@@ -1,0 +1,26 @@
+<div aria-live="polite" aria-atomic="true" class="position-relative" data-controller="toasts">
+  <div class="toast-container top-0 end-0 p-3 ">
+    <% flash.each do |type, msg| %>
+      <%
+        type = { alert: :danger, error: :danger, warning: :warning, success: :success }[type.to_sym] || :primary
+        title = { danger: 'Error', warning: 'Warning', success: 'Success' }[type] || 'Info'
+        icon = {
+          danger: 'exclamation-triangle-fill',
+          warning: 'exclamation-diamond',
+          success: 'check-circle-fill'
+        }[type] || 'exclamation-circle'
+      %>
+      <div class="toast text-bg-<%= type %>" role="alert" aria-live="assertive" aria-atomic="true" data-turbo-temporary>
+        <div class="toast-header">
+          <i class="bi bi-<%= icon %>"></i>&nbsp;
+          <strong class="me-auto"><%= title %></strong>
+          <small class="text-body-secondary"><%= timeago(DateTime.now) %></small>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+          <%= msg %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,26 @@
+<%#
+  locals: {
+    parent?: "parent of the resource to render toolbar for",
+    resource?: "resource to render toolbar for",
+    resource_class: "Class of resource being rendered",
+  }
+%>
+<nav aria-label="breadcrumb" style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);">
+  <ol class="breadcrumb my-1">
+    <% if parent.present? %>
+      <li class="breadcrumb-item"><%= link_to resource_name_plural(parent.class), adapt_route_args(parent.class, use_parent: false), class: 'text-decoration-none' %></li>
+      <li class="breadcrumb-item"><%= link_to display_name_of(parent), adapt_route_args(parent, use_parent: false), class: 'text-decoration-none' %></li>
+    <% end %>
+    <% if resource.present? %>
+      <li class="breadcrumb-item"><%= link_to resource_name_plural(resource_class), adapt_route_args(resource_class), class: 'text-decoration-none' %></li>
+      <% if %w[edit update custom_action commit_custom_action].include? action_name %>
+        <li class="breadcrumb-item"><%= link_to display_name_of(resource), adapt_route_args(resource), class: 'text-decoration-none' %></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= (params[:custom_action] || 'Edit').titleize %></li>
+      <% else %>
+        <li class="breadcrumb-item active" aria-current="page"><%= resource.persisted? ? display_name_of(resource) : 'New' %></li>
+      <% end %>
+    <% else %>
+      <li class="breadcrumb-item"><%= resource_name_plural(resource_class) %></li>
+    <% end %>
+  </ol>
+</nav>

@@ -1,0 +1,24 @@
+<% content_for :toolbar do %>
+  <%= render 'toolbar', resource_class: resource_class,
+                        parent: current_parent do %>
+    <%=
+      render partial: 'toolbar_search_input', locals: {
+        search_object: @table.search_object,
+        search_field: @table.search_field
+      }
+    %>
+    <%=
+      render partial: 'toolbar_actions', locals: {
+        actions: @table.actions.permitted_actions_for(policy(resource_class)),
+        resource: resource_class
+      }
+    %>
+  <% end %>
+<% end %>
+<%=
+  render partial: 'associations_bar', locals: {
+    associations: @associations,
+    resource_class: resource_class
+  }
+%>
+<%= render 'table', table: @table %>

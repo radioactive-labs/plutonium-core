@@ -1,0 +1,80 @@
+<%
+  # locals: {
+  #   table: "instance of Pu::UI::Builder::Collection"
+  # }
+
+  resource_class = table.model_class
+  resources = table.records.to_a
+  record_actions = table.record_actions
+  search_object = table.search_object
+%>
+<div class="row">
+  <% unless resources.any? %>
+    <div class="col-12">
+      <%=
+        render 'shared/empty_card', message: "You have no #{resource_name_plural(resource_class).downcase}" do
+          if policy(resource_class).create?
+            link_to "Create #{resource_name(resource_class)}", adapt_route_args(resource_class, action: :new), class: 'btn btn-outline-primary'
+          end
+        end
+      %>
+    </div>
+  <% else %>
+    <div id="table-container" class="col-12 table-responsive max-vh-75 py-2" data-controller="scroll-preserver" data-action="scroll->scroll-preserver#scrolled"  >
+      <table class="table table-hover table-striped my-0">
+        <thead class="sticky-top">
+          <tr>
+            <th scope="col" class="text-center resource-table-col-id"><%= sort_link(search_object, :id, '#', class: "text-decoration-none") %></th>
+            <% table.fields.each do |name, field| %>
+              <th scope="col" class="resource-table-col-attr">
+                <% if resource_class.ransortable_attributes.include? name.to_s %>
+                  <%= sort_link(search_object, name, field.label, class: "text-decoration-none") %>
+                <% else %>
+                  <%= field.label %>
+                <% end %>
+              </th>
+            <% end %>
+            <th scope="col" class="text-center resource-table-col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% resources.each do |resource| %>
+            <tr class="align-middle">
+              <td class="text-center text-truncate resource-table-cell-id">
+                <% if policy(resource).show? %>
+                  <%= link_to resource.to_param, adapt_route_args(resource), class: "text-decoration-none" %>
+                <% else %>
+                  <%= resource.to_param %>
+                <% end %>
+              </td>
+              <% table.fields.each do |name, field| %>
+                <%
+                value = resource.send(name)
+                helper = field.helper
+                options = field.options
+                max_width = options.delete :pu_max_width
+              %>
+                <td class='text-truncate resource-table-cell-attr' style="max-width: <%= max_width %>px;">
+                  <%= display_field value:, helper:, **options %>
+                </td>
+              <% end %>
+              <td class="text-center resource-table-cell-actions">
+                <%=
+                render partial: 'table_actions', locals: {
+                  actions: record_actions.permitted_actions_for(policy(resource)),
+                  resource: resource
+                }
+              %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <% if table.pagination.present? %>
+      <div class="col-12">
+        <%= render 'pagination', pagination: table.pagination %>
+      </div>
+    <% end  %>
+  <% end %>
+</div>

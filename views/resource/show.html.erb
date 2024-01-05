@@ -1,0 +1,19 @@
+<% content_for :toolbar do %>
+  <%= render 'toolbar', resource_class: resource_class,
+                        resource: @detail.record,
+                        parent: current_parent do %>
+    <%=
+      render partial: 'toolbar_actions', locals: {
+        actions: @detail.actions.permitted_actions_for(policy(@detail.record)),
+        resource: @detail.record
+      }
+    %>
+  <% end %>
+<% end %>
+<%=
+  render partial: 'associations_bar', locals: {
+    associations: @associations,
+    resource_class: resource_class
+  }
+%>
+<%= render "resource", details: @detail %>

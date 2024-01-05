@@ -1,0 +1,10 @@
+<div class="row row-gap-2">
+  <% details.fields.each do |name, field| %>
+    <%
+      value = details.record.send(name)
+      options = field.options
+    %>
+    <dt class="col-md-3"><%= field.label %></dt>
+    <dd class="col-md-9"><%= display_field(value:, helper: field.helper, title: false, **options) %></dd>
+  <% end %>
+</div>

@@ -1,0 +1,35 @@
+{
+  "git.enableSmartCommit": true,
+  "editor.formatOnSave": true,
+  "editor.renderControlCharacters": true,
+  "editor.semanticHighlighting.enabled": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "editor.rulers": [
+    80,
+    120
+  ],
+  "solargraph.formatting": true,
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[ruby]": {
+    "editor.defaultFormatter": "testdouble.vscode-standard-ruby",
+    "editor.formatOnSave": true
+  },
+  "[erb]": {
+    "editor.defaultFormatter": "aliariff.vscode-erb-beautify",
+    "editor.formatOnSave": false
+  },
+  "files.associations": {
+    "*.html.erb": "erb",
+    "Gemfile": "ruby",
+  },
+  "rubyLsp.enabledFeatures": {
+    "diagnostics": false, // uses rubocop. our projects uses standard
+  }
+}

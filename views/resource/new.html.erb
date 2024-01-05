@@ -1,0 +1,16 @@
+<% content_for :toolbar do %>
+  <%=
+    render partial: 'toolbar', locals: {
+      resource_class: resource_class,
+      resource: @form.record,
+      parent: current_parent,
+    }
+  %>
+<% end %>
+<%=
+  render partial: 'associations_bar', locals: {
+    associations: @associations,
+    resource_class: resource_class
+  }
+%>
+<%= render "form", form: @form %>

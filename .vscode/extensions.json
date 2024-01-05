@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "redhat.vscode-yaml",
+    "mickey.code-copy-ruby-ref",
+    "ghbozz.hashtag",
+    "kaiwood.endwise",
+    "castwide.solargraph",
+    "aliariff.vscode-erb-beautify",
+    "jbockle.jbockle-format-files",
+    "esbenp.prettier-vscode",
+    "pavlitsky.yard",
+    "testdouble.vscode-standard-ruby",
+    "shopify.ruby-lsp"
+  ]
+}
