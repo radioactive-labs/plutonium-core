@@ -33,7 +33,9 @@ Gem::Specification.new do |spec|
   # Uncomment to register a new dependency of your gem
   spec.add_dependency "activesupport", "~> 7.1.2"
   spec.add_dependency "railties", "~> 7.1.2"
+  spec.add_dependency "actionpack", "~> 7.1.2"
   spec.add_dependency "pagy", "~> 6.2.0"
+  spec.add_dependency "pundit" # , "~> 6.2.0"
   # spec.add_dependency "rails", ">= 7.1.2"
 
   # For more information and examples about making a new gem, check out our

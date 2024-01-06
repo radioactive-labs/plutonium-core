@@ -3,5 +3,6 @@ module Plutonium
     extend ActiveSupport::Autoload
 
     autoload :UserModel
+    autoload :ResourceController
   end
 end
