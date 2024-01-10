@@ -2,6 +2,10 @@ require "active_support"
 require_relative "plutonium/version"
 
 module Plutonium
+  require_relative "active_model/validations/array_validator"
+  require_relative "active_model/validations/attached_validator"
+  require_relative "active_model/validations/url_validator"
+
   extend ActiveSupport::Autoload
 
   class Error < StandardError; end
@@ -13,6 +17,7 @@ module Plutonium
   def self.lib_root
     File.expand_path("lib/plutonium/", root)
   end
+
 
   autoload :App
   autoload :Package

@@ -338,7 +338,9 @@ module Plutonium
       end
 
       def policy_namespace(scope)
-        [:resources, scope]
+        ns = self.class.to_s.split("::")[0].to_sym
+        [ns, scope]
+        scope
       end
 
       def pundit_user
