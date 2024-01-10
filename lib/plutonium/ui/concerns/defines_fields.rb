@@ -8,7 +8,7 @@ module Plutonium
 
         def with_fields(*names)
           names.flatten.each do |name|
-            define_field(Pu::UI::Field.for_attribute(model_class, name)) unless field_defined?(name)
+            define_field(Plutonium::UI::Field.for_attribute(model_class, name)) unless field_defined?(name)
             @enabled_fields[name] = true
           end
           self

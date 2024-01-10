@@ -2,7 +2,7 @@ module Plutonium
   module UI
     module Action
       class InteractiveAction < Action
-        include Pu::UI::Concerns::DefinesInputs
+        include Plutonium::UI::Concerns::DefinesInputs
 
         attr_reader :interaction
 

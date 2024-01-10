@@ -2,7 +2,7 @@ module Plutonium
   module UI
     module Builder
       class Collection
-        include Pu::UI::Concerns::DefinesFields
+        include Plutonium::UI::Concerns::DefinesFields
 
         attr_reader :records, :actions, :record_actions, :pagination, :search_object, :search_field
 

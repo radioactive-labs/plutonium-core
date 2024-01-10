@@ -9,7 +9,7 @@ module Plutonium
       def build_collection(permitted_attributes)
         fields = collection_fields & permitted_attributes
 
-        customize_fields(Pu::UI::Builder::Collection.new(resource_class))
+        customize_fields(Plutonium::UI::Builder::Collection.new(resource_class))
           .with_record_actions(build_actions.only!(*collection_record_actions))
           .with_actions(build_actions.only!(*collection_actions))
           .with_fields(fields)
@@ -18,7 +18,7 @@ module Plutonium
       def build_detail(permitted_attributes)
         fields = detail_fields & permitted_attributes
 
-        customize_fields(Pu::UI::Builder::Detail.new(resource_class))
+        customize_fields(Plutonium::UI::Builder::Detail.new(resource_class))
           .with_actions(build_actions.except!(:create, :show))
           .with_fields(fields)
       end
@@ -26,18 +26,18 @@ module Plutonium
       def build_form(permitted_attributes)
         inputs = form_inputs & permitted_attributes
 
-        customize_inputs(Pu::UI::Builder::Form.new(resource_class))
+        customize_inputs(Plutonium::UI::Builder::Form.new(resource_class))
           .with_inputs(inputs)
       end
 
       def build_associations(permitted_associations)
         associations = associations_list & permitted_associations
-        Pu::Builders::Associations.new
+        Plutonium::Builders::Associations.new
           .with_associations(associations)
       end
 
       def build_actions
-        Pu::UI::Builder::Actions.new
+        Plutonium::UI::Builder::Actions.new
           .with_standard_actions
       end
 

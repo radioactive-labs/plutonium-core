@@ -10,10 +10,17 @@ module Plutonium
     File.expand_path("../", __dir__)
   end
 
+  def self.lib_root
+    File.expand_path("lib/plutonium/", root)
+  end
+
   autoload :App
   autoload :Package
   autoload :Core
-  autoload :Helpers
+  # autoload :Policy
+  # autoload :Helpers
+  # autoload :Builders
+  autoload :SimpleForm
 end
 
 # Add a shorter alias

@@ -1,3 +1,5 @@
+require "pundit"
+
 module Plutonium
   module Policy
     module Initializer

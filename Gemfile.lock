@@ -3,9 +3,10 @@ PATH
   specs:
     plutonium (0.1.0)
       actionpack (~> 7.1.2)
+      active_interaction (~> 5.3.0)
       activesupport (~> 7.1.2)
       pagy (~> 6.2.0)
-      pundit
+      pundit (~> 2.3.1)
       railties (~> 7.1.2)
 
 GEM
@@ -27,6 +28,11 @@ GEM
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
+    active_interaction (5.3.0)
+      activemodel (>= 5.2, < 8)
+      activesupport (>= 5.2, < 8)
+    activemodel (7.1.2)
+      activesupport (= 7.1.2)
     activesupport (7.1.2)
       base64
       bigdecimal

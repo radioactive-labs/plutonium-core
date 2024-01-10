@@ -1,10 +1,8 @@
-# frozen_string_literal: true
-
 require "action_controller"
 require "pundit"
 require "pagy"
-require File.expand_path("lib/plutonium/refinements/parameter_refinements", Plutonium.root)
 
+require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root)
 using Plutonium::Refinements::ParameterRefinements
 
 module Plutonium
@@ -222,22 +220,16 @@ module Plutonium
 
       # Resource
 
-      class << self
-        attr_reader :resource_class, :resource_search_field
-
-        def controller_for(resource_class, resource_search_field = nil)
-          @resource_class = resource_class
-          @resource_search_field = resource_search_field
-        end
-      end
-
-      def resource_class
-        self.class.resource_class
-      end
+      class_attribute :resource_class, :resource_search_field, instance_writer: false, instance_predicate: false
       helper_method :resource_class
 
-      def resource_search_field
-        self.class.resource_search_field
+      class << self
+        private
+
+        def controller_for(resource_class, resource_search_field = nil)
+          self.resource_class = resource_class
+          self.resource_search_field = resource_search_field
+        end
       end
 
       def resource_record
@@ -318,7 +310,6 @@ module Plutonium
       # Authorisation
 
       def permitted_attributes(policy_subject = nil)
-        policy_subject ||= resource_record || resource_class
         @permitted_attributes ||= current_policy.send :"permitted_attributes_for_#{action_name}"
       end
       helper_method :permitted_attributes
@@ -355,11 +346,46 @@ module Plutonium
       end
 
       def resource_context
-        @resource_context ||= Pu::ResourceContext.new(
+        @resource_context ||= Plutonium::Core::ResourceContext.new(
           resource_class:,
           user: current_user,
           parent: current_parent
         )
+      end
+
+      ############
+
+      def adapt_route_args(*args, action: nil, use_parent: true, **kwargs)
+        # If the last item is a class and an action is passed e.g. `adapt_route_args User, action: :new`,
+        # it must be converted into a symbol to generate the appropriate helper i.e `new_entity_user_*`
+        resource = args.pop
+        resource = resource.to_s.underscore.to_sym if action.present? && resource.is_a?(Class)
+        args.push resource
+
+        parent = use_parent ? current_parent : nil
+
+        # # rails compacts this list. no need to handle nils
+        [action, parent] + args + [**kwargs]
+      end
+      helper_method :adapt_route_args
+
+      def current_parent
+        return unless parent_param_key.present?
+
+        @current_parent ||= begin
+          parent_name = parent_param_key.to_s.gsub(/_id$/, "")
+
+          parent_class = parent_name.classify.constantize
+          parent_class.from_path_param(params[parent_param_key]).first!
+        end
+      end
+      helper_method :current_parent
+
+      def parent_param_key
+        @parent_param_key ||= begin
+          path_param_keys = params.keys.last(4) - %w[controller action entity_id id format]
+          path_param_keys.reverse.find { |key| /_id$/.match? key }&.to_sym
+        end
       end
     end
   end

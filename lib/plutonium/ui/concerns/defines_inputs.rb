@@ -8,7 +8,7 @@ module Plutonium
 
         def with_inputs(*names)
           names.flatten.each do |name|
-            define_input(Pu::UI::Input.for_attribute(model_class, name)) unless input_defined?(name)
+            define_input(Plutonium::UI::Input.for_attribute(model_class, name)) unless input_defined?(name)
             @enabled_inputs[name] = true
           end
           self

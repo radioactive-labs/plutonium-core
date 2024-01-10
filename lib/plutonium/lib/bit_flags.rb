@@ -1,5 +1,5 @@
 module Plutonium
-  module Core
+  module Lib
     class BitFlags
       delegate :sum, to: :indices
 

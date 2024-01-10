@@ -1,6 +1,10 @@
 module Plutonium
-  module Policy
+  module Core
     module ResourcePolicy
+      def self.included(base)
+        base.include Plutonium::Policy::Initializer
+      end
+
       def read?
         true
       end

@@ -5,7 +5,7 @@
   # }
 %>
 <% actions.values.each do |action| %>
-  <% if action.button.is_a? Pu::UI::Button %>
+  <% if action.button.is_a? Plutonium::UI::Button %>
     <%=
       toolbar_action_button adapt_route_args(resource, action: action.route.action, **action.route.options),
                           icon: action.button.icon,

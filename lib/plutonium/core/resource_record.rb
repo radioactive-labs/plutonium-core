@@ -1,9 +1,10 @@
 module Plutonium
   module Core
-    module ResourceModel
-      def self.included(base)
-        base.send :scope, :from_path_param, ->(param) { where(id: param) }
-        base.send :extend, ClassMethods
+    module ResourceRecord
+      extend ActiveSupport::Concern
+
+      included do
+        scope from_path_param, ->(param) { where(id: param) }
       end
 
       module ClassMethods

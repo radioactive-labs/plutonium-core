@@ -2,7 +2,7 @@ module Plutonium
   module UI
     module Builder
       class Detail
-        include Pu::UI::Concerns::DefinesFields
+        include Plutonium::UI::Concerns::DefinesFields
 
         attr_reader :record, :actions
 

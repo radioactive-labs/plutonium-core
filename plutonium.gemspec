@@ -35,7 +35,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "railties", "~> 7.1.2"
   spec.add_dependency "actionpack", "~> 7.1.2"
   spec.add_dependency "pagy", "~> 6.2.0"
-  spec.add_dependency "pundit" # , "~> 6.2.0"
+  spec.add_dependency "pundit", "~> 2.3.1"
+  spec.add_dependency "active_interaction", "~> 5.3.0"
   # spec.add_dependency "rails", ">= 7.1.2"
 
   # For more information and examples about making a new gem, check out our

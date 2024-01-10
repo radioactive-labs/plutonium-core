@@ -2,7 +2,7 @@ module Plutonium
   module UI
     module Builder
       class Form
-        include Pu::UI::Concerns::DefinesInputs
+        include Plutonium::UI::Concerns::DefinesInputs
 
         attr_reader :record
 
