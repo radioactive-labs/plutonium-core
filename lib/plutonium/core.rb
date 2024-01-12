@@ -7,5 +7,6 @@ module Plutonium
     autoload :ResourceRecord
     autoload :ResourceInteraction
     autoload :ResourcePresenter
+    autoload :ResourceContext
   end
 end

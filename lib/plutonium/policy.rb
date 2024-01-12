@@ -3,7 +3,7 @@ module Plutonium
     extend ActiveSupport::Autoload
 
     autoload :Initializer
-    autoload :Base
+    autoload :Scope
     # autoload :AdminResourcePolicy
     # autoload :EntityResourcePolicy
   end

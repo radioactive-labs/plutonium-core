@@ -2,8 +2,8 @@
   <nav class="navbar navbar-expand-md bg-body-tertiary">
     <div class="container-fluid">
       <%=
-        link_to root_path, data: { turbo: false } do
-          image_tag 'header-logo', class:"navbar-brand", style:"width: 200px;"
+        link_to main_app.root_path, data: { turbo: false } do
+          # image_tag 'header-logo', class:"navbar-brand", style:"width: 200px;"
         end
       %>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarScroll" aria-controls="navbarScroll" aria-expanded="false" aria-label="Toggle navigation">

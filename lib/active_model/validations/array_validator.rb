@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+# require 'active_model/validations/each_validator'
 
 # Based on https://gist.github.com/ssimeonov/6519423
 #

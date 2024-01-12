@@ -1,6 +1,7 @@
 require "action_controller"
 require "pundit"
 require "pagy"
+require "ransack"
 
 require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root)
 using Plutonium::Refinements::ParameterRefinements
@@ -12,9 +13,10 @@ module Plutonium
       include Pundit::Authorization
 
       add_flash_types :success, :warning, :error
-      append_view_path File.expand_path("views", Plutonium.root)
+      append_view_path File.expand_path("app/views", Plutonium.root)
 
       layout "resource"
+      helper Plutonium::Helpers
 
       before_action :set_page_title
       before_action :set_sidebar_menu
@@ -338,8 +340,11 @@ module Plutonium
       end
 
       def policy_namespace(scope)
-        ns = self.class.to_s.split("::")[0].to_sym
-        [ns, scope]
+        # ns = self.class.to_s.split("::")[0].to_sym
+        # [ns, scope]
+        # ap '~~~~~~~~~~~~~~'
+        # ap scope
+        # ap '~~~~~~~~~~~~~~'
         scope
       end
 
@@ -358,16 +363,29 @@ module Plutonium
       ############
 
       def adapt_route_args(*args, action: nil, use_parent: true, **kwargs)
+        ap '~~~~~~~~~~~>>>>>>> adapt_route_args'
+        ap args
+        ap '~~~~'
+        ap action
+        ap '~~~~'
+        ap use_parent
+        ap '~~~~'
+        ap kwargs
+        ap '~~~~~~~~~~~>>>>>>> end'
         # If the last item is a class and an action is passed e.g. `adapt_route_args User, action: :new`,
         # it must be converted into a symbol to generate the appropriate helper i.e `new_entity_user_*`
         resource = args.pop
-        resource = resource.to_s.underscore.to_sym if action.present? && resource.is_a?(Class)
+        resource = resource.to_s.underscore.tr("/", "_").to_sym if action.present? && resource.is_a?(Class)
         args.push resource
 
         parent = use_parent ? current_parent : nil
 
         # # rails compacts this list. no need to handle nils
-        [action, parent] + args + [**kwargs]
+        a  = [action, parent] + args + [**kwargs]
+
+
+
+        a
       end
       helper_method :adapt_route_args
 

@@ -4,7 +4,7 @@ module Plutonium
       extend ActiveSupport::Concern
 
       included do
-        scope from_path_param, ->(param) { where(id: param) }
+        scope :from_path_param, ->(param) { where(id: param) }
       end
 
       module ClassMethods
