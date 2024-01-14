@@ -5,6 +5,7 @@ module Plutonium
 
       autoload :DefinesFields
       autoload :DefinesActions
+      autoload :DefinesInputs
     end
   end
 end

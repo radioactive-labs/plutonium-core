@@ -1,5 +1,3 @@
-
-
 attributes :id
 attributes(*permitted_attributes)
 attributes :created_at, :updated_at

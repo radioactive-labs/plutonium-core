@@ -1,5 +1,3 @@
-
-
 object @record
 
-extends '_resource'
+extends "_resource"

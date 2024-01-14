@@ -35,7 +35,7 @@ module ActiveModel
       def validate_url
         return true if URL_PATTERN.match?(value)
 
-        record.errors.add attribute, (options[:message] || 'is not a valid URL')
+        record.errors.add attribute, (options[:message] || "is not a valid URL")
         false
       end
 
@@ -43,7 +43,7 @@ module ActiveModel
         return true unless options[:image].present?
         return true unless FastImage.type(value).nil?
 
-        record.errors.add(attribute, (options[:message] || 'is not a valid image URL'))
+        record.errors.add(attribute, (options[:message] || "is not a valid image URL"))
         false
       end
     end

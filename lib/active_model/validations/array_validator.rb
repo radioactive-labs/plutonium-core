@@ -36,7 +36,7 @@ module ActiveModel
       def validate_each_internal(values)
         [values].flatten.each_with_index do |value, index|
           options.except(:if, :unless, :on, :strict).each do |key, args|
-            validator_options = { attributes: attribute }
+            validator_options = {attributes: attribute}
             validator_options.merge!(args) if args.is_a?(Hash)
 
             next if skip? value, validator_options

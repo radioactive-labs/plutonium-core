@@ -7,5 +7,6 @@ module Plutonium
     autoload :Action
     autoload :Button
     autoload :Field
+    autoload :Input
   end
 end
