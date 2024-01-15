@@ -19,17 +19,13 @@ module Plutonium
   end
 
   def self.configure_rails(config)
-    reactor_engine = "Core::Engine".constantize
-
-    config.railties_order += Rails::Engine.descendants.select { |engine| engine.include? Plutonium::App }
-    config.railties_order += Rails::Engine.descendants.select { |engine| engine.include? Plutonium::Package } - [reactor_engine]
-    config.railties_order += [reactor_engine]
-
+    # Serve up our assets
     config.middleware.insert_before(
       ActionDispatch::Static,
       Rack::Static,
       urls: ["/plutonium-assets"],
-      root: Plutonium.root.join("public")
+      root: Plutonium.root.join("public"),
+      cascade: true
     )
   end
 
