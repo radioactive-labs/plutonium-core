@@ -33,8 +33,9 @@ module Plutonium
     )
   end
 
-  autoload :App
   autoload :Package
+  autoload :Feature
+  autoload :App
   autoload :Core
   autoload :Policy
   autoload :UI

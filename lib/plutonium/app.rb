@@ -3,23 +3,13 @@ require "rails/engine"
 module Plutonium
   module App
     extend ActiveSupport::Concern
+    include Package
 
     included do
-      # include Package
       isolate_namespace to_s.deconstantize.constantize
-
-      # prevent this package from being added to the view lookup
-      config.before_configuration do
-        # this touches the internals of rails, but I could not find a good way of doing this
-        # we get the initializer instance and set the block property to a noop
-        add_view_paths_initializer = Rails.application.initializers.find do |a|
-          a.context_class == self && a.name.to_s == "add_view_paths"
-        end
-        add_view_paths_initializer.instance_variable_set(:@block, ->(app) {})
-      end
     end
 
-    module ClassMethods
+    class_methods do
       def register_resource(resource)
         @resource_register ||= []
         @resource_register << resource
@@ -40,14 +30,14 @@ module Plutonium
 
             resource_name_plural = resource_name.pluralize
             resource_name_plural_underscored = resource_name_plural.underscore.tr("/", "_")
-            resource_attribute_plural = resource_name_plural.demodulize.underscore
+            resource_controller = resource_name_plural.demodulize.underscore
 
             resources_path = resource_name_plural.underscore
 
             route_opts = {}
             if resource_module_underscored.present?
               route_opts[:module] = resource_module_underscored
-              route_opts[:controller] = resource_attribute_plural
+              route_opts[:controller] = resource_controller
               route_opts[:path] = resources_path
             end
             # route = <<~TILDE
