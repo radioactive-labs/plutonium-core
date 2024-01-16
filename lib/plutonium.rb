@@ -38,6 +38,7 @@ module Plutonium
   autoload :Helpers
   autoload :SimpleForm
   autoload :Builders
+  autoload :Auth
 end
 
 # Add a shorter alias
