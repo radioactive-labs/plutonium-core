@@ -20,7 +20,12 @@ module Plutonium
       end
 
       def draw_resource_routes
-        registered_resources = resource_register
+        # We want our resources sorted in reverse order in order to prevent routing conflicts
+        # e.g. /blogs/1 and blogs/comments cause an issue if Blog is registered before Blogs::Comment
+        # attempting to load blogs/comments routes to blogs/:id which fails with a 404
+        # Reverse sorting ensures that nested resources are registered first
+        registered_resources = resource_register.sort.reverse
+
         routes.draw do
           registered_resources.each do |resource|
             resource_name = resource.to_s.classify
