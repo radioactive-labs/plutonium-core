@@ -2,16 +2,11 @@ module Plutonium
   module Core
     module AppController
       extend ActiveSupport::Concern
+      include Plutonium::Core::Controller::EntityScoping
 
       included do
         helper_method :current_parent
         helper_method :adapt_route_args
-      end
-
-      class_methods do
-        def scope_to_entity(entity_class)
-          include Plutonium::Core::Controller::EntityScoped.to(entity_class)
-        end
       end
 
       private
@@ -28,27 +23,9 @@ module Plutonium
       def build_sidebar_menu
         {
           resources: current_engine.resource_register.map { |resource|
-                       [resource.pluralize, url_for(resource.constantize)]
+                       [resource.pluralize, url_for(adapt_route_args(resource.constantize))]
                      }.to_h
         }
-      end
-
-      def scoped_to_entity?
-        false
-      end
-
-      def scoped_entity_class
-        raise NotImplementedError, "this request is not scoped to an entity\n\n" \
-                                   "add the `scope_to_entity MyEntityModel` directive in " \
-                                   "#{current_package}::ResourceController after `boot #{current_package}` " \
-                                   "or implement #scoped_entity_class"
-      end
-
-      def current_scoped_entity
-        raise NotImplementedError, "this request is not scoped to an entity\n\n" \
-                                   "add the `scope_to_entity MyEntityModel` directive in " \
-                                   "#{current_package}::ResourceController after `boot #{current_package}` " \
-                                   "or implement #current_scoped_entity"
       end
 
       def current_parent
@@ -64,7 +41,10 @@ module Plutonium
       end
 
       def parent_param_key
-        @parent_param_key ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }&.to_sym
+        @parent_param_key ||= begin
+          path_param_keys = request.path_parameters.keys - [:controller, :action, scoped_to_entity? ? scoped_entity_param_key : nil]
+          path_param_keys.reverse.find { |key| /_id$/.match? key }&.to_sym
+        end
       end
 
       #

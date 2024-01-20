@@ -4,7 +4,7 @@ module Plutonium
       extend ActiveSupport::Autoload
 
       autoload :CrudActions
-      autoload :EntityScoped
+      autoload :EntityScoping
     end
   end
 end
