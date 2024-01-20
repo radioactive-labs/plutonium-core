@@ -9,17 +9,12 @@ module Plutonium
       end
 
       class_methods do
-        attr_reader :scoped_entity_strategy
+        attr_reader :scoped_entity_strategy, :scoped_entity_class
 
-        def scope_to_entity(entity_class = "Entity", strategy: :path, param_key: nil)
-          @scoped_entity_class = entity_class
+        def scope_to_entity(entity_class: "Entity", strategy: :path, param_key: nil)
+          @scoped_entity_class = entity_class.try(:constantize) || entity_class
           @scoped_entity_strategy = strategy
           @scoped_entity_param_key = param_key
-        end
-
-        def scoped_entity_class
-          @scoped_entity_class = @scoped_entity_class.constantize if @scoped_entity_class.is_a?(String)
-          @scoped_entity_class
         end
 
         def scoped_entity_param_key
@@ -43,7 +38,7 @@ module Plutonium
           # e.g. /blogs/1 and blogs/comments cause an issue if Blog is registered before Blogs::Comment
           # attempting to load blogs/comments routes to blogs/:id which fails with a 404
           # Reverse sorting ensures that nested resources are registered first
-          registered_resources = resource_register.sort.reverse
+          registered_resources = resource_register.map(&:to_s).sort.reverse
 
           # debugger
 
