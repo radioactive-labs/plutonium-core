@@ -9,7 +9,7 @@ module Plutonium
       end
 
       class_methods do
-        attr_reader :scoped_entity_strategy, :scoped_entity_class
+        attr_reader :scoped_entity_class, :scoped_entity_strategy
 
         def scope_to_entity(entity_class: "Entity", strategy: :path, param_key: nil)
           @scoped_entity_class = entity_class.try(:constantize) || entity_class
@@ -18,6 +18,8 @@ module Plutonium
         end
 
         def scoped_entity_param_key
+          return unless scoped_entity_class.present?
+
           @scoped_entity_param_key ||= begin
             scope_param_key = scoped_entity_class.model_name.singular_route_key
             :"#{scope_param_key}_id"
@@ -50,7 +52,7 @@ module Plutonium
 
           scoped_entity_param_key = self.scoped_entity_param_key
           routes.draw do
-            scope ":#{scoped_entity_param_key}", as: :entity do
+            route_drawer = -> {
               registered_resources.each do |resource|
                 resource_name = resource.to_s.classify
 
@@ -83,6 +85,14 @@ module Plutonium
 
                 resources resource_name_plural_underscored, **route_opts
               end
+            }
+
+            if scoped_entity_param_key.present?
+              scope ":#{scoped_entity_param_key}", as: :entity do
+                route_drawer.call
+              end
+            else
+              route_drawer.call
             end
           end
         end
