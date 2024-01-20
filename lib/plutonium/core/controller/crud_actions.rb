@@ -1,7 +1,7 @@
 module Plutonium
   module Core
     module Controller
-      module Actions
+      module CrudActions
         extend ActiveSupport::Concern
 
         # GET /resources(.{format})

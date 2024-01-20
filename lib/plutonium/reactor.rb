@@ -1,14 +1,12 @@
-require "rails/engine"
-
 module Plutonium
   module Reactor
-    extend ActiveSupport::Concern
-    include Package
+    extend ActiveSupport::Autoload
 
-    included do
-      initializer "disable_turbo" do
-        Rails.autoloaders.once.do_not_eager_load("#{Turbo::Engine.root}/app/channels")
-      end
-    end
+    autoload :Engine
+    autoload :ResourceController
+    autoload :ResourceInteraction
+    autoload :ResourcePolicy
+    autoload :ResourcePresenter
+    autoload :ResourceRecord
   end
 end

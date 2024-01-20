@@ -3,7 +3,8 @@ module Plutonium
     module Controller
       extend ActiveSupport::Autoload
 
-      autoload :Actions
+      autoload :CrudActions
+      autoload :EntityScoped
     end
   end
 end

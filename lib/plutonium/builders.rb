@@ -1,5 +1,5 @@
 module Plutonium
-  module Builders # :nodoc:
+  module Builders
     extend ActiveSupport::Autoload
 
     autoload :Associations

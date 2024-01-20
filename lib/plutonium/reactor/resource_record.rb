@@ -1,10 +1,11 @@
 module Plutonium
-  module Core
+  module Reactor
     module ResourceRecord
       extend ActiveSupport::Concern
 
       included do
         scope :from_path_param, ->(param) { where(id: param) }
+        scope :for_parent, ->(parent) { all }
       end
 
       module ClassMethods

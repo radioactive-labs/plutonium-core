@@ -12,16 +12,22 @@ module Plutonium
             helper_method :logout_url
           end
 
+          private
+
+          def rodauth(name = :#{name})
+            super(name)
+          end
+
           def authenticate
-            rodauth(:#{name}).require_account
+            rodauth.require_account
           end
 
           def current_user
-            rodauth(:#{name}).rails_account
+            rodauth.rails_account
           end
 
           def logout_url
-            rodauth(:#{name}).logout_path
+            rodauth.logout_path
           end
 
           define_singleton_method(:to_s) { "Plutonium::Auth::Rodauth(:#{name})" }

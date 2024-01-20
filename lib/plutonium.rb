@@ -29,10 +29,8 @@ module Plutonium
     )
   end
 
-  autoload :Package
+  autoload :Packaging
   autoload :Reactor
-  autoload :App
-  autoload :Feature
   autoload :Core
   autoload :Policy
   autoload :UI

@@ -1,5 +1,5 @@
 module Plutonium
-  module Policy # :nodoc:
+  module Policy
     extend ActiveSupport::Autoload
 
     autoload :Initializer

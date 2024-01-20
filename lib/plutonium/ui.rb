@@ -1,5 +1,5 @@
 module Plutonium
-  module UI # :nodoc:
+  module UI
     extend ActiveSupport::Autoload
 
     autoload :Builder

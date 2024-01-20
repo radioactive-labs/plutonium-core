@@ -7,15 +7,19 @@ require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root
 using Plutonium::Refinements::ParameterRefinements
 
 module Plutonium
-  module Core
+  module Reactor
     class ResourceController < ActionController::Base
+      # remove this controller from the view lookup
+      # has the side effect of marking all public methods as private.
       abstract!
 
       include Pagy::Backend
       include Pundit::Authorization
+      include Plutonium::Core::FeatureController
 
       def self.inherited(child)
-        child.send :include, Plutonium::Core::Controller::Actions
+        # Include our actions after we are inherited else they are marked as private due to our call to abstract!
+        child.send :include, Plutonium::Core::Controller::CrudActions
         super
       end
 
@@ -176,7 +180,7 @@ module Plutonium
       end
 
       def policy_namespace(scope)
-        scope
+        raise NotImplementedError, "policy_namespace"
       end
 
       def pundit_user
@@ -194,40 +198,11 @@ module Plutonium
       ############
 
       def current_package
-        @current_package ||= self.class.to_s.split("::").first.constantize
+        @current_package ||= self.class.module_parents[-2]
       end
 
-      def adapt_route_args(*args, action: nil, use_parent: true, **kwargs)
-        # If the last item is a class and an action is passed e.g. `adapt_route_args User, action: :new`,
-        # it must be converted into a symbol to generate the appropriate helper i.e `new_entity_user_*`
-        resource = args.pop
-        resource = resource.to_s.underscore.tr("/", "_").to_sym if action.present? && resource.is_a?(Class)
-        args.push resource
-
-        parent = use_parent ? current_parent : nil
-
-        # # rails compacts this list. no need to handle nils
-        [action, parent] + args + [**kwargs]
-      end
-      helper_method :adapt_route_args
-
-      def current_parent
-        return unless parent_param_key.present?
-
-        @current_parent ||= begin
-          parent_name = parent_param_key.to_s.gsub(/_id$/, "")
-
-          parent_class = parent_name.classify.constantize
-          parent_class.from_path_param(params[parent_param_key]).first!
-        end
-      end
-      helper_method :current_parent
-
-      def parent_param_key
-        @parent_param_key ||= begin
-          path_param_keys = params.keys.last(4) - %w[controller action entity_id id format]
-          path_param_keys.reverse.find { |key| /_id$/.match? key }&.to_sym
-        end
+      def current_user
+        raise NotImplementedError, "current_user"
       end
     end
   end

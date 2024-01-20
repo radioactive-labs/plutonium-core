@@ -1,5 +1,5 @@
 module Plutonium
-  module SimpleForm # :nodoc:
+  module SimpleForm
     extend ActiveSupport::Autoload
 
     autoload :AttachmentComponent

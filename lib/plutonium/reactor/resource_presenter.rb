@@ -1,6 +1,6 @@
 module Plutonium
-  module Core
-    module ResourcePresenter
+  module Reactor
+    class ResourcePresenter
       def initialize(context, resource_class)
         @context = context
         @resource_class = resource_class
@@ -46,7 +46,9 @@ module Plutonium
       attr_reader :context, :resource_class
 
       def collection_fields
-        raise NotImplementedError, "collection_fields"
+        maybe_warn_autodetect_usage :collection_fields
+        context.resource_class.columns.map { |col| col.name.to_sym } - %i[id]
+        # raise NotImplementedError, "collection_fields"
       end
 
       def collection_actions
@@ -58,15 +60,18 @@ module Plutonium
       end
 
       def detail_fields
-        raise NotImplementedError, "detail_fields"
+        maybe_warn_autodetect_usage :detail_fields
+        context.resource_class.columns.map { |col| col.name.to_sym } - %i[id]
       end
 
       def form_inputs
-        raise NotImplementedError, "form_inputs"
+        maybe_warn_autodetect_usage :form_inputs
+        context.resource_class.columns.map { |col| col.name.to_sym }
       end
 
       def associations_list
-        raise NotImplementedError, "associations_list"
+        maybe_warn_autodetect_usage :collection_fields
+        []
       end
 
       def customize_fields(builder)
@@ -75,6 +80,23 @@ module Plutonium
 
       def customize_inputs(builder)
         builder
+      end
+
+      def maybe_warn_autodetect_usage(method)
+        return unless Rails.env.production?
+
+        Rails.logger.warn %(
+          🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+
+          Resource field auto-detection violation #{self.class}##{method}
+
+          Using auto-detected resource fields in production is not recommended.
+          It can lead to accidental exposure of sensitive resource fields.
+
+          Override a #{context.resource_class}Presenter with your own ##{method} method.
+
+          🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+        )
       end
     end
   end

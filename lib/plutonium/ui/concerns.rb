@@ -1,5 +1,5 @@
 module Plutonium
-  module UI # :nodoc:
+  module UI
     module Concerns
       extend ActiveSupport::Autoload
 
