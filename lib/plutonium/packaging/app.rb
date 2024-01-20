@@ -20,10 +20,7 @@ module Plutonium
         def scoped_entity_param_key
           return unless scoped_entity_class.present?
 
-          @scoped_entity_param_key ||= begin
-            scope_param_key = scoped_entity_class.model_name.singular_route_key
-            :"#{scope_param_key}_id"
-          end
+          scoped_entity_class.model_name.singular_route_key.to_sym
         end
 
         def register_resource(resource)
@@ -88,7 +85,7 @@ module Plutonium
             }
 
             if scoped_entity_param_key.present?
-              scope ":#{scoped_entity_param_key}", as: :entity do
+              scope ":#{scoped_entity_param_key}", as: scoped_entity_param_key do
                 route_drawer.call
               end
             else

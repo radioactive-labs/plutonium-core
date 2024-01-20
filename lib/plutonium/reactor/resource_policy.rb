@@ -83,7 +83,7 @@ module Plutonium
       private
 
       def maybe_warn_autodetect_usage(method)
-        return unless Rails.env.production?
+        return if Rails.env.local?
 
         Rails.logger.warn %(
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
