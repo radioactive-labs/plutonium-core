@@ -51,7 +51,7 @@ module Plutonium
           routes.draw do
             route_drawer = -> {
               registered_resources.each do |resource|
-                resource_name = resource.to_s.classify
+                resource_name = resource.to_s #.classify
 
                 resource_module = resource_name.deconstantize
                 resource_module_underscored = resource_module&.underscore

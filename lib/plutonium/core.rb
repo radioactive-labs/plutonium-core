@@ -2,10 +2,11 @@ module Plutonium
   module Core
     extend ActiveSupport::Autoload
 
-    autoload :AppController
-    autoload :FeatureController
-    autoload :ResourceContext
-    autoload :ResourceContextScope
-    autoload :Controller
+    eager_autoload do
+      autoload :Fields
+      autoload :Controllers
+      autoload :Presenters
+      autoload :AppController
+    end
   end
 end

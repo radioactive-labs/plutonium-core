@@ -2,12 +2,11 @@ module Plutonium
   module UI
     module Builder
       class Form
-        include Plutonium::UI::Concerns::DefinesInputs
+        attr_reader :record, :inputs
 
-        attr_reader :record
-
-        def initialize(model_class)
-          initialize_inputs_definer(model_class)
+        def with_inputs(inputs)
+          @inputs = inputs
+          self
         end
 
         def with_record(record)

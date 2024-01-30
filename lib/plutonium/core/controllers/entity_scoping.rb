@@ -1,6 +1,6 @@
 module Plutonium
   module Core
-    module Controller
+    module Controllers
       module EntityScoping
         extend ActiveSupport::Concern
 

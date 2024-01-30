@@ -15,11 +15,11 @@ module Plutonium
 
       include Pagy::Backend
       include Pundit::Authorization
-      include Plutonium::Core::FeatureController
+      include Plutonium::Core::Controllers::Bootable
 
       def self.inherited(child)
         # Include our actions after we are inherited else they are marked as private due to our call to abstract!
-        child.send :include, Plutonium::Core::Controller::CrudActions
+        child.send :include, Plutonium::Core::Controllers::CrudActions
         super
       end
 
@@ -42,9 +42,9 @@ module Plutonium
 
       private
 
-      def current_layout
-        send :_layout, lookup_context, []
-      end
+      # def current_layout
+      #   send :_layout, lookup_context, []
+      # end
 
       def custom_actions
         @custom_actions ||= current_presenter.build_actions.action_definitions.except :create, :show, :edit, :destroy
@@ -54,7 +54,7 @@ module Plutonium
         custom_action = params[:custom_action]&.to_sym
 
         unless custom_actions.key?(custom_action)
-          raise ::AbstractController::ActionNotFound, "Undefined action #{custom_action}'"
+          raise ::AbstractController::ActionNotFound, "Unknown action #{custom_action}'"
         end
 
         authorize resource_record, :"#{custom_action}?"
@@ -62,22 +62,8 @@ module Plutonium
 
       # Resource
 
-      class_attribute :resource_class, :resource_search_field, instance_writer: false, instance_predicate: false
-      helper_method :resource_class
-
-      class << self
-        private
-
-        def controller_for(resource_class, resource_search_field = nil)
-          self.resource_class = resource_class
-          self.resource_search_field = resource_search_field
-        end
-      end
-
       def resource_record
-        return unless params[:id].present?
-
-        @resource_record ||= policy_scope(resource_class).from_path_param(params[:id]).first!
+        @resource_record ||= (policy_scope(resource_class).from_path_param(params[:id]).first! if params[:id].present?)
       end
       helper_method :resource_record
 
@@ -85,14 +71,16 @@ module Plutonium
         # we don't care much about strong parameters since we have our own whitelist
         # strong params and pundit permitted_attributes don't support array/hash params without a convoluted
         # attribute list
-        form_params = params.require(resource_param_key).permit!.slice(*permitted_attributes)
+        form_params = params.require(resource_param_key).permit!.nilify.to_h.with_indifferent_access
         form_params[parent_param_key] = current_parent.id if current_parent.present?
 
-        form_params.nilify
+        # debugger
+
+        form_params
       end
 
       def resource_param_key
-        resource_class.to_s.underscore.tr("/", "_")
+        resource_class.model_name.singular_route_key
       end
       helper_method :resource_param_key
 
@@ -188,10 +176,12 @@ module Plutonium
       end
 
       def resource_context
-        @resource_context ||= Plutonium::Core::ResourceContext.new(
-          resource_class:,
+        Plutonium::Reactor::ResourceContext.new(
           user: current_user,
-          parent: current_parent
+          resource_class:,
+          resource_record: @resource_record,
+          parent: current_parent,
+          scope: scoped_to_entity? ? current_scoped_entity : nil
         )
       end
 

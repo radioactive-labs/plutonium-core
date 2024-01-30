@@ -1,8 +1,9 @@
 module Plutonium
   module Core
-    module Controller
+    module Controllers
       extend ActiveSupport::Autoload
 
+      autoload :Bootable
       autoload :CrudActions
       autoload :EntityScoping
     end

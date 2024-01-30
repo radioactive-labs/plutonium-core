@@ -49,13 +49,11 @@
               </td>
               <% table.fields.each do |name, field| %>
                 <%
-                value = resource.send(name)
-                helper = field.helper
-                options = field.options
-                max_width = options.delete :pu_max_width
-              %>
+                  options = field.options
+                  max_width = options.delete :pu_max_width
+                %>
                 <td class='text-truncate resource-table-cell-attr' style="max-width: <%= max_width %>px;">
-                  <%= display_field value:, helper:, **options %>
+                  <%= field.render self, resource %>
                 </td>
               <% end %>
               <td class="text-center resource-table-cell-actions">

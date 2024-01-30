@@ -1,3 +1,3 @@
-object @record
+object @resource_record
 
 extends "_resource"

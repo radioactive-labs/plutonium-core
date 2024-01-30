@@ -15,7 +15,7 @@ module Plutonium
   end
 
   def self.lib_root
-    Pathname.new File.expand_path("lib/plutonium/", root)
+    root.join("lib", "plutonium")
   end
 
   def self.configure_rails(config)
@@ -29,15 +29,22 @@ module Plutonium
     )
   end
 
-  autoload :Packaging
-  autoload :Reactor
-  autoload :Core
-  autoload :Policy
-  autoload :UI
-  autoload :Helpers
-  autoload :SimpleForm
-  autoload :Builders
-  autoload :Auth
+  autoload :Reloader
+
+  eager_autoload do
+    autoload :Packaging
+    autoload :Reactor
+    autoload :Core
+    autoload :Policy
+    autoload :UI
+    autoload :Helpers
+    autoload :SimpleForm
+    autoload :Builders
+    autoload :Auth
+  end
+
+  mattr_accessor :cache_discovery
+  @@cache_discovery = defined?(Rails.env) && !Rails.env.development?
 end
 
 # Add a shorter alias

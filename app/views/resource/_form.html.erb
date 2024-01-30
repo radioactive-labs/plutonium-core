@@ -21,7 +21,7 @@
     </div>
     <div class="form-inputs">
       <% form.inputs.values.each do |input| %>
-        <%= f.input input.name, **input.options %>
+        <%= input.render f, form.record %>
       <% end %>
     </div>
     <div class="form-actions">

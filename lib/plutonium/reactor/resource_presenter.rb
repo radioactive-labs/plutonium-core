@@ -1,33 +1,32 @@
 module Plutonium
   module Reactor
     class ResourcePresenter
-      def initialize(context, resource_class)
+      include Plutonium::Core::Presenters::FieldDefinitions
+
+      def initialize(context)
         @context = context
-        @resource_class = resource_class
+
+        customize_fields
       end
 
       def build_collection(permitted_attributes)
-        fields = collection_fields & permitted_attributes
-
-        customize_fields(Plutonium::UI::Builder::Collection.new(resource_class))
+        Plutonium::UI::Builder::Collection.new(context.resource_class)
           .with_record_actions(build_actions.only!(*collection_record_actions))
           .with_actions(build_actions.only!(*collection_actions))
-          .with_fields(fields)
+          .with_fields(field_renderers_for permitted_attributes)
       end
 
       def build_detail(permitted_attributes)
         fields = detail_fields & permitted_attributes
 
-        customize_fields(Plutonium::UI::Builder::Detail.new(resource_class))
+        Plutonium::UI::Builder::Detail.new(context.resource_class)
           .with_actions(build_actions.except!(:create, :show))
-          .with_fields(fields)
+          .with_fields(field_renderers_for fields)
       end
 
       def build_form(permitted_attributes)
-        inputs = form_inputs & permitted_attributes
-
-        customize_inputs(Plutonium::UI::Builder::Form.new(resource_class))
-          .with_inputs(inputs)
+        inputs = field_inputs_for(form_inputs & permitted_attributes)
+        Plutonium::UI::Builder::Form.new.with_inputs(inputs)
       end
 
       def build_associations(permitted_associations)
@@ -43,12 +42,20 @@ module Plutonium
 
       private
 
-      attr_reader :context, :resource_class
+      attr_reader :context
+
+      def autodetect_fields_for(method_name)
+        maybe_warn_autodetect_usage method_name
+
+        belongs_to = context.resource_class.reflect_on_all_associations(:belongs_to).map { |col| col.name.to_sym }
+        has_many = context.resource_class.reflect_on_all_associations(:has_many).map { |col| col.name.to_sym }
+        content_columns = context.resource_class.content_columns.map { |col| col.name.to_sym }
+        belongs_to + content_columns + has_many
+        context.resource_class.resource_fields
+      end
 
       def collection_fields
-        maybe_warn_autodetect_usage :collection_fields
-        context.resource_class.columns.map { |col| col.name.to_sym } - %i[id]
-        # raise NotImplementedError, "collection_fields"
+        autodetect_fields_for :collection_fields
       end
 
       def collection_actions
@@ -60,13 +67,11 @@ module Plutonium
       end
 
       def detail_fields
-        maybe_warn_autodetect_usage :detail_fields
-        context.resource_class.columns.map { |col| col.name.to_sym } - %i[id]
+        autodetect_fields_for :detail_fields
       end
 
       def form_inputs
-        maybe_warn_autodetect_usage :form_inputs
-        context.resource_class.columns.map { |col| col.name.to_sym }
+        autodetect_fields_for :form_inputs
       end
 
       def associations_list
@@ -74,12 +79,8 @@ module Plutonium
         []
       end
 
-      def customize_fields(builder)
-        builder
-      end
-
-      def customize_inputs(builder)
-        builder
+      def customize_fields
+        # do nothing
       end
 
       def maybe_warn_autodetect_usage(method)

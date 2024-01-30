@@ -2,14 +2,16 @@ module Plutonium
   module UI
     module Builder
       class Detail
-        include Plutonium::UI::Concerns::DefinesFields
-
-        attr_reader :record, :actions
+        attr_reader :record, :actions, :fields
 
         delegate :to_partial_path, to: :record
 
         def initialize(model_class)
-          initialize_fields_definer(model_class)
+        end
+
+        def with_fields(fields)
+          @fields = fields
+          self
         end
 
         def with_record(record)

@@ -21,7 +21,7 @@ module Plutonium
           }
         when :datetime, :timestamp, :time, :date
           definition = {
-            html5: true
+            html5: false
           }
         when :slim_select
           definition = {
@@ -56,6 +56,10 @@ module Plutonium
             attachment: true,
             direct_upload: true
           }
+        when :association
+          definition = {
+            as: :association
+          }
         end
 
         options = definition.deep_merge options
@@ -67,6 +71,7 @@ module Plutonium
         column = model_class.column_for_attribute name if model_class.respond_to? :column_for_attribute
         if model_class.respond_to? :reflect_on_association
           attachment = model_class.reflect_on_association(:"#{name}_attachment") || model_class.reflect_on_association(:"#{name}_attachments")
+          association = model_class.reflect_on_association(name)
         end
 
         type ||= :slim_select if options.key? :collection
@@ -74,6 +79,8 @@ module Plutonium
         if attachment.present?
           type ||= :attachment
           options[:multiple] = true if options[:multiple].nil? && attachment.macro == :has_many
+        elsif association.present?
+          type ||= :association
         elsif column.present?
           type ||= column.type
           options[:multiple] = column.array? if options[:multiple].nil? && column.respond_to?(:array?)

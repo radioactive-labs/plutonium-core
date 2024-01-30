@@ -3,6 +3,7 @@ module Plutonium
     extend ActiveSupport::Autoload
 
     autoload :Engine
+    autoload :ResourceContext
     autoload :ResourceController
     autoload :ResourceInteraction
     autoload :ResourcePolicy

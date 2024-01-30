@@ -1,6 +1,6 @@
 module Plutonium
   module Core
-    module Controller
+    module Controllers
       module CrudActions
         extend ActiveSupport::Concern
 
@@ -13,7 +13,7 @@ module Plutonium
           @table = build_collection
             .with_records(@resource_records)
             .with_pagination(pagy)
-            .search_with(q, resource_search_field)
+            .search_with(q, nil)
 
           render :index
         end
@@ -22,8 +22,7 @@ module Plutonium
         def show
           authorize resource_record
 
-          @record = resource_record
-          @detail = build_detail.with_record(@record)
+          @detail = build_detail.with_record(resource_record)
 
           render :show
         end
@@ -51,21 +50,21 @@ module Plutonium
           authorize resource_class
 
           respond_to do |format|
-            @record = resource_class.new(resource_params)
+            @resource_record = resource_class.new(resource_params)
 
-            if @record.save
+            if resource_record.save
               format.html do
-                redirect_to adapt_route_args(@record),
-                  notice: "#{helpers.resource_name(resource_class)} was successfully created."
+                redirect_to adapt_route_args(resource_record),
+                  notice: "#{resource_class.model_name.human} was successfully created."
               end
-              format.any { render :show, status: :created, location: adapt_route_args(@record) }
+              format.any { render :show, status: :created, location: adapt_route_args(resource_record) }
             else
               format.html do
-                @form = build_form.with_record(@record)
+                @form = build_form.with_record(resource_record)
                 render :new, status: :unprocessable_entity
               end
               format.any do
-                @errors = @record.errors
+                @errors = resource_record.errors
                 render "errors", status: :unprocessable_entity
               end
             end
@@ -77,21 +76,21 @@ module Plutonium
           authorize resource_record
 
           respond_to do |format|
-            @record = resource_record
+            @resource_record = resource_record
 
-            if @record.update(resource_params)
+            if resource_record.update(resource_params)
               format.html do
-                redirect_to adapt_route_args(@record), notice: "#{helpers.resource_name(resource_class)} was successfully updated.",
+                redirect_to adapt_route_args(resource_record), notice: "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
               end
-              format.any { render :show, status: :ok, location: adapt_route_args(@record) }
+              format.any { render :show, status: :ok, location: adapt_route_args(resource_record) }
             else
               format.html do
-                @form = build_form.with_record(@record)
+                @form = build_form.with_record(resource_record)
                 render :edit, status: :unprocessable_entity
               end
               format.any do
-                @errors = @record.errors
+                @errors = resource_record.errors
                 render "errors", status: :unprocessable_entity
               end
             end
@@ -107,13 +106,13 @@ module Plutonium
 
             format.html do
               redirect_to adapt_route_args(resource_class),
-                notice: "#{helpers.resource_name(resource_class)} was successfully deleted."
+                notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey => e
             format.html do
               redirect_to adapt_route_args(resource_record),
-                alert: "#{helpers.resource_name(resource_class)} is referenced by other records."
+                alert: "#{resource_class.model_name.human} is referenced by other records."
             end
             format.any do
               @errors = ActiveModel::Errors.new resource_record
@@ -145,7 +144,7 @@ module Plutonium
             @interaction = @action.interaction.run(inputs)
 
             if @interaction.valid?
-              flash[:notice] = "#{helpers.resource_name(resource_class)} was successfully updated."
+              flash[:notice] = "#{resource_class.model_name.human} was successfully updated."
 
               format.html { redirect_to adapt_route_args(@interaction.result), status: :see_other }
               format.any { render :show, status: :ok, location: adapt_route_args(@interaction.result) }

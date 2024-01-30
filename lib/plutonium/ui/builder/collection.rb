@@ -2,13 +2,10 @@ module Plutonium
   module UI
     module Builder
       class Collection
-        include Plutonium::UI::Concerns::DefinesFields
-
-        attr_reader :records, :actions, :record_actions, :pagination, :search_object, :search_field
+        attr_reader :records, :fields, :model_class, :actions, :record_actions, :pagination, :search_object, :search_field
 
         def initialize(model_class)
-          initialize_fields_definer(model_class)
-
+          @model_class = model_class
           @records = []
         end
 
@@ -19,6 +16,11 @@ module Plutonium
 
         def with_actions(actions)
           @actions = actions
+          self
+        end
+
+        def with_fields(fields)
+          @fields = fields
           self
         end
 

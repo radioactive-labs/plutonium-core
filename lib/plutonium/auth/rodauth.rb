@@ -7,7 +7,6 @@ module Plutonium
           extend ActiveSupport::Concern
 
           included do
-            prepend_before_action :authenticate
             helper_method :current_user
             helper_method :logout_url
           end

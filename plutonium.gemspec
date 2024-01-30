@@ -37,7 +37,7 @@ Gem::Specification.new do |spec|
   # spec.add_dependency "activesupport", "~> 7.1.2"
   # spec.add_dependency "railties", "~> 7.1.2"
   # spec.add_dependency "actionpack", "~> 7.1.2"
-  # spec.add_dependency "pagy", "~> 6.2.0"
+  spec.add_dependency "pagy", "~> 6.2.0"
   spec.add_dependency "ransack", "~> 4.1.1"
 
   # For more information and examples about making a new gem, check out our

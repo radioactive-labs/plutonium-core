@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module AppController
       extend ActiveSupport::Concern
-      include Plutonium::Core::Controller::EntityScoping
+      include Plutonium::Core::Controllers::EntityScoping
 
       included do
         helper_method :current_parent
@@ -13,7 +13,7 @@ module Plutonium
 
       def resource_presenter(resource_class)
         presenter_class = "#{current_package}::#{resource_class}Presenter".constantize
-        presenter_class.new resource_context, resource_class
+        presenter_class.new resource_context
       end
 
       def policy_namespace(scope)

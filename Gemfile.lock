@@ -3,6 +3,7 @@ PATH
   specs:
     plutonium (0.1.0)
       active_interaction (~> 5.3)
+      pundit (~> 2.3.1)
       rails (>= 7.1.2)
       ransack (~> 4.1.1)
 
@@ -143,6 +144,8 @@ GEM
       racc
     psych (5.1.2)
       stringio
+    pundit (2.3.1)
+      activesupport (>= 3.0.0)
     racc (1.7.3)
     rack (3.0.8)
     rack-session (2.0.0)
