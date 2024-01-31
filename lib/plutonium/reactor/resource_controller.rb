@@ -64,15 +64,10 @@ module Plutonium
       helper_method :resource_record
 
       def resource_params
-        # we don't care much about strong parameters since we have our own whitelist
-        # strong params and pundit permitted_attributes don't support array/hash params without a convoluted
-        # attribute list
-        form_params = params.require(resource_param_key).permit!.nilify.to_h.with_indifferent_access
-        form_params[parent_param_key] = current_parent.id if current_parent.present?
-
-        # debugger
-
-        form_params
+        input_params = params.require(resource_param_key).permit!.nilify.to_h
+        current_presenter.inputs_for(current_permitted_attributes)
+          .values.map { |input| input.collect input_params }
+          .reduce(:merge)
       end
 
       def resource_param_key

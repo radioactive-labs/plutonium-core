@@ -28,8 +28,9 @@ module Plutonium
         def new
           authorize resource_class
 
-          # TODO: make this more secure
-          @resource_record = resource_class.new params[resource_param_key]
+          @resource_record = resource_class.new
+          # set params if they have been passed
+          resource_record.attributes = params[resource_param_key].present? ? resource_params : {}
           @form = build_form
 
           render :new
@@ -39,6 +40,8 @@ module Plutonium
         def edit
           authorize resource_record
 
+          # set params if they have been passed
+          resource_record.attributes = params[resource_param_key].present? ? resource_params : {}
           @form = build_form
 
           render :edit

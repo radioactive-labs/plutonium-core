@@ -46,7 +46,21 @@ module Plutonium
 
         def param = name
 
-        def collect(params) = params[param]
+        def collect(params)
+          # Handles multi parameter attributes
+          # https://www.cookieshq.co.uk/posts/rails-spelunking-date-select
+          # https://www.cookieshq.co.uk/posts/multiparameter-attributes
+
+          # Matches
+          # - parameter
+          # - parameter(1)
+          # - parameter(2)
+          # - parameter(1i)
+          # - parameter(2f)
+          regex = /^#{param}(\(\d+[if]?\))?$/
+
+          params.select { |key| regex.match? key }
+        end
       end
     end
   end
