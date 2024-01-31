@@ -30,12 +30,12 @@ module Plutonium
         read?
       end
 
-      def show?
-        read?
-      end
-
       def new?
         create?
+      end
+
+      def show?
+        read?
       end
 
       def edit?

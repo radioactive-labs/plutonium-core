@@ -5,14 +5,12 @@
   # }
 %>
 <% actions.values.each do |action| %>
-  <% if action.button.is_a? Plutonium::UI::Button %>
-    <%=
-      toolbar_action_button adapt_route_args(resource, action: action.route.action, **action.route.options),
-                          icon: action.button.icon,
-                          button_class: action.button.button_class,
-                          method: action.route.method,
-                          confirm: action.confirmation,
-                          turbo_frame: action.turbo_frame
-    %>
-  <% end %>
+  <%=
+    toolbar_action_button adapt_route_args(resource, action: action.route_options.action, **action.route_options.options),
+                        icon: action.icon,
+                        button_class: action.action_class,
+                        method: action.route_options.method,
+                        confirm: action.confirmation,
+                        turbo_frame: action.turbo_frame
+  %>
 <% end %>

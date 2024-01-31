@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-# Validates that the value is a url
-#
-# Example:
-#
-#   validates :website_url, url: true
-#
 module ActiveModel
   module Validations
+    # Validates that the value is a url
+    #
+    # Example:
+    #
+    #   validates :website_url, url: true
+    #
     class UrlValidator < EachValidator
       URL_PATTERN = URI::DEFAULT_PARSER.make_regexp(%w[http https]).freeze
 

@@ -11,15 +11,11 @@ module Plutonium
       end
 
       def resource_name(resource_class, count = 1)
-        resource_class.to_s.demodulize.pluralize(count).titleize
+        resource_class.model_name.human.pluralize(count)
       end
 
       def resource_name_plural(resource_class)
         resource_name resource_class, 2
-      end
-
-      def attribute_name(_resource_class, name)
-        name.to_s.titleize
       end
     end
   end

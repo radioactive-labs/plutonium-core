@@ -4,16 +4,11 @@
                         parent: current_parent do %>
     <%=
       render partial: 'toolbar_actions', locals: {
-        actions: @detail.actions.permitted_actions_for(policy(@detail.record)),
+        actions: @detail.actions.record_actions.permitted_for(policy(@detail.record)),
         resource: @detail.record
       }
     %>
   <% end %>
 <% end %>
-<%=
-  render partial: 'associations_bar', locals: {
-    associations: @associations,
-    resource_class: resource_class
-  }
-%>
+
 <%= render "resource", details: @detail %>

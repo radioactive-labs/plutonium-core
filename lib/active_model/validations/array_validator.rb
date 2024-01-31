@@ -1,17 +1,17 @@
 # require 'active_model/validations/each_validator'
 
-# Based on https://gist.github.com/ssimeonov/6519423
-#
-# Validates the values of an Array with other validators.
-# Generates error messages that include the index and value of
-# invalid elements.
-#
-# Example:
-#
-#   validates :values, array: { presence: true, inclusion: { in: %w{ big small } } }
-#
 module ActiveModel
   module Validations
+    # Based on https://gist.github.com/ssimeonov/6519423
+    #
+    # Validates the values of an Array with other validators.
+    # Generates error messages that include the index and value of
+    # invalid elements.
+    #
+    # Example:
+    #
+    #   validates :values, array: { presence: true, inclusion: { in: %w{ big small } } }
+    #
     class ArrayValidator < EachValidator
       attr_reader :record, :attribute, :proxy_attribute
 

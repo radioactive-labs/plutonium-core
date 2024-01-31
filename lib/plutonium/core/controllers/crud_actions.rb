@@ -8,12 +8,9 @@ module Plutonium
         def index
           authorize resource_class
 
-          q = policy_scope(resource_class).ransack(params[:q])
-          pagy, @resource_records = pagy q.result
-          @table = build_collection
-            .with_records(@resource_records)
-            .with_pagination(pagy)
-            .search_with(q, nil)
+          @ransack = policy_scope(resource_class).ransack(params[:q])
+          @pagy, @resource_records = pagy @ransack.result
+          @collection = build_collection
 
           render :index
         end
@@ -22,7 +19,7 @@ module Plutonium
         def show
           authorize resource_record
 
-          @detail = build_detail.with_record(resource_record)
+          @detail = build_detail
 
           render :show
         end
@@ -31,7 +28,9 @@ module Plutonium
         def new
           authorize resource_class
 
-          @form = build_form.with_record(resource_class.new)
+          # TODO: make this more secure
+          @resource_record = resource_class.new params[resource_param_key]
+          @form = build_form
 
           render :new
         end
@@ -40,7 +39,7 @@ module Plutonium
         def edit
           authorize resource_record
 
-          @form = build_form.with_record(resource_record)
+          @form = build_form
 
           render :edit
         end
@@ -49,9 +48,9 @@ module Plutonium
         def create
           authorize resource_class
 
-          respond_to do |format|
-            @resource_record = resource_class.new(resource_params)
+          @resource_record = resource_class.new resource_params
 
+          respond_to do |format|
             if resource_record.save
               format.html do
                 redirect_to adapt_route_args(resource_record),
@@ -60,7 +59,7 @@ module Plutonium
               format.any { render :show, status: :created, location: adapt_route_args(resource_record) }
             else
               format.html do
-                @form = build_form.with_record(resource_record)
+                @form = build_form
                 render :new, status: :unprocessable_entity
               end
               format.any do
@@ -76,8 +75,6 @@ module Plutonium
           authorize resource_record
 
           respond_to do |format|
-            @resource_record = resource_record
-
             if resource_record.update(resource_params)
               format.html do
                 redirect_to adapt_route_args(resource_record), notice: "#{resource_class.model_name.human} was successfully updated.",
@@ -86,7 +83,7 @@ module Plutonium
               format.any { render :show, status: :ok, location: adapt_route_args(resource_record) }
             else
               format.html do
-                @form = build_form.with_record(resource_record)
+                @form = build_form
                 render :edit, status: :unprocessable_entity
               end
               format.any do

@@ -4,7 +4,5 @@ module Plutonium
 
     autoload :Initializer
     autoload :Scope
-    # autoload :AdminResourcePolicy
-    # autoload :EntityResourcePolicy
   end
 end

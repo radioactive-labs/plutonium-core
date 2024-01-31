@@ -29,6 +29,8 @@ module Plutonium
           end
         end
 
+        private
+
         def current_engine
           @current_engine ||= self.class.current_engine
         end

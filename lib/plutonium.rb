@@ -36,10 +36,8 @@ module Plutonium
     autoload :Reactor
     autoload :Core
     autoload :Policy
-    autoload :UI
     autoload :Helpers
     autoload :SimpleForm
-    autoload :Builders
     autoload :Auth
   end
 

@@ -1,5 +1,4 @@
 require "action_controller"
-require "pundit"
 require "pagy"
 require "ransack"
 
@@ -14,8 +13,9 @@ module Plutonium
       abstract!
 
       include Pagy::Backend
-      include Pundit::Authorization
       include Plutonium::Core::Controllers::Bootable
+      include Plutonium::Core::Controllers::Authorizable
+      include Plutonium::Core::Controllers::Presentable
 
       def self.inherited(child)
         # Include our actions after we are inherited else they are marked as private due to our call to abstract!
@@ -31,11 +31,7 @@ module Plutonium
 
       before_action :set_page_title
       before_action :set_sidebar_menu
-      before_action :set_associations
       before_action :authorize_custom_action, only: %i[custom_action commit_custom_action]
-
-      after_action :verify_authorized
-      after_action :verify_policy_scoped, except: %i[new create]
 
       # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
       after_action { pagy_headers_merge(@pagy) if @pagy }
@@ -47,7 +43,7 @@ module Plutonium
       # end
 
       def custom_actions
-        @custom_actions ||= current_presenter.build_actions.action_definitions.except :create, :show, :edit, :destroy
+        @custom_actions ||= current_presenter.actions.except :new, :show, :edit, :destroy
       end
 
       def authorize_custom_action
@@ -84,37 +80,6 @@ module Plutonium
       end
       helper_method :resource_param_key
 
-      # Presentation
-
-      def current_presenter
-        resource_presenter resource_class
-      end
-
-      def resource_presenter(resource_class)
-        raise NotImplementedError, "resource_presenter"
-      end
-
-      def build_collection
-        table = current_presenter.build_collection(permitted_attributes)
-        table.except_fields!(parent_param_key.to_s.gsub(/_id$/, "").to_sym) if current_parent.present?
-
-        table
-      end
-
-      def build_detail
-        detail = current_presenter.build_detail(permitted_attributes)
-        detail.except_fields!(parent_param_key.to_s.gsub(/_id$/, "").to_sym) if current_parent.present?
-
-        detail
-      end
-
-      def build_form
-        form = current_presenter.build_form(permitted_attributes)
-        form.except_inputs!(parent_param_key) if current_parent.present?
-
-        form
-      end
-
       # Layout
 
       def set_page_title
@@ -127,52 +92,6 @@ module Plutonium
 
       def build_sidebar_menu
         raise NotImplementedError, "build_sidebar_menu"
-      end
-
-      def set_associations
-        @associations = if current_parent.present?
-          resource_presenter(current_parent.class).build_associations(parent_policy.permitted_associations).with_record(current_parent)
-        elsif action_name == "show"
-          current_presenter.build_associations(current_policy.permitted_associations).with_record(resource_record)
-        end
-      end
-
-      # Authorisation
-
-      def permitted_attributes(policy_subject = nil)
-        @permitted_attributes ||= current_policy.send :"permitted_attributes_for_#{action_name}"
-      end
-      helper_method :permitted_attributes
-
-      def current_policy
-        policy_subject = resource_record || resource_class
-        policy(policy_subject)
-      end
-
-      def parent_policy
-        return unless current_parent.present?
-
-        policy(current_parent)
-      end
-
-      def policy(scope)
-        super(policy_namespace(scope))
-      end
-
-      def policy_scope(scope)
-        super(policy_namespace(scope))
-      end
-
-      def authorize(record, query = nil)
-        super(policy_namespace(record), query)
-      end
-
-      def policy_namespace(scope)
-        raise NotImplementedError, "policy_namespace"
-      end
-
-      def pundit_user
-        resource_context
       end
 
       def resource_context

@@ -53,7 +53,6 @@ module Plutonium
           []
         end
 
-
         def resource_fields
           @resource_fields ||= begin
             belongs_to = reflect_on_all_associations(:belongs_to).map { |assoc| assoc.name.to_sym }
@@ -65,7 +64,6 @@ module Plutonium
       end
 
       def to_label
-        name_method = nil
         %i[name title].each do |method|
           name = send(method) if respond_to?(method)
           return name if name.present?

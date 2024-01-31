@@ -11,6 +11,7 @@
       <li class="breadcrumb-item"><%= link_to resource_name_plural(parent.class), adapt_route_args(parent.class, use_parent: false), class: 'text-decoration-none' %></li>
       <li class="breadcrumb-item"><%= link_to display_name_of(parent), adapt_route_args(parent, use_parent: false), class: 'text-decoration-none' %></li>
     <% end %>
+
     <% if resource.present? %>
       <li class="breadcrumb-item"><%= link_to resource_name_plural(resource_class), adapt_route_args(resource_class), class: 'text-decoration-none' %></li>
       <% if %w[edit update custom_action commit_custom_action].include? action_name %>

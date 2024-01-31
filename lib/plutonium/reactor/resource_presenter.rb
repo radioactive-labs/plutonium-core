@@ -2,30 +2,18 @@ module Plutonium
   module Reactor
     class ResourcePresenter
       include Plutonium::Core::Presenters::FieldDefinitions
+      include Plutonium::Core::Presenters::ActionDefinitions
 
       def initialize(context)
         @context = context
 
-        customize_fields
-      end
-
-      def build_collection(permitted_attributes)
-        Plutonium::UI::Builder::Collection.new(context.resource_class)
-          .with_record_actions(build_actions.only!(*collection_record_actions))
-          .with_actions(build_actions.only!(*collection_actions))
-          .with_fields(field_renderers_for permitted_attributes)
-      end
-
-      def build_detail(permitted_attributes)
-        fields = detail_fields & permitted_attributes
-
-        Plutonium::UI::Builder::Detail.new(context.resource_class)
-          .with_actions(build_actions.except!(:create, :show))
-          .with_fields(field_renderers_for fields)
+        define_standard_actions
+        define_actions
+        define_fields
       end
 
       def build_form(permitted_attributes)
-        inputs = field_inputs_for(form_inputs & permitted_attributes)
+        inputs = inputs_for(form_inputs & permitted_attributes)
         Plutonium::UI::Builder::Form.new.with_inputs(inputs)
       end
 
@@ -44,13 +32,24 @@ module Plutonium
 
       attr_reader :context
 
+      def define_standard_actions
+        define_action :new, Plutonium::Core::Actions::NewAction.new(:new)
+        define_action :show, Plutonium::Core::Actions::ShowAction.new(:show)
+        define_action :edit, Plutonium::Core::Actions::EditAction.new(:edit)
+        define_action :destroy, Plutonium::Core::Actions::DestroyAction.new(:destroy)
+      end
+
+      def define_fields
+        # override this in child presenters for custom field definitions
+      end
+
+      def define_actions
+        # override this in child presenters for custom action definitions
+      end
+
       def autodetect_fields_for(method_name)
         maybe_warn_autodetect_usage method_name
 
-        belongs_to = context.resource_class.reflect_on_all_associations(:belongs_to).map { |col| col.name.to_sym }
-        has_many = context.resource_class.reflect_on_all_associations(:has_many).map { |col| col.name.to_sym }
-        content_columns = context.resource_class.content_columns.map { |col| col.name.to_sym }
-        belongs_to + content_columns + has_many
         context.resource_class.resource_fields
       end
 
@@ -77,10 +76,6 @@ module Plutonium
       def associations_list
         maybe_warn_autodetect_usage :collection_fields
         []
-      end
-
-      def customize_fields
-        # do nothing
       end
 
       def maybe_warn_autodetect_usage(method)

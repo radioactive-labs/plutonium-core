@@ -54,8 +54,7 @@ module Plutonium
         return obj.map { |i| display_name_of i, separator: }.join(separator) if obj.is_a? Array
 
         # Fallback to retrieving the value from a predefined list
-        name_method = nil
-        %i[display_name name title].each do |method|
+        %i[to_label name title].each do |method|
           name = obj.send(method) if obj.respond_to?(method)
           return name if name.present?
         end

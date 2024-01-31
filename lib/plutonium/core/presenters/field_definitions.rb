@@ -3,6 +3,8 @@ module Plutonium
     module Presenters
       module FieldDefinitions
         extend ActiveSupport::Concern
+        include InputDefinitions
+        include RendererDefinitions
 
         class_methods do
           private
@@ -10,57 +12,11 @@ module Plutonium
           def autodiscover_field_cache = @autodiscover_field_cache ||= {}
         end
 
-        def field_inputs_for(names)
-          (names - input_definitions.keys).each do |name|
-            define_field_input(name, input: autodiscover_field(name)[:input])
-          end
-          input_definitions.slice(*names)
-        end
-
-        def field_renderers_for(names)
-          (names - renderer_definitions.keys).each do |name|
-            define_field_renderer(name, renderer: autodiscover_field(name)[:renderer])
-          end
-          renderer_definitions.slice(*names)
-        end
-
         private
 
-        def input_definitions = @input_definitions ||= {}
-
-        def renderer_definitions = @renderer_definitions ||= {}
-
         def define_field(name, type: nil, input: nil, renderer: nil, input_options: {}, renderer_options: {})
-          define_field_input(name, type:, input:, **input_options)
-          define_field_renderer(name, type:, renderer:, **renderer_options)
-        end
-
-        def define_field_input(name, input: nil, type: nil, **options)
-          input_definitions[name] = if input.present?
-            input
-          elsif type.present? || options.present?
-            Plutonium::Core::Fields::Input.for_resource_attribute(context.resource_class, name, type:, **options)
-          else
-            autodiscover_field(name)[:input]
-          end
-        end
-
-        def define_field_renderer(name, renderer: nil, type: nil, **options)
-          renderer_definitions[name] = if renderer.present?
-            renderer
-          elsif type.present? || options.present?
-            Plutonium::Core::Fields::Renderer.for_resource_attribute(context.resource_class, name, type:, **options)
-          else
-            autodiscover_field(name)[:renderer]
-          end
-        end
-
-        def field_input_defined?(name)
-          input_definitions.key? name
-        end
-
-        def field_renderer_defined?(name)
-          renderer_definitions.key? name
+          define_input(name, type:, input:, **input_options)
+          define_renderer(name, type:, renderer:, **renderer_options)
         end
 
         def autodiscover_field(name)

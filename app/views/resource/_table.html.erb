@@ -3,9 +3,9 @@
   #   table: "instance of Plutonium::UI::Builder::Collection"
   # }
 
-  resource_class = table.model_class
+  resource_class = table.resource_class
   resources = table.records.to_a
-  record_actions = table.record_actions
+  record_actions = table.actions.collection_record_actions
   search_object = table.search_object
 %>
 <div class="row">
@@ -59,7 +59,7 @@
               <td class="text-center resource-table-cell-actions">
                 <%=
                 render partial: 'table_actions', locals: {
-                  actions: record_actions.permitted_actions_for(policy(resource)),
+                  actions: record_actions.permitted_for(policy(resource)),
                   resource: resource
                 }
               %>
