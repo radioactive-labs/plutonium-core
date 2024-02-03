@@ -3,6 +3,7 @@ PATH
   specs:
     plutonium (0.1.0)
       active_interaction (~> 5.3)
+      pagy (~> 6.2.0)
       pundit (~> 2.3.1)
       rails (>= 7.1.2)
       ransack (~> 4.1.1)
@@ -138,6 +139,7 @@ GEM
       racc (~> 1.4)
     nokogiri (1.16.0-x86_64-darwin)
       racc (~> 1.4)
+    pagy (6.2.0)
     parallel (1.24.0)
     parser (3.2.2.4)
       ast (~> 2.4.1)

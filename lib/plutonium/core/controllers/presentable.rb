@@ -11,7 +11,8 @@ module Plutonium
         end
 
         def current_presenter
-          @current_presenter ||= resource_presenter resource_class
+          # @current_presenter ||=
+          resource_presenter resource_class
         end
 
         def build_collection

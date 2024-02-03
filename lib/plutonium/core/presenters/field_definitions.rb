@@ -21,8 +21,8 @@ module Plutonium
 
         def autodiscover_field(name)
           autodiscover_field_cache[name] ||= {
-            input: Plutonium::Core::Fields::Input.for_resource_attribute(context.resource_class, name),
-            renderer: Plutonium::Core::Fields::Renderer.for_resource_attribute(context.resource_class, name)
+            input: Plutonium::Core::Fields::Inputs.infer_for_resource_attribute(context.resource_class, name),
+            renderer: Plutonium::Core::Fields::Renderers.infer_for_resource_attribute(context.resource_class, name)
           }
         end
 

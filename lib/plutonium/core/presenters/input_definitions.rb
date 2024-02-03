@@ -18,8 +18,10 @@ module Plutonium
         def define_input(name, input: nil, type: nil, **options)
           input_definitions[name] = if input.present?
             input
-          elsif type.present? || options.present?
-            Plutonium::Core::Fields::Input.for_resource_attribute(context.resource_class, name, type:, **options)
+          elsif type.present?
+            Plutonium::Core::Fields::Inputs.build(name, type:, **options)
+          elsif options.present?
+            Plutonium::Core::Fields::Inputs.infer_for_resource_attribute(context.resource_class, name, **options)
           else
             autodiscover_field(name)[:input]
           end

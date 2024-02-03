@@ -4,9 +4,7 @@ module Plutonium
       extend ActiveSupport::Autoload
 
       eager_autoload do
-        autoload :Input
         autoload :Inputs
-        autoload :Renderer
         autoload :Renderers
       end
     end
