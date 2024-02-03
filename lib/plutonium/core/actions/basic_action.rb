@@ -9,7 +9,7 @@ module Plutonium
 
         private
 
-        def action_options = {}.freeze
+        def action_options = {}
       end
     end
   end

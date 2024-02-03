@@ -3,9 +3,21 @@ module Plutonium
     module Fields
       module Renderers
         class AssociationRenderer < BasicRenderer
+          attr_reader :reflection
+
+          def initialize(name, reflection:, **user_options)
+            @reflection = reflection
+            super(name, **user_options)
+          end
+
           private
 
-          def renderer_options = {helper: :display_association_value}.freeze
+          def renderer_options
+            resource_record = reflection.klass.include? Plutonium::Reactor::ResourceRecord
+            {
+              helper: resource_record ? :display_association_value : :display_name_of
+            }
+          end
         end
       end
     end

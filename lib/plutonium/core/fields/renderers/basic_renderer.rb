@@ -19,7 +19,7 @@ module Plutonium
 
           private
 
-          def renderer_options = {}.freeze
+          def renderer_options = {}
 
         end
       end

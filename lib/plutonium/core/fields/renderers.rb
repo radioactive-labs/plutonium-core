@@ -21,6 +21,7 @@ module Plutonium
 
           if (reflection = resource_class.try(:reflect_on_association, attr_name))
             type = reflection.macro
+            options[:reflection] = reflection
           elsif (attachment = resource_class.try(:reflect_on_association, :"#{attr_name}_attachment"))
             type = :attachment
           elsif (column = resource_class.try(:column_for_attribute, attr_name))
