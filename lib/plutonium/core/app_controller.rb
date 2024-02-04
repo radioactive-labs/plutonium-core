@@ -22,7 +22,7 @@ module Plutonium
 
       def build_sidebar_menu
         {
-          resources: current_engine.resource_register.map { |resource|
+          Resources: current_engine.resource_register.map { |resource|
                        [resource.model_name.human.pluralize, url_for(adapt_route_args(resource))]
                      }.to_h
         }
