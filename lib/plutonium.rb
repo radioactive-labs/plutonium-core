@@ -29,7 +29,7 @@ module Plutonium
     )
   end
 
-  autoload :Reloader
+  autoload :Config
 
   eager_autoload do
     autoload :Packaging
