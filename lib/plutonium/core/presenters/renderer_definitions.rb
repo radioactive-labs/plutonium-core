@@ -19,7 +19,7 @@ module Plutonium
           renderer_definitions[name] = if renderer.present?
             renderer
           elsif type.present? || options.present?
-            Plutonium::Core::Fields::Renderers.infer_for_resource_attribute(context.resource_class, name, type:, **options)
+            Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name, type:, **options)
           else
             autodiscover_field(name)[:renderer]
           end

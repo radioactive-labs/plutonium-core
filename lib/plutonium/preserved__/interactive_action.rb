@@ -1,44 +1,44 @@
-module Plutonium
-  module UI
-    module Action
-      class InteractiveAction < Action
-        include Plutonium::UI::Concerns::DefinesInputs
+# module Plutonium
+#   module UI
+#     module Action
+#       class InteractiveAction < Action
+#         include Plutonium::UI::Concerns::DefinesInputs
 
-        attr_reader :interaction
+#         attr_reader :interaction
 
-        def with_interaction(interaction, inline: nil)
-          @interaction = interaction
-          setup_interaction_inputs
+#         def with_interaction(interaction, inline: nil)
+#           @interaction = interaction
+#           setup_interaction_inputs
 
-          @route.action = :custom_action
-          @route.options[:custom_action] = name
+#           @route.action = :custom_action
+#           @route.options[:custom_action] = name
 
-          @inline = case inline
-          when nil, true
-            @enabled_inputs.blank?
-          else
-            false
-          end
+#           @inline = case inline
+#           when nil, true
+#             @enabled_inputs.blank?
+#           else
+#             false
+#           end
 
-          if @inline
-            @route.method = :post
-            with_confirmation "#{name.to_s.titleize}?"
-          end
+#           if @inline
+#             @route.method = :post
+#             with_confirmation "#{name.to_s.titleize}?"
+#           end
 
-          self
-        end
+#           self
+#         end
 
-        def turbo_frame
-          "modal"
-        end
+#         def turbo_frame
+#           "modal"
+#         end
 
-        private
+#         private
 
-        def setup_interaction_inputs
-          initialize_inputs_definer interaction.new
-          with_inputs(interaction.filters.keys - [:resource])
-        end
-      end
-    end
-  end
-end
+#         def setup_interaction_inputs
+#           initialize_inputs_definer interaction.new
+#           with_inputs(interaction.filters.keys - [:resource])
+#         end
+#       end
+#     end
+#   end
+# end

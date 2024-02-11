@@ -21,15 +21,15 @@ module Plutonium
 
         def autodiscover_field(name)
           autodiscover_field_cache[name] ||= {
-            input: Plutonium::Core::Fields::Inputs.infer_for_resource_attribute(context.resource_class, name),
-            renderer: Plutonium::Core::Fields::Renderers.infer_for_resource_attribute(context.resource_class, name)
+            input: Plutonium::Core::Fields::Inputs::Factory.for_resource_attribute(context.resource_class, name),
+            renderer: Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name)
           }
         end
 
         # If cache_discovery is enabled, use the class level cache that persists
         # between requests, otherwise use the instance one.
         def autodiscover_field_cache
-          if Plutonium.cache_discovery
+          if Plutonium::Config.cache_discovery
             self.class.autodiscover_field_cache
           else
             @autodiscover_field_cache ||= {}

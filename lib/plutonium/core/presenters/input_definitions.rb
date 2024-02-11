@@ -21,7 +21,7 @@ module Plutonium
           elsif type.present?
             Plutonium::Core::Fields::Inputs.build(name, type:, **options)
           elsif options.present?
-            Plutonium::Core::Fields::Inputs.infer_for_resource_attribute(context.resource_class, name, **options)
+            Plutonium::Core::Fields::Inputs::Factory.for_resource_attribute(context.resource_class, name, **options)
           else
             autodiscover_field(name)[:input]
           end

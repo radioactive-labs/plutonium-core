@@ -1,3 +1,5 @@
+require "pagy"
+
 module Plutonium
   module Helpers
     module PaginationHelper

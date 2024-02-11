@@ -40,10 +40,4 @@ module Plutonium
     autoload :SimpleForm
     autoload :Auth
   end
-
-  mattr_accessor :cache_discovery
-  @@cache_discovery = defined?(Rails.env) && !Rails.env.development?
 end
-
-# Add a shorter alias
-# Pu = Plutonium
