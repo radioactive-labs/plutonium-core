@@ -35,7 +35,7 @@ module Plutonium
           parent_name = parent_param_key.to_s.gsub(/_id$/, "")
 
           parent_scope = parent_name.classify.constantize.from_path_param(params[parent_param_key])
-          parent_scope = parent_scope.for_parent(current_scoped_entity) if scoped_to_entity?
+          parent_scope = parent_scope.associated_with(current_scoped_entity) if scoped_to_entity?
           parent_scope.first!
         end
       end

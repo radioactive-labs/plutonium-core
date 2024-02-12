@@ -5,7 +5,26 @@ module Plutonium
 
       included do
         scope :from_path_param, ->(param) { where(id: param) }
-        scope :for_parent, ->(parent) { all }
+
+        scope :associated_with, ->(record) {
+          custom_scope = :"associated_with_#{record.model_name.singular}"
+          return send(custom_scope, record) if respond_to?(custom_scope)
+
+          # TODO: add logging
+          if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass == record.class })
+            case own_association.macro
+            when :belongs_to
+              where(own_association.name => record)
+            else
+              joins(own_association.name).where(own_association.klass.table_name.to_sym => record)
+            end
+          elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass == klass })
+            # TODO: add a warning here about a potentially poor performing query
+            where(id: record.send(record_association.name))
+          else
+            raise "Could not resolve association between '#{klass.name}' and '#{record.class.name}'"
+          end
+        }
       end
 
       module ClassMethods
