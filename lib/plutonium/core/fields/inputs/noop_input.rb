@@ -3,6 +3,9 @@ module Plutonium
     module Fields
       module Inputs
         class NoopInput
+          def initialize(*)
+          end
+
           def render(f, record)
           end
 

@@ -2,6 +2,8 @@ module Plutonium
   module Helpers
     module DisplayHelper
       def display_field(value:, helper: nil, **options)
+        return '-' unless value.present?
+
         stack_multiple = options.key?(:stack_multiple) ? options.delete(:stack_multiple) : helper != :display_name_of
 
         # clean options list
@@ -31,8 +33,11 @@ module Plutonium
       end
 
       def display_association_value(association)
-        link_to display_name_of(association), adapt_route_args(association, use_parent: false),
+        display_name = display_name_of(association)
+        link_to display_name, adapt_route_args(association, use_parent: false),
           class: "text-decoration-none"
+      rescue NoMethodError
+        display_name
       end
 
       def display_numeric_value(value)
