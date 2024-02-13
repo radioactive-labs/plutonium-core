@@ -65,7 +65,15 @@ module Plutonium
 
       def resource_params
         input_params = params.require(resource_param_key).permit!.nilify.to_h
-        current_presenter.inputs_for(current_permitted_attributes)
+
+        # Override any entity scoping params
+        input_params[scoped_entity_param_key] = current_scoped_entity if scoped_to_entity?
+        input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id if scoped_to_entity?
+        # Override any parent params
+        input_params[parent_param_key] = current_parent if current_parent.present?
+        input_params[:"#{parent_param_key}_id"] = current_parent.id if current_parent.present?
+
+        current_presenter.inputs_for(permitted_attributes)
           .values.map { |input| input.collect input_params }
           .reduce(:merge)
       end
@@ -78,7 +86,7 @@ module Plutonium
       # Layout
 
       def set_page_title
-        @page_title = "Dashboard"
+        @page_title = "Pluton8"
       end
 
       def set_sidebar_menu

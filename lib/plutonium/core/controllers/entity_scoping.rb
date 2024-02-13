@@ -12,7 +12,7 @@ module Plutonium
         private
 
         def scoped_to_entity?
-          current_engine.scoped_entity_class.present?
+          current_engine.scoped_to_entity?
         end
 
         def scoped_entity_class
@@ -22,7 +22,7 @@ module Plutonium
         end
 
         def scoped_entity_param_key
-          ensure_legal_entity_scoping_method_access! :scoped_entity_class
+          ensure_legal_entity_scoping_method_access! :scoped_entity_param_key
 
           current_engine.scoped_entity_param_key
         end

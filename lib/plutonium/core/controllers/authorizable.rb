@@ -10,6 +10,8 @@ module Plutonium
         included do
           after_action :verify_authorized
           after_action :verify_policy_scoped, except: %i[new create]
+
+          helper_method :permitted_attributes
         end
 
         private
@@ -34,12 +36,8 @@ module Plutonium
           super(policy_namespace(record), query)
         end
 
-        def current_permitted_attributes
-          @current_permitted_attributes ||= begin
-            permitted_attributes = current_policy.send :"permitted_attributes_for_#{action_name}"
-            permitted_attributes -= [parent_param_key, parent_param_key.to_s.gsub(/_id$/, "").to_sym] if current_parent.present?
-            permitted_attributes
-          end
+        def permitted_attributes
+          @permitted_attributes ||= current_policy.send :"permitted_attributes_for_#{action_name}"
         end
 
         def current_policy

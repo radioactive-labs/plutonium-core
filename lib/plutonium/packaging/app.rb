@@ -9,18 +9,16 @@ module Plutonium
       end
 
       class_methods do
-        attr_reader :scoped_entity_class, :scoped_entity_strategy
+        attr_reader :scoped_entity_class, :scoped_entity_param_key, :scoped_entity_strategy
 
-        def scope_to_entity(entity_class = "Entity", strategy: :path, param_key: nil)
-          @scoped_entity_class = entity_class.is_a?(String) ? entity_class.constantize : entity_class
+        def scope_to_entity(entity_class, param_key: nil, strategy: :path)
+          @scoped_entity_class = entity_class
           @scoped_entity_strategy = strategy
-          @scoped_entity_param_key = param_key
+          @scoped_entity_param_key = param_key || entity_class.model_name.singular_route_key.to_sym
         end
 
-        def scoped_entity_param_key
-          return unless scoped_entity_class.present?
-
-          scoped_entity_class.model_name.singular_route_key.to_sym
+        def scoped_to_entity?
+          scoped_entity_class.present?
         end
 
         def register_resource(resource)
