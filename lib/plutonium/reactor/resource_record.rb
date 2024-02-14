@@ -7,8 +7,8 @@ module Plutonium
         scope :from_path_param, ->(param) { where(id: param) }
 
         scope :associated_with, ->(record) do
-          custom_scope = :"associated_with_#{record.model_name.singular}"
-          return send(custom_scope, record) if respond_to?(custom_scope)
+          named_scope = :"associated_with_#{record.model_name.singular}"
+          return send(named_scope, record) if respond_to?(named_scope)
 
           # TODO: add logging
           if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass == record.class })
@@ -21,14 +21,20 @@ module Plutonium
               })
             when :belongs_to
               where(own_association.name => record)
-            else
+            when :has_many
               joins(own_association.name).where(own_association.klass.table_name.to_sym => record)
+            else
+              raise Net::HTTPNotImplemented, "associated_with->##{own_association.macro}"
             end
           elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass == klass })
             # TODO: add a warning here about a potentially poor performing query
             where(id: record.send(record_association.name))
           else
-            raise "Could not resolve association between '#{klass.name}' and '#{record.class.name}'"
+            raise "Could not resolve the association between '#{klass.name}' and '#{record.class.name}'\n\n" \
+                  "Define\n" \
+                  " 1. the associations between the models\n" \
+                  " 2. a named scope e.g.\n\n" \
+                  "scope :#{named_scope}, ->(#{record.model_name.singular}) { do_something_here }"
           end
         end
       end
