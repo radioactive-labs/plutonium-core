@@ -74,7 +74,8 @@ module Plutonium
                 #   admin_resource_routes << :#{resource_name_underscored}_routes
                 # TILDE
 
-                # TODO: test this with uncountables
+                # TODO: test this with uncountables/irregulars
+                # https://stackoverflow.com/questions/31812619/rails-routes-wrong-singular-for-resources
                 # if resource.model_name.uncountable?
                 #   # https://stackoverflow.com/questions/6476763/rails-3-route-appends-index-to-route-name
                 #   resource resource.model_name.singular, **route_opts

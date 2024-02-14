@@ -2,16 +2,13 @@ module Plutonium
   module Core
     module Actions
       class ShowAction < BasicAction
-        def collection_record_action?
-          true
-        end
-
         private
 
         def action_options
           {
             icon: "box-arrow-up-right",
-            action_class: "primary"
+            action_class: "primary",
+            collection_record_action: true,
           }
         end
       end
