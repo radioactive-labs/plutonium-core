@@ -62,13 +62,16 @@ module Plutonium
 
                 resources resource.model_name.plural, **route_opts  do
                   member do
-                    get 'actions/:interactive_action', action: :begin_interactive_resource_record_action, as: :interactive_resource_record_action
-                    post 'actions/:interactive_action', action: :commit_interactive_resource_record_action
+                    get 'record_actions/:interactive_action', action: :begin_interactive_resource_record_action, as: :interactive_resource_record_action
+                    post 'record_actions/:interactive_action', action: :commit_interactive_resource_record_action
                   end
 
                   collection do
-                    get 'actions/:interactive_action', action: :begin_interactive_resource_collection_action, as: :interactive_resource_collection_action
-                    post 'actions/:interactive_action', action: :commit_interactive_resource_collection_action
+                    get 'collection_actions/:interactive_action', action: :begin_interactive_resource_collection_action, as: :interactive_resource_collection_action
+                    post 'collection_actions/:interactive_action', action: :commit_interactive_resource_collection_action
+
+                    get 'recordless_actions/:interactive_action', action: :begin_interactive_resource_recordless_action, as: :interactive_resource_recordless_action
+                    post 'recordless_actions/:interactive_action', action: :commit_interactive_resource_recordless_action
                   end
                 end
 

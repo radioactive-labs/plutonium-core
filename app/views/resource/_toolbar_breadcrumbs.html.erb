@@ -14,14 +14,19 @@
 
     <% if resource.present? %>
       <li class="breadcrumb-item"><%= link_to resource_name_plural(resource_class), adapt_route_args(resource_class), class: 'text-decoration-none' %></li>
-      <% if %w[edit update begin_interactive_resource_record_action commit_interactive_resource_record_action].include? action_name %>
+      <% if /edit|update|.*interactive_resource.*/.match? action_name %>
         <li class="breadcrumb-item"><%= link_to display_name_of(resource), adapt_route_args(resource), class: 'text-decoration-none' %></li>
         <li class="breadcrumb-item active" aria-current="page"><%= (params[:interactive_action] || 'Edit').titleize %></li>
       <% else %>
         <li class="breadcrumb-item active" aria-current="page"><%= resource.persisted? ? display_name_of(resource) : 'New' %></li>
       <% end %>
     <% else %>
-      <li class="breadcrumb-item"><%= resource_name_plural(resource_class) %></li>
+      <% if /.*interactive_resource.*/.match? action_name %>
+      <li class="breadcrumb-item"><%= link_to resource_name_plural(resource_class), adapt_route_args(resource_class), class: 'text-decoration-none' %></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= params[:interactive_action].titleize %></li>
+      <% else %>
+        <li class="breadcrumb-item"><%= resource_name_plural(resource_class) %></li>
+      <% end %>
     <% end %>
   </ol>
 </nav>

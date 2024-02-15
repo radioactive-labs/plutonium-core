@@ -26,7 +26,9 @@ module Plutonium
 
         def action_options
           {
-            collection_action: action_type == :interactive_resource_collection_action,
+            # TODO: move these into config
+            collection_action: [:interactive_resource_collection_action,
+                                :interactive_resource_recordless_action].include?(action_type),
             collection_record_action: action_type == :interactive_resource_record_action,
             record_action: action_type == :interactive_resource_record_action,
             bulk_action: action_type == :interactive_resource_collection_action
@@ -48,14 +50,13 @@ module Plutonium
         end
 
         def action_type
-          @action_type ||= if interaction.filters.key? :resource
-                              :interactive_resource_record_action
-                           elsif interaction.filters.key? :resources
-                              :interactive_resource_collection_action
-                           else
-                              raise NotImplementedError, "unable to determine action_type of #{interaction}"
-                           end
-
+          if interaction.filters.key? :resource
+            :interactive_resource_record_action
+          elsif interaction.filters.key? :resources
+            :interactive_resource_collection_action
+          else
+            :interactive_resource_recordless_action
+          end
         end
       end
     end

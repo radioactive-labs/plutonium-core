@@ -16,7 +16,6 @@ module Plutonium
             require 'listen'
 
             listener = Listen.to(Plutonium.lib_root.to_s, only: /\.rb$/) do |modified, added, removed|
-              puts (modified + added)
               (modified + added).each { |f| load f}
             end
             listener.start

@@ -21,6 +21,9 @@ module Plutonium
         # Include our actions after we are inherited else they are marked as private due to our call to abstract!
         child.send :include, Plutonium::Core::Controllers::CrudActions
         child.send :include, Plutonium::Core::Controllers::InteractiveActions
+
+        # TODO: move this into interactive actions module
+        child.helper_method :current_interactive_action
         super
       end
 
