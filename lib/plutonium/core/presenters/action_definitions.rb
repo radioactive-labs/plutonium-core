@@ -12,8 +12,8 @@ module Plutonium
 
         def action_definitions = @action_definitions ||= Plutonium::Core::Actions::Collection.new
 
-        def define_action(name, action)
-          action_definitions[name] = action
+        def define_action(action)
+          action_definitions[action.name] = action
         end
 
         def action_defined?(name)

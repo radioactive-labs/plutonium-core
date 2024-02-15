@@ -60,7 +60,12 @@ module Plutonium
                   route_opts[:path] = resource.model_name.collection
                 end
 
-                resources resource.model_name.plural, **route_opts
+                resources resource.model_name.plural, **route_opts  do
+                  member do
+                    get 'action/:custom_action', action: :custom_action, as: :custom_action
+                    post 'action/:custom_action', action: :commit_custom_action
+                  end
+                end
 
                 # route = <<~TILDE
                 #   concern :#{resource_name_underscored}_routes do

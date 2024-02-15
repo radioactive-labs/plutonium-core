@@ -9,6 +9,7 @@ module Plutonium
         autoload :NewAction
         autoload :DestroyAction
         autoload :EditAction
+        autoload :InteractiveAction
         autoload :ShowAction
       end
     end

@@ -14,6 +14,10 @@ module Plutonium
 
         private
 
+        def resource_class
+          raise NotImplementedError, "#{self.class}#resource_class"
+        end
+
         def define_field(name, type: nil, input: nil, renderer: nil, input_options: {}, renderer_options: {})
           define_input(name, type:, input:, **input_options)
           define_renderer(name, type:, renderer:, **renderer_options)
@@ -21,8 +25,8 @@ module Plutonium
 
         def autodiscover_field(name)
           autodiscover_field_cache[name] ||= {
-            input: Plutonium::Core::Fields::Inputs::Factory.for_resource_attribute(context.resource_class, name),
-            renderer: Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name)
+            input: Plutonium::Core::Fields::Inputs::Factory.for_resource_attribute(resource_class, name),
+            renderer: Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(resource_class, name)
           }
         end
 

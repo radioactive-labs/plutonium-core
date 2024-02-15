@@ -25,11 +25,17 @@ module Plutonium
       end
 
       def define_standard_actions
-        define_action :new, Plutonium::Core::Actions::NewAction.new(:new)
-        define_action :show, Plutonium::Core::Actions::ShowAction.new(:show)
-        define_action :edit, Plutonium::Core::Actions::EditAction.new(:edit)
-        define_action :destroy, Plutonium::Core::Actions::DestroyAction.new(:destroy)
+        define_action Plutonium::Core::Actions::NewAction.new(:new)
+        define_action Plutonium::Core::Actions::ShowAction.new(:show)
+        define_action Plutonium::Core::Actions::EditAction.new(:edit)
+        define_action Plutonium::Core::Actions::DestroyAction.new(:destroy)
       end
+
+      def define_interactive_action(name, interaction:, **options)
+        define_action Plutonium::Core::Actions::InteractiveAction.new(name, interaction:, **options)
+      end
+
+      def resource_class = context.resource_class
 
       # def maybe_warn_autodetect_usage(method)
       #   return if Rails.env.local?

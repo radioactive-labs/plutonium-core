@@ -11,7 +11,7 @@ module Plutonium
         private
 
         def resource_presenter(resource_class)
-          raise NotImplementedError, "resource_presenter"
+          raise NotImplementedError, "#{self.class}#resource_presenter"
         end
 
         def current_presenter

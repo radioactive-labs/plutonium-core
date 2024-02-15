@@ -60,8 +60,8 @@ module Plutonium
           return if scoped_to_entity?
 
           raise NotImplementedError, "this request is not scoped to an entity\n\n" \
-                                     "add the `scope_to_entity MyEntityModel` directive in " \
-                                     "#{current_engine} or implement ##{method}"
+                                     "add the `scope_to_entity YourEntityRecord` directive in " \
+                                     "#{current_engine} or implement #{self.class}##{method}"
         end
       end
     end

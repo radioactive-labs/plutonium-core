@@ -9,10 +9,10 @@ module Plutonium
 
       attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :action_class
 
-      def initialize(name, label: nil, icon: nil, route_options: nil,
-                           confirmation: nil, turbo_frame: nil, action_class: nil,
-                           collection_action: false, collection_record_action: false,
-                           record_action: false, bulk_action: false)
+      def initialize(name, label: nil, icon: nil, action_class: nil,
+                           confirmation: nil,
+                           route_options: nil, turbo_frame: nil,
+                           collection_action: false, collection_record_action: false, record_action: false, bulk_action: false)
         @name = name
         @icon = icon
         @label = label || name.to_s.humanize

@@ -94,7 +94,7 @@ module Plutonium
       end
 
       def build_sidebar_menu
-        raise NotImplementedError, "build_sidebar_menu"
+        raise NotImplementedError, "#{self.class}#build_sidebar_menu"
       end
 
       def resource_context
@@ -114,7 +114,7 @@ module Plutonium
       end
 
       def current_user
-        raise NotImplementedError, "current_user"
+        raise NotImplementedError, "#{self.class}#current_user"
       end
     end
   end

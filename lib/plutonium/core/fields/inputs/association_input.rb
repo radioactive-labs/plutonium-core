@@ -17,7 +17,7 @@ module Plutonium
           private
 
           def param
-            raise NotImplementedError
+            raise NotImplementedError, "#{self.class}#param"
           end
         end
       end
