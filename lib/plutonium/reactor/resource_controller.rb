@@ -20,6 +20,7 @@ module Plutonium
       def self.inherited(child)
         # Include our actions after we are inherited else they are marked as private due to our call to abstract!
         child.send :include, Plutonium::Core::Controllers::CrudActions
+        child.send :include, Plutonium::Core::Controllers::InteractiveActions
         super
       end
 
@@ -31,7 +32,6 @@ module Plutonium
 
       before_action :set_page_title
       before_action :set_sidebar_menu
-      before_action :authorize_custom_action, only: %i[custom_action commit_custom_action]
 
       # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
       after_action { pagy_headers_merge(@pagy) if @pagy }
@@ -42,18 +42,18 @@ module Plutonium
       #   send :_layout, lookup_context, []
       # end
 
-      def custom_actions
-        @custom_actions ||= current_presenter.actions.except :new, :show, :edit, :destroy
+      def interactive_resource_actions
+        @interactive_resource_actions ||= current_presenter.actions.except :new, :show, :edit, :destroy
       end
 
-      def authorize_custom_action
-        custom_action = params[:custom_action]&.to_sym
+      def authorize_interactive_resource_action
+        interactive_resource_action = params[:interactive_action]&.to_sym
 
-        unless custom_actions.key?(custom_action)
-          raise ::AbstractController::ActionNotFound, "Unknown action #{custom_action}'"
+        unless interactive_resource_actions.key?(interactive_resource_action)
+          raise ::AbstractController::ActionNotFound, "Unknown action #{interactive_resource_action}'"
         end
 
-        authorize resource_record, :"#{custom_action}?"
+        authorize resource_record, :"#{interactive_resource_action}?"
       end
 
       # Resource

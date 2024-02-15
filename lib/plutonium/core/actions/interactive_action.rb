@@ -16,7 +16,7 @@ module Plutonium
           # TODO: turn them off forcefully if detected
           # e.g. collection_action: true is not compatible with interactions that specify a resource
 
-          kwargs[:route_options] ||= RouteOptions.new action: :custom_action, options: { custom_action: name }
+          kwargs[:route_options] ||= RouteOptions.new action: :interactive_resource_action, options: { interactive_action: name }
           kwargs.reverse_merge! action_options
           super(name, *args, **kwargs)
         end

@@ -9,3 +9,10 @@
 
 # rspec failure tracking
 .rspec_status
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+.DS_Store

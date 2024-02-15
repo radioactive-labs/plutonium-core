@@ -62,8 +62,8 @@ module Plutonium
 
                 resources resource.model_name.plural, **route_opts  do
                   member do
-                    get 'action/:custom_action', action: :custom_action, as: :custom_action
-                    post 'action/:custom_action', action: :commit_custom_action
+                    get 'actions/:interactive_action', action: :begin_interactive_resource_action, as: :interactive_resource_action
+                    post 'actions/:interactive_action', action: :commit_interactive_resource_action
                   end
                 end
 

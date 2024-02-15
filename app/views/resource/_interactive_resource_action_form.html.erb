@@ -10,7 +10,7 @@
         <%= simple_form_for @interaction, as: :resource,
                                           method: :post,
                                           turbo_frame: :modal,
-                                          url: adapt_route_args(@interaction.resource,  action: :custom_action) do |f| %>
+                                          url: adapt_route_args(@interaction.resource,  action: :interactive_resource_action) do |f| %>
           <div class="modal-content">
             <div class="modal-header">
               <h1 class="modal-title fs-5"><%= @action.name.to_s.titleize %></h1>
@@ -28,13 +28,13 @@
               </div>
               <div class="form-inputs">
                 <% @action.inputs.values.each do |input| %>
-                  <%= f.input input.name, **input.options %>
+                  <%= input.render f, @interaction.resource %>
                 <% end %>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <%= f.button :button, 'Submit', class: "btn btn-primary" %>
+              <%= f.button :submit, @action.label, class: "btn btn-outline-primary" %>
             </div>
           </div>
         <% end %>
@@ -42,7 +42,7 @@
     </div>
   <% end %>
 <% else%>
-  <%= simple_form_for @interaction, as: :resource, method: :post, url: adapt_route_args(@interaction.resource, action: :custom_action) do |f| %>
+  <%= simple_form_for @interaction, as: :resource, method: :post, url: adapt_route_args(@interaction.resource, action: :interactive_resource_action) do |f| %>
     <div class="row row-gap-2">
       <div class="container">
         <div class="form-errors">
