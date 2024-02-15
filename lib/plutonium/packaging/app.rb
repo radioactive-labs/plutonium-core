@@ -65,6 +65,11 @@ module Plutonium
                     get 'actions/:interactive_action', action: :begin_interactive_resource_action, as: :interactive_resource_action
                     post 'actions/:interactive_action', action: :commit_interactive_resource_action
                   end
+
+                  collection do
+                    get 'actions/:interactive_action', action: :begin_interactive_bulk_resource_action, as: :interactive_bulk_resource_action
+                    post 'actions/:interactive_action', action: :commit_interactive_bulk_resource_action
+                  end
                 end
 
                 # route = <<~TILDE

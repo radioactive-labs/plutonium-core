@@ -42,19 +42,6 @@ module Plutonium
       #   send :_layout, lookup_context, []
       # end
 
-      def interactive_resource_actions
-        @interactive_resource_actions ||= current_presenter.actions.except :new, :show, :edit, :destroy
-      end
-
-      def authorize_interactive_resource_action
-        interactive_resource_action = params[:interactive_action]&.to_sym
-
-        unless interactive_resource_actions.key?(interactive_resource_action)
-          raise ::AbstractController::ActionNotFound, "Unknown action #{interactive_resource_action}'"
-        end
-
-        authorize resource_record, :"#{interactive_resource_action}?"
-      end
 
       # Resource
 

@@ -2,43 +2,60 @@ module Plutonium
   module Core
     module Actions
       class InteractiveAction < Plutonium::Core::Action
-        include Plutonium::Core::Presenters::FieldDefinitions
+        include Plutonium::Core::Definers::InputDefiner
 
         Context = Data.define :resource_class
 
         attr_reader :interaction, :inline, :inputs
 
-        def initialize(name, *args, interaction:, inline: nil, **kwargs)
+        def initialize(name, *args, interaction:, **kwargs)
           set_interaction interaction
-          set_inline inline
 
-          # some placement options are not compatible, depending on the interaction config
-          # TODO: turn them off forcefully if detected
-          # e.g. collection_action: true is not compatible with interactions that specify a resource
-
-          kwargs[:route_options] ||= RouteOptions.new action: :interactive_resource_action, options: { interactive_action: name }
+          kwargs[:route_options] ||= build_route_options name
           kwargs.reverse_merge! action_options
           super(name, *args, **kwargs)
         end
 
-        private
+        def confirmation
+          super || (inline ? "#{label}?" : nil)
+        end
 
-        def action_options = {}
+        private
 
         def resource_class = interaction
 
-        def set_interaction(interaction)
-          @interaction = interaction
-          @inputs = inputs_for(interaction.filters.keys - [:resource])
+        def action_options
+          {
+            collection_action: action_type == :interactive_bulk_resource_action,
+            collection_record_action: action_type == :interactive_resource_action,
+            record_action: action_type == :interactive_resource_action,
+            bulk_action: action_type == :interactive_bulk_resource_action
+          }
         end
 
-        def set_inline(inline)
-          @inline = case inline
-                    when nil, true
-                      @enabled_inputs.blank?
-                    else
-                      false
-                    end
+        def set_interaction(interaction)
+          @interaction = interaction
+          @inputs = defined_inputs_for(interaction.filters.keys - [:resource, :resources])
+          @inline = @inputs.blank? unless inline == false
+        end
+
+        def build_route_options(name)
+          method = inline ? :post : :get
+          action = action_type
+          options = { interactive_action: name }
+
+          RouteOptions.new action:, method:, options:
+        end
+
+        def action_type
+          @action_type ||= if interaction.filters.key? :resource
+                              :interactive_resource_action
+                           elsif interaction.filters.key? :resources
+                              :interactive_bulk_resource_action
+                           else
+                              raise NotImplementedError, "unable to determine action_type of #{interaction}"
+                           end
+
         end
       end
     end
