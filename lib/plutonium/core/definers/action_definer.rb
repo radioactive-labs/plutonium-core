@@ -1,7 +1,7 @@
 module Plutonium
   module Core
-    module Presenters
-      module ActionDefinitions
+    module Definers
+      module ActionDefiner
         extend ActiveSupport::Concern
 
         def actions

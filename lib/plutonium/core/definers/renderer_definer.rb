@@ -1,12 +1,13 @@
 module Plutonium
   module Core
-    module Presenters
-      module RendererDefinitions
+    module Definers
+      module RendererDefiner
         extend ActiveSupport::Concern
+        include Plutonium::Core::Autodiscovery::RendererDiscoverer
 
-        def renderers_for(names)
+        def defined_renderers_for(names)
           (names - renderer_definitions.keys).each do |name|
-            define_renderer(name, renderer: autodiscover_field(name)[:renderer])
+            define_renderer(name, renderer: autodiscover_renderer(name))
           end
           renderer_definitions.slice(*names)
         end
@@ -21,7 +22,7 @@ module Plutonium
           elsif type.present? || options.present?
             Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name, type:, **options)
           else
-            autodiscover_field(name)[:renderer]
+            autodiscover_renderer(name)
           end
         end
 

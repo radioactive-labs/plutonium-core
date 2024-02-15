@@ -1,12 +1,13 @@
 module Plutonium
   module Core
-    module Presenters
-      module InputDefinitions
+    module Definers
+      module InputDefiner
         extend ActiveSupport::Concern
+        include Plutonium::Core::Autodiscovery::InputDiscoverer
 
-        def inputs_for(names)
+        def defined_inputs_for(names)
           (names - input_definitions.keys).each do |name|
-            define_input(name, input: autodiscover_field(name)[:input])
+            define_input(name, input: autodiscover_input(name))
           end
           input_definitions.slice(*names)
         end
@@ -23,7 +24,7 @@ module Plutonium
           elsif options.present?
             Plutonium::Core::Fields::Inputs::Factory.for_resource_attribute(context.resource_class, name, **options)
           else
-            autodiscover_field(name)[:input]
+            autodiscover_input(name)
           end
         end
 

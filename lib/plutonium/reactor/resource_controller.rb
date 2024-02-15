@@ -73,7 +73,7 @@ module Plutonium
         input_params[parent_param_key] = current_parent if current_parent.present?
         input_params[:"#{parent_param_key}_id"] = current_parent.id if current_parent.present?
 
-        current_presenter.inputs_for(permitted_attributes)
+        current_presenter.defined_inputs_for(permitted_attributes)
           .values.map { |input| input.collect input_params }
           .reduce(:merge)
       end

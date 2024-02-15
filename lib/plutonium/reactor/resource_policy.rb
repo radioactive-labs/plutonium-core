@@ -87,17 +87,15 @@ module Plutonium
       end
 
       def maybe_warn_autodetect_usage(method)
-        return if Rails.env.local?
+        raise "Resource field auto-detection: #{self.class}##{method} outside development" unless Rails.env.development?
 
         Rails.logger.warn %(
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
-          Resource field auto-detection violation #{self.class}##{method}
+          Resource field auto-detection: #{self.class}##{method}
 
-          Using auto-detected resource fields in production is not recommended.
-          It can lead to accidental exposure of sensitive resource fields.
-
-          Override a #{context.resource_class}Policy with your own ##{method} method.
+          Auto-detected resource fields result in security holes and will fail outside of development.
+          Override #{context.resource_class}Policy or #{self.class} with your own ##{method} method.
 
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
         )

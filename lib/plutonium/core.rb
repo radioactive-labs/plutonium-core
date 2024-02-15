@@ -3,13 +3,14 @@ module Plutonium
     extend ActiveSupport::Autoload
 
     eager_autoload do
-      autoload :Actions
-      autoload :Controllers
-      autoload :Fields
-      autoload :Presenters
-      autoload :UI
       autoload :Action
+      autoload :Actions
       autoload :AppController
+      autoload :Autodiscovery
+      autoload :Controllers
+      autoload :Definers
+      autoload :Fields
+      autoload :UI
     end
   end
 end
