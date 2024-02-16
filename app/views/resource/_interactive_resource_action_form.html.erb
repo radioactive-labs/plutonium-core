@@ -7,7 +7,7 @@
   <%= turbo_frame_tag "modal" do %>
     <div class="modal " tabindex="-1" data-controller="modal">
       <div class="modal-dialog modal-dialog-scrollable modal-lg">
-        <%= simple_form_for @interaction, as: :interaction,
+        <%= resource_form_for @interaction, as: :interaction,
                                           method: :post,
                                           turbo_frame: :modal,
                                           url: "" do |f| %>
@@ -42,7 +42,7 @@
     </div>
   <% end %>
 <% else%>
-  <%= simple_form_for @interaction, as: :interaction, method: :post, url: "" do |f| %>
+  <%= resource_form_for @interaction, as: :interaction, method: :post, url: "" do |f| %>
     <div class="row row-gap-2">
       <div class="container">
         <div class="form-errors">

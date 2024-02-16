@@ -3,7 +3,7 @@
     form: "instance of Plutonium::UI::Builder::Form"
   }
 %>
-<%= simple_form_for adapt_route_args(form.record) do |f| %>
+<%= resource_form_for adapt_route_args(form.record) do |f| %>
   <div class="row row-gap-2">
     <div class="container">
       <div class="form-errors">
