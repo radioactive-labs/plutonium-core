@@ -84,14 +84,29 @@ module Plutonium
           []
         end
 
-        def resource_fields
-          @resource_fields ||= begin
-            belongs_to = reflect_on_all_associations(:belongs_to).map { |assoc| assoc.name.to_sym }
-            has_one = reflect_on_all_associations(:has_one).map { |assoc| assoc.name.to_sym }
-            has_many = reflect_on_all_associations(:has_many).map { |assoc| assoc.name.to_sym }
-            content_columns = self.content_columns.map { |col| col.name.to_sym }
-            belongs_to + has_one + content_columns + has_many
-          end
+        def resource_field_names
+          @resource_field_names ||= belongs_to_association_field_names + has_one_association_field_names +
+            has_many_association_field_names + content_column_field_names
+        end
+
+        def belongs_to_association_field_names
+          @belongs_to_association_field_names ||= reflect_on_all_associations(:belongs_to).map { |assoc| assoc.name.to_sym }
+        end
+
+        def has_one_association_field_names
+          @has_one_association_field_names ||= reflect_on_all_associations(:has_one).map { |assoc| assoc.name.to_sym }
+        end
+
+        def has_many_association_field_names
+          @has_many_association_field_names ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.name.to_sym }
+        end
+
+        def content_column_field_names
+          @content_column_field_names ||= content_columns.map { |col| col.name.to_sym }
+        end
+
+        def has_many_association_routes
+          @has_many_association_routes ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
         end
       end
 

@@ -30,82 +30,86 @@ module Plutonium
           @resource_register || []
         end
 
+        def registered_resource_route_key_lookup
+          @registered_resource_route_key_lookup = resource_register.map { |resource|
+            [resource.model_name.singular_route_key.to_sym, resource]
+          }.to_h
+        end
+
         def draw_resource_routes
-          # We want our resources sorted in reverse order in order to prevent routing conflicts
-          # e.g. /blogs/1 and blogs/comments cause an issue if Blog is registered before Blogs::Comment
-          # attempting to load blogs/comments routes to blogs/:id which fails with a 404
-          # Reverse sorting ensures that nested resources are registered first
-          registered_resources = resource_register.map(&:to_s).sort.reverse.map(&:constantize)
-
-          # debugger
-
-          # scope ':entity_id/dashboard', module: :entity_resources, as: :entity do
-          #   get '', to: 'index#index'
-          #   concerns entity_resource_routes.sort.reverse
-          #   # pu:routes:entity
-          # end
-
+          registered_resources = resource_register
           scoped_entity_param_key = self.scoped_entity_param_key
           routes.draw do
-            route_drawer = -> {
-              registered_resources.each do |resource|
-                resource_name = resource.to_s
-                resource_module = resource_name.deconstantize&.underscore
-                resource_controller = resource_name.pluralize.demodulize.underscore
-
-                route_opts = {}
-                if resource_module.present?
-                  route_opts[:module] = resource_module
-                  route_opts[:controller] = resource_controller
-                  route_opts[:path] = resource.model_name.collection
-                end
-
-                resources resource.model_name.plural, **route_opts  do
-                  member do
-                    get 'record_actions/:interactive_action', action: :begin_interactive_resource_record_action, as: :interactive_resource_record_action
-                    post 'record_actions/:interactive_action', action: :commit_interactive_resource_record_action
-                  end
-
-                  collection do
-                    get 'collection_actions/:interactive_action', action: :begin_interactive_resource_collection_action, as: :interactive_resource_collection_action
-                    post 'collection_actions/:interactive_action', action: :commit_interactive_resource_collection_action
-
-                    get 'recordless_actions/:interactive_action', action: :begin_interactive_resource_recordless_action, as: :interactive_resource_recordless_action
-                    post 'recordless_actions/:interactive_action', action: :commit_interactive_resource_recordless_action
-                  end
-                end
-
-                # route = <<~TILDE
-                #   concern :#{resource_name_underscored}_routes do
-                #     #{resource_name_underscored}_concerns = %i[]
-                #     #{resource_name_underscored}_concerns += shared_resource_concerns
-                #     resources :#{resource_name_plural_underscored}, concerns: #{resource_name_underscored}_concerns#{module_config} do
-                #       # pu:routes:#{resource_name_plural_underscored}
-                #     end
-                #   end
-                #   entity_resource_routes << :#{resource_name_underscored}_routes
-                #   admin_resource_routes << :#{resource_name_underscored}_routes
-                # TILDE
-
-                # TODO: test this with uncountables/irregulars
-                # https://stackoverflow.com/questions/31812619/rails-routes-wrong-singular-for-resources
-                # if resource.model_name.uncountable?
-                #   # https://stackoverflow.com/questions/6476763/rails-3-route-appends-index-to-route-name
-                #   resource resource.model_name.singular, **route_opts
-                #   get "#{resource.model_name.collection}_index", action: :index,
-                #                                       as: resource.model_name.route_key,
-                #                                       **route_opts.slice(:module, :controller)
-                # else
-                # end
+            shared_resource_concerns = [:interactive_resource_actions] # TODO: make this a config parameter
+            concern :interactive_resource_actions do
+              # these concerns power the interactive actions feature
+              member do
+                get "record_actions/:interactive_action", action: :begin_interactive_resource_record_action,
+                  as: :interactive_resource_record_action
+                post "record_actions/:interactive_action", action: :commit_interactive_resource_record_action
               end
-            }
 
-            if scoped_entity_param_key.present?
-              scope ":#{scoped_entity_param_key}", as: scoped_entity_param_key do
-                route_drawer.call
+              collection do
+                get "collection_actions/:interactive_action", action: :begin_interactive_resource_collection_action,
+                  as: :interactive_resource_collection_action
+                post "collection_actions/:interactive_action", action: :commit_interactive_resource_collection_action
+
+                get "recordless_actions/:interactive_action", action: :begin_interactive_resource_recordless_action,
+                  as: :interactive_resource_recordless_action
+                post "recordless_actions/:interactive_action", action: :commit_interactive_resource_recordless_action
               end
-            else
-              route_drawer.call
+            end
+
+            resource_route_names = []
+            resource_route_opts_lookup = {}
+            # for each of our registered resources, we are registering the routes required
+            registered_resources.each do |resource|
+              resource_name = resource.to_s # Deeply::Namespaced::ResourceModel
+              resource_controller = resource_name.pluralize.underscore # deeply/namespaced/resource_models
+              resource_route = resource.model_name.plural # deeply_namespaced_resource_models
+              resource_route_name = :"#{resource_route}_routes" # deeply_namespaced_resource_models_routes
+
+              resource_route_opts = {}
+              # rails is not smart enough to infer Deeply::Namespaced::ResourceModelsController from deeply_namespaced_resource_models
+              # since we are heavy on namespaces, we choose to be explicit to guarantee there is no confusion
+              resource_route_opts[:controller] = resource_controller
+              # using collection for path is much nicer than the alternative
+              # e.g. deeply/namespaced/resource_models vs deeply_namespaced_resource_models
+              resource_route_opts[:path] = resource.model_name.collection
+              resource_route_opts_lookup[resource_route] = resource_route_opts
+
+              # defining our resources with concerns allows us to defer materializing till later,
+              # ensuring that resource_route_opts_lookup is populated
+              concern resource_route_name do
+                resources resource_route, **resource_route_opts, concerns: shared_resource_concerns do
+                  nested_resources_route_opts = resource_route_opts_lookup.slice(*resource.has_many_association_routes)
+                  nested_resources_route_opts.each do |nested_resource_route, nested_resource_route_opts|
+                    resources nested_resource_route, **nested_resource_route_opts, concerns: shared_resource_concerns
+                  end
+                end
+              end
+              resource_route_names << resource_route_name
+            end
+
+            # materialize our routes using a scope
+            # if the app is scoped to an entity, ensure that the expected route param and url helper prefix are specified.
+
+            # path   => /:entity/deeply/namespaced/resource_models/:deeply_namespaced_resource_model_id/
+            # helper => entity_deeply_namespaced_resource_models_path
+            scope_name = scoped_entity_param_key.present? ? ":#{scoped_entity_param_key}" : ""
+
+            # path   => /deeply/namespaced/resource_models/:deeply_namespaced_resource_model_id/
+            # helper => deeply_namespaced_resource_models_path
+            scope_options = scoped_entity_param_key.present? ? {as: scoped_entity_param_key} : {}
+
+            scope scope_name, scope_options do
+              # we have to reverse sort our resource routes in order to prevent routing conflicts
+              # e.g. /blogs/1 and blogs/comments cause an issue if Blog is registered before Blogs::Comment
+              # attempting to load blogs/comments routes to blogs/:id which fails with a 404 since BlogsController
+              # essentially performs a Blog.find('comments')
+              # since the route names for these 2 will be 'blogs' and 'blog_comments',
+              # reverse sorting ensures that blog_comments is registered first, preventing the issue described above
+              concerns resource_route_names.sort.reverse
             end
           end
         end

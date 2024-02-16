@@ -83,7 +83,7 @@ module Plutonium
       def autodetect_fields_for(method_name)
         maybe_warn_autodetect_usage method_name
 
-        context.resource_class.resource_fields
+        context.resource_class.resource_field_names
       end
 
       def maybe_warn_autodetect_usage(method)

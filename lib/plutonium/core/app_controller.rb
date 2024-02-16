@@ -23,7 +23,7 @@ module Plutonium
       def build_sidebar_menu
         {
           Resources: current_engine.resource_register.map { |resource|
-                       [resource.model_name.human.pluralize, url_for(adapt_route_args(resource))]
+                       [resource.model_name.human.pluralize, url_for(adapt_route_args(resource, use_parent: false))]
                      }.to_h
         }
       end
@@ -32,9 +32,10 @@ module Plutonium
         return unless parent_param_key.present?
 
         @current_parent ||= begin
-          parent_name = parent_param_key.to_s.gsub(/_id$/, "")
+          parent_route_key = parent_param_key.to_s.gsub(/_id$/, "").to_sym
+          parent_class = current_engine.registered_resource_route_key_lookup[parent_route_key]
 
-          parent_scope = parent_name.classify.constantize.from_path_param(params[parent_param_key])
+          parent_scope = parent_class.from_path_param(params[parent_param_key])
           parent_scope = parent_scope.associated_with(current_scoped_entity) if scoped_to_entity?
           parent_scope.first!
         end
