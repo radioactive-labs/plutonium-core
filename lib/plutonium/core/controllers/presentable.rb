@@ -22,7 +22,7 @@ module Plutonium
           @presentable_attributes ||= begin
             presentable_attributes = permitted_attributes
             presentable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"] if scoped_to_entity?
-            presentable_attributes -= [parent_param_key, parent_param_key.to_s.gsub(/_id$/, "").to_sym] if current_parent.present?
+            presentable_attributes -= [parent_input_param, :"#{parent_input_param}_id"] if current_parent.present?
             presentable_attributes
           end
         end

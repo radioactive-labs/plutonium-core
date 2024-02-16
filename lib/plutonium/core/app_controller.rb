@@ -29,23 +29,28 @@ module Plutonium
       end
 
       def current_parent
-        return unless parent_param_key.present?
+        return unless parent_route_param.present?
 
         @current_parent ||= begin
-          parent_route_key = parent_param_key.to_s.gsub(/_id$/, "").to_sym
+          parent_route_key = parent_route_param.to_s.gsub(/_id$/, "").to_sym
           parent_class = current_engine.registered_resource_route_key_lookup[parent_route_key]
-
-          parent_scope = parent_class.from_path_param(params[parent_param_key])
+          parent_scope = parent_class.from_path_param(params[parent_route_param])
           parent_scope = parent_scope.associated_with(current_scoped_entity) if scoped_to_entity?
           parent_scope.first!
         end
       end
 
-      def parent_param_key
-        @parent_param_key ||= begin
-          path_param_keys = request.path_parameters.keys - [:controller, :action, scoped_to_entity? ? scoped_entity_param_key : nil]
-          path_param_keys.reverse.find { |key| /_id$/.match? key }&.to_sym
-        end
+      def parent_route_param
+        @parent_route_param ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }
+      end
+
+      #
+      # Returns the attribute on the resource if there is a current parent and the resource has a belongs to association to it
+      #
+      def parent_input_param
+        return unless current_parent.present?
+
+        resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass == current_parent.class }&.name&.to_sym
       end
 
       #
