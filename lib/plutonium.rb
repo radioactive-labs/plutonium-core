@@ -18,20 +18,6 @@ module Plutonium
     root.join("lib", "plutonium")
   end
 
-  def self.configure_rails(config)
-    # setup a middleware to serve our assets
-    config.middleware.insert_before(
-      ActionDispatch::Static,
-      Rack::Static,
-      urls: ["/plutonium-assets"],
-      root: Plutonium.root.join("public"),
-      cascade: true
-    )
-
-    # get the ball rolling
-    Plutonium::Reactor::Core.achieve_criticality!
-  end
-
   autoload :Config
 
   eager_autoload do
@@ -40,7 +26,6 @@ module Plutonium
     autoload :Core
     autoload :Policy
     autoload :Helpers
-    autoload :SimpleForm
     autoload :Auth
   end
 end

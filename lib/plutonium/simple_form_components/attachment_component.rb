@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module Plutonium
   module SimpleForm
     module AttachmentComponent
@@ -27,8 +25,7 @@ module Plutonium
                 @builder.hidden_field(attribute_name, multiple: multiple?, value: attachment.signed_id),
 
                 # By removing this component, the hidden field is gone, which allows us to remove the files from active storage
-                template.content_tag(:p, class: "text-danger m-0", role: :button,
-                  data: {action: "click->attachment-preview#remove"}) do
+                template.content_tag(:p, class: "text-danger m-0", role: :button, data: {action: "click->attachment-preview#remove"}) do
                   template.content_tag :span, " Delete", class: "bi bi-trash"
                 end
               ]
@@ -40,7 +37,7 @@ module Plutonium
       private
 
       def value
-        @value ||= object.send(attribute_name) if object && object.respond_to?(attribute_name)
+        @value ||= object.send(attribute_name) if object&.respond_to?(attribute_name)
       end
 
       def multiple?
@@ -77,3 +74,4 @@ module Plutonium
     end
   end
 end
+SimpleForm.include_component(Plutonium::SimpleForm::AttachmentComponent)

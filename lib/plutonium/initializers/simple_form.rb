@@ -1,10 +1,7 @@
-# frozen_string_literal: true
-
-# Be sure to restart your server when you modify this file.
+require "simple_form"
 
 # Register components
-SimpleForm.include_component(Plutonium::SimpleForm::InputGroupComponent)
-SimpleForm.include_component(Plutonium::SimpleForm::AttachmentComponent)
+Dir[Plutonium.lib_root.join("simple_form_components", "*.rb")].each { |component| require component }
 
 # Use this setup block to configure all options available in SimpleForm.
 SimpleForm.setup do |config|
@@ -384,6 +381,10 @@ SimpleForm.setup do |config|
     end
     b.use :hint, wrap_with: {class: "form-text"}
   end
+
+  # TODO: this will conflict with existing apps that use simple_form.
+  # A workaround would be to ensure their initializer loads after ours.
+  # Since this is for  will deal with it when we get there
 
   # The default wrapper to be used by the FormBuilder.
   config.default_wrapper = :vertical_form

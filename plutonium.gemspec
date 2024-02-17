@@ -30,18 +30,14 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
   spec.add_dependency "rails", ">= 7.1.2"
+  spec.add_dependency "listen"
   spec.add_dependency "active_interaction", "~> 5.3"
   spec.add_dependency "pundit", "~> 2.3.1"
-  # spec.add_dependency "activesupport", "~> 7.1.2"
-  # spec.add_dependency "railties", "~> 7.1.2"
-  # spec.add_dependency "actionpack", "~> 7.1.2"
   spec.add_dependency "pagy", "~> 6.2.0"
   spec.add_dependency "ransack", "~> 4.1.1"
-  spec.add_dependency "listen"
-  # spec.add_dependency "plutonium_generators", github: "radioactive-labs/plutonium-generators"
-  # spec.add_dependency "plutonium_generators", path: "/Users/stefan/code/plutonium/plutonium_generators"
+  spec.add_dependency "simple_form", "~> 5.3"
+  spec.add_dependency "rabl", "~> 0.16.1"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

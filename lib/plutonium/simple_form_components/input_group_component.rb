@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module Plutonium
   module SimpleForm
     module InputGroupComponent
@@ -13,3 +11,4 @@ module Plutonium
     end
   end
 end
+SimpleForm.include_component(Plutonium::SimpleForm::InputGroupComponent)

@@ -1,19 +1,26 @@
+# Restart rails after modifying this file since achieve_criticality! is called our initializer
+
 module Plutonium
   module Reactor
     class Core
       def self.achieve_criticality!
-        # TODO: clean this mess up
+        Dir[Plutonium.lib_root.join("initializers", "**", "*.rb")].each do |file|
+          require file
+        end
 
-        require "pagy"
-        require "pagy/extras/bootstrap"
-        require "pagy/extras/overflow"
-        require "pagy/extras/trim"
-        require "pagy/extras/headers"
+        # setup a middleware to serve our assets
+        Rails.application.config.middleware.insert_before(
+          ActionDispatch::Static,
+          Rack::Static,
+          urls: ["/plutonium-assets"],
+          root: Plutonium.root.join("public"),
+          cascade: true
+        )
 
-        # this is required to circumvent an issue with turbo loading action cable even if it is not included
-        # in rails
-        Rails.autoloaders.once.do_not_eager_load("#{Turbo::Engine.root}/app/channels")
+        start_reloader!
+      end
 
+      def self.start_reloader!
         return unless Plutonium::Config.reload_files
 
         # GLORIOUS hot reloading!!!

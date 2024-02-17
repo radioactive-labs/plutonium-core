@@ -3,7 +3,7 @@
 require "plutonium_generators"
 
 module Pu
-  module Base
+  module Core
     class InstallGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
@@ -12,8 +12,6 @@ module Pu
       desc "Set up the base requirements for Plutonium"
 
       def start
-        gem "plutonium", github: "radioactive-labs/plutonium-core"
-
         setup_packaging_system
         install_required_gems
         setup_app
@@ -25,18 +23,20 @@ module Pu
 
       def setup_packaging_system
         copy_file "config/packages.rb"
+        create_file "packages/.keep"
         insert_into_file "config/application.rb", "\nrequire_relative \"packages\"\n", after: /Bundler\.require.*\n/
-        insert_into_file "config/application.rb", indent("Plutonium.configure_rails config\n\n", 4), after: /.*< Rails::Application\n/
+        # insert_into_file "config/application.rb", indent("Plutonium.configure_rails config\n\n", 4), after: /.*< Rails::Application\n/
       end
 
       def setup_app
+        directory "config"
         directory "app"
       end
 
       def install_required_gems
-        invoke "pu:gem:simple_form"
+        # invoke "pu:gem:simple_form"
         # invoke "pu:gem:pagy"
-        invoke "pu:gem:rabl"
+        # invoke "pu:gem:rabl"
       end
     end
   end
