@@ -4,11 +4,23 @@ module <%= package_name %>
     include Plutonium::Core::AppController
     <%- if rodauth_account.present? -%>
     include Plutonium::Auth.rodauth(:<%= rodauth_account %>)
+    <%- elsif public_access? -%>
+    include Plutonium::Auth::PublicAccess
     <%- end -%>
     # add concerns above.
 
     included do
       boot <%= package_name %>
+      <%- if bring_your_own_auth? -%>
+
+      helper_method :current_user
+      <%- end -%>
     end
+    <%- if bring_your_own_auth? -%>
+
+    def current_user
+      raise NotImplementedError, "#{self.class}#current_user must return a non nil value"
+    end
+    <%- end -%>
   end
 end

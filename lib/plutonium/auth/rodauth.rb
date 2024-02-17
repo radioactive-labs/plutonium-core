@@ -17,10 +17,6 @@ module Plutonium
             super(name)
           end
 
-          def authenticate
-            rodauth.require_account
-          end
-
           def current_user
             rodauth.rails_account
           end

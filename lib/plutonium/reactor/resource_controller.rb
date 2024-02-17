@@ -101,10 +101,6 @@ module Plutonium
       def current_package
         @current_package ||= self.class.module_parents[-2]
       end
-
-      def current_user
-        raise NotImplementedError, "#{self.class}#current_user"
-      end
     end
   end
 end

@@ -7,5 +7,6 @@ module Plutonium
     end
 
     autoload :Rodauth
+    autoload :PublicAccess
   end
 end

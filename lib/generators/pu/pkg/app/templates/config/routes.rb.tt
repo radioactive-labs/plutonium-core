@@ -1,9 +1,9 @@
-# draw routes for registered resources
-<%= package_name %>::Engine.draw_resource_routes
-
 # <%= package_name %>::Engine.routes.draw do
 #   # add custom app routes here
 # end
+
+# draw routes for registered resources
+<%= package_name %>::Engine.draw_resource_routes
 
 # mount our app
 Rails.application.routes.draw do
