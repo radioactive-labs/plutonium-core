@@ -2,7 +2,7 @@ module Plutonium
   module Reactor
     extend ActiveSupport::Autoload
 
-    autoload :Engine
+    autoload :Core
     autoload :ResourceContext
     autoload :ResourceController
     autoload :ResourceInteraction

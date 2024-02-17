@@ -19,7 +19,7 @@ module Plutonium
   end
 
   def self.configure_rails(config)
-    # Serve up our assets
+    # setup a middleware to serve our assets
     config.middleware.insert_before(
       ActionDispatch::Static,
       Rack::Static,
@@ -27,6 +27,9 @@ module Plutonium
       root: Plutonium.root.join("public"),
       cascade: true
     )
+
+    # get the ball rolling
+    Plutonium::Reactor::Core.achieve_criticality!
   end
 
   autoload :Config
