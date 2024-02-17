@@ -1,0 +1,23 @@
+# frozen_string_literal: true
+
+require File.expand_path('../../../../plutonium_generators', __dir__)
+
+module Pu
+  module <%= pug_module %>
+    class <%= pug_class %> < Rails::Generators::Base
+      include PlutoniumGenerators::Generator
+
+      source_root File.expand_path('templates', __dir__)
+
+      desc '<%= options[:desc] || 'TODO: add description' %>'
+
+      argument :name
+
+      def start
+        raise NotImplementedError, "<%= pug_name %>"
+      rescue StandardError => e
+        exception "#{self.class} failed:", e
+      end
+    end
+  end
+end

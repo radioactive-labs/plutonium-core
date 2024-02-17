@@ -1,0 +1,9 @@
+# Used by the sms codes feature
+create_table :<%= table_prefix %>_sms_codes, id: false do |t|
+  t.<%= primary_key_type(nil) %> :id, primary_key: true
+  t.foreign_key :<%= table_prefix.pluralize %>, column: :id
+  t.string :phone_number, null: false
+  t.integer :num_failures
+  t.string :code
+  t.datetime :code_issued_at, null: false, default: -> { "<%= current_timestamp %>" }
+end

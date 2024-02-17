@@ -1,0 +1,3 @@
+class <%= app_namespace %>::<%= resource_class %>Presenter < ::<%= resource_class %>Presenter
+  include <%= app_namespace %>::ResourcePresenter
+end

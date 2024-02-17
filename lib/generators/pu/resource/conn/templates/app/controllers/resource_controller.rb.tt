@@ -1,0 +1,3 @@
+class <%= app_namespace %>::<%= resource_class.pluralize %>Controller < ::<%= resource_class.pluralize %>Controller
+  include <%= app_namespace %>::ResourceController
+end

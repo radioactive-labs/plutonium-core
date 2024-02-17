@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+module <%= resource_name_plural %>
+  class AdminPresenter < Presenter
+    include AdminResourcePresenter
+  end
+end

@@ -1,0 +1,5 @@
+<%= form_with url: rodauth.sms_request_path, method: :post, data: { turbo: false } do |form| %>
+  <div class="form-group mb-3">
+    <%= form.submit rodauth.sms_request_button, class: "btn btn-primary" %>
+  </div>
+<% end %>

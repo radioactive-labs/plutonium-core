@@ -1,0 +1,53 @@
+<% if class_path.last.present? -%>
+require_relative "../<%= class_path.last.underscore %>"
+
+<% end -%>
+<% module_namespacing do -%>
+class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::" %>
+  # add concerns above.
+
+  # add model configurations above.
+
+<% attributes.select(&:reference?).each do |attribute| -%>
+  belongs_to :<%= attribute.name %><%= ", polymorphic: true" if attribute.polymorphic? %>
+<% end -%>
+  # add belongs_to associations above.
+
+  # add has_one associations above.
+
+  # add has_many associations above.
+
+<% attributes.select(&:attachment?).each do |attribute| -%>
+  has_one_attached :<%= attribute.name %>
+<% end -%>
+<% attributes.select(&:attachments?).each do |attribute| -%>
+  has_many_attached :<%= attribute.name %>
+<% end -%>
+  # add attachments above.
+
+<% attributes.select(&:rich_text?).each do |attribute| -%>
+  has_rich_text :<%= attribute.name %>
+<% end -%>
+<% attributes.select(&:token?).each do |attribute| -%>
+  has_secure_token<% if attribute.name != "token" %> :<%= attribute.name %><% end %>
+<% end -%>
+<% if attributes.any?(&:password_digest?) -%>
+  has_secure_password
+<% end -%>
+  # add misc attribute macros above.
+
+  # add scopes above.
+
+<% attributes.select(&:required?).each do |attribute| -%>
+  <%- next if attribute.reference? || attribute.rich_text? || attribute.token? || attribute.password_digest? -%>
+  validates :<%= attribute.name %>, presence: true
+<% end -%>
+  # add validations above.
+
+  # add callbacks above.
+
+  # add delegations above.
+
+  # add methods above.
+end
+<% end -%>

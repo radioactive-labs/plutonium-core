@@ -1,0 +1,11 @@
+# Used by the lockout feature
+create_table :<%= table_prefix %>_login_failures do
+  foreign_key :id, :<%= table_prefix.pluralize %>, primary_key: true, type: :Bignum
+  Integer :number, null: false, default: 1
+end
+create_table :<%= table_prefix %>_lockouts do
+  foreign_key :id, :<%= table_prefix.pluralize %>, primary_key: true, type: :Bignum
+  String :key, null: false
+  DateTime :deadline, null: false
+  DateTime :email_last_sent
+end

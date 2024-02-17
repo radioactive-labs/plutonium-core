@@ -1,0 +1,23 @@
+<% cred = rodauth.new_webauthn_credential %>
+
+<%= form_with url: request.path, method: :post, id: "webauthn-setup-form", data: { credential_options: cred.as_json.to_json, turbo: false } do |form| %>
+  <%= form.hidden_field rodauth.webauthn_setup_challenge_param, value: cred.challenge %>
+  <%= form.hidden_field rodauth.webauthn_setup_challenge_hmac_param, value: rodauth.compute_hmac(cred.challenge) %>
+  <%= form.text_field rodauth.webauthn_setup_param, value: "", id: "webauthn-setup", class: "d-none", aria: { hidden: "true" } %>
+
+  <% if rodauth.two_factor_modifications_require_password? %>
+    <div class="form-group mb-3">
+      <%= form.label "password", rodauth.password_label, class: "form-label" %>
+      <%= form.password_field rodauth.password_param, value: "", id: "password", autocomplete: rodauth.password_field_autocomplete_value, required: true, class: "form-control #{"is-invalid" if rodauth.field_error(rodauth.password_param)}", aria: ({ invalid: true, describedby: "password_error_message" } if rodauth.field_error(rodauth.password_param)) %>
+      <%= content_tag(:span, rodauth.field_error(rodauth.password_param), class: "invalid-feedback", id: "password_error_message") if rodauth.field_error(rodauth.password_param) %>
+    </div>
+  <% end %>
+
+  <div id="webauthn-setup-button">
+    <div class="form-group mb-3">
+      <%= form.submit rodauth.webauthn_setup_button, class: "btn btn-primary" %>
+    </div>
+  </div>
+<% end %>
+
+<%= javascript_include_tag rodauth.webauthn_setup_js_path, extname: false %>

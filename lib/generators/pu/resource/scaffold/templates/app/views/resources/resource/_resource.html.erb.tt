@@ -1,0 +1,3 @@
+<%% raise NotImplementedError, "Only Builders::Details is supported" unless <%= resource_name_underscored %>.is_a? ::Pu::UI::Builder::Detail %>
+
+<%%= render 'details', details: <%= resource_name_underscored %> %>

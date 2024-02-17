@@ -1,0 +1,17 @@
+# draw routes for registered resources
+<%= package_name %>::Engine.draw_resource_routes
+
+# <%= package_name %>::Engine.routes.draw do
+#   # add custom app routes here
+# end
+
+# mount our app
+Rails.application.routes.draw do
+  <%- if rodauth_account.present? -%>
+  constraints Rodauth::Rails.authenticate(:<%= rodauth_account %>) do
+    mount <%= package_name %>::Engine, at: "/<%= name.underscore %>"
+  end
+  <%- else -%>
+  mount <%= package_name %>::Engine, at: "/<%= name.underscore %>"
+  <%- end -%>
+end

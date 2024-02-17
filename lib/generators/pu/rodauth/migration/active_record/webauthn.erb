@@ -1,0 +1,13 @@
+# Used by the webauthn feature
+create_table :<%= table_prefix %>_webauthn_user_ids, id: false do |t|
+  t.<%= primary_key_type(nil) %> :id, primary_key: true
+  t.foreign_key :<%= table_prefix.pluralize %>, column: :id
+  t.string :webauthn_id, null: false
+end
+create_table :<%= table_prefix %>_webauthn_keys, primary_key: [:<%= table_prefix %>_id, :webauthn_id] do |t|
+  t.references :<%= table_prefix %>, foreign_key: true<%= primary_key_type(:type) %>
+  t.string :webauthn_id
+  t.string :public_key, null: false
+  t.integer :sign_count, null: false
+  t.datetime :last_use, null: false, default: -> { "<%= current_timestamp %>" }
+end

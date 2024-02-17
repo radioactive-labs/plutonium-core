@@ -1,0 +1,2 @@
+class ResourcePresenter < Plutonium::Reactor::ResourcePresenter
+end

@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+module <%= resource_name_plural %>
+  class EntityPresenter < Presenter
+    include EntityResourcePresenter
+  end
+end

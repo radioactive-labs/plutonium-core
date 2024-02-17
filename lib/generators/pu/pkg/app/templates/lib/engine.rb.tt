@@ -1,0 +1,14 @@
+module <%= package_name %>
+  class Engine < Rails::Engine
+    include Plutonium::<%= package_type %>
+    # add concerns above.
+
+    config.after_initialize do
+      initialize_register!
+
+      # add directives above.
+
+      # register resources above.
+    end
+  end
+end

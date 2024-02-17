@@ -1,0 +1,4 @@
+module <%= package_name %>
+  class ResourceInteraction < ::ResourceInteraction
+  end
+end

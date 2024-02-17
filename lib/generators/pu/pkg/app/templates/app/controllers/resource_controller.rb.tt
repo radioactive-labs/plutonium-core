@@ -1,0 +1,14 @@
+module <%= package_name %>
+  module ResourceController
+    extend ActiveSupport::Concern
+    include Plutonium::Core::AppController
+    <%- if rodauth_account.present? -%>
+    include Plutonium::Auth.rodauth(:<%= rodauth_account %>)
+    <%- end -%>
+    # add concerns above.
+
+    included do
+      boot <%= package_name %>
+    end
+  end
+end
