@@ -21,9 +21,15 @@ module Plutonium
           scoped_entity_class.present?
         end
 
+        def initialize_register!
+          # this exists solely to support hot reloads
+          # if the user has modified the register especially if they removed a registration, we have no way of telling
+          # so instead we start over
+          @resource_register = []
+        end
+
         def register_resource(resource)
-          @resource_register ||= []
-          @resource_register << resource
+          @resource_register.append resource
         end
 
         def resource_register

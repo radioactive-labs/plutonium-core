@@ -13,10 +13,31 @@ module Plutonium
           next unless Plutonium::Config.reload_files
 
           @listener ||= begin
-            require 'listen'
+            require "listen"
 
-            listener = Listen.to(Plutonium.lib_root.to_s, only: /\.rb$/) do |modified, added, removed|
-              (modified + added).each { |f| load f}
+            plutonium_lib_dir = Plutonium.lib_root.to_s
+            packages_dir = Rails.root.join("packages/").to_s
+            listener = Listen.to(plutonium_lib_dir, packages_dir, only: /\.rb$/) do |modified, added, removed|
+              (modified + added).each do |file|
+                if file.starts_with?(packages_dir)
+                  # if package file was added, ignore it
+                  # otherwise rails gets mad at us since engines cannot be loaded after initial boot
+                  # TODO: check if guard has apis to control reloading dynamically
+                  next if added.include? file
+
+                  case File.basename(file)
+                  when "engine.rb"
+                    # reload engines. due to how we load packages, rails does not support
+                    load file
+                    # reload routes to pick up any registration changes
+                    Rails.application.reload_routes!
+                  else
+                    # non engine package files are reloaded by rails automatically
+                  end
+                else
+                  load file
+                end
+              end
             end
             listener.start
             listener
