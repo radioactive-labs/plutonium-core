@@ -30,7 +30,7 @@ Get Plutonium up and running in your Rails application with these simple steps:
 1. **Add Plutonium to your Gemfile:**
 
 ```ruby
-gem "plutonium", github: "radioactive-labs/plutonium-core"
+gem "plutonium"
 gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", group: [:development, :test]
 ```
 
