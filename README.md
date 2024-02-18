@@ -1,4 +1,4 @@
-# Plutonium: Supercharge Your Rails Development
+# Plutonium: Nuclear Powered Rails Application Development
 
 **Plutonium** transforms the way you build applications with Rails, offering a powerful toolkit for rapid application development.
 It's a culmination of lessons learned from years of developing nearly identical applications and is designed to save you from the drudgery of re-implementation.
