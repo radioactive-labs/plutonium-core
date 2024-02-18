@@ -94,6 +94,8 @@ GEM
     ast (2.4.2)
     base64 (0.2.0)
     bigdecimal (3.1.5)
+    brakeman (6.1.2)
+      racc
     builder (3.2.4)
     concurrent-ruby (1.2.2)
     connection_pool (2.4.1)
@@ -273,6 +275,7 @@ PLATFORMS
   x86_64-darwin-21
 
 DEPENDENCIES
+  brakeman
   plutonium!
   rake (~> 13.0)
   rspec (~> 3.0)

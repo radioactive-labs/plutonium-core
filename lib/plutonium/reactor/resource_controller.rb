@@ -53,6 +53,8 @@ module Plutonium
       helper_method :resource_record
 
       def resource_params
+        # Example of documenting an ignore in the source code
+        # NOTE: Brakeman warning ignored for MassAssignment because inputs are filtered manually
         input_params = params.require(resource_param_key).permit!.nilify.to_h
 
         # Override any entity scoping params

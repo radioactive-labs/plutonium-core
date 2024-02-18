@@ -1,0 +1,51 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Cross-Site Request Forgery",
+      "warning_code": 7,
+      "fingerprint": "1cb8570b8c91f38317cdf909e01e7016359846174f427e86011633c344d30fc3",
+      "check_name": "ForgerySetting",
+      "message": "`protect_from_forgery` should be called in `Plutonium::Reactor::ResourceController`",
+      "file": "lib/plutonium/reactor/resource_controller.rb",
+      "line": 10,
+      "link": "https://brakemanscanner.org/docs/warning_types/cross-site_request_forgery/",
+      "code": null,
+      "render_path": null,
+      "location": {
+        "type": "controller",
+        "controller": "Plutonium::Reactor::ResourceController"
+      },
+      "user_input": null,
+      "confidence": "High",
+      "cwe_id": [
+        352
+      ],
+      "note": "this is tested and confirmed to be a false flag"
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 70,
+      "fingerprint": "873ee0d868e06a32e8ff387a38ddb8c6183a419813d5c20122fa9c3a887f4e54",
+      "check_name": "MassAssignment",
+      "message": "Specify exact keys allowed for mass assignment instead of using `permit!` which allows any keys",
+      "file": "lib/plutonium/reactor/resource_controller.rb",
+      "line": 58,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "params.require(resource_param_key).permit!",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Reactor::ResourceController",
+        "method": "resource_params"
+      },
+      "user_input": null,
+      "confidence": "Medium",
+      "cwe_id": [
+        915
+      ],
+      "note": "we manually filter params"
+    }
+  ],
+  "updated": "2024-02-18 00:37:39 +0000",
+  "brakeman_version": "6.1.2"
+}
