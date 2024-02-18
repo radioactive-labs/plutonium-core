@@ -1,69 +1,51 @@
-# Plutonium
+# Plutonium: Supercharge Your Rails Development
 
-Plutonium is a rapid application development toolkit built on top of rails. It is a generator based framework that gives you full control over your application.
+**Plutonium** transforms the way you build applications with Rails, offering a powerful toolkit for rapid application development. It's a culmination of lessons learned from years of developing nearly identical applications, designed to save you from the cycle of re-implementation.
 
-It builds upon years of frustration re-implementing almost identical applications over and over.
+**Why Choose Plutonium?**
 
-After trying out lots of dashboard gems and starter kits, we always found them lacking.
-Either they did way too much and customizing them was close to impossible, or they did too little and were still had to customize.
+- **Efficiency by Design:** Plutonium is built for developers who demand efficiency without compromise. It automates 90% of your application needs while giving you the flexibility to tailor the remaining 10% to your specific requirements.
+- **Comprehensive Features:** From authentication and authorization to CRUD operations, and beyond, Plutonium covers a wide array of functionalities out of the box:
+  - Authentication & Authorization
+  - Complete CRUD operations with advanced features: customizable tables, forms, pagination, actions, search, filtering, and nested resources.
+  - Modular architecture leveraging Rails engines for improved packaging and namespacing.
+  - Time-saving generators for boilerplate tasks.
+- **Omakase with a Twist:** Inspired by Rails' omakase philosophy, Plutonium delivers a convention-based approach but doesn't box you in. It's seamlessly integrated into your project, allowing you to write your application as you would with vanilla Rails but with powerful extensions.
+- **MVC and Beyond:** Plutonium adopts the MVC pattern, enhanced with modern web technologies like [hotwire](TODO), to deliver an interactive and robust user experience. It emphasizes progressive enhancement, ensuring a smooth development process and end-user experience.
+- **Rails Harmony:** A Plutonium app is a Rails app at its core. It respects and builds upon Rails' conventions, making it intuitive for Rails developers. If you know Rails, learning Plutonium requires only a few new concepts.
+- **Effortless Customization:** Plutonium is designed for easy customization to meet your unique requirements. Whether adjusting the functionality of entire resource groups or fine-tuning individual elements, our accessible low-level APIs and the familiar Rails conventions offer unparalleled flexibility. This ensures that any modifications you need to make can be implemented swiftly and smoothly, reducing complexity and enhancing your development experience.
+- **Community-Driven Dependencies:** Plutonium stands on the shoulders of giants, integrating with well-established gems known for their robustness and flexibility, including:
+  - [ActiveInteraction](https://github.com/AaronLasseigne/active_interaction) for business logic
+  - [Pagy](https://github.com/ddnexus/pagy) for pagination
+  - [Pundit](https://github.com/varvet/pundit) for authorization
+  - [ransack](https://github.com/activerecord-hackery/ransack) for searching
+  - [Simple Form](https://github.com/heartcombo/simple_form) for forms
+  - [Rodauth](https://github.com/jeremyevans/rodauth) (via [rodauth-rails](https://github.com/janko/rodauth-rails)) for authentication. Rodauth is optional, allowing flexibility in choosing your auth solution
 
-We set out to solve a one problem.
+## Quick Start
 
-Create something that did 90% of what we wanted, while allowing us the freedom of achieving the remainder.
+Get Plutonium up and running in your Rails application with these simple steps:
 
-Plutonium takes care of
+1. **Add Plutonium to your Gemfile:**
 
-1. Authentication
-2. Authorization
-3. CRUD including tables, details, forms, pagination, actions, fully customizable fields and inputs, search and filtering, routing, nested resources etc.
-4. Modularizating i.e it includes a packaging system based on rails engines and adds improved namespacing supporting
-5. Advanced generators to handle repetitive tasks
+```ruby
+gem "plutonium", github: "radioactive-labs/plutonium-core"
+gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", group: [:development, :test]
+```
 
-# Design Choices
+2. **Bundle Install:**
 
-Like Rails itself, Plutonium is [omakase](https://dhh.dk/2012/rails-is-omakase.html).
-We provide a few conventions outside of which you are able to write your application just like you would a normal rails app.
+```shell
+bundle
+```
 
-While traditional admin dashboard tools ship as a rails engine, Plutonium integrates into your project, generating integration points to the core library. Similar to how Rails provides an Application which inherits ActiveRecord::Base, Plutonium adds a few base classes. This is the cost of plugging the leak in the abstraction.
+3. **Install Plutonium:**
 
-Plutonium is MVC. It is the most productive way to build that I have found. Coupled with [hotwire](TODO), we are able to build an interactive,responsive and extremely robust functionality. Most of our features are progressively enhanced, allowing them to be used with hotwire turned off. Features requiring hotwire will be indicated.
+```shell
+rails g pu:core:install
+```
 
-The same principle of progressive enhancement applies to how features are built. Features start as basic plumbing, exposing a fully customizable api. The framework then builds nicer layers on top of this. This makes us consumers of our own api forcing us to improve upon it when we hit a roadblock. If you can't do it, that means we can't do it either. Let us know, we are committed to improving customizability.
-
-A Plutonium app is a rails app. We reuse the same patterns used for controllers, routing and models. If you know rails, picking up plutonium requires only learning a few new concepts.
-
-Rails does an amazing number of things right. Especially around view resolution and how it handles inheritance.
-We have leveraged this such that you can apply customizations granularly, from groups of resources to individual resources.
-If you don't like how we do something, easy, override a method or a view and voila.
-
-A lot of our functionality is built on and inspired by gems we carefully considered for robustness and customizability.
-
-- [ActiveInteraction](https://github.com/AaronLasseigne/active_interaction): 💼 Manage application specific business logic. Powers [actions](TODO).
-- [Pagy](https://github.com/ddnexus/pagy): 🏆 The Best Pagination Ruby Gem 🥇. Powers [collection view](TODO)
-- [Pundit](https://github.com/varvet/pundit): Minimal authorization through OO design and pure Ruby classes. Powers [authorization](TODO).
-- [ransack](https://github.com/activerecord-hackery/ransack): Object-based searching. Powers [search](TODO).
-- [Simple Form](https://github.com/heartcombo/simple_form): Forms made easy for Rails! It's tied to a simple DSL, with no opinion on markup. Powers [inputs](TODO). Heavily inspired the fields api 💡💡💡.
-- [Rodauth\*](https://github.com/jeremyevans/rodauth): Ruby's Most Advanced Authentication Framework. Used via the [rodauth-rails](https://github.com/janko/rodauth-rails) gem. Powers [authentication](TODO). \*Rodauth is optional. You can bring your own auth.
-
-## Installation
-
-Add to your gemfile
-
-    gem "plutonium", github: "radioactive-labs/plutonium-core"
-    gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", group: [:development, :test]
-
-<!--
-gem "plutonium", path: "/Users/stefan/code/plutonium/starters/plutonium/"
-gem "plutonium_generators", path: "/Users/stefan/code/plutonium/plutonium_generators", group: [:development, :test]
--->
-
-Install new gems
-
-    bundle
-
-Setup Plutonium in your application
-
-    rails g pu:core:install
+Start building your Rails applications faster, with more flexibility and less boilerplate. **Plutonium** is here to revolutionize your development process.
 
 ## Usage
 
