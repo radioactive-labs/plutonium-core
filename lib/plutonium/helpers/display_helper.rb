@@ -2,7 +2,7 @@ module Plutonium
   module Helpers
     module DisplayHelper
       def display_field(value:, helper: nil, **options)
-        return '-' unless value.present?
+        return "-" unless value.present?
 
         stack_multiple = options.key?(:stack_multiple) ? options.delete(:stack_multiple) : helper != :display_name_of
 

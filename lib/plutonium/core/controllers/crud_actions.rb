@@ -109,7 +109,7 @@ module Plutonium
                 notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
-          rescue ActiveRecord::InvalidForeignKey => e
+          rescue ActiveRecord::InvalidForeignKey
             format.html do
               redirect_to adapt_route_args(resource_record),
                 alert: "#{resource_class.model_name.human} is referenced by other records."

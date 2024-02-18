@@ -1,4 +1,4 @@
-require 'simple_form/map_type'
+require "simple_form/map_type"
 
 module Plutonium
   module Core
@@ -34,7 +34,7 @@ module Plutonium
 
             if resource_class.respond_to? :reflect_on_association
               attachment = resource_class.reflect_on_association(:"#{attr_name}_attachment") || \
-                           resource_class.reflect_on_association(:"#{attr_name}_attachments")
+                resource_class.reflect_on_association(:"#{attr_name}_attachments")
               association = resource_class.reflect_on_association(attr_name)
             end
 

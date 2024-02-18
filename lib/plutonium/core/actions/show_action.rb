@@ -8,7 +8,7 @@ module Plutonium
           {
             icon: "box-arrow-up-right",
             action_class: "primary",
-            collection_record_action: true,
+            collection_record_action: true
           }
         end
       end

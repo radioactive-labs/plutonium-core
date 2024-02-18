@@ -1,4 +1,4 @@
-require 'simple_form/map_type'
+require "simple_form/map_type"
 
 module Plutonium
   module Core
@@ -10,7 +10,6 @@ module Plutonium
           map_type :belongs_to, :has_one, :has_many, to: Plutonium::Core::Fields::Renderers::AssociationRenderer
 
           def self.build(name, type:, **)
-
             mapping = mappings[type] || Plutonium::Core::Fields::Renderers::BasicRenderer
             mapping.new(name, **)
 
@@ -30,7 +29,7 @@ module Plutonium
 
             if resource_class.respond_to? :reflect_on_association
               attachment = resource_class.reflect_on_association(:"#{attr_name}_attachment") || \
-                           resource_class.reflect_on_association(:"#{attr_name}_attachments")
+                resource_class.reflect_on_association(:"#{attr_name}_attachments")
               association = resource_class.reflect_on_association(attr_name)
             end
 

@@ -48,7 +48,7 @@ module Plutonium
           link_body = if attachment.representable?
             image_tag attachment.thumbnail_url, style: "width:100%; height:100%; object-fit: contain;"
           else
-            "#{attachment.file.extension}"
+            attachment.file.extension.to_s
           end
 
           link_to link_body, attachment.file_url, style: "width:150px; height:150px; line-height: 150px;",

@@ -153,8 +153,8 @@ module Pu
             false
           end
 
-          assoc = source_class.reflect_on_all_associations(:belongs_to).select(&matcher).first
-          assoc ||= source_class.reflect_on_all_associations(:has_one).select(&matcher).first
+          assoc = source_class.reflect_on_all_associations(:belongs_to).find(&matcher)
+          assoc ||= source_class.reflect_on_all_associations(:has_one).find(&matcher)
           assoc
         end
       end

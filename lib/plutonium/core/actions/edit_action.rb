@@ -10,7 +10,7 @@ module Plutonium
             route_options: Plutonium::Core::Action::RouteOptions.new(action: :edit),
             action_class: "warning",
             collection_record_action: true,
-            record_action: true,
+            record_action: true
           }
         end
       end

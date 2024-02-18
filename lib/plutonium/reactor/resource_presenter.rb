@@ -32,12 +32,11 @@ module Plutonium
       end
 
       # TODO: move this to its own definer
-      def define_interactive_action(name, interaction:, **options)
-        define_action Plutonium::Core::Actions::InteractiveAction.new(name, interaction:, **options)
+      def define_interactive_action(name, interaction:, **)
+        define_action Plutonium::Core::Actions::InteractiveAction.new(name, interaction:, **)
       end
 
       def resource_class = context.resource_class
-
     end
   end
 end

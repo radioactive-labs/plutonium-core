@@ -71,7 +71,8 @@ module Plutonium
 
         # GET /resources/actions/:interactive_action?ids[]=1&ids[]=2
         def begin_interactive_resource_collection_action
-          m = interactive_resource_collection # TODO: decide how to handle this
+          # TODO: ensure that the selected list matches the returned value
+          interactive_resource_collection
           @interaction = current_interactive_action.interaction.new((params[:interaction] || {}).except(:resources))
 
           if helpers.current_turbo_frame == "modal"

@@ -28,7 +28,7 @@ module Plutonium
           {
             # TODO: move these into config
             collection_action: [:interactive_resource_collection_action,
-                                :interactive_resource_recordless_action].include?(action_type),
+              :interactive_resource_recordless_action].include?(action_type),
             collection_record_action: action_type == :interactive_resource_record_action,
             record_action: action_type == :interactive_resource_record_action,
             bulk_action: action_type == :interactive_resource_collection_action
@@ -44,7 +44,7 @@ module Plutonium
         def build_route_options(name)
           method = inline ? :post : :get
           action = action_type
-          options = { interactive_action: name }
+          options = {interactive_action: name}
 
           RouteOptions.new action:, method:, options:
         end
