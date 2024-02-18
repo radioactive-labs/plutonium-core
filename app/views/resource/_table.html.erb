@@ -12,7 +12,7 @@
   <% unless resources.any? %>
     <div class="col-12">
       <%=
-        render 'shared/empty_card', message: "You have no #{resource_name_plural(resource_class).downcase}" do
+        render 'empty_card', message: "You have no #{resource_name_plural(resource_class).downcase}" do
           if policy(resource_class).create?
             link_to "Create #{resource_name(resource_class)}", adapt_route_args(resource_class, action: :new), class: 'btn btn-outline-primary'
           end

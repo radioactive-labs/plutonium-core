@@ -10,7 +10,7 @@ module Plutonium
       private
 
       def current_user
-        true
+        "Guest"
       end
     end
   end
