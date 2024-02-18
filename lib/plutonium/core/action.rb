@@ -19,6 +19,7 @@ module Plutonium
         @route_options = route_options || RouteOptions.new
         @turbo_frame = turbo_frame
         @action_class = action_class
+        @confirmation = confirmation
         @collection_action = collection_action
         @collection_record_action = collection_record_action
         @record_action = record_action

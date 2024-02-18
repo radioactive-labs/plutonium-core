@@ -1,4 +1,5 @@
-# Restart rails after modifying this file since achieve_criticality! is called our initializer
+# Be sure to restart your server when you modify this file.
+# This is a glorified initializer
 
 module Plutonium
   module Reactor
