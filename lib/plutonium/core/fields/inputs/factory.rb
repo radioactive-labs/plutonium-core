@@ -10,6 +10,7 @@ module Plutonium
           map_type :has_one, to: Plutonium::Core::Fields::Inputs::NoopInput
           map_type :belongs_to, to: Plutonium::Core::Fields::Inputs::BelongsToInput
           map_type :has_many, to: Plutonium::Core::Fields::Inputs::HasManyInput
+          map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
 
           def self.build(name, type:, **)
             mapping = mappings[type] || Plutonium::Core::Fields::Inputs::BasicInput
@@ -32,23 +33,10 @@ module Plutonium
           def self.for_resource_attribute(resource_class, attr_name, **options)
             type = nil
 
-            if resource_class.respond_to? :reflect_on_association
-              attachment = resource_class.reflect_on_association(:"#{attr_name}_attachment") || \
-                resource_class.reflect_on_association(:"#{attr_name}_attachments")
-              association = resource_class.reflect_on_association(attr_name)
-            end
-
-            if attachment.present?
+            if (attachment = resource_class.try(:reflect_on_attachment, attr_name))
               type = :attachment
-              options[:attachment] = true
-              # options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
-              multiple = if options.key?(:multiple)
-                options.delete(:multiple)
-              else
-                attachment.macro == :has_many
-              end
-              options = {input_html: {multiple: multiple}}.deep_merge options
-            elsif association.present?
+              options[:reflection] = attachment
+            elsif (association = resource_class.try(:reflect_on_association, attr_name))
               type = association.macro
               options[:reflection] = association
             elsif (column = resource_class.try(:column_for_attribute, attr_name))

@@ -66,7 +66,7 @@ module Plutonium
       end
 
       def _attachment_extension(attachment)
-        attachment.respond_to?(:file) ? attachment.file.extension.to_s : File.extname(attachment.filename.to_s)
+        attachment.try(:extension) || File.extname(attachment.filename.to_s)
       end
     end
   end

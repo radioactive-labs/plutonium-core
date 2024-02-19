@@ -36,6 +36,12 @@ module Plutonium
       before_action :set_page_title
       before_action :set_sidebar_menu
 
+      before_action do
+        return unless defined?(ActiveStorage)
+
+        ActiveStorage::Current.url_options = {protocol: request.protocol, host: request.host, port: request.port}
+      end
+
       # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
       after_action { pagy_headers_merge(@pagy) if @pagy }
 

@@ -8,6 +8,7 @@ module Plutonium
           extend ::SimpleForm::MapType
 
           map_type :belongs_to, :has_one, :has_many, to: Plutonium::Core::Fields::Renderers::AssociationRenderer
+          map_type :attachment, to: Plutonium::Core::Fields::Renderers::AttachmentRenderer
 
           def self.build(name, type:, **)
             mapping = mappings[type] || Plutonium::Core::Fields::Renderers::BasicRenderer
@@ -27,17 +28,10 @@ module Plutonium
             type = nil
             options[:label] ||= resource_class.human_attribute_name(attr_name)
 
-            if resource_class.respond_to? :reflect_on_association
-              attachment = resource_class.reflect_on_association(:"#{attr_name}_attachment") || \
-                resource_class.reflect_on_association(:"#{attr_name}_attachments")
-              association = resource_class.reflect_on_association(attr_name)
-            end
-
-            if attachment.present?
+            if (attachment = resource_class.try(:reflect_on_attachment, attr_name))
               type = :attachment
-              options[:helper] = :display_attachment_value
-              # options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
-            elsif association.present?
+              options[:reflection] = attachment
+            elsif (association = resource_class.try(:reflect_on_association, attr_name))
               type = association.macro
               options[:reflection] = association
             elsif (column = resource_class.try(:column_for_attribute, attr_name))

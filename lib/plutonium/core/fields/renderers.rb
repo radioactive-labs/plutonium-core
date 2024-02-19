@@ -5,9 +5,10 @@ module Plutonium
         extend ActiveSupport::Autoload
 
         eager_autoload do
-          autoload :Factory
-          autoload :BasicRenderer
           autoload :AssociationRenderer
+          autoload :AttachmentRenderer
+          autoload :BasicRenderer
+          autoload :Factory
         end
       end
     end
