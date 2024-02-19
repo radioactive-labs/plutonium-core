@@ -122,7 +122,7 @@ module Plutonium
         end
 
         def content_column_field_names
-          @content_column_field_names ||= content_columns.map(&:name)
+          @content_column_field_names ||= content_columns.map { |col| col.name.to_sym }
         end
 
         def has_many_association_routes
