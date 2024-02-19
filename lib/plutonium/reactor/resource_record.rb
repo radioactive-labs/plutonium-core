@@ -99,13 +99,13 @@ module Plutonium
 
         def has_one_association_field_names
           @has_one_association_field_names ||= reflect_on_all_associations(:has_one)
-            .map { |assoc| /_attachment$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .map { |assoc| /_attachment$|_blob$/.match?(assoc.name) ? nil : assoc.name.to_sym }
             .compact
         end
 
         def has_many_association_field_names
           @has_many_association_field_names ||= reflect_on_all_associations(:has_many)
-            .map { |assoc| /_attachments$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .map { |assoc| /_attachments$|_blobs$/.match?(assoc.name) ? nil : assoc.name.to_sym }
             .compact
         end
 
