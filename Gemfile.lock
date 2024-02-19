@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    plutonium (0.1.0)
+    plutonium (0.5.0)
       active_interaction (~> 5.3)
       listen (~> 3.8)
       pagy (~> 6.2)
