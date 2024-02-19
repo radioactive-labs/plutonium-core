@@ -41,7 +41,7 @@ module Plutonium
       end
 
       def multiple?
-        options[:multiple]
+        options[:input_html][:multiple]
       end
 
       def maybe_setup_direct_uploads
@@ -74,4 +74,5 @@ module Plutonium
     end
   end
 end
+# Register with simple_form
 SimpleForm.include_component(Plutonium::SimpleForm::AttachmentComponent)

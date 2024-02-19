@@ -11,4 +11,5 @@ module Plutonium
     end
   end
 end
+# Register with simple_form
 SimpleForm.include_component(Plutonium::SimpleForm::InputGroupComponent)

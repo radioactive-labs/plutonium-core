@@ -40,7 +40,14 @@ module Plutonium
 
             if attachment.present?
               type = :attachment
-              options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
+              options[:attachment] = true
+              # options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
+              multiple = if options.key?(:multiple)
+                options.delete(:multiple)
+              else
+                attachment.macro == :has_many
+              end
+              options = {input_html: {multiple: multiple}}.deep_merge options
             elsif association.present?
               type = association.macro
               options[:reflection] = association

@@ -14,7 +14,7 @@ module Plutonium
                   data: {
                     controller: "attachment-preview",
                     attachment_preview_mime_type_value: attachment.file.mime_type,
-                    attachment_preview_thumbnail_url_value: attachment.thumbnail_url
+                    attachment_preview_thumbnail_url_value: attachment.try(:thumbnail_url)
                   } do
                   tag.figure class: "figure my-1", style: "width: 160px;" do
                     concat attachment_preview_thumnail(attachment)
@@ -45,8 +45,8 @@ module Plutonium
         # Any changes made here must be reflected in attachment_input_controller#buildPreviewTemplate
 
         tag.div class: "d-inline-block img-thumbnail", data: {attachment_preview_target: "thumbnail"} do
-          link_body = if attachment.representable?
-            image_tag attachment.thumbnail_url, style: "width:100%; height:100%; object-fit: contain;"
+          link_body = if (thumbnail_url = attachment.try(:thumbnail_url))
+            image_tag thumbnail_url, style: "width:100%; height:100%; object-fit: contain;"
           else
             attachment.file.extension.to_s
           end

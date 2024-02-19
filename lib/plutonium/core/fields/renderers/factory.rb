@@ -35,7 +35,8 @@ module Plutonium
 
             if attachment.present?
               type = :attachment
-              options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
+              options[:helper] = :display_attachment_value
+              # options[:multiple] = (attachment.macro == :has_many) unless options.key?(:multiple)
             elsif association.present?
               type = association.macro
               options[:reflection] = association

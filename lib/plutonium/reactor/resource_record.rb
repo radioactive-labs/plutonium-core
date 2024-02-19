@@ -10,21 +10,23 @@ module Plutonium
           named_scope = :"associated_with_#{record.model_name.singular}"
           return send(named_scope, record) if respond_to?(named_scope)
 
+          # TOD: add suppport for polymorphic associations
+
           # TODO: add logging
           if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass == record.class })
             case own_association.macro
             when :has_one
               joins(own_association.name).where({
-                own_association.name.to_sym => {
+                own_association.name => {
                   record.class.primary_key => record.id
                 }
               })
             when :belongs_to
               where(own_association.name => record)
             when :has_many
-              joins(own_association.name).where(own_association.klass.table_name.to_sym => record)
+              joins(own_association.name).where(own_association.klass.table_name => record)
             else
-              raise Net::HTTPNotImplemented, "associated_with->##{own_association.macro}"
+              raise NotImplementedError, "associated_with->##{own_association.macro}"
             end
           elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass == klass })
             # TODO: add a warning here about a potentially poor performing query
@@ -33,7 +35,7 @@ module Plutonium
             raise "Could not resolve the association between '#{klass.name}' and '#{record.class.name}'\n\n" \
                   "Define\n" \
                   " 1. the associations between the models\n" \
-                  " 2. a named scope e.g.\n\n" \
+                  " 2. a named scope on #{klass.name} e.g.\n\n" \
                   "scope :#{named_scope}, ->(#{record.model_name.singular}) { do_something_here }"
           end
         end
@@ -85,24 +87,42 @@ module Plutonium
         end
 
         def resource_field_names
-          @resource_field_names ||= belongs_to_association_field_names + has_one_association_field_names +
-            has_many_association_field_names + content_column_field_names
+          @resource_field_names ||= belongs_to_association_field_names +
+            has_one_attachment_field_names + has_one_association_field_names +
+            has_many_attachment_field_names + has_many_association_field_names +
+            content_column_field_names
         end
 
         def belongs_to_association_field_names
-          @belongs_to_association_field_names ||= reflect_on_all_associations(:belongs_to).map { |assoc| assoc.name.to_sym }
+          @belongs_to_association_field_names ||= reflect_on_all_associations(:belongs_to).map(&:name)
         end
 
         def has_one_association_field_names
-          @has_one_association_field_names ||= reflect_on_all_associations(:has_one).map { |assoc| assoc.name.to_sym }
+          @has_one_association_field_names ||= reflect_on_all_associations(:has_one)
+            .map { |assoc| /_attachment$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .compact
         end
 
         def has_many_association_field_names
-          @has_many_association_field_names ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.name.to_sym }
+          @has_many_association_field_names ||= reflect_on_all_associations(:has_many)
+            .map { |assoc| /_attachments$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .compact
+        end
+
+        def has_one_attachment_field_names
+          @has_one_attachment_field_names ||= reflect_on_all_associations(:has_one)
+            .map { |assoc| /_attachment$/.match?(assoc.name) ? assoc.name.to_s.gsub(/_attachment$/, "").to_sym : nil }
+            .compact
+        end
+
+        def has_many_attachment_field_names
+          @has_many_attachment_field_names ||= reflect_on_all_associations(:has_many)
+            .map { |assoc| /_attachments$/.match?(assoc.name) ? assoc.name.to_s.gsub(/_attachments$/, "").to_sym : nil }
+            .compact
         end
 
         def content_column_field_names
-          @content_column_field_names ||= content_columns.map { |col| col.name.to_sym }
+          @content_column_field_names ||= content_columns.map(&:name)
         end
 
         def has_many_association_routes
