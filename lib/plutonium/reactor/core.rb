@@ -50,6 +50,8 @@ module Plutonium
               else
                 load file
               end
+            rescue => e
+              Rails.logger.error "\npu.hotreloader: failed to reload #{file}\n\n#{e}\n"
             end
           end
           listener.start

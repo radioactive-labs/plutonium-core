@@ -25,17 +25,6 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
 <% end -%>
   # add attachments above.
 
-<% attributes.select(&:rich_text?).each do |attribute| -%>
-  has_rich_text :<%= attribute.name %>
-<% end -%>
-<% attributes.select(&:token?).each do |attribute| -%>
-  has_secure_token<% if attribute.name != "token" %> :<%= attribute.name %><% end %>
-<% end -%>
-<% if attributes.any?(&:password_digest?) -%>
-  has_secure_password
-<% end -%>
-  # add misc attribute macros above.
-
   # add scopes above.
 
 <% attributes.select(&:required?).each do |attribute| -%>
@@ -47,6 +36,17 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
   # add callbacks above.
 
   # add delegations above.
+
+<% attributes.select(&:rich_text?).each do |attribute| -%>
+  has_rich_text :<%= attribute.name %>
+<% end -%>
+<% attributes.select(&:token?).each do |attribute| -%>
+  has_secure_token<% if attribute.name != "token" %> :<%= attribute.name %><% end %>
+<% end -%>
+<% if attributes.any?(&:password_digest?) -%>
+  has_secure_password
+<% end -%>
+  # add misc attribute macros above.
 
   # add methods above.
 end

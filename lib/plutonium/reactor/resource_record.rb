@@ -42,50 +42,6 @@ module Plutonium
       end
 
       module ClassMethods
-        # Path parameters
-
-        def path_parameter(param_name)
-          param_name = param_name.to_sym
-
-          scope :from_path_param, ->(param) { where(param_name => param) }
-
-          define_method :to_param do
-            return nil unless persisted?
-
-            send param_name
-          end
-        end
-
-        def dynamic_path_parameter(param_name)
-          param_name = param_name.to_sym
-
-          scope :from_path_param, ->(param) { where(id: param.split("-").first) }
-
-          define_method :to_param do
-            return nil unless persisted?
-
-            "#{id}-#{send(param_name)}".parameterize
-          end
-        end
-
-        # Ransack
-
-        def ransackable_attributes(_auth_object = nil)
-          _ransackers.keys
-        end
-
-        def ransackable_associations(_auth_object = nil)
-          [] # reflect_on_all_associations.map { |a| a.name.to_s }
-        end
-
-        def ransortable_attributes(auth_object = nil)
-          ransackable_attributes(auth_object) + %w[id created_at updated_at]
-        end
-
-        def ransackable_scopes(_auth_object = nil)
-          []
-        end
-
         def resource_field_names
           @resource_field_names ||= belongs_to_association_field_names +
             has_one_attached_field_names + has_one_association_field_names +
@@ -127,6 +83,92 @@ module Plutonium
 
         def has_many_association_routes
           @has_many_association_routes ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
+        end
+
+        #
+        # Returns the strong parameters definition for the given attribute names
+        #
+        # @param [Array] *attributes Attribute names
+        #
+        # @return [Array] A strong parameters compatible array e.g.
+        #   [:title, :body, {:images=>[]}, {:docs=>[]}]
+        #
+        def strong_parameters_for(*attributes)
+          strong_parameters_definition.slice(*attributes).map { |key, value| value.nil? ? key : {key => value} }
+        end
+
+        # Ransack
+
+        def ransackable_attributes(_auth_object = nil)
+          _ransackers.keys
+        end
+
+        def ransackable_associations(_auth_object = nil)
+          [] # reflect_on_all_associations.map { |a| a.name.to_s }
+        end
+
+        def ransortable_attributes(auth_object = nil)
+          ransackable_attributes(auth_object) + %w[id created_at updated_at]
+        end
+
+        def ransackable_scopes(_auth_object = nil)
+          []
+        end
+
+        private
+
+        def strong_parameters_definition
+          # @strong_parameters ||= begin
+          @strong_parameters = begin
+            content_column_parameters = content_column_field_names.map do |name|
+              column = columns_hash[name.to_s]
+
+              type = nil
+              type = [] if column&.try(:array?)
+              type = {} if [:json, :jsonb].include?(column&.type)
+
+              [name, type]
+            end
+            parameters = content_column_parameters.to_h
+
+            # TODO: add nested support
+
+            parameters.merge! belongs_to_association_field_names.map { |name| [name, nil] }.to_h
+            parameters.merge! has_one_association_field_names.map { |name| [name, nil] }.to_h
+            parameters.merge! has_one_attached_field_names.map { |name| [name, nil] }.to_h
+
+            parameters.merge! has_many_association_field_names.map { |name| [name, []] }.to_h
+            parameters.merge! has_many_attached_field_names.map { |name| [name, []] }.to_h
+
+            # e.g. {:title=>nil, :body=>nil, :state=>nil, :created_at=>nil, :updated_at=>nil, :image=>nil, :images=>[]}
+            parameters
+          end
+        end
+
+        # Path parameters
+
+        def path_parameter(param_name)
+          param_name = param_name.to_sym
+
+          scope :from_path_param, ->(param) { where(param_name => param) }
+
+          define_method :to_param do
+            return nil unless persisted?
+
+            send param_name
+          end
+        end
+
+        def dynamic_path_parameter(param_name)
+          param_name = param_name.to_sym
+
+          scope :from_path_param, ->(param) { where(id: param.split("-").first) }
+
+          define_method :to_param do
+            return nil unless persisted?
+
+            "#{id}-#{send(param_name)}".parameterize
+          end
         end
       end
 

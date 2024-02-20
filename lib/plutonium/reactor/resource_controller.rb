@@ -58,10 +58,15 @@ module Plutonium
       end
       helper_method :resource_record
 
+      def submitted_resource_params
+        @submitted_resource_params ||= begin
+          strong_parameters = resource_class.strong_parameters_for(*permitted_attributes)
+          params.require(resource_param_key).permit(*strong_parameters).nilify.to_h
+        end
+      end
+
       def resource_params
-        # Example of documenting an ignore in the source code
-        # NOTE: Brakeman warning ignored for MassAssignment because inputs are filtered manually
-        input_params = params.require(resource_param_key).permit!.nilify.to_h
+        input_params = submitted_resource_params.dup
 
         # Override any entity scoping params
         input_params[scoped_entity_param_key] = current_scoped_entity if scoped_to_entity?
@@ -70,6 +75,7 @@ module Plutonium
         input_params[parent_input_param] = current_parent if current_parent.present?
         input_params[:"#{parent_input_param}_id"] = current_parent.id if current_parent.present?
 
+        # additionally filter our input_params through our inputs
         current_presenter.defined_inputs_for(permitted_attributes)
           .values.map { |input| input.collect input_params }
           .reduce(:merge)
@@ -79,6 +85,19 @@ module Plutonium
         resource_class.model_name.singular_route_key
       end
       helper_method :resource_param_key
+
+      # sets params on submitted_resource_params if they have been passed
+      def maybe_apply_submitted_resource_params!
+        # this is useful in dynamic forms as we can read the resource record to determine how to define our inputs
+        # we need to ensure that this is being called from get because
+        # it is potentially unsafe since we don't apply the input filter. see #resource_params
+        # would have been nice to be able to, but we can't until we have the presenter, and the presenter
+        # requires the resource_record for our dynamic forms
+        # is this perfect? no. but it works.
+        raise "🚨🚨🚨 this should be called from actions that are not persisting this data" unless request.method == "GET"
+
+        resource_record.attributes = submitted_resource_params if params[resource_param_key].present?
+      end
 
       # Layout
 

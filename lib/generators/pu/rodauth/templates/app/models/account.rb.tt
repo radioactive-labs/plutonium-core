@@ -13,13 +13,6 @@ class <%= table_prefix.camelize %> < ApplicationRecord
 
   # add attachments above.
 
-<% if ActiveRecord.version >= Gem::Version.new("7.0") -%>
-  enum :status, unverified: 1, verified: 2, closed: 3
-<% else -%>
-  enum status: { unverified: 1, verified: 2, closed: 3 }
-<% end -%>
-  # add misc attribute macros above.
-
   # add scopes above.
 
   validates :email, presence: true
@@ -28,6 +21,9 @@ class <%= table_prefix.camelize %> < ApplicationRecord
   # add callbacks above.
 
   # add delegations above.
+
+  enum :status, unverified: 1, verified: 2, closed: 3
+  # add misc attribute macros above.
 
   # add methods above.
 end

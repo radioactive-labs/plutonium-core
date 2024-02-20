@@ -202,6 +202,7 @@ module Plutonium
         end
 
         def interaction_params
+          # active interaction handles filtering so no need for strong params
           (params[:interaction] || {}).except(:resource, :resources)
         end
       end
