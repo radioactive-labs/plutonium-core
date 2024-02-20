@@ -1,5 +1,6 @@
 require "active_support"
 require_relative "plutonium/version"
+require_relative "plutonium/railtie"
 
 module Plutonium
   # require_relative "active_model/validations/array_validator"
