@@ -1,4 +1,4 @@
-# Plutonium: Take Your Rails Productivity Nuclear🚀!
+# Plutonium: Take Your Rails Productivity Nuclear🚀
 
 **Plutonium** picks up where Rails left off, introducing application level concepts and tooling, transforming the way you build applications with Rails.
 It's a culmination of lessons learned from years of developing nearly identical applications and is designed to save you from the drudgery of re-implementation.
