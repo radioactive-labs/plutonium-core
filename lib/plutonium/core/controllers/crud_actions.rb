@@ -36,17 +36,6 @@ module Plutonium
           render :new
         end
 
-        # GET /resources/1/edit
-        def edit
-          authorize resource_record
-
-          # set params if they have been passed
-          resource_record.attributes = params[resource_param_key].present? ? resource_params : {}
-          @form = build_form
-
-          render :edit
-        end
-
         # POST /resources(.{format})
         def create
           authorize resource_class
@@ -71,6 +60,17 @@ module Plutonium
               end
             end
           end
+        end
+
+        # GET /resources/1/edit
+        def edit
+          authorize resource_record
+
+          # set params if they have been passed
+          resource_record.attributes = params[resource_param_key].present? ? resource_params : {}
+          @form = build_form
+
+          render :edit
         end
 
         # PATCH/PUT /resources/1(.{format})
