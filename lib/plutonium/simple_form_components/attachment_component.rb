@@ -14,7 +14,7 @@ module Plutonium
           next if value.nil?
 
           template.concat begin
-            template.display_attachment_value value, identity_class: input_class, caption: true do |attachment|
+            template.display_attachment_value value, identity_class: input_class, caption: caption? do |attachment|
               [
                 # These hidden fields allow us to preserve the already uploaded files.
                 # For has_one_attached, it overrides the hidden field previously added
@@ -43,6 +43,10 @@ module Plutonium
 
       def multiple?
         options[:input_html] && options[:input_html][:multiple]
+      end
+
+      def caption?
+        options.key?(:caption) ? options[:caption] : true
       end
 
       def maybe_setup_direct_uploads
