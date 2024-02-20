@@ -4,7 +4,7 @@
     <%=
       render partial: 'toolbar_search_input', locals: {
         search_object: @collection.search_object,
-        search_field: nil
+        search_field: @collection.search_field
       }
     %>
     <%=

@@ -12,6 +12,10 @@ module Plutonium
         define_fields
       end
 
+      def search_field
+        nil
+      end
+
       private
 
       attr_reader :context

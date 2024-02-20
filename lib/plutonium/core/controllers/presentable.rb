@@ -34,7 +34,8 @@ module Plutonium
             fields: current_presenter.defined_renderers_for(presentable_attributes),
             actions: current_presenter.actions,
             pagination: @pagy,
-            search_object: @ransack
+            search_object: @ransack,
+            search_field: current_presenter.search_field
           )
         end
 
