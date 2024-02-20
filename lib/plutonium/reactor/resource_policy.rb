@@ -83,7 +83,7 @@ module Plutonium
       def autodetect_fields_for(method_name)
         maybe_warn_autodetect_usage method_name
 
-        context.resource_class.resource_field_names
+        context.resource_context.resource_class.resource_field_names
       end
 
       def maybe_warn_autodetect_usage(method)
@@ -95,7 +95,7 @@ module Plutonium
           Resource field auto-detection: #{self.class}##{method}
 
           Auto-detected resource fields result in security holes and will fail outside of development.
-          Override #{context.resource_class}Policy or #{self.class} with your own ##{method} method.
+          Override #{context.resource_context.resource_class}Policy or #{self.class} with your own ##{method} method.
 
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
         )

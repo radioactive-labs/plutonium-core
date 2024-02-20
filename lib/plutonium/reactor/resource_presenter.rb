@@ -4,8 +4,9 @@ module Plutonium
       include Plutonium::Core::Definers::FieldDefiner
       include Plutonium::Core::Definers::ActionDefiner
 
-      def initialize(context)
+      def initialize(context, resource_record)
         @context = context
+        @resource_record = resource_record
 
         define_standard_actions
         define_actions
@@ -18,7 +19,7 @@ module Plutonium
 
       private
 
-      attr_reader :context
+      attr_reader :context, :resource_record
 
       def define_fields
         # override this in child presenters for custom field definitions

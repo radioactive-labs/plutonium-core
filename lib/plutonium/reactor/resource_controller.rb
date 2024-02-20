@@ -115,9 +115,7 @@ module Plutonium
 
       def resource_context
         Plutonium::Reactor::ResourceContext.new(
-          user: current_user,
           resource_class:,
-          resource_record: @resource_record,
           parent: current_parent,
           scope: scoped_to_entity? ? current_scoped_entity : nil
         )

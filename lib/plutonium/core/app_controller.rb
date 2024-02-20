@@ -11,9 +11,9 @@ module Plutonium
 
       private
 
-      def resource_presenter(resource_class)
+      def resource_presenter(resource_class, resource_record)
         presenter_class = "#{current_package}::#{resource_class}Presenter".constantize
-        presenter_class.new resource_context
+        presenter_class.new resource_context, resource_record
       end
 
       def policy_namespace(scope)

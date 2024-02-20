@@ -10,12 +10,12 @@ module Plutonium
 
         private
 
-        def resource_presenter(resource_class)
+        def resource_presenter(resource_class, resource_record)
           raise NotImplementedError, "#{self.class}#resource_presenter"
         end
 
         def current_presenter
-          resource_presenter resource_class
+          resource_presenter resource_class, @resource_record
         end
 
         def presentable_attributes

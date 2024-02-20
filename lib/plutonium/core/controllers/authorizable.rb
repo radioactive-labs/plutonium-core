@@ -20,8 +20,15 @@ module Plutonium
           raise NotImplementedError, "policy_namespace"
         end
 
+        def policy_context
+          Plutonium::Reactor::PolicyContext.new(
+            user: current_user,
+            resource_context: resource_context
+          )
+        end
+
         def pundit_user
-          resource_context
+          policy_context
         end
 
         def policy(scope)
