@@ -5,8 +5,6 @@ module Plutonium
     # add railties here
 
     initializer "plutonium.achieve_criticality" do
-      # get the ball rolling
-      Plutonium::Reactor::Core.achieve_criticality!
     end
   end
 end
