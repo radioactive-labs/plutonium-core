@@ -88,8 +88,8 @@ module Plutonium
 
         def resource_field_names
           @resource_field_names ||= belongs_to_association_field_names +
-            has_one_attachment_field_names + has_one_association_field_names +
-            has_many_attachment_field_names + has_many_association_field_names +
+            has_one_attached_field_names + has_one_association_field_names +
+            has_many_attached_field_names + has_many_association_field_names +
             content_column_field_names
         end
 
@@ -99,25 +99,25 @@ module Plutonium
 
         def has_one_association_field_names
           @has_one_association_field_names ||= reflect_on_all_associations(:has_one)
-            .map { |assoc| /_attachment$|_blob$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .map { |assoc| /_attachment$|_blob$/.match?(assoc.name) ? nil : assoc.name }
             .compact
         end
 
         def has_many_association_field_names
           @has_many_association_field_names ||= reflect_on_all_associations(:has_many)
-            .map { |assoc| /_attachments$|_blobs$/.match?(assoc.name) ? nil : assoc.name.to_sym }
+            .map { |assoc| /_attachments$|_blobs$/.match?(assoc.name) ? nil : assoc.name }
             .compact
         end
 
-        def has_one_attachment_field_names
-          @has_one_attachment_field_names ||= reflect_on_all_associations(:has_one)
-            .map { |assoc| /_attachment$/.match?(assoc.name) ? assoc.name.to_s.gsub(/_attachment$/, "").to_sym : nil }
+        def has_one_attached_field_names
+          @has_one_attached_field_names ||= reflect_on_all_attachments
+            .map { |a| (a.macro == :has_one_attached) ? a.name : nil }
             .compact
         end
 
-        def has_many_attachment_field_names
-          @has_many_attachment_field_names ||= reflect_on_all_associations(:has_many)
-            .map { |assoc| /_attachments$/.match?(assoc.name) ? assoc.name.to_s.gsub(/_attachments$/, "").to_sym : nil }
+        def has_many_attached_field_names
+          @has_many_attached_field_names ||= reflect_on_all_attachments
+            .map { |a| (a.macro == :has_many_attached) ? a.name : nil }
             .compact
         end
 

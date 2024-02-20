@@ -5,13 +5,14 @@ module Plutonium
         extend ActiveSupport::Autoload
 
         eager_autoload do
-          autoload :AssociationInput
           autoload :AttachmentInput
-          autoload :BasicInput
-          autoload :BelongsToInput
+          autoload :Base
+          autoload :BelongsToAssociationInput
           autoload :Factory
-          autoload :HasManyInput
+          autoload :HasManyAssociationInput
           autoload :NoopInput
+          autoload :SimpleFormAssociationInput
+          autoload :SimpleFormInput
         end
       end
     end

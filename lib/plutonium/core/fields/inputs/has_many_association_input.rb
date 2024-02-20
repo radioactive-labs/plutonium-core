@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module Fields
       module Inputs
-        class HasManyInput < AssociationInput
+        class HasManyAssociationInput < SimpleFormAssociationInput
           private
 
           def param

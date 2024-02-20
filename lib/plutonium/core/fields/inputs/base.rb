@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module Fields
       module Inputs
-        class BasicInput
+        class Base
           attr_reader :name, :user_options
 
           def initialize(name, **user_options)
@@ -10,7 +10,9 @@ module Plutonium
             @user_options = user_options
           end
 
-          def render(f, record) = f.input name, **options
+          def render(f, record)
+            raise NotImplementedError, "#{self.class}#render"
+          end
 
           def collect(params)
             # Handles multi parameter attributes

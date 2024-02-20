@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module Fields
       module Inputs
-        class AssociationInput < BasicInput
+        class SimpleFormAssociationInput < Base
           attr_reader :reflection
 
           def initialize(name, reflection:, **user_options)
