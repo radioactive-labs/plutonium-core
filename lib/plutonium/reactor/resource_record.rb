@@ -94,7 +94,16 @@ module Plutonium
         #   [:title, :body, {:images=>[]}, {:docs=>[]}]
         #
         def strong_parameters_for(*attributes)
-          strong_parameters_definition.slice(*attributes).map { |key, value| value.nil? ? key : {key => value} }
+          # {:name=>{:name=>nil}, :body=>{:body=>nil}, :cover_image=>{:cover_image=>nil}, :comments=>{:comment_ids=>[]}}
+          strong_parameters_definition
+            # {:name=>{:name=>nil}, :comments=>{:comment_ids=>[]}, :cover_image=>{:cover_image=>nil}}
+            .slice(*attributes)
+            # [{:name=>nil}, {:comment_ids=>[]}, {:cover_image=>nil}]
+            .values
+            # {:name=>nil, :comment_ids=>[], :cover_image=>nil}
+            .reduce(:merge)
+            # [:name, {:comment_ids=>[]}, :cover_image]
+            .map { |key, value| value.nil? ? key : {key => value} }
         end
 
         # Ransack
@@ -127,20 +136,28 @@ module Plutonium
               type = [] if column&.try(:array?)
               type = {} if [:json, :jsonb].include?(column&.type)
 
-              [name, type]
+              [name, {name => type}]
             end
             parameters = content_column_parameters.to_h
 
             # TODO: add nested support
 
-            parameters.merge! belongs_to_association_field_names.map { |name| [name, nil] }.to_h
-            parameters.merge! has_one_association_field_names.map { |name| [name, nil] }.to_h
-            parameters.merge! has_one_attached_field_names.map { |name| [name, nil] }.to_h
+            # TODO:
+            parameters.merge! reflect_on_all_associations(:belongs_to)
+              .map { |reflection|
+                                input_param = (reflection.respond_to?(:options) && reflection.options[:foreign_key]) || :"#{reflection.name}_id"
+                                [reflection.name, {input_param => nil}]
+                              }
+              .to_h
 
-            parameters.merge! has_many_association_field_names.map { |name| [name, []] }.to_h
-            parameters.merge! has_many_attached_field_names.map { |name| [name, []] }.to_h
+            parameters.merge! has_one_association_field_names.map { |name| [name, {name => nil}] }.to_h
+            parameters.merge! has_one_attached_field_names.map { |name| [name, {name => nil}] }.to_h
 
-            # e.g. {:title=>nil, :body=>nil, :state=>nil, :created_at=>nil, :updated_at=>nil, :image=>nil, :images=>[]}
+            parameters.merge! has_many_association_field_names.map { |name| [name, {"#{name.to_s.singularize}_ids": []}] }.to_h
+            parameters.merge! has_many_attached_field_names.map { |name| [name, {name: []}] }.to_h
+
+            # e.g.
+            # {:name=>{:name=>nil}, :cover_image=>{:cover_image=>nil}, :user=>{:user_id=>nil} :comments=>{:comment_ids=>[]}}
             parameters
           end
         end
