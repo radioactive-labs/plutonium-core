@@ -1,4 +1,23 @@
 <% module_namespacing do -%>
 class <%= class_name %>Policy < <%= [feature_package_name, "ResourcePolicy"].join "::" %>
+  # Core actions
+
+  def create?
+    true
+  end
+
+  def read?
+    true
+  end
+
+  # Core attributes
+
+  def permitted_attributes_for_create
+    <%= (class_name.constantize.resource_field_names - [:created_at, :updated_at]).inspect %>
+  end
+
+  def permitted_attributes_for_read
+    <%= class_name.constantize.resource_field_names.inspect %>
+  end
 end
 <% end -%>

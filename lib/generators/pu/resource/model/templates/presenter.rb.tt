@@ -1,4 +1,18 @@
 <% module_namespacing do -%>
 class <%= class_name %>Presenter < <%= [feature_package_name, "ResourcePresenter"].join "::" %>
+  def search_field
+    # ransack search field
+    nil
+  end
+
+  private
+
+  def define_fields
+    # custom field definitions
+  end
+
+  def define_actions
+    # custom action definitions
+  end
 end
 <% end -%>

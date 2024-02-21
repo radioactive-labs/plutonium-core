@@ -103,7 +103,7 @@ module Plutonium
             # {:name=>nil, :comment_ids=>[], :cover_image=>nil}
             .reduce(:merge)
             # [:name, {:comment_ids=>[]}, :cover_image]
-            .map { |key, value| value.nil? ? key : {key => value} }
+            &.map { |key, value| value.nil? ? key : {key => value} } || {}
         end
 
         # Ransack

@@ -9,19 +9,19 @@ module Plutonium
       # Core actions
 
       def create?
-        true
+        false
       end
 
       def read?
-        true
+        false
       end
 
       def update?
-        true
+        create?
       end
 
       def destroy?
-        true
+        create?
       end
 
       # Inferred actions
@@ -45,7 +45,7 @@ module Plutonium
       # Core attributes
 
       def permitted_attributes_for_create
-        autodetect_fields_for :permitted_attributes_for_create
+        autodetect_fields_for(:permitted_attributes_for_create) - [context.resource_context.resource_class.primary_key.to_sym, :created_at, :updated_at]
       end
 
       def permitted_attributes_for_read
@@ -74,9 +74,9 @@ module Plutonium
         permitted_attributes_for_update
       end
 
-      def permitted_associations
-        []
-      end
+      # def permitted_associations
+      #   []
+      # end
 
       private
 
