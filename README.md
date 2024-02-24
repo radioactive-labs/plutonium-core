@@ -1,5 +1,7 @@
 # Plutonium: Take Your Rails Productivity Nuclear🚀
 
+[![Ruby](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml/badge.svg)](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml)
+
 **Plutonium** picks up where Rails left off, introducing application level concepts and tooling, transforming the way you build applications with Rails.
 It's a culmination of lessons learned from years of developing nearly identical applications and is designed to save you from the drudgery of re-implementation.
 
