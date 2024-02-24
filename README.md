@@ -1,4 +1,4 @@
-# Plutonium: Take Your Rails Productivity Nuclear🚀
+# Plutonium: Nuclear ☢️ Reactor Included
 
 [![Ruby](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml/badge.svg)](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml)
 
@@ -8,7 +8,7 @@ It's a culmination of lessons learned from years of developing nearly identical 
 **Why Choose Plutonium?**
 
 - **Efficiency by Design:** Plutonium is built for developers who demand efficiency without compromise. It automates 90% of your application needs while giving you the flexibility to tailor the remaining 10% to your specific requirements.
-- **Comprehensive Features:** From authentication and authorization to CRUD operations, and beyond, Plutonium covers a wide array of functionalities out of the box:
+- **Comprehensive Features:** Plutonium covers a wide array of functionalities out of the box:
   - Authentication & Authorization
   - Complete CRUD operations with advanced features: customizable inputs, fields, tables, forms, pagination, actions, search, filtering, and nested resources.
   - Modular architecture leveraging Rails engines for improved packaging and namespacing.
