@@ -1,6 +1,6 @@
 require "active_support"
 require_relative "plutonium/version"
-require_relative "plutonium/railtie"
+require_relative "plutonium/railtie" if defined?(Rails::Railtie)
 
 module Plutonium
   # require_relative "active_model/validations/array_validator"

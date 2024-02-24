@@ -277,9 +277,9 @@ PLATFORMS
 DEPENDENCIES
   brakeman
   plutonium!
-  rake (~> 13.0)
-  rspec (~> 3.0)
-  standard (~> 1.3)
+  rake
+  rspec
+  standard
 
 BUNDLED WITH
    2.5.3

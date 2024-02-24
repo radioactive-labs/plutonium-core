@@ -40,8 +40,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "simple_form", "~> 5.3"
   spec.add_dependency "rabl", "~> 0.16.1" # TODO: what to do with RABL
 
-  spec.add_development_dependency "brakeman"
-
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end
