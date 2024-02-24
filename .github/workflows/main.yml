@@ -27,3 +27,5 @@ jobs:
         run: bundle exec standardrb
       - name: Analyze ruby
         run: bundle exec brakeman -i brakeman.ignore
+      - name: Audit bundle
+        run: bundle exec bundle-audit

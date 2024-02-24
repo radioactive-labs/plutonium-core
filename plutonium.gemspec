@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description = "Plutonium extends Rails' capabilities with a powerful, generator-driven toolkit designed to supercharge your development process. " \
                      "It transforms the way you build applications with Rails, optimizing for rapid application development."
   spec.homepage = "https://github.com/radioactive-labs/plutonium-core"
-  spec.license = nil
+  spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.2"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "rails", ">= 7.1.2"
+  spec.add_dependency "rails", ">= 7.1"
   spec.add_dependency "listen", "~> 3.8"
   spec.add_dependency "active_interaction", "~> 5.3"
   spec.add_dependency "pundit", "~> 2.3"

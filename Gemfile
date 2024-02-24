@@ -7,3 +7,4 @@ gem "rake", require: false
 gem "rspec", require: false
 gem "standard", require: false
 gem "brakeman", require: false
+gem "bundle-audit", require: false
