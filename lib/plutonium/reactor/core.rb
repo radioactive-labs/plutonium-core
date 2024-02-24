@@ -9,15 +9,6 @@ module Plutonium
           require file
         end
 
-        # setup a middleware to serve our assets
-        Rails.application.config.middleware.insert_before(
-          ActionDispatch::Static,
-          Rack::Static,
-          urls: ["/plutonium-assets"],
-          root: Plutonium.root.join("public"),
-          cascade: true
-        )
-
         start_reloader!
       end
 
