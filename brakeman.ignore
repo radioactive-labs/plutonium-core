@@ -20,9 +20,9 @@
       "cwe_id": [
         352
       ],
-      "note": "this is tested and confirmed to be a false flag"
-    },
+      "note": "Tests confirm csrf tokens are being verified. False flag."
+    }
   ],
-  "updated": "2024-02-18 00:37:39 +0000",
+  "updated": "2024-02-24 17:32:51 +0000",
   "brakeman_version": "6.1.2"
 }
