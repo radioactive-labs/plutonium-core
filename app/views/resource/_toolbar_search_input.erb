@@ -1,9 +1,5 @@
-<%
-  # locals: {
-  #   search_object: "the object to build the search form for",
-  #   search_field: "search input field name",
-  # }
-%>
+<%# locals: (search_object:, search_field:) -%>
+
 <%= search_form_for adapt_route_args(search_object), class: "d-inline", html: { data: { controller: "form", turbo_frame: nil } } do |f| %>
   <label for="search" class="visually-hidden">Search</label>
   <% if search_field.present? %>

@@ -1,3 +1,5 @@
+<%# locals: (sidebar_menu:) -%>
+
 <div class="offcanvas-md offcanvas-start" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel">
   <div class="offcanvas-header">
     <h5 class="offcanvas-title" id="sidebarLabel"> </h5>
@@ -5,7 +7,7 @@
   </div>
   <div class="offcanvas-body">
     <div class="flex-shrink-0 ps-3">
-      <%= render "sidebar_menu", sidebar_menu: @sidebar_menu %>
+      <%= render "sidebar_menu", sidebar_menu: sidebar_menu %>
     </div>
   </div>
 </div>

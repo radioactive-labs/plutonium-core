@@ -1,7 +1,0 @@
-# frozen_string_literal: true
-
-module AdminResources
-  class <%= resource_name_plural %>Controller < ResourceController
-    controller_for ::<%= resource_name %>
-  end
-end

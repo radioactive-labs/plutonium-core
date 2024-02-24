@@ -21,12 +21,12 @@
     <%= modal_frame_tag do %>
       <%= yield(:modal) %>
     <% end %>
-    <%= render "messages" %>
+    <%= render "flash" %>
     <%= content_for?(:header) ? yield(:header) : render("header") %>
     <div class="container-fluid">
       <div class="row">
         <div class="col-12 col-sm-3 col-xl-2 pt-2">
-          <%= render 'sidebar' %>
+          <%= render "sidebar", sidebar_menu: @sidebar_menu %>
         </div>
         <div class="col-12 col-sm-9 col-xl-10 pt-2">
           <div class="container-fluid">
@@ -38,6 +38,6 @@
         </div>
       </div>
     </div>
-    <%= render 'color_modes' %>
+    <%= render "color_modes" %>
   </body>
 </html>

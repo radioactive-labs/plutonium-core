@@ -1,9 +1,5 @@
-<%
-  # locals: {
-  #   resource: "the resource to generate actions for",
-  #   actions: "list of actions to generate",
-  # }
-%>
+<%# locals: (resource:, actions:) -%>
+
 <% actions.values.each do |action| %>
   <%=
     table_action_button adapt_route_args(resource, action: action.route_options.action, **action.route_options.options),

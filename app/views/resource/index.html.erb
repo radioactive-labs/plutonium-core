@@ -1,14 +1,13 @@
 <% content_for :toolbar do %>
-  <%= render 'toolbar', resource_class: resource_class,
-                        parent: current_parent do %>
+  <%= render "toolbar", resource_class: resource_class, parent: current_parent do %>
     <%=
-      render partial: 'toolbar_search_input', locals: {
+      render partial: "toolbar_search_input", locals: {
         search_object: @collection.search_object,
         search_field: @collection.search_field
       }
     %>
     <%=
-      render partial: 'toolbar_actions', locals: {
+      render partial: "toolbar_actions", locals: {
         actions: @collection.actions.collection_actions.permitted_for(policy(resource_class)),
         resource: resource_class
       }
@@ -16,4 +15,4 @@
   <% end %>
 <% end %>
 
-<%= render 'table', table: @collection %>
+<%= render "resource_table", collection: @collection %>

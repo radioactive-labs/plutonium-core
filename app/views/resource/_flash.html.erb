@@ -1,9 +1,1 @@
-<% flash.each do |type, msg| %>
-  <%
-    type = { alert: :danger, warning: :warning, success: :success }[type.to_sym] || :primary
-  %>
-  <div class="alert alert-<%= type %> alert-dismissible fade show" role="alert" data-turbo-temporary>
-    <%= msg %>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
-    </div>
-  <% end %>
+<%= render "flash_toasts" %>

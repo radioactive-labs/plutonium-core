@@ -1,3 +1,3 @@
 object @resource_record
 
-extends "_resource"
+extends "_resource_details"

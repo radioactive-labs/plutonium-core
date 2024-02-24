@@ -1,18 +1,17 @@
-<%
-  # locals: {
-  #   table: "instance of Plutonium::UI::Builder::Collection"
-  # }
+<%# locals: (collection:) -%>
 
-  resource_class = table.resource_class
-  resources = table.records.to_a
-  record_actions = table.actions.collection_record_actions
-  search_object = table.search_object
-%>
+<%
+  resource_class = collection.resource_class
+  resources = collection.records.to_a
+  record_actions = collection.actions.collection_record_actions
+  search_object = collection.search_object
+-%>
+
 <div class="row">
   <% unless resources.any? %>
     <div class="col-12">
       <%=
-        render 'empty_card', message: "You have no #{resource_name_plural(resource_class).downcase}" do
+        render "empty_card", message: "You have no #{resource_name_plural(resource_class).downcase}" do
           if policy(resource_class).create?
             link_to "Create #{resource_name(resource_class)}", adapt_route_args(resource_class, action: :new), class: 'btn btn-outline-primary'
           end
@@ -25,7 +24,7 @@
         <thead class="sticky-top">
           <tr>
             <th scope="col" class="text-center resource-table-col-id"><%= sort_link(search_object, :id, '#', class: "text-decoration-none") %></th>
-            <% table.fields.each do |name, field| %>
+            <% collection.fields.each do |name, field| %>
               <th scope="col" class="resource-table-col-attr">
                 <% if resource_class.ransortable_attributes.include? name.to_s %>
                   <%= sort_link(search_object, name, field.label, class: "text-decoration-none") %>
@@ -47,7 +46,7 @@
                   <%= resource.to_param %>
                 <% end %>
               </td>
-              <% table.fields.each do |name, field| %>
+              <% collection.fields.each do |name, field| %>
                 <%
                   options = field.options
                   max_width = options.delete :pu_max_width
@@ -58,7 +57,7 @@
               <% end %>
               <td class="text-center resource-table-cell-actions">
                 <%=
-                render partial: 'table_actions', locals: {
+                render partial: "resource_table_actions", locals: {
                   actions: record_actions.permitted_for(policy(resource)),
                   resource: resource
                 }
@@ -69,9 +68,9 @@
         </tbody>
       </table>
     </div>
-    <% if table.pagination.present? %>
+    <% if collection.pager.present? %>
       <div class="col-12">
-        <%= render 'pagination', pagination: table.pagination %>
+        <%= render "pagination", pager: collection.pager %>
       </div>
     <% end  %>
   <% end %>

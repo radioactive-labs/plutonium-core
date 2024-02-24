@@ -1,9 +1,9 @@
 <% content_for :toolbar do %>
-  <%= render 'toolbar', resource_class: resource_class,
+  <%= render "toolbar", resource_class: resource_class,
                         resource: @detail.record,
                         parent: current_parent do %>
     <%=
-      render partial: 'toolbar_actions', locals: {
+      render partial: "toolbar_actions", locals: {
         actions: @detail.actions.record_actions.permitted_for(policy(@detail.record)),
         resource: @detail.record
       }
@@ -11,4 +11,4 @@
   <% end %>
 <% end %>
 
-<%= render "resource", details: @detail %>
+<%= render "resource_details", details: @detail %>

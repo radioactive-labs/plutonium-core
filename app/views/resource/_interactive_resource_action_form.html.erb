@@ -1,8 +1,5 @@
-<%#
-  locals: {
-    interactive_action
-  }
-%>
+<%# locals: (interactive_action:) -%>
+
 <% if current_turbo_frame == 'modal' %>
   <%= turbo_frame_tag "modal" do %>
     <div class="modal " tabindex="-1" data-controller="modal">

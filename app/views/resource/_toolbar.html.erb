@@ -1,20 +1,8 @@
-<%
-  # locals: {
-  #   parent?: "parent of the resource to render toolbar for",
-  #   resource?: "resource to render toolbar for",
-  #   resource_class: "Class of resource being rendered",
-  # }
+<%# locals: (resource_class: , resource: nil, parent: nil) -%>
 
-  resource = nil unless local_assigns[:resource].present?
-  associations = nil unless local_assigns[:associations].present?
-%>
 <div class="row justify-content-between py-2 mb-3 border-bottom">
   <div class="col-sm-6">
-    <%= render partial: 'toolbar_breadcrumbs', locals: {
-                                                  resource: resource,
-                                                  resource_class: resource_class,
-                                                  parent: parent
-                                                } %>
+    <%= render partial: "toolbar_breadcrumbs", locals: { resource:, resource_class:, parent: } %>
   </div>
   <div class="col-sm-6 text-end">
     <%= yield %>
