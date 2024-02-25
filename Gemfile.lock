@@ -7,7 +7,7 @@ PATH
       pagy (~> 6.2)
       pundit (~> 2.3)
       rabl (~> 0.16.1)
-      rails (>= 7.1)
+      rails (>= 7.1, < 8.0)
       ransack (~> 4.1)
       simple_form (~> 5.3)
 
