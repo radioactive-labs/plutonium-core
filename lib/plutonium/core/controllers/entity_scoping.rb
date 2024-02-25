@@ -30,7 +30,7 @@ module Plutonium
         def scoped_entity_session_key
           ensure_legal_entity_scoping_method_access! :scoped_entity_session_key
 
-          :scoped_entity_id
+          :"#{current_package.name.underscore}__scoped_entity_id"
         end
 
         def current_scoped_entity

@@ -4,35 +4,25 @@ module Plutonium
       module Bootable
         extend ActiveSupport::Concern
 
-        included do
-          class_attribute :package
-          class_attribute :resource_class, instance_writer: false, instance_predicate: false
-
-          helper_method :resource_class
-        end
-
         class_methods do
-          def current_engine
-            "#{package}::Engine".constantize
-          end
+          attr_reader :package, :current_engine
 
           private
 
           def boot(package)
-            self.package = package
+            raise "#{self.class} has been already booted" if defined?(@package) || defined?(@current_engine)
+
+            @package = package
+            @current_engine = "#{package}::Engine".constantize
 
             prepend_view_path current_engine.paths["app/views"].first
-          end
-
-          def controller_for(resource_class)
-            self.resource_class = resource_class
           end
         end
 
         private
 
         def current_engine
-          @current_engine ||= self.class.current_engine
+          self.class.current_engine
         end
 
         def current_package

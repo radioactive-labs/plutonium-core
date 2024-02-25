@@ -9,9 +9,9 @@ module Plutonium
       end
 
       class_methods do
-        attr_reader :scoped_entity_class, :scoped_entity_param_key, :scoped_entity_strategy
+        attr_reader :scoped_entity_class, :scoped_entity_strategy, :scoped_entity_param_key
 
-        def scope_to_entity(entity_class, param_key: nil, strategy: :path)
+        def scope_to_entity(entity_class, strategy: :path, param_key: nil)
           @scoped_entity_class = entity_class
           @scoped_entity_strategy = strategy
           @scoped_entity_param_key = param_key || entity_class.model_name.singular_route_key.to_sym

@@ -13,7 +13,6 @@ module Plutonium
       abstract!
 
       include Pagy::Backend
-      include Plutonium::Core::Controllers::Bootable
       include Plutonium::Core::Controllers::Authorizable
       include Plutonium::Core::Controllers::Presentable
 
@@ -44,6 +43,16 @@ module Plutonium
 
       # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
       after_action { pagy_headers_merge(@pagy) if @pagy }
+
+      # Controller Resource
+
+      # we use class attribute since we want this value inherited
+      class_attribute :resource_class, instance_writer: false, instance_predicate: false
+      helper_method :resource_class
+
+      def self.controller_for(resource_class)
+        self.resource_class = resource_class
+      end
 
       private
 

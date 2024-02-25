@@ -3,6 +3,7 @@ module Plutonium
     module AppController
       extend ActiveSupport::Concern
       include Plutonium::Core::Controllers::EntityScoping
+      include Plutonium::Core::Controllers::Bootable
 
       included do
         helper_method :current_parent
