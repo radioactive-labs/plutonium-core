@@ -28,7 +28,7 @@ module Pu
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
         template "config/routes.rb", "packages/#{package_namespace}/config/routes.rb"
 
-        %w[controllers interactions policies presenters].each do |dir|
+        %w[controllers policies presenters].each do |dir|
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
         end
         create_file "packages/#{package_namespace}/app/views/#{package_namespace}/.keep"
