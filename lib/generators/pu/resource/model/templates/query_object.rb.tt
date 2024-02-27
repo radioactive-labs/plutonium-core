@@ -1,0 +1,17 @@
+<% module_namespacing do -%>
+class <%= class_name %>QueryObject < <%= [feature_package_name, "ResourceQueryObject"].join "::" %>
+  private
+
+  def define_filters
+    # define custom filters
+  end
+
+  def define_scopes
+    # define custom scopes
+  end
+
+  def define_sorters
+    # define custom sorters
+  end
+end
+<% end -%>

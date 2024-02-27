@@ -1,0 +1,3 @@
+class <%= app_namespace %>::<%= resource_class %>QueryObject < ::<%= resource_class %>QueryObject
+  include <%= app_namespace %>::ResourceQueryObject
+end
