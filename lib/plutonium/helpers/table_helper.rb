@@ -16,7 +16,7 @@ module Plutonium
             end
             if sort_params[:position].present?
               concat " "
-              concat link_to(sort_params[:position], sort_params[:reset_url],
+              concat link_to(sort_params[:position] + 1, sort_params[:reset_url],
                 class: "badge rounded-pill text-bg-secondary text-decoration-none", title: "remove sorting",
                 style: "font-size: 0.6em;")
             end
