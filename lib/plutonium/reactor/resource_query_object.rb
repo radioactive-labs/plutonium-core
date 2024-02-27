@@ -7,6 +7,26 @@ module Plutonium
       class Query
         include Plutonium::Core::Definers::InputDefiner
 
+        def apply(scope, params)
+          params = extract_query_params params
+
+          if input_definitions.size == params.size
+            apply_internal scope, params
+          else
+            scope
+          end
+        end
+
+        private
+
+        def apply_internal(scope, params)
+          raise NotImplementedError, "#{self.class}#apply_internal"
+        end
+
+        def extract_query_params(params)
+          input_definitions.collect_all(params).symbolize_keys
+        end
+
         def resource_class = nil
       end
 
@@ -18,15 +38,10 @@ module Plutonium
           yield self if block_given?
         end
 
-        def apply(scope, params)
-          if input_definitions.present?
-            query_params = input_definitions.collect_all(params).symbolize_keys
-            return scope if query_params.blank?
-          else
-            query_params = {}
-          end
+        private
 
-          scope.send name, **query_params
+        def apply_internal(scope, params)
+          scope.send name, **params
         end
       end
 
@@ -38,8 +53,12 @@ module Plutonium
           yield self if block_given?
         end
 
-        def apply(scope)
-          scope.instance_exec(&block)
+        def apply_internal(scope, params)
+          if body.arity == 1
+            body.call scope
+          else
+            body.call scope, **params
+          end
         end
       end
 
@@ -54,6 +73,7 @@ module Plutonium
         define_standard_queries
         define_scopes
         define_filters
+        define_sorters
       end
 
       def build_url(**options)
@@ -61,18 +81,44 @@ module Plutonium
         q = {}
         q = q.merge(search.input_definitions.collect_all(@params)) if search.present?
         q[:scope] = @params[:scope] if scope_definitions[@params[:scope]]
+        q[:sort_directions] = @params[:sort_directions].dup if @params[:sort_directions].present?
+        q[:sort_fields] = selected_sorters.dup if selected_sorters.present?
 
         # overrides
         q[:search] = options[:search] if options.key?(:search)
         q[:scope] = options[:scope] if options.key?(:scope)
 
-        query_params = {q: q}.to_param
-        "?#{query_params}"
+        if (sort = options[:sort])
+          q[:sort_fields] ||= []
+          q[:sort_directions] ||= {}
+
+          q[:sort_fields] << sort.to_s unless q[:sort_fields].include?(sort.to_s)
+
+          sort_direction = @params[:sort_directions].try(:[], sort)&.upcase
+
+          if sort_direction.nil?
+            q[:sort_directions][sort] = "ASC"
+          elsif sort_direction == "ASC"
+            q[:sort_directions][sort] = "DESC"
+          else
+            q[:sort_directions].delete sort
+            q[:sort_fields].delete_if { |e| e == sort.to_s }
+          end
+        end
+
+        "?#{{q: q}.to_param}"
       end
 
       def apply(scope)
         scope = search.apply(scope, @params) if search.present?
         scope = scope_definitions[@params[:scope]].apply(scope, @params) if scope_definitions[@params[:scope]].present?
+        selected_sorters.each do |name|
+          sorter = sort_definitions[name]
+          next unless sorter.present?
+
+          params = {direction: @params[:sort_directions].try(:[], name)}
+          scope = sorter.apply(scope, params)
+        end
         scope
       end
 
@@ -80,16 +126,34 @@ module Plutonium
 
       def filter_definitions = @filter_definitions ||= {}.with_indifferent_access
 
+      def sort_definitions = @sort_definitions ||= {}.with_indifferent_access
+
+      def sort_params_for(name)
+        return unless sort_definitions[name]
+
+        # TODO: refactor this. make it cleaner and adhere to sortinng param invariants
+        {
+          url: build_url(sort: name),
+          position: selected_sorters.index(name.to_s),
+          direction: @params[:sort_directions].try(:[], name)
+        }
+      end
+
       private
 
       attr_reader :context
 
+      def selected_sorters
+        @selected_sorters ||= @params[:sort_fields] || []
+      end
+
       def define_filters
-        # define_filter :search, -> { where(name:) }
       end
 
       def define_scopes
-        # s
+      end
+
+      def define_sorters
       end
 
       def define_standard_queries
@@ -101,14 +165,31 @@ module Plutonium
         filter_definitions[name] = build_query(body, &block)
       end
 
-      def define_scope(name, body = nil, &block)
+      def define_scope(name, body = nil)
         body ||= name
-        scope_definitions[name] = build_query(body, &block)
+        scope_definitions[name] = build_query(body)
+      end
+
+      def define_sort(name, body = nil)
+        if body.nil?
+          sort_field = if resource_class.content_column_field_names.include? name
+            name
+          elsif resource_class.belongs_to_association_field_names.include? name
+            Comment.reflect_on_association(name).foreign_key.to_sym
+          else
+            raise "Unable to determine sort logic for '#{body}'"
+          end
+          body = lambda { |scope, direction:| scope.order(sort_field => direction) }
+        end
+
+        sort_definitions[name] = build_query(body) do |query|
+          query.define_input :direction
+        end
       end
 
       def define_search(body)
-        @search = build_query(body) do |filter|
-          filter.define_input :search
+        @search = build_query(body) do |query|
+          query.define_input :search
         end
       end
 

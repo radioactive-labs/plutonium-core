@@ -27,11 +27,17 @@
         <table class="table table-hover table-striped my-0">
           <thead>
             <tr>
-              <th scope="col" class="text-center resource-table-col-id"><%= sort_link(search_object, :id, '#', class: "text-decoration-none") %></th>
+              <th scope="col" class="text-center resource-table-col-id">
+                <% if sort_params = search_object.sort_params_for(:id) %>
+                  <%= link_to "#", sort_params[:url] %>
+                <% else %>
+                  #
+                <% end %>
+              </th>
               <% collection.fields.each do |name, field| %>
                 <th scope="col" class="resource-table-col-attr">
-                  <% if resource_class.ransortable_attributes.include? name.to_s %>
-                    <%= sort_link(search_object, name, field.label, class: "text-decoration-none") %>
+                  <% if sort_params = search_object.sort_params_for(name) %>
+                    <%= link_to "#{sort_params[:position]} #{field.label} #{sort_params[:direction]}", sort_params[:url] %>
                   <% else %>
                     <%= field.label %>
                   <% end %>
