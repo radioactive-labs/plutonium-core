@@ -10,7 +10,7 @@ It's a culmination of lessons learned from years of developing nearly identical 
 - **Efficiency by Design:** Plutonium is built for developers who demand efficiency without compromise. It automates 90% of your application needs while giving you the flexibility to tailor the remaining 10% to your specific requirements.
 - **Comprehensive Features:** Plutonium covers a wide array of functionalities out of the box:
   - Authentication & Authorization
-  - Complete CRUD operations with advanced features: customizable inputs, fields, tables, forms, pagination, actions, search, filtering, and nested resources.
+  - Complete CRUD operations with advanced features: customizable inputs, fields, tables, forms, pagination, actions, search, scopes, filtering, nested resources and much more.
   - Modular architecture leveraging Rails engines for improved packaging and namespacing.
   - Time-saving generators for boilerplate tasks.
 - **Omakase with a Twist:** Inspired by Rails' omakase philosophy, Plutonium delivers a convention-based approach but doesn't box you in. It's seamlessly integrated into your project, allowing you to write your application as you would with vanilla Rails but with powerful extensions.
@@ -21,7 +21,6 @@ It's a culmination of lessons learned from years of developing nearly identical 
   - [ActiveInteraction](https://github.com/AaronLasseigne/active_interaction) for business logic
   - [Pagy](https://github.com/ddnexus/pagy) for pagination
   - [Pundit](https://github.com/varvet/pundit) for authorization
-  - [ransack](https://github.com/activerecord-hackery/ransack) for searching
   - [Simple Form](https://github.com/heartcombo/simple_form) for forms
   - [Rodauth](https://github.com/jeremyevans/rodauth) (via [rodauth-rails](https://github.com/janko/rodauth-rails)) for authentication. Rodauth is optional, allowing flexibility in choosing your auth solution
 

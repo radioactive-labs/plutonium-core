@@ -1,6 +1,5 @@
 require "action_controller"
 require "pagy"
-require "ransack"
 
 require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root)
 using Plutonium::Refinements::ParameterRefinements
