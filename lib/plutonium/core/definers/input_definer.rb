@@ -10,12 +10,32 @@ module Plutonium
             @hash = hash
           end
 
-          def collect_all(params)
-            values.map { |input| input.collect params }.reduce(:merge)
+          def []=(key, value)
+            hash[key] = value
+          end
+
+          def [](key)
+            hash[key]
           end
 
           def slice(*)
             self.class.new(hash.slice(*))
+          end
+
+          def collect_all(params)
+            hash.values.map { |input| input.collect params }.reduce(:merge) || {}
+          end
+
+          def size
+            hash.size
+          end
+
+          def keys
+            hash.keys
+          end
+
+          def values
+            hash.values
           end
 
           private

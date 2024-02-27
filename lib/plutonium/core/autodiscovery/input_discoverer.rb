@@ -6,8 +6,6 @@ module Plutonium
         include Discoverer
 
         class_methods do
-          private
-
           def autodiscovery_input_cache = @autodiscovery_input_cache ||= {}
         end
 

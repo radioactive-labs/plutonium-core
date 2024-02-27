@@ -6,8 +6,6 @@ module Plutonium
         include Discoverer
 
         class_methods do
-          private
-
           def autodiscovery_renderer_cache = @autodiscovery_renderer_cache ||= {}
         end
 
