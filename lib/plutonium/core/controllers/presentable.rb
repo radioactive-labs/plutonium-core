@@ -11,11 +11,12 @@ module Plutonium
         private
 
         def resource_presenter(resource_class, resource_record)
-          raise NotImplementedError, "#{self.class}#resource_presenter"
+          presenter_class = "#{resource_class}Presenter".constantize
+          presenter_class.new resource_context, resource_record
         end
 
         def current_presenter
-          resource_presenter resource_class, @resource_record
+          @current_presenter ||= resource_presenter resource_class, @resource_record
         end
 
         def presentable_attributes
@@ -31,11 +32,10 @@ module Plutonium
           Plutonium::Core::UI::Collection.new(
             resource_class:,
             records: @resource_records,
-            fields: current_presenter.defined_renderers_for(presentable_attributes),
+            fields: current_presenter.defined_renderers_for(*presentable_attributes),
             actions: current_presenter.actions,
             pager: @pagy,
-            search_object: @ransack,
-            search_field: current_presenter.search_field
+            search_object: @search_object
           )
         end
 
@@ -43,7 +43,7 @@ module Plutonium
           Plutonium::Core::UI::Detail.new(
             resource_class:,
             record: resource_record,
-            fields: current_presenter.defined_renderers_for(presentable_attributes),
+            fields: current_presenter.defined_renderers_for(*presentable_attributes),
             actions: current_presenter.actions
           )
         end
@@ -51,7 +51,7 @@ module Plutonium
         def build_form
           Plutonium::Core::UI::Form.new(
             record: resource_record,
-            inputs: current_presenter.defined_inputs_for(presentable_attributes)
+            inputs: current_presenter.defined_inputs_for(*presentable_attributes)
           )
         end
       end

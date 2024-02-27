@@ -12,6 +12,7 @@ module Plutonium
           after_action :verify_policy_scoped, except: %i[new create]
 
           helper_method :permitted_attributes
+          helper_method :current_policy
         end
 
         private

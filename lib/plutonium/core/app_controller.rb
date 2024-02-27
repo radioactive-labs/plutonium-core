@@ -17,6 +17,11 @@ module Plutonium
         presenter_class.new resource_context, resource_record
       end
 
+      def resource_query_object(resource_class, params)
+        query_object_class = "#{current_package}::#{resource_class}QueryObject".constantize
+        query_object_class.new resource_context, params
+      end
+
       def policy_namespace(scope)
         [current_package.to_s.underscore.to_sym, scope]
       end

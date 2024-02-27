@@ -1,0 +1,23 @@
+<%# locals: (search_object:) -%>
+
+<% if search_object.search.present? && current_policy.search? %>
+  <%= simple_form_for :q, method: :get, html: { class: "d-inline", data: { controller: "form", turbo_frame: nil } } do |f| %>
+  <label for="search" class="form-label visually-hidden">Search</label>
+  <%= search_object.search.input_definitions[:search].render f, nil,
+            wrapper: false, label: false,
+            as: :string, # force string for search
+            placeholder: "search...",
+            required: false,
+            input_html: {
+              id: "search",
+              value: params[:q].try(:[], :search),
+              class: "form-control form-control-sm d-inline w-auto", style: "box-shadow: none;",
+              data: {
+                action: "form#submit",
+                # form_target: "focus",
+                turbo_permanent: true
+              }
+            } %>
+  <%= f.hidden_field :scope, value: params[:q].try(:[], :scope) %>
+  <% end %>
+<% end %>

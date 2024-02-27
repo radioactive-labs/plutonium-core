@@ -42,10 +42,17 @@ module Plutonium
         update?
       end
 
+      def search?
+        index?
+      end
+
       # Core attributes
 
       def permitted_attributes_for_create
-        autodetect_fields_for(:permitted_attributes_for_create) - [context.resource_context.resource_class.primary_key.to_sym, :created_at, :updated_at]
+        autodetect_fields_for(:permitted_attributes_for_create) - [
+          context.resource_context.resource_class.primary_key.to_sym, # primary_key
+          :created_at, :updated_at # timestamps
+        ]
       end
 
       def permitted_attributes_for_read

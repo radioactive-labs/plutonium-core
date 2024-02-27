@@ -37,7 +37,7 @@ module Plutonium
 
         def set_interaction(interaction)
           @interaction = interaction
-          @inputs = defined_inputs_for(interaction.filters.keys - [:resource, :resources])
+          @inputs = defined_inputs_for(*(interaction.filters.keys - [:resource, :resources]))
           @inline = @inputs.blank? unless inline == false
         end
 

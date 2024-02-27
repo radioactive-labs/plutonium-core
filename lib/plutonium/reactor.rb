@@ -9,6 +9,7 @@ module Plutonium
     autoload :ResourceInteraction
     autoload :ResourcePolicy
     autoload :ResourcePresenter
+    autoload :ResourceQueryObject
     autoload :ResourceRecord
   end
 end

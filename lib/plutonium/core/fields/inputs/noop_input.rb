@@ -6,7 +6,7 @@ module Plutonium
           def initialize(*)
           end
 
-          def render(f, record)
+          def render(f, record, **)
           end
 
           def collect(params)

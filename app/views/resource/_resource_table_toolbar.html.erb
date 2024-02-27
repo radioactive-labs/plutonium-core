@@ -1,0 +1,55 @@
+<%# locals: (resource_class:, search_object:, actions:) -%>
+
+<div class="mb-1 bg-body shadow">
+  <div class="row">
+    <div class="col-8">
+      <% if search_object.scope_definitions.present?  %>
+      <ul class="nav">
+        <%
+          name = name.to_s
+          current_scope = params[:q].try(:[], :scope)
+        %>
+
+        <li class="nav-item">
+          <% if current_scope.blank? %>
+            <a class="nav-link active text-bg-danger" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
+          <% else %>
+            <a class="nav-link" href="<%= search_object.build_url(scope: nil) %>">All</a>
+          <% end %>
+        </li>
+
+        <% search_object.scope_definitions.each do |name, definition| %>
+        <li class="nav-item">
+          <% if name == current_scope %>
+            <a class="nav-link active text-bg-danger" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+          <% else %>
+            <a class="nav-link" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+          <% end %>
+        </li>
+        <% end %>
+      </ul>
+      <% end %>
+    </div>
+    <div class="col-4 text-end py-1 pe-4">
+        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          Filters
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="#">Action</a></li>
+          <li><a class="dropdown-item" href="#">Another action</a></li>
+          <li><a class="dropdown-item" href="#">Something else here</a></li>
+        </ul>
+      <%=
+        render partial: "resource_table_toolbar_search_input", locals: {
+          search_object: search_object
+        }
+      %>
+      <%=
+        render partial: "toolbar_actions", locals: {
+          actions:,
+          resource: resource_class
+        }
+      %>
+    </div>
+  </div>
+</div>

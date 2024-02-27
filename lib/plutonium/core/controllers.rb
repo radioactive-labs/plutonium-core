@@ -8,8 +8,9 @@ module Plutonium
         autoload :Bootable
         autoload :CrudActions
         autoload :EntityScoping
-        autoload :Presentable
         autoload :InteractiveActions
+        autoload :Presentable
+        autoload :Queryable
       end
     end
   end

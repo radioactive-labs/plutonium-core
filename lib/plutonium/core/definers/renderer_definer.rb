@@ -5,7 +5,7 @@ module Plutonium
         extend ActiveSupport::Concern
         include Plutonium::Core::Autodiscovery::RendererDiscoverer
 
-        def defined_renderers_for(names)
+        def defined_renderers_for(*names)
           (names - renderer_definitions.keys).each do |name|
             define_renderer(name, renderer: autodiscover_renderer(name))
           end
@@ -19,8 +19,10 @@ module Plutonium
         def define_renderer(name, renderer: nil, type: nil, **options)
           renderer_definitions[name] = if renderer.present?
             renderer
-          elsif type.present? || options.present?
-            Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name, type:, **options)
+          elsif type.present?
+            Plutonium::Core::Fields::Renderers::Factory.build(name, type:, **options)
+          elsif options.present?
+            Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name, **options)
           else
             autodiscover_renderer(name)
           end

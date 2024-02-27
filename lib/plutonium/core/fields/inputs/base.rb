@@ -10,7 +10,7 @@ module Plutonium
             @user_options = user_options
           end
 
-          def render(f, record)
+          def render(f, record, **)
             raise NotImplementedError, "#{self.class}#render"
           end
 
@@ -27,7 +27,7 @@ module Plutonium
             # - parameter(2f)
             regex = /^#{param}(\(\d+[if]?\))?$/
 
-            params.select { |key| regex.match? key }
+            params.map { |key, value| [key, regex.match?(key) ? value.presence : nil] }.to_h.compact
           end
 
           protected

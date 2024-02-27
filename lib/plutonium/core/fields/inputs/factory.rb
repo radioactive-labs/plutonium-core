@@ -12,9 +12,13 @@ module Plutonium
           map_type :has_many, to: Plutonium::Core::Fields::Inputs::HasManyAssociationInput
           map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
 
-          def self.build(name, type:, **)
-            mapping = mappings[type] || Plutonium::Core::Fields::Inputs::SimpleFormInput
-            mapping.new(name, **)
+          def self.build(name, type:, **options)
+            mapping = mappings[type]
+            unless mapping.present?
+              options[:as] = type
+              mapping = Plutonium::Core::Fields::Inputs::SimpleFormInput
+            end
+            mapping.new(name, **options)
           end
 
           def self.for_resource_attribute(resource_class, attr_name, **options)

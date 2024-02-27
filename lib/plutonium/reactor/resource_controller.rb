@@ -15,6 +15,7 @@ module Plutonium
       include Pagy::Backend
       include Plutonium::Core::Controllers::Authorizable
       include Plutonium::Core::Controllers::Presentable
+      include Plutonium::Core::Controllers::Queryable
 
       def self.inherited(child)
         # Include our actions after we are inherited else they are marked as private due to our call to abstract!
@@ -85,9 +86,7 @@ module Plutonium
         input_params[:"#{parent_input_param}_id"] = current_parent.id if current_parent.present?
 
         # additionally filter our input_params through our inputs
-        current_presenter.defined_inputs_for(permitted_attributes)
-          .values.map { |input| input.collect input_params }
-          .reduce(:merge)
+        current_presenter.defined_inputs_for(*permitted_attributes).collect_all(input_params)
       end
 
       def resource_param_key

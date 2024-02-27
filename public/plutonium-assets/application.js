@@ -31076,7 +31076,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var form_controller_default = class extends Controller {
     static targets = ["focus"];
     connect() {
-      this.submit = (0, import_lodash.default)(this.submit, 1e3).bind(this);
+      this.submit = (0, import_lodash.default)(this.submit, 250).bind(this);
       this._maybeFocusTarget();
     }
     submit() {
