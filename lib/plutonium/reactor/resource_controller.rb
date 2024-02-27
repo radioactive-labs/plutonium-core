@@ -30,7 +30,8 @@ module Plutonium
       add_flash_types :success, :warning, :error
       append_view_path File.expand_path("app/views", Plutonium.root)
 
-      layout "resource"
+      # layout "resource"
+      layout -> { turbo_frame_request? ? false : "resource" }
       helper Plutonium::Helpers
 
       before_action :set_page_title
