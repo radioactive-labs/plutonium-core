@@ -1,3 +1,4 @@
+# TODO: refactor
 module Plutonium
   module Reactor
     class ResourceQueryObject
@@ -62,53 +63,45 @@ module Plutonium
         end
       end
 
-      attr_reader :search, :selected_sort_fields, :selected_sort_directions
+      attr_reader :search_filter, :search_query
 
       def initialize(context, params)
         @context = context
-
-        @selected_sort_fields = params&.permit(sort_fields: [])&.[](:sort_fields) || []
-        @selected_sort_directions = params&.permit(sort_directions: {})&.[](:sort_directions) || {}
-
-        params = params.dup.permit!.to_h if params.is_a?(ActionController::Parameters)
-        @params = params || {}
 
         define_standard_queries
         define_scopes
         define_filters
         define_sorters
+
+        params = params&.dup
+        extract_filter_params(params)
+        extract_sort_params(params)
+        @params = (params&.except(:scope, :search, :sort_fields, :sort_directions)&.permit!.to_h || {}).with_indifferent_access
       end
 
       def build_url(**options)
-        # base
         q = {}
-        q = q.merge(search.input_definitions.collect_all(@params)) if search.present?
-        q[:scope] = @params[:scope] if scope_definitions[@params[:scope]]
-        q[:sort_directions] = selected_sort_directions.dup if selected_sort_directions.present?
-        q[:sort_fields] = selected_sort_fields.dup if selected_sort_fields.present?
 
-        # overrides
-        q[:search] = options[:search] if options.key?(:search)
-        q[:scope] = options[:scope] if options.key?(:scope)
+        q[:search] = options.key?(:search) ? options[:search].presence : search_query
+        q[:scope] = options.key?(:scope) ? options[:scope].presence : selected_scope_filter
 
+        q[:sort_directions] = selected_sort_directions.dup
+        q[:sort_fields] = selected_sort_fields.dup
         if (sort = options[:sort])
-          q[:sort_fields] ||= []
-          q[:sort_directions] ||= {}
-
           if options[:reset]
-            q[:sort_directions].delete sort
             q[:sort_fields].delete_if { |e| e == sort.to_s }
+            q[:sort_directions].delete sort
           else
             q[:sort_fields] << sort.to_s unless q[:sort_fields].include?(sort.to_s)
 
-            sort_direction = selected_sort_directions[sort]&.upcase
+            sort_direction = selected_sort_directions[sort]
             if sort_direction.nil?
               q[:sort_directions][sort] = "ASC"
             elsif sort_direction == "ASC"
               q[:sort_directions][sort] = "DESC"
             else
-              q[:sort_directions].delete sort
               q[:sort_fields].delete_if { |e| e == sort.to_s }
+              q[:sort_directions].delete sort
             end
           end
         end
@@ -117,8 +110,8 @@ module Plutonium
       end
 
       def apply(scope)
-        scope = search.apply(scope, @params) if search.present?
-        scope = scope_definitions[@params[:scope]].apply(scope, @params) if scope_definitions[@params[:scope]].present?
+        scope = search_filter.apply(scope, {search: search_query}) if search_filter.present?
+        scope = scope_definitions[selected_scope_filter].apply(scope, {}) if selected_scope_filter.present?
         selected_sort_fields.each do |name|
           sorter = sort_definitions[name]
           next unless sorter.present?
@@ -138,7 +131,6 @@ module Plutonium
       def sort_params_for(name)
         return unless sort_definitions[name]
 
-        # TODO: refactor this. make it cleaner and adhere to sortinng param invariants
         {
           url: build_url(sort: name),
           reset_url: build_url(sort: name, reset: true),
@@ -149,7 +141,7 @@ module Plutonium
 
       private
 
-      attr_reader :context
+      attr_reader :context, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
 
       def define_filters
       end
@@ -192,9 +184,22 @@ module Plutonium
       end
 
       def define_search(body)
-        @search = build_query(body) do |query|
+        @search_filter = build_query(body) do |query|
           query.define_input :search
         end
+      end
+
+      def extract_filter_params(params)
+        @search_query = params&.permit(:search)&.[](:search)
+        @selected_scope_filter = params&.permit(:scope)&.[](:scope)
+      end
+
+      def extract_sort_params(params)
+        @selected_sort_fields = params&.permit(sort_fields: [])&.[](:sort_fields) || []
+        @selected_sort_fields &= sort_definitions.keys
+
+        @selected_sort_directions = (params&.permit(sort_directions: sort_definitions.keys)&.[](:sort_directions) || {}).to_h.with_indifferent_access
+        @selected_sort_directions = @selected_sort_directions.map { |key, value| [key, {"DESC" => "DESC"}[value.upcase] || "ASC"] }.to_h.with_indifferent_access
       end
 
       def build_query(body, &block)
