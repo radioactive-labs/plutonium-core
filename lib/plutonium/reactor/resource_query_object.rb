@@ -62,10 +62,13 @@ module Plutonium
         end
       end
 
-      attr_reader :search
+      attr_reader :search, :selected_sort_fields, :selected_sort_directions
 
       def initialize(context, params)
         @context = context
+
+        @selected_sort_fields = params&.permit(sort_fields: [])&.[](:sort_fields) || []
+        @selected_sort_directions = params&.permit(sort_directions: {})&.[](:sort_directions) || {}
 
         params = params.dup.permit!.to_h if params.is_a?(ActionController::Parameters)
         @params = params || {}
@@ -81,8 +84,8 @@ module Plutonium
         q = {}
         q = q.merge(search.input_definitions.collect_all(@params)) if search.present?
         q[:scope] = @params[:scope] if scope_definitions[@params[:scope]]
-        q[:sort_directions] = @params[:sort_directions].dup if @params[:sort_directions].present?
-        q[:sort_fields] = selected_sorters.dup if selected_sorters.present?
+        q[:sort_directions] = selected_sort_directions.dup if selected_sort_directions.present?
+        q[:sort_fields] = selected_sort_fields.dup if selected_sort_fields.present?
 
         # overrides
         q[:search] = options[:search] if options.key?(:search)
@@ -92,17 +95,21 @@ module Plutonium
           q[:sort_fields] ||= []
           q[:sort_directions] ||= {}
 
-          q[:sort_fields] << sort.to_s unless q[:sort_fields].include?(sort.to_s)
-
-          sort_direction = @params[:sort_directions].try(:[], sort)&.upcase
-
-          if sort_direction.nil?
-            q[:sort_directions][sort] = "ASC"
-          elsif sort_direction == "ASC"
-            q[:sort_directions][sort] = "DESC"
-          else
+          if options[:reset]
             q[:sort_directions].delete sort
             q[:sort_fields].delete_if { |e| e == sort.to_s }
+          else
+            q[:sort_fields] << sort.to_s unless q[:sort_fields].include?(sort.to_s)
+
+            sort_direction = selected_sort_directions[sort]&.upcase
+            if sort_direction.nil?
+              q[:sort_directions][sort] = "ASC"
+            elsif sort_direction == "ASC"
+              q[:sort_directions][sort] = "DESC"
+            else
+              q[:sort_directions].delete sort
+              q[:sort_fields].delete_if { |e| e == sort.to_s }
+            end
           end
         end
 
@@ -112,11 +119,11 @@ module Plutonium
       def apply(scope)
         scope = search.apply(scope, @params) if search.present?
         scope = scope_definitions[@params[:scope]].apply(scope, @params) if scope_definitions[@params[:scope]].present?
-        selected_sorters.each do |name|
+        selected_sort_fields.each do |name|
           sorter = sort_definitions[name]
           next unless sorter.present?
 
-          params = {direction: @params[:sort_directions].try(:[], name)}
+          params = {direction: selected_sort_directions[name] || "ASC"}
           scope = sorter.apply(scope, params)
         end
         scope
@@ -134,18 +141,15 @@ module Plutonium
         # TODO: refactor this. make it cleaner and adhere to sortinng param invariants
         {
           url: build_url(sort: name),
-          position: selected_sorters.index(name.to_s),
-          direction: @params[:sort_directions].try(:[], name)
+          reset_url: build_url(sort: name, reset: true),
+          position: selected_sort_fields.index(name.to_s),
+          direction: selected_sort_directions[name]
         }
       end
 
       private
 
       attr_reader :context
-
-      def selected_sorters
-        @selected_sorters ||= @params[:sort_fields] || []
-      end
 
       def define_filters
       end
@@ -172,7 +176,7 @@ module Plutonium
 
       def define_sort(name, body = nil)
         if body.nil?
-          sort_field = if resource_class.content_column_field_names.include? name
+          sort_field = if resource_class.primary_key == name.to_s || resource_class.content_column_field_names.include?(name)
             name
           elsif resource_class.belongs_to_association_field_names.include? name
             Comment.reflect_on_association(name).foreign_key.to_sym

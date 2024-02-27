@@ -4,28 +4,32 @@ module Plutonium
 
     def self.included(base)
       base.class_eval do
-        include Plutonium::Helpers::ApplicationHelper
         include Plutonium::Helpers::ActionButtonsHelper
+        include Plutonium::Helpers::ApplicationHelper
+        include Plutonium::Helpers::AttachmentHelper
         include Plutonium::Helpers::ContentHelper
+        include Plutonium::Helpers::DisplayHelper
         include Plutonium::Helpers::FormHelper
         include Plutonium::Helpers::MenuHelper
         include Plutonium::Helpers::PaginationHelper
-        include Plutonium::Helpers::DisplayHelper
+        include Plutonium::Helpers::TableHelper
         include Plutonium::Helpers::TurboHelper
-        include Plutonium::Helpers::AttachmentHelper
+        include Plutonium::Helpers::TurboStreamActionsHelper
       end
     end
 
     eager_autoload do
-      autoload :ApplicationHelper
       autoload :ActionButtonsHelper
+      autoload :ApplicationHelper
+      autoload :AttachmentHelper
       autoload :ContentHelper
+      autoload :DisplayHelper
       autoload :FormHelper
       autoload :MenuHelper
       autoload :PaginationHelper
-      autoload :DisplayHelper
+      autoload :TableHelper
       autoload :TurboHelper
-      autoload :AttachmentHelper
+      autoload :TurboStreamActionsHelper
     end
   end
 end

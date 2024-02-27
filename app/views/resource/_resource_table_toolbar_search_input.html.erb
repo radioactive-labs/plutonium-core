@@ -1,9 +1,8 @@
 <%# locals: (search_object:) -%>
-
 <% if search_object.search.present? && current_policy.search? %>
   <%= simple_form_for :q, method: :get, html: { class: "d-inline", data: { controller: "form", turbo_frame: nil } } do |f| %>
-  <label for="search" class="form-label visually-hidden">Search</label>
-  <%= search_object.search.input_definitions[:search].render f, nil,
+    <label for="search" class="form-label visually-hidden">Search</label>
+    <%= search_object.search.input_definitions[:search].render f, nil,
             wrapper: false, label: false,
             as: :string, # force string for search
             placeholder: "search...",
@@ -18,6 +17,21 @@
                 turbo_permanent: true
               }
             } %>
-  <%= f.hidden_field :scope, value: params[:q].try(:[], :scope) %>
+    <%= f.hidden_field :scope, value: params[:q].try(:[], :scope) %>
+
+    <% f.hidden_field :sort_fields, value: params[:q].try(:[], :sort_fields) %>
+
+    <%= f.simple_fields_for :sort_fields do |nested| %>
+      <% Array(params[:q].try(:[], :sort_fields)).each do |key| %>
+        <%= nested.hidden_field nil, value: key %>
+      <% end %>
+    <% end %>
+
+    <%= f.simple_fields_for :sort_directions do |nested| %>
+      <% (params[:q].try(:[], :sort_directions) || {}).each do |key, value| %>
+        <%= nested.hidden_field key, value: %>
+      <% end %>
+    <% end %>
+
   <% end %>
 <% end %>

@@ -27,20 +27,12 @@
         <table class="table table-hover table-striped my-0">
           <thead>
             <tr>
-              <th scope="col" class="text-center resource-table-col-id">
-                <% if sort_params = search_object.sort_params_for(:id) %>
-                  <%= link_to "#", sort_params[:url] %>
-                <% else %>
-                  #
-                <% end %>
+              <th scope="col" class="resource-table-col-id">
+                <%= table_header :id, "#", search_object  %>
               </th>
               <% collection.fields.each do |name, field| %>
                 <th scope="col" class="resource-table-col-attr">
-                  <% if sort_params = search_object.sort_params_for(name) %>
-                    <%= link_to "#{sort_params[:position]} #{field.label} #{sort_params[:direction]}", sort_params[:url] %>
-                  <% else %>
-                    <%= field.label %>
-                  <% end %>
+                  <%= table_header name, field.label, search_object  %>
                 </th>
               <% end %>
               <th scope="col" class="text-center resource-table-col-actions">Actions</th>
@@ -49,7 +41,7 @@
           <tbody>
             <% resources.each do |resource| %>
               <tr class="align-middle">
-                <td class="text-center text-truncate resource-table-cell-id">
+                <td class="resource-table-cell-id">
                   <% if policy(resource).show? %>
                     <%= link_to resource.to_param, adapt_route_args(resource), class: "text-decoration-none" %>
                   <% else %>
