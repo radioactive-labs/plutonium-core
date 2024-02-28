@@ -22,7 +22,7 @@ module Plutonium
           elsif type.present?
             Plutonium::Core::Fields::Renderers::Factory.build(name, type:, **options)
           elsif options.present?
-            Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(context.resource_class, name, **options)
+            Plutonium::Core::Fields::Renderers::Factory.for_resource_attribute(resource_class, name, **options)
           else
             autodiscover_renderer(name)
           end
