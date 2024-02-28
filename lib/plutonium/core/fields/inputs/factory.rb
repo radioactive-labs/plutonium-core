@@ -11,6 +11,7 @@ module Plutonium
           map_type :belongs_to, to: Plutonium::Core::Fields::Inputs::BelongsToAssociationInput
           map_type :has_many, to: Plutonium::Core::Fields::Inputs::HasManyAssociationInput
           map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
+          # map_type :text, :string, to: Plutonium::Core::Fields::Inputs::SimpleFormInput
 
           def self.build(name, type:, **options)
             mapping = mappings[type]
@@ -31,7 +32,7 @@ module Plutonium
               type = association.macro
               options[:reflection] = association
             elsif (column = resource_class.try(:column_for_attribute, attr_name))
-              type = column.type
+              # type = column.type
               options[:multiple] = column.try(:array?) if options[:multiple].nil?
             end
 

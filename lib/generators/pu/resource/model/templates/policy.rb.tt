@@ -13,11 +13,11 @@ class <%= class_name %>Policy < <%= [feature_package_name, "ResourcePolicy"].joi
   # Core attributes
 
   def permitted_attributes_for_create
-    <%= (class_name.constantize.resource_field_names - [:created_at, :updated_at]).inspect %>
+    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
   end
 
   def permitted_attributes_for_read
-    <%= class_name.constantize.resource_field_names.inspect %>
+    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
   end
 end
 <% end -%>

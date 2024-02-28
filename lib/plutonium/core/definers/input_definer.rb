@@ -38,6 +38,10 @@ module Plutonium
             hash.values
           end
 
+          def blank?
+            hash.blank?
+          end
+
           private
 
           attr_reader :hash

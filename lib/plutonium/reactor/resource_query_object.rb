@@ -1,5 +1,6 @@
 # TODO: refactor
 module Plutonium
+  # TODO: make standard query type names e.g. search and scope configurable
   module Reactor
     class ResourceQueryObject
       class << self
