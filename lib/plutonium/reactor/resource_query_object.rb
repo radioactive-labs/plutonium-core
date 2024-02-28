@@ -206,6 +206,7 @@ module Plutonium
       def build_query(body, &block)
         case body
         when Symbol
+          raise "Cannot find scope :#{body} on #{resource_class}" unless resource_class.respond_to? body
           ScopeQuery.new(body, &block)
         else
           BlockQuery.new(body, &block)
