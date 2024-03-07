@@ -16,3 +16,6 @@
 !.elasticbeanstalk/*.global.yml
 
 .DS_Store
+node_modules
+build
+assets.manifest

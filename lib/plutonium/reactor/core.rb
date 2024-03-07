@@ -12,16 +12,24 @@ module Plutonium
       end
 
       def self.start_reloader!
-        return unless Plutonium::Config.reload_files
+        return unless Plutonium::Config.enable_hotreload
 
-        # GLORIOUS hot reloading!!!
+        # GLORIOUS hotreload!!!
         @listener ||= begin
           require "listen"
 
-          plutonium_lib_dir = Plutonium.lib_root.to_s
-          plutonium_components_dir = Plutonium.root.join("app/views/components").to_s
+          reload_paths = []
+
+          if Plutonium::Config.development
+            reload_paths << Plutonium.lib_root.to_s
+            reload_paths << Plutonium.root.join("app/views/components").to_s
+          end
+
+          # we want to always watch packages for changes to engines
           packages_dir = Rails.root.join("packages/").to_s
-          listener = Listen.to(plutonium_lib_dir, plutonium_components_dir, packages_dir, only: /\.rb$/) do |modified, added, removed|
+          reload_paths << packages_dir if File.directory?(packages_dir)
+
+          listener = Listen.to(*reload_paths, only: /\.rb$/) do |modified, added, removed|
             (modified + added).each do |file|
               next if file == __FILE__ # reloading this file does nothing
 
@@ -33,9 +41,11 @@ module Plutonium
 
                 case File.basename(file)
                 when "engine.rb"
-                  # reload engines. due to how we load packages, rails does not support
+                  # rails engines are loaded once,
+                  # so in order to detect resource registration changes, we need to handle reloads ourselves
+
+                  # load the engine and reload routes to pick up any registration changes
                   load file
-                  # reload routes to pick up any registration changes
                   Rails.application.reload_routes!
                 else
                   # non engine package files are reloaded by rails automatically

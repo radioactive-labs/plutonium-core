@@ -9,7 +9,11 @@ module Plutonium
         Rack::Static,
         urls: ["/plutonium-assets"],
         root: Plutonium.root.join("public"),
-        cascade: true
+        cascade: true,
+        header_rules: [
+          # Cache all static files in public caches (e.g. Rack::Cache) as well as in the browser
+          [:all, {"cache-control" => "public, max-age=31536000"}]
+        ]
       )
     end
   end
