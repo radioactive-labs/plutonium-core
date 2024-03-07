@@ -74,10 +74,10 @@ module Plutonium
         define_filters
         define_sorters
 
-        params = params&.dup
+        params = params&.to_unsafe_h || {}.with_indifferent_access
         extract_filter_params(params)
         extract_sort_params(params)
-        @params = (params&.except(:scope, :search, :sort_fields, :sort_directions)&.permit!.to_h || {}).with_indifferent_access
+        # @params = params.except(:scope, :search, :sort_fields, :sort_directions)
       end
 
       def build_url(**options)
@@ -172,7 +172,7 @@ module Plutonium
           sort_field = if resource_class.primary_key == name.to_s || resource_class.content_column_field_names.include?(name)
             name
           elsif resource_class.belongs_to_association_field_names.include? name
-            Comment.reflect_on_association(name).foreign_key.to_sym
+            resource_class.reflect_on_association(name).foreign_key.to_sym
           else
             raise "Unable to determine sort logic for '#{body}'"
           end
@@ -191,15 +191,15 @@ module Plutonium
       end
 
       def extract_filter_params(params)
-        @search_query = params&.permit(:search)&.[](:search)
-        @selected_scope_filter = params&.permit(:scope)&.[](:scope)
+        @search_query = params[:search]
+        @selected_scope_filter = params[:scope]
       end
 
       def extract_sort_params(params)
-        @selected_sort_fields = params&.permit(sort_fields: [])&.[](:sort_fields) || []
+        @selected_sort_fields = Array(params[:sort_fields])
         @selected_sort_fields &= sort_definitions.keys
 
-        @selected_sort_directions = (params&.permit(sort_directions: sort_definitions.keys)&.[](:sort_directions) || {}).to_h.with_indifferent_access
+        @selected_sort_directions = params[:sort_directions]&.slice(*sort_definitions.keys) || {}
         @selected_sort_directions = @selected_sort_directions.map { |key, value| [key, {"DESC" => "DESC"}[value.upcase] || "ASC"] }.to_h.with_indifferent_access
       end
 
