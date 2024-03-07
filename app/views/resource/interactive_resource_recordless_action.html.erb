@@ -1,10 +1,8 @@
 <% content_for :toolbar do %>
   <%=
-    render partial: "toolbar", locals: {
-      resource_class: resource_class,
-      resource: resource_record,
-      parent: current_parent,
-    }
+      resource_component :toolbar, resource_class: resource_class,
+                          parent: current_parent,
+                          resource: resource_record
   %>
 <% end %>
 

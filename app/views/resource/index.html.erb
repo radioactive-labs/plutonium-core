@@ -1,5 +1,8 @@
 <% content_for :toolbar do %>
-  <%= render "toolbar", resource_class: resource_class, parent: current_parent %>
+  <%=
+      resource_component :toolbar, resource_class: resource_class,
+                          parent: current_parent
+  %>
 <% end %>
 
 <%= render "resource_table", collection: @collection %>

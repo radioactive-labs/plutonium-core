@@ -5,9 +5,8 @@ module Plutonium
   module Reactor
     class Core
       def self.achieve_criticality!
-        Dir[Plutonium.lib_root.join("initializers", "**", "*.rb")].each do |file|
-          require file
-        end
+        # Load initializers
+        Dir.glob(Plutonium.lib_root.join("initializers", "**", "*.rb")) { |file| load file }
 
         start_reloader!
       end
@@ -20,9 +19,12 @@ module Plutonium
           require "listen"
 
           plutonium_lib_dir = Plutonium.lib_root.to_s
+          plutonium_components_dir = Plutonium.root.join("app/views/components").to_s
           packages_dir = Rails.root.join("packages/").to_s
-          listener = Listen.to(plutonium_lib_dir, packages_dir, only: /\.rb$/) do |modified, added, removed|
+          listener = Listen.to(plutonium_lib_dir, plutonium_components_dir, packages_dir, only: /\.rb$/) do |modified, added, removed|
             (modified + added).each do |file|
+              next if file == __FILE__ # reloading this file does nothing
+
               if file.starts_with?(packages_dir)
                 # if package file was added, ignore it
                 # otherwise rails gets mad at us since engines cannot be loaded after initial boot

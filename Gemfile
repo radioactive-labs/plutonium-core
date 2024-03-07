@@ -8,3 +8,5 @@ gem "rspec", require: false
 gem "standard", require: false
 gem "brakeman", require: false
 gem "bundle-audit", require: false
+
+gem "plutonium_generators", github: "radioactive-labs/plutonium-generators"

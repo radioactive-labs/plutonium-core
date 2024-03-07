@@ -1,0 +1,7 @@
+module <%= component_namespace %>
+  class <%= component_class %> < Plutonium::UI::Base
+    option :title
+  end
+end
+
+Plutonium::ComponentRegistry.register :<%= component_class.underscore %>, to: <%= component_namespace %>::<%= component_class %>

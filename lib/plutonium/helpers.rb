@@ -7,6 +7,7 @@ module Plutonium
         include Plutonium::Helpers::ActionButtonsHelper
         include Plutonium::Helpers::ApplicationHelper
         include Plutonium::Helpers::AttachmentHelper
+        include Plutonium::Helpers::ComponentHelper
         include Plutonium::Helpers::ContentHelper
         include Plutonium::Helpers::DisplayHelper
         include Plutonium::Helpers::FormHelper
@@ -23,6 +24,7 @@ module Plutonium
       autoload :ApplicationHelper
       autoload :AttachmentHelper
       autoload :ContentHelper
+      autoload :ComponentHelper
       autoload :DisplayHelper
       autoload :FormHelper
       autoload :MenuHelper

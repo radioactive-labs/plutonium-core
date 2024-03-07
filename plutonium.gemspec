@@ -37,6 +37,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "pundit", "~> 2.3"
   spec.add_dependency "pagy", "~> 6.2"
   spec.add_dependency "simple_form", "~> 5.3"
+  spec.add_dependency "view_component", "~> 3"
+  spec.add_dependency "dry-initializer", "~> 3.1"
   spec.add_dependency "rabl", "~> 0.16.1" # TODO: what to do with RABL
 
   # For more information and examples about making a new gem, check out our

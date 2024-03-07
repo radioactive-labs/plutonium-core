@@ -1,4 +1,5 @@
 require "active_support"
+
 require_relative "plutonium/version"
 require_relative "plutonium/railtie" if defined?(Rails::Railtie)
 
@@ -22,11 +23,14 @@ module Plutonium
   autoload :Config
 
   eager_autoload do
-    autoload :Packaging
-    autoload :Reactor
-    autoload :Core
-    autoload :Policy
-    autoload :Helpers
     autoload :Auth
+    autoload :ComponentRegistry
+    autoload :Core
+    autoload :Helpers
+    autoload :Packaging
+    autoload :Policy
+    autoload :Reactor
   end
 end
+
+require_relative "../app/views/components/base" if defined?(Rails)

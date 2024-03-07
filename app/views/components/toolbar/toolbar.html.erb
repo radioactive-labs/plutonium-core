@@ -1,10 +1,8 @@
-<%# locals: (resource_class: , resource: nil, parent: nil) -%>
-
 <div class="row justify-content-between py-2 mb-3 border-bottom">
   <div class="col-sm-6">
     <%= render partial: "toolbar_breadcrumbs", locals: { resource:, resource_class:, parent: } %>
   </div>
   <div class="col-sm-6 text-end">
-    <%= yield %>
+    <%= content %>
   </div>
 </div>
