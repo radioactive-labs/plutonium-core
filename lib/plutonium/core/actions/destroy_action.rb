@@ -8,7 +8,7 @@ module Plutonium
           {
             icon: "trash",
             route_options: Plutonium::Core::Action::RouteOptions.new(method: :delete),
-            action_class: "danger",
+            action_class: "red",
             confirmation: "Are you sure?",
             turbo_frame: "_top",
             collection_record_action: true,

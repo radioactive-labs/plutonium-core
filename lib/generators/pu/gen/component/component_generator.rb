@@ -19,7 +19,7 @@ module Pu
       protected
 
       def component_name
-        name.classify
+        name.camelize
       end
 
       def component_path

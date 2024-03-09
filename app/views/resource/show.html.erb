@@ -1,14 +1,12 @@
-<% content_for :toolbar do %>
-  <%= resource_component :toolbar, resource_class: resource_class,
-                          parent: current_parent,
-                          resource: @detail.record do %>
-    <%=
-      render partial: "toolbar_actions", locals: {
-        actions: @detail.actions.record_actions.permitted_for(policy(@detail.record)),
-        resource: @detail.record
-      }
-    %>
-  <% end %>
+<%= resource_component :breadcrumbs, resource_class:, parent: current_parent, resource: @detail.record %>
+
+<%= resource_component :toolbar, resource_class: do %>
+  <%#=
+    render partial: "toolbar_actions", locals: {
+      actions: @detail.actions.record_actions.permitted_for(policy(@detail.record)),
+      resource: @detail.record
+    }
+  %>
 <% end %>
 
 <%= render "resource_details", details: @detail %>

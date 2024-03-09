@@ -8,7 +8,7 @@ module Plutonium
           {
             icon: "pencil",
             route_options: Plutonium::Core::Action::RouteOptions.new(action: :edit),
-            action_class: "warning",
+            action_class: "yellow",
             collection_record_action: true,
             record_action: true
           }

@@ -4,13 +4,18 @@ module Plutonium
       module Bootable
         extend ActiveSupport::Concern
 
+        included do
+          helper_method :current_engine
+          helper_method :current_package
+        end
+
         class_methods do
           attr_reader :package, :current_engine
 
           private
 
           def boot(package)
-            raise "#{self.class} has been already booted" if defined?(@package) || defined?(@current_engine)
+            raise "#{self.class} has already booted" if defined?(@package) || defined?(@current_engine)
 
             @package = package
             @current_engine = "#{package}::Engine".constantize

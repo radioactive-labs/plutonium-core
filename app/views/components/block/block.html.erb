@@ -1,0 +1,8 @@
+<div
+  id="<%= id %>"
+  <% data.each do |key, value| %>
+    data-<%= key %>="<%= value %>"
+  <% end %>
+  class="relative bg-white dark:bg-gray-800 shadow-md <%= classnames %>">
+  <%= content %>
+</div>

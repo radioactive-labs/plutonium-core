@@ -3,6 +3,7 @@
 <% actions.values.each do |action| %>
   <%=
     toolbar_action_button adapt_route_args(resource, action: action.route_options.action, **action.route_options.options),
+                        label: action.label,
                         icon: action.icon,
                         button_class: action.action_class,
                         method: action.route_options.method,

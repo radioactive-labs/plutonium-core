@@ -1,9 +1,7 @@
-<% content_for :toolbar do %>
   <%=
       resource_component :toolbar, resource_class: resource_class,
                           parent: current_parent,
                           resource: resource_record
   %>
-<% end %>
 
 <%= render "interactive_resource_action_form", interactive_action: current_interactive_action %>

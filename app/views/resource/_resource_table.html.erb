@@ -8,9 +8,9 @@
   collection_actions = @collection.actions.collection_actions.permitted_for(current_policy)
 -%>
 
-<%= render partial: "resource_table_toolbar", locals: {resource_class:, search_object:, actions: collection_actions} %>
 
-<div class="row">
+  <%= render partial: "resource_table_toolbar", locals: {resource_class:, search_object:, actions: collection_actions} %>
+
   <% unless resources.any? %>
     <div class="col-12">
       <%=
@@ -22,42 +22,53 @@
       %>
     </div>
   <% else %>
-    <div class="col-12">
-      <div id="table-container" class="table-responsive max-vh-75 pb-2" data-controller="scroll-preserver" data-action="scroll->scroll-preserver#scrolled">
-        <table class="table table-hover table-striped my-0">
-          <thead>
+    <%= resource_component :block, id: "resource-table", scroll: :x, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
+        <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+          <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
-              <th scope="col" class="resource-table-col-id">
+              <th scope="col" class="p-4">
+                <div class="flex items-center">
+                    <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="checkbox-all-search" class="sr-only">checkbox</label>
+                </div>
+              </th>
+              <th scope="col" class="px-6 py-3">
                 <%= table_header :id, "#", search_object  %>
               </th>
               <% collection.fields.each do |name, field| %>
-                <th scope="col" class="resource-table-col-attr">
+                <th scope="col" class="px-6 py-3">
                   <%= table_header name, field.label, search_object  %>
                 </th>
               <% end %>
-              <th scope="col" class="text-center resource-table-col-actions">Actions</th>
+              <th scope="col" class="px-6 py-3">Actions</th>
             </tr>
           </thead>
           <tbody>
             <% resources.each do |resource| %>
-              <tr class="align-middle">
-                <td class="resource-table-cell-id">
+              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
+                <td class="w-4 p-4">
+                    <div class="flex items-center">
+                        <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                        <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+                    </div>
+                </td>
+                <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                   <% if policy(resource).show? %>
                     <%= link_to resource.to_param, adapt_route_args(resource), class: "text-decoration-none" %>
                   <% else %>
                     <%= resource.to_param %>
                   <% end %>
-                </td>
+                </th>
                 <% collection.fields.each do |name, field| %>
                   <%
                     options = field.options
                     max_width = options.delete :pu_max_width
                   %>
-                  <td class='text-truncate resource-table-cell-attr' style="max-width: <%= max_width %>px;">
+                  <td class="px-6 py-4">
                     <%= field.render self, resource %>
                   </td>
                 <% end %>
-                <td class="text-center resource-table-cell-actions">
+                <td class="flex items-center px-6 py-4">
                   <%=
                   render partial: "resource_table_actions", locals: {
                     actions: record_actions.permitted_for(policy(resource)),
@@ -69,12 +80,10 @@
             <% end %>
           </tbody>
         </table>
-      </div>
-    </div>
+    <% end %>
     <% if collection.pager.present? %>
-      <div class="col-12">
-        <%= render "pagination", pager: collection.pager %>
-      </div>
+      <%= resource_component :block, rounded: :bottom do %>
+          <%= render "pagination", pager: collection.pager %>
+      <% end  %>
     <% end  %>
   <% end %>
-</div>
