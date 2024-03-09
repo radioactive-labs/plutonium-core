@@ -1,6 +1,6 @@
 <%# locals: (resource_class:, search_object:, actions:) -%>
 
-<%= resource_component :block, rounded: :top do %>
+<%= resource_component :block, rounded: :all do %>
   <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
     <div class="w-full md:w-1/2">
       <%=
@@ -74,7 +74,6 @@
 
 
 <% if search_object.scope_definitions.present?  %>
-<%= resource_component :block do %>
   <%
     name = name.to_s
     current_scope = params[:q].try(:[], :scope)
@@ -99,5 +98,4 @@
         </li>
       <% end %>
   </ul>
-<% end %>
 <% end %>

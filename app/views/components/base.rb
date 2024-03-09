@@ -18,7 +18,8 @@ module Plutonium::UI
       if respond_to?(:current_package)
         send(current_package.name.underscore.to_sym).url_for(*)
       else
-        super(*)
+        super(*
+        )
       end
     end
   end

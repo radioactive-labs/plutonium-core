@@ -34,7 +34,6 @@ module Plutonium
       helper Plutonium::Helpers
 
       before_action :set_page_title
-      before_action :set_sidebar_menu
 
       before_action do
         return unless defined?(ActiveStorage)
@@ -111,14 +110,6 @@ module Plutonium
 
       def set_page_title
         @page_title = "Pluton8"
-      end
-
-      def set_sidebar_menu
-        @sidebar_menu = build_sidebar_menu
-      end
-
-      def build_sidebar_menu
-        raise NotImplementedError, "#{self.class}#build_sidebar_menu"
       end
 
       def resource_context

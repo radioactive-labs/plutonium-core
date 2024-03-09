@@ -8,6 +8,7 @@ module Plutonium
       included do
         helper_method :current_parent
         helper_method :adapt_route_args
+        helper_method :registered_resources
       end
 
       private
@@ -26,31 +27,34 @@ module Plutonium
         [current_package.to_s.underscore.to_sym, scope]
       end
 
-      # Menu Builder
-      def build_namespace_node(namespaces, resource, parent)
-        current = namespaces.shift
-        if namespaces.size.zero?
-          parent[current.pluralize] = url_for(adapt_route_args(resource, use_parent: false))
-        else
-          parent[current] = {}
-          build_namespace_node(namespaces, resource, parent[current])
-        end
-        # parent.sort!
-      end
+      # # Menu Builder
+      # def build_namespace_node(namespaces, resource, parent)
+      #   current = namespaces.shift
+      #   if namespaces.size.zero?
+      #     parent[current.pluralize] = url_for(adapt_route_args(resource, use_parent: false))
+      #   else
+      #     parent[current] = {}
+      #     build_namespace_node(namespaces, resource, parent[current])
+      #   end
+      #   # parent.sort!
+      # end
 
-      def build_namespace_tree(resources)
-        root = {}
-        resources.each do |resource|
-          namespaces = resource.name.split("::")
-          build_namespace_node(namespaces, resource, root)
-        end
-        root
-      end
+      # def build_namespace_tree(resources)
+      #   root = {}
+      #   resources.each do |resource|
+      #     namespaces = resource.name.split("::")
+      #     build_namespace_node(namespaces, resource, root)
+      #   end
+      #   root
+      # end
 
-      def build_sidebar_menu
-        build_namespace_tree(current_engine.resource_register)
-      end
+      # def build_sidebar_menu
+      #   build_namespace_tree(current_engine.resource_register)
+      # end
 
+      def registered_resources
+        current_engine.resource_register
+      end
       # Menu Builder
 
       def current_parent

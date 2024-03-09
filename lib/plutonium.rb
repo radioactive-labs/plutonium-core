@@ -37,6 +37,7 @@ module Plutonium
 
   eager_autoload do
     autoload :Auth
+    autoload :Builders
     autoload :ComponentRegistry
     autoload :Core
     autoload :Helpers

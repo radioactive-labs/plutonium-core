@@ -27,9 +27,8 @@
     <%= yield(:head) %>
   </head>
   <body class="antialiased bg-gray-50 dark:bg-gray-900">
-    <%= render("header") %>
-    <%= render("sidebar") %>
-
+    <%= render("resource_header") %>
+    <%= render("resource_sidebar") %>
     <main class="p-4 lg:ml-64 h-auto pt-20">
       <%= yield %>
     </main>
