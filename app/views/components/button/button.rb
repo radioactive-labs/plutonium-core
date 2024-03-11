@@ -2,7 +2,7 @@ module Plutonium::UI
   class Button < Plutonium::UI::Base
     option :label
     option :to, optional: true
-    option :icon, optiona: true
+    option :icon, optional: true
     option :color, optional: true
     option :variant, optional: true
     option :size, optional: true

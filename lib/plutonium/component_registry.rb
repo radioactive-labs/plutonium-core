@@ -1,6 +1,6 @@
 module Plutonium
   class ComponentRegistry
-    class_attribute :mappings, instance_accessor: false, instance_predicate: false, default: {}
+    class_attribute :mappings, instance_accessor: false, instance_predicate: false, default: {}.with_indifferent_access
 
     class UnregisteredComponent < StandardError; end
 
@@ -9,7 +9,7 @@ module Plutonium
     end
 
     def self.resolve(name)
-      raise UnregisteredComponent.new("no such component registered: #{name}") unless mappings[name]
+      raise UnregisteredComponent.new("no such component registered: #{name.inspect}") unless mappings[name]
       mappings[name]
     end
   end

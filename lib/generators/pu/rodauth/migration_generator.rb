@@ -95,7 +95,6 @@ module Pu
       def migration_overrides
         @migration_overrides ||= migration_config.values_at(*selected_features)
           .flat_map(&:to_a)
-          .filter { |config, format| config.ends_with? "_table" }
           .map { |config, format| [config, (format % {plural: table_prefix.pluralize, singular: table_prefix})] }
           .to_h
           .compact
@@ -141,7 +140,6 @@ module Pu
         def primary_key_type(key = :id)
           generators = ::Rails.application.config.generators
           column_type = generators.options[:active_record][:primary_key_type]
-
           if key
             ", #{key}: :#{column_type}" if column_type
           else
@@ -150,7 +148,7 @@ module Pu
         end
 
         def default_primary_key_type
-          if ActiveRecord.version >= Gem::Version.new("5.1") && activerecord_adapter != "sqlite3"
+          if ActiveRecord.version >= Gem::Version.new("5.1")
             :bigint
           else
             :integer
