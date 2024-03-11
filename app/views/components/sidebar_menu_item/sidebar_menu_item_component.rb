@@ -1,5 +1,5 @@
 module Plutonium::UI
-  class SidebarMenuItem < Plutonium::UI::Base
+  class SidebarMenuItemComponent < Plutonium::UI::Base
     option :name
     option :value
     option :indicator, optional: true
@@ -20,4 +20,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :sidebar_menu_item, to: Plutonium::UI::SidebarMenuItem
+Plutonium::ComponentRegistry.register :sidebar_menu_item, to: Plutonium::UI::SidebarMenuItemComponent

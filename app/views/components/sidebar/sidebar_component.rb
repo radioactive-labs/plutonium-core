@@ -1,5 +1,5 @@
 module Plutonium::UI
-  class Sidebar < Plutonium::UI::Base
+  class SidebarComponent < Plutonium::UI::Base
     private
 
     def sidebar_class
@@ -12,4 +12,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :sidebar, to: Plutonium::UI::Sidebar
+Plutonium::ComponentRegistry.register :sidebar, to: Plutonium::UI::SidebarComponent

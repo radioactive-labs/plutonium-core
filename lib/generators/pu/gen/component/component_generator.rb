@@ -19,11 +19,11 @@ module Pu
       protected
 
       def component_name
-        name.camelize
+        "#{name}_component".camelize
       end
 
       def component_path
-        [component_module, component_class, component_class].compact.join("::").underscore
+        [component_module, name.underscore, component_class].compact.join("::").underscore
       end
 
       def component_class
@@ -36,6 +36,10 @@ module Pu
 
       def component_namespace
         ["Plutonium::UI", component_module].compact.join "::"
+      end
+
+      def component_identifier
+        component_name.underscore.sub("_component", "")
       end
     end
   end

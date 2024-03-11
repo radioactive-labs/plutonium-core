@@ -3,4 +3,4 @@ module <%= component_namespace %>
   end
 end
 
-Plutonium::ComponentRegistry.register :<%= component_class.underscore %>, to: <%= component_namespace %>::<%= component_class %>
+Plutonium::ComponentRegistry.register :<%= component_identifier %>, to: <%= component_namespace %>::<%= component_class %>

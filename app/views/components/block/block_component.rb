@@ -1,5 +1,5 @@
 module Plutonium::UI
-  class Block < Plutonium::UI::Base
+  class BlockComponent < Plutonium::UI::Base
     option :rounded, optional: true
     option :scroll, optional: true
     option :classes, optional: true
@@ -39,4 +39,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :block, to: Plutonium::UI::Block
+Plutonium::ComponentRegistry.register :block, to: Plutonium::UI::BlockComponent

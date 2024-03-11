@@ -1,0 +1,10 @@
+<%= resource_component :block do %>
+  <div
+    id="<%= id %>"
+    <% data.each do |key, value| %>
+      data-<%= key %>="<%= value %>"
+    <% end %>
+    class="p-6">
+    <%= content %>
+  </div>
+<% end %>
