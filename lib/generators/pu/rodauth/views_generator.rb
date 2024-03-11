@@ -27,10 +27,6 @@ module Pu
         desc: "Generates views for all Rodauth features",
         default: false
 
-      class_option :css, type: :string, enum: %w[bootstrap tailwind tailwindcss],
-        desc: "CSS framework to generate views for",
-        default: "bootstrap"
-
       def validate_selected_features
         if selected_features.empty?
           say "No view features specified!", :yellow
@@ -109,16 +105,7 @@ module Pu
       end
 
       def view_location(view)
-        if tailwind?
-          "app/views/rodauth/tailwind/#{view}.html.erb"
-        else
-          "app/views/rodauth/#{view}.html.erb"
-        end
-      end
-
-      def tailwind?
-        ::Rails.application.config.generators.options[:rails][:template_engine] == :tailwindcss ||
-          options[:css]&.downcase&.start_with?("tailwind")
+        "app/views/rodauth/#{view}.html.erb"
       end
     end
   end

@@ -14,10 +14,15 @@ Object.keys(colors).forEach((color) => {
 });
 
 module.exports = {
-  content: ["./app/assets/**/*.css", "./app/views/**/*.{rb,erb}", "./node_modules/flowbite/**/*.js"],
+  content: [
+    "./app/assets/**/*.css",
+    "./app/views/**/*.{rb,erb}",
+    "./node_modules/flowbite/**/*.js",
+  ],
   darkMode: 'class',
   plugins: [
-    require('flowbite/plugin')
+    require('@tailwindcss/forms'),
+    require('flowbite/plugin'),
   ],
   theme: {
     extend: {

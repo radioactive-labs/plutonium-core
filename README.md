@@ -66,3 +66,17 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/[USERN
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+<!--
+# ------------------------------
+
+gem "plutonium", path: "/Users/stefan/code/plutonium/starters/plutonium/"
+gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", group: [:development, :test]
+
+
+
+# rails new vulcan \
+#                --skip-action-mailbox --skip-action-text --skip-active-storage --skip-action-cable --skip-jbuilder \
+#                --skip-test --skip-system-test --javascript=esbuild --css=bootstrap --database=postgresql
+
+-->

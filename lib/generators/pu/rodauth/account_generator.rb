@@ -99,17 +99,6 @@ module Pu
         directory "app/views/rodauth_mailer", "app/views/rodauth/#{table_prefix}_mailer"
       end
 
-      def create_views
-        return if only_json? || selected_view_features.empty?
-
-        account_name = primary? ? nil : table_prefix
-        # Use generate here because invoke spawns in the same process
-        # Unfortunately, during the generation process, some new files are created which are not currently loaded,
-        #   causing an error when it attempts to load the rodauth config.
-        # Generate spawns a separate process which loads the new files and ensures it works correctly
-        generate "pu:rodauth:views", account_name, "--features", *selected_view_features
-      end
-
       private
 
       def only_json?

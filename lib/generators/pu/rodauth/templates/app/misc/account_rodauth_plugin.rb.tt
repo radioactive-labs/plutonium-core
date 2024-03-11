@@ -42,9 +42,11 @@ class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
     # Change some default param keys.
     # login_param "email"
     # password_confirm_param "confirm_password"
+<% if login? -%>
 
     # Redirect back to originally requested location after authentication.
-    # login_return_to_requested_location? true
+    login_return_to_requested_location? true
+<% end -%>
     # two_factor_auth_return_to_requested_location? true # if using MFA
 
     # Autologin the user after they have reset their password.
@@ -223,6 +225,11 @@ class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
 <% unless only_json? -%>
 
     # ==> Redirects
+<% if login? -%>
+
+    # Redirect to home after login.
+    login_redirect "/"
+<% end -%>
 <% if logout? -%>
 
     # Redirect to home page after logout.

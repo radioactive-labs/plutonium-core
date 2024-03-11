@@ -1,3 +1,4 @@
+# Base rodauth controller. Inherited by all account controllers.
 class RodauthController < ApplicationController
-  # Base rodauth controller
+  include Plutonium::Rodauth::ControllerMethods
 end

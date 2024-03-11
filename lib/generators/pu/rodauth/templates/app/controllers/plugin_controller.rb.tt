@@ -2,5 +2,15 @@ module Rodauth
   class <%= table_prefix.classify %>Controller < RodauthController
     # used by Rodauth for rendering views, CSRF protection, and running any
     # registered action callbacks and rescue_from handlers
+
+    private
+
+    def current_account(name = <%= ":#{table_prefix}" %>)
+      super(name)
+    end
+
+    def rodauth(name = <%= ":#{table_prefix}" %>)
+      super(name)
+    end
   end
 end
