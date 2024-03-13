@@ -1,4 +1,5 @@
 <%= resource_form_for adapt_route_args(form.record), html: {class: "flex flex-col space-y-6"} do |f| %>
+      <h2 class="mb-4 text-xl font-bold text-gray-900 dark:text-white"><%= f.submit_default_value %></h2>
 
   <% if f.object.errors.present? %>
     <div class="flex p-4 px-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
