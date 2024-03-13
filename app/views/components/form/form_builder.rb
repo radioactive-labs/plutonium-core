@@ -8,10 +8,12 @@ module Plutonium::UI
         # Don't show the hint
         options.delete(:hint)
         # Apply error class if there are errors
-        label_class = [label_class, "block mb-2 text-sm font-medium text-red-700 dark:text-red-500"].compact.join(" ")
+        label_class = [label_class, "text-red-700 dark:text-red-500"].compact.join(" ")
       elsif object.persisted? || !object.errors.empty?
         # Apply success class if the object is persisted, has been validated (errors are not empty), and the field has no errors
         label_class = [label_class, "block mb-2 text-sm font-medium text-green-700 dark:text-green-500"].compact.join(" ")
+      else
+        label_class = [label_class, "text-gray-700 dark:text-white"].compact.join(" ")
       end
 
       options[:label_html] ||= {}

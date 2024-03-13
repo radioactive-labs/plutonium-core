@@ -20,7 +20,7 @@ module.exports = {
     "./node_modules/flowbite/**/*.js",
     "./lib/plutonium/initializers/simple_form.rb"
   ],
-  darkMode: 'class',
+  darkMode: "selector",
   plugins: [
     require('@tailwindcss/forms'),
     require('flowbite/plugin'),

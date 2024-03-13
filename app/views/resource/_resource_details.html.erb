@@ -29,7 +29,7 @@
 
   <div class="p-4">
     <div class="px-0">
-      <h3 class="text-base font-semibold leading-7 text-gray-900">
+      <h3 class="text-base font-semibold leading-7 text-gray-900 dark:text-gray-400">
         <%= resource_name(resource_class) %>
         #<%= details.record.to_param %>
       </h3>
@@ -38,10 +38,10 @@
       <dl class="divide-y divide-gray-100">
         <% details.fields.each do |name, field| %>
           <div class="py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-            <dt class="text-sm font-medium leading-6 text-gray-900">
+            <dt class="text-sm font-medium leading-6 text-gray-900 dark:text-gray-300">
               <%= field.label %>
             </dt>
-            <dd class="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
+            <dd class="mt-1 text-sm leading-6 text-gray-700 dark:text-gray-400 sm:col-span-2 sm:mt-0">
               <%= field.render self, details.record %>
             </dd>
           </div>
