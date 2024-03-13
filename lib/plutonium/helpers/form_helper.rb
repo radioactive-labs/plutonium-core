@@ -1,21 +1,42 @@
+require "view_component/form"
+
 module Plutonium
   module Helpers
     module FormHelper
       include ActionView::Helpers::FormHelper
 
       def resource_form_for(record, options = {}, &block)
-        turbo_frame = options.key?(:turbo_frame) ? options[:turbo_frame] : "_top"
-        options = {
-          html: {
-            data: {
-              turbo_frame:
-            }
-          }
-        }.deep_merge! options
+        options[:builder] ||= Plutonium::UI::FormBuilder
+        options[:wrapper] ||= :default_resource_form
+        options[:html] ||= {}
+        options[:html][:data] ||= {}
+        options[:html][:data][:turbo_frame] = options.key?(:turbo_frame) ? options.delete(:turbo_frame) : "_top"
+        unless options[:html].key?(:novalidate)
+          options[:html][:novalidate] = false
+        end
 
-        # record = adapt_route_args(record) unless record.is_a?(Array) || options.key?(:url)
+        with_resource_form_field_error_proc do
+          form_for(record, options, &block)
+        end
+      end
 
-        simple_form_for(record, options, &block)
+      def token_tag(...)
+        # needed to workaround https://github.com/tailwindlabs/tailwindcss/issues/3350
+        super(...).sub(" />", " hidden />").html_safe
+      end
+
+      private
+
+      def with_resource_form_field_error_proc
+        # borrowed from https://github.com/heartcombo/simple_form/blob/main/lib/simple_form/action_view_extensions/form_helper.rb#L40C1-L50C10
+        # this does not look threadsafe
+        default_field_error_proc = ::ActionView::Base.field_error_proc
+        begin
+          ::ActionView::Base.field_error_proc = proc { |html_tag, instance| html_tag }
+          yield
+        ensure
+          ::ActionView::Base.field_error_proc = default_field_error_proc
+        end
       end
     end
   end

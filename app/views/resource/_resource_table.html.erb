@@ -42,7 +42,7 @@
                   <%= table_header name, field.label, search_object  %>
                 </th>
               <% end %>
-              <th scope="col" class="px-6 py-3">Actions</th>
+              <th scope="col" class="px-6 py-3 text-end">&nbsp;</th>
             </tr>
           </thead>
           <tbody>
@@ -70,7 +70,7 @@
                     <%= field.render self, resource %>
                   </td>
                 <% end %>
-                <td class="flex items-center px-6 py-4">
+                <td class="flex justify-end px-6 py-4">
                   <%=
                   render partial: "resource_table_actions", locals: {
                     actions: record_actions.permitted_for(policy(resource)),

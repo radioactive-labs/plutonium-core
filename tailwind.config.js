@@ -18,6 +18,7 @@ module.exports = {
     "./app/assets/**/*.css",
     "./app/views/**/*.{rb,erb}",
     "./node_modules/flowbite/**/*.js",
+    "./lib/plutonium/initializers/simple_form.rb"
   ],
   darkMode: 'class',
   plugins: [

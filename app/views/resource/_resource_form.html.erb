@@ -1,29 +1,5 @@
 <%# locals: (form:) -%>
 
-<%= resource_form_for adapt_route_args(form.record) do |f| %>
-  <div class="row row-gap-2">
-    <div class="container">
-      <div class="form-errors">
-        <%= f.error_notification %>
-        <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
-        <% f.object.errors.full_messages.each do |message|  %>
-          <%= f.error_notification message: message  %>
-        <% end  %>
-      </div>
-    </div>
-    <div class="row py-2">
-      <div class="col-12 text-end">
-        <%= f.button :submit, class: "btn btn-sm btn-outline-primary" %>
-      </div>
-    </div>
-    <div class="form-inputs">
-      <% form.inputs.values.each do |input| %>
-        <%= input.render f, form.record %>
-      <% end %>
-    </div>
-    <div class="form-actions">
-      <%#= f.button :button, class: "btn btn-outline-secondary", formaction: "", formmethod: :get %>
-      <%= f.button :submit, class: "btn btn-outline-primary" %>
-    </div>
-  </div>
+<%= resource_component :panel do %>
+  <%= resource_component :form, form: %>
 <% end %>

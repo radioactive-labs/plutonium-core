@@ -26,8 +26,8 @@ module Plutonium
             # - parameter(1i)
             # - parameter(2f)
             regex = /^#{param}(\(\d+[if]?\))?$/
-
-            params.map { |key, value| [key, regex.match?(key) ? value.presence : nil] }.to_h.compact
+            keys = params.select { |key, value| regex.match?(key) }.keys
+            params.slice(*keys)
           end
 
           protected

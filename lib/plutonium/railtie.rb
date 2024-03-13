@@ -16,5 +16,9 @@ module Plutonium
         ]
       )
     end
+
+    initializer "plutonium.view_components" do
+      config.view_component.capture_compatibility_patch_enabled = true
+    end
   end
 end

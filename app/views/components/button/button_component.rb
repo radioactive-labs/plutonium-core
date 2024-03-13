@@ -6,6 +6,7 @@ module Plutonium::UI
     option :color, optional: true
     option :variant, optional: true
     option :size, optional: true
+    option :type, default: proc { :button }
 
     private
 
