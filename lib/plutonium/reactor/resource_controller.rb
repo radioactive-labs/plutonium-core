@@ -21,8 +21,9 @@ module Plutonium
         child.send :include, Plutonium::Core::Controllers::CrudActions
         child.send :include, Plutonium::Core::Controllers::InteractiveActions
 
-        # TODO: move this into interactive actions module
-        child.helper_method :current_interactive_action
+        Plutonium::Core::Controllers::CrudActions.included_after_inheritance(child)
+        Plutonium::Core::Controllers::InteractiveActions.included_after_inheritance(child)
+
         super
       end
 

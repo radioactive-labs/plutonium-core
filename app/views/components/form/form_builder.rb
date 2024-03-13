@@ -27,15 +27,43 @@ module Plutonium::UI
     end
 
     def error_notification(options = {})
+      # Overriding this because we want an unstyled error notification
       translate_error_notification = lambda {
         lookups = []
         lookups << :"#{object_name}"
         lookups << :default_message
         lookups << "Please review the problems below:"
-        I18n.t(lookups.shift, scope: :"simple_form.error_notification", default: lookups)
+        I18n.t(lookups.shift, scope: :"plutonium.error_notification", default: lookups)
       }
 
       (options.delete(:message) || translate_error_notification.call).html_safe
+    end
+
+    def submit_default_value
+      object = convert_to_model(@object)
+      key = if object
+        object.persisted? ? :update : :create
+      else
+        :submit
+      end
+
+      model = if object.respond_to?(:model_name)
+        object.model_name.human
+      else
+        @object_name.to_s.humanize
+      end
+
+      defaults = []
+      # Object is a model and it is not overwritten by as and scope option.
+      defaults << if object.respond_to?(:model_name) && object_name.to_s == model.downcase
+        :"helpers.submit.#{object.model_name.i18n_key}.#{key}"
+      else
+        :"helpers.submit.#{object_name}.#{key}"
+      end
+      defaults << :"helpers.submit.#{key}"
+      defaults << "#{key.to_s.humanize} #{model}"
+
+      I18n.t(defaults.shift, model: model, default: defaults)
     end
   end
 end

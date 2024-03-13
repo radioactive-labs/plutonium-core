@@ -4,6 +4,10 @@ module Plutonium
       module CrudActions
         extend ActiveSupport::Concern
 
+        def self.included_after_inheritance(base)
+          base.helper_method :preferred_action_after_submit
+        end
+
         # GET /resources(.{format})
         def index
           authorize resource_class
@@ -47,10 +51,10 @@ module Plutonium
           respond_to do |format|
             if resource_record.save
               format.html do
-                redirect_to adapt_route_args(resource_record),
+                redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully created."
               end
-              format.any { render :show, status: :created, location: adapt_route_args(resource_record) }
+              format.any { render :show, status: :created, location: redirect_url_after_submit }
             else
               format.html do
                 @form = build_form
@@ -81,10 +85,10 @@ module Plutonium
           respond_to do |format|
             if resource_record.update(resource_params)
               format.html do
-                redirect_to adapt_route_args(resource_record), notice: "#{resource_class.model_name.human} was successfully updated.",
+                redirect_to redirect_url_after_submit, notice: "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
               end
-              format.any { render :show, status: :ok, location: adapt_route_args(resource_record) }
+              format.any { render :show, status: :ok, location: redirect_url_after_submit }
             else
               format.html do
                 @form = build_form
@@ -122,6 +126,32 @@ module Plutonium
               render "errors", status: :unprocessable_entity
             end
           end
+        end
+
+        private
+
+        def redirect_url_after_submit
+          url = case preferred_action_after_submit
+          when "show"
+            adapt_route_args(resource_record) if current_policy.show?
+          when "edit"
+            adapt_route_args(resource_record, action: :edit) if current_policy.edit?
+          when "new"
+            adapt_route_args(resource_class, action: :new) if current_policy.new?
+          when "index"
+            adapt_route_args(resource_class) if current_policy.index?
+          else
+            # ensure we have a valid value
+            session[:action_after_submit_preference] = "show"
+          end
+          url || adapt_route_args(resource_record)
+        end
+
+        def preferred_action_after_submit
+          if %w[new edit show index].include? params[:commit]
+            session[:action_after_submit_preference] = params[:commit]
+          end
+          session[:action_after_submit_preference] || "show"
         end
       end
     end
