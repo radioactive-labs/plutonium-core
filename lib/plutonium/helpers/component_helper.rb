@@ -1,8 +1,12 @@
 module Plutonium
   module Helpers
     module ComponentHelper
-      def resource_component(name, *, **, &block)
-        component = Plutonium::ComponentRegistry.resolve name
+      def resolve_component(name)
+        Plutonium::ComponentRegistry.resolve name
+      end
+
+      def render_component(name, *, **, &block)
+        component = resolve_component name
         render(component.new(*, **), &block)
       end
     end

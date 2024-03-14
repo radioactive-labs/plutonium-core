@@ -1,7 +1,7 @@
-<%= resource_component :breadcrumbs, resource_class:, parent: current_parent, resource: @form.record %>
+<%= render_component :breadcrumbs, resource_class:, parent: current_parent, resource: @form.record %>
 
   <%=
-      resource_component :toolbar, resource_class: resource_class,
+      render_component :toolbar, resource_class: resource_class,
                           parent: current_parent,
                           resource: @form.record
   %>

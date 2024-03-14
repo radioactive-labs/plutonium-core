@@ -14,9 +14,9 @@
   <% unless resources.any? %>
     <div class="col-12">
       <%=
-        resource_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} matching your query" do
+        render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} matching your query" do
           if current_policy.create?
-            resource_component :button, label: "Create #{resource_name(resource_class)}",
+            render_component :button, label: "Create #{resource_name(resource_class)}",
                                         to: resource_url_for(resource_class, action: :new),
                                         color: :primary
           end
@@ -24,7 +24,7 @@
       %>
     </div>
   <% else %>
-    <%= resource_component :block, id: "resource-table", scroll: :x, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
+    <%= render_component :block, id: "resource-table", scroll: :x, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
         <table class="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead class="text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400">
             <tr>
@@ -84,8 +84,8 @@
         </table>
     <% end %>
     <% if collection.pager.present? %>
-      <%= resource_component :block, rounded: :bottom do %>
-        <%= resource_component :pagination, pager: collection.pager %>
+      <%= render_component :block, rounded: :bottom do %>
+        <%= render_component :pagination, pager: collection.pager %>
       <% end  %>
     <% end  %>
   <% end %>

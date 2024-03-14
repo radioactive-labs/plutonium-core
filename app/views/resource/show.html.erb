@@ -1,6 +1,6 @@
-<%= resource_component :breadcrumbs, resource_class:, parent: current_parent, resource: @detail.record %>
+<%= render_component :breadcrumbs, resource_class:, parent: current_parent, resource: @detail.record %>
 
-<%= resource_component :toolbar, resource_class: do %>
+<%= render_component :toolbar, resource_class: do %>
   <%#=
     render partial: "toolbar_actions", locals: {
       actions: @detail.actions.record_actions.permitted_for(policy(@detail.record)),

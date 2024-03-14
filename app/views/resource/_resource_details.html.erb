@@ -1,6 +1,6 @@
 <%# locals: (details:) -%>
 
-<%= resource_component :block, rounded: :all do %>
+<%= render_component :block, rounded: :all do %>
   <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
     <div class="w-full md:w-1/2">
 
@@ -17,7 +17,7 @@
 
 <% end %>
 
-<%= resource_component :block, rounded: :top do %>
+<%= render_component :block, rounded: :top do %>
   <ul class="text-sm font-medium flex flex-wrap -mb-px -ms-px">
     <li class="me-2">
       <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="">Details</a>
@@ -26,7 +26,7 @@
   </ul>
 <% end %>
 
-<%= resource_component :block do %>
+<%= render_component :block do %>
 
   <div class="p-4">
     <div class="px-0">
