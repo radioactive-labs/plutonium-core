@@ -2,7 +2,7 @@
 
 <% actions.values.each do |action| %>
   <%=
-    toolbar_action_button adapt_route_args(resource, action: action.route_options.action, **action.route_options.options),
+    toolbar_action_button resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
                         label: action.label,
                         icon: action.icon,
                         color: action.color,

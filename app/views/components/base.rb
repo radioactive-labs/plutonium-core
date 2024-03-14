@@ -14,15 +14,6 @@ module Plutonium::UI
 
     private
 
-    def url_for(*)
-      if respond_to?(:current_package)
-        send(current_package.name.underscore.to_sym).url_for(*)
-      else
-        super(*
-        )
-      end
-    end
-
     def component_attributes
       attributes = {id:, class: classname.presence}.compact.map { |key, value| "#{key}=\"#{value}\"" }.join " "
       data.each do |key, value|

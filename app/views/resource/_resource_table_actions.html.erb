@@ -2,7 +2,7 @@
 
 <% actions.values.each do |action| %>
   <%=
-    table_action_button adapt_route_args(resource, action: action.route_options.action, **action.route_options.options),
+    table_action_button resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
                       icon: action.icon,
                       label: action.label,
                       color: action.color,

@@ -2,7 +2,7 @@
   <%= resource_component :sidebar_menu do %>
     <%= resource_component :sidebar_menu_item, name: "Overview", value: "/" %>
 
-    <% resource_items = registered_resources.map { |resource| [resource.model_name.name.pluralize, url_for(adapt_route_args(resource, use_parent: false))] } %>
+    <% resource_items = registered_resources.map { |resource| [resource.model_name.name.pluralize, resource_url_for(resource, use_parent: false)] } %>
     <%= resource_component :sidebar_menu_item, name: "Resources", value: resource_items %>
   <% end %>
 

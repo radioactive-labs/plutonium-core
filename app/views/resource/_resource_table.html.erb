@@ -17,7 +17,7 @@
         resource_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} matching your query" do
           if current_policy.create?
             resource_component :button, label: "Create #{resource_name(resource_class)}",
-                                        to: adapt_route_args(resource_class, action: :new),
+                                        to: resource_url_for(resource_class, action: :new),
                                         color: :primary
           end
         end
@@ -56,7 +56,7 @@
                 </td>
                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                   <% if policy(resource).show? %>
-                    <%= link_to resource.to_param, adapt_route_args(resource), class: "text-decoration-none" %>
+                    <%= link_to resource.to_param, resource_url_for(resource), class: "text-decoration-none" %>
                   <% else %>
                     <%= resource.to_param %>
                   <% end %>

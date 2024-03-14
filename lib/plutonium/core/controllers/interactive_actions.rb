@@ -45,13 +45,13 @@ module Plutonium
             if @interaction.valid?
               flash[:notice] = "TODO:#{current_interactive_action} was successfully updated."
 
-              format.html { redirect_to adapt_route_args(@interaction.result), status: :see_other }
-              format.any { render :show, status: :ok, location: adapt_route_args(@interaction.result) }
+              format.html { redirect_to resource_url_for(@interaction.result), status: :see_other }
+              format.any { render :show, status: :ok, location: resource_url_for(@interaction.result) }
 
               if helpers.current_turbo_frame == "modal"
                 format.turbo_stream do
                   render turbo_stream: [
-                    turbo_stream.redirect(url_for(adapt_route_args(@interaction.result)))
+                    turbo_stream.redirect(resource_url_for(@interaction.result))
                   ]
                 end
               end
@@ -97,11 +97,11 @@ module Plutonium
 
               flash[:notice] = "TODO:#{current_interactive_action} #{collection_count} #{resource_class.model_name.human.pluralize(collection_count)} successfully updated."
 
-              format.html { redirect_to adapt_route_args(resource_class) }
+              format.html { redirect_to resource_url_for(resource_class) }
               if helpers.current_turbo_frame == "modal"
                 format.turbo_stream do
                   render turbo_stream: [
-                    turbo_stream.redirect(url_for(resource_class))
+                    turbo_stream.redirect(resource_url_for(resource_class))
                   ]
                 end
               end
@@ -147,12 +147,12 @@ module Plutonium
             if @interaction.valid?
               flash[:notice] = "TODO:#{current_interactive_action} was successfully updated."
 
-              format.html { redirect_to adapt_route_args(resource_class) }
+              format.html { redirect_to resource_url_for(resource_class) }
 
               if helpers.current_turbo_frame == "modal"
                 format.turbo_stream do
                   render turbo_stream: [
-                    turbo_stream.redirect(url_for(adapt_route_args(resource_class)))
+                    turbo_stream.redirect(resource_url_for(resource_class))
                   ]
                 end
               end

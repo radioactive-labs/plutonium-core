@@ -110,13 +110,13 @@ module Plutonium
             resource_record.destroy
 
             format.html do
-              redirect_to adapt_route_args(resource_class),
+              redirect_to resource_url_for(resource_class),
                 notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey
             format.html do
-              redirect_to adapt_route_args(resource_record),
+              redirect_to resource_url_for(resource_record),
                 alert: "#{resource_class.model_name.human} is referenced by other records."
             end
             format.any do
@@ -133,18 +133,18 @@ module Plutonium
         def redirect_url_after_submit
           url = case preferred_action_after_submit
           when "show"
-            adapt_route_args(resource_record) if current_policy.show?
+            resource_url_for(resource_record) if current_policy.show?
           when "edit"
-            adapt_route_args(resource_record, action: :edit) if current_policy.edit?
+            resource_url_for(resource_record, action: :edit) if current_policy.edit?
           when "new"
-            adapt_route_args(resource_class, action: :new) if current_policy.new?
+            resource_url_for(resource_class, action: :new) if current_policy.new?
           when "index"
-            adapt_route_args(resource_class) if current_policy.index?
+            resource_url_for(resource_class) if current_policy.index?
           else
             # ensure we have a valid value
             session[:action_after_submit_preference] = "show"
           end
-          url || adapt_route_args(resource_record)
+          url || resource_url_for(resource_record)
         end
 
         def preferred_action_after_submit
