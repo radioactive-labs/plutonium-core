@@ -2,15 +2,14 @@ module Plutonium::UI
   class BlockComponent < Plutonium::UI::Base
     option :rounded, optional: true
     option :scroll, optional: true
-    option :classes, optional: true
 
     private
 
     def classnames
-      classnames = Array(classes)
+      classnames = [classname.presence]
       classnames << rounded_classes
       classnames << scroll_classes
-      classnames.join " "
+      classnames.compact.join " "
     end
 
     def scroll_classes

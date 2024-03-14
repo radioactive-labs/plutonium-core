@@ -11,7 +11,6 @@ module Plutonium
         include Plutonium::Helpers::ContentHelper
         include Plutonium::Helpers::DisplayHelper
         include Plutonium::Helpers::FormHelper
-        include Plutonium::Helpers::PaginationHelper
         include Plutonium::Helpers::TableHelper
         include Plutonium::Helpers::TurboHelper
         include Plutonium::Helpers::TurboStreamActionsHelper
@@ -26,7 +25,6 @@ module Plutonium
       autoload :ComponentHelper
       autoload :DisplayHelper
       autoload :FormHelper
-      autoload :PaginationHelper
       autoload :TableHelper
       autoload :TurboHelper
       autoload :TurboStreamActionsHelper

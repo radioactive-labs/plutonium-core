@@ -1,10 +1,5 @@
 <%= resource_component :block, rounded: :all do %>
-  <div
-    id="<%= id %>"
-    <% data.each do |key, value| %>
-      data-<%= key %>="<%= value %>"
-    <% end %>
-    class="p-6">
+  <div <%= component_attributes %>>
     <%= content %>
   </div>
 <% end %>

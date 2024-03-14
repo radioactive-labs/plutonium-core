@@ -11,7 +11,7 @@ module Plutonium::UI
     private
 
     def classnames
-      classnames = [classes]
+      classnames = [classname]
       classnames << "me-2 text-center py-2.5 font-medium px-5"
       classnames << "inline-flex items-center justify-center" if icon.present?
       classnames << color_classes

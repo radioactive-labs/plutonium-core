@@ -35,7 +35,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "listen", "~> 3.8"
   spec.add_dependency "active_interaction", "~> 5.3"
   spec.add_dependency "pundit", "~> 2.3"
-  spec.add_dependency "pagy", "~> 6.2"
+  spec.add_dependency "pagy", "~> 7.0"
   spec.add_dependency "simple_form", "~> 5.3"
   spec.add_dependency "view_component", "~> 3"
   spec.add_dependency "view_component-form", "~> 0.2.6"

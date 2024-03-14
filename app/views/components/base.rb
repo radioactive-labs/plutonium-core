@@ -10,7 +10,7 @@ module Plutonium::UI
 
     option :id, optional: true
     option :data, default: proc { {} }
-    option :classes, optional: true
+    option :classname, default: proc { "" }
 
     private
 
@@ -21,6 +21,14 @@ module Plutonium::UI
         super(*
         )
       end
+    end
+
+    def component_attributes
+      attributes = {id:, class: classname.presence}.compact.map { |key, value| "#{key}=\"#{value}\"" }.join " "
+      data.each do |key, value|
+        attributes = "#{attributes} data-#{key}=\"#{value}\""
+      end
+      attributes.html_safe
     end
   end
 end

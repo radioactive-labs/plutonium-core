@@ -85,7 +85,7 @@
     <% end %>
     <% if collection.pager.present? %>
       <%= resource_component :block, rounded: :bottom do %>
-          <%= render "pagination", pager: collection.pager %>
+        <%= resource_component :pagination, pager: collection.pager %>
       <% end  %>
     <% end  %>
   <% end %>
