@@ -80,24 +80,25 @@
     name = name.to_s
     current_scope = params[:q].try(:[], :scope)
   %>
-
-  <ul class="text-sm font-medium flex flex-wrap -mb-px">
-      <li class="me-2">
-        <% if current_scope.blank? %>
-          <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
-        <% else %>
-          <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
-        <% end %>
-      </li>
-
-      <% search_object.scope_definitions.each do |name, definition| %>
+  <%= resource_component :block, rounded: :top do %>
+    <ul class="text-sm font-medium flex flex-wrap -mb-px">
         <li class="me-2">
-          <% if name == current_scope %>
-            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+          <% if current_scope.blank? %>
+            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
           <% else %>
-            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
           <% end %>
         </li>
-      <% end %>
-  </ul>
+
+        <% search_object.scope_definitions.each do |name, definition| %>
+          <li class="me-2">
+            <% if name == current_scope %>
+              <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% else %>
+              <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% end %>
+          </li>
+        <% end %>
+    </ul>
+  <% end %>
 <% end %>
