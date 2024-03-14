@@ -22,12 +22,12 @@ module Plutonium
 
   def self.stylesheet
     if Plutonium::Config.development
-      file = JSON.parse(File.read(root.join("assets.manifest")))["plutonium-dev.css"]
+      file = JSON.parse(File.read(root.join("css.manifest")))["plutonium-dev.css"]
       "/plutonium-assets/build/#{file}"
     else
       raise NotImplementedError, "TODO: implement asset resolution for prod"
       # @stylesheet ||= begin
-      #   file = JSON.parse(File.read(root.join("assets.manifest")))["plutonium.css"]
+      #   file = JSON.parse(File.read(root.join("css.manifest")))["plutonium.css"]
       #   "/plutonium-assets/#{file}"
       # end
     end

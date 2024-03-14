@@ -148,10 +148,12 @@ module Plutonium
         end
 
         def preferred_action_after_submit
-          if %w[new edit show index].include? params[:commit]
-            session[:action_after_submit_preference] = params[:commit]
+          @preferred_action_after_submit = begin
+            if %w[new edit show index].include? params[:commit]
+              session[:action_after_submit_preference] = params[:commit]
+            end
+            session[:action_after_submit_preference] || "show"
           end
-          session[:action_after_submit_preference] || "show"
         end
       end
     end

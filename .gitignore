@@ -18,4 +18,5 @@
 .DS_Store
 node_modules
 build
-assets.manifest
+css.manifest
+js.manifest
