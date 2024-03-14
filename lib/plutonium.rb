@@ -54,6 +54,7 @@ module Plutonium
     autoload :ComponentRegistry
     autoload :Core
     autoload :Helpers
+    autoload :Icons
     autoload :Packaging
     autoload :Policy
     autoload :Reactor

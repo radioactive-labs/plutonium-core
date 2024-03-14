@@ -30,6 +30,10 @@ module Plutonium::UI
       end
       attributes.html_safe
     end
+
+    def render_icon(icon)
+      Plutonium::Icons.render(icon).html_safe
+    end
   end
 end
 
