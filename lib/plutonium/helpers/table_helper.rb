@@ -1,31 +1,6 @@
 module Plutonium
   module Helpers
     module TableHelper
-      def table_header(name, label, search_object)
-        if (sort_params = search_object.sort_params_for(name))
-          tag.span do
-            concat begin
-              link_to(sort_params[:url], class: "text-decoration-none") do
-                concat label
-                if sort_params[:direction].present?
-                  icon = (sort_params[:direction] == "ASC") ? "up" : "down"
-                  concat " "
-                  concat tag.i(class: "bi bi-sort-#{icon} text-muted", title: sort_params[:direction])
-                end
-              end
-            end
-            if sort_params[:position].present?
-              concat " "
-              concat link_to(sort_params[:position] + 1, sort_params[:reset_url],
-                class: "badge rounded-pill text-bg-secondary text-decoration-none", title: "remove sorting",
-                style: "font-size: 0.6em;")
-            end
-          end
-        else
-          label
-        end
-      end
-
       def attachment_preview_thumnail(attachment)
         return unless attachment.url.present?
 

@@ -1,7 +1,5 @@
-<%# locals: (search_object:) -%>
-
-<% if search_object.search_filter.present? && current_policy.search? %>
-  <%= simple_form_for :q, method: :get, html: { class: "flex items-center", data: { controller: "form", turbo_frame: nil } } do |f| %>
+<div data-controller="table_search_input" <%= component_attributes %>>
+  <%= simple_form_for :q, url: "", method: :get, html: { class: "flex items-center", data: { controller: "form", turbo_frame: nil } } do |f| %>
     <label for="search" class="sr-only">Search</label>
     <div class="relative w-full">
         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -41,4 +39,4 @@
       <% end %>
     <% end %>
   <% end %>
-<% end %>
+</div>

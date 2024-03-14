@@ -1,0 +1,91 @@
+<% if search_object.scope_definitions.present?  %>
+  <%
+    name = name.to_s
+    current_scope = params[:q].try(:[], :scope)
+  %>
+  <%= render_component :block, rounded: :top do %>
+    <ul class="text-sm font-medium flex flex-wrap -mb-px">
+        <li class="me-2">
+          <% if current_scope.blank? %>
+            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
+          <% else %>
+            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
+          <% end %>
+        </li>
+
+        <% search_object.scope_definitions.each do |name, definition| %>
+          <li class="me-2">
+            <% if name == current_scope %>
+              <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% else %>
+              <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% end %>
+          </li>
+        <% end %>
+    </ul>
+  <% end %>
+<% end %>
+
+<%= render_component :block, id: "resource-table-container", scroll: :x, rounded: table_rounding, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
+  <table data-controller="table" <%= component_attributes %>>
+    <thead class="<%= table_head_classes %>">
+      <tr>
+        <th scope="col" class="p-4">
+          <div class="flex items-center">
+            <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            <label for="checkbox-all-search" class="sr-only">checkbox</label>
+          </div>
+        </th>
+        <th scope="col" class="px-6 py-3">
+          <%= table_header :id, "#", search_object  %>
+        </th>
+        <% fields.each do |name, field| %>
+          <th scope="col" class="px-6 py-3">
+            <%= table_header name, field.label, search_object  %>
+          </th>
+        <% end %>
+        <th scope="col" class="px-6 py-3 text-end">&nbsp;</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% resources.each do |resource| %>
+        <tr class="<%= table_row_classes %>">
+          <td class="w-4 p-4">
+            <div class="flex items-center">
+              <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+            </div>
+          </td>
+          <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+            <% if policy(resource).show? %>
+              <%= link_to resource.to_param, resource_url_for(resource), class: "text-decoration-none" %>
+            <% else %>
+              <%= resource.to_param %>
+            <% end %>
+          </th>
+          <% fields.each do |name, field| %>
+            <%
+              options = field.options
+              max_width = options.delete :pu_max_width
+            %>
+            <td class="px-6 py-4">
+              <%= field.render self, resource %>
+            </td>
+          <% end %>
+          <td class="flex justify-end px-6 py-4">
+            <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
+              <%=
+                table_action_button resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
+                                  icon: action.icon,
+                                  label: action.label,
+                                  color: action.color,
+                                  method: action.route_options.method,
+                                  confirm: action.confirmation
+              %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

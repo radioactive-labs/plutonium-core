@@ -1,13 +1,9 @@
-<%# locals: (resource_class:, search_object:, actions:) -%>
-
 <%= render_component :block, rounded: :all do %>
-  <div class="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 p-4">
+  <div data-controller="table_toolbar" <%= component_attributes %>>
     <div class="w-full md:w-1/2">
-      <%=
-        render partial: "resource_table_toolbar_search_input", locals: {
-          search_object: search_object
-        }
-      %>
+        <% if search_object.search_filter.present? && current_policy.search? %>
+            <%= render_component "table_search_input", search_object: search_object %>
+        <% end %>
     </div>
     <div class="w-full md:w-auto flex flex-col md:flex-row space-y-2 md:space-y-0 items-stretch md:items-center justify-end md:space-x-3 flex-shrink-0">
       <%=
@@ -72,33 +68,4 @@
       -->
     </div>
   </div>
-<% end %>
-
-
-<% if search_object.scope_definitions.present?  %>
-  <%
-    name = name.to_s
-    current_scope = params[:q].try(:[], :scope)
-  %>
-  <%= render_component :block, rounded: :top do %>
-    <ul class="text-sm font-medium flex flex-wrap -mb-px">
-        <li class="me-2">
-          <% if current_scope.blank? %>
-            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
-          <% else %>
-            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
-          <% end %>
-        </li>
-
-        <% search_object.scope_definitions.each do |name, definition| %>
-          <li class="me-2">
-            <% if name == current_scope %>
-              <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
-            <% else %>
-              <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
-            <% end %>
-          </li>
-        <% end %>
-    </ul>
-  <% end %>
 <% end %>
