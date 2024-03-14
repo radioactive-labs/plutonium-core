@@ -74,14 +74,7 @@
           <% end %>
           <td class="flex justify-end px-6 py-4">
             <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
-              <%=
-                table_action_button resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
-                                  icon: action.icon,
-                                  label: action.label,
-                                  color: action.color,
-                                  method: action.route_options.method,
-                                  confirm: action.confirmation
-              %>
+              <%= table_action_button resource, action %>
             <% end %>
           </td>
         </tr>

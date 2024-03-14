@@ -27,6 +27,10 @@ module Plutonium
         def bulk_actions
           Collection.new(@collection.select { |name, action| action.bulk_action? })
         end
+
+        def values
+          super.sort_by { |value| value.position }
+        end
       end
     end
   end

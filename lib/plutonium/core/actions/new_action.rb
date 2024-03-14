@@ -9,7 +9,9 @@ module Plutonium
             icon: "outline/general/plus",
             route_options: Plutonium::Core::Action::RouteOptions.new(action: :new),
             color: :primary,
-            collection_action: true
+            collection_action: true,
+            category: :standard,
+            position: 100
           }
         end
       end

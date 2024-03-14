@@ -1,12 +1,27 @@
 module Plutonium
   module Helpers
     module ActionButtonsHelper
-      def toolbar_action_button(url, label:, icon:, color: nil, method: :get, confirm: nil, turbo_frame: nil)
-        render_component :action_button, to: url, method:, icon:, label:, size: :xs, color:, turbo_frame:, confirmation: confirm
+      def toolbar_action_button(resource, action)
+        render_component :action_button,
+          to: resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
+          method: action.route_options.method,
+          icon: action.icon,
+          label: action.label,
+          color: action.color,
+          confirmation: action.confirmation,
+          size: :xs
       end
 
-      def table_action_button(url, label:, icon:, color: nil, method: :get, confirm: nil, turbo_frame: nil)
-        render_component :action_button, to: url, method:, icon:, variant: :outline, label:, size: :xs, color:, turbo_frame:, confirmation: confirm
+      def table_action_button(resource, action)
+        render_component :action_button,
+          to: resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
+          method: action.route_options.method,
+          icon: nil, # action.icon,
+          label: action.label,
+          color: action.color,
+          confirmation: action.confirmation,
+          variant: :outline,
+          size: :xs
       end
     end
   end

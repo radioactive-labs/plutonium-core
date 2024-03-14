@@ -8,7 +8,9 @@ module Plutonium
           {
             icon: "outline/general/arrow-up-right-from-square",
             color: :primary,
-            collection_record_action: true
+            collection_record_action: true,
+            category: :standard,
+            position: 10
           }
         end
       end

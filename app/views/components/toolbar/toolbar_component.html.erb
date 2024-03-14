@@ -5,15 +5,7 @@
     </div>
     <div class="<%= toolbar_actions_classes %>">
       <% actions.values.each do |action| %>
-        <%=
-          toolbar_action_button resource_url_for(resource, action: action.route_options.action, **action.route_options.options),
-                              label: action.label,
-                              icon: action.icon,
-                              color: action.color,
-                              method: action.route_options.method,
-                              confirm: action.confirmation,
-                              turbo_frame: action.turbo_frame
-        %>
+        <%= toolbar_action_button resource, action %>
       <% end %>
 
       <!--

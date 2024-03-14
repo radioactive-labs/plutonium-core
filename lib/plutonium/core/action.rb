@@ -7,12 +7,13 @@ module Plutonium
         end
       end
 
-      attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :color
+      attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :color, :category, :position
 
-      def initialize(name, label: nil, icon: nil, color: nil,
-        confirmation: nil,
-        route_options: nil, turbo_frame: nil,
-        collection_action: false, collection_record_action: false, record_action: false, bulk_action: false)
+      def initialize(
+        name, label: nil, icon: nil, color: nil, confirmation: nil, route_options: nil, turbo_frame: nil,
+        collection_action: false, collection_record_action: false, record_action: false, bulk_action: false,
+        category: nil, position: 50
+      )
         @name = name
         @icon = icon
         @label = label || name.to_s.humanize
@@ -24,6 +25,8 @@ module Plutonium
         @collection_record_action = collection_record_action
         @record_action = record_action
         @bulk_action = bulk_action
+        @category = category
+        @position = position
       end
 
       def collection_action?

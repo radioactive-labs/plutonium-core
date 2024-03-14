@@ -12,7 +12,9 @@ module Plutonium
             confirmation: "Are you sure?",
             turbo_frame: "_top",
             collection_record_action: true,
-            record_action: true
+            record_action: true,
+            category: :standard,
+            position: 100
           }
         end
       end
