@@ -20,9 +20,22 @@ module Plutonium
     root.join("lib", "plutonium")
   end
 
-  def self.stylesheet
+  def self.stylesheet_link
     if Plutonium::Config.development
       file = JSON.parse(File.read(root.join("css.manifest")))["plutonium-dev.css"]
+      "/plutonium-assets/build/#{file}"
+    else
+      raise NotImplementedError, "TODO: implement asset resolution for prod"
+      # @stylesheet ||= begin
+      #   file = JSON.parse(File.read(root.join("css.manifest")))["plutonium.css"]
+      #   "/plutonium-assets/#{file}"
+      # end
+    end
+  end
+
+  def self.script_link
+    if Plutonium::Config.development
+      file = JSON.parse(File.read(root.join("js.manifest")))["plutonium.js"]
       "/plutonium-assets/build/#{file}"
     else
       raise NotImplementedError, "TODO: implement asset resolution for prod"

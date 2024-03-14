@@ -1,5 +1,8 @@
 module <%= component_namespace %>
   class <%= component_class %> < Plutonium::UI::Base
+    # def classname
+    #   "custom classnames here #{super}"
+    # end
   end
 end
 

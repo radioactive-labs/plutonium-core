@@ -1,1 +1,3 @@
-<%%= content %>
+<div data-controller="<%= component_controller %>" <%%= component_attributes %>>
+  <%%= content %>
+</div>

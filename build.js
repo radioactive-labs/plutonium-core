@@ -7,6 +7,6 @@ esbuild.context({
   outdir: "public/plutonium-assets/build/",
   plugins: [manifestPlugin({
     filename: `${__dirname}/js.manifest`,
-    shortNames: 'input',
+    shortNames: true,
   })],
 }).then((context) => context.watch().catch((e) => console.error(e.message)))

@@ -14,6 +14,10 @@ module Pu
       def start
         template "component.rb", "app/views/components/#{component_path}.rb"
         template "component.html.erb", "app/views/components/#{component_path}.html.erb"
+        template "component.js", "app/views/components/#{component_path}.js"
+
+        controllers_file = File.join __dir__, "../../../../../app/assets/js/controllers/index.js"
+        insert_into_file controllers_file, controller_registration, after: /.*Register controllers here.*\n\n/
       end
 
       protected
@@ -40,6 +44,15 @@ module Pu
 
       def component_identifier
         component_name.underscore.sub("_component", "")
+      end
+
+      def component_controller
+        component_identifier.parameterize
+      end
+
+      def controller_registration
+        %(import #{component_identifier.camelize}Controller from "../../../views/components/#{component_path}.js"\n) +
+          %(application.register("#{component_identifier}", #{component_identifier.camelize}Controller)\n\n)
       end
     end
   end
