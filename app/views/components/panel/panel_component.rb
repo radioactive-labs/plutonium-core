@@ -1,7 +1,7 @@
 module Plutonium::UI
   class PanelComponent < Plutonium::UI::Base
     def classname
-      "p-6 #{super}"
+      "p-4 #{super}"
     end
   end
 end

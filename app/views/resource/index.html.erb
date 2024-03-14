@@ -1,8 +1,4 @@
 <%= render_component :breadcrumbs, resource_class:, parent: current_parent %>
 
-  <%=
-      render_component :toolbar, resource_class: resource_class,
-                          parent: current_parent
-  %>
 
 <%= render "resource_table", collection: @collection %>

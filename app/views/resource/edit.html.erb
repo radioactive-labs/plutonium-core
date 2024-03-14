@@ -1,9 +1,3 @@
 <%= render_component :breadcrumbs, resource_class:, parent: current_parent, resource: @form.record %>
 
-  <%=
-      render_component :toolbar, resource_class: resource_class,
-                          resource: @form.record,
-                          parent: current_parent
-  %>
-
 <%= render "resource_form", form: @form %>
