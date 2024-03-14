@@ -6,9 +6,9 @@ module Plutonium
 
         def action_options
           {
-            icon: "trash",
+            icon: "outline/general/trash-bin",
             route_options: Plutonium::Core::Action::RouteOptions.new(method: :delete),
-            action_class: "red",
+            color: :red,
             confirmation: "Are you sure?",
             turbo_frame: "_top",
             collection_record_action: true,

@@ -7,9 +7,9 @@ module Plutonium
         end
       end
 
-      attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :action_class
+      attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :color
 
-      def initialize(name, label: nil, icon: nil, action_class: nil,
+      def initialize(name, label: nil, icon: nil, color: nil,
         confirmation: nil,
         route_options: nil, turbo_frame: nil,
         collection_action: false, collection_record_action: false, record_action: false, bulk_action: false)
@@ -18,7 +18,7 @@ module Plutonium
         @label = label || name.to_s.humanize
         @route_options = route_options || RouteOptions.new
         @turbo_frame = turbo_frame
-        @action_class = action_class
+        @color = color
         @confirmation = confirmation
         @collection_action = collection_action
         @collection_record_action = collection_record_action

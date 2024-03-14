@@ -10,13 +10,10 @@ module Plutonium::UI
 
     private
 
-    def classnames
-      classnames = [classname]
-      classnames << "me-2 text-center py-2.5 font-medium px-5"
-      classnames << "inline-flex items-center justify-center" if icon.present?
-      classnames << color_classes
-      classnames << shape_classes
-      classnames << size_classes
+    def classname
+      classnames = ["text-center py-2.5 font-medium px-5", color_classes, shape_classes, size_classes]
+      classnames << "flex items-center justify-center space-x-1" if icon.present?
+      classnames << super.presence
       classnames.join " "
     end
 

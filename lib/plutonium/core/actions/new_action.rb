@@ -6,9 +6,9 @@ module Plutonium
 
         def action_options
           {
-            icon: "plus",
+            icon: "outline/general/plus",
             route_options: Plutonium::Core::Action::RouteOptions.new(action: :new),
-            action_class: "primary",
+            color: :primary,
             collection_action: true
           }
         end
