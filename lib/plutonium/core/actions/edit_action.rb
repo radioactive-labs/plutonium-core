@@ -6,7 +6,7 @@ module Plutonium
 
         def action_options
           {
-            icon: "outline/general/edit",
+            icon: "outline/edit",
             route_options: Plutonium::Core::Action::RouteOptions.new(action: :edit),
             color: :yellow,
             collection_record_action: true,

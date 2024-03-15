@@ -14,7 +14,7 @@ module Plutonium
         # concurrent disk accesses for a brief while after boot.
         size = ICON_SIZES.key?(size) ? size : :sm
         ICON_CACHE["#{name}:#{size}"] ||= begin
-          path = File.join __dir__, "icons/#{name}.svg"
+          path = Plutonium.root.join "app/assets/icons/#{name}.svg"
           raise "Invalid icon: #{name}" unless File.exist?(path)
 
           File.read(path).sub("<svg ", "<svg class=\"#{ICON_SIZES[size]}\" ")

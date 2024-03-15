@@ -6,7 +6,7 @@ module Plutonium
 
         def action_options
           {
-            icon: "outline/general/arrow-up-right-from-square",
+            icon: "outline/arrow-up-right-from-square",
             color: :primary,
             collection_record_action: true,
             category: :standard,
