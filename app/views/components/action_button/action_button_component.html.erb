@@ -1,9 +1,7 @@
 <% if method == :get %>
-  <%= render_component :button, to:, icon:, label:, size:,
-                                       color:, variant:, classname:, data: {turbo_frame:} %>
+  <%= render_component :button, to:, icon:, label:, size:, tooltip:, color:, variant:, classname:, data: {turbo_frame:} %>
 <% else %>
   <%= form_for :action, url: to, method:, html: {class: classname, data: {turbo_confirm: confirmation, turbo_frame:}} do %>
-    <%= render_component :button, type: :submit, icon:, label:, size:,
-                                    color:, variant:, classname: "w-full" %>
+    <%= render_component :button, type: :submit, icon:, label:, size:, tooltip:, color:, variant:, classname: "w-full" %>
   <% end %>
 <% end %>

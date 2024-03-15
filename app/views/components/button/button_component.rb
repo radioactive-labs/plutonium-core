@@ -3,6 +3,7 @@ module Plutonium::UI
     option :label
     option :to, optional: true
     option :icon, optional: true
+    option :tooltip, optional: true
     option :color, optional: true
     option :variant, optional: true
     option :size, optional: true
@@ -12,7 +13,8 @@ module Plutonium::UI
 
     def classname
       classnames = ["text-center py-2.5 font-medium px-5", color_classes, shape_classes, size_classes]
-      classnames << "flex items-center justify-center space-x-1" if icon.present?
+      classnames << "flex items-center justify-center"
+      classnames << "space-x-1" if icon.present? && label.present?
       classnames << super.presence
       classnames.join " "
     end

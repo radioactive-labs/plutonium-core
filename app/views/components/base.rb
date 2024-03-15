@@ -10,7 +10,7 @@ module Plutonium::UI
 
     option :id, optional: true
     option :data, default: proc { {} }
-    option :classname, default: proc { "" }
+    option :classname, optional: true
 
     private
 
