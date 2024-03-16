@@ -1,4 +1,4 @@
-<div data-controller="table_toolbar" <%= component_attributes %>>
+<div data-controller="table-toolbar" <%= render_component_attributes %>>
     <%= render_component :toolbar, actions:, resource: resource_class do %>
         <% if search_object.search_filter.present? && current_policy.search? %>
             <%= render_component "table_search_input", search_object: search_object %>

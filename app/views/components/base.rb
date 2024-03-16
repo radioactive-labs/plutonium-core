@@ -11,19 +11,37 @@ module Plutonium::UI
     option :id, optional: true
     option :data, default: proc { {} }
     option :classname, optional: true
+    option :tooltip, optional: true
+    option :attributes, default: proc { {} }
 
     private
 
+    def base_classname = nil
+
+    def merged_classname
+      [base_classname, classname].compact.join.presence
+    end
+
     def component_attributes
-      attributes = {id:, class: classname.presence}.compact.map { |key, value| "#{key}=\"#{value}\"" }.join " "
-      data.each do |key, value|
-        attributes = "#{attributes} data-#{key}=\"#{value}\""
-      end
-      attributes.html_safe
+      {id:, data:, class: merged_classname, title: tooltip}.merge(attributes).compact
+    end
+
+    def render_component_attributes
+      attributes_to_string(component_attributes).html_safe
     end
 
     def render_icon(icon)
       Plutonium::Icons.render(icon).html_safe
+    end
+
+    def attributes_to_string(attributes, prefix = nil)
+      attributes.map do |key, value|
+        if value.is_a?(Hash)
+          attributes_to_string(value, "#{prefix ? "#{prefix}-" : ""}#{key}")
+        else
+          "#{prefix ? "#{prefix}-" : ""}#{key}=\"#{value}\""
+        end
+      end.join(" ")
     end
   end
 end

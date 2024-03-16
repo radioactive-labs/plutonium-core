@@ -1,9 +1,9 @@
 module <%= component_namespace %>
-  class <%= component_class %> < Plutonium::UI::Base
-    # def classname
-    #   "custom classnames here #{super}"
+  class <%= component_classname %> < Plutonium::UI::Base
+    # def base_classname
+    #   "base classnames here"
     # end
   end
 end
 
-Plutonium::ComponentRegistry.register :<%= component_identifier %>, to: <%= component_namespace %>::<%= component_class %>
+Plutonium::ComponentRegistry.register :<%= component_identifier %>, to: <%= component_reference %>

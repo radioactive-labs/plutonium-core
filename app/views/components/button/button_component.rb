@@ -3,7 +3,6 @@ module Plutonium::UI
     option :label
     option :to, optional: true
     option :icon, optional: true
-    option :tooltip, optional: true
     option :color, optional: true
     option :variant, optional: true
     option :size, optional: true

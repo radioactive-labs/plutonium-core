@@ -27,7 +27,7 @@
 <% end %>
 
 <%= render_component :block, id: "resource-table-container", scroll: :x, rounded: table_rounding, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
-  <table data-controller="table" <%= component_attributes %>>
+  <table data-controller="table" <%= render_component_attributes %>>
     <thead class="<%= table_head_classes %>">
       <tr>
         <th scope="col" class="p-4">

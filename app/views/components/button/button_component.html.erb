@@ -1,10 +1,10 @@
 <% if to %>
-  <%= link_to to, id:, role: "button", data:, class: classname, title: tooltip do %>
+  <%= link_to to, role: "button", **component_attributes do %>
     <%= render_icon icon if icon %>
     <span><%= label %></span>
   <% end %>
 <% else %>
-  <button <%= component_attributes %> type="<%= type %>" <%== "title=\"#{tooltip}\"" if tooltip.present? %>>
+  <button <%= render_component_attributes %> type="<%= type %>" %>
     <%= render_icon icon if icon %>
     <span><%= label %></span>
   </button>

@@ -21,7 +21,7 @@ module.exports = {
     "./lib/plutonium/initializers/simple_form.rb",
     // TODO: temporary workaround for buttons flex basis hack.
     // To be removed after moving buttons_helper to components.
-    "./lib/plutonium//**/*.{rb,erb}"
+    "./lib/plutonium/**/*.{rb,erb}"
   ],
   darkMode: "selector",
   plugins: [

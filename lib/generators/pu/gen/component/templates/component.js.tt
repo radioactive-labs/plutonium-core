@@ -1,8 +1,0 @@
-import { Controller } from "@hotwired/stimulus"
-
-// Connects to data-controller="<%= component_controller %>"
-export default class extends Controller {
-  connect() {
-    console.log(`<%= component_controller %> connected: ${this.element}`)
-  }
-}

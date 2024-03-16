@@ -11,10 +11,14 @@ module Pu
 
       argument :name
 
+      def normalize_name
+        @name = name.camelize.gsub(/Component$/, "")
+      end
+
       def start
-        template "component.rb", "app/views/components/#{component_path}.rb"
-        template "component.html.erb", "app/views/components/#{component_path}.html.erb"
-        template "component.js", "app/views/components/#{component_path}.js"
+        template "component.rb", "#{component_path}.rb"
+        template "component.html.erb", "#{component_path}.html.erb"
+        template "controller.js", controller_path
 
         controllers_file = File.join __dir__, "../../../../../app/assets/js/controllers/index.js"
         insert_into_file controllers_file, controller_registration, after: /.*Register controllers here.*\n\n/
@@ -22,37 +26,61 @@ module Pu
 
       protected
 
+      def dest_dir
+        "app/views/components/"
+      end
+
       def component_name
-        "#{name}_component".camelize
+        name.demodulize
       end
 
-      def component_path
-        [component_module, name.underscore, component_class].compact.join("::").underscore
-      end
-
-      def component_class
-        component_name.demodulize
+      def component_classname
+        "#{component_name}Component"
       end
 
       def component_module
-        component_name.deconstantize.presence
+        name.deconstantize.presence
       end
 
       def component_namespace
         ["Plutonium::UI", component_module].compact.join "::"
       end
 
-      def component_identifier
-        component_name.underscore.sub("_component", "")
+      def component_reference
+        [component_namespace, component_classname].compact.join "::"
       end
 
-      def component_controller
-        component_identifier.parameterize
+      def component_dir
+        [component_module, component_name.underscore].compact.join("::").underscore
+      end
+
+      def component_base_path
+        File.join dest_dir, component_dir, component_name.underscore
+      end
+
+      def component_path
+        "#{component_base_path}_component"
+      end
+
+      def component_identifier
+        [component_module, component_name].compact.join("::").gsub("::", "__").underscore
+      end
+
+      def controller_path
+        "#{component_base_path}_controller.js"
+      end
+
+      def controller_identifier
+        component_identifier.dasherize
+      end
+
+      def controller_reference
+        [component_module, "#{component_name}Controller"].compact.join("::").gsub("::", "_")
       end
 
       def controller_registration
-        %(import #{component_identifier.camelize}Controller from "../../../views/components/#{component_path}.js"\n) +
-          %(application.register("#{component_identifier}", #{component_identifier.camelize}Controller)\n\n)
+        %(import #{controller_reference} from "../../../../#{controller_path}"\n) +
+          %(application.register("#{controller_identifier}", #{controller_reference})\n\n)
       end
     end
   end

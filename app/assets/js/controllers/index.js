@@ -2,17 +2,17 @@ import { application } from "./application"
 
 // Register controllers here
 
-import ToolbarController from "../../../views/components/toolbar/toolbar_component.js"
+import ToolbarController from "../../../../app/views/components/toolbar/toolbar_controller.js"
 application.register("toolbar", ToolbarController)
 
-import TableSearchInputController from "../../../views/components/table_search_input/table_search_input_component.js"
-application.register("table_search_input", TableSearchInputController)
+import TableSearchInputController from "../../../../app/views/components/table_search_input/table_search_input_controller.js"
+application.register("table-search-input", TableSearchInputController)
 
-import TableToolbarController from "../../../views/components/table_toolbar/table_toolbar_component.js"
-application.register("table_toolbar", TableToolbarController)
+import TableToolbarController from "../../../../app/views/components/table_toolbar/table_toolbar_controller.js"
+application.register("table-toolbar", TableToolbarController)
 
-import TableController from "../../../views/components/table/table_component.js"
+import TableController from "../../../../app/views/components/table/table_controller.js"
 application.register("table", TableController)
 
-import FormController from "../../../views/components/form/form_component.js"
+import FormController from "../../../../app/views/components/form/form_controller.js"
 application.register("form", FormController)
