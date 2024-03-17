@@ -37,7 +37,7 @@ module Pu
       end
 
       def package_type
-        "Packaging::Feature"
+        "Pkg::Feature"
       end
     end
   end

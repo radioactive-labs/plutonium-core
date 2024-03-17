@@ -1,6 +1,6 @@
 module Plutonium
-  module Packaging
-    module Package
+  module Pkg
+    module Base
       extend ActiveSupport::Concern
 
       included do

@@ -1,8 +1,8 @@
 module Plutonium
-  module Packaging
+  module Pkg
     module App
       extend ActiveSupport::Concern
-      include Package
+      include Base
 
       included do
         isolate_namespace to_s.deconstantize.constantize

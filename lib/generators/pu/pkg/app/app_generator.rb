@@ -49,7 +49,7 @@ module Pu
       end
 
       def package_type
-        "Packaging::App"
+        "Pkg::App"
       end
 
       def public_access? = @public_access

@@ -55,7 +55,7 @@ module Plutonium
     autoload :Core
     autoload :Helpers
     autoload :Icons
-    autoload :Packaging
+    autoload :Pkg
     autoload :Policy
     autoload :Reactor
     autoload :Rodauth

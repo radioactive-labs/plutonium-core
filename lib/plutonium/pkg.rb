@@ -1,9 +1,9 @@
 module Plutonium
-  module Packaging
+  module Pkg
     extend ActiveSupport::Autoload
 
     autoload :App
+    autoload :Base
     autoload :Feature
-    autoload :Package
   end
 end
