@@ -5,7 +5,7 @@
       "warning_code": 7,
       "fingerprint": "1cb8570b8c91f38317cdf909e01e7016359846174f427e86011633c344d30fc3",
       "check_name": "ForgerySetting",
-      "message": "`protect_from_forgery` should be called in `Plutonium::Reactor::ResourceController`",
+      "message": "`protect_from_forgery` should be called in `Plutonium::Resource::Controller`",
       "file": "lib/plutonium/reactor/resource_controller.rb",
       "line": 10,
       "link": "https://brakemanscanner.org/docs/warning_types/cross-site_request_forgery/",
@@ -13,7 +13,7 @@
       "render_path": null,
       "location": {
         "type": "controller",
-        "controller": "Plutonium::Reactor::ResourceController"
+        "controller": "Plutonium::Resource::Controller"
       },
       "user_input": null,
       "confidence": "High",

@@ -1,2 +1,2 @@
-class ResourceQueryObject < Plutonium::Reactor::ResourceQueryObject
+class ResourceQueryObject < Plutonium::Resource::QueryObject
 end

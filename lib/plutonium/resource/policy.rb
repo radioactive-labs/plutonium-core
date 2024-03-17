@@ -1,6 +1,6 @@
 module Plutonium
-  module Reactor
-    class ResourcePolicy
+  module Resource
+    class Policy
       include Plutonium::Policy::Initializer
 
       class Scope < Plutonium::Policy::Scope

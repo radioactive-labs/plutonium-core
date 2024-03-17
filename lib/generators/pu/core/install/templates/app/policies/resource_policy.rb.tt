@@ -1,2 +1,2 @@
-class ResourcePolicy < Plutonium::Reactor::ResourcePolicy
+class ResourcePolicy < Plutonium::Resource::Policy
 end

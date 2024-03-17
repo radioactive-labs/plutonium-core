@@ -1,2 +1,2 @@
-class ResourceInteraction < Plutonium::Reactor::ResourceInteraction
+class ResourceInteraction < Plutonium::Resource::Interaction
 end

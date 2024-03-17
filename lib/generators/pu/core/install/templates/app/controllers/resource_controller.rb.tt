@@ -1,2 +1,2 @@
-class ResourceController < Plutonium::Reactor::ResourceController
+class ResourceController < Plutonium::Resource::Controller
 end

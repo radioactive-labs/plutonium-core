@@ -58,6 +58,7 @@ module Plutonium
     autoload :Pkg
     autoload :Policy
     autoload :Reactor
+    autoload :Resource
     autoload :Rodauth
   end
 end

@@ -1,6 +1,6 @@
 module Plutonium
-  module Reactor
-    module ResourceRecord
+  module Resource
+    module Resource
       extend ActiveSupport::Concern
 
       included do

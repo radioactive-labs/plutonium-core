@@ -1,6 +1,6 @@
 module Plutonium
-  module Reactor
-    class ResourcePresenter
+  module Resource
+    class Presenter
       include Plutonium::Core::Definers::FieldDefiner
       include Plutonium::Core::Definers::ActionDefiner
 

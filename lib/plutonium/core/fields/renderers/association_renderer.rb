@@ -13,7 +13,7 @@ module Plutonium
           private
 
           def renderer_options
-            resource_record = reflection.klass.include? Plutonium::Reactor::ResourceRecord
+            resource_record = reflection.klass.include? Plutonium::Resource::Record
             {
               helper: resource_record ? :display_association_value : :display_name_of
             }

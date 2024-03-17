@@ -5,8 +5,8 @@ require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root
 using Plutonium::Refinements::ParameterRefinements
 
 module Plutonium
-  module Reactor
-    class ResourceController < ActionController::Base
+  module Resource
+    class Controller < ActionController::Base
       # remove this controller from the view lookup
       # has the side effect of marking all public methods as private.
       abstract!
@@ -114,7 +114,7 @@ module Plutonium
       end
 
       def resource_context
-        Plutonium::Reactor::ResourceContext.new(
+        Plutonium::Resource::Context.new(
           resource_class:,
           parent: current_parent,
           scope: scoped_to_entity? ? current_scoped_entity : nil
