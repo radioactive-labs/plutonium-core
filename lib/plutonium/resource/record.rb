@@ -1,6 +1,6 @@
 module Plutonium
   module Resource
-    module Resource
+    module Record
       extend ActiveSupport::Concern
 
       included do
@@ -41,7 +41,7 @@ module Plutonium
         end
       end
 
-      module ClassMethods
+      class_methods do
         def resource_field_names
           @resource_field_names ||= belongs_to_association_field_names +
             has_one_attached_field_names + has_one_association_field_names +
@@ -66,15 +66,23 @@ module Plutonium
         end
 
         def has_one_attached_field_names
-          @has_one_attached_field_names ||= reflect_on_all_attachments
-            .map { |a| (a.macro == :has_one_attached) ? a.name : nil }
-            .compact
+          @has_one_attached_field_names ||= if respond_to?(:reflect_on_all_attachments)
+            reflect_on_all_attachments
+              .map { |a| (a.macro == :has_one_attached) ? a.name : nil }
+              .compact
+          else
+            []
+          end
         end
 
         def has_many_attached_field_names
-          @has_many_attached_field_names ||= reflect_on_all_attachments
-            .map { |a| (a.macro == :has_many_attached) ? a.name : nil }
-            .compact
+          @has_many_attached_field_names ||= if respond_to?(:reflect_on_all_attachments)
+            reflect_on_all_attachments
+              .map { |a| (a.macro == :has_many_attached) ? a.name : nil }
+              .compact
+          else
+            []
+          end
         end
 
         def content_column_field_names
@@ -95,15 +103,15 @@ module Plutonium
         #
         def strong_parameters_for(*attributes)
           # {:name=>{:name=>nil}, :body=>{:body=>nil}, :cover_image=>{:cover_image=>nil}, :comments=>{:comment_ids=>[]}}
-          strong_parameters_definition
+          strong_parameters_definition.
             # {:name=>{:name=>nil}, :comments=>{:comment_ids=>[]}, :cover_image=>{:cover_image=>nil}}
-            .slice(*attributes)
+            slice(*attributes).
             # [{:name=>nil}, {:comment_ids=>[]}, {:cover_image=>nil}]
-            .values
+            values.
             # {:name=>nil, :comment_ids=>[], :cover_image=>nil}
-            .reduce(:merge)
+            reduce(:merge)&.
             # [:name, {:comment_ids=>[]}, :cover_image]
-            &.map { |key, value| value.nil? ? key : {key => value} } || {}
+            map { |key, value| value.nil? ? key : {key => value} } || {}
         end
 
         private

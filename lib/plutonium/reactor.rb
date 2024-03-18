@@ -3,6 +3,5 @@ module Plutonium
     extend ActiveSupport::Autoload
 
     autoload :Core
-    autoload :PolicyContext
   end
 end

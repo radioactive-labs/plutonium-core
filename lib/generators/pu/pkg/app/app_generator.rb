@@ -28,7 +28,17 @@ module Pu
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
         template "config/routes.rb", "packages/#{package_namespace}/config/routes.rb"
 
-        %w[controllers policies presenters query_objects].each do |dir|
+        template "app/controllers/package_controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{package_namespace}_controller.rb"
+        template "app/controllers/application_controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/application_controller.rb"
+
+        template "app/controllers/dashboard_controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/dashboard_controller.rb"
+        copy_file "app/views/package/dashboard/index.html.erb",
+          "packages/#{package_namespace}/app/views/#{package_namespace}/dashboard/index.html.erb"
+
+        %w[policies presenters query_objects].each do |dir|
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
         end
         create_file "packages/#{package_namespace}/app/views/#{package_namespace}/.keep"

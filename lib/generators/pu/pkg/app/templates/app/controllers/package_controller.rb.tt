@@ -1,7 +1,7 @@
 module <%= package_name %>
-  module ResourceController
+  module <%= package_name %>Controller
     extend ActiveSupport::Concern
-    include Plutonium::Core::AppController
+    include Plutonium::Application::Controller
     <%- if rodauth_account.present? -%>
     include Plutonium::Auth.rodauth(:<%= rodauth_account %>)
     <%- elsif public_access? -%>

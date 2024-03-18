@@ -4,8 +4,8 @@ module Plutonium
       module CrudActions
         extend ActiveSupport::Concern
 
-        def self.included_after_inheritance(base)
-          base.helper_method :preferred_action_after_submit
+        included do
+          helper_method :preferred_action_after_submit
         end
 
         # GET /resources(.{format})

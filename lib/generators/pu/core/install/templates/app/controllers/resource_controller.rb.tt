@@ -1,2 +1,3 @@
-class ResourceController < Plutonium::Resource::Controller
+class ResourceController < ApplicationController
+  include Plutonium::Resource::Controller
 end

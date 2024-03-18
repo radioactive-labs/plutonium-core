@@ -5,7 +5,6 @@ module Plutonium
     eager_autoload do
       autoload :Action
       autoload :Actions
-      autoload :AppController
       autoload :Autodiscovery
       autoload :Controllers
       autoload :Definers

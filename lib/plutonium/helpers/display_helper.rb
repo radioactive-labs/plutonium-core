@@ -34,7 +34,7 @@ module Plutonium
 
       def display_association_value(association)
         display_name = display_name_of(association)
-        link_to display_name, resource_url_for(association, use_parent: false),
+        link_to display_name, resource_url_for(association, parent: nil),
           class: "text-decoration-none"
       rescue NoMethodError
         display_name

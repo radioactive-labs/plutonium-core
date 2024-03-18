@@ -5,33 +5,19 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          helper_method :current_engine
-          helper_method :current_package
+          class_attribute :current_package, instance_writer: false, instance_predicate: false
+          class_attribute :current_engine, instance_writer: false, instance_predicate: false
+
+          helper_method :current_engine, :current_package
         end
 
         class_methods do
-          attr_reader :package, :current_engine
-
-          private
-
           def boot(package)
-            raise "#{self.class} has already booted" if defined?(@package) || defined?(@current_engine)
-
-            @package = package
-            @current_engine = "#{package}::Engine".constantize
+            self.current_package = package
+            self.current_engine = "#{package}::Engine".constantize
 
             prepend_view_path current_engine.paths["app/views"].first
           end
-        end
-
-        private
-
-        def current_engine
-          self.class.current_engine
-        end
-
-        def current_package
-          self.class.package
         end
       end
     end

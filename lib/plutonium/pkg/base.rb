@@ -17,6 +17,10 @@ module Plutonium
           add_view_paths_initializer.instance_variable_set(:@block, ->(app) {})
         end
       end
+
+      def scoped_to_entity?
+        raise NotImplementedError, "scoped_to_entity?"
+      end
     end
   end
 end

@@ -4,11 +4,9 @@ module Plutonium
       module InteractiveActions
         extend ActiveSupport::Concern
 
-        def self.included_after_inheritance(base)
-          base.helper_method :current_interactive_action
-        end
-
         included do
+          helper_method :current_interactive_action
+
           before_action :validate_interactive_resource_action, only: %i[
             begin_interactive_resource_record_action commit_interactive_resource_record_action
             begin_interactive_resource_collection_action commit_interactive_resource_collection_action

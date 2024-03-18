@@ -18,14 +18,11 @@ module Plutonium
         private
 
         def policy_namespace(scope)
-          raise NotImplementedError, "policy_namespace"
+          [current_package.to_s.underscore.to_sym, scope]
         end
 
         def policy_context
-          Plutonium::Reactor::PolicyContext.new(
-            user: current_user,
-            resource_context: resource_context
-          )
+          raise NotImplementedError, "policy_context"
         end
 
         def pundit_user

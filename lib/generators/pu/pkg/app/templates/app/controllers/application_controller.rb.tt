@@ -1,0 +1,5 @@
+module <%= package_name %>
+  class ApplicationController < ::ApplicationController
+    include <%= package_name %>Controller
+  end
+end

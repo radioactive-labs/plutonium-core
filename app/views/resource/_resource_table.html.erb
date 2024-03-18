@@ -14,7 +14,7 @@
 <% unless resources.any? %>
   <div class="col-12">
     <%=
-      render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} matching your query" do
+      render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} match your query" do
         if current_policy.create?
           render_component :button, label: "Create #{resource_name(resource_class)}",
                                       to: resource_url_for(resource_class, action: :new),

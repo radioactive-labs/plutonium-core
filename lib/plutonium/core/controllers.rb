@@ -5,6 +5,7 @@ module Plutonium
 
       eager_autoload do
         autoload :Authorizable
+        autoload :Base
         autoload :Bootable
         autoload :CrudActions
         autoload :EntityScoping
