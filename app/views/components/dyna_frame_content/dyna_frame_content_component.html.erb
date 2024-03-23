@@ -1,0 +1,7 @@
+<% if current_turbo_frame.present? %>
+  <%= turbo_frame_tag current_turbo_frame do %>
+    <%= content %>
+  <% end %>
+<% else %>
+  <%= content %>
+<% end %>

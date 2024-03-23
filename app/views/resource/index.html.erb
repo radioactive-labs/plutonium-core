@@ -1,4 +1,5 @@
 <%= render_component :breadcrumbs, resource_class:, parent: current_parent %>
 
-
-<%= render "resource_table", collection: @collection %>
+<%= render_component :dyna_frame_content do %>
+  <%= render "resource_table", collection: @collection %>
+<% end %>
