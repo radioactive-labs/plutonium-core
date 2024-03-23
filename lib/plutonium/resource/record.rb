@@ -102,8 +102,12 @@ module Plutonium
         #   [:title, :body, {:images=>[]}, {:docs=>[]}]
         #
         def strong_parameters_for(*attributes)
+          # attributes that are passed by we do not have a model/database backed definition for e.g. virtual attributes.
+          unbacked = attributes - strong_parameters_definition.keys
+
+          # attributes backed by some model/database definition
           # {:name=>{:name=>nil}, :body=>{:body=>nil}, :cover_image=>{:cover_image=>nil}, :comments=>{:comment_ids=>[]}}
-          strong_parameters_definition.
+          backed = strong_parameters_definition.
             # {:name=>{:name=>nil}, :comments=>{:comment_ids=>[]}, :cover_image=>{:cover_image=>nil}}
             slice(*attributes).
             # [{:name=>nil}, {:comment_ids=>[]}, {:cover_image=>nil}]
@@ -112,6 +116,8 @@ module Plutonium
             reduce(:merge)&.
             # [:name, {:comment_ids=>[]}, :cover_image]
             map { |key, value| value.nil? ? key : {key => value} } || {}
+
+          unbacked + backed
         end
 
         private

@@ -1,5 +1,5 @@
 <%= package_name %>::Engine.routes.draw do
-  get "/", to: "dashboard#index"
+  root to: "dashboard#index"
 
   # add custom app routes here
 end

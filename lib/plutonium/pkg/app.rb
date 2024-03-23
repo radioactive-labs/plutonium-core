@@ -115,7 +115,7 @@ module Plutonium
               # essentially performs a Blog.find('comments')
               # since the route names for these 2 will be 'blogs' and 'blog_comments',
               # reverse sorting ensures that blog_comments is registered first, preventing the issue described above
-              concerns resource_route_names.sort.reverse
+              concerns resource_route_names.sort
             end
           end
         end
