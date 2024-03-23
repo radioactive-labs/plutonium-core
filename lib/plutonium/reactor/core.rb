@@ -8,7 +8,7 @@ module Plutonium
         # Load initializers
         Dir.glob(Plutonium.lib_root.join("initializers", "**", "*.rb")) { |file| load file }
 
-        # start_reloader!
+        start_reloader!
       end
 
       def self.start_reloader!

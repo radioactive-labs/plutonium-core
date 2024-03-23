@@ -9,8 +9,6 @@ module Plutonium
         options[:builder] ||= Plutonium::UI::FormBuilder
         options[:wrapper] ||= :default_resource_form
         options[:html] ||= {}
-        options[:html][:data] ||= {}
-        options[:html][:data][:turbo_frame] = options.key?(:turbo_frame) ? options.delete(:turbo_frame) : "_top"
         unless options[:html].key?(:novalidate)
           options[:html][:novalidate] = false
         end

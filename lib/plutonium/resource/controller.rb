@@ -130,7 +130,7 @@ module Plutonium
       # end
 
       def resource_url_args_for(*args, **kwargs)
-        kwargs[:parent] = current_parent unless kwargs.key(:parent)
+        kwargs[:parent] = current_parent unless kwargs.key?(:parent)
         super(*args, **kwargs)
       end
     end

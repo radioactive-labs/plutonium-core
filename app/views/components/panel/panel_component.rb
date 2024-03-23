@@ -1,5 +1,7 @@
 module Plutonium::UI
   class PanelComponent < Plutonium::UI::Base
+    option :title, optional: true
+
     def classname
       "p-4 #{super}"
     end

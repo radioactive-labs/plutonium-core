@@ -2,6 +2,9 @@ import { application } from "./application"
 
 // Register controllers here
 
+import TabBarController from "../../../../app/views/components/tab_bar/tab_bar_controller.js"
+application.register("tab-bar", TabBarController)
+
 import ToolbarController from "../../../../app/views/components/toolbar/toolbar_controller.js"
 application.register("toolbar", ToolbarController)
 
