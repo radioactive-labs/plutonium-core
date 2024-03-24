@@ -75,8 +75,8 @@ module Plutonium
         clamp_content quill(value)
       end
 
-      def display_attachment_value(value, **, &block)
-        attachment_preview(value, **, &block)
+      def display_attachment_value(value, **, &)
+        attachment_preview(value, **, &)
       end
     end
   end

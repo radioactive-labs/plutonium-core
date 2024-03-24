@@ -14,9 +14,9 @@ module Plutonium
         @value = url
       end
 
-      def items(&block)
+      def items(&)
         raise ArgumentError, "Indicator not allowed for items with children" if @indicator
-        @value = Menu.new(&block).items
+        @value = Menu.new(&).items
       end
 
       def indicator=(indicator)

@@ -157,9 +157,9 @@ module Plutonium
         define_search(:search) if resource_class.respond_to?(:search)
       end
 
-      def define_filter(name, body = nil, &block)
+      def define_filter(name, body = nil, &)
         body ||= name
-        filter_definitions[name] = build_query(body, &block)
+        filter_definitions[name] = build_query(body, &)
       end
 
       def define_scope(name, body = nil)
@@ -203,13 +203,13 @@ module Plutonium
         @selected_sort_directions = @selected_sort_directions.map { |key, value| [key, {"DESC" => "DESC"}[value.upcase] || "ASC"] }.to_h.with_indifferent_access
       end
 
-      def build_query(body, &block)
+      def build_query(body, &)
         case body
         when Symbol
           raise "Cannot find scope :#{body} on #{resource_class}" unless resource_class.respond_to? body
-          ScopeQuery.new(body, &block)
+          ScopeQuery.new(body, &)
         else
-          BlockQuery.new(body, &block)
+          BlockQuery.new(body, &)
         end
       end
 

@@ -3,9 +3,9 @@ module Plutonium
     class SidebarMenu
       attr_reader :items
 
-      def initialize(&block)
+      def initialize(&)
         @items = []
-        instance_eval(&block)
+        instance_eval(&)
       end
 
       def item(name, indicator: nil, url: nil, &block)

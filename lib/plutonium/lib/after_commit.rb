@@ -24,8 +24,8 @@ module Plutonium
       end
 
       class << self
-        def execute(rolled_back: false, connection: ActiveRecord::Base.connection, &block)
-          connection.transaction_open? ? connection.add_transaction_record(AfterCommit.new(rolled_back: rolled_back, &block)) : yield
+        def execute(rolled_back: false, connection: ActiveRecord::Base.connection, &)
+          connection.transaction_open? ? connection.add_transaction_record(AfterCommit.new(rolled_back: rolled_back, &)) : yield
           nil
         end
       end

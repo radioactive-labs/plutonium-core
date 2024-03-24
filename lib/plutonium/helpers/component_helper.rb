@@ -5,9 +5,9 @@ module Plutonium
         Plutonium::ComponentRegistry.resolve name
       end
 
-      def render_component(name, *, **, &block)
+      def render_component(name, *, **, &)
         component = resolve_component name
-        render(component.new(*, **), &block)
+        render(component.new(*, **), &)
       end
     end
   end
