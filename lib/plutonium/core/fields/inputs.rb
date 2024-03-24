@@ -8,6 +8,7 @@ module Plutonium
           autoload :AttachmentInput
           autoload :Base
           autoload :BelongsToAssociationInput
+          autoload :DateTimeInput
           autoload :Factory
           autoload :HasManyAssociationInput
           autoload :NoopInput
