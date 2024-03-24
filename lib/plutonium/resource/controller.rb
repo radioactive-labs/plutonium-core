@@ -120,7 +120,7 @@ module Plutonium
       def parent_input_param
         return unless current_parent.present?
 
-        resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass == current_parent.class }&.name&.to_sym
+        resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass.name == current_parent.class.name }&.name&.to_sym
       end
 
       ############

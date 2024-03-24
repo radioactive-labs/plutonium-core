@@ -10,10 +10,11 @@ module Plutonium
           named_scope = :"associated_with_#{record.model_name.singular}"
           return send(named_scope, record) if respond_to?(named_scope)
 
-          # TOD: add suppport for polymorphic associations
-
+          # TODO: add suppport for polymorphic associations
           # TODO: add logging
-          if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass == record.class })
+          # TODO: memoize this
+
+          if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass.name == record.class.name })
             case own_association.macro
             when :has_one
               joins(own_association.name).where({
@@ -28,7 +29,7 @@ module Plutonium
             else
               raise NotImplementedError, "associated_with->##{own_association.macro}"
             end
-          elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass == klass })
+          elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass.name == klass.name })
             # TODO: add a warning here about a potentially poor performing query
             where(id: record.send(record_association.name))
           else
