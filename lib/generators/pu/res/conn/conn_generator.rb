@@ -3,7 +3,7 @@
 require "plutonium_generators"
 
 module Pu
-  module Resource
+  module Res
     class ConnGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 

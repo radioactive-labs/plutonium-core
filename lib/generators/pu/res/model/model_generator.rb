@@ -6,7 +6,7 @@ require "rails/generators"
 require "rails/generators/active_record/model/model_generator"
 
 module Pu
-  module Resource
+  module Res
     class ModelGenerator < ActiveRecord::Generators::ModelGenerator
       include PlutoniumGenerators::Generator
 
