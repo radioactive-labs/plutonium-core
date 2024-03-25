@@ -27,7 +27,7 @@ module Plutonium
       end
 
       def display_field_value(value:, helper: nil, title: nil, **)
-        title = (title != false) ? title || value : nil
+        title = (title != false) ? title || display_name_of(value) : nil
         rendered = helper.present? ? send(helper, value, **) : value
         tag.span rendered, title:
       end
@@ -35,7 +35,7 @@ module Plutonium
       def display_association_value(association)
         display_name = display_name_of(association)
         link_to display_name, resource_url_for(association, parent: nil),
-          class: "text-decoration-none"
+          class: "font-medium text-primary-600 dark:text-primary-500"
       rescue NoMethodError
         display_name
       end
@@ -49,7 +49,7 @@ module Plutonium
       end
 
       def display_url_value(value)
-        link_to nil, value, class: "text-decoration-none", target: :blank
+        link_to nil, value, class: "font-medium text-primary-600 dark:text-primary-500", target: :blank
       end
 
       def display_name_of(obj, separator: ", ")
