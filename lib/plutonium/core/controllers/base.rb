@@ -18,8 +18,7 @@ module Plutonium
           end
 
           helper Plutonium::Helpers
-          helper_method :resource_url_for
-          helper_method :resource_url_args_for
+          helper_method :page_title, :resource_url_for, :resource_url_args_for
 
           append_view_path File.expand_path("app/views", Plutonium.root)
           layout -> { turbo_frame_request? ? false : "resource" }
@@ -29,6 +28,10 @@ module Plutonium
 
         def set_page_title
           @page_title = "Pluton8"
+        end
+
+        def page_title(title)
+          [title.presence, Rails.application.class.module_parent.name].compact.join(" | ")
         end
 
         #

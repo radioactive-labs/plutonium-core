@@ -7,7 +7,7 @@ module Plutonium::UI
     option :fields
 
     def classname
-      "w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 #{super}"
+      "table-auto w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 #{super}"
     end
 
     private
@@ -22,6 +22,14 @@ module Plutonium::UI
 
     def table_row_classes
       "bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+    end
+
+    def table_row_cell_classes
+      "px-6 py-4 whitespace-nowrap max-w-[250px] hover:max-w-fit overflow-hidden text-ellipsis"
+    end
+
+    def table_actions_cell_classes
+      "flex justify-end px-6 py-4"
     end
 
     def table_header(name, label, search_object)
