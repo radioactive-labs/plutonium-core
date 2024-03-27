@@ -67,7 +67,7 @@ module Pu
       end
 
       def feature_package_name
-        main_app? ? nil : selected_feature.classify
+        main_app? ? nil : selected_feature.camelize
       end
 
       def main_app?
@@ -114,6 +114,7 @@ module Pu
 
               if name.include? "/"
                 attr_options[:to_table] = name.tr("/", "_").pluralize.to_sym
+                attr_options[:class_name] = name.classify
                 if (shared_namespace = find_shared_namespace(model_name, name, separator: "/"))
                   name = name.sub "#{shared_namespace}/", ""
                 end
@@ -159,6 +160,7 @@ module Pu
             if options[:to_table]
               options[:foreign_key] = {to_table: options.delete(:to_table)}
             end
+            options.delete(:class_name)
           end
         end
       end

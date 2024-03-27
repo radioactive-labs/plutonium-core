@@ -29,7 +29,7 @@ module Pu
       private
 
       def package_name
-        name.classify
+        name.camelize
       end
 
       def package_namespace

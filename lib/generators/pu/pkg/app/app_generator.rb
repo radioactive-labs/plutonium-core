@@ -51,7 +51,7 @@ module Pu
       attr_reader :rodauth_account
 
       def package_name
-        name.classify + "App"
+        name.camelize + "App"
       end
 
       def package_namespace
