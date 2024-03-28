@@ -27,48 +27,66 @@
 <% end %>
 
 <%= render_component :block, id: "resource-table-container", scroll: :x, rounded: table_rounding, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
-  <table data-controller="table" <%= render_component_attributes %>>
-    <thead class="<%= table_head_classes %>">
-      <tr>
-        <th scope="col" class="p-4">
-          <div class="flex items-center">
-            <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-            <label for="checkbox-all-search" class="sr-only">checkbox</label>
-          </div>
-        </th>
-        <% fields.each do |name, field| %>
-          <th scope="col" class="px-6 py-3">
-            <%= table_header name, field.label, search_object  %>
-          </th>
-        <% end %>
-        <th scope="col" class="px-6 py-3 text-end">&nbsp;</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% resources.each do |resource| %>
-        <tr class="<%= table_row_classes %>">
-          <th scope="row" class="w-4 p-4">
+  <% unless resources.any? %>
+    <div class="col-12">
+      <%=
+        render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} match your query" do
+          if current_policy.create?
+            render_component :button, label: "Create #{resource_name(resource_class)}",
+                                        to: resource_url_for(resource_class, action: :new),
+                                        color: :primary
+          end
+        end
+      %>
+    </div>
+  <% else %>
+    <table data-controller="table" <%= render_component_attributes %>>
+      <thead class="<%= table_head_classes %>">
+        <tr>
+          <th scope="col" class="p-4">
             <div class="flex items-center">
-              <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-              <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+              <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+              <label for="checkbox-all-search" class="sr-only">checkbox</label>
             </div>
           </th>
           <% fields.each do |name, field| %>
-            <%
-              options = field.options
-              max_width = options.delete :pu_max_width
-            %>
-            <td class="<%= table_row_cell_classes %>">
-              <%= field.render self, resource %>
-            </td>
+            <th scope="col" class="px-6 py-3">
+              <%= table_header name, field.label, search_object  %>
+            </th>
           <% end %>
-          <td class="<%= table_actions_cell_classes %>">
-            <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
-              <%= table_action_button resource, action %>
-            <% end %>
-          </td>
+          <th scope="col" class="px-6 py-3 text-end">&nbsp;</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% resources.each do |resource| %>
+          <tr class="<%= table_row_classes %>">
+            <th scope="row" class="w-4 p-4">
+              <div class="flex items-center">
+                <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+                <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+              </div>
+            </th>
+            <% fields.each do |name, field| %>
+              <%
+                options = field.options
+                max_width = options.delete :pu_max_width
+              %>
+              <td class="<%= table_row_cell_classes %>">
+                <%= field.render self, resource %>
+              </td>
+            <% end %>
+            <td class="<%= table_actions_cell_classes %>">
+              <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
+                <%= table_action_button resource, action %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <% if pager.present? %>
+      <%= render_component :pagination, pager: pager %>
+    <% end %>
+  <% end %>
 <% end %>

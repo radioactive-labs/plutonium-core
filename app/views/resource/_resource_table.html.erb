@@ -6,29 +6,10 @@
   record_actions = collection.actions.collection_record_actions
   search_object = collection.search_object
   fields = collection.fields
+  pager = collection.pager
   collection_actions = @collection.actions.collection_actions.permitted_for(current_policy)
 -%>
 
 <%= render_component :table_toolbar, resource_class:, search_object:, actions: collection_actions %>
 
-<% unless resources.any? %>
-  <div class="col-12">
-    <%=
-      render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} match your query" do
-        if current_policy.create?
-          render_component :button, label: "Create #{resource_name(resource_class)}",
-                                      to: resource_url_for(resource_class, action: :new),
-                                      color: :primary
-        end
-      end
-    %>
-  </div>
-<% else %>
-  <%= render_component :table, resource_class:, resources:, record_actions:, search_object:, fields:  %>
-
-  <% if collection.pager.present? %>
-    <%= render_component :block, rounded: :bottom do %>
-      <%= render_component :pagination, pager: collection.pager %>
-    <% end  %>
-  <% end  %>
-<% end %>
+<%= render_component :table, resource_class:, resources:, record_actions:, search_object:, fields:, pager:  %>

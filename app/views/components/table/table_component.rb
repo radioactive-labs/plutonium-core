@@ -5,6 +5,7 @@ module Plutonium::UI
     option :record_actions
     option :search_object
     option :fields
+    option :pager
 
     def classname
       "table-auto w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 #{super}"
@@ -13,7 +14,7 @@ module Plutonium::UI
     private
 
     def table_rounding
-      :top unless search_object.scope_definitions.present?
+      search_object.scope_definitions.present? ? :bottom : :all
     end
 
     def table_head_classes
@@ -41,7 +42,7 @@ module Plutonium::UI
               if sort_params[:direction].present?
                 icon = (sort_params[:direction] == "ASC") ? "up" : "down"
                 concat " "
-                concat tag.i(class: "bi bi-sort-#{icon} text-muted", title: sort_params[:direction])
+                concat tag.i(icon, class: "bi bi-sort-#{icon} text-muted", title: sort_params[:direction])
               end
             end
           end
