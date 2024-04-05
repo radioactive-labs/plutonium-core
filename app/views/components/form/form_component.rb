@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class FormComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class FormComponent < Plutonium::Ui::Base
     option :form
     option :preferred_action_after_submit, default: proc { "show" }
 
@@ -20,4 +20,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :form, to: Plutonium::UI::FormComponent
+Plutonium::ComponentRegistry.register :form, to: Plutonium::Ui::FormComponent

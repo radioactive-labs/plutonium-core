@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class TableComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class TableComponent < Plutonium::Ui::Base
     option :resource_class
     option :resources
     option :record_actions
@@ -60,4 +60,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :table, to: Plutonium::UI::TableComponent
+Plutonium::ComponentRegistry.register :table, to: Plutonium::Ui::TableComponent

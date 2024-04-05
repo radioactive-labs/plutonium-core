@@ -1,6 +1,6 @@
 module Plutonium
   module Auth
-    module PublicAccess
+    module Public
       extend ActiveSupport::Concern
 
       included do

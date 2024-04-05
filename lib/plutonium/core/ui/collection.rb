@@ -1,13 +1,17 @@
+require "dry-initializer"
+
 module Plutonium
   module Core
-    module UI
-      Collection = Data.define :resource_class, :records, :fields, :actions, :pager, :search_object do
-        def initialize(
-          resource_class:, records: [], fields: {}, actions: Plutonium::Core::Actions::Collection.new,
-          pager: nil, search_object: nil
-        )
-          super
-        end
+    module Ui
+      class Collection
+        extend Dry::Initializer
+
+        option :resource_class
+        option :records, default: proc { [] }
+        option :fields, default: proc { {} }
+        option :actions, default: proc { Plutonium::Core::Actions::Collection.new }
+        option :pager, optional: true
+        option :search_object, optional: true
       end
     end
   end

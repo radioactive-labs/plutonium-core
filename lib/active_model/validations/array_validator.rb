@@ -1,4 +1,4 @@
-# require 'active_model/validations/each_validator'
+require "active_model"
 
 module ActiveModel
   module Validations

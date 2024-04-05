@@ -1,6 +1,6 @@
-module Plutonium::UI::Skeleton
-  class TableComponent < Plutonium::UI::Base
+module Plutonium::Ui::Skeleton
+  class TableComponent < Plutonium::Ui::Base
   end
 end
 
-Plutonium::ComponentRegistry.register :skeleton__table, to: Plutonium::UI::Skeleton::TableComponent
+Plutonium::ComponentRegistry.register :skeleton__table, to: Plutonium::Ui::Skeleton::TableComponent

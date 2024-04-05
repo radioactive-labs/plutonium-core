@@ -1,7 +1,7 @@
 require "view_component"
 require "dry-initializer"
 
-module Plutonium::UI
+module Plutonium::Ui
   class Base < ViewComponent::Base
     extend Dry::Initializer
     include Plutonium::Helpers::ComponentHelper

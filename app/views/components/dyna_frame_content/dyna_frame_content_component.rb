@@ -1,6 +1,6 @@
-module Plutonium::UI
-  class DynaFrameContentComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class DynaFrameContentComponent < Plutonium::Ui::Base
   end
 end
 
-Plutonium::ComponentRegistry.register :dyna_frame_content, to: Plutonium::UI::DynaFrameContentComponent
+Plutonium::ComponentRegistry.register :dyna_frame_content, to: Plutonium::Ui::DynaFrameContentComponent

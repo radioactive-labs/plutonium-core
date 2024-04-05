@@ -6,7 +6,7 @@ module Plutonium
       include ActionView::Helpers::FormHelper
 
       def resource_form_for(record, options = {}, &block)
-        options[:builder] ||= Plutonium::UI::FormBuilder
+        options[:builder] ||= Plutonium::Ui::FormBuilder
         options[:wrapper] ||= :default_resource_form
         options[:html] ||= {}
         unless options[:html].key?(:novalidate)

@@ -1,7 +1,5 @@
 module Plutonium
   module Helpers
-    extend ActiveSupport::Autoload
-
     def self.included(base)
       base.class_eval do
         include Plutonium::Helpers::ActionButtonsHelper
@@ -15,19 +13,6 @@ module Plutonium
         include Plutonium::Helpers::TurboHelper
         include Plutonium::Helpers::TurboStreamActionsHelper
       end
-    end
-
-    eager_autoload do
-      autoload :ActionButtonsHelper
-      autoload :ApplicationHelper
-      autoload :AttachmentHelper
-      autoload :ContentHelper
-      autoload :ComponentHelper
-      autoload :DisplayHelper
-      autoload :FormHelper
-      autoload :TableHelper
-      autoload :TurboHelper
-      autoload :TurboStreamActionsHelper
     end
   end
 end

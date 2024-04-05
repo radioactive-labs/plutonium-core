@@ -1,3 +1,6 @@
+require "active_support/core_ext/class/attribute"
+require "active_support/core_ext/hash/indifferent_access"
+
 module Plutonium
   class ComponentRegistry
     class_attribute :mappings, instance_accessor: false, instance_predicate: false, default: {}.with_indifferent_access

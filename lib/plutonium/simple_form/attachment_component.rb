@@ -1,3 +1,5 @@
+require "simple_form"
+
 module Plutonium
   module SimpleForm
     module AttachmentComponent

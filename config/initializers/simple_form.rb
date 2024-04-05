@@ -1,7 +1,7 @@
 require "simple_form"
 
 # Register components
-Dir.glob(Plutonium.lib_root.join("simple_form_components", "*.rb")) { |component| load component }
+Dir.glob(Plutonium.lib_root.join("form_component", "*.rb")) { |component| load component }
 
 # Use this setup block to configure all options available in SimpleForm.
 SimpleForm.setup do |config|

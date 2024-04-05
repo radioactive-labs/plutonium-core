@@ -1,10 +1,11 @@
 module Plutonium
   module Core
-    module UI
-      Form = Data.define :record, :inputs do
-        def initialize(record: nil, inputs: {})
-          super
-        end
+    module Ui
+      class Form
+        extend Dry::Initializer
+
+        option :record, optional: true
+        option :inputs, default: proc { {} }
       end
     end
   end

@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class DynaFrameHostComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class DynaFrameHostComponent < Plutonium::Ui::Base
     option :src
 
     def id
@@ -8,4 +8,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :dyna_frame_host, to: Plutonium::UI::DynaFrameHostComponent
+Plutonium::ComponentRegistry.register :dyna_frame_host, to: Plutonium::Ui::DynaFrameHostComponent

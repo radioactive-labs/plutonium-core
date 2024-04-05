@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+require "active_model"
 
 module ActiveModel
   module Validations

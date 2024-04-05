@@ -1,3 +1,5 @@
+require "action_controller"
+
 module Plutonium
   module Refinements
     module ParameterRefinements

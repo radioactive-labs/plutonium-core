@@ -18,7 +18,7 @@ module.exports = {
     "./app/assets/**/*.css",
     "./app/views/**/*.{rb,erb}",
     "./node_modules/flowbite/**/*.js",
-    "./lib/plutonium/initializers/simple_form.rb",
+    "./config/initializers/simple_form.rb",
     // TODO: temporary workaround for buttons flex basis hack.
     // To be removed after moving buttons_helper to components.
     "./lib/plutonium/**/*.{rb,erb}"

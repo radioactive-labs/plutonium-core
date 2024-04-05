@@ -1,5 +1,5 @@
 module Plutonium
-  module UI
+  module Ui
     class Field
       attr_reader :name, :label, :helper, :options
 

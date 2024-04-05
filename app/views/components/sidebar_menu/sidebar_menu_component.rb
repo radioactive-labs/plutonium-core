@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class SidebarMenuComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class SidebarMenuComponent < Plutonium::Ui::Base
     option :separated, optional: true
 
     private
@@ -10,4 +10,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :sidebar_menu, to: Plutonium::UI::SidebarMenuComponent
+Plutonium::ComponentRegistry.register :sidebar_menu, to: Plutonium::Ui::SidebarMenuComponent

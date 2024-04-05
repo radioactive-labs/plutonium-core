@@ -12,7 +12,7 @@ GIT
 PATH
   remote: .
   specs:
-    plutonium (0.6.2)
+    plutonium (0.7.0)
       active_interaction (~> 5.3)
       dry-initializer (~> 3.1)
       listen (~> 3.8)
@@ -23,6 +23,7 @@ PATH
       simple_form (~> 5.3)
       view_component (~> 3)
       view_component-form (~> 0.2.6)
+      zeitwerk
 
 GEM
   remote: https://rubygems.org/

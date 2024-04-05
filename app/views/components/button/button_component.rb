@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class ButtonComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class ButtonComponent < Plutonium::Ui::Base
     option :label
     option :to, optional: true
     option :icon, optional: true
@@ -120,4 +120,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :button, to: Plutonium::UI::ButtonComponent
+Plutonium::ComponentRegistry.register :button, to: Plutonium::Ui::ButtonComponent

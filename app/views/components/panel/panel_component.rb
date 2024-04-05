@@ -1,5 +1,5 @@
-module Plutonium::UI
-  class PanelComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class PanelComponent < Plutonium::Ui::Base
     option :title, optional: true
 
     def classname
@@ -8,4 +8,4 @@ module Plutonium::UI
   end
 end
 
-Plutonium::ComponentRegistry.register :panel, to: Plutonium::UI::PanelComponent
+Plutonium::ComponentRegistry.register :panel, to: Plutonium::Ui::PanelComponent

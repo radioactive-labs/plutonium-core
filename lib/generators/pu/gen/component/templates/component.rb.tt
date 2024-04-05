@@ -1,5 +1,5 @@
 module <%= component_namespace %>
-  class <%= component_classname %> < Plutonium::UI::Base
+  class <%= component_classname %> < Plutonium::Ui::Base
     # def base_classname
     #   "base classnames here"
     # end

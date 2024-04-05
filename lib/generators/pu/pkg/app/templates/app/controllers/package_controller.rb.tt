@@ -5,7 +5,7 @@ module <%= package_name %>
     <%- if rodauth_account.present? -%>
     include Plutonium::Auth.rodauth(:<%= rodauth_account %>)
     <%- elsif public_access? -%>
-    include Plutonium::Auth::PublicAccess
+    include Plutonium::Auth::Public
     <%- end -%>
     # add concerns above.
 

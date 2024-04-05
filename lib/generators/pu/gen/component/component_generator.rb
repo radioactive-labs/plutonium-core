@@ -43,7 +43,7 @@ module Pu
       end
 
       def component_namespace
-        ["Plutonium::UI", component_module].compact.join "::"
+        ["Plutonium::Ui", component_module].compact.join "::"
       end
 
       def component_reference

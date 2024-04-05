@@ -1,9 +1,9 @@
-module Plutonium::UI
-  class BreadcrumbsComponent < Plutonium::UI::Base
+module Plutonium::Ui
+  class BreadcrumbsComponent < Plutonium::Ui::Base
     option :resource_class
     option :parent, optional: true
     option :resource, optional: true
   end
 end
 
-Plutonium::ComponentRegistry.register :breadcrumbs, to: Plutonium::UI::BreadcrumbsComponent
+Plutonium::ComponentRegistry.register :breadcrumbs, to: Plutonium::Ui::BreadcrumbsComponent
