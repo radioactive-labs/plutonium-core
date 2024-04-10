@@ -1,7 +1,3 @@
-<% if activerecord_adapter == "postgresql" -%>
-enable_extension "citext"
-
-<% end -%>
 create_table :<%= table_prefix.pluralize %><%= primary_key_type %> do |t|
   t.integer :status, null: false, default: 1
 <% case activerecord_adapter -%>

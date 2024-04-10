@@ -28,13 +28,13 @@ module Pu
       end
 
       def create_rodauth_app
-        template "app/misc/account_rodauth_plugin.rb", "app/misc/#{table_prefix}_rodauth_plugin.rb"
+        template "app/misc/account_rodauth_plugin.rb", "app/misc/#{account_path}_rodauth_plugin.rb"
       end
 
       def configure_rodauth_plugin
         in_root do
           plugin_name = indent(
-            "configure ::#{table_prefix.classify}RodauthPlugin#{", :#{table_prefix}" unless primary?}\n", 2
+            "configure ::#{account_path.classify}RodauthPlugin#{", :#{table_prefix}" unless primary?}\n", 2
           )
           gsub_file "app/misc/rodauth_app.rb", /.*# configure RodauthMain\n/, ""
           insert_into_file "app/misc/rodauth_app.rb", plugin_name, after: "# auth configuration\n"
@@ -71,7 +71,7 @@ module Pu
       end
 
       def create_rodauth_controller
-        dest = "app/controllers/rodauth/#{table_prefix}_controller.rb"
+        dest = "app/controllers/rodauth/#{account_path}_controller.rb"
         template "app/controllers/plugin_controller.rb", dest
       end
 
@@ -88,15 +88,15 @@ module Pu
       def create_account_model
         return unless base?
 
-        template "app/models/account.rb", "app/models/#{table_prefix}.rb"
+        template "app/models/account.rb", "app/models/#{account_path}.rb"
       end
 
       def create_mailer
         return unless mails?
 
         template "app/mailers/rodauth_mailer.rb", "app/mailers/rodauth_mailer.rb"
-        template "app/mailers/account_mailer.rb", "app/mailers/rodauth/#{table_prefix}_mailer.rb"
-        directory "app/views/rodauth_mailer", "app/views/rodauth/#{table_prefix}_mailer"
+        template "app/mailers/account_mailer.rb", "app/mailers/rodauth/#{account_path}_mailer.rb"
+        directory "app/views/rodauth_mailer", "app/views/rodauth/#{account_path}_mailer"
       end
 
       private

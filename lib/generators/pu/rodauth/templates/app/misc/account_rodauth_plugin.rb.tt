@@ -1,6 +1,6 @@
 require "sequel/core"
 
-class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
+class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
   configure do
     # This block is running inside of
     #   plugin :rodauth do
@@ -24,7 +24,7 @@ class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
     # hmac_secret "<SECRET_KEY>"
 
     # Use path prefix for all routes.
-    <%= '# ' if primary? %>prefix "/<%= table_prefix.pluralize %>"
+    <%= '# ' if primary? %>prefix "/<%= account_path.pluralize %>"
 <% unless separate_passwords? -%>
 
     # Store password hash in a column instead of a separate table.
@@ -32,7 +32,10 @@ class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
 <% end -%>
 
     # Specify the controller used for view rendering, CSRF, and callbacks.
-    rails_controller { Rodauth::<%= "#{table_prefix.classify}" %>Controller }
+    rails_controller { Rodauth::<%= account_path.classify %>Controller }
+
+    # Specify the model to be used.
+    rails_account_model { <%= account_path.classify %> }
 <% if verify_account? -%>
 
     # Set password when verifying account.
@@ -87,43 +90,43 @@ class <%= table_prefix.classify %>RodauthPlugin < RodauthPlugin
 <% if reset_password? -%>
 
     create_reset_password_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.reset_password(self.class.configuration_name, account_id, reset_password_key_value)
+      Rodauth::<%= account_path.classify %>Mailer.reset_password(self.class.configuration_name, account_id, reset_password_key_value)
     end
 <% end -%>
 <% if verify_account? -%>
 
     create_verify_account_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.verify_account(self.class.configuration_name, account_id, verify_account_key_value)
+      Rodauth::<%= account_path.classify %>Mailer.verify_account(self.class.configuration_name, account_id, verify_account_key_value)
     end
 <% end -%>
 <% if verify_login_change? -%>
 
     create_verify_login_change_email do |_login|
-      Rodauth::<%= table_prefix.classify %>Mailer.verify_login_change(self.class.configuration_name, account_id, verify_login_change_key_value)
+      Rodauth::<%= account_path.classify %>Mailer.verify_login_change(self.class.configuration_name, account_id, verify_login_change_key_value)
     end
 <% end -%>
 <% if change_password_notify? -%>
 
     create_password_changed_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.change_password_notify(self.class.configuration_name, account_id)
+      Rodauth::<%= account_path.classify %>Mailer.change_password_notify(self.class.configuration_name, account_id)
     end
 <% end -%>
 <% if reset_password_notify? -%>
 
     create_reset_password_notify_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.reset_password_notify(self.class.configuration_name, account_id)
+      Rodauth::<%= account_path.classify %>Mailer.reset_password_notify(self.class.configuration_name, account_id)
     end
 <% end -%>
 <% if email_auth? -%>
 
     create_email_auth_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.email_auth(self.class.configuration_name, account_id, email_auth_key_value)
+      Rodauth::<%= account_path.classify %>Mailer.email_auth(self.class.configuration_name, account_id, email_auth_key_value)
     end
 <% end -%>
 <% if lockout? -%>
 
     create_unlock_account_email do
-      Rodauth::<%= table_prefix.classify %>Mailer.unlock_account(self.class.configuration_name, account_id, unlock_account_key_value)
+      Rodauth::<%= account_path.classify %>Mailer.unlock_account(self.class.configuration_name, account_id, unlock_account_key_value)
     end
 <% end -%>
 

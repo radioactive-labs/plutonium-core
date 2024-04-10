@@ -1,5 +1,5 @@
 module Rodauth
-  class <%= table_prefix.classify %>Controller < RodauthController
+  class <%= account_path.classify %>Controller < RodauthController
     # used by Rodauth for rendering views, CSRF protection, and running any
     # registered action callbacks and rescue_from handlers
 

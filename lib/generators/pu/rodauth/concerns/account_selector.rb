@@ -13,8 +13,12 @@ module Pu
           @table ||= account_name.underscore.pluralize
         end
 
+        def account_path
+          @account_path ||= account_name.singularize.underscore
+        end
+
         def table_prefix
-          @table_prefix ||= account_name.underscore.singularize
+          @table_prefix ||= account_path.tr("/", "_")
         end
       end
     end

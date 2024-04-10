@@ -1,8 +1,11 @@
 <% if defined?(ActiveRecord::Railtie) -%>
-class <%= table_prefix.camelize %> < ApplicationRecord
+class <%= account_path.classify %> < ApplicationRecord
   include Rodauth::Rails.model<%= "(:#{table_prefix})" unless primary? %>
   # add concerns above.
 
+  <%- if account_path.include?("/") -%>
+  self.table_name = :<%= table_prefix.pluralize %>
+  <%- end -%>
   # add model configurations above.
 
   # add belongs_to associations above.

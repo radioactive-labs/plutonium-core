@@ -69,7 +69,7 @@ module Pu
       private
 
       def plugin_filename
-        "app/misc/#{table_prefix}_rodauth_plugin.rb"
+        "app/misc/#{account_path}_rodauth_plugin.rb"
       end
 
       def migration_name
