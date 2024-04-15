@@ -10,7 +10,7 @@ module Plutonium::Ui
     private
 
     def toolbar_actions_classes
-      "w-full md:w-auto flex flex-col md:flex-row space-y-1 md:space-y-0 items-stretch md:items-center justify-end flex-shrink-0"
+      "w-full md:w-auto flex flex-col md:flex-row space-y-1 md:space-y-0 items-stretch md:items-center justify-end shrink-0"
     end
   end
 end

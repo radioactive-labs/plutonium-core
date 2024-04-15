@@ -12,5 +12,11 @@ module Plutonium
 
     mattr_accessor :cache_discovery
     @@cache_discovery = defined?(Rails.env) && !Rails.env.development?
+
+    mattr_accessor :stylesheet_tag
+    @@stylesheet_tag = ->(view_context) { "<link rel=\"stylesheet\" href=\"#{Plutonium.stylesheet_link}\" />" }
+
+    mattr_accessor :script_tag
+    @@script_tag = ->(view_context) { "<script src=\"#{Plutonium.script_link}\"></script>" }
   end
 end

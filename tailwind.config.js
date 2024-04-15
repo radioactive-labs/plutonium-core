@@ -15,13 +15,14 @@ Object.keys(colors).forEach((color) => {
 
 module.exports = {
   content: [
-    "./app/assets/**/*.css",
-    "./app/views/**/*.{rb,erb}",
-    "./node_modules/flowbite/**/*.js",
-    "./config/initializers/simple_form.rb",
+    // node modules are not packaged as part of the gem.
+    './node_modules/flowbite/**/*.js', // requires framework user to have flowbite installed.
+    `${__dirname}/app/assets/**/*.css`,
+    `${__dirname}/app/views/**/*.{rb,erb}`,
+    `${__dirname}/config/initializers/simple_form.rb`,
     // TODO: temporary workaround for buttons flex basis hack.
     // To be removed after moving buttons_helper to components.
-    "./lib/plutonium/**/*.{rb,erb}"
+    `${__dirname}/lib/plutonium/**/*.{rb,erb}`
   ],
   darkMode: "selector",
   plugins: [
@@ -86,5 +87,5 @@ module.exports = {
       ]
     }
   },
-  safelist: safelist,
+  safelist: safelist
 }

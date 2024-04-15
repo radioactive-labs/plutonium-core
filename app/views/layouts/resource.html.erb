@@ -22,9 +22,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
     <%= yield(:assets) %>
-    <link rel="stylesheet" href="<%= Plutonium.stylesheet_link %>" />
-    <script src="<%= Plutonium.script_link %>"></script>
-    <%# <script src="/plutonium-assets/application.js"></script> %>
+
+    <%== Plutonium::Config.stylesheet_tag.call self %>
+    <%== Plutonium::Config.script_tag.call self %>
+
     <%= yield(:head) %>
   </head>
   <body class="antialiased bg-gray-50 dark:bg-gray-900">
