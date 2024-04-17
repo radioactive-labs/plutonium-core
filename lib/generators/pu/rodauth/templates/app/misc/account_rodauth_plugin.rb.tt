@@ -228,6 +228,11 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
 <% unless only_json? -%>
 
     # ==> Redirects
+<% if create_account? -%>
+
+    # Redirect to home after login.
+    create_account_redirect "/"
+<% end -%>
 <% if login? -%>
 
     # Redirect to home after login.

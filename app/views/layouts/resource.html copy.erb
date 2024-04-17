@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="turbo-cache-control" content="no-cache">
+    <meta name="turbo-refresh-method" content="morph">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= yield(:meta) %>
@@ -16,8 +17,8 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 
-    <link rel="stylesheet" href="<%= Plutonium.stylesheet_link %>" />
-    <script src="/plutonium-assets/application.js"></script>
+    <%== Plutonium::Config.stylesheet_tag.call self %>
+    <%== Plutonium::Config.script_tag.call self %>
     <%= yield(:head) %>
   </head>
   <body class="bg-body-tertiary">
