@@ -27,7 +27,7 @@ module Plutonium
               type = :attachment
               options[:reflection] = attachment
             elsif (association = resource_class.try(:reflect_on_association, attr_name))
-              type = association.macro
+              type = association.polymorphic? ? :"polymorphic_#{association.macro}" : association.macro
               options[:reflection] = association
             elsif (column = resource_class.try(:column_for_attribute, attr_name))
               type = column.type

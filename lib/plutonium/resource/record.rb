@@ -50,6 +50,29 @@ module Plutonium
             content_column_field_names
         end
 
+        def belongs_to(name, scope = nil, **options)
+          super(name, scope, **options)
+
+          if options[:polymorphic]
+            mod = Module.new
+            mod.module_eval <<-RUBY, __FILE__, __LINE__ + 1
+              extend ActiveSupport::Concern
+
+              def #{name}_sgid
+                #{name}&.to_signed_global_id
+              end
+
+              def #{name}_sgid=(sgid)
+                self.#{name} = GlobalID::Locator.locate_signed(sgid)
+              end
+
+              define_singleton_method(:to_s) { "Plutonium::Polymormorphic::BelongsTo(:#{name})" }
+              define_singleton_method(:inspect) { "Plutonium::Polymormorphic::BelongsTo(:#{name})" }
+            RUBY
+            include mod
+          end
+        end
+
         def belongs_to_association_field_names
           @belongs_to_association_field_names ||= reflect_on_all_associations(:belongs_to).map(&:name)
         end
@@ -103,7 +126,7 @@ module Plutonium
         #   [:title, :body, {:images=>[]}, {:docs=>[]}]
         #
         def strong_parameters_for(*attributes)
-          # attributes that are passed by we do not have a model/database backed definition for e.g. virtual attributes.
+          # attributes that are passed but we do not have a model/database backed definition for e.g. virtual attributes.
           unbacked = attributes - strong_parameters_definition.keys
 
           # attributes backed by some model/database definition

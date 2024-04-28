@@ -10,13 +10,10 @@ module Plutonium
             super(name, **user_options)
           end
 
-          private
-
-          def renderer_options
-            resource_record = reflection.klass.include? Plutonium::Resource::Record
-            {
-              helper: resource_record ? :display_association_value : :display_name_of
-            }
+          def render(view_context, record)
+            value = record.send(name)
+            options = self.options.merge(helper: value.class.include?(Plutonium::Resource::Record) ? :display_association_value : :display_name_of)
+            view_context.display_field value:, **options
           end
         end
       end

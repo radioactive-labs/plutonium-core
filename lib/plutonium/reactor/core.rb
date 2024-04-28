@@ -64,8 +64,9 @@ module Plutonium
                 load Plutonium.root.join("app", "views", "components", "base.rb")
                 load file # this just a lazy way to ensure we load files that do not contain constants like initializers
               end
+              Rails.logger.debug "\n\nplutonium: reload #{file}\n"
             rescue => e
-              Rails.logger.error "\nnplutonium: reload failed #{file}\n\n#{e}\n"
+              Rails.logger.error "\n\nplutonium: reload failed #{file}\n\n#{e}\n"
             end
           end
           listener.start
