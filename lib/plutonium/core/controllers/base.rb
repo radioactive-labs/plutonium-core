@@ -67,7 +67,7 @@ module Plutonium
           resource = resource.model_name.singular_route_key.to_sym if action == :new && resource.is_a?(Class)
           args.push resource
 
-          base_args = if scoped_to_entity?
+          base_args = if scoped_to_entity? && scoped_entity_strategy == :path
             [action, current_scoped_entity.becomes(scoped_entity_class), parent]
           else
             [action, parent]

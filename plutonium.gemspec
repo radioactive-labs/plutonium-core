@@ -42,6 +42,8 @@ Gem::Specification.new do |spec|
   spec.add_dependency "view_component-form", "~> 0.2.6"
   spec.add_dependency "dry-initializer", "~> 3.1"
   spec.add_dependency "rabl", "~> 0.16.1" # TODO: what to do with RABL
+  spec.add_dependency "semantic_range", "~> 3.0"
+  spec.add_dependency "tty-prompt", "~> 0.23.1"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

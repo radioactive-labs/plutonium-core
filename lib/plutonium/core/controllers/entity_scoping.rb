@@ -15,6 +15,10 @@ module Plutonium
           current_engine.scoped_to_entity?
         end
 
+        def scoped_entity_strategy
+          current_engine.scoped_entity_strategy
+        end
+
         def scoped_entity_class
           ensure_legal_entity_scoping_method_access! :scoped_entity_class
 
@@ -38,10 +42,17 @@ module Plutonium
 
           return unless current_user.present?
 
-          @current_scoped_entity ||= scoped_entity_class
-            .associated_with(current_user)
-            .from_path_param(request.path_parameters[scoped_entity_param_key])
-            .first! # Raise NotFound if user does not have access to the entity or it does not exist
+          @current_scoped_entity ||= case scoped_entity_strategy
+          when :current_user
+            current_user
+          when :path
+            scoped_entity_class
+              .associated_with(current_user)
+              .from_path_param(request.path_parameters[scoped_entity_param_key])
+              .first! # Raise NotFound if user does not have access to the entity or it does not exist
+          else
+            raise NotImplementedError, "unknown scoped entity strategy: #{scoped_entity_strategy}"
+          end
         end
 
         def remember_scoped_entity

@@ -32,7 +32,6 @@ Get Plutonium up and running in your Rails application with these simple steps:
 
 ```ruby
 gem "plutonium"
-gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", group: [:development, :test]
 ```
 
 2. **Bundle Install:**

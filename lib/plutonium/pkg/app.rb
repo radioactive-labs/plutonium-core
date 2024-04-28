@@ -12,6 +12,8 @@ module Plutonium
         attr_reader :scoped_entity_class, :scoped_entity_strategy, :scoped_entity_param_key
 
         def scope_to_entity(entity_class, strategy: :path, param_key: nil)
+          raise "#{entity_class} is not a valid resource record" unless entity_class.include?(Plutonium::Resource::Record)
+
           @scoped_entity_class = entity_class
           @scoped_entity_strategy = strategy
           @scoped_entity_param_key = param_key || entity_class.model_name.singular_route_key.to_sym
@@ -44,7 +46,7 @@ module Plutonium
 
         def draw_resource_routes
           registered_resources = resource_register
-          scoped_entity_param_key = self.scoped_entity_param_key
+          scoped_entity_param_key = self.scoped_entity_param_key if scoped_entity_strategy == :path
           routes.draw do
             shared_resource_concerns = [:interactive_resource_actions] # TODO: make this a config parameter
             concern :interactive_resource_actions do

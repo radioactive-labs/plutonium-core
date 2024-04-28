@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "plutonium_generators"
+require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Res
