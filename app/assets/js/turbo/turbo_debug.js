@@ -17,6 +17,10 @@ eventNames = [
   'turbo:frame-missing',
   'turbo:fetch-request-error',
   'turbo:reload', // https://github.com/hotwired/turbo/pull/556
+  'turbo:morph',
+  'turbo:before-morph-element',
+  'turbo:morph-attribute',
+  'turbo:morph',
 ]
 
 eventNames.forEach(eventName => {
