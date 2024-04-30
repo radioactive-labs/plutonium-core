@@ -9,6 +9,7 @@ module Plutonium
 
           map_type :has_one, to: Plutonium::Core::Fields::Inputs::NoopInput
           map_type :belongs_to, to: Plutonium::Core::Fields::Inputs::BelongsToAssociationInput
+          map_type :polymorphic_belongs_to, to: Plutonium::Core::Fields::Inputs::PolymorphicBelongsToAssociationInput
           map_type :has_many, to: Plutonium::Core::Fields::Inputs::HasManyAssociationInput
           map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
           map_type :datetime, :date, :time, to: Plutonium::Core::Fields::Inputs::DateTimeInput
