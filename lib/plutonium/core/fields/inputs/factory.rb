@@ -33,6 +33,10 @@ module Plutonium
             elsif (column = resource_class.try(:column_for_attribute, attr_name))
               type = column.type
               options[:multiple] = column.try(:array?) if options[:multiple].nil?
+            elsif (filter = resource_class.try(:filters).try(:[], attr_name))
+              # type = filter.database_column_type
+              options[:hint] ||= filter.desc
+              options[:multiple] = column.try(:array?) if options[:multiple].nil?
             end
 
             build(attr_name, type:, **options)
