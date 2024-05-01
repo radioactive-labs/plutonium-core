@@ -39,26 +39,7 @@
     </div>
   <% end %>
 <% else%>
-  <%= resource_form_for @interaction, as: :interaction, method: :post, url: "" do |f| %>
-    <div class="row row-gap-2">
-      <div class="container">
-        <div class="form-errors">
-          <%= f.error_notification %>
-          <%= f.error_notification message: f.object.errors[:base].to_sentence if f.object.errors[:base].present? %>
-          <% f.object.errors.full_messages.each do |message|  %>
-            <%= f.error_notification message: message  %>
-          <% end  %>
-        </div>
-      </div>
-      <div class="form-inputs">
-        <% interactive_action.inputs.values.each do |input| %>
-          <%= input.render f, @interaction %>
-        <% end %>
-      </div>
-      <div class="form-actions">
-        <%#= f.button :button, class: "btn btn-outline-secondary", formaction: "", formmethod: :get %>
-        <%= f.button :submit, interactive_action.label, class: "btn btn-outline-primary" %>
-      </div>
-    </div>
+  <%= render_component :panel do %>
+    <%= render_component :interactive_action_form, interactive_action:, interaction: @interaction %>
   <% end %>
 <% end %>
