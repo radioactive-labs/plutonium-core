@@ -11,8 +11,6 @@ module Pu
 
       desc "Scaffold a resource"
 
-      class_option :package, type: :string
-
       def setup
         model_class = class_name.safe_constantize
         if model_class.present? && attributes.empty? && prompt.yes?("Existing model class found. Do you want to import its attributes?")
@@ -22,7 +20,7 @@ module Pu
       end
 
       def create_model
-        invoke "pu:res:model", [name, *@original_attributes], **options
+        invoke "pu:res:model", [@original_name, *@original_attributes], dest: selected_feature, **options
       end
 
       def create_controller
@@ -39,33 +37,6 @@ module Pu
 
       def create_query_object
         template "query_object.rb", File.join("app/query_objects", class_path, "#{file_name}_query_object.rb")
-      end
-
-      # SSSSS
-
-      def name
-        @pu_name ||= begin
-          @selected_feature = select_feature selected_feature
-          @name = [main_app? ? nil : selected_feature.underscore, super.singularize.underscore].compact.join "/"
-          set_destination_root!
-          @name
-        end
-      end
-
-      def feature_package_name
-        main_app? ? nil : selected_feature.camelize
-      end
-
-      def main_app?
-        selected_feature == "main_app"
-      end
-
-      def selected_feature
-        @selected_feature || options[:feature]
-      end
-
-      def set_destination_root!
-        @destination_stack = [File.join(Rails.root, main_app? ? "" : "packages/#{selected_feature.underscore}")]
       end
     end
   end

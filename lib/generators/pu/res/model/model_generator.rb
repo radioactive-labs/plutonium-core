@@ -8,7 +8,7 @@ module Pu
       source_root File.expand_path("templates", __dir__)
 
       def run_create_module
-        create_module_file if @create_files
+        create_module_file if create_files?
       end
 
       def run_create_model
@@ -19,11 +19,11 @@ module Pu
             after: /.*class .*\n/
         end
 
-        create_model_file if @create_files
+        create_model_file if create_files?
       end
 
       def run_create_migration
-        create_migration_file if @create_files
+        create_migration_file if create_files?
       end
 
       private
