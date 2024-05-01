@@ -34,7 +34,7 @@ module Plutonium::Ui
         lookups = []
         lookups << :"#{object_name}"
         lookups << :default_message
-        lookups << "Please review the problems below:"
+        lookups << "Please review the problems below"
         I18n.t(lookups.shift, scope: :"plutonium.error_notification", default: lookups)
       }
 
