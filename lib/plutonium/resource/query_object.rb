@@ -75,7 +75,6 @@ module Plutonium
         define_filters
         define_sorters
 
-        params = params&.to_unsafe_h || {}.with_indifferent_access
         extract_filter_params(params)
         extract_sort_params(params)
         # @params = params.except(:scope, :search, :sort_fields, :sort_directions)

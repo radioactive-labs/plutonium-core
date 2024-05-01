@@ -1,7 +1,7 @@
 <% if search_object.scope_definitions.present?  %>
   <%
     name = name.to_s
-    current_scope = params[:q].try(:[], :scope)
+    current_scope = resource_query_params[:scope]
   %>
   <%= render_component :block, rounded: :top do %>
     <ul class="text-sm font-medium flex flex-wrap -mb-px">

@@ -27,14 +27,14 @@
 
     <%# preserve collection filters %>
 
-    <%= f.hidden_field :scope, value: params[:q].try(:[], :scope) %>
+    <%= f.hidden_field :scope, value: resource_query_params[:scope] %>
     <%= f.simple_fields_for :sort_fields do |nested| %>
-      <% Array(params[:q].try(:[], :sort_fields)).each do |key| %>
+      <% Array(resource_query_params[:sort_fields]).each do |key| %>
         <%= nested.hidden_field nil, value: key %>
       <% end %>
     <% end %>
     <%= f.simple_fields_for :sort_directions do |nested| %>
-      <% (params[:q].try(:[], :sort_directions) || {}).each do |key, value| %>
+      <% (resource_query_params[:sort_directions] || {}).each do |key, value| %>
         <%= nested.hidden_field key, value: %>
       <% end %>
     <% end %>
