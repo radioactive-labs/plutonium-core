@@ -13,6 +13,7 @@ module Plutonium
           map_type :has_many, to: Plutonium::Core::Fields::Inputs::HasManyAssociationInput
           map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
           map_type :datetime, :date, :time, to: Plutonium::Core::Fields::Inputs::DateTimeInput
+          map_type :phone, to: Plutonium::Core::Fields::Inputs::PhoneInput
           # map_type :text, :string, to: Plutonium::Core::Fields::Inputs::SimpleFormInput
 
           def self.build(name, type:, **options)

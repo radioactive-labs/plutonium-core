@@ -25,7 +25,7 @@ SimpleForm.setup do |config|
         error_class: "bg-red-50 border border-red-500 text-red-900 placeholder-red-700 rounded-lg focus:ring-red-500 dark:bg-gray-700 focus:border-red-500 dark:text-red-500 dark:placeholder-red-500 dark:border-red-500",
         valid_class: "bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500"
       ba.use :full_error, wrap_with: {tag: "p", class: "mt-2 text-sm text-red-600 dark:text-red-500"}
-      ba.use :hint, wrap_with: {tag: "p", class: "mt-2 text-sm text-gray-500 dark:text-gray-400"}
+      ba.use :hint, wrap_with: {tag: "p", class: "mt-2 text-sm text-gray-500 dark:text-gray-200"}
     end
   end
 
@@ -48,7 +48,7 @@ SimpleForm.setup do |config|
           valid_class: "bg-green-50 border border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 rounded-lg focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500"
       end
       ba.use :full_error, wrap_with: {tag: "p", class: "mt-2 text-sm text-red-600 dark:text-red-500"}
-      ba.use :hint, wrap_with: {tag: "p", class: "mt-2 text-sm text-gray-500 dark:text-gray-400"}
+      ba.use :hint, wrap_with: {tag: "p", class: "mt-2 text-sm text-gray-500 dark:text-gray-200"}
     end
   end
 end

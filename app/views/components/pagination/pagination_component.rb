@@ -44,7 +44,7 @@ module Plutonium::Ui
       else "pagy.info.multiple_pages" # rubocop:disable Lint/ElseLayout
       end
 
-      %(<span#{p_id} class="text-sm text-gray-700 dark:text-gray-400 pagy-info">#{
+      %(<span#{p_id} class="text-sm text-gray-700 dark:text-gray-200 pagy-info">#{
           pagy_t key, item_name: item_name || pagy_t(item_i18n_key || pagy.vars[:item_i18n_key], count: p_count),
             count: p_count, from: pagy.from, to: pagy.to
         }</span>)
@@ -75,7 +75,7 @@ module Plutonium::Ui
     end
 
     def default_link_classes
-      "flex items-center justify-center px-3 h-8 leading-tight text-gray-500 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400"
+      "flex items-center justify-center px-3 h-8 leading-tight text-gray-500 border border-gray-300 bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
     end
 
     def page_link_classes

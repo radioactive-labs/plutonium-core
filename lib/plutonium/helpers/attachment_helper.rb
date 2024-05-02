@@ -44,7 +44,7 @@ module Plutonium
 
         # Any changes made here must be reflected in attachment_input_controller#buildPreviewTemplate
 
-        tag.div class: "d-inline-block img-thumbnail", data: {attachment_preview_target: "thumbnail"} do
+        tag.div class: "bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700", data: {attachment_preview_target: "thumbnail"} do
           thumbnail_url = _attachment_thumbnail_url(attachment)
           link_body = if thumbnail_url
             image_tag thumbnail_url, style: "width:100%; height:100%; object-fit: contain;"

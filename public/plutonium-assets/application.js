@@ -297,7 +297,7 @@
         }
         uninstallEventHandlers() {
           for (let eventName in this.events) {
-            this.webSocket[`on${eventName}`] = function() {
+            this.webSocket[`on${eventName}`] = function () {
             };
           }
         }
@@ -356,7 +356,7 @@
   var extend, Subscription;
   var init_subscription = __esm({
     "node_modules/@rails/actioncable/src/subscription.js"() {
-      extend = function(object, properties) {
+      extend = function (object, properties) {
         if (properties != null) {
           for (let key in properties) {
             const value = properties[key];
@@ -604,9 +604,9 @@
   // node_modules/dompurify/dist/purify.js
   var require_purify = __commonJS({
     "node_modules/dompurify/dist/purify.js"(exports, module) {
-      (function(global2, factory) {
+      (function (global2, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.DOMPurify = factory());
-      })(exports, function() {
+      })(exports, function () {
         "use strict";
         const {
           entries,
@@ -656,7 +656,7 @@
         const regExpTest = unapply(RegExp.prototype.test);
         const typeErrorCreate = unconstruct(TypeError);
         function unapply(func) {
-          return function(thisArg) {
+          return function (thisArg) {
             for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
               args[_key - 1] = arguments[_key];
             }
@@ -664,7 +664,7 @@
           };
         }
         function unconstruct(func) {
-          return function() {
+          return function () {
             for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
               args[_key2] = arguments[_key2];
             }
@@ -921,7 +921,7 @@
             }
             cfg = clone(cfg);
             PARSER_MEDIA_TYPE = // eslint-disable-next-line unicorn/prefer-includes
-            SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? PARSER_MEDIA_TYPE = DEFAULT_PARSER_MEDIA_TYPE : PARSER_MEDIA_TYPE = cfg.PARSER_MEDIA_TYPE;
+              SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? PARSER_MEDIA_TYPE = DEFAULT_PARSER_MEDIA_TYPE : PARSER_MEDIA_TYPE = cfg.PARSER_MEDIA_TYPE;
             transformCaseFunc = PARSER_MEDIA_TYPE === "application/xhtml+xml" ? stringToString : stringToLowerCase;
             ALLOWED_TAGS = "ALLOWED_TAGS" in cfg ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
             ALLOWED_ATTR = "ALLOWED_ATTR" in cfg ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
@@ -1399,7 +1399,7 @@
             }
             _executeHook("afterSanitizeShadowDOM", fragment, null);
           };
-          DOMPurify2.sanitize = function(dirty) {
+          DOMPurify2.sanitize = function (dirty) {
             let cfg = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
             let body = null;
             let importedNode = null;
@@ -1448,7 +1448,7 @@
               }
             } else {
               if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT && // eslint-disable-next-line unicorn/prefer-includes
-              dirty.indexOf("<") === -1) {
+                dirty.indexOf("<") === -1) {
                 return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
               }
               body = _initDocument(dirty);
@@ -1497,16 +1497,16 @@
             }
             return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
           };
-          DOMPurify2.setConfig = function() {
+          DOMPurify2.setConfig = function () {
             let cfg = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
             _parseConfig(cfg);
             SET_CONFIG = true;
           };
-          DOMPurify2.clearConfig = function() {
+          DOMPurify2.clearConfig = function () {
             CONFIG = null;
             SET_CONFIG = false;
           };
-          DOMPurify2.isValidAttribute = function(tag, attr, value) {
+          DOMPurify2.isValidAttribute = function (tag, attr, value) {
             if (!CONFIG) {
               _parseConfig({});
             }
@@ -1514,24 +1514,24 @@
             const lcName = transformCaseFunc(attr);
             return _isValidAttribute(lcTag, lcName, value);
           };
-          DOMPurify2.addHook = function(entryPoint, hookFunction) {
+          DOMPurify2.addHook = function (entryPoint, hookFunction) {
             if (typeof hookFunction !== "function") {
               return;
             }
             hooks[entryPoint] = hooks[entryPoint] || [];
             arrayPush(hooks[entryPoint], hookFunction);
           };
-          DOMPurify2.removeHook = function(entryPoint) {
+          DOMPurify2.removeHook = function (entryPoint) {
             if (hooks[entryPoint]) {
               return arrayPop(hooks[entryPoint]);
             }
           };
-          DOMPurify2.removeHooks = function(entryPoint) {
+          DOMPurify2.removeHooks = function (entryPoint) {
             if (hooks[entryPoint]) {
               hooks[entryPoint] = [];
             }
           };
-          DOMPurify2.removeAllHooks = function() {
+          DOMPurify2.removeAllHooks = function () {
             hooks = {};
           };
           return DOMPurify2;
@@ -1648,7 +1648,7 @@
   var require_now = __commonJS({
     "node_modules/lodash/now.js"(exports, module) {
       var root = require_root();
-      var now2 = function() {
+      var now2 = function () {
         return root.Date.now();
       };
       module.exports = now2;
@@ -1961,7 +1961,7 @@
         this.separator = separator2;
         this.parts = text.split(separator2);
       }
-      WildcardMatcher.prototype.match = function(input) {
+      WildcardMatcher.prototype.match = function (input) {
         var matches = true;
         var parts = this.parts;
         var ii;
@@ -1985,7 +1985,7 @@
           }
         } else if (typeof input.splice == "function") {
           matches = [];
-          for (ii = input.length; ii--; ) {
+          for (ii = input.length; ii--;) {
             if (this.match(input[ii])) {
               matches[matches.length] = input[ii];
             }
@@ -2000,7 +2000,7 @@
         }
         return matches;
       };
-      module.exports = function(text, test, separator2) {
+      module.exports = function (text, test, separator2) {
         var matcher = new WildcardMatcher(text, separator2 || /[\/\.]/);
         if (typeof test != "undefined") {
           return matcher.match(test);
@@ -2015,7 +2015,7 @@
     "node_modules/mime-match/index.js"(exports, module) {
       var wildcard = require_wildcard();
       var reMimePartSplit = /[\/\+\.]/;
-      module.exports = function(target, pattern) {
+      module.exports = function (target, pattern) {
         function test(pattern2) {
           var result = wildcard(pattern2, target, reMimePartSplit);
           return result && result.length >= 2;
@@ -2028,7 +2028,7 @@
   // node_modules/classnames/index.js
   var require_classnames = __commonJS({
     "node_modules/classnames/index.js"(exports, module) {
-      (function() {
+      (function () {
         "use strict";
         var hasOwn = {}.hasOwnProperty;
         var nativeCodeString = "[native code]";
@@ -2066,7 +2066,7 @@
           classNames13.default = classNames13;
           module.exports = classNames13;
         } else if (typeof define === "function" && typeof define.amd === "object" && define.amd) {
-          define("classnames", [], function() {
+          define("classnames", [], function () {
             return classNames13;
           });
         } else {
@@ -2305,18 +2305,18 @@
   // node_modules/cropperjs/dist/cropper.js
   var require_cropper = __commonJS({
     "node_modules/cropperjs/dist/cropper.js"(exports, module) {
-      (function(global2, factory) {
+      (function (global2, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = global2 || self, global2.Cropper = factory());
-      })(exports, function() {
+      })(exports, function () {
         "use strict";
         function _typeof2(obj) {
           "@babel/helpers - typeof";
           if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
-            _typeof2 = function(obj2) {
+            _typeof2 = function (obj2) {
               return typeof obj2;
             };
           } else {
-            _typeof2 = function(obj2) {
+            _typeof2 = function (obj2) {
               return obj2 && typeof Symbol === "function" && obj2.constructor === Symbol && obj2 !== Symbol.prototype ? "symbol" : typeof obj2;
             };
           }
@@ -2362,7 +2362,7 @@
           if (Object.getOwnPropertySymbols) {
             var symbols = Object.getOwnPropertySymbols(object);
             if (enumerableOnly)
-              symbols = symbols.filter(function(sym) {
+              symbols = symbols.filter(function (sym) {
                 return Object.getOwnPropertyDescriptor(object, sym).enumerable;
               });
             keys.push.apply(keys, symbols);
@@ -2373,13 +2373,13 @@
           for (var i4 = 1; i4 < arguments.length; i4++) {
             var source = arguments[i4] != null ? arguments[i4] : {};
             if (i4 % 2) {
-              ownKeys(Object(source), true).forEach(function(key) {
+              ownKeys(Object(source), true).forEach(function (key) {
                 _defineProperty(target, key, source[key]);
               });
             } else if (Object.getOwnPropertyDescriptors) {
               Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
             } else {
-              ownKeys(Object(source)).forEach(function(key) {
+              ownKeys(Object(source)).forEach(function (key) {
                 Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
               });
             }
@@ -2578,11 +2578,11 @@
         function forEach(data, callback) {
           if (data && isFunction(callback)) {
             if (Array.isArray(data) || isNumber(data.length)) {
-              toArray(data).forEach(function(value, key) {
+              toArray(data).forEach(function (value, key) {
                 callback.call(data, value, key, data);
               });
             } else if (isObject(data)) {
-              Object.keys(data).forEach(function(key) {
+              Object.keys(data).forEach(function (key) {
                 callback.call(data, data[key], key, data);
               });
             }
@@ -2594,9 +2594,9 @@
             args[_key - 1] = arguments[_key];
           }
           if (isObject(target) && args.length > 0) {
-            args.forEach(function(arg) {
+            args.forEach(function (arg) {
               if (isObject(arg)) {
-                Object.keys(arg).forEach(function(key) {
+                Object.keys(arg).forEach(function (key) {
                   target[key] = arg[key];
                 });
               }
@@ -2612,7 +2612,7 @@
         var REGEXP_SUFFIX = /^width|height|left|top|marginLeft|marginTop$/;
         function setStyle(element, styles) {
           var style = element.style;
-          forEach(styles, function(value, property) {
+          forEach(styles, function (value, property) {
             if (REGEXP_SUFFIX.test(property) && isNumber(value)) {
               value = "".concat(value, "px");
             }
@@ -2627,7 +2627,7 @@
             return;
           }
           if (isNumber(element.length)) {
-            forEach(element, function(elem) {
+            forEach(element, function (elem) {
               addClass(elem, value);
             });
             return;
@@ -2648,7 +2648,7 @@
             return;
           }
           if (isNumber(element.length)) {
-            forEach(element, function(elem) {
+            forEach(element, function (elem) {
               removeClass(elem, value);
             });
             return;
@@ -2666,7 +2666,7 @@
             return;
           }
           if (isNumber(element.length)) {
-            forEach(element, function(elem) {
+            forEach(element, function (elem) {
               toggleClass(elem, value, added);
             });
             return;
@@ -2717,7 +2717,7 @@
           }
         }
         var REGEXP_SPACES = /\s\s*/;
-        var onceSupported = function() {
+        var onceSupported = function () {
           var supported = false;
           if (IS_BROWSER) {
             var once = false;
@@ -2745,7 +2745,7 @@
         function removeListener(element, type, listener) {
           var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
           var handler = listener;
-          type.trim().split(REGEXP_SPACES).forEach(function(event) {
+          type.trim().split(REGEXP_SPACES).forEach(function (event) {
             if (!onceSupported) {
               var listeners = element.listeners;
               if (listeners && listeners[event] && listeners[event][listener]) {
@@ -2765,7 +2765,7 @@
         function addListener(element, type, listener) {
           var options = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
           var _handler = listener;
-          type.trim().split(REGEXP_SPACES).forEach(function(event) {
+          type.trim().split(REGEXP_SPACES).forEach(function (event) {
             if (options.once && !onceSupported) {
               var _element$listeners = element.listeners, listeners = _element$listeners === void 0 ? {} : _element$listeners;
               _handler = function handler() {
@@ -2847,9 +2847,9 @@
         function getMaxZoomRatio(pointers) {
           var pointers2 = _objectSpread2({}, pointers);
           var ratios = [];
-          forEach(pointers, function(pointer, pointerId) {
+          forEach(pointers, function (pointer, pointerId) {
             delete pointers2[pointerId];
-            forEach(pointers2, function(pointer2) {
+            forEach(pointers2, function (pointer2) {
               var x1 = Math.abs(pointer.startX - pointer2.startX);
               var y1 = Math.abs(pointer.startY - pointer2.startY);
               var x22 = Math.abs(pointer.endX - pointer2.endX);
@@ -2860,7 +2860,7 @@
               ratios.push(ratio);
             });
           });
-          ratios.sort(function(a4, b4) {
+          ratios.sort(function (a4, b4) {
             return Math.abs(a4) < Math.abs(b4);
           });
           return ratios[0];
@@ -2880,7 +2880,7 @@
           var pageX = 0;
           var pageY = 0;
           var count = 0;
-          forEach(pointers, function(_ref3) {
+          forEach(pointers, function (_ref3) {
             var startX = _ref3.startX, startY = _ref3.startY;
             pageX += startX;
             pageY += startY;
@@ -2978,7 +2978,7 @@
           context.scale(scaleX, scaleY);
           context.imageSmoothingEnabled = imageSmoothingEnabled;
           context.imageSmoothingQuality = imageSmoothingQuality;
-          context.drawImage.apply(context, [image].concat(_toConsumableArray(params.map(function(param) {
+          context.drawImage.apply(context, [image].concat(_toConsumableArray(params.map(function (param) {
             return Math.floor(normalizeDecimalNumber(param));
           }))));
           context.restore();
@@ -2999,7 +2999,7 @@
           var binary = atob(base64);
           var arrayBuffer = new ArrayBuffer(binary.length);
           var uint8 = new Uint8Array(arrayBuffer);
-          forEach(uint8, function(value, i4) {
+          forEach(uint8, function (value, i4) {
             uint8[i4] = binary.charCodeAt(i4);
           });
           return arrayBuffer;
@@ -3443,7 +3443,7 @@
               previews = [preview2];
             }
             this.previews = previews;
-            forEach(previews, function(el) {
+            forEach(previews, function (el) {
               var img = document.createElement("img");
               setData(el, DATA_PREVIEW, {
                 width: el.offsetWidth,
@@ -3461,7 +3461,7 @@
             });
           },
           resetPreview: function resetPreview() {
-            forEach(this.previews, function(element) {
+            forEach(this.previews, function (element) {
               var data = getData(element, DATA_PREVIEW);
               setStyle(element, {
                 width: data.width,
@@ -3487,7 +3487,7 @@
               translateX: -left2,
               translateY: -top2
             }, imageData))));
-            forEach(this.previews, function(element) {
+            forEach(this.previews, function (element) {
               var data = getData(element, DATA_PREVIEW);
               var originalWidth = data.width;
               var originalHeight = data.height;
@@ -3601,10 +3601,10 @@
               }
               this.render();
               if (options.restore) {
-                this.setCanvasData(forEach(canvasData, function(n3, i4) {
+                this.setCanvasData(forEach(canvasData, function (n3, i4) {
                   canvasData[i4] = n3 * ratio;
                 }));
-                this.setCropBoxData(forEach(cropBoxData, function(n3, i4) {
+                this.setCropBoxData(forEach(cropBoxData, function (n3, i4) {
                   cropBoxData[i4] = n3 * ratio;
                 }));
               }
@@ -3628,7 +3628,7 @@
               return;
             }
             this.wheeling = true;
-            setTimeout(function() {
+            setTimeout(function () {
               _this.wheeling = false;
             }, 50);
             if (event.deltaY) {
@@ -3643,13 +3643,13 @@
           cropStart: function cropStart(event) {
             var buttons = event.buttons, button = event.button;
             if (this.disabled || (event.type === "mousedown" || event.type === "pointerdown" && event.pointerType === "mouse") && // No primary button (Usually the left button)
-            (isNumber(buttons) && buttons !== 1 || isNumber(button) && button !== 0 || event.ctrlKey)) {
+              (isNumber(buttons) && buttons !== 1 || isNumber(button) && button !== 0 || event.ctrlKey)) {
               return;
             }
             var options = this.options, pointers = this.pointers;
             var action;
             if (event.changedTouches) {
-              forEach(event.changedTouches, function(touch) {
+              forEach(event.changedTouches, function (touch) {
                 pointers[touch.identifier] = getPointer(touch);
               });
             } else {
@@ -3691,7 +3691,7 @@
               return;
             }
             if (event.changedTouches) {
-              forEach(event.changedTouches, function(touch) {
+              forEach(event.changedTouches, function (touch) {
                 assign3(pointers[touch.identifier] || {}, getPointer(touch, true));
               });
             } else {
@@ -3705,7 +3705,7 @@
             }
             var action = this.action, pointers = this.pointers;
             if (event.changedTouches) {
-              forEach(event.changedTouches, function(touch) {
+              forEach(event.changedTouches, function (touch) {
                 delete pointers[touch.identifier];
               });
             } else {
@@ -4091,7 +4091,7 @@
               this.action = action;
               this.renderCropBox();
             }
-            forEach(pointers, function(p4) {
+            forEach(pointers, function (p4) {
               p4.startX = p4.endX;
               p4.startY = p4.endY;
             });
@@ -4159,7 +4159,7 @@
                 this.image.src = url;
                 if (this.ready) {
                   this.viewBoxImage.src = url;
-                  forEach(this.previews, function(element) {
+                  forEach(this.previews, function (element) {
                     element.getElementsByTagName("img")[0].src = url;
                   });
                 }
@@ -4386,7 +4386,7 @@
                 height: cropBoxData.height
               };
               var ratio = imageData.width / imageData.naturalWidth;
-              forEach(data, function(n3, i4) {
+              forEach(data, function (n3, i4) {
                 data[i4] = n3 / ratio;
               });
               if (rounded) {
@@ -4482,7 +4482,7 @@
             var canvasData = this.canvasData;
             var data = {};
             if (this.ready) {
-              forEach(["left", "top", "width", "height", "naturalWidth", "naturalHeight"], function(n3) {
+              forEach(["left", "top", "width", "height", "naturalWidth", "naturalHeight"], function (n3) {
                 data[n3] = canvasData[n3];
               });
             }
@@ -4664,7 +4664,7 @@
               var scale = width / initialWidth;
               params.push(dstX * scale, dstY * scale, dstWidth * scale, dstHeight * scale);
             }
-            context.drawImage.apply(context, [source].concat(_toConsumableArray(params.map(function(param) {
+            context.drawImage.apply(context, [source].concat(_toConsumableArray(params.map(function (param) {
               return Math.floor(normalizeDecimalNumber(param));
             }))));
             return canvas;
@@ -4712,7 +4712,7 @@
           }
         };
         var AnotherCropper = WINDOW.Cropper;
-        var Cropper2 = /* @__PURE__ */ function() {
+        var Cropper2 = /* @__PURE__ */ function () {
           function Cropper3(element) {
             var options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
             _classCallCheck(this, Cropper3);
@@ -4786,15 +4786,15 @@
               xhr.onabort = clone;
               xhr.onerror = clone;
               xhr.ontimeout = clone;
-              xhr.onprogress = function() {
+              xhr.onprogress = function () {
                 if (xhr.getResponseHeader("content-type") !== MIME_TYPE_JPEG) {
                   xhr.abort();
                 }
               };
-              xhr.onload = function() {
+              xhr.onload = function () {
                 _this.read(xhr.response);
               };
-              xhr.onloadend = function() {
+              xhr.onloadend = function () {
                 _this.reloading = false;
                 _this.xhr = null;
               };
@@ -4882,7 +4882,7 @@
               var sizingImage = document.createElement("img");
               var body = document.body || document.documentElement;
               this.sizingImage = sizingImage;
-              sizingImage.onload = function() {
+              sizingImage.onload = function () {
                 done(sizingImage.width, sizingImage.height);
                 if (!isIOSWebKit) {
                   body.removeChild(sizingImage);
@@ -5047,7 +5047,7 @@
       var objectToString = objectProto.toString;
       var nativeMax = Math.max;
       var nativeMin = Math.min;
-      var now2 = function() {
+      var now2 = function () {
         return root.Date.now();
       };
       function debounce5(func, wait, options) {
@@ -5235,10 +5235,10 @@
   var viewport = "viewport";
   var popper = "popper";
   var reference = "reference";
-  var variationPlacements = /* @__PURE__ */ basePlacements.reduce(function(acc, placement) {
+  var variationPlacements = /* @__PURE__ */ basePlacements.reduce(function (acc, placement) {
     return acc.concat([placement + "-" + start, placement + "-" + end]);
   }, []);
-  var placements = /* @__PURE__ */ [].concat(basePlacements, [auto]).reduce(function(acc, placement) {
+  var placements = /* @__PURE__ */[].concat(basePlacements, [auto]).reduce(function (acc, placement) {
     return acc.concat([placement, placement + "-" + start, placement + "-" + end]);
   }, []);
   var beforeRead = "beforeRead";
@@ -5289,7 +5289,7 @@
   // node_modules/@popperjs/core/lib/modifiers/applyStyles.js
   function applyStyles(_ref) {
     var state = _ref.state;
-    Object.keys(state.elements).forEach(function(name) {
+    Object.keys(state.elements).forEach(function (name) {
       var style = state.styles[name] || {};
       var attributes = state.attributes[name] || {};
       var element = state.elements[name];
@@ -5297,7 +5297,7 @@
         return;
       }
       Object.assign(element.style, style);
-      Object.keys(attributes).forEach(function(name2) {
+      Object.keys(attributes).forEach(function (name2) {
         var value = attributes[name2];
         if (value === false) {
           element.removeAttribute(name2);
@@ -5326,12 +5326,12 @@
     if (state.elements.arrow) {
       Object.assign(state.elements.arrow.style, initialStyles.arrow);
     }
-    return function() {
-      Object.keys(state.elements).forEach(function(name) {
+    return function () {
+      Object.keys(state.elements).forEach(function (name) {
         var element = state.elements[name];
         var attributes = state.attributes[name] || {};
         var styleProperties = Object.keys(state.styles.hasOwnProperty(name) ? state.styles[name] : initialStyles[name]);
-        var style = styleProperties.reduce(function(style2, property) {
+        var style = styleProperties.reduce(function (style2, property) {
           style2[property] = "";
           return style2;
         }, {});
@@ -5339,7 +5339,7 @@
           return;
         }
         Object.assign(element.style, style);
-        Object.keys(attributes).forEach(function(attribute) {
+        Object.keys(attributes).forEach(function (attribute) {
           element.removeAttribute(attribute);
         });
       });
@@ -5368,7 +5368,7 @@
   function getUAString() {
     var uaData = navigator.userAgentData;
     if (uaData != null && uaData.brands && Array.isArray(uaData.brands)) {
-      return uaData.brands.map(function(item) {
+      return uaData.brands.map(function (item) {
         return item.brand + "/" + item.version;
       }).join(" ");
     }
@@ -5487,7 +5487,7 @@
   // node_modules/@popperjs/core/lib/dom-utils/getOffsetParent.js
   function getTrueOffsetParent(element) {
     if (!isHTMLElement(element) || // https://github.com/popperjs/popper-core/issues/837
-    getComputedStyle2(element).position === "fixed") {
+      getComputedStyle2(element).position === "fixed") {
       return null;
     }
     return element.offsetParent;
@@ -5558,7 +5558,7 @@
 
   // node_modules/@popperjs/core/lib/utils/expandToHashMap.js
   function expandToHashMap(value, keys) {
-    return keys.reduce(function(hashMap, key) {
+    return keys.reduce(function (hashMap, key) {
       hashMap[key] = value;
       return hashMap;
     }, {});
@@ -5762,16 +5762,16 @@
     var window2 = getWindow(state.elements.popper);
     var scrollParents = [].concat(state.scrollParents.reference, state.scrollParents.popper);
     if (scroll) {
-      scrollParents.forEach(function(scrollParent) {
+      scrollParents.forEach(function (scrollParent) {
         scrollParent.addEventListener("scroll", instance.update, passive);
       });
     }
     if (resize) {
       window2.addEventListener("resize", instance.update, passive);
     }
-    return function() {
+    return function () {
       if (scroll) {
-        scrollParents.forEach(function(scrollParent) {
+        scrollParents.forEach(function (scrollParent) {
           scrollParent.removeEventListener("scroll", instance.update, passive);
         });
       }
@@ -5798,7 +5798,7 @@
     top: "bottom"
   };
   function getOppositePlacement(placement) {
-    return placement.replace(/left|right|bottom|top/g, function(matched) {
+    return placement.replace(/left|right|bottom|top/g, function (matched) {
       return hash[matched];
     });
   }
@@ -5809,7 +5809,7 @@
     end: "start"
   };
   function getOppositeVariationPlacement(placement) {
-    return placement.replace(/start|end/g, function(matched) {
+    return placement.replace(/start|end/g, function (matched) {
       return hash2[matched];
     });
   }
@@ -5944,7 +5944,7 @@
     if (!isElement(clipperElement)) {
       return [];
     }
-    return clippingParents2.filter(function(clippingParent) {
+    return clippingParents2.filter(function (clippingParent) {
       return isElement(clippingParent) && contains(clippingParent, clipperElement) && getNodeName(clippingParent) !== "body";
     });
   }
@@ -5952,7 +5952,7 @@
     var mainClippingParents = boundary === "clippingParents" ? getClippingParents(element) : [].concat(boundary);
     var clippingParents2 = [].concat(mainClippingParents, [rootBoundary]);
     var firstClippingParent = clippingParents2[0];
-    var clippingRect = clippingParents2.reduce(function(accRect, clippingParent) {
+    var clippingRect = clippingParents2.reduce(function (accRect, clippingParent) {
       var rect = getClientRectFromMixedType(element, clippingParent, strategy);
       accRect.top = max(rect.top, accRect.top);
       accRect.right = min(rect.right, accRect.right);
@@ -6051,7 +6051,7 @@
     var offsetData = state.modifiersData.offset;
     if (elementContext === popper && offsetData) {
       var offset2 = offsetData[placement];
-      Object.keys(overflowOffsets).forEach(function(key) {
+      Object.keys(overflowOffsets).forEach(function (key) {
         var multiply = [right, bottom].indexOf(key) >= 0 ? 1 : -1;
         var axis = [top, bottom].indexOf(key) >= 0 ? "y" : "x";
         overflowOffsets[key] += offset2[axis] * multiply;
@@ -6067,16 +6067,16 @@
     }
     var _options = options, placement = _options.placement, boundary = _options.boundary, rootBoundary = _options.rootBoundary, padding = _options.padding, flipVariations = _options.flipVariations, _options$allowedAutoP = _options.allowedAutoPlacements, allowedAutoPlacements = _options$allowedAutoP === void 0 ? placements : _options$allowedAutoP;
     var variation = getVariation(placement);
-    var placements2 = variation ? flipVariations ? variationPlacements : variationPlacements.filter(function(placement2) {
+    var placements2 = variation ? flipVariations ? variationPlacements : variationPlacements.filter(function (placement2) {
       return getVariation(placement2) === variation;
     }) : basePlacements;
-    var allowedPlacements = placements2.filter(function(placement2) {
+    var allowedPlacements = placements2.filter(function (placement2) {
       return allowedAutoPlacements.indexOf(placement2) >= 0;
     });
     if (allowedPlacements.length === 0) {
       allowedPlacements = placements2;
     }
-    var overflows = allowedPlacements.reduce(function(acc, placement2) {
+    var overflows = allowedPlacements.reduce(function (acc, placement2) {
       acc[placement2] = detectOverflow(state, {
         placement: placement2,
         boundary,
@@ -6085,7 +6085,7 @@
       })[getBasePlacement(placement2)];
       return acc;
     }, {});
-    return Object.keys(overflows).sort(function(a4, b4) {
+    return Object.keys(overflows).sort(function (a4, b4) {
       return overflows[a4] - overflows[b4];
     });
   }
@@ -6108,7 +6108,7 @@
     var basePlacement = getBasePlacement(preferredPlacement);
     var isBasePlacement = basePlacement === preferredPlacement;
     var fallbackPlacements = specifiedFallbackPlacements || (isBasePlacement || !flipVariations ? [getOppositePlacement(preferredPlacement)] : getExpandedFallbackPlacements(preferredPlacement));
-    var placements2 = [preferredPlacement].concat(fallbackPlacements).reduce(function(acc, placement2) {
+    var placements2 = [preferredPlacement].concat(fallbackPlacements).reduce(function (acc, placement2) {
       return acc.concat(getBasePlacement(placement2) === auto ? computeAutoPlacement(state, {
         placement: placement2,
         boundary,
@@ -6148,7 +6148,7 @@
       if (checkAltAxis) {
         checks.push(overflow[mainVariationSide] <= 0, overflow[altVariationSide] <= 0);
       }
-      if (checks.every(function(check) {
+      if (checks.every(function (check) {
         return check;
       })) {
         firstFittingPlacement = placement;
@@ -6160,10 +6160,10 @@
     if (makeFallbackChecks) {
       var numberOfChecks = flipVariations ? 3 : 1;
       var _loop = function _loop2(_i2) {
-        var fittingPlacement = placements2.find(function(placement2) {
+        var fittingPlacement = placements2.find(function (placement2) {
           var checks2 = checksMap.get(placement2);
           if (checks2) {
-            return checks2.slice(0, _i2).every(function(check) {
+            return checks2.slice(0, _i2).every(function (check) {
               return check;
             });
           }
@@ -6212,7 +6212,7 @@
     };
   }
   function isAnySideFullyClipped(overflow) {
-    return [top, right, bottom, left].some(function(side) {
+    return [top, right, bottom, left].some(function (side) {
       return overflow[side] >= 0;
     });
   }
@@ -6270,7 +6270,7 @@
   function offset(_ref2) {
     var state = _ref2.state, options = _ref2.options, name = _ref2.name;
     var _options$offset = options.offset, offset2 = _options$offset === void 0 ? [0, 0] : _options$offset;
-    var data = placements.reduce(function(acc, placement) {
+    var data = placements.reduce(function (acc, placement) {
       acc[placement] = distanceAndSkiddingToXY(placement, state.rects, offset2);
       return acc;
     }, {});
@@ -6447,7 +6447,7 @@
     };
     if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
       if (getNodeName(offsetParent) !== "body" || // https://github.com/popperjs/popper-core/issues/1078
-      isScrollParent(documentElement)) {
+        isScrollParent(documentElement)) {
         scroll = getNodeScroll(offsetParent);
       }
       if (isHTMLElement(offsetParent)) {
@@ -6471,13 +6471,13 @@
     var map = /* @__PURE__ */ new Map();
     var visited = /* @__PURE__ */ new Set();
     var result = [];
-    modifiers.forEach(function(modifier) {
+    modifiers.forEach(function (modifier) {
       map.set(modifier.name, modifier);
     });
     function sort(modifier) {
       visited.add(modifier.name);
       var requires = [].concat(modifier.requires || [], modifier.requiresIfExists || []);
-      requires.forEach(function(dep) {
+      requires.forEach(function (dep) {
         if (!visited.has(dep)) {
           var depModifier = map.get(dep);
           if (depModifier) {
@@ -6487,7 +6487,7 @@
       });
       result.push(modifier);
     }
-    modifiers.forEach(function(modifier) {
+    modifiers.forEach(function (modifier) {
       if (!visited.has(modifier.name)) {
         sort(modifier);
       }
@@ -6496,8 +6496,8 @@
   }
   function orderModifiers(modifiers) {
     var orderedModifiers = order(modifiers);
-    return modifierPhases.reduce(function(acc, phase) {
-      return acc.concat(orderedModifiers.filter(function(modifier) {
+    return modifierPhases.reduce(function (acc, phase) {
+      return acc.concat(orderedModifiers.filter(function (modifier) {
         return modifier.phase === phase;
       }));
     }, []);
@@ -6506,10 +6506,10 @@
   // node_modules/@popperjs/core/lib/utils/debounce.js
   function debounce(fn2) {
     var pending;
-    return function() {
+    return function () {
       if (!pending) {
-        pending = new Promise(function(resolve) {
-          Promise.resolve().then(function() {
+        pending = new Promise(function (resolve) {
+          Promise.resolve().then(function () {
             pending = void 0;
             resolve(fn2());
           });
@@ -6521,7 +6521,7 @@
 
   // node_modules/@popperjs/core/lib/utils/mergeByName.js
   function mergeByName(modifiers) {
-    var merged = modifiers.reduce(function(merged2, current) {
+    var merged = modifiers.reduce(function (merged2, current) {
       var existing = merged2[current.name];
       merged2[current.name] = existing ? Object.assign({}, existing, current, {
         options: Object.assign({}, existing.options, current.options),
@@ -6529,7 +6529,7 @@
       }) : current;
       return merged2;
     }, {});
-    return Object.keys(merged).map(function(key) {
+    return Object.keys(merged).map(function (key) {
       return merged[key];
     });
   }
@@ -6544,7 +6544,7 @@
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
-    return !args.some(function(element) {
+    return !args.some(function (element) {
       return !(element && typeof element.getBoundingClientRect === "function");
     });
   }
@@ -6582,7 +6582,7 @@
             popper: listScrollParents(popper2)
           };
           var orderedModifiers = orderModifiers(mergeByName([].concat(defaultModifiers3, state.options.modifiers)));
-          state.orderedModifiers = orderedModifiers.filter(function(m4) {
+          state.orderedModifiers = orderedModifiers.filter(function (m4) {
             return m4.enabled;
           });
           runModifierEffects();
@@ -6607,7 +6607,7 @@
           };
           state.reset = false;
           state.placement = state.options.placement;
-          state.orderedModifiers.forEach(function(modifier) {
+          state.orderedModifiers.forEach(function (modifier) {
             return state.modifiersData[modifier.name] = Object.assign({}, modifier.data);
           });
           for (var index = 0; index < state.orderedModifiers.length; index++) {
@@ -6629,8 +6629,8 @@
         },
         // Async and optimistically optimized update – it will not be executed if
         // not necessary (debounced to run at most once-per-tick)
-        update: debounce(function() {
-          return new Promise(function(resolve) {
+        update: debounce(function () {
+          return new Promise(function (resolve) {
             instance.forceUpdate();
             resolve(state);
           });
@@ -6643,13 +6643,13 @@
       if (!areValidElements(reference2, popper2)) {
         return instance;
       }
-      instance.setOptions(options).then(function(state2) {
+      instance.setOptions(options).then(function (state2) {
         if (!isDestroyed && options.onFirstUpdate) {
           options.onFirstUpdate(state2);
         }
       });
       function runModifierEffects() {
-        state.orderedModifiers.forEach(function(_ref) {
+        state.orderedModifiers.forEach(function (_ref) {
           var name = _ref.name, _ref$options = _ref.options, options2 = _ref$options === void 0 ? {} : _ref$options, effect4 = _ref.effect;
           if (typeof effect4 === "function") {
             var cleanupFn = effect4({
@@ -6665,7 +6665,7 @@
         });
       }
       function cleanupModifierEffects() {
-        effectCleanupFns.forEach(function(fn2) {
+        effectCleanupFns.forEach(function (fn2) {
           return fn2();
         });
         effectCleanupFns = [];
@@ -6977,7 +6977,7 @@
     let [isDelegated, callable, typeEvent] = normalizeParameters(originalTypeEvent, handler, delegationFunction);
     if (originalTypeEvent in customEvents) {
       const wrapFunction = (fn3) => {
-        return function(event) {
+        return function (event) {
           if (!event.relatedTarget || event.relatedTarget !== event.delegateTarget && !event.delegateTarget.contains(event.relatedTarget)) {
             return fn3.call(this, event);
           }
@@ -7319,7 +7319,7 @@
   var enableDismissTrigger = (component, method = "hide") => {
     const clickEvent = `click.dismiss${component.EVENT_KEY}`;
     const name = component.NAME;
-    EventHandler.on(document, clickEvent, `[data-bs-dismiss="${name}"]`, function(event) {
+    EventHandler.on(document, clickEvent, `[data-bs-dismiss="${name}"]`, function (event) {
       if (["A", "AREA"].includes(this.tagName)) {
         event.preventDefault();
       }
@@ -7361,7 +7361,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Alert.getOrCreateInstance(this);
         if (typeof config !== "string") {
           return;
@@ -7393,7 +7393,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Button.getOrCreateInstance(this);
         if (config === "toggle") {
           data[config]();
@@ -7789,7 +7789,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Carousel.getOrCreateInstance(this, config);
         if (typeof config === "number") {
           data.to(config);
@@ -7804,7 +7804,7 @@
       });
     }
   };
-  EventHandler.on(document, EVENT_CLICK_DATA_API$5, SELECTOR_DATA_SLIDE, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API$5, SELECTOR_DATA_SLIDE, function (event) {
     const target = SelectorEngine.getElementFromSelector(this);
     if (!target || !target.classList.contains(CLASS_NAME_CAROUSEL)) {
       return;
@@ -8008,7 +8008,7 @@
       if (typeof config === "string" && /show|hide/.test(config)) {
         _config.toggle = false;
       }
-      return this.each(function() {
+      return this.each(function () {
         const data = _Collapse.getOrCreateInstance(this, _config);
         if (typeof config === "string") {
           if (typeof data[config] === "undefined") {
@@ -8019,7 +8019,7 @@
       });
     }
   };
-  EventHandler.on(document, EVENT_CLICK_DATA_API$4, SELECTOR_DATA_TOGGLE$4, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API$4, SELECTOR_DATA_TOGGLE$4, function (event) {
     if (event.target.tagName === "A" || event.delegateTarget && event.delegateTarget.tagName === "A") {
       event.preventDefault();
     }
@@ -8267,7 +8267,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Dropdown.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -8335,7 +8335,7 @@
   EventHandler.on(document, EVENT_KEYDOWN_DATA_API, SELECTOR_MENU, Dropdown.dataApiKeydownHandler);
   EventHandler.on(document, EVENT_CLICK_DATA_API$3, Dropdown.clearMenus);
   EventHandler.on(document, EVENT_KEYUP_DATA_API, Dropdown.clearMenus);
-  EventHandler.on(document, EVENT_CLICK_DATA_API$3, SELECTOR_DATA_TOGGLE$3, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API$3, SELECTOR_DATA_TOGGLE$3, function (event) {
     event.preventDefault();
     Dropdown.getOrCreateInstance(this).toggle();
   });
@@ -8824,7 +8824,7 @@
     }
     // Static
     static jQueryInterface(config, relatedTarget) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Modal.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -8836,7 +8836,7 @@
       });
     }
   };
-  EventHandler.on(document, EVENT_CLICK_DATA_API$2, SELECTOR_DATA_TOGGLE$2, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API$2, SELECTOR_DATA_TOGGLE$2, function (event) {
     const target = SelectorEngine.getElementFromSelector(this);
     if (["A", "AREA"].includes(this.tagName)) {
       event.preventDefault();
@@ -9008,7 +9008,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Offcanvas.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -9020,7 +9020,7 @@
       });
     }
   };
-  EventHandler.on(document, EVENT_CLICK_DATA_API$1, SELECTOR_DATA_TOGGLE$1, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API$1, SELECTOR_DATA_TOGGLE$1, function (event) {
     const target = SelectorEngine.getElementFromSelector(this);
     if (["A", "AREA"].includes(this.tagName)) {
       event.preventDefault();
@@ -9688,7 +9688,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Tooltip.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -9743,7 +9743,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Popover.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -9946,7 +9946,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _ScrollSpy.getOrCreateInstance(this, config);
         if (typeof config !== "string") {
           return;
@@ -10158,7 +10158,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Tab.getOrCreateInstance(this);
         if (typeof config !== "string") {
           return;
@@ -10170,7 +10170,7 @@
       });
     }
   };
-  EventHandler.on(document, EVENT_CLICK_DATA_API, SELECTOR_DATA_TOGGLE, function(event) {
+  EventHandler.on(document, EVENT_CLICK_DATA_API, SELECTOR_DATA_TOGGLE, function (event) {
     if (["A", "AREA"].includes(this.tagName)) {
       event.preventDefault();
     }
@@ -10321,7 +10321,7 @@
     }
     // Static
     static jQueryInterface(config) {
-      return this.each(function() {
+      return this.each(function () {
         const data = _Toast.getOrCreateInstance(this, config);
         if (typeof config === "string") {
           if (typeof data[config] === "undefined") {
@@ -10336,7 +10336,7 @@
   defineJQueryPlugin(Toast);
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js
-  (function() {
+  (function () {
     if (window.Reflect === void 0 || window.customElements === void 0 || window.customElements.polyfillWrapFlushCallback) {
       return;
     }
@@ -10351,10 +10351,10 @@
     HTMLElement.prototype.constructor = HTMLElement;
     Object.setPrototypeOf(HTMLElement, BuiltInHTMLElement);
   })();
-  (function(prototype) {
+  (function (prototype) {
     if (typeof prototype.requestSubmit == "function")
       return;
-    prototype.requestSubmit = function(submitter) {
+    prototype.requestSubmit = function (submitter) {
       if (submitter) {
         validateSubmitter(submitter, this);
         submitter.click();
@@ -10388,7 +10388,7 @@
       submittersByForm.set(submitter.form, submitter);
     }
   }
-  (function() {
+  (function () {
     if ("submitter" in Event.prototype)
       return;
     let prototype = window.Event.prototype;
@@ -10407,7 +10407,7 @@
     });
   })();
   var FrameLoadingStyle;
-  (function(FrameLoadingStyle2) {
+  (function (FrameLoadingStyle2) {
     FrameLoadingStyle2["eager"] = "eager";
     FrameLoadingStyle2["lazy"] = "lazy";
   })(FrameLoadingStyle || (FrameLoadingStyle = {}));
@@ -10748,7 +10748,7 @@
     }
   }
   var FetchMethod;
-  (function(FetchMethod2) {
+  (function (FetchMethod2) {
     FetchMethod2[FetchMethod2["get"] = 0] = "get";
     FetchMethod2[FetchMethod2["post"] = 1] = "post";
     FetchMethod2[FetchMethod2["put"] = 2] = "put";
@@ -10927,7 +10927,7 @@
     return fragment;
   }
   var FormSubmissionState;
-  (function(FormSubmissionState2) {
+  (function (FormSubmissionState2) {
     FormSubmissionState2[FormSubmissionState2["initialized"] = 0] = "initialized";
     FormSubmissionState2[FormSubmissionState2["requesting"] = 1] = "requesting";
     FormSubmissionState2[FormSubmissionState2["waiting"] = 2] = "waiting";
@@ -10936,7 +10936,7 @@
     FormSubmissionState2[FormSubmissionState2["stopped"] = 5] = "stopped";
   })(FormSubmissionState || (FormSubmissionState = {}));
   var FormEnctype;
-  (function(FormEnctype2) {
+  (function (FormEnctype2) {
     FormEnctype2["urlEncoded"] = "application/x-www-form-urlencoded";
     FormEnctype2["multipart"] = "multipart/form-data";
     FormEnctype2["plain"] = "text/plain";
@@ -11909,14 +11909,14 @@
     }
   };
   var TimingMetric;
-  (function(TimingMetric2) {
+  (function (TimingMetric2) {
     TimingMetric2["visitStart"] = "visitStart";
     TimingMetric2["requestStart"] = "requestStart";
     TimingMetric2["requestEnd"] = "requestEnd";
     TimingMetric2["visitEnd"] = "visitEnd";
   })(TimingMetric || (TimingMetric = {}));
   var VisitState;
-  (function(VisitState2) {
+  (function (VisitState2) {
     VisitState2["initialized"] = "initialized";
     VisitState2["started"] = "started";
     VisitState2["canceled"] = "canceled";
@@ -11934,7 +11934,7 @@
     acceptsStreamResponse: false
   };
   var SystemStatusCode;
-  (function(SystemStatusCode2) {
+  (function (SystemStatusCode2) {
     SystemStatusCode2[SystemStatusCode2["networkFailure"] = 0] = "networkFailure";
     SystemStatusCode2[SystemStatusCode2["timeoutFailure"] = -1] = "timeoutFailure";
     SystemStatusCode2[SystemStatusCode2["contentTypeMismatch"] = -2] = "contentTypeMismatch";
@@ -12641,7 +12641,7 @@
     }
   };
   var PageStage;
-  (function(PageStage2) {
+  (function (PageStage2) {
     PageStage2[PageStage2["initial"] = 0] = "initial";
     PageStage2[PageStage2["loading"] = 1] = "loading";
     PageStage2[PageStage2["interactive"] = 2] = "interactive";
@@ -14157,8 +14157,8 @@
       return obj;
     if (Array.isArray(obj))
       return obj.map(walk);
-    return Object.keys(obj).reduce(function(acc, key) {
-      var camel = key[0].toLowerCase() + key.slice(1).replace(/([A-Z]+)/g, function(m4, x3) {
+    return Object.keys(obj).reduce(function (acc, key) {
+      var camel = key[0].toLowerCase() + key.slice(1).replace(/([A-Z]+)/g, function (m4, x3) {
         return "_" + x3.toLowerCase();
       });
       acc[camel] = walk(obj[key]);
@@ -15786,11 +15786,11 @@
       return extended;
     }
     function testReflectExtension() {
-      const a4 = function() {
+      const a4 = function () {
         this.a.call(this);
       };
       const b4 = extendWithReflect(a4);
-      b4.prototype.a = function() {
+      b4.prototype.a = function () {
       };
       return new b4();
     }
@@ -16725,9 +16725,9 @@
   // node_modules/@babel/runtime/helpers/esm/typeof.js
   function _typeof(o4) {
     "@babel/helpers - typeof";
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o5) {
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o5) {
       return typeof o5;
-    } : function(o5) {
+    } : function (o5) {
       return o5 && "function" == typeof Symbol && o5.constructor === Symbol && o5 !== Symbol.prototype ? "symbol" : typeof o5;
     }, _typeof(o4);
   }
@@ -16958,7 +16958,7 @@
 
   // node_modules/date-fns/esm/locale/_lib/buildFormatLongFn/index.js
   function buildFormatLongFn(args) {
-    return function() {
+    return function () {
       var options = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
       var width = options.width ? String(options.width) : args.defaultWidth;
       var format = args.formats[width] || args.formats[args.defaultWidth];
@@ -17017,7 +17017,7 @@
 
   // node_modules/date-fns/esm/locale/_lib/buildLocalizeFn/index.js
   function buildLocalizeFn(args) {
-    return function(dirtyIndex, options) {
+    return function (dirtyIndex, options) {
       var context = options !== null && options !== void 0 && options.context ? String(options.context) : "standalone";
       var valuesArray;
       if (context === "formatting" && args.formattingValues) {
@@ -17167,7 +17167,7 @@
 
   // node_modules/date-fns/esm/locale/_lib/buildMatchFn/index.js
   function buildMatchFn(args) {
-    return function(string) {
+    return function (string) {
       var options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
       var width = options.width;
       var matchPattern = width && args.matchPatterns[width] || args.matchPatterns[args.defaultMatchWidth];
@@ -17177,9 +17177,9 @@
       }
       var matchedString = matchResult[0];
       var parsePatterns = width && args.parsePatterns[width] || args.parsePatterns[args.defaultParseWidth];
-      var key = Array.isArray(parsePatterns) ? findIndex(parsePatterns, function(pattern) {
+      var key = Array.isArray(parsePatterns) ? findIndex(parsePatterns, function (pattern) {
         return pattern.test(matchedString);
-      }) : findKey(parsePatterns, function(pattern) {
+      }) : findKey(parsePatterns, function (pattern) {
         return pattern.test(matchedString);
       });
       var value;
@@ -17211,7 +17211,7 @@
 
   // node_modules/date-fns/esm/locale/_lib/buildMatchPatternFn/index.js
   function buildMatchPatternFn(args) {
-    return function(string) {
+    return function (string) {
       var options = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
       var matchResult = string.match(args.matchPattern);
       if (!matchResult)
@@ -17968,7 +17968,7 @@
     },
     warn: () => {
     },
-    error: function() {
+    error: function () {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
@@ -17976,19 +17976,19 @@
     }
   };
   var debugLogger = {
-    debug: function() {
+    debug: function () {
       for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
         args[_key2] = arguments[_key2];
       }
       return console.debug(`[Uppy] [${getTimeStamp()}]`, ...args);
     },
-    warn: function() {
+    warn: function () {
       for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
         args[_key3] = arguments[_key3];
       }
       return console.warn(`[Uppy] [${getTimeStamp()}]`, ...args);
     },
-    error: function() {
+    error: function () {
       for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
         args[_key4] = arguments[_key4];
       }
@@ -19813,7 +19813,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
   }
   function x() {
     var n3, l5, u4, t4, o4, r6, e4, c4, s5;
-    for (i.sort(f); n3 = i.shift(); )
+    for (i.sort(f); n3 = i.shift();)
       n3.__d && (l5 = i.length, t4 = void 0, o4 = void 0, r6 = void 0, c4 = (e4 = (u4 = n3).__v).__e, (s5 = u4.__P) && (t4 = [], o4 = [], (r6 = h({}, e4)).__v = e4.__v + 1, z(s5, e4, r6, u4.__n, void 0 !== s5.ownerSVGElement, null != e4.__h ? [c4] : null, t4, null == c4 ? g(e4) : c4, e4.__h, o4), L(t4, e4, o4), e4.__e != c4 && m(e4)), i.length > l5 && i.sort(f));
     x.__r = 0;
   }
@@ -19821,7 +19821,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     var p4, y3, _3, b4, m4, w4, x3, P3, C3, D3 = 0, H3 = t4 && t4.__k || s2, I3 = H3.length, T4 = I3, j4 = l5.length;
     for (u4.__k = [], p4 = 0; p4 < j4; p4++)
       null != (b4 = u4.__k[p4] = null == (b4 = l5[p4]) || "boolean" == typeof b4 || "function" == typeof b4 ? null : "string" == typeof b4 || "number" == typeof b4 || "bigint" == typeof b4 ? d(null, b4, null, null, b4) : v(b4) ? d(k, { children: b4 }, null, null, null) : b4.__b > 0 ? d(b4.type, b4.props, b4.key, b4.ref ? b4.ref : null, b4.__v) : b4) ? (b4.__ = u4, b4.__b = u4.__b + 1, -1 === (P3 = A(b4, H3, x3 = p4 + D3, T4)) ? _3 = c : (_3 = H3[P3] || c, H3[P3] = void 0, T4--), z(n3, b4, _3, i4, o4, r6, f4, e4, a4, h4), m4 = b4.__e, (y3 = b4.ref) && _3.ref != y3 && (_3.ref && N(_3.ref, null, b4), h4.push(y3, b4.__c || m4, b4)), null != m4 && (null == w4 && (w4 = m4), (C3 = _3 === c || null === _3.__v) ? -1 == P3 && D3-- : P3 !== x3 && (P3 === x3 + 1 ? D3++ : P3 > x3 ? T4 > j4 - x3 ? D3 += P3 - x3 : D3-- : D3 = P3 < x3 && P3 == x3 - 1 ? P3 - x3 : 0), x3 = p4 + D3, "function" != typeof b4.type || P3 === x3 && _3.__k !== b4.__k ? "function" == typeof b4.type || P3 === x3 && !C3 ? void 0 !== b4.__d ? (e4 = b4.__d, b4.__d = void 0) : e4 = m4.nextSibling : e4 = S(n3, m4, e4) : e4 = $(b4, e4, n3), "function" == typeof u4.type && (u4.__d = e4))) : (_3 = H3[p4]) && null == _3.key && _3.__e && (_3.__e == e4 && (_3.__ = t4, e4 = g(_3)), O(_3, _3, false), H3[p4] = null);
-    for (u4.__e = w4, p4 = I3; p4--; )
+    for (u4.__e = w4, p4 = I3; p4--;)
       null != H3[p4] && ("function" == typeof u4.type && null != H3[p4].__e && H3[p4].__e == u4.__d && (u4.__d = H3[p4].__e.nextSibling), O(H3[p4], H3[p4]));
   }
   function $(n3, l5, u4) {
@@ -19830,7 +19830,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     return l5;
   }
   function C(n3, l5) {
-    return l5 = l5 || [], null == n3 || "boolean" == typeof n3 || (v(n3) ? n3.some(function(n4) {
+    return l5 = l5 || [], null == n3 || "boolean" == typeof n3 || (v(n3) ? n3.some(function (n4) {
       C(n4, l5);
     }) : l5.push(n3)), l5;
   }
@@ -19842,7 +19842,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     if (null === e4 || e4 && i4 == e4.key && o4 === e4.type)
       return u4;
     if (t4 > (null != e4 ? 1 : 0))
-      for (; r6 >= 0 || f4 < l5.length; ) {
+      for (; r6 >= 0 || f4 < l5.length;) {
         if (r6 >= 0) {
           if ((e4 = l5[r6]) && i4 == e4.key && o4 === e4.type)
             return r6;
@@ -19869,30 +19869,30 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
   function I(n3, l5, u4, t4, i4) {
     var o4;
     n:
-      if ("style" === l5)
-        if ("string" == typeof u4)
-          n3.style.cssText = u4;
-        else {
-          if ("string" == typeof t4 && (n3.style.cssText = t4 = ""), t4)
-            for (l5 in t4)
-              u4 && l5 in u4 || H(n3.style, l5, "");
-          if (u4)
-            for (l5 in u4)
-              t4 && u4[l5] === t4[l5] || H(n3.style, l5, u4[l5]);
-        }
-      else if ("o" === l5[0] && "n" === l5[1])
-        o4 = l5 !== (l5 = l5.replace(/(PointerCapture)$|Capture$/, "$1")), l5 = l5.toLowerCase() in n3 ? l5.toLowerCase().slice(2) : l5.slice(2), n3.l || (n3.l = {}), n3.l[l5 + o4] = u4, u4 ? t4 ? u4.u = t4.u : (u4.u = Date.now(), n3.addEventListener(l5, o4 ? j : T, o4)) : n3.removeEventListener(l5, o4 ? j : T, o4);
-      else if ("dangerouslySetInnerHTML" !== l5) {
-        if (i4)
-          l5 = l5.replace(/xlink(H|:h)/, "h").replace(/sName$/, "s");
-        else if ("width" !== l5 && "height" !== l5 && "href" !== l5 && "list" !== l5 && "form" !== l5 && "tabIndex" !== l5 && "download" !== l5 && "rowSpan" !== l5 && "colSpan" !== l5 && "role" !== l5 && l5 in n3)
-          try {
-            n3[l5] = null == u4 ? "" : u4;
-            break n;
-          } catch (n4) {
-          }
-        "function" == typeof u4 || (null == u4 || false === u4 && "-" !== l5[4] ? n3.removeAttribute(l5) : n3.setAttribute(l5, u4));
+    if ("style" === l5)
+      if ("string" == typeof u4)
+        n3.style.cssText = u4;
+      else {
+        if ("string" == typeof t4 && (n3.style.cssText = t4 = ""), t4)
+          for (l5 in t4)
+            u4 && l5 in u4 || H(n3.style, l5, "");
+        if (u4)
+          for (l5 in u4)
+            t4 && u4[l5] === t4[l5] || H(n3.style, l5, u4[l5]);
       }
+    else if ("o" === l5[0] && "n" === l5[1])
+      o4 = l5 !== (l5 = l5.replace(/(PointerCapture)$|Capture$/, "$1")), l5 = l5.toLowerCase() in n3 ? l5.toLowerCase().slice(2) : l5.slice(2), n3.l || (n3.l = {}), n3.l[l5 + o4] = u4, u4 ? t4 ? u4.u = t4.u : (u4.u = Date.now(), n3.addEventListener(l5, o4 ? j : T, o4)) : n3.removeEventListener(l5, o4 ? j : T, o4);
+    else if ("dangerouslySetInnerHTML" !== l5) {
+      if (i4)
+        l5 = l5.replace(/xlink(H|:h)/, "h").replace(/sName$/, "s");
+      else if ("width" !== l5 && "height" !== l5 && "href" !== l5 && "list" !== l5 && "form" !== l5 && "tabIndex" !== l5 && "download" !== l5 && "rowSpan" !== l5 && "colSpan" !== l5 && "role" !== l5 && l5 in n3)
+        try {
+          n3[l5] = null == u4 ? "" : u4;
+          break n;
+        } catch (n4) {
+        }
+      "function" == typeof u4 || (null == u4 || false === u4 && "-" !== l5[4] ? n3.removeAttribute(l5) : n3.setAttribute(l5, u4));
+    }
   }
   function T(n3) {
     var u4 = this.l[n3.type + false];
@@ -19912,45 +19912,45 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       return null;
     null != t4.__h && (c4 = t4.__h, e4 = u4.__e = t4.__e, u4.__h = null, r6 = [e4]), (a4 = l2.__b) && a4(u4);
     n:
-      if ("function" == typeof I3)
-        try {
-          if (w4 = u4.props, x3 = (a4 = I3.contextType) && i4[a4.__c], $3 = a4 ? x3 ? x3.props.value : a4.__ : i4, t4.__c ? m4 = (p4 = u4.__c = t4.__c).__ = p4.__E : ("prototype" in I3 && I3.prototype.render ? u4.__c = p4 = new I3(w4, $3) : (u4.__c = p4 = new b(w4, $3), p4.constructor = I3, p4.render = q), x3 && x3.sub(p4), p4.props = w4, p4.state || (p4.state = {}), p4.context = $3, p4.__n = i4, y3 = p4.__d = true, p4.__h = [], p4._sb = []), null == p4.__s && (p4.__s = p4.state), null != I3.getDerivedStateFromProps && (p4.__s == p4.state && (p4.__s = h({}, p4.__s)), h(p4.__s, I3.getDerivedStateFromProps(w4, p4.__s))), d4 = p4.props, _3 = p4.state, p4.__v = u4, y3)
-            null == I3.getDerivedStateFromProps && null != p4.componentWillMount && p4.componentWillMount(), null != p4.componentDidMount && p4.__h.push(p4.componentDidMount);
-          else {
-            if (null == I3.getDerivedStateFromProps && w4 !== d4 && null != p4.componentWillReceiveProps && p4.componentWillReceiveProps(w4, $3), !p4.__e && (null != p4.shouldComponentUpdate && false === p4.shouldComponentUpdate(w4, p4.__s, $3) || u4.__v === t4.__v)) {
-              for (u4.__v !== t4.__v && (p4.props = w4, p4.state = p4.__s, p4.__d = false), u4.__e = t4.__e, u4.__k = t4.__k, u4.__k.forEach(function(n4) {
-                n4 && (n4.__ = u4);
-              }), C3 = 0; C3 < p4._sb.length; C3++)
-                p4.__h.push(p4._sb[C3]);
-              p4._sb = [], p4.__h.length && f4.push(p4);
-              break n;
-            }
-            null != p4.componentWillUpdate && p4.componentWillUpdate(w4, p4.__s, $3), null != p4.componentDidUpdate && p4.__h.push(function() {
-              p4.componentDidUpdate(d4, _3, g4);
-            });
+    if ("function" == typeof I3)
+      try {
+        if (w4 = u4.props, x3 = (a4 = I3.contextType) && i4[a4.__c], $3 = a4 ? x3 ? x3.props.value : a4.__ : i4, t4.__c ? m4 = (p4 = u4.__c = t4.__c).__ = p4.__E : ("prototype" in I3 && I3.prototype.render ? u4.__c = p4 = new I3(w4, $3) : (u4.__c = p4 = new b(w4, $3), p4.constructor = I3, p4.render = q), x3 && x3.sub(p4), p4.props = w4, p4.state || (p4.state = {}), p4.context = $3, p4.__n = i4, y3 = p4.__d = true, p4.__h = [], p4._sb = []), null == p4.__s && (p4.__s = p4.state), null != I3.getDerivedStateFromProps && (p4.__s == p4.state && (p4.__s = h({}, p4.__s)), h(p4.__s, I3.getDerivedStateFromProps(w4, p4.__s))), d4 = p4.props, _3 = p4.state, p4.__v = u4, y3)
+          null == I3.getDerivedStateFromProps && null != p4.componentWillMount && p4.componentWillMount(), null != p4.componentDidMount && p4.__h.push(p4.componentDidMount);
+        else {
+          if (null == I3.getDerivedStateFromProps && w4 !== d4 && null != p4.componentWillReceiveProps && p4.componentWillReceiveProps(w4, $3), !p4.__e && (null != p4.shouldComponentUpdate && false === p4.shouldComponentUpdate(w4, p4.__s, $3) || u4.__v === t4.__v)) {
+            for (u4.__v !== t4.__v && (p4.props = w4, p4.state = p4.__s, p4.__d = false), u4.__e = t4.__e, u4.__k = t4.__k, u4.__k.forEach(function (n4) {
+              n4 && (n4.__ = u4);
+            }), C3 = 0; C3 < p4._sb.length; C3++)
+              p4.__h.push(p4._sb[C3]);
+            p4._sb = [], p4.__h.length && f4.push(p4);
+            break n;
           }
-          if (p4.context = $3, p4.props = w4, p4.__P = n3, p4.__e = false, S3 = l2.__r, A3 = 0, "prototype" in I3 && I3.prototype.render) {
-            for (p4.state = p4.__s, p4.__d = false, S3 && S3(u4), a4 = p4.render(p4.props, p4.state, p4.context), D3 = 0; D3 < p4._sb.length; D3++)
-              p4.__h.push(p4._sb[D3]);
-            p4._sb = [];
-          } else
-            do {
-              p4.__d = false, S3 && S3(u4), a4 = p4.render(p4.props, p4.state, p4.context), p4.state = p4.__s;
-            } while (p4.__d && ++A3 < 25);
-          p4.state = p4.__s, null != p4.getChildContext && (i4 = h(h({}, i4), p4.getChildContext())), y3 || null == p4.getSnapshotBeforeUpdate || (g4 = p4.getSnapshotBeforeUpdate(d4, _3)), P(n3, v(H3 = null != a4 && a4.type === k && null == a4.key ? a4.props.children : a4) ? H3 : [H3], u4, t4, i4, o4, r6, f4, e4, c4, s5), p4.base = u4.__e, u4.__h = null, p4.__h.length && f4.push(p4), m4 && (p4.__E = p4.__ = null);
-        } catch (n4) {
-          u4.__v = null, (c4 || null != r6) && (u4.__e = e4, u4.__h = !!c4, r6[r6.indexOf(e4)] = null), l2.__e(n4, u4, t4);
+          null != p4.componentWillUpdate && p4.componentWillUpdate(w4, p4.__s, $3), null != p4.componentDidUpdate && p4.__h.push(function () {
+            p4.componentDidUpdate(d4, _3, g4);
+          });
         }
-      else
-        null == r6 && u4.__v === t4.__v ? (u4.__k = t4.__k, u4.__e = t4.__e) : u4.__e = M(t4.__e, u4, t4, i4, o4, r6, f4, c4, s5);
+        if (p4.context = $3, p4.props = w4, p4.__P = n3, p4.__e = false, S3 = l2.__r, A3 = 0, "prototype" in I3 && I3.prototype.render) {
+          for (p4.state = p4.__s, p4.__d = false, S3 && S3(u4), a4 = p4.render(p4.props, p4.state, p4.context), D3 = 0; D3 < p4._sb.length; D3++)
+            p4.__h.push(p4._sb[D3]);
+          p4._sb = [];
+        } else
+          do {
+            p4.__d = false, S3 && S3(u4), a4 = p4.render(p4.props, p4.state, p4.context), p4.state = p4.__s;
+          } while (p4.__d && ++A3 < 25);
+        p4.state = p4.__s, null != p4.getChildContext && (i4 = h(h({}, i4), p4.getChildContext())), y3 || null == p4.getSnapshotBeforeUpdate || (g4 = p4.getSnapshotBeforeUpdate(d4, _3)), P(n3, v(H3 = null != a4 && a4.type === k && null == a4.key ? a4.props.children : a4) ? H3 : [H3], u4, t4, i4, o4, r6, f4, e4, c4, s5), p4.base = u4.__e, u4.__h = null, p4.__h.length && f4.push(p4), m4 && (p4.__E = p4.__ = null);
+      } catch (n4) {
+        u4.__v = null, (c4 || null != r6) && (u4.__e = e4, u4.__h = !!c4, r6[r6.indexOf(e4)] = null), l2.__e(n4, u4, t4);
+      }
+    else
+      null == r6 && u4.__v === t4.__v ? (u4.__k = t4.__k, u4.__e = t4.__e) : u4.__e = M(t4.__e, u4, t4, i4, o4, r6, f4, c4, s5);
     (a4 = l2.diffed) && a4(u4);
   }
   function L(n3, u4, t4) {
     for (var i4 = 0; i4 < t4.length; i4++)
       N(t4[i4], t4[++i4], t4[++i4]);
-    l2.__c && l2.__c(u4, n3), n3.some(function(u5) {
+    l2.__c && l2.__c(u4, n3), n3.some(function (u5) {
       try {
-        n3 = u5.__h, u5.__h = [], n3.some(function(n4) {
+        n3 = u5.__h, u5.__h = [], n3.some(function (n4) {
           n4.call(u5);
         });
       } catch (n4) {
@@ -19984,7 +19984,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       if (D(l5, _3, d4, o4, e4), y3)
         u4.__k = [];
       else if (P(l5, v(b4 = u4.props.children) ? b4 : [b4], u4, t4, i4, o4 && "foreignObject" !== k4, r6, f4, r6 ? r6[0] : t4.__k && g(t4, 0), e4, s5), null != r6)
-        for (b4 = r6.length; b4--; )
+        for (b4 = r6.length; b4--;)
           null != r6[b4] && p(r6[b4]);
       e4 || ("value" in _3 && void 0 !== (b4 = _3.value) && (b4 !== l5.value || "progress" === k4 && !b4 || "option" === k4 && b4 !== d4.value) && I(l5, "value", b4, d4.value, false), "checked" in _3 && void 0 !== (b4 = _3.checked) && b4 !== l5.checked && I(l5, "checked", b4, d4.checked, false));
     }
@@ -20026,24 +20026,26 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       "key" == r6 ? i4 = u4[r6] : "ref" == r6 ? o4 = u4[r6] : e4[r6] = void 0 === u4[r6] && void 0 !== f4 ? f4[r6] : u4[r6];
     return arguments.length > 2 && (e4.children = arguments.length > 3 ? n.call(arguments, 2) : t4), d(l5.type, e4, i4 || l5.key, o4 || l5.ref, null);
   }
-  n = s2.slice, l2 = { __e: function(n3, l5, u4, t4) {
-    for (var i4, o4, r6; l5 = l5.__; )
-      if ((i4 = l5.__c) && !i4.__)
-        try {
-          if ((o4 = i4.constructor) && null != o4.getDerivedStateFromError && (i4.setState(o4.getDerivedStateFromError(n3)), r6 = i4.__d), null != i4.componentDidCatch && (i4.componentDidCatch(n3, t4 || {}), r6 = i4.__d), r6)
-            return i4.__E = i4;
-        } catch (l6) {
-          n3 = l6;
-        }
-    throw n3;
-  } }, u = 0, t = function(n3) {
+  n = s2.slice, l2 = {
+    __e: function (n3, l5, u4, t4) {
+      for (var i4, o4, r6; l5 = l5.__;)
+        if ((i4 = l5.__c) && !i4.__)
+          try {
+            if ((o4 = i4.constructor) && null != o4.getDerivedStateFromError && (i4.setState(o4.getDerivedStateFromError(n3)), r6 = i4.__d), null != i4.componentDidCatch && (i4.componentDidCatch(n3, t4 || {}), r6 = i4.__d), r6)
+              return i4.__E = i4;
+          } catch (l6) {
+            n3 = l6;
+          }
+      throw n3;
+    }
+  }, u = 0, t = function (n3) {
     return null != n3 && void 0 === n3.constructor;
-  }, b.prototype.setState = function(n3, l5) {
+  }, b.prototype.setState = function (n3, l5) {
     var u4;
     u4 = null != this.__s && this.__s !== this.state ? this.__s : this.__s = h({}, this.state), "function" == typeof n3 && (n3 = n3(h({}, u4), this.props)), n3 && h(u4, n3), null != n3 && this.__v && (l5 && this._sb.push(l5), w(this));
-  }, b.prototype.forceUpdate = function(n3) {
+  }, b.prototype.forceUpdate = function (n3) {
     this.__v && (this.__e = true, n3 && this.__h.push(n3), w(this));
-  }, b.prototype.render = k, i = [], r3 = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, f = function(n3, l5) {
+  }, b.prototype.render = k, i = [], r3 = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, f = function (n3, l5) {
     return n3.__v.__b - l5.__v.__b;
   }, x.__r = 0, e = 0;
 
@@ -20167,7 +20169,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
   function debounce2(fn2) {
     let calling = null;
     let latestArgs = null;
-    return function() {
+    return function () {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
@@ -20676,7 +20678,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       numUploads
     } = props;
     function displayErrorAlert() {
-      const errorMessage = `${i18n("uploadFailed")} 
+      const errorMessage = `${i18n("uploadFailed")}
 
  ${error2}`;
       alert(errorMessage);
@@ -21476,7 +21478,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
           "data-microtip-position": "top-left",
           "data-microtip-size": "medium",
           role: "tooltip",
-          onClick: () => alert(`${info.message} 
+          onClick: () => alert(`${info.message}
 
  ${info.details}`)
         }, "?"))))));
@@ -21559,7 +21561,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     throw delete t4.stack, t4;
   }
   function o2(e4) {
-    let t4 = function(e5) {
+    let t4 = function (e5) {
       let t5 = 0;
       return e5.ifd0.enabled && (t5 += 1024), e5.exif.enabled && (t5 += 2048), e5.makerNote && (t5 += 2048), e5.userComment && (t5 += 1024), e5.gps.enabled && (t5 += 512), e5.interop.enabled && (t5 += 100), e5.ifd1.enabled && (t5 += 1024), t5 + 2048;
     }(e4);
@@ -21615,7 +21617,6 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     getString(e4 = 0, t4 = this.byteLength) {
       let s5 = this.getUint8Array(e4, t4);
       return i4 = s5, d2 ? d2.decode(i4) : a2 ? Buffer.from(i4).toString("utf8") : decodeURIComponent(escape(u2(i4)));
-      var i4;
     }
     getLatin1String(e4 = 0, t4 = this.byteLength) {
       let s5 = this.getUint8Array(e4, t4);
@@ -21695,7 +21696,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       super(), this.kind = e4;
     }
     get(e4, t4) {
-      return this.has(e4) || p2(this.kind, e4), t4 && (e4 in t4 || function(e5, t5) {
+      return this.has(e4) || p2(this.kind, e4), t4 && (e4 in t4 || function (e5, t5) {
         l3(`Unknown ${e5} '${t5}'.`);
       }(this.kind, e4), t4[e4].enabled || p2(this.kind, e4)), super.get(e4);
     }
@@ -21709,10 +21710,9 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
   var w2 = t2.fetch;
   function k2(e4, t4) {
     return (i4 = e4).startsWith("data:") || i4.length > 1e4 ? v2(e4, t4, "base64") : n2 && e4.includes("://") ? O2(e4, t4, "url", S2) : n2 ? v2(e4, t4, "fs") : s3 ? O2(e4, t4, "url", S2) : void l3("Invalid input argument");
-    var i4;
   }
   async function O2(e4, t4, s5, i4) {
-    return b2.has(s5) ? v2(e4, t4, s5) : i4 ? async function(e5, t5) {
+    return b2.has(s5) ? v2(e4, t4, s5) : i4 ? async function (e5, t5) {
       let s6 = await t5(e5);
       return new c2(s6);
     }(e4, i4) : void l3(`Parser ${s5} is not loaded`);
@@ -21922,7 +21922,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       e2(this, "parsers", {}), e2(this, "output", {}), e2(this, "errors", []), e2(this, "pushToErrors", (e4) => this.errors.push(e4)), this.options = R.useCached(t4);
     }
     async read(e4) {
-      this.file = await function(e5, t4) {
+      this.file = await function (e5, t4) {
         return "string" == typeof e5 ? k2(e5, t4) : s3 && !i2 && e5 instanceof HTMLImageElement ? k2(e5.src, t4) : e5 instanceof Uint8Array || e5 instanceof ArrayBuffer || e5 instanceof DataView ? new c2(e5) : s3 && e5 instanceof Blob ? O2(e5, t4, "blob", A2) : void l3("Invalid input argument");
       }(e4, this.options);
     }
@@ -21938,7 +21938,6 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     async parse() {
       let { output: e4, errors: t4 } = this;
       return this.setup(), this.options.silentErrors ? (await this.executeParsers().catch(this.pushToErrors), t4.push(...this.fileParser.errors)) : await this.executeParsers(), this.file.close && this.file.close(), this.options.silentErrors && t4.length > 0 && (e4.errors = t4), f2(s5 = e4) ? void 0 : s5;
-      var s5;
     }
     async executeParsers() {
       let { output: e4 } = this;
@@ -22077,7 +22076,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
         return t5.multiSegment && s6.multiSegment;
       }), i4 && await this.file.readWhole()), e4 = this.findAppSegmentsInRange(e4, s5.byteLength), !this.options.onlyTiff && s5.chunked) {
         let t5 = false;
-        for (; r6.size > 0 && !t5 && (s5.canReadNextChunk || this.unfinishedMultiSegment); ) {
+        for (; r6.size > 0 && !t5 && (s5.canReadNextChunk || this.unfinishedMultiSegment);) {
           let { nextChunkOffset: i5 } = s5, n4 = this.appSegments.some((e5) => !this.file.available(e5.offset || e5.start, e5.length || e5.size));
           if (t5 = e4 > i5 && !n4 ? !await s5.readNextChunk(e4) : !await s5.readNextChunk(i5), void 0 === (e4 = this.findAppSegmentsInRange(e4, s5.byteLength)))
             return;
@@ -22104,7 +22103,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
     mergeMultiSegments() {
       if (!this.appSegments.some((e5) => e5.multiSegment))
         return;
-      let e4 = function(e5, t4) {
+      let e4 = function (e5, t4) {
         let s5, i4, n3, r6 = /* @__PURE__ */ new Map();
         for (let a4 = 0; a4 < e5.length; a4++)
           s5 = e5[a4], i4 = s5[t4], r6.has(i4) ? n3 = r6.get(i4) : r6.set(i4, n3 = []), n3.push(s5);
@@ -22154,8 +22153,8 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       if (a4 * r6 <= 4 ? e4 += 8 : e4 = i4.getUint32(e4 + 8), (n3 < 1 || n3 > 13) && l3(`Invalid TIFF value type. block: ${s5.toUpperCase()}, tag: ${t4.toString(16)}, type: ${n3}, offset ${e4}`), e4 > i4.byteLength && l3(`Invalid TIFF value offset. block: ${s5.toUpperCase()}, tag: ${t4.toString(16)}, type: ${n3}, offset ${e4} is outside of chunk size ${i4.byteLength}`), 1 === n3)
         return i4.getUint8Array(e4, r6);
       if (2 === n3)
-        return "" === (h4 = function(e5) {
-          for (; e5.endsWith("\0"); )
+        return "" === (h4 = function (e5) {
+          for (; e5.endsWith("\0");)
             e5 = e5.slice(0, -1);
           return e5;
         }(h4 = i4.getString(e4, r6)).trim()) ? void 0 : h4;
@@ -22165,7 +22164,7 @@ Uppy plugins must have unique \`id\` options. See https://uppy.io/docs/plugins/#
       if (1 === r6)
         return this.parseTagValue(n3, e4);
       {
-        let t5 = new (function(e5) {
+        let t5 = new (function (e5) {
           switch (e5) {
             case 1:
               return Uint8Array;
@@ -23045,7 +23044,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
 
   // node_modules/p-queue/dist/priority-queue.js
-  var __classPrivateFieldGet = function(receiver, state, kind, f4) {
+  var __classPrivateFieldGet = function (receiver, state, kind, f4) {
     if (kind === "a" && !f4)
       throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f4 : !state.has(receiver))
@@ -23088,7 +23087,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var priority_queue_default = PriorityQueue;
 
   // node_modules/p-queue/dist/index.js
-  var __classPrivateFieldSet = function(receiver, state, value, kind, f4) {
+  var __classPrivateFieldSet = function (receiver, state, value, kind, f4) {
     if (kind === "m")
       throw new TypeError("Private method is not writable");
     if (kind === "a" && !f4)
@@ -23097,7 +23096,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       throw new TypeError("Cannot write private member to an object whose class did not declare it");
     return kind === "a" ? f4.call(receiver, value) : f4 ? f4.value = value : state.set(receiver, value), value;
   };
-  var __classPrivateFieldGet2 = function(receiver, state, kind, f4) {
+  var __classPrivateFieldGet2 = function (receiver, state, kind, f4) {
     if (kind === "a" && !f4)
       throw new TypeError("Private accessor was defined without a getter");
     if (typeof state === "function" ? receiver !== state || !f4 : !state.has(receiver))
@@ -23263,7 +23262,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     /**
         Can be called multiple times. Useful if you for example add additional items at a later time.
-    
+
         @returns A promise that settles when the queue becomes empty.
         */
     async onEmpty() {
@@ -23274,9 +23273,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     /**
         @returns A promise that settles when the queue size is less than the given limit: `queue.size < limit`.
-    
+
         If you want to avoid having the queue grow beyond a certain size you can `await queue.onSizeLessThan()` before adding a new item.
-    
+
         Note that this only limits the number of items waiting to start. There could still be up to `concurrency` jobs already running that this call does not include in its calculation.
         */
     async onSizeLessThan(limit) {
@@ -23287,7 +23286,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     /**
         The difference with `.onEmpty` is that `.onIdle` guarantees that all work from the queue has finished. `.onEmpty` merely signals that the queue is empty, but it could mean that some promises haven't completed yet.
-    
+
         @returns A promise that settles when the queue becomes empty, and all promises have completed; `queue.size === 0 && queue.pending === 0`.
         */
     async onIdle() {
@@ -23304,7 +23303,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     /**
         Size of the queue, filtered by the given options.
-    
+
         For example, this can be used to find the number of items remaining in the queue with a specific priority level.
         */
     sizeBy(options) {
@@ -23592,22 +23591,22 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   function s4(n3, u4, i4) {
     var o4 = d3(t3++, 2);
-    if (o4.t = n3, !o4.__c && (o4.__ = [i4 ? i4(u4) : B3(void 0, u4), function(n4) {
+    if (o4.t = n3, !o4.__c && (o4.__ = [i4 ? i4(u4) : B3(void 0, u4), function (n4) {
       var t4 = o4.__N ? o4.__N[0] : o4.__[0], r6 = o4.t(t4, n4);
       t4 !== r6 && (o4.__N = [r6, o4.__[1]], o4.__c.setState({}));
     }], o4.__c = r5, !r5.u)) {
-      var f4 = function(n4, t4, r6) {
+      var f4 = function (n4, t4, r6) {
         if (!o4.__c.__H)
           return true;
-        var u5 = o4.__c.__H.__.filter(function(n5) {
+        var u5 = o4.__c.__H.__.filter(function (n5) {
           return n5.__c;
         });
-        if (u5.every(function(n5) {
+        if (u5.every(function (n5) {
           return !n5.__N;
         }))
           return !c4 || c4.call(this, n4, t4, r6);
         var i5 = false;
-        return u5.forEach(function(n5) {
+        return u5.forEach(function (n5) {
           if (n5.__N) {
             var t5 = n5.__[0];
             n5.__ = n5.__N, n5.__N = void 0, t5 !== n5.__[0] && (i5 = true);
@@ -23616,7 +23615,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       };
       r5.u = true;
       var c4 = r5.shouldComponentUpdate, e4 = r5.componentWillUpdate;
-      r5.componentWillUpdate = function(n4, t4, r6) {
+      r5.componentWillUpdate = function (n4, t4, r6) {
         if (this.__e) {
           var u5 = c4;
           c4 = void 0, f4(n4, t4, r6), c4 = u5;
@@ -23635,12 +23634,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return z3(u4.__H, r6) ? (u4.__V = n3(), u4.i = r6, u4.__h = n3, u4.__V) : u4.__;
   }
   function T3(n3, t4) {
-    return o3 = 8, F3(function() {
+    return o3 = 8, F3(function () {
       return n3;
     }, t4);
   }
   function b3() {
-    for (var t4; t4 = f3.shift(); )
+    for (var t4; t4 = f3.shift();)
       if (t4.__P && t4.__H)
         try {
           t4.__H.__h.forEach(k3), t4.__H.__h.forEach(w3), t4.__H.__h = [];
@@ -23648,36 +23647,36 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           t4.__H.__h = [], l2.__e(r6, t4.__v);
         }
   }
-  l2.__b = function(n3) {
+  l2.__b = function (n3) {
     r5 = null, e3 && e3(n3);
-  }, l2.__r = function(n3) {
+  }, l2.__r = function (n3) {
     a3 && a3(n3), t3 = 0;
     var i4 = (r5 = n3.__c).__H;
-    i4 && (u3 === r5 ? (i4.__h = [], r5.__h = [], i4.__.forEach(function(n4) {
+    i4 && (u3 === r5 ? (i4.__h = [], r5.__h = [], i4.__.forEach(function (n4) {
       n4.__N && (n4.__ = n4.__N), n4.__V = c3, n4.__N = n4.i = void 0;
     })) : (i4.__h.forEach(k3), i4.__h.forEach(w3), i4.__h = [], t3 = 0)), u3 = r5;
-  }, l2.diffed = function(t4) {
+  }, l2.diffed = function (t4) {
     v3 && v3(t4);
     var o4 = t4.__c;
-    o4 && o4.__H && (o4.__H.__h.length && (1 !== f3.push(o4) && i3 === l2.requestAnimationFrame || ((i3 = l2.requestAnimationFrame) || j3)(b3)), o4.__H.__.forEach(function(n3) {
+    o4 && o4.__H && (o4.__H.__h.length && (1 !== f3.push(o4) && i3 === l2.requestAnimationFrame || ((i3 = l2.requestAnimationFrame) || j3)(b3)), o4.__H.__.forEach(function (n3) {
       n3.i && (n3.__H = n3.i), n3.__V !== c3 && (n3.__ = n3.__V), n3.i = void 0, n3.__V = c3;
     })), u3 = r5 = null;
-  }, l2.__c = function(t4, r6) {
-    r6.some(function(t5) {
+  }, l2.__c = function (t4, r6) {
+    r6.some(function (t5) {
       try {
-        t5.__h.forEach(k3), t5.__h = t5.__h.filter(function(n3) {
+        t5.__h.forEach(k3), t5.__h = t5.__h.filter(function (n3) {
           return !n3.__ || w3(n3);
         });
       } catch (u4) {
-        r6.some(function(n3) {
+        r6.some(function (n3) {
           n3.__h && (n3.__h = []);
         }), r6 = [], l2.__e(u4, t5.__v);
       }
     }), l4 && l4(t4, r6);
-  }, l2.unmount = function(t4) {
+  }, l2.unmount = function (t4) {
     m3 && m3(t4);
     var r6, u4 = t4.__c;
-    u4 && u4.__H && (u4.__H.__.forEach(function(n3) {
+    u4 && u4.__H && (u4.__H.__.forEach(function (n3) {
       try {
         k3(n3);
       } catch (n4) {
@@ -23687,7 +23686,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var g3 = "function" == typeof requestAnimationFrame;
   function j3(n3) {
-    var t4, r6 = function() {
+    var t4, r6 = function () {
       clearTimeout(u4), g3 && cancelAnimationFrame(t4), setTimeout(n3);
     }, u4 = setTimeout(r6, 100);
     g3 && (t4 = requestAnimationFrame(r6));
@@ -23701,7 +23700,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     n3.__c = n3.__(), r5 = t4;
   }
   function z3(n3, t4) {
-    return !n3 || n3.length !== t4.length || t4.some(function(t5, r6) {
+    return !n3 || n3.length !== t4.length || t4.some(function (t5, r6) {
       return t5 !== n3[r6];
     });
   }
@@ -23711,7 +23710,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // node_modules/@uppy/utils/lib/VirtualList.js
   function _extends() {
-    _extends = Object.assign ? Object.assign.bind() : function(target) {
+    _extends = Object.assign ? Object.assign.bind() : function (target) {
       for (var i4 = 1; i4 < arguments.length; i4++) {
         var source = arguments[i4];
         for (var key in source) {
@@ -24117,7 +24116,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // node_modules/@uppy/provider-views/lib/Item/index.js
   function _extends2() {
-    _extends2 = Object.assign ? Object.assign.bind() : function(target) {
+    _extends2 = Object.assign ? Object.assign.bind() : function (target) {
       for (var i4 = 1; i4 < arguments.length; i4++) {
         var source = arguments[i4];
         for (var key in source) {
@@ -24955,7 +24954,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         pluginIcon,
         i18n: this.plugin.uppy.i18n,
         uppyFiles: this.plugin.uppy.getFiles(),
-        validateRestrictions: function() {
+        validateRestrictions: function () {
           return _this.plugin.uppy.validateRestrictions(...arguments);
         }
       };
@@ -25256,7 +25255,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         pluginIcon: this.plugin.icon,
         i18n,
         uppyFiles: this.plugin.uppy.getFiles(),
-        validateRestrictions: function() {
+        validateRestrictions: function () {
           return _this.plugin.uppy.validateRestrictions(...arguments);
         }
       };
@@ -27178,7 +27177,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // node_modules/@uppy/dashboard/lib/components/Dashboard.js
   function _extends3() {
-    _extends3 = Object.assign ? Object.assign.bind() : function(target) {
+    _extends3 = Object.assign ? Object.assign.bind() : function (target) {
       for (var i4 = 1; i4 < arguments.length; i4++) {
         var source = arguments[i4];
         for (var key in source) {
@@ -27610,7 +27609,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         this.uppy.emit("dashboard:modal-open");
         return promise;
       };
-      this.closeModal = function(opts) {
+      this.closeModal = function (opts) {
         if (opts === void 0) {
           opts = {};
         }
@@ -29052,7 +29051,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     onCancelAll(fileID, eventHandler) {
       var _this = this;
-      this.on("cancel-all", function() {
+      this.on("cancel-all", function () {
         if (!_classPrivateFieldLooseBase9(_this, _uppy)[_uppy].getFile(fileID))
           return;
         eventHandler(...arguments);
@@ -29484,7 +29483,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           socket.send("pause", {});
           queuedRequest.abort();
         });
-        eventManager.onCancelAll(file.id, function(_temp) {
+        eventManager.onCancelAll(file.id, function (_temp) {
           let {
             reason
           } = _temp === void 0 ? {} : _temp;
@@ -30010,7 +30009,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     wrapSyncFunction(fn2, queueOptions) {
       var _this = this;
-      return function() {
+      return function () {
         for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
           args[_key] = arguments[_key];
         }
@@ -30030,7 +30029,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     wrapPromiseFunction(fn2, queueOptions) {
       var _this2 = this;
-      return function() {
+      return function () {
         for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
           args[_key2] = arguments[_key2];
         }
@@ -30631,7 +30630,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         emitError(error2);
         return reject(error2);
       });
-      this.uppy.on("cancel-all", function(_temp) {
+      this.uppy.on("cancel-all", function (_temp) {
         let {
           reason
         } = _temp === void 0 ? {} : _temp;
@@ -30828,7 +30827,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
             data-controller="attachment-preview" data-attachment-preview-mime-type-value="${mimeType}"
             data-attachment-preview-thumbnail-url-value="${thumbnailUrl}">
           <figure class="figure my-1" style="width: 160px;">
-              <div class="d-inline-block img-thumbnail" data-attachment-preview-target="thumbnail">
+              <div class="bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700" data-attachment-preview-target="thumbnail">
                 <a class="d-block text-decoration-none user-select-none fs-5 font-monospace text-body-secondary"
                     style="width:150px; height:150px; line-height: 150px;" target="blank"
                     href="${url}"
@@ -31162,7 +31161,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         }
       }
       const $this = this;
-      this.quill.on("text-change", function(delta, oldDelta, source) {
+      this.quill.on("text-change", function (delta, oldDelta, source) {
         $this.inputTarget.value = JSON.stringify($this.quill.getContents());
       });
     }
@@ -31348,7 +31347,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   });
 
   // app/javascript/turbo/turbo_actions.js
-  Turbo.StreamActions.redirect = function() {
+  Turbo.StreamActions.redirect = function () {
     Turbo.clearCache();
     const url = this.getAttribute("url");
     Turbo.visit(url);
@@ -31381,9 +31380,9 @@ dompurify/dist/purify.js:
 
 classnames/index.js:
   (*!
-  	Copyright (c) 2018 Jed Watson.
-  	Licensed under the MIT License (MIT), see
-  	http://jedwatson.github.io/classnames
+    Copyright (c) 2018 Jed Watson.
+    Licensed under the MIT License (MIT), see
+    http://jedwatson.github.io/classnames
   *)
 
 cropperjs/dist/cropper.js:

@@ -8,7 +8,7 @@ module Plutonium::Ui
     option :pager
 
     def classname
-      "table-auto w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 #{super}"
+      "table-auto w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-200 #{super}"
     end
 
     private
@@ -18,7 +18,7 @@ module Plutonium::Ui
     end
 
     def table_head_classes
-      "text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400"
+      "text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
     end
 
     def table_row_classes
