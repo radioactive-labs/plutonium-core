@@ -21,7 +21,7 @@
 
   <div>
   <% interactive_action.inputs.values.each do |input| %>
-    <%= input.render f, interaction %>
+    <%= input.render self, f, interaction %>
   <% end %>
   </div>
 

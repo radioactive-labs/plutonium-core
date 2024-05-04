@@ -10,7 +10,7 @@ module Plutonium
             @user_options = user_options
           end
 
-          def render(f, record, **)
+          def render(view_context, f, record, **)
             raise NotImplementedError, "#{self.class}#render"
           end
 

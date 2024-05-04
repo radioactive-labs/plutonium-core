@@ -10,7 +10,7 @@ module Plutonium
             super(name, **user_options)
           end
 
-          def render(f, record, **opts)
+          def render(view_context, f, record, **opts)
             opts = options.deep_merge opts
             f.association name, **opts
           end

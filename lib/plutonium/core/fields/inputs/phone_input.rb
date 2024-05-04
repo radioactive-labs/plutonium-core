@@ -3,7 +3,7 @@ module Plutonium
     module Fields
       module Inputs
         class PhoneInput < SimpleFormInput
-          # def render(f, record, **opts)
+          # def render(view_context, f, record, **opts)
           #   opts = options.deep_merge opts
           #   opts.delete(:as)
           #   f.input name, **opts
