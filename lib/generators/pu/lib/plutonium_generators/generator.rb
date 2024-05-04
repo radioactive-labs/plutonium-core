@@ -64,12 +64,8 @@ module PlutoniumGenerators
       @prompt ||= TTY::Prompt.new
     end
 
-    def rails?
-      PlutoniumGenerators.rails?
-    end
-
     def appname
-      rails? ? Rails.application.class.module_parent.name : "PlutoniumGenerators"
+      defined?(Rails.application) ? Rails.application.class.module_parent.name : "PlutoniumGenerators"
     end
 
     def app_name

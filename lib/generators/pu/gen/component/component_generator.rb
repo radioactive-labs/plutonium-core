@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-return if PlutoniumGenerators.rails?
+return unless PlutoniumGenerators.cli?
 
 module Pu
   module Gen
