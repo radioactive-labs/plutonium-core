@@ -6,6 +6,12 @@ module Plutonium
       class Scope < Plutonium::Policy::Scope
       end
 
+      def send_with_report(method)
+        raise NotImplementedError, "#{self.class.name} does not implement the required #{method}" unless respond_to? method
+
+        send method
+      end
+
       # Core actions
 
       def create?

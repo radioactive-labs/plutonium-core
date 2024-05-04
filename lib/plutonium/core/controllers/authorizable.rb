@@ -42,7 +42,7 @@ module Plutonium
         end
 
         def permitted_attributes
-          @permitted_attributes ||= current_policy.send :"permitted_attributes_for_#{action_name}"
+          @permitted_attributes ||= current_policy.send_with_report :"permitted_attributes_for_#{action_name}"
         end
 
         def current_policy
@@ -52,9 +52,9 @@ module Plutonium
           end
         end
 
-        def parent_policy
-          @parent_policy ||= policy(current_parent) if current_parent.present?
-        end
+        # def parent_policy
+        #   @parent_policy ||= policy(current_parent) if current_parent.present?
+        # end
       end
     end
   end
