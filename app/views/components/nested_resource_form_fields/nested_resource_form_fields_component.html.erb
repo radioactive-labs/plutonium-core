@@ -16,9 +16,9 @@
           <%= input.render self, nested, new_record %>
         <% end %>
 
-        <div>
+        <div class="text-right">
           <% if nested.object.new_record? || allow_destroy %>
-            <label class="flex items-center justify-end text-md font-medium text-red-900">
+            <label class="text-md font-medium text-red-900">
               <%= "Delete" %>
               <input type="checkbox" value=""
                       data-action="nested-resource-form-fields#remove"
