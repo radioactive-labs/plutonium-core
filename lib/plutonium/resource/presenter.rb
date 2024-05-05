@@ -37,6 +37,41 @@ module Plutonium
         define_action Plutonium::Core::Actions::InteractiveAction.new(name, interaction:, **)
       end
 
+      # TODO: move this to its own definer
+      def define_nested_input(name, inputs:, model_class: nil, **options)
+        nested_attribute_options = resource_class.all_nested_attributes_options[name]
+
+        nested_attribute_options_class = nested_attribute_options&.[](:class)
+        if nested_attribute_options_class.nil? && model_class.nil?
+          raise ArgumentError, "model_class is required if your field is not an association or is polymorphic"
+        end
+        model_class ||= nested_attribute_options_class
+
+        macro = nested_attribute_options&.[](:macro)
+        allow_destroy = nested_attribute_options&.[](:allow_destroy).presence
+        update_only = nested_attribute_options&.[](:update_only).presence
+        limit = if macro == :has_one
+          1
+        elsif options.key?(:limit)
+          options[:limit]
+        else
+          nested_attribute_options&.[](:limit)
+        end
+
+        input = Plutonium::Core::Fields::Inputs::NestedInput.new(
+          name,
+          inputs:,
+          allow_destroy: options.key?(:allow_destroy) ? options[:allow_destroy] : allow_destroy,
+          update_only: options.key?(:update_only) ? options[:update_only] : update_only,
+          limit: limit,
+          resource_class: model_class,
+          **options
+        )
+        yield input if block_given?
+
+        define_input name, input:
+      end
+
       def resource_class = context.resource_class
     end
   end

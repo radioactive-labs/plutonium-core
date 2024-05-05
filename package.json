@@ -14,8 +14,8 @@
     "tailwindcss": "^3.4.1"
   },
   "scripts": {
-    "watch": "postcss app/assets/css/plutonium.css -o public/plutonium-assets/build/plutonium-dev.css --watch",
-    "scripts": "node build.js",
-    "build": "postcss app/assets/css/plutonium.css -o public/plutonium-assets/build/plutonium.css --watch"
+    "watch-css": "postcss app/assets/css/plutonium.css -o public/plutonium-assets/build/plutonium-dev.css --watch",
+    "watch-js": "node build.js",
+    "build-css": "postcss app/assets/css/plutonium.css -o public/plutonium-assets/build/plutonium.css --watch"
   }
 }

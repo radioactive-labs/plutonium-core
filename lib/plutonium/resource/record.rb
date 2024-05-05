@@ -117,6 +117,23 @@ module Plutonium
           @has_many_association_routes ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
         end
 
+        def all_nested_attributes_options
+          unless Rails.env.local?
+            return @all_nested_attributes_options if defined?(@all_nested_attributes_options)
+          end
+
+          @all_nested_attributes_options = reflect_on_all_associations.map do |association|
+            setter_method = "#{association.name}_attributes="
+            if method_defined?(setter_method)
+              [association.name, {
+                **nested_attributes_options[association.name],
+                macro: association.macro,
+                class: association.polymorphic? ? nil : association.klass
+              }]
+            end
+          end.compact.to_h
+        end
+
         #
         # Returns the strong parameters definition for the given attribute names
         #
@@ -127,6 +144,8 @@ module Plutonium
         #
         def strong_parameters_for(*attributes)
           # attributes that are passed but we do not have a model/database backed definition for e.g. virtual attributes.
+          # if they are passed and we are not expecting them, our inputs will filter them out as they apply an additional level
+          # of filtering
           unbacked = attributes - strong_parameters_definition.keys
 
           # attributes backed by some model/database definition
@@ -147,8 +166,13 @@ module Plutonium
         private
 
         def strong_parameters_definition
-          # @strong_parameters ||= begin
+          unless Rails.env.local?
+            return @strong_parameters if defined?(@strong_parameters)
+          end
+
           @strong_parameters = begin
+            # Columns
+
             content_column_parameters = content_column_field_names.map do |name|
               column = columns_hash[name.to_s]
 
@@ -160,21 +184,28 @@ module Plutonium
             end
             parameters = content_column_parameters.to_h
 
-            # TODO: add nested support
+            # Associations
 
-            # TODO:
             parameters.merge! reflect_on_all_associations(:belongs_to)
               .map { |reflection|
-                                input_param = (reflection.respond_to?(:options) && reflection.options[:foreign_key]) || :"#{reflection.name}_id"
+                                input_param = reflection.respond_to?(:options) ? reflection.options[:foreign_key] : :"#{reflection.name}_id"
                                 [reflection.name, {input_param => nil}]
                               }
               .to_h
 
-            parameters.merge! has_one_association_field_names.map { |name| [name, {name => nil}] }.to_h
-            parameters.merge! has_one_attached_field_names.map { |name| [name, {name => nil}] }.to_h
+            parameters.merge! (all_nested_attributes_options.keys & has_one_association_field_names)
+              .map { |name| [name, {name => {}}] }
+              .to_h
 
-            parameters.merge! has_many_association_field_names.map { |name| [name, {"#{name.to_s.singularize}_ids": []}] }.to_h
-            parameters.merge! has_many_attached_field_names.map { |name| [name, {name: []}] }.to_h
+            parameters.merge! has_many_association_field_names
+              .map { |name| [name, {"#{name.to_s.singularize}_ids": []}] }
+              .to_h
+
+            # Attachments
+
+            parameters.merge! has_many_attached_field_names.map { |name| [name, {name => []}] }.to_h
+
+            parameters.merge! has_one_attached_field_names.map { |name| [name, {name => nil}] }.to_h
 
             # e.g.
             # {:name=>{:name=>nil}, :cover_image=>{:cover_image=>nil}, :user=>{:user_id=>nil} :comments=>{:comment_ids=>[]}}

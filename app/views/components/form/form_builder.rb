@@ -4,12 +4,12 @@ module Plutonium::Ui
   class FormBuilder < SimpleForm::FormBuilder
     def input(attribute_name, options = {}, &block)
       label_class = options.dig(:label_html, :class)
-      if object.errors[attribute_name].present?
+      if attribute_name.present? && object&.errors&.[](attribute_name).present?
         # Don't show the hint
         options.delete(:hint)
         # Apply error class if there are errors
         label_class = [label_class, "text-red-700 dark:text-red-500"].compact.join(" ")
-      elsif object.persisted? || !object.errors.empty?
+      elsif object&.persisted? || !object&.errors&.empty?
         # Apply success class if the object is persisted, has been validated (errors are not empty), and the field has no errors
         label_class = [label_class, "block mb-2 text-sm font-medium text-green-700 dark:text-green-500"].compact.join(" ")
       else

@@ -1,0 +1,66 @@
+<div data-controller="nested-resource-form-fields"
+      data-nested-resource-form-fields-limit-value="<%= limit %>"
+      <%= render_component_attributes %>>
+  <h2 class="text-lg font-bold dark:text-white ">
+    <%= label %>
+  </h2>
+  <p class="mb-4 text-md font-normal text-gray-500 dark:text-gray-400">
+    <%= description %>
+  </p>
+
+  <template data-nested-resource-form-fields-target="template">
+    <% new_record = resource_class.new %>
+    <%= form.simple_fields_for name, new_record, child_index: 'NEW_RECORD' do |nested| %>
+      <fieldset class="border-t mt-4 pt-4 first:border-t-0 first:pt-0 nested-resource-form-fields" data-new-record="<%= nested.object.new_record? %>">
+        <% inputs.values.each do |input| %>
+          <%= input.render self, nested, new_record %>
+        <% end %>
+
+        <div>
+          <% if nested.object.new_record? || allow_destroy %>
+            <label class="flex items-center justify-end text-md font-medium text-red-900">
+              <%= "Delete" %>
+              <input type="checkbox" value=""
+                      data-action="nested-resource-form-fields#remove"
+                      class="w-4 h-4 ms-2 text-red-600 bg-red-100 border-red-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            </label>
+          <% end %>
+        </div>
+
+        <%= nested.hidden_field :_destroy %>
+      </fieldset>
+    <% end %>
+  </template>
+
+  <div>
+    <%= form.simple_fields_for name do |nested| %>
+      <fieldset class="border-t mt-4 pt-4 first:border-t-0 first:pt-0 nested-resource-form-fields" data-new-record="<%= nested.object.new_record? %>">
+        <% inputs.values.each do |input| %>
+          <%= input.render self, nested, new_record %>
+        <% end %>
+
+        <div>
+          <% if nested.object.new_record? || allow_destroy %>
+            <label class="flex items-center justify-end text-md font-medium text-red-900">
+              <%= "Delete" %>
+              <input type="checkbox" value=""
+                      data-action="nested-resource-form-fields#remove"
+                      class="w-4 h-4 ms-2 text-red-600 bg-red-100 border-red-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            </label>
+          <% end %>
+        </div>
+
+        <%= nested.hidden_field :_destroy %>
+      </fieldset>
+    <% end %>
+
+    <div data-nested-resource-form-fields-target="target" hidden></div>
+  </div>
+
+  <%=
+    render_component :button, label: "Add #{name.to_s.humanize}", classname: "mt-4", data: {
+      action: "nested-resource-form-fields#add",
+      "nested-resource-form-fields-target": "addButton"
+    }
+  %>
+</div>

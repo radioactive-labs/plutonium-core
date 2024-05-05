@@ -2,6 +2,9 @@ import { application } from "./application"
 
 // Register controllers here
 
+import NestedResourceFormFieldsController from "../../../../app/views/components/nested_resource_form_fields/nested_resource_form_fields_controller.js"
+application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
+
 import TabBarController from "../../../../app/views/components/tab_bar/tab_bar_controller.js"
 application.register("tab-bar", TabBarController)
 
