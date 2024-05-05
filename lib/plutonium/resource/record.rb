@@ -193,10 +193,6 @@ module Plutonium
                               }
               .to_h
 
-            parameters.merge! (all_nested_attributes_options.keys & has_one_association_field_names)
-              .map { |name| [name, {name => {}}] }
-              .to_h
-
             parameters.merge! has_many_association_field_names
               .map { |name| [name, {"#{name.to_s.singularize}_ids": []}] }
               .to_h
@@ -206,6 +202,12 @@ module Plutonium
             parameters.merge! has_many_attached_field_names.map { |name| [name, {name => []}] }.to_h
 
             parameters.merge! has_one_attached_field_names.map { |name| [name, {name => nil}] }.to_h
+
+            # Nested Attributes
+
+            parameters.merge! all_nested_attributes_options.keys
+              .map { |name| [name, {"#{name}_attributes" => {}}] }
+              .to_h
 
             # e.g.
             # {:name=>{:name=>nil}, :cover_image=>{:cover_image=>nil}, :user=>{:user_id=>nil} :comments=>{:comment_ids=>[]}}

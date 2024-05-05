@@ -23,10 +23,14 @@ module Plutonium
           end
 
           def collect(params)
-            defined_inputs.collect_all params
+            attributes = params[param].each { |index, params| [index, defined_inputs.collect_all(params)] }.to_h
+
+            {param => attributes}
           end
 
           private
+
+          def param = :"#{name}_attributes"
 
           def input_options = {
             name:,
