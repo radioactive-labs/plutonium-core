@@ -49,7 +49,7 @@ export default class extends Controller {
   }
 
   updateState() {
-    if (!this.hasAddButtonTarget) return
+    if (!this.hasAddButtonTarget || this.limitValue == 0) return
 
     if (this.childCount >= this.limitValue)
       this.addButtonTarget.style.display = "none"

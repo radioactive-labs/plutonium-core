@@ -58,7 +58,7 @@
   </div>
 
   <%=
-    render_component :button, label: "Add #{name.to_s.humanize}", classname: "mt-4", data: {
+    render_component :button, label: "Add #{name.to_s.singularize.humanize}", classname: "mt-4", data: {
       action: "nested-resource-form-fields#add",
       "nested-resource-form-fields-target": "addButton"
     }
