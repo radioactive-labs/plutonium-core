@@ -4,6 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 // Copied from https://github.com/stimulus-components/stimulus-rails-nested-form/blob/master/src/index.ts
 export default class extends Controller {
   static targets = ["target", "template", "addButton"]
+
   static values = {
     wrapperSelector: {
       type: String,

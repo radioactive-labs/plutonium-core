@@ -25,3 +25,6 @@ application.register("form", FormController)
 
 import ResourceDropDownController from "./resource_drop_down_controller.js"
 application.register("resource-drop-down", ResourceDropDownController)
+
+import ResourceDismissController from "./resource_dismiss_controller.js"
+application.register("resource-dismiss", ResourceDismissController)

@@ -34,6 +34,7 @@
     <%= render("resource_header") %>
     <%= render("resource_sidebar") %>
     <main class="p-4 lg:ml-64 h-auto pt-20">
+      <%= render "flash" %>
       <%= yield %>
     </main>
   </body>
@@ -45,6 +46,5 @@
     <%= modal_frame_tag do %>
       <%= yield(:modal) %>
     <% end %>
-    <%= render "flash" %>
 
 -->

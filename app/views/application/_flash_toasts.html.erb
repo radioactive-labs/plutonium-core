@@ -1,26 +1,56 @@
-<div aria-live="polite" aria-atomic="true" class="position-relative" data-controller="toasts">
-  <div class="toast-container top-0 end-0 p-3 ">
-    <% flash.each do |type, msg| %>
-      <%
-        type = { alert: :danger, error: :danger, warning: :warning, success: :success }[type.to_sym] || :primary
-        title = { danger: 'Error', warning: 'Warning', success: 'Success' }[type] || 'Info'
-        icon = {
-          danger: 'exclamation-triangle-fill',
-          warning: 'exclamation-diamond',
-          success: 'check-circle-fill'
-        }[type] || 'exclamation-circle'
-      %>
-      <div class="toast text-bg-<%= type %>" role="alert" aria-live="assertive" aria-atomic="true" data-turbo-temporary>
-        <div class="toast-header">
-          <i class="bi bi-<%= icon %>"></i>&nbsp;
-          <strong class="me-auto"><%= title %></strong>
-          <small class="text-body-secondary"><%= timeago(DateTime.now) %></small>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-          <%= msg %>
-        </div>
-      </div>
+<% flash.each do |type, msg| %>
+<%
+  color = case type.to_sym
+  when :success
+    # text-green-500 bg-green-100 bg-green-800 text-green-200 bg-green-50 text-green-400 ring-green-400
+    "green"
+  when :warning
+    # text-yellow-500 bg-yellow-100 bg-yellow-800 text-yellow-200 bg-yellow-50 text-yellow-400 ring-yellow-400
+    "yellow"
+  when :alert, :danger, :error
+    # text-red-500 bg-red-100 bg-red-800 text-red-200 bg-red-50 text-red-400 ring-red-400
+    "red"
+  else
+    # text-blue-500 bg-blue-100 bg-blue-800 text-blue-200 bg-blue-50 text-blue-400 ring-blue-400
+    "blue"
+  end
+%>
+
+<div data-controller="resource-dismiss"
+    data-resource-dismiss-target="target"
+    data-resource-dismiss-after-value="6000"
+    class="fixed z-50 top-16 right-5 flex items-center w-full max-w-md p-4 text-gray-500 bg-<%= color %>-50 rounded-lg shadow dark:text-<%= color %>-400 dark:bg-gray-800"
+    role="alert">
+
+  <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-<%= color %>-500 bg-<%= color %>-100 rounded-lg dark:bg-<%= color %>-800 dark:text-<%= color %>-200">
+    <% case type.to_sym %>
+    <% when :success %>
+      <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+      </svg>
+    <% when :warning %>
+      <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/>
+      </svg>
+    <% when :alert, :danger, :error %>
+      <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>
+      </svg>
+    <% else %>
+      <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 20">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.147 15.085a7.159 7.159 0 0 1-6.189 3.307A6.713 6.713 0 0 1 3.1 15.444c-2.679-4.513.287-8.737.888-9.548A4.373 4.373 0 0 0 5 1.608c1.287.953 6.445 3.218 5.537 10.5 1.5-1.122 2.706-3.01 2.853-6.14 1.433 1.049 3.993 5.395 1.757 9.117Z"/>
+      </svg>
     <% end %>
   </div>
+  <div class="ms-3 text-sm font-normal"><%= msg %></div>
+  <button type="button"
+    class="ms-auto -mx-1.5 -my-1.5 bg-<%= color %>-50 text-<%= color %>-400 rounded-lg focus:ring-2 focus:ring-<%= color %>-400 p-1.5 hover:bg-<%= color %>-200 inline-flex items-center justify-center h-8 w-8 dark:text-<%= color %>-400 dark:bg-gray-800 dark:hover:bg-gray-700"
+    data-resource-dismiss-target="trigger"
+    aria-label="Close">
+      <span class="sr-only">Close</span>
+      <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+      </svg>
+  </button>
 </div>
+<% end %>
