@@ -22,3 +22,6 @@ application.register("table", TableController)
 
 import FormController from "../../../../app/views/components/form/form_controller.js"
 application.register("form", FormController)
+
+import ResourceDropDownController from "./resource_drop_down_controller.js"
+application.register("resource-drop-down", ResourceDropDownController)

@@ -4,7 +4,7 @@ module Plutonium::Ui
   class FormBuilder < SimpleForm::FormBuilder
     def input(attribute_name, options = {}, &block)
       label_class = options.dig(:label_html, :class)
-      if attribute_name.present? && object&.errors&.[](attribute_name).present?
+      if object&.errors&.[](attribute_name).present?
         # Don't show the hint
         options.delete(:hint)
         # Apply error class if there are errors

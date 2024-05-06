@@ -1,4 +1,4 @@
-import * as Turbo from "@hotwired/turbo"
+// import * as Turbo from "@hotwired/turbo"
 
 import "./turbo_debug"
 // import "./turbo_actions"
