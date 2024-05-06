@@ -23,7 +23,13 @@ module Plutonium
           end
 
           def collect(params)
-            attributes = params[param].each { |index, params| [index, defined_inputs.collect_all(params)] }.to_h
+            attributes = {}
+            params[param].each do |index, nested_params|
+              collected = defined_inputs.collect_all(nested_params)
+              collected[:id] = nested_params[:id] if nested_params.key?(:id) && !@update_only
+              collected[:_destroy] = nested_params[:_destroy] if @allow_destroy
+              attributes[index] = collected
+            end
 
             {param => attributes}
           end
