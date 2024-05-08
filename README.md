@@ -79,3 +79,9 @@ gem "plutonium_generators", github: "radioactive-labs/plutonium-generators", gro
 #                --skip-test --skip-system-test --javascript=esbuild --css=bootstrap --database=postgresql
 
 -->
+
+```bash
+rails new pluton8_starter --name="Pluton8 Starter" --database=sqlite3 --skip-action-mailbox --skip-action-text --skip-active-storage --asset-pipeline=propshaft --skip-jbuilder --javascript=importmap --css=tailwind
+
+bin/rails app:template LOCATION=~/template.rb
+```

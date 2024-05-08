@@ -7,7 +7,7 @@ module PlutoniumGenerators
   class ModelGenerator < ActiveRecord::Generators::ModelGenerator
     include PlutoniumGenerators::Generator
 
-    remove_hook_for :test_framework
+    # remove_hook_for :test_framework
     remove_task :create_migration_file
     remove_task :create_model_file
     remove_task :create_module_file

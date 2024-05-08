@@ -9,6 +9,7 @@ module Plutonium
 
           map_type :belongs_to, :has_one, :has_many, to: Plutonium::Core::Fields::Renderers::AssociationRenderer
           map_type :attachment, to: Plutonium::Core::Fields::Renderers::AttachmentRenderer
+          map_type :map, to: Plutonium::Core::Fields::Renderers::MapRenderer
 
           def self.build(name, type:, **)
             mapping = mappings[type] || Plutonium::Core::Fields::Renderers::BasicRenderer
