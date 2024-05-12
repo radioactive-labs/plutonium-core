@@ -21,28 +21,31 @@ module Plutonium
 
   def self.stylesheet_link
     if Plutonium::Config.development
-      file = JSON.parse(File.read(root.join("css.manifest")))["plutonium-dev.css"]
-      "/plutonium-assets/build/#{file}"
+      base_dir = "/plutonium-assets/build"
+      manifest = "css.dev.manifest"
+      filename = "plutonium-dev.css"
     else
-      raise NotImplementedError, "TODO: implement asset resolution for prod"
-      # @stylesheet ||= begin
-      #   file = JSON.parse(File.read(root.join("css.manifest")))["plutonium.css"]
-      #   "/plutonium-assets/#{file}"
-      # end
+      base_dir = "/plutonium-assets"
+      manifest = "css.manifest"
+      filename = "plutonium.css"
     end
+
+    file = JSON.parse(File.read(root.join(manifest)))[filename]
+    "#{base_dir}/#{file}"
   end
 
   def self.script_link
+    filename = "plutonium-app.js"
     if Plutonium::Config.development
-      file = JSON.parse(File.read(root.join("js.manifest")))["plutonium.js"]
-      "/plutonium-assets/build/#{file}"
+      base_dir = "/plutonium-assets/build"
+      manifest = "js.dev.manifest"
     else
-      raise NotImplementedError, "TODO: implement asset resolution for prod"
-      # @stylesheet ||= begin
-      #   file = JSON.parse(File.read(root.join("css.manifest")))["plutonium.css"]
-      #   "/plutonium-assets/#{file}"
-      # end
+      base_dir = "/plutonium-assets"
+      manifest = "js.manifest"
     end
+
+    file = JSON.parse(File.read(root.join(manifest)))[filename]
+    "#{base_dir}/#{file}"
   end
 end
 

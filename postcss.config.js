@@ -5,7 +5,7 @@ module.exports = {
     'postcss-hash': {
       algorithm: 'sha256',
       trim: 20,
-      manifest: './css.manifest'
+      manifest: process.argv.includes("--prod") ? './css.manifest' : './css.dev.manifest'
     },
   }
 }

@@ -20,8 +20,10 @@ module Pu
         template "component.html.erb", "#{component_path}.html.erb"
         template "controller.js", controller_path
 
-        controllers_file = File.join __dir__, "../../../../../app/assets/js/controllers/index.js"
-        insert_into_file controllers_file, controller_registration, after: /.*Register controllers here.*\n\n/
+        controllers_index_file = File.join __dir__, "../../../../../app/assets/javascripts/controllers/index.js"
+        insert_into_file controllers_index_file, controller_import, after: /.*Import controllers here*\n/
+        insert_into_file controllers_index_file, controller_registration, after: /.*Register controllers here*\n/
+        insert_into_file controllers_index_file, controller_export, after: /.*Export controllers here*\n/
       end
 
       protected
@@ -78,9 +80,16 @@ module Pu
         [component_module, "#{component_name}Controller"].compact.join("::").gsub("::", "_")
       end
 
+      def controller_import
+        "import #{controller_reference} from \"../../../../#{controller_path}\"\n"
+      end
+
       def controller_registration
-        %(import #{controller_reference} from "../../../../#{controller_path}"\n) +
-          %(application.register("#{controller_identifier}", #{controller_reference})\n\n)
+        "  application.register(\"#{controller_identifier}\", #{controller_reference})\n"
+      end
+
+      def controller_export
+        "export { #{controller_reference} }\n"
       end
     end
   end

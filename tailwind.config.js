@@ -1,17 +1,16 @@
+
 /** @type {import('tailwindcss').Config} */
 
-const colors = require('tailwindcss/colors');
-
 let safelist = [];
-Object.keys(colors).forEach((color) => {
-  if (typeof colors[color] === 'object') {
-    Object.keys(colors[color]).forEach((shade) => {
-      safelist.push(`bg-${color}-${shade}`);
-      safelist.push(`text-${color}-${shade}`);
-      // Add other utilities as needed
-    });
-  }
-});
+// Object.keys(colors).forEach((color) => {
+//   if (typeof colors[color] === 'object') {
+//     Object.keys(colors[color]).forEach((shade) => {
+//       safelist.push(`bg-${color}-${shade}`);
+//       safelist.push(`text-${color}-${shade}`);
+//       // Add other utilities as needed
+//     });
+//   }
+// });
 
 module.exports = {
   content: [
@@ -22,7 +21,7 @@ module.exports = {
     `${__dirname}/config/initializers/simple_form.rb`,
     // TODO: temporary workaround for buttons flex basis hack.
     // To be removed after moving buttons_helper to components.
-    `${__dirname}/lib/plutonium/**/*.{rb,erb}`
+    // `${__dirname}/lib/plutonium/**/*.{rb,erb}`
   ],
   darkMode: "selector",
   plugins: [
