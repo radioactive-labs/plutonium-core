@@ -18,8 +18,7 @@ module Pu
 
       def add_rodauth
         Bundler.with_unbundled_env do
-          run "bundle add bcrypt"
-          run "bundle add rodauth-rails"
+          run "bundle add bcrypt rodauth-rails"
         end
       end
 

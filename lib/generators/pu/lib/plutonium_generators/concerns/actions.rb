@@ -11,87 +11,89 @@ module PlutoniumGenerators
       protected
 
       #
-      # Sets the ruby version for the project in .ruby-version and Gemfile to `PlutoniumGenerators::RUBY_VERSION`
+      # Sets the ruby version for the project in .ruby-version and Gemfile to `version`
+      #
+      # @param [string] version semantic ruby version you want to use e.g. 3.3.0
       #
       # @return [void]
       #
-      def set_ruby_version!
-        log :set_ruby_version!, PlutoniumGenerators::RUBY_VERSION
+      def set_ruby_version!(version)
+        log :set_ruby_version!, version
 
         in_root do
-          create_file ".ruby-version", PlutoniumGenerators::RUBY_VERSION, force: true, verbose: false
-          gsub_file "Gemfile", /^ruby ["'].*["']/, "ruby '~> #{PlutoniumGenerators::RUBY_VERSION}'", verbose: false
+          create_file ".ruby-version", version, force: true, verbose: false
+          gsub_file "Gemfile", /^ruby ["'].*["']/, "ruby '~> #{version}'", verbose: false
         end
       end
 
-      #
-      # Adds a new gem into the Gemfile
-      # Existing directives are updated if they do not match
-      # When `:group` is specified, the gem is inserted into the approriate gem group.
-      #
-      # @param [String] name the name of the gem
-      # @param [Hash] **kwargs set of options to append see #super
-      #
-      # @return [void]
-      #
-      def gem(name, **kwargs)
-        groups = Array(kwargs.delete(:group))
+      # #
+      # # Adds a new gem into the Gemfile
+      # # Existing directives are updated if they do not match
+      # # When `:group` is specified, the gem is inserted into the approriate gem group.
+      # #
+      # # @param [String] name the name of the gem
+      # # @param [Hash] **kwargs set of options to append see #super
+      # #
+      # # @return [void]
+      # #
+      # def gem(name, **kwargs)
+      #   groups = Array(kwargs.delete(:group))
 
-        in_root do
-          begin
-            # Create a temp gemfile
-            File.rename("Gemfile", "Gemfile.bak")
-            File.write("Gemfile", "")
-            # Generate the directive
-            super
-            # Get the generated directive
-            directive = gemfile.strip
-          ensure
-            # Restore our gemfile
-            File.delete "Gemfile"
-            File.rename "Gemfile.bak", "Gemfile"
-          end
+      #   in_root do
+      #     begin
+      #       # Create a temp gemfile
+      #       File.rename("Gemfile", "Gemfile.bak")
+      #       File.write("Gemfile", "")
+      #       # Generate the directive
+      #       super
+      #       # Get the generated directive
+      #       directive = gemfile.strip
+      #     ensure
+      #       # Restore our gemfile
+      #       File.delete "Gemfile"
+      #       File.rename "Gemfile.bak", "Gemfile"
+      #     end
 
-          pattern = /^# gem ['"]#{name}['"].*/
-          if gemfile.match(pattern)
-            # Replace commented out directive
-            gsub_file("Gemfile", pattern, directive)
-            break
-          end
+      #     pattern = /^# gem ['"]#{name}['"].*/
+      #     if gemfile.match(pattern)
+      #       # Replace commented out directive
+      #       gsub_file("Gemfile", pattern, directive)
+      #       break
+      #     end
 
-          # Remove existing directive
-          remove_gem name
+      #     # Remove existing directive
+      #     remove_gem name
 
-          # Insert the new directive
-          if groups != []
-            str = groups.sort.map(&:inspect).join(", ")
-            after_sentinel = "group #{str} do\n"
+      #     # Insert the new directive
+      #     if groups != []
+      #       str = groups.sort.map(&:inspect).join(", ")
+      #       after_sentinel = "group #{str} do\n"
 
-            unless File.read("Gemfile").match?(/^#{after_sentinel}/)
-              inject_into_file "Gemfile", "\n#{after_sentinel}end\n"
-            end
-          else
-            after_sentinel = "# Project gems\n\n"
-            unless File.read("Gemfile").match?(/^#{after_sentinel}/)
-              inject_into_file "Gemfile", "\n#{after_sentinel}", after: /^ruby .*\n/
-            end
-          end
+      #       unless File.read("Gemfile").match?(/^#{after_sentinel}/)
+      #         inject_into_file "Gemfile", "\n#{after_sentinel}end\n"
+      #       end
+      #     else
+      #       after_sentinel = "# Project gems\n\n"
+      #       unless File.read("Gemfile").match?(/^#{after_sentinel}/)
+      #         inject_into_file "Gemfile", "\n#{after_sentinel}", after: /^ruby .*\n/
+      #       end
+      #     end
 
-          inject_into_file "Gemfile", "#{directive}\n", after: /^#{after_sentinel}/
-        end
-      end
+      #     inject_into_file "Gemfile", "#{directive}\n", after: /^#{after_sentinel}/
+      #   end
+      # end
 
-      #
-      # Removes a gem and any preceeding comments from the Gemfile
-      #
-      # @param gem [String] the name of the gem to remove
-      #
-      # @return [void]
-      #
-      def remove_gem(gem)
-        log :remove_gem, gem
-        gsub_file "Gemfile", /(:?^.*#.*\n)*.*gem ['"]#{gem}['"].*\n/, "", verbose: false
-      end
+      # #
+      # # Removes a gem and any preceeding comments from the Gemfile
+      # #
+      # # @param gem [String] the name of the gem to remove
+      # #
+      # # @return [void]
+      # #
+      # def remove_gem(gem)
+      #   log :remove_gem, gem
+      #   gsub_file "Gemfile", /(:?^.*#.*\n)*.*gem ['"]#{gem}['"].*\n/, "", verbose: false
+      # end
 
       #
       # Evaluates the given template and merges it with the project's docker-compose.yml
@@ -346,6 +348,18 @@ module PlutoniumGenerators
       def gemfile
         in_root do
           File.read("Gemfile")
+        end
+      end
+
+      def bundle(*gems)
+        Bundler.with_unbundled_env do
+          run "bundle add #{Array(gems).join " "}"
+        end
+      end
+
+      def unbundle(*gems)
+        Bundler.with_unbundled_env do
+          run "bundle remove #{Array(gems).join " "}"
         end
       end
     end
