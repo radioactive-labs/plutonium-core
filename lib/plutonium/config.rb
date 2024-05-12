@@ -1,10 +1,11 @@
 require "active_support"
+require "active_model"
 
 module Plutonium
   module Config
     # @return [Boolean] Are we developing plutonium? This is separate from Rails development.
     mattr_accessor :development
-    @@development = defined?(Rails.env) && Rails.env.development?
+    @@development = ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
 
     # @return [Boolean] Should hotreload be enabled? Enabled by default in Rails development.
     mattr_accessor :enable_hotreload
