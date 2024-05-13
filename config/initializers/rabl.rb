@@ -58,3 +58,5 @@ module Rabl
     end
   end
 end
+
+Rabl.register!
