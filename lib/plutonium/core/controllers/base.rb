@@ -18,7 +18,7 @@ module Plutonium
           end
 
           helper Plutonium::Helpers
-          helper_method :page_title, :resource_url_for, :resource_url_args_for
+          helper_method :page_title, :resource_url_for, :resource_url_args_for, :root_path
 
           append_view_path File.expand_path("app/views", Plutonium.root)
           layout -> { turbo_frame_request? ? false : "resource" }
@@ -79,6 +79,12 @@ module Plutonium
 
         def resource_url_for(...)
           send(current_package.name.underscore.to_sym).url_for(resource_url_args_for(...))
+        end
+
+        def root_path(*)
+          return send(:"#{scoped_entity_param_key}_root_path", *) if scoped_to_entity? && scoped_entity_strategy == :path
+
+          super(*)
         end
       end
     end

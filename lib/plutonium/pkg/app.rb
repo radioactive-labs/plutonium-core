@@ -44,7 +44,12 @@ module Plutonium
           }.to_h
         end
 
+        def draw_custom_routes(&block)
+          @custom_routes_block = block
+        end
+
         def draw_resource_routes
+          custom_routes_block = @custom_routes_block
           registered_resources = resource_register
           scoped_entity_param_key = self.scoped_entity_param_key if scoped_entity_strategy == :path
           routes.draw do
@@ -111,6 +116,7 @@ module Plutonium
             scope_options = scoped_entity_param_key.present? ? {as: scoped_entity_param_key} : {}
 
             scope scope_name, scope_options do
+              instance_exec(&custom_routes_block) if custom_routes_block.present?
               # we have to reverse sort our resource routes in order to prevent routing conflicts
               # e.g. /blogs/1 and blogs/comments cause an issue if Blog is registered before Blogs::Comment
               # attempting to load blogs/comments routes to blogs/:id which fails with a 404 since BlogsController

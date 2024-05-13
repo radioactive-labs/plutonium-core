@@ -1,7 +1,7 @@
-<%= package_name %>::Engine.routes.draw do
-  root to: "dashboard#index"
+<%= package_name %>::Engine.draw_custom_routes do
+  # draw custom routes here
 
-  # add custom app routes here
+  root to: "dashboard#index"
 end
 
 # draw routes for registered resources
