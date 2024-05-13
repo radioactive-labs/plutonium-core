@@ -160,7 +160,16 @@ module Plutonium
             # [:name, {:comment_ids=>[]}, :cover_image]
             map { |key, value| value.nil? ? key : {key => value} } || {}
 
-          unbacked + backed
+          case backed.presence
+          when Hash
+            [*unbacked, **backed]
+          when Array
+            [*unbacked, *backed]
+          when nil
+            unbacked
+          else
+            raise "Weird strong parameters definition: #{backed.class}"
+          end
         end
 
         private
@@ -188,7 +197,7 @@ module Plutonium
 
             parameters.merge! reflect_on_all_associations(:belongs_to)
               .map { |reflection|
-                                input_param = reflection.respond_to?(:options) ? reflection.options[:foreign_key] : :"#{reflection.name}_id"
+                                input_param = reflection.try(:options).try(:foreign_key) || :"#{reflection.name}_id"
                                 [reflection.name, {input_param => nil}]
                               }
               .to_h
