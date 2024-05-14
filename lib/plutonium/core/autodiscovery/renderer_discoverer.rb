@@ -14,7 +14,7 @@ module Plutonium
         # If cache_discovery is enabled, use the class level cache that persists
         # between requests, otherwise use the instance one.
         def autodiscovery_renderer_cache
-          if Plutonium::Config.cache_discovery
+          if Rails.application.config.plutonium.cache_discovery
             self.class.autodiscovery_renderer_cache
           else
             @autodiscovery_renderer_cache ||= {}

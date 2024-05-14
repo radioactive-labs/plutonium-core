@@ -102,7 +102,7 @@ module Plutonium
       def maybe_warn_autodetect_usage(method)
         raise "Resource field auto-detection: #{self.class}##{method} outside development" unless Rails.env.development?
 
-        Rails.logger.warn %(
+        Plutonium.logger.warn %(
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
           Resource field auto-detection: #{self.class}##{method}

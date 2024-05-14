@@ -8,26 +8,21 @@ module Plutonium
         # Eager load the framework
         # Plutonium::ZEITWERK_LOADER.eager_load
 
-        # Load view components
-        load Plutonium.root.join("app", "views", "components", "base.rb")
-
-        # Load initializers
-        Dir.glob(Plutonium.root.join("config", "initializers", "**", "*.rb")) { |file| load file }
-
-        start_reloader!
+        start_reloader! if Rails.application.config.plutonium.enable_hotreload
       end
 
       def self.start_reloader!
+        puts "=> [plutonium] starting reloader"
         # TODO: see which parts of this can be moved into zeitwerk
-        return unless Plutonium::Config.enable_hotreload
 
         # GLORIOUS hotreload!!!
-        @listener ||= begin
+        @listener&.stop
+        @listener = begin
           require "listen"
 
           reload_paths = []
 
-          if Plutonium::Config.development
+          if Plutonium.development?
             reload_paths << Plutonium.lib_root.to_s
             reload_paths << Plutonium.root.join("app", "views", "components").to_s
             reload_paths << Plutonium.root.join("config", "initializers").to_s
@@ -39,9 +34,12 @@ module Plutonium
 
           listener = Listen.to(*reload_paths, only: /\.rb$/) do |modified, added, removed|
             (modified + added).each do |file|
-              next if file == __FILE__ # reloading this file does nothing
+              Plutonium.logger.debug "[plutonium] change detected: #{file}"
 
-              if file.starts_with?(packages_dir)
+              if file == __FILE__
+                load file
+                Plutonium::Reactor::Core.achieve_criticality!
+              elsif file.starts_with?(packages_dir)
                 # if package file was added, ignore it
                 # otherwise rails gets mad at us since engines cannot be loaded after initial boot
                 # TODO: check if guard has apis to control reloading dynamically
@@ -53,20 +51,21 @@ module Plutonium
                   # so in order to detect resource registration changes, we need to handle reloads ourselves
 
                   # load the engine and reload routes to pick up any registration changes
-                  Rails.logger.debug "\nplutonium: reloaded #{file}\n"
+                  Plutonium.logger.debug "[plutonium] reloading #{file}"
                   load file
                   Rails.application.reload_routes!
                 else
                   # non engine package files are reloaded by rails automatically
                 end
               else
+                Plutonium.logger.debug "[plutonium] reloading framework"
                 Plutonium::ZEITWERK_LOADER.reload
                 load Plutonium.root.join("app", "views", "components", "base.rb")
                 load file # this just a lazy way to ensure we load files that do not contain constants like initializers
               end
-              Rails.logger.debug "\n\nplutonium: reload #{file}\n"
             rescue => e
-              Rails.logger.error "\n\nplutonium: reload failed #{file}\n\n#{e}\n"
+              Plutonium.logger.error "\n[plutonium] reload failed #{file}\n\n#{e}\n"
+              Plutonium.logger.error e.backtrace.join("\n")
             end
           end
           listener.start

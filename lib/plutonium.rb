@@ -19,8 +19,16 @@ module Plutonium
     root.join("lib", "plutonium")
   end
 
+  def self.logger
+    Rails.logger
+  end
+
+  def self.development?
+    ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
+  end
+
   def self.stylesheet_link
-    if Plutonium::Config.development
+    if development?
       base_dir = "/plutonium-assets/build"
       manifest = "css.dev.manifest"
       filename = "plutonium-dev.css"
@@ -36,7 +44,7 @@ module Plutonium
 
   def self.script_link
     filename = "plutonium-app.js"
-    if Plutonium::Config.development
+    if development?
       base_dir = "/plutonium-assets/build"
       manifest = "js.dev.manifest"
     else

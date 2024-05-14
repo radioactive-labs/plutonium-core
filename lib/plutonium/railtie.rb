@@ -3,11 +3,21 @@ require "view_component"
 module Plutonium
   class Railtie < Rails::Railtie
     config.plutonium = ActiveSupport::OrderedOptions.new
+    config.plutonium.cache_discovery = defined?(Rails.env) && !Rails.env.development?
+    config.plutonium.enable_hotreload = defined?(Rails.env) && Rails.env.development?
 
     initializer "plutonium.append_assets_path" do |app|
       config.to_prepare do
         Rails.application.config.assets.paths << Plutonium.root.join("app/assets/build").to_s
       end
+    end
+
+    initializer "plutonium.load_view_components" do
+      load Plutonium.root.join("app", "views", "components", "base.rb")
+    end
+
+    initializer "plutonium.load_initializers" do
+      Dir.glob(Plutonium.root.join("config", "initializers", "**", "*.rb")) { |file| load file }
     end
 
     initializer "plutonium.asset_server" do
@@ -27,6 +37,10 @@ module Plutonium
 
     initializer "plutonium.view_components_capture_compat" do
       config.view_component.capture_compatibility_patch_enabled = true
+    end
+
+    config.after_initialize do
+      Plutonium::Reactor::Core.achieve_criticality!
     end
   end
 end
