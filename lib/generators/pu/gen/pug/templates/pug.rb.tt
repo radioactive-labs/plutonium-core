@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require File.expand_path('../../../../plutonium_generators', __dir__)
+require_relative "<%= lib_path %>"
 
 module Pu
   module <%= pug_module %>

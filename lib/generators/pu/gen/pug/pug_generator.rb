@@ -38,6 +38,12 @@ module Pu
       def pug_class
         "#{pug_name.demodulize}Generator"
       end
+
+      def lib_path
+        depth = name.split(":").count
+        base = ([".."] * depth).join "/"
+        "#{base}/lib/plutonium_generators"
+      end
     end
   end
 end
