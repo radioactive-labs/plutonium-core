@@ -1,4 +1,4 @@
 <%= display_name_of current_user %>
 <% if respond_to? :logout_url -%>
-  <%= link_to "Sign out", "/", class: "btn btn-outline-primary", data: { turbo: false } %>
+  <%= link_to "Sign out", logout_url, class: "btn btn-outline-primary", data: { turbo: false } %>
 <% end -%>

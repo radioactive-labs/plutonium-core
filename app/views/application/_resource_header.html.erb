@@ -35,13 +35,15 @@
             </svg>
             <span class="sr-only">Toggle sidebar</span>
           </button>
-          <a href="https://flowbite.com" class="flex items-center justify-between mr-4">
+          <a href="<%= root_path %>" class="flex items-center justify-between mr-4">
             <img
-              src="https://flowbite.s3.amazonaws.com/logo.svg"
-              class="mr-3 h-8"
-              alt="Flowbite Logo"
+              src="<%= Plutonium.logo_link %>"
+              class="mr-3 h-10"
+              alt="<%= application_name %> Logo"
             />
-            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white hidden xs:block">Plutonium</span>
+            <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white hidden xs:block">
+              <%= application_name %>
+            </span>
           </a>
           <%# <form action="#" method="GET" class="hidden md:block md:pl-2">
             <label for="topbar-search" class="sr-only">Search</label>
@@ -704,18 +706,16 @@
                   </a>
                 </li>
               </ul>
+
+              <% if respond_to? :logout_url -%>
               <ul
                 class="py-1 text-gray-700 dark:text-gray-300"
-                aria-labelledby="dropdown"
-              >
+                aria-labelledby="dropdown">
                 <li>
-                  <a
-                    href="#"
-                    class="block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white"
-                    >Sign out</a
-                  >
+                  <%= link_to "Sign out", logout_url, class: "block py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white", data: { turbo: false } %>
                 </li>
               </ul>
+              <% end -%>
             </div>
           </div>
         </div>

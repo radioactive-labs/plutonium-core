@@ -6,6 +6,13 @@ module Plutonium
       included do
         layout "rodauth"
         append_view_path File.expand_path("app/views", Plutonium.root)
+        helper_method :application_name
+      end
+
+      private
+
+      def application_name
+        Rails.application.class.module_parent.name
       end
     end
   end

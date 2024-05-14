@@ -55,6 +55,14 @@ module Plutonium
     file = JSON.parse(File.read(root.join(manifest)))[filename]
     "#{base_dir}/#{file}"
   end
+
+  def self.favicon_link
+    "/plutonium-assets/plutonium.ico"
+  end
+
+  def self.logo_link
+    "/plutonium-assets/plutonium-logo.png"
+  end
 end
 
 Plutonium::ZEITWERK_LOADER = loader
