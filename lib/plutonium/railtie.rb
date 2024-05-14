@@ -40,7 +40,8 @@ module Plutonium
     end
 
     config.after_initialize do
-      Plutonium::Reactor::Core.achieve_criticality!
+      Plutonium::Reloader.start! if Rails.application.config.plutonium.enable_hotreload
+      Plutonium::ZEITWERK_LOADER.eager_load if Rails.env.production?
     end
   end
 end
