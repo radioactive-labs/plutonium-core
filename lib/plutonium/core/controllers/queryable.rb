@@ -1,3 +1,5 @@
+using Plutonium::Refinements::ParameterRefinements
+
 module Plutonium
   module Core
     module Controllers
@@ -18,7 +20,7 @@ module Plutonium
         end
 
         def resource_query_params
-          (params[:q]&.to_unsafe_h || {}).with_indifferent_access
+          (params[:q]&.nilify&.to_unsafe_h || {}).with_indifferent_access
         end
       end
     end
