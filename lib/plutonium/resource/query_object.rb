@@ -27,7 +27,7 @@ module Plutonium
         end
 
         def extract_query_params(params)
-          input_definitions.collect_all(params).symbolize_keys
+          input_definitions.collect_all(params).compact.symbolize_keys
         end
 
         def resource_class = nil
