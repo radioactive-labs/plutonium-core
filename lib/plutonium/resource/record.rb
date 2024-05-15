@@ -14,37 +14,53 @@ module Plutonium
           # TODO: add logging
           # TODO: memoize this
 
-          if (own_association = reflect_on_all_associations.find { |assoc| assoc.klass.name == record.class.name })
-            case own_association.macro
-            when :has_one
-              joins(own_association.name).where({
-                own_association.name => {
-                  record.class.primary_key => record.id
-                }
-              })
-            when :belongs_to
-              where(own_association.name => record)
-            when :has_many
-              joins(own_association.name).where(own_association.klass.table_name => record)
-            else
-              raise NotImplementedError, "associated_with->##{own_association.macro}"
-            end
-          elsif (record_association = record.class.reflect_on_all_associations.find { |assoc| assoc.klass.name == klass.name })
-            # TODO: add a warning here about a potentially poor performing query
-            where(id: record.send(record_association.name))
-          else
-            raise "Could not resolve the association between '#{klass.name}' and '#{record.class.name}'\n\n" \
-                  "Define\n" \
-                  " 1. the associations between the models\n" \
-                  " 2. a named scope on #{klass.name} e.g.\n\n" \
-                  "scope :#{named_scope}, ->(#{record.model_name.singular}) { do_something_here }"
+          own_association = reflect_on_all_associations.find do |assoc|
+            assoc.klass.name == record.class.name
+          rescue
+            assoc.check_validity!
+            raise
           end
+          if own_association
+            return case own_association.macro
+                   when :has_one
+                     joins(own_association.name).where({
+                       own_association.name => {
+                         record.class.primary_key => record.id
+                       }
+                     })
+                   when :belongs_to
+                     where(own_association.name => record)
+                   when :has_many
+                     joins(own_association.name).where(own_association.klass.table_name => record)
+                   else
+                     raise NotImplementedError, "associated_with->##{own_association.macro}"
+                   end
+          end
+
+          record_association = record.class.reflect_on_all_associations.find do |assoc|
+            assoc.klass.name == klass.name
+          rescue
+            assoc.check_validity!
+            raise
+          end
+          if record_association
+            # TODO: add a warning here about a potentially poor performing query
+            return where(id: record.send(record_association.name))
+          end
+
+          raise "Could not resolve the association between '#{klass.name}' and '#{record.class.name}'\n\n" \
+                "Define\n" \
+                " 1. the associations between the models\n" \
+                " 2. a named scope on #{klass.name} e.g.\n\n" \
+                "scope :#{named_scope}, ->(#{record.model_name.singular}) { do_something_here }"
         end
       end
 
       class_methods do
         def resource_field_names
-          @resource_field_names ||= belongs_to_association_field_names +
+          return @resource_field_names if defined?(@resource_field_names) && !Rails.env.local?
+
+          @resource_field_names = belongs_to_association_field_names +
             has_one_attached_field_names + has_one_association_field_names +
             has_many_attached_field_names + has_many_association_field_names +
             content_column_field_names
@@ -74,23 +90,31 @@ module Plutonium
         end
 
         def belongs_to_association_field_names
-          @belongs_to_association_field_names ||= reflect_on_all_associations(:belongs_to).map(&:name)
+          return @belongs_to_association_field_names if defined?(@belongs_to_association_field_names) && !Rails.env.local?
+
+          @belongs_to_association_field_names = reflect_on_all_associations(:belongs_to).map(&:name)
         end
 
         def has_one_association_field_names
-          @has_one_association_field_names ||= reflect_on_all_associations(:has_one)
+          return @has_one_association_field_names if defined?(@has_one_association_field_names) && !Rails.env.local?
+
+          @has_one_association_field_names = reflect_on_all_associations(:has_one)
             .map { |assoc| /_attachment$|_blob$/.match?(assoc.name) ? nil : assoc.name }
             .compact
         end
 
         def has_many_association_field_names
-          @has_many_association_field_names ||= reflect_on_all_associations(:has_many)
+          return @has_many_association_field_names if defined?(@has_many_association_field_names) && !Rails.env.local?
+
+          @has_many_association_field_names = reflect_on_all_associations(:has_many)
             .map { |assoc| /_attachments$|_blobs$/.match?(assoc.name) ? nil : assoc.name }
             .compact
         end
 
         def has_one_attached_field_names
-          @has_one_attached_field_names ||= if respond_to?(:reflect_on_all_attachments)
+          return @has_one_attached_field_names if defined?(@has_one_attached_field_names) && !Rails.env.local?
+
+          @has_one_attached_field_names = if respond_to?(:reflect_on_all_attachments)
             reflect_on_all_attachments
               .map { |a| (a.macro == :has_one_attached) ? a.name : nil }
               .compact
@@ -100,7 +124,9 @@ module Plutonium
         end
 
         def has_many_attached_field_names
-          @has_many_attached_field_names ||= if respond_to?(:reflect_on_all_attachments)
+          return @has_many_attached_field_names if defined?(@has_many_attached_field_names) && !Rails.env.local?
+
+          @has_many_attached_field_names = if respond_to?(:reflect_on_all_attachments)
             reflect_on_all_attachments
               .map { |a| (a.macro == :has_many_attached) ? a.name : nil }
               .compact
@@ -110,10 +136,14 @@ module Plutonium
         end
 
         def content_column_field_names
+          return @content_column_field_names if defined?(@content_column_field_names) && !Rails.env.local?
+
           @content_column_field_names ||= content_columns.map { |col| col.name.to_sym }
         end
 
         def has_many_association_routes
+          return @has_many_association_routes if defined?(@has_many_association_routes) && !Rails.env.local?
+
           @has_many_association_routes ||= reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
         end
 
