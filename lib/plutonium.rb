@@ -28,32 +28,32 @@ module Plutonium
   end
 
   def self.stylesheet_link
+    return @stylesheet_link if defined?(@stylesheet_link) && !development?
+
     if development?
       base_dir = "/plutonium-assets/build"
-      manifest = "css.dev.manifest"
       filename = "plutonium-dev.css"
     else
       base_dir = "/plutonium-assets"
-      manifest = "css.manifest"
       filename = "plutonium.css"
     end
 
-    file = JSON.parse(File.read(root.join(manifest)))[filename]
-    "#{base_dir}/#{file}"
+    file = stylesheet_manifest[filename]
+    @stylesheet_link = "#{base_dir}/#{file}"
   end
 
   def self.script_link
+    return @script_link if defined?(@script_link) && !development?
+
     filename = "plutonium-app.js"
-    if development?
-      base_dir = "/plutonium-assets/build"
-      manifest = "js.dev.manifest"
+    base_dir = if development?
+      "/plutonium-assets/build"
     else
-      base_dir = "/plutonium-assets"
-      manifest = "js.manifest"
+      "/plutonium-assets"
     end
 
-    file = JSON.parse(File.read(root.join(manifest)))[filename]
-    "#{base_dir}/#{file}"
+    file = script_manifest[filename]
+    @script_link = "#{base_dir}/#{file}"
   end
 
   def self.favicon_link
@@ -62,6 +62,28 @@ module Plutonium
 
   def self.logo_link
     "/plutonium-assets/plutonium-logo.png"
+  end
+
+  def self.stylesheet_manifest
+    return @stylesheet_manifest if defined?(@stylesheet_manifest) && !development?
+
+    manifest = if development?
+      "css.dev.manifest"
+    else
+      "css.manifest"
+    end
+    @stylesheet_manifest = JSON.parse(File.read(root.join(manifest)))
+  end
+
+  def self.script_manifest
+    return @script_manifest if defined?(@script_manifest) && !development?
+
+    manifest = if development?
+      "js.dev.manifest"
+    else
+      "js.manifest"
+    end
+    @script_manifest = JSON.parse(File.read(root.join(manifest)))
   end
 end
 
