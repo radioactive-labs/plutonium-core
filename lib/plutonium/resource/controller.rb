@@ -6,6 +6,7 @@ using Plutonium::Refinements::ParameterRefinements
 
 module Plutonium
   module Resource
+    # Controller module to handle resource actions and concerns
     module Controller
       extend ActiveSupport::Concern
       include Pagy::Backend
@@ -17,7 +18,6 @@ module Plutonium
       include Plutonium::Core::Controllers::InteractiveActions
 
       included do
-        # we use class attribute since we want this value inherited
         class_attribute :resource_class, instance_writer: false, instance_predicate: false
 
         # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
@@ -27,6 +27,8 @@ module Plutonium
       end
 
       class_methods do
+        # Sets the resource class for the controller
+        # @param [Class] resource_class The resource class
         def controller_for(resource_class)
           self.resource_class = resource_class
         end
@@ -34,6 +36,8 @@ module Plutonium
 
       private
 
+      # Creates a policy context
+      # @return [Plutonium::Resource::PolicyContext] The policy context
       def policy_context
         Plutonium::Resource::PolicyContext.new(
           user: current_user,
@@ -41,10 +45,14 @@ module Plutonium
         )
       end
 
+      # Returns the resource record based on path parameters
+      # @return [ActiveRecord::Base, nil] The resource record
       def resource_record
-        @resource_record ||= (policy_scope(resource_class).from_path_param(params[:id]).first! if params[:id].present?)
+        @resource_record ||= policy_scope(resource_class).from_path_param(params[:id]).first! if params[:id].present?
       end
 
+      # Returns the submitted resource parameters
+      # @return [Hash] The submitted resource parameters
       def submitted_resource_params
         @submitted_resource_params ||= begin
           strong_parameters = resource_class.strong_parameters_for(*permitted_attributes)
@@ -52,24 +60,25 @@ module Plutonium
         end
       end
 
+      # Returns the resource parameters, including scoped and parent parameters
+      # @return [Hash] The resource parameters
       def resource_params
         input_params = submitted_resource_params.dup
 
-        # Override any entity scoping params
-        input_params[scoped_entity_param_key] = current_scoped_entity if scoped_to_entity?
-        input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id if scoped_to_entity?
-        # Override any parent params
-        input_params[parent_input_param] = current_parent if current_parent.present?
-        input_params[:"#{parent_input_param}_id"] = current_parent.id if current_parent.present?
+        override_entity_scoping_params(input_params)
+        override_parent_params(input_params)
 
-        # additionally filter our input_params through our inputs
         current_presenter.defined_inputs_for(*permitted_attributes).collect_all(input_params)
       end
 
+      # Returns the resource parameter key
+      # @return [Symbol] The resource parameter key
       def resource_param_key
         resource_class.model_name.singular_route_key
       end
 
+      # Creates a resource context
+      # @return [Plutonium::Resource::Context] The resource context
       def resource_context
         Plutonium::Resource::Context.new(
           resource_class:,
@@ -78,29 +87,32 @@ module Plutonium
         )
       end
 
+      # Creates a resource presenter
+      # @param [Class] resource_class The resource class
+      # @param [ActiveRecord::Base] resource_record The resource record
+      # @return [Object] The resource presenter
       def resource_presenter(resource_class, resource_record)
         presenter_class = "#{current_package}::#{resource_class}Presenter".constantize
         presenter_class.new resource_context, resource_record
       end
 
+      # Creates a resource query object
+      # @param [Class] resource_class The resource class
+      # @param [ActionController::Parameters] params The request parameters
+      # @return [Object] The resource query object
       def resource_query_object(resource_class, params)
         query_object_class = "#{current_package}::#{resource_class}QueryObject".constantize
         query_object_class.new resource_context, params
       end
 
-      # sets params on submitted_resource_params if they have been passed
+      # Applies submitted resource params if they have been passed
       def maybe_apply_submitted_resource_params!
-        # this is useful in dynamic forms as we can read the resource record to determine how to define our inputs
-        # we need to ensure that this is being called from get because
-        # it is potentially unsafe since we don't apply the input filter. see #resource_params
-        # would have been nice to be able to, but we can't until we have the presenter, and the presenter
-        # requires the resource_record for our dynamic forms
-        # is this perfect? no. but it works.
-        raise "🚨🚨🚨 this should be called from actions that are not persisting this data" unless request.method == "GET"
-
+        ensure_get_request
         resource_record.attributes = submitted_resource_params if params[resource_param_key].present?
       end
 
+      # Returns the current parent based on path parameters
+      # @return [ActiveRecord::Base, nil] The current parent
       def current_parent
         return unless parent_route_param.present?
 
@@ -113,22 +125,49 @@ module Plutonium
         end
       end
 
+      # Returns the parent route parameter
+      # @return [Symbol, nil] The parent route parameter
       def parent_route_param
         @parent_route_param ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }
       end
 
+      # Returns the parent input parameter
+      # @return [Symbol, nil] The parent input parameter
       def parent_input_param
         return unless current_parent.present?
 
         resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass.name == current_parent.class.name }&.name&.to_sym
       end
 
-      ############
+      # Ensures the method is a GET request
+      def ensure_get_request
+        unless request.method == "GET"
+          raise "🚨🚨🚨 This should be called from actions that are not persisting this data"
+        end
+      end
 
-      # def current_package
-      #   @current_package ||= self.class.module_parents[-2]
-      # end
+      # Overrides entity scoping parameters
+      # @param [Hash] input_params The input parameters
+      def override_entity_scoping_params(input_params)
+        if scoped_to_entity?
+          input_params[scoped_entity_param_key] = current_scoped_entity
+          input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id
+        end
+      end
 
+      # Overrides parent parameters
+      # @param [Hash] input_params The input parameters
+      def override_parent_params(input_params)
+        if current_parent.present?
+          input_params[parent_input_param] = current_parent
+          input_params[:"#{parent_input_param}_id"] = current_parent.id
+        end
+      end
+
+      # Constructs resource URL arguments
+      # @param [Array] args The URL arguments
+      # @param [Hash] kwargs The keyword arguments
+      # @return [Array] The URL arguments
       def resource_url_args_for(*args, **kwargs)
         kwargs[:parent] = current_parent unless kwargs.key?(:parent)
         super(*args, **kwargs)
