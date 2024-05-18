@@ -98,29 +98,84 @@ module PlutoniumGenerators
       #   gsub_file "Gemfile", /(:?^.*#.*\n)*.*gem ['"]#{gem}['"].*\n/, "", verbose: false
       # end
 
-      #
-      # Evaluates the given template and merges it with the project's docker-compose.yml
-      #
-      # @param [String] source the template filename
-      #
-      # @return [void]
-      #
-      def docker_compose(source)
-        log :docker_compose, source
+      # #
+      # # Evaluates the given template and merges it with the project's docker-compose.yml
+      # #
+      # # @param [String] source the template filename
+      # #
+      # # @return [void]
+      # #
+      # def docker_compose(source)
+      #   log :docker_compose, source
+
+      #   in_root do
+      #     compose_file = "docker-compose.yml"
+      #     compose_definition = YAML.load_file(compose_file) if File.exist?(compose_file)
+      #     compose_definition ||= {
+      #       version: "3.7",
+      #       services: {}
+      #     }
+      #     compose_definition.deep_stringify_keys!
+
+      #     new_definition = YAML.load template_eval("docker-compose/#{source}.yml.tt")
+      #     compose_definition.deep_merge! new_definition.deep_stringify_keys
+
+      #     create_file compose_file, YAML.dump(compose_definition), force: true
+      #   end
+      # end
+
+      def managed_compose(file = "docker-compose.yml")
+        @managed_compose ||= {}
+
+        @managed_compose[file] ||= in_root do
+          next unless File.exist?(file)
+
+          parsed_yaml = YAML.load_file(file, aliases: true)
+          parsed_yaml if parsed_yaml["x-managed-by"] == "plutonium"
+        end
+      end
+
+      def add_compose_service(service, config, file = "docker-compose.yml")
+        docker_compose = managed_compose(file)
+        error "Docker compose is not managed by plutonium" unless docker_compose
+        error "#{service} is already added to compose" if docker_compose["services"].key?(service.to_s)
 
         in_root do
-          compose_file = "docker-compose.yml"
-          compose_definition = YAML.load_file(compose_file) if File.exist?(compose_file)
-          compose_definition ||= {
-            version: "3.7",
-            services: {}
-          }
-          compose_definition.deep_stringify_keys!
+          insert_into_file file, indent(config, 2), after: /.*# additional services go here.*\n/
+        end
+      end
 
-          new_definition = YAML.load template_eval("docker-compose/#{source}.yml.tt")
-          compose_definition.deep_merge! new_definition.deep_stringify_keys
+      def add_compose_env(key, value, service = "x-app", file = "docker-compose.yml")
+        raise NotImplementedError, "only service: x-app is currently supported" unless service == "x-app"
 
-          create_file compose_file, YAML.dump(compose_definition), force: true
+        docker_compose = managed_compose(file)
+        error "Docker compose is not managed by plutonium" unless docker_compose
+
+        in_root do
+          gsub_file file, "environment: {} # x-app", "environment: # #{service}"
+          gsub_file file, /.*#{key}:.*# #{service}.*\n/, ""
+          config = "#{key}: #{value} # #{service}\n"
+          insert_into_file file, indent(config, 4), after: /.*environment: # #{service}.*\n/
+        end
+      end
+
+      def add_compose_dependency(value, service = "x-app", file = "docker-compose.yml")
+        raise NotImplementedError, "only service: x-app is currently supported" unless service == "x-app"
+
+        docker_compose = managed_compose(file)
+        error "Docker compose is not managed by plutonium" unless docker_compose
+
+        in_root do
+          gsub_file file, "depends_on: [] # x-app", "depends_on: # #{service}"
+          gsub_file file, /.*- #{value}.*# #{service}.*\n/, ""
+          config = "- #{value} # #{service}\n"
+          insert_into_file file, indent(config, 4), after: /.*depends_on: # #{service}.*\n/
+        end
+      end
+
+      def add_docker_dependency(config, file = "Dockerfile.dev")
+        in_root do
+          insert_into_file file, "#{config}\n", after: /.*# Additional dependencies go here*\n\n/
         end
       end
 
@@ -287,6 +342,23 @@ module PlutoniumGenerators
       end
 
       #
+      # Insert the given directives into .dockerignore
+      #
+      # @param [String] *directives directives to ignore
+      #
+      # @return [void]
+      #
+      def dockerignore(*directives)
+        in_root do
+          # Doing this one by one so that duplication detection during insertion will work
+          directives.each do |directive|
+            log :dockerignore, directive
+            insert_into_file ".dockerignore", "#{directive}\n", verbose: false
+          end
+        end
+      end
+
+      #
       # Similar to #run, this executes a command but returns both success and output
       #
       # @param command [String] the command to run
@@ -314,6 +386,20 @@ module PlutoniumGenerators
         success = status.success?
 
         [success, output]
+      end
+
+      def bin_directory
+        # Copy the directory and store the list of copied files
+        @copied_files = directory "bin"
+        # Change permissions of the copied files to make them executable
+        in_root do
+          @copied_files.each do |file|
+            file = file.split("/bin/")[1]
+            file = "bin/#{file}"
+            puts file
+            chmod file, "+x" if File.file?(file)
+          end
+        end
       end
 
       private

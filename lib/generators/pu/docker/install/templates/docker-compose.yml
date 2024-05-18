@@ -1,0 +1,26 @@
+---
+x-managed-by: plutonium
+
+x-app: &app
+  build: # x-app
+    context: . # x-app
+    dockerfile: Dockerfile.dev # x-app
+  # x-app properties
+  volumes: # x-app
+  - ".:/rails" # x-app
+  - "./.volumes/bundle:/usr/local/bundle" # x-app
+  - "./.volumes/node_modules:/rails/node_modules" # x-app
+  - "./.volumes/shell_history:/root/shell_history" # x-app
+  depends_on: [] # x-app
+  environment: {} # x-app
+  tty: true # for binding.pry # x-app
+  stdin_open: true # for binding.pry # x-app
+
+services:
+  web:
+    <<: *app
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle && yarn && bin/dev" # web
+    # web properties
+    ports: # web
+      - "3000:3000" # app
+  # additional services go here
