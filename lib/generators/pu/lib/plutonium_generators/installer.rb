@@ -21,7 +21,7 @@ module PlutoniumGenerators
     protected
 
     def install!(feature)
-      set_ruby_version! if root_pug?
+      # set_ruby_version! if root_pug?
 
       from_version = read_config(:installed, feature, default: "0.0.0")
       versions = methods.map do |m|
