@@ -35,7 +35,7 @@ module Plutonium
         end
 
         def application_name
-          Rails.application.class.module_parent.name
+          Plutonium.application_name
         end
 
         #

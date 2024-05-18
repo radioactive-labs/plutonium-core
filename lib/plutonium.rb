@@ -23,6 +23,10 @@ module Plutonium
     Rails.logger
   end
 
+  def self.application_name
+    Rails.application.class.module_parent.name
+  end
+
   def self.development?
     ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
   end

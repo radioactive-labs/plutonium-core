@@ -64,13 +64,13 @@ module PlutoniumGenerators
       @prompt ||= TTY::Prompt.new
     end
 
-    def appname
-      defined?(Rails.application) ? Rails.application.class.module_parent.name : "PlutoniumGenerators"
-    end
+    # def appname
+    #   defined?(Rails.application) ? Rails.application.class.module_parent.name : "PlutoniumGenerators"
+    # end
 
-    def app_name
-      appname.underscore
-    end
+    # def app_name
+    #   appname.underscore
+    # end
 
     def pug_installed?(feature, version: nil)
       installed_version = read_config(:installed, feature)
