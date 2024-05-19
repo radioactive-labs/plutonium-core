@@ -22,10 +22,14 @@
         <img class="w-16 h-16 mr-2" src="<%= Plutonium.logo_link %>" alt="logo">
         <%= application_name %>
       </p>
-      <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-        <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+      <div class="w-full max-w-md bg-white rounded-lg shadow dark:border md:mt-0 xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+        <div class="w-full p-6 space-y-4 md:space-y-6 sm:p-8">
           <%= yield %>
         </div>
+      </div>
+      <div class="mt-4 flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
+        <%= Plutonium::Icons.render "outline/home" %>
+        <%= link_to "Home", root_path, class: "font-medium text-blue-600 dark:text-blue-500" %>
       </div>
     </main>
   </body>

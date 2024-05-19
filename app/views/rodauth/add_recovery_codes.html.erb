@@ -1,16 +1,17 @@
 <div>
-  <% if rodauth.recovery_codes.any? %>
-    <div class="text-sm px-4 py-3 bg-white rounded-lg border shadow-lg grid grid-cols-2 gap-y-2 gap-x-4 dark:bg-gray-900 dark:text-gray-200">
+  <h4 class="text-2xl font-bold dark:text-white mb-4">Recovery Codes</h4>
+
+  <div class="mb-4 text-sm grid grid-cols-1 gap-y-2 gap-x-4 dark:bg-gray-900 dark:text-gray-200">
+    <% if rodauth.recovery_codes.any? %>
       <% rodauth.recovery_codes.each do |code| %>
         <div class="font-mono"><%= code %></div>
       <% end %>
-    </div>
-  <% end %>
+    <% else %>
+        <div class="font-mono">You have no recovery codes</div>
+    <% end %>
+  </div>
 
   <% if rodauth.can_add_recovery_codes? %>
-    <div class="text-2xl font-medium mt-6 mb-4">
-      <%== rodauth.add_recovery_codes_heading %>
-    </div>
     <%= render template: "rodauth/recovery_codes", layout: false %>
   <% end %>
 </div>
