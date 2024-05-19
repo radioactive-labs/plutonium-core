@@ -1,9 +1,12 @@
 require "rails/generators/base"
+require "rails/generators/active_record/migration"
 require "securerandom"
 
 module Pu
   module Rodauth
     class InstallGenerator < ::Rails::Generators::Base
+      include ::ActiveRecord::Generators::Migration
+
       SEQUEL_ADAPTERS = {
         "postgresql" => (RUBY_ENGINE == "jruby") ? "postgresql" : "postgres",
         "mysql2" => (RUBY_ENGINE == "jruby") ? "mysql" : "mysql2",
@@ -39,6 +42,10 @@ module Pu
         insert_into_file "config/environments/development.rb",
           "\n  config.action_mailer.default_url_options = { host: '127.0.0.1', port: ENV.fetch('PORT', 3000) }\n",
           before: /^end/
+      end
+
+      def create_install_migration
+        migration_template "db/migrate/install_rodauth.rb", "db/migrate/install_rodauth.rb" # , File.join(db_migrate_path, "#{migration_name}.rb")
       end
 
       def show_instructions

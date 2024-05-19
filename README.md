@@ -87,4 +87,5 @@ rails new pluton8_starter --name="Pluton8 Starter" --database=sqlite3 --skip-act
 bin/rails app:template LOCATION=/Users/stefan/code/plutonium/starters/vulcan/gems/plutonium/templates/base.rb
 ```
 
+rails g pu:rodauth:account admin --no-defaults --login --logout --remember --change-password --internal-request --create-account --lockout
 -->

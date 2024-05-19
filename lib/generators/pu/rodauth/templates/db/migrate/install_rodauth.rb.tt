@@ -1,0 +1,5 @@
+class InstallRodauth < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+  def change
+    enable_extension "citext"
+  end
+end
