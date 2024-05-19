@@ -39,6 +39,10 @@ module Plutonium
       config.view_component.capture_compatibility_patch_enabled = true
     end
 
+    rake_tasks do
+      load "tasks/create_rodauth_admin.rake"
+    end
+
     config.after_initialize do
       Plutonium::Reloader.start! if Rails.application.config.plutonium.enable_hotreload
       Plutonium::ZEITWERK_LOADER.eager_load if Rails.env.production?
