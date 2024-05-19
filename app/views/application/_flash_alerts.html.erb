@@ -1,5 +1,8 @@
+
 <% flash.each do |type, msg| %>
 <%
+  next unless msg.present?
+
   color = case type.to_sym
   when :success
     # bg-green-50 text-green-800 text-green-500 text-green-400 ring-green-400

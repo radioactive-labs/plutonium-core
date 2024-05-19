@@ -38,8 +38,8 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
     rails_account_model { <%= account_path.classify %> }
 <% if verify_account? -%>
 
-    # Set password when verifying account.
-    verify_account_set_password? false
+    # Set password password during create account.
+    # verify_account_set_password? false
 <% end -%>
 
     # Change some default param keys.
