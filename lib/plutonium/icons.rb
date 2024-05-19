@@ -17,7 +17,7 @@ module Plutonium
           path = Plutonium.root.join "app/assets/icons/#{name}.svg"
           raise "Invalid icon: #{name}" unless File.exist?(path)
 
-          File.read(path).sub("<svg ", "<svg class=\"#{ICON_SIZES[size]}\" ")
+          File.read(path).sub("<svg ", "<svg class=\"#{ICON_SIZES[size]}\" ").html_safe
         end
       end
     end

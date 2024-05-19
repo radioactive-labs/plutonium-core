@@ -31,7 +31,7 @@ module Plutonium::Ui
     end
 
     def render_icon(icon)
-      Plutonium::Icons.render(icon).html_safe
+      Plutonium::Icons.render(icon)
     end
 
     def attributes_to_string(attributes, prefix = nil)
