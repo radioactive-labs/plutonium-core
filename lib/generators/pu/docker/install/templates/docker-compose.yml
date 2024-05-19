@@ -12,7 +12,10 @@ x-app: &app
   - "./.volumes/node_modules:/rails/node_modules" # x-app
   - "./.volumes/shell_history:/root/shell_history" # x-app
   depends_on: [] # x-app
-  environment: {} # x-app
+  environment: # x-app
+    RUBY_DEBUG_OPEN: true # x-app
+    PORT: 3000 # x-app
+    HISTFILE: /root/shell_history/.bash_history # x-app
   tty: true # for binding.pry # x-app
   stdin_open: true # for binding.pry # x-app
 
