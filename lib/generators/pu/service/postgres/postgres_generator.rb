@@ -12,6 +12,7 @@ module Pu
       desc "Set up postgres for project"
 
       def start
+        bundle "goldiloader"
         template "database.yml", "config/database.yml", force: true
         bin_directory
         add_compose_env :POSTGRES_HOST, service
