@@ -402,6 +402,35 @@ module PlutoniumGenerators
         end
       end
 
+      def bundle!
+        log :bundle, "install"
+
+        Bundler.with_unbundled_env do
+          run "bundle install", verbose: false
+        end
+      end
+
+      def bundle(*gems, **options)
+        gems = Array(gems).join " "
+        options = hash_to_cli_options options
+        cmd_args = "add #{gems} #{options}"
+
+        log :bundle, cmd_args
+        Bundler.with_unbundled_env do
+          run "bundle #{cmd_args}", verbose: false
+        end
+      end
+
+      def unbundle(*gems)
+        gems = Array(gems).join " "
+        cmd_args = "remove #{gems}"
+
+        log :bundle, cmd_args
+        Bundler.with_unbundled_env do
+          run "bundle remove #{Array(gems).join " "}", verbose: false
+        end
+      end
+
       private
 
       #
@@ -440,16 +469,11 @@ module PlutoniumGenerators
         end
       end
 
-      def bundle(*gems)
-        Bundler.with_unbundled_env do
-          run "bundle add #{Array(gems).join " "}"
-        end
-      end
-
-      def unbundle(*gems)
-        Bundler.with_unbundled_env do
-          run "bundle remove #{Array(gems).join " "}"
-        end
+      def hash_to_cli_options(hash)
+        hash.map do |key, value|
+          formatted_value = value.is_a?(Array) ? value.join(",") : value
+          "--#{key.to_s.tr("_", "-")}=#{formatted_value}"
+        end.join(" ")
       end
     end
   end
