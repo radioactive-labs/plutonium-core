@@ -431,6 +431,15 @@ module PlutoniumGenerators
         end
       end
 
+      def add_required_env_vars(*vars)
+        vars = Array(vars).join " "
+        log :equired_env_vars, vars
+        in_root do
+          cmd = "required_env_vars += %w[#{vars}]\n"
+          insert_into_file "config/initializers/001_ensure_required_env.rb", cmd, after: /# Add additional env vars here.*\n/
+        end
+      end
+
       private
 
       #
