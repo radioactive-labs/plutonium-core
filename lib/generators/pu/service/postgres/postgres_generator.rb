@@ -3,8 +3,8 @@
 require_relative "../../lib/plutonium_generators"
 
 module Pu
-  module Pg
-    class InstallGenerator < Rails::Generators::Base
+  module Service
+    class PostgresGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
       source_root File.expand_path("templates", __dir__)
