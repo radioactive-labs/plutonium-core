@@ -34,8 +34,8 @@ module Pu
       end
 
       def create_rodauth_app
-        template "app/misc/rodauth_app.rb"
-        template "app/misc/rodauth_plugin.rb"
+        template "app/rodauth/rodauth_app.rb"
+        template "app/rodauth/rodauth_plugin.rb"
       end
 
       def add_dev_config
