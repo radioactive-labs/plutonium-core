@@ -49,6 +49,7 @@ module Plutonium
       # @return [ActiveRecord::Base, nil] The resource record
       def resource_record
         @resource_record ||= policy_scope(resource_class).from_path_param(params[:id]).first! if params[:id].present?
+        @resource_record
       end
 
       # Returns the submitted resource parameters
