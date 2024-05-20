@@ -7,7 +7,7 @@
     <meta name="turbo-cache-control" content="no-cache">
     <meta name="turbo-refresh-method" content="morph">
     <meta name="turbo-refresh-scroll" content="preserve">
-    <link rel="icon" type="image/x-icon" href="<%= Plutonium.favicon_link %>">
+    <%= Plutonium::Config.favicon_tag.call self %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= yield(:meta) %>
@@ -24,8 +24,8 @@
 
     <%= yield(:assets) %>
 
-    <%== Plutonium::Config.stylesheet_tag.call self %>
-    <%== Plutonium::Config.script_tag.call self %>
+    <%= Plutonium::Config.stylesheet_tag.call self %>
+    <%= Plutonium::Config.script_tag.call self %>
 
     <%= yield(:head) %>
   </head>

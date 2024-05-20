@@ -5,12 +5,17 @@ module Plutonium
   module Config
     mattr_accessor :stylesheet_tag
     @@stylesheet_tag = ->(view_context) {
-      "<link rel=\"stylesheet\" href=\"#{Plutonium.stylesheet_link}\" data-turbo-track=\"reload\" />"
+      "<link rel=\"stylesheet\" href=\"#{Plutonium.stylesheet_link}\" data-turbo-track=\"reload\" />".html_safe
     }
 
     mattr_accessor :script_tag
     @@script_tag = ->(view_context) {
-      "<script src=\"#{Plutonium.script_link}\" data-turbo-track=\"reload\"></script>"
+      "<script src=\"#{Plutonium.script_link}\" data-turbo-track=\"reload\"></script>".html_safe
+    }
+
+    mattr_accessor :favicon_tag
+    @@favicon_tag = ->(view_context) {
+      "<link rel=\"icon\" type=\"image/x-icon\" href=\"#{Plutonium.favicon_link}\">".html_safe
     }
   end
 end
