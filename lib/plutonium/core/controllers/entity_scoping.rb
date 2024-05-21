@@ -43,15 +43,15 @@ module Plutonium
           return unless current_user.present?
 
           @current_scoped_entity ||= case scoped_entity_strategy
-          when :current_user
-            current_user
           when :path
             scoped_entity_class
               .associated_with(current_user)
               .from_path_param(request.path_parameters[scoped_entity_param_key])
               .first! # Raise NotFound if user does not have access to the entity or it does not exist
+          when Symbol
+            send scoped_entity_strategy
           else
-            raise NotImplementedError, "unknown scoped entity strategy: #{scoped_entity_strategy}"
+            raise NotImplementedError, "unknown scoped entity strategy: #{scoped_entity_strategy.inspect}"
           end
         end
 
