@@ -13,13 +13,8 @@ module Pu
 
       def start
         bundle "sidekiq"
-        bundle "sidekiq-failures"
         directory "app"
         directory "config"
-
-        in_root do
-          insert_into_file "app/jobs/application_job.rb", "\n  sidekiq_options failures: :exhausted\n", before: /^end/
-        end
 
         add_compose_env :REDIS_QUEUE_URL, "redis://redis-queue/0"
         add_required_env_vars :REDIS_QUEUE_URL
