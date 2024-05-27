@@ -27,7 +27,7 @@ module Plutonium
           end
 
           def associated_classes
-            Rails.application.eager_load! unless Rails.application.config.eager_load
+            Plutonium.eager_load_rails!
 
             associated_classes = []
             ActiveRecord::Base.descendants.each do |model|

@@ -31,6 +31,13 @@ module Plutonium
     ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
   end
 
+  def self.eager_load_rails!
+    return if Rails.env.production? && defined?(@rails_eager_loaded)
+
+    Rails.application.eager_load! unless Rails.application.config.eager_load
+    @rails_eager_loaded = true
+  end
+
   def self.stylesheet_link
     return @stylesheet_link if defined?(@stylesheet_link) && !development?
 

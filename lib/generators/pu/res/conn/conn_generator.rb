@@ -17,7 +17,7 @@ module Pu
         source_feature = select_feature
         source_module = (source_feature == "main_app") ? "ResourceRecord" : "#{source_feature.classify}::ResourceRecord"
 
-        Rails.application.eager_load!
+        Plutonium.eager_load_rails!
         available_resources = source_module.constantize.descendants.map(&:to_s)
         selected_resources = prompt.multi_select("Select resources", available_resources)
 
