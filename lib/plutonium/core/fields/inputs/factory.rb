@@ -14,6 +14,7 @@ module Plutonium
           map_type :attachment, to: Plutonium::Core::Fields::Inputs::AttachmentInput
           map_type :datetime, :date, :time, to: Plutonium::Core::Fields::Inputs::DateTimeInput
           map_type :phone, to: Plutonium::Core::Fields::Inputs::PhoneInput
+          map_type :boolean, to: Plutonium::Core::Fields::Inputs::CheckboxInput
           # map_type :text, :string, to: Plutonium::Core::Fields::Inputs::SimpleFormInput
 
           def self.build(name, type:, **options)
