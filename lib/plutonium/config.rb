@@ -17,5 +17,10 @@ module Plutonium
     @@favicon_tag = ->(view_context) {
       "<link rel=\"icon\" type=\"image/x-icon\" href=\"#{Plutonium.favicon_link}\">".html_safe
     }
+
+    mattr_accessor :logo_tag
+    @@logo_tag = ->(view_context, classname:) {
+      "<img src=\"#{Plutonium.logo_link}\" class=\"#{classname}\" alt=\"#{Plutonium.application_name} Logo\" />".html_safe
+    }
   end
 end

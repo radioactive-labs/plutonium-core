@@ -24,7 +24,11 @@ module Plutonium
   end
 
   def self.application_name
-    Rails.application.class.module_parent.name
+    @application_name || Rails.application.class.module_parent.name
+  end
+
+  def self.application_name=(application_name)
+    @application_name = application_name
   end
 
   def self.development?
@@ -68,11 +72,19 @@ module Plutonium
   end
 
   def self.favicon_link
-    "/plutonium-assets/plutonium.ico"
+    @favicon_link || "/plutonium-assets/plutonium.ico"
+  end
+
+  def self.favicon_link=(favicon_link)
+    @favicon_link = favicon_link
   end
 
   def self.logo_link
-    "/plutonium-assets/plutonium-logo.png"
+    @logo_link || "/plutonium-assets/plutonium-logo.png"
+  end
+
+  def self.logo_link=(logo_link)
+    @logo_link = logo_link
   end
 
   def self.stylesheet_manifest
