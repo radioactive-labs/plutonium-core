@@ -1,9 +1,9 @@
 <%#= render_component :panel do %>
-  <div data-controller="toolbar" <%= render_component_attributes %>>
+  <div <%= attributes_html %>>
     <div class="w-full md:w-1/2">
         <%= content %>
     </div>
-    <div class="<%= toolbar_actions_classes %>">
+    <div class="<%= toolbar_actions_classname %>">
       <% actions.values.each do |action| %>
         <%= toolbar_action_button resource, action %>
       <% end %>

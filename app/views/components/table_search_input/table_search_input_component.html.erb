@@ -1,4 +1,4 @@
-<div data-controller="table-search-input" <%= render_component_attributes %>>
+<div <%= attributes_html %>>
   <%= simple_form_for :q, url: "", method: :get, html: { class: "flex items-center", data: { controller: "form", turbo_frame: nil } } do |f| %>
     <label for="search" class="sr-only">Search</label>
     <div class="relative w-full">

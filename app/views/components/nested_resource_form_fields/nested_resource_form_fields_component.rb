@@ -10,8 +10,14 @@ module Plutonium::Ui
     option :update_only, optional: true
     option :limit, optional: true
 
-    def base_classname
-      "mt-6 mb-4"
+    def base_attributes
+      {
+        classname: "mt-6 mb-4",
+        controller: "nested-resource-form-fields",
+        data: {
+          "nested-resource-form-fields-limit-value": limit
+        }
+      }
     end
 
     def label

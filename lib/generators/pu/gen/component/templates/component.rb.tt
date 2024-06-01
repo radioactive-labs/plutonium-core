@@ -1,8 +1,14 @@
 module <%= component_namespace %>
   class <%= component_classname %> < Plutonium::Ui::Base
-    # def base_classname
-    #   "base classnames here"
-    # end
+    private
+
+    def base_attributes
+      # base attributes go here
+      {
+        classname: "<%= controller_identifier %>",
+        controller: "<%= controller_identifier %>"
+      }
+    end
   end
 end
 

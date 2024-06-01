@@ -9,10 +9,6 @@ module Plutonium::Ui
     option :nav_aria_label, optional: true
     option :nav_i18n_key, optional: true
 
-    def classname
-      "flex flex-col items-center space-y-2 p-6 #{super}"
-    end
-
     def pagy_nav(pagy, **vars)
       p_id = %( id="#{pagy_id}") if pagy_id
       link = pagy_link_proc(pagy, link_extra: "class=\"#{default_link_classes} #{page_link_classes}\"")
@@ -51,6 +47,13 @@ module Plutonium::Ui
     end
 
     private
+
+    def base_attributes
+      {
+        classname: "flex flex-col items-center space-y-2 p-6",
+        controller: "pagination"
+      }
+    end
 
     def prev_html(pagy, text: pagy_t("pagy.prev"))
       link = pagy_link_proc(pagy, link_extra: "class=\"#{default_link_classes} #{page_link_classes} rounded-s-lg\"")

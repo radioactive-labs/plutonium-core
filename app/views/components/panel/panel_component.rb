@@ -2,8 +2,12 @@ module Plutonium::Ui
   class PanelComponent < Plutonium::Ui::Base
     option :title, optional: true
 
-    def classname
-      "p-4 #{super}"
+    private
+
+    def base_attributes
+      {
+        classname: "p-4"
+      }
     end
   end
 end

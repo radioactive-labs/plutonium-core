@@ -3,6 +3,14 @@ module Plutonium::Ui
     option :resource_class
     option :search_object
     option :actions
+
+    private
+
+    def base_attributes
+      {
+        controller: "table-toolbar"
+      }
+    end
   end
 end
 

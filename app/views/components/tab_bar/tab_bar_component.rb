@@ -1,8 +1,12 @@
 module Plutonium::Ui
   class TabBarComponent < Plutonium::Ui::Base
-    # def base_classname
-    #   "base classnames here"
-    # end
+    private
+
+    def base_attributes
+      {
+        controller: "tab-bar"
+      }
+    end
   end
 end
 

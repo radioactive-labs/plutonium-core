@@ -3,14 +3,18 @@ module Plutonium::Ui
     option :resource
     option :actions, default: proc { {} }
 
-    def classname
-      "flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4 #{super}"
-    end
-
     private
 
-    def toolbar_actions_classes
-      "w-full md:w-auto flex flex-col md:flex-row space-y-1 md:space-y-0 items-stretch md:items-center justify-end shrink-0"
+    def base_attributes
+      {
+        classname: "flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0 md:space-x-4",
+        toolbar_actions_classname: "w-full md:w-auto flex flex-col md:flex-row space-y-1 md:space-y-0 items-stretch md:items-center justify-end shrink-0",
+        controller: "toolbar"
+      }
+    end
+
+    def toolbar_actions_classname
+      attributes_hash[:toolbar_actions_classname]
     end
   end
 end

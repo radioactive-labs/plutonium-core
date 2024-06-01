@@ -5,10 +5,14 @@ module Plutonium::Ui
 
     private
 
-    def classname
-      classnames = ["relative bg-white dark:bg-gray-800 shadow-md", rounded_classes, scroll_classes]
-      classnames << super.presence
-      classnames.compact.join " "
+    def base_attributes
+      {
+        classname: classnames
+      }
+    end
+
+    def classnames
+      ["relative bg-white dark:bg-gray-800 shadow-md", rounded_classes, scroll_classes]
     end
 
     def scroll_classes

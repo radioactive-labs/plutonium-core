@@ -1,9 +1,14 @@
 module Plutonium::Ui
   class TableSearchInputComponent < Plutonium::Ui::Base
     option :search_object
-    # def classname
-    #   "custom classnames here #{super}"
-    # end
+
+    private
+
+    def base_attributes
+      {
+        controller: "table-search-input"
+      }
+    end
   end
 end
 

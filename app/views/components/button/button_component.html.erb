@@ -1,10 +1,10 @@
 <% if to %>
-  <%= link_to to, role: "button", **component_attributes do %>
+  <%= link_to to, role: "button", **attributes_hash do %>
     <%= render_icon icon if icon %>
     <span><%= label %></span>
   <% end %>
 <% else %>
-  <button <%= render_component_attributes %> type="<%= type %>" %>
+  <button <%= attributes_html %> type="<%= type %>" %>
     <%= render_icon icon if icon %>
     <span><%= label %></span>
   </button>
