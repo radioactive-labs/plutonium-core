@@ -11,8 +11,7 @@ module Plutonium
           after_action :verify_authorized
           after_action :verify_policy_scoped, except: %i[new create]
 
-          helper_method :permitted_attributes
-          helper_method :current_policy
+          helper_method :current_policy, :permitted_attributes
         end
 
         private
@@ -43,6 +42,10 @@ module Plutonium
 
         def permitted_attributes
           @permitted_attributes ||= current_policy.send_with_report :"permitted_attributes_for_#{action_name}"
+        end
+
+        def permitted_associations
+          @permitted_associations ||= current_policy.permitted_associations
         end
 
         def current_policy

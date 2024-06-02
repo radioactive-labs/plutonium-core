@@ -1,18 +1,24 @@
-<div data-controller="has-many-panel" <%= attributes_html %>>
+<div <%= attributes_html %>>
   <%= render_component :panel, title: do |panel| %>
     <% panel.with_action do %>
-      <button title="Back" class="mr-2 text-gray-600 dark:text-gray-300" data-has-many-panel-target="backButton">
+      <button title="Back" class="mr-2 text-gray-600 dark:text-gray-300" style="display:none" data-frame-navigator-target="backButton">
         <%= render_icon "outline/chevron-left", size: :xl %>
       </button>
     <% end %>
 
     <% panel.with_action do %>
-      <button title="Refresh" data-has-many-panel-target="refreshButton" class="text-gray-600 dark:text-gray-300">
+      <button title="Home" class="mr-2 text-gray-600 dark:text-gray-300" style="display:none" data-frame-navigator-target="homeButton">
+        <%= render_icon "outline/home", size: :xl %>
+      </button>
+    <% end %>
+
+    <% panel.with_action do %>
+      <button title="Refresh" data-frame-navigator-target="refreshButton" style="display:none" class="text-gray-600 dark:text-gray-300">
         <%= render_icon "outline/refresh", size: :xl %>
       </button>
     <% end %>
 
-    <%= render_component :dyna_frame_host, data: { "has-many-panel-target": "frame" }, src: do %>
+    <%= render_component :dyna_frame_host, loading: :lazy, data: { "frame-navigator-target": "frame" }, src: do %>
       <%= render_component :skeleton__table %>
     <% end %>
   <% end %>

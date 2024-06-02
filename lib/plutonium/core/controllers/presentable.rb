@@ -44,6 +44,7 @@ module Plutonium
             resource_class:,
             record: resource_record,
             fields: current_presenter.defined_renderers_for(*presentable_attributes),
+            associations: current_presenter.defined_association_renderers_for(*permitted_associations),
             actions: current_presenter.actions
           )
         end

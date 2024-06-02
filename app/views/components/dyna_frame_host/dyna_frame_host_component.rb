@@ -1,13 +1,15 @@
 module Plutonium::Ui
   class DynaFrameHostComponent < Plutonium::Ui::Base
     option :src
+    option :loading
 
     private
 
     def base_attributes
       {
         id: SecureRandom.hex,
-        src:
+        src:,
+        loading:
       }
     end
   end

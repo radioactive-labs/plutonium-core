@@ -5,6 +5,7 @@ module Plutonium
     class Presenter
       include Plutonium::Core::Definers::FieldDefiner
       include Plutonium::Core::Definers::ActionDefiner
+      include Plutonium::Core::Definers::AssociationRendererDefiner
 
       # Initializes the presenter with context and resource record
       # @param [Object] context The context in which the presenter is used

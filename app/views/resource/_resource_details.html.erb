@@ -7,20 +7,22 @@
 
 
 <%= render_component :block, rounded: :all do %>
-
   <div class="p-4">
     <dl class="divide-y divide-gray-100">
-      <% details.fields.each do |name, field| %>
+      <% details.fields.each do |name, renderer| %>
         <div class="py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
           <dt class="text-sm font-medium leading-6 text-gray-900 dark:text-gray-300">
-            <%= field.label %>
+            <%= renderer.label %>
           </dt>
           <dd class="mt-1 text-sm leading-6 text-gray-700 dark:text-gray-200 sm:col-span-2 sm:mt-0">
-            <%= field.render self, details.record %>
+            <%= renderer.render self, details.record %>
           </dd>
         </div>
       <% end %>
     </dl>
   </div>
+<% end %>
 
+<% details.associations.each do |name, renderer| %>
+  <%= renderer.render self, details.record %>
 <% end %>

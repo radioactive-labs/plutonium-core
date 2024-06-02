@@ -19,5 +19,11 @@ class <%= class_name %>Policy < <%= [feature_package_name, "ResourcePolicy"].joi
   def permitted_attributes_for_read
     <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
   end
+
+  # Associations
+
+  def permitted_associations
+    %i[]
+  end
 end
 <% end -%>
