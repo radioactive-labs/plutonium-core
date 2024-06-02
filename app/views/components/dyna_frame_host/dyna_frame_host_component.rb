@@ -2,8 +2,13 @@ module Plutonium::Ui
   class DynaFrameHostComponent < Plutonium::Ui::Base
     option :src
 
-    def id
-      super || SecureRandom.hex
+    private
+
+    def base_attributes
+      {
+        id: SecureRandom.hex,
+        src:
+      }
     end
   end
 end
