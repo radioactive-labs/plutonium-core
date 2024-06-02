@@ -25,8 +25,8 @@ module Plutonium
       #
       # @param icon [Symbol, String] The name or identifier of the icon to render.
       # @return [String] The HTML-safe string for the rendered icon.
-      def render_icon(icon)
-        Plutonium::Icons.render(icon)
+      def render_icon(icon, **)
+        Plutonium::Icons.render(icon, **)
       end
     end
   end

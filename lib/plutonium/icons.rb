@@ -4,7 +4,8 @@ module Plutonium
     ICON_SIZES = {
       sm: "w-3 h-3",
       md: "w-4 h-4",
-      lg: "w-6 h-6"
+      lg: "w-6 h-6",
+      xl: "w-8 h-8"
     }
 
     class << self
