@@ -1,5 +1,7 @@
 module Plutonium::Ui
   class PanelComponent < Plutonium::Ui::Base
+    renders_many :actions
+
     option :title, optional: true
 
     private
