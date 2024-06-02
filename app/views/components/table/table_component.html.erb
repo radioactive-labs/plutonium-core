@@ -1,92 +1,43 @@
-<% if search_object.scope_definitions.present?  %>
-  <%
-    name = name.to_s
-    current_scope = resource_query_params[:scope]
-  %>
-  <%= render_component :block, rounded: :top do %>
-    <ul class="text-sm font-medium flex flex-wrap -mb-px">
-        <li class="me-2">
-          <% if current_scope.blank? %>
-            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
-          <% else %>
-            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
-          <% end %>
-        </li>
-
-        <% search_object.scope_definitions.each do |name, definition| %>
-          <li class="me-2">
-            <% if name == current_scope %>
-              <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
-            <% else %>
-              <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
-            <% end %>
-          </li>
+<table <%= attributes_html %>>
+  <thead class="<%= table_head_classname %>">
+    <tr>
+      <th scope="col" class="p-4">
+        <div class="flex items-center">
+          <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="checkbox-all-search" class="sr-only">checkbox</label>
+        </div>
+      </th>
+      <% @columns.each do |column| %>
+        <th scope="col" class="<%= table_head_cell_classname %>">
+          <%= table_head_cell column  %>
+        </th>
+      <% end %>
+      <% if actions_block.present? %>
+        <th scope="col" class="<%= table_actions_head_classname %>">&nbsp;</th>
+      <% end %>
+    </tr>
+  </thead>
+  <tbody>
+    <% @rows.each do |row| %>
+      <tr class="<%= table_row_classname %>">
+        <th scope="row" class="w-4 p-4">
+          <div class="flex items-center">
+            <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+            <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
+          </div>
+        </th>
+        <% @columns.each do |column| %>
+          <td class="<%= table_row_cell_classname %>">
+            <%# the capture ensures, that we do not only return the return of the block, but all the html from the block %>
+            <%= view_context.capture(row, &column.td_block) %>
+          </td>
         <% end %>
-    </ul>
-  <% end %>
-<% end %>
-
-<%= render_component :block, id: "resource-table-container", scroll: :x, rounded: table_rounding, data: {controller:"scroll-preserver", action: "scroll->scroll-preserver#scrolled"} do %>
-  <% unless resources.any? %>
-    <div class="col-12">
-      <%=
-        render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} match your query" do
-          if current_policy.create?
-            render_component :button, label: "Create #{resource_name(resource_class)}",
-                                        to: resource_url_for(resource_class, action: :new),
-                                        color: :primary
-          end
-        end
-      %>
-    </div>
-  <% else %>
-    <table data-controller="table" <%= render_component_attributes %>>
-      <thead class="<%= table_head_classes %>">
-        <tr>
-          <th scope="col" class="p-4">
-            <div class="flex items-center">
-              <input id="checkbox-all-search" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-              <label for="checkbox-all-search" class="sr-only">checkbox</label>
-            </div>
-          </th>
-          <% fields.each do |name, field| %>
-            <th scope="col" class="px-6 py-3">
-              <%= table_header name, field.label, search_object  %>
-            </th>
-          <% end %>
-          <th scope="col" class="px-6 py-3 text-end">&nbsp;</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% resources.each do |resource| %>
-          <tr class="<%= table_row_classes %>">
-            <th scope="row" class="w-4 p-4">
-              <div class="flex items-center">
-                <input id="checkbox-table-search-1" type="checkbox" class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-                <label for="checkbox-table-search-1" class="sr-only">checkbox</label>
-              </div>
-            </th>
-            <% fields.each do |name, field| %>
-              <%
-                options = field.options
-                max_width = options.delete :pu_max_width
-              %>
-              <td class="<%= table_row_cell_classes %>">
-                <%= field.render self, resource %>
-              </td>
-            <% end %>
-            <td class="<%= table_actions_cell_classes %>">
-              <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
-                <%= table_action_button resource, action %>
-              <% end %>
-            </td>
-          </tr>
+        <% if actions_block.present? %>
+          <td class="<%= table_actions_row_classname %>">
+            <%= view_context.capture(row, &actions_block) %>
+          </td>
         <% end %>
-      </tbody>
-    </table>
-
-    <% if pager.present? %>
-      <%= render_component :pagination, pager: pager %>
+      </tr>
     <% end %>
-  <% end %>
-<% end %>
+  </tbody>
+</table>

@@ -8,8 +8,77 @@
   fields = collection.fields
   pager = collection.pager
   collection_actions = @collection.actions.collection_actions.permitted_for(current_policy)
+  table_rounding = search_object.scope_definitions.present? ? :bottom : :all
 -%>
 
 <%= render_component :table_toolbar, resource_class:, search_object:, actions: collection_actions %>
 
-<%= render_component :table, resource_class:, resources:, record_actions:, search_object:, fields:, pager:  %>
+<% if search_object.scope_definitions.present?  %>
+  <%
+    name = name.to_s
+    current_scope = resource_query_params[:scope]
+  %>
+  <%= render_component :block, rounded: :top do %>
+    <ul class="text-sm font-medium flex flex-wrap -mb-px">
+        <li class="me-2">
+          <% if current_scope.blank? %>
+            <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: nil) %>">All</a>
+          <% else %>
+            <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: nil) %>">All</a>
+          <% end %>
+        </li>
+
+        <% search_object.scope_definitions.each do |name, definition| %>
+          <li class="me-2">
+            <% if name == current_scope %>
+              <a class="inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" aria-current="page" href="?<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% else %>
+              <a class="inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300 dark:text-gray-500" href="<%= search_object.build_url(scope: name) %>"><%= name.humanize %></a>
+            <% end %>
+          </li>
+        <% end %>
+    </ul>
+  <% end %>
+<% end %>
+
+<%= render_component :block, id: "resource-table-container",
+                             scroll: :x,
+                             rounded: table_rounding,
+                             data: {
+                              controller:"scroll-preserver",
+                              action: "scroll->scroll-preserver#scrolled"
+                             } do %>
+  <% unless resources.any? %>
+    <%# empty card %>
+    <div class="col-12">
+      <%=
+        render_component :empty_card, message: "No #{resource_name_plural(resource_class).downcase} match your query" do
+          if current_policy.create?
+            render_component :button, label: "Create #{resource_name(resource_class)}",
+                                        to: resource_url_for(resource_class, action: :new),
+                                        color: :primary
+          end
+        end
+      %>
+    </div>
+  <% else %>
+    <%# table %>
+    <%= render_component :table, rows: resources do |table| %>
+      <% table.with_actions do |resource| %>
+        <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
+          <%= table_action_button resource, action %>
+        <% end %>
+      <% end %>
+
+      <% fields.each do |name, field| %>
+        <% table.column(name:, label: field.label, search_object: search_object) do |resource| %>
+          <%= field.render self, resource %>
+        <% end %>
+      <% end %>
+    <% end %>
+    <%# pagination %>
+    <% if pager.present? %>
+      <%= render_component :pagination, pager: pager %>
+    <% end %>
+  <% end %>
+<% end %>
