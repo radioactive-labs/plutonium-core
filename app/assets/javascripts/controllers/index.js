@@ -1,4 +1,5 @@
 // Import controllers here
+import HasManyPanelController from "../../../../app/views/components/has_many_panel/has_many_panel_controller.js"
 import NestedResourceFormFieldsController from "../../../../app/views/components/nested_resource_form_fields/nested_resource_form_fields_controller.js"
 import TabBarController from "../../../../app/views/components/tab_bar/tab_bar_controller.js"
 import ToolbarController from "../../../../app/views/components/toolbar/toolbar_controller.js"
@@ -11,6 +12,7 @@ import ResourceDismissController from "./resource_dismiss_controller.js"
 
 export function registerControllers(application) {
   // Register controllers here
+  application.register("has-many-panel", HasManyPanelController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
   application.register("tab-bar", TabBarController)
   application.register("toolbar", ToolbarController)
@@ -23,6 +25,7 @@ export function registerControllers(application) {
 }
 
 // Export controllers here
+export { HasManyPanelController }
 export { NestedResourceFormFieldsController };
 export { TabBarController };
 export { ToolbarController };

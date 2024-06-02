@@ -1,0 +1,19 @@
+<div data-controller="has-many-panel" <%= attributes_html %>>
+  <%= render_component :panel, title: do |panel| %>
+    <% panel.with_action do %>
+      <button title="Back" class="mr-2 text-gray-600 dark:text-gray-300" data-has-many-panel-target="backButton">
+        <%= render_icon "outline/chevron-left", size: :xl %>
+      </button>
+    <% end %>
+
+    <% panel.with_action do %>
+      <button title="Refresh" data-has-many-panel-target="refreshButton" class="text-gray-600 dark:text-gray-300">
+        <%= render_icon "outline/refresh", size: :xl %>
+      </button>
+    <% end %>
+
+    <%= render_component :dyna_frame_host, data: { "has-many-panel-target": "frame" }, src: do %>
+      <%= render_component :skeleton__table %>
+    <% end %>
+  <% end %>
+</div>
