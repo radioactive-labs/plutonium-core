@@ -5,6 +5,7 @@ module Plutonium::Ui
     option :name
     option :url, default: -> { "" }
     option :options, default: -> { {} }
+    option :icon, optional: true
 
     private
 
