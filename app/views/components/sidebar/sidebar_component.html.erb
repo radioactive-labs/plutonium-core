@@ -55,36 +55,6 @@
     </div>
     -->
 
-    <script>
-      function updateColorMode() {
-        // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
-      }
-
-      function setLightColorMode() {
-        // Whenever the user explicitly chooses light mode
-        localStorage.theme = 'light'
-        updateColorMode()
-      }
-
-      function setDarkColorMode() {
-        // Whenever the user explicitly chooses dark mode
-        localStorage.theme = 'dark'
-        updateColorMode()
-      }
-
-      function setSystemColorMode() {
-        // Whenever the user explicitly chooses to respect the OS preference
-        localStorage.removeItem('theme')
-        updateColorMode()
-      }
-
-      updateColorMode()
-    </script>
 
     <!-- Color Modes -->
     <div data-controller="resource-drop-down">
@@ -105,7 +75,7 @@
               type="button"
               class="w-full block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:text-white dark:text-gray-300 dark:hover:bg-gray-600"
               role="menuitem"
-              onclick="setLightColorMode()"
+              data-action="click->color-mode#setLightColorMode"
             >
               <div class="flex justify-start">
                 <svg class="w-6 h-6 me-2 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -120,7 +90,7 @@
               type="button"
               class="w-full block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:text-white dark:text-gray-300 dark:hover:bg-gray-600"
               role="menuitem"
-              onclick="setDarkColorMode()"
+              data-action="click->color-mode#setDarkColorMode"
             >
               <div class="flex justify-start">
                 <svg class="w-6 h-6 me-2 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -135,7 +105,7 @@
               type="button"
               class="w-full block py-2 px-4 text-sm text-gray-700 hover:bg-gray-100 dark:hover:text-white dark:text-gray-300 dark:hover:bg-gray-600"
               role="menuitem"
-              onclick="setSystemColorMode()"
+              data-action="click->color-mode#setSystemColorMode"
             >
               <div class="flex justify-start">
                 <svg class="w-6 h-6 me-2 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">

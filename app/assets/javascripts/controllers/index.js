@@ -12,6 +12,7 @@ import FormController from "../../../../app/views/components/form/form_controlle
 import ResourceDropDownController from "./resource_drop_down_controller.js"
 import ResourceDismissController from "./resource_dismiss_controller.js"
 import FrameNavigatorController from "./frame_navigator_controller.js"
+import ColorModeController from "./color_mode.js"
 
 export function registerControllers(application) {
   // Register controllers here
@@ -28,6 +29,7 @@ export function registerControllers(application) {
   application.register("resource-drop-down", ResourceDropDownController)
   application.register("resource-dismiss", ResourceDismissController)
   application.register("frame-navigator", FrameNavigatorController)
+  application.register("color-mode", ColorModeController)
 
 }
 
@@ -45,3 +47,4 @@ export { FormController };
 export { ResourceDropDownController };
 export { ResourceDismissController };
 export { FrameNavigatorController };
+export { ColorModeController };
