@@ -69,7 +69,11 @@ module Plutonium
       #   attributes = object.attributes_hash
       #   # => { id: "some_id", title: "some_tooltip", class: "some_class", data: { controller: "some_controller", key: "value" } }
       def attributes_hash
-        @attributes_hash ||= build_attributes_hash
+        @attributes_hash ||= raw_attributes_hash.except(*filtered_attributes)
+      end
+
+      def raw_attributes_hash
+        @raw_attributes_hash ||= build_attributes_hash
       end
 
       # Generates an HTML-safe string of attributes for the current object.
@@ -95,6 +99,22 @@ module Plutonium
       # @return [Hash] The base attributes hash.
       def base_attributes
         {}
+      end
+
+      # Returns the list of attributes that should be filtered from #attributes_hash
+      # Useful for allowing attributes to be overriden while not rendering them on the dom element.
+      #
+      # @return [Array] The list of attributes to filter.
+      def filtered_attributes
+        []
+      end
+
+      # Returns the list of attributes that are we include in our attributes_hash.
+      # Can be used in #filtered_attributes to simplify filtering.
+      #
+      # @return [Array] The list of possible attributes.
+      def possible_attributes
+        %i[id class data title]
       end
 
       # Builds the attributes hash by merging base attributes and custom attributes,

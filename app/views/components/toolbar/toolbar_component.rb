@@ -13,8 +13,12 @@ module Plutonium::Ui
       }
     end
 
+    def filtered_attributes
+      %i[toolbar_actions_classname]
+    end
+
     def toolbar_actions_classname
-      attributes_hash[:toolbar_actions_classname]
+      raw_attributes_hash[:toolbar_actions_classname]
     end
   end
 end

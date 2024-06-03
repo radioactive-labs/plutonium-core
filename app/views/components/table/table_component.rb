@@ -40,6 +40,10 @@ module Plutonium
         }
       end
 
+      def filtered_attributes
+        base_attributes.keys - possible_attributes
+      end
+
       # Defines a block of actions to be included in each row.
       #
       # @param block [Proc] The block defining the actions.
@@ -58,42 +62,42 @@ module Plutonium
       #
       # @return [String] The CSS class for the table head.
       def table_head_classname
-        attributes_hash[:table_head_classname]
+        raw_attributes_hash[:table_head_classname]
       end
 
       # Retrieves the CSS class for a table head cell.
       #
       # @return [String] The CSS class for a table head cell.
       def table_head_cell_classname
-        attributes_hash[:table_head_cell_classname]
+        raw_attributes_hash[:table_head_cell_classname]
       end
 
       # Retrieves the CSS class for a table row.
       #
       # @return [String] The CSS class for a table row.
       def table_row_classname
-        attributes_hash[:table_row_classname]
+        raw_attributes_hash[:table_row_classname]
       end
 
       # Retrieves the CSS class for a table row cell.
       #
       # @return [String] The CSS class for a table row cell.
       def table_row_cell_classname
-        attributes_hash[:table_row_cell_classname]
+        raw_attributes_hash[:table_row_cell_classname]
       end
 
       # Retrieves the CSS class for the table actions head.
       #
       # @return [String] The CSS class for the table actions head.
       def table_actions_head_classname
-        attributes_hash[:table_actions_head_classname]
+        raw_attributes_hash[:table_actions_head_classname]
       end
 
       # Retrieves the CSS class for the table actions row.
       #
       # @return [String] The CSS class for the table actions row.
       def table_actions_row_classname
-        attributes_hash[:table_actions_row_classname]
+        raw_attributes_hash[:table_actions_row_classname]
       end
 
       # Generates the content for a table head cell, including sorting links if applicable.
