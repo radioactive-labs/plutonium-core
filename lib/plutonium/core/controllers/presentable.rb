@@ -5,7 +5,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          helper_method :presentable_attributes
+          helper_method :presentable_attributes, :present_associations?
         end
 
         private
@@ -54,6 +54,10 @@ module Plutonium
             record: resource_record,
             inputs: current_presenter.defined_inputs_for(*presentable_attributes)
           )
+        end
+
+        def present_associations?
+          current_parent.nil?
         end
       end
     end

@@ -5,7 +5,6 @@
                              actions: details.actions.record_actions.permitted_for(policy(details.record))
 %>
 
-
 <%= render_component :block, rounded: :all do %>
   <div class="p-4">
     <dl class="divide-y divide-gray-100">
@@ -23,6 +22,8 @@
   </div>
 <% end %>
 
-<% details.associations.each do |name, renderer| %>
-  <%= renderer.render self, details.record %>
+<% if present_associations? %>
+  <% details.associations.each do |name, renderer| %>
+    <%= renderer.render self, details.record %>
+  <% end %>
 <% end %>
