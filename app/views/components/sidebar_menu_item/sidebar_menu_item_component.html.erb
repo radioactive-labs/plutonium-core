@@ -3,8 +3,8 @@
     <button
       type="button"
       class="<%= link_button_class %> w-full transition duration-75"
-      aria-controls="dropdown-<%= name.parameterize %>"
-      data-collapse-toggle="dropdown-<%= name.parameterize %>">
+      data-resource-drop-down-target="trigger"
+      aria-controls="dropdown-<%= name.parameterize %>">
       <svg
         aria-hidden="true"
         class="shrink-0 w-6 h-6 text-gray-500 transition duration-75 group-hover:text-gray-900 dark:text-gray-200 dark:group-hover:text-white"
@@ -32,7 +32,7 @@
       </svg>
     </button>
 
-    <ul id="dropdown-<%= name.parameterize %>" class="hidden py-2 space-y-2">
+    <ul id="dropdown-<%= name.parameterize %>" data-resource-drop-down-target="menu" class="hidden py-2 space-y-2">
       <% sub_items.each do |sub_item| %>
         <%#= sub_item %>
         <li>

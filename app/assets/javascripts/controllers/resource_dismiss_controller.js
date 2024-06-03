@@ -11,6 +11,8 @@ export default class extends Controller {
   }
 
   connect() {
+    console.log(`resource-dismiss connected: ${this.element}`)
+
     // https://flowbite.com/docs/components/alerts/#javascript-behaviour
     this.dismiss = new Dismiss(this.targetTarget, this.triggerTarget);
 
