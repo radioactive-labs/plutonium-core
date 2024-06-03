@@ -1,4 +1,6 @@
 // Import controllers here
+import SidebarMenuItemController from "../../../../app/views/components/sidebar_menu_item/sidebar_menu_item_controller.js"
+import SidebarMenuController from "../../../../app/views/components/sidebar_menu/sidebar_menu_controller.js"
 import HasManyPanelController from "../../../../app/views/components/has_many_panel/has_many_panel_controller.js"
 import NestedResourceFormFieldsController from "../../../../app/views/components/nested_resource_form_fields/nested_resource_form_fields_controller.js"
 import TabBarController from "../../../../app/views/components/tab_bar/tab_bar_controller.js"
@@ -13,6 +15,8 @@ import FrameNavigatorController from "./frame_navigator_controller.js"
 
 export function registerControllers(application) {
   // Register controllers here
+  application.register("sidebar-menu-item", SidebarMenuItemController)
+  application.register("sidebar-menu", SidebarMenuController)
   application.register("has-many-panel", HasManyPanelController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
   application.register("tab-bar", TabBarController)
@@ -28,6 +32,8 @@ export function registerControllers(application) {
 }
 
 // Export controllers here
+export { SidebarMenuItemController }
+export { SidebarMenuController }
 export { HasManyPanelController }
 export { NestedResourceFormFieldsController };
 export { TabBarController };

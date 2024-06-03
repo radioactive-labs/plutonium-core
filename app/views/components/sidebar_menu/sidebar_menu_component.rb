@@ -1,11 +1,15 @@
 module Plutonium::Ui
   class SidebarMenuComponent < Plutonium::Ui::Base
-    option :separated, optional: true
+    renders_many :items, "::Plutonium::Ui::SidebarMenuItemComponent"
 
     private
 
-    def menu_class
-      "space-y-2 #{separated ? "pt-5 mt-5 border-t border-gray-200 dark:border-gray-700" : nil}"
+    def base_attributes
+      # base attributes go here
+      {
+        classname: "sidebar-menu space-y-2",
+        controller: "sidebar-menu"
+      }
     end
   end
 end

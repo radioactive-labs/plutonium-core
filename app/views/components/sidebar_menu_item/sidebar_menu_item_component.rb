@@ -1,8 +1,10 @@
 module Plutonium::Ui
   class SidebarMenuItemComponent < Plutonium::Ui::Base
+    renders_many :sub_items, "::Plutonium::Ui::SidebarMenuItemComponent"
+
     option :name
-    option :value
-    option :indicator, optional: true
+    option :url, default: -> { "" }
+    option :options, default: -> { {} }
 
     private
 
