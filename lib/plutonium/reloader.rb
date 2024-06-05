@@ -31,7 +31,7 @@ module Plutonium
 
         if Plutonium.development?
           reload_paths << Plutonium.lib_root.to_s
-          reload_paths << Plutonium.root.join("app", "views", "components").to_s
+          # reload_paths << Plutonium.root.join("app", "views", "components").to_s
           reload_paths << Plutonium.root.join("config", "initializers").to_s
         end
 
@@ -83,7 +83,7 @@ module Plutonium
       def reload_framework_and_file(file)
         Plutonium.logger.debug "[plutonium] reloading framework"
         Plutonium::ZEITWERK_LOADER.reload
-        load Plutonium.root.join("app", "views", "components", "base.rb")
+        # load Plutonium.root.join("app", "views", "components", "base.rb")
         load file # Ensure files that do not contain constants are loaded
       end
 
