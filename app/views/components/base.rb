@@ -18,21 +18,11 @@ module Plutonium
       include Plutonium::Ui::Attributes
 
       delegate_missing_to :helpers
-
-      private
-
-      # Renders an icon using the Plutonium Icons library.
-      #
-      # @param icon [Symbol, String] The name or identifier of the icon to render.
-      # @return [String] The HTML-safe string for the rendered icon.
-      def render_icon(icon, **)
-        Plutonium::Icons.render(icon, **)
-      end
     end
   end
 end
 
 # Require all component files within the same directory and subdirectories
 Dir.glob(File.expand_path("**/*.rb", __dir__)) do |component|
-  load component unless component == __FILE__
+  require component unless component == __FILE__
 end

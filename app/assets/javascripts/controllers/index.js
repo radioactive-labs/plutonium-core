@@ -1,4 +1,10 @@
 // Import controllers here
+import NavGridMenuItemController from "../../../../app/views/components/nav_grid_menu_item/nav_grid_menu_item_controller.js"
+import NavGridMenuController from "../../../../app/views/components/nav_grid_menu/nav_grid_menu_controller.js"
+import NavUserSectionController from "../../../../app/views/components/nav_user_section/nav_user_section_controller.js"
+import NavUserLinkController from "../../../../app/views/components/nav_user_link/nav_user_link_controller.js"
+import NavUserController from "../../../../app/views/components/nav_user/nav_user_controller.js"
+import ResourceHeaderController from "../../../../app/views/components/resource_header/resource_header_controller.js"
 import SidebarMenuItemController from "../../../../app/views/components/sidebar_menu_item/sidebar_menu_item_controller.js"
 import SidebarMenuController from "../../../../app/views/components/sidebar_menu/sidebar_menu_controller.js"
 import HasManyPanelController from "../../../../app/views/components/has_many_panel/has_many_panel_controller.js"
@@ -16,6 +22,12 @@ import ColorModeController from "./color_mode.js"
 
 export function registerControllers(application) {
   // Register controllers here
+  application.register("nav-grid-menu-item", NavGridMenuItemController)
+  application.register("nav-grid-menu", NavGridMenuController)
+  application.register("nav-user-section", NavUserSectionController)
+  application.register("nav-user-link", NavUserLinkController)
+  application.register("nav-user", NavUserController)
+  application.register("resource-header", ResourceHeaderController)
   application.register("sidebar-menu-item", SidebarMenuItemController)
   application.register("sidebar-menu", SidebarMenuController)
   application.register("has-many-panel", HasManyPanelController)
@@ -34,6 +46,12 @@ export function registerControllers(application) {
 }
 
 // Export controllers here
+export { NavGridMenuItemController }
+export { NavGridMenuController }
+export { NavUserSectionController }
+export { NavUserLinkController }
+export { NavUserController }
+export { ResourceHeaderController }
 export { SidebarMenuItemController }
 export { SidebarMenuController }
 export { HasManyPanelController }

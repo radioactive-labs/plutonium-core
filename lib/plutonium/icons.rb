@@ -9,16 +9,22 @@ module Plutonium
     }
 
     class << self
-      def render(name, size: :md)
+      def render(name, size: :md, classname: nil)
+        size = ICON_SIZES.key?(size) ? size : :sm
+        classname = (Array(classname) + [ICON_SIZES[size]]).join(" ")
+
+        resolve(name).sub("<svg ", "<svg class=\"#{classname}\" ").html_safe
+      end
+
+      def resolve(name)
         # This is not threadsafe, but should not cause any issues
         # I believe adding a mutex would be overall more expensive than a few potential
         # concurrent disk accesses for a brief while after boot.
-        size = ICON_SIZES.key?(size) ? size : :sm
-        ICON_CACHE["#{name}:#{size}"] ||= begin
+        ICON_CACHE[name] ||= begin
           path = Plutonium.root.join "app/assets/icons/#{name}.svg"
           raise "Invalid icon: #{name}" unless File.exist?(path)
 
-          File.read(path).sub("<svg ", "<svg class=\"#{ICON_SIZES[size]}\" ").html_safe
+          File.read(path)
         end
       end
     end
