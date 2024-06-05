@@ -2,7 +2,7 @@
 
 <% if current_turbo_frame == 'modal' %>
   <%= turbo_frame_tag "modal" do %>
-    <div class="modal " tabindex="-1" data-controller="modal">
+    <div class="modal" tabindex="-1" data-controller="modal">
       <div class="modal-dialog modal-dialog-scrollable modal-lg">
         <%= resource_form_for @interaction, as: :interaction,
                                           method: :post,
