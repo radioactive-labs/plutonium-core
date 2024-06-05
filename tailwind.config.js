@@ -16,8 +16,8 @@ module.exports = {
   content: [
     // node modules are not packaged as part of the gem.
     './node_modules/flowbite/**/*.js', // requires framework user to have flowbite installed.
-    `${__dirname}/app/assets/**/*.css`,
-    `${__dirname}/app/views/**/*.{rb,erb}`,
+    `${__dirname}/app/assets/**/*.{css,js}`,
+    `${__dirname}/app/views/**/*.{rb,erb,js}`,
     `${__dirname}/config/initializers/simple_form.rb`,
     // TODO: temporary workaround for buttons flex basis hack.
     // To be removed after moving buttons_helper to components.

@@ -45,11 +45,13 @@ export default class extends Controller {
   }
 
   frameLoading(event) {
-    if (this.hasRefreshButtonTarget) this.refreshButtonTarget.classList.add("animate-spin")
+    if (this.hasRefreshButtonTarget) this.refreshButtonTarget.classList.add("motion-safe:animate-spin")
+    this.frameTarget.classList.add("motion-safe:animate-pulse")
   }
 
   frameLoaded(event) {
-    if (this.hasRefreshButtonTarget) this.refreshButtonTarget.classList.remove("animate-spin")
+    if (this.hasRefreshButtonTarget) this.refreshButtonTarget.classList.remove("motion-safe:animate-spin")
+    this.frameTarget.classList.remove("motion-safe:animate-pulse")
 
     let src = event.target.src
     if (src == this.currentSrc) {
