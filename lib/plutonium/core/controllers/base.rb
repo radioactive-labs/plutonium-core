@@ -18,7 +18,7 @@ module Plutonium
           end
 
           helper Plutonium::Helpers
-          helper_method :page_title, :resource_url_for, :resource_url_args_for, :root_path, :application_name
+          helper_method :page_title, :resource_url_for, :resource_url_args_for, :root_path
 
           append_view_path File.expand_path("app/views", Plutonium.root)
           layout -> { turbo_frame_request? ? false : "resource" }
@@ -31,11 +31,7 @@ module Plutonium
         end
 
         def page_title(title)
-          [title.presence, application_name].compact.join(" | ")
-        end
-
-        def application_name
-          Plutonium.application_name
+          [title.presence, helpers.application_name].compact.join(" | ")
         end
 
         #

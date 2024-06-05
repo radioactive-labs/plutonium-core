@@ -1,4 +1,5 @@
 // Import controllers here
+import ResourceLayoutController from "../../../../app/views/components/resource_layout/resource_layout_controller.js"
 import NavGridMenuItemController from "../../../../app/views/components/nav_grid_menu_item/nav_grid_menu_item_controller.js"
 import NavGridMenuController from "../../../../app/views/components/nav_grid_menu/nav_grid_menu_controller.js"
 import NavUserSectionController from "../../../../app/views/components/nav_user_section/nav_user_section_controller.js"
@@ -22,6 +23,7 @@ import ColorModeController from "./color_mode.js"
 
 export function registerControllers(application) {
   // Register controllers here
+  application.register("resource-layout", ResourceLayoutController)
   application.register("nav-grid-menu-item", NavGridMenuItemController)
   application.register("nav-grid-menu", NavGridMenuController)
   application.register("nav-user-section", NavUserSectionController)
@@ -46,6 +48,7 @@ export function registerControllers(application) {
 }
 
 // Export controllers here
+export { ResourceLayoutController }
 export { NavGridMenuItemController }
 export { NavGridMenuController }
 export { NavUserSectionController }
