@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class ActionButtonComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class ActionButtonComponent < PlutoniumUi::Base
     option :label
     option :to
     option :method
@@ -12,4 +12,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :action_button, to: Plutonium::Ui::ActionButtonComponent
+Plutonium::ComponentRegistry.register :action_button, to: PlutoniumUi::ActionButtonComponent

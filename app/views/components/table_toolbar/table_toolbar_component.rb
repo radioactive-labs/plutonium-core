@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class TableToolbarComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class TableToolbarComponent < PlutoniumUi::Base
     option :resource_class
     option :search_object
     option :actions
@@ -14,4 +14,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :table_toolbar, to: Plutonium::Ui::TableToolbarComponent
+Plutonium::ComponentRegistry.register :table_toolbar, to: PlutoniumUi::TableToolbarComponent

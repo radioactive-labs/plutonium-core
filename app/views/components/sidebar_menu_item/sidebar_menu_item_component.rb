@@ -1,6 +1,6 @@
-module Plutonium::Ui
-  class SidebarMenuItemComponent < Plutonium::Ui::Base
-    renders_many :sub_items, "::Plutonium::Ui::SidebarMenuItemComponent"
+module PlutoniumUi
+  class SidebarMenuItemComponent < PlutoniumUi::Base
+    renders_many :sub_items, "::PlutoniumUi::SidebarMenuItemComponent"
 
     option :name
     option :url, default: -> { "" }
@@ -39,4 +39,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :sidebar_menu_item, to: Plutonium::Ui::SidebarMenuItemComponent
+Plutonium::ComponentRegistry.register :sidebar_menu_item, to: PlutoniumUi::SidebarMenuItemComponent

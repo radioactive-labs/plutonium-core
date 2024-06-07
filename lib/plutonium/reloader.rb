@@ -85,15 +85,17 @@ module Plutonium
       end
 
       def reload_framework_and_file(file)
-        # Ensure that the file loads correctly before we do any reloading
-        load file
+        # # Ensure that the file loads correctly before we do any reloading
+        # load file
 
         Plutonium.logger.debug "[plutonium] reloading: app+framework"
         Rails.application.reloader.reload!
         Plutonium::ZEITWERK_LOADER.reload
+        # reload components
+        Object.send(:remove_const, "PlutoniumUi")
         load Plutonium.root.join("app", "views", "components", "base.rb")
-        # Ensure files that do not contain constants are loaded again e.g. initializers
-        load file
+        # # Ensure files that do not contain constants are loaded again e.g. initializers
+        # load file
       end
 
       def reload_file(file)

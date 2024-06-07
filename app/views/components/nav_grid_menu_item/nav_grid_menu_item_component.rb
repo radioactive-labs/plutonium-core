@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class NavGridMenuItemComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class NavGridMenuItemComponent < PlutoniumUi::Base
     option :name
     option :icon
     option :url, as: :href
@@ -17,4 +17,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nav_grid_menu_item, to: Plutonium::Ui::NavGridMenuItemComponent
+Plutonium::ComponentRegistry.register :nav_grid_menu_item, to: PlutoniumUi::NavGridMenuItemComponent

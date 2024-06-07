@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class PanelComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class PanelComponent < PlutoniumUi::Base
     renders_many :actions
 
     option :title, optional: true
@@ -14,4 +14,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :panel, to: Plutonium::Ui::PanelComponent
+Plutonium::ComponentRegistry.register :panel, to: PlutoniumUi::PanelComponent

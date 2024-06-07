@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class ToolbarComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class ToolbarComponent < PlutoniumUi::Base
     option :resource
     option :actions, default: proc { {} }
 
@@ -23,4 +23,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :toolbar, to: Plutonium::Ui::ToolbarComponent
+Plutonium::ComponentRegistry.register :toolbar, to: PlutoniumUi::ToolbarComponent

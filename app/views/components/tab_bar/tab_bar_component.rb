@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class TabBarComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class TabBarComponent < PlutoniumUi::Base
     private
 
     def base_attributes
@@ -10,4 +10,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :tab_bar, to: Plutonium::Ui::TabBarComponent
+Plutonium::ComponentRegistry.register :tab_bar, to: PlutoniumUi::TabBarComponent

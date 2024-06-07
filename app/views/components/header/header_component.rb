@@ -1,7 +1,7 @@
-module Plutonium::Ui
-  class HeaderComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class HeaderComponent < PlutoniumUi::Base
     option :title
   end
 end
 
-Plutonium::ComponentRegistry.register :header, to: Plutonium::Ui::HeaderComponent
+Plutonium::ComponentRegistry.register :header, to: PlutoniumUi::HeaderComponent

@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class NavUserLinkComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class NavUserLinkComponent < PlutoniumUi::Base
     renders_one :leading
     renders_one :trailing
 
@@ -20,4 +20,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nav_user_link, to: Plutonium::Ui::NavUserLinkComponent
+Plutonium::ComponentRegistry.register :nav_user_link, to: PlutoniumUi::NavUserLinkComponent

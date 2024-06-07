@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class NestedResourceFormFieldsComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class NestedResourceFormFieldsComponent < PlutoniumUi::Base
     option :name
     option :resource_class
     option :form
@@ -26,4 +26,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nested_resource_form_fields, to: Plutonium::Ui::NestedResourceFormFieldsComponent
+Plutonium::ComponentRegistry.register :nested_resource_form_fields, to: PlutoniumUi::NestedResourceFormFieldsComponent

@@ -1,6 +1,6 @@
-module Plutonium::Ui
-  class NavUserComponent < Plutonium::Ui::Base
-    renders_many :sections, "Plutonium::Ui::NavUserSectionComponent"
+module PlutoniumUi
+  class NavUserComponent < PlutoniumUi::Base
+    renders_many :sections, "PlutoniumUi::NavUserSectionComponent"
 
     option :email
     option :name, optional: true
@@ -29,4 +29,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nav_user, to: Plutonium::Ui::NavUserComponent
+Plutonium::ComponentRegistry.register :nav_user, to: PlutoniumUi::NavUserComponent

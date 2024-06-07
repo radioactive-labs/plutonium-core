@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class ResourceHeaderComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class ResourceHeaderComponent < PlutoniumUi::Base
     renders_one :brand_logo
     renders_many :actions
 
@@ -17,4 +17,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :resource_header, to: Plutonium::Ui::ResourceHeaderComponent
+Plutonium::ComponentRegistry.register :resource_header, to: PlutoniumUi::ResourceHeaderComponent

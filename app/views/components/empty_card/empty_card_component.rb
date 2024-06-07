@@ -1,7 +1,7 @@
-module Plutonium::Ui
-  class EmptyCardComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class EmptyCardComponent < PlutoniumUi::Base
     option :message
   end
 end
 
-Plutonium::ComponentRegistry.register :empty_card, to: Plutonium::Ui::EmptyCardComponent
+Plutonium::ComponentRegistry.register :empty_card, to: PlutoniumUi::EmptyCardComponent

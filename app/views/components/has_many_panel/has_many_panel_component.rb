@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class HasManyPanelComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class HasManyPanelComponent < PlutoniumUi::Base
     option :title
     option :src
 
@@ -13,4 +13,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :has_many_panel, to: Plutonium::Ui::HasManyPanelComponent
+Plutonium::ComponentRegistry.register :has_many_panel, to: PlutoniumUi::HasManyPanelComponent

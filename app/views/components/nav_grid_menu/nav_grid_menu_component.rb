@@ -1,6 +1,6 @@
-module Plutonium::Ui
-  class NavGridMenuComponent < Plutonium::Ui::Base
-    renders_many :items, "Plutonium::Ui::NavGridMenuItemComponent"
+module PlutoniumUi
+  class NavGridMenuComponent < PlutoniumUi::Base
+    renders_many :items, "PlutoniumUi::NavGridMenuItemComponent"
 
     option :label
 
@@ -20,4 +20,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nav_grid_menu, to: Plutonium::Ui::NavGridMenuComponent
+Plutonium::ComponentRegistry.register :nav_grid_menu, to: PlutoniumUi::NavGridMenuComponent

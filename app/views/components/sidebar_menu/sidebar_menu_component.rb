@@ -1,6 +1,6 @@
-module Plutonium::Ui
-  class SidebarMenuComponent < Plutonium::Ui::Base
-    renders_many :items, "::Plutonium::Ui::SidebarMenuItemComponent"
+module PlutoniumUi
+  class SidebarMenuComponent < PlutoniumUi::Base
+    renders_many :items, "::PlutoniumUi::SidebarMenuItemComponent"
 
     private
 
@@ -14,4 +14,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :sidebar_menu, to: Plutonium::Ui::SidebarMenuComponent
+Plutonium::ComponentRegistry.register :sidebar_menu, to: PlutoniumUi::SidebarMenuComponent

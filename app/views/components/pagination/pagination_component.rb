@@ -1,7 +1,7 @@
 require "pagy"
 
-module Plutonium::Ui
-  class PaginationComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class PaginationComponent < PlutoniumUi::Base
     include Pagy::Frontend
 
     option :pager
@@ -91,4 +91,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :pagination, to: Plutonium::Ui::PaginationComponent
+Plutonium::ComponentRegistry.register :pagination, to: PlutoniumUi::PaginationComponent

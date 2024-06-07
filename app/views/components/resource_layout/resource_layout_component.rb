@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class ResourceLayoutComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class ResourceLayoutComponent < PlutoniumUi::Base
     renders_one :meta
     renders_one :favicon
     renders_one :fonts
@@ -36,4 +36,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :resource_layout, to: Plutonium::Ui::ResourceLayoutComponent
+Plutonium::ComponentRegistry.register :resource_layout, to: PlutoniumUi::ResourceLayoutComponent

@@ -13,9 +13,7 @@
   <% end %>
 
   <% header.with_action do %>
-    <%= render_component :nav_user, email: current_user.email,
-                                    logout_url: try(:logout_url) do |nav_user| %>
-
+    <%= render_component :nav_user, email: current_user.email, logout_url: try(:logout_url) do |nav_user| %>
       <% nav_user.with_section do |section| %>
         <% section.with_link url: "#", label: "My profile" %>
         <% section.with_link url: "#", label: "Account settings" %>
@@ -36,7 +34,6 @@
             <%= render_icon "outline/angle-right", size: :sm %>
           <% end %>
         <% end %>
-
       <% end %>
     <% end %>
   <% end %>

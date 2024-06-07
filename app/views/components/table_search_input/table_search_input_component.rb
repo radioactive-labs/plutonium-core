@@ -1,5 +1,5 @@
-module Plutonium::Ui
-  class TableSearchInputComponent < Plutonium::Ui::Base
+module PlutoniumUi
+  class TableSearchInputComponent < PlutoniumUi::Base
     option :search_object
 
     private
@@ -12,4 +12,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :table_search_input, to: Plutonium::Ui::TableSearchInputComponent
+Plutonium::ComponentRegistry.register :table_search_input, to: PlutoniumUi::TableSearchInputComponent

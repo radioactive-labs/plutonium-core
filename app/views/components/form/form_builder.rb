@@ -1,6 +1,6 @@
 require "simple_form"
 
-module Plutonium::Ui
+module PlutoniumUi
   class FormBuilder < SimpleForm::FormBuilder
     def input(attribute_name, options = {}, &block)
       label_class = options.dig(:label_html, :class)

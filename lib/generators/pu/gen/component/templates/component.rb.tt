@@ -1,5 +1,5 @@
 module <%= component_namespace %>
-  class <%= component_classname %> < Plutonium::Ui::Base
+  class <%= component_classname %> < PlutoniumUi::Base
     private
 
     def base_attributes

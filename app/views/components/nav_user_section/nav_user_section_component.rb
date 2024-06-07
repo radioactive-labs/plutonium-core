@@ -1,6 +1,6 @@
-module Plutonium::Ui
-  class NavUserSectionComponent < Plutonium::Ui::Base
-    renders_many :links, "Plutonium::Ui::NavUserLinkComponent"
+module PlutoniumUi
+  class NavUserSectionComponent < PlutoniumUi::Base
+    renders_many :links, "PlutoniumUi::NavUserLinkComponent"
 
     private
 
@@ -15,4 +15,4 @@ module Plutonium::Ui
   end
 end
 
-Plutonium::ComponentRegistry.register :nav_user_section, to: Plutonium::Ui::NavUserSectionComponent
+Plutonium::ComponentRegistry.register :nav_user_section, to: PlutoniumUi::NavUserSectionComponent
