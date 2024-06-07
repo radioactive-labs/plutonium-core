@@ -85,8 +85,6 @@ export default class extends Controller {
     this.frameTarget.src = this.originalFrameSrc
   }
 
-  private
-
   get currentSrc() { return this.srcHistory[this.srcHistory.length - 1] }
 
   updateNavigationButtonsDisplay() {

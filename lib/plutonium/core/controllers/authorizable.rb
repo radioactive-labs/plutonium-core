@@ -5,7 +5,7 @@ module Plutonium
     module Controllers
       module Authorizable
         extend ActiveSupport::Concern
-        include Pundit::Authorization
+        include ::Pundit::Authorization
 
         included do
           after_action :verify_authorized
@@ -16,10 +16,6 @@ module Plutonium
 
         private
 
-        def policy_namespace(scope)
-          [current_package.to_s.underscore.to_sym, scope]
-        end
-
         def policy_context
           raise NotImplementedError, "policy_context"
         end
@@ -28,16 +24,13 @@ module Plutonium
           policy_context
         end
 
-        def policy(scope)
-          super(policy_namespace(scope))
-        end
-
-        def policy_scope(scope)
-          super(policy_namespace(scope))
-        end
-
-        def authorize(record, query = nil)
-          super(policy_namespace(record), query)
+        # @return [Plutonium::Pundit::Context] a new instance of {Plutonium::Pundit::Context} with the current user and package
+        def pundit
+          @pundit ||= Plutonium::Pundit::Context.new(
+            package: current_package.to_s.underscore.to_sym,
+            user: pundit_user,
+            policy_cache: ::Pundit::CacheStore::LegacyStore.new(policies)
+          )
         end
 
         def permitted_attributes
