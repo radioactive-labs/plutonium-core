@@ -1,3 +1,5 @@
+require "active_support/notifications"
+
 module Plutonium
   module Pkg
     module App
@@ -49,6 +51,14 @@ module Plutonium
         end
 
         def draw_resource_routes
+          ActiveSupport::Notifications.instrument("plutonium.app.draw_resource_routes", app: self.class.module_parent.to_s) do
+            draw_resource_routes_internal
+          end
+        end
+
+        private
+
+        def draw_resource_routes_internal
           custom_routes_block = @custom_routes_block
           registered_resources = resource_register
           scoped_entity_param_key = self.scoped_entity_param_key if scoped_entity_strategy == :path

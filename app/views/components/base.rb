@@ -1,5 +1,6 @@
 require "view_component"
 require "dry-initializer"
+require "active_support/notifications"
 
 require_relative "attributes"
 
@@ -22,7 +23,37 @@ module Plutonium
   end
 end
 
-# Require all component files within the same directory and subdirectories
-Dir.glob(File.expand_path("**/*.rb", __dir__)) do |component|
-  require component unless component == __FILE__
+def load_component(file_path)
+  # sidebar_menu_item/sidebar_menu_item_component
+  # skeleton/table/table_component
+  relative_path = file_path.sub(%r{^#{__dir__}/}, "").sub(/\.rb$/, "")
+
+  # sidebar_menu_item
+  # skeleton/table
+  constant_prefix = relative_path.split("/")[0...-1].join("/")
+
+  # SidebarMenuItemComponent
+  # Skeleton::TableComponent
+  constant_name = "#{constant_prefix.camelize}Component"
+
+  begin
+    # Remove constant if defined
+    names = constant_name.split("::")
+    constant = names.pop
+    parent_module = names.inject(Plutonium::Ui) do |mod, name|
+      mod.const_get(name)
+    end
+    parent_module.send(:remove_const, constant) if parent_module.const_defined?(constant)
+  rescue NameError
+    # do nothing
+  end
+
+  load file_path
+end
+
+ActiveSupport::Notifications.instrument("plutonium.components.load") do
+  # Require all component files within the same directory and subdirectories
+  Dir.glob(File.expand_path("**/*.rb", __dir__)) do |component_file_path|
+    load_component component_file_path unless component_file_path == __FILE__
+  end
 end
