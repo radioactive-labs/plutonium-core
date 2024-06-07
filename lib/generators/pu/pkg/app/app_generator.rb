@@ -28,10 +28,10 @@ module Pu
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
         template "config/routes.rb", "packages/#{package_namespace}/config/routes.rb"
 
-        template "app/controllers/package_controller.rb",
-          "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{package_namespace}_controller.rb"
-        template "app/controllers/app_controller.rb",
-          "packages/#{package_namespace}/app/controllers/#{package_namespace}/app_controller.rb"
+        template "app/controllers/concerns/controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/concerns/controller.rb"
+        template "app/controllers/controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/controller.rb"
 
         template "app/controllers/dashboard_controller.rb",
           "packages/#{package_namespace}/app/controllers/#{package_namespace}/dashboard_controller.rb"

@@ -1,0 +1,5 @@
+module <%= package_name %>
+  class Controller < ::ApplicationController
+    include <%= package_name %>::Concerns::Controller
+  end
+end

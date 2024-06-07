@@ -1,5 +1,5 @@
 module <%= package_name %>
-  class DashboardController < AppController
+  class DashboardController < Controller
     def index
     end
   end
