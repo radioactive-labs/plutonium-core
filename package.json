@@ -1,5 +1,5 @@
 {
-  "name": "@plutonium-rails/core",
+  "name": "@radioactive-labs/plutonium",
   "version": "0.1.0",
   "description": "Core assets for the Plutonium gem",
   "type": "module",
