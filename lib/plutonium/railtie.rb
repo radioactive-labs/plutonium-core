@@ -6,17 +6,26 @@ module Plutonium
     config.plutonium.cache_discovery = defined?(Rails.env) && !Rails.env.development?
     config.plutonium.enable_hotreload = defined?(Rails.env) && Rails.env.development?
 
-    initializer "plutonium.append_assets_path" do |app|
-      config.to_prepare do
-        Rails.application.config.assets.paths << Plutonium.root.join("app/assets/build").to_s
-      end
+    # If you don't want to precompile Plutonium's assets (eg. because you're using webpack),
+    # you can do this in an intiailzer:
+    #
+    # config.after_initialize do
+    #   config.assets.precompile -= Plutonium::Railtie::PRECOMPILE_ASSETS
+    # end
+    PRECOMPILE_ASSETS = %w[plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map plutonium.css]
+
+    initializer "plutonium.assets" do
+      next unless Rails.application.config.respond_to?(:assets)
+
+      Rails.application.config.assets.precompile += PRECOMPILE_ASSETS
+      Rails.application.config.assets.paths << Plutonium.root.join("app/assets").to_s
     end
 
-    initializer "plutonium.load_view_components" do
+    initializer "plutonium.load_components" do
       load Plutonium.root.join("app", "views", "components", "base.rb")
     end
 
-    initializer "plutonium.load_initializers" do
+    initializer "plutonium.initializers" do
       Dir.glob(Plutonium.root.join("config", "initializers", "**", "*.rb")) { |file| load file }
     end
 

@@ -1,24 +1,47 @@
 {
-  "devDependencies": {
+  "name": "@plutonium-rails/core",
+  "version": "0.1.0",
+  "description": "Core assets for the Plutonium gem",
+  "type": "module",
+  "main": "src/js/core.js",
+  "files": [
+    "src/"
+  ],
+  "author": "Stefan Froelich (@thedumbtechguy)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/radioactive-labs/plutonium-core/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/radioactive-labs/plutonium-core.git"
+  },
+  "homepage": "https://github.com/radioactive-labs/plutonium-core#readme",
+  "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
-    "@hotwired/turbo": "^8.0.4",
+    "lodash.debounce": "^4.0.8",
+    "@hotwired/turbo": "^8.0.4"
+  },
+  "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
     "autoprefixer": "^10.4.18",
     "concurrently": "^8.2.2",
     "esbuild": "^0.20.1",
     "esbuild-plugin-manifest": "^1.0.3",
     "flowbite": "^2.3.0",
-    "lodash.debounce": "^4.0.8",
     "postcss": "^8.4.35",
     "postcss-cli": "^11.0.0",
     "postcss-hash": "^3.0.0",
-    "tailwindcss": "^3.4.1"
+    "tailwindcss": "^3.4.1",
+    "cssnano": "^7.0.2"
   },
   "scripts": {
+    "build": "npm run js:prod && npm run css:prod",
     "dev": "concurrently \"npm run css:dev\" \"npm run js:dev\"",
-    "css:dev": "postcss app/assets/stylesheets/plutonium.css -o public/plutonium-assets/build/plutonium-dev.css --watch",
-    "js:dev": "node esbuild.config.js",
-    "css:prod": "postcss app/assets/stylesheets/plutonium.css -o public/plutonium-assets/plutonium.css --prod",
-    "js:prod": "node esbuild.config.js --prod"
+    "css:dev": "postcss src/css/plutonium.css -o src/build/plutonium.css --watch --dev",
+    "js:dev": "node esbuild.config.js --dev",
+    "css:prod": "postcss src/css/plutonium.css -o app/assets/plutonium.css && postcss src/css/plutonium.css -o src/dist/css/plutonium.css",
+    "js:prod": "node esbuild.config.js",
+    "prepare": "npm run build"
   }
 }

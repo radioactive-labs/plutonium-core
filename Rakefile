@@ -8,8 +8,7 @@ require "standard/rake"
 task default: %i[spec standard]
 
 task :assets do
-  `npm run js:prod`
-  `npm run css:prod`
+  `npm run build`
 end
 
 # https://stackoverflow.com/questions/15707940/rake-before-task-hook

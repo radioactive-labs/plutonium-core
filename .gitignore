@@ -10,14 +10,7 @@
 # rspec failure tracking
 .rspec_status
 
-# Elastic Beanstalk Files
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-
 .DS_Store
 node_modules
 build
-!app/assets/build
-css.dev.manifest
-js.dev.manifest
+dist
