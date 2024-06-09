@@ -30,12 +30,15 @@ module Plutonium
     end
 
     initializer "plutonium.asset_server" do
+      next unless Plutonium.development?
+
+      puts "=> [plutonium] starting assets server"
       # setup a middleware to serve our assets
       config.app_middleware.insert_before(
         ActionDispatch::Static,
         Rack::Static,
-        urls: ["/plutonium-assets"],
-        root: Plutonium.root.join("public"),
+        urls: ["/build"],
+        root: Plutonium.root.join("src").to_s,
         cascade: true,
         header_rules: [
           # Cache all static files in public caches (e.g. Rack::Cache) as well as in the browser

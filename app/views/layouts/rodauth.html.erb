@@ -9,7 +9,7 @@
   <% end %>
 
   <% layout.with_favicon do %>
-    <%= Plutonium::Config.favicon_tag.call self %>
+    <%= favicon_link_tag "plutonium.ico" %>
   <% end %>
 
   <% layout.with_fonts do %>
@@ -19,13 +19,12 @@
   <% end %>
 
   <% layout.with_assets do %>
-    <%= Plutonium::Config.stylesheet_tag.call self %>
-    <%= Plutonium::Config.script_tag.call self %>
+    <%= plutonium_stylesheet_tag %>
+    <%= plutonium_script_tag %>
   <% end %>
 
-  <%= render "flash" %>
   <p class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-    <%= Plutonium::Config.logo_tag.call self, classname: "w-24 h-24 mr-2" %>
+    <%= logo_tag classname: "w-24 h-24 mr-2" %>
   </p>
   <div class="w-full max-w-md bg-white rounded-lg shadow dark:border md:mt-0 xl:p-0 dark:bg-gray-800 dark:border-gray-700">
     <div class="w-full p-6 space-y-4 md:space-y-6 sm:p-8">

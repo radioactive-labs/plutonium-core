@@ -12371,7 +12371,7 @@
   start2();
 
   // src/js/turbo/turbo_debug.js
-  eventNames = [
+  [
     "turbo:click",
     "turbo:before-visit",
     "turbo:visit",
@@ -12395,8 +12395,7 @@
     "turbo:before-morph-element",
     "turbo:morph-attribute",
     "turbo:morph"
-  ];
-  eventNames.forEach((eventName) => {
+  ].forEach((eventName) => {
     document.addEventListener(eventName, (event) => {
       console.log(event.type, event);
     });

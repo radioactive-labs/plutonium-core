@@ -1,4 +1,4 @@
-eventNames = [
+[
   'turbo:click',
   'turbo:before-visit',
   'turbo:visit',
@@ -21,9 +21,7 @@ eventNames = [
   'turbo:before-morph-element',
   'turbo:morph-attribute',
   'turbo:morph',
-]
-
-eventNames.forEach(eventName => {
+].forEach(eventName => {
   document.addEventListener(eventName, (event) => {
     console.log(event.type, event);
   });

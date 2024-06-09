@@ -6,6 +6,7 @@ module Plutonium
       included do
         helper Plutonium::Helpers::ApplicationHelper
         helper Plutonium::Helpers::ComponentHelper
+        helper Plutonium::Helpers::AssetsHelper
 
         layout "rodauth"
         append_view_path File.expand_path("app/views", Plutonium.root)

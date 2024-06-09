@@ -1,4 +1,4 @@
-<%= render_component :resource_layout, page_title: page_title(@page_title), lang: "en" do |layout| %>
+<%= render_component :resource_layout, page_title: make_page_title(@page_title), lang: "en" do |layout| %>
 
   <% layout.with_meta do %>
     <meta name="turbo-cache-control" content="no-cache">
@@ -7,7 +7,7 @@
   <% end %>
 
   <% layout.with_favicon do %>
-    <%= Plutonium::Config.favicon_tag.call self %>
+    <%= favicon_link_tag "plutonium.ico" %>
   <% end %>
 
   <% layout.with_fonts do %>
@@ -17,8 +17,8 @@
   <% end %>
 
   <% layout.with_assets do %>
-    <%= Plutonium::Config.stylesheet_tag.call self %>
-    <%= Plutonium::Config.script_tag.call self %>
+    <%= plutonium_stylesheet_tag %>
+    <%= plutonium_script_tag %>
   <% end %>
 
   <% layout.with_header do %>

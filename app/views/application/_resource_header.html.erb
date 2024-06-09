@@ -1,6 +1,6 @@
 <%= render_component :resource_header, brand_name: nil do |header| %>
   <% header.with_brand_logo do %>
-    <%= Plutonium::Config.logo_tag.call self, classname: "mr-3 h-10" %>
+    <%= logo_tag classname: "mr-3 h-10" %>
   <% end %>
 
   <% header.with_action do %>

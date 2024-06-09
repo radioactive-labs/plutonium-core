@@ -12,6 +12,7 @@ module Plutonium
         include Plutonium::Helpers::TableHelper
         include Plutonium::Helpers::TurboHelper
         include Plutonium::Helpers::TurboStreamActionsHelper
+        include Plutonium::Helpers::AssetsHelper
       end
     end
   end
