@@ -35,6 +35,9 @@ module Pu
           import { registerControllers } from "@radioactive-labs/plutonium"
           registerControllers(application)
         EOT
+
+        environment "config.plutonium.assets.stylesheet = \"application\""
+        environment "config.plutonium.assets.script = \"application\""
       end
     end
   end

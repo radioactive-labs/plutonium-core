@@ -2,9 +2,8 @@ module PlutoniumUi
   class ResourceLayoutComponent < PlutoniumUi::Base
     renders_one :meta
     renders_one :favicon
-    renders_one :fonts
     renders_one :assets
-    renders_one :after_head
+    renders_one :head
     renders_one :header
     renders_one :sidebar
 
@@ -14,6 +13,9 @@ module PlutoniumUi
     option :main_classname, default: -> { "p-4 h-auto" }
     option :header_adjustment, default: -> { "pt-20" }
     option :sidebar_adjustment, default: -> { "lg:ml-64" }
+    option :default_turbo_tag, default: -> { true }
+    option :default_fonts_tag, default: -> { true }
+    option :default_assets_tag, default: -> { true }
 
     private
 

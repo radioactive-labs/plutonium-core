@@ -1,28 +1,11 @@
-<%= render_component :resource_layout, page_title: make_page_title(@page_title), lang: "en" do |layout| %>
-
-  <% layout.with_meta do %>
-    <meta name="turbo-cache-control" content="no-cache">
-    <meta name="turbo-refresh-method" content="morph">
-    <meta name="turbo-refresh-scroll" content="preserve">
-  <% end %>
-
+<%= render_component :resource_layout, lang: "en",
+                                        page_title: make_page_title(@page_title) do |layout| %>
   <% layout.with_favicon do %>
-    <%= favicon_link_tag "plutonium.ico" %>
-  <% end %>
-
-  <% layout.with_fonts do %>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
-  <% end %>
-
-  <% layout.with_assets do %>
-    <%= plutonium_stylesheet_tag %>
-    <%= plutonium_script_tag %>
+    <%= resource_favicon_tag %>
   <% end %>
 
   <% layout.with_header do %>
-    <%= render("resource_header") %>
+    <%= render("resource_header", sidebar_toggle: true) %>
   <% end %>
 
   <% layout.with_sidebar do %>

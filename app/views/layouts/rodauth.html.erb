@@ -1,30 +1,12 @@
 <%= render_component :resource_layout, page_title: @page_title,
                                        lang: "en",
                                        main_classname: "flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0" do |layout| %>
-
-  <% layout.with_meta do %>
-    <meta name="turbo-cache-control" content="no-cache">
-    <meta name="turbo-refresh-method" content="morph">
-    <meta name="turbo-refresh-scroll" content="preserve">
-  <% end %>
-
   <% layout.with_favicon do %>
-    <%= favicon_link_tag "plutonium.ico" %>
-  <% end %>
-
-  <% layout.with_fonts do %>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
-  <% end %>
-
-  <% layout.with_assets do %>
-    <%= plutonium_stylesheet_tag %>
-    <%= plutonium_script_tag %>
+    <%= resource_favicon_tag %>
   <% end %>
 
   <p class="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-    <%= logo_tag classname: "w-24 h-24 mr-2" %>
+    <%= resource_logo_tag classname: "w-24 h-24 mr-2" %>
   </p>
   <div class="w-full max-w-md bg-white rounded-lg shadow dark:border md:mt-0 xl:p-0 dark:bg-gray-800 dark:border-gray-700">
     <div class="w-full p-6 space-y-4 md:space-y-6 sm:p-8">
@@ -32,7 +14,7 @@
     </div>
   </div>
   <div class="mt-4 flex items-center font-medium text-blue-600 dark:text-blue-500 hover:underline">
-    <%= Plutonium::Icons.render "outline/home" %>
+    <%= render_icon "outline/home" %>
     <%= link_to "Home", root_path, class: "font-medium text-blue-600 dark:text-blue-500" %>
   </div>
 <% end %>

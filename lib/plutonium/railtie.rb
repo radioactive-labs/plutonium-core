@@ -6,6 +6,12 @@ module Plutonium
     config.plutonium.cache_discovery = defined?(Rails.env) && !Rails.env.development?
     config.plutonium.enable_hotreload = defined?(Rails.env) && Rails.env.development?
 
+    config.plutonium.assets = ActiveSupport::OrderedOptions.new
+    config.plutonium.assets.logo = "plutonium.png"
+    config.plutonium.assets.favicon = "plutonium.ico"
+    config.plutonium.assets.stylesheet = "plutonium.css"
+    config.plutonium.assets.script = "plutonium.min.js"
+
     # If you don't want to precompile Plutonium's assets (eg. because you're using webpack),
     # you can do this in an intiailzer:
     #

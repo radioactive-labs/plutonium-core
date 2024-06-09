@@ -1,8 +1,6 @@
-<%= render_component :resource_header, brand_name: nil do |header| %>
-  <% header.with_brand_logo do %>
-    <%= logo_tag classname: "mr-3 h-10" %>
-  <% end %>
+<%# locals: (sidebar_toggle:) %>
 
+<%= render_component :resource_header, sidebar_toggle: do |header| %>
   <% header.with_action do %>
     <%=
       render_component :nav_grid_menu, label: "Apps" do |menu|
