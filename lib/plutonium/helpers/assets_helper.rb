@@ -6,7 +6,7 @@ module Plutonium
           file = JSON.parse(File.read(Plutonium.root.join("src", "build", "css.manifest")))["plutonium.css"]
           "/build/#{file}"
         else
-          "plutonium"
+          "plutonium.css"
         end
         stylesheet_link_tag url, "data-turbo-track": "reload"
       end
@@ -16,7 +16,7 @@ module Plutonium
           file = JSON.parse(File.read(Plutonium.root.join("src", "build", "js.manifest")))["plutonium.js"]
           "/build/#{file}"
         else
-          "plutonium.min"
+          "plutonium.min.js"
         end
         javascript_include_tag url, "data-turbo-track": "reload", type: "module"
       end
