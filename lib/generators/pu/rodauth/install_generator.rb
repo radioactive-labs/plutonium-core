@@ -45,7 +45,7 @@ module Pu
       end
 
       def create_install_migration
-        next unless activerecord_adapter == "postgresql"
+        return unless activerecord_adapter == "postgresql"
 
         migration_template "db/migrate/install_rodauth.rb", "db/migrate/install_rodauth.rb" # , File.join(db_migrate_path, "#{migration_name}.rb")
       end
