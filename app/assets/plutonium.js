@@ -3213,6 +3213,7 @@
     window.Collapse = Collapse;
     window.initCollapses = initCollapses;
   }
+  var collapse_default = Collapse;
 
   // node_modules/flowbite/lib/esm/components/carousel/index.js
   var __assign3 = function() {
@@ -7109,7 +7110,28 @@
       this.dropdown.show();
     }
     hide() {
-      this.dropdown.show();
+      this.dropdown.hide();
+    }
+  };
+
+  // src/js/controllers/resource_collapse_controller.js
+  var resource_collapse_controller_default = class extends Controller {
+    static targets = ["trigger", "menu"];
+    connect() {
+      console.log(`resource-collapse connected: ${this.element}`);
+      this.collapse = new collapse_default(this.menuTarget, this.triggerTarget);
+    }
+    disconnect() {
+      this.collapse = null;
+    }
+    toggle() {
+      this.collapse.toggle();
+    }
+    show() {
+      this.collapse.show();
+    }
+    hide() {
+      this.collapse.hide();
     }
   };
 
@@ -7271,6 +7293,7 @@
     application2.register("table", table_controller_default);
     application2.register("form", form_controller_default);
     application2.register("resource-drop-down", resource_drop_down_controller_default);
+    application2.register("resource-collapse", resource_collapse_controller_default);
     application2.register("resource-dismiss", resource_dismiss_controller_default);
     application2.register("frame-navigator", frame_navigator_controller_default);
     application2.register("color-mode", color_mode_controller_default);

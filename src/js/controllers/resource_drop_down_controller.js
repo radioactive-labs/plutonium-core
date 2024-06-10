@@ -26,6 +26,6 @@ export default class extends Controller {
   }
 
   hide() {
-    this.dropdown.show()
+    this.dropdown.hide()
   }
 }

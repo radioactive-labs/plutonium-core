@@ -3,10 +3,10 @@
     <button
       type="button"
       class="<%= link_button_class %> w-full transition duration-75"
-      data-resource-drop-down-target="trigger"
-      aria-controls="dropdown-<%= name.parameterize %>">
+      data-resource-collapse-target="trigger"
+      aria-controls="side-menu-item-<%= name.parameterize %>">
       <% if icon.present? %>
-        <%= render_icon icon, size: :lg %>
+        <%= render_icon icon, size: :lg, classname: icon_class %>
       <% else %>
         <div class="shrink-0 w-6 h-6">
           &nbsp;
@@ -28,7 +28,7 @@
       </svg>
     </button>
 
-    <ul id="dropdown-<%= name.parameterize %>" data-resource-drop-down-target="menu" class="hidden py-2 space-y-2">
+    <ul id="side-menu-item-<%= name.parameterize %>" data-resource-collapse-target="menu" class="hidden py-2 space-y-2">
       <% sub_items.each do |sub_item| %>
         <%#= sub_item %>
         <li>
@@ -43,9 +43,9 @@
   <% else %>
     <a
       href="<%= url %>"
-      class="<%= link_button_class %>">
+      class="<%= link_link_class %>">
       <% if icon.present? %>
-        <%= render_icon icon, size: :lg %>
+        <%= render_icon icon, size: :lg, classname: icon_class %>
       <% else %>
         <div class="shrink-0 w-6 h-6">
           &nbsp;

@@ -16,6 +16,7 @@ import TableToolbarController from "./table_toolbar_controller.js"
 import TableController from "./table_controller.js"
 import FormController from "./form_controller.js"
 import ResourceDropDownController from "./resource_drop_down_controller.js"
+import ResourceCollapseController from "./resource_collapse_controller.js"
 import ResourceDismissController from "./resource_dismiss_controller.js"
 import FrameNavigatorController from "./frame_navigator_controller.js"
 import ColorModeController from "./color_mode_controller.js"
@@ -39,6 +40,7 @@ export default function (application) {
   application.register("table", TableController)
   application.register("form", FormController)
   application.register("resource-drop-down", ResourceDropDownController)
+  application.register("resource-collapse", ResourceCollapseController)
   application.register("resource-dismiss", ResourceDismissController)
   application.register("frame-navigator", FrameNavigatorController)
   application.register("color-mode", ColorModeController)
