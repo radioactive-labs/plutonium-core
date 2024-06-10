@@ -48,6 +48,11 @@ module Pu
         migration_template "db/migrate/install_rodauth.rb", "db/migrate/install_rodauth.rb" # , File.join(db_migrate_path, "#{migration_name}.rb")
       end
 
+      def eject_layout
+        file = "app/views/layouts/rodauth.html.erb"
+        FileUtils.cp Plutonium.root.join(file), Rails.root.join(file)
+      end
+
       def show_instructions
         readme "INSTRUCTIONS" if behavior == :invoke
       end

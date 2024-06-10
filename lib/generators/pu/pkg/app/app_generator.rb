@@ -42,6 +42,10 @@ module Pu
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
         end
         create_file "packages/#{package_namespace}/app/views/#{package_namespace}/.keep"
+
+        invoke "pu:eject:shell", [], dest: package_namespace,
+          force: options[:force],
+          skip: options[:skip]
       rescue => e
         exception "#{self.class} failed:", e
       end

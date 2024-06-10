@@ -19,9 +19,9 @@ module PlutoniumUi
     # @param label [String] The label of the column.
     # @param search_object [Object] The search object associated with the column.
     # @param block [Proc] An optional block for additional column customization.
-    def column(name:, label:, search_object:, &block)
+    def column(name:, label:, search_object:, &)
       @columns ||= []
-      @columns << Column.new(name:, label:, search_object:, &block)
+      @columns << Column.new(name:, label:, search_object:, &)
     end
 
     # Returns the base attributes for the table.

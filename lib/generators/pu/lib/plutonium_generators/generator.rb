@@ -34,7 +34,7 @@ module PlutoniumGenerators
     end
 
     def available_apps
-      @available_apps ||= available_packages.select { |pkg| pkg.ends_with? "_app" }
+      @available_apps ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with? "_app" }
     end
 
     def available_features

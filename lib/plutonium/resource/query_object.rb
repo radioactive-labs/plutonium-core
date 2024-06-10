@@ -190,9 +190,9 @@ module Plutonium
       #
       # @param name [Symbol] The name of the filter.
       # @param body [Proc, nil] The body of the filter.
-      def define_filter(name, body = nil, &block)
+      def define_filter(name, body = nil, &)
         body ||= name
-        filter_definitions[name] = build_query(body, &block)
+        filter_definitions[name] = build_query(body, &)
       end
 
       # Defines a scope with the given name and body.
@@ -251,14 +251,14 @@ module Plutonium
       # @param body [Proc, Symbol] The body of the query.
       # @yieldparam query [Query] The query object.
       # @return [Query] The constructed query object.
-      def build_query(body, &block)
+      def build_query(body, &)
         case body
         when Symbol
           raise "Cannot find scope :#{body} on #{resource_class}" unless resource_class.respond_to?(body)
 
-          ScopeQuery.new(body, &block)
+          ScopeQuery.new(body, &)
         else
-          BlockQuery.new(body, &block)
+          BlockQuery.new(body, &)
         end
       end
 

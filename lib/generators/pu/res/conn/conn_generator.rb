@@ -14,7 +14,7 @@ module Pu
       # argument :name
 
       def start
-        source_feature = select_feature
+        source_feature = select_feature msg: "Select source feature"
         source_module = (source_feature == "main_app") ? "ResourceRecord" : "#{source_feature.classify}::ResourceRecord"
 
         Plutonium.eager_load_rails!

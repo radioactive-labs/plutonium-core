@@ -41,27 +41,27 @@ module PlutoniumGenerators
     def name
       @pu_name ||= begin
         @original_name = @name
-        @selected_feature = select_feature selected_feature
-        @name = [main_app? ? nil : selected_feature.underscore, super.singularize.underscore].compact.join "/"
+        @selected_destination_feature = select_feature selected_destination_feature, msg: "Select destination feature"
+        @name = [main_app? ? nil : selected_destination_feature.underscore, super.singularize.underscore].compact.join "/"
         set_destination_root!
         @name
       end
     end
 
     def feature_package_name
-      main_app? ? nil : selected_feature.camelize
+      main_app? ? nil : selected_destination_feature.camelize
     end
 
     def main_app?
-      selected_feature == "main_app"
+      selected_destination_feature == "main_app"
     end
 
-    def selected_feature
-      @selected_feature || options[:dest]
+    def selected_destination_feature
+      @selected_destination_feature || options[:dest]
     end
 
     def set_destination_root!
-      @destination_stack = [File.join(Rails.root, main_app? ? "" : "packages/#{selected_feature.underscore}")]
+      @destination_stack = [File.join(Rails.root, main_app? ? "" : "packages/#{selected_destination_feature.underscore}")]
     end
 
     # https://github.com/rails/rails/blob/main/railties/lib/rails/generators/generated_attribute.rb#L7

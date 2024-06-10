@@ -12,16 +12,16 @@ module Pu
       desc "Set up the base requirements for Plutonium"
 
       def start
-        setup_packaging_system
-        install_required_gems
+        setup_packages
         setup_app
+        eject_views
       rescue => e
         exception "#{self.class} failed:", e
       end
 
       private
 
-      def setup_packaging_system
+      def setup_packages
         copy_file "config/packages.rb"
         create_file "packages/.keep"
         insert_into_file "config/application.rb", "\nrequire_relative \"packages\"\n", after: /Bundler\.require.*\n/
@@ -36,10 +36,10 @@ module Pu
         environment "# config.plutonium.assets.logo = \"logo.png\""
       end
 
-      def install_required_gems
-        # invoke "pu:gem:simple_form"
-        # invoke "pu:gem:pagy"
-        # invoke "pu:gem:rabl"
+      def eject_views
+        invoke "pu:eject:layout", [], dest: "main_app",
+          force: options[:force],
+          skip: options[:skip]
       end
     end
   end
