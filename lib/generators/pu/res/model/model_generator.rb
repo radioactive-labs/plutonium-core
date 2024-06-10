@@ -4,7 +4,7 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Res
-    class ModelGenerator < PlutoniumGenerators::ModelGenerator
+    class ModelGenerator < PlutoniumGenerators::ModelGeneratorBase
       source_root File.expand_path("templates", __dir__)
 
       def run_create_module

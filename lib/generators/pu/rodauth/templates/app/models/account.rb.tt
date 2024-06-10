@@ -1,5 +1,5 @@
 <% if defined?(ActiveRecord::Railtie) -%>
-class <%= account_path.classify %> < ApplicationRecord
+class <%= account_path.classify %> < ResourceRecord
   include Rodauth::Rails.model<%= "(:#{table_prefix})" unless primary? %>
   # add concerns above.
 

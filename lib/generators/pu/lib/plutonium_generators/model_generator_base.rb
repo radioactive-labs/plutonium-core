@@ -4,7 +4,7 @@ require "rails/generators"
 require "rails/generators/active_record/model/model_generator"
 
 module PlutoniumGenerators
-  class ModelGenerator < ActiveRecord::Generators::ModelGenerator
+  class ModelGeneratorBase < ActiveRecord::Generators::ModelGenerator
     include PlutoniumGenerators::Generator
 
     remove_hook_for :test_framework

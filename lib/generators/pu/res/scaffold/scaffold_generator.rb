@@ -4,14 +4,18 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Res
-    class ScaffoldGenerator < PlutoniumGenerators::ModelGenerator
+    class ScaffoldGenerator < PlutoniumGenerators::ModelGeneratorBase
       include PlutoniumGenerators::Generator
 
       source_root File.expand_path("templates", __dir__)
 
       desc "Scaffold a resource"
 
+      class_option :model, type: :boolean, default: true
+
       def setup
+        return unless options[:model]
+
         model_class = class_name.safe_constantize
         if model_class.present? && attributes.empty? && prompt.yes?("Existing model class found. Do you want to import its attributes?")
           attributes_str = model_class.content_columns.map { |col| "#{col.name}:#{col.type}" }
@@ -20,6 +24,8 @@ module Pu
       end
 
       def create_model
+        return unless options[:model]
+
         invoke "pu:res:model", [@original_name, *@original_attributes], dest: selected_feature, **options
       end
 

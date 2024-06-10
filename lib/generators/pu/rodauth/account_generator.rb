@@ -89,6 +89,10 @@ module Pu
         return unless base?
 
         template "app/models/account.rb", "app/models/#{account_path}.rb"
+        invoke "pu:res:scaffold", [table, "email:string", "status:integer"], dest: "main_app",
+          model: false,
+          force: true,
+          skip: options[:skip]
       end
 
       def create_mailer
