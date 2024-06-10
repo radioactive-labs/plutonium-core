@@ -14,12 +14,12 @@ module Pu
       class_option :dest, type: :string
 
       def start
-        destination_dir = (destination_app == "main_app") ? "app/views/" : "packages/#{destination_app}/app/views/#{destination_app}"
+        destination_dir = (destination_app == "main_app") ? "app/views/" : "packages/#{destination_app}/app/views"
         [
           "application/_resource_header.html.erb",
           "application/_resource_sidebar.html.erb"
         ].each do |file|
-          copy_file Plutonium.root.join("app", "views", file), Rails.root.join(destination_dir)
+          copy_file Plutonium.root.join("app", "views", file), Rails.root.join(destination_dir, file)
         end
       rescue => e
         exception "#{self.class} failed:", e
@@ -33,6 +33,7 @@ module Pu
 
       def copy_file(source_path, destination_path)
         if File.exist?(source_path)
+          FileUtils.mkdir_p(File.dirname(destination_path))
           FileUtils.cp(source_path, destination_path)
           say_status("info", "Copied #{source_path} to #{destination_path}", :green)
         else
