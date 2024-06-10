@@ -71,8 +71,16 @@
       <% end %>
 
       <% fields.each do |name, field| %>
+        <%#
+          TODO:
+          For now, we are hacking around the need to call #with before #label
+          This proves there's an issue with the rendering api.
+          While I think of an elegant solution, this works for now.
+        %>
+        <% field.with(record: resources[0]) %>
         <% table.column(name:, label: field.label, search_object: search_object) do |resource| %>
-          <%= field.render self, resource %>
+          <% field.with(record: resource) %>
+          <%= render field %>
         <% end %>
       <% end %>
     <% end %>

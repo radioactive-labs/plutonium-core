@@ -69,7 +69,7 @@ module Plutonium
         override_entity_scoping_params(input_params)
         override_parent_params(input_params)
 
-        current_presenter.defined_inputs_for(*permitted_attributes).collect_all(input_params)
+        current_presenter.defined_field_inputs_for(*permitted_attributes).collect_all(input_params)
       end
 
       # Returns the resource parameter key

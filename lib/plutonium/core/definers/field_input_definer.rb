@@ -1,7 +1,7 @@
 module Plutonium
   module Core
     module Definers
-      module InputDefiner
+      module FieldInputDefiner
         extend ActiveSupport::Concern
         include Plutonium::Core::Autodiscovery::InputDiscoverer
 
@@ -47,14 +47,14 @@ module Plutonium
           attr_reader :hash
         end
 
-        def defined_inputs_for(*names)
+        def defined_field_inputs_for(*names)
           (names - input_definitions.keys).each do |name|
-            define_input(name, input: autodiscover_input(name))
+            define_field_input(name, input: autodiscover_input(name))
           end
           input_definitions.slice(*names)
         end
 
-        def define_input(name, input: nil, type: nil, **options)
+        def define_field_input(name, input: nil, type: nil, **options)
           input_definitions[name] = if input.present?
             input
           elsif type.present?

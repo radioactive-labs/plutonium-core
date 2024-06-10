@@ -15,7 +15,7 @@ module Plutonium
           @search_object = current_query_object
           base_query = policy_scope(resource_class)
           base_query = @search_object.apply(base_query)
-          base_query = base_query.send(params[:scope].to_sym) if params[:scope].present?
+          base_query = base_query.public_send(params[:scope].to_sym) if params[:scope].present?
           @pagy, @resource_records = pagy base_query
           @collection = build_collection
 

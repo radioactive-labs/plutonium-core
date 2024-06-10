@@ -5,9 +5,9 @@ module Plutonium
         class AttachmentInput < SimpleFormInput
           attr_reader :reflection
 
-          def initialize(name, reflection:, **user_options)
+          def initialize(name, reflection:, **options)
             @reflection = reflection
-            super(name, **user_options)
+            super(name, **options)
           end
 
           private

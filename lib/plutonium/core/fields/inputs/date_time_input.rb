@@ -5,7 +5,9 @@ module Plutonium
         class DateTimeInput < SimpleFormInput
           private
 
-          def input_options = {wrapper: :resource_multi_select}
+          def input_options
+            {wrapper: :resource_multi_select}
+          end
         end
       end
     end

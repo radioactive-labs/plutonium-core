@@ -17,7 +17,6 @@ module Plutonium
 
           def self.for_resource_attribute(resource_class, attr_name, **options)
             type = nil
-            options[:label] ||= resource_class.human_attribute_name(attr_name)
 
             if (attachment = resource_class.try(:reflect_on_attachment, attr_name))
               type = :attachment

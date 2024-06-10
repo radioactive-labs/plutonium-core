@@ -11,7 +11,7 @@
     <%= form.simple_fields_for name, new_record, child_index: 'NEW_RECORD' do |nested| %>
       <fieldset class="border-t mt-4 pt-4 first:border-t-0 first:pt-0 nested-resource-form-fields" data-new-record="<%= nested.object.new_record? %>">
         <% inputs.values.each do |input| %>
-          <%= input.render self, nested, new_record %>
+          <%= render input.with(form: nested, record: new_record) %>
         <% end %>
 
         <div class="text-right">
@@ -34,7 +34,7 @@
     <%= form.simple_fields_for name do |nested| %>
       <fieldset class="border-t mt-4 pt-4 first:border-t-0 first:pt-0 nested-resource-form-fields" data-new-record="<%= nested.object.new_record? %>">
         <% inputs.values.each do |input| %>
-          <%= input.render self, nested, new_record %>
+          <%= render input.with(form: nested, record: new_record) %>
         <% end %>
 
         <div>

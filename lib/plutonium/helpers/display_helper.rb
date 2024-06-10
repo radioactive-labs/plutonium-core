@@ -73,7 +73,7 @@ module Plutonium
 
         # Fallback to retrieving the value from a predefined list
         %i[to_label name title].each do |method|
-          name = obj.send(method) if obj.respond_to?(method)
+          name = obj.public_send(method) if obj.respond_to?(method)
           return name if name.present?
         end
 

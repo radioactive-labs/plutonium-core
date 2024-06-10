@@ -17,8 +17,6 @@ module Plutonium
           end
 
           def self.for_resource_association(resource_class, attr_name, **options)
-            options[:label] ||= resource_class.human_attribute_name(attr_name)
-
             association = resource_class.try(:reflect_on_association, attr_name)
             raise ArgumentError, "#{attr_name} is not a valid association of #{resource_class}" unless association.present?
             raise ArgumentError, "#{association.klass} does is not a resource record" unless association.klass.include?(Plutonium::Resource::Record)

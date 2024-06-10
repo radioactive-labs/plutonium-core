@@ -18,7 +18,7 @@ module Plutonium
           raise NotImplementedError, "#{self.class.name} does not implement the required #{method}"
         end
 
-        send(method)
+        public_send(method)
       end
 
       # Core actions

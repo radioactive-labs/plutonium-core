@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module Fields
       module Renderers
-        class AssociationRenderer < BasicRenderer
+        class AssociationRenderer < Base
           attr_reader :reflection
 
           def initialize(name, reflection:, **user_options)
@@ -10,10 +10,16 @@ module Plutonium
             super(name, **user_options)
           end
 
-          def render(view_context, record)
-            value = record.send(name)
-            options = self.options.merge(helper: value.class.include?(Plutonium::Resource::Record) ? :display_association_value : :display_name_of)
-            view_context.display_field value:, **options
+          def render
+            display_field value:, **options
+          end
+
+          private
+
+          def renderer_options
+            {
+              helper: value.class.include?(Plutonium::Resource::Record) ? :display_association_value : :display_name_of
+            }
           end
         end
       end

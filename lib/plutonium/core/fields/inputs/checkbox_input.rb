@@ -5,7 +5,9 @@ module Plutonium
         class CheckboxInput < SimpleFormInput
           private
 
-          def input_options = {wrapper: :resource_checkbox}
+          def input_options
+            {wrapper: :resource_checkbox}
+          end
         end
       end
     end

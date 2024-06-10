@@ -3,9 +3,8 @@ module Plutonium
     module Fields
       module Inputs
         class PolymorphicBelongsToAssociationInput < SimpleFormAssociationInput
-          def render(view_context, f, record, **opts)
-            opts = options.deep_merge opts
-            f.input param, **opts
+          def render
+            form.input param, **options
           end
 
           private
@@ -15,12 +14,11 @@ module Plutonium
           end
 
           def input_options
+            collection = @user_options.delete(:collection).presence || associated_classes
             {
               as: :grouped_select,
+              collection:,
               label: reflection.name.to_s.humanize,
-              collection: associated_classes.map { |klass|
-                            [klass.name, klass.all]
-                          }.to_h,
               group_label_method: :first,
               group_method: :last, include_blank: "Select One"
             }
@@ -38,7 +36,10 @@ module Plutonium
                 end
               end
             end
-            associated_classes
+
+            associated_classes.map { |klass|
+              [klass.name, klass.all]
+            }.to_h
           end
         end
       end

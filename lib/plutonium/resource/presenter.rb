@@ -83,7 +83,7 @@ module Plutonium
         )
         yield input if block_given?
 
-        define_input name, input:
+        define_field_input name, input:
       end
 
       # Determines the limit for a nested input

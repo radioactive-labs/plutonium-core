@@ -2,7 +2,7 @@ module Plutonium
   module Core
     module Actions
       class InteractiveAction < Plutonium::Core::Action
-        include Plutonium::Core::Definers::InputDefiner
+        include Plutonium::Core::Definers::FieldInputDefiner
 
         Context = Data.define :resource_class
 
@@ -37,7 +37,7 @@ module Plutonium
 
         def set_interaction(interaction)
           @interaction = interaction
-          @inputs = defined_inputs_for(*(interaction.filters.keys - [:resource, :resources]))
+          @inputs = defined_field_inputs_for(*(interaction.filters.keys - [:resource, :resources]))
           @inline = @inputs.blank? unless inline == false
         end
 

@@ -22,7 +22,7 @@ module Plutonium
           record_association = klass.find_association_to_self(record)
           if record_association
             # TODO: add a warning here about a potentially poor performing query
-            return where(id: record.send(record_association.name))
+            return where(id: record.public_send(record_association.name))
           end
 
           klass.raise_association_error(record, named_scope)

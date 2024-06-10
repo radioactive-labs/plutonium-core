@@ -3,9 +3,8 @@ module Plutonium
     module Fields
       module Inputs
         class SimpleFormInput < Base
-          def render(view_context, f, record, **opts)
-            opts = options.deep_merge opts
-            f.input name, **opts
+          def render
+            form.input name, **options
           end
         end
       end

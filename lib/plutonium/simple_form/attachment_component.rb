@@ -40,7 +40,7 @@ module Plutonium
       private
 
       def value
-        @value ||= object.send(attribute_name) if object&.respond_to?(attribute_name)
+        @value ||= object.public_send(attribute_name) if object&.respond_to?(attribute_name)
       end
 
       def multiple?

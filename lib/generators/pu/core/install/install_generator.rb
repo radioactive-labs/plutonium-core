@@ -29,7 +29,7 @@ module Pu
       end
 
       def setup_app
-        # directory "config"
+        directory "config"
         directory "app"
 
         environment "# config.plutonium.assets.favicon = \"favicon.ico\""

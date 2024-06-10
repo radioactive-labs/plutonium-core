@@ -3,23 +3,22 @@ module Plutonium
     module Fields
       module Inputs
         class NestedInput < Base
-          include Plutonium::Core::Definers::InputDefiner
+          include Plutonium::Core::Definers::FieldInputDefiner
 
           attr_reader :inputs, :resource_class
 
-          def initialize(name, inputs:, resource_class:, allow_destroy:, update_only:, limit:, **user_options)
+          def initialize(name, inputs:, resource_class:, allow_destroy:, update_only:, limit:, **options)
             @inputs = inputs
             @resource_class = resource_class
             @allow_destroy = allow_destroy
             @update_only = update_only
             @limit = limit
 
-            super(name, **user_options)
+            super(name, **options)
           end
 
-          def render(view_context, f, record, **opts)
-            opts = options.deep_merge opts
-            view_context.render_component :nested_resource_form_fields, form: f, **opts
+          def render
+            render_component :nested_resource_form_fields, form:, **options
           end
 
           def collect(params)
@@ -36,19 +35,23 @@ module Plutonium
 
           private
 
-          def param = :"#{name}_attributes"
+          def param
+            :"#{name}_attributes"
+          end
 
-          def input_options = {
-            name:,
-            resource_class:,
-            allow_destroy: @allow_destroy,
-            update_only: @update_only,
-            limit: @limit,
-            inputs: defined_inputs
-          }
+          def input_options
+            {
+              name:,
+              resource_class:,
+              allow_destroy: @allow_destroy,
+              update_only: @update_only,
+              limit: @limit,
+              inputs: defined_inputs
+            }
+          end
 
           def defined_inputs
-            @defined_inputs ||= defined_inputs_for(*inputs)
+            @defined_inputs ||= defined_field_inputs_for(*inputs)
           end
         end
       end

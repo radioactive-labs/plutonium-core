@@ -32,7 +32,7 @@ module Plutonium
           Plutonium::Core::Ui::Collection.new(
             resource_class:,
             records: @resource_records,
-            fields: current_presenter.defined_renderers_for(*presentable_attributes),
+            fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
             actions: current_presenter.actions,
             pager: @pagy,
             search_object: @search_object
@@ -43,7 +43,7 @@ module Plutonium
           Plutonium::Core::Ui::Detail.new(
             resource_class:,
             record: resource_record,
-            fields: current_presenter.defined_renderers_for(*presentable_attributes),
+            fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
             associations: current_presenter.defined_association_renderers_for(*permitted_associations),
             actions: current_presenter.actions
           )
@@ -52,7 +52,7 @@ module Plutonium
         def build_form
           Plutonium::Core::Ui::Form.new(
             record: resource_record,
-            inputs: current_presenter.defined_inputs_for(*presentable_attributes)
+            inputs: current_presenter.defined_field_inputs_for(*presentable_attributes)
           )
         end
 

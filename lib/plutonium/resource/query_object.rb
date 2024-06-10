@@ -5,7 +5,7 @@ module Plutonium
       end
 
       class Query
-        include Plutonium::Core::Definers::InputDefiner
+        include Plutonium::Core::Definers::FieldInputDefiner
 
         # Applies the query to the given scope using the provided parameters.
         #
@@ -65,7 +65,7 @@ module Plutonium
         # @param params [Hash] The parameters for the query.
         # @return [Object] The modified scope.
         def apply_internal(scope, params)
-          scope.send(name, **params)
+          scope.public_send(name, **params)
         end
       end
 
@@ -215,7 +215,7 @@ module Plutonium
         end
 
         sort_definitions[name] = build_query(body) do |query|
-          query.define_input :direction
+          query.define_field_input :direction
         end
       end
 
@@ -224,7 +224,7 @@ module Plutonium
       # @param body [Proc, Symbol] The body of the search filter.
       def define_search(body)
         @search_filter = build_query(body) do |query|
-          query.define_input :search
+          query.define_field_input :search
         end
       end
 

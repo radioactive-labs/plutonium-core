@@ -21,7 +21,7 @@
 
   <div>
   <% form.inputs.values.each do |input| %>
-    <%= input.render self, f, form.record %>
+    <%= render input.with(form: f, record: form.record) %>
   <% end %>
   </div>
 

@@ -9,12 +9,19 @@
   <div class="p-4">
     <dl class="divide-y divide-gray-100">
       <% details.fields.each do |name, renderer| %>
+        <%#
+          TODO:
+          For now, we are hacking around the need to call #with before #label
+          This proves there's an issue with the rendering api.
+          While I think of an elegant solution, this works for now.
+        %>
+        <% renderer.with(record: details.record) %>
         <div class="py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
           <dt class="text-sm font-medium leading-6 text-gray-900 dark:text-gray-300">
             <%= renderer.label %>
           </dt>
           <dd class="mt-1 text-sm leading-6 text-gray-700 dark:text-gray-200 sm:col-span-2 sm:mt-0">
-            <%= renderer.render self, details.record %>
+            <%= render renderer %>
           </dd>
         </div>
       <% end %>
@@ -24,6 +31,6 @@
 
 <% if present_associations? %>
   <% details.associations.each do |name, renderer| %>
-    <%= renderer.render self, details.record %>
+    <%= render renderer.with(record: details.record) %>
   <% end %>
 <% end %>

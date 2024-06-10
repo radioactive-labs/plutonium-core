@@ -5,14 +5,13 @@ module Plutonium
         class SimpleFormAssociationInput < Base
           attr_reader :reflection
 
-          def initialize(name, reflection:, **user_options)
+          def initialize(name, reflection:, **)
             @reflection = reflection
-            super(name, **user_options)
+            super(name, **)
           end
 
-          def render(view_context, f, record, **opts)
-            opts = options.deep_merge opts
-            f.association name, **opts
+          def render
+            form.association name, **options
           end
 
           private

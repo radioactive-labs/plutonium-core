@@ -25,7 +25,7 @@
               </div>
               <div class="form-inputs">
                 <% interactive_action.inputs.values.each do |input| %>
-                  <%= input.render self, f, @interaction %>
+                  <%= render input.with(form: f, record: @interaction) %>
                 <% end %>
               </div>
             </div>

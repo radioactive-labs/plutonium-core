@@ -1,23 +1,23 @@
 module Plutonium
   module Core
     module Definers
-      module RendererDefiner
+      module FieldRendererDefiner
         extend ActiveSupport::Concern
         include Plutonium::Core::Autodiscovery::RendererDiscoverer
 
-        def defined_renderers_for(*names)
-          (names - renderer_definitions.keys).each do |name|
-            define_renderer(name, renderer: autodiscover_renderer(name))
+        def defined_field_renderers_for(*names)
+          (names - field_renderer_definitions.keys).each do |name|
+            define_field_renderer(name, renderer: autodiscover_renderer(name))
           end
-          renderer_definitions.slice(*names)
+          field_renderer_definitions.slice(*names)
         end
 
         private
 
-        def renderer_definitions = @renderer_definitions ||= {}
+        def field_renderer_definitions = @field_renderer_definitions ||= {}
 
-        def define_renderer(name, renderer: nil, type: nil, **options)
-          renderer_definitions[name] = if renderer.present?
+        def define_field_renderer(name, renderer: nil, type: nil, **options)
+          field_renderer_definitions[name] = if renderer.present?
             renderer
           elsif type.present?
             Plutonium::Core::Fields::Renderers::Factory.build(name, type:, **options)
@@ -28,8 +28,8 @@ module Plutonium
           end
         end
 
-        def renderer_defined?(name)
-          renderer_definitions.key? name
+        def field_renderer_defined?(name)
+          field_renderer_definitions.key? name
         end
       end
     end
