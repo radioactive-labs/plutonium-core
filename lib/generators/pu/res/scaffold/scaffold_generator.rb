@@ -26,7 +26,7 @@ module Pu
       def create_model
         return unless options[:model]
 
-        invoke "pu:res:model", [@original_name, *@original_attributes], dest: selected_feature, **options
+        invoke "pu:res:model", [@original_name, *@original_attributes], dest: selected_destination_feature, **options
       end
 
       def create_controller
