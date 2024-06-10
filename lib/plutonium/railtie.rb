@@ -18,7 +18,7 @@ module Plutonium
     # config.after_initialize do
     #   config.assets.precompile -= Plutonium::Railtie::PRECOMPILE_ASSETS
     # end
-    PRECOMPILE_ASSETS = %w[plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map plutonium.css]
+    PRECOMPILE_ASSETS = %w[plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map plutonium.css plutonium.png plutonium.ico]
 
     initializer "plutonium.assets" do
       next unless Rails.application.config.respond_to?(:assets)
