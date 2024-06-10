@@ -36,10 +36,6 @@ module Pu
         environment "# config.plutonium.assets.logo = \"logo.png\""
       end
 
-      def setup_assets
-        invoke "pu:core:assets", [], force: true, skip: options[:skip]
-      end
-
       def eject_views
         invoke "pu:eject:layout", [], dest: "main_app",
           force: options[:force],
