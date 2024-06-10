@@ -9,9 +9,9 @@ module PlutoniumUi
 
     option :page_title
     option :lang
-    option :body_classname, default: -> { "antialiased bg-gray-50 dark:bg-gray-900" }
-    option :main_classname, default: -> { "p-4 h-auto" }
-    option :header_adjustment, default: -> { "pt-20" }
+    option :body_classname, default: -> { "antialiased min-h-screen w-full bg-gray-50 dark:bg-gray-900" }
+    option :main_classname, default: -> { "p-4" }
+    option :header_adjustment, default: -> { "pt-20 min-h-screen w-full" }
     option :sidebar_adjustment, default: -> { "lg:ml-64" }
     option :default_turbo_tag, default: -> { true }
     option :default_fonts_tag, default: -> { true }
