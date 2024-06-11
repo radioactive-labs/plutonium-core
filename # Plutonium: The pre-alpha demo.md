@@ -7,8 +7,8 @@
   ```
 - Install Plutonium
   ```bash
-  rails g pu:core:install
   bundle add plutonium
+  rails g pu:core:install
   ```
 - Install useful gems
   ```bash
@@ -28,7 +28,7 @@
   ```
 - Create blog resource
   ```bash
-  rails g pu:res:scaffold blog user:belongs_to slug:text title:string content:text state:string published_at:datetime
+  rails g pu:res:scaffold blog user:belongs_to slug:string title:string content:text state:string published_at:datetime
   ```
 - Create dashboard app package
   ```bash
