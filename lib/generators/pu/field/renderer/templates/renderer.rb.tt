@@ -1,0 +1,9 @@
+module Fields
+  module Renderers
+    class <%= name.camelize %>Renderer < Plutonium::Core::Fields::Renderers::Base
+      def render
+        tag.span value
+      end
+    end
+  end
+end

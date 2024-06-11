@@ -1,0 +1,15 @@
+module Fields
+  module Inputs
+    class <%= name.camelize %>Input < Plutonium::Core::Fields::Inputs::Base
+      def render
+        form.input name, **options
+      end
+
+      private
+
+      def input_options
+        {}
+      end
+    end
+  end
+end
