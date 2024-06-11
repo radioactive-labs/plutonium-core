@@ -8,13 +8,11 @@
       </svg>
       <div>
         <span class="font-medium"><%= f.error_notification %></span>
-        <!--
-          <ul class="mt-1.5 list-disc list-inside">
-            <% f.object.errors.full_messages.each do |message|  %>
-              <li><%= f.error_notification message: message  %></li>
-            <% end  %>
+        <ul class="mt-1.5 list-disc list-inside">
+          <% f.object.errors.full_messages.each do |message|  %>
+            <li><%= f.error_notification message: message  %></li>
+          <% end  %>
         </ul>
-        -->
       </div>
     </div>
   <% end %>
