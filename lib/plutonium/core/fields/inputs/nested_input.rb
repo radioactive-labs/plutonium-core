@@ -22,18 +22,30 @@ module Plutonium
           end
 
           def collect(params)
+            nested_params = params[param] || {}
+            attributes = (nested_params.keys.first == "0") ? collect_indexed_attributes(nested_params) : collect_single_attributes(nested_params)
+            {param => attributes}
+          end
+
+          private
+
+          def collect_single_attributes(params)
+            collected = defined_inputs.collect_all(params)
+            collected[:id] = params[:id] if params.key?(:id) && !@update_only
+            collected[:_destroy] = params[:_destroy] if @allow_destroy
+            collected
+          end
+
+          def collect_indexed_attributes(params)
             attributes = {}
-            params[param].each do |index, nested_params|
+            params.each do |index, nested_params|
               collected = defined_inputs.collect_all(nested_params)
               collected[:id] = nested_params[:id] if nested_params.key?(:id) && !@update_only
               collected[:_destroy] = nested_params[:_destroy] if @allow_destroy
               attributes[index] = collected
             end
-
-            {param => attributes}
+            attributes
           end
-
-          private
 
           def param
             :"#{name}_attributes"

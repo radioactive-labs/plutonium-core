@@ -3,6 +3,8 @@ module Plutonium
     module Associations
       module Renderers
         class Base
+          include Plutonium::Core::Renderable
+
           attr_reader :name, :reflection
 
           def initialize(name, reflection:, **user_options)
@@ -25,6 +27,26 @@ module Plutonium
           end
 
           private
+
+          # Returns the merged options for rendering.
+          #
+          # @raise [RuntimeError] if accessed before rendering.
+          # @return [Hash] the merged options.
+          def options
+            raise "cannot access #options before calling #with" unless defined?(@options)
+
+            @options
+          end
+
+          # Returns the record object.
+          #
+          # @raise [RuntimeError] if accessed before rendering.
+          # @return [Object] the record object.
+          def record
+            raise "cannot access #record before calling #with" unless defined?(@record)
+
+            @record
+          end
 
           def renderer_options
             {}

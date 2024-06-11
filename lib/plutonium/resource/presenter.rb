@@ -63,7 +63,7 @@ module Plutonium
 
         nested_attribute_options_class = nested_attribute_options&.[](:class)
         if nested_attribute_options_class.nil? && model_class.nil?
-          raise ArgumentError, "model_class is required if your field is not an association or is polymorphic"
+          raise ArgumentError, "model_class is required if your field is not an association or is polymorphic. also ensure you have called `accepts_nested_attributes_for :#{name}`"
         end
         model_class ||= nested_attribute_options_class
 
@@ -92,7 +92,7 @@ module Plutonium
       # @param [Integer, nil] nested_attribute_limit The limit from nested attributes
       # @return [Integer, nil] The determined limit
       def determine_nested_input_limit(macro, option_limit, nested_attribute_limit)
-        if macro == :has_one
+        if %i[belongs_to has_one].include? macro
           1
         elsif option_limit
           option_limit
