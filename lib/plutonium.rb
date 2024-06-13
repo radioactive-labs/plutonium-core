@@ -1,5 +1,6 @@
 require "zeitwerk"
 
+# Zeitwerk loader setup for the Plutonium gem
 loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
 loader.ignore("#{__dir__}/generators")
 loader.ignore("#{__dir__}/plutonium/railtie.rb")
@@ -9,37 +10,47 @@ loader.setup
 require_relative "plutonium/railtie" if defined?(Rails::Railtie)
 
 module Plutonium
+  # Custom error class for the Plutonium module
   class Error < StandardError; end
 
-  def self.root
-    Pathname.new File.expand_path("../", __dir__)
-  end
+  class << self
+    # @return [Pathname] the root directory of the gem
+    def root
+      Pathname.new(File.expand_path("..", __dir__))
+    end
 
-  def self.lib_root
-    root.join("lib", "plutonium")
-  end
+    # @return [Pathname] the root directory of the lib folder of the gem
+    def lib_root
+      root.join("lib", "plutonium")
+    end
 
-  def self.logger
-    Rails.logger
-  end
+    # @return [Logger] the Rails logger
+    def logger
+      Rails.logger
+    end
 
-  def self.application_name
-    @application_name || Rails.application.class.module_parent.name
-  end
+    # @return [String] the name of the application
+    def application_name
+      @application_name || Rails.application.class.module_parent_name
+    end
 
-  def self.application_name=(application_name)
-    @application_name = application_name
-  end
+    # @param [String] application_name the name of the application
+    # @return [void]
+    attr_writer :application_name
 
-  def self.development?
-    ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
-  end
+    # @return [Boolean] whether the gem is in development mode
+    def development?
+      ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
+    end
 
-  def self.eager_load_rails!
-    return if Rails.env.production? && defined?(@rails_eager_loaded)
+    # Eager loads Rails application if not already eager loaded
+    # @return [void]
+    def eager_load_rails!
+      return if Rails.env.production? && defined?(@rails_eager_loaded)
 
-    Rails.application.eager_load! unless Rails.application.config.eager_load
-    @rails_eager_loaded = true
+      Rails.application.eager_load! unless Rails.application.config.eager_load
+      @rails_eager_loaded = true
+    end
   end
 end
 

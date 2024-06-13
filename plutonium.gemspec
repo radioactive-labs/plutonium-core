@@ -45,6 +45,15 @@ Gem::Specification.new do |spec|
   spec.add_dependency "semantic_range", "~> 3.0"
   spec.add_dependency "tty-prompt", "~> 0.23.1"
 
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "minitest"
+  spec.add_development_dependency "minitest-reporters"
+  spec.add_development_dependency "standard"
+  spec.add_development_dependency "brakeman"
+  spec.add_development_dependency "bundle-audit"
+  spec.add_development_dependency "appraisal"
+  spec.add_development_dependency 'combustion'
+
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end

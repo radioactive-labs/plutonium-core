@@ -1,4 +1,12 @@
+# plutonium.rbs
 module Plutonium
-  VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+  class Error < StandardError; end
+
+  def self.root: () -> Pathname
+  def self.lib_root: () -> Pathname
+  def self.logger: () -> Logger
+  def self.application_name: () -> String
+  def self.application_name=: (String) -> void
+  def self.development?: () -> bool
+  def self.eager_load_rails!: () -> void
 end
