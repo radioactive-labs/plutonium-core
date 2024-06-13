@@ -2,6 +2,10 @@
 
 [![Ruby](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml/badge.svg)](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml)
 
+Watch the introduction video: [Plutonium in 30 minutes](https://www.youtube.com/watch?v=HMjzj-vVLIU)
+
+---
+
 **Plutonium** picks up where Rails left off, introducing application level concepts and tooling, transforming the way you build applications with Rails.
 It's a culmination of lessons learned from years of developing nearly identical applications and is designed to save you from the drudgery of re-implementation.
 
