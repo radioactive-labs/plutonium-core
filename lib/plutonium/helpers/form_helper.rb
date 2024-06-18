@@ -5,13 +5,12 @@ module Plutonium
     module FormHelper
       include ActionView::Helpers::FormHelper
 
-      def resource_form_for(record, options = {}, &block)
+      def resource_form_for(record, **options, &block)
+        options[:url] ||= resource_url_args_for(record, action: record.new_record? ? :create : :update)
         options[:builder] ||= PlutoniumUi::FormBuilder
         options[:wrapper] ||= :default_resource_form
         options[:html] ||= {}
-        unless options[:html].key?(:novalidate)
-          options[:html][:novalidate] = false
-        end
+        options[:html][:novalidate] = false unless options[:html].key?(:novalidate)
 
         with_resource_form_field_error_proc do
           form_for(record, options, &block)

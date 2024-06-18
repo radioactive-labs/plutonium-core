@@ -1,4 +1,4 @@
-<%= resource_form_for resource_url_args_for(form.record), html: {class: "flex flex-col space-y-6 px-4 py-2"} do |f| %>
+<%= resource_form_for form.record, html: {class: "flex flex-col space-y-6 px-4 py-2"} do |f| %>
   <h2 class="mb-4 text-xl font-bold text-gray-900 dark:text-gray-200"><%= f.submit_default_value %></h2>
 
   <% if f.object.errors.present? %>

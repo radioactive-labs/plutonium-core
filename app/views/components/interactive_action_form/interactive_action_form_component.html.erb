@@ -1,4 +1,4 @@
-<%= resource_form_for interaction, as: :interaction, method: :post, url: "", html: {class: "flex flex-col space-y-6 px-4 py-2"} do |f| %>
+<%= resource_form_for interaction, url: "", as: :interaction, method: :post, html: {class: "flex flex-col space-y-6 px-4 py-2"} do |f| %>
   <h2 class="mb-4 text-xl font-bold text-gray-900 dark:text-gray-200"><%= interactive_action.name.to_s.titleize %></h2>
 
   <% if f.object.errors.present? %>

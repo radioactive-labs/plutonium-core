@@ -4,10 +4,10 @@
   <%= turbo_frame_tag "modal" do %>
     <div class="modal" tabindex="-1" data-controller="modal">
       <div class="modal-dialog modal-dialog-scrollable modal-lg">
-        <%= resource_form_for @interaction, as: :interaction,
-                                          method: :post,
-                                          turbo_frame: :modal,
-                                          url: "" do |f| %>
+        <%= resource_form_for @interaction, url: "",
+                                            as: :interaction,
+                                            method: :post,
+                                            turbo_frame: :modal do |f| %>
           <div class="modal-content">
             <div class="modal-header">
               <h1 class="modal-title fs-5"><%= interactive_action.name.to_s.titleize %></h1>
