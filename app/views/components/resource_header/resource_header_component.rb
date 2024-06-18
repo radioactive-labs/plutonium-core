@@ -5,7 +5,7 @@ module PlutoniumUi
 
     option :brand_name, optional: true
     option :default_brand_logo, default: -> { true }
-    option :sidebar_toggle, default: -> { false }
+    option :sidebar_toggle, default: -> {}
 
     private
 

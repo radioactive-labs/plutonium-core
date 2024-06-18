@@ -5,7 +5,7 @@
   <% end %>
 
   <% layout.with_header do %>
-    <%= render("resource_header", sidebar_toggle: true) %>
+    <%= render("resource_header", sidebar_toggle: "#{current_engine.dom_id}-drawer") %>
   <% end %>
 
   <% layout.with_sidebar do %>

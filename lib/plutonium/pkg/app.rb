@@ -56,6 +56,10 @@ module Plutonium
           end
         end
 
+        def dom_id
+          module_parent_name.underscore.dasherize
+        end
+
         private
 
         def draw_resource_routes_internal

@@ -1,4 +1,4 @@
-<%= render_component(:sidebar) do %>
+<%= render_component(:sidebar, id: "#{current_engine.dom_id}-drawer") do %>
   <%=
     render_component(:sidebar_menu) do |menu|
       menu.with_item(name: "Dashboard", url: root_path, icon: "outline/home")
