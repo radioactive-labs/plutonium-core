@@ -6,7 +6,7 @@ module Plutonium
           private
 
           def input_options
-            {wrapper: :resource_multi_select}
+            {wrapper: :resource_multi_select, include_blank: true}
           end
         end
       end
