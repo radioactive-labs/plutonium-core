@@ -11,8 +11,11 @@ require "#{__dir__}/concerns/account_selector"
 module Pu
   module Rodauth
     class MigrationGenerator < ::Rails::Generators::Base
+      include ::ActiveRecord::Generators::Migration
       include Concerns::Configuration
       include Concerns::AccountSelector
+
+      MIGRATION_DIR = "#{__dir__}/migration/active_record"
 
       source_root "#{__dir__}/templates"
 
@@ -124,63 +127,39 @@ module Pu
         Dir["#{MIGRATION_DIR}/*.erb"].map { |filename| File.basename(filename, ".erb").to_sym }
       end
 
-      if defined?(::ActiveRecord::Railtie) # Active Record
-        include ::ActiveRecord::Generators::Migration
-
-        MIGRATION_DIR = "#{__dir__}/migration/active_record"
-
-        def activerecord_adapter
-          if ActiveRecord::Base.respond_to?(:connection_db_config)
-            ActiveRecord::Base.connection_db_config.adapter
-          else
-            ActiveRecord::Base.connection_config.fetch(:adapter)
-          end
+      def activerecord_adapter
+        if ActiveRecord::Base.respond_to?(:connection_db_config)
+          ActiveRecord::Base.connection_db_config.adapter
+        else
+          ActiveRecord::Base.connection_config.fetch(:adapter)
         end
+      end
 
-        def primary_key_type(key = :id)
-          generators = ::Rails.application.config.generators
-          column_type = generators.options[:active_record][:primary_key_type]
-          if key
-            ", #{key}: :#{column_type}" if column_type
-          else
-            column_type || default_primary_key_type
-          end
+      def primary_key_type(key = :id)
+        generators = ::Rails.application.config.generators
+        column_type = generators.options[:active_record][:primary_key_type]
+        if key
+          ", #{key}: :#{column_type}" if column_type
+        else
+          column_type || default_primary_key_type
         end
+      end
 
-        def default_primary_key_type
-          if ActiveRecord.version >= Gem::Version.new("5.1")
-            :bigint
-          else
-            :integer
-          end
+      def default_primary_key_type
+        if ActiveRecord.version >= Gem::Version.new("5.1")
+          :bigint
+        else
+          :integer
         end
+      end
 
-        # Active Record 7+ sets default precision to 6 for timestamp columns,
-        # so we need to ensure we match this when setting the default value.
-        def current_timestamp
-          if ActiveRecord.version >= Gem::Version.new("7.0") && ["mysql2", "trilogy"].include?(activerecord_adapter) && ActiveRecord::Base.connection.supports_datetime_with_precision?
-            "CURRENT_TIMESTAMP(6)"
-          else
-            "CURRENT_TIMESTAMP"
-          end
-        end
-      else # Sequel
-        include ::Rails::Generators::Migration
-
-        MIGRATION_DIR = "#{__dir__}/migration/sequel"
-
-        def self.next_migration_number(dirname)
-          next_migration_number = current_migration_number(dirname) + 1
-          [Time.now.utc.strftime("%Y%m%d%H%M%S"), format("%.14d", next_migration_number)].max
-        end
-
-        def db_migrate_path
-          "db/migrate"
-        end
-
-        def db
-          db = ::Sequel::DATABASES.first if defined?(::Sequel)
-          db or fail Rodauth::Rails::Error, "missing Sequel database connection"
+      # Active Record 7+ sets default precision to 6 for timestamp columns,
+      # so we need to ensure we match this when setting the default value.
+      def current_timestamp
+        if ActiveRecord.version >= Gem::Version.new("7.0") && ["mysql2", "trilogy"].include?(activerecord_adapter) && ActiveRecord::Base.connection.supports_datetime_with_precision?
+          "CURRENT_TIMESTAMP(6)"
+        else
+          "CURRENT_TIMESTAMP"
         end
       end
     end

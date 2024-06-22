@@ -14,7 +14,6 @@ class RodauthPlugin < Rodauth::Rails::Auth
 
     # ==> General
 
-<% if sequel_activerecord_integration? -%>
     # Initialize Sequel and have it reuse Active Record's database connection.
 <% if RUBY_ENGINE == "jruby" -%>
     db Sequel.connect("jdbc:<%= sequel_adapter %>://", extensions: :activerecord_connection, keep_reference: false)
@@ -26,7 +25,6 @@ class RodauthPlugin < Rodauth::Rails::Auth
     # https://github.com/janko/rodauth-rails/issues/244
     convert_token_id_to_integer? true
 
-<% end -%>
     # Change prefix of table and foreign key column names from default "account"
     # accounts_table :users
     # verify_account_table :user_verification_keys

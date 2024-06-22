@@ -61,11 +61,6 @@ module Pu
 
       private
 
-      def sequel_activerecord_integration?
-        defined?(ActiveRecord::Railtie) &&
-          (!defined?(Sequel) || Sequel::DATABASES.empty?)
-      end
-
       def sequel_adapter
         SEQUEL_ADAPTERS[activerecord_adapter] || activerecord_adapter
       end
