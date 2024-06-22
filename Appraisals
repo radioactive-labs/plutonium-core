@@ -6,6 +6,6 @@ appraise "rails-7" do
   gem "importmap-rails"
   gem "turbo-rails"
   gem "stimulus-rails"
-  gem "tzinfo-data", platforms: %i[ windows jruby ]
+  gem "tzinfo-data", platforms: %i[windows jruby]
   # gem "bootsnap", require: false
 end
