@@ -1,6 +1,8 @@
 require "sequel/core"
 
 class RodauthPlugin < Rodauth::Rails::Auth
+  attr_accessor :url_options
+
   configure do
     # ==> Features
     # See the Rodauth documentation for the list of available config options:
@@ -225,5 +227,11 @@ class RodauthPlugin < Rodauth::Rails::Auth
 
     # Does not work with only_json?
     # remember_deadline_interval Hash[days: 30]
+  end
+
+  private
+
+  def rails_url_options
+    url_options || super
   end
 end
