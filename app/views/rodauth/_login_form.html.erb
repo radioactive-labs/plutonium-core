@@ -1,8 +1,8 @@
-<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+<h1 class="text-lg font-bold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">
   Sign in to your account
 </h1>
-<%= form_with url: rodauth.login_path, method: :post, data: { turbo: false }, class: "space-y-4 md:space-y-6" do |form| %>
-  <div class="mb-6">
+<%= form_with url: rodauth.login_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
+  <div>
     <%= form.label "login", rodauth.login_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
     <%= form.email_field rodauth.login_param, value: params[rodauth.login_param],
                                               id: "login", autocomplete: rodauth.login_field_autocomplete_value,
@@ -15,7 +15,7 @@
   </div>
 
   <% unless rodauth.skip_password_field_on_login? %>
-    <div class="mb-6">
+    <div>
       <%= form.label "password", rodauth.password_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
       <%= form.password_field rodauth.password_param, value: "",
                                                       id: "password",

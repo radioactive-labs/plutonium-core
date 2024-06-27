@@ -1,8 +1,8 @@
-<h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+<h1 class="text-lg font-bold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">
   Create an account
 </h1>
-<%= form_with url: rodauth.create_account_path, method: :post, data: { turbo: false }, class: "space-y-4 md:space-y-6" do |form| %>
-  <div class="mb-6">
+<%= form_with url: rodauth.create_account_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
+  <div>
     <%= form.label "login", rodauth.login_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
     <%= form.email_field rodauth.login_param, value: params[rodauth.login_param],
                                               id: "login",
@@ -14,7 +14,7 @@
   </div>
 
   <% if rodauth.require_login_confirmation? %>
-    <div class="mb-6">
+    <div>
       <%= form.label "login-confirm", rodauth.login_confirm_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
       <%= form.email_field rodauth.login_confirm_param, value: params[rodauth.login_confirm_param],
                                                 id: "login-confirm",
@@ -27,7 +27,7 @@
   <% end %>
 
   <% if rodauth.create_account_set_password? %>
-    <div class="mb-6">
+    <div>
       <%= form.label "password", rodauth.password_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
       <%= form.password_field rodauth.password_param, value: "",
                                                       id: "password",
@@ -38,7 +38,7 @@
     </div>
 
     <% if rodauth.require_password_confirmation? %>
-      <div class="mb-6">
+      <div>
         <%= form.label "password-confirm", rodauth.password_confirm_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
         <%= form.password_field rodauth.password_confirm_param, value: "",
                                                         id: "password-confirm",

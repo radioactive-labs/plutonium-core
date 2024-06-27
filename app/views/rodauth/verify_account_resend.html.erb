@@ -1,11 +1,11 @@
 <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
   <%== rodauth.verify_account_resend_explanatory_text %>
 </div>
-<%= form_with url: rodauth.verify_account_resend_path, method: :post, data: { turbo: false }, class: "space-y-4 md:space-y-6" do |form| %>
+<%= form_with url: rodauth.verify_account_resend_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
   <% if params[rodauth.login_param] %>
     <%= form.hidden_field rodauth.login_param, value: params[rodauth.login_param] %>
   <% else %>
-    <div class="mb-6">
+    <div>
       <%= form.label "login", rodauth.login_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
       <%= form.email_field rodauth.login_param, value: params[rodauth.login_param],
                                                 id: "login",
