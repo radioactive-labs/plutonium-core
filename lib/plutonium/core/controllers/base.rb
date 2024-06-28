@@ -65,7 +65,7 @@ module Plutonium
           url_args = {**kwargs, action: action}.compact
 
           controller_chain = [current_package.to_s]
-          [parent, *args].compact.each_with_index do |element, index|
+          [*args].compact.each_with_index do |element, index|
             if element.is_a?(Class)
               controller_chain << element.to_s.pluralize
             else
@@ -80,6 +80,7 @@ module Plutonium
           end
           url_args[:controller] = "/#{controller_chain.join("::").underscore}"
 
+          url_args[:"#{parent.model_name.singular_route_key}_id"] = parent.to_param if parent.present?
           if scoped_to_entity? && scoped_entity_strategy == :path
             url_args[scoped_entity_param_key] = current_scoped_entity
           end
