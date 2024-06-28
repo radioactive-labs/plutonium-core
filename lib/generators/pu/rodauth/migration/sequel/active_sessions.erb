@@ -1,8 +1,0 @@
-# Used by the active sessions feature
-create_table :<%= table_prefix %>_active_session_keys do
-  foreign_key :<%= table_prefix %>_id, :<%= table_prefix.pluralize %>, type: :Bignum
-  String :session_id
-  Time :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
-  Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
-  primary_key [:<%= table_prefix %>_id, :session_id]
-end

@@ -14,7 +14,9 @@ module Plutonium
           private
 
           def rodauth(name = :#{name})
-            super(name)
+            instance = super(name)
+            instance.url_options = default_url_options.presence
+            instance
           end
 
           def current_user

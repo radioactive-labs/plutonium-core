@@ -1,6 +1,8 @@
 require "sequel/core"
 
 class RodauthPlugin < Rodauth::Rails::Auth
+  attr_accessor :url_options
+
   configure do
     # ==> Features
     # See the Rodauth documentation for the list of available config options:
@@ -14,7 +16,6 @@ class RodauthPlugin < Rodauth::Rails::Auth
 
     # ==> General
 
-<% if sequel_activerecord_integration? -%>
     # Initialize Sequel and have it reuse Active Record's database connection.
 <% if RUBY_ENGINE == "jruby" -%>
     db Sequel.connect("jdbc:<%= sequel_adapter %>://", extensions: :activerecord_connection, keep_reference: false)
@@ -26,7 +27,6 @@ class RodauthPlugin < Rodauth::Rails::Auth
     # https://github.com/janko/rodauth-rails/issues/244
     convert_token_id_to_integer? true
 
-<% end -%>
     # Change prefix of table and foreign key column names from default "account"
     # accounts_table :users
     # verify_account_table :user_verification_keys
@@ -227,5 +227,11 @@ class RodauthPlugin < Rodauth::Rails::Auth
 
     # Does not work with only_json?
     # remember_deadline_interval Hash[days: 30]
+  end
+
+  private
+
+  def rails_url_options
+    url_options || super
   end
 end

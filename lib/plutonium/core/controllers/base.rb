@@ -78,7 +78,7 @@ module Plutonium
               end
             end
           end
-          url_args[:controller] = controller_chain.join("::").underscore
+          url_args[:controller] = "/#{controller_chain.join("::").underscore}"
 
           if scoped_to_entity? && scoped_entity_strategy == :path
             url_args[scoped_entity_param_key] = current_scoped_entity

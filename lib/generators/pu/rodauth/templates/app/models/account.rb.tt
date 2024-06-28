@@ -1,4 +1,3 @@
-<% if defined?(ActiveRecord::Railtie) -%>
 class <%= account_path.classify %> < ResourceRecord
   include Rodauth::Rails.model<%= "(:#{table_prefix})" unless primary? %>
   # add concerns above.
@@ -30,10 +29,3 @@ class <%= account_path.classify %> < ResourceRecord
 
   # add methods above.
 end
-<% else -%>
-class <%= table_prefix.camelize %> < Sequel::Model
-  include Rodauth::Rails.model
-  plugin :enum
-  enum :status, unverified: 1, verified: 2, closed: 3
-end
-<% end -%>

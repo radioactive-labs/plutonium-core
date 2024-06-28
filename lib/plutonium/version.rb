@@ -1,3 +1,3 @@
 module Plutonium
-  VERSION = "0.12.14"
+  VERSION = "0.13.0"
 end

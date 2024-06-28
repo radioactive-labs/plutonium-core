@@ -45,12 +45,14 @@ module Plutonium
         tag.span rendered, title:
       end
 
-      def display_association_value(association_class)
-        display_name = display_name_of(association_class)
-        link_to display_name, resource_url_for(association_class, parent: nil),
-          class: "font-medium text-primary-600 dark:text-primary-500"
-      rescue NoMethodError
-        display_name
+      def display_association_value(association)
+        display_name = display_name_of(association)
+        if registered_resources.include?(association.class)
+          link_to display_name, resource_url_for(association, parent: nil),
+            class: "font-medium text-primary-600 dark:text-primary-500"
+        else
+          display_name
+        end
       end
 
       def display_numeric_value(value)
