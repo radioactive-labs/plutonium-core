@@ -34,11 +34,11 @@ module PlutoniumGenerators
     end
 
     def available_apps
-      @available_apps ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with? "_app" }
+      @available_apps ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with? "_app" }.sort
     end
 
     def available_features
-      @available_features ||= ["main_app"] + available_packages.select { |pkg| !pkg.ends_with?("_app") }
+      @available_features ||= ["main_app"] + available_packages.select { |pkg| !pkg.ends_with?("_app") }.sort
     end
 
     def select_package(selected_package = nil, msg: "Select package", pkgs: nil)
