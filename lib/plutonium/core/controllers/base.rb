@@ -9,8 +9,6 @@ module Plutonium
         included do
           add_flash_types :success, :warning, :error
 
-          before_action :set_page_title
-
           before_action do
             next unless defined?(ActiveStorage)
 
@@ -26,8 +24,8 @@ module Plutonium
 
         private
 
-        def set_page_title
-          @page_title = nil
+        def set_page_title(page_title)
+          @page_title = page_title
         end
 
         def make_page_title(title)

@@ -11,6 +11,7 @@ module Plutonium
         # GET /resources(.{format})
         def index
           authorize resource_class
+          set_page_title resource_class.model_name.human.pluralize.titleize
 
           @search_object = current_query_object
           base_query = policy_scope(resource_class)
@@ -25,6 +26,7 @@ module Plutonium
         # GET /resources/1(.{format})
         def show
           authorize resource_record
+          set_page_title resource_record.to_label.titleize
 
           @detail = build_detail
 
@@ -34,6 +36,7 @@ module Plutonium
         # GET /resources/new
         def new
           authorize resource_class
+          set_page_title "Create #{resource_class.model_name.human.titleize}"
 
           @resource_record = resource_class.new
           maybe_apply_submitted_resource_params!
@@ -45,6 +48,7 @@ module Plutonium
         # POST /resources(.{format})
         def create
           authorize resource_class
+          set_page_title "Create #{resource_class.model_name.human.titleize}"
 
           @resource_record = resource_class.new resource_params
 
@@ -71,6 +75,7 @@ module Plutonium
         # GET /resources/1/edit
         def edit
           authorize resource_record
+          set_page_title "Update #{resource_record.to_label.titleize}"
 
           maybe_apply_submitted_resource_params!
           @form = build_form
@@ -81,6 +86,7 @@ module Plutonium
         # PATCH/PUT /resources/1(.{format})
         def update
           authorize resource_record
+          set_page_title "Update #{resource_record.to_label.titleize}"
 
           respond_to do |format|
             if resource_record.update(resource_params)
