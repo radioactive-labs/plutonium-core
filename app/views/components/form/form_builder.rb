@@ -28,6 +28,10 @@ module PlutoniumUi
       super(...)
     end
 
+    def return_to(url)
+      @template.tag(:input, type: "hidden", name: "return_to", value: url, hidden: true)
+    end
+
     def error_notification(options = {})
       # Overriding this because we want an unstyled error notification
       translate_error_notification = lambda {

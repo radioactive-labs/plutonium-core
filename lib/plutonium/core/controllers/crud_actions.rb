@@ -137,6 +137,10 @@ module Plutonium
         private
 
         def redirect_url_after_submit
+          if (return_to = url_from(params[:return_to]))
+            return return_to
+          end
+
           url = case preferred_action_after_submit
           when "show"
             resource_url_for(resource_record) if current_policy.show?
