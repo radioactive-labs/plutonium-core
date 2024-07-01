@@ -32,7 +32,7 @@ module Plutonium
               next unless model.table_exists?
               model.reflect_on_all_associations(:has_many).each do |association|
                 if association.options[:as] == reflection.name
-                  associated_classes << model.name
+                  associated_classes << model
                 end
               end
             end
