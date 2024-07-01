@@ -38,7 +38,7 @@ module Plutonium
             end
 
             associated_classes.map { |klass|
-              [klass.name, klass.all]
+              [klass.model_name.human.pluralize, klass.all]
             }.to_h
           end
         end

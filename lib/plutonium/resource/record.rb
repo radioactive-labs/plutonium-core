@@ -181,7 +181,7 @@ module Plutonium
         # @return [ActiveRecord::Reflection::AssociationReflection, nil]
         def find_association_to_record(record)
           reflect_on_all_associations.find do |assoc|
-            assoc.klass.name == record.class.name
+            assoc.klass.name == record.class.name unless assoc.polymorphic?
           rescue
             assoc.check_validity!
             raise
@@ -267,7 +267,7 @@ module Plutonium
         def belongs_to_association_parameters
           reflect_on_all_associations(:belongs_to).map do |reflection|
             input_param = reflection.options[:foreign_key] || :"#{reflection.name}_id"
-            [reflection.name, {input_param => nil}]
+            [reflection.name, {input_param => nil, :"#{reflection.name}_sgid" => nil}]
           end.to_h
         end
 
