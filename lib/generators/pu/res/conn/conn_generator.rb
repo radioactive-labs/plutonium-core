@@ -15,13 +15,13 @@ module Pu
 
       def start
         source_feature = select_feature msg: "Select source feature"
-        source_module = (source_feature == "main_app") ? "ResourceRecord" : "#{source_feature.classify}::ResourceRecord"
+        source_module = (source_feature == "main_app") ? "ResourceRecord" : "#{source_feature.camelize}::ResourceRecord"
 
         Plutonium.eager_load_rails!
         available_resources = source_module.constantize.descendants.map(&:to_s).sort
         selected_resources = prompt.multi_select("Select resources", available_resources)
 
-        @app_namespace = select_app.classify
+        @app_namespace = select_app.camelize
 
         selected_resources.each do |resource|
           @resource_class = resource
