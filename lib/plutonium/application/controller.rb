@@ -36,7 +36,7 @@ module Plutonium
       # end
 
       def registered_resources
-        current_engine.resource_register
+        current_engine.resource_register.resources
       end
     end
   end
