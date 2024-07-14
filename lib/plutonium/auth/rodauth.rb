@@ -28,7 +28,7 @@ module Plutonium
           end
 
           define_singleton_method(:to_s) { "Plutonium::Auth::Rodauth(:#{name})" }
-          define_singleton_method(:inspect) { "Plutonium::Auth::Rodautht(:#{name})" }
+          define_singleton_method(:inspect) { "Plutonium::Auth::Rodauth(:#{name})" }
         RUBY
         mod
       end
