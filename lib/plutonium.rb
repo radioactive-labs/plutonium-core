@@ -1,57 +1,71 @@
+# frozen_string_literal: true
+
 require "zeitwerk"
+require_relative "plutonium/configuration"
 
-# Zeitwerk loader setup for the Plutonium gem
-loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false)
-loader.ignore("#{__dir__}/generators")
-loader.ignore("#{__dir__}/plutonium/railtie.rb")
-loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
-loader.setup
-
-require_relative "plutonium/railtie" if defined?(Rails::Railtie)
-
+# Plutonium module
+#
+# This module provides the main functionality for the Plutonium gem.
+# It sets up autoloading using Zeitwerk and provides utility methods
+# for accessing gem-related information.
 module Plutonium
-  # Custom error class for the Plutonium module
+  # Custom error class for Plutonium-specific exceptions
   class Error < StandardError; end
 
+  # Set up Zeitwerk loader for the Plutonium gem
+  # @return [Zeitwerk::Loader] configured Zeitwerk loader instance
+  ZEITWERK_LOADER = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
+    loader.ignore("#{__dir__}/generators")
+    loader.ignore("#{__dir__}/plutonium/railtie.rb")
+    loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
+    loader.setup
+  end
+
   class << self
-    # @return [Pathname] the root directory of the gem
+    # Get the root directory of the gem
+    #
+    # @return [Pathname] the root directory path
     def root
-      Pathname.new(File.expand_path("..", __dir__))
+      @root ||= Pathname.new(File.expand_path("..", __dir__))
     end
 
-    # @return [Pathname] the root directory of the lib folder of the gem
+    # Get the root directory of the lib folder of the gem
+    #
+    # @return [Pathname] the lib root directory path
     def lib_root
-      root.join("lib", "plutonium")
+      @lib_root ||= root.join("lib", "plutonium")
     end
 
-    # @return [Logger] the Rails logger
+    # Get the Rails logger
+    #
+    # @return [Logger] the Rails logger instance
     def logger
       Rails.logger
     end
 
-    # @return [String] the name of the application
+    # Get the name of the application
+    #
+    # @return [String] the application name
     def application_name
       @application_name || Rails.application.class.module_parent_name
     end
 
-    # @param [String] application_name the name of the application
-    # @return [void]
+    # Set the name of the application
+    #
+    # @param [String] name the name of the application
     attr_writer :application_name
 
-    # @return [Boolean] whether the gem is in development mode
-    def development?
-      ActiveModel::Type::Boolean.new.cast(ENV["PLUTONIUM_DEV"]).present?
-    end
-
-    # Eager loads Rails application if not already eager loaded
+    # Eager load Rails application if not already eager loaded
+    #
     # @return [void]
     def eager_load_rails!
-      return if Rails.env.production? && defined?(@rails_eager_loaded)
+      return if @rails_eager_loaded || Rails.application.config.eager_load
 
-      Rails.application.eager_load! unless Rails.application.config.eager_load
+      Rails.application.eager_load!
       @rails_eager_loaded = true
     end
   end
 end
 
-Plutonium::ZEITWERK_LOADER = loader
+# Load Railtie if Rails is defined
+require_relative "plutonium/railtie" if defined?(Rails::Railtie)

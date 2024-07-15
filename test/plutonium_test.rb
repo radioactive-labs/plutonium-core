@@ -38,10 +38,10 @@ class PlutoniumTest < Minitest::Test
 
   def test_development?
     ENV["PLUTONIUM_DEV"] = "true"
-    assert Plutonium.development?
+    assert Plutonium.configuration.development?
 
     ENV["PLUTONIUM_DEV"] = "false"
-    refute Plutonium.development?
+    refute Plutonium.configuration.development?
   end
 
   def test_eager_load_rails!

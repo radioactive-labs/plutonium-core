@@ -9,16 +9,7 @@ module Plutonium
   # to work seamlessly within a Rails environment.
   class Railtie < Rails::Railtie
     # Configuration options for Plutonium
-    config.plutonium = ActiveSupport::OrderedOptions.new
-    config.plutonium.cache_discovery = !Rails.env.development?
-    config.plutonium.enable_hotreload = Rails.env.development?
-
-    # Asset configuration
-    config.plutonium.assets = ActiveSupport::OrderedOptions.new
-    config.plutonium.assets.logo = "plutonium.png"
-    config.plutonium.assets.favicon = "plutonium.ico"
-    config.plutonium.assets.stylesheet = "plutonium.css"
-    config.plutonium.assets.script = "plutonium.min.js"
+    config.plutonium = Plutonium.configuration
 
     # Assets to be precompiled
     #
@@ -46,7 +37,7 @@ module Plutonium
     end
 
     initializer "plutonium.asset_server" do
-      setup_development_asset_server if Plutonium.development?
+      setup_development_asset_server if Plutonium.configuration.development?
     end
 
     initializer "plutonium.view_components_capture_compat" do
