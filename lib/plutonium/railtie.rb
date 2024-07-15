@@ -8,9 +8,6 @@ module Plutonium
   # This Railtie sets up configurations, initializers, and tasks for Plutonium
   # to work seamlessly within a Rails environment.
   class Railtie < Rails::Railtie
-    # Configuration options for Plutonium
-    config.plutonium = Plutonium.configuration
-
     # Assets to be precompiled
     #
     # If you don't want to precompile Plutonium's assets (eg. because you're using webpack),
@@ -53,7 +50,7 @@ module Plutonium
     end
 
     config.after_initialize do
-      Plutonium::Reloader.start! if Rails.application.config.plutonium.enable_hotreload
+      Plutonium::Reloader.start! if Plutonium.configuration.enable_hotreload
       Plutonium::ZEITWERK_LOADER.eager_load if Rails.env.production?
     end
 

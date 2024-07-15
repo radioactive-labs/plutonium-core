@@ -37,8 +37,8 @@ module Pu
           registerControllers(application)
         EOT
 
-        environment "config.plutonium.assets.stylesheet = \"application\""
-        environment "config.plutonium.assets.script = \"application\""
+        configure_plutonium "config.assets.stylesheet = \"application\""
+        configure_plutonium "config.assets.script = \"application\""
       end
     end
   end

@@ -5,6 +5,7 @@ module Plutonium
   #
   # @example
   #   Plutonium.configure do |config|
+  #     config.load_defaults 1.0
   #     config.development = true
   #     config.cache_discovery = false
   #     config.enable_hotreload = true
@@ -23,14 +24,49 @@ module Plutonium
     # @return [AssetConfiguration] asset configuration
     attr_reader :assets
 
+    # @return [Float] the current defaults version
+    attr_reader :defaults_version
+
+    # Map of version numbers to their default configurations
+    VERSION_DEFAULTS = {
+      1.0 => proc do |config|
+        # No changes for 1.0 yet as it's the current base configuration
+      end
+      # Add more version configurations here as needed
+      # 1.1 => proc do |config|
+      #   config.some_new_setting = true
+      # end
+    }.freeze
+
     # Initialize a new Configuration instance
     #
-    # @note This method sets default values based on environment variables and Rails environment
+    # @note This method sets initial values
     def initialize
+      @defaults_version = nil
+      @assets = AssetConfiguration.new
+
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?
       @enable_hotreload = Rails.env.development?
-      @assets = AssetConfiguration.new
+    end
+
+    # Load default configuration for a specific version
+    #
+    # @param version [Float] the version to load defaults for
+    # @return [void]
+    def load_defaults(version)
+      available_versions = VERSION_DEFAULTS.keys.sort
+      applicable_versions = available_versions.select { |v| v <= version }
+
+      if applicable_versions.empty?
+        raise "No applicable defaults found for version #{version}."
+      end
+
+      applicable_versions.each do |v|
+        VERSION_DEFAULTS[v].call(self)
+      end
+
+      @defaults_version = applicable_versions.last
     end
 
     # whether Plutonium is in development mode
@@ -89,6 +125,14 @@ module Plutonium
     # @return [void]
     def configure
       yield(configuration)
+    end
+
+    # Load default configuration for a specific version
+    #
+    # @param version [Float] the version to load defaults for
+    # @return [void]
+    def load_defaults(version)
+      configuration.load_defaults(version)
     end
   end
 end

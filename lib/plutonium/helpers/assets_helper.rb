@@ -39,28 +39,28 @@ module Plutonium
       #
       # @return [String] path to the logo asset
       def resource_logo_asset
-        Rails.application.config.plutonium.assets.logo
+        Plutonium.configuration.assets.logo
       end
 
       # Get the stylesheet asset path
       #
       # @return [String] path to the stylesheet asset
       def resource_stylesheet_asset
-        Rails.application.config.plutonium.assets.stylesheet
+        Plutonium.configuration.assets.stylesheet
       end
 
       # Get the script asset path
       #
       # @return [String] path to the script asset
       def resource_script_asset
-        Rails.application.config.plutonium.assets.script
+        Plutonium.configuration.assets.script
       end
 
       # Get the favicon asset path
       #
       # @return [String] path to the favicon asset
       def resource_favicon_asset
-        Rails.application.config.plutonium.assets.favicon
+        Plutonium.configuration.assets.favicon
       end
 
       private

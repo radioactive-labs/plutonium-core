@@ -31,9 +31,6 @@ module Pu
       def setup_app
         directory "config"
         directory "app"
-
-        environment "# config.plutonium.assets.favicon = \"favicon.ico\""
-        environment "# config.plutonium.assets.logo = \"logo.png\""
       end
 
       def eject_views

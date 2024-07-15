@@ -272,6 +272,25 @@ module PlutoniumGenerators
         end
       end
 
+      def configure_plutonium(data = nil, options = {})
+        data ||= yield if block_given?
+
+        log :configure_plutonium, data
+
+        in_root do
+          replace_existing = ->(file, data) do
+            gsub_file file, Regexp.new(".*#{data.split("=").first.strip}.*=.*\n"), data, verbose: false
+          end
+
+          data = optimize_indentation(data, 2)
+          file = "config/initializers/plutonium.rb"
+          replace_existing.call file, data
+          break if File.read(file).match? regexify_config(data)
+
+          inject_into_file file, data, before: /.*# Configure plutonium above this.*/, verbose: false
+        end
+      end
+
       #
       # Set a config in the application generator block
       # If the configuration exists already, it is updated
