@@ -4,11 +4,7 @@ module <%= package_name %>
     # add concerns above.
 
     config.after_initialize do
-      initialize_register!
-
       # add directives above.
-
-      # register resources above.
     end
   end
 end

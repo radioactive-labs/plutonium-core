@@ -5,8 +5,6 @@ module Plutonium
     module App
       extend ActiveSupport::Concern
       include Base
-      include Concerns::ResourceRegistration
-      include ResourceRoutesDrawer
 
       included do
         isolate_namespace to_s.deconstantize.constantize
@@ -14,7 +12,6 @@ module Plutonium
 
       class_methods do
         include Plutonium::Concerns::ResourceValidatable
-
         attr_reader :scoped_entity_class, :scoped_entity_strategy, :scoped_entity_param_key
 
         def scope_to_entity(entity_class, strategy: :path, param_key: nil)
@@ -27,16 +24,6 @@ module Plutonium
 
         def scoped_to_entity?
           scoped_entity_class.present?
-        end
-
-        def draw_custom_routes(&block)
-          @custom_routes_block = block
-        end
-
-        def draw_resource_routes
-          ActiveSupport::Notifications.instrument("plutonium.app.draw_resource_routes", app: module_parent.to_s) do
-            draw_resource_routes_internal
-          end
         end
 
         def dom_id

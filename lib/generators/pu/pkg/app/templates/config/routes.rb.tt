@@ -1,11 +1,10 @@
-<%= package_name %>::Engine.draw_custom_routes do
-  # draw custom routes here
-
+<%= package_name %>::Engine.routes.draw do
   root to: "dashboard#index"
-end
 
-# draw routes for registered resources
-<%= package_name %>::Engine.draw_resource_routes
+  # register resources above.
+
+  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+end
 
 # mount our app
 Rails.application.routes.draw do

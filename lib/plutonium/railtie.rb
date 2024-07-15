@@ -1,60 +1,60 @@
+# frozen_string_literal: true
+
 require "view_component"
 
 module Plutonium
+  # Plutonium::Railtie integrates Plutonium with Rails applications.
+  #
+  # This Railtie sets up configurations, initializers, and tasks for Plutonium
+  # to work seamlessly within a Rails environment.
   class Railtie < Rails::Railtie
+    # Configuration options for Plutonium
     config.plutonium = ActiveSupport::OrderedOptions.new
-    config.plutonium.cache_discovery = defined?(Rails.env) && !Rails.env.development?
-    config.plutonium.enable_hotreload = defined?(Rails.env) && Rails.env.development?
+    config.plutonium.cache_discovery = !Rails.env.development?
+    config.plutonium.enable_hotreload = Rails.env.development?
 
+    # Asset configuration
     config.plutonium.assets = ActiveSupport::OrderedOptions.new
     config.plutonium.assets.logo = "plutonium.png"
     config.plutonium.assets.favicon = "plutonium.ico"
     config.plutonium.assets.stylesheet = "plutonium.css"
     config.plutonium.assets.script = "plutonium.min.js"
 
+    # Assets to be precompiled
+    #
     # If you don't want to precompile Plutonium's assets (eg. because you're using webpack),
     # you can do this in an intiailzer:
     #
     # config.after_initialize do
     #   config.assets.precompile -= Plutonium::Railtie::PRECOMPILE_ASSETS
     # end
-    PRECOMPILE_ASSETS = %w[plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map plutonium.css plutonium.png plutonium.ico]
+    PRECOMPILE_ASSETS = %w[
+      plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map
+      plutonium.css plutonium.png plutonium.ico
+    ].freeze
 
     initializer "plutonium.assets" do
-      next unless Rails.application.config.respond_to?(:assets)
-
-      Rails.application.config.assets.precompile += PRECOMPILE_ASSETS
-      Rails.application.config.assets.paths << Plutonium.root.join("app/assets").to_s
+      setup_asset_pipeline if Rails.application.config.respond_to?(:assets)
     end
 
     initializer "plutonium.load_components" do
-      load Plutonium.root.join("app", "views", "components", "base.rb")
+      load_base_component
     end
 
     initializer "plutonium.initializers" do
-      Dir.glob(Plutonium.root.join("config", "initializers", "**", "*.rb")) { |file| load file }
+      load_plutonium_initializers
     end
 
     initializer "plutonium.asset_server" do
-      next unless Plutonium.development?
-
-      puts "=> [plutonium] starting assets server"
-      # setup a middleware to serve our assets
-      config.app_middleware.insert_before(
-        ActionDispatch::Static,
-        Rack::Static,
-        urls: ["/build"],
-        root: Plutonium.root.join("src").to_s,
-        cascade: true,
-        header_rules: [
-          # Cache all static files in public caches (e.g. Rack::Cache) as well as in the browser
-          [:all, {"cache-control" => "public, max-age=31536000"}]
-        ]
-      )
+      setup_development_asset_server if Plutonium.development?
     end
 
     initializer "plutonium.view_components_capture_compat" do
       config.view_component.capture_compatibility_patch_enabled = true
+    end
+
+    initializer "plutonium.action_dispatch_extensions" do
+      extend_action_dispatch
     end
 
     rake_tasks do
@@ -64,6 +64,41 @@ module Plutonium
     config.after_initialize do
       Plutonium::Reloader.start! if Rails.application.config.plutonium.enable_hotreload
       Plutonium::ZEITWERK_LOADER.eager_load if Rails.env.production?
+    end
+
+    private
+
+    def setup_asset_pipeline
+      Rails.application.config.assets.precompile += PRECOMPILE_ASSETS
+      Rails.application.config.assets.paths << Plutonium.root.join("app/assets").to_s
+    end
+
+    def load_base_component
+      load Plutonium.root.join("app", "views", "components", "base.rb")
+    end
+
+    def load_plutonium_initializers
+      Dir.glob(Plutonium.root.join("config", "initializers", "**", "*.rb")) { |file| load file }
+    end
+
+    def setup_development_asset_server
+      puts "=> [plutonium] starting assets server"
+      config.app_middleware.insert_before(
+        ActionDispatch::Static,
+        Rack::Static,
+        urls: ["/build"],
+        root: Plutonium.root.join("src").to_s,
+        cascade: true,
+        header_rules: [
+          [:all, {"cache-control" => "public, max-age=31536000"}]
+        ]
+      )
+    end
+
+    def extend_action_dispatch
+      ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::MapperExtensions
+      ActionDispatch::Routing::RouteSet.prepend Plutonium::Routing::RouteSetExtensions
+      Rails::Engine.include Plutonium::Routing::ResourceRegistration
     end
   end
 end

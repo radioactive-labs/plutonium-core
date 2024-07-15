@@ -31,8 +31,8 @@ module Pu
           # template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb"
           # template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb"
 
-          insert_into_file "packages/#{package_namespace}/lib/engine.rb",
-            indent("register_resource ::#{resource}\n", 6),
+          insert_into_file "packages/#{package_namespace}/config/routes.rb",
+            indent("register_resource ::#{resource}\n", 2),
             before: /.*# register resources above.*/
         end
       rescue => e
