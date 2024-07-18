@@ -4,10 +4,6 @@ module Plutonium
       extend ActiveSupport::Concern
       include Plutonium::Core::Controllers::Base
 
-      included do
-        helper_method :registered_resources
-      end
-
       private
 
       # # Menu Builder
@@ -34,10 +30,6 @@ module Plutonium
       # def build_sidebar_menu
       #   build_namespace_tree(current_engine.resource_register)
       # end
-
-      def registered_resources
-        current_engine.resource_register.resources
-      end
     end
   end
 end

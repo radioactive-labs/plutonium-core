@@ -20,6 +20,7 @@ module Plutonium
 
           append_view_path File.expand_path("app/views", Plutonium.root)
           layout -> { turbo_frame_request? ? false : "resource" }
+          helper_method :registered_resources
         end
 
         private
@@ -62,7 +63,7 @@ module Plutonium
         def resource_url_args_for(*args, action: nil, parent: nil, **kwargs)
           url_args = {**kwargs, action: action}.compact
 
-          controller_chain = [current_package.to_s]
+          controller_chain = [current_package&.to_s].compact
           [*args].compact.each_with_index do |element, index|
             if element.is_a?(Class)
               controller_chain << element.to_s.pluralize
@@ -87,13 +88,22 @@ module Plutonium
         end
 
         def resource_url_for(...)
-          send(current_package.name.underscore.to_sym).url_for(resource_url_args_for(...))
+          args = resource_url_args_for(...)
+          if current_package.present?
+            send(current_package.name.underscore.to_sym).url_for(args)
+          else
+            url_for(args)
+          end
         end
 
         def root_path(*)
           return send(:"#{scoped_entity_param_key}_root_path", *) if scoped_to_entity? && scoped_entity_strategy == :path
 
           super(*)
+        end
+
+        def registered_resources
+          current_engine.resource_register.resources
         end
       end
     end
