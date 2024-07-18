@@ -18,8 +18,6 @@ module Plutonium
       include Plutonium::Core::Controllers::InteractiveActions
 
       included do
-        class_attribute :resource_class, instance_writer: false, instance_predicate: false
-
         # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
         after_action { pagy_headers_merge(@pagy) if @pagy }
 
@@ -27,14 +25,31 @@ module Plutonium
       end
 
       class_methods do
+        include SmartCache
+
         # Sets the resource class for the controller
-        # @param [Class] resource_class The resource class
+        # @param [ActiveRecord::Base] resource_class The resource class
         def controller_for(resource_class)
-          self.resource_class = resource_class
+          @resource_class = resource_class
         end
+
+        # Gets the resource class for the controller
+        # @return [ActiveRecord::Base] The resource class
+        def resource_class
+          return @resource_class if @resource_class.present?
+
+          name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").classify.constantize
+        rescue NameError
+          raise NameError, "Failed to determine the resource class. Please call `controller_for(MyResource)` in #{name}."
+        end
+        memoize_unless_reloading :resource_class
       end
 
       private
+
+      def resource_class
+        self.class.resource_class
+      end
 
       # Creates a policy context
       # @return [Plutonium::Resource::PolicyContext] The policy context
