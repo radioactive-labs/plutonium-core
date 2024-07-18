@@ -50,6 +50,11 @@ module Pu
       def resource_namespace
         app_namespace.underscore
       end
+
+      def parent_controller
+        resource_controller = "::#{resource_class.pluralize}Controller".safe_constantize
+        (resource_controller.present? && resource_controller < ::ResourceController) ? resource_controller : "#{app_namespace}::ResourceController"
+      end
     end
   end
 end
