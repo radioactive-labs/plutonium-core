@@ -21,6 +21,10 @@ module Plutonium
       plutonium.css plutonium.png plutonium.ico
     ].freeze
 
+    initializer "plutonium.base" do
+      Rails.application.class.include Plutonium::Application::Engine
+    end
+
     initializer "plutonium.assets" do
       setup_asset_pipeline if Rails.application.config.respond_to?(:assets)
     end

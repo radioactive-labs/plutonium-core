@@ -11,7 +11,7 @@ module Plutonium
       attr_reader :package
 
       def policy
-        policy_internal([package, object]) || policy_internal(object)
+        (package.present? ? policy_internal([package, object]) : nil) || policy_internal(object)
       end
 
       private

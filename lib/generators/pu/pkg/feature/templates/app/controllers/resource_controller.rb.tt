@@ -1,7 +1,5 @@
 module <%= package_name %>
   class ResourceController < ::ResourceController
     # add concerns above.
-
-    boot <%= package_name %>
   end
 end

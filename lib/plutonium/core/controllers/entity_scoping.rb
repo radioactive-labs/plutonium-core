@@ -60,7 +60,7 @@ module Plutonium
         # @raise [NotImplementedError] if not scoped to an entity
         def scoped_entity_session_key
           ensure_legal_entity_scoping_method_access!(__method__)
-          :"#{current_package.name.underscore}__scoped_entity_id"
+          [current_package&.name&.underscore, "scoped_entity_id"].compact.join("__").to_sym
         end
 
         # Returns the current scoped entity for the request.

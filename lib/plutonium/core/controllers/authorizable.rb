@@ -27,7 +27,7 @@ module Plutonium
         # @return [Plutonium::Pundit::Context] a new instance of {Plutonium::Pundit::Context} with the current user and package
         def pundit
           @pundit ||= Plutonium::Pundit::Context.new(
-            package: current_package.to_s.underscore.to_sym,
+            package: current_package.present? ? current_package.to_s.underscore.to_sym : nil,
             user: pundit_user,
             policy_cache: ::Pundit::CacheStore::LegacyStore.new(policies)
           )

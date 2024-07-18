@@ -9,15 +9,11 @@ module <%= package_name %>
       include Plutonium::Auth::Public
       <%- end -%>
       # add concerns above.
+      <%- if bring_your_own_auth? -%>
 
       included do
-        boot <%= package_name %>
-        <%- if bring_your_own_auth? -%>
-
         helper_method :current_user
-        <%- end -%>
       end
-      <%- if bring_your_own_auth? -%>
 
       def current_user
         raise NotImplementedError, "#{self.class}#current_user must return a non nil value"

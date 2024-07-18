@@ -108,7 +108,7 @@ module Plutonium
       # @param [ActiveRecord::Base] resource_record The resource record
       # @return [Object] The resource presenter
       def resource_presenter(resource_class, resource_record)
-        presenter_class = "#{current_package}::#{resource_class}Presenter".constantize
+        presenter_class = [current_package, "#{resource_class}Presenter"].compact.join("::").constantize
         presenter_class.new resource_context, resource_record
       rescue NameError
         super(resource_class, resource_record)
@@ -119,7 +119,7 @@ module Plutonium
       # @param [ActionController::Parameters] params The request parameters
       # @return [Object] The resource query object
       def resource_query_object(resource_class, params)
-        query_object_class = "#{current_package}::#{resource_class}QueryObject".constantize
+        query_object_class = [current_package, "#{resource_class}QueryObject"].compact.join("::").constantize
         query_object_class.new resource_context, params
       rescue NameError
         super(resource_class, params)

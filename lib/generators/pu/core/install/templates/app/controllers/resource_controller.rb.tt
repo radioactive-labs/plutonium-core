@@ -1,3 +1,23 @@
 class ResourceController < ApplicationController
   include Plutonium::Resource::Controller
+  <%- if !ApplicationController.new.respond_to?(:current_user, true) -%>
+
+  private def current_user
+    raise NotImplementedError, "#{self.class}#current_user must return a non nil value"
+  end
+  helper_method :current_user
+  <%- elsif !ApplicationController._helper_methods.include?(:current_user) -%>
+
+  helper_method :current_user
+  <%- end -%>
+  <%- if !ApplicationController.new.respond_to?(:logout_url, true) -%>
+
+  private def logout_url
+    # return a logout url to render a logout link
+  end
+  helper_method :logout_url
+  <%- elsif !ApplicationController._helper_methods.include?(:logout_url) -%>
+
+  helper_method :logout_url
+  <%- end -%>
 end
