@@ -4,7 +4,7 @@ Plutonium.configure do |config|
   config.load_defaults 1.0
 
   # config.assets.logo = "logo.png"
-  # Configure plutonium above this
+  # Configure plutonium above.
 end
 
 Rails.application.config.to_prepare do

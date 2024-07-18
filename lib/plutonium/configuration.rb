@@ -126,13 +126,5 @@ module Plutonium
     def configure
       yield(configuration)
     end
-
-    # Load default configuration for a specific version
-    #
-    # @param version [Float] the version to load defaults for
-    # @return [void]
-    def load_defaults(version)
-      configuration.load_defaults(version)
-    end
   end
 end

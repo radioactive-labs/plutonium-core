@@ -287,7 +287,7 @@ module PlutoniumGenerators
           replace_existing.call file, data
           break if File.read(file).match? regexify_config(data)
 
-          inject_into_file file, data, before: /.*# Configure plutonium above this.*/, verbose: false
+          inject_into_file file, data, before: /.*# Configure plutonium above.*/, verbose: false
         end
       end
 
