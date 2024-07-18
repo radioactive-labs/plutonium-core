@@ -27,8 +27,10 @@ module Plutonium
     extend ActiveSupport::Concern
 
     included do
-      class_attribute :_memoized_results, instance_writer: false, default: Concurrent::Map.new
+      mattr_accessor :_memoized_results, instance_writer: false, default: Concurrent::Map.new
     end
+
+    private
 
     # Caches the result of the given block unless class caching is disabled.
     #
