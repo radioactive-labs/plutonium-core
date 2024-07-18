@@ -2,7 +2,7 @@ module Plutonium
   module Pkg
     module Feature
       extend ActiveSupport::Concern
-      include Base
+      include Plutonium::Pkg::Base
 
       included do
         initializer :append_migrations do |app|

@@ -12,6 +12,9 @@ module Plutonium
     #     register_resource SomeModel
     #   end
     module RouteSetExtensions
+      extend ActiveSupport::Concern
+      include Plutonium::EngineValidator
+
       # Clears all registered resources and route configurations.
       #
       # This method should be called when you want to reset all registered resources
@@ -30,7 +33,7 @@ module Plutonium
       # @return [void]
       # @yield Executes the given block in the context of route drawing.
       def draw(&block)
-        if supported_engine?
+        if self.class.supported_engine?(engine)
           ActiveSupport::Notifications.instrument("plutonium.resource_routes.draw", app: engine.to_s) do
             super do
               setup_shared_resource_concerns
@@ -50,7 +53,7 @@ module Plutonium
       # @return [Hash] The configuration for the registered resource.
       # @raise [ArgumentError] If the engine doesn't support Plutonium::Pkg::App.
       def register_resource(resource, &)
-        validate_engine!
+        self.class.validate_engine! engine
         engine.resource_register.register(resource)
 
         route_name = resource.model_name.plural
@@ -83,21 +86,6 @@ module Plutonium
       # @return [Hash] A lookup table for resource route configurations.
       def resource_route_config_lookup
         @resource_route_config_lookup ||= {}
-      end
-
-      # Validates that the current engine supports Plutonium features.
-      #
-      # @raise [ArgumentError] If the engine doesn't include Plutonium::Pkg::App.
-      # @return [void]
-      def validate_engine!
-        raise ArgumentError, "#{engine} must include Plutonium::Pkg::App to register resources" unless supported_engine?
-      end
-
-      # Checks if the current engine supports Plutonium features.
-      #
-      # @return [Boolean] True if the engine includes Plutonium::Pkg::App, false otherwise.
-      def supported_engine?
-        engine.include?(Plutonium::Pkg::App)
       end
 
       # Determines the appropriate engine based on the current scope.
