@@ -1,7 +1,7 @@
 using Plutonium::Refinements::ParameterRefinements
 
 module Plutonium
-  module Core
+  module Resource
     module Controllers
       module Queryable
         extend ActiveSupport::Concern

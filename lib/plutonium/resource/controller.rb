@@ -10,12 +10,12 @@ module Plutonium
     module Controller
       extend ActiveSupport::Concern
       include Pagy::Backend
-      include Plutonium::Core::Controllers::Base
-      include Plutonium::Authorization::ResourceController
-      include Plutonium::Core::Controllers::Presentable
-      include Plutonium::Core::Controllers::Queryable
-      include Plutonium::Core::Controllers::CrudActions
-      include Plutonium::Core::Controllers::InteractiveActions
+      include Plutonium::Core::Controller
+      include Plutonium::Resource::Controllers::Authorizable
+      include Plutonium::Resource::Controllers::Presentable
+      include Plutonium::Resource::Controllers::Queryable
+      include Plutonium::Resource::Controllers::CrudActions
+      include Plutonium::Resource::Controllers::InteractiveActions
 
       included do
         # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers

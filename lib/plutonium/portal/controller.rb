@@ -2,8 +2,7 @@ module Plutonium
   module Portal
     module Controller
       extend ActiveSupport::Concern
-      include Plutonium::Core::Controllers::Base
-      include Plutonium::Authorization::Controller
+      include Plutonium::Core::Controller
 
       # private
 

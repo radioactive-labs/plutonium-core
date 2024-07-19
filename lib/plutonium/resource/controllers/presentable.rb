@@ -1,5 +1,5 @@
 module Plutonium
-  module Core
+  module Resource
     module Controllers
       module Presentable
         extend ActiveSupport::Concern

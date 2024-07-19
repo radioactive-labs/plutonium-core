@@ -1,5 +1,5 @@
 module Plutonium
-  module Core
+  module Resource
     module Controllers
       module InteractiveActions
         extend ActiveSupport::Concern
