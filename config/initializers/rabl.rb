@@ -30,32 +30,39 @@ Rabl.configure do |config|
   # config.camelize_keys = :upper # Defaults to false
 end
 
-# Monkey Patch Rabl source lookup to make it compatible with Rails view lookup
+# Extend Rabl source lookup to make it compatible with Rails view lookup
 module Rabl
   module Sources
-    private
+    module RailsViewLookupExtension
+      private
 
-    # Returns the rabl template path for Rails
-    def fetch_rails_source(file, _options = {})
-      # use Rails template resolution mechanism if possible (find_template)
-      source_format = request_format if defined?(request_format)
+      # Returns the rabl template path for Rails
+      def fetch_rails_source(file, options = {})
+        # use Rails template resolution mechanism if possible (find_template)
+        source_format = request_format if defined?(request_format)
 
-      lookup_proc = lambda do |partial|
-        context_scope.lookup_context.find(file, context_scope.lookup_context.prefixes, partial, [],
-          {formats: [source_format]})
+        lookup_proc = lambda do |partial|
+          context_scope.lookup_context.find(file, context_scope.lookup_context.prefixes, partial, [],
+            {formats: [source_format]})
+        end
+
+        template = begin
+          lookup_proc.call(false)
+        rescue
+          nil
+        end
+
+        template ||= begin
+          lookup_proc.call(true)
+        rescue
+          nil
+        end
+
+        template&.identifier
       end
-      template = begin
-        lookup_proc.call(false)
-      rescue
-        nil
-      end
-      template ||= begin
-        lookup_proc.call(true)
-      rescue
-        nil
-      end
-      template&.identifier
     end
+
+    prepend RailsViewLookupExtension
   end
 end
 

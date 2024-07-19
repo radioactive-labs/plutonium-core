@@ -24,10 +24,13 @@ module Plutonium
   #     memoize_unless_reloading :another_method
   #   end
   module SmartCache
-    extend ActiveSupport::Concern
+    extend ::ActiveSupport::Concern
+
+    # Class-level thread-local storage for force caching (useful for testing)
+    thread_mattr_accessor :force_caching
 
     included do
-      mattr_accessor :_memoized_results, instance_writer: false, default: Concurrent::Map.new
+      mattr_accessor :_smart_cache, instance_writer: false, default: Concurrent::Map.new
     end
 
     private
@@ -44,16 +47,10 @@ module Plutonium
     #       UserDataService.fetch(user_id)
     #     end
     #   end
-    #
-    # @note This method uses Rails.application.config.cache_classes
-    #       to determine whether to cache or not. When cache_classes is false
-    #       (typical in development), it will always yield to get a fresh result.
-    #       When true (typical in production), it will use the cache.
     def cache_unless_reloading(cache_key, &block)
-      return yield unless should_cache?
+      return yield unless should_smart_cache?
 
-      @cached_results ||= Concurrent::Map.new
-      @cached_results.compute_if_absent(cache_key) { yield }
+      self.class._smart_cache.compute_if_absent(cache_key.to_sym) { yield }
     end
 
     # Flushes the smart cache for the specified keys or all keys if none are specified.
@@ -66,27 +63,16 @@ module Plutonium
     #
     # @example Flushing all cache keys
     #   flush_smart_cache
-    #
-    # @note This method clears both inline caches and memoized method results.
     def flush_smart_cache(keys = nil)
-      keys = Array(keys).map(&:to_sym)
-      if keys.present?
-        @cached_results&.delete_if { |k, _| keys.include?(k.to_sym) }
-        keys.each { |key| self.class._memoized_results.delete(key) }
-      else
-        @cached_results&.clear
-        self.class._memoized_results.clear
-      end
+      self.class.flush_smart_cache(keys)
     end
 
-    # Determines whether caching should be performed based on the current Rails configuration.
+    # Determines whether caching should be performed based on the current Rails configuration
+    # or the force_caching flag.
     #
     # @return [Boolean] true if caching should be performed, false otherwise
-    # @note This method uses Rails.application.config.cache_classes to determine caching behavior.
-    #       When cache_classes is false (typical in development), it returns false.
-    #       When true (typical in production), it returns true.
-    def should_cache?
-      Rails.application.config.cache_classes
+    def should_smart_cache?
+      SmartCache.force_caching.nil? ? Rails.application.config.cache_classes : SmartCache.force_caching
     end
 
     class_methods do
@@ -104,27 +90,50 @@ module Plutonium
       #     end
       #     memoize_unless_reloading :expensive_full_name_calculation
       #   end
-      #
-      # @note This method uses Rails.application.config.cache_classes to determine
-      #       whether to memoize or not. When cache_classes is false (typical in development),
-      #       it will always call the original method. When true (typical in production),
-      #       it will use memoization, caching results for each unique set of arguments.
       def memoize_unless_reloading(method_name)
+        return if method_defined?(:"#{method_name}_without_memoization")
+
         original_method = instance_method(method_name)
+        alias_method :"#{method_name}_without_memoization", method_name
+
         define_method(method_name) do |*args|
-          if should_cache?
-            cache = self.class._memoized_results[method_name] ||= Concurrent::Map.new
-            cache.compute_if_absent(args.hash.to_s) { original_method.bind_call(self, *args) }
+          if should_smart_cache?
+            cache = self.class._smart_cache.compute_if_absent(method_name.to_sym) { Concurrent::Map.new }
+            if args.empty?
+              cache.compute_if_absent(:no_args) { original_method.bind_call(self) }
+            else
+              cache.compute_if_absent(args.hash.to_s) { original_method.bind_call(self, *args) }
+            end
           else
             original_method.bind_call(self, *args)
           end
+        end
+      end
+
+      # Flushes the smart cache for the specified keys or all keys if none are specified.
+      #
+      # @param keys [Array<Symbol, String>, Symbol, String] The cache key(s) to flush
+      # @return [void]
+      #
+      # @example Flushing specific cache keys
+      #   flush_smart_cache([:user_data, :product_list])
+      #
+      # @example Flushing all cache keys
+      #   flush_smart_cache
+      def flush_smart_cache(keys = nil)
+        keys = Array(keys).map(&:to_sym)
+        if keys.present?
+          keys.each { |key| _smart_cache.delete(key) }
+        else
+          _smart_cache.clear
         end
       end
     end
   end
 
   # Configuration:
-  #  The caching behavior is controlled by the Rails configuration option config.cache_classes:
+  #  The caching behavior is controlled by the Rails configuration option config.cache_classes
+  #  or can be overridden using the SmartCache.force_caching flag:
   #
   #  - When false (typical in development):
   #    - Classes are reloaded on each request.
@@ -148,6 +157,13 @@ module Plutonium
   #  - It uses Concurrent::Map from the concurrent-ruby gem for thread-safe caching.
   #
   # Testing:
-  #  - In your test environment, you may want to control caching behavior explicitly.
-  #  - You can mock or stub Rails.application.config.cache_classes or override should_cache? as needed in your tests.
+  #  - In your test environment, you can control caching behavior explicitly using SmartCache.force_caching.
+  #  - Example:
+  #      describe "MyClass" do
+  #        before { Plutonium::SmartCache.force_caching = true }
+  #        after { Plutonium::SmartCache.force_caching = nil }
+  #        it "caches results" do
+  #          # Test caching behavior
+  #        end
+  #      end
 end
