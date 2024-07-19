@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
 module Plutonium
-  module Application
+  module Portal
     # DynamicControllers module provides functionality for dynamically creating controller classes
     # when they are missing in the current module's namespace.
     #
     # @example Usage
     #   module MyApp
-    #     include Plutonium::Application::DynamicControllers
+    #     include Plutonium::Portal::DynamicControllers
     #   end
     #
     #   # Now, MyApp::SomeController will be dynamically created if it doesn't exist,

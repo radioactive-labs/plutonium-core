@@ -3,7 +3,7 @@ module Plutonium
     module Controllers
       module Bootable
         extend ActiveSupport::Concern
-        include Plutonium::EngineValidator
+        include Plutonium::Engine::Validator
 
         included do
           helper_method :current_package, :current_engine

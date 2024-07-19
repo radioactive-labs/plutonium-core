@@ -22,7 +22,7 @@ module Plutonium
     ].freeze
 
     initializer "plutonium.base" do
-      Rails.application.class.include Plutonium::Application::Engine
+      Rails.application.class.include Plutonium::Engine
     end
 
     initializer "plutonium.assets" do

@@ -13,7 +13,7 @@ module Plutonium
     #   end
     module RouteSetExtensions
       extend ActiveSupport::Concern
-      include Plutonium::EngineValidator
+      include Plutonium::Engine::Validator
 
       # Clears all registered resources and route configurations.
       #
@@ -51,7 +51,7 @@ module Plutonium
       # @param resource [Class] The resource class to be registered.
       # @yield An optional block for additional resource configuration.
       # @return [Hash] The configuration for the registered resource.
-      # @raise [ArgumentError] If the engine doesn't support Plutonium::Pkg::App.
+      # @raise [ArgumentError] If the engine is not supported.
       def register_resource(resource, &)
         self.class.validate_engine! engine
         engine.resource_register.register(resource)

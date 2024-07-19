@@ -19,11 +19,13 @@ module PlutoniumGenerators
     protected
 
     def reserved_packages
-      %w[core reactor app main]
+      %w[core reactor app main plutonium pluton8 plutonate]
     end
 
     def validate_package_name(package_name)
+      package_name = package_name.underscore
       error("Package name is reserved\n\n#{reserved_packages.join "\n"}") if reserved_packages.include?(package_name)
+      error("Package name cannot end in `_app` or `_portal`") if /(_app|_portal)$/i.match?(package_name)
     end
 
     def available_packages
@@ -34,11 +36,11 @@ module PlutoniumGenerators
     end
 
     def available_apps
-      @available_apps ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with? "_app" }.sort
+      @available_apps ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with?("_app") || pkg.ends_with?("_portal") }.sort
     end
 
     def available_features
-      @available_features ||= ["main_app"] + available_packages.select { |pkg| !pkg.ends_with?("_app") }.sort
+      @available_features ||= ["main_app"] + available_packages.select { |pkg| !(pkg.ends_with?("_app") || pkg.ends_with?("_portal")) }.sort
     end
 
     def select_package(selected_package = nil, msg: "Select package", pkgs: nil)

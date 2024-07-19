@@ -1,10 +1,10 @@
 module Plutonium
-  module Application
+  module Portal
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Core::Controllers::Base
 
-      private
+      # private
 
       # # Menu Builder
       # def build_namespace_node(namespaces, resource, parent)

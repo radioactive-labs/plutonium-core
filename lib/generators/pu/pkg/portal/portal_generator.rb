@@ -4,17 +4,17 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Pkg
-    class AppGenerator < Rails::Generators::Base
+    class PortalGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Create a plutonium app package"
+      desc "Create a plutonium portal package"
 
       argument :name
 
       def start
-        validate_package_name package_name
+        validate_package_name name
 
         if defined?(RodauthApp) && (rodauths = RodauthApp.opts[:rodauths].keys).present?
           rodauth_account = prompt.select("Select rodauth account to authenticate with:", rodauths + [:none])
@@ -57,7 +57,7 @@ module Pu
       attr_reader :rodauth_account
 
       def package_name
-        name.camelize + "App"
+        name.camelize + "Portal"
       end
 
       def package_namespace
@@ -65,7 +65,7 @@ module Pu
       end
 
       def package_type
-        "Pkg::App"
+        "Portal::Engine"
       end
 
       def public_access? = @public_access

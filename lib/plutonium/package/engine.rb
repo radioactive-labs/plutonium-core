@@ -1,6 +1,6 @@
 module Plutonium
-  module Pkg
-    module Base
+  module Package
+    module Engine
       extend ActiveSupport::Concern
 
       included do
@@ -15,6 +15,14 @@ module Plutonium
             a.context_class == self && a.name.to_s == "add_view_paths"
           end
           add_view_paths_initializer.instance_variable_set(:@block, ->(app) {})
+        end
+
+        initializer :append_migrations do |app|
+          unless app.root.to_s.match root.to_s
+            config.paths["db/migrate"].expanded.each do |expanded_path|
+              app.config.paths["db/migrate"] << expanded_path
+            end
+          end
         end
       end
     end

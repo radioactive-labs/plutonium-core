@@ -25,7 +25,7 @@ module Plutonium
       end
 
       class_methods do
-        include SmartCache
+        include Plutonium::Lib::SmartCache
 
         # Sets the resource class for the controller
         # @param [ActiveRecord::Base] resource_class The resource class

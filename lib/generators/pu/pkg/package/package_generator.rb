@@ -4,12 +4,12 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Pkg
-    class FeatureGenerator < Rails::Generators::Base
+    class PackageGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Create a plutonium feature package"
+      desc "Create a plutonium package"
 
       argument :name
 
@@ -37,7 +37,7 @@ module Pu
       end
 
       def package_type
-        "Pkg::Feature"
+        "Package::Engine"
       end
     end
   end
