@@ -1,3 +1,31 @@
-class <%= app_namespace %>::<%= resource_class %>Policy < ::<%= resource_class %>Policy
+class <%= app_namespace %>::<%= resource_class %>Policy < ::<%= parent_policy %>
   include <%= app_namespace %>::ResourcePolicy
+  <%- unless expected_parent_policy -%>
+
+  # Core actions
+
+  def create?
+    true
+  end
+
+  def read?
+    true
+  end
+
+  # Core attributes
+
+  def permitted_attributes_for_create
+    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
+  end
+
+  def permitted_attributes_for_read
+    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
+  end
+
+  # Associations
+
+  def permitted_associations
+    %i[]
+  end
+  <%- end -%>
 end
