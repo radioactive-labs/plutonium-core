@@ -191,12 +191,12 @@ module Plutonium
 
         def authorize_interactive_resource_record_action
           interactive_resource_action = params[:interactive_action]&.to_sym
-          authorize resource_record, :"#{interactive_resource_action}?"
+          authorize! resource_record, to: :"#{interactive_resource_action}?"
         end
 
         def authorize_interactive_resource_action
           interactive_resource_action = params[:interactive_action]&.to_sym
-          authorize resource_class, :"#{interactive_resource_action}?"
+          authorize! resource_class, to: :"#{interactive_resource_action}?"
         end
 
         def interactive_resource_collection
