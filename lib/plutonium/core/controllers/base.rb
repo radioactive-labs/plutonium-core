@@ -33,6 +33,16 @@ module Plutonium
           [title.presence, helpers.application_name].compact.join(" | ")
         end
 
+        # Creates a resource context
+        # @return [Plutonium::Resource::Context] The resource context
+        def resource_context
+          Plutonium::Resource::Context.new(
+            resource_class: nil,
+            parent: nil,
+            scope: scoped_to_entity? ? current_scoped_entity : nil
+          )
+        end
+
         #
         # Returns a dynamic list of args to be used with `url_for`, which considers the route namespace and nesting.
         # The current entity and parent record (for nested routes) are inserted appropriately, ensuring that generated URLs

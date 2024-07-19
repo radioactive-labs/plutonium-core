@@ -44,6 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rabl", "~> 0.16.1" # TODO: what to do with RABL
   spec.add_dependency "semantic_range", "~> 3.0"
   spec.add_dependency "tty-prompt", "~> 0.23.1"
+  spec.add_dependency "action_policy", "~> 0.7.0"
 
   spec.add_development_dependency "rake"
   spec.add_development_dependency "minitest"

@@ -11,7 +11,7 @@ module Plutonium
       extend ActiveSupport::Concern
       include Pagy::Backend
       include Plutonium::Core::Controllers::Base
-      include Plutonium::Core::Controllers::Authorizable
+      include Plutonium::Authorization::ResourceController
       include Plutonium::Core::Controllers::Presentable
       include Plutonium::Core::Controllers::Queryable
       include Plutonium::Core::Controllers::CrudActions
@@ -51,19 +51,10 @@ module Plutonium
         self.class.resource_class
       end
 
-      # Creates a policy context
-      # @return [Plutonium::Resource::PolicyContext] The policy context
-      def policy_context
-        Plutonium::Resource::PolicyContext.new(
-          user: current_user,
-          resource_context: resource_context
-        )
-      end
-
       # Returns the resource record based on path parameters
       # @return [ActiveRecord::Base, nil] The resource record
       def resource_record
-        @resource_record ||= policy_scope(resource_class).from_path_param(params[:id]).first! if params[:id].present?
+        @resource_record ||= authorized_scope_for(resource_class).from_path_param(params[:id]).first! if params[:id].present?
         @resource_record
       end
 

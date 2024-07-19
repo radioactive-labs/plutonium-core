@@ -1,13 +1,22 @@
+require "action_policy"
+
 module Plutonium
   module Resource
     # Policy class to define permissions and attributes for a resource.
     # This class provides methods to check permissions for various actions
     # and to retrieve permitted attributes for these actions.
-    class Policy
-      include Plutonium::Policy::Initializer
+    class Policy < ActionPolicy::Base
+      authorize :user, allow_nil: false
+      authorize :resource_context, allow_nil: false
 
-      # Scope class to define the scope of the policy.
-      class Scope < Plutonium::Policy::Scope
+      # define a scope of a `relation` type
+      scope_for :relation do |relation|
+        if resource_context.parent.present?
+          relation = relation.associated_with(resource_context.parent)
+        elsif resource_context.scope.present?
+          relation = relation.associated_with(resource_context.scope)
+        end
+        relation
       end
 
       # Sends a method and raises an error if the method is not implemented.
@@ -159,7 +168,7 @@ module Plutonium
       # @return [Array<Symbol>] The auto-detected permitted fields.
       def autodetect_permitted_fields(method_name)
         warn_about_autodetect_usage(method_name)
-        context.resource_context.resource_class.resource_field_names
+        resource_context.resource_class.resource_field_names
       end
 
       # Warns about the usage of auto-detection of fields.
@@ -177,7 +186,7 @@ module Plutonium
           Resource field auto-detection: #{self.class}##{method}
 
           Auto-detected resource fields result in security holes and will fail outside of development.
-          Override #{context.resource_context.resource_class}Policy or #{self.class} with your own ##{method} method.
+          Override #{resource_context.resource_class}Policy or #{self.class} with your own ##{method} method.
 
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
         )

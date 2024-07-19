@@ -123,7 +123,7 @@ module Plutonium
 
         # GET /resources/actions/:interactive_action
         def begin_interactive_resource_recordless_action
-          skip_policy_scope
+          # skip_policy_scope
 
           @interaction = current_interactive_action.interaction.new interaction_params
 
@@ -136,7 +136,7 @@ module Plutonium
 
         # POST /resources/actions/:interactive_action
         def commit_interactive_resource_recordless_action
-          skip_policy_scope
+          # skip_policy_scope
 
           respond_to do |format|
             inputs = interaction_params
@@ -200,7 +200,7 @@ module Plutonium
         end
 
         def interactive_resource_collection
-          @interactive_resource_collection ||= policy_scope(resource_class).from_path_param(params.require(:ids)).all
+          @interactive_resource_collection ||= authorized_scope_for(resource_class).from_path_param(params.require(:ids))
         end
 
         def interaction_params

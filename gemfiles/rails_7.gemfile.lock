@@ -1,7 +1,8 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.14.1)
+    plutonium (0.15.0)
+      action_policy (~> 0.7.0)
       active_interaction (~> 5.3)
       dry-initializer (~> 3.1)
       listen (~> 3.8)
@@ -19,6 +20,8 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
+    action_policy (0.7.0)
+      ruby-next-core (>= 1.0)
     actioncable (7.1.3.4)
       actionpack (= 7.1.3.4)
       activesupport (= 7.1.3.4)
@@ -253,6 +256,7 @@ GEM
     rubocop-performance (1.21.0)
       rubocop (>= 1.48.1, < 2.0)
       rubocop-ast (>= 1.31.1, < 2.0)
+    ruby-next-core (1.0.3)
     ruby-progressbar (1.13.0)
     semantic_range (3.0.0)
     simple_form (5.3.1)

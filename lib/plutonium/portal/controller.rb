@@ -3,6 +3,7 @@ module Plutonium
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Core::Controllers::Base
+      include Plutonium::Authorization::Controller
 
       # private
 

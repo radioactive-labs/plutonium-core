@@ -65,7 +65,7 @@
     <%# table %>
     <%= render_component :table, rows: resources do |table| %>
       <% table.with_actions do |resource| %>
-        <% record_actions.permitted_for(policy(resource)).values.each do |action| %>
+        <% record_actions.permitted_for(policy_for(record: resource)).values.each do |action| %>
           <%= table_action_button resource, action %>
         <% end %>
       <% end %>
