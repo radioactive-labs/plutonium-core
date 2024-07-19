@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Plutonium
-  module Config
+  module Lib
     # OverlayedHash provides a hash-like structure that overlays values on top of a base hash.
     #
     # This class allows you to create a new hash-like object that uses a base hash for default values,
