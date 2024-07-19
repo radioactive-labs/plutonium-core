@@ -8,7 +8,7 @@ module Plutonium
 
       class_methods do
         def resource_register
-          @resource_register ||= Plutonium::ResourceRegister.new
+          @resource_register ||= Plutonium::Resource::Register.new
         end
       end
     end
