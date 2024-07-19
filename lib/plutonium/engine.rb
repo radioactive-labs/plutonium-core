@@ -5,7 +5,7 @@ module Plutonium
     extend ActiveSupport::Concern
 
     class_methods do
-      include Plutonium::Concerns::ResourceValidatable
+      include Plutonium::Resource::Validator
       attr_reader :scoped_entity_class, :scoped_entity_strategy, :scoped_entity_param_key
 
       def scope_to_entity(entity_class, strategy: :path, param_key: nil)

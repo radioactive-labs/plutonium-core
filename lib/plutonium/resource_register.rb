@@ -4,7 +4,7 @@ module Plutonium
   # ResourceRegister manages the registration and lookup of resources.
   class ResourceRegister
     include Plutonium::Lib::SmartCache
-    include Concerns::ResourceValidatable
+    include Plutonium::Resource::Validator
 
     # Custom error class for frozen register operations
     class FrozenRegisterError < StandardError; end
@@ -17,7 +17,7 @@ module Plutonium
     # Registers a new resource with the register.
     #
     # @param resource [Class] The resource class to be registered.
-    # @raise [Plutonium::Concerns::ResourceValidatable::InvalidResourceError] If the resource is not a valid Plutonium::Resource::Record.
+    # @raise [Plutonium::Resource::Validator::InvalidResourceError] If the resource is not a valid Plutonium::Resource::Record.
     # @raise [FrozenRegisterError] If the register is frozen.
     # @return [void]
     def register(resource)

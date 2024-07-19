@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 module Plutonium
-  module Concerns
+  module Resource
     # Provides methods for validating Plutonium resources
-    module ResourceValidatable
+    module Validator
       extend ActiveSupport::Concern
 
       # Custom error class for invalid resources
