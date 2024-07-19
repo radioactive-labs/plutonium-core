@@ -18,7 +18,7 @@ module Plutonium
         end
 
         class_methods do
-          include Plutonium::SmartCache
+          include Plutonium::Lib::SmartCache
 
           def inherited(subclass)
             super

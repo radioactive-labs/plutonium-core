@@ -3,7 +3,7 @@
 module Plutonium
   # ResourceRegister manages the registration and lookup of resources.
   class ResourceRegister
-    include Plutonium::SmartCache
+    include Plutonium::Lib::SmartCache
     include Concerns::ResourceValidatable
 
     # Custom error class for frozen register operations
