@@ -14,6 +14,8 @@ module Plutonium
 
         included do
           verify_authorized
+          after_action :verify_authorize_current
+          after_action :verify_current_authorized_scope, except: %i[new create]
 
           helper_method :current_policy, :permitted_attributes
 
@@ -26,12 +28,16 @@ module Plutonium
 
         private
 
-        def verify_authorized
+        def verify_authorize_current
           return if verify_authorized_skipped
 
-          Kernel.raise ActionMissingAuthorizeCurrent.new(controller_path, action_name) if authorize_current_count.zero?
-          Kernel.raise ActionMissingCurrentAuthorizedScope.new(controller_path, action_name) if current_authorized_scope_count.zero?
-          super
+          raise ActionMissingAuthorizeCurrent.new(controller_path, action_name) if authorize_current_count.zero?
+        end
+
+        def verify_current_authorized_scope
+          return if verify_authorized_skipped
+
+          raise ActionMissingCurrentAuthorizedScope.new(controller_path, action_name) if current_authorized_scope_count.zero?
         end
 
         def authorize_current_count
