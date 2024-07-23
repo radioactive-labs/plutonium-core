@@ -5,6 +5,8 @@
       if registered_resources.any?
         menu.with_item(name: "Resources", icon: "outline/grid") do |sub_menu|
           registered_resources.each do |resource|
+            next unless allowed_to? :index?, resource
+
             sub_menu.with_sub_item(name: resource.model_name.human.pluralize, url: resource_url_for(resource, parent: nil))
           end
         end

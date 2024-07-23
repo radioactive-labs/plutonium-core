@@ -54,7 +54,7 @@ module Plutonium
       # Returns the resource record based on path parameters
       # @return [ActiveRecord::Base, nil] The resource record
       def resource_record
-        @resource_record ||= authorized_scope_for(resource_class).from_path_param(params[:id]).first! if params[:id].present?
+        @resource_record ||= current_authorized_scope.from_path_param(params[:id]).first! if params[:id].present?
         @resource_record
       end
 
@@ -132,7 +132,9 @@ module Plutonium
           parent_class = current_engine.resource_register.route_key_lookup[parent_route_key]
           parent_scope = parent_class.from_path_param(params[parent_route_param])
           parent_scope = parent_scope.associated_with(current_scoped_entity) if scoped_to_entity?
-          parent_scope.first!
+          current_parent = parent_scope.first!
+          authorize! current_parent, to: :read?
+          current_parent
         end
       end
 

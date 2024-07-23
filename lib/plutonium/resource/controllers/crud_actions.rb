@@ -10,11 +10,11 @@ module Plutonium
 
         # GET /resources(.{format})
         def index
-          authorize! resource_class
+          authorize_current! resource_class
           set_page_title resource_class.model_name.human.pluralize.titleize
 
           @search_object = current_query_object
-          base_query = authorized_scope_for(resource_class)
+          base_query = current_authorized_scope
           base_query = @search_object.apply(base_query)
           # base_query = base_query.public_send(params[:scope].to_sym) if params[:scope].present?
           @pagy, @resource_records = pagy base_query
@@ -25,7 +25,7 @@ module Plutonium
 
         # GET /resources/1(.{format})
         def show
-          authorize! resource_record
+          authorize_current! resource_record
           set_page_title resource_record.to_label.titleize
 
           @detail = build_detail
@@ -35,7 +35,7 @@ module Plutonium
 
         # GET /resources/new
         def new
-          authorize! resource_class
+          authorize_current! resource_class
           set_page_title "Create #{resource_class.model_name.human.titleize}"
 
           @resource_record = resource_class.new
@@ -47,7 +47,7 @@ module Plutonium
 
         # POST /resources(.{format})
         def create
-          authorize! resource_class
+          authorize_current! resource_class
           set_page_title "Create #{resource_class.model_name.human.titleize}"
 
           @resource_record = resource_class.new resource_params
@@ -74,7 +74,7 @@ module Plutonium
 
         # GET /resources/1/edit
         def edit
-          authorize! resource_record
+          authorize_current! resource_record
           set_page_title "Update #{resource_record.to_label.titleize}"
 
           maybe_apply_submitted_resource_params!
@@ -85,7 +85,7 @@ module Plutonium
 
         # PATCH/PUT /resources/1(.{format})
         def update
-          authorize! resource_record
+          authorize_current! resource_record
           set_page_title "Update #{resource_record.to_label.titleize}"
 
           respond_to do |format|
@@ -110,7 +110,7 @@ module Plutonium
 
         # DELETE /resources/1(.{format})
         def destroy
-          authorize! resource_record
+          authorize_current! resource_record
 
           respond_to do |format|
             resource_record.destroy

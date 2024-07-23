@@ -7,17 +7,17 @@ module Plutonium
         included do
           helper_method :current_interactive_action
 
-          before_action :validate_interactive_resource_action, only: %i[
+          before_action :validate_interactive_resource_action!, only: %i[
             begin_interactive_resource_record_action commit_interactive_resource_record_action
             begin_interactive_resource_collection_action commit_interactive_resource_collection_action
             begin_interactive_resource_recordless_action commit_interactive_resource_recordless_action
           ]
 
-          before_action :authorize_interactive_resource_record_action, only: %i[
+          before_action :authorize_interactive_resource_record_action!, only: %i[
             begin_interactive_resource_record_action commit_interactive_resource_record_action
           ]
 
-          before_action :authorize_interactive_resource_action, only: %i[
+          before_action :authorize_interactive_resource_action!, only: %i[
             begin_interactive_resource_collection_action commit_interactive_resource_collection_action
             begin_interactive_resource_recordless_action commit_interactive_resource_recordless_action
           ]
@@ -182,25 +182,25 @@ module Plutonium
           @interactive_resource_actions ||= current_presenter.actions.except :new, :show, :edit, :destroy
         end
 
-        def validate_interactive_resource_action
+        def validate_interactive_resource_action!
           interactive_resource_action = params[:interactive_action]&.to_sym
           unless interactive_resource_actions.key?(interactive_resource_action)
             raise ::AbstractController::ActionNotFound, "Unknown action '#{interactive_resource_action}'"
           end
         end
 
-        def authorize_interactive_resource_record_action
+        def authorize_interactive_resource_record_action!
           interactive_resource_action = params[:interactive_action]&.to_sym
-          authorize! resource_record, to: :"#{interactive_resource_action}?"
+          authorize_current! resource_record, to: :"#{interactive_resource_action}?"
         end
 
-        def authorize_interactive_resource_action
+        def authorize_interactive_resource_action!
           interactive_resource_action = params[:interactive_action]&.to_sym
-          authorize! resource_class, to: :"#{interactive_resource_action}?"
+          authorize_current! resource_class, to: :"#{interactive_resource_action}?"
         end
 
         def interactive_resource_collection
-          @interactive_resource_collection ||= authorized_scope_for(resource_class).from_path_param(params.require(:ids))
+          @interactive_resource_collection ||= current_authorized_scope.from_path_param(params.require(:ids))
         end
 
         def interaction_params

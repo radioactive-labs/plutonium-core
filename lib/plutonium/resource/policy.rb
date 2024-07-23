@@ -7,14 +7,14 @@ module Plutonium
     # and to retrieve permitted attributes for these actions.
     class Policy < ActionPolicy::Base
       authorize :user, allow_nil: false
-      authorize :resource_context, allow_nil: false
+      authorize :scope, allow_nil: true
+
+      scope_matcher :relation, ActiveRecord::Relation
 
       # define a scope of a `relation` type
       scope_for :relation do |relation|
-        if resource_context.parent.present?
-          relation = relation.associated_with(resource_context.parent)
-        elsif resource_context.scope.present?
-          relation = relation.associated_with(resource_context.scope)
+        if scope.present?
+          relation = relation.associated_with(scope)
         end
         relation
       end
@@ -104,7 +104,7 @@ module Plutonium
       # @return [Array<Symbol>] The permitted attributes.
       def permitted_attributes_for_create
         autodetect_permitted_fields(:permitted_attributes_for_create) - [
-          context.resource_context.resource_class.primary_key.to_sym, # primary_key
+          resource_class.primary_key.to_sym, # primary_key
           :created_at, :updated_at # timestamps
         ]
       end
@@ -162,13 +162,17 @@ module Plutonium
 
       private
 
+      def resource_class
+        raise NotImplementedError
+      end
+
       # Autodetects the permitted fields for a given method.
       #
       # @param method_name [Symbol] The name of the method.
       # @return [Array<Symbol>] The auto-detected permitted fields.
       def autodetect_permitted_fields(method_name)
         warn_about_autodetect_usage(method_name)
-        resource_context.resource_class.resource_field_names
+        resource_class.resource_field_names
       end
 
       # Warns about the usage of auto-detection of fields.
@@ -186,7 +190,7 @@ module Plutonium
           Resource field auto-detection: #{self.class}##{method}
 
           Auto-detected resource fields result in security holes and will fail outside of development.
-          Override #{resource_context.resource_class}Policy or #{self.class} with your own ##{method} method.
+          Override #{resource_class}Policy or #{self.class} with your own ##{method} method.
 
           🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
         )

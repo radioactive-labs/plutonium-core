@@ -9,7 +9,7 @@ module Plutonium
         end
 
         def permitted_for(policy)
-          Collection.new(@collection.select { |name, action| policy.send_with_report :"#{action.name}?" })
+          Collection.new(@collection.select { |name, action| policy.allowed_to? :"#{action.name}?" })
         end
 
         def collection_actions

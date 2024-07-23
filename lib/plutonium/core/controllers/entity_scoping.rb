@@ -69,6 +69,8 @@ module Plutonium
         # @raise [NotImplementedError] if not scoped to an entity or strategy is unknown
         def current_scoped_entity
           ensure_legal_entity_scoping_method_access!(__method__)
+          # this method might be invoked even when not authenticated.
+          # so let's guard against that.
           return unless current_user.present?
 
           @current_scoped_entity ||= fetch_current_scoped_entity
@@ -79,7 +81,7 @@ module Plutonium
         # @return [ActiveRecord::Base, nil] the current scoped entity or nil if not found
         # @raise [NotImplementedError] if the scoping strategy is unknown
         def fetch_current_scoped_entity
-          case scoped_entity_strategy
+          scoped_entity = case scoped_entity_strategy
           when :path
             fetch_entity_from_path
           when Symbol
@@ -87,6 +89,8 @@ module Plutonium
           else
             raise NotImplementedError, "Unknown scoped entity strategy: #{scoped_entity_strategy.inspect}"
           end
+          authorize! scoped_entity, to: :read?
+          scoped_entity
         end
 
         # Fetches the scoped entity from the path parameters.

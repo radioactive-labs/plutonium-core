@@ -2,7 +2,7 @@
 
 <%=
   render_component :toolbar, resource: details.record,
-                             actions: details.actions.record_actions.permitted_for(policy_for(record: details.record))
+                             actions: details.actions.record_actions.permitted_for(current_policy)
 %>
 
 <%= render_component :block, rounded: :all do %>
