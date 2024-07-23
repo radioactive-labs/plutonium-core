@@ -21,7 +21,7 @@ module PlutoniumGenerators
       end
 
       def exception(msg, err)
-        error "#{msg}\n\n#{err}\n#{err.backtrace.join("\n")}"
+        error "#{msg}\n\n#{err.class}: #{err}\n#{err.backtrace.join("\n")}"
       end
 
       private

@@ -99,6 +99,9 @@ module Pu
 
           PlutoniumGenerators::ModelGeneratorBase::GeneratedAttribute.parse resource_class, "#{col.name}:#{col.type}"
         }
+      rescue ActiveRecord::StatementInvalid
+        say format_log("An error occurred while building attributes. Ensure any migrations have been run and try again.", :error), :red
+        []
       end
     end
   end
