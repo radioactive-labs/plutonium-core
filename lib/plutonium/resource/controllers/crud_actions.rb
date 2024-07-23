@@ -143,13 +143,13 @@ module Plutonium
 
           url = case preferred_action_after_submit
           when "show"
-            resource_url_for(resource_record) if current_policy.show?
+            resource_url_for(resource_record) if current_policy.allowed_to? :show?
           when "edit"
-            resource_url_for(resource_record, action: :edit) if current_policy.edit?
+            resource_url_for(resource_record, action: :edit) if current_policy.allowed_to? :edit?
           when "new"
-            resource_url_for(resource_class, action: :new) if current_policy.new?
+            resource_url_for(resource_class, action: :new) if current_policy.allowed_to? :new?
           when "index"
-            resource_url_for(resource_class) if current_policy.index?
+            resource_url_for(resource_class) if current_policy.allowed_to? :index?
           else
             # ensure we have a valid value
             session[:action_after_submit_preference] = "show"
