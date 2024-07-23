@@ -163,7 +163,7 @@ module Plutonium
       private
 
       def resource_class
-        raise NotImplementedError
+        record.instance_of?(Class) ? record : record.class
       end
 
       # Autodetects the permitted fields for a given method.
