@@ -22,6 +22,10 @@ module Plutonium
   end
 
   class << self
+    def deprecator
+      @deprecator ||= ActiveSupport::Deprecation.new("1.0", "Plutonium")
+    end
+
     # Get the root directory of the gem
     #
     # @return [Pathname] the root directory path

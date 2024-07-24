@@ -28,8 +28,8 @@ module Plutonium
 
           def boot(package = nil)
             if package.present?
-              ActiveSupport::Deprecation.new("0.15.0", "Plutonium").warn(
-                "Calling boot with an argument is deprecated and no longer has an effect. It will be removed in the next version.",
+              Plutonium.deprecator.warn(
+                "Calling boot with an argument is deprecated and no longer has an effect.",
                 caller_locations(1)
               )
             end

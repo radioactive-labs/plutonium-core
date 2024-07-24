@@ -25,6 +25,10 @@ module Plutonium
       Rails.application.class.include Plutonium::Engine
     end
 
+    initializer "plutonium.deprecator" do |app|
+      app.deprecators[:plutonium] = Plutonium.deprecator
+    end
+
     initializer "plutonium.assets" do
       setup_asset_pipeline if Rails.application.config.respond_to?(:assets)
     end
