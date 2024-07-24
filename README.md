@@ -24,7 +24,7 @@ It's a culmination of lessons learned from years of developing nearly identical 
 - **Community-Driven Dependencies:** Plutonium stands on the shoulders of giants, integrating with well-established gems chosen for their robustness and flexibility, including:
   - [ActiveInteraction](https://github.com/AaronLasseigne/active_interaction) for business logic
   - [Pagy](https://github.com/ddnexus/pagy) for pagination
-  - [Pundit](https://github.com/varvet/pundit) for authorization
+  - [Action Policy](https://actionpolicy.evilmartians.io/): for authorization
   - [Simple Form](https://github.com/heartcombo/simple_form) for forms
   - [Rodauth](https://github.com/jeremyevans/rodauth) (via [rodauth-rails](https://github.com/janko/rodauth-rails)) for authentication. Rodauth is optional, allowing flexibility in choosing your auth solution
 

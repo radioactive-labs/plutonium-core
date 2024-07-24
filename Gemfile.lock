@@ -199,8 +199,6 @@ GEM
       tty-color (~> 0.5)
     psych (5.1.2)
       stringio
-    pundit (2.3.2)
-      activesupport (>= 3.0.0)
     rabl (0.16.1)
       activesupport (>= 2.3.14)
     racc (1.8.0)

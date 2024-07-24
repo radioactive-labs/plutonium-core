@@ -40,7 +40,7 @@ A lot of our functionality is built on and inspired by gems we carefully conside
 
 - [ActiveInteraction](https://github.com/AaronLasseigne/active_interaction): 💼 Manage application specific business logic. Powers [actions](TODO).
 - [Pagy](https://github.com/ddnexus/pagy): 🏆 The Best Pagination Ruby Gem 🥇. Powers [collection view](TODO)
-- [Pundit](https://github.com/varvet/pundit): Minimal authorization through OO design and pure Ruby classes. Powers [authorization](TODO).
+- [Action Policy](https://actionpolicy.evilmartians.io/): Authorization framework for Ruby and Rails. Composable. Extensible. Performant. Powers [authorization](TODO).
 - [Simple Form](https://github.com/heartcombo/simple_form): Forms made easy for Rails! It's tied to a simple DSL, with no opinion on markup. Powers [inputs](TODO). Heavily inspired the fields api 💡💡💡.
 - [Rodauth\*](https://github.com/jeremyevans/rodauth): Ruby's Most Advanced Authentication Framework. Used via the [rodauth-rails](https://github.com/janko/rodauth-rails) gem. Powers [authentication](TODO). \*Rodauth is optional. You can bring your own auth.
 
