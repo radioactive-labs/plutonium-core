@@ -73,7 +73,7 @@ module Plutonium
       #
       # @return [Boolean] true if caching should be performed, false otherwise
       def should_smart_cache?
-        SmartCache.force_caching.nil? ? Rails.application.config.cache_classes : SmartCache.force_caching
+        Plutonium::Lib::SmartCache.force_caching.nil? ? Rails.application.config.cache_classes : Plutonium::Lib::SmartCache.force_caching
       end
 
       class_methods do
