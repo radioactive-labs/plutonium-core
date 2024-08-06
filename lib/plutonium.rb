@@ -14,7 +14,7 @@ module Plutonium
 
   # Set up Zeitwerk loader for the Plutonium gem
   # @return [Zeitwerk::Loader] configured Zeitwerk loader instance
-  ZEITWERK_LOADER = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
+  Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
     loader.ignore("#{__dir__}/generators")
     loader.ignore("#{__dir__}/plutonium/railtie.rb")
     loader.enable_reloading if defined?(Rails.env) && Rails.env.development?

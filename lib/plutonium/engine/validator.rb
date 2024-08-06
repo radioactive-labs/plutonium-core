@@ -21,7 +21,8 @@ module Plutonium
         #
         # @return [Boolean] True if the engine includes Plutonium::Engine, false otherwise.
         def supported_engine?(engine)
-          engine.include?(Plutonium::Engine)
+          # TODO: fix constant being out of sync after reload during development
+          Plutonium.configuration.development? ? engine.respond_to?(:dom_id) : engine.include?(Plutonium::Engine)
         end
       end
     end

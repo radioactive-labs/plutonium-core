@@ -119,7 +119,7 @@ module Plutonium
       def reload_framework_and_file(file)
         Plutonium.logger.debug "[plutonium] reloading: app+framework"
         Rails.application.reloader.reload!
-        Plutonium::ZEITWERK_LOADER.reload
+        Plutonium::Loader.reload
         reload_components
       end
 

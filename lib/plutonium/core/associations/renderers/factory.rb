@@ -19,7 +19,9 @@ module Plutonium
           def self.for_resource_association(resource_class, attr_name, **options)
             association = resource_class.try(:reflect_on_association, attr_name)
             raise ArgumentError, "#{attr_name} is not a valid association of #{resource_class}" unless association.present?
-            raise ArgumentError, "#{association.klass} does is not a resource record" unless association.klass.include?(Plutonium::Resource::Record)
+            # TODO: fix constant being out of sync after reload during development
+            valid_resource_record = Plutonium.configuration.development? ? association.klass.respond_to?(:resource_field_names) : association.klass.include?(Plutonium::Resource::Record)
+            raise ArgumentError, "#{association.klass} is not a resource record" unless valid_resource_record
 
             type = association.macro
             raise NotImplementedError, "#{macro} associations are currently not supported." unless type == :has_many

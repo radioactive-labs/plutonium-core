@@ -16,4 +16,4 @@ build
 dist
 
 ai_tools
-test/internal/db/*.sqlite
+test/internal/db/*.sqlite*

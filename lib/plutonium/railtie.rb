@@ -59,7 +59,7 @@ module Plutonium
 
     config.after_initialize do
       Plutonium::Reloader.start! if Plutonium.configuration.enable_hotreload
-      Plutonium::ZEITWERK_LOADER.eager_load if Rails.env.production?
+      Plutonium::Loader.eager_load if Rails.env.production?
     end
 
     private
