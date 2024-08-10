@@ -166,7 +166,6 @@ Or within another interaction:
 def execute
   MyInteraction.call(some_input: "value")
     .and_then { |result| do_something_with(result) }
-    .map { |final_result| success(final_result) }
     .with_response(Response::Redirect.new(some_path(final_result)))
     .with_message("Operation completed successfully")
 end
@@ -176,7 +175,7 @@ end
 
 1. Keep interactions focused on a single responsibility
 2. Use meaningful names for interactions that describe the action being performed
-3. Leverage the `and_then` and `map` methods for clean and expressive operation chaining
+3. Leverage the `and_then` method for clean and expressive operation chaining
 4. Prefer small, composable interactions over large, monolithic ones
 5. Use `with_response` to explicitly set the desired response type
 6. Keep the interaction's core logic separate from response handling
@@ -279,7 +278,6 @@ module Orders
         .and_then { |attrs| find_user(attrs[:user_id]) }
         .and_then { |user| find_products(user, attributes[:product_ids]) }
         .and_then { |user, products| create_order(user, products) }
-        .map { |order| success(order) }
         .with_response(Response::Redirect.new(order_path(order)))
         .with_message("Order placed successfully.")
     end

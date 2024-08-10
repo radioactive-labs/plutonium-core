@@ -24,7 +24,7 @@ module Plutonium
         assert_equal [["Success message", :notice]], success.messages
       end
 
-      def test_with_response
+      def test_success_with_response
         redirect_response = Response::Redirect.new("/some/path")
         success = Success.new("test value").with_response(redirect_response)
         assert_equal redirect_response, success.to_response
@@ -38,13 +38,6 @@ module Plutonium
         assert_equal 4, result.value
       end
 
-      def test_success_map
-        result = Success.new(1)
-          .map { |value| value + 1 }
-          .map { |value| value * 2 }
-        assert_equal 4, result.value
-      end
-
       def test_failure_and_then
         initial_failure = Failure.new(["Initial error"])
         result = initial_failure
@@ -53,27 +46,19 @@ module Plutonium
         assert_equal initial_failure, result
       end
 
-      def test_failure_map
-        initial_failure = Failure.new(["Initial error"])
-        result = initial_failure
-          .map { |_| "This shouldn't be reached" }
-          .map { |_| "Nor this" }
-        assert_equal initial_failure, result
-      end
-
-      def test_to_response_with_explicit_response
+      def test_success_to_response_with_explicit_response
         redirect_response = Response::Redirect.new("/some/path")
         success = Success.new("test value").with_response(redirect_response)
         assert_equal redirect_response, success.to_response
       end
 
-      def test_to_response_with_default_response
+      def test_success_to_response_with_default_response
         success = Success.new("test value")
         assert_instance_of Response::Null, success.to_response
         assert_equal "test value", success.to_response.result
       end
 
-      def test_to_response_with_messages
+      def test_success_to_response_with_messages
         success = Success.new("test value")
           .with_message("Message 1", :notice)
           .with_message("Message 2", :alert)
@@ -81,9 +66,9 @@ module Plutonium
         assert_equal [["Message 1", :notice], ["Message 2", :alert]], response.flash
       end
 
-      def test_chaining_with_response_and_message
+      def test_success_chaining_with_response_and_message
         result = Success.new(1)
-          .map { |value| value * 2 }
+          .and_then { |value| Success.new(value * 2) }
           .with_response(Response::Redirect.new("/result"))
           .with_message("Operation successful", :notice)
 
@@ -94,14 +79,25 @@ module Plutonium
 
       def test_failure_with_response
         failure = Failure.new(["Error"])
-          .with_response(Response::Redirect.new("/error"))
-        assert_instance_of Failure, failure
+        redirect_response = Response::Redirect.new("/error")
+        result = failure.with_response(redirect_response)
+        assert_equal failure, result
         assert_nil failure.instance_variable_get(:@response)
       end
 
       def test_failure_to_response
         failure = Failure.new(["Error"])
         assert_raises(NotImplementedError) { failure.to_response }
+      end
+
+      def test_success_with_response_resets_to_response_cache
+        success = Success.new("test value")
+        initial_response = success.to_response
+        assert_instance_of Response::Null, initial_response
+
+        new_response = Response::Redirect.new("/new/path")
+        success.with_response(new_response)
+        assert_equal new_response, success.to_response
       end
     end
   end

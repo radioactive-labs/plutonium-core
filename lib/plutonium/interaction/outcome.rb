@@ -53,14 +53,6 @@ module Plutonium
         raise NotImplementedError, "#{self.class} must implement #and_then"
       end
 
-      # Maps the value of a successful outcome.
-      #
-      # @abstract
-      # @raise [NotImplementedError] if not implemented in subclass.
-      def map
-        raise NotImplementedError, "#{self.class} must implement #map"
-      end
-
       # Converts the outcome to a response object.
       #
       # @abstract
@@ -88,19 +80,12 @@ module Plutonium
         yield value
       end
 
-      # Maps the value of this successful outcome.
-      #
-      # @yield [Object] The value wrapped by this outcome.
-      # @return [Success] A new Success wrapping the result of the yielded block.
-      def map
-        Success.new(yield value)
-      end
-
       # Sets the response for this successful outcome.
       #
       # @param response [Plutonium::Interaction::Response::Base] The response to set.
       # @return [self]
       def with_response(response)
+        @to_response = nil
         @response = response
         self
       end
@@ -130,13 +115,6 @@ module Plutonium
       #
       # @return [self]
       def and_then
-        self
-      end
-
-      # Returns self without executing the given block, propagating the failure.
-      #
-      # @return [self]
-      def map
         self
       end
 
