@@ -65,11 +65,10 @@ Encapsulates the result of an interaction. It has two subclasses:
 - `Success`: Represents a successful operation
 - `Failure`: Represents a failed operation
 
-Both can now have an associated response set via `with_response`.
-
 ### Plutonium::Interaction::Response
 
-Represents controller operations that can be performed as a result of a successful interaction:
+Represents controller operations that can be performed as a result of a successful interaction.
+We ship with these out of the box:
 
 - `Plutonium::Interaction::Response::Redirect`
 - `Plutonium::Interaction::Response::Render`
@@ -273,6 +272,8 @@ module Orders
     attribute :user_id, :integer
     attribute :product_ids, :string
 
+    private
+
     def execute
       success(attributes)
         .and_then { |attrs| find_user(attrs[:user_id]) }
@@ -281,8 +282,6 @@ module Orders
         .with_response(Response::Redirect.new(order_path(order)))
         .with_message("Order placed successfully.")
     end
-
-    private
 
     def find_user(user_id)
       user = User.find_by(id: user_id)
