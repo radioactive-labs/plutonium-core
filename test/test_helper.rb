@@ -1,7 +1,5 @@
 # Uncomment and update these requires as needed
-# require "plutonium"
-# require "rails"
-# require "active_model"
+require "plutonium"
 
 require "combustion"
 Combustion.path = "test/internal"
