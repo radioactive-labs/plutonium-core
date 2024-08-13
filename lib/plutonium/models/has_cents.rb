@@ -10,17 +10,56 @@ module Plutonium
     #
     # @example Usage
     #   class Product < ApplicationRecord
-    #     include HasCents
+    #     include Plutonium::Models::HasCents
+    #
     #     has_cents :price_cents
     #     has_cents :cost_cents, name: :wholesale_price, rate: 1000
+    #     has_cents :quantity_cents, name: :quantity, rate: 1
+    #     has_cents :total_cents, suffix: "value"
+    #
     #     validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
     #   end
     #
+    #   # Basic Usage
+    #   product = Product.new(price: 10.99)
+    #   product.price_cents #=> 1099
+    #   product.price #=> 10.99
+    #
+    #   product.wholesale_price = 5.5
+    #   product.cost_cents #=> 5500
+    #
+    #   product.quantity = 3
+    #   product.quantity_cents #=> 3
+    #
+    #   # Truncation
+    #   product = Product.new
+    #
+    #   product.price #=> 10.991
+    #   product.price_cents #=> 1099
+    #
+    #   product.price #=> 10.995
+    #   product.price_cents #=> 1099
+    #
+    #   product.price #=> 10.999
+    #   product.price_cents #=> 1099
+    #
+    #   # Validation Inheritance
     #   product = Product.new(price: -10.99)
     #   product.valid? #=> false
     #   product.errors[:price] #=> ["must be greater than or equal to 0"]
+    #   product.errors[:price_cents] #=> ["must be greater than or equal to 0"]
     #
-    #   Product.has_cents_attributes #=> {:price_cents=>{:name=>:price, :rate=>100}, :cost_cents=>{:name=>:wholesale_price, :rate=>1000}}
+    #   product.total_value = 100.50
+    #   product.total_cents #=> 10050
+    #
+    #   Product.has_cents_attributes
+    #   #=> {
+    #   #     price_cents: { name: :price, rate: 100 },
+    #   #     cost_cents: { name: :wholesale_price, rate: 1000 },
+    #   #     quantity_cents: { name: :quantity, rate: 1 },
+    #   #     total_cents: { name: :total, rate: 100 }
+    #   #   }
+    #
     #   Product.has_cents_attribute?(:price_cents) #=> true
     #   Product.has_cents_attribute?(:name) #=> false
     #   Product.has_cents_attributes[:cost_cents] #=> {name: :wholesale_price, rate: 1000}
@@ -99,8 +138,9 @@ module Plutonium
             #
             # @param value [Numeric, nil] The decimal value to be set.
             def #{name}=(value)
-              cents_value = (value.to_d * #{rate}).to_i if value.present?
-              self.#{cents_name} = cents_value
+              self.#{cents_name} = if value.present?
+                (BigDecimal(value.to_s) * #{rate}).to_i
+              end
             end
 
             # Propagate validation errors from cents attribute to the decimal attribute.

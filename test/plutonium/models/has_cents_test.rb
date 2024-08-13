@@ -21,6 +21,13 @@ module Plutonium
         has_cents :custom_suffix, suffix: "attr"
 
         validates :price_cents, numericality: {greater_than_or_equal_to: 0}
+        validate :invalidate_price
+
+        private
+
+        def invalidate_price
+          errors.add(:price_cents, :invalid)
+        end
       end
 
       def setup
@@ -64,6 +71,7 @@ module Plutonium
         refute @model.valid?
         assert_includes @model.errors[:price_cents], "must be greater than or equal to 0"
         assert_includes @model.errors[:price], "must be greater than or equal to 0"
+        assert_includes @model.errors[:price], "is invalid"
       end
 
       def test_custom_rate
@@ -83,10 +91,18 @@ module Plutonium
         assert_equal 0, @model.price
       end
 
-      def test_rounding
+      def test_truncation
         @model.price = 10.999
         assert_equal 1099, @model.price_cents
         assert_equal 10.99, @model.price
+
+        @model.price = 11.995
+        assert_equal 1199, @model.price_cents
+        assert_equal 11.99, @model.price
+
+        @model.price = 12.994
+        assert_equal 1299, @model.price_cents
+        assert_equal 12.99, @model.price
       end
 
       def test_large_numbers
@@ -98,7 +114,7 @@ module Plutonium
       def test_error_propagation
         @model.price_cents = -100
         @model.valid?
-        assert_equal @model.errors[:price_cents], @model.errors[:price]
+        assert_equal @model.errors[:price_cents].sort, @model.errors[:price].sort
       end
 
       def test_multiple_validations
@@ -133,6 +149,24 @@ module Plutonium
         @model.custom_suffix_attr = 10.5
         assert_equal 1050, @model.custom_suffix
         assert_equal 10.5, @model.custom_suffix_attr
+      end
+
+      def test_assign_nil
+        @model.price_cents = 100
+        assert_equal 100, @model.price_cents
+        assert_equal 1.0, @model.price
+
+        @model.price_cents = nil
+        assert_nil @model.price_cents
+        assert_nil @model.price
+
+        @model.price = 1
+        assert_equal 100, @model.price_cents
+        assert_equal 1.0, @model.price
+
+        @model.price = nil
+        assert_nil @model.price_cents
+        assert_nil @model.price
       end
     end
   end
