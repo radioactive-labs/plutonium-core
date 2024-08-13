@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# file: /Users/stefan/code/plutonium/starters/vulcan/gems/plutonium/lib/plutonium/models/has_cents.rb
-
 module Plutonium
   module Models
     # HasCents module provides functionality to handle monetary values stored as cents
@@ -20,8 +18,9 @@ module Plutonium
     #     validates :price_cents, numericality: { greater_than_or_equal_to: 0 }
     #   end
     #
-    #   # Basic Usage
+    # @example Basic Usage
     #   product = Product.new(price: 10.99)
+    #
     #   product.price_cents #=> 1099
     #   product.price #=> 10.99
     #
@@ -31,38 +30,45 @@ module Plutonium
     #   product.quantity = 3
     #   product.quantity_cents #=> 3
     #
-    #   # Truncation
-    #   product = Product.new
-    #
-    #   product.price #=> 10.991
+    # @example Truncation
+    #   product.price = 10.991
     #   product.price_cents #=> 1099
     #
-    #   product.price #=> 10.995
+    #   product.price = 10.995
     #   product.price_cents #=> 1099
     #
-    #   product.price #=> 10.999
+    #   product.price = 10.999
     #   product.price_cents #=> 1099
-    #
-    #   # Validation Inheritance
-    #   product = Product.new(price: -10.99)
-    #   product.valid? #=> false
-    #   product.errors[:price] #=> ["must be greater than or equal to 0"]
-    #   product.errors[:price_cents] #=> ["must be greater than or equal to 0"]
     #
     #   product.total_value = 100.50
     #   product.total_cents #=> 10050
     #
+    # @example Validation Inheritance
+    #   product = Product.new(price: -10.99)
+    #   product.valid? #=> false
+    #   product.errors[:price_cents] #=> ["must be greater than or equal to 0"]
+    #   product.errors[:price] #=> ["is invalid"]
+    #
+    # @example Reflection
     #   Product.has_cents_attributes
     #   #=> {
     #   #     price_cents: { name: :price, rate: 100 },
     #   #     cost_cents: { name: :wholesale_price, rate: 1000 },
     #   #     quantity_cents: { name: :quantity, rate: 1 },
-    #   #     total_cents: { name: :total, rate: 100 }
+    #   #     total_cents: { name: :total_value, rate: 100 }
     #   #   }
     #
     #   Product.has_cents_attribute?(:price_cents) #=> true
     #   Product.has_cents_attribute?(:name) #=> false
     #   Product.has_cents_attributes[:cost_cents] #=> {name: :wholesale_price, rate: 1000}
+    #
+    # @note This module automatically handles validation propagation. If a validation error
+    #   is applied to the cents attribute, the decimal attribute will be marked as invalid.
+    #
+    # @note The module uses BigDecimal for internal calculations to ensure precision
+    #   in monetary operations.
+    #
+    # @see ClassMethods#has_cents for details on setting up attributes
     module HasCents
       extend ActiveSupport::Concern
 
@@ -70,28 +76,27 @@ module Plutonium
         class_attribute :has_cents_attributes, instance_writer: false, default: {}
       end
 
-      class_methods do
-        # Inherit validations from cents attribute to decimal attribute
-        def validate(*args, &block)
-          options = args.extract_options!
-          Array(options[:attributes]).each do |attribute|
-            attribute = attribute.to_sym
-            if has_cents_attribute?(attribute)
-              decimal_attribute = has_cents_attributes[attribute][:name]
-              options[:attributes] += [decimal_attribute]
-              args = args.map do |validator|
-                if validator.respond_to?(:attributes)
-                  validator.instance_variable_set(:@attributes, validator.attributes + [decimal_attribute])
-                  _validators[decimal_attribute] << validator
-                  validator
-                end
-              end
-            end
-          end
+      module ClassMethods
+        # # Inherit validations from cents attribute to decimal attribute
+        # def validate(*args, &block)
+        #   options = args.extract_options!
+        #   Array(options[:attributes]).each do |attribute|
+        #     attribute = attribute.to_sym
+        #     if has_cents_attribute?(attribute)
+        #       decimal_attribute = has_cents_attributes[attribute][:name]
+        #       options[:attributes] += [decimal_attribute]
+        #       args = args.map do |validator|
+        #         if validator.respond_to?(:attributes)
+        #           validator.instance_variable_set(:@attributes, validator.attributes + [decimal_attribute])
+        #           _validators[decimal_attribute] << validator
+        #           validator
+        #         end
+        #       end
+        #     end
+        #   end
 
-          super(*args, options, &block)
-        end
-
+        #   super(*args, options, &block)
+        # end
         # Defines getter and setter methods for a monetary value stored as cents,
         # and ensures validations are applied to both cents and decimal attributes.
         #
@@ -143,12 +148,11 @@ module Plutonium
               end
             end
 
-            # Propagate validation errors from cents attribute to the decimal attribute.
-            # This serves to propagate any errors that may have been applied by custom validators
+            # Mark decimal field as invalid if cents field is not valid
             after_validation do
-              errors[#{cents_name.inspect}]&.each do |error_message|
-                errors.add(#{name.inspect}, error_message) unless errors[#{name.inspect}].include?(error_message)
-              end
+              next unless errors[#{cents_name.inspect}].present?
+
+              errors.add(#{name.inspect}, :invalid)
             end
           RUBY
         end

@@ -70,7 +70,6 @@ module Plutonium
         @model.price = -10.99
         refute @model.valid?
         assert_includes @model.errors[:price_cents], "must be greater than or equal to 0"
-        assert_includes @model.errors[:price], "must be greater than or equal to 0"
         assert_includes @model.errors[:price], "is invalid"
       end
 
@@ -114,7 +113,7 @@ module Plutonium
       def test_error_propagation
         @model.price_cents = -100
         @model.valid?
-        assert_equal @model.errors[:price_cents].sort, @model.errors[:price].sort
+        assert_equal ["is invalid"], @model.errors[:price]
       end
 
       def test_multiple_validations
@@ -125,7 +124,7 @@ module Plutonium
         @model.price_cents = nil
         refute @model.valid?
         assert_includes @model.errors[:price_cents], "can't be blank"
-        assert_includes @model.errors[:price], "can't be blank"
+        assert_includes @model.errors[:price], "is invalid"
       end
 
       def test_custom_validation_error_message
@@ -136,7 +135,7 @@ module Plutonium
         @model.price = 0
         refute @model.valid?
         assert_includes @model.errors[:price_cents], "must be positive"
-        assert_includes @model.errors[:price], "must be positive"
+        assert_includes @model.errors[:price], "is invalid"
       end
 
       def test_suffix
