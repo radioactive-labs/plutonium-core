@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "action_policy"
-
 module Plutonium
   module Resource
     module Controllers

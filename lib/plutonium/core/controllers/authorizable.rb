@@ -1,4 +1,4 @@
-require "action_policy"
+# frozen_string_literal: true
 
 module Plutonium
   module Core

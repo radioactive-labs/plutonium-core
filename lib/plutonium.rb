@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "zeitwerk"
+require "action_policy"
+
 require_relative "plutonium/configuration"
 
 # Plutonium module
