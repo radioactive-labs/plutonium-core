@@ -111,6 +111,19 @@ module PlutoniumGenerators
 
         private
 
+        def parse_type_and_options(type)
+          parsed_type, parsed_options = super
+
+          if type&.ends_with?("?")
+            parsed_type.remove!("?")
+            parsed_options[:null] = true
+          end
+
+          [parsed_type, parsed_options]
+        end
+
+        private
+
         def find_shared_namespace(model1, model2, separator: "::")
           # Split the model names by separator to get the namespaces and class names as arrays
           parts1 = model1.split(separator)
@@ -134,8 +147,7 @@ module PlutoniumGenerators
       end
 
       def required?
-        # TODO: make it such that we can override fields as nullable
-        super || true
+        super || attr_options[:null] != true
       end
 
       def options_for_migration
