@@ -62,7 +62,7 @@ module Pu
       end
 
       def expected_parent_policy
-        expected_parent_policy = "::#{resource_class.pluralize}Policy".safe_constantize
+        expected_parent_policy = "::#{resource_class.classify}Policy".safe_constantize
         expected_parent_policy if expected_parent_policy.present? && expected_parent_policy < ::ResourcePolicy
       end
 
@@ -71,7 +71,7 @@ module Pu
       end
 
       def expected_parent_presenter
-        expected_parent_presenter = "::#{resource_class.pluralize}Presenter".safe_constantize
+        expected_parent_presenter = "::#{resource_class.classify}Presenter".safe_constantize
         expected_parent_presenter if expected_parent_presenter.present? && expected_parent_presenter < ::ResourcePresenter
       end
 
@@ -80,7 +80,7 @@ module Pu
       end
 
       def expected_parent_query_object
-        expected_parent_query_object = "::#{resource_class.pluralize}QueryObject".safe_constantize
+        expected_parent_query_object = "::#{resource_class.classify}QueryObject".safe_constantize
         expected_parent_query_object if expected_parent_query_object.present? && expected_parent_query_object < ::ResourceQueryObject
       end
 
