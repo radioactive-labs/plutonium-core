@@ -6,6 +6,9 @@ require_relative "../<%= class_path.last.underscore %>"
 class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::" %>
   # add concerns above.
 
+<% attributes.select(&:cents?).each do |attribute| -%>
+  has_cents :<%= attribute.name %>
+<% end -%>
   # add model configurations above.
 
 <% attributes.select(&:reference?).each do |attribute| -%>
@@ -29,7 +32,7 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
 
 <% attributes.select(&:required?).each do |attribute| -%>
   <%- next if attribute.reference? || attribute.rich_text? || attribute.token? || attribute.password_digest? -%>
-  validates :<%= attribute.name %>, presence: true
+  validates :<%= attribute.attribute_name %>, presence: true
 <% end -%>
   # add validations above.
 

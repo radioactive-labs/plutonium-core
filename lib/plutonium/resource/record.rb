@@ -2,6 +2,7 @@ module Plutonium
   module Resource
     module Record
       extend ActiveSupport::Concern
+      include Plutonium::Models::HasCents
 
       included do
         scope :from_path_param, ->(param) { where(id: param) }

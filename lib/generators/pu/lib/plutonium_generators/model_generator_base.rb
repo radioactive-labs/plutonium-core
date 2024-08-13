@@ -150,6 +150,18 @@ module PlutoniumGenerators
         super || attr_options[:null] != true
       end
 
+      def cents?
+        name.ends_with?("_cents")
+      end
+
+      def attribute_name
+        if cents?
+          name.sub("_cents", "")
+        else
+          name
+        end
+      end
+
       def options_for_migration
         super.tap do |options|
           if options[:to_table]
