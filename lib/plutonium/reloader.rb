@@ -65,7 +65,7 @@ module Plutonium
       # @return [void]
       def handle_file_changes(modified, added, removed)
         (modified + added).each do |file|
-          Plutonium.logger.debug "[plutonium] change detected: #{file}"
+          Plutonium.logger.debug { "[plutonium] change detected: #{file}" }
 
           if file == __FILE__
             reload_file(file)
@@ -107,7 +107,7 @@ module Plutonium
       # @param file [String] path to the engine file
       # @return [void]
       def reload_engine_and_routes(file)
-        Plutonium.logger.debug "[plutonium] reloading: engine+routes"
+        Plutonium.logger.debug { "[plutonium] reloading: engine+routes" }
         load file
         Rails.application.reload_routes!
       end
@@ -117,7 +117,7 @@ module Plutonium
       # @param file [String] path to the file
       # @return [void]
       def reload_framework_and_file(file)
-        Plutonium.logger.debug "[plutonium] reloading: app+framework"
+        Plutonium.logger.debug { "[plutonium] reloading: app+framework" }
         Rails.application.reloader.reload!
         Plutonium::Loader.reload
         reload_components
@@ -145,7 +145,7 @@ module Plutonium
       # @param error [StandardError] the error that occurred during reloading
       # @return [void]
       def log_reload_failure(file, error)
-        Plutonium.logger.error "\n[plutonium] reloading failed\n\n#{error.message}\n"
+        Plutonium.logger.error { "\n[plutonium] reloading failed\n\n#{error.message}\n" }
       end
     end
   end

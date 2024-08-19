@@ -74,7 +74,7 @@ module Plutonium
           log_controller_creation(const_full_name, parent_controller)
           const_full_name.constantize
         rescue => e
-          Plutonium.logger.error "[plutonium] Failed to create dynamic controller: #{e.message}"
+          Plutonium.logger.error { "[plutonium] Failed to create dynamic controller: #{e.message}" }
           raise
         end
 
@@ -100,7 +100,7 @@ module Plutonium
         # @param const_full_name [String] The full name of the created controller
         # @param parent_controller [Class] The parent controller class
         def log_controller_creation(const_full_name, parent_controller)
-          Plutonium.logger.info "[plutonium] Dynamically created #{const_full_name} < #{parent_controller}"
+          Plutonium.logger.info { "[plutonium] Dynamically created #{const_full_name} < #{parent_controller}" }
         end
       end
     end

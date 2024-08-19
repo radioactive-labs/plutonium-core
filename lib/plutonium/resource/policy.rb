@@ -6,7 +6,6 @@ module Plutonium
     # This class provides methods to check permissions for various actions
     # and to retrieve permitted attributes for these actions.
     class Policy < ActionPolicy::Base
-
       authorize :user, allow_nil: false
       authorize :scope, allow_nil: true
 
@@ -182,16 +181,18 @@ module Plutonium
           raise "Resource field auto-detection: #{self.class}##{method} outside development"
         end
 
-        Plutonium.logger.warn %(
-          🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+        Plutonium.logger.warn {
+          %(
+            🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
 
-          Resource field auto-detection: #{self.class}##{method}
+            Resource field auto-detection: #{self.class}##{method}
 
-          Auto-detected resource fields result in security holes and will fail outside of development.
-          Override #{resource_class}Policy or #{self.class} with your own ##{method} method.
+            Auto-detected resource fields result in security holes and will fail outside of development.
+            Override #{resource_class}Policy or #{self.class} with your own ##{method} method.
 
-          🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
-        )
+            🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨
+          )
+        }
       end
     end
   end
