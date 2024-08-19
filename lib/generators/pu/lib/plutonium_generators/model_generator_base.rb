@@ -151,7 +151,7 @@ module PlutoniumGenerators
       end
 
       def cents?
-        name.ends_with?("_cents")
+        type == :integer && name.ends_with?("_cents")
       end
 
       def attribute_name
