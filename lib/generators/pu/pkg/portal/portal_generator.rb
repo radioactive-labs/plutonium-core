@@ -40,7 +40,7 @@ module Pu
         copy_file "app/views/package/dashboard/index.html.erb",
           "packages/#{package_namespace}/app/views/#{package_namespace}/dashboard/index.html.erb"
 
-        %w[policies presenters query_objects].each do |dir|
+        %w[policies definitions].each do |dir|
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
         end
         create_file "packages/#{package_namespace}/app/views/#{package_namespace}/.keep"

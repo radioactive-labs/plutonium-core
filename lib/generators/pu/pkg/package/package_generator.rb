@@ -18,7 +18,7 @@ module Pu
 
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
 
-        %w[controllers interactions models policies presenters query_objects].each do |dir|
+        %w[controllers interactions models policies definitions].each do |dir|
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
         end
         create_file "packages/#{package_namespace}/app/views/#{package_namespace}/.keep"

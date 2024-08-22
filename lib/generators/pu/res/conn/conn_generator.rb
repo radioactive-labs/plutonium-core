@@ -29,8 +29,9 @@ module Pu
 
           template "app/controllers/resource_controller.rb", "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
           template "app/policies/resource_policy.rb", "packages/#{package_namespace}/app/policies/#{package_namespace}/#{resource.underscore}_policy.rb" unless expected_parent_policy
-          template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb" unless expected_parent_presenter
-          template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb" unless expected_parent_query_object
+          # template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb" unless expected_parent_presenter
+          # template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb" unless expected_parent_query_object
+          template "app/definitions/resource_definition.rb", "packages/#{package_namespace}/app/definitions/#{package_namespace}/#{resource.underscore}_definition.rb" unless expected_parent_definition
 
           insert_into_file "packages/#{package_namespace}/config/routes.rb",
             indent("register_resource ::#{resource}\n", 2),
@@ -86,6 +87,15 @@ module Pu
 
       def parent_query_object
         expected_parent_query_object || "ResourceQueryObject"
+      end
+
+      def expected_parent_definition
+        expected_parent_definition = "::#{resource_class.classify}Definition".safe_constantize
+        expected_parent_definition if expected_parent_definition.present? && expected_parent_definition < ::ResourceDefinition
+      end
+
+      def parent_definition
+        expected_parent_definition || "ResourceDefinition"
       end
 
       def attributes

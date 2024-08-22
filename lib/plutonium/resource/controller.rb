@@ -11,6 +11,7 @@ module Plutonium
       extend ActiveSupport::Concern
       include Pagy::Backend
       include Plutonium::Core::Controller
+      include Plutonium::Resource::Controllers::Defineable
       include Plutonium::Resource::Controllers::Authorizable
       include Plutonium::Resource::Controllers::Presentable
       include Plutonium::Resource::Controllers::Queryable
@@ -102,7 +103,17 @@ module Plutonium
         presenter_class = [current_package, "#{resource_class}Presenter"].compact.join("::").constantize
         presenter_class.new resource_context, resource_record
       rescue NameError
-        super(resource_class, resource_record)
+        super
+      end
+
+      # Creates a resource definition
+      # @param [Class] resource_class The resource class
+      # @return [Object] The resource definition
+      def resource_definition(resource_class)
+        definition_class = [current_package, "#{resource_class}Definition"].compact.join("::").constantize
+        definition_class.new
+      rescue NameError
+        super
       end
 
       # Creates a resource query object
@@ -113,7 +124,7 @@ module Plutonium
         query_object_class = [current_package, "#{resource_class}QueryObject"].compact.join("::").constantize
         query_object_class.new resource_context, params
       rescue NameError
-        super(resource_class, params)
+        super
       end
 
       # Applies submitted resource params if they have been passed
@@ -181,9 +192,9 @@ module Plutonium
       # @param [Array] args The URL arguments
       # @param [Hash] kwargs The keyword arguments
       # @return [Array] The URL arguments
-      def resource_url_args_for(*args, **kwargs)
+      def resource_url_args_for(*, **kwargs)
         kwargs[:parent] = current_parent unless kwargs.key?(:parent)
-        super(*args, **kwargs)
+        super
       end
     end
   end

@@ -2,7 +2,6 @@
 
 require "view_component"
 
-
 module Plutonium
   # Plutonium::Railtie integrates Plutonium with Rails applications.
   #

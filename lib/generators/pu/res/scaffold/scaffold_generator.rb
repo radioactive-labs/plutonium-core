@@ -37,12 +37,30 @@ module Pu
         template "policy.rb", File.join("app/policies", class_path, "#{file_name}_policy.rb")
       end
 
-      def create_presenter
-        template "presenter.rb", File.join("app/presenters", class_path, "#{file_name}_presenter.rb")
+      def create_definition
+        template "definition.rb", File.join("app/definitions", class_path, "#{file_name}_definition.rb")
       end
 
-      def create_query_object
-        template "query_object.rb", File.join("app/query_objects", class_path, "#{file_name}_query_object.rb")
+      # def create_presenter
+      #   template "presenter.rb", File.join("app/presenters", class_path, "#{file_name}_presenter.rb")
+      # end
+
+      # def create_query_object
+      #   template "query_object.rb", File.join("app/query_objects", class_path, "#{file_name}_query_object.rb")
+      # end
+
+      private
+
+      def default_policy_attributes
+        attributes.select { |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:attribute_name).map(&:to_sym)
+      end
+
+      def policy_attributes_for_create
+        default_policy_attributes
+      end
+
+      def policy_attributes_for_read
+        default_policy_attributes + [:created_at, :updated_at]
       end
     end
   end

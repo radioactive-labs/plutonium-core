@@ -1,0 +1,3 @@
+class <%= app_namespace %>::<%= resource_class %>Definition < ::<%= parent_definition %>
+  include <%= app_namespace %>::ResourceDefinition
+end

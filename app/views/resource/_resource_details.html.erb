@@ -9,13 +9,14 @@
   <div class="p-4">
     <dl class="divide-y divide-gray-100">
       <% details.fields.each do |name, renderer| %>
-        <%#
-          TODO:
-          For now, we are hacking around the need to call #with before #label
-          This proves there's an issue with the rendering api.
-          While I think of an elegant solution, this works for now.
+        <%
+          # TODO:
+          # For now, we are hacking around the need to call #with before #label
+          # This proves there's an issue with the rendering api.
+          # While I think of an elegant solution, this works for now.
+
+          renderer.with(record: details.record)
         %>
-        <% renderer.with(record: details.record) %>
         <div class="py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
           <dt class="text-sm font-medium leading-6 text-gray-900 dark:text-gray-300">
             <%= renderer.label %>
