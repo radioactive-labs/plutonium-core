@@ -15,12 +15,12 @@ module Plutonium
           # TODO: add logging
           # TODO: memoize this
 
-          own_association = klass.find_association_to_record(record)
+          own_association = klass.find_association_from_self_to_record(record)
           if own_association
             return klass.query_based_on_association(own_association, record)
           end
 
-          record_association = klass.find_association_to_self(record)
+          record_association = klass.find_association_to_self_from_record(record)
           if record_association
             # TODO: add a warning here about a potentially poor performing query
             return where(id: record.public_send(record_association.name))
@@ -44,7 +44,7 @@ module Plutonium
         # @param [Proc] scope The scope for the association
         # @param [Hash] options The options for the association
         def belongs_to(name, scope = nil, **options)
-          super(name, scope, **options)
+          super
 
           return unless options[:polymorphic]
 
@@ -156,31 +156,10 @@ module Plutonium
           end.compact.to_h
         end
 
-        # Returns the strong parameters definition for the given attribute names
-        # @param [Array<Symbol>] *attributes Attribute names
-        # @return [Array<Symbol, Hash>] A strong parameters compatible array
-        def strong_parameters_for(*attributes)
-          unbacked = attributes - strong_parameters_definition.keys
-
-          backed = strong_parameters_definition.slice(*attributes).values.reduce(:merge)
-            &.map { |key, value| value.nil? ? key : {key => value} } || {}
-
-          case backed.presence
-          when Hash
-            [*unbacked, **backed]
-          when Array
-            [*unbacked, *backed]
-          when nil
-            unbacked
-          else
-            raise "Unexpected strong parameters definition: #{backed.class}"
-          end
-        end
-
         # Finds the association to the given record
         # @param [ActiveRecord::Base] record The record to find the association with
         # @return [ActiveRecord::Reflection::AssociationReflection, nil]
-        def find_association_to_record(record)
+        def find_association_from_self_to_record(record)
           reflect_on_all_associations.find do |assoc|
             assoc.klass.name == record.class.name unless assoc.polymorphic?
           rescue
@@ -192,7 +171,7 @@ module Plutonium
         # Finds the association to self in the given record
         # @param [ActiveRecord::Base] record The record to find the association with
         # @return [ActiveRecord::Reflection::AssociationReflection, nil]
-        def find_association_to_self(record)
+        def find_association_to_self_from_record(record)
           record.class.reflect_on_all_associations.find do |assoc|
             assoc.klass.name == name
           rescue
@@ -231,69 +210,6 @@ module Plutonium
         end
 
         private
-
-        # Defines the strong parameters
-        # @return [Hash]
-        def strong_parameters_definition
-          unless Rails.env.local?
-            return @strong_parameters if defined?(@strong_parameters)
-          end
-
-          @strong_parameters = build_strong_parameters
-        end
-
-        # Builds the strong parameters hash
-        # @return [Hash]
-        def build_strong_parameters
-          parameters = content_column_field_names.map do |name|
-            column = columns_hash[name.to_s]
-            type = if column.try(:array?)
-              []
-            else
-              ([:json, :jsonb].include?(column&.type) ? {} : nil)
-            end
-            [name, {name => type}]
-          end.to_h
-
-          parameters.merge!(belongs_to_association_parameters)
-          parameters.merge!(has_many_association_parameters)
-          parameters.merge!(attachment_parameters)
-          parameters.merge!(nested_attributes_parameters)
-
-          parameters
-        end
-
-        # Returns the parameters for belongs_to associations
-        # @return [Hash]
-        def belongs_to_association_parameters
-          reflect_on_all_associations(:belongs_to).map do |reflection|
-            input_param = reflection.options[:foreign_key] || :"#{reflection.name}_id"
-            [reflection.name, {input_param => nil, :"#{reflection.name}_sgid" => nil}]
-          end.to_h
-        end
-
-        # Returns the parameters for has_many associations
-        # @return [Hash]
-        def has_many_association_parameters
-          has_many_association_field_names.map do |name|
-            [name, {"#{name.to_s.singularize}_ids": []}]
-          end.to_h
-        end
-
-        # Returns the parameters for attachments
-        # @return [Hash]
-        def attachment_parameters
-          has_many_attached_field_names.map { |name| [name, {name => []}] }.to_h
-            .merge(has_one_attached_field_names.map { |name| [name, {name => nil}] }.to_h)
-        end
-
-        # Returns the parameters for nested attributes
-        # @return [Hash]
-        def nested_attributes_parameters
-          all_nested_attributes_options.keys.map do |name|
-            [name, {"#{name}_attributes" => {}}]
-          end.to_h
-        end
 
         # Defines a scope and method for path parameters
         # @param [Symbol] param_name The name of the parameter

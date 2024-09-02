@@ -42,11 +42,9 @@ module Plutonium
           )
         end
 
-        def build_form
-          Plutonium::Core::UI::Form.new(
-            record: resource_record,
-            inputs: current_presenter.defined_field_inputs_for(*presentable_attributes)
-          )
+        def build_form(record = resource_record)
+          # preferred_action_after_submit:
+          current_definition.form_class.new(record, resource_fields: presentable_attributes)
         end
 
         def present_associations?

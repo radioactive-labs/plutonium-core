@@ -62,21 +62,19 @@ module Plutonium
       # Returns the submitted resource parameters
       # @return [Hash] The submitted resource parameters
       def submitted_resource_params
-        @submitted_resource_params ||= begin
-          strong_parameters = resource_class.strong_parameters_for(*permitted_attributes)
-          params.require(resource_param_key).permit(*strong_parameters).nilify.to_h
-        end
+        @submitted_resource_params ||= build_form(resource_class.new).extract_input(params)[resource_param_key.to_sym]
       end
 
       # Returns the resource parameters, including scoped and parent parameters
       # @return [Hash] The resource parameters
       def resource_params
-        input_params = submitted_resource_params.dup
+        @resource_params ||= begin
+          input_params = submitted_resource_params.dup
+          override_entity_scoping_params(input_params)
+          override_parent_params(input_params)
 
-        override_entity_scoping_params(input_params)
-        override_parent_params(input_params)
-
-        current_presenter.defined_field_inputs_for(*permitted_attributes).collect_all(input_params)
+          input_params
+        end
       end
 
       # Returns the resource parameter key
