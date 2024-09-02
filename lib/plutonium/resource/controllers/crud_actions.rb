@@ -116,7 +116,7 @@ module Plutonium
             resource_record.destroy
 
             format.html do
-              redirect_to resource_url_for(resource_class),
+              redirect_to redirect_url_after_destroy,
                 notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
@@ -155,6 +155,14 @@ module Plutonium
             session[:action_after_submit_preference] = "show"
           end
           url || resource_url_for(resource_record)
+        end
+
+        def redirect_url_after_destroy
+          if (return_to = url_from(params[:return_to]))
+            return return_to
+          end
+
+          resource_url_for(resource_class)
         end
 
         def preferred_action_after_submit

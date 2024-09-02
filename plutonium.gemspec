@@ -35,10 +35,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 7.1", "< 8.0"
   spec.add_dependency "listen", "~> 3.8"
   spec.add_dependency "active_interaction", "~> 5.3"
-  spec.add_dependency "pagy", "~> 7.0"
+  spec.add_dependency "pagy", "~> 9.0"
   spec.add_dependency "simple_form", "~> 5.3"
   spec.add_dependency "view_component", "~> 3"
-  spec.add_dependency "view_component-form", "~> 0.2.6"
   spec.add_dependency "dry-initializer", "~> 3.1"
   spec.add_dependency "rabl", "~> 0.16.1" # TODO: what to do with RABL
   spec.add_dependency "semantic_range", "~> 3.0"

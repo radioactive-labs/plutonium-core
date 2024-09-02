@@ -29,14 +29,7 @@ module Plutonium
         end
 
         def build_collection
-          Plutonium::Core::UI::Collection.new(
-            resource_class:,
-            records: @resource_records,
-            fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
-            actions: current_presenter.actions,
-            pager: @pagy,
-            search_object: @search_object
-          )
+          current_definition.collection_class.new @resource_records, resource_fields: presentable_attributes
         end
 
         def build_detail

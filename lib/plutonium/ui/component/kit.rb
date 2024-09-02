@@ -15,6 +15,16 @@ module Plutonium
         def PageHeader(...) = render Plutonium::UI::PageHeader.new(...)
 
         def ActionButton(...) = render Plutonium::UI::ActionButton.new(...)
+
+        def EmptyCard(...) = render Plutonium::UI::EmptyCard.new(...)
+
+        def TableSearchBar(...) = render Plutonium::UI::Table::Components::SearchBar.new(...)
+
+        def TableScopesBar(...) = render Plutonium::UI::Table::Components::ScopesBar.new(...)
+
+        def TableInfo(...) = render Plutonium::UI::Table::Components::PagyInfo.new(...)
+
+        def TablePagination(...) = render Plutonium::UI::Table::Components::PagyPagination.new(...)
       end
     end
   end
