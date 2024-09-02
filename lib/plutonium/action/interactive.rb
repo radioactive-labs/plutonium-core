@@ -5,19 +5,19 @@ module Plutonium
     # InteractiveAction class for handling interactive actions in the Plutonium framework
     #
     # @attr_reader [Class] interaction The interaction class associated with this action
-    # @attr_reader [Boolean] inline Whether the action is inline
+    # @attr_reader [Boolean] immediate Whether the action is executed immediately
     class Interactive < Base
-      attr_reader :interaction, :inline
+      attr_reader :interaction, :immediate
 
       # Initialize a new InteractiveAction
       #
       # @param [Symbol] name The name of the action
       # @param [Class] interaction The interaction class for this action
-      # @param [Boolean] inline Whether the action is inline
+      # @param [Boolean] immediate Whether the action is executed immediately
       # @param [Hash] options Additional options for the action
-      def initialize(name, interaction:, inline:, **)
+      def initialize(name, interaction:, immediate:, **)
         @interaction = interaction
-        @inline = inline
+        @immediate = immediate
 
         super(name, **)
       end
@@ -26,7 +26,7 @@ module Plutonium
       #
       # @return [String, nil] The confirmation message or nil if not applicable
       def confirmation
-        super || (@inline ? "#{label}?" : nil)
+        super || (@immediate ? "#{label}?" : nil)
       end
 
       # Factory for creating Interactive actions
@@ -42,13 +42,13 @@ module Plutonium
           action_type = determine_action_type(attribute_names)
           input_fields = determine_input_fields(attribute_names)
           action_options = determine_action_options(action_type)
-          inline = options.fetch(:inline) { input_fields.blank? }
-          route_options = build_route_options(name, action_type, inline)
+          immediate = options.fetch(:immediate) { input_fields.blank? }
+          route_options = build_route_options(name, action_type, immediate)
 
           Interactive.new(
             name,
             interaction: interaction,
-            inline: inline,
+            immediate: immediate,
             route_options: route_options,
             **action_options,
             **options
@@ -91,10 +91,10 @@ module Plutonium
         # @return [Hash] The action options
         def self.determine_action_options(action_type)
           {
-            collection_action: action_type == :interactive_resource_collection_action,
+            bulk_action: action_type == :interactive_resource_collection_action,
             record_action: action_type == :interactive_resource_record_action,
             collection_record_action: action_type == :interactive_resource_record_action,
-            global_action: action_type == :interactive_resource_recordless_action
+            resource_action: action_type == :interactive_resource_recordless_action
           }
         end
 
@@ -102,11 +102,11 @@ module Plutonium
         #
         # @param [Symbol] name The name of the action
         # @param [Symbol] action_type The type of the action
-        # @param [Boolean] inline Whether the action is inline
+        # @param [Boolean] immediate Whether the action is executed immediately
         # @return [RouteOptions] The route options for the action
-        def self.build_route_options(name, action_type, inline)
+        def self.build_route_options(name, action_type, immediate)
           RouteOptions.new(
-            method: inline ? :post : :get,
+            method: immediate ? :post : :get,
             action: action_type,
             interactive_action: name
           )

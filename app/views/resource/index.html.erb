@@ -1,5 +1,1 @@
-<%= render_component :breadcrumbs, resource_class:, parent: current_parent %>
-
-<%= render_component :dyna_frame_content do %>
-  <%= render "resource_table", collection: @collection %>
-<% end %>
+<%= render current_definition.index_page_class.new %>

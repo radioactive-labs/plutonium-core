@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "phlexi-form"
-
 module Plutonium
   module Definition
     # Base class for Plutonium definitions
@@ -26,25 +24,61 @@ module Plutonium
     # @note This class is not thread-safe. Ensure proper synchronization
     #   if used in a multi-threaded environment.
     class Base
-      include DefineableProperties
+      include DefineableProps
+      include ConfigAttr
+      include Actions
 
-      class Form < Phlexi::Form::Base
-      end
+      class IndexPage < Plutonium::UI::Page::Index; end
 
-      defineable_property :field
-      defineable_property :input
-      defineable_property :filter
-      defineable_property :scope
-      defineable_property :sorter
+      class NewPage < Plutonium::UI::Page::New; end
+
+      class ShowPage < Plutonium::UI::Page::Show; end
+
+      class EditPage < Plutonium::UI::Page::Edit; end
+
+      class Form < Plutonium::UI::Form::Resource; end
+
+      class Table < Plutonium::UI::Table::Resource; end
+
+      # fields
+      defineable_props :field, :input
+
+      # queries
+      defineable_props :filter, :scope, :sorter
+
+      # pages
+      config_attr \
+        :index_page_title, :index_page_description,
+        :show_page_title, :show_page_description,
+        :new_page_title, :new_page_description,
+        :edit_page_title, :edit_page_description
 
       def initialize
         super
       end
 
-      private
+      def index_page_class
+        self.class::IndexPage
+      end
+
+      def new_page_class
+        self.class::NewPage
+      end
+
+      def show_page_class
+        self.class::ShowPage
+      end
+
+      def edit_page_class
+        self.class::EditPage
+      end
 
       def form_class
         self.class::Form
+      end
+
+      def collection_class
+        self.class::Table
       end
     end
   end

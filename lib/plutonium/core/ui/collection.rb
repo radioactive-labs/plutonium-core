@@ -2,7 +2,7 @@ require "dry-initializer"
 
 module Plutonium
   module Core
-    module Ui
+    module UI
       class Collection
         extend Dry::Initializer
 

@@ -14,7 +14,7 @@ module Plutonium
           confirmation: "Are you sure?",
           route_options: RouteOptions.new(action: :test, method: :post),
           turbo_frame: "test_frame",
-          collection_action: true,
+          bulk_action: true,
           category: :test_category,
           position: 10
         )
@@ -28,7 +28,8 @@ module Plutonium
         assert_equal "Are you sure?", @action.confirmation
         assert_instance_of RouteOptions, @action.route_options
         assert_equal "test_frame", @action.turbo_frame
-        assert_equal :test_category, @action.category
+        assert_equal "test_category", @action.category
+        assert @action.category.test_category?
         assert_equal 10, @action.position
       end
 
@@ -44,13 +45,13 @@ module Plutonium
       end
 
       def test_action_types
-        assert @action.collection_action?
+        assert @action.bulk_action?
         refute @action.collection_record_action?
         refute @action.record_action?
-        refute @action.global_action?
+        refute @action.resource_action?
 
-        global_action = Base.new(:global, global_action: true)
-        assert global_action.global_action?
+        resource_action = Base.new(:resource, resource_action: true)
+        assert resource_action.resource_action?
       end
 
       def test_frozen_instance
@@ -68,10 +69,10 @@ module Plutonium
       end
 
       def test_multiple_action_types
-        action = Base.new(:multi, collection_action: true, record_action: true)
-        assert action.collection_action?
+        action = Base.new(:multi, bulk_action: true, record_action: true)
+        assert action.bulk_action?
         assert action.record_action?
-        refute action.global_action?
+        refute action.resource_action?
         refute action.collection_record_action?
       end
 

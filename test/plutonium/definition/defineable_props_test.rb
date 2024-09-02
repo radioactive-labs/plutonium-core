@@ -2,13 +2,13 @@ require "test_helper"
 
 module Plutonium
   module Definition
-    class DefineablePropertiesTest < Minitest::Test
+    class DefineablePropsTest < Minitest::Test
       class TestClass
-        include DefineableProperties
+        include DefineableProps
 
-        defineable_property :field
-        defineable_property :input
-        defineable_property :filter
+        defineable_prop :field
+        defineable_prop :input
+        defineable_prop :filter
 
         field :name, as: :string
         input :email, as: :email
@@ -32,15 +32,15 @@ module Plutonium
       end
 
       def test_class_level_property_definition
-        assert_equal({name: {options: {as: :string}}}, TestClass.fields)
-        assert_equal({email: {options: {as: :email}}}, TestClass.inputs)
-        assert_equal({status: {options: {type: :select}}}, TestClass.filters)
+        assert_equal({name: {options: {as: :string}}}, TestClass.defined_fields)
+        assert_equal({email: {options: {as: :email}}}, TestClass.defined_inputs)
+        assert_equal({status: {options: {type: :select}}}, TestClass.defined_filters)
       end
 
       def test_instance_level_property_access
-        assert_equal({name: {options: {as: :string}}, custom_field: {options: {as: :integer}}}, @instance.fields)
-        assert_equal({email: {options: {as: :email}}, custom_input: {options: {as: :boolean}}}, @instance.inputs)
-        assert_equal({status: {options: {type: :select}}, custom_filter: {options: {type: :text}}}, @instance.filters)
+        assert_equal({name: {options: {as: :string}}, custom_field: {options: {as: :integer}}}, @instance.defined_fields)
+        assert_equal({email: {options: {as: :email}}, custom_input: {options: {as: :boolean}}}, @instance.defined_inputs)
+        assert_equal({status: {options: {type: :select}}, custom_filter: {options: {type: :text}}}, @instance.defined_filters)
       end
 
       def test_inheritance
@@ -62,19 +62,19 @@ module Plutonium
           subclass_field: {options: {as: :date}},
           custom_field: {options: {as: :integer}},
           another_custom_field: {options: {as: :string}}
-        }, instance.fields)
+        }, instance.defined_fields)
 
         assert_equal({
           email: {options: {as: :email}},
           subclass_input: {options: {as: :password}},
           custom_input: {options: {as: :boolean}}
-        }, instance.inputs)
+        }, instance.defined_inputs)
 
         assert_equal({
           status: {options: {type: :select}},
           subclass_filter: {options: {type: :date_range}},
           custom_filter: {options: {type: :text}}
-        }, instance.filters)
+        }, instance.defined_filters)
       end
 
       def test_instance_level_property_definition
@@ -82,19 +82,19 @@ module Plutonium
         @instance.input(:instance_input, as: :text)
         @instance.filter(:instance_filter, type: :range)
 
-        assert_includes @instance.fields, :instance_field
-        assert_includes @instance.inputs, :instance_input
-        assert_includes @instance.filters, :instance_filter
+        assert_includes @instance.defined_fields, :instance_field
+        assert_includes @instance.defined_inputs, :instance_input
+        assert_includes @instance.defined_filters, :instance_filter
       end
 
       def test_customize_definitions
-        assert_includes @instance.fields, :custom_field
-        assert_includes @instance.inputs, :custom_input
-        assert_includes @instance.filters, :custom_filter
+        assert_includes @instance.defined_fields, :custom_field
+        assert_includes @instance.defined_inputs, :custom_input
+        assert_includes @instance.defined_filters, :custom_filter
       end
 
       def test_defineable_properties_list
-        assert_equal [:fields, :inputs, :filters], TestClass.defineable_properties
+        assert_equal [:fields, :inputs, :filters], TestClass._defineable_props_store
       end
 
       def test_property_method_generation
@@ -115,9 +115,9 @@ module Plutonium
 
         instance = subclass.new
 
-        assert_equal({as: :text}, instance.fields[:name][:options])
-        assert_equal({as: :string}, instance.inputs[:email][:options])
-        assert_equal({type: :checkbox}, instance.filters[:status][:options])
+        assert_equal({as: :text}, instance.defined_fields[:name][:options])
+        assert_equal({as: :string}, instance.defined_inputs[:email][:options])
+        assert_equal({type: :checkbox}, instance.defined_filters[:status][:options])
       end
 
       def test_multiple_inheritance_levels
@@ -131,45 +131,45 @@ module Plutonium
 
         instance = subclass2.new
 
-        assert_includes instance.fields, :name
-        assert_includes instance.fields, :custom_field
-        assert_includes instance.fields, :subclass1_field
-        assert_includes instance.fields, :subclass2_field
+        assert_includes instance.defined_fields, :name
+        assert_includes instance.defined_fields, :custom_field
+        assert_includes instance.defined_fields, :subclass1_field
+        assert_includes instance.defined_fields, :subclass2_field
       end
 
       def test_redefining_existing_property
         test_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
         end
 
         test_class.field :existing_field, as: :string
 
         test_class.field :existing_field, as: :integer
-        assert_equal({as: :integer}, test_class.fields[:existing_field][:options])
+        assert_equal({as: :integer}, test_class.defined_fields[:existing_field][:options])
 
         test_class.field :existing_field
-        assert_equal({}, test_class.fields[:existing_field][:options])
+        assert_equal({}, test_class.defined_fields[:existing_field][:options])
       end
 
       def test_defineable_property_with_non_standard_plural
         test_class = Class.new do
-          include DefineableProperties
+          include DefineableProps
         end
 
-        test_class.defineable_property :category
+        test_class.defineable_prop :category
 
-        assert_includes test_class.defineable_properties, :categories
+        assert_includes test_class._defineable_props_store, :categories
         assert test_class.respond_to?(:category)
-        assert test_class.respond_to?(:categories)
+        assert test_class.respond_to?(:defined_categories)
         assert test_class.new.respond_to?(:category)
-        assert test_class.new.respond_to?(:categories)
+        assert test_class.new.respond_to?(:defined_categories)
       end
 
       def test_property_with_block
         test_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
 
           field :with_block, as: :string do
             "Block content"
@@ -177,13 +177,13 @@ module Plutonium
         end
 
         instance = test_class.new
-        assert_equal "Block content", instance.fields[:with_block][:block].call
+        assert_equal "Block content", instance.defined_fields[:with_block][:block].call
       end
 
       def test_property_block_inheritance
         parent_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
 
           field :parent_field, as: :string do
             "Parent block"
@@ -197,14 +197,14 @@ module Plutonium
         end
 
         instance = child_class.new
-        assert_equal "Parent block", instance.fields[:parent_field][:block].call
-        assert_equal "Child block", instance.fields[:child_field][:block].call
+        assert_equal "Parent block", instance.defined_fields[:parent_field][:block].call
+        assert_equal "Child block", instance.defined_fields[:child_field][:block].call
       end
 
       def test_property_block_override
         parent_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
 
           field :overridden_field, as: :string do
             "Parent block"
@@ -218,26 +218,26 @@ module Plutonium
         end
 
         instance = child_class.new
-        assert_equal "Child block", instance.fields[:overridden_field][:block].call
-        assert_equal({as: :integer}, instance.fields[:overridden_field][:options])
+        assert_equal "Child block", instance.defined_fields[:overridden_field][:block].call
+        assert_equal({as: :integer}, instance.defined_fields[:overridden_field][:options])
       end
 
       def test_property_without_block
         test_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
 
           field :without_block, as: :string
         end
 
         instance = test_class.new
-        assert_nil instance.fields[:without_block][:block]
+        assert_nil instance.defined_fields[:without_block][:block]
       end
 
       def test_instance_level_property_with_block
         test_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
         end
 
         instance = test_class.new
@@ -245,13 +245,13 @@ module Plutonium
           "Instance block"
         end
 
-        assert_equal "Instance block", instance.fields[:instance_field][:block].call
+        assert_equal "Instance block", instance.defined_fields[:instance_field][:block].call
       end
 
       def test_property_block_inheritance_without_child_block
         parent_class = Class.new do
-          include DefineableProperties
-          defineable_property :field
+          include DefineableProps
+          defineable_prop :field
 
           field :inherited_field, as: :string do
             "Parent block"
@@ -265,11 +265,11 @@ module Plutonium
         parent_instance = parent_class.new
         child_instance = child_class.new
 
-        assert_equal "Parent block", parent_instance.fields[:inherited_field][:block].call
-        assert_equal({as: :string}, parent_instance.fields[:inherited_field][:options])
+        assert_equal "Parent block", parent_instance.defined_fields[:inherited_field][:block].call
+        assert_equal({as: :string}, parent_instance.defined_fields[:inherited_field][:options])
 
-        assert_nil child_instance.fields[:inherited_field][:block]
-        assert_equal({as: :integer}, child_instance.fields[:inherited_field][:options])
+        assert_nil child_instance.defined_fields[:inherited_field][:block]
+        assert_equal({as: :integer}, child_instance.defined_fields[:inherited_field][:options])
       end
     end
   end

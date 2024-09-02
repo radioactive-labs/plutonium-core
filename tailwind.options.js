@@ -2,13 +2,11 @@ export const content = [
   `${__dirname}/src/**/*.{css,js}`,
   `${__dirname}/app/views/**/*.{rb,erb,js}`,
   `${__dirname}/config/initializers/simple_form.rb`,
+  `${__dirname}/lib/plutonium/**/*.rb`,
 
   // node modules are not packaged as part of the gem.
   // requires users to have flowbite installed in their own project.
   './node_modules/flowbite/**/*.js',
-  // TODO: temporary workaround for legacy components.
-  // To be removed after converting buttons_helper and other files containing tailwind to components .
-  // `${__dirname}/lib/plutonium/**/*.{rb,erb}`
 ];
 export const darkMode = "selector";
 export const plugins = [

@@ -44,6 +44,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "semantic_range", "~> 3.0"
   spec.add_dependency "tty-prompt", "~> 0.23.1"
   spec.add_dependency "action_policy", "~> 0.7.0"
+  spec.add_dependency "phlex", "~> 1.11"
+  spec.add_dependency "phlex-rails"
+  spec.add_dependency "phlex-tabler_icons"
   spec.add_dependency "phlexi-form", "0.3.0.rc1"
 
   spec.add_development_dependency "rake"

@@ -7,7 +7,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          helper_method :resource_query_params
+          helper_method :resource_query_params, :current_query_object
         end
 
         def resource_query_object(resource_class, params)

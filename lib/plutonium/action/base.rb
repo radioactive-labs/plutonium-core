@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "active_support/string_inquirer"
+
 module Plutonium
   module Action
     # Base class for all actions in the Plutonium framework.
@@ -22,14 +24,14 @@ module Plutonium
       # @param [Hash] options The options for the action.
       # @option options [String] :label The human-readable label for the action.
       # @option options [String] :icon The icon associated with the action (e.g., 'fa-edit' for Font Awesome).
-      # @option options [Symbol] :color The color associated with the action (e.g., :primary, :secondary).
+      # @option options [Symbol] :color The color associated with the action (e.g., :primary, :secondary, :success, :warning, :danger).
       # @option options [String] :confirmation The confirmation message to display before executing the action.
       # @option options [RouteOptions, Hash] :route_options The routing options for the action.
       # @option options [String] :turbo_frame The Turbo Frame ID for the action (used in Hotwire/Turbo Drive applications).
-      # @option options [Boolean] :collection_action (false) If true, applies bulk actions to a selection of records (e.g., "Mark Selected as Read").
-      # @option options [Boolean] :collection_record_action (false) If true, applies to each record in a collection (e.g., "Edit Record" button in a list).
-      # @option options [Boolean] :record_action (false) If true, applies to a single individual record (e.g., "Delete" button on a Show page).
-      # @option options [Boolean] :global_action (false) If true, applies to the entire resource and can be used in any context (e.g., "Import from CSV").
+      # @option options [Boolean] :bulk_action (false) If true, applies to a bulk selection of records (e.g., "Mark Selected as Read").
+      # @option options [Boolean] :collection_record_action (false) If true, applies to records in a collection (e.g., "Edit Record" button in a table).
+      # @option options [Boolean] :record_action (false) If true, applies to an individual record (e.g., "Delete" button on a Show page).
+      # @option options [Boolean] :resource_action (false) If true, applies to the entire resource and can be used in any context (e.g., "Import from CSV").
       # @option options [Symbol] :category The category of the action. Determines visibility and grouping.
       #   Valid values include:
       #   @option options [Symbol] :primary Always shown and given prominence in the UI.
@@ -44,19 +46,19 @@ module Plutonium
         @confirmation = options[:confirmation]
         @route_options = build_route_options(options[:route_options])
         @turbo_frame = options[:turbo_frame]
-        @collection_action = options[:collection_action] || false
+        @bulk_action = options[:bulk_action] || false
         @collection_record_action = options[:collection_record_action] || false
         @record_action = options[:record_action] || false
-        @global_action = options[:global_action] || false
-        @category = options[:category]
+        @resource_action = options[:resource_action] || false
+        @category = ActiveSupport::StringInquirer.new((options[:category] || :secondary).to_s)
         @position = options[:position] || 50
 
         freeze
       end
 
-      # @return [Boolean] Whether this is a collection action.
-      def collection_action?
-        @collection_action
+      # @return [Boolean] Whether this is a bulk action.
+      def bulk_action?
+        @bulk_action
       end
 
       # @return [Boolean] Whether this is a collection record action.
@@ -69,9 +71,13 @@ module Plutonium
         @record_action
       end
 
-      # @return [Boolean] Whether this is a bulk action.
-      def global_action?
-        @global_action
+      # @return [Boolean] Whether this is a resource action.
+      def resource_action?
+        @resource_action
+      end
+
+      def permitted_by?(policy)
+        policy.allowed_to?(:"#{name}?")
       end
 
       private

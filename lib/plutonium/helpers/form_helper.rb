@@ -1,5 +1,3 @@
-require "view_component/form"
-
 module Plutonium
   module Helpers
     module FormHelper
@@ -23,7 +21,7 @@ module Plutonium
 
       def token_tag(...)
         # needed to workaround https://github.com/tailwindlabs/tailwindcss/issues/3350
-        super(...).sub(" />", " hidden />").html_safe
+        super.sub(" />", " hidden />").html_safe
       end
 
       private

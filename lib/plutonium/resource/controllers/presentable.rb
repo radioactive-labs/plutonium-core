@@ -29,7 +29,7 @@ module Plutonium
         end
 
         def build_collection
-          Plutonium::Core::Ui::Collection.new(
+          Plutonium::Core::UI::Collection.new(
             resource_class:,
             records: @resource_records,
             fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
@@ -40,7 +40,7 @@ module Plutonium
         end
 
         def build_detail
-          Plutonium::Core::Ui::Detail.new(
+          Plutonium::Core::UI::Detail.new(
             resource_class:,
             record: resource_record,
             fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
@@ -50,7 +50,7 @@ module Plutonium
         end
 
         def build_form
-          Plutonium::Core::Ui::Form.new(
+          Plutonium::Core::UI::Form.new(
             record: resource_record,
             inputs: current_presenter.defined_field_inputs_for(*presentable_attributes)
           )

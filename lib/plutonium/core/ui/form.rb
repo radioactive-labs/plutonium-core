@@ -1,6 +1,6 @@
 module Plutonium
   module Core
-    module Ui
+    module UI
       class Form
         extend Dry::Initializer
 

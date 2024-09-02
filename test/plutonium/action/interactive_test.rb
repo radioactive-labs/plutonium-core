@@ -40,7 +40,7 @@ module Plutonium
         @action = Interactive::Factory.create(:test_interactive,
           interaction: RecordInteraction,
           label: "Test Interactive",
-          inline: true)
+          immediate: true)
       end
 
       def test_initialization
@@ -52,8 +52,8 @@ module Plutonium
       def test_confirmation
         assert_equal "Test Interactive?", @action.confirmation
 
-        non_inline_action = Interactive::Factory.create(:non_inline, interaction: RecordInteraction, inline: false)
-        assert_nil non_inline_action.confirmation
+        non_immediate_action = Interactive::Factory.create(:non_immediate, interaction: RecordInteraction, immediate: false)
+        assert_nil non_immediate_action.confirmation
       end
 
       def test_route_options
@@ -65,8 +65,8 @@ module Plutonium
       def test_action_types
         assert @action.record_action?
         assert @action.collection_record_action?
-        refute @action.collection_action?
-        refute @action.global_action?
+        refute @action.bulk_action?
+        refute @action.resource_action?
       end
 
       def test_record_action_types
@@ -74,42 +74,42 @@ module Plutonium
 
         assert action.record_action?
         assert action.collection_record_action?
-        refute action.collection_action?
-        refute action.global_action?
+        refute action.bulk_action?
+        refute action.resource_action?
       end
 
-      def test_collection_action_types
-        action = Interactive::Factory.create(:collection, interaction: CollectionInteraction)
+      def test_bulk_action_types
+        action = Interactive::Factory.create(:bulk, interaction: CollectionInteraction)
 
         refute action.record_action?
         refute action.collection_record_action?
-        assert action.collection_action?
-        refute action.global_action?
+        assert action.bulk_action?
+        refute action.resource_action?
       end
 
-      def test_global_action_types
-        action = Interactive::Factory.create(:global, interaction: RecordlessInteraction)
+      def test_resource_action_types
+        action = Interactive::Factory.create(:resource, interaction: RecordlessInteraction)
 
         refute action.record_action?
         refute action.collection_record_action?
-        refute action.collection_action?
-        assert action.global_action?
+        refute action.bulk_action?
+        assert action.resource_action?
       end
 
-      def test_auto_inline_detection
+      def test_auto_immediate_detection
         action_with_inputs = Interactive::Factory.create(:with_inputs, interaction: RecordInteraction)
-        refute action_with_inputs.send(:instance_variable_get, :@inline)
+        refute action_with_inputs.send(:instance_variable_get, :@immediate)
 
         action_without_inputs = Interactive::Factory.create(:without_inputs, interaction: InlineInteraction)
-        assert action_without_inputs.send(:instance_variable_get, :@inline)
+        assert action_without_inputs.send(:instance_variable_get, :@immediate)
       end
 
       def test_build_route_options
-        inline_action = Interactive::Factory.create(:inline, interaction: RecordInteraction, inline: true)
-        assert_equal :post, inline_action.route_options.method
+        immediate_action = Interactive::Factory.create(:immediate, interaction: RecordInteraction, immediate: true)
+        assert_equal :post, immediate_action.route_options.method
 
-        non_inline_action = Interactive::Factory.create(:non_inline, interaction: RecordInteraction, inline: false)
-        assert_equal :get, non_inline_action.route_options.method
+        non_immediate_action = Interactive::Factory.create(:non_immediate, interaction: RecordInteraction, immediate: false)
+        assert_equal :get, non_immediate_action.route_options.method
       end
     end
   end

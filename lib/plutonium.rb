@@ -2,6 +2,8 @@
 
 require "zeitwerk"
 require "action_policy"
+require "phlex-rails"
+require "phlex/tabler_icons"
 
 require_relative "plutonium/configuration"
 
@@ -19,6 +21,7 @@ module Plutonium
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
     loader.ignore("#{__dir__}/generators")
     loader.ignore("#{__dir__}/plutonium/railtie.rb")
+    loader.inflector.inflect("ui" => "UI")
     loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
     loader.setup
   end

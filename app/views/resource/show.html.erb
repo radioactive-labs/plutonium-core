@@ -1,5 +1,1 @@
-<%= render_component :breadcrumbs, resource_class:, parent: current_parent, resource: @detail.record %>
-
-<%= render_component :dyna_frame_content do %>
-  <%= render "resource_details", details: @detail %>
-<% end %>
+<%= render current_definition.show_page_class.new %>
