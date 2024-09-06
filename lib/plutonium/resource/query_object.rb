@@ -308,14 +308,11 @@ module Plutonium
           query_params[:sort_fields] << sort.to_s unless query_params[:sort_fields].include?(sort.to_s)
 
           sort_direction = selected_sort_directions[sort]
-          if sort_direction.nil?
-            query_params[:sort_directions][sort] = "ASC"
-          elsif sort_direction == "ASC"
-            query_params[:sort_directions][sort] = "DESC"
-          else
-            query_params[:sort_fields].delete_if { |e| e == sort.to_s }
-            query_params[:sort_directions].delete(sort)
-          end
+          query_params[:sort_directions][sort] = (sort_direction == "ASC") ? "DESC" : "ASC"
+          # else
+          #   query_params[:sort_fields].delete_if { |e| e == sort.to_s }
+          #   query_params[:sort_directions].delete(sort)
+          # end
         end
       end
 
