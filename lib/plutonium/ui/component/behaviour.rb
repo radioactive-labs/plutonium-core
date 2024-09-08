@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "phlex"
-
 module Plutonium
   module UI
     module Component
@@ -24,9 +22,11 @@ module Plutonium
           return unless arg
           raise ArgumentError, "phlexi_render requires a default render block" unless block_given?
 
-          if arg.respond_to?(:render_in)
+          # Handle Phlex components or Rails Renderables
+          if arg.class < Phlex::SGML || arg.respond_to?(:render_in)
             render arg
-          elsif arg.respond_to?(:call)
+          # Handle procs
+          elsif arg.respond_to?(:to_proc)
             instance_exec(&arg)
           else
             yield

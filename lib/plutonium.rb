@@ -2,6 +2,7 @@
 
 require "zeitwerk"
 require "action_policy"
+require "phlex"
 require "phlex-rails"
 require "phlex/tabler_icons"
 require "phlexi-display"
