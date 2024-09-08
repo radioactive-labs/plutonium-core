@@ -5,7 +5,9 @@ require "phlexi-form"
 module Plutonium
   module UI
     module Table
-      class Theme < Phlexi::Table::Theme
+      class Theme
+        include Phlexi::Field::Theme
+
         THEME = {
           selection_checkbox: "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
           name_column: "font-medium text-gray-900 whitespace-nowrap dark:text-white",
@@ -26,6 +28,10 @@ module Plutonium
           sort_index_clear_link_text: "text-xs font-bold",
           sort_index_clear_link_icon: "ml-1 text-red-600"
         }.freeze
+
+        def theme
+          @theme ||= Phlexi::Table::Theme::DEFAULT_THEME.merge(THEME).freeze
+        end
       end
     end
   end

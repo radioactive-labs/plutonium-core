@@ -4,6 +4,9 @@ require "zeitwerk"
 require "action_policy"
 require "phlex-rails"
 require "phlex/tabler_icons"
+require "phlexi-display"
+require "phlexi-form"
+require "phlexi-table"
 
 require_relative "plutonium/configuration"
 

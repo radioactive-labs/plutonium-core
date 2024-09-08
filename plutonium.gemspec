@@ -46,7 +46,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "phlex", "~> 1.11"
   spec.add_dependency "phlex-rails"
   spec.add_dependency "phlex-tabler_icons"
-  spec.add_dependency "phlexi-form", "0.3.0.rc1"
+  spec.add_dependency "phlexi-form"
+  spec.add_dependency "phlexi-table"
+  spec.add_dependency "phlexi-display"
 
   spec.add_development_dependency "rake"
   spec.add_development_dependency "minitest"

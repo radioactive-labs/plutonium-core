@@ -53,6 +53,13 @@ module Plutonium
       extend_action_dispatch
     end
 
+    initializer "plutonium.phlexi_themes" do
+      Rails.application.config.to_prepare do
+        Phlexi::Table::Theme.instance = Plutonium::UI::Table::Theme.instance
+        Phlexi::Display::Theme.instance = Plutonium::UI::Display::Theme.instance
+      end
+    end
+
     rake_tasks do
       load "tasks/create_rodauth_admin.rake"
     end
