@@ -18,7 +18,7 @@ module Plutonium
       extend ActiveSupport::Concern
 
       included do
-        class_attribute :_defineable_props_store, default: []
+        class_attribute :_defineable_props_store, instance_accessor: false, instance_predicate: false, default: []
       end
 
       class_methods do

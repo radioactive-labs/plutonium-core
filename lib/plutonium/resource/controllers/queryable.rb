@@ -16,7 +16,23 @@ module Plutonium
         end
 
         def current_query_object
-          @current_query_object ||= resource_query_object resource_class, resource_query_params
+          @current_query_object ||= Plutonium::Resource::QueryObject.new(resource_context, resource_query_params) do |query_object|
+            if current_definition.search_definition
+              query_object.define_search proc { |scope, search:|
+                current_definition.search_definition.call(scope, search)
+              }
+            end
+
+            current_definition.defined_scopes.each do |key, value|
+              query_object.define_scope key, value[:block]
+            end
+
+            current_definition.defined_sorts.each do |key, value|
+              query_object.define_sorter key, value[:block]
+            end
+
+            query_object
+          end
         end
 
         def resource_query_params

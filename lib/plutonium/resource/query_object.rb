@@ -102,7 +102,7 @@ module Plutonium
       #
       # @param context [Object] The context in which the query object is used.
       # @param params [Hash] The parameters for initialization.
-      def initialize(context, params)
+      def initialize(context, params, &)
         @context = context
 
         define_standard_queries
@@ -110,8 +110,52 @@ module Plutonium
         define_filters
         define_sorters
 
+        yield self if block_given?
+
         extract_filter_params(params)
         extract_sort_params(params)
+      end
+
+      # Defines a filter with the given name and body.
+      #
+      # @param name [Symbol] The name of the filter.
+      # @param body [Proc, nil] The body of the filter.
+      def define_filter(name, body = nil, &)
+        body ||= name
+        filter_definitions[name] = build_query(body, &)
+      end
+
+      # Defines a scope with the given name and body.
+      #
+      # @param name [Symbol] The name of the scope.
+      # @param body [Proc, nil] The body of the scope.
+      def define_scope(name, body = nil)
+        body ||= name
+        scope_definitions[name] = build_query(body)
+      end
+
+      # Defines a sort with the given name and body.
+      #
+      # @param name [Symbol] The name of the sort.
+      # @param body [Proc, nil] The body of the sort.
+      def define_sorter(name, body = nil)
+        if body.nil?
+          sort_field = determine_sort_field(name)
+          body = ->(scope, direction:) { scope.order(sort_field => direction) }
+        end
+
+        sort_definitions[name] = build_query(body) do |query|
+          query.define_field_input :direction
+        end
+      end
+
+      # Defines a search filter with the given body.
+      #
+      # @param body [Proc, Symbol] The body of the search filter.
+      def define_search(body)
+        @search_filter = build_query(body) do |query|
+          query.define_field_input :search
+        end
       end
 
       # Builds a URL with the given options for search and sorting.
@@ -184,48 +228,6 @@ module Plutonium
       # Defines standard queries for search and scope.
       def define_standard_queries
         define_search(:search) if resource_class.respond_to?(:search)
-      end
-
-      # Defines a filter with the given name and body.
-      #
-      # @param name [Symbol] The name of the filter.
-      # @param body [Proc, nil] The body of the filter.
-      def define_filter(name, body = nil, &)
-        body ||= name
-        filter_definitions[name] = build_query(body, &)
-      end
-
-      # Defines a scope with the given name and body.
-      #
-      # @param name [Symbol] The name of the scope.
-      # @param body [Proc, nil] The body of the scope.
-      def define_scope(name, body = nil)
-        body ||= name
-        scope_definitions[name] = build_query(body)
-      end
-
-      # Defines a sort with the given name and body.
-      #
-      # @param name [Symbol] The name of the sort.
-      # @param body [Proc, nil] The body of the sort.
-      def define_sorter(name, body = nil)
-        if body.nil?
-          sort_field = determine_sort_field(name)
-          body = ->(scope, direction:) { scope.order(sort_field => direction) }
-        end
-
-        sort_definitions[name] = build_query(body) do |query|
-          query.define_field_input :direction
-        end
-      end
-
-      # Defines a search filter with the given body.
-      #
-      # @param body [Proc, Symbol] The body of the search filter.
-      def define_search(body)
-        @search_filter = build_query(body) do |query|
-          query.define_field_input :search
-        end
       end
 
       # Extracts filter parameters from the given params.
