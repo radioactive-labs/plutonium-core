@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "phlexi-form"
-
 module Plutonium
   module UI
     module Table
@@ -19,7 +17,7 @@ module Plutonium
           header: "text-xs text-gray-700 uppercase bg-gray-200 dark:bg-gray-700 dark:text-gray-400",
           header_grouping_cell: "px-6 py-3 text-center text-sm border-b border-t border-r last:border-r-0 dark:border-gray-800",
           header_cell: "px-6 py-3",
-          body_row: "bg-white border-b dark:bg-gray-800 dark:border-gray-700",
+          body_row: "bg-white border-b last:border-none dark:bg-gray-800 dark:border-gray-700",
           body_cell: "px-6 py-4",
           actions_row_cell: "flex items-center space-x-2",
           sort_icon: "w-3 h-3",
