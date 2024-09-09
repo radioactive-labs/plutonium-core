@@ -46,9 +46,7 @@ module Plutonium
 
           def current_engine
             potential_package = module_parents[-2]
-            engine = potential_package.nil? ? Rails.application.class : ("#{potential_package}::Engine".safe_constantize || Rails.application.class)
-            validate_engine! engine
-            engine
+            potential_package.nil? ? Rails.application.class : ("#{potential_package}::Engine".safe_constantize || Rails.application.class)
           end
           memoize_unless_reloading :current_engine
         end
