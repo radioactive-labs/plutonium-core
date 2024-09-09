@@ -3,7 +3,6 @@ module Plutonium
     class Breadcrumbs < Plutonium::UI::Component::Base
       include Phlex::Rails::Helpers::ActionName
       include Phlex::Rails::Helpers::LinkTo
-      include Phlex::Rails::Helpers::Routes
 
       def view_template
         nav(
@@ -17,7 +16,7 @@ module Plutonium
           ) do
             li(class: "inline-flex items-center") do
               a(
-                href: root_path,
+                href: helpers.root_path,
                 class:
                   "inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-white"
               ) do
