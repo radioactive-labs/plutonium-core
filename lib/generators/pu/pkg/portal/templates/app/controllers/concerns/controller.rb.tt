@@ -4,7 +4,7 @@ module <%= package_name %>
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
       <%- if rodauth_account.present? -%>
-      include Plutonium::Auth.rodauth(:<%= rodauth_account %>)
+      include Plutonium::Auth::Rodauth(:<%= rodauth_account %>)
       <%- elsif public_access? -%>
       include Plutonium::Auth::Public
       <%- end -%>
