@@ -1,5 +1,5 @@
 module <%= package_name %>
-  class ApplicationController < ::ApplicationController
+  class PlutoniumController < ::PlutoniumController
     include <%= package_name %>::Concerns::Controller
   end
 end

@@ -1,4 +1,4 @@
-class ResourceController < ApplicationController
+class ResourceController < PlutoniumController
   include Plutonium::Resource::Controller
   <%- if !ApplicationController.new.respond_to?(:current_user, true) -%>
 

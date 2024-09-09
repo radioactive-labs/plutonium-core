@@ -113,6 +113,18 @@ module Pu
         say format_log("An error occurred while building attributes. Ensure any migrations have been run and try again.", :error), :red
         []
       end
+
+      def default_policy_attributes
+        attributes.select { |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:attribute_name).map(&:to_sym)
+      end
+
+      def policy_attributes_for_create
+        default_policy_attributes
+      end
+
+      def policy_attributes_for_read
+        default_policy_attributes + [:created_at, :updated_at]
+      end
     end
   end
 end

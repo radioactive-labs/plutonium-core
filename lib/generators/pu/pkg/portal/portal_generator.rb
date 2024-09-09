@@ -30,8 +30,8 @@ module Pu
 
         template "app/controllers/concerns/controller.rb",
           "packages/#{package_namespace}/app/controllers/#{package_namespace}/concerns/controller.rb"
-        template "app/controllers/application_controller.rb",
-          "packages/#{package_namespace}/app/controllers/#{package_namespace}/application_controller.rb"
+        template "app/controllers/plutonium_controller.rb",
+          "packages/#{package_namespace}/app/controllers/#{package_namespace}/plutonium_controller.rb"
         template "app/controllers/resource_controller.rb",
           "packages/#{package_namespace}/app/controllers/#{package_namespace}/resource_controller.rb"
 

@@ -15,11 +15,11 @@ class <%= app_namespace %>::<%= resource_class %>Policy < ::<%= parent_policy %>
   # Core attributes
 
   def permitted_attributes_for_create
-    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
+    <%= policy_attributes_for_create.inspect %>
   end
 
   def permitted_attributes_for_read
-    <%= attributes.select{ |a| !a.rich_text? && !a.password_digest? && !a.token? }.map(&:name).map(&:to_sym).inspect %>
+    <%= policy_attributes_for_read.inspect %>
   end
 
   # Associations
