@@ -2,18 +2,19 @@
 
 module Plutonium
   module UI
-    module Form
+    module Display
       class Resource < Base
         attr_reader :resource_fields
 
-        def initialize(*, resource_fields:, **, &)
+        def initialize(*, resource_fields:, resource_associations:, **, &)
           super(*, **, &)
           @resource_fields = resource_fields
+          @resource_associations = resource_associations
         end
 
-        def form_template
+        def display_template
           render_fields
-          render_actions
+          render_associations if present_associations?
         end
 
         private
@@ -26,18 +27,25 @@ module Plutonium
           }
         end
 
-        def form_action
-          return @form_action unless object.present? && @form_action != false && helpers.present?
-
-          @form_action ||= resource_url_for(object, action: object.new_record? ? :create : :update)
+        def render_associations
+          nil
+          # TODO
+          # resource_associations.each do |name, renderer|
+          #   #     <%= render renderer.with(record: details.record) %>
+          # end
         end
 
         def render_resource_field(name, **options)
           return unless @resource_fields.include? name
 
           render field(name).wrapped do |f|
-            render f.send(:"#{f.inferred_component_type}_tag")
+            # render f.send(:"#{f.inferred_component_type}_tag")
+            render f.string_tag
           end
+        end
+
+        def present_associations?
+          current_parent.nil?
         end
       end
     end

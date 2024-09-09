@@ -15,8 +15,7 @@ module Plutonium
         end
 
         def render_default_content
-          form = helpers.controller.instance_variable_get :@form
-          render "resource_form", form: form
+          render "resource_form"
         end
       end
     end

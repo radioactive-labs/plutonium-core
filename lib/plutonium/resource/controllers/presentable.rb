@@ -10,15 +10,6 @@ module Plutonium
 
         private
 
-        def resource_presenter(resource_class, resource_record)
-          presenter_class = "#{resource_class}Presenter".constantize
-          presenter_class.new resource_context, resource_record
-        end
-
-        def current_presenter
-          @current_presenter ||= resource_presenter resource_class, @resource_record
-        end
-
         def presentable_attributes
           @presentable_attributes ||= begin
             presentable_attributes = permitted_attributes
@@ -29,21 +20,14 @@ module Plutonium
         end
 
         def build_collection
-          current_definition.collection_class.new @resource_records, resource_fields: presentable_attributes
+          current_definition.collection_class.new(@resource_records, resource_fields: presentable_attributes)
         end
 
         def build_detail
-          Plutonium::Core::UI::Detail.new(
-            resource_class:,
-            record: resource_record,
-            fields: current_presenter.defined_field_renderers_for(*presentable_attributes),
-            associations: current_presenter.defined_association_renderers_for(*permitted_associations),
-            actions: current_presenter.actions
-          )
+          current_definition.detail_class.new(resource_record, resource_fields: presentable_attributes, resource_associations: permitted_associations)
         end
 
         def build_form(record = resource_record)
-          # preferred_action_after_submit:
           current_definition.form_class.new(record, resource_fields: presentable_attributes)
         end
 

@@ -41,6 +41,8 @@ module Plutonium
 
       class Table < Plutonium::UI::Table::Resource; end
 
+      class Display < Plutonium::UI::Display::Resource; end
+
       # fields
       defineable_props :field, :input
 
@@ -80,6 +82,10 @@ module Plutonium
 
       def collection_class
         self.class::Table
+      end
+
+      def detail_class
+        self.class::Display
       end
     end
   end
