@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "phlexi-form"
-
 module Plutonium
   module UI
     module Form
