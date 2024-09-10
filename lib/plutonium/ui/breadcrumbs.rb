@@ -14,6 +14,7 @@ module Plutonium
             class:
               "inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse"
           ) do
+            # Dashboard
             li(class: "inline-flex items-center") do
               a(
                 href: helpers.root_path,
@@ -35,7 +36,10 @@ module Plutonium
                 plain " Dashboard "
               end
             end
+
+            # Parent
             if current_parent.present?
+              # Parent Resource
               li(class: "flex items-center") do
                 svg(
                   class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
@@ -57,6 +61,8 @@ module Plutonium
                   class:
                     "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
               end
+
+              # Parent Itself
               li(class: "flex items-center") do
                 svg(
                   class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
@@ -79,7 +85,10 @@ module Plutonium
                     "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
               end
             end
+
+            # Record
             if resource_record.present?
+              # Record Resource
               li(class: "flex items-center") do
                 svg(
                   class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
@@ -101,7 +110,9 @@ module Plutonium
                   class:
                     "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
               end
-              if /edit|update|.*interactive_resource.*/.match? action_name
+
+              # Record Itself
+              if resource_record.persisted? && action_name != "show"
                 li(class: "flex items-center") do
                   svg(
                     class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
@@ -123,122 +134,25 @@ module Plutonium
                     class:
                       "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
                 end
-                li(class: "flex items-center", aria_current: "page") do
-                  svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                    aria_hidden: "true",
-                    xmlns: "http://www.w3.org/2000/svg",
-                    fill: "none",
-                    viewbox: "0 0 6 10"
-                  ) do |s|
-                    s.path(
-                      stroke: "currentColor",
-                      stroke_linecap: "round",
-                      stroke_linejoin: "round",
-                      stroke_width: "2",
-                      d: "m1 9 4-4-4-4"
-                    )
-                  end
-                  span(
-                    class:
-                      "ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-200"
-                  ) do
-                    plain (params[:interactive_action] || "Edit").titleize
-                  end
-                end
-              else
-                li(class: "flex items-center", aria_current: "page") do
-                  svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                    aria_hidden: "true",
-                    xmlns: "http://www.w3.org/2000/svg",
-                    fill: "none",
-                    viewbox: "0 0 6 10"
-                  ) do |s|
-                    s.path(
-                      stroke: "currentColor",
-                      stroke_linecap: "round",
-                      stroke_linejoin: "round",
-                      stroke_width: "2",
-                      d: "m1 9 4-4-4-4"
-                    )
-                  end
-                  span(
-                    class:
-                      "ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-200"
-                  ) do
-                    plain resource_record.persisted? ? display_name_of(resource_record) : "Create"
-                  end
-                end
               end
-            elsif /.*interactive_resource.*/.match? action_name
-              li(class: "flex items-center") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
-                end
-                link_to resource_name_plural(resource_class),
-                  resource_url_for(resource_class),
-                  class:
-                    "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
-              end
-              li(class: "flex items-center", aria_current: "page") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
-                end
-                span(
-                  class:
-                    "ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-200"
-                ) do
-                  plain params[:interactive_action].titleize
-                end
-              end
-            else
-              li(class: "flex items-center", aria_current: "page") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
-                end
-                span(
-                  class:
-                    "ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-200"
-                ) do
-                  plain resource_name_plural(resource_class)
-                end
+            end
+
+            # Trailing Caret
+            li(class: "flex items-center") do
+              svg(
+                class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                aria_hidden: "true",
+                xmlns: "http://www.w3.org/2000/svg",
+                fill: "none",
+                viewbox: "0 0 6 10"
+              ) do |s|
+                s.path(
+                  stroke: "currentColor",
+                  stroke_linecap: "round",
+                  stroke_linejoin: "round",
+                  stroke_width: "2",
+                  d: "m1 9 4-4-4-4"
+                )
               end
             end
           end

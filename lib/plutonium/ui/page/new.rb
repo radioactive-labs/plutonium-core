@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          current_definition.new_page_title || super || "New #{resource_name(resource_record)}"
+          current_definition.new_page_title || super || "New"
         end
 
         def page_description

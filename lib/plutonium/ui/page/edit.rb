@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          current_definition.edit_page_title || super || "Edit #{display_name_of(resource_record)}"
+          current_definition.edit_page_title || super || "Edit"
         end
 
         def page_description
