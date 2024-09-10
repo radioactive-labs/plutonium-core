@@ -79,7 +79,7 @@ module Plutonium
       def define_nested_resource_routes(resource)
         nested_configs = route_set.resource_route_config_for(*resource.has_many_association_routes)
         nested_configs.each do |nested_config|
-          resources nested_config[:route_name], **nested_config[:route_options] do
+          resources "nested_#{nested_config[:route_name]}", **nested_config[:route_options] do
             instance_exec(&nested_config[:block]) if nested_config[:block]
           end
         end
