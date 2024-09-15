@@ -4,11 +4,12 @@ module Plutonium
   module UI
     module Table
       class Resource < Plutonium::UI::Component::Base
-        attr_reader :collection, :resource_fields
+        attr_reader :collection, :resource_fields, :resource_definition
 
-        def initialize(collection, resource_fields:)
+        def initialize(collection, resource_fields:, resource_definition:)
           @collection = collection
           @resource_fields = resource_fields
+          @resource_definition = resource_definition
         end
 
         def view_template
@@ -32,7 +33,7 @@ module Plutonium
 
         def render_empty_card
           EmptyCard("No #{resource_name_plural(resource_class)} match your query") {
-            action = current_definition.defined_actions[:new]
+            action = resource_definition.defined_actions[:new]
             if action&.permitted_by?(current_policy)
               url = resource_url_for(resource_class, *action.route_options.url_args, **action.route_options.url_options)
               ActionButton(action, url:)
@@ -50,7 +51,7 @@ module Plutonium
               #   proxy.field(:dob).date_tag
               # end
 
-              column_definition = current_definition.defined_columns[name] || {}
+              column_definition = resource_definition.defined_columns[name] || {}
               column_display_options = column_definition[:options] || {}
               display_field_as = column_display_options.delete(:as)
               align_field_to = column_display_options.delete(:align)
@@ -61,7 +62,7 @@ module Plutonium
                 f.send(:"#{display_field_as}_tag", **column_display_options)
               }
 
-              field_options = current_definition.defined_fields[name] ? current_definition.defined_fields[name][:options] : {}
+              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
               field_options[:as] = display_field_as
               field_options[:align] = align_field_to if align_field_to
               table.column name, **field_options, sort_params: current_query_object.sort_params_for(name), &display_block
@@ -72,7 +73,7 @@ module Plutonium
               policy = policy_for(record:)
 
               div(class: "flex space-x-2") {
-                current_definition.defined_actions
+                resource_definition.defined_actions
                   .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
                   .values
                   .each { |action|

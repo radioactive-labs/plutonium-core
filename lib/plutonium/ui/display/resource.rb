@@ -4,12 +4,13 @@ module Plutonium
   module UI
     module Display
       class Resource < Base
-        attr_reader :resource_fields
+        attr_reader :resource_fields, :resource_associations, :resource_definition
 
-        def initialize(*, resource_fields:, resource_associations:, **, &)
+        def initialize(*, resource_fields:, resource_associations:, resource_definition:, **, &)
           super(*, **, &)
           @resource_fields = resource_fields
           @resource_associations = resource_associations
+          @resource_definition = resource_definition
         end
 
         def display_template
@@ -44,7 +45,7 @@ module Plutonium
           # end
 
           when_permitted(name) do
-            display_definition = current_definition.defined_displays[name] || {}
+            display_definition = resource_definition.defined_displays[name] || {}
             display_options = display_definition[:options] || {}
             display_field_as = display_options.delete(:as)
 
@@ -54,7 +55,7 @@ module Plutonium
               f.send(:"#{display_field_as}_tag", **display_field_options)
             }
 
-            field_options = current_definition.defined_fields[name] ? current_definition.defined_fields[name][:options] : {}
+            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
             render field(name, **field_options).wrapped(**display_options) do |f|
               render display_block.call(f)
             end

@@ -4,11 +4,12 @@ module Plutonium
   module UI
     module Form
       class Resource < Base
-        attr_reader :resource_fields
+        attr_reader :resource_fields, :resource_definition
 
-        def initialize(*, resource_fields:, **, &)
+        def initialize(*, resource_fields:, resource_definition:, **, &)
           super(*, **, &)
           @resource_fields = resource_fields
+          @resource_definition = resource_definition
         end
 
         def form_template
@@ -41,7 +42,7 @@ module Plutonium
           # end
 
           when_permitted(name) do
-            input_definition = current_definition.defined_inputs[name] || {}
+            input_definition = resource_definition.defined_inputs[name] || {}
             input_options = input_definition[:options] || {}
             input_field_as = input_options.delete(:as)
 
@@ -51,7 +52,7 @@ module Plutonium
               f.send(:"#{input_field_as}_tag", **input_field_options)
             }
 
-            field_options = current_definition.defined_fields[name] ? current_definition.defined_fields[name][:options] : {}
+            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
             render field(name, **field_options).wrapped(**input_options) do |f|
               render input_block.call(f)
             end
