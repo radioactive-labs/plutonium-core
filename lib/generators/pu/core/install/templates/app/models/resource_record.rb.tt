@@ -1,5 +1,3 @@
 class ResourceRecord < ApplicationRecord
-  include Plutonium::Resource::Record
-
   self.abstract_class = true
 end
