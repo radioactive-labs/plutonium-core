@@ -18,7 +18,6 @@ module Plutonium
           base_query = @search_object.apply(base_query)
           # base_query = base_query.public_send(params[:scope].to_sym) if params[:scope].present?
           @pagy, @resource_records = pagy base_query
-          @collection = build_collection
 
           render :index
         end
@@ -27,8 +26,6 @@ module Plutonium
         def show
           authorize_current! resource_record
           set_page_title resource_record.to_label.titleize
-
-          @detail = build_detail
 
           render :show
         end
@@ -40,7 +37,6 @@ module Plutonium
 
           @resource_record = resource_class.new
           maybe_apply_submitted_resource_params!
-          @form = build_form
 
           render :new
         end
@@ -61,7 +57,6 @@ module Plutonium
               format.any { render :show, status: :created, location: redirect_url_after_submit }
             else
               format.html do
-                @form = build_form
                 render :new, status: :unprocessable_entity
               end
               format.any do
@@ -78,7 +73,6 @@ module Plutonium
           set_page_title "Update #{resource_record.to_label.titleize}"
 
           maybe_apply_submitted_resource_params!
-          @form = build_form
 
           render :edit
         end
@@ -97,7 +91,6 @@ module Plutonium
               format.any { render :show, status: :ok, location: redirect_url_after_submit }
             else
               format.html do
-                @form = build_form
                 render :edit, status: :unprocessable_entity
               end
               format.any do
