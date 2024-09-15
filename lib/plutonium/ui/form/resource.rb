@@ -53,6 +53,11 @@ module Plutonium
             }
 
             field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
+            if !input_options[:class] || !input_options[:class].include?("col-span")
+              # temp hack to allow col span overrides
+              # TODO: remove once we complete theming, which will support merges
+              input_options[:class] = tokens("col-span-full", input_options[:class])
+            end
             render field(name, **field_options).wrapped(**input_options) do |f|
               render input_block.call(f)
             end

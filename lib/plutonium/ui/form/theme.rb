@@ -6,13 +6,16 @@ module Plutonium
       class Theme < Phlexi::Form::Theme
         def self.theme
           super.merge({
-            base: "flex flex-col space-y-6 px-4 py-2",
+            base: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3 p-6 space-y-6",
+            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 grid-flow-row-dense",
             actions_wrapper: "flex justify-end space-x-2",
+            wrapper: nil,
+            inner_wrapper: "w-full",
             # label themes
-            label: "md:w-1/6 mt-2 block mb-2 text-sm font-medium",
+            label: "mt-2 block mb-2 text-base font-bold",
             invalid_label: "text-red-700 dark:text-red-500",
             valid_label: "text-green-700 dark:text-green-500",
-            neutral_label: "text-gray-700 dark:text-white",
+            neutral_label: "text-gray-500 dark:text-gray-400",
             # input themes
             input: "w-full p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700",
             invalid_input: "bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 placeholder-red-700 dark:placeholder-red-500 focus:ring-red-500 focus:border-red-500",
@@ -29,9 +32,6 @@ module Plutonium
             hint: "mt-2 text-sm text-gray-500 dark:text-gray-200",
             # error themes
             error: "mt-2 text-sm text-red-600 dark:text-red-500",
-            # wrapper themes
-            wrapper: "flex flex-col md:flex-row items-start space-y-2 md:space-y-0 md:space-x-2 mb-4",
-            inner_wrapper: "md:w-5/6 w-full",
             # button themes
             button: "px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
           })

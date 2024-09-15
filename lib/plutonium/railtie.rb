@@ -58,14 +58,7 @@ module Plutonium
     end
 
     initializer "plutonium.phlexi_themes" do
-      Rails.application.config.to_prepare do
-        Phlexi::Form::Theme.instance = Plutonium::UI::Form::Theme.instance
-
-        Phlexi::Display::Theme.instance = Plutonium::UI::Display::Theme.instance
-
-        Phlexi::Table::Theme.instance = Plutonium::UI::Table::Theme.instance
-        Phlexi::Table::DisplayTheme.instance = Plutonium::UI::Table::DisplayTheme.instance
-      end
+      setup_phlexi_themes
     end
 
     rake_tasks do
@@ -105,6 +98,15 @@ module Plutonium
           [:all, {"cache-control" => "public, max-age=31536000"}]
         ]
       )
+    end
+
+    def setup_phlexi_themes
+      Rails.application.config.to_prepare do
+        Phlexi::Form::Theme.instance = Plutonium::UI::Form::Theme.instance
+        Phlexi::Display::Theme.instance = Plutonium::UI::Display::Theme.instance
+        Phlexi::Table::Theme.instance = Plutonium::UI::Table::Theme.instance
+        Phlexi::Table::DisplayTheme.instance = Plutonium::UI::Table::DisplayTheme.instance
+      end
     end
 
     def extend_action_dispatch
