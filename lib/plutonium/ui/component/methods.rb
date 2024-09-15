@@ -46,6 +46,7 @@ module Plutonium
           :current_turbo_frame,
           :policy_for,
           :allowed_to?,
+          :registered_resources,
           to: :helpers
       end
     end

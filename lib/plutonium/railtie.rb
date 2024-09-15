@@ -59,8 +59,12 @@ module Plutonium
 
     initializer "plutonium.phlexi_themes" do
       Rails.application.config.to_prepare do
-        Phlexi::Table::Theme.instance = Plutonium::UI::Table::Theme.instance
+        Phlexi::Form::Theme.instance = Plutonium::UI::Form::Theme.instance
+
         Phlexi::Display::Theme.instance = Plutonium::UI::Display::Theme.instance
+
+        Phlexi::Table::Theme.instance = Plutonium::UI::Table::Theme.instance
+        Phlexi::Table::DisplayTheme.instance = Plutonium::UI::Table::DisplayTheme.instance
       end
     end
 

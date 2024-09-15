@@ -6,13 +6,17 @@ module Plutonium
       class Base < Phlexi::Display::Base
         include Plutonium::UI::Component::Behaviour
 
+        class Builder < Builder
+          def association_tag(**, &)
+            create_component(Plutonium::UI::Display::Component::Association, :association, **, &)
+          end
+        end
+
         private
 
         def fields_wrapper(&)
-          div(class: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3") {
-            div(class: "p-6 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6") {
-              yield
-            }
+          div(class: themed(:fields_wrapper)) {
+            yield
           }
         end
       end

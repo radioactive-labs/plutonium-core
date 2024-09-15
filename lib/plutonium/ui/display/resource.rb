@@ -39,8 +39,7 @@ module Plutonium
           return unless @resource_fields.include? name
 
           render field(name).wrapped do |f|
-            # render f.send(:"#{f.inferred_component_type}_tag")
-            render f.string_tag
+            render f.send(:"#{f.inferred_field_component}_tag")
           end
         end
 

@@ -18,7 +18,7 @@ module Plutonium
 
           def renderer_options
             {
-              helper: value.class.include?(Plutonium::Resource::Record) ? :display_association_value : :display_name_of
+              # helper: value.class.include?(Plutonium: :Resource: :Record) ? :display_association_value : :display_name_of
             }
           end
         end

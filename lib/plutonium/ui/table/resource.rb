@@ -46,16 +46,20 @@ module Plutonium
               table.column name, sort_params: current_query_object.sort_params_for(name)
             end
 
-            table.actions do |record|
+            table.actions do |wrapped_object|
+              record = wrapped_object.unwrapped
               policy = policy_for(record:)
-              current_definition.defined_actions
-                .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
-                .values
-                .each { |action|
-                  url = resource_url_for(record, *action.route_options.url_args, **action.route_options.url_options)
 
-                  ActionButton(action, url:, variant: :table)
-                }
+              div(class: "flex space-x-2") {
+                current_definition.defined_actions
+                  .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
+                  .values
+                  .each { |action|
+                    url = resource_url_for(record, *action.route_options.url_args, **action.route_options.url_options)
+
+                    ActionButton(action, url:, variant: :table)
+                  }
+              }
             end
           end
         end
