@@ -43,7 +43,28 @@ module Plutonium
         def render_table
           render Plutonium::UI::Table::Base.new(collection) do |table|
             @resource_fields.each do |name|
-              table.column name, sort_params: current_query_object.sort_params_for(name)
+              # column :name, as: :string
+              # column :description, class: "text-red-700"
+              # column :age, align: :end
+              # column :dob do |proxy|
+              #   proxy.field(:dob).date_tag
+              # end
+
+              column_definition = current_definition.defined_columns[name] || {}
+              column_display_options = column_definition[:options] || {}
+              display_field_as = column_display_options.delete(:as)
+              align_field_to = column_display_options.delete(:align)
+
+              display_block = column_definition[:block] || ->(wrapped_object, key) {
+                f = wrapped_object.field(key)
+                display_field_as ||= f.inferred_field_component
+                f.send(:"#{display_field_as}_tag", **column_display_options)
+              }
+
+              field_options = current_definition.defined_fields[name] ? current_definition.defined_fields[name][:options] : {}
+              field_options[:as] = display_field_as
+              field_options[:align] = align_field_to if align_field_to
+              table.column name, **field_options, sort_params: current_query_object.sort_params_for(name), &display_block
             end
 
             table.actions do |wrapped_object|

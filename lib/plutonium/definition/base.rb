@@ -44,7 +44,7 @@ module Plutonium
       class Display < Plutonium::UI::Display::Resource; end
 
       # fields
-      defineable_props :field, :input
+      defineable_props :field, :input, :display, :column
 
       # queries
       defineable_props :filter, :scope, :sort

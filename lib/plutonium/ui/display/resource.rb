@@ -35,12 +35,36 @@ module Plutonium
           # end
         end
 
-        def render_resource_field(name, **options)
+        def render_resource_field(name)
+          # display :name, as: :string
+          # display :description, class: "col-span-full"
+          # display :age, field: {class: "max-h-fit"}
+          # display :dob do |f|
+          #   f.date_tag
+          # end
+
+          when_permitted(name) do
+            display_definition = current_definition.defined_displays[name] || {}
+            display_options = display_definition[:options] || {}
+            display_field_as = display_options.delete(:as)
+
+            display_field_options = display_options.delete(:field) || {}
+            display_block = display_definition[:block] || ->(f) {
+              display_field_as ||= f.inferred_field_component
+              f.send(:"#{display_field_as}_tag", **display_field_options)
+            }
+
+            field_options = current_definition.defined_fields[name] ? current_definition.defined_fields[name][:options] : {}
+            render field(name, **field_options).wrapped(**display_options) do |f|
+              render display_block.call(f)
+            end
+          end
+        end
+
+        def when_permitted(name, &)
           return unless @resource_fields.include? name
 
-          render field(name).wrapped do |f|
-            render f.send(:"#{f.inferred_field_component}_tag")
-          end
+          yield
         end
 
         def present_associations?
