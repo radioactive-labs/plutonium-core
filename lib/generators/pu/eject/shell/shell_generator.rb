@@ -16,8 +16,8 @@ module Pu
       def start
         destination_dir = (destination_app == "main_app") ? "app/views/" : "packages/#{destination_app}/app/views"
         [
-          "application/_resource_header.html.erb",
-          "application/_resource_sidebar.html.erb"
+          "plutonium/_resource_header.html.erb",
+          "plutonium/_resource_sidebar.html.erb"
         ].each do |file|
           copy_file Plutonium.root.join("app", "views", file), Rails.root.join(destination_dir, file)
         end
