@@ -190,23 +190,25 @@ GEM
       zeitwerk (~> 2.6)
     phlex-tabler_icons (0.2.2)
       phlex (~> 1.6)
-    phlexi-display (0.0.3)
+    phlexi-display (0.0.4)
       activesupport
       phlex (~> 1.11)
       phlexi-field
       zeitwerk
-    phlexi-field (0.0.1)
+    phlexi-field (0.0.2)
       activesupport
       fiber-local
       phlex (~> 1.11)
       zeitwerk
-    phlexi-form (0.3.0)
+    phlexi-form (0.4.0)
       activesupport
       phlex (~> 1.11)
+      phlexi-field
       zeitwerk
-    phlexi-table (0.0.2)
+    phlexi-table (0.0.3)
       activesupport
       phlex (~> 1.11)
+      phlexi-display
       phlexi-field
       zeitwerk
     psych (5.1.2)
