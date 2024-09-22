@@ -83,7 +83,38 @@ export const theme = {
   }
 };
 
-export const safelist = [];
+export const safelist = [
+  // Col span classes
+  {
+    pattern: /^col-span-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+  // Col start classes
+  {
+    pattern: /^col-start-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+  // Col end classes
+  {
+    pattern: /^col-end-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+  // Row span classes
+  {
+    pattern: /^row-span-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+  // Row start classes
+  {
+    pattern: /^row-start-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+  // Row end classes
+  {
+    pattern: /^row-end-/,
+    variants: ['sm', 'md', 'lg', 'xl', '2xl'],
+  },
+]
 
 // // Object.keys(colors).forEach((color) => {
 // //   if (typeof colors[color] === 'object') {
