@@ -8,23 +8,23 @@ module Plutonium
           helper_method :current_interactive_action
 
           before_action :validate_interactive_resource_action!, only: %i[
-            begin_interactive_resource_record_action commit_interactive_resource_record_action
-            begin_interactive_resource_collection_action commit_interactive_resource_collection_action
-            begin_interactive_resource_recordless_action commit_interactive_resource_recordless_action
+            interactive_resource_record_action commit_interactive_resource_record_action
+            interactive_resource_collection_action commit_interactive_resource_collection_action
+            interactive_resource_recordless_action commit_interactive_resource_recordless_action
           ]
 
           before_action :authorize_interactive_resource_record_action!, only: %i[
-            begin_interactive_resource_record_action commit_interactive_resource_record_action
+            interactive_resource_record_action commit_interactive_resource_record_action
           ]
 
           before_action :authorize_interactive_resource_action!, only: %i[
-            begin_interactive_resource_collection_action commit_interactive_resource_collection_action
-            begin_interactive_resource_recordless_action commit_interactive_resource_recordless_action
+            interactive_resource_collection_action commit_interactive_resource_collection_action
+            interactive_resource_recordless_action commit_interactive_resource_recordless_action
           ]
         end
 
         # GET /resources/1/actions/:interactive_action
-        def begin_interactive_resource_record_action
+        def interactive_resource_record_action
           @interaction = current_interactive_action.interaction.new interaction_params
 
           if helpers.current_turbo_frame == "modal"
@@ -72,7 +72,7 @@ module Plutonium
         end
 
         # GET /resources/actions/:interactive_action?ids[]=1&ids[]=2
-        def begin_interactive_resource_collection_action
+        def interactive_resource_collection_action
           # TODO: ensure that the selected list matches the returned value
           interactive_resource_collection
           @interaction = current_interactive_action.interaction.new((params[:interaction] || {}).except(:resources))
@@ -122,7 +122,7 @@ module Plutonium
         end
 
         # GET /resources/actions/:interactive_action
-        def begin_interactive_resource_recordless_action
+        def interactive_resource_recordless_action
           # skip_policy_scope
 
           @interaction = current_interactive_action.interaction.new interaction_params

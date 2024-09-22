@@ -90,7 +90,7 @@ module Plutonium
       # @return [void]
       def define_member_interactive_actions
         member do
-          get "record_actions/:interactive_action", action: :begin_interactive_resource_record_action,
+          get "record_actions/:interactive_action", action: :interactive_resource_record_action,
             as: :interactive_resource_record_action
           post "record_actions/:interactive_action", action: :commit_interactive_resource_record_action
         end
@@ -101,11 +101,11 @@ module Plutonium
       # @return [void]
       def define_collection_interactive_actions
         collection do
-          get "collection_actions/:interactive_action", action: :begin_interactive_resource_collection_action,
+          get "collection_actions/:interactive_action", action: :interactive_resource_collection_action,
             as: :interactive_resource_collection_action
           post "collection_actions/:interactive_action", action: :commit_interactive_resource_collection_action
 
-          get "recordless_actions/:interactive_action", action: :begin_interactive_resource_recordless_action,
+          get "recordless_actions/:interactive_action", action: :interactive_resource_recordless_action,
             as: :interactive_resource_recordless_action
           post "recordless_actions/:interactive_action", action: :commit_interactive_resource_recordless_action
         end

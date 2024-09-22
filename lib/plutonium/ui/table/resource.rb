@@ -72,16 +72,22 @@ module Plutonium
               record = wrapped_object.unwrapped
               policy = policy_for(record:)
 
-              div(class: "flex space-x-2") {
+              div(class: "flex space-x-2") do
                 resource_definition.defined_actions
                   .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
                   .values
-                  .each { |action|
-                    url = resource_url_for(record, *action.route_options.url_args, **action.route_options.url_options)
+                  .each do |action|
+                    # TODO: extract this
+                    url = case action.route_options.url_resolver
+                    when :resource_url_for
+                      resource_url_for(record, *action.route_options.url_args, **action.route_options.url_options)
+                    else
+                      raise NotImplementedError, "url_resolver: #{action.route_options.url_resolver}"
+                    end
 
                     ActionButton(action, url:, variant: :table)
-                  }
-              }
+                  end
+              end
             end
           end
         end
