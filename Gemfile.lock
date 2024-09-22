@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    plutonium (0.15.0.pre.rc2)
+    plutonium (0.15.0.pre.rc3)
       action_policy (~> 0.7.0)
       active_interaction (~> 5.3)
       dry-initializer (~> 3.1)
@@ -134,7 +134,7 @@ GEM
     fiber-storage (1.0.0)
     globalid (1.2.1)
       activesupport (>= 6.1)
-    i18n (1.14.5)
+    i18n (1.14.6)
       concurrent-ruby (~> 1.0)
     io-console (0.7.2)
     irb (1.14.0)
@@ -191,8 +191,7 @@ GEM
       phlex (~> 1.9)
       railties (>= 6.1, < 8)
       zeitwerk (~> 2.6)
-    phlex-tabler_icons (0.2.2)
-      phlex (~> 1.6)
+    phlex-tabler_icons (0.3.0)
     phlexi-display (0.0.4)
       activesupport
       phlex (~> 1.11)
@@ -203,12 +202,12 @@ GEM
       fiber-local
       phlex (~> 1.11)
       zeitwerk
-    phlexi-form (0.4.0)
+    phlexi-form (0.4.2)
       activesupport
       phlex (~> 1.11)
       phlexi-field
       zeitwerk
-    phlexi-table (0.0.3)
+    phlexi-table (0.0.4)
       activesupport
       phlex (~> 1.11)
       phlexi-display

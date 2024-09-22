@@ -24,8 +24,9 @@ module Plutonium
             body_cell: "px-6 py-4 whitespace-pre max-w-[310px] hover:max-w-[600px] overflow-hidden text-ellipsis transition-all duration-300 ease-in-out",
             sort_icon: "w-3 h-3",
             sort_icon_active: "text-primary-600",
+            sort_icon_inactive: "text-gray-600 dark:text-gray-500",
             sort_index_clear_link: "ml-2",
-            sort_index_clear_link_text: "text-xs font-bold",
+            sort_index_clear_link_text: "text-xs font-bold text-gray-600 dark:text-gray-500",
             sort_index_clear_link_icon: "ml-1 text-red-600"
           })
         end

@@ -11,6 +11,10 @@ module Plutonium
             actions_wrapper: "flex justify-end space-x-2",
             wrapper: nil,
             inner_wrapper: "w-full",
+            # errors
+            form_errors_wrapper: "flex p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400",
+            form_errors_message: "font-medium",
+            form_errors_list: "mt-1.5 list-disc list-inside",
             # label themes
             label: "mt-2 block mb-2 text-base font-bold",
             invalid_label: "text-red-700 dark:text-red-500",
