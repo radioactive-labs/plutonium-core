@@ -2,7 +2,7 @@ require "simple_form"
 
 module PlutoniumUi
   class FormBuilder < SimpleForm::FormBuilder
-    def input(attribute_name, options = {}, &block)
+    def input(attribute_name, options = {}, &)
       label_class = options.dig(:label_html, :class)
       if object&.errors&.[](attribute_name).present?
         # Don't show the hint
@@ -19,13 +19,13 @@ module PlutoniumUi
       options[:label_html] ||= {}
       options[:label_html][:class] = label_class
 
-      super(attribute_name, options, &block)
+      super
     end
 
     def hint(...)
       return if object.errors[attribute_name].present?
 
-      super(...)
+      super
     end
 
     def return_to(url)

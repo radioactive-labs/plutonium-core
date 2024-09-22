@@ -99,7 +99,7 @@ module Plutonium
       def root_path(*)
         return send(:"#{scoped_entity_param_key}_root_path", *) if scoped_to_entity? && scoped_entity_strategy == :path
 
-        super(*)
+        super
       end
 
       def registered_resources

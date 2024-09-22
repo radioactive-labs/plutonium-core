@@ -7,14 +7,14 @@ module Plutonium
 
           attr_reader :inputs, :resource_class
 
-          def initialize(name, inputs:, resource_class:, allow_destroy:, update_only:, limit:, **options)
+          def initialize(name, inputs:, resource_class:, allow_destroy:, update_only:, limit:, **)
             @inputs = inputs
             @resource_class = resource_class
             @allow_destroy = allow_destroy
             @update_only = update_only
             @limit = limit
 
-            super(name, **options)
+            super(name, **)
           end
 
           def render

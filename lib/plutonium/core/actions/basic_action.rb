@@ -2,9 +2,9 @@ module Plutonium
   module Core
     module Actions
       class BasicAction < Plutonium::Core::Action
-        def initialize(*args, **kwargs)
+        def initialize(*, **kwargs)
           kwargs.reverse_merge! action_options
-          super(*args, **kwargs)
+          super
         end
 
         private

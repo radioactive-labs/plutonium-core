@@ -106,7 +106,7 @@ module PlutoniumGenerators
     end
 
     def yes?(statement, color = nil)
-      !interactive? || super(statement, color)
+      !interactive? || super
     end
 
     def interactive?

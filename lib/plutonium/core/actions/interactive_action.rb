@@ -8,12 +8,12 @@ module Plutonium
 
         attr_reader :interaction, :inline, :inputs
 
-        def initialize(name, *args, interaction:, **kwargs)
+        def initialize(name, *, interaction:, **kwargs)
           set_interaction interaction
 
           kwargs[:route_options] ||= build_route_options name
           kwargs.reverse_merge! action_options
-          super(name, *args, **kwargs)
+          super(name, *, **kwargs)
         end
 
         def confirmation

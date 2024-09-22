@@ -42,7 +42,7 @@ module Plutonium
             end
           end
         else
-          super(&block)
+          super
         end
       end
 

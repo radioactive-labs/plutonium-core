@@ -9,7 +9,7 @@ module PlutoniumUi
     #
     # @param options [Hash] The options for the component.
     def initialize(...)
-      super(...)
+      super
       @columns = []
     end
 
