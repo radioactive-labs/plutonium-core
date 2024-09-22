@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    plutonium (0.15.0.pre.rc3)
+    plutonium (0.15.0)
       action_policy (~> 0.7.0)
       active_interaction (~> 5.3)
       dry-initializer (~> 3.1)
