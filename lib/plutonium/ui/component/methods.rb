@@ -44,6 +44,7 @@ module Plutonium
           :resource_query_params,
           :current_policy,
           :current_turbo_frame,
+          :current_interactive_action,
           :policy_for,
           :allowed_to?,
           :registered_resources,

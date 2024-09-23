@@ -33,27 +33,39 @@ module Plutonium
           def presents(**options)
             self.presentation_metadata = options
           end
+
+          # Returns the label for the interaction.
+          #
+          # @return [String] The label defined in the presentation metadata or a default generated from the class name.
+          def label
+            presentation_metadata[:label] || name.demodulize.titleize
+          end
+
+          # Returns the icon for the interaction.
+          #
+          # @return [String, nil] The icon defined in the presentation metadata.
+          def icon
+            presentation_metadata[:icon]
+          end
+
+          # Returns the description for the interaction.
+          #
+          # @return [String, nil] The description defined in the presentation metadata.
+          def description
+            presentation_metadata[:description]
+          end
         end
 
-        # Returns the label for the interaction.
-        #
-        # @return [String] The label defined in the presentation metadata or a default generated from the class name.
         def label
-          self.class.presentation_metadata[:label] || self.class.name.demodulize.titleize
+          self.class.label
         end
 
-        # Returns the icon for the interaction.
-        #
-        # @return [String, nil] The icon defined in the presentation metadata.
         def icon
-          self.class.presentation_metadata[:icon]
+          self.class.icon
         end
 
-        # Returns the description for the interaction.
-        #
-        # @return [String, nil] The description defined in the presentation metadata.
         def description
-          self.class.presentation_metadata[:description]
+          self.class.description
         end
       end
     end

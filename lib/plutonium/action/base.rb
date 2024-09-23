@@ -16,13 +16,14 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :icon, :route_options, :confirmation, :turbo_frame, :color, :category, :position
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo_frame, :color, :category, :position
 
       # Initialize a new action.
       #
       # @param [Symbol] name The name of the action.
       # @param [Hash] options The options for the action.
       # @option options [String] :label The human-readable label for the action.
+      # @option options [String] :description The human-readable description for the action.
       # @option options [String] :icon The icon associated with the action (e.g., 'fa-edit' for Font Awesome).
       # @option options [Symbol] :color The color associated with the action (e.g., :primary, :secondary, :success, :warning, :danger).
       # @option options [String] :confirmation The confirmation message to display before executing the action.
@@ -40,8 +41,9 @@ module Plutonium
       # @option options [Integer] :position (50) The position of the action in its group. Lower numbers appear first.
       def initialize(name, **options)
         @name = name.to_sym
-        @label = options[:label] || name.to_s.humanize
-        @icon = options[:icon]
+        @label = options[:label] || @name.to_s.titleize
+        @description = options[:description]
+        @icon = options[:icon] || Phlex::TablerIcons::ChevronRight
         @color = options[:color]
         @confirmation = options[:confirmation]
         @route_options = build_route_options(options[:route_options])

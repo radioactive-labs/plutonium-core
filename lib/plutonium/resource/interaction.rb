@@ -1,8 +1,6 @@
-require "active_interaction"
-
 module Plutonium
   module Resource
-    class Interaction < ActiveInteraction::Base
+    class Interaction < Plutonium::Interaction::Base
     end
   end
 end

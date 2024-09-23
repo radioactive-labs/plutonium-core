@@ -34,7 +34,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "zeitwerk"
   spec.add_dependency "rails", ">= 7.1", "< 8.0"
   spec.add_dependency "listen", "~> 3.8"
-  spec.add_dependency "active_interaction", "~> 5.3"
   spec.add_dependency "pagy", "~> 9.0"
   spec.add_dependency "simple_form", "~> 5.3"
   spec.add_dependency "view_component", "~> 3"

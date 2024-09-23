@@ -55,7 +55,7 @@ module Plutonium
         if @action.icon
           render @action.icon.new(class: icon_classes)
         end
-        span { @action.label } unless @variant == :table
+        span { @action.label }
       end
 
       def button_classes
@@ -77,7 +77,7 @@ module Plutonium
 
       def icon_classes
         if @variant == :table
-          "h-4 w-4"
+          "h-4 w-4 mr-1"
         else
           "h-3.5 w-3.5 mr-2 -ml-1"
         end

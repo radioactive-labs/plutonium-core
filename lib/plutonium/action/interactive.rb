@@ -15,11 +15,15 @@ module Plutonium
       # @param [Class] interaction The interaction class for this action
       # @param [Boolean] immediate Whether the action is executed immediately
       # @param [Hash] options Additional options for the action
-      def initialize(name, interaction:, immediate:, **)
+      def initialize(name, interaction:, immediate:, **options)
         @interaction = interaction
         @immediate = immediate
 
-        super(name, **)
+        options[:label] ||= interaction.label
+        options[:description] ||= interaction.description
+        options[:icon] ||= interaction.icon
+
+        super(name, **options)
       end
 
       # Get the confirmation message for the action
@@ -31,6 +35,8 @@ module Plutonium
 
       # Factory for creating Interactive actions
       class Factory
+        # TODO: move these into Plutonium::Action::Interactive
+
         # Create a new Interactive action based on the interaction type
         #
         # @param [Symbol] name The name of the action
@@ -69,11 +75,11 @@ module Plutonium
         # @return [Symbol] The determined action type
         def self.determine_action_type(attribute_names)
           if attribute_names.include?(:resource)
-            :interactive_resource_record_action
+            :interactive_record_action
           elsif attribute_names.include?(:resources)
-            :interactive_resource_collection_action
+            :interactive_collection_action
           else
-            :interactive_resource_recordless_action
+            :interactive_resource_action
           end
         end
 
@@ -91,10 +97,10 @@ module Plutonium
         # @return [Hash] The action options
         def self.determine_action_options(action_type)
           {
-            bulk_action: action_type == :interactive_resource_collection_action,
-            record_action: action_type == :interactive_resource_record_action,
-            collection_record_action: action_type == :interactive_resource_record_action,
-            resource_action: action_type == :interactive_resource_recordless_action
+            bulk_action: action_type == :interactive_collection_action,
+            record_action: action_type == :interactive_record_action,
+            collection_record_action: action_type == :interactive_record_action,
+            resource_action: action_type == :interactive_resource_action
           }
         end
 

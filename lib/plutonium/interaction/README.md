@@ -255,7 +255,7 @@ class MyInteraction < Plutonium::Interaction::Base
   include Plutonium::Interaction::Concerns::Presentable
 
   presents label: "My Interaction",
-           icon: "star",
+           icon: Phlex::TablerIcons::Activate,
            description: "Does something awesome"
 
   # ... rest of the interaction

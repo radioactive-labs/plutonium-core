@@ -22,8 +22,13 @@ module Plutonium
     class Base
       include ActiveModel::Model
       include ActiveModel::Attributes
-      # include Concerns::Presentable
+      include Concerns::Presentable
+      include Plutonium::Definition::DefineableProps
       # include Concerns::WorkflowDSL
+
+      class Form < Plutonium::UI::Form::Interaction; end
+
+      defineable_props :field, :input
 
       # Executes the interaction with the given arguments.
       #
@@ -33,15 +38,28 @@ module Plutonium
         new(**args).call
       end
 
+      def self.build_form(instance)
+        self::Form.new(instance || new)
+      end
+
       # Executes the interaction.
       #
       # @return [Plutonium::Interaction::Outcome] The result of the interaction.
       def call
         if valid?
-          execute
+          outcome = execute
+          unless outcome.is_a?(Plutonium::Interaction::Outcome)
+            raise "#{self.class}#execute must return an instance of Plutonium::Interaction::Outcome.\n" \
+                  "#{outcome.inspect} received instead"
+          end
+          outcome
         else
-          failure(errors)
+          failure.with_message("An error occurred")
         end
+      end
+
+      def build_form
+        self.class.build_form(self)
       end
 
       private
@@ -59,16 +77,22 @@ module Plutonium
       #
       # @param value [Object] The value to be wrapped in the successful outcome.
       # @return [Plutonium::Interaction::Success] A successful outcome.
-      def success(value)
-        Success.new(value)
+      def succeed(value = nil)
+        Plutonium::Interaction::Outcome::Success.new(value)
+      end
+      alias_method :success, :succeed
+
+      def failed(errors, attribute = :base)
+        Array(errors).each { |error| self.errors.add(attribute, error) }
+        failure
       end
 
       # Creates a failure outcome.
       #
       # @param errors [ActiveModel::Errors, Array<String>] The errors to be wrapped in the failure outcome.
       # @return [Plutonium::Interaction::Failure] A failure outcome.
-      def failure(errors)
-        Failure.new(errors)
+      def failure
+        Plutonium::Interaction::Outcome::Failure.new
       end
     end
   end

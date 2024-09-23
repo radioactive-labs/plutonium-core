@@ -3,7 +3,6 @@ PATH
   specs:
     plutonium (0.15.0)
       action_policy (~> 0.7.0)
-      active_interaction (~> 5.3)
       dry-initializer (~> 3.1)
       listen (~> 3.8)
       pagy (~> 9.0)
@@ -71,9 +70,6 @@ GEM
       erubi (~> 1.11)
       rails-dom-testing (~> 2.2)
       rails-html-sanitizer (~> 1.6)
-    active_interaction (5.3.0)
-      activemodel (>= 5.2, < 8)
-      activesupport (>= 5.2, < 8)
     activejob (7.2.1)
       activesupport (= 7.2.1)
       globalid (>= 0.3.6)

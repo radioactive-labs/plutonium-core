@@ -37,6 +37,8 @@ module Plutonium
 
       class EditPage < Plutonium::UI::Page::Edit; end
 
+      class InteractiveActionPage < Plutonium::UI::Page::InteractiveAction; end
+
       class Form < Plutonium::UI::Form::Resource; end
 
       class Table < Plutonium::UI::Table::Resource; end
@@ -74,6 +76,10 @@ module Plutonium
 
       def edit_page_class
         self.class::EditPage
+      end
+
+      def interactive_action_page_class
+        self.class::InteractiveActionPage
       end
 
       def form_class

@@ -26,7 +26,6 @@ module Plutonium
         class ActionMissingCurrentAuthorizedScope < ActionPolicy::UnauthorizedAction; end
 
         included do
-          verify_authorized
           after_action :verify_authorize_current
           after_action :verify_current_authorized_scope, except: %i[new create]
 
@@ -35,28 +34,53 @@ module Plutonium
           attr_writer :authorize_current_count
           attr_writer :current_authorized_scope_count
 
+          attr_reader :verify_authorize_current_skipped
+          attr_reader :verify_current_authorized_scope_skipped
+
           protected :authorize_current_count=, :authorize_current_count
           protected :current_authorized_scope_count=, :current_authorized_scope_count
         end
 
+        class_methods do
+          # Skips verify_authorize_current after_action callback.
+          def skip_verify_authorize_current(**options)
+            skip_after_action :verify_authorize_current, options
+          end
+
+          # Skips verify_current_authorized_scope after_action callback.
+          def skip_verify_current_authorized_scope(**options)
+            skip_after_action :verify_current_authorized_scope, options
+          end
+        end
+
         private
+
+        def skip_verify_authorize_current!
+          @verify_authorize_current_skipped = true
+        end
+
+        def skip_verify_current_authorized_scope!
+          @verify_current_authorized_scope_skipped = true
+        end
 
         # Verifies that authorize_current has been called
         #
         # @raise [ActionMissingAuthorizeCurrent] if authorize_current hasn't been called
         def verify_authorize_current
-          return if verify_authorized_skipped
+          return if verify_authorize_current_skipped
+          return if authorize_current_count > 0
 
-          raise ActionMissingAuthorizeCurrent.new(controller_path, action_name) if authorize_current_count.zero?
+          raise ActionMissingAuthorizeCurrent.new(controller_path, action_name)
         end
 
         # Verifies that current_authorized_scope has been called
         #
         # @raise [ActionMissingCurrentAuthorizedScope] if current_authorized_scope hasn't been called
         def verify_current_authorized_scope
-          return if verify_authorized_skipped
+          return if current_authorized_scope_count
+          return if current_authorized_scope_count > 0
 
-          raise ActionMissingCurrentAuthorizedScope.new(controller_path, action_name) if current_authorized_scope_count.zero?
+          raise ActionMissingCurrentAuthorizedScope.new(controller_path, action_name)
         end
 
         # @return [Integer] the number of times authorize_current has been called

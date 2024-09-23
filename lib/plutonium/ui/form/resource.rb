@@ -65,7 +65,7 @@ module Plutonium
         end
 
         def when_permitted(name, &)
-          return unless @resource_fields.include? name
+          return unless resource_fields.include? name
 
           yield
         end

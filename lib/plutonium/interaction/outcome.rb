@@ -7,8 +7,7 @@ module Plutonium
     #
     # @abstract Subclass and override {#and_then}, {#map}, and {#to_response} to implement
     class Outcome
-      # @return [Array<Array(String, Symbol)>] Messages associated with the outcome.
-      attr_reader :messages
+      def messages = @messages || []
 
       # Checks if the outcome is successful.
       #
@@ -27,7 +26,7 @@ module Plutonium
       # Adds a message to the outcome.
       #
       # @param msg [String] The message to add.
-      # @param type [Symbol] The type of the message (e.g., :notice, :error).
+      # @param type [Symbol] The type of the message (e.g., :notice, :alert).
       # @return [self]
       def with_message(msg, type = :notice)
         @messages ||= []
@@ -60,69 +59,80 @@ module Plutonium
       def to_response
         raise NotImplementedError, "#{self.class} must implement #to_response"
       end
-    end
 
-    # Represents a successful outcome of an interaction.
-    class Success < Outcome
-      # @return [Object] The value wrapped by this successful outcome.
-      attr_reader :value
+      # Represents a successful outcome of an interaction.
+      class Success < Outcome
+        # @return [Object] The value wrapped by this successful outcome.
+        attr_reader :value
 
-      # @param value [Object] The value to be wrapped in this successful outcome.
-      def initialize(value)
-        @value = value
-      end
+        # @param value [Object] The value to be wrapped in this successful outcome.
+        def initialize(value)
+          @value = value
+        end
 
-      # Chains another operation to be executed with the value of this outcome.
-      #
-      # @yield [Object] The value wrapped by this outcome.
-      # @return [Outcome] The result of the yielded block.
-      def and_then
-        yield value
-      end
+        # Chains another operation to be executed with the value of this outcome.
+        #
+        # @yield [Object] The value wrapped by this outcome.
+        # @return [Outcome] The result of the yielded block.
+        def and_then
+          yield value
+        end
 
-      # Sets the response for this successful outcome.
-      #
-      # @param response [Plutonium::Interaction::Response::Base] The response to set.
-      # @return [self]
-      def with_response(response)
-        @to_response = nil
-        @response = response
-        self
-      end
+        # Sets the response for this successful outcome.
+        #
+        # @param response [Plutonium::Interaction::Response::Base] The response to set.
+        # @return [self]
+        def with_response(response)
+          @to_response = nil
+          @response = response
+          self
+        end
 
-      # Converts this successful outcome to a response object.
-      #
-      # @return [Plutonium::Interaction::Response::Base] The response object.
-      def to_response
-        @to_response ||= begin
-          @response ||= Response::Null.new(value)
-          @response.with_flash(messages)
+        # Converts this successful outcome to a response object.
+        #
+        # @return [Plutonium::Interaction::Response::Base] The response object.
+        def to_response
+          @to_response ||= begin
+            @response ||= Response::Null.new(value)
+            @response.with_flash(messages)
+          end
         end
       end
-    end
 
-    # Represents a failed outcome of an interaction.
-    class Failure < Outcome
-      # @return [ActiveModel::Errors, Array<String>] The errors associated with this failure.
-      attr_reader :errors
+      # Represents a failed outcome of an interaction.
+      class Failure < Outcome
+        # Adds a message to the outcome.
+        #
+        # @param msg [String] The message to add.
+        # @param type [Symbol] The type of the message (e.g., :notice, :alert).
+        # @return [self]
+        def with_message(msg, type = :alert)
+          super
+        end
 
-      # @param errors [ActiveModel::Errors, Array<String>] The errors to be wrapped in this failure.
-      def initialize(errors)
-        @errors = errors
-      end
+        # Returns self without executing the given block, propagating the failure.
+        #
+        # @return [self]
+        def and_then
+          self
+        end
 
-      # Returns self without executing the given block, propagating the failure.
-      #
-      # @return [self]
-      def and_then
-        self
-      end
+        # Returns self without setting a response.
+        #
+        # @return [self]
+        def with_response(response)
+          self
+        end
 
-      # Returns self without setting a response.
-      #
-      # @return [self]
-      def with_response(response)
-        self
+        # Converts this failure outcome to a response object.
+        #
+        # @return [Plutonium::Interaction::Response::Null] The response object.
+        def to_response
+          @to_response ||= begin
+            @response ||= Response::Failure.new
+            @response.with_flash(messages)
+          end
+        end
       end
     end
   end
