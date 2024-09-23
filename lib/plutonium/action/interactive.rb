@@ -56,6 +56,7 @@ module Plutonium
             interaction: interaction,
             immediate: immediate,
             route_options: route_options,
+            turbo: interaction.turbo,
             **action_options,
             **options
           )

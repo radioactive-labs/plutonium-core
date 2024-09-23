@@ -16,7 +16,7 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo_frame, :color, :category, :position
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position
 
       # Initialize a new action.
       #
@@ -47,6 +47,7 @@ module Plutonium
         @color = options[:color]
         @confirmation = options[:confirmation]
         @route_options = build_route_options(options[:route_options])
+        @turbo = options[:turbo]
         @turbo_frame = options[:turbo_frame]
         @bulk_action = options[:bulk_action] || false
         @collection_record_action = options[:collection_record_action] || false

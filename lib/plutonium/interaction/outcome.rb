@@ -88,6 +88,18 @@ module Plutonium
           self
         end
 
+        def with_redirect_response(*, **)
+          with_response(Response::Redirect.new(*, **))
+        end
+
+        def with_render_response(*, **)
+          with_response(Response::Render.new(*, **))
+        end
+
+        def with_file_response(*, **)
+          with_response(Response::File.new(*, **))
+        end
+
         # Converts this successful outcome to a response object.
         #
         # @return [Plutonium::Interaction::Response::Base] The response object.

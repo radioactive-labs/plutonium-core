@@ -18,6 +18,11 @@ module Plutonium
           # interactive action forms post to the same page
           nil
         end
+
+        def initialize_attributes
+          super
+          attributes.fetch(:data_turbo) { attributes[:data_turbo] = object.turbo.to_s }
+        end
       end
     end
   end

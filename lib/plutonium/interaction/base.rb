@@ -24,10 +24,12 @@ module Plutonium
       include ActiveModel::Attributes
       include Concerns::Presentable
       include Plutonium::Definition::DefineableProps
+      include Plutonium::Definition::ConfigAttr
       # include Concerns::WorkflowDSL
 
       class Form < Plutonium::UI::Form::Interaction; end
 
+      config_attr :turbo
       defineable_props :field, :input
 
       # Executes the interaction with the given arguments.

@@ -13,7 +13,9 @@ module Plutonium
         attr_reader :flash
 
         # Initializes a new Response::Base instance.
-        def initialize
+        def initialize(*args, **options)
+          @args = args
+          @options = options
           @flash = []
         end
 

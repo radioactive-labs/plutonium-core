@@ -40,6 +40,7 @@ module Plutonium
           class: "inline-block",
           form: {
             data: {
+              turbo: @action.turbo,
               turbo_confirm: @action.confirmation,
               turbo_frame: @action.turbo_frame
             }
