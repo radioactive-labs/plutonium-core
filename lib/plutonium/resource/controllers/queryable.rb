@@ -24,11 +24,11 @@ module Plutonium
             end
 
             current_definition.defined_scopes.each do |key, value|
-              query_object.define_scope key, value[:block]
+              query_object.define_scope key, value[:block], **value[:options]
             end
 
             current_definition.defined_sorts.each do |key, value|
-              query_object.define_sorter key, value[:block]
+              query_object.define_sorter key, value[:block], **value[:options]
             end
 
             query_object

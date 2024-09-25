@@ -27,6 +27,7 @@ module Plutonium
       include DefineableProps
       include ConfigAttr
       include Actions
+      include Sorting
       include Search
 
       class IndexPage < Plutonium::UI::Page::Index; end
@@ -49,7 +50,7 @@ module Plutonium
       defineable_props :field, :input, :display, :column
 
       # queries
-      defineable_props :filter, :scope, :sort
+      defineable_props :filter, :scope
 
       # pages
       config_attr \

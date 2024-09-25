@@ -366,4 +366,37 @@ module Orders
   end
 end
 ```
+
+
+  class Sample < Phlex::HTML
+    def view_template
+      p { "my custom template" }
+    end
+  end
+
+  class Rename < ResourceInteraction
+    attribute :resource
+
+    attribute :name
+    validates :name, presence: true
+
+    # input :name, as: :file
+    turbo false
+
+    presents label: "Rename resource",
+      icon: Phlex::TablerIcons::Pencil,
+      description: "Some cool stuff"
+
+    private
+
+    def execute
+      resource.name = name
+      if resource.save
+        succeed.with_message("Action completed").with_render_response(Sample.new)
+      else
+        failed resource.errors
+      end
+    end
+  end
+  # action :rename, interaction: Rename
 -->

@@ -138,9 +138,9 @@ module Plutonium
       #
       # @param name [Symbol] The name of the sort.
       # @param body [Proc, nil] The body of the sort.
-      def define_sorter(name, body = nil)
+      def define_sorter(name, body = nil, using: nil)
         if body.nil?
-          sort_field = determine_sort_field(name)
+          sort_field = using || determine_sort_field(name)
           body = ->(scope, direction:) { scope.order(sort_field => direction) }
         end
 
