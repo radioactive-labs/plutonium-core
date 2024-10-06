@@ -70,7 +70,7 @@ module Plutonium
 
       def base_classes
         if @variant == :table
-          "inline-flex items-center justify-center p-1 rounded-lg focus:outline-none focus:ring-2"
+          "inline-flex items-center justify-center py-1 px-2 rounded-lg focus:outline-none focus:ring-2"
         else
           "flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-4"
         end

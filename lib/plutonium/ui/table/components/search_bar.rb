@@ -19,7 +19,7 @@ module Plutonium
             ) do
               search_query = current_query_object.search_query
               query_params = resource_query_params
-              render Phlexi::Form(:q, attributes: {data: {controller: "form", turbo_frame: nil}}) {
+              render Phlexi::Form(:q, attributes: {class!: nil, data: {controller: "form", turbo_frame: nil}}) {
                 div(class: "relative") do
                   div(class: "absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none") do
                     svg(

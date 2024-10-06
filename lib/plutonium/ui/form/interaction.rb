@@ -23,6 +23,12 @@ module Plutonium
           super
           attributes.fetch(:data_turbo) { attributes[:data_turbo] = object.turbo.to_s }
         end
+
+        def submit_button(*, **)
+          super(*, **) do
+            object.label
+          end
+        end
       end
     end
   end

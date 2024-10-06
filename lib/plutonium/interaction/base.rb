@@ -84,8 +84,13 @@ module Plutonium
       end
       alias_method :success, :succeed
 
-      def failed(errors, attribute = :base)
-        Array(errors).each { |error| self.errors.add(attribute, error) }
+      def failed(errors = nil, attribute = :base)
+        case errors
+        when Hash
+          errors.each { |attribute, error| self.errors.add(attribute, error) }
+        else
+          Array(errors).each { |error| self.errors.add(attribute, error) }
+        end
         failure
       end
 
