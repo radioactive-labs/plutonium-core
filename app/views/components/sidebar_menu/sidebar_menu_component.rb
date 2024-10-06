@@ -7,7 +7,7 @@ module PlutoniumUi
     def base_attributes
       # base attributes go here
       {
-        classname: "sidebar-menu space-y-2",
+        classname: "sidebar-menu space-y-2 pb-6 mb-6",
         controller: "sidebar-menu"
       }
     end
