@@ -28,6 +28,11 @@ module Plutonium
         def entity_scope_for_authorize
           scoped_to_entity? ? current_scoped_entity : nil
         end
+
+        def verify_authorized
+          # we don't use action policy's inbuilt checks, so ensure they are neutered,
+          # also ensures pundit checks are disabled.
+        end
       end
     end
   end

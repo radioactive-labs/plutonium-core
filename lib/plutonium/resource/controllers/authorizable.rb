@@ -77,7 +77,7 @@ module Plutonium
         #
         # @raise [ActionMissingCurrentAuthorizedScope] if current_authorized_scope hasn't been called
         def verify_current_authorized_scope
-          return if current_authorized_scope_count
+          return if verify_current_authorized_scope_skipped
           return if current_authorized_scope_count > 0
 
           raise ActionMissingCurrentAuthorizedScope.new(controller_path, action_name)
