@@ -81,16 +81,16 @@ module Plutonium
         # @return [ActiveRecord::Base, nil] the current scoped entity or nil if not found
         # @raise [NotImplementedError] if the scoping strategy is unknown
         def fetch_current_scoped_entity
-          scoped_entity = case scoped_entity_strategy
+          case scoped_entity_strategy
           when :path
-            fetch_entity_from_path
+            scoped_entity = fetch_entity_from_path
+            authorize! scoped_entity, to: :read?
+            scoped_entity
           when Symbol
             send(scoped_entity_strategy)
           else
             raise NotImplementedError, "Unknown scoped entity strategy: #{scoped_entity_strategy.inspect}"
           end
-          authorize! scoped_entity, to: :read?
-          scoped_entity
         end
 
         # Fetches the scoped entity from the path parameters.
