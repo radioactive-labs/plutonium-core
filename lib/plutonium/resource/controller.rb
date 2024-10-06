@@ -172,8 +172,13 @@ module Plutonium
       # @param [Hash] input_params The input parameters
       def override_entity_scoping_params(input_params)
         if scoped_to_entity?
-          input_params[scoped_entity_param_key] = current_scoped_entity
-          input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id
+          if input_params.key?(scoped_entity_param_key) || resource_class.method_defined?(:"#{scoped_entity_param_key}=")
+            input_params[scoped_entity_param_key] = current_scoped_entity
+          end
+
+          if input_params.key?(:"#{scoped_entity_param_key}_id") || resource_class.method_defined?(:"#{scoped_entity_param_key}_id=")
+            input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id
+          end
         end
       end
 
@@ -181,8 +186,13 @@ module Plutonium
       # @param [Hash] input_params The input parameters
       def override_parent_params(input_params)
         if current_parent.present?
-          input_params[parent_input_param] = current_parent
-          input_params[:"#{parent_input_param}_id"] = current_parent.id
+          if input_params.key?(parent_input_param) || resource_class.method_defined?(:"#{parent_input_param}=")
+            input_params[parent_input_param] = current_parent
+          end
+
+          if input_params.key?(:"#{parent_input_param}_id") || resource_class.method_defined?(:"#{parent_input_param}_id=")
+            input_params[:"#{parent_input_param}_id"] = current_parent.id
+          end
         end
       end
 

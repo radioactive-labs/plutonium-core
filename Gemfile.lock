@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    plutonium (0.15.3)
+    plutonium (0.15.4)
       action_policy (~> 0.7.0)
       dry-initializer (~> 3.1)
       listen (~> 3.8)
@@ -188,7 +188,7 @@ GEM
       railties (>= 6.1, < 8)
       zeitwerk (~> 2.6)
     phlex-tabler_icons (0.3.0)
-    phlexi-display (0.0.6)
+    phlexi-display (0.0.7)
       activesupport
       phlex (~> 1.11)
       phlexi-field
@@ -198,7 +198,7 @@ GEM
       fiber-local
       phlex (~> 1.11)
       zeitwerk
-    phlexi-form (0.4.4)
+    phlexi-form (0.4.5)
       activesupport
       phlex (~> 1.11)
       phlexi-field
