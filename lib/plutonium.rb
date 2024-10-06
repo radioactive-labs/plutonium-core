@@ -26,7 +26,7 @@ module Plutonium
     loader.ignore("#{__dir__}/generators")
     loader.ignore("#{__dir__}/plutonium/railtie.rb")
     loader.inflector.inflect("ui" => "UI")
-    loader.inflector.inflect("dsl" => "DSL")
+    loader.inflector.inflect("workflow_dsl" => "WorkflowDSL")
     loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
     loader.setup
   end

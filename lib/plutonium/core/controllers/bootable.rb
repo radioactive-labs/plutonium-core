@@ -18,11 +18,12 @@ module Plutonium
         end
 
         class_methods do
-          include Plutonium::Lib::SmartCache
-
           def inherited(subclass)
             super
 
+            subclass.include Plutonium::Lib::SmartCache
+            subclass.memoize_unless_reloading :current_package
+            subclass.memoize_unless_reloading :current_engine
             subclass.boot
           end
 
@@ -42,13 +43,11 @@ module Plutonium
           def current_package
             (current_engine == Rails.application.class) ? nil : current_engine.module_parent
           end
-          memoize_unless_reloading :current_package
 
           def current_engine
             potential_package = module_parents[-2]
             potential_package.nil? ? Rails.application.class : ("#{potential_package}::Engine".safe_constantize || Rails.application.class)
           end
-          memoize_unless_reloading :current_engine
         end
       end
     end
