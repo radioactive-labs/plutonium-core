@@ -4,98 +4,6 @@ module Plutonium
       class << self
       end
 
-      class Query
-        include Plutonium::Core::Definers::FieldInputDefiner
-
-        # Applies the query to the given scope using the provided parameters.
-        #
-        # @param scope [Object] The initial scope to which the query will be applied.
-        # @param params [Hash] The parameters for the query.
-        # @return [Object] The modified scope.
-        def apply(scope, params)
-          params = extract_query_params(params)
-
-          if input_definitions.size == params.size
-            apply_internal(scope, params)
-          else
-            scope
-          end
-        end
-
-        private
-
-        # Abstract method to apply the query logic to the scope.
-        # Should be implemented by subclasses.
-        #
-        # @param scope [Object] The initial scope.
-        # @param params [Hash] The parameters for the query.
-        # @raise [NotImplementedError] If the method is not implemented.
-        def apply_internal(scope, params)
-          raise NotImplementedError, "#{self.class}#apply_internal"
-        end
-
-        # Extracts query parameters based on the defined inputs.
-        #
-        # @param params [Hash] The parameters to extract.
-        # @return [Hash] The extracted and symbolized parameters.
-        def extract_query_params(params)
-          input_definitions.collect_all(params).compact.symbolize_keys
-        end
-
-        # @return [nil] The resource class (default implementation returns nil).
-        def resource_class = nil
-      end
-
-      class ScopeQuery < Query
-        attr_reader :name
-
-        # Initializes a ScopeQuery with a given name.
-        #
-        # @param name [Symbol] The name of the scope.
-        def initialize(name)
-          @name = name
-          yield self if block_given?
-        end
-
-        private
-
-        # Applies the scope query to the given scope.
-        #
-        # @param scope [Object] The initial scope.
-        # @param params [Hash] The parameters for the query.
-        # @return [Object] The modified scope.
-        def apply_internal(scope, params)
-          scope.public_send(name, **params)
-        end
-      end
-
-      class BlockQuery < Query
-        attr_reader :body
-
-        # Initializes a BlockQuery with a given block of code.
-        #
-        # @param body [Proc] The block of code for the query.
-        def initialize(body)
-          @body = body
-          yield self if block_given?
-        end
-
-        private
-
-        # Applies the block query to the given scope.
-        #
-        # @param scope [Object] The initial scope.
-        # @param params [Hash] The parameters for the query.
-        # @return [Object] The modified scope.
-        def apply_internal(scope, params)
-          if body.arity == 1
-            body.call(scope)
-          else
-            body.call(scope, **params)
-          end
-        end
-      end
-
       attr_reader :search_filter, :search_query
 
       # Initializes a QueryObject with the given context and parameters.
@@ -145,7 +53,7 @@ module Plutonium
         end
 
         sort_definitions[name] = build_query(body) do |query|
-          query.define_field_input :direction
+          query.input :direction
         end
       end
 
@@ -154,7 +62,7 @@ module Plutonium
       # @param body [Proc, Symbol] The body of the search filter.
       def define_search(body)
         @search_filter = build_query(body) do |query|
-          query.define_field_input :search
+          query.input :search
         end
       end
 
@@ -180,8 +88,8 @@ module Plutonium
       # @param scope [Object] The initial scope to which filters and sorts are applied.
       # @return [Object] The modified scope.
       def apply(scope)
-        scope = search_filter.apply(scope, {search: search_query}) if search_filter.present?
-        scope = scope_definitions[selected_scope_filter].apply(scope, {}) if selected_scope_filter.present?
+        scope = search_filter.apply(scope, {search: search_query}) if search_filter
+        scope = scope_definitions[selected_scope_filter].apply(scope, {}) if selected_scope_filter
         apply_sorts(scope)
       end
 
@@ -251,16 +159,16 @@ module Plutonium
       # Builds a query object based on the given body and optional block.
       #
       # @param body [Proc, Symbol] The body of the query.
-      # @yieldparam query [Query] The query object.
-      # @return [Query] The constructed query object.
+      # @yieldparam query [Plutonium::Query::Base] The query object.
+      # @return [Plutonium::Query::Base] The constructed query object.
       def build_query(body, &)
         case body
         when Symbol
           raise "Cannot find scope :#{body} on #{resource_class}" unless resource_class.respond_to?(body)
 
-          ScopeQuery.new(body, &)
+          Plutonium::Query::ModelScope.new(body, &)
         else
-          BlockQuery.new(body, &)
+          Plutonium::Query::AdhocBlock.new(body, &)
         end
       end
 
@@ -324,8 +232,7 @@ module Plutonium
       # @return [Object] The modified scope.
       def apply_sorts(scope)
         selected_sort_fields.each do |name|
-          sorter = sort_definitions[name]
-          next unless sorter.present?
+          next unless (sorter = sort_definitions[name])
 
           params = {direction: selected_sort_directions[name] || "ASC"}
           scope = sorter.apply(scope, params)
