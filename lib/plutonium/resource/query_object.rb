@@ -6,20 +6,14 @@ module Plutonium
 
       attr_reader :search_filter, :search_query
 
-      # Initializes a QueryObject with the given context and parameters.
+      # Initializes a QueryObject with the given resource_class and parameters.
       #
-      # @param context [Object] The context in which the query object is used.
+      # @param resource_class [Object] The resource class.
       # @param params [Hash] The parameters for initialization.
-      def initialize(context, params, &)
-        @context = context
-
+      def initialize(resource_class, params, &)
+        @resource_class = resource_class
         define_standard_queries
-        define_scopes
-        define_filters
-        define_sorters
-
         yield self if block_given?
-
         extract_filter_params(params)
         extract_sort_params(params)
       end
@@ -116,22 +110,7 @@ module Plutonium
 
       private
 
-      attr_reader :context, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
-
-      # Defines standard filters.
-      def define_filters
-        # Implement filter definitions if needed
-      end
-
-      # Defines standard scopes.
-      def define_scopes
-        # Implement scope definitions if needed
-      end
-
-      # Defines standard sorters.
-      def define_sorters
-        # Implement sorter definitions if needed
-      end
+      attr_reader :resource_class, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
 
       # Defines standard queries for search and scope.
       def define_standard_queries
@@ -239,9 +218,6 @@ module Plutonium
         end
         scope
       end
-
-      # @return [Object] The resource class from the context.
-      def resource_class = context.resource_class
     end
   end
 end
