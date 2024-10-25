@@ -14,6 +14,7 @@ module Plutonium
 
         def view_template
           render_search_bar
+          render_filter_bar
           render_scopes_bar
 
           collection.empty? ? render_empty_card : render_table
@@ -25,6 +26,10 @@ module Plutonium
 
         def render_search_bar
           TableSearchBar()
+        end
+
+        def render_filter_bar
+          TableFilterBar()
         end
 
         def render_scopes_bar
@@ -53,19 +58,20 @@ module Plutonium
 
               column_definition = resource_definition.defined_columns[name] || {}
               column_display_options = column_definition[:options] || {}
-              display_field_as = column_display_options.delete(:as)
-              align_field_to = column_display_options.delete(:align)
 
-              display_block = column_definition[:block] || ->(wrapped_object, key) {
+              display_tag = column_display_options[:as]
+              display_tag_options = column_display_options.except(:as, :align)
+              display_tag_block = column_definition[:block] || ->(wrapped_object, key) {
                 f = wrapped_object.field(key)
-                display_field_as ||= f.inferred_field_component
-                f.send(:"#{display_field_as}_tag", **column_display_options)
+                display_tag ||= f.inferred_field_component
+                f.send(:"#{display_tag}_tag", **display_tag_options)
               }
 
-              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-              field_options[:as] = display_field_as
-              field_options[:align] = align_field_to if align_field_to
-              table.column name, **field_options, sort_params: current_query_object.sort_params_for(name), &display_block
+              # align_field_to = column_display_options.slice(:align)
+              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
+              field_options = field_options.merge(**column_display_options.slice(:align))
+              # field_options[:align] = align_field_to if align_field_to
+              table.column name, **field_options, sort_params: current_query_object.sort_params_for(name), &display_tag_block
             end
 
             table.actions do |wrapped_object|

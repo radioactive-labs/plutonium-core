@@ -46,6 +46,8 @@ module Plutonium
 
       class Display < Plutonium::UI::Display::Resource; end
 
+      class TextFilter < Plutonium::Query::Filters::Text; end
+
       # fields
       defineable_props :field, :input, :display, :column
 

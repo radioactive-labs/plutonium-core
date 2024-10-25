@@ -1,8 +1,7 @@
 module Plutonium
   module Resource
     class QueryObject
-      class << self
-      end
+      class Form < Plutonium::UI::Form::Query; end
 
       attr_reader :search_filter, :search_query
 
@@ -12,18 +11,19 @@ module Plutonium
       # @param params [Hash] The parameters for initialization.
       def initialize(resource_class, params, &)
         @resource_class = resource_class
+        @params = params
+
         define_standard_queries
         yield self if block_given?
-        extract_filter_params(params)
-        extract_sort_params(params)
+        extract_filter_params
+        extract_sort_params
       end
 
       # Defines a filter with the given name and body.
       #
       # @param name [Symbol] The name of the filter.
       # @param body [Proc, nil] The body of the filter.
-      def define_filter(name, body = nil, &)
-        body ||= name
+      def define_filter(name, body, &)
         filter_definitions[name] = build_query(body, &)
       end
 
@@ -60,6 +60,10 @@ module Plutonium
         end
       end
 
+      def build_form(params = nil, page_size: nil)
+        self.class::Form.new(params, as: :q, query_object: self, page_size:, attributes: {id: SecureRandom.hex})
+      end
+
       # Builds a URL with the given options for search and sorting.
       #
       # @param options [Hash] The options for building the URL.
@@ -84,7 +88,8 @@ module Plutonium
       def apply(scope)
         scope = search_filter.apply(scope, {search: search_query}) if search_filter
         scope = scope_definitions[selected_scope_filter].apply(scope, {}) if selected_scope_filter
-        apply_sorts(scope)
+        scope = apply_sorts(scope)
+        apply_filters(scope)
       end
 
       def scope_definitions = @scope_definitions ||= {}.with_indifferent_access
@@ -110,7 +115,7 @@ module Plutonium
 
       private
 
-      attr_reader :resource_class, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
+      attr_reader :resource_class, :params, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
 
       # Defines standard queries for search and scope.
       def define_standard_queries
@@ -120,7 +125,7 @@ module Plutonium
       # Extracts filter parameters from the given params.
       #
       # @param params [Hash] The parameters to extract.
-      def extract_filter_params(params)
+      def extract_filter_params
         @search_query = params[:search]
         @selected_scope_filter = params[:scope]
       end
@@ -128,7 +133,7 @@ module Plutonium
       # Extracts sort parameters from the given params.
       #
       # @param params [Hash] The parameters to extract.
-      def extract_sort_params(params)
+      def extract_sort_params
         @selected_sort_fields = Array(params[:sort_fields])
         @selected_sort_fields &= sort_definitions.keys
 
@@ -140,15 +145,22 @@ module Plutonium
       # @param body [Proc, Symbol] The body of the query.
       # @yieldparam query [Plutonium::Query::Base] The query object.
       # @return [Plutonium::Query::Base] The constructed query object.
-      def build_query(body, &)
-        case body
+      def build_query(body)
+        query = case body
         when Symbol
           raise "Cannot find scope :#{body} on #{resource_class}" unless resource_class.respond_to?(body)
 
-          Plutonium::Query::ModelScope.new(body, &)
+          Plutonium::Query::ModelScope.new(body)
+        when Proc
+          Plutonium::Query::AdhocBlock.new(body)
+        when Plutonium::Query::Filter
+          body
         else
-          Plutonium::Query::AdhocBlock.new(body, &)
+          raise NotImplementedError, "Unsupported query body: #{body.class} -> #{body}"
         end
+
+        yield query if block_given?
+        query
       end
 
       # Determines the sort field for the given name.
@@ -215,6 +227,18 @@ module Plutonium
 
           params = {direction: selected_sort_directions[name] || "ASC"}
           scope = sorter.apply(scope, params)
+        end
+        scope
+      end
+
+      def apply_filters(scope)
+        params = build_form(nil).extract_input(q: self.params)[:q]
+        filter_definitions.each do |name, filter|
+          name = name.to_sym
+          filter_params = params[name].compact
+          next if filter_params.blank?
+
+          scope = filter.apply(scope, filter_params)
         end
         scope
       end

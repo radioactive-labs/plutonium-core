@@ -8,9 +8,7 @@ module Plutonium
       # @param name [Symbol] The name of the scope.
       def initialize(name)
         super()
-
         @name = name
-        yield self if block_given?
       end
 
       private

@@ -8,9 +8,7 @@ module Plutonium
       # @param body [Proc] The block of code for the query.
       def initialize(body)
         super()
-
         @body = body
-        yield self if block_given?
       end
 
       private

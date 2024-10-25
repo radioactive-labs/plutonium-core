@@ -47,17 +47,18 @@ module Plutonium
           when_permitted(name) do
             display_definition = resource_definition.defined_displays[name] || {}
             display_options = display_definition[:options] || {}
-            display_field_as = display_options.delete(:as)
 
-            display_field_options = display_options.delete(:field) || {}
-            display_block = display_definition[:block] || ->(f) {
-              display_field_as ||= f.inferred_field_component
-              f.send(:"#{display_field_as}_tag", **display_field_options)
+            display_tag = display_options[:as]
+            display_tag_options = display_options[:field] || {}
+            display_tag_block = display_definition[:block] || ->(f) {
+              display_tag ||= f.inferred_field_component
+              f.send(:"#{display_tag}_tag", **display_tag_options)
             }
 
             field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-            render field(name, **field_options).wrapped(**display_options) do |f|
-              render display_block.call(f)
+            wrapper_options = display_options.except(:field, :as)
+            render field(name, **field_options).wrapped(**wrapper_options) do |f|
+              render display_tag_block.call(f)
             end
           end
         end

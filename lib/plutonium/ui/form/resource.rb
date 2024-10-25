@@ -44,22 +44,23 @@ module Plutonium
           when_permitted(name) do
             input_definition = resource_definition.defined_inputs[name] || {}
             input_options = input_definition[:options] || {}
-            input_field_as = input_options.delete(:as)
 
-            input_field_options = input_options.delete(:field) || {}
-            input_block = input_definition[:block] || ->(f) {
-              input_field_as ||= f.inferred_field_component
-              f.send(:"#{input_field_as}_tag", **input_field_options)
+            input_tag = input_options[:as]
+            input_tag_options = input_options[:field] || {}
+            input_tag_block = input_definition[:block] || ->(f) {
+              input_tag ||= f.inferred_field_component
+              f.send(:"#{input_tag}_tag", **input_tag_options)
             }
 
             field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-            if !input_options[:class] || !input_options[:class].include?("col-span")
+            wrapper_options = input_options.except(:field, :as)
+            if !wrapper_options[:class] || wrapper_options[:class].include?("col-span")
               # temp hack to allow col span overrides
               # TODO: remove once we complete theming, which will support merges
-              input_options[:class] = tokens("col-span-full", input_options[:class])
+              wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
             end
-            render field(name, **field_options).wrapped(**input_options) do |f|
-              render input_block.call(f)
+            render field(name, **field_options).wrapped(**wrapper_options) do |f|
+              render input_tag_block.call(f)
             end
           end
         end

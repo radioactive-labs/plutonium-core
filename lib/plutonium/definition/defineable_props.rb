@@ -67,7 +67,7 @@ module Plutonium
                   end
                   # merged[name].compact!
                 end
-                merged
+                Plutonium::Lib::DeepFreezer.freeze(merged)
               end
             end
 
