@@ -72,6 +72,8 @@ module Plutonium
         q[:sort_fields] = selected_sort_fields.dup
         handle_sort_options!(q, options)
 
+        q.merge! params.slice(*filter_definitions.keys)
+
         "?#{{q: q}.to_param}"
       end
 
