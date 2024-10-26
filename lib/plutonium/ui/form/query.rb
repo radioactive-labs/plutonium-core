@@ -7,8 +7,10 @@ module Plutonium
         attr_reader :query_object
 
         def initialize(*, query_object:, page_size:, attributes: {}, **options, &)
-          attributes[:class!] = "flex flex-wrap items-center gap-4"
+          options[:as] = :q
           options[:method] = :get
+          attributes[:id] = SecureRandom.hex
+          attributes[:class!] = "flex flex-wrap items-center gap-4"
           @page_size = page_size
           super(*, attributes:, **options, &)
 

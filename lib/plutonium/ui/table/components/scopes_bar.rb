@@ -124,7 +124,7 @@ module Plutonium
 
           private
 
-          def current_scope = resource_query_params[:scope]
+          def current_scope = raw_resource_query_params[:scope]
 
           def render?
             current_query_object.scope_definitions.present?

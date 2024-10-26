@@ -1,8 +1,6 @@
 module Plutonium
   module Resource
     class QueryObject
-      class Form < Plutonium::UI::Form::Query; end
-
       attr_reader :search_filter, :search_query
 
       # Initializes a QueryObject with the given resource_class and parameters.
@@ -60,10 +58,6 @@ module Plutonium
         end
       end
 
-      def build_form(params = nil, page_size: nil)
-        self.class::Form.new(params, as: :q, query_object: self, page_size:, attributes: {id: SecureRandom.hex})
-      end
-
       # Builds a URL with the given options for search and sorting.
       #
       # @param options [Hash] The options for building the URL.
@@ -85,11 +79,12 @@ module Plutonium
       #
       # @param scope [Object] The initial scope to which filters and sorts are applied.
       # @return [Object] The modified scope.
-      def apply(scope)
-        scope = search_filter.apply(scope, {search: search_query}) if search_filter
-        scope = scope_definitions[selected_scope_filter].apply(scope, {}) if selected_scope_filter
-        scope = apply_sorts(scope)
-        apply_filters(scope)
+      def apply(scope, params)
+        params = params.with_indifferent_access
+        scope = search_filter.apply(scope, {search: params[:search]}) if search_filter
+        scope = scope_definitions[params[:scope]].apply(scope, {}) if scope_definitions[params[:scope]]
+        scope = apply_sorts(scope, params)
+        apply_filters(scope, params)
       end
 
       def scope_definitions = @scope_definitions ||= {}.with_indifferent_access
@@ -183,7 +178,7 @@ module Plutonium
       # @param params [Hash] The parameters to extract.
       # @return [Hash] The extracted sort directions.
       def extract_sort_directions(params)
-        params[:sort_directions]&.slice(*sort_definitions.keys) || {}
+        params[:sort_directions]&.slice(*sort_definitions.keys.map(&:to_sym)) || {}
       end
 
       # Handles the sort options for building the URL.
@@ -221,7 +216,8 @@ module Plutonium
       #
       # @param scope [Object] The initial scope.
       # @return [Object] The modified scope.
-      def apply_sorts(scope)
+      def apply_sorts(scope, params)
+        selected_sort_directions = extract_sort_directions(params)
         selected_sort_fields.each do |name|
           next unless (sorter = sort_definitions[name])
 
@@ -231,8 +227,7 @@ module Plutonium
         scope
       end
 
-      def apply_filters(scope)
-        params = build_form(nil).extract_input(q: self.params)[:q]
+      def apply_filters(scope, params)
         filter_definitions.each do |name, filter|
           name = name.to_sym
           filter_params = params[name].compact

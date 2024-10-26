@@ -46,6 +46,8 @@ module Plutonium
 
       class Display < Plutonium::UI::Display::Resource; end
 
+      class QueryForm < Plutonium::UI::Form::Query; end
+
       class TextFilter < Plutonium::Query::Filters::Text; end
 
       # fields
@@ -95,6 +97,10 @@ module Plutonium
 
       def detail_class
         self.class::Display
+      end
+
+      def query_form
+        self.class::QueryForm
       end
     end
   end

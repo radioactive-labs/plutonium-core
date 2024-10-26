@@ -13,8 +13,11 @@ module Plutonium
             Phlex::HTML.const_set(:EVENT_ATTRIBUTES, temp_attributes)
 
             div(class: "space-y-2 mb-4") do
-              query_params = resource_query_params
-              render current_query_object.build_form(query_params, page_size: request.parameters[:limit])
+              render current_definition.query_form.new(
+                raw_resource_query_params,
+                query_object: current_query_object,
+                page_size: request.parameters[:limit]
+              )
             end
           ensure
             # TODO: remove this once Phlex adds support for SafeValues
@@ -24,7 +27,7 @@ module Plutonium
           private
 
           def render?
-            current_query_object.filter_definitions.present? # && current_policy.allowed_to?(:search?)
+            current_query_object.filter_definitions.present? && current_policy.allowed_to?(:filter?)
           end
         end
       end
