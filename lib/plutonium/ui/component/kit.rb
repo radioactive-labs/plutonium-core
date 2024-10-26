@@ -20,8 +20,6 @@ module Plutonium
 
         def TableSearchBar(...) = render Plutonium::UI::Table::Components::SearchBar.new(...)
 
-        def TableFilterBar(...) = render Plutonium::UI::Table::Components::FilterBar.new(...)
-
         def TableScopesBar(...) = render Plutonium::UI::Table::Components::ScopesBar.new(...)
 
         def TableInfo(...) = render Plutonium::UI::Table::Components::PagyInfo.new(...)

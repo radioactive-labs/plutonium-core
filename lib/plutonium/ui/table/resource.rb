@@ -14,7 +14,6 @@ module Plutonium
 
         def view_template
           render_search_bar
-          render_filter_bar
           render_scopes_bar
 
           collection.empty? ? render_empty_card : render_table
@@ -26,10 +25,6 @@ module Plutonium
 
         def render_search_bar
           TableSearchBar()
-        end
-
-        def render_filter_bar
-          TableFilterBar()
         end
 
         def render_scopes_bar

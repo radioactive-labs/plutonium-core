@@ -9,47 +9,46 @@ module Plutonium
         def initialize(*, query_object:, page_size:, attributes: {}, **options, &)
           options[:as] = :q
           options[:method] = :get
-          attributes[:id] = SecureRandom.hex
-          attributes[:class!] = "flex flex-wrap items-center gap-4"
-          @page_size = page_size
+          attributes.deep_merge!(
+            id: :search_form,
+            class!: "space-y-2 mb-4",
+            controller: "form",
+            data: {controller: "form", turbo_frame: nil}
+          )
           super(*, attributes:, **options, &)
 
           @query_object = query_object
+          @page_size = page_size
         end
 
         def form_template
-          span(class: "text-sm font-medium text-gray-900 dark:text-white") { "Filters:" }
-          div(class: "flex flex-wrap items-center gap-4 mr-auto") {
-            render_fields
-            input(name: "limit", value: @page_size, type: :hidden) if @page_size
-          }
-          div(class: "flex flex-wrap items-center gap-2") {
-            render_actions
-          }
+          render_fields
         end
 
         private
 
         def render_fields
-          render_sort_fields
-          render_scope_fields
           render_search_fields
           render_filter_fields
+          div hidden: true do # workaround the fact that input array does not accept other attributes for now
+            input(name: "limit", value: @page_size, type: :hidden, hidden: true) if @page_size
+            render_sort_fields
+            render_scope_fields
+          end
         end
 
         def render_sort_fields
-          # q[sort_directions][created_at]=ASC&q[sort_directions][name]=ASC&
           # q[sort_fields][]=name&q[sort_fields][]=created_at
-          div hidden: true do
-            field :sort_fields do |name|
-              render name.input_array_tag
+          field :sort_fields do |name|
+            render name.input_array_tag do |array|
+              render array.input_tag(type: :hidden, hidden: true)
             end
           end
-
+          # q[sort_directions][created_at]=ASC&q[sort_directions][name]=ASC&
           nest_one :sort_directions do |nested|
             query_object.sort_definitions.each do |filter_name, definition|
               nested.field(filter_name) do |f|
-                render f.string_tag(hidden: true)
+                render f.input_tag(type: :hidden, hidden: true)
               end
             end
           end
@@ -59,45 +58,79 @@ module Plutonium
           # q[scope]=&
           return if query_object.scope_definitions.blank?
 
-          render field(:scope).string_tag(hidden: true)
+          render field(:scope).input_tag(type: :hidden, hidden: true)
         end
 
         def render_search_fields
           # q[search]=&
           return unless query_object.search_filter
 
-          render field(:search).string_tag(hidden: true)
-        end
-
-        def render_filter_fields
-          query_object.filter_definitions.each do |filter_name, definition|
-            nest_one filter_name do |nested|
-              definition.defined_inputs.each do |input_name, _|
-                render_defined_field nested, definition, input_name
+          search_query = query_object.search_query
+          div(class: "relative") do
+            div(class: "absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none") do
+              svg(
+                class: "w-5 h-5 text-gray-500 dark:text-gray-400",
+                aria_hidden: "true",
+                fill: "currentColor",
+                viewbox: "0 0 20 20",
+                xmlns: "http://www.w3.org/2000/svg"
+              ) do |s|
+                s.path(
+                  fill_rule: "evenodd",
+                  d:
+                    "M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z",
+                  clip_rule: "evenodd"
+                )
               end
             end
+            render field(:search, value: search_query)
+              .placeholder("Search...")
+              .input_tag(
+                value: search_query,
+                class: "block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500",
+                data: {
+                  action: "form#submit",
+                  turbo_permanent: true
+                }
+              )
           end
         end
 
-        def render_actions
-          actions_wrapper {
-            render field(:submit).submit_button_tag(
-              name: nil,
-              class!: "inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-            ) do
-              render Phlex::TablerIcons::Filter.new(class: "w-4 h-4 mr-2")
-              plain "Apply Filters"
+        def render_filter_fields
+          div(class: "flex flex-wrap items-center gap-4") do
+            span(class: "text-sm font-medium text-gray-900 dark:text-white") { "Filters:" }
+            div(class: "flex flex-wrap items-center gap-4 mr-auto") do
+              div class: "flex flex-wrap items-center gap-4" do
+                query_object.filter_definitions.each do |filter_name, definition|
+                  nest_one filter_name do |nested|
+                    definition.defined_inputs.each do |input_name, _|
+                      render_defined_field nested, definition, input_name
+                    end
+                  end
+                end
+              end
             end
+            div(class: "flex flex-wrap items-center gap-2") do
+              actions_wrapper do
+                render field(:submit).submit_button_tag(
+                  name: nil,
+                  class!: "inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                ) do
+                  render Phlex::TablerIcons::Filter.new(class: "w-4 h-4 mr-2")
+                  plain "Apply Filters"
+                end
 
-            render field(:reset).submit_button_tag(
-              name: nil,
-              type: :reset,
-              class!: "inline-flex items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-            ) do
-              render Phlex::TablerIcons::X.new(class: "w-4 h-4 mr-2")
-              plain "Clear Filters"
+                render field(:reset).submit_button_tag(
+                  name: nil,
+                  type: :reset,
+                  class!: "inline-flex items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                ) do
+                  render Phlex::TablerIcons::X.new(class: "w-4 h-4 mr-2")
+                  plain "Clear Filters"
+                end
+              end
             end
-          }
+          end
         end
 
         def form_action
