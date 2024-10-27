@@ -73,8 +73,8 @@ module Plutonium
         handle_sort_options!(q, options)
 
         q.merge! params.slice(*filter_definitions.keys)
-
-        "?#{{q: q}.to_param}"
+        query_params = deep_compact({q: q}).to_param
+        "?#{query_params}"
       end
 
       # Applies the defined filters and sorts to the given scope.
@@ -238,6 +238,16 @@ module Plutonium
           scope = filter.apply(scope, filter_params)
         end
         scope
+      end
+
+      def deep_compact(hash)
+        hash.transform_values do |value|
+          if value.respond_to?(:transform_values)
+            deep_compact(value)
+          else
+            value.presence
+          end
+        end.compact.presence
       end
     end
   end

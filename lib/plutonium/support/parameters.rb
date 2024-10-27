@@ -1,11 +1,9 @@
-require "action_controller"
-
 module Plutonium
-  module Refinements
-    module ParameterRefinements
-      refine ActionController::Parameters do
-        def nilify
-          transform_values { |value| nilify_internal value }
+  module Support
+    module Parameters
+      class << self
+        def nilify(params)
+          params.transform_values { |value| nilify_internal(value) }
         end
 
         private

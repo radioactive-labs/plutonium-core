@@ -1,5 +1,3 @@
-using Plutonium::Refinements::ParameterRefinements
-
 module Plutonium
   module Resource
     module Controllers

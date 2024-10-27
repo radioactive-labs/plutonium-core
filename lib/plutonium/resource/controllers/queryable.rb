@@ -1,5 +1,3 @@
-using Plutonium::Refinements::ParameterRefinements
-
 module Plutonium
   module Resource
     module Controllers
@@ -47,7 +45,14 @@ module Plutonium
         end
 
         def raw_resource_query_params
-          params[:q]&.nilify&.to_unsafe_h || {}.with_indifferent_access
+          @raw_resource_query_params ||= begin
+            query_params = params[:q]
+            if query_params.is_a?(ActionController::Parameters)
+              query_params.to_unsafe_h
+            else
+              {}.with_indifferent_access
+            end
+          end
         end
       end
     end

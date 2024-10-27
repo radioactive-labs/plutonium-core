@@ -14,7 +14,7 @@ module Plutonium
           authorize_current! resource_class
           set_page_title resource_class.model_name.human.pluralize.titleize
 
-          setup_resource_index
+          setup_index_action!
 
           render :index
         end
