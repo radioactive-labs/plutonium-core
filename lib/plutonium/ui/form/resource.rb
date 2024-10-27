@@ -34,33 +34,36 @@ module Plutonium
         end
 
         def render_resource_field(name)
-          # input :name, as: :string
-          # input :description, class: "col-span-full"
-          # input :age, field: {class: "max-h-fit"}
-          # input :dob do |f|
-          #   f.date_tag
-          # end
-
           when_permitted(name) do
+            # field :name, as: :string
+            # input :name, as: :string
+            # input :description, class: "col-span-full"
+            # input :age, tag: {class: "max-h-fit"}
+            # input :dob do |f|
+            #   f.date_tag
+            # end
+
+            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
+
             input_definition = resource_definition.defined_inputs[name] || {}
             input_options = input_definition[:options] || {}
 
-            input_tag = input_options[:as]
-            input_tag_options = input_options[:field] || {}
-            input_tag_block = input_definition[:block] || ->(f) {
-              input_tag ||= f.inferred_field_component
-              f.send(:"#{input_tag}_tag", **input_tag_options)
+            tag = field_options[:as] || input_options[:as]
+            tag_attributes = input_options[:tag] || {}
+            tag_block = input_definition[:block] || ->(f) {
+              tag ||= f.inferred_field_component
+              f.send(:"#{tag}_tag", **tag_attributes)
             }
 
-            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-            wrapper_options = input_options.except(:field, :as)
+            field_options = field_options.except(:as)
+            wrapper_options = input_options.except(:tag, :as)
             if !wrapper_options[:class] || wrapper_options[:class].include?("col-span")
               # temp hack to allow col span overrides
               # TODO: remove once we complete theming, which will support merges
               wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
             end
             render field(name, **field_options).wrapped(**wrapper_options) do |f|
-              render input_tag_block.call(f)
+              render tag_block.call(f)
             end
           end
         end

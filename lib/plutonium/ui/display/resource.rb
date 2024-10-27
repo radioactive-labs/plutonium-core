@@ -37,28 +37,31 @@ module Plutonium
         end
 
         def render_resource_field(name)
-          # display :name, as: :string
-          # display :description, class: "col-span-full"
-          # display :age, field: {class: "max-h-fit"}
-          # display :dob do |f|
-          #   f.date_tag
-          # end
-
           when_permitted(name) do
+            # field :name, as: :string
+            # display :name, as: :string
+            # display :description, class: "col-span-full"
+            # display :age, tag: {class: "max-h-fit"}
+            # display :dob do |f|
+            #   f.date_tag
+            # end
+
+            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
+
             display_definition = resource_definition.defined_displays[name] || {}
             display_options = display_definition[:options] || {}
 
-            display_tag = display_options[:as]
-            display_tag_options = display_options[:field] || {}
-            display_tag_block = display_definition[:block] || ->(f) {
-              display_tag ||= f.inferred_field_component
-              f.send(:"#{display_tag}_tag", **display_tag_options)
+            tag = field_options[:as] || display_options[:as]
+            tag_attributes = display_options[:tag] || {}
+            tag_block = display_definition[:block] || ->(f) {
+              tag ||= f.inferred_field_component
+              f.send(:"#{tag}_tag", **tag_attributes)
             }
 
-            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-            wrapper_options = display_options.except(:field, :as)
+            field_options = field_options.except(:as)
+            wrapper_options = display_options.except(:tag, :as)
             render field(name, **field_options).wrapped(**wrapper_options) do |f|
-              render display_tag_block.call(f)
+              render tag_block.call(f)
             end
           end
         end
