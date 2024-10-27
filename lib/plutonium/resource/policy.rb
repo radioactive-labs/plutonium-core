@@ -94,13 +94,6 @@ module Plutonium
         index?
       end
 
-      # Checks if the record filtering is permitted.
-      #
-      # @return [Boolean] Delegates to index?.
-      def filter?
-        search?
-      end
-
       # Core attributes
 
       # Returns the permitted attributes for the create action.
