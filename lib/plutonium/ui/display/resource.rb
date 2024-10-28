@@ -37,27 +37,31 @@ module Plutonium
         end
 
         def render_resource_field(name)
-          # display :name, as: :string
-          # display :description, class: "col-span-full"
-          # display :age, field: {class: "max-h-fit"}
-          # display :dob do |f|
-          #   f.date_tag
-          # end
-
           when_permitted(name) do
-            display_definition = resource_definition.defined_displays[name] || {}
-            display_options = display_definition[:options] || {}
-            display_field_as = display_options.delete(:as)
-
-            display_field_options = display_options.delete(:field) || {}
-            display_block = display_definition[:block] || ->(f) {
-              display_field_as ||= f.inferred_field_component
-              f.send(:"#{display_field_as}_tag", **display_field_options)
-            }
+            # field :name, as: :string
+            # display :name, as: :string
+            # display :description, class: "col-span-full"
+            # display :age, tag: {class: "max-h-fit"}
+            # display :dob do |f|
+            #   f.date_tag
+            # end
 
             field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-            render field(name, **field_options).wrapped(**display_options) do |f|
-              render display_block.call(f)
+
+            display_definition = resource_definition.defined_displays[name] || {}
+            display_options = display_definition[:options] || {}
+
+            tag = field_options[:as] || display_options[:as]
+            tag_attributes = display_options[:tag] || {}
+            tag_block = display_definition[:block] || ->(f) {
+              tag ||= f.inferred_field_component
+              f.send(:"#{tag}_tag", **tag_attributes)
+            }
+
+            field_options = field_options.except(:as)
+            wrapper_options = display_options.except(:tag, :as)
+            render field(name, **field_options).wrapped(**wrapper_options) do |f|
+              render tag_block.call(f)
             end
           end
         end

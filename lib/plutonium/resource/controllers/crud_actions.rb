@@ -3,6 +3,7 @@ module Plutonium
     module Controllers
       module CrudActions
         extend ActiveSupport::Concern
+        include IndexAction
 
         included do
           helper_method :preferred_action_after_submit
@@ -13,11 +14,7 @@ module Plutonium
           authorize_current! resource_class
           set_page_title resource_class.model_name.human.pluralize.titleize
 
-          @search_object = current_query_object
-          base_query = current_authorized_scope
-          base_query = @search_object.apply(base_query)
-          # base_query = base_query.public_send(params[:scope].to_sym) if params[:scope].present?
-          @pagy, @resource_records = pagy base_query
+          setup_index_action!
 
           render :index
         end

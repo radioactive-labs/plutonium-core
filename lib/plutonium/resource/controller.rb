@@ -1,9 +1,6 @@
 require "action_controller"
 require "pagy"
 
-require File.expand_path("refinements/parameter_refinements", Plutonium.lib_root)
-using Plutonium::Refinements::ParameterRefinements
-
 module Plutonium
   module Resource
     # Controller module to handle resource actions and concerns

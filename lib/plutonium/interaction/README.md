@@ -252,7 +252,7 @@ The `Presentable` concern allows you to add metadata to your interactions, which
 
 ```ruby
 class MyInteraction < Plutonium::Interaction::Base
-  include Plutonium::Interaction::Concerns::Presentable
+  include Plutonium::Definition::Presentable
 
   presents label: "My Interaction",
            icon: Phlex::TablerIcons::Activate,

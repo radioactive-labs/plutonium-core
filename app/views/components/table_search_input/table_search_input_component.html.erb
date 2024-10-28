@@ -33,14 +33,14 @@
 
     <%# preserve collection filters %>
 
-    <%= f.hidden_field :scope, value: resource_query_params[:scope] %>
+    <%= f.hidden_field :scope, value: raw_resource_query_params[:scope] %>
     <%= f.simple_fields_for :sort_fields do |nested| %>
-      <% Array(resource_query_params[:sort_fields]).each do |key| %>
+      <% Array(raw_resource_query_params[:sort_fields]).each do |key| %>
         <%= nested.hidden_field nil, value: key %>
       <% end %>
     <% end %>
     <%= f.simple_fields_for :sort_directions do |nested| %>
-      <% (resource_query_params[:sort_directions] || {}).each do |key, value| %>
+      <% (raw_resource_query_params[:sort_directions] || {}).each do |key, value| %>
         <%= nested.hidden_field key, value: %>
       <% end %>
     <% end %>

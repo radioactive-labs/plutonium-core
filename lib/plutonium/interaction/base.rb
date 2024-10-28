@@ -22,10 +22,10 @@ module Plutonium
     class Base
       include ActiveModel::Model
       include ActiveModel::Attributes
-      include Concerns::Presentable
       include Plutonium::Definition::DefineableProps
       include Plutonium::Definition::ConfigAttr
-      # include Concerns::WorkflowDSL
+      include Plutonium::Definition::Presentable
+      # include Plutonium::Interaction::Concerns::WorkflowDSL
 
       class Form < Plutonium::UI::Form::Interaction; end
 
@@ -44,6 +44,10 @@ module Plutonium
         self::Form.new(instance || new)
       end
 
+      def build_form
+        self.class.build_form(self)
+      end
+
       # Executes the interaction.
       #
       # @return [Plutonium::Interaction::Outcome] The result of the interaction.
@@ -58,10 +62,6 @@ module Plutonium
         else
           failure.with_message("An error occurred")
         end
-      end
-
-      def build_form
-        self.class.build_form(self)
       end
 
       private

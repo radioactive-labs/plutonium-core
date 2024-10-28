@@ -87,7 +87,7 @@ module Plutonium
         update?
       end
 
-      # Checks if the search action is permitted.
+      # Checks if record search is permitted.
       #
       # @return [Boolean] Delegates to index?.
       def search?
