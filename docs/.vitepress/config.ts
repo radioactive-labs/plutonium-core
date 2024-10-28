@@ -3,7 +3,7 @@ import { defineConfig } from 'vitepress'
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: '/plutonium-core/',
-  title: "Plutonium",
+  title: "Plutonium Docs",
   description: "A Rapid Application Development Toolkit (RADKit) for Rails",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
