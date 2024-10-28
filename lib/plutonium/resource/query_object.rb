@@ -82,8 +82,8 @@ module Plutonium
       # @param scope [Object] The initial scope to which filters and sorts are applied.
       # @return [Object] The modified scope.
       def apply(scope, params)
-        params = params.with_indifferent_access
-        scope = search_filter.apply(scope, {search: params[:search]}) if search_filter
+        params = deep_compact(params.with_indifferent_access)
+        scope = search_filter.apply(scope, {search: params[:search]}) if search_filter && params[:search]
         scope = scope_definitions[params[:scope]].apply(scope, {}) if scope_definitions[params[:scope]]
         scope = apply_sorts(scope, params)
         apply_filters(scope, params)
@@ -232,7 +232,7 @@ module Plutonium
       def apply_filters(scope, params)
         filter_definitions.each do |name, filter|
           name = name.to_sym
-          filter_params = params[name].compact
+          filter_params = params[name]
           next if filter_params.blank?
 
           scope = filter.apply(scope, filter_params)
@@ -243,11 +243,11 @@ module Plutonium
       def deep_compact(hash)
         hash.transform_values do |value|
           if value.respond_to?(:transform_values)
-            deep_compact(value)
+            deep_compact(value).presence
           else
             value.presence
           end
-        end.compact.presence
+        end.compact
       end
     end
   end
