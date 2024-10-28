@@ -7,10 +7,6 @@ module Plutonium
         super()
         @key = key
       end
-
-      def apply(scope, params)
-        raise NotImplementedError, "#{self.class}#apply(scope, params)"
-      end
     end
   end
 end

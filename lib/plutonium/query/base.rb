@@ -7,29 +7,22 @@ module Plutonium
 
       defineable_props :field, :input
 
-      # Applies the query to the given scope using the provided parameters.
+      # Applies a parameterized query to modify the given scope.
       #
-      # @param scope [Object] The initial scope to which the query will be applied.
-      # @param params [Hash] The parameters for the query.
-      # @return [Object] The modified scope.
-      def apply(scope, params)
-        if defined_inputs.size == params.size
-          apply_internal(scope, params)
-        else
-          scope
-        end
-      end
-
-      private
-
-      # Abstract method to apply the query logic to the scope.
-      # Should be implemented by subclasses.
+      # @param scope [Object] The initial scope that will be filtered, sorted, or otherwise modified
+      #   by applying this query. This is typically an ActiveRecord::Relation or similar query object.
       #
-      # @param scope [Object] The initial scope.
-      # @param params [Hash] The parameters for the query.
-      # @raise [NotImplementedError] If the method is not implemented.
-      def apply_internal(scope, params)
-        raise NotImplementedError, "#{self.class}#apply_internal(scope, params)"
+      # @param params [Hash] Optional parameters that configure how the query is applied.
+      #   The specific parameters accepted depend on the implementing class.
+      #
+      # @return [Object] The modified scope with this query's conditions applied. Returns the same
+      #   type as the input scope parameter.
+      #
+      # @example Basic usage
+      #   query.apply(User.all, status: 'active')
+      #
+      def apply(scope, **params)
+        raise NotImplementedError, "#{self.class}#apply(scope, **params)"
       end
     end
   end

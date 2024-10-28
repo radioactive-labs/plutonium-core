@@ -11,19 +11,8 @@ module Plutonium
         @body = body
       end
 
-      private
-
-      # Applies the block query to the given scope.
-      #
-      # @param scope [Object] The initial scope.
-      # @param params [Hash] The parameters for the query.
-      # @return [Object] The modified scope.
-      def apply_internal(scope, params)
-        if body.arity == 1
-          body.call(scope)
-        else
-          body.call(scope, **params)
-        end
+      def apply(scope, **)
+        body.call(scope, **)
       end
     end
   end

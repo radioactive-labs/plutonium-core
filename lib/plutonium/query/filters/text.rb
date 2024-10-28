@@ -7,10 +7,10 @@ module Plutonium
           @predicate = predicate
         end
 
-        def apply(scope, params)
+        def apply(scope, query:)
           case @predicate
           when :eq
-            scope.where(key => params[:query])
+            scope.where(key => query)
           else
             raise ArgumentError, "unsupported predicate #{@predicate}"
           end

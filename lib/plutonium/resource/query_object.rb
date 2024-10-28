@@ -83,8 +83,8 @@ module Plutonium
       # @return [Object] The modified scope.
       def apply(scope, params)
         params = deep_compact(params.with_indifferent_access)
-        scope = search_filter.apply(scope, {search: params[:search]}) if search_filter && params[:search]
-        scope = scope_definitions[params[:scope]].apply(scope, {}) if scope_definitions[params[:scope]]
+        scope = search_filter.apply(scope, search: params[:search]) if search_filter && params[:search]
+        scope = scope_definitions[params[:scope]].apply(scope, **{}) if scope_definitions[params[:scope]]
         scope = apply_sorts(scope, params)
         apply_filters(scope, params)
       end
@@ -223,8 +223,8 @@ module Plutonium
         selected_sort_fields.each do |name|
           next unless (sorter = sort_definitions[name])
 
-          params = {direction: selected_sort_directions[name] || "ASC"}
-          scope = sorter.apply(scope, params)
+          direction = selected_sort_directions[name] || "ASC"
+          scope = sorter.apply(scope, direction:)
         end
         scope
       end
@@ -235,7 +235,7 @@ module Plutonium
           filter_params = params[name]
           next if filter_params.blank?
 
-          scope = filter.apply(scope, filter_params)
+          scope = filter.apply(scope, **filter_params.symbolize_keys)
         end
         scope
       end

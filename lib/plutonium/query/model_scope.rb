@@ -11,15 +11,8 @@ module Plutonium
         @name = name
       end
 
-      private
-
-      # Chains the the scope onto the given scope.
-      #
-      # @param scope [Object] The initial scope.
-      # @param params [Hash] The parameters for the query.
-      # @return [Object] The modified scope.
-      def apply_internal(scope, params)
-        scope.public_send(name, **params)
+      def apply(scope, **)
+        scope.public_send(name, **)
       end
     end
   end
