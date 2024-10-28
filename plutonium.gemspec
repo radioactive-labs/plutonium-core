@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.summary = "The ultimate Rapid Application Development Toolkit (RADKit) for Rails application development"
   spec.description = "Plutonium extends Rails' capabilities with a powerful, generator-driven toolkit designed to supercharge your development process. " \
                      "It transforms the way you build applications with Rails, optimizing for rapid application development."
-  spec.homepage = "https://github.com/radioactive-labs/plutonium-core"
+  spec.homepage = "https://radioactive-labs.github.io/plutonium-core/"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.2"
 
