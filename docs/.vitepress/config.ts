@@ -1,17 +1,20 @@
 import { defineConfig } from 'vitepress'
 
+const base = "/plutonium-core/"
+
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  base: '/plutonium-core/',
+  base: base,
   title: "Plutonium Docs",
   description: "A Rapid Application Development Toolkit (RADKit) for Rails",
+  head: [['link', { rel: 'icon', href: `${base}favicon.ico` }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    logo: "/assets/plutonium.png",
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Examples', link: '/markdown-examples' }
     ],
-
     sidebar: [
       {
         text: 'Examples',
@@ -25,5 +28,6 @@ export default defineConfig({
     socialLinks: [
       { icon: 'github', link: 'https://github.com/vuejs/vitepress' }
     ]
-  }
+  },
+  cleanUrls: true,
 })
