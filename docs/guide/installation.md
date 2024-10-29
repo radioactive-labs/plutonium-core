@@ -15,10 +15,30 @@ Plutonium requires the following to run:
 bundle add plutonium
 ```
 
-2. Run the install generator
+2. Run the install generator to setup the integration
 
 ```bash
 rails g pu:core:install
+```
+
+## Configure Authentication
+
+Plutonium expects a non-nil `current_user` per request in order to perform authorization checks.
+
+If your `ApplicationController` inherits `ActionController::Base` and implements a `current_user` method,
+this will be used by plutonium.
+
+Otherwise, configure the `current_user` method in `app/controllers/resource_controller.rb` to return a non nil value.
+
+```ruby
+class ResourceController < PlutoniumController
+  include Plutonium::Resource::Controller
+
+  private def current_user
+    raise NotImplementedError, "#{self.class}#current_user must return a non nil value" # [!code --]
+    "Guest" # allow all users # [!code ++]
+  end
+end
 ```
 
 <!--
