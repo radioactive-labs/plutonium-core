@@ -23,7 +23,7 @@ rails g pu:core:install
 
 ## Configure Authentication
 
-Plutonium expects a non-nil `current_user` per request in order to perform authorization checks.
+Plutonium expects a non-nil `user` per request in order to perform authorization checks.
 
 If your `ApplicationController` inherits `ActionController::Base` and implements a `current_user` method,
 this will be used by plutonium.

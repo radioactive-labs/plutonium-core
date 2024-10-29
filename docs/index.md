@@ -18,7 +18,7 @@ hero:
 
 features:
   - title: Pro-Grade CRUD UI
-    details: Stunning, modern interface with multiple field types to build powerful admin panels in minutes
+    details: Stunning, modern interface with rich field types to build powerful admin panels in minutes
 
   - title: Intelligent Fields
     details: Zero-config field detection that matches your Rails models out of the box
