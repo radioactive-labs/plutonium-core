@@ -5,6 +5,9 @@ layout: home
 hero:
   name: Plutonium
   tagline: A Rapid Application Development Toolkit (RADKit) for Rails
+  image:
+    src: /plutonium.png
+    alt: Plutonium
   actions:
     - theme: brand
       text: Get Started

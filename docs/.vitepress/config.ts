@@ -10,7 +10,7 @@ export default defineConfig({
   head: [['link', { rel: 'icon', href: `${base}favicon.ico` }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
-    logo: "/assets/plutonium.png",
+    logo: "/plutonium.png",
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Examples', link: '/markdown-examples' }
