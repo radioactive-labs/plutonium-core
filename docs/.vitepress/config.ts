@@ -5,7 +5,7 @@ const base = "/plutonium-core/"
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
   base: base,
-  title: "Plutonium Docs",
+  title: "Plutonium",
   description: "A Rapid Application Development Toolkit (RADKit) for Rails",
   head: [['link', { rel: 'icon', href: `${base}favicon.ico` }]],
   themeConfig: {
