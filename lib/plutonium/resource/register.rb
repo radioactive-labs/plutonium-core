@@ -21,6 +21,9 @@ module Plutonium
       # @return [void]
       def register(resource)
         raise FrozenRegisterError, "Cannot modify frozen resource register" if @frozen
+        unless resource.include?(Plutonium::Resource::Record)
+          raise ArgumentError, "#{resource} must include Plutonium::Resource::Record before being registered"
+        end
 
         @resources.add(resource.to_s)
       end
