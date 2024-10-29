@@ -148,7 +148,7 @@ module Plutonium
         end
 
         def redirect_url_after_destroy
-          if (return_to = url_from(params[:return_to]))
+          if (return_to = url_from(params[:return_to])) && return_to != request.url
             return return_to
           end
 
