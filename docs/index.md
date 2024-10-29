@@ -11,10 +11,10 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /markdown-examples
-    - theme: alt
-      text: API Reference
-      link: /api-examples
+      link: /guide/installation
+    # - theme: alt
+    #   text: API Reference
+    #   link: /api-examples
 
 features:
   - title: Pro-Grade CRUD UI

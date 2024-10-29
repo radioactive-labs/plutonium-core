@@ -53,10 +53,6 @@ module Plutonium
       extend_action_dispatch
     end
 
-    initializer "plutonium.active_record_extensions" do
-      extend_active_record
-    end
-
     initializer "plutonium.phlexi_themes" do
       setup_phlexi_themes
     end
@@ -113,12 +109,6 @@ module Plutonium
       ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::MapperExtensions
       ActionDispatch::Routing::RouteSet.prepend Plutonium::Routing::RouteSetExtensions
       Rails::Engine.include Plutonium::Routing::ResourceRegistration
-    end
-
-    def extend_active_record
-      ActiveSupport.on_load(:active_record) do
-        include Plutonium::Resource::Record
-      end
     end
   end
 end
