@@ -57,11 +57,12 @@ module Plutonium
 
             field_options = field_options.except(:as)
             wrapper_options = input_options.except(:tag, :as)
-            if !wrapper_options[:class] || wrapper_options[:class].include?("col-span")
+            if !wrapper_options[:class] || !wrapper_options[:class].include?("col-span")
               # temp hack to allow col span overrides
               # TODO: remove once we complete theming, which will support merges
               wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
             end
+
             render field(name, **field_options).wrapped(**wrapper_options) do |f|
               render tag_block.call(f)
             end
