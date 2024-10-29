@@ -80,7 +80,7 @@ module Plutonium
         if @variant == :table
           "h-4 w-4 mr-1"
         else
-          "h-3.5 w-3.5 mr-2 -ml-1"
+          "h-3.5 w-3.5 -ml-1"
         end
       end
 
@@ -91,35 +91,50 @@ module Plutonium
       def color_classes
         case @action.color || @action.category.to_sym
         when :primary
-          table_variant_class(
-            "bg-primary-100 text-primary-700 hover:bg-primary-200 focus:ring-primary-300 dark:bg-primary-700 dark:text-primary-100 dark:hover:bg-primary-600 dark:focus:ring-primary-600",
-            "bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-          )
-        when :warning
-          table_variant_class(
-            "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-300 dark:bg-yellow-700 dark:text-yellow-100 dark:hover:bg-yellow-600 dark:focus:ring-yellow-600",
-            "bg-yellow-400 text-white hover:bg-yellow-500 focus:ring-yellow-300 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800"
-          )
-        when :danger
-          table_variant_class(
-            "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-300 dark:bg-red-700 dark:text-red-100 dark:hover:bg-red-600 dark:focus:ring-red-600",
-            "bg-red-700 text-white hover:bg-red-800 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+          variant_class(
+            "bg-primary-700 text-white hover:bg-primary-800 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800",
+            table: "bg-primary-100 text-primary-700 hover:bg-primary-200 focus:ring-primary-300 dark:bg-primary-700 dark:text-primary-100 dark:hover:bg-primary-600 dark:focus:ring-primary-600"
           )
         when :success
-          table_variant_class(
-            "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-300 dark:bg-green-700 dark:text-green-100 dark:hover:bg-green-600 dark:focus:ring-green-600",
-            "bg-green-700 text-white hover:bg-green-800 focus:ring-green-300 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+          variant_class(
+            "bg-success-700 text-white hover:bg-success-800 focus:ring-success-300 dark:bg-success-600 dark:hover:bg-success-700 dark:focus:ring-success-800",
+            table: "bg-success-100 text-success-700 hover:bg-success-200 focus:ring-success-300 dark:bg-success-700 dark:text-success-100 dark:hover:bg-success-600 dark:focus:ring-success-600"
+          )
+        when :info
+          variant_class(
+            "bg-info-700 text-white hover:bg-info-800 focus:ring-info-300 dark:bg-info-600 dark:hover:bg-info-700 dark:focus:ring-info-800",
+            table: "bg-info-100 text-info-700 hover:bg-info-200 focus:ring-info-300 dark:bg-info-700 dark:text-info-100 dark:hover:bg-info-600 dark:focus:ring-info-600"
+          )
+        when :warning
+          variant_class(
+            "bg-warning-700 text-white hover:bg-warning-800 focus:ring-warning-300 dark:bg-warning-600 dark:hover:bg-warning-700 dark:focus:ring-warning-800",
+            table: "bg-warning-100 text-warning-700 hover:bg-warning-200 focus:ring-warning-300 dark:bg-warning-700 dark:text-warning-100 dark:hover:bg-warning-600 dark:focus:ring-warning-600"
+          )
+        when :danger
+          variant_class(
+            "bg-danger-700 text-white hover:bg-danger-800 focus:ring-danger-300 dark:bg-danger-600 dark:hover:bg-danger-700 dark:focus:ring-danger-800",
+            table: "bg-danger-100 text-danger-700 hover:bg-danger-200 focus:ring-danger-300 dark:bg-danger-700 dark:text-danger-100 dark:hover:bg-danger-600 dark:focus:ring-danger-600"
+          )
+        when :accent
+          variant_class(
+            "bg-accent-700 text-white hover:bg-accent-800 focus:ring-accent-300 dark:bg-accent-600 dark:hover:bg-accent-700 dark:focus:ring-accent-800",
+            table: "bg-accent-100 text-accent-700 hover:bg-accent-200 focus:ring-accent-300 dark:bg-accent-700 dark:text-accent-100 dark:hover:bg-accent-600 dark:focus:ring-accent-600"
           )
         else
-          table_variant_class(
-            "bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 dark:focus:ring-gray-600",
-            "border border-gray-200 bg-white text-gray-900 hover:bg-gray-100 hover:text-primary-700 focus:z-10 focus:ring-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:text-white dark:focus:ring-gray-700"
+          variant_class(
+            "bg-secondary-700 text-white hover:bg-secondary-800 focus:ring-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-700 dark:focus:ring-secondary-800",
+            table: "bg-secondary-100 text-secondary-700 hover:bg-secondary-200 focus:ring-secondary-300 dark:bg-secondary-700 dark:text-secondary-100 dark:hover:bg-secondary-600 dark:focus:ring-secondary-600"
           )
         end
       end
 
-      def table_variant_class(table_class, default_class)
-        (@variant == :table) ? table_class : default_class
+      def variant_class(default, table:)
+        case @variant
+        when :table
+          table
+        else
+          default
+        end
       end
     end
   end
