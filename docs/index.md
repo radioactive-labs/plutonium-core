@@ -10,11 +10,11 @@ hero:
     alt: Plutonium
   actions:
     - theme: brand
-      text: Get Started
+      text: Get started
       link: /guide/installation
-    # - theme: alt
-    #   text: API Reference
-    #   link: /api-examples
+    - theme: alt
+      text: Learn more
+      link: /guide/what-is-plutonium
 
 features:
   - title: Pro-Grade CRUD UI

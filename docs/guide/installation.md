@@ -1,8 +1,8 @@
 # Installation
 
-## Requirements
+Plutonium ships as a gem but with extension points within your app.
 
-Plutonium requires the following to run:
+## Requirements
 
 - Ruby 3.2.2+
 - Rails 7.1+
@@ -40,6 +40,11 @@ class ResourceController < PlutoniumController
   end
 end
 ```
+
+::: tip Note
+You only need to perform this step if you intend to register resources in your main app or
+wish to set a default authentication scheme.
+:::
 
 <!--
 

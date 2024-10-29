@@ -21,9 +21,11 @@ export default defineConfig({
     sidebar: {
       '/guide/': [
         {
-          text: "Getting Started",
+          text: "Introduction",
           items: [
+            { text: "What is Plutonium?", link: "/guide/what-is-plutonium" },
             { text: "Installation", link: "/guide/installation" },
+            { text: "Getting Started", link: "/guide/getting-started" },
             // { text: "Quick Start", link: "/installation" },
           ]
         },
