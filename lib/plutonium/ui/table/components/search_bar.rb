@@ -16,7 +16,7 @@ module Plutonium
           private
 
           def render?
-            current_query_object.filter_definitions.present? && current_policy.allowed_to?(:search?)
+            (current_query_object.search_filter.present? || current_query_object.filter_definitions.present?) && current_policy.allowed_to?(:search?)
           end
         end
       end

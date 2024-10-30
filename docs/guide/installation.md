@@ -2,23 +2,29 @@
 
 Plutonium ships as a gem but with extension points within your app.
 
-## Requirements
-
-- Ruby 3.2.2+
-- Rails 7.1+
-
 ## Installing Plutonium
 
-1. Add plutonium to your bundle
+::: warning Prerequisites
+- A new or existing Rails 7.1+ application
+- Ruby 3.2.2+
+:::
 
-```bash
-bundle add plutonium
+1. Add Plutonium to your Gemfile:
+
+```ruby
+gem 'plutonium'
 ```
 
-2. Run the install generator to setup the integration
+2. Install required dependencies:
 
 ```bash
-rails g pu:core:install
+bundle install
+```
+
+3. Run the installation generator:
+
+```bash
+rails generate pu:core:install
 ```
 
 ## Configure Authentication
