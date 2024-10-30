@@ -27,7 +27,40 @@ bundle install
 rails generate pu:core:install
 ```
 
+## Optional Performance Gems
+
+::: tip Recommended for Postgres/MySQL Users
+If you're using Postgres or MySQL, we strongly recommend installing these gems to optimize your application's performance.
+:::
+
+#### Goldiloader
+[Goldiloader](https://github.com/salsify/goldiloader) automatically eager loads associations when they're used, helping prevent N+1 queries without explicit eager loading declarations. This means:
+
+```ruby
+# Without Goldiloader - Generates N+1 queries
+posts.each do |post|
+  puts post.author.name  # Each post triggers a query
+end
+
+# With Goldiloader - Automatically eager loads in a single query
+posts.each do |post|
+  puts post.author.name  # No additional queries
+end
+```
+
+#### Prosopite
+[Prosopite](https://github.com/charkost/prosopite) helps detect N+1 queries during development and testing. It will raise an error when it detects N+1 queries.
+
+::: warning Note about Prosopite
+Prosopite should only be enabled in development and test environments. It adds overhead that isn't appropriate for production use.
+:::
+
 ## Configure Authentication
+
+::: tip Note
+You only need to perform this step if you intend to register resources in your main app or
+wish to set a default authentication scheme.
+:::
 
 Plutonium expects a non-nil `user` per request in order to perform authorization checks.
 
@@ -46,92 +79,31 @@ class ResourceController < PlutoniumController
   end
 end
 ```
-
-::: tip Note
-You only need to perform this step if you intend to register resources in your main app or
-wish to set a default authentication scheme.
-:::
-
 <!--
+## Verifying Installation
 
-VitePress provides Syntax Highlighting powered by [Shiki](https://github.com/shikijs/shiki), with additional features like line-highlighting:
+After installation, you can verify everything is working correctly:
 
-**Input**
-
-````md
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
-```
-````
-
-**Output**
-
-```js{4}
-export default {
-  data () {
-    return {
-      msg: 'Highlighted!'
-    }
-  }
-}
+1. Start your Rails server:
+```bash
+rails server
 ```
 
-## Custom Containers
+2. Check your logs for any warnings or errors related to Plutonium initialization
 
-**Input**
-
-```md
-::: info
-This is an info box.
-:::
-
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
+3. Generate and test a sample resource:
+```bash
+rails generate pu:res:scaffold Post title:string content:text
+rails server
 ```
 
-**Output**
+4. Visit `http://localhost:3000/posts` to verify the resource is working
 
-::: info
-This is an info box.
+::: info Troubleshooting
+If you encounter any issues during installation, check:
+1. Your Rails version is 7.1 or higher
+2. All dependencies were installed correctly
+3. The installation generator completed successfully
+4. Your database is properly configured and migrated
 :::
-
-::: tip
-This is a tip.
-:::
-
-::: warning
-This is a warning.
-:::
-
-::: danger
-This is a dangerous warning.
-:::
-
-::: details
-This is a details block.
-:::
-
-## More
-
-Check out the documentation for the [full list of markdown extensions](https://vitepress.dev/guide/markdown).
-
- -->
+-->
