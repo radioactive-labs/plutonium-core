@@ -58,7 +58,7 @@ Prosopite should only be enabled in development and test environments. It adds o
 ## Configure Authentication
 
 ::: tip Note
-You only need to perform this step if you intend to register resources in your main app or
+You only need to perform this step if you intend to register resources in your main app (not recommended) or
 wish to set a default authentication scheme.
 :::
 

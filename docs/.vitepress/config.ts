@@ -16,19 +16,26 @@ export default defineConfig({
     },
     nav: [
       { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/installation" }
+      { text: "Guide", link: "/guide/getting-started" }
     ],
     sidebar: {
       '/guide/': [
+
         {
           text: "Introduction",
           items: [
             { text: "What is Plutonium?", link: "/guide/what-is-plutonium" },
-            { text: "Installation", link: "/guide/installation" },
-            { text: "Getting Started", link: "/guide/getting-started" },
-            // { text: "Quick Start", link: "/installation" },
           ]
         },
+        {
+          text: "Getting Started",
+          items: [
+            { text: "Overview", link: "/guide/getting-started/" },
+            { text: "Installation", link: "/guide/getting-started/installation" },
+          ]
+        },
+        // { text: "Quick Start", link: "/installation" },
+
         // {
         //   text: "Examples",
         //   items: [
