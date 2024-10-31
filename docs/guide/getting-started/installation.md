@@ -1,109 +1,278 @@
-# Installation
+# Installation and Setup
 
-Plutonium ships as a gem but with extension points within your app.
-
-## Installing Plutonium
-
-::: warning Prerequisites
-- A new or existing Rails 7.1+ application
-- Ruby 3.2.2+
+::: tip VERSION REQUIREMENTS
+- Ruby 3.2.2 or higher
+- Rails 7.1 or higher
 :::
+
+## Quick Start
+
+Get up and running with Plutonium in minutes:
+
+::: code-group
+```ruby [Gemfile]
+gem "plutonium"
+```
+
+```bash [Terminal]
+# Install the gem
+bundle install
+
+# Run the installer
+rails generate pu:core:install
+```
+:::
+
+## Detailed Installation Guide
+
+### Adding Plutonium to an Existing Rails Application
 
 1. Add Plutonium to your Gemfile:
 
-```ruby
-gem 'plutonium'
+::: code-group
+```ruby [Gemfile]
+gem "plutonium"
+
+# Optional but recommended for PostgreSQL/MySQL users
+gem "goldiloader" # Automatic eager loading
+gem "prosopite"  # N+1 query detection
 ```
 
-2. Install required dependencies:
-
-```bash
+```bash [Terminal]
 bundle install
 ```
+:::
 
-3. Run the installation generator:
+2. Run the installation generator:
 
 ```bash
 rails generate pu:core:install
 ```
 
-## Optional Performance Gems
+This will:
+- Set up the basic Plutonium structure
+- Create necessary configuration files
+- Add required JavaScript and CSS dependencies
+- Configure your application for Plutonium
 
-::: tip Recommended for Postgres/MySQL Users
-If you're using Postgres or MySQL, we strongly recommend installing these gems to optimize your application's performance.
-:::
+### Project Structure
 
-#### Goldiloader
-[Goldiloader](https://github.com/salsify/goldiloader) automatically eager loads associations when they're used, helping prevent N+1 queries without explicit eager loading declarations. This means:
+After installation, your project will have the following new directories and files:
+
+```
+my_rails_app/
+├── app/
+│   ├── controllers/
+│   │   ├── plutonium_controller.rb     # Base controller for Plutonium
+│   │   └── resource_controller.rb      # Base controller for resources
+│   ├── definitions/
+│   │   └── resource_definition.rb      # Base class for resource definitions
+│   ├── interactions/
+│   │   └── resource_interaction.rb     # Base class for resource interactions
+│   ├── models/
+│   │   └── resource_record.rb         # Base module for resource models
+│   ├── policies/
+│   │   └── resource_policy.rb         # Base class for resource policies
+│   └── views/
+│       └── layouts/
+│           └── resource.html.erb       # Base layout for resources
+├── config/
+│   ├── initializers/
+│   │   └── plutonium.rb               # Main configuration
+│   └── packages.rb                    # Package registration
+└── packages/                          # Directory for modular features
+    └── .keep
+```
+
+## Configuration
+
+### Basic Configuration
+
+Configure Plutonium in `config/initializers/plutonium.rb`:
 
 ```ruby
-# Without Goldiloader - Generates N+1 queries
-posts.each do |post|
-  puts post.author.name  # Each post triggers a query
-end
+Plutonium.configure do |config|
+  # Load default configuration for version 1.0
+  config.load_defaults 1.0
 
-# With Goldiloader - Automatically eager loads in a single query
-posts.each do |post|
-  puts post.author.name  # No additional queries
+  # Asset configuration
+  config.assets.stylesheet = "plutonium.css" # Default stylesheet
+  config.assets.script = "plutonium.js"     # Default JavaScript
+  config.assets.logo = "plutonium.png"   # Default logo
 end
 ```
 
-#### Prosopite
-[Prosopite](https://github.com/charkost/prosopite) helps detect N+1 queries during development and testing. It will raise an error when it detects N+1 queries.
-
-::: warning Note about Prosopite
-Prosopite should only be enabled in development and test environments. It adds overhead that isn't appropriate for production use.
+::: warning
+Make sure your configuration matches your environment needs.
 :::
 
-## Configure Authentication
+### Authentication Setup
 
-::: tip Note
-You only need to perform this step if you intend to register resources in your main app (not recommended) or
-wish to set a default authentication scheme.
+Plutonium supports multiple authentication strategies. Here's how to set up the recommended Rodauth integration:
+
+1. Install Rodauth:
+
+```bash
+rails generate pu:rodauth:install
+```
+
+2. Create an authentication account:
+
+::: code-group
+```bash [Basic Setup]
+rails generate pu:rodauth:account user
+```
+
+```bash [Custom Setup]
+# Include selected authentication features
+rails generate pu:rodauth:account user \
+  --login --logout --remember --change-password \
+  --create-account --verify-account --reset-password \
+  --otp --recovery-codes
+```
 :::
 
-Plutonium expects a non-nil `user` per request in order to perform authorization checks.
-
-If your `ApplicationController` inherits `ActionController::Base` and implements a `current_user` method,
-this will be used by plutonium.
-
-Otherwise, configure the `current_user` method in `app/controllers/resource_controller.rb` to return a non nil value.
+3. Configure the authentication controller:
 
 ```ruby
+# app/controllers/resource_controller.rb
 class ResourceController < PlutoniumController
   include Plutonium::Resource::Controller
-
-  private def current_user
-    raise NotImplementedError, "#{self.class}#current_user must return a non nil value" # [!code --]
-    "Guest" # allow all users # [!code ++]
-  end
+  include Plutonium::Auth::Rodauth(:user)
 end
 ```
-<!--
-## Verifying Installation
 
-After installation, you can verify everything is working correctly:
-
-1. Start your Rails server:
-```bash
-rails server
-```
-
-2. Check your logs for any warnings or errors related to Plutonium initialization
-
-3. Generate and test a sample resource:
-```bash
-rails generate pu:res:scaffold Post title:string content:text
-rails server
-```
-
-4. Visit `http://localhost:3000/posts` to verify the resource is working
-
-::: info Troubleshooting
-If you encounter any issues during installation, check:
-1. Your Rails version is 7.1 or higher
-2. All dependencies were installed correctly
-3. The installation generator completed successfully
-4. Your database is properly configured and migrated
+::: tip
+You can use your existing authentication system by implementing the `current_user` method in your `ResourceController`.
 :::
+
+<!--
+## Asset Pipeline Setup
+
+### JavaScript Setup
+
+
+Plutonium uses modern JavaScript features. Here's how to set it up:
+
+1. Install required npm packages:
+
+::: code-group
+```bash [importmap]
+bin/importmap pin @radioactive-labs/plutonium
+```
+
+```bash [esbuild]
+npm install @radioactive-labs/plutonium
+```
+:::
+
+
+2. Configure JavaScript:
+
+::: code-group
+```js [app/javascript/controllers/index.js]
+import { application } from "controllers/application"
+import { registerControllers } from "@radioactive-labs/plutonium" // [!code ++]
+registerControllers(application) // [!code ++]
+```
+
+```js [app/javascript/application.js]
+import "@hotwired/turbo-rails"
+import "controllers"
+```
+:::
+
+### CSS Setup
+
+Plutonium uses Tailwind CSS. Configure it in your `tailwind.config.js`:
+
+```js
+const defaultTheme = require('tailwindcss/defaultTheme')
+
+module.exports = {
+  content: [
+    './app/views/**/*.erb',
+    './app/helpers/**/*.rb',
+    './app/javascript/**/*.js',
+    './app/components/**/*.{erb,rb}',
+    './node_modules/@radioactive-labs/plutonium/**/*.{js,ts}'
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter var', ...defaultTheme.fontFamily.sans],
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('flowbite/plugin')
+  ],
+}
+```
+-->
+
+## Optional Enhancements
+
+### Database Performance
+
+For PostgreSQL/MySQL users, add these recommended gems:
+
+```ruby
+group :development, :test do
+  # N+1 query detection
+  gem "prosopite"
+end
+
+# Automatic eager loading
+gem "goldiloader"
+```
+
+### Development Tools
+
+Add helpful development gems:
+
+```ruby
+# Generate model annotations
+rails generate pu:gem:annotate
+
+# Set up environment variables
+rails generate pu:gem:dotenv
+```
+
+## Verification
+
+Verify your installation:
+
+```bash
+# Start your Rails server
+rails server
+
+# Check your logs for any warnings or errors
+tail -f log/development.log
+
+# Generate and test a sample resource
+rails generate pu:res:scaffold Post title:string content:text
+```
+
+Visit `http://localhost:3000/posts` to verify everything is working.
+
+<!--
+::: tip Next Steps
+Now that you have Plutonium installed and configured, you're ready to:
+1. [Create your first resource](/guide/resources/creating-resources)
+2. [Set up your first package](/guide/packages/creating-packages)
+3. [Configure authorization](/guide/authorization/basic-setup)
+:::
+-->
+
+<!--
+### Getting Help
+
+If you run into issues:
+
+1. Check the [FAQ](/guide/faq)
+2. Search [GitHub Issues](https://github.com/radioactive-labs/plutonium-core/issues)
+3. Join our [Discord Community](https://discord.gg/plutonium)
+4. Create a new [GitHub Issue](https://github.com/radioactive-labs/plutonium-core/issues/new)
 -->
