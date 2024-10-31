@@ -4,7 +4,7 @@ layout: home
 
 hero:
   name: Plutonium
-  tagline: The ultimate Rapid Application Development Toolkit (RADKit) for Rails
+  tagline: The Ultimate Rapid Application Development Toolkit (RADKit) for Rails
   image:
     src: /plutonium.png
     alt: Plutonium
