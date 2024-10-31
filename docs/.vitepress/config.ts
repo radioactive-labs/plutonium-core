@@ -1,9 +1,10 @@
 import { defineConfig } from "vitepress"
+import { withMermaid } from "vitepress-plugin-mermaid";
 
 const base = "/plutonium-core/"
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig({
+export default defineConfig(withMermaid({
   base: base,
   title: "Plutonium",
   description: "The Ultimate Rapid Application Development Toolkit (RADKit) for Rails",
@@ -32,6 +33,7 @@ export default defineConfig({
           items: [
             { text: "Overview", link: "/guide/getting-started/" },
             { text: "Installation", link: "/guide/getting-started/installation" },
+            { text: "Core Concepts", link: "/guide/getting-started/core-concepts" },
           ]
         },
         // { text: "Quick Start", link: "/installation" },
@@ -54,4 +56,4 @@ export default defineConfig({
     }
   },
   cleanUrls: true,
-})
+}))
