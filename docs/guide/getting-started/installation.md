@@ -7,35 +7,27 @@
 
 ## Quick Start
 
-Get up and running with Plutonium in minutes:
+Get up and running with Plutonium in seconds:
 
 ::: code-group
-```ruby [Gemfile]
-gem "plutonium"
+```bash [New App]
+rails new plutonium_app -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
-```bash [Terminal]
-# Install the gem
-bundle install
-
-# Run the installer
-rails generate pu:core:install
+```bash [Existing App]
+bin/rails app:template \
+  LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
 ```
 :::
 
 ## Detailed Installation Guide
-
-### Adding Plutonium to an Existing Rails Application
 
 1. Add Plutonium to your Gemfile:
 
 ::: code-group
 ```ruby [Gemfile]
 gem "plutonium"
-
-# Optional but recommended for PostgreSQL/MySQL users
-gem "goldiloader" # Automatic eager loading
-gem "prosopite"  # N+1 query detection
 ```
 
 ```bash [Terminal]
@@ -102,10 +94,6 @@ Plutonium.configure do |config|
 end
 ```
 
-::: warning
-Make sure your configuration matches your environment needs.
-:::
-
 ### Authentication Setup
 
 Plutonium supports multiple authentication strategies. Here's how to set up the recommended Rodauth integration:
@@ -125,10 +113,12 @@ rails generate pu:rodauth:account user
 
 ```bash [Custom Setup]
 # Include selected authentication features
-rails generate pu:rodauth:account user \
-  --login --logout --remember --change-password \
-  --create-account --verify-account --reset-password \
-  --otp --recovery-codes
+rails generate pu:rodauth:account admin --no-defaults \
+  --login --logout --remember --lockout \
+  --create-account --verify-account --close-account \
+   --change-password --reset-password --reset-password-notify \
+  --active-sessions --password-grace-period --otp \
+  --recovery-codes --audit-logging --internal-request
 ```
 :::
 
@@ -240,6 +230,7 @@ rails generate pu:gem:annotate
 rails generate pu:gem:dotenv
 ```
 
+<!--
 ## Verification
 
 Verify your installation:
@@ -256,6 +247,7 @@ rails generate pu:res:scaffold Post title:string content:text
 ```
 
 Visit `http://localhost:3000/posts` to verify everything is working.
+-->
 
 <!--
 ::: tip Next Steps
