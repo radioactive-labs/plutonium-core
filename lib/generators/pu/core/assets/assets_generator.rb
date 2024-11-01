@@ -22,12 +22,11 @@ module Pu
       private
 
       def copy_tailwind_config
-        copy_file "tailwind.config.js"
+        copy_file "tailwind.config.js", force: true
       end
 
       def install_dependencies
-        `yarn add @radioactive-labs/plutonium`
-        `yarn add flowbite @tailwindcss/forms`
+        run "npm install @radioactive-labs/plutonium flowbite @tailwindcss/forms"
       end
 
       def configure_application
