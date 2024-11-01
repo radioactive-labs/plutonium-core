@@ -34,6 +34,8 @@ export default defineConfig(withMermaid({
             { text: "Overview", link: "/guide/getting-started/" },
             { text: "Installation", link: "/guide/getting-started/installation" },
             { text: "Core Concepts", link: "/guide/getting-started/core-concepts" },
+            { text: "Resources", link: "/guide/getting-started/resources" },
+            { text: "Authorization", link: "/guide/getting-started/authorization" },
           ]
         },
         // { text: "Quick Start", link: "/installation" },

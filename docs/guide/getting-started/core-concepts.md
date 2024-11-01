@@ -47,8 +47,8 @@ class User < ApplicationRecord
   scope :active, -> { where(status: :active) }
 
   # Validations
-  validates :email, presence: true, uniqueness: true
   validates :name, presence: true
+  validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: {in: %w[admin user]}
 
   def admin? = role == "admin"
@@ -162,8 +162,8 @@ module UserInteractions
     attribute :reason, :string
 
     # Validations
-    validates :reason, presence: true
     validates :resource, presence: true
+    validates :reason, presence: true
 
     # Business logic
     def execute
@@ -285,9 +285,6 @@ module AdminPortal
 
     # Scope all resources to organization
     scope_to_entity Organization, strategy: :path
-
-    # Configure authentication
-    include Plutonium::Auth::Rodauth(:admin)
   end
 end
 ```
@@ -300,6 +297,20 @@ AdminPortal::Engine.routes.draw do
   # Register resources from feature packages
   register_resource Blogging::Post
   register_resource Blogging::Comment
+end
+```
+
+```ruby [Controller Configuration]
+# packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
+module AdminPortal
+  module Concerns
+    class Controller < ::Rails::Engine
+      extend ActiveSupport::Concern
+      include Plutonium::Portal::Controller
+      # Integrate authentication
+      include Plutonium::Auth::Rodauth(:admin)
+    end
+  end
 end
 ```
 :::
@@ -326,12 +337,14 @@ end
 class Post < ApplicationRecord
   include Plutonium::Resource::Record
 
-  # Define a relationship to the entity
-  belongs_to :organization
+  # Define a direct relationship to the entity
+  belongs_to :user
+  belongs_to :organization, through: :user
 
   # Alternatively, if there's no direct relationship
   scope :associated_with_organization, ->(organization) do
     # custom scoping logic goes here
+    joins(:user).where(users: { organization_id: organization.id })
   end
 end
 
