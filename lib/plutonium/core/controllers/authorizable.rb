@@ -9,7 +9,7 @@ module Plutonium
 
         included do
           authorize :user, through: :current_user
-          authorize :scope, through: :entity_scope_for_authorize
+          authorize :entity_scope, through: :entity_scope_for_authorize
 
           helper_method :policy_for, :authorized_resource_scope
         end

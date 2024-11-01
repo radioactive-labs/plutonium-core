@@ -15,6 +15,7 @@ module Pu
         setup_packages
         setup_app
         eject_views
+        setup_active_record
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -25,7 +26,6 @@ module Pu
         copy_file "config/packages.rb"
         create_file "packages/.keep"
         insert_into_file "config/application.rb", "\nrequire_relative \"packages\"\n", after: /Bundler\.require.*\n/
-        # insert_into_file "config/application.rb", indent("Plutonium.configure_rails config\n\n", 4), after: /.*< Rails::Application\n/
       end
 
       def setup_app
@@ -37,6 +37,14 @@ module Pu
         invoke "pu:eject:layout", [], dest: "main_app",
           force: options[:force],
           skip: options[:skip]
+      end
+
+      def setup_active_record
+        inject_into_class(
+          "app/models/application_record.rb",
+          "ApplicationRecord",
+          "  include Plutonium::Resource::Record\n"
+        )
       end
     end
   end

@@ -7,13 +7,12 @@ module Plutonium
     # and to retrieve permitted attributes for these actions.
     class Policy < ActionPolicy::Base
       authorize :user, allow_nil: false
-      authorize :scope, allow_nil: true
+      authorize :entity_scope, allow_nil: true
 
       relation_scope do |relation|
-        if scope.present?
-          relation = relation.associated_with(scope)
-        end
-        relation
+        next relation unless entity_scope
+
+        relation.associated_with(entity_scope)
       end
 
       # Sends a method and raises an error if the method is not implemented.

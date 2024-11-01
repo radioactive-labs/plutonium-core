@@ -17,3 +17,6 @@ dist
 
 ai_tools
 test/internal/db/*.sqlite*
+
+docs/.vitepress/cache
+docs/.vitepress/dist
