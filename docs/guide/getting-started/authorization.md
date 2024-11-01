@@ -19,8 +19,8 @@ class BlogPolicy < ResourcePolicy
   # Core CRUD Permissions
 
   def create?
-    # Allow only authenticated users to create blogs
-    user.present?
+    # All authenticated users can create blogs
+    true
   end
 
   def read?
@@ -30,12 +30,12 @@ class BlogPolicy < ResourcePolicy
 
   def update?
     # Allow only the blog owner to update
-    user.present? && record.user_id == user.id
+    owner?
   end
 
   def destroy?
     # Allow only the blog owner or admins to destroy
-    user.present? && (record.user_id == user.id || user.admin?)
+    owner? || user.admin?
   end
 
   # Attribute Control
@@ -61,94 +61,173 @@ class BlogPolicy < ResourcePolicy
   private
 
   def owner?
-    user.present? && record.user_id == user.id
+    record.user_id == user.id
   end
 end
 ```
 
-::: tip
-Note that `permitted_attributes_for_show` and `permitted_attributes_for_index` automatically inherits from `permitted_attributes_for_read` if not defined.
+## Default Behaviors in Plutonium Policies
+
+::: info Overview
+Plutonium's Policy system implements a secure-by-default pattern with clear inheritance chains for both permissions and attribute access.
 :::
 
-## Entity-Based Authorization
+### Permission Defaults
 
-Plutonium supports multi-tenancy through entity-based authorization, allowing you to scope resources based on organizational boundaries.
+Permission methods follow two key patterns: core permissions that default to `false`, and derived permissions that inherit from core ones.
 
-### Setting Up Entity Scoping
+#### Core Permission Chain
 
+```mermaid
+graph TD
+    subgraph Core Permissions
+        A[create? ❌] --> B[update? ❌]
+        A --> C[destroy? ❌]
+        D[read? ❌] --> E[index? ❌]
+        D --> F[show? ❌]
+    end
+```
+
+::: warning Security First
+All core permissions (`create?` and `read?`) default to `false`. You must explicitly override these to grant access.
 ```ruby
-# In your engine.rb
-module AdminPortal
-  class Engine < ::Rails::Engine
-    include Plutonium::Portal::Engine
+# Default implementations
+def create?
+  false
+end
 
-    # Scope all resources to an organization using URL-based scoping
-    scope_to_entity Organization, strategy: :path
-
-    # Or use current a controller method
-    scope_to_entity Organization, strategy: :current_organization
-  end
+def read?
+  false
 end
 ```
-
-::: info
-When using `:path` strategy, Plutonium automatically handles routing for you
 :::
 
-### Implementing Entity Association
-
-There are two ways to associate resources with entities:
+#### Permission Inheritance
 
 ::: code-group
-```ruby [ActiveRecord Association]
-class Blog < ApplicationRecord
-  include Plutonium::Resource::Record
+```ruby [Action Methods]
+def update?
+  create?    # Inherits from create?
+end
 
-  belongs_to :organization
+def destroy?
+  create?    # Inherits from create?
+end
 
-  # Plutonium will automatically use the organization association
+def index?
+  read?      # Inherits from read?
+end
+
+def show?
+  read?      # Inherits from read?
 end
 ```
 
-```ruby [Custom Relationship]
-class Blog < ApplicationRecord
-  include Plutonium::Resource::Record
+```ruby [Helper Methods]
+def new?
+  create?    # Matches create?
+end
 
-  belongs_to :user
-  # Organization is accessed through user
+def edit?
+  update?    # Matches update?
+end
 
-  # Define how to scope by organization
-  scope :associated_with_organization, ->(organization) do
-    joins(:user).where(users: { organization_id: organization.id })
-  end
+def search?
+  index?     # Matches index?
 end
 ```
 :::
 
-## Authorization Contexts
+### Attribute Permission Defaults
 
-By default, Plutonium policies have two context objects:
+Attribute permissions also follow an inheritance pattern, but with auto-detection in development:
 
-```ruby
-class ResourcePolicy < ActionPolicy::Base
-  # Current user (required)
-  authorize :user, allow_nil: false
-
-  # Current scope/tenant (optional)
-  authorize :scope, allow_nil: true
-
-  # All resources are automatically scoped
-  relation_scope do |relation|
-    if scope.present?
-      relation.associated_with(scope)
-    else
-      relation
+::: details Inheritance Chain
+```mermaid
+graph TD
+    subgraph Core Attributes
+        A[permitted_attributes_for_create] --> B[permitted_attributes_for_update]
+        C[permitted_attributes_for_read] --> D[permitted_attributes_for_show]
+        C --> E[permitted_attributes_for_index]
     end
-  end
+```
+:::
+
+#### Core Implementation Details
+
+::: code-group
+```ruby [Create Attributes]
+def permitted_attributes_for_create
+  # Auto-detects fields but excludes system columns
+  autodetect_permitted_fields(:permitted_attributes_for_create) - [
+    resource_class.primary_key.to_sym,
+    :created_at,
+    :updated_at
+  ]
 end
 ```
 
-### Adding Custom Contexts
+```ruby [Read Attributes]
+def permitted_attributes_for_read
+  # Auto-detects all fields
+  autodetect_permitted_fields(:permitted_attributes_for_read)
+end
+```
+
+```ruby [Update Attributes]
+def permitted_attributes_for_update
+  # Inherits from create
+  permitted_attributes_for_create
+end
+```
+:::
+
+::: danger Auto-detection Warning
+The default attribute detection:
+- Only works in development
+- Raises errors in other environments
+- Shows warning messages
+- Must be overridden in production
+:::
+
+### Association Defaults
+
+By default, no associations are permitted:
+
+```ruby
+def permitted_associations
+  []  # Must be explicitly defined
+end
+```
+
+### Context Object Defaults
+
+Two built-in authorization contexts:
+
+::: code-group
+```ruby [Required Context]
+# User must be present
+authorize :user, allow_nil: false
+```
+
+```ruby [Optional Context]
+# Entity scope is optional
+authorize :entity_scope, allow_nil: true
+```
+:::
+
+#### Default Scoping Behavior
+
+When an entity scope exists, records are automatically filtered:
+
+```ruby
+relation_scope do |relation|
+  next relation unless entity_scope
+  relation.associated_with(entity_scope)
+end
+```
+
+#### Adding Custom Contexts
 
 You can add additional authorization contexts:
 
@@ -176,42 +255,24 @@ end
 ```
 :::
 
-## Attribute-Level Access Control
+## Quick Reference
 
-Control access to specific attributes based on user roles or context:
+| Method Type | Default | Inherits From |
+|------------|---------|---------------|
+| create? | false | - |
+| read? | false | - |
+| update? | false | create? |
+| destroy? | false | create? |
+| index? | false | read? |
+| show? | false | read? |
+| attributes_for_create | auto* | - |
+| attributes_for_read | auto* | - |
+| attributes_for_update | auto* | create |
+| associations | [] | - |
 
-```ruby
-class BlogPolicy < ResourcePolicy
-  def permitted_attributes_for_create
-    # Start with basic attributes
-    attrs = [:title, :content]
-
-    # Add role-specific attributes
-    if user.editor?
-      attrs += [:featured, :category]
-    end
-
-    # Add organization-specific attributes
-    if user.admin_in?(scope)
-      attrs += [:internal_notes]
-    end
-
-    attrs
-  end
-
-  # Show action inherits from read by default
-  def permitted_attributes_for_read
-    attrs = [:title, :content, :created_at]
-
-    # Owners and admins can see sensitive data
-    if owner? || user.admin?
-      attrs += [:internal_notes]
-    end
-
-    attrs
-  end
-end
-```
+::: warning
+\*Auto-detection only works in development
+:::
 
 ## Security Best Practices
 

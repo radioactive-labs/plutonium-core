@@ -318,6 +318,9 @@ end
 ## Entity Scoping
 
 Entity scoping is a powerful feature that allows you to partition resources based on a parent entity (like Organization or Account).
+It's how Plutonium achieve's multitenancy.
+
+By properly defining associations to an entity, row-level multitenancy comes for free, out of the box.
 
 ```ruby
 # Scope definition in engine
@@ -325,7 +328,7 @@ module AdminPortal
   class Engine < ::Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Path-based scoping (/org/123/posts)
+    # Path-based scoping (/org_123/posts)
     scope_to_entity Organization, strategy: :path
 
     # Or custom scoping
@@ -348,11 +351,14 @@ class Post < ApplicationRecord
   end
 end
 
-# Controller access
-class PostsController < ResourceController
+# Controller config
+class ResourceController < PlutoniumController
+  include Plutonium::Resource::Controller
+
   private
 
   def current_organization
+    # Get tenant from the current subdomain
     @current_organization ||= Organization.where(subdomain: request.subdomain).first!
   end
 end
@@ -370,7 +376,7 @@ end
 :::
 
 ::: tip Portal Packages
-1. Single responsibility (admin, customer, API)
+1. Single responsibility (admin, customer)
 2. Consistent authentication strategy
 3. Clear resource scoping rules
 4. Feature composition over duplication
@@ -382,14 +388,12 @@ end
 1. Clear validations and constraints
 2. Proper association setup
 3. Meaningful scopes
-4. Entity scoping implementation
 :::
 
 ::: tip Definition Layer
-1. Logical field organization
-2. Appropriate field types
-3. Clear action definitions
-4. Efficient search implementation
+1. Appropriate field types
+2. Clear action definitions
+3. Efficient search implementation
 :::
 
 ::: tip Policy Layer

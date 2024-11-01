@@ -1,5 +1,6 @@
 # Getting Started with Plutonium
 
+<!--
 This guide covers getting up and running with Plutonium.
 
 After reading this guide, you will know:
@@ -8,6 +9,7 @@ After reading this guide, you will know:
 - The general layout of a Plutonium application.
 - The basic principles of Resource design.
 - How to quickly generate the starting pieces of a Plutonium application.
+-->
 
 ## Prerequisites
 

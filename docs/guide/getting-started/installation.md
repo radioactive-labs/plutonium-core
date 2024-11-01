@@ -44,7 +44,6 @@ rails generate pu:core:install
 This will:
 - Set up the basic Plutonium structure
 - Create necessary configuration files
-- Add required JavaScript and CSS dependencies
 - Configure your application for Plutonium
 
 ### Project Structure
@@ -133,7 +132,7 @@ end
 ```
 
 ::: tip
-You can use your existing authentication system by implementing the `current_user` method in your `ResourceController`.
+You can use your existing authentication system by implementing the `current_user` method in `ResourceController`.
 :::
 
 <!--

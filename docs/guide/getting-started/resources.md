@@ -57,7 +57,7 @@ end
 
 ## Resource Definitions
 
-Resource definitions control how a resource behaves in your application. They define:
+Resource definitions customize how a resource behaves in your application. They define:
 - Fields and their types
 - Available actions
 - Search and filtering capabilities
@@ -179,7 +179,7 @@ class BlogDefinition < Plutonium::Resource::Definition
     with: SelectFilter,
     choices: %w[draft published]
 
-  filter :published_after,
+  filter :published_at,
     with: DateFilter,
     predicate: :gteq
 
@@ -227,12 +227,11 @@ class BlogPolicy < Plutonium::Resource::Policy
   end
 
   # Scope visible records
-  relation_scope do |scope|
-    if user.admin?
-      scope
-    else
-      scope.where(user_id: user.id)
-    end
+  relation_scope do |relation|
+    relation = super(relation)
+    next relation unless user.admin?
+
+    relation.with_deleted
   end
 end
 ```
