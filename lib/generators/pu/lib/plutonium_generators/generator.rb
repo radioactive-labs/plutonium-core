@@ -52,7 +52,7 @@ module PlutoniumGenerators
       end
     end
 
-    def select_app(selected_package = nil, msg: "Select app")
+    def select_portal(selected_package = nil, msg: "Select portal")
       select_package(selected_package, msg: msg, pkgs: available_apps)
     end
 

@@ -15,7 +15,7 @@ module Pu
       class_option :rodauth, type: :boolean
 
       def start
-        destination_dir = (destination_app == "main_app") ? "app/views/" : "packages/#{destination_app}/app/views/"
+        destination_dir = (destination_portal == "main_app") ? "app/views/" : "packages/#{destination_portal}/app/views/"
         [
           "layouts/resource.html.erb"
         ].each do |file|
@@ -27,8 +27,8 @@ module Pu
 
       private
 
-      def destination_app
-        @destination_app || select_app(options[:dest], msg: "Select destination app")
+      def destination_portal
+        @destination_portal || select_portal(options[:dest], msg: "Select destination portal")
       end
 
       def copy_file(source_path, destination_path)

@@ -22,7 +22,7 @@ module Pu
         error "No resources found" if available_resources.blank?
         selected_resources = prompt.multi_select("Select resources", available_resources)
 
-        @app_namespace = select_app.camelize
+        @app_namespace = select_portal.camelize
 
         selected_resources.each do |resource|
           @resource_class = resource
