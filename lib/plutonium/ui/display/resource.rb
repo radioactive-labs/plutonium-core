@@ -21,19 +21,37 @@ module Plutonium
         private
 
         def render_fields
-          fields_wrapper {
-            resource_fields.each { |name|
-              render_resource_field name
-            }
-          }
+          Block do
+            fields_wrapper do
+              resource_fields.each do |name|
+                render_resource_field name
+              end
+            end
+          end
         end
 
         def render_associations
-          nil
-          # TODO
-          # resource_associations.each do |name, renderer|
-          #   #     <%= render renderer.with(record: details.record) %>
-          # end
+          resource_associations.each do |name|
+            reflection = object.class.reflect_on_association name
+
+            if !reflection
+              raise ArgumentError,
+                "unknown association #{object.class}##{name} defined in #permitted_associations"
+            elsif !registered_resources.include?(reflection.klass)
+              raise ArgumentError,
+                "#{object.class}##{name} defined in #permitted_associations, but #{reflection.klass} is not a registered resource"
+            end
+
+            title = object.class.human_attribute_name(name)
+            src = case reflection.macro
+            when :belongs_to
+              associated = object.public_send name
+              resource_url_for(associated, parent: nil) if associated
+            when :has_many
+              resource_url_for(reflection.klass, parent: object)
+            end
+            FrameNavigatorPanel(title:, src:) if src
+          end
         end
 
         def render_resource_field(name)

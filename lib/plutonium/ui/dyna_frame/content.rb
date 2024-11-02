@@ -6,10 +6,10 @@ module Plutonium
 
         def view_template
           if current_turbo_frame.present?
-            render turbo_frame_tag(current_turbo_frame) {
+            turbo_frame_tag(current_turbo_frame) do
               render "flash"
               yield
-            }
+            end
           else
             yield
           end

@@ -94,7 +94,7 @@ module Plutonium
         end
 
         def render_footer
-          div(class: "sticky bottom-[-2px] p-4 pb-6 w-full z-50 bg-gray-50 dark:bg-gray-900") {
+          div(class: "sticky bottom-[-2px] mt-1 p-4 pb-6 w-full z-50 bg-gray-50 dark:bg-gray-900") {
             TableInfo(pagy_instance)
             TablePagination(pagy_instance)
           }

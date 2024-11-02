@@ -6,7 +6,7 @@ module Plutonium
       class Theme < Phlexi::Display::Theme
         def self.theme
           super.merge({
-            base: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3",
+            base: "",
             value_wrapper: "max-h-[300px] overflow-y-auto",
             fields_wrapper: "p-6 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 gap-y-10 grid-flow-row-dense",
             label: "text-base font-bold text-gray-500 dark:text-gray-400 mb-1",
