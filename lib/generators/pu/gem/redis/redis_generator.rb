@@ -7,8 +7,6 @@ module Pu
     class RedisGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
-      source_root File.expand_path("templates", __dir__)
-
       desc "Set up redis"
 
       def start

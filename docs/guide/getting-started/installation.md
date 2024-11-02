@@ -3,6 +3,7 @@
 ::: tip VERSION REQUIREMENTS
 - Ruby 3.2.2 or higher
 - Rails 7.1 or higher
+- Node.js and Yarn
 :::
 
 ## Quick Start
@@ -151,7 +152,7 @@ bin/importmap pin @radioactive-labs/plutonium
 ```
 
 ```bash [esbuild]
-npm install @radioactive-labs/plutonium
+yarn add @radioactive-labs/plutonium
 ```
 :::
 

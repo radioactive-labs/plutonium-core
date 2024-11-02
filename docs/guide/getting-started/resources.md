@@ -17,7 +17,8 @@ Resources are the core building blocks of a Plutonium application. A resource re
 The fastest way to create a resource is using the scaffold generator:
 
 ```bash
-rails generate pu:res:scaffold Blog user:belongs_to title:string content:text state:string published_at:datetime?
+rails generate pu:res:scaffold Blog user:belongs_to title:string \
+  content:text state:string published_at:datetime?
 ```
 
 This generates several files, including:

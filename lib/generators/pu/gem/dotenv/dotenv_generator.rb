@@ -21,7 +21,7 @@ module Pu
 
           gitignore "!/.env.template", "!/.env.local.template", "!/.env"
 
-          insert_into_file "Gemfile", "\ngem \"dotenv\", :groups => [:development, :test]\n", after: /^gem ["']rails["'].*\n/
+          insert_into_file "Gemfile", "\ngem \"dotenv\", groups: %i[development test]\n", after: /^gem ["']rails["'].*\n/
           bundle!
         end
       rescue => e
