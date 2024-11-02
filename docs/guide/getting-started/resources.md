@@ -17,8 +17,8 @@ Resources are the core building blocks of a Plutonium application. A resource re
 The fastest way to create a resource is using the scaffold generator:
 
 ```bash
-rails generate pu:res:scaffold Blog user:belongs_to title:string \
-  content:text state:string published_at:datetime?
+rails generate pu:res:scaffold Blog user:belongs_to \
+  title:string content:text 'published_at:datetime?'
 ```
 
 This generates several files, including:
@@ -41,11 +41,11 @@ class BlogPolicy < Plutonium::Resource::Policy
   end
 
   def permitted_attributes_for_create
-    %i[user title content state published_at]
+    %i[user title content published_at]
   end
 
   def permitted_attributes_for_read
-    %i[user title content state published_at]
+    %i[user title content published_at]
   end
 end
 ```
@@ -84,12 +84,12 @@ end
 class BlogDefinition < Plutonium::Resource::Definition
   # Customize how fields are displayed
   display :title, class: "col-span-full"
-  display :content do |f|
+  display :content, class: "col-span-full" do |f|
     f.text_tag class: "prose dark:prose-invert"
   end
 
   # Custom column display in tables
-  column :state, align: :right
+  column :published_at, align: :end
 end
 ```
 :::
@@ -141,7 +141,6 @@ module Blogs
 
     def execute
       if resource.update(
-        state: "published",
         published_at: publish_date
       )
         succeed(resource)
@@ -176,20 +175,16 @@ class BlogDefinition < Plutonium::Resource::Definition
   end
 
   # Add filters
-  filter :state,
-    with: SelectFilter,
-    choices: %w[draft published]
-
   filter :published_at,
     with: DateFilter,
     predicate: :gteq
 
   # Add scopes
   scope :published do |scope|
-    where(state: "published")
+    scope.where.not(published_at: nil)
   end
   scope :draft do |scope|
-    where(state: "draft")
+    scope.where(published_at: nil)
   end
 
   # Configure sorting
