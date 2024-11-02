@@ -15,6 +15,10 @@ after_bundle do
   git add: "."
   git commit: %( -m 'add annotate' )
 
+  generate "pu:gem:standard"
+  git add: "."
+  git commit: %( -m 'add standardrb' )
+
   generate "pu:core:assets"
   git add: "."
   git commit: %( -m 'integrate assets' )
