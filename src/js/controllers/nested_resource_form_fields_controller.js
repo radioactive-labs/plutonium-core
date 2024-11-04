@@ -33,11 +33,11 @@ export default class extends Controller {
     e.preventDefault()
 
     const wrapper = e.target.closest(this.wrapperSelectorValue)
-
-    if (wrapper.dataset.newRecord === "true") {
+    if (wrapper.dataset.newRecord !== undefined) {
       wrapper.remove()
     } else {
       wrapper.style.display = "none"
+      wrapper.classList.remove(...wrapper.classList)
 
       const input = wrapper.querySelector("input[name*='_destroy']")
       input.value = "1"

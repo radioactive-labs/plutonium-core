@@ -4,6 +4,8 @@ module Plutonium
   module UI
     module Form
       class Resource < Base
+        include Plutonium::UI::Form::Concerns::RendersNestedResourceFields
+
         attr_reader :resource_fields, :resource_definition
 
         def initialize(*, resource_fields:, resource_definition:, **, &)
@@ -35,37 +37,45 @@ module Plutonium
 
         def render_resource_field(name)
           when_permitted(name) do
-            # field :name, as: :string
-            # input :name, as: :string
-            # input :description, class: "col-span-full"
-            # input :age, tag: {class: "max-h-fit"}
-            # input :dob do |f|
-            #   f.date_tag
-            # end
-
-            field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
-
-            input_definition = resource_definition.defined_inputs[name] || {}
-            input_options = input_definition[:options] || {}
-
-            tag = field_options[:as] || input_options[:as]
-            tag_attributes = input_options[:tag] || {}
-            tag_block = input_definition[:block] || ->(f) {
-              tag ||= f.inferred_field_component
-              f.send(:"#{tag}_tag", **tag_attributes)
-            }
-
-            field_options = field_options.except(:as)
-            wrapper_options = input_options.except(:tag, :as)
-            if !wrapper_options[:class] || !wrapper_options[:class].include?("col-span")
-              # temp hack to allow col span overrides
-              # TODO: remove once we complete theming, which will support merges
-              wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
+            if resource_definition.defined_nested_inputs[name]
+              render_nested_resource_field(name)
+            else
+              render_simple_resource_field(name, resource_definition, self)
             end
+          end
+        end
 
-            render field(name, **field_options).wrapped(**wrapper_options) do |f|
-              render tag_block.call(f)
-            end
+        def render_simple_resource_field(name, definition, form)
+          # field :name, as: :string
+          # input :name, as: :string
+          # input :description, class: "col-span-full"
+          # input :age, tag: {class: "max-h-fit"}
+          # input :dob do |f|
+          #   f.date_tag
+          # end
+
+          field_options = definition.defined_fields[name] ? definition.defined_fields[name][:options] : {}
+
+          input_definition = definition.defined_inputs[name] || {}
+          input_options = input_definition[:options] || {}
+
+          tag = field_options[:as] || input_options[:as]
+          tag_attributes = input_options[:tag] || {}
+          tag_block = input_definition[:block] || ->(f) {
+            tag ||= f.inferred_field_component
+            f.send(:"#{tag}_tag", **tag_attributes)
+          }
+
+          field_options = field_options.except(:as)
+          wrapper_options = input_options.except(:tag, :as)
+          if !wrapper_options[:class] || !wrapper_options[:class].include?("col-span")
+            # temp hack to allow col span overrides
+            # TODO: remove once we complete theming, which will support merges
+            wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
+          end
+
+          render form.field(name, **field_options).wrapped(**wrapper_options) do |f|
+            render tag_block.call(f)
           end
         end
 

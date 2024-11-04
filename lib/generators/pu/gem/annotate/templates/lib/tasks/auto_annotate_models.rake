@@ -44,7 +44,7 @@ task :set_annotation_options do
     "format_bare" => "true",
     "format_rdoc" => "false",
     "format_yard" => "false",
-    "format_markdown" => "true",
+    "format_markdown" => "false",
     "sort" => "false",
     "force" => "false",
     "frozen" => "false",

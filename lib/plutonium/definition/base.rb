@@ -29,6 +29,7 @@ module Plutonium
       include Actions
       include Sorting
       include Search
+      include NestedInputs
 
       class IndexPage < Plutonium::UI::Page::Index; end
 
