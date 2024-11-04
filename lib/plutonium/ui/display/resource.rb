@@ -91,7 +91,7 @@ module Plutonium
         end
 
         def present_associations?
-          current_parent.nil?
+          current_turbo_frame.nil?
         end
       end
     end

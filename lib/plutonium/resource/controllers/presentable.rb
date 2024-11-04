@@ -5,7 +5,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          helper_method :presentable_attributes, :present_associations?
+          helper_method :presentable_attributes
           helper_method :build_form, :build_detail, :build_collection
         end
 
@@ -30,10 +30,6 @@ module Plutonium
 
         def build_form(record = resource_record)
           current_definition.form_class.new(record, resource_fields: presentable_attributes, resource_definition: current_definition)
-        end
-
-        def present_associations?
-          current_parent.nil?
         end
       end
     end
