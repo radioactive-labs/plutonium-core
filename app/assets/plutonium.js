@@ -2700,10 +2700,11 @@
     remove(e) {
       e.preventDefault();
       const wrapper = e.target.closest(this.wrapperSelectorValue);
-      if (wrapper.dataset.newRecord === "true") {
+      if (wrapper.dataset.newRecord !== void 0) {
         wrapper.remove();
       } else {
         wrapper.style.display = "none";
+        wrapper.classList.remove(...wrapper.classList);
         const input = wrapper.querySelector("input[name*='_destroy']");
         input.value = "1";
       }
@@ -7169,6 +7170,7 @@
     static targets = ["frame", "refreshButton", "backButton", "homeButton"];
     connect() {
       console.log(`frame-navigator connected: ${this.element}`);
+      this.#loadingStarted();
       this.srcHistory = [];
       this.originalFrameSrc = this.frameTarget.src;
       if (this.hasRefreshButtonTarget) {
@@ -7189,6 +7191,8 @@
       this.frameLoading = this.frameLoading.bind(this);
       this.frameTarget.addEventListener("turbo:click", this.frameLoading);
       this.frameTarget.addEventListener("turbo:submit-start", this.frameLoading);
+      this.frameFailed = this.frameFailed.bind(this);
+      this.frameTarget.addEventListener("turbo:fetch-request-error", this.frameFailed);
     }
     disconnect() {
       if (this.hasRefreshButtonTarget)
@@ -7200,23 +7204,23 @@
       this.frameTarget.removeEventListener("turbo:frame-load", this.frameLoaded);
       this.frameTarget.removeEventListener("turbo:click", this.frameLoading);
       this.frameTarget.removeEventListener("turbo:submit-start", this.frameLoading);
+      this.frameTarget.removeEventListener("turbo:fetch-request-error", this.frameFailed);
     }
     frameLoading(event) {
-      if (this.hasRefreshButtonTarget)
-        this.refreshButtonTarget.classList.add("motion-safe:animate-spin");
-      this.frameTarget.classList.add("motion-safe:animate-pulse");
+      this.#loadingStarted();
+    }
+    frameFailed(event) {
+      this.#loadingStopped();
     }
     frameLoaded(event) {
-      if (this.hasRefreshButtonTarget)
-        this.refreshButtonTarget.classList.remove("motion-safe:animate-spin");
-      this.frameTarget.classList.remove("motion-safe:animate-pulse");
+      this.#loadingStopped();
       let src = event.target.src;
       if (src == this.currentSrc) {
       } else if (src == this.originalFrameSrc)
         this.srcHistory = [src];
       else
         this.srcHistory.push(src);
-      this.updateNavigationButtonsDisplay();
+      this.#updateNavigationButtonsDisplay();
     }
     refreshButtonClicked(event) {
       this.frameLoading(null);
@@ -7234,12 +7238,22 @@
     get currentSrc() {
       return this.srcHistory[this.srcHistory.length - 1];
     }
-    updateNavigationButtonsDisplay() {
+    #loadingStarted() {
+      if (this.hasRefreshButtonTarget)
+        this.refreshButtonTarget.classList.add("motion-safe:animate-spin");
+      this.frameTarget.classList.add("motion-safe:animate-pulse");
+    }
+    #loadingStopped() {
+      if (this.hasRefreshButtonTarget)
+        this.refreshButtonTarget.classList.remove("motion-safe:animate-spin");
+      this.frameTarget.classList.remove("motion-safe:animate-pulse");
+    }
+    #updateNavigationButtonsDisplay() {
       if (this.hasHomeButtonTarget) {
-        this.homeButtonTarget.style.display = this.srcHistory.length > 1 ? "" : "none";
+        this.homeButtonTarget.style.display = this.srcHistory.length > 2 ? "" : "none";
       }
       if (this.hasBackButtonTarget) {
-        this.backButtonTarget.style.display = this.srcHistory.length > 2 ? "" : "none";
+        this.backButtonTarget.style.display = this.srcHistory.length > 1 ? "" : "none";
       }
     }
   };
