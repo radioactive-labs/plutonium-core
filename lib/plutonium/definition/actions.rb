@@ -14,8 +14,12 @@ module Plutonium
           end
         end
 
-        def action(name, **)
-          instance_defined_actions[name] = Plutonium::Action::Simple.new(name, **)
+        def action(name, interaction: nil, **)
+          instance_defined_actions[name] = if interaction
+            Plutonium::Action::Interactive::Factory.create(name, interaction:, **)
+          else
+            Plutonium::Action::Simple.new(name, **)
+          end
         end
 
         def defined_actions

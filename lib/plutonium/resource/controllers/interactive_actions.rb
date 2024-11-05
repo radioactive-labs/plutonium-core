@@ -232,7 +232,7 @@ module Plutonium
           @submitted_interaction_params ||= current_interactive_action
             .interaction
             .build_form(nil)
-            .extract_input(params)[:interaction]
+            .extract_input(params, view_context:)[:interaction]
         end
 
         def redirect_url_after_action_on(resource_record_or_resource_class)

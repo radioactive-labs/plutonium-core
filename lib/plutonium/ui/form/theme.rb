@@ -7,7 +7,7 @@ module Plutonium
         def self.theme
           super.merge({
             base: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3 p-6 space-y-6",
-            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 grid-flow-row-dense",
+            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense",
             actions_wrapper: "flex justify-end space-x-2",
             wrapper: nil,
             inner_wrapper: "w-full",
