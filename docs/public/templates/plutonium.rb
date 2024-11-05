@@ -19,6 +19,10 @@ after_bundle do
   git add: "."
   git commit: %( -m 'add standardrb' )
 
+  generate "pu:gem:letter_opener"
+  git add: "."
+  git commit: %( -m 'add letter_opener' )
+
   generate "pu:core:assets"
   git add: "."
   git commit: %( -m 'integrate assets' )
