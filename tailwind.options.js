@@ -12,7 +12,13 @@ export const darkMode = "selector";
 export const plugins = [
   // requires users to have the required packages installed in their own project.
   "@tailwindcss/forms",
-  "flowbite/plugin"
+  "flowbite/plugin",
+  function ({ addVariant }) {
+    // This creates a variant that applies when an ancestor has data-dyna="true"
+    // addVariant('dyna-frame', '&:has([data-dyna-frame="true"] &)')
+    // Or if you prefer using a class instead of data attribute:
+    addVariant('dyna', ':where(.dyna, .dyna *) &')
+  }
 ];
 export const theme = {
   extend: {

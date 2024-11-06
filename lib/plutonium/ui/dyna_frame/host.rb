@@ -12,7 +12,7 @@ module Plutonium
         end
 
         def view_template(&)
-          turbo_frame_tag(@id, src: @src, loading: @loading, **@attributes, &)
+          turbo_frame_tag(@id, src: @src, loading: @loading, **@attributes, class: 'dyna', &)
         end
       end
     end
