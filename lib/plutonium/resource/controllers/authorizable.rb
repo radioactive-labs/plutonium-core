@@ -112,7 +112,7 @@ module Plutonium
         #
         # @return [Hash] default context for the current resource's policy
         def current_policy_context
-          {scope: current_parent || entity_scope_for_authorize}
+          {entity_scope: current_parent || entity_scope_for_authorize}
         end
 
         # Authorizes the current action for the given record of the current resource
@@ -130,7 +130,7 @@ module Plutonium
         #
         # @return [Array<Symbol>] the list of permitted attributes for the current action
         def permitted_attributes
-          @permitted_attributes ||= current_policy.send_with_report(:"permitted_attributes_for_#{action_name}")
+          @permitted_attributes ||= current_policy.send_with_report(:"permitted_attributes_for_#{action_name}").freeze
         end
 
         # Returns the list of permitted associations for the current resource

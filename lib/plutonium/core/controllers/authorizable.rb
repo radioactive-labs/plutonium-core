@@ -26,7 +26,7 @@ module Plutonium
         end
 
         def entity_scope_for_authorize
-          scoped_to_entity? ? current_scoped_entity : nil
+          current_scoped_entity if scoped_to_entity?
         end
 
         def verify_authorized

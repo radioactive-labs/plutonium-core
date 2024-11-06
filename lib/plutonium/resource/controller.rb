@@ -34,7 +34,7 @@ module Plutonium
         # Gets the resource class for the controller
         # @return [ActiveRecord::Base] The resource class
         def resource_class
-          return @resource_class if @resource_class.present?
+          return @resource_class if @resource_class
 
           name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").classify.constantize
         rescue NameError
@@ -52,7 +52,7 @@ module Plutonium
       # Returns the resource record based on path parameters
       # @return [ActiveRecord::Base, nil] The resource record
       def resource_record
-        @resource_record ||= current_authorized_scope.from_path_param(params[:id]).first! if params[:id].present?
+        @resource_record ||= current_authorized_scope.from_path_param(params[:id]).first! if params[:id]
         @resource_record
       end
 
@@ -125,13 +125,13 @@ module Plutonium
       # Applies submitted resource params if they have been passed
       def maybe_apply_submitted_resource_params!
         ensure_get_request
-        resource_record.attributes = submitted_resource_params if params[resource_param_key].present?
+        resource_record.attributes = submitted_resource_params if params[resource_param_key]
       end
 
       # Returns the current parent based on path parameters
       # @return [ActiveRecord::Base, nil] The current parent
       def current_parent
-        return unless parent_route_param.present?
+        return unless parent_route_param
 
         @current_parent ||= begin
           parent_route_key = parent_route_param.to_s.gsub(/_id$/, "").to_sym
@@ -153,7 +153,7 @@ module Plutonium
       # Returns the parent input parameter
       # @return [Symbol, nil] The parent input parameter
       def parent_input_param
-        return unless current_parent.present?
+        return unless current_parent
 
         resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass.name == current_parent.class.name }&.name&.to_sym
       end
@@ -182,7 +182,7 @@ module Plutonium
       # Overrides parent parameters
       # @param [Hash] input_params The input parameters
       def override_parent_params(input_params)
-        if current_parent.present?
+        if current_parent
           if input_params.key?(parent_input_param) || resource_class.method_defined?(:"#{parent_input_param}=")
             input_params[parent_input_param] = current_parent
           end
