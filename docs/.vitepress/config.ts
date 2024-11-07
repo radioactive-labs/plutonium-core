@@ -26,7 +26,7 @@ export default defineConfig(withMermaid({
           text: "Introduction",
           items: [
             { text: "What is Plutonium?", link: "/guide/what-is-plutonium" },
-            { text: "Quick Tutorial", link: "/guide/tutorial" },
+            { text: "Tutorial", link: "/guide/tutorial" },
           ]
         },
         {

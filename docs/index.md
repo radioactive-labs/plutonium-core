@@ -17,27 +17,31 @@ hero:
       link: /guide/what-is-plutonium
 
 features:
-  - title: Pro-Grade CRUD UI
-    details: Stunning, modern interface with rich field types to build powerful admin panels in minutes
+  # Core Value Proposition - Start with the main benefit
+  - title: Rich Resource Management
+    details: Beautiful, modern interfaces with production-ready components for rapid development
 
-  - title: Intelligent Fields
-    details: Zero-config field detection that matches your Rails models out of the box
+  # Core Architecture Features - Foundation pieces
+  - title: Built-in Multitenancy
+    details: Row-level multitenancy that works out of the box - perfect for SaaS and enterprise apps
+
+  - title: Advanced Authorization
+    details: Comprehensive access control built on Action Policy's proven authorization framework
 
   - title: Seamless Authentication
-    details: Use your existing auth or our Rodauth integration - get setup in seconds
+    details: Integrate your existing auth or use our Rodauth integration - ready in seconds
 
-  - title: Enterprise Authorization
-    details: Industrial-strength access control powered by Action Policy's proven framework
-
-  - title: Built-in Multitenancy
-    details: Row-level multitenancy that just works - perfect for SaaS and enterprise apps
+  # Developer Experience Features - How it makes development easier
+  - title: Intelligent Fields
+    details: Smart field detection with automatic Rails model mapping and zero configuration needed
 
   - title: Advanced Nested Resources
-    details: Complex resource relationships made simple with zero extra configuration
+    details: Complex resource relationships made simple through intelligent relationship mapping
 
-  - title: Custom Actions
-    details: Extend your admin panel with incredibly simple custom actions and workflows
+  # Extensibility Features - How it grows with your needs
+  - title: Extensible Workflows
+    details: Add custom actions and business workflows with a simple, declarative API
 
-  - title: Complete Builder Control
-    details: Total flexibility to customize every aspect of your admin UI with elegant builder APIs
+  - title: Flexible UI Customization
+    details: Customize any aspect of your interfaces with elegant builder APIs
 ---
