@@ -74,6 +74,11 @@ rails generate pu:res:scaffold post user:belongs_to title:string \
   content:text 'published_at:datetime?'
 ```
 
+::: tip
+Unlike Rails, Plutonium generates fields as non-null by default.
+Appending `?` to the type e.g. `published_at:datetime?` makes `published_at` a **nullable** datetime.
+:::
+
 When prompted, select the `blogging` feature package.
 
 This creates:
@@ -90,11 +95,6 @@ class Blogging::Post < Blogging::ResourceRecord
   validates :content, presence: true
 end
 ```
-
-::: tip
-Unlike Rails, Plutonium generates fields as non-null by default.
-Appending `?` to the type e.g. `datetime?` marks that field as nullable.
-:::
 
 ## Creating the Dashboard Portal
 
@@ -139,6 +139,15 @@ rails generate pu:res:scaffold comment blogging/post:belongs_to \
 
 rails generate pu:res:conn
 ```
+
+::: tip
+Note the use of the namespaced model in the association `blogging/post`.
+
+Plutonium has inbuilt support for handling namespaces, generating:
+```ruby
+belongs_to :post, class_name: "Blogging::Post"
+```
+:::
 
 This creates:
 - Comment model with associations
