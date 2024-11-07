@@ -136,8 +136,12 @@ module Plutonium
         @current_parent ||= begin
           parent_route_key = parent_route_param.to_s.gsub(/_id$/, "").to_sym
           parent_class = current_engine.resource_register.route_key_lookup[parent_route_key]
-          parent_scope = parent_class.from_path_param(params[parent_route_param])
-          parent_scope = parent_scope.associated_with(current_scoped_entity) if scoped_to_entity?
+          parent_scope = if scoped_to_entity?
+            parent_class.associated_with(current_scoped_entity)
+          else
+            parent_class.all
+          end
+          parent_scope = parent_scope.from_path_param(params[parent_route_param])
           current_parent = parent_scope.first!
           authorize! current_parent, to: :read?
           current_parent
