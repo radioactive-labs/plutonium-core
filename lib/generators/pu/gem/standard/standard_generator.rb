@@ -10,7 +10,7 @@ module Pu
       desc "Set up standardrb"
 
       def start
-        bundle "standardrb"
+        bundle "standard", version: ">= 1.35.1"
       rescue => e
         exception "#{self.class} failed:", e
       end
