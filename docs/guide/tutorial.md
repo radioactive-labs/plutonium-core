@@ -1,5 +1,11 @@
 # Building a Blog with Plutonium
 
+# Building a Blog with Plutonium
+
+> **Quick Links:**
+> - 🔍 [Tutorial Demo](https://github.com/radioactive-labs/plutonium-app)
+> - 📂 [Tutorial Source Code](https://github.com/radioactive-labs/plutonium-app)
+
 This tutorial walks through building a blog application using Plutonium. You'll learn how to:
 
 - Set up authentication using Rodauth
@@ -8,6 +14,8 @@ This tutorial walks through building a blog application using Plutonium. You'll 
 - Implement posts and comments
 - Add interactive actions
 - Configure scoping and authorization
+
+[Rest of the tutorial content remains exactly the same...]
 
 ## Initial Setup
 
@@ -96,6 +104,11 @@ class Blogging::Post < Blogging::ResourceRecord
 end
 ```
 
+Remember to apply the new migrations:
+```bash
+rails db:migrate
+```
+
 ## Creating the Dashboard Portal
 
 Let's add a portal to manage our blog:
@@ -178,6 +191,8 @@ Let's add commenting functionality:
 ```bash
 rails generate pu:res:scaffold comment blogging/post:belongs_to \
   user:belongs_to body:text
+
+rails db:migrate
 
 rails generate pu:res:conn
 ```
@@ -267,10 +282,11 @@ end
 ```
 
 ```ruby [post_policy.rb]
-packages/blogging/app/policies/blogging/post_policy.rb
-def publish?
-  !record.published_at
-end
+# packages/blogging/app/policies/blogging/post_policy.rb
+
+def publish? # [!code ++]
+  !record.published_at # [!code ++]
+end # [!code ++]
 
 
 def permitted_attributes_for_create
@@ -337,13 +353,15 @@ nested_input :comments,
 
 ```ruby [post.rb]
 # packages/blogging/app/models/blogging/post.rb
-accepts_nested_attributes_for :comments
+has_many :comments
+accepts_nested_attributes_for :comments # [!code ++]
 ```
 
 ```ruby [post_policy.rb]
 # packages/blogging/app/policies/blogging/post_policy.rb
 def permitted_attributes_for_create
-  [:user, :title, :content, :comments]
+  [:user, :title, :content] # [!code --]
+  [:user, :title, :content, :comments] # [!code ++]
 end
 ```
 
@@ -353,9 +371,9 @@ end
 
 ## Running the Application
 
-1. Start the Rails server:
+1. Start the Development server:
 ```bash
-rails server
+bin/dev
 ```
 
 2. Visit `http://localhost:3000`
