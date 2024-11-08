@@ -17,7 +17,8 @@ export default defineConfig(withMermaid({
     },
     nav: [
       { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/getting-started" }
+      { text: "Guide", link: "/guide/getting-started" },
+      { text: "Demo", link: "https://plutonium-app.onrender.com/" }
     ],
     sidebar: {
       '/guide/': [
