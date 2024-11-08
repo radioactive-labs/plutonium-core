@@ -112,6 +112,48 @@ This creates a new portal package under `packages/dashboard_portal/` with:
 - Dashboard views
 - Authenticated routes
 
+## Configure Routes
+
+Let's configure our application routes to properly handle authentication and dashboard access:
+
+::: code-group
+```ruby [app/rodauth/user_rodauth_plugin.rb]
+# ==> Redirects
+
+# Redirect to home after login.
+create_account_redirect "/" # [!code --]
+create_account_redirect "/dashboard" # [!code ++]
+
+# Redirect to home after login.
+login_redirect "/" # [!code --]
+login_redirect "/dashboard" # [!code ++]
+
+# Redirect to home page after logout.
+logout_redirect "/" # [!code --]
+logout_redirect "/dashboard" # [!code ++]
+
+# Redirect to wherever login redirects to after account verification.
+verify_account_redirect { login_redirect }
+```
+
+```ruby [config/routes.rb]
+Rails.application.routes.draw do
+  # Other routes...
+
+  # Defines the root path route ("/")
+  # root "posts#index" # [!code --]
+  root to: redirect("/dashboard") # [!code ++]
+end
+```
+:::
+
+These changes ensure that:
+- Users are directed to the dashboard after signing up
+- Users are directed to the dashboard after logging in
+- Users are directed to the dashboard after logging out
+- The root URL (`/`) redirects to the dashboard
+- Account verification follows the same flow as login
+
 ## Connecting Posts to Dashboard
 
 We can now connect our blog posts to the dashboard:
@@ -145,7 +187,11 @@ Note the use of the namespaced model in the association `blogging/post`.
 
 Plutonium has inbuilt support for handling namespaces, generating:
 ```ruby
+# model
 belongs_to :post, class_name: "Blogging::Post"
+
+# migration
+t.belongs_to :post, null: false, foreign_key: {:to_table=>:blogging_posts}
 ```
 :::
 
@@ -217,6 +263,19 @@ module Blogging
       end
     end
   end
+end
+```
+
+```ruby [post_policy.rb]
+packages/blogging/app/policies/blogging/post_policy.rb
+def publish?
+  !record.published_at
+end
+
+
+def permitted_attributes_for_create
+  [:user, :title, :content, :published_at] # [!code --]
+  [:user, :title, :content] # [!code ++]
 end
 ```
 
