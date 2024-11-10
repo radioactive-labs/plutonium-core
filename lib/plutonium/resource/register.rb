@@ -78,7 +78,7 @@ module Plutonium
       #
       # @return [void]
       def invalidate_cache
-        flush_smart_cache
+        # flush_smart_cache
       end
     end
   end
