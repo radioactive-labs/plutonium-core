@@ -3561,7 +3561,6 @@
     window.Dismiss = Dismiss;
     window.initDismisses = initDismisses;
   }
-  var dismiss_default = Dismiss;
 
   // node_modules/@popperjs/core/lib/enums.js
   var top = "top";
@@ -7138,18 +7137,14 @@
 
   // src/js/controllers/resource_dismiss_controller.js
   var resource_dismiss_controller_default = class extends Controller {
-    static targets = ["trigger", "target"];
     static values = {
       after: Number
     };
     connect() {
       console.log(`resource-dismiss connected: ${this.element}`);
-      this.dismiss = new dismiss_default(this.targetTarget, this.triggerTarget);
-      console.log(this.hasAfterValue);
-      console.log(this.afterValue);
       if (this.hasAfterValue && this.afterValue > 0) {
         this.autoDismissTimeout = setTimeout(() => {
-          this.hide();
+          this.dismiss();
           this.autoDismissTimeout = null;
         }, this.afterValue);
       }
@@ -7157,11 +7152,10 @@
     disconnect() {
       if (this.autoDismissTimeout)
         clearTimeout(this.autoDismissTimeout);
-      this.dismiss = null;
       this.autoDismissTimeout = null;
     }
-    hide() {
-      this.dismiss.hide();
+    dismiss() {
+      this.element.remove();
     }
   };
 
