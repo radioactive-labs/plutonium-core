@@ -23,7 +23,7 @@ module Plutonium
       end
 
       class_methods do
-        include Plutonium::Lib::SmartCache
+        # include Plutonium::Lib::SmartCache
 
         # Sets the resource class for the controller
         # @param [ActiveRecord::Base] resource_class The resource class
@@ -40,7 +40,7 @@ module Plutonium
         rescue NameError
           raise NameError, "Failed to determine the resource class. Please call `controller_for(MyResource)` in #{name}."
         end
-        memoize_unless_reloading :resource_class
+        # memoize_unless_reloading :resource_class
       end
 
       private

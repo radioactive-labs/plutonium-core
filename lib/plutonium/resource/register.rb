@@ -4,7 +4,7 @@ module Plutonium
   module Resource
     # Resource register manages the registration and lookup of resources.
     class Register
-      include Plutonium::Lib::SmartCache
+      # include Plutonium::Lib::SmartCache
 
       # Custom error class for frozen register operations
       class FrozenRegisterError < StandardError; end
@@ -35,7 +35,7 @@ module Plutonium
         freeze
         @resources.map(&:constantize)
       end
-      memoize_unless_reloading :resources
+      # memoize_unless_reloading :resources
 
       # Returns a hash mapping route keys to their corresponding resource classes.
       # This method will freeze the register if it hasn't been frozen already.
@@ -47,7 +47,7 @@ module Plutonium
           [resource.model_name.singular_route_key.to_sym, resource]
         end
       end
-      memoize_unless_reloading :route_key_lookup
+      # memoize_unless_reloading :route_key_lookup
 
       # Clears all registered resources and invalidates the cache.
       #

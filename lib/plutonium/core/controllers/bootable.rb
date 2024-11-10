@@ -21,9 +21,9 @@ module Plutonium
           def inherited(subclass)
             super
 
-            subclass.include Plutonium::Lib::SmartCache
-            subclass.memoize_unless_reloading :current_package
-            subclass.memoize_unless_reloading :current_engine
+            # subclass.include Plutonium::Lib::SmartCache
+            # subclass.memoize_unless_reloading :current_package
+            # subclass.memoize_unless_reloading :current_engine
             subclass.boot
           end
 
