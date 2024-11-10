@@ -172,6 +172,7 @@ module Pu
           },
           jwt: {},
           json: {},
+          case_insensitive_login: {default: true},
           internal_request: {default: true}
         }.freeze
 

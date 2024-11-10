@@ -10,6 +10,7 @@ require "phlexi-form"
 require "phlexi-table"
 
 require_relative "plutonium/configuration"
+require_relative "rodauth/loader"
 
 # Plutonium module
 #
@@ -25,6 +26,7 @@ module Plutonium
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
     loader.ignore("#{__dir__}/generators")
     loader.ignore("#{__dir__}/plutonium/railtie.rb")
+    loader.ignore("#{__dir__}/rodauth")
     loader.inflector.inflect("ui" => "UI")
     loader.inflector.inflect("workflow_dsl" => "WorkflowDSL")
     loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
