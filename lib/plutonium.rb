@@ -10,7 +10,7 @@ require "phlexi-form"
 require "phlexi-table"
 
 require_relative "plutonium/configuration"
-require_relative "rodauth/loader"
+require_relative "rodauth/plugins" if defined?(Rodauth)
 
 # Plutonium module
 #
