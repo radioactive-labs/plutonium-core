@@ -4,8 +4,8 @@ module Plutonium
       class Host < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::TurboFrameTag
 
-        def initialize(src:, loading:, id: SecureRandom.hex, **attributes)
-          @id = id
+        def initialize(src:, loading:, **attributes)
+          @id = attributes.delete(:id) || SecureRandom.alphanumeric(8, chars: [*"a".."z"])
           @src = src
           @loading = loading
           @attributes = attributes
