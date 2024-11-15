@@ -500,7 +500,7 @@ module PlutoniumGenerators
       def hash_to_cli_options(hash)
         hash.map do |key, value|
           formatted_value = value.is_a?(Array) ? value.join(",") : value
-          "--#{key.to_s.tr("_", "-")}=#{formatted_value}"
+          "--#{key.to_s.tr("_", "-")}=\"#{formatted_value}\""
         end.join(" ")
       end
     end
