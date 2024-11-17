@@ -1,16 +1,3 @@
-<%= render_component :resource_layout, lang: "en",
-                                        page_title: make_page_title(@page_title) do |layout| %>
-  <% layout.with_favicon do %>
-    <%= resource_favicon_tag %>
-  <% end %>
-
-  <% layout.with_header do %>
-    <%= render("resource_header", sidebar_toggle: "#{current_engine.dom_id}-drawer") %>
-  <% end %>
-
-  <% layout.with_sidebar do %>
-    <%= render("resource_sidebar") %>
-  <% end %>
-
+<%= render Plutonium::UI::Layout::ResourceLayout.new do |layout| %>
   <%= yield %>
 <% end %>

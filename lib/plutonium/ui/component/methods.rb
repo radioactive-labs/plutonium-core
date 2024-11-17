@@ -45,9 +45,11 @@ module Plutonium
           :current_policy,
           :current_turbo_frame,
           :current_interactive_action,
+          :current_engine,
           :policy_for,
           :allowed_to?,
           :registered_resources,
+          :root_path,
           to: :helpers
       end
     end
