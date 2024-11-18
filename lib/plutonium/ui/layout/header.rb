@@ -84,7 +84,7 @@ module Plutonium
         # Renders the brand section with logo and/or name
         # @private
         def render_brand
-          a(href: root_path, class: "flex items-center justify-between md:min-w-60") do
+          a(href: root_path, class: "flex items-center space-x-2 md:min-w-60") do
             render brand_logo_slot if brand_logo_slot?
             if brand_name_slot?
               span(class: "self-center text-2xl font-semibold whitespace-nowrap dark:text-white hidden xs:block") do
