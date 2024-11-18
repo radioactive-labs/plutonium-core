@@ -160,14 +160,14 @@ module Plutonium
           def render_multiple_nested_fields(context)
             nesting_method = :nest_many
             options = {default: {NEW_RECORD: context.blank_object}}
-            render_template_for_nested_fields(context, options, nesting_method:)
+            render_template_for_nested_fields(context, options.merge(collection: {NEW_RECORD: context.blank_object}), nesting_method:)
             render_existing_nested_fields(context, options, nesting_method:)
           end
 
           def render_single_nested_field(context)
             nesting_method = :nest_one
             options = {default: context.blank_object}
-            render_template_for_nested_fields(context, options, nesting_method:)
+            render_template_for_nested_fields(context, options.merge(object: context.blank_object), nesting_method:)
             render_existing_nested_fields(context, options, nesting_method:)
           end
 
@@ -267,8 +267,8 @@ module Plutonium
               you can either pass in a block:
               ```ruby
               nested_input :#{name} do |definition|
-                input :city
-                input :country
+                definition.input :city
+                definition.input :country
               end
               ```
 
