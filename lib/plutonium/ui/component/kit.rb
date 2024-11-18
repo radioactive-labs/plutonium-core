@@ -35,6 +35,8 @@ module Plutonium
         def TableInfo(...) = render Plutonium::UI::Table::Components::PagyInfo.new(...)
 
         def TablePagination(...) = render Plutonium::UI::Table::Components::PagyPagination.new(...)
+
+        def ColorModeSelector(...) = render Plutonium::UI::ColorModeSelector.new(...)
       end
     end
   end
