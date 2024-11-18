@@ -9,12 +9,12 @@ module Plutonium
         def initialize(*, query_object:, page_size:, attributes: {}, **options, &)
           options[:as] = :q
           options[:method] = :get
-          attributes.deep_merge!(
+          attributes = mix(attributes.deep_merge(
             id: :search_form,
             class!: "space-y-2 mb-4",
             controller: "form",
             data: {controller: "form", turbo_frame: nil}
-          )
+          ))
           super(*, attributes:, **options, &)
 
           @query_object = query_object
@@ -97,6 +97,8 @@ module Plutonium
         end
 
         def render_filter_fields
+          return if query_object.filter_definitions.blank?
+
           div(class: "flex flex-wrap items-center gap-4") do
             span(class: "text-sm font-medium text-gray-900 dark:text-white") { "Filters:" }
             div(class: "flex flex-wrap items-center gap-4 mr-auto") do
