@@ -112,7 +112,7 @@ module Plutonium
         end
 
         def render_favicon_tag
-          favicon_link_tag(Plutonium.configuration.assets.favicon)
+          favicon_link_tag(Plutonium.configuration.assets.favicon) if Plutonium.configuration.assets.favicon
         end
 
         def render_assets_tags
