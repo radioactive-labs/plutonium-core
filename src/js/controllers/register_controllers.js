@@ -5,9 +5,10 @@ import NavGridMenuController from "./nav_grid_menu_controller.js"
 import NavUserSectionController from "./nav_user_section_controller.js"
 import NavUserLinkController from "./nav_user_link_controller.js"
 import NavUserController from "./nav_user_controller.js"
-import ResourceHeaderController from "./resource_header_controller.js"
+import HeaderController from "./header_controller.js"
 import SidebarMenuItemController from "./sidebar_menu_item_controller.js"
 import SidebarMenuController from "./sidebar_menu_controller.js"
+import SidebarController from "./sidebar_controller.js"
 import HasManyPanelController from "./has_many_panel_controller.js"
 import NestedResourceFormFieldsController from "./nested_resource_form_fields_controller.js"
 import ToolbarController from "./toolbar_controller.js"
@@ -29,9 +30,10 @@ export default function (application) {
   application.register("nav-user-section", NavUserSectionController)
   application.register("nav-user-link", NavUserLinkController)
   application.register("nav-user", NavUserController)
-  application.register("resource-header", ResourceHeaderController)
+  application.register("header", HeaderController)
   application.register("sidebar-menu-item", SidebarMenuItemController)
   application.register("sidebar-menu", SidebarMenuController)
+  application.register("sidebar", SidebarController)
   application.register("has-many-panel", HasManyPanelController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
   application.register("toolbar", ToolbarController)

@@ -17,7 +17,7 @@ module Plutonium
         def render_before_main
           super
 
-          render("resource_header", sidebar_toggle: "#{current_engine.dom_id}-drawer")
+          render("resource_header")
           render("resource_sidebar")
         end
       end

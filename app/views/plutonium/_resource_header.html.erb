@@ -1,6 +1,8 @@
-<%# locals: (sidebar_toggle:) %>
+<%= render Plutonium::UI::Layout::Header.new do |header| %>
+  <% header.with_brand_logo do %>
+    <%= resource_logo_tag(classname: "mr-3 h-10") %>
+  <% end %>
 
-<%= render_component :resource_header, sidebar_toggle: do |header| %>
   <% header.with_action do %>
     <%=
       render_component :nav_grid_menu, label: "Apps" do |menu|

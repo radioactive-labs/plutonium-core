@@ -8,6 +8,7 @@ PATH
       pagy (~> 9.0)
       phlex (~> 1.11)
       phlex-rails
+      phlex-slotable
       phlex-tabler_icons
       phlexi-display
       phlexi-form
@@ -187,6 +188,8 @@ GEM
       phlex (~> 1.9)
       railties (>= 6.1, < 8)
       zeitwerk (~> 2.6)
+    phlex-slotable (0.5.0)
+      phlex (>= 1.9, < 3)
     phlex-tabler_icons (0.3.0)
     phlexi-display (0.0.7)
       activesupport

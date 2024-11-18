@@ -2648,10 +2648,153 @@
     }
   };
 
-  // src/js/controllers/resource_header_controller.js
-  var resource_header_controller_default = class extends Controller {
+  // src/js/controllers/header_controller.js
+  var header_controller_default = class extends Controller {
+    static targets = ["open", "close"];
+    static outlets = ["sidebar"];
+    static values = {
+      placement: { type: String, default: "left" },
+      bodyScrolling: { type: Boolean, default: false },
+      backdrop: { type: Boolean, default: true },
+      edge: { type: Boolean, default: false },
+      edgeOffset: { type: String, default: "bottom-[60px]" }
+    };
+    static classes = {
+      backdrop: "bg-gray-900/50 dark:bg-gray-900/80 fixed inset-0 z-30"
+    };
+    initialize() {
+      this.visible = false;
+      this.handleEscapeKey = this.handleEscapeKey.bind(this);
+    }
     connect() {
-      console.log(`resource-header connected: ${this.element}`);
+      document.addEventListener("keydown", this.handleEscapeKey);
+    }
+    sidebarOutletConnected() {
+      this.#setupDrawer(this.sidebarOutlet.element);
+    }
+    disconnect() {
+      this.#removeBackdrop();
+      document.removeEventListener("keydown", this.handleEscapeKey);
+      if (!this.bodyScrollingValue) {
+        document.body.classList.remove("overflow-hidden");
+      }
+    }
+    #setupDrawer(drawerElement) {
+      drawerElement.setAttribute("aria-hidden", "true");
+      drawerElement.classList.add("transition-transform");
+      this.#getPlacementClasses(this.placementValue).base.forEach((className) => {
+        drawerElement.classList.add(className);
+      });
+    }
+    toggleDrawer() {
+      this.visible ? this.hideDrawer() : this.showDrawer();
+    }
+    showDrawer() {
+      if (this.edgeValue) {
+        this.#toggleEdgePlacementClasses(`${this.placementValue}-edge`, true);
+      } else {
+        this.#togglePlacementClasses(this.placementValue, true);
+      }
+      this.openTarget.classList.add("hidden");
+      this.openTarget.setAttribute("aria-hidden", "true");
+      this.closeTarget.classList.remove("hidden");
+      this.closeTarget.setAttribute("aria-hidden", "false");
+      this.sidebarOutlet.element.setAttribute("aria-modal", "true");
+      this.sidebarOutlet.element.setAttribute("role", "dialog");
+      this.sidebarOutlet.element.removeAttribute("aria-hidden");
+      if (!this.bodyScrollingValue) {
+        document.body.classList.add("overflow-hidden");
+      }
+      if (this.backdropValue) {
+        this.#createBackdrop();
+      }
+      this.visible = true;
+      this.dispatch("show");
+    }
+    hideDrawer() {
+      if (this.edgeValue) {
+        this.#toggleEdgePlacementClasses(`${this.placementValue}-edge`, false);
+      } else {
+        this.#togglePlacementClasses(this.placementValue, false);
+      }
+      this.openTarget.classList.remove("hidden");
+      this.openTarget.setAttribute("aria-hidden", "false");
+      this.closeTarget.classList.add("hidden");
+      this.closeTarget.setAttribute("aria-hidden", "true");
+      this.sidebarOutlet.element.setAttribute("aria-hidden", "true");
+      this.sidebarOutlet.element.removeAttribute("aria-modal");
+      this.sidebarOutlet.element.removeAttribute("role");
+      if (!this.bodyScrollingValue) {
+        document.body.classList.remove("overflow-hidden");
+      }
+      if (this.backdropValue) {
+        this.#removeBackdrop();
+      }
+      this.visible = false;
+      this.dispatch("hide");
+    }
+    handleEscapeKey(event) {
+      if (event.key === "Escape" && this.visible) {
+        this.hideDrawer();
+      }
+    }
+    #createBackdrop() {
+      if (!this.visible) {
+        const backdrop = document.createElement("div");
+        backdrop.setAttribute("data-drawer-backdrop", "");
+        backdrop.classList.add(...this.constructor.classes.backdrop.split(" "));
+        backdrop.addEventListener("click", () => this.hideDrawer());
+        document.body.appendChild(backdrop);
+      }
+    }
+    #removeBackdrop() {
+      const backdrop = document.querySelector("[data-drawer-backdrop]");
+      if (backdrop) {
+        backdrop.remove();
+      }
+    }
+    #getPlacementClasses(placement) {
+      const placements2 = {
+        top: {
+          base: ["top-0", "left-0", "right-0"],
+          active: ["transform-none"],
+          inactive: ["-translate-y-full"]
+        },
+        right: {
+          base: ["right-0", "top-0"],
+          active: ["transform-none"],
+          inactive: ["translate-x-full"]
+        },
+        bottom: {
+          base: ["bottom-0", "left-0", "right-0"],
+          active: ["transform-none"],
+          inactive: ["translate-y-full"]
+        },
+        left: {
+          base: ["left-0", "top-0"],
+          active: ["transform-none"],
+          inactive: ["-translate-x-full"]
+        },
+        "bottom-edge": {
+          base: ["left-0", "top-0"],
+          active: ["transform-none"],
+          inactive: ["translate-y-full", this.edgeOffsetValue]
+        }
+      };
+      return placements2[placement] || placements2.left;
+    }
+    #togglePlacementClasses(placement, show) {
+      const classes = this.#getPlacementClasses(placement);
+      if (show) {
+        classes.active.forEach((c) => this.sidebarOutlet.element.classList.add(c));
+        classes.inactive.forEach((c) => this.sidebarOutlet.element.classList.remove(c));
+      } else {
+        classes.active.forEach((c) => this.sidebarOutlet.element.classList.remove(c));
+        classes.inactive.forEach((c) => this.sidebarOutlet.element.classList.add(c));
+      }
+    }
+    #toggleEdgePlacementClasses(placement, show) {
+      this.#togglePlacementClasses(placement, show);
     }
   };
 
@@ -2666,6 +2809,13 @@
   var sidebar_menu_controller_default = class extends Controller {
     connect() {
       console.log(`sidebar-menu connected: ${this.element}`);
+    }
+  };
+
+  // src/js/controllers/sidebar_controller.js
+  var sidebar_controller_default = class extends Controller {
+    connect() {
+      console.log(`sidebar connected: ${this.element}`);
     }
   };
 
@@ -7290,9 +7440,10 @@
     application2.register("nav-user-section", nav_user_section_controller_default);
     application2.register("nav-user-link", nav_user_link_controller_default);
     application2.register("nav-user", nav_user_controller_default);
-    application2.register("resource-header", resource_header_controller_default);
+    application2.register("header", header_controller_default);
     application2.register("sidebar-menu-item", sidebar_menu_item_controller_default);
     application2.register("sidebar-menu", sidebar_menu_controller_default);
+    application2.register("sidebar", sidebar_controller_default);
     application2.register("has-many-panel", has_many_panel_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);
     application2.register("toolbar", toolbar_controller_default);
