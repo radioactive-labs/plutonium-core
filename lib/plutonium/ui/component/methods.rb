@@ -39,6 +39,7 @@ module Plutonium
           :resource_name_plural,
           :display_name_of,
           :resource_url_for,
+          :current_user,
           :current_definition,
           :current_query_object,
           :raw_resource_query_params,
