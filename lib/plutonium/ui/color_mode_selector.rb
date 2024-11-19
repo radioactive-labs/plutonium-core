@@ -23,7 +23,7 @@ module Plutonium
 
       # Renders the color mode selector
       # @return [void]
-      def template
+      def view_template
         div(data_controller: "resource-drop-down") do
           render_dropdown_trigger
           render_dropdown_menu
