@@ -6,8 +6,8 @@ module Plutonium
         include Phlex::Rails::Helpers::CSPMetaTag
         include Phlex::Rails::Helpers::CSRFMetaTags
         include Phlex::Rails::Helpers::FaviconLinkTag
-        include Phlex::Rails::Helpers::StyleSheetLinkTag
-        include Phlex::Rails::Helpers::JavaScriptIncludeTag
+        include Phlex::Rails::Helpers::StylesheetLinkTag
+        include Phlex::Rails::Helpers::JavascriptIncludeTag
 
         def view_template(&)
           doctype
