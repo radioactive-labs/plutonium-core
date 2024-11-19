@@ -9,8 +9,6 @@ module Plutonium
       #     ...
       #   end
       class Sidebar < Base
-        include Phlex::Slotable
-
         # Renders the sidebar navigation template
         # @yield [void] The block containing sidebar content
         # @return [void]
