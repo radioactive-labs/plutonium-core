@@ -215,13 +215,13 @@ module Plutonium
         end
 
         def build_interactive_record_action_interaction
-          @interaction = current_interactive_action.interaction.new
+          @interaction = current_interactive_action.interaction.new(view_context:)
           @interaction.attributes = interaction_params.merge(resource: resource_record)
           @interaction
         end
 
         def build_interactive_resource_action_interaction
-          @interaction = current_interactive_action.interaction.new
+          @interaction = current_interactive_action.interaction.new(view_context:)
           @interaction.attributes = interaction_params
           @interaction
         end
@@ -231,7 +231,7 @@ module Plutonium
         def submitted_interaction_params
           @submitted_interaction_params ||= current_interactive_action
             .interaction
-            .build_form(nil)
+            .build_form(current_interactive_action.interaction.new(view_context:))
             .extract_input(params, view_context:)[:interaction]
         end
 

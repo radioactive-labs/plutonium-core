@@ -29,19 +29,26 @@ module Plutonium
 
       class Form < Plutonium::UI::Form::Interaction; end
 
+      class << self
+        def call(...)
+          new(...).call
+        end
+
+        def build_form(instance)
+          raise ArgumentError, "instance is required" unless instance
+
+          self::Form.new(instance)
+        end
+      end
+
       config_attr :turbo
       defineable_props :field, :input
 
-      # Executes the interaction with the given arguments.
-      #
-      # @param args [Hash] The arguments to initialize the interaction.
-      # @return [Plutonium::Interaction::Outcome] The result of the interaction.
-      def self.call(**args)
-        new(**args).call
-      end
+      attr_reader :view_context
 
-      def self.build_form(instance)
-        self::Form.new(instance || new)
+      def initialize(view_context:, **attributes)
+        super(attributes)
+        @view_context = view_context
       end
 
       def build_form
@@ -100,6 +107,10 @@ module Plutonium
       # @return [Plutonium::Interaction::Failure] A failure outcome.
       def failure
         Plutonium::Interaction::Outcome::Failure.new
+      end
+
+      def current_user
+        view_context.controller.helpers.current_user
       end
     end
   end
