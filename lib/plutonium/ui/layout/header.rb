@@ -97,11 +97,11 @@ module Plutonium
         # Renders the toggle icons for the sidebar button
         # @private
         def render_toggle_icons
-          span(data_header_target: "open") do
+          span(data_header_target: "openIcon") do
             render Phlex::TablerIcons::Menu.new(class: "w-6 h-6")
           end
 
-          span(data_header_target: "close", class: "hidden", aria_hidden: "true") do
+          span(data_header_target: "closeIcon", class: "hidden", aria_hidden: "true") do
             render Phlex::TablerIcons::X.new(class: "w-6 h-6")
           end
 

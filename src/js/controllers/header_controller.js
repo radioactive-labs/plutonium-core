@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["open", "close"]
+  static targets = ["openIcon", "closeIcon"]
   static outlets = ["sidebar"]
   static values = {
     placement: { type: String, default: "left" },
@@ -57,11 +57,11 @@ export default class extends Controller {
     }
 
     // Toggle visibility and ARIA attributes of icons
-    this.openTarget.classList.add("hidden")
-    this.openTarget.setAttribute("aria-hidden", "true")
+    this.openIconTarget.classList.add("hidden")
+    this.openIconTarget.setAttribute("aria-hidden", "true")
 
-    this.closeTarget.classList.remove("hidden")
-    this.closeTarget.setAttribute("aria-hidden", "false")
+    this.closeIconTarget.classList.remove("hidden")
+    this.closeIconTarget.setAttribute("aria-hidden", "false")
 
     // Rest of the method stays same...
     this.sidebarOutlet.element.setAttribute("aria-modal", "true")
@@ -88,11 +88,11 @@ export default class extends Controller {
     }
 
     // Toggle visibility and ARIA attributes of icons
-    this.openTarget.classList.remove("hidden")
-    this.openTarget.setAttribute("aria-hidden", "false")
+    this.openIconTarget.classList.remove("hidden")
+    this.openIconTarget.setAttribute("aria-hidden", "false")
 
-    this.closeTarget.classList.add("hidden")
-    this.closeTarget.setAttribute("aria-hidden", "true")
+    this.closeIconTarget.classList.add("hidden")
+    this.closeIconTarget.setAttribute("aria-hidden", "true")
 
     // Rest of the method stays same...
     this.sidebarOutlet.element.setAttribute("aria-hidden", "true")

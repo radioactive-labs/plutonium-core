@@ -2650,7 +2650,7 @@
 
   // src/js/controllers/header_controller.js
   var header_controller_default = class extends Controller {
-    static targets = ["open", "close"];
+    static targets = ["openIcon", "closeIcon"];
     static outlets = ["sidebar"];
     static values = {
       placement: { type: String, default: "left" },
@@ -2695,10 +2695,10 @@
       } else {
         this.#togglePlacementClasses(this.placementValue, true);
       }
-      this.openTarget.classList.add("hidden");
-      this.openTarget.setAttribute("aria-hidden", "true");
-      this.closeTarget.classList.remove("hidden");
-      this.closeTarget.setAttribute("aria-hidden", "false");
+      this.openIconTarget.classList.add("hidden");
+      this.openIconTarget.setAttribute("aria-hidden", "true");
+      this.closeIconTarget.classList.remove("hidden");
+      this.closeIconTarget.setAttribute("aria-hidden", "false");
       this.sidebarOutlet.element.setAttribute("aria-modal", "true");
       this.sidebarOutlet.element.setAttribute("role", "dialog");
       this.sidebarOutlet.element.removeAttribute("aria-hidden");
@@ -2717,10 +2717,10 @@
       } else {
         this.#togglePlacementClasses(this.placementValue, false);
       }
-      this.openTarget.classList.remove("hidden");
-      this.openTarget.setAttribute("aria-hidden", "false");
-      this.closeTarget.classList.add("hidden");
-      this.closeTarget.setAttribute("aria-hidden", "true");
+      this.openIconTarget.classList.remove("hidden");
+      this.openIconTarget.setAttribute("aria-hidden", "false");
+      this.closeIconTarget.classList.add("hidden");
+      this.closeIconTarget.setAttribute("aria-hidden", "true");
       this.sidebarOutlet.element.setAttribute("aria-hidden", "true");
       this.sidebarOutlet.element.removeAttribute("aria-modal");
       this.sidebarOutlet.element.removeAttribute("role");
