@@ -79,7 +79,7 @@ module Plutonium
             field_options = field_options.except(:as)
             wrapper_options = display_options.except(:tag, :as)
             render field(name, **field_options).wrapped(**wrapper_options) do |f|
-              render tag_block.call(f)
+              render instance_exec(f, &tag_block)
             end
           end
         end

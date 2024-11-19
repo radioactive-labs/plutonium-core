@@ -75,7 +75,7 @@ module Plutonium
           end
 
           render form.field(name, **field_options).wrapped(**wrapper_options) do |f|
-            render tag_block.call(f)
+            render instance_exec(f, &tag_block)
           end
         end
 

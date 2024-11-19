@@ -164,7 +164,7 @@ module Plutonium
           field_options = field_options.except(:as)
           nested.field(name, **field_options) do |f|
             f.placeholder(f.label) unless f.placeholder
-            render tag_block.call(f)
+            render instance_exec(f, &tag_block)
           end
         end
       end
