@@ -37,7 +37,7 @@ module Plutonium
 
         def render_resource_field(name)
           when_permitted(name) do
-            if resource_definition.defined_nested_inputs[name]
+            if resource_definition.respond_to?(:defined_nested_inputs) && resource_definition.defined_nested_inputs[name]
               render_nested_resource_field(name)
             else
               render_simple_resource_field(name, resource_definition, self)
