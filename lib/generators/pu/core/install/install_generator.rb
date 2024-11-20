@@ -43,7 +43,7 @@ module Pu
         inject_into_class(
           "app/models/application_record.rb",
           "ApplicationRecord",
-          "  include Plutonium::Resource::Record\n"
+          "  include Plutonium::Resource::Record\n\n"
         )
       end
     end

@@ -15,7 +15,7 @@ module Pu
 
       def start
         source_feature = select_feature msg: "Select source feature"
-        source_module = (source_feature == "main_app") ? "ResourceRecord" : "#{source_feature.camelize}::ResourceRecord"
+        source_module = (source_feature == "main_app") ? "ApplicationRecord" : "#{source_feature.camelize}::ResourceRecord"
 
         Plutonium.eager_load_rails!
         available_resources = source_module.constantize.descendants.map(&:to_s).sort
