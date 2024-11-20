@@ -18,7 +18,10 @@ module Pu
         source_module = (source_feature == "main_app") ? "ApplicationRecord" : "#{source_feature.camelize}::ResourceRecord"
 
         Plutonium.eager_load_rails!
-        available_resources = source_module.constantize.descendants.map(&:to_s).sort
+        available_resources = source_module.constantize.descendants.reject do |model|
+          next true if model.abstract_class?
+          next true if source_module == "ApplicationRecord" && model.ancestors.any? { |ancestor| ancestor.to_s.end_with?("::ResourceRecord") }
+        end.map(&:to_s).sort
         error "No resources found" if available_resources.blank?
         selected_resources = prompt.multi_select("Select resources", available_resources)
 
