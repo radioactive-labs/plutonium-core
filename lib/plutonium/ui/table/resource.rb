@@ -66,7 +66,10 @@ module Plutonium
               field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
               field_options = field_options.merge(**column_display_options.slice(:align))
               # field_options[:align] = align_field_to if align_field_to
-              table.column name, **field_options, sort_params: current_query_object.sort_params_for(name), &display_tag_block
+              table.column name,
+                **field_options,
+                sort_params: current_query_object.sort_params_for(name, request:),
+                &display_tag_block
             end
 
             table.actions do |wrapped_object|
