@@ -1,5 +1,6 @@
 export const content = [
-  `${__dirname}/src/**/*.{css,js}`,
+  `${__dirname}/src/css/**/*.css`,
+  `${__dirname}/src/js/**/*.js`,
   `${__dirname}/app/views/**/*.{rb,erb,js}`,
   `${__dirname}/config/initializers/simple_form.rb`,
   `${__dirname}/lib/plutonium/**/*.rb`,
@@ -12,6 +13,7 @@ export const darkMode = "selector";
 export const plugins = [
   // requires users to have the required packages installed in their own project.
   "@tailwindcss/forms",
+  "@tailwindcss/typography",
   "flowbite/plugin",
   function ({ addVariant }) {
     // This creates a variant that applies when an ancestor has data-dyna="true"

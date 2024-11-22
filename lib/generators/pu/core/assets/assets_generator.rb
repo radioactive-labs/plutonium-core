@@ -26,7 +26,7 @@ module Pu
       end
 
       def install_dependencies
-        run "yarn add @radioactive-labs/plutonium flowbite @tailwindcss/forms"
+        run "yarn add @radioactive-labs/plutonium flowbite @tailwindcss/forms @tailwindcss/typography"
       end
 
       def configure_application

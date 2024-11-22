@@ -1,0 +1,649 @@
+/**
+* EasyMDE + CodeMirror Styles
+* Based on easymde v2.18.0
+* Adapted for Tailwind with dark mode support
+*/
+
+@layer components {
+
+  /* CodeMirror Core */
+  .CodeMirror {
+    @apply font-mono relative overflow-hidden bg-white dark:bg-gray-800 text-black dark:text-white;
+    direction: ltr;
+  }
+
+  .CodeMirror-lines {
+    padding: 4px 0;
+  }
+
+  .CodeMirror-scroll {
+    overflow: scroll !important;
+    margin-bottom: -50px;
+    margin-right: -50px;
+    padding-bottom: 50px;
+    height: 100%;
+    outline: none;
+    position: relative;
+    z-index: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .CodeMirror-sizer {
+    position: relative;
+    border-right: 50px solid transparent;
+    box-sizing: content-box;
+  }
+
+  .CodeMirror-vscrollbar,
+  .CodeMirror-hscrollbar,
+  .CodeMirror-scrollbar-filler,
+  .CodeMirror-gutter-filler {
+    position: absolute;
+    z-index: 6;
+    display: none;
+    outline: none;
+  }
+
+  .CodeMirror-vscrollbar {
+    right: 0;
+    top: 0;
+    overflow-x: hidden;
+    overflow-y: scroll;
+  }
+
+  .CodeMirror-hscrollbar {
+    bottom: 0;
+    left: 0;
+    overflow-y: hidden;
+    overflow-x: scroll;
+  }
+
+  .CodeMirror-scrollbar-filler {
+    right: 0;
+    bottom: 0;
+  }
+
+  .CodeMirror-gutter-filler {
+    left: 0;
+    bottom: 0;
+  }
+
+  .CodeMirror-gutters {
+    @apply absolute left-0 top-0 min-h-full z-[3] border-r border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700;
+    white-space: nowrap;
+    box-sizing: content-box;
+  }
+
+  .CodeMirror-linenumber {
+    @apply text-gray-500 dark:text-gray-400;
+    padding: 0 3px 0 5px;
+    min-width: 20px;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Cursor and Selection */
+  .CodeMirror-cursor {
+    @apply border-l border-black dark:border-white border-r-0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .cm-fat-cursor .CodeMirror-cursor {
+    width: auto;
+    border: 0 !important;
+    background: #77ee77;
+  }
+
+  .cm-fat-cursor div.CodeMirror-cursors {
+    z-index: 1;
+  }
+
+  .CodeMirror-selected {
+    @apply bg-gray-200 dark:bg-gray-600;
+  }
+
+  .CodeMirror-focused .CodeMirror-selected {
+    @apply bg-blue-100 dark:bg-blue-900/30;
+  }
+
+  /* Line Styles */
+  .CodeMirror pre.CodeMirror-line,
+  .CodeMirror pre.CodeMirror-line-like {
+    padding: 0 4px;
+    margin: 0;
+    border-radius: 0;
+    border-width: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    white-space: pre;
+    word-wrap: normal;
+    line-height: inherit;
+    color: inherit;
+    z-index: 2;
+    position: relative;
+    overflow: visible;
+    -webkit-tap-highlight-color: transparent;
+    font-variant-ligatures: contextual;
+  }
+
+  .CodeMirror-wrap pre.CodeMirror-line,
+  .CodeMirror-wrap pre.CodeMirror-line-like {
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    word-break: normal;
+  }
+
+  /* Gutter */
+  .CodeMirror-gutter {
+    white-space: normal;
+    height: 100%;
+    display: inline-block;
+    vertical-align: top;
+    margin-bottom: -50px;
+    box-sizing: content-box;
+  }
+
+  .CodeMirror-gutter-wrapper {
+    position: absolute;
+    z-index: 4;
+    background: none !important;
+    border: none !important;
+  }
+
+  /* EasyMDE Container */
+  .EasyMDEContainer {
+    @apply block;
+  }
+
+  .EasyMDEContainer.sided--no-fullscreen {
+    @apply flex flex-row flex-wrap;
+  }
+
+  .EasyMDEContainer .CodeMirror {
+    @apply box-border border h-auto border-gray-300 dark:border-gray-600 rounded-b-lg p-2.5 z-0 break-words;
+  }
+
+  .EasyMDEContainer .CodeMirror-fullscreen {
+    @apply fixed inset-x-0 top-[50px] bottom-0 h-auto z-40 border-r-0 rounded-br-none bg-white dark:bg-gray-800;
+  }
+
+  .EasyMDEContainer .CodeMirror-sided {
+    width: 50% !important;
+  }
+
+  .EasyMDEContainer.sided--no-fullscreen .CodeMirror-sided {
+    @apply border-r-0 rounded-br-none relative flex-1;
+  }
+
+  .EasyMDEContainer .CodeMirror-placeholder {
+    @apply opacity-50;
+  }
+
+  /* Editor Toolbar */
+  .editor-toolbar {
+    @apply relative select-none p-2.5 border-t border-l border-r border-gray-300 dark:border-gray-600 rounded-t-lg bg-white dark:bg-gray-800 space-x-1;
+  }
+
+  .editor-toolbar.fullscreen {
+    @apply w-full h-[50px] py-2.5 px-0 box-border fixed top-0 left-0 opacity-100 z-50 border-0;
+  }
+
+  .editor-toolbar button {
+    @apply bg-transparent inline-block text-center no-underline h-[30px] m-0 p-0 border border-transparent rounded cursor-pointer min-w-[30px] px-1.5 whitespace-nowrap text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold;
+  }
+
+  .editor-toolbar button.active {
+    @apply bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600;
+  }
+
+  .editor-toolbar i.separator {
+    @apply inline-block w-0 border-l border-r border-l-gray-300 border-r-white dark:border-l-gray-600 dark:border-r-gray-800 text-transparent -indent-[10px] mx-1.5;
+  }
+
+  .editor-toolbar button:after {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+    font-size: 65%;
+    vertical-align: text-bottom;
+    position: relative;
+    top: 2px;
+  }
+
+  .editor-toolbar button.heading-1:after {
+    content: "1";
+  }
+
+  .editor-toolbar button.heading-2:after {
+    content: "2";
+  }
+
+  .editor-toolbar button.heading-3:after {
+    content: "3";
+  }
+
+  .editor-toolbar button.heading-bigger:after {
+    content: "▲";
+  }
+
+  .editor-toolbar button.heading-smaller:after {
+    content: "▼";
+  }
+
+  /* Preview */
+  .editor-preview {
+    @apply p-2.5 bg-gray-50 dark:bg-gray-900 prose dark:prose-invert max-w-none prose-sm sm:prose-base;
+  }
+
+  .editor-preview-side {
+    @apply fixed bottom-0 w-1/2 top-[50px] right-0 z-50 overflow-auto hidden box-border border border-gray-300 dark:border-gray-600 break-words prose dark:prose-invert max-w-none prose-sm sm:prose-base;
+  }
+
+  .editor-preview-active-side {
+    @apply block;
+  }
+
+  .EasyMDEContainer.sided--no-fullscreen .editor-preview-active-side {
+    @apply flex-1 h-auto static;
+  }
+
+  .editor-preview>p {
+    @apply mt-0;
+  }
+
+  .editor-preview pre {
+    @apply bg-gray-100 dark:bg-gray-800 mb-2.5;
+  }
+
+  .editor-preview table td,
+  .editor-preview table th {
+    @apply border border-gray-300 dark:border-gray-600 p-1.5;
+  }
+
+  /* Status Bar */
+  .editor-statusbar {
+    @apply p-2 text-sm text-gray-500 dark:text-gray-400 text-right;
+  }
+
+  .EasyMDEContainer.sided--no-fullscreen .editor-statusbar {
+    @apply w-full;
+  }
+
+  .editor-statusbar span {
+    @apply inline-block min-w-[4em] ml-4;
+  }
+
+  .editor-statusbar .lines:before {
+    content: 'lines: ';
+  }
+
+  .editor-statusbar .words:before {
+    content: 'words: ';
+  }
+
+  .editor-statusbar .characters:before {
+    content: 'characters: ';
+  }
+
+  /* Syntax Highlighting */
+  /* .cm-s-easymde .cm-header {
+        @apply text-blue-600 dark:text-blue-400;
+    } */
+
+  .cm-s-easymde .cm-em {
+    @apply italic text-secondary-600 dark:text-secondary-400;
+  }
+
+  .cm-s-easymde .cm-strong {
+    @apply font-bold text-secondary-600 dark:text-secondary-400;
+  }
+
+  .cm-s-easymde .cm-strikethrough {
+    @apply line-through italic text-secondary-600 dark:text-secondary-400;
+  }
+
+  .cm-s-easymde .cm-quote {
+    @apply text-green-700 dark:text-green-400;
+  }
+
+  .cm-s-easymde .cm-keyword {
+    @apply text-purple-600 dark:text-purple-400;
+  }
+
+  .cm-s-easymde .cm-atom {
+    @apply text-blue-800 dark:text-blue-300;
+  }
+
+  .cm-s-easymde .cm-number {
+    @apply text-green-800 dark:text-green-300;
+  }
+
+  .cm-s-easymde .cm-def {
+    @apply text-blue-600 dark:text-blue-400;
+  }
+
+  .cm-s-easymde .cm-variable {
+    @apply text-gray-800 dark:text-gray-300;
+  }
+
+  .cm-s-easymde .cm-variable-2 {
+    @apply text-blue-700 dark:text-blue-300;
+  }
+
+  .cm-s-easymde .cm-variable-3 {
+    @apply text-teal-700 dark:text-teal-300;
+  }
+
+  .cm-s-easymde .cm-link {
+    @apply text-secondary-700 dark:text-secondary-300;
+  }
+
+  .cm-s-easymde .cm-url {
+    @apply text-primary-700 dark:text-primary-300;
+  }
+
+  .cm-s-easymde .cm-string-2 {
+    @apply text-orange-600 dark:text-orange-300;
+  }
+
+  .cm-s-easymde .cm-comment {
+    @apply text-gray-600 dark:text-gray-400 font-mono;
+  }
+
+  .cm-s-easymde .cm-tag {
+    color: #63a35c;
+  }
+
+  .cm-s-easymde .cm-meta {
+    @apply text-gray-600 dark:text-gray-400;
+  }
+
+  .cm-s-easymde .cm-attribute {
+    color: #795da3;
+  }
+
+  .cm-s-easymde .cm-error {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  .cm-s-easymde .cm-header-1 {
+    font-size: calc(1.375rem + 1.5vw);
+  }
+
+  .cm-s-easymde .cm-header-2 {
+    font-size: calc(1.325rem + .9vw);
+  }
+
+  .cm-s-easymde .cm-header-3 {
+    font-size: calc(1.3rem + .6vw);
+  }
+
+  .cm-s-easymde .cm-header-4 {
+    font-size: calc(1.275rem + .3vw);
+  }
+
+  .cm-s-easymde .cm-header-5 {
+    font-size: 1.25rem;
+  }
+
+  .cm-s-easymde .cm-header-6 {
+    font-size: 1rem;
+  }
+
+  .cm-s-easymde .cm-header-1,
+  .cm-s-easymde .cm-header-2,
+  .cm-s-easymde .cm-header-3,
+  .cm-s-easymde .cm-header-4,
+  .cm-s-easymde .cm-header-5,
+  .cm-s-easymde .cm-header-6 {
+    @apply mb-2 leading-tight;
+  }
+
+  /* Dropdown */
+  .editor-toolbar .easymde-dropdown {
+    @apply relative bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600;
+    background: linear-gradient(to bottom right, #fff 0, #fff 84%, #333 50%, #333 100%);
+  }
+
+  .editor-toolbar .easymde-dropdown:hover {
+    background: linear-gradient(to bottom right, #fff 0, #fff 84%, #333 50%, #333 100%);
+  }
+
+  .easymde-dropdown-content {
+    @apply block invisible absolute bg-gray-50 dark:bg-gray-800 shadow-lg p-2 z-20 top-[30px];
+  }
+
+  .easymde-dropdown:active .easymde-dropdown-content,
+  .easymde-dropdown:focus .easymde-dropdown-content,
+  .easymde-dropdown:focus-within .easymde-dropdown-content {
+    @apply visible;
+  }
+
+  /* Fullscreen Gradients */
+  .editor-toolbar.fullscreen::before {
+    @apply w-5 h-[50px] fixed top-0 left-0 m-0 p-0;
+    background: linear-gradient(to right, #fff 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .editor-toolbar.fullscreen::after {
+    @apply w-5 h-[50px] fixed top-0 right-0 m-0 p-0;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, #fff 100%);
+  }
+
+  /* Dark mode fullscreen gradients */
+  .dark .editor-toolbar.fullscreen::before {
+    background: linear-gradient(to right, #1f2937 0%, rgba(31, 41, 55, 0) 100%);
+  }
+
+  .dark .editor-toolbar.fullscreen::after {
+    background: linear-gradient(to right, rgba(31, 41, 55, 0) 0%, #1f2937 100%);
+  }
+
+  /* Mobile Responsiveness */
+  @media only screen and (max-width: 700px) {
+    .editor-toolbar i.no-mobile {
+      @apply hidden;
+    }
+  }
+
+  /* Spell Check */
+  .CodeMirror .cm-spell-error:not(.cm-url):not(.cm-comment):not(.cm-tag):not(.cm-word) {
+    @apply bg-red-100/50 dark:bg-red-900/30;
+  }
+
+  /* Image Handling */
+  span[data-img-src]::after {
+    content: '';
+    background-image: var(--bg-image);
+    @apply block max-h-full max-w-full bg-contain bg-no-repeat;
+    height: 0;
+    padding-top: var(--height);
+    width: var(--width);
+  }
+
+  /* RTL Support */
+  .CodeMirror-rtl pre {
+    direction: rtl;
+  }
+
+  /* Selection Styles */
+  /* .CodeMirror-line::selection,
+    .CodeMirror-line>span::selection,
+    .CodeMirror-line>span>span::selection {
+        @apply bg-accent-100 dark:bg-accent-900/30;
+    }
+
+    .CodeMirror-line::-moz-selection,
+    .CodeMirror-line>span::-moz-selection,
+    .CodeMirror-line>span>span::-moz-selection {
+        @apply bg-accent-100 dark:bg-accent-900/30;
+    } */
+
+  .CodeMirror-selectedtext {
+    @apply bg-gray-200/70 dark:bg-gray-600/50;
+  }
+
+  /* Cursor Animations */
+  @keyframes blink {
+    50% {
+      background-color: transparent;
+    }
+  }
+
+  @-moz-keyframes blink {
+    50% {
+      background-color: transparent;
+    }
+  }
+
+  @-webkit-keyframes blink {
+    50% {
+      background-color: transparent;
+    }
+  }
+
+  .cm-fat-cursor .CodeMirror-cursor {
+    @apply bg-[#7e7];
+    width: auto;
+    border: 0 !important;
+  }
+
+  .cm-fat-cursor div.CodeMirror-cursors {
+    z-index: 1;
+  }
+
+  .cm-fat-cursor .CodeMirror-line::selection,
+  .cm-fat-cursor .CodeMirror-line>span::selection,
+  .cm-fat-cursor .CodeMirror-line>span>span::selection {
+    background: transparent;
+  }
+
+  .cm-fat-cursor .CodeMirror-line::-moz-selection,
+  .cm-fat-cursor .CodeMirror-line>span::-moz-selection,
+  .cm-fat-cursor .CodeMirror-line>span>span::-moz-selection {
+    background: transparent;
+  }
+
+  .cm-fat-cursor {
+    caret-color: transparent;
+  }
+
+  /* Print Styles */
+  @media print {
+    .CodeMirror div.CodeMirror-cursors {
+      visibility: hidden;
+    }
+  }
+
+  /* Additional Utility Classes */
+  .CodeMirror-selected {
+    @apply bg-gray-200 dark:bg-gray-600;
+  }
+
+  .CodeMirror-focused .CodeMirror-selected {
+    @apply bg-blue-100 dark:bg-blue-900/30;
+  }
+
+  .CodeMirror-crosshair {
+    @apply cursor-crosshair;
+  }
+
+  .CodeMirror-line {
+    @apply outline-none;
+  }
+
+  /* Fix for tab character rendering */
+  .cm-tab-wrap-hack:after {
+    content: '';
+  }
+
+  /* Cursor visibility states */
+  div.CodeMirror-cursors {
+    @apply invisible relative z-[3];
+  }
+
+  div.CodeMirror-dragcursors {
+    @apply visible;
+  }
+
+  .CodeMirror-focused div.CodeMirror-cursors {
+    @apply visible;
+  }
+
+  /* Measure element used for character width calculations */
+  .CodeMirror-measure {
+    @apply absolute w-full h-0 overflow-hidden invisible;
+  }
+
+  /* Line background and widgets */
+  .CodeMirror-linebackground {
+    @apply absolute inset-0 z-0;
+  }
+
+  .CodeMirror-linewidget {
+    @apply relative z-[2];
+    padding: 0.1px;
+  }
+
+  /* Gutter click prevention */
+  .CodeMirror-gutter,
+  .CodeMirror-gutters,
+  .CodeMirror-linenumber {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Ensure proper line wrapping in various scenarios */
+  .CodeMirror-wrap pre.CodeMirror-line,
+  .CodeMirror-wrap pre.CodeMirror-line-like {
+    @apply break-words whitespace-pre-wrap break-normal;
+  }
+
+  /* Composing indicator for IME */
+  .CodeMirror-composing {
+    @apply border-b-2 border-solid;
+  }
+
+  /* Matching brackets highlighting */
+  div.CodeMirror span.CodeMirror-matchingbracket {
+    @apply text-green-700 dark:text-green-400;
+  }
+
+  div.CodeMirror span.CodeMirror-nonmatchingbracket {
+    @apply text-red-600 dark:text-red-400;
+  }
+
+  /* Active line background */
+  .CodeMirror-activeline-background {
+    @apply bg-blue-50 dark:bg-blue-900/10;
+  }
+
+  /* Ensure proper z-index stacking in fullscreen mode */
+  .CodeMirror-fullscreen {
+    @apply z-[9999];
+  }
+
+  /* Preview mode button states */
+  .editor-toolbar.disabled-for-preview button:not(.no-disable) {
+    @apply opacity-60 pointer-events-none;
+  }
+
+  /* Ensure proper box sizing for measurement */
+  .CodeMirror-measure pre {
+    @apply static;
+  }
+
+  /* Fix for Safari overflow issues */
+  .CodeMirror-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* System-specific font smoothing */
+  .CodeMirror pre.CodeMirror-line,
+  .CodeMirror pre.CodeMirror-line-like {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
