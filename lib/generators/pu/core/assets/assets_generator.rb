@@ -51,7 +51,7 @@ module Pu
 
       def import_styles
         prepend_to_file "app/assets/stylesheets/application.tailwind.css",
-          "@import \"gem:plutonium/src/css/plutonium.css\";\n"
+          "@import \"gem:plutonium/src/css/plutonium.css\";\n\n"
       end
     end
   end
