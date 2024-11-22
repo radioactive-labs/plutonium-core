@@ -33,18 +33,7 @@ module Plutonium
           head {
             render_title
             render_metatags
-            render_security_metatags
-            render_turbo_metatags
-            render_font_tags
-            render_favicon_tag
-            render_assets_tags
-
-            # plain assets
-            # plain head
-            # <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" integrity="sha512-/FHUK/LsH78K9XTqsR9hbzr21J8B8RwHR/r8Jv9fzry6NVAOVIGFKQCNINsbhK7a1xubVu2r5QZcz2T9cKpubw==" crossorigin="anonymous" referrerpolicy="no-referrer" /> '
-            # <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js" integrity="sha512-P2W2rr8ikUPfa31PLBo5bcBQrsa+TNj8jiKadtaIrHQGMo6hQM6RdPjQYxlNguwHz8AwSQ28VkBK6kHBLgd/8g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-            # <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.6.0/slimselect.min.css" integrity="sha512-GvqWM4KWH8mbgWIyvwdH8HgjUbyZTXrCq0sjGij9fDNiXz3vJoy3jCcAaWNekH2rJe4hXVWCJKN+bEW8V7AAEQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-            # <script src="https://cdnjs.cloudflare.com/ajax/libs/slim-select/2.6.0/slimselect.min.js" integrity="sha512-0E8oaoA2v32h26IycsmRDShtQ8kMgD91zWVBxdIvUCjU3xBw81PV61QBsBqNQpWkp/zYJZip8Ag3ifmzz1wCKQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            render_assets
           }
         end
 
@@ -53,6 +42,7 @@ module Plutonium
             render_before_main
             render_main(&)
             render_after_main
+            render_body_scripts
           }
         end
 
@@ -90,6 +80,12 @@ module Plutonium
         end
 
         def render_metatags
+          render_base_metatags
+          render_security_metatags
+          render_turbo_metatags
+        end
+
+        def render_base_metatags
           meta(charset: "utf-8")
           meta(name: "viewport", content: "width=device-width,initial-scale=1")
         end
@@ -105,29 +101,34 @@ module Plutonium
           meta(name: "turbo-refresh-scroll", content: "preserve")
         end
 
-        def render_font_tags
+        def render_fonts
           link(rel: "preconnect", href: "https://fonts.googleapis.com")
           link(rel: "preconnect", href: "https://fonts.gstatic.com", crossorigin: true)
           link(href: "https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap", rel: "stylesheet")
         end
 
-        def render_favicon_tag
+        def render_favicon
           favicon_link_tag(Plutonium.configuration.assets.favicon) if Plutonium.configuration.assets.favicon
         end
 
-        def render_assets_tags
-          render_asset_style_tags
-          render_asset_scripts_tags
+        def render_assets
+          render_favicon
+          render_fonts
+          render_styles
+          render_scripts
         end
 
-        def render_asset_style_tags
+        def render_styles
           url = resource_asset_url_for(:css, resource_stylesheet_asset)
           stylesheet_link_tag(url, "data-turbo-track": "reload")
         end
 
-        def render_asset_scripts_tags
+        def render_scripts
           url = resource_asset_url_for(:js, resource_script_asset)
           javascript_include_tag(url, "data-turbo-track": "reload", type: "module")
+        end
+
+        def render_body_scripts
         end
       end
     end
