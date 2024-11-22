@@ -15,6 +15,8 @@ module Pu
         install_dependencies
         copy_tailwind_config
         configure_application
+        replace_build_script
+        import_styles
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -23,10 +25,11 @@ module Pu
 
       def copy_tailwind_config
         copy_file "tailwind.config.js", force: true
+        copy_file "postcss.config.js", force: true
       end
 
       def install_dependencies
-        run "yarn add @radioactive-labs/plutonium flowbite @tailwindcss/forms @tailwindcss/typography"
+        run "yarn add @radioactive-labs/plutonium flowbite @tailwindcss/forms @tailwindcss/typography postcss-cli cssnano"
       end
 
       def configure_application
@@ -38,6 +41,17 @@ module Pu
 
         configure_plutonium "config.assets.stylesheet = \"application\""
         configure_plutonium "config.assets.script = \"application\""
+      end
+
+      def replace_build_script
+        gsub_file "package.json",
+          /"build:css":.*/,
+          '"build:css": "postcss ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css"'
+      end
+
+      def import_styles
+        prepend_to_file "app/assets/stylesheets/application.tailwind.css",
+          "@import \"gem:plutonium/src/css/plutonium.css\";\n"
       end
     end
   end
