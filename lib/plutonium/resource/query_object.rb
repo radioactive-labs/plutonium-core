@@ -7,9 +7,10 @@ module Plutonium
       #
       # @param resource_class [Object] The resource class.
       # @param params [Hash] The parameters for initialization.
-      def initialize(resource_class, params, &)
+      def initialize(resource_class, params, request_path, &)
         @resource_class = resource_class
         @params = params
+        @request_path = request_path
 
         define_standard_queries
         yield self if block_given?
@@ -62,7 +63,7 @@ module Plutonium
       #
       # @param options [Hash] The options for building the URL.
       # @return [String] The constructed URL with query parameters.
-      def build_url(request:, **options)
+      def build_url(**options)
         q = {}
 
         q[:search] = options.key?(:search) ? options[:search].presence : search_query
@@ -74,7 +75,7 @@ module Plutonium
 
         q.merge! params.slice(*filter_definitions.keys)
         query_params = deep_compact({q: q}).to_param
-        "#{request.path}?#{query_params}"
+        "#{@request_path}?#{query_params}"
       end
 
       # Applies the defined filters and sorts to the given scope.
@@ -99,12 +100,12 @@ module Plutonium
       #
       # @param name [Symbol, String] The name of the field to sort.
       # @return [Hash, nil] The sorting parameters including URL and direction.
-      def sort_params_for(name, request:)
+      def sort_params_for(name)
         return unless sort_definitions[name]
 
         {
-          url: build_url(request:, sort: name),
-          reset_url: build_url(request:, sort: name, reset: true),
+          url: build_url(sort: name),
+          reset_url: build_url(sort: name, reset: true),
           position: selected_sort_fields.index(name.to_s),
           direction: selected_sort_directions[name]
         }

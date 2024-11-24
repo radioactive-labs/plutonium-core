@@ -108,7 +108,7 @@ module PlutoniumUi
       label = column.label
       search_object = column.search_object
 
-      if (sort_params = search_object.sort_params_for(name, request:))
+      if (sort_params = search_object.sort_params_for(name))
         tag.div class: "inline-flex" do
           concat begin
             link_to(sort_params[:url], class: "flex", title: sort_params[:direction] || "Sort") do

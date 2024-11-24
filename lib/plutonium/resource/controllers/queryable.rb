@@ -15,7 +15,7 @@ module Plutonium
 
         def current_query_object
           @current_query_object ||=
-            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params) do |query_object|
+            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params, request.path) do |query_object|
               if current_definition.search_definition
                 query_object.define_search proc { |scope, search:|
                   current_definition.search_definition.call(scope, search)
