@@ -6,6 +6,13 @@ module Plutonium
       class Base < Phlexi::Form::Base
         include Plutonium::UI::Component::Behaviour
 
+        class Builder < Builder
+          def easymde_tag(**, &)
+            create_component(Plutonium::UI::Form::Components::Easymde, :easymde, **, &)
+          end
+          alias_method :markdown_tag, :easymde_tag
+        end
+
         private
 
         def render_actions

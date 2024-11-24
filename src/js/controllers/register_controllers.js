@@ -21,6 +21,7 @@ import ResourceCollapseController from "./resource_collapse_controller.js"
 import ResourceDismissController from "./resource_dismiss_controller.js"
 import FrameNavigatorController from "./frame_navigator_controller.js"
 import ColorModeController from "./color_mode_controller.js"
+import EasyMDEController from "./easymde_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -46,4 +47,5 @@ export default function (application) {
   application.register("resource-dismiss", ResourceDismissController)
   application.register("frame-navigator", FrameNavigatorController)
   application.register("color-mode", ColorModeController)
+  application.register("easymde", EasyMDEController)
 }

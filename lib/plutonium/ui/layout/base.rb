@@ -119,13 +119,28 @@ module Plutonium
         end
 
         def render_styles
+          render_external_styles
+
           url = resource_asset_url_for(:css, resource_stylesheet_asset)
           stylesheet_link_tag(url, "data-turbo-track": "reload")
         end
 
+        def render_external_styles
+        end
+
         def render_scripts
+          render_external_scripts
+
           url = resource_asset_url_for(:js, resource_script_asset)
           javascript_include_tag(url, "data-turbo-track": "reload", type: "module")
+        end
+
+        def render_external_scripts
+          script(
+            src: "https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js",
+            integrity: "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_body_scripts
