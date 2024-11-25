@@ -7,10 +7,18 @@ module Plutonium
         include Plutonium::UI::Component::Behaviour
 
         class Builder < Builder
+          include Plutonium::UI::Form::Options::InferredTypes
+
           def easymde_tag(**, &)
             create_component(Plutonium::UI::Form::Components::Easymde, :easymde, **, &)
           end
           alias_method :markdown_tag, :easymde_tag
+
+          alias_method :basic_select_tag, :select_tag
+          def slim_select_tag(**, &)
+            basic_select_tag(**, data_controller: "slim-select", class!: "", &)
+          end
+          alias_method :select_tag, :slim_select_tag
         end
 
         private

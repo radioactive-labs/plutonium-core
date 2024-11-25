@@ -141,6 +141,11 @@ module Plutonium
             integrity: "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE",
             crossorigin: "anonymous"
           )
+          script(
+            src: "https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.min.js",
+            integrity: "sha384-WKsmo+vSs0gqrT+es6wFEojVFn4P0kNaHpHTIkn84iHY8T4rF2V2McZeSbLPLlHy",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_body_scripts

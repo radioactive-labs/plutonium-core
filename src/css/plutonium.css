@@ -1,5 +1,6 @@
 @import "core.css";
 @import "easymde.css";
+@import "slim_select.css";
 
 @tailwind base;
 @tailwind components;
