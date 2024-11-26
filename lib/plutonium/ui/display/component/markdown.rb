@@ -16,6 +16,16 @@ module Plutonium
               unsafe_raw RENDERER.render(value)
             end
           end
+
+          private
+
+          def normalize_value(value)
+            if value.respond_to?(:to_plain_text)
+              value.to_plain_text
+            else
+              value.to_s
+            end
+          end
         end
       end
     end
