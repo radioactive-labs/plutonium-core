@@ -15,6 +15,7 @@ PATH
       phlexi-table
       rabl (~> 0.16.1)
       rails (>= 7.1, < 8.0)
+      redcarpet
       semantic_range (~> 3.0)
       simple_form (~> 5.3)
       tailwind_merge
@@ -261,6 +262,7 @@ GEM
       ffi (~> 1.0)
     rdoc (6.7.0)
       psych (>= 4.0.0)
+    redcarpet (3.6.0)
     regexp_parser (2.9.2)
     reline (0.5.10)
       io-console (~> 0.5)

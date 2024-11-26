@@ -50,6 +50,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "phlexi-display"
   spec.add_dependency "tailwind_merge"
   spec.add_dependency "phlex-slotable"
+  spec.add_dependency "redcarpet"
 
   spec.add_development_dependency "rake"
   spec.add_development_dependency "minitest"

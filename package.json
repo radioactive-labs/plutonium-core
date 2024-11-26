@@ -31,6 +31,7 @@
     "cssnano": "^7.0.2",
     "esbuild": "^0.20.1",
     "esbuild-plugin-manifest": "^1.0.3",
+    "flowbite-typography": "^1.0.5",
     "mermaid": "^11.4.0",
     "postcss": "^8.4.35",
     "postcss-cli": "^11.0.0",

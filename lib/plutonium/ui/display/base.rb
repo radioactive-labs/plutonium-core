@@ -10,6 +10,10 @@ module Plutonium
           def association_tag(**, &)
             create_component(Plutonium::UI::Display::Component::Association, :association, **, &)
           end
+
+          def markdown_tag(**, &)
+            create_component(Plutonium::UI::Display::Component::Markdown, :markdown, **, &)
+          end
         end
 
         private

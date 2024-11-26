@@ -233,11 +233,11 @@
 
   /* Preview */
   .editor-preview {
-    @apply p-2.5 bg-gray-50 dark:bg-gray-900 prose dark:prose-invert max-w-none prose-sm sm:prose-base;
+    @apply p-2.5 bg-gray-50 dark:bg-gray-900 format dark:format-invert format-primary max-w-none;
   }
 
   .editor-preview-side {
-    @apply fixed bottom-0 w-1/2 top-[50px] right-0 z-50 overflow-auto hidden box-border border border-gray-300 dark:border-gray-600 break-words prose dark:prose-invert max-w-none prose-sm sm:prose-base;
+    @apply fixed bottom-0 w-1/2 top-[50px] right-0 z-50 overflow-auto hidden box-border border border-gray-300 dark:border-gray-600 break-words format dark:format-invert format-primary max-w-none;
   }
 
   .editor-preview-active-side {

@@ -19,7 +19,8 @@ module Plutonium
             color_indicator: "w-10 h-10 rounded-full mr-2", # max-h-fit
             email: "flex items-center text-md text-primary-600 dark:text-primary-500 mb-1 whitespace-pre-line",
             json: "text-sm text-gray-900 dark:text-white mb-1 whitespace-pre font-mono shadow-inner p-4",
-            prefixed_icon: "w-8 h-8 mr-2"
+            prefixed_icon: "w-8 h-8 mr-2",
+            markdown: "format dark:format-invert format-primary"
           })
         end
       end

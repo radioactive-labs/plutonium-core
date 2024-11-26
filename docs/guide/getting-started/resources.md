@@ -85,7 +85,7 @@ class BlogDefinition < Plutonium::Resource::Definition
   # Customize how fields are displayed
   display :title, class: "col-span-full"
   display :content, class: "col-span-full" do |f|
-    f.text_tag class: "prose dark:prose-invert"
+    f.text_tag class: "format dark:format-invert"
   end
 
   # Custom column display in tables
