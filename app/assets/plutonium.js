@@ -7432,6 +7432,32 @@
     }
   };
 
+  // src/js/controllers/easymde_controller.js
+  var easymde_controller_default = class extends Controller {
+    connect() {
+      console.log(`easymde connected: ${this.element}`);
+      self.easyMDE = new EasyMDE({ element: this.element });
+    }
+    disconnect() {
+      self.easyMDE.toTextArea();
+      self.easyMDE = null;
+    }
+  };
+
+  // src/js/controllers/slim_select_controller.js
+  var slim_select_controller_default = class extends Controller {
+    connect() {
+      console.log(`slim-select connected: ${this.element}`);
+      self.slimSelect = new SlimSelect({
+        select: this.element
+      });
+    }
+    disconnect() {
+      self.slimSelect.destroy();
+      self.slimSelect = null;
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("resource-layout", resource_layout_controller_default);
@@ -7456,6 +7482,8 @@
     application2.register("resource-dismiss", resource_dismiss_controller_default);
     application2.register("frame-navigator", frame_navigator_controller_default);
     application2.register("color-mode", color_mode_controller_default);
+    application2.register("easymde", easymde_controller_default);
+    application2.register("slim-select", slim_select_controller_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js
