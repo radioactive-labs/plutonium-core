@@ -8,11 +8,11 @@ module Plutonium
 
         class Builder < Builder
           def association_tag(**, &)
-            create_component(Plutonium::UI::Display::Component::Association, :association, **, &)
+            create_component(Plutonium::UI::Display::Component::AssociationField, :association, **, &)
           end
 
           def markdown_tag(**, &)
-            create_component(Plutonium::UI::Display::Component::Markdown, :markdown, **, &)
+            create_component(Plutonium::UI::Display::Component::MarkdownField, :markdown, **, &)
           end
         end
 

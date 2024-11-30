@@ -14,6 +14,8 @@ module Plutonium
             case component
             when :select
               :slim_select
+            when :date, :time, :datetime
+              :flatpickr
             else
               component
             end

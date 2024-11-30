@@ -6,7 +6,7 @@ module Plutonium
   module UI
     module Display
       module Component
-        class Markdown < Phlexi::Display::Components::Base
+        class MarkdownField < Phlexi::Display::Components::Base
           include Phlexi::Display::Components::Concerns::DisplaysValue
 
           RENDERER = Redcarpet::Markdown.new(Redcarpet::Render::HTML, autolink: true, tables: true)

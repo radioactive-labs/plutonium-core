@@ -7458,6 +7458,28 @@
     }
   };
 
+  // src/js/controllers/flatpickr_controller.js
+  var flatpickr_controller_default = class extends Controller {
+    connect() {
+      console.log(`flatpickr connected: ${this.element}`);
+      self.picker = new flatpickr(this.element, this.#buildOptions());
+    }
+    disconnect() {
+      self.picker.destroy();
+      self.picker = null;
+    }
+    #buildOptions() {
+      let options = { altInput: true };
+      if (this.element.attributes.type.value == "datetime-local") {
+        options.enableTime = true;
+      } else if (this.element.attributes.type.value == "time") {
+        options.enableTime = true;
+        options.noCalendar = true;
+      }
+      return options;
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("resource-layout", resource_layout_controller_default);
@@ -7484,6 +7506,7 @@
     application2.register("color-mode", color_mode_controller_default);
     application2.register("easymde", easymde_controller_default);
     application2.register("slim-select", slim_select_controller_default);
+    application2.register("flatpickr", flatpickr_controller_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js

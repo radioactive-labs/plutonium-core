@@ -23,6 +23,7 @@ import FrameNavigatorController from "./frame_navigator_controller.js"
 import ColorModeController from "./color_mode_controller.js"
 import EasyMDEController from "./easymde_controller.js"
 import SlimSelectController from "./slim_select_controller.js"
+import FlatpickrController from "./flatpickr_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -50,4 +51,5 @@ export default function (application) {
   application.register("color-mode", ColorModeController)
   application.register("easymde", EasyMDEController)
   application.register("slim-select", SlimSelectController)
+  application.register("flatpickr", FlatpickrController)
 }

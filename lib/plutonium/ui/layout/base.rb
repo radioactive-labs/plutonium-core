@@ -126,6 +126,12 @@ module Plutonium
         end
 
         def render_external_styles
+          link(
+            rel: "stylesheet",
+            href: "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css",
+            integrity: "sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_scripts
@@ -144,6 +150,11 @@ module Plutonium
           script(
             src: "https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.min.js",
             integrity: "sha384-WKsmo+vSs0gqrT+es6wFEojVFn4P0kNaHpHTIkn84iHY8T4rF2V2McZeSbLPLlHy",
+            crossorigin: "anonymous"
+          )
+          script(
+            src: "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js",
+            integrity: "sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6",
             crossorigin: "anonymous"
           )
         end
