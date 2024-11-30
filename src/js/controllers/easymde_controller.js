@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   connect() {
     console.log(`easymde connected: ${this.element}`)
-    self.easyMDE = new EasyMDE({ element: this.element })
+    self.easyMDE = new EasyMDE(this.#buildOptions())
     this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect")
   }
 
@@ -16,5 +16,17 @@ export default class extends Controller {
   reconnect() {
     this.disconnect()
     this.connect()
+  }
+
+  #buildOptions() {
+    let options = { element: this.element }
+    if (this.element.attributes.id.value) {
+      options.autosave = {
+        enabled: true,
+        uniqueId: this.element.attributes.id.value,
+        delay: 1000,
+      }
+    }
+    return options
   }
 }

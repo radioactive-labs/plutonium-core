@@ -7436,7 +7436,7 @@
   var easymde_controller_default = class extends Controller {
     connect() {
       console.log(`easymde connected: ${this.element}`);
-      self.easyMDE = new EasyMDE({ element: this.element });
+      self.easyMDE = new EasyMDE(this.#buildOptions());
       this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect");
     }
     disconnect() {
@@ -7446,6 +7446,17 @@
     reconnect() {
       this.disconnect();
       this.connect();
+    }
+    #buildOptions() {
+      let options = { element: this.element };
+      if (this.element.attributes.id.value) {
+        options.autosave = {
+          enabled: true,
+          uniqueId: this.element.attributes.id.value,
+          delay: 1e3
+        };
+      }
+      return options;
     }
   };
 
