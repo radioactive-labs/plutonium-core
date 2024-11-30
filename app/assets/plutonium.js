@@ -7437,10 +7437,15 @@
     connect() {
       console.log(`easymde connected: ${this.element}`);
       self.easyMDE = new EasyMDE({ element: this.element });
+      this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect");
     }
     disconnect() {
       self.easyMDE.toTextArea();
       self.easyMDE = null;
+    }
+    reconnect() {
+      this.disconnect();
+      this.connect();
     }
   };
 
@@ -7451,10 +7456,15 @@
       self.slimSelect = new SlimSelect({
         select: this.element
       });
+      this.element.setAttribute("data-action", "turbo:morph-element->slim-select#reconnect");
     }
     disconnect() {
       self.slimSelect.destroy();
       self.slimSelect = null;
+    }
+    reconnect() {
+      this.disconnect();
+      this.connect();
     }
   };
 
@@ -7463,10 +7473,15 @@
     connect() {
       console.log(`flatpickr connected: ${this.element}`);
       self.picker = new flatpickr(this.element, this.#buildOptions());
+      this.element.setAttribute("data-action", "turbo:morph-element->flatpickr#reconnect");
     }
     disconnect() {
       self.picker.destroy();
       self.picker = null;
+    }
+    reconnect() {
+      this.disconnect();
+      this.connect();
     }
     #buildOptions() {
       let options = { altInput: true };

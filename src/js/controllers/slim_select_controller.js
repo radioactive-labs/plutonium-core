@@ -7,10 +7,16 @@ export default class extends Controller {
     self.slimSelect = new SlimSelect({
       select: this.element
     })
+    this.element.setAttribute("data-action", "turbo:morph-element->slim-select#reconnect")
   }
 
   disconnect() {
     self.slimSelect.destroy()
     self.slimSelect = null
+  }
+
+  reconnect() {
+    this.disconnect()
+    this.connect()
   }
 }
