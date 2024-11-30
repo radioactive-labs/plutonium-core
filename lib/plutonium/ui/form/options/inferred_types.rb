@@ -8,6 +8,8 @@ module Plutonium
           private
 
           def infer_field_component
+            return :markdown if inferred_field_type == :rich_text
+
             component = super
             case component
             when :select
