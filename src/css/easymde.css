@@ -1,7 +1,7 @@
 /**
 * EasyMDE + CodeMirror Styles
-* Based on easymde v2.18.0
-* Adapted for Tailwind with dark mode support
+* Based on https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css
+* Adapted for Flowbite with dark mode support
 */
 
 @layer components {
@@ -304,47 +304,68 @@
   }
 
   .cm-s-easymde .cm-quote {
-    @apply text-green-700 dark:text-green-400;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-keyword {
-    @apply text-purple-600 dark:text-purple-400;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-atom {
-    @apply text-blue-800 dark:text-blue-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-number {
-    @apply text-green-800 dark:text-green-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-def {
-    @apply text-blue-600 dark:text-blue-400;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-variable {
-    @apply text-gray-800 dark:text-gray-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-variable-2 {
-    @apply text-blue-700 dark:text-blue-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-variable-3 {
-    @apply text-teal-700 dark:text-teal-300;
+    @apply text-gray-900 dark:text-white;
   }
 
-  .cm-s-easymde .cm-link {
-    @apply text-secondary-700 dark:text-secondary-300;
+  .cm-formatting.cm-formatting-list {
+    @apply text-gray-900 dark:text-white;
   }
+
+  .cm-formatting.cm-formatting-link {
+    @apply text-secondary-900 dark:text-secondary-400 !important;
+  }
+
+  .cm-formatting.cm-formatting-link-string {
+    @apply text-secondary-900 dark:text-secondary-400 !important;
+  }
+
+
+  .cm-s-easymde .cm-string {
+    @apply text-accent-600 dark:text-accent-400;
+  }
+
+  .cm-s-easymde .cm-string.cm-url {
+    @apply text-accent-600 dark:text-accent-400;
+  }
+
+  /* .cm-s-easymde .cm-link {
+    @apply text-accent-600 dark:text-accent-400;
+  } */
 
   .cm-s-easymde .cm-url {
-    @apply text-primary-700 dark:text-primary-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-string-2 {
-    @apply text-orange-600 dark:text-orange-300;
+    @apply text-gray-900 dark:text-white;
   }
 
   .cm-s-easymde .cm-comment {
@@ -360,7 +381,7 @@
   }
 
   .cm-s-easymde .cm-attribute {
-    color: #795da3;
+    @apply text-secondary-600 dark:text-secondary-400;
   }
 
   .cm-s-easymde .cm-error {
@@ -467,19 +488,6 @@
     direction: rtl;
   }
 
-  /* Selection Styles */
-  /* .CodeMirror-line::selection,
-    .CodeMirror-line>span::selection,
-    .CodeMirror-line>span>span::selection {
-        @apply bg-accent-100 dark:bg-accent-900/30;
-    }
-
-    .CodeMirror-line::-moz-selection,
-    .CodeMirror-line>span::-moz-selection,
-    .CodeMirror-line>span>span::-moz-selection {
-        @apply bg-accent-100 dark:bg-accent-900/30;
-    } */
-
   .CodeMirror-selectedtext {
     @apply bg-gray-200/70 dark:bg-gray-600/50;
   }
@@ -551,6 +559,10 @@
 
   .CodeMirror-line {
     @apply outline-none;
+  }
+
+  .cm-tab {
+    @apply inline-block no-underline;
   }
 
   /* Fix for tab character rendering */
@@ -645,5 +657,70 @@
   .CodeMirror pre.CodeMirror-line-like {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Typography Styles */
+  .cm-s-easymde .cm-header {
+    @apply text-gray-900 dark:text-white;
+  }
+
+  /* Focus/Selection Styles */
+  .CodeMirror-line::selection,
+  .CodeMirror-line>span::selection,
+  .CodeMirror-line>span>span::selection {
+    @apply bg-primary-100 dark:bg-primary-900/30;
+  }
+
+  .CodeMirror-line::-moz-selection,
+  .CodeMirror-line>span::-moz-selection,
+  .CodeMirror-line>span>span::-moz-selection {
+    @apply bg-primary-100 dark:bg-primary-900/30;
+  }
+
+  /* Tag Match Styles */
+  .CodeMirror-matchingtag {
+    @apply bg-yellow-200/30 dark:bg-yellow-900/30;
+  }
+
+  /* Search Highlight Styles */
+  .cm-searching {
+    @apply bg-yellow-200/40 dark:bg-yellow-900/40;
+  }
+
+  /* Ruler Styles */
+  .CodeMirror-rulers {
+    @apply absolute inset-x-0 -top-[50px] bottom-0 overflow-hidden;
+  }
+
+  .CodeMirror-ruler {
+    @apply border-l border-gray-300 dark:border-gray-600 top-0 bottom-0 absolute;
+  }
+
+  /* Editor Preview Full */
+  .editor-preview-full {
+    @apply absolute w-full h-full top-0 left-0 z-[7] overflow-auto hidden box-border;
+  }
+
+  /* Add active state for full preview */
+  .editor-preview-active {
+    @apply block;
+  }
+
+  /* Preview content specific styles */
+  .editor-preview-full {
+    @apply p-2.5 bg-gray-50 dark:bg-gray-900 format dark:format-invert format-primary max-w-none;
+  }
+
+  .editor-preview-full>p {
+    @apply mt-0;
+  }
+
+  .editor-preview-full pre {
+    @apply bg-gray-100 dark:bg-gray-800 mb-2.5;
+  }
+
+  .editor-preview-full table td,
+  .editor-preview-full table th {
+    @apply border border-gray-300 dark:border-gray-600 p-1.5;
   }
 }

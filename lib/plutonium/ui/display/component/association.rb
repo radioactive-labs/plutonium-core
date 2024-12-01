@@ -4,7 +4,7 @@ module Plutonium
   module UI
     module Display
       module Component
-        class AssociationField < Phlexi::Display::Components::Association
+        class Association < Phlexi::Display::Components::Association
           include Plutonium::UI::Component::Methods
 
           def render_value(value)

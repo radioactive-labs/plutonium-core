@@ -1,3 +1,9 @@
+/**
+* Slim Select Styles
+* Based on https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.min.css
+* Adapted for Flowbite with dark mode support
+*/
+
 @layer components {
   :root {
     --ss-primary-color: theme('colors.primary.500');

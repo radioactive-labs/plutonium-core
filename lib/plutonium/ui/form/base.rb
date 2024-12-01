@@ -10,7 +10,7 @@ module Plutonium
           include Plutonium::UI::Form::Options::InferredTypes
 
           def easymde_tag(**, &)
-            create_component(Plutonium::UI::Form::Components::EasymdeInput, :easymde, **, &)
+            create_component(Plutonium::UI::Form::Components::Easymde, :easymde, **, &)
           end
           alias_method :markdown_tag, :easymde_tag
 
@@ -21,7 +21,7 @@ module Plutonium
           alias_method :select_tag, :slim_select_tag
 
           def flatpickr_tag(**, &)
-            create_component(Plutonium::UI::Form::Components::FlatpickrInput, :flatpickr, **, &)
+            create_component(Plutonium::UI::Form::Components::Flatpickr, :flatpickr, **, &)
           end
         end
 

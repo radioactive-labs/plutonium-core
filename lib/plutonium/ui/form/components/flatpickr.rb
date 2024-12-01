@@ -4,7 +4,7 @@ module Plutonium
   module UI
     module Form
       module Components
-        class FlatpickrInput < Phlexi::Form::Components::Input
+        class Flatpickr < Phlexi::Form::Components::Input
           private
 
           def build_input_attributes

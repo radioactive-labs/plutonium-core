@@ -4,7 +4,7 @@ module Plutonium
   module UI
     module Form
       module Components
-        class EasymdeInput < Phlexi::Form::Components::Base
+        class Easymde < Phlexi::Form::Components::Base
           include Phlexi::Form::Components::Concerns::HandlesInput
 
           def view_template
