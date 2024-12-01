@@ -29,7 +29,13 @@ module Plutonium
           private
 
           def render_markdown(value)
-            RENDERER.render ActionController::Base.helpers.sanitize(value, tags: %w[strong em sub sup details summary])
+            RENDERER.render(
+              ActionController::Base.helpers.sanitize(
+                value,
+                tags: %w[strong em sub sup details summary],
+                attributes: []
+              )
+            )
           end
 
           def normalize_value(value)
