@@ -92,7 +92,7 @@
   }
 
   .ss-main .ss-values .ss-value {
-    @apply flex select-none items-center w-fit bg-primary-500 rounded-md;
+    @apply flex select-none items-center w-fit bg-primary-500 rounded-md text-white;
     animation: ss-valueIn 0.2s ease-out forwards;
   }
 
@@ -101,11 +101,11 @@
   }
 
   .ss-main .ss-values .ss-value .ss-value-text {
-    @apply text-xs text-white dark:text-gray-900 leading-normal p-[3px_5px];
+    @apply text-xs leading-normal p-[3px_5px];
   }
 
   .ss-main .ss-values .ss-value .ss-value-delete {
-    @apply flex items-center h-[7px] w-[7px] p-[3px_5px] cursor-pointer border-l border-solid border-white dark:border-gray-900 box-content;
+    @apply flex items-center h-[7px] w-[7px] p-[3px_5px] cursor-pointer border-l border-solid border-white box-content;
   }
 
   .ss-main .ss-values .ss-value .ss-value-delete svg {
@@ -113,7 +113,7 @@
   }
 
   .ss-main .ss-values .ss-value .ss-value-delete svg path {
-    @apply fill-none stroke-white dark:stroke-gray-900;
+    @apply fill-none stroke-white;
     stroke-width: 18;
     stroke-linecap: round;
     stroke-linejoin: round;
