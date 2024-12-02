@@ -132,6 +132,12 @@ module Plutonium
             integrity: "sha384-RkASv+6KfBMW9eknReJIJ6b3UnjKOKC5bOUaNgIY778NFbQ8MtWq9Lr/khUgqtTt",
             crossorigin: "anonymous"
           )
+          link(
+            rel: "stylesheet",
+            href: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/css/intlTelInput.min.css",
+            integrity: "sha384-oE0RVGDyNw9goP8V3wYWC9+3GYojVc/LhhKmLT9J5k+L+oGHPa1gRF3FomvOCOFs",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_scripts
@@ -155,6 +161,11 @@ module Plutonium
           script(
             src: "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js",
             integrity: "sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6",
+            crossorigin: "anonymous"
+          )
+          script(
+            src: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/intlTelInput.min.js",
+            integrity: "sha384-oCoRbvnGGnM56vTrLX0f7cgRy2aqLchemkQhvfBT7J+b6km6CSuWz/89IpPnTq9j",
             crossorigin: "anonymous"
           )
         end

@@ -4,13 +4,13 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   connect() {
     console.log(`flatpickr connected: ${this.element}`)
-    self.picker = new flatpickr(this.element, this.#buildOptions())
+    this.picker = new flatpickr(this.element, this.#buildOptions())
     this.element.setAttribute("data-action", "turbo:morph-element->flatpickr#reconnect")
   }
 
   disconnect() {
-    self.picker.destroy()
-    self.picker = null
+    this.picker.destroy()
+    this.picker = null
   }
 
   reconnect() {

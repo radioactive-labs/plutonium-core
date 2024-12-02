@@ -30,8 +30,13 @@ module Plutonium
           end
 
           def flatpickr_tag(**, &)
-            create_component(Plutonium::UI::Form::Components::Flatpickr, :flatpickr, **, &)
+            create_component(Components::Flatpickr, :flatpickr, **, &)
           end
+
+          def int_tel_input_tag(**, &)
+            create_component(Components::IntlTelInput, :int_tel_input, **, &)
+          end
+          alias_method :phone_tag, :int_tel_input_tag
         end
 
         private

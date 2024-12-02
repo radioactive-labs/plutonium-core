@@ -12,6 +12,7 @@ module Plutonium
             color: "flex items-center",
             color_indicator: "w-10 h-10 rounded-full mr-2",
             email: "flex items-center text-primary-600 dark:text-primary-500 whitespace-nowrap",
+            phone: "flex items-center text-primary-600 dark:text-primary-500 whitespace-nowrap",
             json: " whitespace-pre font-mono shadow-inner p-4"
           })
         end

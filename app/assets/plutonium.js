@@ -10657,12 +10657,12 @@ ${text2}</tr>
   var easymde_controller_default = class extends Controller {
     connect() {
       console.log(`easymde connected: ${this.element}`);
-      self.easyMDE = new EasyMDE(this.#buildOptions());
+      this.easyMDE = new EasyMDE(this.#buildOptions());
       this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect");
     }
     disconnect() {
-      self.easyMDE.toTextArea();
-      self.easyMDE = null;
+      this.easyMDE.toTextArea();
+      this.easyMDE = null;
     }
     reconnect() {
       this.disconnect();
@@ -10698,14 +10698,14 @@ ${text2}</tr>
   var slim_select_controller_default = class extends Controller {
     connect() {
       console.log(`slim-select connected: ${this.element}`);
-      self.slimSelect = new SlimSelect({
+      this.slimSelect = new SlimSelect({
         select: this.element
       });
       this.element.setAttribute("data-action", "turbo:morph-element->slim-select#reconnect");
     }
     disconnect() {
-      self.slimSelect.destroy();
-      self.slimSelect = null;
+      this.slimSelect.destroy();
+      this.slimSelect = null;
     }
     reconnect() {
       this.disconnect();
@@ -10717,12 +10717,12 @@ ${text2}</tr>
   var flatpickr_controller_default = class extends Controller {
     connect() {
       console.log(`flatpickr connected: ${this.element}`);
-      self.picker = new flatpickr(this.element, this.#buildOptions());
+      this.picker = new flatpickr(this.element, this.#buildOptions());
       this.element.setAttribute("data-action", "turbo:morph-element->flatpickr#reconnect");
     }
     disconnect() {
-      self.picker.destroy();
-      self.picker = null;
+      this.picker.destroy();
+      this.picker = null;
     }
     reconnect() {
       this.disconnect();
@@ -10737,6 +10737,39 @@ ${text2}</tr>
         options2.noCalendar = true;
       }
       return options2;
+    }
+  };
+
+  // src/js/controllers/intl_tel_input_controller.js
+  var intl_tel_input_controller_default = class extends Controller {
+    static targets = ["input"];
+    connect() {
+      console.log(`intl-tel-input connected: ${this.element}`);
+    }
+    disconnect() {
+      this.inputTargetDisconnected();
+    }
+    inputTargetConnected() {
+      if (!this.hasInputTarget)
+        return;
+      this.iti = window.intlTelInput(this.inputTarget, this.#buildOptions());
+      this.inputTarget.setAttribute("data-action", "turbo:morph-element->intl-tel-input#reconnect");
+    }
+    inputTargetDisconnected() {
+      if (this.iti)
+        this.iti.destroy();
+      this.iti = null;
+    }
+    reconnect() {
+      this.inputTargetDisconnected();
+      this.inputTargetConnected();
+    }
+    #buildOptions() {
+      return {
+        strictMode: true,
+        hiddenInput: () => ({ phone: this.inputTarget.attributes.name.value }),
+        loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/utils.js"
+      };
     }
   };
 
@@ -10767,6 +10800,7 @@ ${text2}</tr>
     application2.register("easymde", easymde_controller_default);
     application2.register("slim-select", slim_select_controller_default);
     application2.register("flatpickr", flatpickr_controller_default);
+    application2.register("intl-tel-input", intl_tel_input_controller_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js

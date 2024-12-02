@@ -42,7 +42,12 @@ module Plutonium
             flatpickr: :input,
             valid_flatpickr: :valid_input,
             invalid_flatpickr: :invalid_input,
-            neutral_flatpickr: :neutral_input
+            neutral_flatpickr: :neutral_input,
+            # int_tel_input
+            int_tel_input: :input,
+            valid_int_tel_input: :valid_input,
+            invalid_int_tel_input: :invalid_input,
+            neutral_int_tel_input: :neutral_input
           })
         end
       end
