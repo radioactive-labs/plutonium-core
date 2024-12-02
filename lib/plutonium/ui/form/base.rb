@@ -14,11 +14,20 @@ module Plutonium
           end
           alias_method :markdown_tag, :easymde_tag
 
-          alias_method :basic_select_tag, :select_tag
-          def slim_select_tag(**, &)
-            basic_select_tag(**, data_controller: "slim-select", class!: "", &)
+          def slim_select_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
+            select_tag(**attributes, class!: "", &)
           end
-          alias_method :select_tag, :slim_select_tag
+
+          def belongs_to_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
+            create_component(Components::BelongsTo, :belongs_to, **attributes, &)
+          end
+
+          def has_many_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
+            create_component(Components::HasMany, :has_many, **attributes, &)
+          end
 
           def flatpickr_tag(**, &)
             create_component(Plutonium::UI::Form::Components::Flatpickr, :flatpickr, **, &)

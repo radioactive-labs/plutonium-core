@@ -8,16 +8,19 @@ module Plutonium
           private
 
           def infer_field_component
-            return :markdown if inferred_field_type == :rich_text
+            case inferred_field_type
+            when :rich_text
+              return :markdown
+            end
 
-            component = super
-            case component
+            inferred_field_component = super
+            case inferred_field_component
             when :select
               :slim_select
             when :date, :time, :datetime
               :flatpickr
             else
-              component
+              inferred_field_component
             end
           end
         end

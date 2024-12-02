@@ -48,6 +48,7 @@ module Plutonium
           :current_interactive_action,
           :current_engine,
           :policy_for,
+          :authorized_resource_scope,
           :allowed_to?,
           :registered_resources,
           :root_path,
