@@ -1,7 +1,5 @@
 # Building a Blog with Plutonium
 
-# Building a Blog with Plutonium
-
 > **Quick Links:**
 > - 🔍 [Tutorial Demo](https://github.com/radioactive-labs/plutonium-app)
 > - 📂 [Tutorial Source Code](https://github.com/radioactive-labs/plutonium-app)
