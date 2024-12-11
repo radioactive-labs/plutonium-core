@@ -1,3 +1,4 @@
+# sidebar_menu_item_component.rb
 module PlutoniumUi
   class SidebarMenuItemComponent < PlutoniumUi::Base
     renders_many :sub_items, "::PlutoniumUi::SidebarMenuItemComponent"
