@@ -48,6 +48,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "phlexi-form"
   spec.add_dependency "phlexi-table"
   spec.add_dependency "phlexi-display"
+  spec.add_dependency "phlexi-menu"
   spec.add_dependency "tailwind_merge"
   spec.add_dependency "phlex-slotable"
   spec.add_dependency "redcarpet"

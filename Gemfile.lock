@@ -12,6 +12,7 @@ PATH
       phlex-tabler_icons
       phlexi-display
       phlexi-form
+      phlexi-menu
       phlexi-table
       rabl (~> 0.16.1)
       rails (>= 7.1, < 8.0)
@@ -205,6 +206,10 @@ GEM
       zeitwerk
     phlexi-form (0.6.1)
       activesupport
+      phlex (~> 1.11)
+      phlexi-field
+      zeitwerk
+    phlexi-menu (0.2.0)
       phlex (~> 1.11)
       phlexi-field
       zeitwerk
