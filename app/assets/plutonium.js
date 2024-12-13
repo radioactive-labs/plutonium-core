@@ -3364,7 +3364,6 @@
     window.Collapse = Collapse;
     window.initCollapses = initCollapses;
   }
-  var collapse_default = Collapse;
 
   // node_modules/flowbite/lib/esm/components/carousel/index.js
   var __assign3 = function() {
@@ -7269,19 +7268,27 @@
     static targets = ["trigger", "menu"];
     connect() {
       console.log(`resource-collapse connected: ${this.element}`);
-      this.collapse = new collapse_default(this.menuTarget, this.triggerTarget);
-    }
-    disconnect() {
-      this.collapse = null;
+      if (!this.element.hasAttribute("data-visible")) {
+        this.element.setAttribute("data-visible", "false");
+      }
+      this.#updateState();
     }
     toggle() {
-      this.collapse.toggle();
+      const isVisible = this.element.getAttribute("data-visible") === "true";
+      this.element.setAttribute("data-visible", (!isVisible).toString());
+      this.#updateState();
     }
-    show() {
-      this.collapse.show();
-    }
-    hide() {
-      this.collapse.hide();
+    #updateState() {
+      const isVisible = this.element.getAttribute("data-visible") === "true";
+      if (isVisible) {
+        this.menuTarget.classList.remove("hidden");
+        this.triggerTarget.setAttribute("aria-expanded", "true");
+        this.dispatch("expand");
+      } else {
+        this.menuTarget.classList.add("hidden");
+        this.triggerTarget.setAttribute("aria-expanded", "false");
+        this.dispatch("collapse");
+      }
     }
   };
 

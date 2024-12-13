@@ -1,6 +1,4 @@
 import { Controller } from "@hotwired/stimulus"
-import { Collapse } from 'flowbite';
-
 
 // Connects to data-controller="resource-collapse"
 export default class extends Controller {
@@ -9,22 +7,32 @@ export default class extends Controller {
   connect() {
     console.log(`resource-collapse connected: ${this.element}`)
 
-    this.collapse = new Collapse(this.menuTarget, this.triggerTarget);
-  }
+    // Default to false if the data attribute isn't set
+    if (!this.element.hasAttribute('data-visible')) {
+      this.element.setAttribute('data-visible', 'false')
+    }
 
-  disconnect() {
-    this.collapse = null
+    // Set initial state
+    this.#updateState()
   }
 
   toggle() {
-    this.collapse.toggle()
+    const isVisible = this.element.getAttribute('data-visible') === 'true'
+    this.element.setAttribute('data-visible', (!isVisible).toString())
+    this.#updateState()
   }
 
-  show() {
-    this.collapse.show()
-  }
+  #updateState() {
+    const isVisible = this.element.getAttribute('data-visible') === 'true'
 
-  hide() {
-    this.collapse.hide()
+    if (isVisible) {
+      this.menuTarget.classList.remove('hidden')
+      this.triggerTarget.setAttribute('aria-expanded', 'true')
+      this.dispatch('expand')
+    } else {
+      this.menuTarget.classList.add('hidden')
+      this.triggerTarget.setAttribute('aria-expanded', 'false')
+      this.dispatch('collapse')
+    }
   }
 }
