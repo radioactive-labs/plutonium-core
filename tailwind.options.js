@@ -248,6 +248,52 @@ export const safelist = [
   },
 ]
 
+export const merge = function (...configs) {
+  function isObject(item) {
+    return item && typeof item === 'object' && !Array.isArray(item);
+  }
+
+  function mergeArrays(target, source) {
+    // Combine arrays and remove duplicates for simple values
+    if (target.every(item => typeof item === 'string')) {
+      return [...new Set([...target, ...source])];
+    }
+    // For arrays of objects or complex types, concatenate
+    return [...target, ...source];
+  }
+
+  function deepMerge(target, source) {
+    if (!isObject(target) || !isObject(source)) {
+      return source;
+    }
+
+    const output = { ...target };
+
+    Object.keys(source).forEach(key => {
+      const targetValue = output[key];
+      const sourceValue = source[key];
+
+      if (Array.isArray(targetValue) && Array.isArray(sourceValue)) {
+        output[key] = mergeArrays(targetValue, sourceValue);
+      } else if (isObject(targetValue) && isObject(sourceValue)) {
+        // Handle function properties (like theme functions in Tailwind)
+        if (typeof targetValue === 'function' || typeof sourceValue === 'function') {
+          output[key] = sourceValue;
+        } else {
+          output[key] = deepMerge(targetValue, sourceValue);
+        }
+      } else {
+        output[key] = sourceValue;
+      }
+    });
+
+    return output;
+  }
+
+  // Reduce all configs into a single merged config
+  return configs.reduce((merged, config) => deepMerge(merged, config), {});
+}
+
 // // Object.keys(colors).forEach((color) => {
 // //   if (typeof colors[color] === 'object') {
 // //     Object.keys(colors[color]).forEach((shade) => {
