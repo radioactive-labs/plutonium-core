@@ -25,7 +25,7 @@ module Plutonium
             item_span: "flex items-center p-2 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700",
 
             # Label and content styles
-            item_label: "flex-1 ml-3 text-left whitespace-nowrap",
+            item_label: ->(depth) { "flex-1 #{(depth > 0) ? "ml-9" : "ml-3"} text-left whitespace-nowrap" },
 
             # Badge styles
             leading_badge: "inline-flex justify-center items-center w-5 h-5 text-xs font-semibold rounded-full text-primary-800 bg-primary-100 dark:bg-primary-200 dark:text-primary-800",
@@ -50,9 +50,22 @@ module Plutonium
 
       protected
 
+      def render_items(items, depth = 0)
+        return if depth >= @max_depth || items.empty?
+
+        if depth.zero?
+          ul(class: themed(:items_container, depth)) do
+            items.each { |item| render_item_wrapper(item, depth) }
+          end
+        else
+          ul(class: themed(:sub_items_container, depth), data: {"resource-collapse-target": "menu"}) do
+            items.each { |item| render_item_wrapper(item, depth) }
+          end
+        end
+      end
+
       # def render_items(items, depth = 0)
       #   return if depth >= @max_depth
-      #   return if items.empty?
 
       #   if depth.zero?
       #     ul(class: themed(:items_container, depth)) do
@@ -63,9 +76,9 @@ module Plutonium
       #   else
       #     # Use collapsible rendering for nested levels
       #     ul(
-      #       id: generate_menu_id(items.first&.options&.dig(:parent)),
+      #       id: generate_menu_id(:root),
       #       class: themed(:sub_items_container, depth),
-      #       data: { "resource-collapse-target": "menu" }
+      #       data: {"resource-collapse-target": "menu"}
       #     ) do
       #       items.each do |item|
       #         render_item_wrapper(item, depth)
@@ -83,10 +96,6 @@ module Plutonium
         if nested?(item, depth)
           wrapper_attrs[:data][:controller] = "resource-collapse"
           wrapper_attrs[:data]["resource-collapse-active-class"] = themed(:collapse_icon_expanded)
-          wrapper_attrs[:id] = generate_item_id(item)
-
-          # # Store parent reference for nested items
-          # item.items.each { |child| child.options[:parent] = item }
         end
 
         li(**wrapper_attrs) do
@@ -103,28 +112,15 @@ module Plutonium
         end
       end
 
-      # def render_item_link(item, depth)
-      #   if item.url
-      #     a(href: item.url, class: themed(:item_link, depth)) do
-      #       render_item_interior(item, depth)
-      #     end
-      #   else
-      #     span(class: themed(:item_span, depth)) do
-      #       render_item_interior(item, depth)
-      #     end
-      #   end
-      # end
-
       def render_collapsible_button(item, depth)
         button(
           type: "button",
           class: themed(:item_span, depth),
           data: {
             "resource-collapse-target": "trigger",
-            "action": "resource-collapse#toggle"
+            action: "resource-collapse#toggle"
           },
           aria: {
-            controls: generate_menu_id(item),
             expanded: "false"
           }
         ) do
@@ -139,7 +135,7 @@ module Plutonium
           fill: "currentColor",
           viewBox: "0 0 20 20",
           xmlns: "http://www.w3.org/2000/svg",
-          aria: { hidden: true }
+          aria: {inert: true}
         ) do |s|
           s.path(
             fill_rule: "evenodd",
@@ -148,22 +144,6 @@ module Plutonium
           )
         end
       end
-
-      private
-
-      def generate_item_id(item)
-        "sidebar-menu-item-#{item.label.to_s.parameterize}"
-      end
-
-      def generate_menu_id(item)
-        # return nil unless item
-        "#{generate_item_id(item)}-menu"
-      end
-
-      # # Override to disable active state for turbo-permanent compatibility
-      # def active_class(item, depth = 0)
-      #   nil
-      # end
     end
   end
 end
