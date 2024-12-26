@@ -132,6 +132,30 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
       Rodauth::<%= account_path.classify %>Mailer.unlock_account(self.class.configuration_name, account_id, unlock_account_key_value)
     end
 <% end -%>
+<% if otp_lockout_email? -%>
+
+    create_otp_locked_out_email do
+      Rodauth::<%= account_path.classify %>Mailer.otp_locked_out(self.class.configuration_name, account_id)
+    end
+
+    create_otp_unlocked_email do
+      Rodauth::<%= account_path.classify %>Mailer.otp_unlocked(self.class.configuration_name, account_id)
+    end
+
+    create_otp_unlock_failed_email do
+      Rodauth::<%= account_path.classify %>Mailer.otp_unlock_failed(self.class.configuration_name, account_id)
+    end
+<% end -%>
+<% if otp_modify_email? -%>
+
+    create_otp_setup_email do
+      Rodauth::<%= account_path.classify %>Mailer.otp_setup(self.class.configuration_name, account_id)
+    end
+
+    create_otp_disabled_email do
+      Rodauth::<%= account_path.classify %>Mailer.otp_disabled(self.class.configuration_name, account_id)
+    end
+<% end -%>
 
     send_email do |email|
       # queue email delivery on the mailer after the transaction commits

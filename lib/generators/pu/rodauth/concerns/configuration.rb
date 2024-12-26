@@ -107,6 +107,8 @@ module Pu
               otp_unlock_table: "%<singular>s_otp_unlocks"
             }
           },
+          otp_lockout_email: {},
+          otp_modify_email: {},
           sms_codes: {
             views: %w[sms_setup sms_confirm sms_auth sms_request sms_disable],
             migrations: {

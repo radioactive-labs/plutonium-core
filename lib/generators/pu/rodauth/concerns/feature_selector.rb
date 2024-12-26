@@ -56,7 +56,7 @@ module Pu
           when :remember
             return false if only_json?
           when :otp
-            return true if otp_unlock?
+            return true if otp_unlock? || otp_lockout_email? || otp_modify_email?
           end
 
           return feature_options[:default] if defaults? && options[feature].nil?
