@@ -29,16 +29,30 @@ module Pu
 
         selected_resources.each do |resource|
           @resource_class = resource
+          if app_namespace == "MainApp"
+            insert_into_file "config/routes.rb",
+              indent("register_resource ::#{resource}\n", 2),
+              after: /.*Rails\.application\.routes\.draw do.*\n/
+          else
+            unless expected_parent_policy
+              template "app/policies/resource_policy.rb",
+                "packages/#{package_namespace}/app/policies/#{package_namespace}/#{resource.underscore}_policy.rb"
+            end
 
-          template "app/controllers/resource_controller.rb", "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
-          template "app/policies/resource_policy.rb", "packages/#{package_namespace}/app/policies/#{package_namespace}/#{resource.underscore}_policy.rb" unless expected_parent_policy
-          # template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb" unless expected_parent_presenter
-          # template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb" unless expected_parent_query_object
-          template "app/definitions/resource_definition.rb", "packages/#{package_namespace}/app/definitions/#{package_namespace}/#{resource.underscore}_definition.rb" unless expected_parent_definition
+            unless expected_parent_definition
+              template "app/definitions/resource_definition.rb",
+                "packages/#{package_namespace}/app/definitions/#{package_namespace}/#{resource.underscore}_definition.rb"
+            end
+            # template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb" unless expected_parent_presenter
+            # template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb" unless expected_parent_query_object
 
-          insert_into_file "packages/#{package_namespace}/config/routes.rb",
-            indent("register_resource ::#{resource}\n", 2),
-            before: /.*# register resources above.*/
+            template "app/controllers/resource_controller.rb",
+              "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
+
+            insert_into_file "packages/#{package_namespace}/config/routes.rb",
+              indent("register_resource ::#{resource}\n", 2),
+              before: /.*# register resources above.*/
+          end
         end
       rescue => e
         exception "#{self.class} failed:", e
