@@ -23,10 +23,6 @@ class RodauthPlugin < Rodauth::Rails::Auth
     db Sequel.<%= sequel_adapter %>(extensions: :activerecord_connection, keep_reference: false)
 <% end -%>
 
-    # Prevent rodauth from introspecting the database if we are not using UUIDs
-    # https://github.com/janko/rodauth-rails/issues/244
-    convert_token_id_to_integer? true
-
     # Change prefix of table and foreign key column names from default "account"
     # accounts_table :users
     # verify_account_table :user_verification_keys

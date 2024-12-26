@@ -16,6 +16,9 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
 
     # ==> General
 
+    # Prevent rodauth from introspecting the database if we are not using UUIDs
+    convert_token_id_to_integer? { <%= account_path.classify %>.columns_hash["id"].type == :integer }
+
     # Change prefix of table and foreign key column names from default "account"
     # accounts_table: 'players'
 
