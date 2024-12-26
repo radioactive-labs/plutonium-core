@@ -19,7 +19,9 @@ module Plutonium
         # Use this when getting a scope for a resource that is not the current
         # Use this instead of authorized_scope directly
         def authorized_resource_scope(resource, relation: nil, **options)
-          raise ArgumentError("Expected resource to be a class inheriting ActiveRecord::Base") unless resource.instance_of?(Class) && resource < ActiveRecord::Base
+          unless resource.instance_of?(Class) && resource < ActiveRecord::Base
+            raise ArgumentError("Expected resource to be a class inheriting ActiveRecord::Base")
+          end
 
           options[:with] ||= ActionPolicy.lookup(resource, namespace: authorization_namespace)
           relation ||= resource.all
