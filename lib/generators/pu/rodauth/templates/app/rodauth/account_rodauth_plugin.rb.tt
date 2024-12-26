@@ -156,6 +156,16 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
       Rodauth::<%= account_path.classify %>Mailer.otp_disabled(self.class.configuration_name, account_id)
     end
 <% end -%>
+<% if webauthn_modify_email? -%>
+
+    create_webauthn_authenticator_added_email do
+      Rodauth::<%= account_path.classify %>Mailer.webauthn_authenticator_added(self.class.configuration_name, account_id)
+    end
+
+    create_webauthn_authenticator_removed_email do
+      Rodauth::<%= account_path.classify %>Mailer.webauthn_authenticator_removed(self.class.configuration_name, account_id)
+    end
+<% end -%>
 
     send_email do |email|
       # queue email delivery on the mailer after the transaction commits

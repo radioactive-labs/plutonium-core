@@ -129,9 +129,12 @@ module Pu
               webauthn_keys_account_id_column: "%<singular>s_id"
             }
           },
+          webauthn_login: {},
           webauthn_autofill: {
             views: %w[webauthn_autofill]
           },
+          webauthn_modify_email: {},
+          webauthn_verify_account: {},
           lockout: {
             views: %w[unlock_account_request unlock_account],
             migrations: {

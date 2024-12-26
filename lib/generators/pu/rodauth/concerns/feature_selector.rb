@@ -57,6 +57,8 @@ module Pu
             return false if only_json?
           when :otp
             return true if otp_unlock? || otp_lockout_email? || otp_modify_email?
+          when :webauthn
+            return true if webauthn_login? || webauthn_autofill? || webauthn_modify_email? || webauthn_verify_account?
           end
 
           return feature_options[:default] if defaults? && options[feature].nil?
