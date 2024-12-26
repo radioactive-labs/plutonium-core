@@ -21,7 +21,9 @@ module Pu
 
       def add_rodauth
         Bundler.with_unbundled_env do
-          run "bundle add bcrypt rodauth-rails"
+          %w[bcrypt sequel-activerecord_connection tilt rodauth-rails].each do |gem|
+            run "bundle add #{gem}"
+          end
         end
       end
 

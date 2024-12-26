@@ -5,12 +5,12 @@ module Rodauth
 
     private
 
-    def current_account(name = <%= ":#{table_prefix}" %>)
-      super(name)
+    def current_account
+      rodauth.rails_account
     end
 
     def rodauth(name = <%= ":#{table_prefix}" %>)
-      super(name)
+      super
     end
   end
 end
