@@ -55,6 +55,8 @@ module Pu
             return true if only_json?
           when :remember
             return false if only_json?
+          when :otp
+            return true if otp_unlock?
           end
 
           return feature_options[:default] if defaults? && options[feature].nil?

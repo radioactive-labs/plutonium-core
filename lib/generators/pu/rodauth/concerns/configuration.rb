@@ -101,6 +101,12 @@ module Pu
               otp_keys_table: "%<singular>s_otp_keys"
             }
           },
+          otp_unlock: {
+            views: %w[otp_unlock otp_unlock_unavailable],
+            migrations: {
+              otp_unlock_table: "%<singular>s_otp_unlocks"
+            }
+          },
           sms_codes: {
             views: %w[sms_setup sms_confirm sms_auth sms_request sms_disable],
             migrations: {
