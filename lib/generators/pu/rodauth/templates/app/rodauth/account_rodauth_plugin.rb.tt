@@ -290,9 +290,6 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
     # Redirect to login page after password reset.
     reset_password_redirect { login_path }
 <% end -%>
-
-    # Ensure requiring login follows login route changes.
-    require_login_redirect { login_path }
 <% end -%>
 
     # ==> Deadlines
