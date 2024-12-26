@@ -102,7 +102,7 @@ module Pu
             }
           },
           otp_unlock: {
-            views: %w[otp_unlock otp_unlock_unavailable],
+            views: %w[otp_unlock otp_unlock_not_available],
             migrations: {
               otp_unlock_table: "%<singular>s_otp_unlocks"
             }
