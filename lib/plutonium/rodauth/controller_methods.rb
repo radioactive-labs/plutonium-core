@@ -17,7 +17,7 @@ module Plutonium
       private
 
       def root_path
-        "/"
+        rodauth.login_redirect
       end
     end
   end
