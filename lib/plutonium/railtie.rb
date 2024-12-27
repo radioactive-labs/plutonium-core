@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "view_component"
-
 module Plutonium
   # Plutonium::Railtie integrates Plutonium with Rails applications.
   #
@@ -33,20 +31,12 @@ module Plutonium
       setup_asset_pipeline if Rails.application.config.respond_to?(:assets)
     end
 
-    initializer "plutonium.load_components" do
-      load_base_component
-    end
-
     initializer "plutonium.initializers" do
       load_plutonium_initializers
     end
 
     initializer "plutonium.asset_server" do
       setup_development_asset_server if Plutonium.configuration.development?
-    end
-
-    initializer "plutonium.view_components_capture_compat" do
-      config.view_component.capture_compatibility_patch_enabled = true
     end
 
     initializer "plutonium.action_dispatch_extensions" do
@@ -72,10 +62,6 @@ module Plutonium
     def setup_asset_pipeline
       Rails.application.config.assets.precompile += PRECOMPILE_ASSETS
       Rails.application.config.assets.paths << Plutonium.root.join("app/assets").to_s
-    end
-
-    def load_base_component
-      load Plutonium.root.join("app", "views", "components", "base.rb")
     end
 
     def load_plutonium_initializers

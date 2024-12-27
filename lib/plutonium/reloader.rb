@@ -5,8 +5,7 @@ require "active_support/notifications"
 module Plutonium
   # Reloader class for Plutonium
   #
-  # This class is responsible for managing the reloading of Plutonium components
-  # and related files during development.
+  # This class is responsible for reloading during development.
   class Reloader
     class << self
       # Start the reloader
@@ -46,11 +45,11 @@ module Plutonium
         if Plutonium.configuration.development?
           reload_paths.concat([
             Plutonium.lib_root.to_s,
-            Plutonium.root.join("app", "views", "components").to_s,
             Plutonium.root.join("config", "initializers").to_s
           ])
         end
 
+        # Add the application's packages dir
         packages_dir = Rails.root.join("packages").to_s
         reload_paths << packages_dir if File.directory?(packages_dir)
 
@@ -120,15 +119,6 @@ module Plutonium
         Plutonium.logger.debug { "[plutonium] reloading: app+framework" }
         Rails.application.reloader.reload!
         Plutonium::Loader.reload
-        reload_components
-      end
-
-      # Reload components
-      #
-      # @return [void]
-      def reload_components
-        Object.send(:remove_const, "PlutoniumUi")
-        load Plutonium.root.join("app", "views", "components", "base.rb")
       end
 
       # Reload a single file
