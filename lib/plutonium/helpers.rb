@@ -6,7 +6,6 @@ module Plutonium
         include Plutonium::Helpers::AttachmentHelper
         include Plutonium::Helpers::ContentHelper
         include Plutonium::Helpers::DisplayHelper
-        include Plutonium::Helpers::FormHelper
         include Plutonium::Helpers::TableHelper
         include Plutonium::Helpers::TurboHelper
         include Plutonium::Helpers::TurboStreamActionsHelper
