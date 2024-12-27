@@ -2606,48 +2606,6 @@
   Controller.outlets = [];
   Controller.values = {};
 
-  // src/js/controllers/resource_layout_controller.js
-  var resource_layout_controller_default = class extends Controller {
-    connect() {
-      console.log(`resource-layout connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/nav_grid_menu_item_controller.js
-  var nav_grid_menu_item_controller_default = class extends Controller {
-    connect() {
-      console.log(`nav-grid-menu-item connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/nav_grid_menu_controller.js
-  var nav_grid_menu_controller_default = class extends Controller {
-    connect() {
-      console.log(`nav-grid-menu connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/nav_user_section_controller.js
-  var nav_user_section_controller_default = class extends Controller {
-    connect() {
-      console.log(`nav-user-section connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/nav_user_link_controller.js
-  var nav_user_link_controller_default = class extends Controller {
-    connect() {
-      console.log(`nav-user-link connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/nav_user_controller.js
-  var nav_user_controller_default = class extends Controller {
-    connect() {
-      console.log(`nav-user connected: ${this.element}`);
-    }
-  };
-
   // src/js/controllers/header_controller.js
   var header_controller_default = class extends Controller {
     static targets = ["openIcon", "closeIcon"];
@@ -2798,34 +2756,6 @@
     }
   };
 
-  // src/js/controllers/sidebar_menu_item_controller.js
-  var sidebar_menu_item_controller_default = class extends Controller {
-    connect() {
-      console.log(`sidebar-menu-item connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/sidebar_menu_controller.js
-  var sidebar_menu_controller_default = class extends Controller {
-    connect() {
-      console.log(`sidebar-menu connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/sidebar_controller.js
-  var sidebar_controller_default = class extends Controller {
-    connect() {
-      console.log(`sidebar connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/has_many_panel_controller.js
-  var has_many_panel_controller_default = class extends Controller {
-    connect() {
-      console.log(`has-many-panel connected: ${this.element}`);
-    }
-  };
-
   // src/js/controllers/nested_resource_form_fields_controller.js
   var nested_resource_form_fields_controller_default = class extends Controller {
     static targets = ["target", "template", "addButton"];
@@ -2872,34 +2802,6 @@
     }
     get childCount() {
       return this.element.querySelectorAll(this.wrapperSelectorValue).length;
-    }
-  };
-
-  // src/js/controllers/toolbar_controller.js
-  var toolbar_controller_default = class extends Controller {
-    connect() {
-      console.log(`toolbar connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/table_search_input_controller.js
-  var table_search_input_controller_default = class extends Controller {
-    connect() {
-      console.log(`table-search-input connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/table_toolbar_controller.js
-  var table_toolbar_controller_default = class extends Controller {
-    connect() {
-      console.log(`table-toolbar connected: ${this.element}`);
-    }
-  };
-
-  // src/js/controllers/table_controller.js
-  var table_controller_default = class extends Controller {
-    connect() {
-      console.log(`table connected: ${this.element}`);
     }
   };
 
@@ -10658,22 +10560,8 @@ ${text2}</tr>
 
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
-    application2.register("resource-layout", resource_layout_controller_default);
-    application2.register("nav-grid-menu-item", nav_grid_menu_item_controller_default);
-    application2.register("nav-grid-menu", nav_grid_menu_controller_default);
-    application2.register("nav-user-section", nav_user_section_controller_default);
-    application2.register("nav-user-link", nav_user_link_controller_default);
-    application2.register("nav-user", nav_user_controller_default);
     application2.register("header", header_controller_default);
-    application2.register("sidebar-menu-item", sidebar_menu_item_controller_default);
-    application2.register("sidebar-menu", sidebar_menu_controller_default);
-    application2.register("sidebar", sidebar_controller_default);
-    application2.register("has-many-panel", has_many_panel_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);
-    application2.register("toolbar", toolbar_controller_default);
-    application2.register("table-search-input", table_search_input_controller_default);
-    application2.register("table-toolbar", table_toolbar_controller_default);
-    application2.register("table", table_controller_default);
     application2.register("form", form_controller_default);
     application2.register("resource-drop-down", resource_drop_down_controller_default);
     application2.register("resource-collapse", resource_collapse_controller_default);

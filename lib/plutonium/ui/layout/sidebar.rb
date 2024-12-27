@@ -26,7 +26,6 @@ module Plutonium
           aside(
             id: "sidebar-navigation",
             aria: {label: "Sidebar Navigation"},
-            data: {controller: :sidebar},
             class: "fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full lg:translate-x-0",
             &
           )

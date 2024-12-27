@@ -38,7 +38,7 @@ module Plutonium
       end
 
       def view_template
-        div(data: {controller: %w[has-many-panel frame-navigator]}) do
+        div(data: {controller: %w[frame-navigator]}) do
           Panel do |panel|
             panel.with_title @title
             panel.with_item PanelItem.new(label: "Home", icon: Phlex::TablerIcons::Home2, data_frame_navigator_target: %(homeButton))

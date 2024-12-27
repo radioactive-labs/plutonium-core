@@ -23,7 +23,7 @@ module Plutonium
 
         def page_title = helpers.controller.instance_variable_get(:@page_title)
 
-        def html_attributes = {lang:, data_controller: "resource-layout color-mode"}
+        def html_attributes = {lang:, data_controller: "color-mode"}
 
         def body_attributes = {class: "antialiased min-h-screen bg-gray-50 dark:bg-gray-900"}
 

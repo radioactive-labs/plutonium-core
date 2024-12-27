@@ -5,7 +5,6 @@ module Plutonium
 
       included do
         helper Plutonium::Helpers::ApplicationHelper
-        helper Plutonium::Helpers::ComponentHelper
         helper Plutonium::Helpers::AssetsHelper
         helper Plutonium::Helpers::FormHelper
 

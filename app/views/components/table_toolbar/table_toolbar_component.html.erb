@@ -1,7 +1,0 @@
-<div <%= attributes_html %>>
-    <%= render_component :toolbar, actions:, resource: resource_class do %>
-        <% if search_object.search_filter.present? && current_policy.search? %>
-            <%= render_component "table_search_input", search_object: search_object %>
-        <% end %>
-    <% end %>
-</div>
