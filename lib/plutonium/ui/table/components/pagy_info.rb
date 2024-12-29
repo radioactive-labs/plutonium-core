@@ -43,9 +43,10 @@ module Plutonium
               class: "flex items-center space-x-2 mt-2 md:mt-0",
               data_controller: "select-navigator"
             ) do
-              label(for: "perPage", class: "mr-2") { "Per page" }
+              id = "perPage#{SecureRandom.hex}"
+              label(for: id, class: "mr-2") { "Per page" }
               select(
-                id: "perPage", name: "items", class: select_classes,
+                id: id, name: "items", class: select_classes,
                 data_action: "change->select-navigator#navigate",
                 data_select_navigator_target: "select"
               ) do
@@ -60,7 +61,7 @@ module Plutonium
           end
 
           def select_classes
-            "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 min-w-[5em]"
           end
 
           def page_url(limit)
