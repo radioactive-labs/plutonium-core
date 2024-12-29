@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Connects to data-controller="resource-header"
 export default class extends Controller {
   static targets = ["openIcon", "closeIcon"]
   static outlets = ["sidebar"]

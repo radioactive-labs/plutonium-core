@@ -1,5 +1,5 @@
 // Import controllers here
-import HeaderController from "./header_controller.js"
+import ResourceHeaderController from "./resource_header_controller.js"
 import NestedResourceFormFieldsController from "./nested_resource_form_fields_controller.js"
 import FormController from "./form_controller.js"
 import ResourceDropDownController from "./resource_drop_down_controller.js"
@@ -16,7 +16,7 @@ import ResourceTabListController from "./resource_tab_list_controller.js"
 
 export default function (application) {
   // Register controllers here
-  application.register("header", HeaderController)
+  application.register("resource-header", ResourceHeaderController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
   application.register("form", FormController)
   application.register("resource-drop-down", ResourceDropDownController)
