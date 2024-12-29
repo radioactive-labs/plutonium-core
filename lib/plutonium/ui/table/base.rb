@@ -6,7 +6,13 @@ module Plutonium
       class Base < Phlexi::Table::Base
         include Plutonium::UI::Component::Behaviour
 
-        class Display < Plutonium::UI::Display::Base; end
+        class Display < Plutonium::UI::Display::Base
+          class Builder < Builder
+            def attachment_tag(**, &)
+              create_component(Plutonium::UI::Table::Components::Attachment, :attachment, **, &)
+            end
+          end
+        end
       end
     end
   end

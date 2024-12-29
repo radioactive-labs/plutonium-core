@@ -5,9 +5,10 @@ require "redcarpet"
 module Plutonium
   module UI
     module Display
-      module Component
+      module Components
         class Markdown < Phlexi::Display::Components::Base
           include Phlexi::Display::Components::Concerns::DisplaysValue
+          include Plutonium::UI::Component::Methods
 
           RENDERER = Redcarpet::Markdown.new(
             Redcarpet::Render::HTML.new(

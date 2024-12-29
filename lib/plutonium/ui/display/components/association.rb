@@ -3,7 +3,7 @@
 module Plutonium
   module UI
     module Display
-      module Component
+      module Components
         class Association < Phlexi::Display::Components::Association
           include Plutonium::UI::Component::Methods
 

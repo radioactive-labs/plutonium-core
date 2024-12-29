@@ -21,7 +21,8 @@ module Plutonium
             phone: "flex items-center text-md text-primary-600 dark:text-primary-500 mb-1 whitespace-pre-line",
             json: "text-sm text-gray-900 dark:text-white mb-1 whitespace-pre font-mono shadow-inner p-4",
             prefixed_icon: "w-8 h-8 mr-2",
-            markdown: "format dark:format-invert format-primary"
+            markdown: "format dark:format-invert format-primary",
+            attachment_value_wrapper: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
           })
         end
       end

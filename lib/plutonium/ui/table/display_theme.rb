@@ -13,7 +13,8 @@ module Plutonium
             color_indicator: "w-10 h-10 rounded-full mr-2",
             email: "flex items-center text-primary-600 dark:text-primary-500 whitespace-nowrap",
             phone: "flex items-center text-primary-600 dark:text-primary-500 whitespace-nowrap",
-            json: " whitespace-pre font-mono shadow-inner p-4"
+            json: " whitespace-pre font-mono shadow-inner p-4",
+            attachment_value_wrapper: "flex flex-wrap gap-4"
           })
         end
       end
