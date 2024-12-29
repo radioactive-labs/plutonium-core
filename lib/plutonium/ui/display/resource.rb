@@ -58,8 +58,8 @@ module Plutonium
           when_permitted(name) do
             # field :name, as: :string
             # display :name, as: :string
-            # display :description, class: "col-span-full"
-            # display :age, tag: {class: "max-h-fit"}
+            # display :description, wrapper: {class: "col-span-full"}
+            # display :age, class: "max-h-fit"
             # display :dob do |f|
             #   f.date_tag
             # end
@@ -69,15 +69,16 @@ module Plutonium
             display_definition = resource_definition.defined_displays[name] || {}
             display_options = display_definition[:options] || {}
 
-            tag = field_options[:as] || display_options[:as]
-            tag_attributes = display_options[:tag] || {}
+            tag = display_options[:as] || field_options[:as]
+            tag_attributes = display_options.except(:wrapper, :as)
             tag_block = display_definition[:block] || ->(f) {
               tag ||= f.inferred_field_component
               f.send(:"#{tag}_tag", **tag_attributes)
             }
 
+            wrapper_options = display_options[:wrapper] || {}
+
             field_options = field_options.except(:as)
-            wrapper_options = display_options.except(:tag, :as)
             render field(name, **field_options).wrapped(**wrapper_options) do |f|
               render instance_exec(f, &tag_block)
             end

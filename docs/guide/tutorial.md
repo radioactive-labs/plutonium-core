@@ -236,10 +236,10 @@ Customize the post detail layout using display grids:
 ```ruby
 # packages/blogging/app/definitions/blogging/post_definition.rb
 class Blogging::PostDefinition < Blogging::ResourceDefinition
-  display :user, class: "col-span-full"
-  display :title, class: "col-span-full"
-  display :content, class: "col-span-full"
-  display :published_at, class: "col-span-full"
+  display :user, wrapper: {class: "col-span-full"}
+  display :title, wrapper: {class: "col-span-full"}
+  display :content, wrapper: {class: "col-span-full"}
+  display :published_at, wrapper: {class: "col-span-full"}
 end
 ```
 

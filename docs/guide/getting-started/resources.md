@@ -83,8 +83,8 @@ end
 ```ruby [Custom Displays]
 class BlogDefinition < Plutonium::Resource::Definition
   # Customize how fields are displayed
-  display :title, class: "col-span-full"
-  display :content, class: "col-span-full" do |f|
+  display :title, wrapper: {class: "col-span-full"}
+  display :content, wrapper: {class: "col-span-full"} do |f|
     f.text_tag class: "format dark:format-invert"
   end
 

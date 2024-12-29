@@ -44,32 +44,31 @@ module Plutonium
         def render_table
           render Plutonium::UI::Table::Base.new(collection) do |table|
             @resource_fields.each do |name|
-              # column :name, as: :string
+              # field :name, as: :string
               # column :description, class: "text-red-700"
               # column :age, align: :end
               # column :dob do |proxy|
               #   proxy.field(:dob).date_tag
               # end
 
-              column_definition = resource_definition.defined_columns[name] || {}
-              column_display_options = column_definition[:options] || {}
+              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
 
-              display_tag = column_display_options[:as]
-              display_tag_options = column_display_options.except(:as, :align)
-              display_tag_block = column_definition[:block] || ->(wrapped_object, key) {
+              column_definition = resource_definition.defined_columns[name] || {}
+              column_options = column_definition[:options] || {}
+
+              tag = column_options[:as] || field_options[:as]
+              tag_attributes = column_options.except(:wrapper, :as, :align)
+              tag_block = column_definition[:block] || ->(wrapped_object, key) {
                 f = wrapped_object.field(key)
-                display_tag ||= f.inferred_field_component
-                f.send(:"#{display_tag}_tag", **display_tag_options)
+                tag ||= f.inferred_field_component
+                f.send(:"#{tag}_tag", **tag_attributes)
               }
 
-              # align_field_to = column_display_options.slice(:align)
-              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
-              field_options = field_options.merge(**column_display_options.slice(:align))
-              # field_options[:align] = align_field_to if align_field_to
+              field_options = field_options.merge(**column_options.slice(:align))
               table.column name,
                 **field_options,
                 sort_params: current_query_object.sort_params_for(name),
-                &display_tag_block
+                &tag_block
             end
 
             table.actions do |wrapped_object|
