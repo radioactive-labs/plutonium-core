@@ -31,6 +31,10 @@ module Plutonium
         end
 
         def render_associations
+          return unless resource_associations.present?
+
+          tablist = BuildTabList()
+
           resource_associations.each do |name|
             reflection = object.class.reflect_on_association name
 
@@ -50,8 +54,18 @@ module Plutonium
             when :has_many
               resource_url_for(reflection.klass, parent: object)
             end
-            FrameNavigatorPanel(title:, src:) if src
+
+            next unless src
+
+            tablist.with_tab(
+              identifier: title.parameterize,
+              title: -> { h5(class: "text-2xl font-bold tracking-tight text-gray-900 dark:text-white") { title } }
+            ) do
+              FrameNavigatorPanel(title: "", src:)
+            end
           end
+
+          render tablist
         end
 
         def render_resource_field(name)

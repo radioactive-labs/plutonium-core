@@ -7813,6 +7813,55 @@ ${text2}</tr>
     }
   };
 
+  // src/js/controllers/resource_tab_list_controller.js
+  var resource_tab_list_controller_default = class extends Controller {
+    static targets = ["btn", "tab"];
+    static values = {
+      defaultTab: String,
+      activeClasses: String,
+      inActiveClasses: String
+    };
+    connect() {
+      this.activeClasses = this.hasActiveClassesValue ? this.activeClassesValue.split(" ") : [];
+      this.inActiveClasses = this.hasInActiveClassesValue ? this.inActiveClassesValue.split(" ") : [];
+      this.#selectInternal(this.defaultTabValue || this.btnTargets[0].id);
+    }
+    select(event) {
+      this.#selectInternal(event.currentTarget.id);
+    }
+    #selectInternal(id) {
+      const selectedBtn = this.btnTargets.find((element) => element.id === id);
+      if (!selectedBtn) {
+        console.error(`Tab Button with id "${id}" not found`);
+        return;
+      }
+      const selectedTab = this.tabTargets.find((element) => element.id === selectedBtn.dataset.target);
+      if (!selectedTab) {
+        console.error(`Tab Panel with id "${selectedBtn.dataset.target}" not found`);
+        return;
+      }
+      this.tabTargets.forEach((tab) => {
+        tab.hidden = true;
+        tab.setAttribute("aria-hidden", "true");
+      });
+      this.btnTargets.forEach((btn) => {
+        btn.setAttribute("aria-selected", "false");
+        btn.setAttribute("tabindex", "-1");
+        btn.classList.remove(...this.activeClasses);
+        btn.classList.add(...this.inActiveClasses);
+      });
+      selectedBtn.setAttribute("aria-selected", "true");
+      selectedBtn.setAttribute("tabindex", "0");
+      selectedBtn.classList.remove(...this.inActiveClasses);
+      selectedBtn.classList.add(...this.activeClasses);
+      selectedTab.hidden = false;
+      selectedTab.setAttribute("aria-hidden", "false");
+      if (selectedBtn !== document.activeElement) {
+        selectedBtn.focus();
+      }
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("header", header_controller_default);
@@ -7828,6 +7877,7 @@ ${text2}</tr>
     application2.register("flatpickr", flatpickr_controller_default);
     application2.register("intl-tel-input", intl_tel_input_controller_default);
     application2.register("select-navigator", select_navigator_default);
+    application2.register("resource-tab-list", resource_tab_list_controller_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js

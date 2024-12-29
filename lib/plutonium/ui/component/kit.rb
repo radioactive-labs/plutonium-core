@@ -18,6 +18,10 @@ module Plutonium
 
         def FrameNavigatorPanel(...) = render Plutonium::UI::FrameNavigatorPanel.new(...)
 
+        def BuildTabList(...) = Plutonium::UI::TabList.new(...)
+
+        def TabList(...) = render BuildTabList(...)
+
         def DynaFrameHost(...) = render Plutonium::UI::DynaFrame::Host.new(...)
 
         def DynaFrameContent(...) = render Plutonium::UI::DynaFrame::Content.new(...)

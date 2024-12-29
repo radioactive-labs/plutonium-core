@@ -12,6 +12,7 @@ import SlimSelectController from "./slim_select_controller.js"
 import FlatpickrController from "./flatpickr_controller.js"
 import IntlTelInputController from "./intl_tel_input_controller.js"
 import SelectNavigatorController from "./select_navigator.js"
+import ResourceTabListController from "./resource_tab_list_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -28,4 +29,5 @@ export default function (application) {
   application.register("flatpickr", FlatpickrController)
   application.register("intl-tel-input", IntlTelInputController)
   application.register("select-navigator", SelectNavigatorController)
+  application.register("resource-tab-list", ResourceTabListController)
 }

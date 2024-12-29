@@ -29,7 +29,7 @@ module Plutonium
           elsif arg.respond_to?(:to_proc)
             instance_exec(&arg)
           else
-            yield
+            yield arg
           end
         end
       end
