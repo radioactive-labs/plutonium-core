@@ -4,10 +4,6 @@ export const content = [
   `${__dirname}/app/views/**/*.{rb,erb,js}`,
   `${__dirname}/config/initializers/simple_form.rb`,
   `${__dirname}/lib/plutonium/**/*.rb`,
-
-  // node modules are not packaged as part of the gem.
-  // requires users to have flowbite installed in their own project.
-  './node_modules/flowbite/**/*.js',
 ];
 
 export const darkMode = "selector";
@@ -16,7 +12,6 @@ export const plugins = [
   // requires users to have the required packages installed in their own project.
   "@tailwindcss/forms",
   "@tailwindcss/typography",
-  "flowbite/plugin",
   "flowbite-typography",
   function ({ addVariant }) {
     // This creates a variant that applies when an ancestor has data-dyna="true"

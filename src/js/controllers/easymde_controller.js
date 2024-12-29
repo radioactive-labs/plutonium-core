@@ -5,7 +5,6 @@ import { marked } from 'marked';
 // Connects to data-controller="easymde"
 export default class extends Controller {
   connect() {
-    console.log(`easymde connected: ${this.element}`)
     this.easyMDE = new EasyMDE(this.#buildOptions())
     this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect")
   }

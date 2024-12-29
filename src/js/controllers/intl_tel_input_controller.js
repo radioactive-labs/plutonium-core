@@ -5,7 +5,6 @@ export default class extends Controller {
   static targets = ["input"]
 
   connect() {
-    console.log(`intl-tel-input connected: ${this.element}`)
   }
 
   disconnect() {

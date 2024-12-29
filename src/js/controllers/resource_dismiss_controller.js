@@ -7,7 +7,6 @@ export default class extends Controller {
   }
 
   connect() {
-    console.log(`resource-dismiss connected: ${this.element}`)
 
     if (this.hasAfterValue && this.afterValue > 0) {
       this.autoDismissTimeout = setTimeout(() => {

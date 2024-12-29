@@ -5,7 +5,6 @@ export default class extends Controller {
   static targets = ["frame", "refreshButton", "backButton", "homeButton"];
 
   connect() {
-    console.log(`frame-navigator connected: ${this.element}`)
     this.#loadingStarted()
 
     this.srcHistory = []

@@ -6,7 +6,6 @@ export default class extends Controller {
   // static targets = ["trigger", "menu"]
 
   connect() {
-    console.log(`color-mode connected: ${this.element}`)
     this.updateColorMode()
   }
 

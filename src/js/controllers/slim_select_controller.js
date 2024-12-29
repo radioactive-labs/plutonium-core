@@ -3,7 +3,6 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="slim-select"
 export default class extends Controller {
   connect() {
-    console.log(`slim-select connected: ${this.element}`)
     this.slimSelect = new SlimSelect({
       select: this.element
     })

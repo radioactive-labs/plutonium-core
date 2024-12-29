@@ -5,7 +5,6 @@ export default class extends Controller {
   static targets = ["trigger", "menu"]
 
   connect() {
-    console.log(`resource-collapse connected: ${this.element}`)
 
     // Default to false if the data attribute isn't set
     if (!this.element.hasAttribute('data-visible')) {
