@@ -63,10 +63,9 @@ class RodauthPlugin < Rodauth::Rails::Auth
 
     # Redirect to the app from login and registration pages if already logged in.
     already_logged_in do
-      redirect URI::HTTP.build(
-        path: login_redirect,
-        query: rails_request.query_parameters.to_query
-      )
+      uri = URI(login_redirect)
+      uri.query = URI.encode_www_form(rails_request.query_parameters)
+      redirect uri.to_s
     end
 
     # ==> JWT
