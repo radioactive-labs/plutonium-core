@@ -9,11 +9,20 @@ module Plutonium
 
           private
 
-          def build_attributes
-            @skip_authorization = attributes.delete(:skip_authorization)
-            unless @skip_authorization || attributes[:choices]
-              attributes[:choices] = authorized_resource_scope(association_reflection.klass, relation: field.choices)
+          def choices
+            @choices ||= begin
+              collection = if @provided_choices || @skip_authorization
+                @choice_collection
+              else
+                authorized_resource_scope(association_reflection.klass, relation: @choice_collection)
+              end
+              Phlexi::Form::ChoicesMapper.new(collection, label_method: @label_method, value_method: @value_method)
             end
+          end
+
+          def build_attributes
+            @provided_choices = !attributes[:choices].nil?
+            @skip_authorization = attributes.delete(:skip_authorization)
 
             super
           end
