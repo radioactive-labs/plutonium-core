@@ -34,7 +34,7 @@ module Plutonium
 
       def render_toolbar
         div(class: %(flex justify-between items-center mb-4)) do
-          if @title.present?
+          if @title
             h5(class: %(text-2xl font-bold tracking-tight text-gray-900 dark:text-white)) do
               @title
             end
@@ -52,7 +52,7 @@ module Plutonium
       end
 
       def render_toolbar?
-        @title || @items.present?
+        @title || @items
       end
 
       def render_content?

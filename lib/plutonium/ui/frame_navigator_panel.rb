@@ -62,7 +62,7 @@ module Plutonium
             panel.with_item PanelItem.new(label: "Home", icon: Phlex::TablerIcons::Home2, data_frame_navigator_target: %(homeButton))
             panel.with_item PanelItem.new(label: "Back", icon: Phlex::TablerIcons::ChevronLeft, data_frame_navigator_target: %(backButton))
             panel.with_item PanelItem.new(label: "Refresh", icon: Phlex::TablerIcons::RefreshDot, data_frame_navigator_target: %(refreshButton))
-            panel.with_item PanelLink.new(label: "Manage", icon: Phlex::TablerIcons::LayoutDashboard, href: @src)
+            panel.with_item PanelLink.new(label: "Maximize", icon: Phlex::TablerIcons::WindowMaximize, href: @src)
             panel.with_content PanelContent.new(src: @src)
           end
         end
