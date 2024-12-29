@@ -10558,6 +10558,19 @@ ${text2}</tr>
     }
   };
 
+  // src/js/controllers/select_navigator.js
+  var select_navigator_default = class extends Controller {
+    static targets = ["select"];
+    navigate(_) {
+      const url = this.selectTarget.value;
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      this.element.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("header", header_controller_default);
@@ -10572,6 +10585,7 @@ ${text2}</tr>
     application2.register("slim-select", slim_select_controller_default);
     application2.register("flatpickr", flatpickr_controller_default);
     application2.register("intl-tel-input", intl_tel_input_controller_default);
+    application2.register("select-navigator", select_navigator_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js

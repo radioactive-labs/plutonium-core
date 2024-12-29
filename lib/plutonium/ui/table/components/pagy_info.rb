@@ -39,9 +39,16 @@ module Plutonium
             temp_attributes.delete("onchange")
             Phlex::HTML.const_set(:EVENT_ATTRIBUTES, temp_attributes)
 
-            div(class: "flex items-center space-x-2 mt-2 md:mt-0") do
+            div(
+              class: "flex items-center space-x-2 mt-2 md:mt-0",
+              data_controller: "select-navigator"
+            ) do
               label(for: "perPage", class: "mr-2") { "Per page" }
-              select(id: "perPage", name: "items", class: select_classes, onchange: "window.location.href=this.value") do
+              select(
+                id: "perPage", name: "items", class: select_classes,
+                data_action: "change->select-navigator#navigate",
+                data_select_navigator_target: "select"
+              ) do
                 @per_page_options.each do |option|
                   option(value: page_url(option), selected: option == @pagy.limit) { option.to_s }
                 end
