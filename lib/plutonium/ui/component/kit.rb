@@ -5,42 +5,82 @@ require "phlex"
 module Plutonium
   module UI
     module Component
+      # Component Kit automatically handles component instantiation and rendering
+      # through a convention-based approach using Build* methods.
+      #
+      # @example Basic component usage
+      #   class MyView
+      #     include Plutonium::UI::Component::Kit
+      #
+      #     def template
+      #       PageHeader(title: "Dashboard")
+      #       TabList(items: tabs)
+      #       Panel(class: "mt-4") do
+      #         content
+      #       end
+      #     end
+      #   end
+      #
+      # @example Adding a new component
+      #   def BuildCustomComponent(title:, **options)
+      #     Plutonium::UI::CustomComponent.new(
+      #       title: title,
+      #       **options
+      #     )
+      #   end
+      #
+      # @note All components are automatically rendered when called without the 'Build' prefix.
+      #       For example, calling `TabList(...)` will internally call `BuildTabList(...)` and
+      #       render the result.
       module Kit
         extend ActiveSupport::Concern
 
-        def Breadcrumbs(...) = render Plutonium::UI::Breadcrumbs.new(...)
+        def method_missing(method_name, *args, **kwargs, &block)
+          build_method = "Build#{method_name}"
 
-        def SkeletonTable(...) = render Plutonium::UI::SkeletonTable.new(...)
+          if self.class.method_defined?(build_method)
+            render send(build_method, *args, **kwargs, &block)
+          else
+            super
+          end
+        end
 
-        def Block(...) = render Plutonium::UI::Block.new(...)
+        def respond_to_missing?(method_name, include_private = false)
+          build_method = "Build#{method_name}"
+          self.class.method_defined?(build_method) || super
+        end
 
-        def Panel(...) = render Plutonium::UI::Panel.new(...)
+        def BuildBreadcrumbs(...) = Plutonium::UI::Breadcrumbs.new(...)
 
-        def FrameNavigatorPanel(...) = render Plutonium::UI::FrameNavigatorPanel.new(...)
+        def BuildSkeletonTable(...) = Plutonium::UI::SkeletonTable.new(...)
+
+        def BuildBlock(...) = Plutonium::UI::Block.new(...)
+
+        def BuildPanel(...) = Plutonium::UI::Panel.new(...)
+
+        def BuildFrameNavigatorPanel(...) = Plutonium::UI::FrameNavigatorPanel.new(...)
 
         def BuildTabList(...) = Plutonium::UI::TabList.new(...)
 
-        def TabList(...) = render BuildTabList(...)
+        def BuildDynaFrameHost(...) = Plutonium::UI::DynaFrame::Host.new(...)
 
-        def DynaFrameHost(...) = render Plutonium::UI::DynaFrame::Host.new(...)
+        def BuildDynaFrameContent(...) = Plutonium::UI::DynaFrame::Content.new(...)
 
-        def DynaFrameContent(...) = render Plutonium::UI::DynaFrame::Content.new(...)
+        def BuildPageHeader(...) = Plutonium::UI::PageHeader.new(...)
 
-        def PageHeader(...) = render Plutonium::UI::PageHeader.new(...)
+        def BuildActionButton(...) = Plutonium::UI::ActionButton.new(...)
 
-        def ActionButton(...) = render Plutonium::UI::ActionButton.new(...)
+        def BuildEmptyCard(...) = Plutonium::UI::EmptyCard.new(...)
 
-        def EmptyCard(...) = render Plutonium::UI::EmptyCard.new(...)
+        def BuildTableSearchBar(...) = Plutonium::UI::Table::Components::SearchBar.new(...)
 
-        def TableSearchBar(...) = render Plutonium::UI::Table::Components::SearchBar.new(...)
+        def BuildTableScopesBar(...) = Plutonium::UI::Table::Components::ScopesBar.new(...)
 
-        def TableScopesBar(...) = render Plutonium::UI::Table::Components::ScopesBar.new(...)
+        def BuildTableInfo(...) = Plutonium::UI::Table::Components::PagyInfo.new(...)
 
-        def TableInfo(...) = render Plutonium::UI::Table::Components::PagyInfo.new(...)
+        def BuildTablePagination(...) = Plutonium::UI::Table::Components::PagyPagination.new(...)
 
-        def TablePagination(...) = render Plutonium::UI::Table::Components::PagyPagination.new(...)
-
-        def ColorModeSelector(...) = render Plutonium::UI::ColorModeSelector.new(...)
+        def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)
       end
     end
   end
