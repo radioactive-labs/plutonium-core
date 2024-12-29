@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="frame-navigator"
 export default class extends Controller {
-  static targets = ["frame", "refreshButton", "backButton", "homeButton"];
+  static targets = ["frame", "refreshButton", "backButton", "homeButton", "maximizeLink"];
 
   connect() {
     this.#loadingStarted()
@@ -60,16 +60,7 @@ export default class extends Controller {
     this.#loadingStopped()
 
     let src = event.target.src
-    if (src == this.currentSrc) {
-      // this must be a refresh
-      // do nothing
-    }
-    else if (src == this.originalFrameSrc)
-      this.srcHistory = [src]
-    else
-      this.srcHistory.push(src)
-
-    this.#updateNavigationButtonsDisplay()
+    this.#notifySrcChanged(src)
   }
 
   refreshButtonClicked(event) {
@@ -92,6 +83,20 @@ export default class extends Controller {
   }
 
   get currentSrc() { return this.srcHistory[this.srcHistory.length - 1] }
+
+  #notifySrcChanged(src) {
+    if (src == this.currentSrc) {
+      // this must be a refresh
+      // do nothing
+    }
+    else if (src == this.originalFrameSrc)
+      this.srcHistory = [src]
+    else
+      this.srcHistory.push(src)
+
+    this.#updateNavigationButtonsDisplay()
+    if (this.hasMaximizeLinkTarget) this.maximizeLinkTarget.href = src
+  }
 
   #loadingStarted() {
     if (this.hasRefreshButtonTarget) this.refreshButtonTarget.classList.add("motion-safe:animate-spin")
