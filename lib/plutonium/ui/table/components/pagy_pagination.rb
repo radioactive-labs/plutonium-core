@@ -30,7 +30,7 @@ module Plutonium
                   render Phlex::TablerIcons::ChevronLeft.new
                 }
               else
-                a(href: "#", class: disabled_link_classes(true), aria_disabled: "true") {
+                button(class: disabled_link_classes(true), aria_disabled: "true") {
                   render Phlex::TablerIcons::ChevronLeft.new
                 }
               end
@@ -44,7 +44,7 @@ module Plutonium
                   render Phlex::TablerIcons::ChevronRight.new
                 }
               else
-                a(href: "#", class: disabled_link_classes(false, true), aria_disabled: "true") {
+                button(class: disabled_link_classes(false, true), aria_disabled: "true") {
                   render Phlex::TablerIcons::ChevronRight.new
                 }
               end
@@ -71,11 +71,11 @@ module Plutonium
           end
 
           def current_page_link(page)
-            a(href: "#", class: current_link_classes, aria_current: "page") { page.to_s }
+            button(class: current_link_classes, aria_current: "page") { page.to_s }
           end
 
           def gap_link
-            a(href: "#", class: link_classes, aria_disabled: "true") { "..." }
+            button(class: link_classes, aria_disabled: "true") { "..." }
           end
 
           def link_classes(first = false, last = false)
@@ -86,7 +86,7 @@ module Plutonium
           end
 
           def current_link_classes
-            "flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white"
+            "flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white cursor-not-allowed"
           end
 
           def disabled_link_classes(first = false, last = false)
