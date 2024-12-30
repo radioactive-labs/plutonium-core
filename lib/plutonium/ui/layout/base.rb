@@ -138,6 +138,29 @@ module Plutonium
             integrity: "sha384-oE0RVGDyNw9goP8V3wYWC9+3GYojVc/LhhKmLT9J5k+L+oGHPa1gRF3FomvOCOFs",
             crossorigin: "anonymous"
           )
+          link(
+            rel: "stylesheet",
+            href: "https://cdn.jsdelivr.net/npm/@uppy/core@4.3.1/dist/style.min.css",
+            integrity:
+              "sha384-duO7yazRrDcRaU8fsOcR3nRyiE7zYi14hncnPBJwqwtTNIaOSMoedatlLJgOcuWC",
+            crossorigin: "anonymous"
+          )
+          link(
+            rel: "stylesheet",
+            href:
+              "https://cdn.jsdelivr.net/npm/@uppy/dashboard@4.1.3/dist/style.min.css",
+            integrity:
+              "sha384-zhtN/7sNIm7zP9ccJ0oz4Bhoe1iy2gZM9y37fMgGqWDSY5AIeGoPzAfnqbW6bYII",
+            crossorigin: "anonymous"
+          )
+          link(
+            rel: "stylesheet",
+            href:
+              "https://cdn.jsdelivr.net/npm/@uppy/image-editor@3.2.1/dist/style.min.css",
+            integrity:
+              "sha384-Wk0+fOnKCX5R8Clls7c6jbYFLDZe43o6j9HFR9AUmOrc+TQZH6B4DFnXhvwhNPyG",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_scripts

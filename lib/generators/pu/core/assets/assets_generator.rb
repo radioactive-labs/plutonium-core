@@ -29,7 +29,13 @@ module Pu
       end
 
       def install_dependencies
-        run "yarn add @radioactive-labs/plutonium @tailwindcss/forms @tailwindcss/typography flowbite-typography postcss-cli cssnano marked"
+        [
+          "@radioactive-labs/plutonium",
+          "@tailwindcss/forms", "@tailwindcss/typography", "flowbite-typography",
+          "postcss-cli", "cssnano marked"
+        ].each do |package|
+          run "yarn add #{package}"
+        end
       end
 
       def configure_application
