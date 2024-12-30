@@ -31,7 +31,7 @@ module Plutonium
             valid_color: nil,
             neutral_color: nil,
             # file
-            file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
+            # file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
             # hint themes
             hint: "mt-2 text-sm text-gray-500 dark:text-gray-200",
             # error themes
