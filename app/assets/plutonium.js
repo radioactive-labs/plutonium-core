@@ -24288,7 +24288,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         "items-center",
         "justify-center"
       );
-      this.thumbnailTarget.style.backgroundColor = mime.color;
+      this.thumbnailLinkTarget.style.backgroundColor = mime.color;
       this.thumbnailLinkTarget.innerHTML = null;
       this.thumbnailLinkTarget.appendChild(mime.icon);
     }

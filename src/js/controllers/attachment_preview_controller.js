@@ -54,7 +54,7 @@ export default class extends Controller {
     )
 
     // Set the background color
-    this.thumbnailTarget.style.backgroundColor = mime.color
+    this.thumbnailLinkTarget.style.backgroundColor = mime.color
 
     // Clear and append the icon
     this.thumbnailLinkTarget.innerHTML = null
