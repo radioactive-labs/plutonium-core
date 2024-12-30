@@ -1,6 +1,9 @@
 @import "core.css";
 @import "easymde.css";
 @import "slim_select.css";
+@import "@uppy/core/dist/style.min";
+@import "@uppy/dashboard/dist/style.min";
+@import "@uppy/image-editor/dist/style.min";
 
 @tailwind base;
 @tailwind components;

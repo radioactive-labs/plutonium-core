@@ -9,21 +9,21 @@ module Plutonium
           include Plutonium::UI::Component::Methods
           include Plutonium::UI::Component::Behaviour
 
-          def render_value(value)
-            return unless value.url.present?
+          def render_value(attachment)
+            return unless attachment.url.present?
 
             div(
               class: "p-2 w-full",
-              title: value.filename,
+              title: attachment.filename,
               data: {
                 controller: "attachment-preview",
-                attachment_preview_mime_type_value: value.content_type,
-                attachment_preview_thumbnail_url_value: attachment_thumbnail_url(value)
+                attachment_preview_mime_type_value: attachment.content_type,
+                attachment_preview_thumbnail_url_value: attachment_thumbnail_url(attachment)
               }
             ) do
               div(class: "flex flex-col items-center w-full") do
-                render_thumbnail(value)
-                render_caption(value)
+                render_thumbnail(attachment)
+                render_caption(attachment)
               end
             end
           end

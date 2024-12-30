@@ -25,7 +25,8 @@ module Plutonium
                 attachment_preview_mime_type_value: attachment.content_type,
                 attachment_preview_thumbnail_url_value: attachment_thumbnail_url(attachment),
                 attachment_preview_target: "thumbnail"
-              }
+              },
+              title: attachment.filename
             ) do
               a(
                 href: attachment.url,

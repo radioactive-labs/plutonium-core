@@ -47,7 +47,11 @@ module Plutonium
             int_tel_input: :input,
             valid_int_tel_input: :valid_input,
             invalid_int_tel_input: :invalid_input,
-            neutral_int_tel_input: :neutral_input
+            neutral_int_tel_input: :neutral_input,
+            uppy: :file,
+            valid_uppy: :valid_file,
+            invalid_uppy: :invalid_file,
+            neutral_uppy: :neutral_file
           })
         end
       end
