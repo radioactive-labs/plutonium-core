@@ -1,11 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
-// import DomElement from "../support/dom_element"
-
-// import Uppy from '@uppy/core'
-// import Dashboard from '@uppy/dashboard'
-// import ImageEditor from '@uppy/image-editor'
-// import XHRUpload from '@uppy/xhr-upload'
+import Uppy from '@uppy/core'
+import Dashboard from '@uppy/dashboard'
+import ImageEditor from '@uppy/image-editor'
+import XHRUpload from '@uppy/xhr-upload'
+import DomElement from "../support/dom_element"
 
 // Connects to data-controller="attachment-input"
 export default class extends Controller {

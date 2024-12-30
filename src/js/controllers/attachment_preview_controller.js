@@ -26,7 +26,7 @@ export default class extends Controller {
 
   useThumbnailPreview() {
     const thumbnail = DomElement.fromTemplate(`
-      <img src="${this.thumbnailUrlValue}" class="w-full h-full object-cover rounded-lg" />
+      <img src="${this.thumbnailUrlValue}" class="w-full h-full object-cover" />
     `)
 
     this.thumbnailLinkTarget.innerHTML = null

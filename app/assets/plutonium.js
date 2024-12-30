@@ -46,7 +46,7 @@
       var now = function() {
         return root.Date.now();
       };
-      function debounce4(func, wait, options2) {
+      function debounce6(func, wait, options2) {
         var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
         if (typeof func != "function") {
           throw new TypeError(FUNC_ERROR_TEXT);
@@ -154,7 +154,3472 @@
         var isBinary = reIsBinary.test(value);
         return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
       }
-      module.exports = debounce4;
+      module.exports = debounce6;
+    }
+  });
+
+  // node_modules/namespace-emitter/index.js
+  var require_namespace_emitter = __commonJS({
+    "node_modules/namespace-emitter/index.js"(exports, module) {
+      module.exports = function createNamespaceEmitter() {
+        var emitter = {};
+        var _fns = emitter._fns = {};
+        emitter.emit = function emit(event, arg1, arg2, arg3, arg4, arg5, arg6) {
+          var toEmit = getListeners(event);
+          if (toEmit.length) {
+            emitAll(event, toEmit, [arg1, arg2, arg3, arg4, arg5, arg6]);
+          }
+        };
+        emitter.on = function on(event, fn2) {
+          if (!_fns[event]) {
+            _fns[event] = [];
+          }
+          _fns[event].push(fn2);
+        };
+        emitter.once = function once(event, fn2) {
+          function one() {
+            fn2.apply(this, arguments);
+            emitter.off(event, one);
+          }
+          this.on(event, one);
+        };
+        emitter.off = function off(event, fn2) {
+          var keep = [];
+          if (event && fn2) {
+            var fns = this._fns[event];
+            var i4 = 0;
+            var l4 = fns ? fns.length : 0;
+            for (i4; i4 < l4; i4++) {
+              if (fns[i4] !== fn2) {
+                keep.push(fns[i4]);
+              }
+            }
+          }
+          keep.length ? this._fns[event] = keep : delete this._fns[event];
+        };
+        function getListeners(e4) {
+          var out = _fns[e4] ? _fns[e4] : [];
+          var idx = e4.indexOf(":");
+          var args = idx === -1 ? [e4] : [e4.substring(0, idx), e4.substring(idx + 1)];
+          var keys = Object.keys(_fns);
+          var i4 = 0;
+          var l4 = keys.length;
+          for (i4; i4 < l4; i4++) {
+            var key = keys[i4];
+            if (key === "*") {
+              out = out.concat(_fns[key]);
+            }
+            if (args.length === 2 && args[0] === key) {
+              out = out.concat(_fns[key]);
+              break;
+            }
+          }
+          return out;
+        }
+        function emitAll(e4, fns, args) {
+          var i4 = 0;
+          var l4 = fns.length;
+          for (i4; i4 < l4; i4++) {
+            if (!fns[i4])
+              break;
+            fns[i4].event = e4;
+            fns[i4].apply(fns[i4], args);
+          }
+        }
+        return emitter;
+      };
+    }
+  });
+
+  // node_modules/lodash/isObject.js
+  var require_isObject = __commonJS({
+    "node_modules/lodash/isObject.js"(exports, module) {
+      function isObject(value) {
+        var type = typeof value;
+        return value != null && (type == "object" || type == "function");
+      }
+      module.exports = isObject;
+    }
+  });
+
+  // node_modules/lodash/_freeGlobal.js
+  var require_freeGlobal = __commonJS({
+    "node_modules/lodash/_freeGlobal.js"(exports, module) {
+      var freeGlobal = typeof global == "object" && global && global.Object === Object && global;
+      module.exports = freeGlobal;
+    }
+  });
+
+  // node_modules/lodash/_root.js
+  var require_root = __commonJS({
+    "node_modules/lodash/_root.js"(exports, module) {
+      var freeGlobal = require_freeGlobal();
+      var freeSelf = typeof self == "object" && self && self.Object === Object && self;
+      var root = freeGlobal || freeSelf || Function("return this")();
+      module.exports = root;
+    }
+  });
+
+  // node_modules/lodash/now.js
+  var require_now = __commonJS({
+    "node_modules/lodash/now.js"(exports, module) {
+      var root = require_root();
+      var now = function() {
+        return root.Date.now();
+      };
+      module.exports = now;
+    }
+  });
+
+  // node_modules/lodash/_trimmedEndIndex.js
+  var require_trimmedEndIndex = __commonJS({
+    "node_modules/lodash/_trimmedEndIndex.js"(exports, module) {
+      var reWhitespace = /\s/;
+      function trimmedEndIndex(string) {
+        var index = string.length;
+        while (index-- && reWhitespace.test(string.charAt(index))) {
+        }
+        return index;
+      }
+      module.exports = trimmedEndIndex;
+    }
+  });
+
+  // node_modules/lodash/_baseTrim.js
+  var require_baseTrim = __commonJS({
+    "node_modules/lodash/_baseTrim.js"(exports, module) {
+      var trimmedEndIndex = require_trimmedEndIndex();
+      var reTrimStart = /^\s+/;
+      function baseTrim(string) {
+        return string ? string.slice(0, trimmedEndIndex(string) + 1).replace(reTrimStart, "") : string;
+      }
+      module.exports = baseTrim;
+    }
+  });
+
+  // node_modules/lodash/_Symbol.js
+  var require_Symbol = __commonJS({
+    "node_modules/lodash/_Symbol.js"(exports, module) {
+      var root = require_root();
+      var Symbol2 = root.Symbol;
+      module.exports = Symbol2;
+    }
+  });
+
+  // node_modules/lodash/_getRawTag.js
+  var require_getRawTag = __commonJS({
+    "node_modules/lodash/_getRawTag.js"(exports, module) {
+      var Symbol2 = require_Symbol();
+      var objectProto = Object.prototype;
+      var hasOwnProperty = objectProto.hasOwnProperty;
+      var nativeObjectToString = objectProto.toString;
+      var symToStringTag = Symbol2 ? Symbol2.toStringTag : void 0;
+      function getRawTag(value) {
+        var isOwn = hasOwnProperty.call(value, symToStringTag), tag2 = value[symToStringTag];
+        try {
+          value[symToStringTag] = void 0;
+          var unmasked = true;
+        } catch (e4) {
+        }
+        var result = nativeObjectToString.call(value);
+        if (unmasked) {
+          if (isOwn) {
+            value[symToStringTag] = tag2;
+          } else {
+            delete value[symToStringTag];
+          }
+        }
+        return result;
+      }
+      module.exports = getRawTag;
+    }
+  });
+
+  // node_modules/lodash/_objectToString.js
+  var require_objectToString = __commonJS({
+    "node_modules/lodash/_objectToString.js"(exports, module) {
+      var objectProto = Object.prototype;
+      var nativeObjectToString = objectProto.toString;
+      function objectToString(value) {
+        return nativeObjectToString.call(value);
+      }
+      module.exports = objectToString;
+    }
+  });
+
+  // node_modules/lodash/_baseGetTag.js
+  var require_baseGetTag = __commonJS({
+    "node_modules/lodash/_baseGetTag.js"(exports, module) {
+      var Symbol2 = require_Symbol();
+      var getRawTag = require_getRawTag();
+      var objectToString = require_objectToString();
+      var nullTag = "[object Null]";
+      var undefinedTag = "[object Undefined]";
+      var symToStringTag = Symbol2 ? Symbol2.toStringTag : void 0;
+      function baseGetTag(value) {
+        if (value == null) {
+          return value === void 0 ? undefinedTag : nullTag;
+        }
+        return symToStringTag && symToStringTag in Object(value) ? getRawTag(value) : objectToString(value);
+      }
+      module.exports = baseGetTag;
+    }
+  });
+
+  // node_modules/lodash/isObjectLike.js
+  var require_isObjectLike = __commonJS({
+    "node_modules/lodash/isObjectLike.js"(exports, module) {
+      function isObjectLike(value) {
+        return value != null && typeof value == "object";
+      }
+      module.exports = isObjectLike;
+    }
+  });
+
+  // node_modules/lodash/isSymbol.js
+  var require_isSymbol = __commonJS({
+    "node_modules/lodash/isSymbol.js"(exports, module) {
+      var baseGetTag = require_baseGetTag();
+      var isObjectLike = require_isObjectLike();
+      var symbolTag = "[object Symbol]";
+      function isSymbol(value) {
+        return typeof value == "symbol" || isObjectLike(value) && baseGetTag(value) == symbolTag;
+      }
+      module.exports = isSymbol;
+    }
+  });
+
+  // node_modules/lodash/toNumber.js
+  var require_toNumber = __commonJS({
+    "node_modules/lodash/toNumber.js"(exports, module) {
+      var baseTrim = require_baseTrim();
+      var isObject = require_isObject();
+      var isSymbol = require_isSymbol();
+      var NAN = 0 / 0;
+      var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
+      var reIsBinary = /^0b[01]+$/i;
+      var reIsOctal = /^0o[0-7]+$/i;
+      var freeParseInt = parseInt;
+      function toNumber(value) {
+        if (typeof value == "number") {
+          return value;
+        }
+        if (isSymbol(value)) {
+          return NAN;
+        }
+        if (isObject(value)) {
+          var other2 = typeof value.valueOf == "function" ? value.valueOf() : value;
+          value = isObject(other2) ? other2 + "" : other2;
+        }
+        if (typeof value != "string") {
+          return value === 0 ? value : +value;
+        }
+        value = baseTrim(value);
+        var isBinary = reIsBinary.test(value);
+        return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
+      }
+      module.exports = toNumber;
+    }
+  });
+
+  // node_modules/lodash/debounce.js
+  var require_debounce = __commonJS({
+    "node_modules/lodash/debounce.js"(exports, module) {
+      var isObject = require_isObject();
+      var now = require_now();
+      var toNumber = require_toNumber();
+      var FUNC_ERROR_TEXT = "Expected a function";
+      var nativeMax = Math.max;
+      var nativeMin = Math.min;
+      function debounce6(func, wait, options2) {
+        var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
+        if (typeof func != "function") {
+          throw new TypeError(FUNC_ERROR_TEXT);
+        }
+        wait = toNumber(wait) || 0;
+        if (isObject(options2)) {
+          leading = !!options2.leading;
+          maxing = "maxWait" in options2;
+          maxWait = maxing ? nativeMax(toNumber(options2.maxWait) || 0, wait) : maxWait;
+          trailing = "trailing" in options2 ? !!options2.trailing : trailing;
+        }
+        function invokeFunc(time) {
+          var args = lastArgs, thisArg = lastThis;
+          lastArgs = lastThis = void 0;
+          lastInvokeTime = time;
+          result = func.apply(thisArg, args);
+          return result;
+        }
+        function leadingEdge(time) {
+          lastInvokeTime = time;
+          timerId = setTimeout(timerExpired, wait);
+          return leading ? invokeFunc(time) : result;
+        }
+        function remainingWait(time) {
+          var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime, timeWaiting = wait - timeSinceLastCall;
+          return maxing ? nativeMin(timeWaiting, maxWait - timeSinceLastInvoke) : timeWaiting;
+        }
+        function shouldInvoke(time) {
+          var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime;
+          return lastCallTime === void 0 || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
+        }
+        function timerExpired() {
+          var time = now();
+          if (shouldInvoke(time)) {
+            return trailingEdge(time);
+          }
+          timerId = setTimeout(timerExpired, remainingWait(time));
+        }
+        function trailingEdge(time) {
+          timerId = void 0;
+          if (trailing && lastArgs) {
+            return invokeFunc(time);
+          }
+          lastArgs = lastThis = void 0;
+          return result;
+        }
+        function cancel() {
+          if (timerId !== void 0) {
+            clearTimeout(timerId);
+          }
+          lastInvokeTime = 0;
+          lastArgs = lastCallTime = lastThis = timerId = void 0;
+        }
+        function flush() {
+          return timerId === void 0 ? result : trailingEdge(now());
+        }
+        function debounced() {
+          var time = now(), isInvoking = shouldInvoke(time);
+          lastArgs = arguments;
+          lastThis = this;
+          lastCallTime = time;
+          if (isInvoking) {
+            if (timerId === void 0) {
+              return leadingEdge(lastCallTime);
+            }
+            if (maxing) {
+              clearTimeout(timerId);
+              timerId = setTimeout(timerExpired, wait);
+              return invokeFunc(lastCallTime);
+            }
+          }
+          if (timerId === void 0) {
+            timerId = setTimeout(timerExpired, wait);
+          }
+          return result;
+        }
+        debounced.cancel = cancel;
+        debounced.flush = flush;
+        return debounced;
+      }
+      module.exports = debounce6;
+    }
+  });
+
+  // node_modules/lodash/throttle.js
+  var require_throttle = __commonJS({
+    "node_modules/lodash/throttle.js"(exports, module) {
+      var debounce6 = require_debounce();
+      var isObject = require_isObject();
+      var FUNC_ERROR_TEXT = "Expected a function";
+      function throttle2(func, wait, options2) {
+        var leading = true, trailing = true;
+        if (typeof func != "function") {
+          throw new TypeError(FUNC_ERROR_TEXT);
+        }
+        if (isObject(options2)) {
+          leading = "leading" in options2 ? !!options2.leading : leading;
+          trailing = "trailing" in options2 ? !!options2.trailing : trailing;
+        }
+        return debounce6(func, wait, {
+          "leading": leading,
+          "maxWait": wait,
+          "trailing": trailing
+        });
+      }
+      module.exports = throttle2;
+    }
+  });
+
+  // node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js
+  var require_prettierBytes = __commonJS({
+    "node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js"(exports, module) {
+      "use strict";
+      module.exports = function prettierBytes4(input) {
+        if (typeof input !== "number" || Number.isNaN(input)) {
+          throw new TypeError(`Expected a number, got ${typeof input}`);
+        }
+        const neg = input < 0;
+        let num = Math.abs(input);
+        if (neg) {
+          num = -num;
+        }
+        if (num === 0) {
+          return "0 B";
+        }
+        const units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+        const exponent = Math.min(Math.floor(Math.log(num) / Math.log(1024)), units.length - 1);
+        const value = Number(num / 1024 ** exponent);
+        const unit = units[exponent];
+        return `${value >= 10 || value % 1 === 0 ? Math.round(value) : value.toFixed(1)} ${unit}`;
+      };
+    }
+  });
+
+  // node_modules/wildcard/index.js
+  var require_wildcard = __commonJS({
+    "node_modules/wildcard/index.js"(exports, module) {
+      "use strict";
+      function WildcardMatcher(text2, separator2) {
+        this.text = text2 = text2 || "";
+        this.hasWild = ~text2.indexOf("*");
+        this.separator = separator2;
+        this.parts = text2.split(separator2);
+      }
+      WildcardMatcher.prototype.match = function(input) {
+        var matches = true;
+        var parts = this.parts;
+        var ii;
+        var partsCount = parts.length;
+        var testParts;
+        if (typeof input == "string" || input instanceof String) {
+          if (!this.hasWild && this.text != input) {
+            matches = false;
+          } else {
+            testParts = (input || "").split(this.separator);
+            for (ii = 0; matches && ii < partsCount; ii++) {
+              if (parts[ii] === "*") {
+                continue;
+              } else if (ii < testParts.length) {
+                matches = parts[ii] === testParts[ii];
+              } else {
+                matches = false;
+              }
+            }
+            matches = matches && testParts;
+          }
+        } else if (typeof input.splice == "function") {
+          matches = [];
+          for (ii = input.length; ii--; ) {
+            if (this.match(input[ii])) {
+              matches[matches.length] = input[ii];
+            }
+          }
+        } else if (typeof input == "object") {
+          matches = {};
+          for (var key in input) {
+            if (this.match(key)) {
+              matches[key] = input[key];
+            }
+          }
+        }
+        return matches;
+      };
+      module.exports = function(text2, test, separator2) {
+        var matcher = new WildcardMatcher(text2, separator2 || /[\/\.]/);
+        if (typeof test != "undefined") {
+          return matcher.match(test);
+        }
+        return matcher;
+      };
+    }
+  });
+
+  // node_modules/mime-match/index.js
+  var require_mime_match = __commonJS({
+    "node_modules/mime-match/index.js"(exports, module) {
+      var wildcard = require_wildcard();
+      var reMimePartSplit = /[\/\+\.]/;
+      module.exports = function(target, pattern) {
+        function test(pattern2) {
+          var result = wildcard(pattern2, target, reMimePartSplit);
+          return result && result.length >= 2;
+        }
+        return pattern ? test(pattern.split(";")[0]) : test;
+      };
+    }
+  });
+
+  // node_modules/classnames/index.js
+  var require_classnames = __commonJS({
+    "node_modules/classnames/index.js"(exports, module) {
+      (function() {
+        "use strict";
+        var hasOwn = {}.hasOwnProperty;
+        function classNames15() {
+          var classes = "";
+          for (var i4 = 0; i4 < arguments.length; i4++) {
+            var arg = arguments[i4];
+            if (arg) {
+              classes = appendClass(classes, parseValue(arg));
+            }
+          }
+          return classes;
+        }
+        function parseValue(arg) {
+          if (typeof arg === "string" || typeof arg === "number") {
+            return arg;
+          }
+          if (typeof arg !== "object") {
+            return "";
+          }
+          if (Array.isArray(arg)) {
+            return classNames15.apply(null, arg);
+          }
+          if (arg.toString !== Object.prototype.toString && !arg.toString.toString().includes("[native code]")) {
+            return arg.toString();
+          }
+          var classes = "";
+          for (var key in arg) {
+            if (hasOwn.call(arg, key) && arg[key]) {
+              classes = appendClass(classes, key);
+            }
+          }
+          return classes;
+        }
+        function appendClass(value, newClass) {
+          if (!newClass) {
+            return value;
+          }
+          if (value) {
+            return value + " " + newClass;
+          }
+          return value + newClass;
+        }
+        if (typeof module !== "undefined" && module.exports) {
+          classNames15.default = classNames15;
+          module.exports = classNames15;
+        } else if (typeof define === "function" && typeof define.amd === "object" && define.amd) {
+          define("classnames", [], function() {
+            return classNames15;
+          });
+        } else {
+          window.classNames = classNames15;
+        }
+      })();
+    }
+  });
+
+  // node_modules/eventemitter3/index.js
+  var require_eventemitter3 = __commonJS({
+    "node_modules/eventemitter3/index.js"(exports, module) {
+      "use strict";
+      var has = Object.prototype.hasOwnProperty;
+      var prefix = "~";
+      function Events() {
+      }
+      if (Object.create) {
+        Events.prototype = /* @__PURE__ */ Object.create(null);
+        if (!new Events().__proto__)
+          prefix = false;
+      }
+      function EE(fn2, context, once) {
+        this.fn = fn2;
+        this.context = context;
+        this.once = once || false;
+      }
+      function addListener(emitter, event, fn2, context, once) {
+        if (typeof fn2 !== "function") {
+          throw new TypeError("The listener must be a function");
+        }
+        var listener = new EE(fn2, context || emitter, once), evt = prefix ? prefix + event : event;
+        if (!emitter._events[evt])
+          emitter._events[evt] = listener, emitter._eventsCount++;
+        else if (!emitter._events[evt].fn)
+          emitter._events[evt].push(listener);
+        else
+          emitter._events[evt] = [emitter._events[evt], listener];
+        return emitter;
+      }
+      function clearEvent(emitter, evt) {
+        if (--emitter._eventsCount === 0)
+          emitter._events = new Events();
+        else
+          delete emitter._events[evt];
+      }
+      function EventEmitter2() {
+        this._events = new Events();
+        this._eventsCount = 0;
+      }
+      EventEmitter2.prototype.eventNames = function eventNames() {
+        var names = [], events, name;
+        if (this._eventsCount === 0)
+          return names;
+        for (name in events = this._events) {
+          if (has.call(events, name))
+            names.push(prefix ? name.slice(1) : name);
+        }
+        if (Object.getOwnPropertySymbols) {
+          return names.concat(Object.getOwnPropertySymbols(events));
+        }
+        return names;
+      };
+      EventEmitter2.prototype.listeners = function listeners(event) {
+        var evt = prefix ? prefix + event : event, handlers = this._events[evt];
+        if (!handlers)
+          return [];
+        if (handlers.fn)
+          return [handlers.fn];
+        for (var i4 = 0, l4 = handlers.length, ee3 = new Array(l4); i4 < l4; i4++) {
+          ee3[i4] = handlers[i4].fn;
+        }
+        return ee3;
+      };
+      EventEmitter2.prototype.listenerCount = function listenerCount(event) {
+        var evt = prefix ? prefix + event : event, listeners = this._events[evt];
+        if (!listeners)
+          return 0;
+        if (listeners.fn)
+          return 1;
+        return listeners.length;
+      };
+      EventEmitter2.prototype.emit = function emit(event, a1, a22, a32, a4, a5) {
+        var evt = prefix ? prefix + event : event;
+        if (!this._events[evt])
+          return false;
+        var listeners = this._events[evt], len = arguments.length, args, i4;
+        if (listeners.fn) {
+          if (listeners.once)
+            this.removeListener(event, listeners.fn, void 0, true);
+          switch (len) {
+            case 1:
+              return listeners.fn.call(listeners.context), true;
+            case 2:
+              return listeners.fn.call(listeners.context, a1), true;
+            case 3:
+              return listeners.fn.call(listeners.context, a1, a22), true;
+            case 4:
+              return listeners.fn.call(listeners.context, a1, a22, a32), true;
+            case 5:
+              return listeners.fn.call(listeners.context, a1, a22, a32, a4), true;
+            case 6:
+              return listeners.fn.call(listeners.context, a1, a22, a32, a4, a5), true;
+          }
+          for (i4 = 1, args = new Array(len - 1); i4 < len; i4++) {
+            args[i4 - 1] = arguments[i4];
+          }
+          listeners.fn.apply(listeners.context, args);
+        } else {
+          var length = listeners.length, j4;
+          for (i4 = 0; i4 < length; i4++) {
+            if (listeners[i4].once)
+              this.removeListener(event, listeners[i4].fn, void 0, true);
+            switch (len) {
+              case 1:
+                listeners[i4].fn.call(listeners[i4].context);
+                break;
+              case 2:
+                listeners[i4].fn.call(listeners[i4].context, a1);
+                break;
+              case 3:
+                listeners[i4].fn.call(listeners[i4].context, a1, a22);
+                break;
+              case 4:
+                listeners[i4].fn.call(listeners[i4].context, a1, a22, a32);
+                break;
+              default:
+                if (!args)
+                  for (j4 = 1, args = new Array(len - 1); j4 < len; j4++) {
+                    args[j4 - 1] = arguments[j4];
+                  }
+                listeners[i4].fn.apply(listeners[i4].context, args);
+            }
+          }
+        }
+        return true;
+      };
+      EventEmitter2.prototype.on = function on(event, fn2, context) {
+        return addListener(this, event, fn2, context, false);
+      };
+      EventEmitter2.prototype.once = function once(event, fn2, context) {
+        return addListener(this, event, fn2, context, true);
+      };
+      EventEmitter2.prototype.removeListener = function removeListener(event, fn2, context, once) {
+        var evt = prefix ? prefix + event : event;
+        if (!this._events[evt])
+          return this;
+        if (!fn2) {
+          clearEvent(this, evt);
+          return this;
+        }
+        var listeners = this._events[evt];
+        if (listeners.fn) {
+          if (listeners.fn === fn2 && (!once || listeners.once) && (!context || listeners.context === context)) {
+            clearEvent(this, evt);
+          }
+        } else {
+          for (var i4 = 0, events = [], length = listeners.length; i4 < length; i4++) {
+            if (listeners[i4].fn !== fn2 || once && !listeners[i4].once || context && listeners[i4].context !== context) {
+              events.push(listeners[i4]);
+            }
+          }
+          if (events.length)
+            this._events[evt] = events.length === 1 ? events[0] : events;
+          else
+            clearEvent(this, evt);
+        }
+        return this;
+      };
+      EventEmitter2.prototype.removeAllListeners = function removeAllListeners(event) {
+        var evt;
+        if (event) {
+          evt = prefix ? prefix + event : event;
+          if (this._events[evt])
+            clearEvent(this, evt);
+        } else {
+          this._events = new Events();
+          this._eventsCount = 0;
+        }
+        return this;
+      };
+      EventEmitter2.prototype.off = EventEmitter2.prototype.removeListener;
+      EventEmitter2.prototype.addListener = EventEmitter2.prototype.on;
+      EventEmitter2.prefixed = prefix;
+      EventEmitter2.EventEmitter = EventEmitter2;
+      if ("undefined" !== typeof module) {
+        module.exports = EventEmitter2;
+      }
+    }
+  });
+
+  // node_modules/cropperjs/dist/cropper.js
+  var require_cropper = __commonJS({
+    "node_modules/cropperjs/dist/cropper.js"(exports, module) {
+      (function(global2, factory) {
+        typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.Cropper = factory());
+      })(exports, function() {
+        "use strict";
+        function ownKeys(e4, r4) {
+          var t4 = Object.keys(e4);
+          if (Object.getOwnPropertySymbols) {
+            var o4 = Object.getOwnPropertySymbols(e4);
+            r4 && (o4 = o4.filter(function(r5) {
+              return Object.getOwnPropertyDescriptor(e4, r5).enumerable;
+            })), t4.push.apply(t4, o4);
+          }
+          return t4;
+        }
+        function _objectSpread2(e4) {
+          for (var r4 = 1; r4 < arguments.length; r4++) {
+            var t4 = null != arguments[r4] ? arguments[r4] : {};
+            r4 % 2 ? ownKeys(Object(t4), true).forEach(function(r5) {
+              _defineProperty(e4, r5, t4[r5]);
+            }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e4, Object.getOwnPropertyDescriptors(t4)) : ownKeys(Object(t4)).forEach(function(r5) {
+              Object.defineProperty(e4, r5, Object.getOwnPropertyDescriptor(t4, r5));
+            });
+          }
+          return e4;
+        }
+        function _toPrimitive(t4, r4) {
+          if ("object" != typeof t4 || !t4)
+            return t4;
+          var e4 = t4[Symbol.toPrimitive];
+          if (void 0 !== e4) {
+            var i4 = e4.call(t4, r4 || "default");
+            if ("object" != typeof i4)
+              return i4;
+            throw new TypeError("@@toPrimitive must return a primitive value.");
+          }
+          return ("string" === r4 ? String : Number)(t4);
+        }
+        function _toPropertyKey(t4) {
+          var i4 = _toPrimitive(t4, "string");
+          return "symbol" == typeof i4 ? i4 : i4 + "";
+        }
+        function _typeof(o4) {
+          "@babel/helpers - typeof";
+          return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o5) {
+            return typeof o5;
+          } : function(o5) {
+            return o5 && "function" == typeof Symbol && o5.constructor === Symbol && o5 !== Symbol.prototype ? "symbol" : typeof o5;
+          }, _typeof(o4);
+        }
+        function _classCallCheck(instance, Constructor) {
+          if (!(instance instanceof Constructor)) {
+            throw new TypeError("Cannot call a class as a function");
+          }
+        }
+        function _defineProperties(target, props) {
+          for (var i4 = 0; i4 < props.length; i4++) {
+            var descriptor = props[i4];
+            descriptor.enumerable = descriptor.enumerable || false;
+            descriptor.configurable = true;
+            if ("value" in descriptor)
+              descriptor.writable = true;
+            Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor);
+          }
+        }
+        function _createClass(Constructor, protoProps, staticProps) {
+          if (protoProps)
+            _defineProperties(Constructor.prototype, protoProps);
+          if (staticProps)
+            _defineProperties(Constructor, staticProps);
+          Object.defineProperty(Constructor, "prototype", {
+            writable: false
+          });
+          return Constructor;
+        }
+        function _defineProperty(obj, key, value) {
+          key = _toPropertyKey(key);
+          if (key in obj) {
+            Object.defineProperty(obj, key, {
+              value,
+              enumerable: true,
+              configurable: true,
+              writable: true
+            });
+          } else {
+            obj[key] = value;
+          }
+          return obj;
+        }
+        function _toConsumableArray(arr) {
+          return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
+        }
+        function _arrayWithoutHoles(arr) {
+          if (Array.isArray(arr))
+            return _arrayLikeToArray(arr);
+        }
+        function _iterableToArray(iter) {
+          if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null)
+            return Array.from(iter);
+        }
+        function _unsupportedIterableToArray(o4, minLen) {
+          if (!o4)
+            return;
+          if (typeof o4 === "string")
+            return _arrayLikeToArray(o4, minLen);
+          var n3 = Object.prototype.toString.call(o4).slice(8, -1);
+          if (n3 === "Object" && o4.constructor)
+            n3 = o4.constructor.name;
+          if (n3 === "Map" || n3 === "Set")
+            return Array.from(o4);
+          if (n3 === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n3))
+            return _arrayLikeToArray(o4, minLen);
+        }
+        function _arrayLikeToArray(arr, len) {
+          if (len == null || len > arr.length)
+            len = arr.length;
+          for (var i4 = 0, arr2 = new Array(len); i4 < len; i4++)
+            arr2[i4] = arr[i4];
+          return arr2;
+        }
+        function _nonIterableSpread() {
+          throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+        }
+        var IS_BROWSER = typeof window !== "undefined" && typeof window.document !== "undefined";
+        var WINDOW = IS_BROWSER ? window : {};
+        var IS_TOUCH_DEVICE = IS_BROWSER && WINDOW.document.documentElement ? "ontouchstart" in WINDOW.document.documentElement : false;
+        var HAS_POINTER_EVENT = IS_BROWSER ? "PointerEvent" in WINDOW : false;
+        var NAMESPACE = "cropper";
+        var ACTION_ALL = "all";
+        var ACTION_CROP = "crop";
+        var ACTION_MOVE = "move";
+        var ACTION_ZOOM = "zoom";
+        var ACTION_EAST = "e";
+        var ACTION_WEST = "w";
+        var ACTION_SOUTH = "s";
+        var ACTION_NORTH = "n";
+        var ACTION_NORTH_EAST = "ne";
+        var ACTION_NORTH_WEST = "nw";
+        var ACTION_SOUTH_EAST = "se";
+        var ACTION_SOUTH_WEST = "sw";
+        var CLASS_CROP = "".concat(NAMESPACE, "-crop");
+        var CLASS_DISABLED = "".concat(NAMESPACE, "-disabled");
+        var CLASS_HIDDEN = "".concat(NAMESPACE, "-hidden");
+        var CLASS_HIDE = "".concat(NAMESPACE, "-hide");
+        var CLASS_INVISIBLE = "".concat(NAMESPACE, "-invisible");
+        var CLASS_MODAL = "".concat(NAMESPACE, "-modal");
+        var CLASS_MOVE = "".concat(NAMESPACE, "-move");
+        var DATA_ACTION = "".concat(NAMESPACE, "Action");
+        var DATA_PREVIEW = "".concat(NAMESPACE, "Preview");
+        var DRAG_MODE_CROP = "crop";
+        var DRAG_MODE_MOVE = "move";
+        var DRAG_MODE_NONE = "none";
+        var EVENT_CROP = "crop";
+        var EVENT_CROP_END = "cropend";
+        var EVENT_CROP_MOVE = "cropmove";
+        var EVENT_CROP_START = "cropstart";
+        var EVENT_DBLCLICK = "dblclick";
+        var EVENT_TOUCH_START = IS_TOUCH_DEVICE ? "touchstart" : "mousedown";
+        var EVENT_TOUCH_MOVE = IS_TOUCH_DEVICE ? "touchmove" : "mousemove";
+        var EVENT_TOUCH_END = IS_TOUCH_DEVICE ? "touchend touchcancel" : "mouseup";
+        var EVENT_POINTER_DOWN = HAS_POINTER_EVENT ? "pointerdown" : EVENT_TOUCH_START;
+        var EVENT_POINTER_MOVE = HAS_POINTER_EVENT ? "pointermove" : EVENT_TOUCH_MOVE;
+        var EVENT_POINTER_UP = HAS_POINTER_EVENT ? "pointerup pointercancel" : EVENT_TOUCH_END;
+        var EVENT_READY = "ready";
+        var EVENT_RESIZE = "resize";
+        var EVENT_WHEEL = "wheel";
+        var EVENT_ZOOM = "zoom";
+        var MIME_TYPE_JPEG = "image/jpeg";
+        var REGEXP_ACTIONS = /^e|w|s|n|se|sw|ne|nw|all|crop|move|zoom$/;
+        var REGEXP_DATA_URL = /^data:/;
+        var REGEXP_DATA_URL_JPEG = /^data:image\/jpeg;base64,/;
+        var REGEXP_TAG_NAME = /^img|canvas$/i;
+        var MIN_CONTAINER_WIDTH = 200;
+        var MIN_CONTAINER_HEIGHT = 100;
+        var DEFAULTS = {
+          // Define the view mode of the cropper
+          viewMode: 0,
+          // 0, 1, 2, 3
+          // Define the dragging mode of the cropper
+          dragMode: DRAG_MODE_CROP,
+          // 'crop', 'move' or 'none'
+          // Define the initial aspect ratio of the crop box
+          initialAspectRatio: NaN,
+          // Define the aspect ratio of the crop box
+          aspectRatio: NaN,
+          // An object with the previous cropping result data
+          data: null,
+          // A selector for adding extra containers to preview
+          preview: "",
+          // Re-render the cropper when resize the window
+          responsive: true,
+          // Restore the cropped area after resize the window
+          restore: true,
+          // Check if the current image is a cross-origin image
+          checkCrossOrigin: true,
+          // Check the current image's Exif Orientation information
+          checkOrientation: true,
+          // Show the black modal
+          modal: true,
+          // Show the dashed lines for guiding
+          guides: true,
+          // Show the center indicator for guiding
+          center: true,
+          // Show the white modal to highlight the crop box
+          highlight: true,
+          // Show the grid background
+          background: true,
+          // Enable to crop the image automatically when initialize
+          autoCrop: true,
+          // Define the percentage of automatic cropping area when initializes
+          autoCropArea: 0.8,
+          // Enable to move the image
+          movable: true,
+          // Enable to rotate the image
+          rotatable: true,
+          // Enable to scale the image
+          scalable: true,
+          // Enable to zoom the image
+          zoomable: true,
+          // Enable to zoom the image by dragging touch
+          zoomOnTouch: true,
+          // Enable to zoom the image by wheeling mouse
+          zoomOnWheel: true,
+          // Define zoom ratio when zoom the image by wheeling mouse
+          wheelZoomRatio: 0.1,
+          // Enable to move the crop box
+          cropBoxMovable: true,
+          // Enable to resize the crop box
+          cropBoxResizable: true,
+          // Toggle drag mode between "crop" and "move" when click twice on the cropper
+          toggleDragModeOnDblclick: true,
+          // Size limitation
+          minCanvasWidth: 0,
+          minCanvasHeight: 0,
+          minCropBoxWidth: 0,
+          minCropBoxHeight: 0,
+          minContainerWidth: MIN_CONTAINER_WIDTH,
+          minContainerHeight: MIN_CONTAINER_HEIGHT,
+          // Shortcuts of events
+          ready: null,
+          cropstart: null,
+          cropmove: null,
+          cropend: null,
+          crop: null,
+          zoom: null
+        };
+        var TEMPLATE = '<div class="cropper-container" touch-action="none"><div class="cropper-wrap-box"><div class="cropper-canvas"></div></div><div class="cropper-drag-box"></div><div class="cropper-crop-box"><span class="cropper-view-box"></span><span class="cropper-dashed dashed-h"></span><span class="cropper-dashed dashed-v"></span><span class="cropper-center"></span><span class="cropper-face"></span><span class="cropper-line line-e" data-cropper-action="e"></span><span class="cropper-line line-n" data-cropper-action="n"></span><span class="cropper-line line-w" data-cropper-action="w"></span><span class="cropper-line line-s" data-cropper-action="s"></span><span class="cropper-point point-e" data-cropper-action="e"></span><span class="cropper-point point-n" data-cropper-action="n"></span><span class="cropper-point point-w" data-cropper-action="w"></span><span class="cropper-point point-s" data-cropper-action="s"></span><span class="cropper-point point-ne" data-cropper-action="ne"></span><span class="cropper-point point-nw" data-cropper-action="nw"></span><span class="cropper-point point-sw" data-cropper-action="sw"></span><span class="cropper-point point-se" data-cropper-action="se"></span></div></div>';
+        var isNaN = Number.isNaN || WINDOW.isNaN;
+        function isNumber(value) {
+          return typeof value === "number" && !isNaN(value);
+        }
+        var isPositiveNumber = function isPositiveNumber2(value) {
+          return value > 0 && value < Infinity;
+        };
+        function isUndefined(value) {
+          return typeof value === "undefined";
+        }
+        function isObject(value) {
+          return _typeof(value) === "object" && value !== null;
+        }
+        var hasOwnProperty = Object.prototype.hasOwnProperty;
+        function isPlainObject(value) {
+          if (!isObject(value)) {
+            return false;
+          }
+          try {
+            var _constructor = value.constructor;
+            var prototype = _constructor.prototype;
+            return _constructor && prototype && hasOwnProperty.call(prototype, "isPrototypeOf");
+          } catch (error2) {
+            return false;
+          }
+        }
+        function isFunction(value) {
+          return typeof value === "function";
+        }
+        var slice = Array.prototype.slice;
+        function toArray(value) {
+          return Array.from ? Array.from(value) : slice.call(value);
+        }
+        function forEach(data, callback) {
+          if (data && isFunction(callback)) {
+            if (Array.isArray(data) || isNumber(data.length)) {
+              toArray(data).forEach(function(value, key) {
+                callback.call(data, value, key, data);
+              });
+            } else if (isObject(data)) {
+              Object.keys(data).forEach(function(key) {
+                callback.call(data, data[key], key, data);
+              });
+            }
+          }
+          return data;
+        }
+        var assign2 = Object.assign || function assign3(target) {
+          for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            args[_key - 1] = arguments[_key];
+          }
+          if (isObject(target) && args.length > 0) {
+            args.forEach(function(arg) {
+              if (isObject(arg)) {
+                Object.keys(arg).forEach(function(key) {
+                  target[key] = arg[key];
+                });
+              }
+            });
+          }
+          return target;
+        };
+        var REGEXP_DECIMALS = /\.\d*(?:0|9){12}\d*$/;
+        function normalizeDecimalNumber(value) {
+          var times = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : 1e11;
+          return REGEXP_DECIMALS.test(value) ? Math.round(value * times) / times : value;
+        }
+        var REGEXP_SUFFIX = /^width|height|left|top|marginLeft|marginTop$/;
+        function setStyle(element, styles) {
+          var style = element.style;
+          forEach(styles, function(value, property) {
+            if (REGEXP_SUFFIX.test(property) && isNumber(value)) {
+              value = "".concat(value, "px");
+            }
+            style[property] = value;
+          });
+        }
+        function hasClass(element, value) {
+          return element.classList ? element.classList.contains(value) : element.className.indexOf(value) > -1;
+        }
+        function addClass(element, value) {
+          if (!value) {
+            return;
+          }
+          if (isNumber(element.length)) {
+            forEach(element, function(elem) {
+              addClass(elem, value);
+            });
+            return;
+          }
+          if (element.classList) {
+            element.classList.add(value);
+            return;
+          }
+          var className = element.className.trim();
+          if (!className) {
+            element.className = value;
+          } else if (className.indexOf(value) < 0) {
+            element.className = "".concat(className, " ").concat(value);
+          }
+        }
+        function removeClass(element, value) {
+          if (!value) {
+            return;
+          }
+          if (isNumber(element.length)) {
+            forEach(element, function(elem) {
+              removeClass(elem, value);
+            });
+            return;
+          }
+          if (element.classList) {
+            element.classList.remove(value);
+            return;
+          }
+          if (element.className.indexOf(value) >= 0) {
+            element.className = element.className.replace(value, "");
+          }
+        }
+        function toggleClass(element, value, added) {
+          if (!value) {
+            return;
+          }
+          if (isNumber(element.length)) {
+            forEach(element, function(elem) {
+              toggleClass(elem, value, added);
+            });
+            return;
+          }
+          if (added) {
+            addClass(element, value);
+          } else {
+            removeClass(element, value);
+          }
+        }
+        var REGEXP_CAMEL_CASE = /([a-z\d])([A-Z])/g;
+        function toParamCase(value) {
+          return value.replace(REGEXP_CAMEL_CASE, "$1-$2").toLowerCase();
+        }
+        function getData(element, name) {
+          if (isObject(element[name])) {
+            return element[name];
+          }
+          if (element.dataset) {
+            return element.dataset[name];
+          }
+          return element.getAttribute("data-".concat(toParamCase(name)));
+        }
+        function setData(element, name, data) {
+          if (isObject(data)) {
+            element[name] = data;
+          } else if (element.dataset) {
+            element.dataset[name] = data;
+          } else {
+            element.setAttribute("data-".concat(toParamCase(name)), data);
+          }
+        }
+        function removeData(element, name) {
+          if (isObject(element[name])) {
+            try {
+              delete element[name];
+            } catch (error2) {
+              element[name] = void 0;
+            }
+          } else if (element.dataset) {
+            try {
+              delete element.dataset[name];
+            } catch (error2) {
+              element.dataset[name] = void 0;
+            }
+          } else {
+            element.removeAttribute("data-".concat(toParamCase(name)));
+          }
+        }
+        var REGEXP_SPACES = /\s\s*/;
+        var onceSupported = function() {
+          var supported = false;
+          if (IS_BROWSER) {
+            var once = false;
+            var listener = function listener2() {
+            };
+            var options2 = Object.defineProperty({}, "once", {
+              get: function get() {
+                supported = true;
+                return once;
+              },
+              /**
+               * This setter can fix a `TypeError` in strict mode
+               * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Getter_only}
+               * @param {boolean} value - The value to set
+               */
+              set: function set(value) {
+                once = value;
+              }
+            });
+            WINDOW.addEventListener("test", listener, options2);
+            WINDOW.removeEventListener("test", listener, options2);
+          }
+          return supported;
+        }();
+        function removeListener(element, type, listener) {
+          var options2 = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
+          var handler = listener;
+          type.trim().split(REGEXP_SPACES).forEach(function(event) {
+            if (!onceSupported) {
+              var listeners = element.listeners;
+              if (listeners && listeners[event] && listeners[event][listener]) {
+                handler = listeners[event][listener];
+                delete listeners[event][listener];
+                if (Object.keys(listeners[event]).length === 0) {
+                  delete listeners[event];
+                }
+                if (Object.keys(listeners).length === 0) {
+                  delete element.listeners;
+                }
+              }
+            }
+            element.removeEventListener(event, handler, options2);
+          });
+        }
+        function addListener(element, type, listener) {
+          var options2 = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : {};
+          var _handler = listener;
+          type.trim().split(REGEXP_SPACES).forEach(function(event) {
+            if (options2.once && !onceSupported) {
+              var _element$listeners = element.listeners, listeners = _element$listeners === void 0 ? {} : _element$listeners;
+              _handler = function handler() {
+                delete listeners[event][listener];
+                element.removeEventListener(event, _handler, options2);
+                for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+                  args[_key2] = arguments[_key2];
+                }
+                listener.apply(element, args);
+              };
+              if (!listeners[event]) {
+                listeners[event] = {};
+              }
+              if (listeners[event][listener]) {
+                element.removeEventListener(event, listeners[event][listener], options2);
+              }
+              listeners[event][listener] = _handler;
+              element.listeners = listeners;
+            }
+            element.addEventListener(event, _handler, options2);
+          });
+        }
+        function dispatchEvent2(element, type, data) {
+          var event;
+          if (isFunction(Event) && isFunction(CustomEvent)) {
+            event = new CustomEvent(type, {
+              detail: data,
+              bubbles: true,
+              cancelable: true
+            });
+          } else {
+            event = document.createEvent("CustomEvent");
+            event.initCustomEvent(type, true, true, data);
+          }
+          return element.dispatchEvent(event);
+        }
+        function getOffset(element) {
+          var box = element.getBoundingClientRect();
+          return {
+            left: box.left + (window.pageXOffset - document.documentElement.clientLeft),
+            top: box.top + (window.pageYOffset - document.documentElement.clientTop)
+          };
+        }
+        var location2 = WINDOW.location;
+        var REGEXP_ORIGINS = /^(\w+:)\/\/([^:/?#]*):?(\d*)/i;
+        function isCrossOriginURL(url) {
+          var parts = url.match(REGEXP_ORIGINS);
+          return parts !== null && (parts[1] !== location2.protocol || parts[2] !== location2.hostname || parts[3] !== location2.port);
+        }
+        function addTimestamp(url) {
+          var timestamp = "timestamp=".concat((/* @__PURE__ */ new Date()).getTime());
+          return url + (url.indexOf("?") === -1 ? "?" : "&") + timestamp;
+        }
+        function getTransforms(_ref) {
+          var rotate = _ref.rotate, scaleX = _ref.scaleX, scaleY = _ref.scaleY, translateX = _ref.translateX, translateY = _ref.translateY;
+          var values = [];
+          if (isNumber(translateX) && translateX !== 0) {
+            values.push("translateX(".concat(translateX, "px)"));
+          }
+          if (isNumber(translateY) && translateY !== 0) {
+            values.push("translateY(".concat(translateY, "px)"));
+          }
+          if (isNumber(rotate) && rotate !== 0) {
+            values.push("rotate(".concat(rotate, "deg)"));
+          }
+          if (isNumber(scaleX) && scaleX !== 1) {
+            values.push("scaleX(".concat(scaleX, ")"));
+          }
+          if (isNumber(scaleY) && scaleY !== 1) {
+            values.push("scaleY(".concat(scaleY, ")"));
+          }
+          var transform = values.length ? values.join(" ") : "none";
+          return {
+            WebkitTransform: transform,
+            msTransform: transform,
+            transform
+          };
+        }
+        function getMaxZoomRatio(pointers) {
+          var pointers2 = _objectSpread2({}, pointers);
+          var maxRatio = 0;
+          forEach(pointers, function(pointer, pointerId) {
+            delete pointers2[pointerId];
+            forEach(pointers2, function(pointer2) {
+              var x1 = Math.abs(pointer.startX - pointer2.startX);
+              var y1 = Math.abs(pointer.startY - pointer2.startY);
+              var x22 = Math.abs(pointer.endX - pointer2.endX);
+              var y22 = Math.abs(pointer.endY - pointer2.endY);
+              var z1 = Math.sqrt(x1 * x1 + y1 * y1);
+              var z22 = Math.sqrt(x22 * x22 + y22 * y22);
+              var ratio = (z22 - z1) / z1;
+              if (Math.abs(ratio) > Math.abs(maxRatio)) {
+                maxRatio = ratio;
+              }
+            });
+          });
+          return maxRatio;
+        }
+        function getPointer(_ref2, endOnly) {
+          var pageX = _ref2.pageX, pageY = _ref2.pageY;
+          var end2 = {
+            endX: pageX,
+            endY: pageY
+          };
+          return endOnly ? end2 : _objectSpread2({
+            startX: pageX,
+            startY: pageY
+          }, end2);
+        }
+        function getPointersCenter(pointers) {
+          var pageX = 0;
+          var pageY = 0;
+          var count = 0;
+          forEach(pointers, function(_ref3) {
+            var startX = _ref3.startX, startY = _ref3.startY;
+            pageX += startX;
+            pageY += startY;
+            count += 1;
+          });
+          pageX /= count;
+          pageY /= count;
+          return {
+            pageX,
+            pageY
+          };
+        }
+        function getAdjustedSizes(_ref4) {
+          var aspectRatio = _ref4.aspectRatio, height = _ref4.height, width = _ref4.width;
+          var type = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : "contain";
+          var isValidWidth = isPositiveNumber(width);
+          var isValidHeight = isPositiveNumber(height);
+          if (isValidWidth && isValidHeight) {
+            var adjustedWidth = height * aspectRatio;
+            if (type === "contain" && adjustedWidth > width || type === "cover" && adjustedWidth < width) {
+              height = width / aspectRatio;
+            } else {
+              width = height * aspectRatio;
+            }
+          } else if (isValidWidth) {
+            height = width / aspectRatio;
+          } else if (isValidHeight) {
+            width = height * aspectRatio;
+          }
+          return {
+            width,
+            height
+          };
+        }
+        function getRotatedSizes(_ref5) {
+          var width = _ref5.width, height = _ref5.height, degree = _ref5.degree;
+          degree = Math.abs(degree) % 180;
+          if (degree === 90) {
+            return {
+              width: height,
+              height: width
+            };
+          }
+          var arc = degree % 90 * Math.PI / 180;
+          var sinArc = Math.sin(arc);
+          var cosArc = Math.cos(arc);
+          var newWidth = width * cosArc + height * sinArc;
+          var newHeight = width * sinArc + height * cosArc;
+          return degree > 90 ? {
+            width: newHeight,
+            height: newWidth
+          } : {
+            width: newWidth,
+            height: newHeight
+          };
+        }
+        function getSourceCanvas(image, _ref6, _ref7, _ref8) {
+          var imageAspectRatio = _ref6.aspectRatio, imageNaturalWidth = _ref6.naturalWidth, imageNaturalHeight = _ref6.naturalHeight, _ref6$rotate = _ref6.rotate, rotate = _ref6$rotate === void 0 ? 0 : _ref6$rotate, _ref6$scaleX = _ref6.scaleX, scaleX = _ref6$scaleX === void 0 ? 1 : _ref6$scaleX, _ref6$scaleY = _ref6.scaleY, scaleY = _ref6$scaleY === void 0 ? 1 : _ref6$scaleY;
+          var aspectRatio = _ref7.aspectRatio, naturalWidth = _ref7.naturalWidth, naturalHeight = _ref7.naturalHeight;
+          var _ref8$fillColor = _ref8.fillColor, fillColor = _ref8$fillColor === void 0 ? "transparent" : _ref8$fillColor, _ref8$imageSmoothingE = _ref8.imageSmoothingEnabled, imageSmoothingEnabled = _ref8$imageSmoothingE === void 0 ? true : _ref8$imageSmoothingE, _ref8$imageSmoothingQ = _ref8.imageSmoothingQuality, imageSmoothingQuality = _ref8$imageSmoothingQ === void 0 ? "low" : _ref8$imageSmoothingQ, _ref8$maxWidth = _ref8.maxWidth, maxWidth = _ref8$maxWidth === void 0 ? Infinity : _ref8$maxWidth, _ref8$maxHeight = _ref8.maxHeight, maxHeight = _ref8$maxHeight === void 0 ? Infinity : _ref8$maxHeight, _ref8$minWidth = _ref8.minWidth, minWidth = _ref8$minWidth === void 0 ? 0 : _ref8$minWidth, _ref8$minHeight = _ref8.minHeight, minHeight = _ref8$minHeight === void 0 ? 0 : _ref8$minHeight;
+          var canvas = document.createElement("canvas");
+          var context = canvas.getContext("2d");
+          var maxSizes = getAdjustedSizes({
+            aspectRatio,
+            width: maxWidth,
+            height: maxHeight
+          });
+          var minSizes = getAdjustedSizes({
+            aspectRatio,
+            width: minWidth,
+            height: minHeight
+          }, "cover");
+          var width = Math.min(maxSizes.width, Math.max(minSizes.width, naturalWidth));
+          var height = Math.min(maxSizes.height, Math.max(minSizes.height, naturalHeight));
+          var destMaxSizes = getAdjustedSizes({
+            aspectRatio: imageAspectRatio,
+            width: maxWidth,
+            height: maxHeight
+          });
+          var destMinSizes = getAdjustedSizes({
+            aspectRatio: imageAspectRatio,
+            width: minWidth,
+            height: minHeight
+          }, "cover");
+          var destWidth = Math.min(destMaxSizes.width, Math.max(destMinSizes.width, imageNaturalWidth));
+          var destHeight = Math.min(destMaxSizes.height, Math.max(destMinSizes.height, imageNaturalHeight));
+          var params = [-destWidth / 2, -destHeight / 2, destWidth, destHeight];
+          canvas.width = normalizeDecimalNumber(width);
+          canvas.height = normalizeDecimalNumber(height);
+          context.fillStyle = fillColor;
+          context.fillRect(0, 0, width, height);
+          context.save();
+          context.translate(width / 2, height / 2);
+          context.rotate(rotate * Math.PI / 180);
+          context.scale(scaleX, scaleY);
+          context.imageSmoothingEnabled = imageSmoothingEnabled;
+          context.imageSmoothingQuality = imageSmoothingQuality;
+          context.drawImage.apply(context, [image].concat(_toConsumableArray(params.map(function(param) {
+            return Math.floor(normalizeDecimalNumber(param));
+          }))));
+          context.restore();
+          return canvas;
+        }
+        var fromCharCode = String.fromCharCode;
+        function getStringFromCharCode(dataView, start3, length) {
+          var str = "";
+          length += start3;
+          for (var i4 = start3; i4 < length; i4 += 1) {
+            str += fromCharCode(dataView.getUint8(i4));
+          }
+          return str;
+        }
+        var REGEXP_DATA_URL_HEAD = /^data:.*,/;
+        function dataURLToArrayBuffer(dataURL) {
+          var base64 = dataURL.replace(REGEXP_DATA_URL_HEAD, "");
+          var binary = atob(base64);
+          var arrayBuffer = new ArrayBuffer(binary.length);
+          var uint8 = new Uint8Array(arrayBuffer);
+          forEach(uint8, function(value, i4) {
+            uint8[i4] = binary.charCodeAt(i4);
+          });
+          return arrayBuffer;
+        }
+        function arrayBufferToDataURL(arrayBuffer, mimeType) {
+          var chunks2 = [];
+          var chunkSize = 8192;
+          var uint8 = new Uint8Array(arrayBuffer);
+          while (uint8.length > 0) {
+            chunks2.push(fromCharCode.apply(null, toArray(uint8.subarray(0, chunkSize))));
+            uint8 = uint8.subarray(chunkSize);
+          }
+          return "data:".concat(mimeType, ";base64,").concat(btoa(chunks2.join("")));
+        }
+        function resetAndGetOrientation(arrayBuffer) {
+          var dataView = new DataView(arrayBuffer);
+          var orientation;
+          try {
+            var littleEndian;
+            var app1Start;
+            var ifdStart;
+            if (dataView.getUint8(0) === 255 && dataView.getUint8(1) === 216) {
+              var length = dataView.byteLength;
+              var offset2 = 2;
+              while (offset2 + 1 < length) {
+                if (dataView.getUint8(offset2) === 255 && dataView.getUint8(offset2 + 1) === 225) {
+                  app1Start = offset2;
+                  break;
+                }
+                offset2 += 1;
+              }
+            }
+            if (app1Start) {
+              var exifIDCode = app1Start + 4;
+              var tiffOffset = app1Start + 10;
+              if (getStringFromCharCode(dataView, exifIDCode, 4) === "Exif") {
+                var endianness = dataView.getUint16(tiffOffset);
+                littleEndian = endianness === 18761;
+                if (littleEndian || endianness === 19789) {
+                  if (dataView.getUint16(tiffOffset + 2, littleEndian) === 42) {
+                    var firstIFDOffset = dataView.getUint32(tiffOffset + 4, littleEndian);
+                    if (firstIFDOffset >= 8) {
+                      ifdStart = tiffOffset + firstIFDOffset;
+                    }
+                  }
+                }
+              }
+            }
+            if (ifdStart) {
+              var _length = dataView.getUint16(ifdStart, littleEndian);
+              var _offset;
+              var i4;
+              for (i4 = 0; i4 < _length; i4 += 1) {
+                _offset = ifdStart + i4 * 12 + 2;
+                if (dataView.getUint16(_offset, littleEndian) === 274) {
+                  _offset += 8;
+                  orientation = dataView.getUint16(_offset, littleEndian);
+                  dataView.setUint16(_offset, 1, littleEndian);
+                  break;
+                }
+              }
+            }
+          } catch (error2) {
+            orientation = 1;
+          }
+          return orientation;
+        }
+        function parseOrientation(orientation) {
+          var rotate = 0;
+          var scaleX = 1;
+          var scaleY = 1;
+          switch (orientation) {
+            case 2:
+              scaleX = -1;
+              break;
+            case 3:
+              rotate = -180;
+              break;
+            case 4:
+              scaleY = -1;
+              break;
+            case 5:
+              rotate = 90;
+              scaleY = -1;
+              break;
+            case 6:
+              rotate = 90;
+              break;
+            case 7:
+              rotate = 90;
+              scaleX = -1;
+              break;
+            case 8:
+              rotate = -90;
+              break;
+          }
+          return {
+            rotate,
+            scaleX,
+            scaleY
+          };
+        }
+        var render = {
+          render: function render2() {
+            this.initContainer();
+            this.initCanvas();
+            this.initCropBox();
+            this.renderCanvas();
+            if (this.cropped) {
+              this.renderCropBox();
+            }
+          },
+          initContainer: function initContainer() {
+            var element = this.element, options2 = this.options, container = this.container, cropper = this.cropper;
+            var minWidth = Number(options2.minContainerWidth);
+            var minHeight = Number(options2.minContainerHeight);
+            addClass(cropper, CLASS_HIDDEN);
+            removeClass(element, CLASS_HIDDEN);
+            var containerData = {
+              width: Math.max(container.offsetWidth, minWidth >= 0 ? minWidth : MIN_CONTAINER_WIDTH),
+              height: Math.max(container.offsetHeight, minHeight >= 0 ? minHeight : MIN_CONTAINER_HEIGHT)
+            };
+            this.containerData = containerData;
+            setStyle(cropper, {
+              width: containerData.width,
+              height: containerData.height
+            });
+            addClass(element, CLASS_HIDDEN);
+            removeClass(cropper, CLASS_HIDDEN);
+          },
+          // Canvas (image wrapper)
+          initCanvas: function initCanvas() {
+            var containerData = this.containerData, imageData = this.imageData;
+            var viewMode = this.options.viewMode;
+            var rotated = Math.abs(imageData.rotate) % 180 === 90;
+            var naturalWidth = rotated ? imageData.naturalHeight : imageData.naturalWidth;
+            var naturalHeight = rotated ? imageData.naturalWidth : imageData.naturalHeight;
+            var aspectRatio = naturalWidth / naturalHeight;
+            var canvasWidth = containerData.width;
+            var canvasHeight = containerData.height;
+            if (containerData.height * aspectRatio > containerData.width) {
+              if (viewMode === 3) {
+                canvasWidth = containerData.height * aspectRatio;
+              } else {
+                canvasHeight = containerData.width / aspectRatio;
+              }
+            } else if (viewMode === 3) {
+              canvasHeight = containerData.width / aspectRatio;
+            } else {
+              canvasWidth = containerData.height * aspectRatio;
+            }
+            var canvasData = {
+              aspectRatio,
+              naturalWidth,
+              naturalHeight,
+              width: canvasWidth,
+              height: canvasHeight
+            };
+            this.canvasData = canvasData;
+            this.limited = viewMode === 1 || viewMode === 2;
+            this.limitCanvas(true, true);
+            canvasData.width = Math.min(Math.max(canvasData.width, canvasData.minWidth), canvasData.maxWidth);
+            canvasData.height = Math.min(Math.max(canvasData.height, canvasData.minHeight), canvasData.maxHeight);
+            canvasData.left = (containerData.width - canvasData.width) / 2;
+            canvasData.top = (containerData.height - canvasData.height) / 2;
+            canvasData.oldLeft = canvasData.left;
+            canvasData.oldTop = canvasData.top;
+            this.initialCanvasData = assign2({}, canvasData);
+          },
+          limitCanvas: function limitCanvas(sizeLimited, positionLimited) {
+            var options2 = this.options, containerData = this.containerData, canvasData = this.canvasData, cropBoxData = this.cropBoxData;
+            var viewMode = options2.viewMode;
+            var aspectRatio = canvasData.aspectRatio;
+            var cropped = this.cropped && cropBoxData;
+            if (sizeLimited) {
+              var minCanvasWidth = Number(options2.minCanvasWidth) || 0;
+              var minCanvasHeight = Number(options2.minCanvasHeight) || 0;
+              if (viewMode > 1) {
+                minCanvasWidth = Math.max(minCanvasWidth, containerData.width);
+                minCanvasHeight = Math.max(minCanvasHeight, containerData.height);
+                if (viewMode === 3) {
+                  if (minCanvasHeight * aspectRatio > minCanvasWidth) {
+                    minCanvasWidth = minCanvasHeight * aspectRatio;
+                  } else {
+                    minCanvasHeight = minCanvasWidth / aspectRatio;
+                  }
+                }
+              } else if (viewMode > 0) {
+                if (minCanvasWidth) {
+                  minCanvasWidth = Math.max(minCanvasWidth, cropped ? cropBoxData.width : 0);
+                } else if (minCanvasHeight) {
+                  minCanvasHeight = Math.max(minCanvasHeight, cropped ? cropBoxData.height : 0);
+                } else if (cropped) {
+                  minCanvasWidth = cropBoxData.width;
+                  minCanvasHeight = cropBoxData.height;
+                  if (minCanvasHeight * aspectRatio > minCanvasWidth) {
+                    minCanvasWidth = minCanvasHeight * aspectRatio;
+                  } else {
+                    minCanvasHeight = minCanvasWidth / aspectRatio;
+                  }
+                }
+              }
+              var _getAdjustedSizes = getAdjustedSizes({
+                aspectRatio,
+                width: minCanvasWidth,
+                height: minCanvasHeight
+              });
+              minCanvasWidth = _getAdjustedSizes.width;
+              minCanvasHeight = _getAdjustedSizes.height;
+              canvasData.minWidth = minCanvasWidth;
+              canvasData.minHeight = minCanvasHeight;
+              canvasData.maxWidth = Infinity;
+              canvasData.maxHeight = Infinity;
+            }
+            if (positionLimited) {
+              if (viewMode > (cropped ? 0 : 1)) {
+                var newCanvasLeft = containerData.width - canvasData.width;
+                var newCanvasTop = containerData.height - canvasData.height;
+                canvasData.minLeft = Math.min(0, newCanvasLeft);
+                canvasData.minTop = Math.min(0, newCanvasTop);
+                canvasData.maxLeft = Math.max(0, newCanvasLeft);
+                canvasData.maxTop = Math.max(0, newCanvasTop);
+                if (cropped && this.limited) {
+                  canvasData.minLeft = Math.min(cropBoxData.left, cropBoxData.left + (cropBoxData.width - canvasData.width));
+                  canvasData.minTop = Math.min(cropBoxData.top, cropBoxData.top + (cropBoxData.height - canvasData.height));
+                  canvasData.maxLeft = cropBoxData.left;
+                  canvasData.maxTop = cropBoxData.top;
+                  if (viewMode === 2) {
+                    if (canvasData.width >= containerData.width) {
+                      canvasData.minLeft = Math.min(0, newCanvasLeft);
+                      canvasData.maxLeft = Math.max(0, newCanvasLeft);
+                    }
+                    if (canvasData.height >= containerData.height) {
+                      canvasData.minTop = Math.min(0, newCanvasTop);
+                      canvasData.maxTop = Math.max(0, newCanvasTop);
+                    }
+                  }
+                }
+              } else {
+                canvasData.minLeft = -canvasData.width;
+                canvasData.minTop = -canvasData.height;
+                canvasData.maxLeft = containerData.width;
+                canvasData.maxTop = containerData.height;
+              }
+            }
+          },
+          renderCanvas: function renderCanvas(changed, transformed) {
+            var canvasData = this.canvasData, imageData = this.imageData;
+            if (transformed) {
+              var _getRotatedSizes = getRotatedSizes({
+                width: imageData.naturalWidth * Math.abs(imageData.scaleX || 1),
+                height: imageData.naturalHeight * Math.abs(imageData.scaleY || 1),
+                degree: imageData.rotate || 0
+              }), naturalWidth = _getRotatedSizes.width, naturalHeight = _getRotatedSizes.height;
+              var width = canvasData.width * (naturalWidth / canvasData.naturalWidth);
+              var height = canvasData.height * (naturalHeight / canvasData.naturalHeight);
+              canvasData.left -= (width - canvasData.width) / 2;
+              canvasData.top -= (height - canvasData.height) / 2;
+              canvasData.width = width;
+              canvasData.height = height;
+              canvasData.aspectRatio = naturalWidth / naturalHeight;
+              canvasData.naturalWidth = naturalWidth;
+              canvasData.naturalHeight = naturalHeight;
+              this.limitCanvas(true, false);
+            }
+            if (canvasData.width > canvasData.maxWidth || canvasData.width < canvasData.minWidth) {
+              canvasData.left = canvasData.oldLeft;
+            }
+            if (canvasData.height > canvasData.maxHeight || canvasData.height < canvasData.minHeight) {
+              canvasData.top = canvasData.oldTop;
+            }
+            canvasData.width = Math.min(Math.max(canvasData.width, canvasData.minWidth), canvasData.maxWidth);
+            canvasData.height = Math.min(Math.max(canvasData.height, canvasData.minHeight), canvasData.maxHeight);
+            this.limitCanvas(false, true);
+            canvasData.left = Math.min(Math.max(canvasData.left, canvasData.minLeft), canvasData.maxLeft);
+            canvasData.top = Math.min(Math.max(canvasData.top, canvasData.minTop), canvasData.maxTop);
+            canvasData.oldLeft = canvasData.left;
+            canvasData.oldTop = canvasData.top;
+            setStyle(this.canvas, assign2({
+              width: canvasData.width,
+              height: canvasData.height
+            }, getTransforms({
+              translateX: canvasData.left,
+              translateY: canvasData.top
+            })));
+            this.renderImage(changed);
+            if (this.cropped && this.limited) {
+              this.limitCropBox(true, true);
+            }
+          },
+          renderImage: function renderImage(changed) {
+            var canvasData = this.canvasData, imageData = this.imageData;
+            var width = imageData.naturalWidth * (canvasData.width / canvasData.naturalWidth);
+            var height = imageData.naturalHeight * (canvasData.height / canvasData.naturalHeight);
+            assign2(imageData, {
+              width,
+              height,
+              left: (canvasData.width - width) / 2,
+              top: (canvasData.height - height) / 2
+            });
+            setStyle(this.image, assign2({
+              width: imageData.width,
+              height: imageData.height
+            }, getTransforms(assign2({
+              translateX: imageData.left,
+              translateY: imageData.top
+            }, imageData))));
+            if (changed) {
+              this.output();
+            }
+          },
+          initCropBox: function initCropBox() {
+            var options2 = this.options, canvasData = this.canvasData;
+            var aspectRatio = options2.aspectRatio || options2.initialAspectRatio;
+            var autoCropArea = Number(options2.autoCropArea) || 0.8;
+            var cropBoxData = {
+              width: canvasData.width,
+              height: canvasData.height
+            };
+            if (aspectRatio) {
+              if (canvasData.height * aspectRatio > canvasData.width) {
+                cropBoxData.height = cropBoxData.width / aspectRatio;
+              } else {
+                cropBoxData.width = cropBoxData.height * aspectRatio;
+              }
+            }
+            this.cropBoxData = cropBoxData;
+            this.limitCropBox(true, true);
+            cropBoxData.width = Math.min(Math.max(cropBoxData.width, cropBoxData.minWidth), cropBoxData.maxWidth);
+            cropBoxData.height = Math.min(Math.max(cropBoxData.height, cropBoxData.minHeight), cropBoxData.maxHeight);
+            cropBoxData.width = Math.max(cropBoxData.minWidth, cropBoxData.width * autoCropArea);
+            cropBoxData.height = Math.max(cropBoxData.minHeight, cropBoxData.height * autoCropArea);
+            cropBoxData.left = canvasData.left + (canvasData.width - cropBoxData.width) / 2;
+            cropBoxData.top = canvasData.top + (canvasData.height - cropBoxData.height) / 2;
+            cropBoxData.oldLeft = cropBoxData.left;
+            cropBoxData.oldTop = cropBoxData.top;
+            this.initialCropBoxData = assign2({}, cropBoxData);
+          },
+          limitCropBox: function limitCropBox(sizeLimited, positionLimited) {
+            var options2 = this.options, containerData = this.containerData, canvasData = this.canvasData, cropBoxData = this.cropBoxData, limited = this.limited;
+            var aspectRatio = options2.aspectRatio;
+            if (sizeLimited) {
+              var minCropBoxWidth = Number(options2.minCropBoxWidth) || 0;
+              var minCropBoxHeight = Number(options2.minCropBoxHeight) || 0;
+              var maxCropBoxWidth = limited ? Math.min(containerData.width, canvasData.width, canvasData.width + canvasData.left, containerData.width - canvasData.left) : containerData.width;
+              var maxCropBoxHeight = limited ? Math.min(containerData.height, canvasData.height, canvasData.height + canvasData.top, containerData.height - canvasData.top) : containerData.height;
+              minCropBoxWidth = Math.min(minCropBoxWidth, containerData.width);
+              minCropBoxHeight = Math.min(minCropBoxHeight, containerData.height);
+              if (aspectRatio) {
+                if (minCropBoxWidth && minCropBoxHeight) {
+                  if (minCropBoxHeight * aspectRatio > minCropBoxWidth) {
+                    minCropBoxHeight = minCropBoxWidth / aspectRatio;
+                  } else {
+                    minCropBoxWidth = minCropBoxHeight * aspectRatio;
+                  }
+                } else if (minCropBoxWidth) {
+                  minCropBoxHeight = minCropBoxWidth / aspectRatio;
+                } else if (minCropBoxHeight) {
+                  minCropBoxWidth = minCropBoxHeight * aspectRatio;
+                }
+                if (maxCropBoxHeight * aspectRatio > maxCropBoxWidth) {
+                  maxCropBoxHeight = maxCropBoxWidth / aspectRatio;
+                } else {
+                  maxCropBoxWidth = maxCropBoxHeight * aspectRatio;
+                }
+              }
+              cropBoxData.minWidth = Math.min(minCropBoxWidth, maxCropBoxWidth);
+              cropBoxData.minHeight = Math.min(minCropBoxHeight, maxCropBoxHeight);
+              cropBoxData.maxWidth = maxCropBoxWidth;
+              cropBoxData.maxHeight = maxCropBoxHeight;
+            }
+            if (positionLimited) {
+              if (limited) {
+                cropBoxData.minLeft = Math.max(0, canvasData.left);
+                cropBoxData.minTop = Math.max(0, canvasData.top);
+                cropBoxData.maxLeft = Math.min(containerData.width, canvasData.left + canvasData.width) - cropBoxData.width;
+                cropBoxData.maxTop = Math.min(containerData.height, canvasData.top + canvasData.height) - cropBoxData.height;
+              } else {
+                cropBoxData.minLeft = 0;
+                cropBoxData.minTop = 0;
+                cropBoxData.maxLeft = containerData.width - cropBoxData.width;
+                cropBoxData.maxTop = containerData.height - cropBoxData.height;
+              }
+            }
+          },
+          renderCropBox: function renderCropBox() {
+            var options2 = this.options, containerData = this.containerData, cropBoxData = this.cropBoxData;
+            if (cropBoxData.width > cropBoxData.maxWidth || cropBoxData.width < cropBoxData.minWidth) {
+              cropBoxData.left = cropBoxData.oldLeft;
+            }
+            if (cropBoxData.height > cropBoxData.maxHeight || cropBoxData.height < cropBoxData.minHeight) {
+              cropBoxData.top = cropBoxData.oldTop;
+            }
+            cropBoxData.width = Math.min(Math.max(cropBoxData.width, cropBoxData.minWidth), cropBoxData.maxWidth);
+            cropBoxData.height = Math.min(Math.max(cropBoxData.height, cropBoxData.minHeight), cropBoxData.maxHeight);
+            this.limitCropBox(false, true);
+            cropBoxData.left = Math.min(Math.max(cropBoxData.left, cropBoxData.minLeft), cropBoxData.maxLeft);
+            cropBoxData.top = Math.min(Math.max(cropBoxData.top, cropBoxData.minTop), cropBoxData.maxTop);
+            cropBoxData.oldLeft = cropBoxData.left;
+            cropBoxData.oldTop = cropBoxData.top;
+            if (options2.movable && options2.cropBoxMovable) {
+              setData(this.face, DATA_ACTION, cropBoxData.width >= containerData.width && cropBoxData.height >= containerData.height ? ACTION_MOVE : ACTION_ALL);
+            }
+            setStyle(this.cropBox, assign2({
+              width: cropBoxData.width,
+              height: cropBoxData.height
+            }, getTransforms({
+              translateX: cropBoxData.left,
+              translateY: cropBoxData.top
+            })));
+            if (this.cropped && this.limited) {
+              this.limitCanvas(true, true);
+            }
+            if (!this.disabled) {
+              this.output();
+            }
+          },
+          output: function output() {
+            this.preview();
+            dispatchEvent2(this.element, EVENT_CROP, this.getData());
+          }
+        };
+        var preview = {
+          initPreview: function initPreview() {
+            var element = this.element, crossOrigin = this.crossOrigin;
+            var preview2 = this.options.preview;
+            var url = crossOrigin ? this.crossOriginUrl : this.url;
+            var alt = element.alt || "The image to preview";
+            var image = document.createElement("img");
+            if (crossOrigin) {
+              image.crossOrigin = crossOrigin;
+            }
+            image.src = url;
+            image.alt = alt;
+            this.viewBox.appendChild(image);
+            this.viewBoxImage = image;
+            if (!preview2) {
+              return;
+            }
+            var previews = preview2;
+            if (typeof preview2 === "string") {
+              previews = element.ownerDocument.querySelectorAll(preview2);
+            } else if (preview2.querySelector) {
+              previews = [preview2];
+            }
+            this.previews = previews;
+            forEach(previews, function(el) {
+              var img = document.createElement("img");
+              setData(el, DATA_PREVIEW, {
+                width: el.offsetWidth,
+                height: el.offsetHeight,
+                html: el.innerHTML
+              });
+              if (crossOrigin) {
+                img.crossOrigin = crossOrigin;
+              }
+              img.src = url;
+              img.alt = alt;
+              img.style.cssText = 'display:block;width:100%;height:auto;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;image-orientation:0deg!important;"';
+              el.innerHTML = "";
+              el.appendChild(img);
+            });
+          },
+          resetPreview: function resetPreview() {
+            forEach(this.previews, function(element) {
+              var data = getData(element, DATA_PREVIEW);
+              setStyle(element, {
+                width: data.width,
+                height: data.height
+              });
+              element.innerHTML = data.html;
+              removeData(element, DATA_PREVIEW);
+            });
+          },
+          preview: function preview2() {
+            var imageData = this.imageData, canvasData = this.canvasData, cropBoxData = this.cropBoxData;
+            var cropBoxWidth = cropBoxData.width, cropBoxHeight = cropBoxData.height;
+            var width = imageData.width, height = imageData.height;
+            var left2 = cropBoxData.left - canvasData.left - imageData.left;
+            var top2 = cropBoxData.top - canvasData.top - imageData.top;
+            if (!this.cropped || this.disabled) {
+              return;
+            }
+            setStyle(this.viewBoxImage, assign2({
+              width,
+              height
+            }, getTransforms(assign2({
+              translateX: -left2,
+              translateY: -top2
+            }, imageData))));
+            forEach(this.previews, function(element) {
+              var data = getData(element, DATA_PREVIEW);
+              var originalWidth = data.width;
+              var originalHeight = data.height;
+              var newWidth = originalWidth;
+              var newHeight = originalHeight;
+              var ratio = 1;
+              if (cropBoxWidth) {
+                ratio = originalWidth / cropBoxWidth;
+                newHeight = cropBoxHeight * ratio;
+              }
+              if (cropBoxHeight && newHeight > originalHeight) {
+                ratio = originalHeight / cropBoxHeight;
+                newWidth = cropBoxWidth * ratio;
+                newHeight = originalHeight;
+              }
+              setStyle(element, {
+                width: newWidth,
+                height: newHeight
+              });
+              setStyle(element.getElementsByTagName("img")[0], assign2({
+                width: width * ratio,
+                height: height * ratio
+              }, getTransforms(assign2({
+                translateX: -left2 * ratio,
+                translateY: -top2 * ratio
+              }, imageData))));
+            });
+          }
+        };
+        var events = {
+          bind: function bind() {
+            var element = this.element, options2 = this.options, cropper = this.cropper;
+            if (isFunction(options2.cropstart)) {
+              addListener(element, EVENT_CROP_START, options2.cropstart);
+            }
+            if (isFunction(options2.cropmove)) {
+              addListener(element, EVENT_CROP_MOVE, options2.cropmove);
+            }
+            if (isFunction(options2.cropend)) {
+              addListener(element, EVENT_CROP_END, options2.cropend);
+            }
+            if (isFunction(options2.crop)) {
+              addListener(element, EVENT_CROP, options2.crop);
+            }
+            if (isFunction(options2.zoom)) {
+              addListener(element, EVENT_ZOOM, options2.zoom);
+            }
+            addListener(cropper, EVENT_POINTER_DOWN, this.onCropStart = this.cropStart.bind(this));
+            if (options2.zoomable && options2.zoomOnWheel) {
+              addListener(cropper, EVENT_WHEEL, this.onWheel = this.wheel.bind(this), {
+                passive: false,
+                capture: true
+              });
+            }
+            if (options2.toggleDragModeOnDblclick) {
+              addListener(cropper, EVENT_DBLCLICK, this.onDblclick = this.dblclick.bind(this));
+            }
+            addListener(element.ownerDocument, EVENT_POINTER_MOVE, this.onCropMove = this.cropMove.bind(this));
+            addListener(element.ownerDocument, EVENT_POINTER_UP, this.onCropEnd = this.cropEnd.bind(this));
+            if (options2.responsive) {
+              addListener(window, EVENT_RESIZE, this.onResize = this.resize.bind(this));
+            }
+          },
+          unbind: function unbind() {
+            var element = this.element, options2 = this.options, cropper = this.cropper;
+            if (isFunction(options2.cropstart)) {
+              removeListener(element, EVENT_CROP_START, options2.cropstart);
+            }
+            if (isFunction(options2.cropmove)) {
+              removeListener(element, EVENT_CROP_MOVE, options2.cropmove);
+            }
+            if (isFunction(options2.cropend)) {
+              removeListener(element, EVENT_CROP_END, options2.cropend);
+            }
+            if (isFunction(options2.crop)) {
+              removeListener(element, EVENT_CROP, options2.crop);
+            }
+            if (isFunction(options2.zoom)) {
+              removeListener(element, EVENT_ZOOM, options2.zoom);
+            }
+            removeListener(cropper, EVENT_POINTER_DOWN, this.onCropStart);
+            if (options2.zoomable && options2.zoomOnWheel) {
+              removeListener(cropper, EVENT_WHEEL, this.onWheel, {
+                passive: false,
+                capture: true
+              });
+            }
+            if (options2.toggleDragModeOnDblclick) {
+              removeListener(cropper, EVENT_DBLCLICK, this.onDblclick);
+            }
+            removeListener(element.ownerDocument, EVENT_POINTER_MOVE, this.onCropMove);
+            removeListener(element.ownerDocument, EVENT_POINTER_UP, this.onCropEnd);
+            if (options2.responsive) {
+              removeListener(window, EVENT_RESIZE, this.onResize);
+            }
+          }
+        };
+        var handlers = {
+          resize: function resize() {
+            if (this.disabled) {
+              return;
+            }
+            var options2 = this.options, container = this.container, containerData = this.containerData;
+            var ratioX = container.offsetWidth / containerData.width;
+            var ratioY = container.offsetHeight / containerData.height;
+            var ratio = Math.abs(ratioX - 1) > Math.abs(ratioY - 1) ? ratioX : ratioY;
+            if (ratio !== 1) {
+              var canvasData;
+              var cropBoxData;
+              if (options2.restore) {
+                canvasData = this.getCanvasData();
+                cropBoxData = this.getCropBoxData();
+              }
+              this.render();
+              if (options2.restore) {
+                this.setCanvasData(forEach(canvasData, function(n3, i4) {
+                  canvasData[i4] = n3 * ratio;
+                }));
+                this.setCropBoxData(forEach(cropBoxData, function(n3, i4) {
+                  cropBoxData[i4] = n3 * ratio;
+                }));
+              }
+            }
+          },
+          dblclick: function dblclick() {
+            if (this.disabled || this.options.dragMode === DRAG_MODE_NONE) {
+              return;
+            }
+            this.setDragMode(hasClass(this.dragBox, CLASS_CROP) ? DRAG_MODE_MOVE : DRAG_MODE_CROP);
+          },
+          wheel: function wheel(event) {
+            var _this = this;
+            var ratio = Number(this.options.wheelZoomRatio) || 0.1;
+            var delta = 1;
+            if (this.disabled) {
+              return;
+            }
+            event.preventDefault();
+            if (this.wheeling) {
+              return;
+            }
+            this.wheeling = true;
+            setTimeout(function() {
+              _this.wheeling = false;
+            }, 50);
+            if (event.deltaY) {
+              delta = event.deltaY > 0 ? 1 : -1;
+            } else if (event.wheelDelta) {
+              delta = -event.wheelDelta / 120;
+            } else if (event.detail) {
+              delta = event.detail > 0 ? 1 : -1;
+            }
+            this.zoom(-delta * ratio, event);
+          },
+          cropStart: function cropStart(event) {
+            var buttons = event.buttons, button = event.button;
+            if (this.disabled || (event.type === "mousedown" || event.type === "pointerdown" && event.pointerType === "mouse") && // No primary button (Usually the left button)
+            (isNumber(buttons) && buttons !== 1 || isNumber(button) && button !== 0 || event.ctrlKey)) {
+              return;
+            }
+            var options2 = this.options, pointers = this.pointers;
+            var action;
+            if (event.changedTouches) {
+              forEach(event.changedTouches, function(touch) {
+                pointers[touch.identifier] = getPointer(touch);
+              });
+            } else {
+              pointers[event.pointerId || 0] = getPointer(event);
+            }
+            if (Object.keys(pointers).length > 1 && options2.zoomable && options2.zoomOnTouch) {
+              action = ACTION_ZOOM;
+            } else {
+              action = getData(event.target, DATA_ACTION);
+            }
+            if (!REGEXP_ACTIONS.test(action)) {
+              return;
+            }
+            if (dispatchEvent2(this.element, EVENT_CROP_START, {
+              originalEvent: event,
+              action
+            }) === false) {
+              return;
+            }
+            event.preventDefault();
+            this.action = action;
+            this.cropping = false;
+            if (action === ACTION_CROP) {
+              this.cropping = true;
+              addClass(this.dragBox, CLASS_MODAL);
+            }
+          },
+          cropMove: function cropMove(event) {
+            var action = this.action;
+            if (this.disabled || !action) {
+              return;
+            }
+            var pointers = this.pointers;
+            event.preventDefault();
+            if (dispatchEvent2(this.element, EVENT_CROP_MOVE, {
+              originalEvent: event,
+              action
+            }) === false) {
+              return;
+            }
+            if (event.changedTouches) {
+              forEach(event.changedTouches, function(touch) {
+                assign2(pointers[touch.identifier] || {}, getPointer(touch, true));
+              });
+            } else {
+              assign2(pointers[event.pointerId || 0] || {}, getPointer(event, true));
+            }
+            this.change(event);
+          },
+          cropEnd: function cropEnd(event) {
+            if (this.disabled) {
+              return;
+            }
+            var action = this.action, pointers = this.pointers;
+            if (event.changedTouches) {
+              forEach(event.changedTouches, function(touch) {
+                delete pointers[touch.identifier];
+              });
+            } else {
+              delete pointers[event.pointerId || 0];
+            }
+            if (!action) {
+              return;
+            }
+            event.preventDefault();
+            if (!Object.keys(pointers).length) {
+              this.action = "";
+            }
+            if (this.cropping) {
+              this.cropping = false;
+              toggleClass(this.dragBox, CLASS_MODAL, this.cropped && this.options.modal);
+            }
+            dispatchEvent2(this.element, EVENT_CROP_END, {
+              originalEvent: event,
+              action
+            });
+          }
+        };
+        var change = {
+          change: function change2(event) {
+            var options2 = this.options, canvasData = this.canvasData, containerData = this.containerData, cropBoxData = this.cropBoxData, pointers = this.pointers;
+            var action = this.action;
+            var aspectRatio = options2.aspectRatio;
+            var left2 = cropBoxData.left, top2 = cropBoxData.top, width = cropBoxData.width, height = cropBoxData.height;
+            var right2 = left2 + width;
+            var bottom2 = top2 + height;
+            var minLeft = 0;
+            var minTop = 0;
+            var maxWidth = containerData.width;
+            var maxHeight = containerData.height;
+            var renderable = true;
+            var offset2;
+            if (!aspectRatio && event.shiftKey) {
+              aspectRatio = width && height ? width / height : 1;
+            }
+            if (this.limited) {
+              minLeft = cropBoxData.minLeft;
+              minTop = cropBoxData.minTop;
+              maxWidth = minLeft + Math.min(containerData.width, canvasData.width, canvasData.left + canvasData.width);
+              maxHeight = minTop + Math.min(containerData.height, canvasData.height, canvasData.top + canvasData.height);
+            }
+            var pointer = pointers[Object.keys(pointers)[0]];
+            var range = {
+              x: pointer.endX - pointer.startX,
+              y: pointer.endY - pointer.startY
+            };
+            var check = function check2(side) {
+              switch (side) {
+                case ACTION_EAST:
+                  if (right2 + range.x > maxWidth) {
+                    range.x = maxWidth - right2;
+                  }
+                  break;
+                case ACTION_WEST:
+                  if (left2 + range.x < minLeft) {
+                    range.x = minLeft - left2;
+                  }
+                  break;
+                case ACTION_NORTH:
+                  if (top2 + range.y < minTop) {
+                    range.y = minTop - top2;
+                  }
+                  break;
+                case ACTION_SOUTH:
+                  if (bottom2 + range.y > maxHeight) {
+                    range.y = maxHeight - bottom2;
+                  }
+                  break;
+              }
+            };
+            switch (action) {
+              case ACTION_ALL:
+                left2 += range.x;
+                top2 += range.y;
+                break;
+              case ACTION_EAST:
+                if (range.x >= 0 && (right2 >= maxWidth || aspectRatio && (top2 <= minTop || bottom2 >= maxHeight))) {
+                  renderable = false;
+                  break;
+                }
+                check(ACTION_EAST);
+                width += range.x;
+                if (width < 0) {
+                  action = ACTION_WEST;
+                  width = -width;
+                  left2 -= width;
+                }
+                if (aspectRatio) {
+                  height = width / aspectRatio;
+                  top2 += (cropBoxData.height - height) / 2;
+                }
+                break;
+              case ACTION_NORTH:
+                if (range.y <= 0 && (top2 <= minTop || aspectRatio && (left2 <= minLeft || right2 >= maxWidth))) {
+                  renderable = false;
+                  break;
+                }
+                check(ACTION_NORTH);
+                height -= range.y;
+                top2 += range.y;
+                if (height < 0) {
+                  action = ACTION_SOUTH;
+                  height = -height;
+                  top2 -= height;
+                }
+                if (aspectRatio) {
+                  width = height * aspectRatio;
+                  left2 += (cropBoxData.width - width) / 2;
+                }
+                break;
+              case ACTION_WEST:
+                if (range.x <= 0 && (left2 <= minLeft || aspectRatio && (top2 <= minTop || bottom2 >= maxHeight))) {
+                  renderable = false;
+                  break;
+                }
+                check(ACTION_WEST);
+                width -= range.x;
+                left2 += range.x;
+                if (width < 0) {
+                  action = ACTION_EAST;
+                  width = -width;
+                  left2 -= width;
+                }
+                if (aspectRatio) {
+                  height = width / aspectRatio;
+                  top2 += (cropBoxData.height - height) / 2;
+                }
+                break;
+              case ACTION_SOUTH:
+                if (range.y >= 0 && (bottom2 >= maxHeight || aspectRatio && (left2 <= minLeft || right2 >= maxWidth))) {
+                  renderable = false;
+                  break;
+                }
+                check(ACTION_SOUTH);
+                height += range.y;
+                if (height < 0) {
+                  action = ACTION_NORTH;
+                  height = -height;
+                  top2 -= height;
+                }
+                if (aspectRatio) {
+                  width = height * aspectRatio;
+                  left2 += (cropBoxData.width - width) / 2;
+                }
+                break;
+              case ACTION_NORTH_EAST:
+                if (aspectRatio) {
+                  if (range.y <= 0 && (top2 <= minTop || right2 >= maxWidth)) {
+                    renderable = false;
+                    break;
+                  }
+                  check(ACTION_NORTH);
+                  height -= range.y;
+                  top2 += range.y;
+                  width = height * aspectRatio;
+                } else {
+                  check(ACTION_NORTH);
+                  check(ACTION_EAST);
+                  if (range.x >= 0) {
+                    if (right2 < maxWidth) {
+                      width += range.x;
+                    } else if (range.y <= 0 && top2 <= minTop) {
+                      renderable = false;
+                    }
+                  } else {
+                    width += range.x;
+                  }
+                  if (range.y <= 0) {
+                    if (top2 > minTop) {
+                      height -= range.y;
+                      top2 += range.y;
+                    }
+                  } else {
+                    height -= range.y;
+                    top2 += range.y;
+                  }
+                }
+                if (width < 0 && height < 0) {
+                  action = ACTION_SOUTH_WEST;
+                  height = -height;
+                  width = -width;
+                  top2 -= height;
+                  left2 -= width;
+                } else if (width < 0) {
+                  action = ACTION_NORTH_WEST;
+                  width = -width;
+                  left2 -= width;
+                } else if (height < 0) {
+                  action = ACTION_SOUTH_EAST;
+                  height = -height;
+                  top2 -= height;
+                }
+                break;
+              case ACTION_NORTH_WEST:
+                if (aspectRatio) {
+                  if (range.y <= 0 && (top2 <= minTop || left2 <= minLeft)) {
+                    renderable = false;
+                    break;
+                  }
+                  check(ACTION_NORTH);
+                  height -= range.y;
+                  top2 += range.y;
+                  width = height * aspectRatio;
+                  left2 += cropBoxData.width - width;
+                } else {
+                  check(ACTION_NORTH);
+                  check(ACTION_WEST);
+                  if (range.x <= 0) {
+                    if (left2 > minLeft) {
+                      width -= range.x;
+                      left2 += range.x;
+                    } else if (range.y <= 0 && top2 <= minTop) {
+                      renderable = false;
+                    }
+                  } else {
+                    width -= range.x;
+                    left2 += range.x;
+                  }
+                  if (range.y <= 0) {
+                    if (top2 > minTop) {
+                      height -= range.y;
+                      top2 += range.y;
+                    }
+                  } else {
+                    height -= range.y;
+                    top2 += range.y;
+                  }
+                }
+                if (width < 0 && height < 0) {
+                  action = ACTION_SOUTH_EAST;
+                  height = -height;
+                  width = -width;
+                  top2 -= height;
+                  left2 -= width;
+                } else if (width < 0) {
+                  action = ACTION_NORTH_EAST;
+                  width = -width;
+                  left2 -= width;
+                } else if (height < 0) {
+                  action = ACTION_SOUTH_WEST;
+                  height = -height;
+                  top2 -= height;
+                }
+                break;
+              case ACTION_SOUTH_WEST:
+                if (aspectRatio) {
+                  if (range.x <= 0 && (left2 <= minLeft || bottom2 >= maxHeight)) {
+                    renderable = false;
+                    break;
+                  }
+                  check(ACTION_WEST);
+                  width -= range.x;
+                  left2 += range.x;
+                  height = width / aspectRatio;
+                } else {
+                  check(ACTION_SOUTH);
+                  check(ACTION_WEST);
+                  if (range.x <= 0) {
+                    if (left2 > minLeft) {
+                      width -= range.x;
+                      left2 += range.x;
+                    } else if (range.y >= 0 && bottom2 >= maxHeight) {
+                      renderable = false;
+                    }
+                  } else {
+                    width -= range.x;
+                    left2 += range.x;
+                  }
+                  if (range.y >= 0) {
+                    if (bottom2 < maxHeight) {
+                      height += range.y;
+                    }
+                  } else {
+                    height += range.y;
+                  }
+                }
+                if (width < 0 && height < 0) {
+                  action = ACTION_NORTH_EAST;
+                  height = -height;
+                  width = -width;
+                  top2 -= height;
+                  left2 -= width;
+                } else if (width < 0) {
+                  action = ACTION_SOUTH_EAST;
+                  width = -width;
+                  left2 -= width;
+                } else if (height < 0) {
+                  action = ACTION_NORTH_WEST;
+                  height = -height;
+                  top2 -= height;
+                }
+                break;
+              case ACTION_SOUTH_EAST:
+                if (aspectRatio) {
+                  if (range.x >= 0 && (right2 >= maxWidth || bottom2 >= maxHeight)) {
+                    renderable = false;
+                    break;
+                  }
+                  check(ACTION_EAST);
+                  width += range.x;
+                  height = width / aspectRatio;
+                } else {
+                  check(ACTION_SOUTH);
+                  check(ACTION_EAST);
+                  if (range.x >= 0) {
+                    if (right2 < maxWidth) {
+                      width += range.x;
+                    } else if (range.y >= 0 && bottom2 >= maxHeight) {
+                      renderable = false;
+                    }
+                  } else {
+                    width += range.x;
+                  }
+                  if (range.y >= 0) {
+                    if (bottom2 < maxHeight) {
+                      height += range.y;
+                    }
+                  } else {
+                    height += range.y;
+                  }
+                }
+                if (width < 0 && height < 0) {
+                  action = ACTION_NORTH_WEST;
+                  height = -height;
+                  width = -width;
+                  top2 -= height;
+                  left2 -= width;
+                } else if (width < 0) {
+                  action = ACTION_SOUTH_WEST;
+                  width = -width;
+                  left2 -= width;
+                } else if (height < 0) {
+                  action = ACTION_NORTH_EAST;
+                  height = -height;
+                  top2 -= height;
+                }
+                break;
+              case ACTION_MOVE:
+                this.move(range.x, range.y);
+                renderable = false;
+                break;
+              case ACTION_ZOOM:
+                this.zoom(getMaxZoomRatio(pointers), event);
+                renderable = false;
+                break;
+              case ACTION_CROP:
+                if (!range.x || !range.y) {
+                  renderable = false;
+                  break;
+                }
+                offset2 = getOffset(this.cropper);
+                left2 = pointer.startX - offset2.left;
+                top2 = pointer.startY - offset2.top;
+                width = cropBoxData.minWidth;
+                height = cropBoxData.minHeight;
+                if (range.x > 0) {
+                  action = range.y > 0 ? ACTION_SOUTH_EAST : ACTION_NORTH_EAST;
+                } else if (range.x < 0) {
+                  left2 -= width;
+                  action = range.y > 0 ? ACTION_SOUTH_WEST : ACTION_NORTH_WEST;
+                }
+                if (range.y < 0) {
+                  top2 -= height;
+                }
+                if (!this.cropped) {
+                  removeClass(this.cropBox, CLASS_HIDDEN);
+                  this.cropped = true;
+                  if (this.limited) {
+                    this.limitCropBox(true, true);
+                  }
+                }
+                break;
+            }
+            if (renderable) {
+              cropBoxData.width = width;
+              cropBoxData.height = height;
+              cropBoxData.left = left2;
+              cropBoxData.top = top2;
+              this.action = action;
+              this.renderCropBox();
+            }
+            forEach(pointers, function(p4) {
+              p4.startX = p4.endX;
+              p4.startY = p4.endY;
+            });
+          }
+        };
+        var methods = {
+          // Show the crop box manually
+          crop: function crop() {
+            if (this.ready && !this.cropped && !this.disabled) {
+              this.cropped = true;
+              this.limitCropBox(true, true);
+              if (this.options.modal) {
+                addClass(this.dragBox, CLASS_MODAL);
+              }
+              removeClass(this.cropBox, CLASS_HIDDEN);
+              this.setCropBoxData(this.initialCropBoxData);
+            }
+            return this;
+          },
+          // Reset the image and crop box to their initial states
+          reset: function reset() {
+            if (this.ready && !this.disabled) {
+              this.imageData = assign2({}, this.initialImageData);
+              this.canvasData = assign2({}, this.initialCanvasData);
+              this.cropBoxData = assign2({}, this.initialCropBoxData);
+              this.renderCanvas();
+              if (this.cropped) {
+                this.renderCropBox();
+              }
+            }
+            return this;
+          },
+          // Clear the crop box
+          clear: function clear() {
+            if (this.cropped && !this.disabled) {
+              assign2(this.cropBoxData, {
+                left: 0,
+                top: 0,
+                width: 0,
+                height: 0
+              });
+              this.cropped = false;
+              this.renderCropBox();
+              this.limitCanvas(true, true);
+              this.renderCanvas();
+              removeClass(this.dragBox, CLASS_MODAL);
+              addClass(this.cropBox, CLASS_HIDDEN);
+            }
+            return this;
+          },
+          /**
+           * Replace the image's src and rebuild the cropper
+           * @param {string} url - The new URL.
+           * @param {boolean} [hasSameSize] - Indicate if the new image has the same size as the old one.
+           * @returns {Cropper} this
+           */
+          replace: function replace(url) {
+            var hasSameSize = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
+            if (!this.disabled && url) {
+              if (this.isImg) {
+                this.element.src = url;
+              }
+              if (hasSameSize) {
+                this.url = url;
+                this.image.src = url;
+                if (this.ready) {
+                  this.viewBoxImage.src = url;
+                  forEach(this.previews, function(element) {
+                    element.getElementsByTagName("img")[0].src = url;
+                  });
+                }
+              } else {
+                if (this.isImg) {
+                  this.replaced = true;
+                }
+                this.options.data = null;
+                this.uncreate();
+                this.load(url);
+              }
+            }
+            return this;
+          },
+          // Enable (unfreeze) the cropper
+          enable: function enable() {
+            if (this.ready && this.disabled) {
+              this.disabled = false;
+              removeClass(this.cropper, CLASS_DISABLED);
+            }
+            return this;
+          },
+          // Disable (freeze) the cropper
+          disable: function disable() {
+            if (this.ready && !this.disabled) {
+              this.disabled = true;
+              addClass(this.cropper, CLASS_DISABLED);
+            }
+            return this;
+          },
+          /**
+           * Destroy the cropper and remove the instance from the image
+           * @returns {Cropper} this
+           */
+          destroy: function destroy() {
+            var element = this.element;
+            if (!element[NAMESPACE]) {
+              return this;
+            }
+            element[NAMESPACE] = void 0;
+            if (this.isImg && this.replaced) {
+              element.src = this.originalUrl;
+            }
+            this.uncreate();
+            return this;
+          },
+          /**
+           * Move the canvas with relative offsets
+           * @param {number} offsetX - The relative offset distance on the x-axis.
+           * @param {number} [offsetY=offsetX] - The relative offset distance on the y-axis.
+           * @returns {Cropper} this
+           */
+          move: function move(offsetX) {
+            var offsetY = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : offsetX;
+            var _this$canvasData = this.canvasData, left2 = _this$canvasData.left, top2 = _this$canvasData.top;
+            return this.moveTo(isUndefined(offsetX) ? offsetX : left2 + Number(offsetX), isUndefined(offsetY) ? offsetY : top2 + Number(offsetY));
+          },
+          /**
+           * Move the canvas to an absolute point
+           * @param {number} x - The x-axis coordinate.
+           * @param {number} [y=x] - The y-axis coordinate.
+           * @returns {Cropper} this
+           */
+          moveTo: function moveTo(x3) {
+            var y4 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : x3;
+            var canvasData = this.canvasData;
+            var changed = false;
+            x3 = Number(x3);
+            y4 = Number(y4);
+            if (this.ready && !this.disabled && this.options.movable) {
+              if (isNumber(x3)) {
+                canvasData.left = x3;
+                changed = true;
+              }
+              if (isNumber(y4)) {
+                canvasData.top = y4;
+                changed = true;
+              }
+              if (changed) {
+                this.renderCanvas(true);
+              }
+            }
+            return this;
+          },
+          /**
+           * Zoom the canvas with a relative ratio
+           * @param {number} ratio - The target ratio.
+           * @param {Event} _originalEvent - The original event if any.
+           * @returns {Cropper} this
+           */
+          zoom: function zoom(ratio, _originalEvent) {
+            var canvasData = this.canvasData;
+            ratio = Number(ratio);
+            if (ratio < 0) {
+              ratio = 1 / (1 - ratio);
+            } else {
+              ratio = 1 + ratio;
+            }
+            return this.zoomTo(canvasData.width * ratio / canvasData.naturalWidth, null, _originalEvent);
+          },
+          /**
+           * Zoom the canvas to an absolute ratio
+           * @param {number} ratio - The target ratio.
+           * @param {Object} pivot - The zoom pivot point coordinate.
+           * @param {Event} _originalEvent - The original event if any.
+           * @returns {Cropper} this
+           */
+          zoomTo: function zoomTo(ratio, pivot, _originalEvent) {
+            var options2 = this.options, canvasData = this.canvasData;
+            var width = canvasData.width, height = canvasData.height, naturalWidth = canvasData.naturalWidth, naturalHeight = canvasData.naturalHeight;
+            ratio = Number(ratio);
+            if (ratio >= 0 && this.ready && !this.disabled && options2.zoomable) {
+              var newWidth = naturalWidth * ratio;
+              var newHeight = naturalHeight * ratio;
+              if (dispatchEvent2(this.element, EVENT_ZOOM, {
+                ratio,
+                oldRatio: width / naturalWidth,
+                originalEvent: _originalEvent
+              }) === false) {
+                return this;
+              }
+              if (_originalEvent) {
+                var pointers = this.pointers;
+                var offset2 = getOffset(this.cropper);
+                var center = pointers && Object.keys(pointers).length ? getPointersCenter(pointers) : {
+                  pageX: _originalEvent.pageX,
+                  pageY: _originalEvent.pageY
+                };
+                canvasData.left -= (newWidth - width) * ((center.pageX - offset2.left - canvasData.left) / width);
+                canvasData.top -= (newHeight - height) * ((center.pageY - offset2.top - canvasData.top) / height);
+              } else if (isPlainObject(pivot) && isNumber(pivot.x) && isNumber(pivot.y)) {
+                canvasData.left -= (newWidth - width) * ((pivot.x - canvasData.left) / width);
+                canvasData.top -= (newHeight - height) * ((pivot.y - canvasData.top) / height);
+              } else {
+                canvasData.left -= (newWidth - width) / 2;
+                canvasData.top -= (newHeight - height) / 2;
+              }
+              canvasData.width = newWidth;
+              canvasData.height = newHeight;
+              this.renderCanvas(true);
+            }
+            return this;
+          },
+          /**
+           * Rotate the canvas with a relative degree
+           * @param {number} degree - The rotate degree.
+           * @returns {Cropper} this
+           */
+          rotate: function rotate(degree) {
+            return this.rotateTo((this.imageData.rotate || 0) + Number(degree));
+          },
+          /**
+           * Rotate the canvas to an absolute degree
+           * @param {number} degree - The rotate degree.
+           * @returns {Cropper} this
+           */
+          rotateTo: function rotateTo(degree) {
+            degree = Number(degree);
+            if (isNumber(degree) && this.ready && !this.disabled && this.options.rotatable) {
+              this.imageData.rotate = degree % 360;
+              this.renderCanvas(true, true);
+            }
+            return this;
+          },
+          /**
+           * Scale the image on the x-axis.
+           * @param {number} scaleX - The scale ratio on the x-axis.
+           * @returns {Cropper} this
+           */
+          scaleX: function scaleX(_scaleX) {
+            var scaleY = this.imageData.scaleY;
+            return this.scale(_scaleX, isNumber(scaleY) ? scaleY : 1);
+          },
+          /**
+           * Scale the image on the y-axis.
+           * @param {number} scaleY - The scale ratio on the y-axis.
+           * @returns {Cropper} this
+           */
+          scaleY: function scaleY(_scaleY) {
+            var scaleX = this.imageData.scaleX;
+            return this.scale(isNumber(scaleX) ? scaleX : 1, _scaleY);
+          },
+          /**
+           * Scale the image
+           * @param {number} scaleX - The scale ratio on the x-axis.
+           * @param {number} [scaleY=scaleX] - The scale ratio on the y-axis.
+           * @returns {Cropper} this
+           */
+          scale: function scale(scaleX) {
+            var scaleY = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : scaleX;
+            var imageData = this.imageData;
+            var transformed = false;
+            scaleX = Number(scaleX);
+            scaleY = Number(scaleY);
+            if (this.ready && !this.disabled && this.options.scalable) {
+              if (isNumber(scaleX)) {
+                imageData.scaleX = scaleX;
+                transformed = true;
+              }
+              if (isNumber(scaleY)) {
+                imageData.scaleY = scaleY;
+                transformed = true;
+              }
+              if (transformed) {
+                this.renderCanvas(true, true);
+              }
+            }
+            return this;
+          },
+          /**
+           * Get the cropped area position and size data (base on the original image)
+           * @param {boolean} [rounded=false] - Indicate if round the data values or not.
+           * @returns {Object} The result cropped data.
+           */
+          getData: function getData2() {
+            var rounded = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : false;
+            var options2 = this.options, imageData = this.imageData, canvasData = this.canvasData, cropBoxData = this.cropBoxData;
+            var data;
+            if (this.ready && this.cropped) {
+              data = {
+                x: cropBoxData.left - canvasData.left,
+                y: cropBoxData.top - canvasData.top,
+                width: cropBoxData.width,
+                height: cropBoxData.height
+              };
+              var ratio = imageData.width / imageData.naturalWidth;
+              forEach(data, function(n3, i4) {
+                data[i4] = n3 / ratio;
+              });
+              if (rounded) {
+                var bottom2 = Math.round(data.y + data.height);
+                var right2 = Math.round(data.x + data.width);
+                data.x = Math.round(data.x);
+                data.y = Math.round(data.y);
+                data.width = right2 - data.x;
+                data.height = bottom2 - data.y;
+              }
+            } else {
+              data = {
+                x: 0,
+                y: 0,
+                width: 0,
+                height: 0
+              };
+            }
+            if (options2.rotatable) {
+              data.rotate = imageData.rotate || 0;
+            }
+            if (options2.scalable) {
+              data.scaleX = imageData.scaleX || 1;
+              data.scaleY = imageData.scaleY || 1;
+            }
+            return data;
+          },
+          /**
+           * Set the cropped area position and size with new data
+           * @param {Object} data - The new data.
+           * @returns {Cropper} this
+           */
+          setData: function setData2(data) {
+            var options2 = this.options, imageData = this.imageData, canvasData = this.canvasData;
+            var cropBoxData = {};
+            if (this.ready && !this.disabled && isPlainObject(data)) {
+              var transformed = false;
+              if (options2.rotatable) {
+                if (isNumber(data.rotate) && data.rotate !== imageData.rotate) {
+                  imageData.rotate = data.rotate;
+                  transformed = true;
+                }
+              }
+              if (options2.scalable) {
+                if (isNumber(data.scaleX) && data.scaleX !== imageData.scaleX) {
+                  imageData.scaleX = data.scaleX;
+                  transformed = true;
+                }
+                if (isNumber(data.scaleY) && data.scaleY !== imageData.scaleY) {
+                  imageData.scaleY = data.scaleY;
+                  transformed = true;
+                }
+              }
+              if (transformed) {
+                this.renderCanvas(true, true);
+              }
+              var ratio = imageData.width / imageData.naturalWidth;
+              if (isNumber(data.x)) {
+                cropBoxData.left = data.x * ratio + canvasData.left;
+              }
+              if (isNumber(data.y)) {
+                cropBoxData.top = data.y * ratio + canvasData.top;
+              }
+              if (isNumber(data.width)) {
+                cropBoxData.width = data.width * ratio;
+              }
+              if (isNumber(data.height)) {
+                cropBoxData.height = data.height * ratio;
+              }
+              this.setCropBoxData(cropBoxData);
+            }
+            return this;
+          },
+          /**
+           * Get the container size data.
+           * @returns {Object} The result container data.
+           */
+          getContainerData: function getContainerData() {
+            return this.ready ? assign2({}, this.containerData) : {};
+          },
+          /**
+           * Get the image position and size data.
+           * @returns {Object} The result image data.
+           */
+          getImageData: function getImageData() {
+            return this.sized ? assign2({}, this.imageData) : {};
+          },
+          /**
+           * Get the canvas position and size data.
+           * @returns {Object} The result canvas data.
+           */
+          getCanvasData: function getCanvasData() {
+            var canvasData = this.canvasData;
+            var data = {};
+            if (this.ready) {
+              forEach(["left", "top", "width", "height", "naturalWidth", "naturalHeight"], function(n3) {
+                data[n3] = canvasData[n3];
+              });
+            }
+            return data;
+          },
+          /**
+           * Set the canvas position and size with new data.
+           * @param {Object} data - The new canvas data.
+           * @returns {Cropper} this
+           */
+          setCanvasData: function setCanvasData(data) {
+            var canvasData = this.canvasData;
+            var aspectRatio = canvasData.aspectRatio;
+            if (this.ready && !this.disabled && isPlainObject(data)) {
+              if (isNumber(data.left)) {
+                canvasData.left = data.left;
+              }
+              if (isNumber(data.top)) {
+                canvasData.top = data.top;
+              }
+              if (isNumber(data.width)) {
+                canvasData.width = data.width;
+                canvasData.height = data.width / aspectRatio;
+              } else if (isNumber(data.height)) {
+                canvasData.height = data.height;
+                canvasData.width = data.height * aspectRatio;
+              }
+              this.renderCanvas(true);
+            }
+            return this;
+          },
+          /**
+           * Get the crop box position and size data.
+           * @returns {Object} The result crop box data.
+           */
+          getCropBoxData: function getCropBoxData() {
+            var cropBoxData = this.cropBoxData;
+            var data;
+            if (this.ready && this.cropped) {
+              data = {
+                left: cropBoxData.left,
+                top: cropBoxData.top,
+                width: cropBoxData.width,
+                height: cropBoxData.height
+              };
+            }
+            return data || {};
+          },
+          /**
+           * Set the crop box position and size with new data.
+           * @param {Object} data - The new crop box data.
+           * @returns {Cropper} this
+           */
+          setCropBoxData: function setCropBoxData(data) {
+            var cropBoxData = this.cropBoxData;
+            var aspectRatio = this.options.aspectRatio;
+            var widthChanged;
+            var heightChanged;
+            if (this.ready && this.cropped && !this.disabled && isPlainObject(data)) {
+              if (isNumber(data.left)) {
+                cropBoxData.left = data.left;
+              }
+              if (isNumber(data.top)) {
+                cropBoxData.top = data.top;
+              }
+              if (isNumber(data.width) && data.width !== cropBoxData.width) {
+                widthChanged = true;
+                cropBoxData.width = data.width;
+              }
+              if (isNumber(data.height) && data.height !== cropBoxData.height) {
+                heightChanged = true;
+                cropBoxData.height = data.height;
+              }
+              if (aspectRatio) {
+                if (widthChanged) {
+                  cropBoxData.height = cropBoxData.width / aspectRatio;
+                } else if (heightChanged) {
+                  cropBoxData.width = cropBoxData.height * aspectRatio;
+                }
+              }
+              this.renderCropBox();
+            }
+            return this;
+          },
+          /**
+           * Get a canvas drawn the cropped image.
+           * @param {Object} [options={}] - The config options.
+           * @returns {HTMLCanvasElement} - The result canvas.
+           */
+          getCroppedCanvas: function getCroppedCanvas() {
+            var options2 = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : {};
+            if (!this.ready || !window.HTMLCanvasElement) {
+              return null;
+            }
+            var canvasData = this.canvasData;
+            var source = getSourceCanvas(this.image, this.imageData, canvasData, options2);
+            if (!this.cropped) {
+              return source;
+            }
+            var _this$getData = this.getData(options2.rounded), initialX = _this$getData.x, initialY = _this$getData.y, initialWidth = _this$getData.width, initialHeight = _this$getData.height;
+            var ratio = source.width / Math.floor(canvasData.naturalWidth);
+            if (ratio !== 1) {
+              initialX *= ratio;
+              initialY *= ratio;
+              initialWidth *= ratio;
+              initialHeight *= ratio;
+            }
+            var aspectRatio = initialWidth / initialHeight;
+            var maxSizes = getAdjustedSizes({
+              aspectRatio,
+              width: options2.maxWidth || Infinity,
+              height: options2.maxHeight || Infinity
+            });
+            var minSizes = getAdjustedSizes({
+              aspectRatio,
+              width: options2.minWidth || 0,
+              height: options2.minHeight || 0
+            }, "cover");
+            var _getAdjustedSizes = getAdjustedSizes({
+              aspectRatio,
+              width: options2.width || (ratio !== 1 ? source.width : initialWidth),
+              height: options2.height || (ratio !== 1 ? source.height : initialHeight)
+            }), width = _getAdjustedSizes.width, height = _getAdjustedSizes.height;
+            width = Math.min(maxSizes.width, Math.max(minSizes.width, width));
+            height = Math.min(maxSizes.height, Math.max(minSizes.height, height));
+            var canvas = document.createElement("canvas");
+            var context = canvas.getContext("2d");
+            canvas.width = normalizeDecimalNumber(width);
+            canvas.height = normalizeDecimalNumber(height);
+            context.fillStyle = options2.fillColor || "transparent";
+            context.fillRect(0, 0, width, height);
+            var _options$imageSmoothi = options2.imageSmoothingEnabled, imageSmoothingEnabled = _options$imageSmoothi === void 0 ? true : _options$imageSmoothi, imageSmoothingQuality = options2.imageSmoothingQuality;
+            context.imageSmoothingEnabled = imageSmoothingEnabled;
+            if (imageSmoothingQuality) {
+              context.imageSmoothingQuality = imageSmoothingQuality;
+            }
+            var sourceWidth = source.width;
+            var sourceHeight = source.height;
+            var srcX = initialX;
+            var srcY = initialY;
+            var srcWidth;
+            var srcHeight;
+            var dstX;
+            var dstY;
+            var dstWidth;
+            var dstHeight;
+            if (srcX <= -initialWidth || srcX > sourceWidth) {
+              srcX = 0;
+              srcWidth = 0;
+              dstX = 0;
+              dstWidth = 0;
+            } else if (srcX <= 0) {
+              dstX = -srcX;
+              srcX = 0;
+              srcWidth = Math.min(sourceWidth, initialWidth + srcX);
+              dstWidth = srcWidth;
+            } else if (srcX <= sourceWidth) {
+              dstX = 0;
+              srcWidth = Math.min(initialWidth, sourceWidth - srcX);
+              dstWidth = srcWidth;
+            }
+            if (srcWidth <= 0 || srcY <= -initialHeight || srcY > sourceHeight) {
+              srcY = 0;
+              srcHeight = 0;
+              dstY = 0;
+              dstHeight = 0;
+            } else if (srcY <= 0) {
+              dstY = -srcY;
+              srcY = 0;
+              srcHeight = Math.min(sourceHeight, initialHeight + srcY);
+              dstHeight = srcHeight;
+            } else if (srcY <= sourceHeight) {
+              dstY = 0;
+              srcHeight = Math.min(initialHeight, sourceHeight - srcY);
+              dstHeight = srcHeight;
+            }
+            var params = [srcX, srcY, srcWidth, srcHeight];
+            if (dstWidth > 0 && dstHeight > 0) {
+              var scale = width / initialWidth;
+              params.push(dstX * scale, dstY * scale, dstWidth * scale, dstHeight * scale);
+            }
+            context.drawImage.apply(context, [source].concat(_toConsumableArray(params.map(function(param) {
+              return Math.floor(normalizeDecimalNumber(param));
+            }))));
+            return canvas;
+          },
+          /**
+           * Change the aspect ratio of the crop box.
+           * @param {number} aspectRatio - The new aspect ratio.
+           * @returns {Cropper} this
+           */
+          setAspectRatio: function setAspectRatio(aspectRatio) {
+            var options2 = this.options;
+            if (!this.disabled && !isUndefined(aspectRatio)) {
+              options2.aspectRatio = Math.max(0, aspectRatio) || NaN;
+              if (this.ready) {
+                this.initCropBox();
+                if (this.cropped) {
+                  this.renderCropBox();
+                }
+              }
+            }
+            return this;
+          },
+          /**
+           * Change the drag mode.
+           * @param {string} mode - The new drag mode.
+           * @returns {Cropper} this
+           */
+          setDragMode: function setDragMode(mode) {
+            var options2 = this.options, dragBox = this.dragBox, face = this.face;
+            if (this.ready && !this.disabled) {
+              var croppable = mode === DRAG_MODE_CROP;
+              var movable = options2.movable && mode === DRAG_MODE_MOVE;
+              mode = croppable || movable ? mode : DRAG_MODE_NONE;
+              options2.dragMode = mode;
+              setData(dragBox, DATA_ACTION, mode);
+              toggleClass(dragBox, CLASS_CROP, croppable);
+              toggleClass(dragBox, CLASS_MOVE, movable);
+              if (!options2.cropBoxMovable) {
+                setData(face, DATA_ACTION, mode);
+                toggleClass(face, CLASS_CROP, croppable);
+                toggleClass(face, CLASS_MOVE, movable);
+              }
+            }
+            return this;
+          }
+        };
+        var AnotherCropper = WINDOW.Cropper;
+        var Cropper2 = /* @__PURE__ */ function() {
+          function Cropper3(element) {
+            var options2 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+            _classCallCheck(this, Cropper3);
+            if (!element || !REGEXP_TAG_NAME.test(element.tagName)) {
+              throw new Error("The first argument is required and must be an <img> or <canvas> element.");
+            }
+            this.element = element;
+            this.options = assign2({}, DEFAULTS, isPlainObject(options2) && options2);
+            this.cropped = false;
+            this.disabled = false;
+            this.pointers = {};
+            this.ready = false;
+            this.reloading = false;
+            this.replaced = false;
+            this.sized = false;
+            this.sizing = false;
+            this.init();
+          }
+          return _createClass(Cropper3, [{
+            key: "init",
+            value: function init() {
+              var element = this.element;
+              var tagName = element.tagName.toLowerCase();
+              var url;
+              if (element[NAMESPACE]) {
+                return;
+              }
+              element[NAMESPACE] = this;
+              if (tagName === "img") {
+                this.isImg = true;
+                url = element.getAttribute("src") || "";
+                this.originalUrl = url;
+                if (!url) {
+                  return;
+                }
+                url = element.src;
+              } else if (tagName === "canvas" && window.HTMLCanvasElement) {
+                url = element.toDataURL();
+              }
+              this.load(url);
+            }
+          }, {
+            key: "load",
+            value: function load(url) {
+              var _this = this;
+              if (!url) {
+                return;
+              }
+              this.url = url;
+              this.imageData = {};
+              var element = this.element, options2 = this.options;
+              if (!options2.rotatable && !options2.scalable) {
+                options2.checkOrientation = false;
+              }
+              if (!options2.checkOrientation || !window.ArrayBuffer) {
+                this.clone();
+                return;
+              }
+              if (REGEXP_DATA_URL.test(url)) {
+                if (REGEXP_DATA_URL_JPEG.test(url)) {
+                  this.read(dataURLToArrayBuffer(url));
+                } else {
+                  this.clone();
+                }
+                return;
+              }
+              var xhr = new XMLHttpRequest();
+              var clone2 = this.clone.bind(this);
+              this.reloading = true;
+              this.xhr = xhr;
+              xhr.onabort = clone2;
+              xhr.onerror = clone2;
+              xhr.ontimeout = clone2;
+              xhr.onprogress = function() {
+                if (xhr.getResponseHeader("content-type") !== MIME_TYPE_JPEG) {
+                  xhr.abort();
+                }
+              };
+              xhr.onload = function() {
+                _this.read(xhr.response);
+              };
+              xhr.onloadend = function() {
+                _this.reloading = false;
+                _this.xhr = null;
+              };
+              if (options2.checkCrossOrigin && isCrossOriginURL(url) && element.crossOrigin) {
+                url = addTimestamp(url);
+              }
+              xhr.open("GET", url, true);
+              xhr.responseType = "arraybuffer";
+              xhr.withCredentials = element.crossOrigin === "use-credentials";
+              xhr.send();
+            }
+          }, {
+            key: "read",
+            value: function read2(arrayBuffer) {
+              var options2 = this.options, imageData = this.imageData;
+              var orientation = resetAndGetOrientation(arrayBuffer);
+              var rotate = 0;
+              var scaleX = 1;
+              var scaleY = 1;
+              if (orientation > 1) {
+                this.url = arrayBufferToDataURL(arrayBuffer, MIME_TYPE_JPEG);
+                var _parseOrientation = parseOrientation(orientation);
+                rotate = _parseOrientation.rotate;
+                scaleX = _parseOrientation.scaleX;
+                scaleY = _parseOrientation.scaleY;
+              }
+              if (options2.rotatable) {
+                imageData.rotate = rotate;
+              }
+              if (options2.scalable) {
+                imageData.scaleX = scaleX;
+                imageData.scaleY = scaleY;
+              }
+              this.clone();
+            }
+          }, {
+            key: "clone",
+            value: function clone2() {
+              var element = this.element, url = this.url;
+              var crossOrigin = element.crossOrigin;
+              var crossOriginUrl = url;
+              if (this.options.checkCrossOrigin && isCrossOriginURL(url)) {
+                if (!crossOrigin) {
+                  crossOrigin = "anonymous";
+                }
+                crossOriginUrl = addTimestamp(url);
+              }
+              this.crossOrigin = crossOrigin;
+              this.crossOriginUrl = crossOriginUrl;
+              var image = document.createElement("img");
+              if (crossOrigin) {
+                image.crossOrigin = crossOrigin;
+              }
+              image.src = crossOriginUrl || url;
+              image.alt = element.alt || "The image to crop";
+              this.image = image;
+              image.onload = this.start.bind(this);
+              image.onerror = this.stop.bind(this);
+              addClass(image, CLASS_HIDE);
+              element.parentNode.insertBefore(image, element.nextSibling);
+            }
+          }, {
+            key: "start",
+            value: function start3() {
+              var _this2 = this;
+              var image = this.image;
+              image.onload = null;
+              image.onerror = null;
+              this.sizing = true;
+              var isIOSWebKit = WINDOW.navigator && /(?:iPad|iPhone|iPod).*?AppleWebKit/i.test(WINDOW.navigator.userAgent);
+              var done = function done2(naturalWidth, naturalHeight) {
+                assign2(_this2.imageData, {
+                  naturalWidth,
+                  naturalHeight,
+                  aspectRatio: naturalWidth / naturalHeight
+                });
+                _this2.initialImageData = assign2({}, _this2.imageData);
+                _this2.sizing = false;
+                _this2.sized = true;
+                _this2.build();
+              };
+              if (image.naturalWidth && !isIOSWebKit) {
+                done(image.naturalWidth, image.naturalHeight);
+                return;
+              }
+              var sizingImage = document.createElement("img");
+              var body = document.body || document.documentElement;
+              this.sizingImage = sizingImage;
+              sizingImage.onload = function() {
+                done(sizingImage.width, sizingImage.height);
+                if (!isIOSWebKit) {
+                  body.removeChild(sizingImage);
+                }
+              };
+              sizingImage.src = image.src;
+              if (!isIOSWebKit) {
+                sizingImage.style.cssText = "left:0;max-height:none!important;max-width:none!important;min-height:0!important;min-width:0!important;opacity:0;position:absolute;top:0;z-index:-1;";
+                body.appendChild(sizingImage);
+              }
+            }
+          }, {
+            key: "stop",
+            value: function stop() {
+              var image = this.image;
+              image.onload = null;
+              image.onerror = null;
+              image.parentNode.removeChild(image);
+              this.image = null;
+            }
+          }, {
+            key: "build",
+            value: function build() {
+              if (!this.sized || this.ready) {
+                return;
+              }
+              var element = this.element, options2 = this.options, image = this.image;
+              var container = element.parentNode;
+              var template = document.createElement("div");
+              template.innerHTML = TEMPLATE;
+              var cropper = template.querySelector(".".concat(NAMESPACE, "-container"));
+              var canvas = cropper.querySelector(".".concat(NAMESPACE, "-canvas"));
+              var dragBox = cropper.querySelector(".".concat(NAMESPACE, "-drag-box"));
+              var cropBox = cropper.querySelector(".".concat(NAMESPACE, "-crop-box"));
+              var face = cropBox.querySelector(".".concat(NAMESPACE, "-face"));
+              this.container = container;
+              this.cropper = cropper;
+              this.canvas = canvas;
+              this.dragBox = dragBox;
+              this.cropBox = cropBox;
+              this.viewBox = cropper.querySelector(".".concat(NAMESPACE, "-view-box"));
+              this.face = face;
+              canvas.appendChild(image);
+              addClass(element, CLASS_HIDDEN);
+              container.insertBefore(cropper, element.nextSibling);
+              removeClass(image, CLASS_HIDE);
+              this.initPreview();
+              this.bind();
+              options2.initialAspectRatio = Math.max(0, options2.initialAspectRatio) || NaN;
+              options2.aspectRatio = Math.max(0, options2.aspectRatio) || NaN;
+              options2.viewMode = Math.max(0, Math.min(3, Math.round(options2.viewMode))) || 0;
+              addClass(cropBox, CLASS_HIDDEN);
+              if (!options2.guides) {
+                addClass(cropBox.getElementsByClassName("".concat(NAMESPACE, "-dashed")), CLASS_HIDDEN);
+              }
+              if (!options2.center) {
+                addClass(cropBox.getElementsByClassName("".concat(NAMESPACE, "-center")), CLASS_HIDDEN);
+              }
+              if (options2.background) {
+                addClass(cropper, "".concat(NAMESPACE, "-bg"));
+              }
+              if (!options2.highlight) {
+                addClass(face, CLASS_INVISIBLE);
+              }
+              if (options2.cropBoxMovable) {
+                addClass(face, CLASS_MOVE);
+                setData(face, DATA_ACTION, ACTION_ALL);
+              }
+              if (!options2.cropBoxResizable) {
+                addClass(cropBox.getElementsByClassName("".concat(NAMESPACE, "-line")), CLASS_HIDDEN);
+                addClass(cropBox.getElementsByClassName("".concat(NAMESPACE, "-point")), CLASS_HIDDEN);
+              }
+              this.render();
+              this.ready = true;
+              this.setDragMode(options2.dragMode);
+              if (options2.autoCrop) {
+                this.crop();
+              }
+              this.setData(options2.data);
+              if (isFunction(options2.ready)) {
+                addListener(element, EVENT_READY, options2.ready, {
+                  once: true
+                });
+              }
+              dispatchEvent2(element, EVENT_READY);
+            }
+          }, {
+            key: "unbuild",
+            value: function unbuild() {
+              if (!this.ready) {
+                return;
+              }
+              this.ready = false;
+              this.unbind();
+              this.resetPreview();
+              var parentNode = this.cropper.parentNode;
+              if (parentNode) {
+                parentNode.removeChild(this.cropper);
+              }
+              removeClass(this.element, CLASS_HIDDEN);
+            }
+          }, {
+            key: "uncreate",
+            value: function uncreate() {
+              if (this.ready) {
+                this.unbuild();
+                this.ready = false;
+                this.cropped = false;
+              } else if (this.sizing) {
+                this.sizingImage.onload = null;
+                this.sizing = false;
+                this.sized = false;
+              } else if (this.reloading) {
+                this.xhr.onabort = null;
+                this.xhr.abort();
+              } else if (this.image) {
+                this.stop();
+              }
+            }
+            /**
+             * Get the no conflict cropper class.
+             * @returns {Cropper} The cropper class.
+             */
+          }], [{
+            key: "noConflict",
+            value: function noConflict() {
+              window.Cropper = AnotherCropper;
+              return Cropper3;
+            }
+            /**
+             * Change the default options.
+             * @param {Object} options - The new default options.
+             */
+          }, {
+            key: "setDefaults",
+            value: function setDefaults(options2) {
+              assign2(DEFAULTS, isPlainObject(options2) && options2);
+            }
+          }]);
+        }();
+        assign2(Cropper2.prototype, render, preview, events, handlers, change, methods);
+        return Cropper2;
+      });
     }
   });
 
@@ -352,7 +3817,7 @@
     }
   }
   function camelize(value) {
-    return value.replace(/(?:[_-])([a-z0-9])/g, (_, char) => char.toUpperCase());
+    return value.replace(/(?:[_-])([a-z0-9])/g, (_3, char) => char.toUpperCase());
   }
   function namespaceCamelize(value) {
     return camelize(value.replace(/--/g, "-").replace(/__/g, "_"));
@@ -361,7 +3826,7 @@
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
   function dasherize(value) {
-    return value.replace(/([A-Z])/g, (_, char) => `-${char.toLowerCase()}`);
+    return value.replace(/([A-Z])/g, (_3, char) => `-${char.toLowerCase()}`);
   }
   function tokenize(value) {
     return value.match(/[^\s]+/g) || [];
@@ -424,8 +3889,8 @@
       const params = {};
       const pattern = new RegExp(`^data-${this.identifier}-(.+)-param$`, "i");
       for (const { name, value } of Array.from(this.element.attributes)) {
-        const match = name.match(pattern);
-        const key = match && match[1];
+        const match2 = name.match(pattern);
+        const key = match2 && match2[1];
         if (key) {
           params[camelize(key)] = typecast(value);
         }
@@ -448,7 +3913,7 @@
     button: () => "click",
     form: () => "submit",
     details: () => "toggle",
-    input: (e) => e.getAttribute("type") == "submit" ? "click" : "input",
+    input: (e4) => e4.getAttribute("type") == "submit" ? "click" : "input",
     select: () => "change",
     textarea: () => "input"
   };
@@ -721,9 +4186,9 @@
       return element.hasAttribute(this.attributeName);
     }
     matchElementsInTree(tree) {
-      const match = this.matchElement(tree) ? [tree] : [];
+      const match2 = this.matchElement(tree) ? [tree] : [];
       const matches = Array.from(tree.querySelectorAll(this.selector));
-      return match.concat(matches);
+      return match2.concat(matches);
     }
     elementMatched(element) {
       if (this.delegate.elementMatchedAttribute) {
@@ -742,13 +4207,13 @@
     }
   };
   function add(map, key, value) {
-    fetch(map, key).add(value);
+    fetch2(map, key).add(value);
   }
   function del(map, key, value) {
-    fetch(map, key).delete(value);
+    fetch2(map, key).delete(value);
     prune(map, key);
   }
-  function fetch(map, key) {
+  function fetch2(map, key) {
     let values = map.get(key);
     if (!values) {
       values = /* @__PURE__ */ new Set();
@@ -850,9 +4315,9 @@
     matchElementsInTree(tree) {
       const { selector } = this;
       if (selector) {
-        const match = this.matchElement(tree) ? [tree] : [];
-        const matches = Array.from(tree.querySelectorAll(selector)).filter((match2) => this.matchElement(match2));
-        return match.concat(matches);
+        const match2 = this.matchElement(tree) ? [tree] : [];
+        const matches = Array.from(tree.querySelectorAll(selector)).filter((match3) => this.matchElement(match3));
+        return match2.concat(matches);
       } else {
         return [];
       }
@@ -1050,7 +4515,7 @@
   }
   function zip(left2, right2) {
     const length = Math.max(left2.length, right2.length);
-    return Array.from({ length }, (_, index) => [left2[index], right2[index]]);
+    return Array.from({ length }, (_3, index) => [left2[index], right2[index]]);
   }
   function tokensAreEqual(left2, right2) {
     return left2 && right2 && left2.index == right2.index && left2.content == right2.content;
@@ -1695,13 +5160,13 @@
       return extended;
     }
     function testReflectExtension() {
-      const a = function() {
+      const a4 = function() {
         this.a.call(this);
       };
-      const b = extendWithReflect(a);
-      b.prototype.a = function() {
+      const b3 = extendWithReflect(a4);
+      b3.prototype.a = function() {
       };
-      return new b();
+      return new b3();
     }
     try {
       testReflectExtension();
@@ -2135,10 +5600,10 @@
     targetAttribute: "data-target",
     targetAttributeForScope: (identifier) => `data-${identifier}-target`,
     outletAttributeForScope: (identifier, outlet) => `data-${identifier}-${outlet}-outlet`,
-    keyMappings: Object.assign(Object.assign({ enter: "Enter", tab: "Tab", esc: "Escape", space: " ", up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", home: "Home", end: "End", page_up: "PageUp", page_down: "PageDown" }, objectFromEntries("abcdefghijklmnopqrstuvwxyz".split("").map((c) => [c, c]))), objectFromEntries("0123456789".split("").map((n) => [n, n])))
+    keyMappings: Object.assign(Object.assign({ enter: "Enter", tab: "Tab", esc: "Escape", space: " ", up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", home: "Home", end: "End", page_up: "PageUp", page_down: "PageDown" }, objectFromEntries("abcdefghijklmnopqrstuvwxyz".split("").map((c4) => [c4, c4]))), objectFromEntries("0123456789".split("").map((n3) => [n3, n3])))
   };
   function objectFromEntries(array) {
-    return array.reduce((memo, [k, v]) => Object.assign(Object.assign({}, memo), { [k]: v }), {});
+    return array.reduce((memo, [k4, v4]) => Object.assign(Object.assign({}, memo), { [k4]: v4 }), {});
   }
   var Application = class {
     constructor(element = document.documentElement, schema = defaultSchema) {
@@ -2744,11 +6209,11 @@
     #togglePlacementClasses(placement, show) {
       const classes = this.#getPlacementClasses(placement);
       if (show) {
-        classes.active.forEach((c) => this.sidebarOutlet.element.classList.add(c));
-        classes.inactive.forEach((c) => this.sidebarOutlet.element.classList.remove(c));
+        classes.active.forEach((c4) => this.sidebarOutlet.element.classList.add(c4));
+        classes.inactive.forEach((c4) => this.sidebarOutlet.element.classList.remove(c4));
       } else {
-        classes.active.forEach((c) => this.sidebarOutlet.element.classList.remove(c));
-        classes.inactive.forEach((c) => this.sidebarOutlet.element.classList.add(c));
+        classes.active.forEach((c4) => this.sidebarOutlet.element.classList.remove(c4));
+        classes.inactive.forEach((c4) => this.sidebarOutlet.element.classList.add(c4));
       }
     }
     #toggleEdgePlacementClasses(placement, show) {
@@ -2769,17 +6234,17 @@
     connect() {
       this.updateState();
     }
-    add(e) {
-      e.preventDefault();
+    add(e4) {
+      e4.preventDefault();
       const content = this.templateTarget.innerHTML.replace(/NEW_RECORD/g, (/* @__PURE__ */ new Date()).getTime().toString());
       this.targetTarget.insertAdjacentHTML("beforebegin", content);
       const event = new CustomEvent("nested-resource-form-fields:add", { bubbles: true });
       this.element.dispatchEvent(event);
       this.updateState();
     }
-    remove(e) {
-      e.preventDefault();
-      const wrapper = e.target.closest(this.wrapperSelectorValue);
+    remove(e4) {
+      e4.preventDefault();
+      const wrapper = e4.target.closest(this.wrapperSelectorValue);
       if (wrapper.dataset.newRecord !== void 0) {
         wrapper.remove();
       } else {
@@ -2990,19 +6455,19 @@
     }
     var _ref = isElement(element) ? getWindow(element) : window, visualViewport = _ref.visualViewport;
     var addVisualOffsets = !isLayoutViewport() && isFixedStrategy;
-    var x = (clientRect.left + (addVisualOffsets && visualViewport ? visualViewport.offsetLeft : 0)) / scaleX;
-    var y = (clientRect.top + (addVisualOffsets && visualViewport ? visualViewport.offsetTop : 0)) / scaleY;
+    var x3 = (clientRect.left + (addVisualOffsets && visualViewport ? visualViewport.offsetLeft : 0)) / scaleX;
+    var y4 = (clientRect.top + (addVisualOffsets && visualViewport ? visualViewport.offsetTop : 0)) / scaleY;
     var width = clientRect.width / scaleX;
     var height = clientRect.height / scaleY;
     return {
       width,
       height,
-      top: y,
-      right: x + width,
-      bottom: y + height,
-      left: x,
-      x,
-      y
+      top: y4,
+      right: x3 + width,
+      bottom: y4 + height,
+      left: x3,
+      x: x3,
+      y: y4
     };
   }
 
@@ -3130,8 +6595,8 @@
     return max(min2, min(value, max2));
   }
   function withinMaxClamp(min2, value, max2) {
-    var v = within(min2, value, max2);
-    return v > max2 ? max2 : v;
+    var v4 = within(min2, value, max2);
+    return v4 > max2 ? max2 : v4;
   }
 
   // node_modules/@popperjs/core/lib/utils/getFreshSideObject.js
@@ -3232,26 +6697,26 @@
     left: "auto"
   };
   function roundOffsetsByDPR(_ref, win) {
-    var x = _ref.x, y = _ref.y;
+    var x3 = _ref.x, y4 = _ref.y;
     var dpr = win.devicePixelRatio || 1;
     return {
-      x: round(x * dpr) / dpr || 0,
-      y: round(y * dpr) / dpr || 0
+      x: round(x3 * dpr) / dpr || 0,
+      y: round(y4 * dpr) / dpr || 0
     };
   }
   function mapToStyles(_ref2) {
     var _Object$assign2;
     var popper2 = _ref2.popper, popperRect = _ref2.popperRect, placement = _ref2.placement, variation = _ref2.variation, offsets = _ref2.offsets, position = _ref2.position, gpuAcceleration = _ref2.gpuAcceleration, adaptive = _ref2.adaptive, roundOffsets = _ref2.roundOffsets, isFixed = _ref2.isFixed;
-    var _offsets$x = offsets.x, x = _offsets$x === void 0 ? 0 : _offsets$x, _offsets$y = offsets.y, y = _offsets$y === void 0 ? 0 : _offsets$y;
+    var _offsets$x = offsets.x, x3 = _offsets$x === void 0 ? 0 : _offsets$x, _offsets$y = offsets.y, y4 = _offsets$y === void 0 ? 0 : _offsets$y;
     var _ref3 = typeof roundOffsets === "function" ? roundOffsets({
-      x,
-      y
+      x: x3,
+      y: y4
     }) : {
-      x,
-      y
+      x: x3,
+      y: y4
     };
-    x = _ref3.x;
-    y = _ref3.y;
+    x3 = _ref3.x;
+    y4 = _ref3.y;
     var hasX = offsets.hasOwnProperty("x");
     var hasY = offsets.hasOwnProperty("y");
     var sideX = left;
@@ -3275,8 +6740,8 @@
           // $FlowFixMe[prop-missing]
           offsetParent[heightProp]
         );
-        y -= offsetY - popperRect.height;
-        y *= gpuAcceleration ? 1 : -1;
+        y4 -= offsetY - popperRect.height;
+        y4 *= gpuAcceleration ? 1 : -1;
       }
       if (placement === left || (placement === top || placement === bottom) && variation === end) {
         sideX = right;
@@ -3284,27 +6749,27 @@
           // $FlowFixMe[prop-missing]
           offsetParent[widthProp]
         );
-        x -= offsetX - popperRect.width;
-        x *= gpuAcceleration ? 1 : -1;
+        x3 -= offsetX - popperRect.width;
+        x3 *= gpuAcceleration ? 1 : -1;
       }
     }
     var commonStyles = Object.assign({
       position
     }, adaptive && unsetSides);
     var _ref4 = roundOffsets === true ? roundOffsetsByDPR({
-      x,
-      y
+      x: x3,
+      y: y4
     }, getWindow(popper2)) : {
-      x,
-      y
+      x: x3,
+      y: y4
     };
-    x = _ref4.x;
-    y = _ref4.y;
+    x3 = _ref4.x;
+    y4 = _ref4.y;
     if (gpuAcceleration) {
       var _Object$assign;
-      return Object.assign({}, commonStyles, (_Object$assign = {}, _Object$assign[sideY] = hasY ? "0" : "", _Object$assign[sideX] = hasX ? "0" : "", _Object$assign.transform = (win.devicePixelRatio || 1) <= 1 ? "translate(" + x + "px, " + y + "px)" : "translate3d(" + x + "px, " + y + "px, 0)", _Object$assign));
+      return Object.assign({}, commonStyles, (_Object$assign = {}, _Object$assign[sideY] = hasY ? "0" : "", _Object$assign[sideX] = hasX ? "0" : "", _Object$assign.transform = (win.devicePixelRatio || 1) <= 1 ? "translate(" + x3 + "px, " + y4 + "px)" : "translate3d(" + x3 + "px, " + y4 + "px, 0)", _Object$assign));
     }
-    return Object.assign({}, commonStyles, (_Object$assign2 = {}, _Object$assign2[sideY] = hasY ? y + "px" : "", _Object$assign2[sideX] = hasX ? x + "px" : "", _Object$assign2.transform = "", _Object$assign2));
+    return Object.assign({}, commonStyles, (_Object$assign2 = {}, _Object$assign2[sideY] = hasY ? y4 + "px" : "", _Object$assign2[sideX] = hasX ? x3 + "px" : "", _Object$assign2.transform = "", _Object$assign2));
   }
   function computeStyles(_ref5) {
     var state = _ref5.state, options2 = _ref5.options;
@@ -3430,22 +6895,22 @@
     var visualViewport = win.visualViewport;
     var width = html3.clientWidth;
     var height = html3.clientHeight;
-    var x = 0;
-    var y = 0;
+    var x3 = 0;
+    var y4 = 0;
     if (visualViewport) {
       width = visualViewport.width;
       height = visualViewport.height;
       var layoutViewport = isLayoutViewport();
       if (layoutViewport || !layoutViewport && strategy === "fixed") {
-        x = visualViewport.offsetLeft;
-        y = visualViewport.offsetTop;
+        x3 = visualViewport.offsetLeft;
+        y4 = visualViewport.offsetTop;
       }
     }
     return {
       width,
       height,
-      x: x + getWindowScrollBarX(element),
-      y
+      x: x3 + getWindowScrollBarX(element),
+      y: y4
     };
   }
 
@@ -3457,16 +6922,16 @@
     var body = (_element$ownerDocumen = element.ownerDocument) == null ? void 0 : _element$ownerDocumen.body;
     var width = max(html3.scrollWidth, html3.clientWidth, body ? body.scrollWidth : 0, body ? body.clientWidth : 0);
     var height = max(html3.scrollHeight, html3.clientHeight, body ? body.scrollHeight : 0, body ? body.clientHeight : 0);
-    var x = -winScroll.scrollLeft + getWindowScrollBarX(element);
-    var y = -winScroll.scrollTop;
+    var x3 = -winScroll.scrollLeft + getWindowScrollBarX(element);
+    var y4 = -winScroll.scrollTop;
     if (getComputedStyle(body || html3).direction === "rtl") {
-      x += max(html3.clientWidth, body ? body.clientWidth : 0) - width;
+      x3 += max(html3.clientWidth, body ? body.clientWidth : 0) - width;
     }
     return {
       width,
       height,
-      x,
-      y
+      x: x3,
+      y: y4
     };
   }
 
@@ -3678,8 +7143,8 @@
       })[getBasePlacement(placement2)];
       return acc;
     }, {});
-    return Object.keys(overflows).sort(function(a, b) {
-      return overflows[a] - overflows[b];
+    return Object.keys(overflows).sort(function(a4, b3) {
+      return overflows[a4] - overflows[b3];
     });
   }
 
@@ -3716,8 +7181,8 @@
     var checksMap = /* @__PURE__ */ new Map();
     var makeFallbackChecks = true;
     var firstFittingPlacement = placements2[0];
-    for (var i = 0; i < placements2.length; i++) {
-      var placement = placements2[i];
+    for (var i4 = 0; i4 < placements2.length; i4++) {
+      var placement = placements2[i4];
       var _basePlacement = getBasePlacement(placement);
       var isStartVariation = getVariation(placement) === start;
       var isVertical = [top, bottom].indexOf(_basePlacement) >= 0;
@@ -3867,10 +7332,10 @@
       acc[placement] = distanceAndSkiddingToXY(placement, state.rects, offset2);
       return acc;
     }, {});
-    var _data$state$placement = data[state.placement], x = _data$state$placement.x, y = _data$state$placement.y;
+    var _data$state$placement = data[state.placement], x3 = _data$state$placement.x, y4 = _data$state$placement.y;
     if (state.modifiersData.popperOffsets != null) {
-      state.modifiersData.popperOffsets.x += x;
-      state.modifiersData.popperOffsets.y += y;
+      state.modifiersData.popperOffsets.x += x3;
+      state.modifiersData.popperOffsets.y += y4;
     }
     state.modifiersData[name] = data;
   }
@@ -4145,15 +7610,15 @@
     if (generatorOptions === void 0) {
       generatorOptions = {};
     }
-    var _generatorOptions = generatorOptions, _generatorOptions$def = _generatorOptions.defaultModifiers, defaultModifiers2 = _generatorOptions$def === void 0 ? [] : _generatorOptions$def, _generatorOptions$def2 = _generatorOptions.defaultOptions, defaultOptions2 = _generatorOptions$def2 === void 0 ? DEFAULT_OPTIONS : _generatorOptions$def2;
+    var _generatorOptions = generatorOptions, _generatorOptions$def = _generatorOptions.defaultModifiers, defaultModifiers2 = _generatorOptions$def === void 0 ? [] : _generatorOptions$def, _generatorOptions$def2 = _generatorOptions.defaultOptions, defaultOptions8 = _generatorOptions$def2 === void 0 ? DEFAULT_OPTIONS : _generatorOptions$def2;
     return function createPopper2(reference2, popper2, options2) {
       if (options2 === void 0) {
-        options2 = defaultOptions2;
+        options2 = defaultOptions8;
       }
       var state = {
         placement: "bottom",
         orderedModifiers: [],
-        options: Object.assign({}, DEFAULT_OPTIONS, defaultOptions2),
+        options: Object.assign({}, DEFAULT_OPTIONS, defaultOptions8),
         modifiersData: {},
         elements: {
           reference: reference2,
@@ -4169,14 +7634,14 @@
         setOptions: function setOptions2(setOptionsAction) {
           var options3 = typeof setOptionsAction === "function" ? setOptionsAction(state.options) : setOptionsAction;
           cleanupModifierEffects();
-          state.options = Object.assign({}, defaultOptions2, state.options, options3);
+          state.options = Object.assign({}, defaultOptions8, state.options, options3);
           state.scrollParents = {
             reference: isElement(reference2) ? listScrollParents(reference2) : reference2.contextElement ? listScrollParents(reference2.contextElement) : [],
             popper: listScrollParents(popper2)
           };
           var orderedModifiers = orderModifiers(mergeByName([].concat(defaultModifiers2, state.options.modifiers)));
-          state.orderedModifiers = orderedModifiers.filter(function(m) {
-            return m.enabled;
+          state.orderedModifiers = orderedModifiers.filter(function(m4) {
+            return m4.enabled;
           });
           runModifierEffects();
           return instance.update();
@@ -4610,13 +8075,13 @@
     construct
   } = typeof Reflect !== "undefined" && Reflect;
   if (!freeze) {
-    freeze = function freeze2(x) {
-      return x;
+    freeze = function freeze2(x3) {
+      return x3;
     };
   }
   if (!seal) {
-    seal = function seal2(x) {
-      return x;
+    seal = function seal2(x3) {
+      return x3;
     };
   }
   if (!apply) {
@@ -4662,14 +8127,14 @@
     if (setPrototypeOf) {
       setPrototypeOf(set, null);
     }
-    let l = array.length;
-    while (l--) {
-      let element = array[l];
+    let l4 = array.length;
+    while (l4--) {
+      let element = array[l4];
       if (typeof element === "string") {
         const lcElement = transformCaseFunc(element);
         if (lcElement !== element) {
           if (!isFrozen(array)) {
-            array[l] = lcElement;
+            array[l4] = lcElement;
           }
           element = lcElement;
         }
@@ -4800,7 +8265,7 @@
           return scriptUrl;
         }
       });
-    } catch (_) {
+    } catch (_3) {
       console.warn("TrustedTypes policy " + policyName + " could not be created.");
       return null;
     }
@@ -5135,7 +8600,7 @@
       });
       try {
         getParentNode2(node).removeChild(node);
-      } catch (_) {
+      } catch (_3) {
         remove(node);
       }
     };
@@ -5145,7 +8610,7 @@
           attribute: element.getAttributeNode(name),
           from: element
         });
-      } catch (_) {
+      } catch (_3) {
         arrayPush(DOMPurify.removed, {
           attribute: null,
           from: element
@@ -5156,12 +8621,12 @@
         if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
           try {
             _forceRemove(element);
-          } catch (_) {
+          } catch (_3) {
           }
         } else {
           try {
             element.setAttribute(name, "");
-          } catch (_) {
+          } catch (_3) {
           }
         }
       }
@@ -5182,14 +8647,14 @@
       if (NAMESPACE === HTML_NAMESPACE) {
         try {
           doc = new DOMParser2().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
-        } catch (_) {
+        } catch (_3) {
         }
       }
       if (!doc || !doc.documentElement) {
         doc = implementation.createDocument(NAMESPACE, "template", null);
         try {
           doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
-        } catch (_) {
+        } catch (_3) {
         }
       }
       const body = doc.body || doc.documentElement;
@@ -5259,8 +8724,8 @@
           const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
           if (childNodes && parentNode) {
             const childCount = childNodes.length;
-            for (let i = childCount - 1; i >= 0; --i) {
-              const childClone = cloneNode(childNodes[i], true);
+            for (let i4 = childCount - 1; i4 >= 0; --i4) {
+              const childClone = cloneNode(childNodes[i4], true);
               childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
               parentNode.insertBefore(childClone, getNextSibling(currentNode));
             }
@@ -5345,9 +8810,9 @@
         allowedAttributes: ALLOWED_ATTR,
         forceKeepAttr: void 0
       };
-      let l = attributes.length;
-      while (l--) {
-        const attr = attributes[l];
+      let l4 = attributes.length;
+      while (l4--) {
+        const attr = attributes[l4];
         const {
           name,
           namespaceURI,
@@ -5416,7 +8881,7 @@
           } else {
             arrayPop(DOMPurify.removed);
           }
-        } catch (_) {
+        } catch (_3) {
         }
       }
       _executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
@@ -5792,7 +9257,7 @@
     "'": "&#39;"
   };
   var getEscapeReplacement = (ch) => escapeReplacements[ch];
-  function escape(html3, encode) {
+  function escape2(html3, encode) {
     if (encode) {
       if (other.escapeTest.test(html3)) {
         return html3.replace(other.escapeReplace, getEscapeReplacement);
@@ -5813,7 +9278,7 @@
     return href;
   }
   function splitCells(tableRow, count) {
-    const row = tableRow.replace(other.findPipe, (match, offset2, str) => {
+    const row = tableRow.replace(other.findPipe, (match2, offset2, str) => {
       let escaped = false;
       let curr = offset2;
       while (--curr >= 0 && str[curr] === "\\")
@@ -5824,7 +9289,7 @@
         return " |";
       }
     }), cells = row.split(other.splitPipe);
-    let i = 0;
+    let i4 = 0;
     if (!cells[0].trim()) {
       cells.shift();
     }
@@ -5839,43 +9304,43 @@
           cells.push("");
       }
     }
-    for (; i < cells.length; i++) {
-      cells[i] = cells[i].trim().replace(other.slashPipe, "|");
+    for (; i4 < cells.length; i4++) {
+      cells[i4] = cells[i4].trim().replace(other.slashPipe, "|");
     }
     return cells;
   }
-  function rtrim(str, c, invert) {
-    const l = str.length;
-    if (l === 0) {
+  function rtrim(str, c4, invert) {
+    const l4 = str.length;
+    if (l4 === 0) {
       return "";
     }
     let suffLen = 0;
-    while (suffLen < l) {
-      const currChar = str.charAt(l - suffLen - 1);
-      if (currChar === c && !invert) {
+    while (suffLen < l4) {
+      const currChar = str.charAt(l4 - suffLen - 1);
+      if (currChar === c4 && !invert) {
         suffLen++;
-      } else if (currChar !== c && invert) {
+      } else if (currChar !== c4 && invert) {
         suffLen++;
       } else {
         break;
       }
     }
-    return str.slice(0, l - suffLen);
+    return str.slice(0, l4 - suffLen);
   }
-  function findClosingBracket(str, b) {
-    if (str.indexOf(b[1]) === -1) {
+  function findClosingBracket(str, b3) {
+    if (str.indexOf(b3[1]) === -1) {
       return -1;
     }
     let level = 0;
-    for (let i = 0; i < str.length; i++) {
-      if (str[i] === "\\") {
-        i++;
-      } else if (str[i] === b[0]) {
+    for (let i4 = 0; i4 < str.length; i4++) {
+      if (str[i4] === "\\") {
+        i4++;
+      } else if (str[i4] === b3[0]) {
         level++;
-      } else if (str[i] === b[1]) {
+      } else if (str[i4] === b3[1]) {
         level--;
         if (level < 0) {
-          return i;
+          return i4;
         }
       }
     }
@@ -6007,18 +9472,18 @@
         while (lines.length > 0) {
           let inBlockquote = false;
           const currentLines = [];
-          let i;
-          for (i = 0; i < lines.length; i++) {
-            if (this.rules.other.blockquoteStart.test(lines[i])) {
-              currentLines.push(lines[i]);
+          let i4;
+          for (i4 = 0; i4 < lines.length; i4++) {
+            if (this.rules.other.blockquoteStart.test(lines[i4])) {
+              currentLines.push(lines[i4]);
               inBlockquote = true;
             } else if (!inBlockquote) {
-              currentLines.push(lines[i]);
+              currentLines.push(lines[i4]);
             } else {
               break;
             }
           }
-          lines = lines.slice(i);
+          lines = lines.slice(i4);
           const currentRaw = currentLines.join("\n");
           const currentText = currentRaw.replace(this.rules.other.blockquoteSetextReplace, "\n    $1").replace(this.rules.other.blockquoteSetextReplace2, "");
           raw = raw ? `${raw}
@@ -6093,7 +9558,7 @@ ${currentText}` : currentText;
           }
           raw = cap[0];
           src = src.substring(raw.length);
-          let line = cap[2].split("\n", 1)[0].replace(this.rules.other.listReplaceTabs, (t) => " ".repeat(3 * t.length));
+          let line = cap[2].split("\n", 1)[0].replace(this.rules.other.listReplaceTabs, (t4) => " ".repeat(3 * t4.length));
           let nextLine = src.split("\n", 1)[0];
           let blankLine = !line.trim();
           let indent = 0;
@@ -6205,18 +9670,18 @@ ${currentText}` : currentText;
           lastItem.text = lastItem.text.trimEnd();
         }
         list2.raw = list2.raw.trimEnd();
-        for (let i = 0; i < list2.items.length; i++) {
+        for (let i4 = 0; i4 < list2.items.length; i4++) {
           this.lexer.state.top = false;
-          list2.items[i].tokens = this.lexer.blockTokens(list2.items[i].text, []);
+          list2.items[i4].tokens = this.lexer.blockTokens(list2.items[i4].text, []);
           if (!list2.loose) {
-            const spacers = list2.items[i].tokens.filter((t) => t.type === "space");
-            const hasMultipleLineBreaks = spacers.length > 0 && spacers.some((t) => this.rules.other.anyLine.test(t.raw));
+            const spacers = list2.items[i4].tokens.filter((t4) => t4.type === "space");
+            const hasMultipleLineBreaks = spacers.length > 0 && spacers.some((t4) => this.rules.other.anyLine.test(t4.raw));
             list2.loose = hasMultipleLineBreaks;
           }
         }
         if (list2.loose) {
-          for (let i = 0; i < list2.items.length; i++) {
-            list2.items[i].loose = true;
+          for (let i4 = 0; i4 < list2.items.length; i4++) {
+            list2.items[i4].loose = true;
           }
         }
         return list2;
@@ -6282,21 +9747,21 @@ ${currentText}` : currentText;
           item.align.push(null);
         }
       }
-      for (let i = 0; i < headers.length; i++) {
+      for (let i4 = 0; i4 < headers.length; i4++) {
         item.header.push({
-          text: headers[i],
-          tokens: this.lexer.inline(headers[i]),
+          text: headers[i4],
+          tokens: this.lexer.inline(headers[i4]),
           header: true,
-          align: item.align[i]
+          align: item.align[i4]
         });
       }
       for (const row of rows) {
-        item.rows.push(splitCells(row, item.header.length).map((cell, i) => {
+        item.rows.push(splitCells(row, item.header.length).map((cell, i4) => {
           return {
             text: cell,
             tokens: this.lexer.inline(cell),
             header: false,
-            align: item.align[i]
+            align: item.align[i4]
           };
         }));
       }
@@ -6434,27 +9899,27 @@ ${currentText}` : currentText;
       }
     }
     emStrong(src, maskedSrc, prevChar = "") {
-      let match = this.rules.inline.emStrongLDelim.exec(src);
-      if (!match)
+      let match2 = this.rules.inline.emStrongLDelim.exec(src);
+      if (!match2)
         return;
-      if (match[3] && prevChar.match(this.rules.other.unicodeAlphaNumeric))
+      if (match2[3] && prevChar.match(this.rules.other.unicodeAlphaNumeric))
         return;
-      const nextChar = match[1] || match[2] || "";
+      const nextChar = match2[1] || match2[2] || "";
       if (!nextChar || !prevChar || this.rules.inline.punctuation.exec(prevChar)) {
-        const lLength = [...match[0]].length - 1;
+        const lLength = [...match2[0]].length - 1;
         let rDelim, rLength, delimTotal = lLength, midDelimTotal = 0;
-        const endReg = match[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
+        const endReg = match2[0][0] === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
         endReg.lastIndex = 0;
         maskedSrc = maskedSrc.slice(-1 * src.length + lLength);
-        while ((match = endReg.exec(maskedSrc)) != null) {
-          rDelim = match[1] || match[2] || match[3] || match[4] || match[5] || match[6];
+        while ((match2 = endReg.exec(maskedSrc)) != null) {
+          rDelim = match2[1] || match2[2] || match2[3] || match2[4] || match2[5] || match2[6];
           if (!rDelim)
             continue;
           rLength = [...rDelim].length;
-          if (match[3] || match[4]) {
+          if (match2[3] || match2[4]) {
             delimTotal += rLength;
             continue;
-          } else if (match[5] || match[6]) {
+          } else if (match2[5] || match2[6]) {
             if (lLength % 3 && !((lLength + rLength) % 3)) {
               midDelimTotal += rLength;
               continue;
@@ -6464,8 +9929,8 @@ ${currentText}` : currentText;
           if (delimTotal > 0)
             continue;
           rLength = Math.min(rLength, rLength + delimTotal + midDelimTotal);
-          const lastCharLength = [...match[0]][0].length;
-          const raw = src.slice(0, lLength + match.index + lastCharLength + rLength);
+          const lastCharLength = [...match2[0]][0].length;
+          const raw = src.slice(0, lLength + match2.index + lastCharLength + rLength);
           if (Math.min(lLength, rLength) % 2) {
             const text3 = raw.slice(1, -1);
             return {
@@ -6662,8 +10127,8 @@ ${currentText}` : currentText;
     lex(src) {
       src = src.replace(other.carriageReturn, "\n");
       this.blockTokens(src, this.tokens);
-      for (let i = 0; i < this.inlineQueue.length; i++) {
-        const next = this.inlineQueue[i];
+      for (let i4 = 0; i4 < this.inlineQueue.length; i4++) {
+        const next = this.inlineQueue[i4];
         this.inlineTokens(next.src, next.tokens);
       }
       this.inlineQueue = [];
@@ -6826,22 +10291,22 @@ ${currentText}` : currentText;
      */
     inlineTokens(src, tokens = []) {
       let maskedSrc = src;
-      let match = null;
+      let match2 = null;
       if (this.tokens.links) {
         const links = Object.keys(this.tokens.links);
         if (links.length > 0) {
-          while ((match = this.tokenizer.rules.inline.reflinkSearch.exec(maskedSrc)) != null) {
-            if (links.includes(match[0].slice(match[0].lastIndexOf("[") + 1, -1))) {
-              maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex);
+          while ((match2 = this.tokenizer.rules.inline.reflinkSearch.exec(maskedSrc)) != null) {
+            if (links.includes(match2[0].slice(match2[0].lastIndexOf("[") + 1, -1))) {
+              maskedSrc = maskedSrc.slice(0, match2.index) + "[" + "a".repeat(match2[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.reflinkSearch.lastIndex);
             }
           }
         }
       }
-      while ((match = this.tokenizer.rules.inline.blockSkip.exec(maskedSrc)) != null) {
-        maskedSrc = maskedSrc.slice(0, match.index) + "[" + "a".repeat(match[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
+      while ((match2 = this.tokenizer.rules.inline.blockSkip.exec(maskedSrc)) != null) {
+        maskedSrc = maskedSrc.slice(0, match2.index) + "[" + "a".repeat(match2[0].length - 2) + "]" + maskedSrc.slice(this.tokenizer.rules.inline.blockSkip.lastIndex);
       }
-      while ((match = this.tokenizer.rules.inline.anyPunctuation.exec(maskedSrc)) != null) {
-        maskedSrc = maskedSrc.slice(0, match.index) + "++" + maskedSrc.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
+      while ((match2 = this.tokenizer.rules.inline.anyPunctuation.exec(maskedSrc)) != null) {
+        maskedSrc = maskedSrc.slice(0, match2.index) + "++" + maskedSrc.slice(this.tokenizer.rules.inline.anyPunctuation.lastIndex);
       }
       let keepPrevChar = false;
       let prevChar = "";
@@ -6974,9 +10439,9 @@ ${currentText}` : currentText;
       const langString = (lang || "").match(other.notSpaceStart)?.[0];
       const code = text2.replace(other.endingNewline, "") + "\n";
       if (!langString) {
-        return "<pre><code>" + (escaped ? code : escape(code, true)) + "</code></pre>\n";
+        return "<pre><code>" + (escaped ? code : escape2(code, true)) + "</code></pre>\n";
       }
-      return '<pre><code class="language-' + escape(langString) + '">' + (escaped ? code : escape(code, true)) + "</code></pre>\n";
+      return '<pre><code class="language-' + escape2(langString) + '">' + (escaped ? code : escape2(code, true)) + "</code></pre>\n";
     }
     blockquote({ tokens }) {
       const body = this.parser.parse(tokens);
@@ -6998,8 +10463,8 @@ ${body}</blockquote>
       const ordered = token.ordered;
       const start3 = token.start;
       let body = "";
-      for (let j = 0; j < token.items.length; j++) {
-        const item = token.items[j];
+      for (let j4 = 0; j4 < token.items.length; j4++) {
+        const item = token.items[j4];
         body += this.listitem(item);
       }
       const type = ordered ? "ol" : "ul";
@@ -7014,7 +10479,7 @@ ${body}</blockquote>
           if (item.tokens[0]?.type === "paragraph") {
             item.tokens[0].text = checkbox + " " + item.tokens[0].text;
             if (item.tokens[0].tokens && item.tokens[0].tokens.length > 0 && item.tokens[0].tokens[0].type === "text") {
-              item.tokens[0].tokens[0].text = checkbox + " " + escape(item.tokens[0].tokens[0].text);
+              item.tokens[0].tokens[0].text = checkbox + " " + escape2(item.tokens[0].tokens[0].text);
               item.tokens[0].tokens[0].escaped = true;
             }
           } else {
@@ -7043,16 +10508,16 @@ ${body}</blockquote>
     table(token) {
       let header = "";
       let cell = "";
-      for (let j = 0; j < token.header.length; j++) {
-        cell += this.tablecell(token.header[j]);
+      for (let j4 = 0; j4 < token.header.length; j4++) {
+        cell += this.tablecell(token.header[j4]);
       }
       header += this.tablerow({ text: cell });
       let body = "";
-      for (let j = 0; j < token.rows.length; j++) {
-        const row = token.rows[j];
+      for (let j4 = 0; j4 < token.rows.length; j4++) {
+        const row = token.rows[j4];
         cell = "";
-        for (let k = 0; k < row.length; k++) {
-          cell += this.tablecell(row[k]);
+        for (let k4 = 0; k4 < row.length; k4++) {
+          cell += this.tablecell(row[k4]);
         }
         body += this.tablerow({ text: cell });
       }
@@ -7082,7 +10547,7 @@ ${text2}</tr>
       return `<em>${this.parser.parseInline(tokens)}</em>`;
     }
     codespan({ text: text2 }) {
-      return `<code>${escape(text2, true)}</code>`;
+      return `<code>${escape2(text2, true)}</code>`;
     }
     br(token) {
       return "<br>";
@@ -7099,7 +10564,7 @@ ${text2}</tr>
       href = cleanHref;
       let out = '<a href="' + href + '"';
       if (title) {
-        out += ' title="' + escape(title) + '"';
+        out += ' title="' + escape2(title) + '"';
       }
       out += ">" + text2 + "</a>";
       return out;
@@ -7107,18 +10572,18 @@ ${text2}</tr>
     image({ href, title, text: text2 }) {
       const cleanHref = cleanUrl(href);
       if (cleanHref === null) {
-        return escape(text2);
+        return escape2(text2);
       }
       href = cleanHref;
       let out = `<img src="${href}" alt="${text2}"`;
       if (title) {
-        out += ` title="${escape(title)}"`;
+        out += ` title="${escape2(title)}"`;
       }
       out += ">";
       return out;
     }
     text(token) {
-      return "tokens" in token && token.tokens ? this.parser.parseInline(token.tokens) : "escaped" in token && token.escaped ? token.text : escape(token.text);
+      return "tokens" in token && token.tokens ? this.parser.parseInline(token.tokens) : "escaped" in token && token.escaped ? token.text : escape2(token.text);
     }
   };
   var _TextRenderer = class {
@@ -7182,8 +10647,8 @@ ${text2}</tr>
      */
     parse(tokens, top2 = true) {
       let out = "";
-      for (let i = 0; i < tokens.length; i++) {
-        const anyToken = tokens[i];
+      for (let i4 = 0; i4 < tokens.length; i4++) {
+        const anyToken = tokens[i4];
         if (this.options.extensions?.renderers?.[anyToken.type]) {
           const genericToken = anyToken;
           const ret = this.options.extensions.renderers[genericToken.type].call({ parser: this }, genericToken);
@@ -7233,8 +10698,8 @@ ${text2}</tr>
           case "text": {
             let textToken = token;
             let body = this.renderer.text(textToken);
-            while (i + 1 < tokens.length && tokens[i + 1].type === "text") {
-              textToken = tokens[++i];
+            while (i4 + 1 < tokens.length && tokens[i4 + 1].type === "text") {
+              textToken = tokens[++i4];
               body += "\n" + this.renderer.text(textToken);
             }
             if (top2) {
@@ -7267,8 +10732,8 @@ ${text2}</tr>
      */
     parseInline(tokens, renderer = this.renderer) {
       let out = "";
-      for (let i = 0; i < tokens.length; i++) {
-        const anyToken = tokens[i];
+      for (let i4 = 0; i4 < tokens.length; i4++) {
+        const anyToken = tokens[i4];
         if (this.options.extensions?.renderers?.[anyToken.type]) {
           const ret = this.options.extensions.renderers[anyToken.type].call({ parser: this }, anyToken);
           if (ret !== false || !["escape", "html", "link", "image", "strong", "em", "codespan", "br", "del", "text"].includes(anyToken.type)) {
@@ -7627,26 +11092,26 @@ ${text2}</tr>
             html3 = opt.hooks.postprocess(html3);
           }
           return html3;
-        } catch (e) {
-          return throwError(e);
+        } catch (e4) {
+          return throwError(e4);
         }
       };
       return parse;
     }
     onError(silent, async) {
-      return (e) => {
-        e.message += "\nPlease report this to https://github.com/markedjs/marked.";
+      return (e4) => {
+        e4.message += "\nPlease report this to https://github.com/markedjs/marked.";
         if (silent) {
-          const msg = "<p>An error occurred:</p><pre>" + escape(e.message + "", true) + "</pre>";
+          const msg = "<p>An error occurred:</p><pre>" + escape2(e4.message + "", true) + "</pre>";
           if (async) {
             return Promise.resolve(msg);
           }
           return msg;
         }
         if (async) {
-          return Promise.reject(e);
+          return Promise.reject(e4);
         }
-        throw e;
+        throw e4;
       };
     }
   };
@@ -7808,7 +11273,7 @@ ${text2}</tr>
   // src/js/controllers/select_navigator.js
   var select_navigator_default = class extends Controller {
     static targets = ["select"];
-    navigate(_) {
+    navigate(_3) {
       const url = this.selectTarget.value;
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -7834,10 +11299,10 @@ ${text2}</tr>
     select(event) {
       this.#selectInternal(event.currentTarget.id);
     }
-    #selectInternal(id) {
-      const selectedBtn = this.btnTargets.find((element) => element.id === id);
+    #selectInternal(id12) {
+      const selectedBtn = this.btnTargets.find((element) => element.id === id12);
       if (!selectedBtn) {
-        console.error(`Tab Button with id "${id}" not found`);
+        console.error(`Tab Button with id "${id12}" not found`);
         return;
       }
       const selectedTab = this.tabTargets.find((element) => element.id === selectedBtn.dataset.target);
@@ -7866,6 +11331,12585 @@ ${text2}</tr>
       }
     }
   };
+
+  // node_modules/@uppy/utils/lib/Translator.js
+  function _classPrivateFieldLooseBase(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id = 0;
+  function _classPrivateFieldLooseKey(e4) {
+    return "__private_" + id++ + "_" + e4;
+  }
+  function insertReplacement(source, rx, replacement) {
+    const newParts = [];
+    source.forEach((chunk) => {
+      if (typeof chunk !== "string") {
+        return newParts.push(chunk);
+      }
+      return rx[Symbol.split](chunk).forEach((raw, i4, list2) => {
+        if (raw !== "") {
+          newParts.push(raw);
+        }
+        if (i4 < list2.length - 1) {
+          newParts.push(replacement);
+        }
+      });
+    });
+    return newParts;
+  }
+  function interpolate(phrase, options2) {
+    const dollarRegex = /\$/g;
+    const dollarBillsYall = "$$$$";
+    let interpolated = [phrase];
+    if (options2 == null)
+      return interpolated;
+    for (const arg of Object.keys(options2)) {
+      if (arg !== "_") {
+        let replacement = options2[arg];
+        if (typeof replacement === "string") {
+          replacement = dollarRegex[Symbol.replace](replacement, dollarBillsYall);
+        }
+        interpolated = insertReplacement(interpolated, new RegExp(`%\\{${arg}\\}`, "g"), replacement);
+      }
+    }
+    return interpolated;
+  }
+  var defaultOnMissingKey = (key) => {
+    throw new Error(`missing string: ${key}`);
+  };
+  var _onMissingKey = /* @__PURE__ */ _classPrivateFieldLooseKey("onMissingKey");
+  var _apply = /* @__PURE__ */ _classPrivateFieldLooseKey("apply");
+  var Translator = class {
+    constructor(locales, _temp) {
+      let {
+        onMissingKey = defaultOnMissingKey
+      } = _temp === void 0 ? {} : _temp;
+      Object.defineProperty(this, _apply, {
+        value: _apply2
+      });
+      Object.defineProperty(this, _onMissingKey, {
+        writable: true,
+        value: void 0
+      });
+      this.locale = {
+        strings: {},
+        pluralize(n3) {
+          if (n3 === 1) {
+            return 0;
+          }
+          return 1;
+        }
+      };
+      if (Array.isArray(locales)) {
+        locales.forEach(_classPrivateFieldLooseBase(this, _apply)[_apply], this);
+      } else {
+        _classPrivateFieldLooseBase(this, _apply)[_apply](locales);
+      }
+      _classPrivateFieldLooseBase(this, _onMissingKey)[_onMissingKey] = onMissingKey;
+    }
+    /**
+     * Public translate method
+     *
+     * @param key
+     * @param options with values that will be used later to replace placeholders in string
+     * @returns string translated (and interpolated)
+     */
+    translate(key, options2) {
+      return this.translateArray(key, options2).join("");
+    }
+    /**
+     * Get a translation and return the translated and interpolated parts as an array.
+     *
+     * @returns The translated and interpolated parts, in order.
+     */
+    translateArray(key, options2) {
+      let string = this.locale.strings[key];
+      if (string == null) {
+        _classPrivateFieldLooseBase(this, _onMissingKey)[_onMissingKey](key);
+        string = key;
+      }
+      const hasPluralForms = typeof string === "object";
+      if (hasPluralForms) {
+        if (options2 && typeof options2.smart_count !== "undefined") {
+          const plural = this.locale.pluralize(options2.smart_count);
+          return interpolate(string[plural], options2);
+        }
+        throw new Error("Attempted to use a string with plural forms, but no value was given for %{smart_count}");
+      }
+      if (typeof string !== "string") {
+        throw new Error(`string was not a string`);
+      }
+      return interpolate(string, options2);
+    }
+  };
+  function _apply2(locale) {
+    if (!(locale != null && locale.strings)) {
+      return;
+    }
+    const prevLocale = this.locale;
+    Object.assign(this.locale, {
+      strings: {
+        ...prevLocale.strings,
+        ...locale.strings
+      },
+      pluralize: locale.pluralize || prevLocale.pluralize
+    });
+  }
+
+  // node_modules/@uppy/core/lib/Uppy.js
+  var import_namespace_emitter = __toESM(require_namespace_emitter(), 1);
+
+  // node_modules/@uppy/core/node_modules/nanoid/non-secure/index.js
+  var urlAlphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
+  var nanoid = (size = 21) => {
+    let id12 = "";
+    let i4 = size | 0;
+    while (i4--) {
+      id12 += urlAlphabet[Math.random() * 64 | 0];
+    }
+    return id12;
+  };
+
+  // node_modules/@uppy/core/lib/Uppy.js
+  var import_throttle = __toESM(require_throttle(), 1);
+
+  // node_modules/@uppy/store-default/lib/index.js
+  function _classPrivateFieldLooseBase2(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id2 = 0;
+  function _classPrivateFieldLooseKey2(e4) {
+    return "__private_" + id2++ + "_" + e4;
+  }
+  var packageJson = {
+    "version": "4.1.2"
+  };
+  var _callbacks = /* @__PURE__ */ _classPrivateFieldLooseKey2("callbacks");
+  var _publish = /* @__PURE__ */ _classPrivateFieldLooseKey2("publish");
+  var DefaultStore = class {
+    constructor() {
+      Object.defineProperty(this, _publish, {
+        value: _publish2
+      });
+      this.state = {};
+      Object.defineProperty(this, _callbacks, {
+        writable: true,
+        value: /* @__PURE__ */ new Set()
+      });
+    }
+    getState() {
+      return this.state;
+    }
+    setState(patch) {
+      const prevState = {
+        ...this.state
+      };
+      const nextState = {
+        ...this.state,
+        ...patch
+      };
+      this.state = nextState;
+      _classPrivateFieldLooseBase2(this, _publish)[_publish](prevState, nextState, patch);
+    }
+    subscribe(listener) {
+      _classPrivateFieldLooseBase2(this, _callbacks)[_callbacks].add(listener);
+      return () => {
+        _classPrivateFieldLooseBase2(this, _callbacks)[_callbacks].delete(listener);
+      };
+    }
+  };
+  function _publish2() {
+    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+    _classPrivateFieldLooseBase2(this, _callbacks)[_callbacks].forEach((listener) => {
+      listener(...args);
+    });
+  }
+  DefaultStore.VERSION = packageJson.version;
+  var lib_default = DefaultStore;
+
+  // node_modules/@uppy/utils/lib/getFileNameAndExtension.js
+  function getFileNameAndExtension(fullFileName) {
+    const lastDot = fullFileName.lastIndexOf(".");
+    if (lastDot === -1 || lastDot === fullFileName.length - 1) {
+      return {
+        name: fullFileName,
+        extension: void 0
+      };
+    }
+    return {
+      name: fullFileName.slice(0, lastDot),
+      extension: fullFileName.slice(lastDot + 1)
+    };
+  }
+
+  // node_modules/@uppy/utils/lib/mimeTypes.js
+  var mimeTypes_default = {
+    __proto__: null,
+    md: "text/markdown",
+    markdown: "text/markdown",
+    mp4: "video/mp4",
+    mp3: "audio/mp3",
+    svg: "image/svg+xml",
+    jpg: "image/jpeg",
+    png: "image/png",
+    webp: "image/webp",
+    gif: "image/gif",
+    heic: "image/heic",
+    heif: "image/heif",
+    yaml: "text/yaml",
+    yml: "text/yaml",
+    csv: "text/csv",
+    tsv: "text/tab-separated-values",
+    tab: "text/tab-separated-values",
+    avi: "video/x-msvideo",
+    mks: "video/x-matroska",
+    mkv: "video/x-matroska",
+    mov: "video/quicktime",
+    dicom: "application/dicom",
+    doc: "application/msword",
+    docm: "application/vnd.ms-word.document.macroenabled.12",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    dot: "application/msword",
+    dotm: "application/vnd.ms-word.template.macroenabled.12",
+    dotx: "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
+    xla: "application/vnd.ms-excel",
+    xlam: "application/vnd.ms-excel.addin.macroenabled.12",
+    xlc: "application/vnd.ms-excel",
+    xlf: "application/x-xliff+xml",
+    xlm: "application/vnd.ms-excel",
+    xls: "application/vnd.ms-excel",
+    xlsb: "application/vnd.ms-excel.sheet.binary.macroenabled.12",
+    xlsm: "application/vnd.ms-excel.sheet.macroenabled.12",
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    xlt: "application/vnd.ms-excel",
+    xltm: "application/vnd.ms-excel.template.macroenabled.12",
+    xltx: "application/vnd.openxmlformats-officedocument.spreadsheetml.template",
+    xlw: "application/vnd.ms-excel",
+    txt: "text/plain",
+    text: "text/plain",
+    conf: "text/plain",
+    log: "text/plain",
+    pdf: "application/pdf",
+    zip: "application/zip",
+    "7z": "application/x-7z-compressed",
+    rar: "application/x-rar-compressed",
+    tar: "application/x-tar",
+    gz: "application/gzip",
+    dmg: "application/x-apple-diskimage"
+  };
+
+  // node_modules/@uppy/utils/lib/getFileType.js
+  function getFileType(file) {
+    var _getFileNameAndExtens;
+    if (file.type)
+      return file.type;
+    const fileExtension = file.name ? (_getFileNameAndExtens = getFileNameAndExtension(file.name).extension) == null ? void 0 : _getFileNameAndExtens.toLowerCase() : null;
+    if (fileExtension && fileExtension in mimeTypes_default) {
+      return mimeTypes_default[fileExtension];
+    }
+    return "application/octet-stream";
+  }
+
+  // node_modules/@uppy/utils/lib/generateFileID.js
+  function encodeCharacter(character) {
+    return character.charCodeAt(0).toString(32);
+  }
+  function encodeFilename(name) {
+    let suffix = "";
+    return name.replace(/[^A-Z0-9]/gi, (character) => {
+      suffix += `-${encodeCharacter(character)}`;
+      return "/";
+    }) + suffix;
+  }
+  function generateFileID(file, instanceId) {
+    let id12 = instanceId || "uppy";
+    if (typeof file.name === "string") {
+      id12 += `-${encodeFilename(file.name.toLowerCase())}`;
+    }
+    if (file.type !== void 0) {
+      id12 += `-${file.type}`;
+    }
+    if (file.meta && typeof file.meta.relativePath === "string") {
+      id12 += `-${encodeFilename(file.meta.relativePath.toLowerCase())}`;
+    }
+    if (file.data.size !== void 0) {
+      id12 += `-${file.data.size}`;
+    }
+    if (file.data.lastModified !== void 0) {
+      id12 += `-${file.data.lastModified}`;
+    }
+    return id12;
+  }
+  function hasFileStableId(file) {
+    if (!file.isRemote || !file.remote)
+      return false;
+    const stableIdProviders = /* @__PURE__ */ new Set(["box", "dropbox", "drive", "facebook", "unsplash"]);
+    return stableIdProviders.has(file.remote.provider);
+  }
+  function getSafeFileId(file, instanceId) {
+    if (hasFileStableId(file))
+      return file.id;
+    const fileType = getFileType(file);
+    return generateFileID({
+      ...file,
+      type: fileType
+    }, instanceId);
+  }
+
+  // node_modules/@uppy/core/lib/supportsUploadProgress.js
+  function supportsUploadProgress(userAgent) {
+    if (userAgent == null && typeof navigator !== "undefined") {
+      userAgent = navigator.userAgent;
+    }
+    if (!userAgent)
+      return true;
+    const m4 = /Edge\/(\d+\.\d+)/.exec(userAgent);
+    if (!m4)
+      return true;
+    const edgeVersion = m4[1];
+    const version = edgeVersion.split(".", 2);
+    const major = parseInt(version[0], 10);
+    const minor = parseInt(version[1], 10);
+    if (major < 15 || major === 15 && minor < 15063) {
+      return true;
+    }
+    if (major > 18 || major === 18 && minor >= 18218) {
+      return true;
+    }
+    return false;
+  }
+
+  // node_modules/@uppy/core/lib/getFileName.js
+  function getFileName(fileType, fileDescriptor) {
+    if (fileDescriptor.name) {
+      return fileDescriptor.name;
+    }
+    if (fileType.split("/")[0] === "image") {
+      return `${fileType.split("/")[0]}.${fileType.split("/")[1]}`;
+    }
+    return "noname";
+  }
+
+  // node_modules/@uppy/utils/lib/getTimeStamp.js
+  function pad(number) {
+    return number < 10 ? `0${number}` : number.toString();
+  }
+  function getTimeStamp() {
+    const date = /* @__PURE__ */ new Date();
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    return `${hours}:${minutes}:${seconds}`;
+  }
+
+  // node_modules/@uppy/core/lib/loggers.js
+  var justErrorsLogger = {
+    debug: () => {
+    },
+    warn: () => {
+    },
+    error: function() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+      return console.error(`[Uppy] [${getTimeStamp()}]`, ...args);
+    }
+  };
+  var debugLogger = {
+    debug: function() {
+      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+        args[_key2] = arguments[_key2];
+      }
+      return console.debug(`[Uppy] [${getTimeStamp()}]`, ...args);
+    },
+    warn: function() {
+      for (var _len3 = arguments.length, args = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
+        args[_key3] = arguments[_key3];
+      }
+      return console.warn(`[Uppy] [${getTimeStamp()}]`, ...args);
+    },
+    error: function() {
+      for (var _len4 = arguments.length, args = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+        args[_key4] = arguments[_key4];
+      }
+      return console.error(`[Uppy] [${getTimeStamp()}]`, ...args);
+    }
+  };
+
+  // node_modules/@uppy/core/lib/Restricter.js
+  var import_prettier_bytes = __toESM(require_prettierBytes(), 1);
+  var import_mime_match = __toESM(require_mime_match(), 1);
+  var defaultOptions = {
+    maxFileSize: null,
+    minFileSize: null,
+    maxTotalFileSize: null,
+    maxNumberOfFiles: null,
+    minNumberOfFiles: null,
+    allowedFileTypes: null,
+    requiredMetaFields: []
+  };
+  var RestrictionError = class extends Error {
+    constructor(message, opts) {
+      var _opts$isUserFacing;
+      super(message);
+      this.isRestriction = true;
+      this.isUserFacing = (_opts$isUserFacing = opts == null ? void 0 : opts.isUserFacing) != null ? _opts$isUserFacing : true;
+      if (opts != null && opts.file) {
+        this.file = opts.file;
+      }
+    }
+  };
+  var Restricter = class {
+    constructor(getOpts, getI18n) {
+      this.getI18n = getI18n;
+      this.getOpts = () => {
+        var _opts$restrictions;
+        const opts = getOpts();
+        if (((_opts$restrictions = opts.restrictions) == null ? void 0 : _opts$restrictions.allowedFileTypes) != null && !Array.isArray(opts.restrictions.allowedFileTypes)) {
+          throw new TypeError("`restrictions.allowedFileTypes` must be an array");
+        }
+        return opts;
+      };
+    }
+    // Because these operations are slow, we cannot run them for every file (if we are adding multiple files)
+    validateAggregateRestrictions(existingFiles, addingFiles) {
+      const {
+        maxTotalFileSize,
+        maxNumberOfFiles
+      } = this.getOpts().restrictions;
+      if (maxNumberOfFiles) {
+        const nonGhostFiles = existingFiles.filter((f4) => !f4.isGhost);
+        if (nonGhostFiles.length + addingFiles.length > maxNumberOfFiles) {
+          throw new RestrictionError(`${this.getI18n()("youCanOnlyUploadX", {
+            smart_count: maxNumberOfFiles
+          })}`);
+        }
+      }
+      if (maxTotalFileSize) {
+        const totalFilesSize = [...existingFiles, ...addingFiles].reduce((total, f4) => {
+          var _f$size;
+          return total + ((_f$size = f4.size) != null ? _f$size : 0);
+        }, 0);
+        if (totalFilesSize > maxTotalFileSize) {
+          throw new RestrictionError(this.getI18n()("aggregateExceedsSize", {
+            sizeAllowed: (0, import_prettier_bytes.default)(maxTotalFileSize),
+            size: (0, import_prettier_bytes.default)(totalFilesSize)
+          }));
+        }
+      }
+    }
+    validateSingleFile(file) {
+      const {
+        maxFileSize,
+        minFileSize,
+        allowedFileTypes
+      } = this.getOpts().restrictions;
+      if (allowedFileTypes) {
+        const isCorrectFileType = allowedFileTypes.some((type) => {
+          if (type.includes("/")) {
+            if (!file.type)
+              return false;
+            return (0, import_mime_match.default)(file.type.replace(/;.*?$/, ""), type);
+          }
+          if (type[0] === "." && file.extension) {
+            return file.extension.toLowerCase() === type.slice(1).toLowerCase();
+          }
+          return false;
+        });
+        if (!isCorrectFileType) {
+          const allowedFileTypesString = allowedFileTypes.join(", ");
+          throw new RestrictionError(this.getI18n()("youCanOnlyUploadFileTypes", {
+            types: allowedFileTypesString
+          }), {
+            file
+          });
+        }
+      }
+      if (maxFileSize && file.size != null && file.size > maxFileSize) {
+        var _file$name;
+        throw new RestrictionError(this.getI18n()("exceedsSize", {
+          size: (0, import_prettier_bytes.default)(maxFileSize),
+          file: (_file$name = file.name) != null ? _file$name : this.getI18n()("unnamed")
+        }), {
+          file
+        });
+      }
+      if (minFileSize && file.size != null && file.size < minFileSize) {
+        throw new RestrictionError(this.getI18n()("inferiorSize", {
+          size: (0, import_prettier_bytes.default)(minFileSize)
+        }), {
+          file
+        });
+      }
+    }
+    validate(existingFiles, addingFiles) {
+      addingFiles.forEach((addingFile) => {
+        this.validateSingleFile(addingFile);
+      });
+      this.validateAggregateRestrictions(existingFiles, addingFiles);
+    }
+    validateMinNumberOfFiles(files) {
+      const {
+        minNumberOfFiles
+      } = this.getOpts().restrictions;
+      if (minNumberOfFiles && Object.keys(files).length < minNumberOfFiles) {
+        throw new RestrictionError(this.getI18n()("youHaveToAtLeastSelectX", {
+          smart_count: minNumberOfFiles
+        }));
+      }
+    }
+    getMissingRequiredMetaFields(file) {
+      var _file$name2;
+      const error2 = new RestrictionError(this.getI18n()("missingRequiredMetaFieldOnFile", {
+        fileName: (_file$name2 = file.name) != null ? _file$name2 : this.getI18n()("unnamed")
+      }));
+      const {
+        requiredMetaFields
+      } = this.getOpts().restrictions;
+      const missingFields = [];
+      for (const field of requiredMetaFields) {
+        if (!Object.hasOwn(file.meta, field) || file.meta[field] === "") {
+          missingFields.push(field);
+        }
+      }
+      return {
+        missingFields,
+        error: error2
+      };
+    }
+  };
+
+  // node_modules/@uppy/core/lib/locale.js
+  var locale_default = {
+    strings: {
+      addBulkFilesFailed: {
+        0: "Failed to add %{smart_count} file due to an internal error",
+        1: "Failed to add %{smart_count} files due to internal errors"
+      },
+      youCanOnlyUploadX: {
+        0: "You can only upload %{smart_count} file",
+        1: "You can only upload %{smart_count} files"
+      },
+      youHaveToAtLeastSelectX: {
+        0: "You have to select at least %{smart_count} file",
+        1: "You have to select at least %{smart_count} files"
+      },
+      aggregateExceedsSize: "You selected %{size} of files, but maximum allowed size is %{sizeAllowed}",
+      exceedsSize: "%{file} exceeds maximum allowed size of %{size}",
+      missingRequiredMetaField: "Missing required meta fields",
+      missingRequiredMetaFieldOnFile: "Missing required meta fields in %{fileName}",
+      inferiorSize: "This file is smaller than the allowed size of %{size}",
+      youCanOnlyUploadFileTypes: "You can only upload: %{types}",
+      noMoreFilesAllowed: "Cannot add more files",
+      noDuplicates: "Cannot add the duplicate file '%{fileName}', it already exists",
+      companionError: "Connection with Companion failed",
+      authAborted: "Authentication aborted",
+      companionUnauthorizeHint: "To unauthorize to your %{provider} account, please go to %{url}",
+      failedToUpload: "Failed to upload %{file}",
+      noInternetConnection: "No Internet connection",
+      connectedToInternet: "Connected to the Internet",
+      // Strings for remote providers
+      noFilesFound: "You have no files or folders here",
+      noSearchResults: "Unfortunately, there are no results for this search",
+      selectX: {
+        0: "Select %{smart_count}",
+        1: "Select %{smart_count}"
+      },
+      allFilesFromFolderNamed: "All files from folder %{name}",
+      openFolderNamed: "Open folder %{name}",
+      cancel: "Cancel",
+      logOut: "Log out",
+      logIn: "Log in",
+      pickFiles: "Pick files",
+      pickPhotos: "Pick photos",
+      filter: "Filter",
+      resetFilter: "Reset filter",
+      loading: "Loading...",
+      loadedXFiles: "Loaded %{numFiles} files",
+      authenticateWithTitle: "Please authenticate with %{pluginName} to select files",
+      authenticateWith: "Connect to %{pluginName}",
+      signInWithGoogle: "Sign in with Google",
+      searchImages: "Search for images",
+      enterTextToSearch: "Enter text to search for images",
+      search: "Search",
+      resetSearch: "Reset search",
+      emptyFolderAdded: "No files were added from empty folder",
+      addedNumFiles: "Added %{numFiles} file(s)",
+      folderAlreadyAdded: 'The folder "%{folder}" was already added',
+      folderAdded: {
+        0: "Added %{smart_count} file from %{folder}",
+        1: "Added %{smart_count} files from %{folder}"
+      },
+      additionalRestrictionsFailed: "%{count} additional restrictions were not fulfilled",
+      unnamed: "Unnamed",
+      pleaseWait: "Please wait"
+    }
+  };
+
+  // node_modules/@uppy/core/lib/Uppy.js
+  function _classPrivateFieldLooseBase3(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id3 = 0;
+  function _classPrivateFieldLooseKey3(e4) {
+    return "__private_" + id3++ + "_" + e4;
+  }
+  var packageJson2 = {
+    "version": "4.3.1"
+  };
+  var defaultUploadState = {
+    totalProgress: 0,
+    allowNewUpload: true,
+    error: null,
+    recoveredState: null
+  };
+  var _plugins = /* @__PURE__ */ _classPrivateFieldLooseKey3("plugins");
+  var _restricter = /* @__PURE__ */ _classPrivateFieldLooseKey3("restricter");
+  var _storeUnsubscribe = /* @__PURE__ */ _classPrivateFieldLooseKey3("storeUnsubscribe");
+  var _emitter = /* @__PURE__ */ _classPrivateFieldLooseKey3("emitter");
+  var _preProcessors = /* @__PURE__ */ _classPrivateFieldLooseKey3("preProcessors");
+  var _uploaders = /* @__PURE__ */ _classPrivateFieldLooseKey3("uploaders");
+  var _postProcessors = /* @__PURE__ */ _classPrivateFieldLooseKey3("postProcessors");
+  var _informAndEmit = /* @__PURE__ */ _classPrivateFieldLooseKey3("informAndEmit");
+  var _checkRequiredMetaFieldsOnFile = /* @__PURE__ */ _classPrivateFieldLooseKey3("checkRequiredMetaFieldsOnFile");
+  var _checkRequiredMetaFields = /* @__PURE__ */ _classPrivateFieldLooseKey3("checkRequiredMetaFields");
+  var _assertNewUploadAllowed = /* @__PURE__ */ _classPrivateFieldLooseKey3("assertNewUploadAllowed");
+  var _transformFile = /* @__PURE__ */ _classPrivateFieldLooseKey3("transformFile");
+  var _startIfAutoProceed = /* @__PURE__ */ _classPrivateFieldLooseKey3("startIfAutoProceed");
+  var _checkAndUpdateFileState = /* @__PURE__ */ _classPrivateFieldLooseKey3("checkAndUpdateFileState");
+  var _handleUploadProgress = /* @__PURE__ */ _classPrivateFieldLooseKey3("handleUploadProgress");
+  var _updateTotalProgress = /* @__PURE__ */ _classPrivateFieldLooseKey3("updateTotalProgress");
+  var _updateTotalProgressThrottled = /* @__PURE__ */ _classPrivateFieldLooseKey3("updateTotalProgressThrottled");
+  var _calculateTotalProgress = /* @__PURE__ */ _classPrivateFieldLooseKey3("calculateTotalProgress");
+  var _addListeners = /* @__PURE__ */ _classPrivateFieldLooseKey3("addListeners");
+  var _updateOnlineStatus = /* @__PURE__ */ _classPrivateFieldLooseKey3("updateOnlineStatus");
+  var _requestClientById = /* @__PURE__ */ _classPrivateFieldLooseKey3("requestClientById");
+  var _createUpload = /* @__PURE__ */ _classPrivateFieldLooseKey3("createUpload");
+  var _getUpload = /* @__PURE__ */ _classPrivateFieldLooseKey3("getUpload");
+  var _removeUpload = /* @__PURE__ */ _classPrivateFieldLooseKey3("removeUpload");
+  var _runUpload = /* @__PURE__ */ _classPrivateFieldLooseKey3("runUpload");
+  var Uppy = class _Uppy {
+    /**
+     * Instantiate Uppy
+     */
+    constructor(_opts) {
+      Object.defineProperty(this, _runUpload, {
+        value: _runUpload2
+      });
+      Object.defineProperty(this, _removeUpload, {
+        value: _removeUpload2
+      });
+      Object.defineProperty(this, _getUpload, {
+        value: _getUpload2
+      });
+      Object.defineProperty(this, _createUpload, {
+        value: _createUpload2
+      });
+      Object.defineProperty(this, _addListeners, {
+        value: _addListeners2
+      });
+      Object.defineProperty(this, _calculateTotalProgress, {
+        value: _calculateTotalProgress2
+      });
+      Object.defineProperty(this, _updateTotalProgress, {
+        value: _updateTotalProgress2
+      });
+      Object.defineProperty(this, _checkAndUpdateFileState, {
+        value: _checkAndUpdateFileState2
+      });
+      Object.defineProperty(this, _startIfAutoProceed, {
+        value: _startIfAutoProceed2
+      });
+      Object.defineProperty(this, _transformFile, {
+        value: _transformFile2
+      });
+      Object.defineProperty(this, _assertNewUploadAllowed, {
+        value: _assertNewUploadAllowed2
+      });
+      Object.defineProperty(this, _checkRequiredMetaFields, {
+        value: _checkRequiredMetaFields2
+      });
+      Object.defineProperty(this, _checkRequiredMetaFieldsOnFile, {
+        value: _checkRequiredMetaFieldsOnFile2
+      });
+      Object.defineProperty(this, _informAndEmit, {
+        value: _informAndEmit2
+      });
+      Object.defineProperty(this, _plugins, {
+        writable: true,
+        value: /* @__PURE__ */ Object.create(null)
+      });
+      Object.defineProperty(this, _restricter, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _storeUnsubscribe, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _emitter, {
+        writable: true,
+        value: (0, import_namespace_emitter.default)()
+      });
+      Object.defineProperty(this, _preProcessors, {
+        writable: true,
+        value: /* @__PURE__ */ new Set()
+      });
+      Object.defineProperty(this, _uploaders, {
+        writable: true,
+        value: /* @__PURE__ */ new Set()
+      });
+      Object.defineProperty(this, _postProcessors, {
+        writable: true,
+        value: /* @__PURE__ */ new Set()
+      });
+      this.scheduledAutoProceed = null;
+      this.wasOffline = false;
+      Object.defineProperty(this, _handleUploadProgress, {
+        writable: true,
+        value: (file, progress) => {
+          const fileInState = file ? this.getFile(file.id) : void 0;
+          if (file == null || !fileInState) {
+            this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+            return;
+          }
+          if (fileInState.progress.percentage === 100) {
+            this.log(`Not setting progress for a file that has been already uploaded: ${file.id}`);
+            return;
+          }
+          const newProgress = {
+            bytesTotal: progress.bytesTotal,
+            // bytesTotal may be null or zero; in that case we can't divide by it
+            percentage: progress.bytesTotal != null && Number.isFinite(progress.bytesTotal) && progress.bytesTotal > 0 ? Math.round(progress.bytesUploaded / progress.bytesTotal * 100) : void 0
+          };
+          if (fileInState.progress.uploadStarted != null) {
+            this.setFileState(file.id, {
+              progress: {
+                ...fileInState.progress,
+                ...newProgress,
+                bytesUploaded: progress.bytesUploaded
+              }
+            });
+          } else {
+            this.setFileState(file.id, {
+              progress: {
+                ...fileInState.progress,
+                ...newProgress
+              }
+            });
+          }
+          _classPrivateFieldLooseBase3(this, _updateTotalProgressThrottled)[_updateTotalProgressThrottled]();
+        }
+      });
+      Object.defineProperty(this, _updateTotalProgressThrottled, {
+        writable: true,
+        value: (0, import_throttle.default)(() => _classPrivateFieldLooseBase3(this, _updateTotalProgress)[_updateTotalProgress](), 500, {
+          leading: true,
+          trailing: true
+        })
+      });
+      Object.defineProperty(this, _updateOnlineStatus, {
+        writable: true,
+        value: this.updateOnlineStatus.bind(this)
+      });
+      Object.defineProperty(this, _requestClientById, {
+        writable: true,
+        value: /* @__PURE__ */ new Map()
+      });
+      this.defaultLocale = locale_default;
+      const defaultOptions8 = {
+        id: "uppy",
+        autoProceed: false,
+        allowMultipleUploadBatches: true,
+        debug: false,
+        restrictions: defaultOptions,
+        meta: {},
+        onBeforeFileAdded: (file, files) => !Object.hasOwn(files, file.id),
+        onBeforeUpload: (files) => files,
+        store: new lib_default(),
+        logger: justErrorsLogger,
+        infoTimeout: 5e3
+      };
+      const merged = {
+        ...defaultOptions8,
+        ..._opts
+      };
+      this.opts = {
+        ...merged,
+        restrictions: {
+          ...defaultOptions8.restrictions,
+          ..._opts && _opts.restrictions
+        }
+      };
+      if (_opts && _opts.logger && _opts.debug) {
+        this.log("You are using a custom `logger`, but also set `debug: true`, which uses built-in logger to output logs to console. Ignoring `debug: true` and using your custom `logger`.", "warning");
+      } else if (_opts && _opts.debug) {
+        this.opts.logger = debugLogger;
+      }
+      this.log(`Using Core v${_Uppy.VERSION}`);
+      this.i18nInit();
+      this.store = this.opts.store;
+      this.setState({
+        ...defaultUploadState,
+        plugins: {},
+        files: {},
+        currentUploads: {},
+        capabilities: {
+          uploadProgress: supportsUploadProgress(),
+          individualCancellation: true,
+          resumableUploads: false
+        },
+        meta: {
+          ...this.opts.meta
+        },
+        info: []
+      });
+      _classPrivateFieldLooseBase3(this, _restricter)[_restricter] = new Restricter(() => this.opts, () => this.i18n);
+      _classPrivateFieldLooseBase3(this, _storeUnsubscribe)[_storeUnsubscribe] = this.store.subscribe((prevState, nextState, patch) => {
+        this.emit("state-update", prevState, nextState, patch);
+        this.updateAll(nextState);
+      });
+      if (this.opts.debug && typeof window !== "undefined") {
+        window[this.opts.id] = this;
+      }
+      _classPrivateFieldLooseBase3(this, _addListeners)[_addListeners]();
+    }
+    emit(event) {
+      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+      _classPrivateFieldLooseBase3(this, _emitter)[_emitter].emit(event, ...args);
+    }
+    on(event, callback) {
+      _classPrivateFieldLooseBase3(this, _emitter)[_emitter].on(event, callback);
+      return this;
+    }
+    once(event, callback) {
+      _classPrivateFieldLooseBase3(this, _emitter)[_emitter].once(event, callback);
+      return this;
+    }
+    off(event, callback) {
+      _classPrivateFieldLooseBase3(this, _emitter)[_emitter].off(event, callback);
+      return this;
+    }
+    /**
+     * Iterate on all plugins and run `update` on them.
+     * Called each time state changes.
+     *
+     */
+    updateAll(state) {
+      this.iteratePlugins((plugin) => {
+        plugin.update(state);
+      });
+    }
+    /**
+     * Updates state with a patch
+     */
+    setState(patch) {
+      this.store.setState(patch);
+    }
+    /**
+     * Returns current state.
+     */
+    getState() {
+      return this.store.getState();
+    }
+    patchFilesState(filesWithNewState) {
+      const existingFilesState = this.getState().files;
+      this.setState({
+        files: {
+          ...existingFilesState,
+          ...Object.fromEntries(Object.entries(filesWithNewState).map((_ref) => {
+            let [fileID, newFileState] = _ref;
+            return [fileID, {
+              ...existingFilesState[fileID],
+              ...newFileState
+            }];
+          }))
+        }
+      });
+    }
+    /**
+     * Shorthand to set state for a specific file.
+     */
+    setFileState(fileID, state) {
+      if (!this.getState().files[fileID]) {
+        throw new Error(`Can\u2019t set state for ${fileID} (the file could have been removed)`);
+      }
+      this.patchFilesState({
+        [fileID]: state
+      });
+    }
+    i18nInit() {
+      const onMissingKey = (key) => this.log(`Missing i18n string: ${key}`, "error");
+      const translator = new Translator([this.defaultLocale, this.opts.locale], {
+        onMissingKey
+      });
+      this.i18n = translator.translate.bind(translator);
+      this.i18nArray = translator.translateArray.bind(translator);
+      this.locale = translator.locale;
+    }
+    setOptions(newOpts) {
+      this.opts = {
+        ...this.opts,
+        ...newOpts,
+        restrictions: {
+          ...this.opts.restrictions,
+          ...newOpts == null ? void 0 : newOpts.restrictions
+        }
+      };
+      if (newOpts.meta) {
+        this.setMeta(newOpts.meta);
+      }
+      this.i18nInit();
+      if (newOpts.locale) {
+        this.iteratePlugins((plugin) => {
+          plugin.setOptions(newOpts);
+        });
+      }
+      this.setState(void 0);
+    }
+    resetProgress() {
+      const defaultProgress = {
+        percentage: 0,
+        bytesUploaded: false,
+        uploadComplete: false,
+        uploadStarted: null
+      };
+      const files = {
+        ...this.getState().files
+      };
+      const updatedFiles = /* @__PURE__ */ Object.create(null);
+      Object.keys(files).forEach((fileID) => {
+        updatedFiles[fileID] = {
+          ...files[fileID],
+          progress: {
+            ...files[fileID].progress,
+            ...defaultProgress
+          },
+          // @ts-expect-error these typed are inserted
+          // into the namespace in their respective packages
+          // but core isn't ware of those
+          tus: void 0,
+          transloadit: void 0
+        };
+      });
+      this.setState({
+        files: updatedFiles,
+        ...defaultUploadState
+      });
+    }
+    clear() {
+      const {
+        capabilities,
+        currentUploads
+      } = this.getState();
+      if (Object.keys(currentUploads).length > 0 && !capabilities.individualCancellation) {
+        throw new Error("The installed uploader plugin does not allow removing files during an upload.");
+      }
+      this.setState({
+        ...defaultUploadState,
+        files: {}
+      });
+    }
+    addPreProcessor(fn2) {
+      _classPrivateFieldLooseBase3(this, _preProcessors)[_preProcessors].add(fn2);
+    }
+    removePreProcessor(fn2) {
+      return _classPrivateFieldLooseBase3(this, _preProcessors)[_preProcessors].delete(fn2);
+    }
+    addPostProcessor(fn2) {
+      _classPrivateFieldLooseBase3(this, _postProcessors)[_postProcessors].add(fn2);
+    }
+    removePostProcessor(fn2) {
+      return _classPrivateFieldLooseBase3(this, _postProcessors)[_postProcessors].delete(fn2);
+    }
+    addUploader(fn2) {
+      _classPrivateFieldLooseBase3(this, _uploaders)[_uploaders].add(fn2);
+    }
+    removeUploader(fn2) {
+      return _classPrivateFieldLooseBase3(this, _uploaders)[_uploaders].delete(fn2);
+    }
+    setMeta(data) {
+      const updatedMeta = {
+        ...this.getState().meta,
+        ...data
+      };
+      const updatedFiles = {
+        ...this.getState().files
+      };
+      Object.keys(updatedFiles).forEach((fileID) => {
+        updatedFiles[fileID] = {
+          ...updatedFiles[fileID],
+          meta: {
+            ...updatedFiles[fileID].meta,
+            ...data
+          }
+        };
+      });
+      this.log("Adding metadata:");
+      this.log(data);
+      this.setState({
+        meta: updatedMeta,
+        files: updatedFiles
+      });
+    }
+    setFileMeta(fileID, data) {
+      const updatedFiles = {
+        ...this.getState().files
+      };
+      if (!updatedFiles[fileID]) {
+        this.log(`Was trying to set metadata for a file that has been removed: ${fileID}`);
+        return;
+      }
+      const newMeta = {
+        ...updatedFiles[fileID].meta,
+        ...data
+      };
+      updatedFiles[fileID] = {
+        ...updatedFiles[fileID],
+        meta: newMeta
+      };
+      this.setState({
+        files: updatedFiles
+      });
+    }
+    /**
+     * Get a file object.
+     */
+    getFile(fileID) {
+      return this.getState().files[fileID];
+    }
+    /**
+     * Get all files in an array.
+     */
+    getFiles() {
+      const {
+        files
+      } = this.getState();
+      return Object.values(files);
+    }
+    getFilesByIds(ids) {
+      return ids.map((id12) => this.getFile(id12));
+    }
+    getObjectOfFilesPerState() {
+      const {
+        files: filesObject,
+        totalProgress,
+        error: error2
+      } = this.getState();
+      const files = Object.values(filesObject);
+      const inProgressFiles = [];
+      const newFiles = [];
+      const startedFiles = [];
+      const uploadStartedFiles = [];
+      const pausedFiles = [];
+      const completeFiles = [];
+      const erroredFiles = [];
+      const inProgressNotPausedFiles = [];
+      const processingFiles = [];
+      for (const file of files) {
+        const {
+          progress
+        } = file;
+        if (!progress.uploadComplete && progress.uploadStarted) {
+          inProgressFiles.push(file);
+          if (!file.isPaused) {
+            inProgressNotPausedFiles.push(file);
+          }
+        }
+        if (!progress.uploadStarted) {
+          newFiles.push(file);
+        }
+        if (progress.uploadStarted || progress.preprocess || progress.postprocess) {
+          startedFiles.push(file);
+        }
+        if (progress.uploadStarted) {
+          uploadStartedFiles.push(file);
+        }
+        if (file.isPaused) {
+          pausedFiles.push(file);
+        }
+        if (progress.uploadComplete) {
+          completeFiles.push(file);
+        }
+        if (file.error) {
+          erroredFiles.push(file);
+        }
+        if (progress.preprocess || progress.postprocess) {
+          processingFiles.push(file);
+        }
+      }
+      return {
+        newFiles,
+        startedFiles,
+        uploadStartedFiles,
+        pausedFiles,
+        completeFiles,
+        erroredFiles,
+        inProgressFiles,
+        inProgressNotPausedFiles,
+        processingFiles,
+        isUploadStarted: uploadStartedFiles.length > 0,
+        isAllComplete: totalProgress === 100 && completeFiles.length === files.length && processingFiles.length === 0,
+        isAllErrored: !!error2 && erroredFiles.length === files.length,
+        isAllPaused: inProgressFiles.length !== 0 && pausedFiles.length === inProgressFiles.length,
+        isUploadInProgress: inProgressFiles.length > 0,
+        isSomeGhost: files.some((file) => file.isGhost)
+      };
+    }
+    validateRestrictions(file, files) {
+      if (files === void 0) {
+        files = this.getFiles();
+      }
+      try {
+        _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validate(files, [file]);
+      } catch (err) {
+        return err;
+      }
+      return null;
+    }
+    validateSingleFile(file) {
+      try {
+        _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validateSingleFile(file);
+      } catch (err) {
+        return err.message;
+      }
+      return null;
+    }
+    validateAggregateRestrictions(files) {
+      const existingFiles = this.getFiles();
+      try {
+        _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validateAggregateRestrictions(existingFiles, files);
+      } catch (err) {
+        return err.message;
+      }
+      return null;
+    }
+    checkIfFileAlreadyExists(fileID) {
+      const {
+        files
+      } = this.getState();
+      if (files[fileID] && !files[fileID].isGhost) {
+        return true;
+      }
+      return false;
+    }
+    /**
+     * Add a new file to `state.files`. This will run `onBeforeFileAdded`,
+     * try to guess file type in a clever way, check file against restrictions,
+     * and start an upload if `autoProceed === true`.
+     */
+    addFile(file) {
+      _classPrivateFieldLooseBase3(this, _assertNewUploadAllowed)[_assertNewUploadAllowed](file);
+      const {
+        nextFilesState,
+        validFilesToAdd,
+        errors
+      } = _classPrivateFieldLooseBase3(this, _checkAndUpdateFileState)[_checkAndUpdateFileState]([file]);
+      const restrictionErrors = errors.filter((error2) => error2.isRestriction);
+      _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit](restrictionErrors);
+      if (errors.length > 0)
+        throw errors[0];
+      this.setState({
+        files: nextFilesState
+      });
+      const [firstValidFileToAdd] = validFilesToAdd;
+      this.emit("file-added", firstValidFileToAdd);
+      this.emit("files-added", validFilesToAdd);
+      this.log(`Added file: ${firstValidFileToAdd.name}, ${firstValidFileToAdd.id}, mime type: ${firstValidFileToAdd.type}`);
+      _classPrivateFieldLooseBase3(this, _startIfAutoProceed)[_startIfAutoProceed]();
+      return firstValidFileToAdd.id;
+    }
+    /**
+     * Add multiple files to `state.files`. See the `addFile()` documentation.
+     *
+     * If an error occurs while adding a file, it is logged and the user is notified.
+     * This is good for UI plugins, but not for programmatic use.
+     * Programmatic users should usually still use `addFile()` on individual files.
+     */
+    addFiles(fileDescriptors) {
+      _classPrivateFieldLooseBase3(this, _assertNewUploadAllowed)[_assertNewUploadAllowed]();
+      const {
+        nextFilesState,
+        validFilesToAdd,
+        errors
+      } = _classPrivateFieldLooseBase3(this, _checkAndUpdateFileState)[_checkAndUpdateFileState](fileDescriptors);
+      const restrictionErrors = errors.filter((error2) => error2.isRestriction);
+      _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit](restrictionErrors);
+      const nonRestrictionErrors = errors.filter((error2) => !error2.isRestriction);
+      if (nonRestrictionErrors.length > 0) {
+        let message = "Multiple errors occurred while adding files:\n";
+        nonRestrictionErrors.forEach((subError) => {
+          message += `
+ * ${subError.message}`;
+        });
+        this.info({
+          message: this.i18n("addBulkFilesFailed", {
+            smart_count: nonRestrictionErrors.length
+          }),
+          details: message
+        }, "error", this.opts.infoTimeout);
+        if (typeof AggregateError === "function") {
+          throw new AggregateError(nonRestrictionErrors, message);
+        } else {
+          const err = new Error(message);
+          err.errors = nonRestrictionErrors;
+          throw err;
+        }
+      }
+      this.setState({
+        files: nextFilesState
+      });
+      validFilesToAdd.forEach((file) => {
+        this.emit("file-added", file);
+      });
+      this.emit("files-added", validFilesToAdd);
+      if (validFilesToAdd.length > 5) {
+        this.log(`Added batch of ${validFilesToAdd.length} files`);
+      } else {
+        Object.values(validFilesToAdd).forEach((file) => {
+          this.log(`Added file: ${file.name}
+ id: ${file.id}
+ type: ${file.type}`);
+        });
+      }
+      if (validFilesToAdd.length > 0) {
+        _classPrivateFieldLooseBase3(this, _startIfAutoProceed)[_startIfAutoProceed]();
+      }
+    }
+    removeFiles(fileIDs) {
+      const {
+        files,
+        currentUploads
+      } = this.getState();
+      const updatedFiles = {
+        ...files
+      };
+      const updatedUploads = {
+        ...currentUploads
+      };
+      const removedFiles = /* @__PURE__ */ Object.create(null);
+      fileIDs.forEach((fileID) => {
+        if (files[fileID]) {
+          removedFiles[fileID] = files[fileID];
+          delete updatedFiles[fileID];
+        }
+      });
+      function fileIsNotRemoved(uploadFileID) {
+        return removedFiles[uploadFileID] === void 0;
+      }
+      Object.keys(updatedUploads).forEach((uploadID) => {
+        const newFileIDs = currentUploads[uploadID].fileIDs.filter(fileIsNotRemoved);
+        if (newFileIDs.length === 0) {
+          delete updatedUploads[uploadID];
+          return;
+        }
+        const {
+          capabilities
+        } = this.getState();
+        if (newFileIDs.length !== currentUploads[uploadID].fileIDs.length && !capabilities.individualCancellation) {
+          throw new Error("The installed uploader plugin does not allow removing files during an upload.");
+        }
+        updatedUploads[uploadID] = {
+          ...currentUploads[uploadID],
+          fileIDs: newFileIDs
+        };
+      });
+      const stateUpdate = {
+        currentUploads: updatedUploads,
+        files: updatedFiles
+      };
+      if (Object.keys(updatedFiles).length === 0) {
+        stateUpdate.allowNewUpload = true;
+        stateUpdate.error = null;
+        stateUpdate.recoveredState = null;
+      }
+      this.setState(stateUpdate);
+      _classPrivateFieldLooseBase3(this, _updateTotalProgressThrottled)[_updateTotalProgressThrottled]();
+      const removedFileIDs = Object.keys(removedFiles);
+      removedFileIDs.forEach((fileID) => {
+        this.emit("file-removed", removedFiles[fileID]);
+      });
+      if (removedFileIDs.length > 5) {
+        this.log(`Removed ${removedFileIDs.length} files`);
+      } else {
+        this.log(`Removed files: ${removedFileIDs.join(", ")}`);
+      }
+    }
+    removeFile(fileID) {
+      this.removeFiles([fileID]);
+    }
+    pauseResume(fileID) {
+      if (!this.getState().capabilities.resumableUploads || this.getFile(fileID).progress.uploadComplete) {
+        return void 0;
+      }
+      const file = this.getFile(fileID);
+      const wasPaused = file.isPaused || false;
+      const isPaused = !wasPaused;
+      this.setFileState(fileID, {
+        isPaused
+      });
+      this.emit("upload-pause", file, isPaused);
+      return isPaused;
+    }
+    pauseAll() {
+      const updatedFiles = {
+        ...this.getState().files
+      };
+      const inProgressUpdatedFiles = Object.keys(updatedFiles).filter((file) => {
+        return !updatedFiles[file].progress.uploadComplete && updatedFiles[file].progress.uploadStarted;
+      });
+      inProgressUpdatedFiles.forEach((file) => {
+        const updatedFile = {
+          ...updatedFiles[file],
+          isPaused: true
+        };
+        updatedFiles[file] = updatedFile;
+      });
+      this.setState({
+        files: updatedFiles
+      });
+      this.emit("pause-all");
+    }
+    resumeAll() {
+      const updatedFiles = {
+        ...this.getState().files
+      };
+      const inProgressUpdatedFiles = Object.keys(updatedFiles).filter((file) => {
+        return !updatedFiles[file].progress.uploadComplete && updatedFiles[file].progress.uploadStarted;
+      });
+      inProgressUpdatedFiles.forEach((file) => {
+        const updatedFile = {
+          ...updatedFiles[file],
+          isPaused: false,
+          error: null
+        };
+        updatedFiles[file] = updatedFile;
+      });
+      this.setState({
+        files: updatedFiles
+      });
+      this.emit("resume-all");
+    }
+    retryAll() {
+      const updatedFiles = {
+        ...this.getState().files
+      };
+      const filesToRetry = Object.keys(updatedFiles).filter((file) => {
+        return updatedFiles[file].error;
+      });
+      filesToRetry.forEach((file) => {
+        const updatedFile = {
+          ...updatedFiles[file],
+          isPaused: false,
+          error: null
+        };
+        updatedFiles[file] = updatedFile;
+      });
+      this.setState({
+        files: updatedFiles,
+        error: null
+      });
+      this.emit("retry-all", Object.values(updatedFiles));
+      if (filesToRetry.length === 0) {
+        return Promise.resolve({
+          successful: [],
+          failed: []
+        });
+      }
+      const uploadID = _classPrivateFieldLooseBase3(this, _createUpload)[_createUpload](filesToRetry, {
+        forceAllowNewUpload: true
+        // create new upload even if allowNewUpload: false
+      });
+      return _classPrivateFieldLooseBase3(this, _runUpload)[_runUpload](uploadID);
+    }
+    cancelAll() {
+      this.emit("cancel-all");
+      const {
+        files
+      } = this.getState();
+      const fileIDs = Object.keys(files);
+      if (fileIDs.length) {
+        this.removeFiles(fileIDs);
+      }
+      this.setState(defaultUploadState);
+    }
+    retryUpload(fileID) {
+      this.setFileState(fileID, {
+        error: null,
+        isPaused: false
+      });
+      this.emit("upload-retry", this.getFile(fileID));
+      const uploadID = _classPrivateFieldLooseBase3(this, _createUpload)[_createUpload]([fileID], {
+        forceAllowNewUpload: true
+        // create new upload even if allowNewUpload: false
+      });
+      return _classPrivateFieldLooseBase3(this, _runUpload)[_runUpload](uploadID);
+    }
+    logout() {
+      this.iteratePlugins((plugin) => {
+        var _provider;
+        ;
+        (_provider = plugin.provider) == null || _provider.logout == null || _provider.logout();
+      });
+    }
+    // eslint-disable-next-line class-methods-use-this, @typescript-eslint/explicit-module-boundary-types
+    [Symbol.for("uppy test: updateTotalProgress")]() {
+      return _classPrivateFieldLooseBase3(this, _updateTotalProgress)[_updateTotalProgress]();
+    }
+    updateOnlineStatus() {
+      var _window$navigator$onL;
+      const online = (_window$navigator$onL = window.navigator.onLine) != null ? _window$navigator$onL : true;
+      if (!online) {
+        this.emit("is-offline");
+        this.info(this.i18n("noInternetConnection"), "error", 0);
+        this.wasOffline = true;
+      } else {
+        this.emit("is-online");
+        if (this.wasOffline) {
+          this.emit("back-online");
+          this.info(this.i18n("connectedToInternet"), "success", 3e3);
+          this.wasOffline = false;
+        }
+      }
+    }
+    getID() {
+      return this.opts.id;
+    }
+    /**
+     * Registers a plugin with Core.
+     */
+    use(Plugin) {
+      if (typeof Plugin !== "function") {
+        const msg = `Expected a plugin class, but got ${Plugin === null ? "null" : typeof Plugin}. Please verify that the plugin was imported and spelled correctly.`;
+        throw new TypeError(msg);
+      }
+      for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+        args[_key2 - 1] = arguments[_key2];
+      }
+      const plugin = new Plugin(this, ...args);
+      const pluginId = plugin.id;
+      if (!pluginId) {
+        throw new Error("Your plugin must have an id");
+      }
+      if (!plugin.type) {
+        throw new Error("Your plugin must have a type");
+      }
+      const existsPluginAlready = this.getPlugin(pluginId);
+      if (existsPluginAlready) {
+        const msg = `Already found a plugin named '${existsPluginAlready.id}'. Tried to use: '${pluginId}'.
+Uppy plugins must have unique \`id\` options.`;
+        throw new Error(msg);
+      }
+      if (Plugin.VERSION) {
+        this.log(`Using ${pluginId} v${Plugin.VERSION}`);
+      }
+      if (plugin.type in _classPrivateFieldLooseBase3(this, _plugins)[_plugins]) {
+        _classPrivateFieldLooseBase3(this, _plugins)[_plugins][plugin.type].push(plugin);
+      } else {
+        _classPrivateFieldLooseBase3(this, _plugins)[_plugins][plugin.type] = [plugin];
+      }
+      plugin.install();
+      this.emit("plugin-added", plugin);
+      return this;
+    }
+    /**
+     * Find one Plugin by name.
+     */
+    getPlugin(id12) {
+      for (const plugins of Object.values(_classPrivateFieldLooseBase3(this, _plugins)[_plugins])) {
+        const foundPlugin = plugins.find((plugin) => plugin.id === id12);
+        if (foundPlugin != null)
+          return foundPlugin;
+      }
+      return void 0;
+    }
+    [Symbol.for("uppy test: getPlugins")](type) {
+      return _classPrivateFieldLooseBase3(this, _plugins)[_plugins][type];
+    }
+    /**
+     * Iterate through all `use`d plugins.
+     *
+     */
+    iteratePlugins(method) {
+      Object.values(_classPrivateFieldLooseBase3(this, _plugins)[_plugins]).flat(1).forEach(method);
+    }
+    /**
+     * Uninstall and remove a plugin.
+     *
+     * @param {object} instance The plugin instance to remove.
+     */
+    removePlugin(instance) {
+      this.log(`Removing plugin ${instance.id}`);
+      this.emit("plugin-remove", instance);
+      if (instance.uninstall) {
+        instance.uninstall();
+      }
+      const list2 = _classPrivateFieldLooseBase3(this, _plugins)[_plugins][instance.type];
+      const index = list2.findIndex((item) => item.id === instance.id);
+      if (index !== -1) {
+        list2.splice(index, 1);
+      }
+      const state = this.getState();
+      const updatedState = {
+        plugins: {
+          ...state.plugins,
+          [instance.id]: void 0
+        }
+      };
+      this.setState(updatedState);
+    }
+    /**
+     * Uninstall all plugins and close down this Uppy instance.
+     */
+    destroy() {
+      this.log(`Closing Uppy instance ${this.opts.id}: removing all files and uninstalling plugins`);
+      this.cancelAll();
+      _classPrivateFieldLooseBase3(this, _storeUnsubscribe)[_storeUnsubscribe]();
+      this.iteratePlugins((plugin) => {
+        this.removePlugin(plugin);
+      });
+      if (typeof window !== "undefined" && window.removeEventListener) {
+        window.removeEventListener("online", _classPrivateFieldLooseBase3(this, _updateOnlineStatus)[_updateOnlineStatus]);
+        window.removeEventListener("offline", _classPrivateFieldLooseBase3(this, _updateOnlineStatus)[_updateOnlineStatus]);
+      }
+    }
+    hideInfo() {
+      const {
+        info
+      } = this.getState();
+      this.setState({
+        info: info.slice(1)
+      });
+      this.emit("info-hidden");
+    }
+    /**
+     * Set info message in `state.info`, so that UI plugins like `Informer`
+     * can display the message.
+     */
+    info(message, type, duration2) {
+      if (type === void 0) {
+        type = "info";
+      }
+      if (duration2 === void 0) {
+        duration2 = 3e3;
+      }
+      const isComplexMessage = typeof message === "object";
+      this.setState({
+        info: [...this.getState().info, {
+          type,
+          message: isComplexMessage ? message.message : message,
+          details: isComplexMessage ? message.details : null
+        }]
+      });
+      setTimeout(() => this.hideInfo(), duration2);
+      this.emit("info-visible");
+    }
+    /**
+     * Passes messages to a function, provided in `opts.logger`.
+     * If `opts.logger: Uppy.debugLogger` or `opts.debug: true`, logs to the browser console.
+     */
+    log(message, type) {
+      const {
+        logger
+      } = this.opts;
+      switch (type) {
+        case "error":
+          logger.error(message);
+          break;
+        case "warning":
+          logger.warn(message);
+          break;
+        default:
+          logger.debug(message);
+          break;
+      }
+    }
+    registerRequestClient(id12, client) {
+      _classPrivateFieldLooseBase3(this, _requestClientById)[_requestClientById].set(id12, client);
+    }
+    /** @protected */
+    getRequestClientForFile(file) {
+      if (!file.remote)
+        throw new Error(`Tried to get RequestClient for a non-remote file ${file.id}`);
+      const requestClient = _classPrivateFieldLooseBase3(this, _requestClientById)[_requestClientById].get(file.remote.requestClientId);
+      if (requestClient == null)
+        throw new Error(`requestClientId "${file.remote.requestClientId}" not registered for file "${file.id}"`);
+      return requestClient;
+    }
+    /**
+     * Restore an upload by its ID.
+     */
+    restore(uploadID) {
+      this.log(`Core: attempting to restore upload "${uploadID}"`);
+      if (!this.getState().currentUploads[uploadID]) {
+        _classPrivateFieldLooseBase3(this, _removeUpload)[_removeUpload](uploadID);
+        return Promise.reject(new Error("Nonexistent upload"));
+      }
+      return _classPrivateFieldLooseBase3(this, _runUpload)[_runUpload](uploadID);
+    }
+    [Symbol.for("uppy test: createUpload")]() {
+      return _classPrivateFieldLooseBase3(this, _createUpload)[_createUpload](...arguments);
+    }
+    /**
+     * Add data to an upload's result object.
+     */
+    addResultData(uploadID, data) {
+      if (!_classPrivateFieldLooseBase3(this, _getUpload)[_getUpload](uploadID)) {
+        this.log(`Not setting result for an upload that has been removed: ${uploadID}`);
+        return;
+      }
+      const {
+        currentUploads
+      } = this.getState();
+      const currentUpload = {
+        ...currentUploads[uploadID],
+        result: {
+          ...currentUploads[uploadID].result,
+          ...data
+        }
+      };
+      this.setState({
+        currentUploads: {
+          ...currentUploads,
+          [uploadID]: currentUpload
+        }
+      });
+    }
+    /**
+     * Start an upload for all the files that are not currently being uploaded.
+     */
+    upload() {
+      var _classPrivateFieldLoo;
+      if (!((_classPrivateFieldLoo = _classPrivateFieldLooseBase3(this, _plugins)[_plugins]["uploader"]) != null && _classPrivateFieldLoo.length)) {
+        this.log("No uploader type plugins are used", "warning");
+      }
+      let {
+        files
+      } = this.getState();
+      const onBeforeUploadResult = this.opts.onBeforeUpload(files);
+      if (onBeforeUploadResult === false) {
+        return Promise.reject(new Error("Not starting the upload because onBeforeUpload returned false"));
+      }
+      if (onBeforeUploadResult && typeof onBeforeUploadResult === "object") {
+        files = onBeforeUploadResult;
+        this.setState({
+          files
+        });
+      }
+      return Promise.resolve().then(() => _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validateMinNumberOfFiles(files)).catch((err) => {
+        _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit]([err]);
+        throw err;
+      }).then(() => {
+        if (!_classPrivateFieldLooseBase3(this, _checkRequiredMetaFields)[_checkRequiredMetaFields](files)) {
+          throw new RestrictionError(this.i18n("missingRequiredMetaField"));
+        }
+      }).catch((err) => {
+        throw err;
+      }).then(() => {
+        const {
+          currentUploads
+        } = this.getState();
+        const currentlyUploadingFiles = Object.values(currentUploads).flatMap((curr) => curr.fileIDs);
+        const waitingFileIDs = [];
+        Object.keys(files).forEach((fileID) => {
+          const file = this.getFile(fileID);
+          if (!file.progress.uploadStarted && currentlyUploadingFiles.indexOf(fileID) === -1) {
+            waitingFileIDs.push(file.id);
+          }
+        });
+        const uploadID = _classPrivateFieldLooseBase3(this, _createUpload)[_createUpload](waitingFileIDs);
+        return _classPrivateFieldLooseBase3(this, _runUpload)[_runUpload](uploadID);
+      }).catch((err) => {
+        this.emit("error", err);
+        this.log(err, "error");
+        throw err;
+      });
+    }
+  };
+  function _informAndEmit2(errors) {
+    for (const error2 of errors) {
+      if (error2.isRestriction) {
+        this.emit("restriction-failed", error2.file, error2);
+      } else {
+        this.emit("error", error2, error2.file);
+      }
+      this.log(error2, "warning");
+    }
+    const userFacingErrors = errors.filter((error2) => error2.isUserFacing);
+    const maxNumToShow = 4;
+    const firstErrors = userFacingErrors.slice(0, maxNumToShow);
+    const additionalErrors = userFacingErrors.slice(maxNumToShow);
+    firstErrors.forEach((_ref2) => {
+      let {
+        message,
+        details = ""
+      } = _ref2;
+      this.info({
+        message,
+        details
+      }, "error", this.opts.infoTimeout);
+    });
+    if (additionalErrors.length > 0) {
+      this.info({
+        message: this.i18n("additionalRestrictionsFailed", {
+          count: additionalErrors.length
+        })
+      });
+    }
+  }
+  function _checkRequiredMetaFieldsOnFile2(file) {
+    const {
+      missingFields,
+      error: error2
+    } = _classPrivateFieldLooseBase3(this, _restricter)[_restricter].getMissingRequiredMetaFields(file);
+    if (missingFields.length > 0) {
+      this.setFileState(file.id, {
+        missingRequiredMetaFields: missingFields
+      });
+      this.log(error2.message);
+      this.emit("restriction-failed", file, error2);
+      return false;
+    }
+    return true;
+  }
+  function _checkRequiredMetaFields2(files) {
+    let success = true;
+    for (const file of Object.values(files)) {
+      if (!_classPrivateFieldLooseBase3(this, _checkRequiredMetaFieldsOnFile)[_checkRequiredMetaFieldsOnFile](file)) {
+        success = false;
+      }
+    }
+    return success;
+  }
+  function _assertNewUploadAllowed2(file) {
+    const {
+      allowNewUpload
+    } = this.getState();
+    if (allowNewUpload === false) {
+      const error2 = new RestrictionError(this.i18n("noMoreFilesAllowed"), {
+        file
+      });
+      _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit]([error2]);
+      throw error2;
+    }
+  }
+  function _transformFile2(fileDescriptorOrFile) {
+    const file = fileDescriptorOrFile instanceof File ? {
+      name: fileDescriptorOrFile.name,
+      type: fileDescriptorOrFile.type,
+      size: fileDescriptorOrFile.size,
+      data: fileDescriptorOrFile
+    } : fileDescriptorOrFile;
+    const fileType = getFileType(file);
+    const fileName = getFileName(fileType, file);
+    const fileExtension = getFileNameAndExtension(fileName).extension;
+    const id12 = getSafeFileId(file, this.getID());
+    const meta = file.meta || {};
+    meta.name = fileName;
+    meta.type = fileType;
+    const size = Number.isFinite(file.data.size) ? file.data.size : null;
+    return {
+      source: file.source || "",
+      id: id12,
+      name: fileName,
+      extension: fileExtension || "",
+      meta: {
+        ...this.getState().meta,
+        ...meta
+      },
+      type: fileType,
+      data: file.data,
+      progress: {
+        percentage: 0,
+        bytesUploaded: false,
+        bytesTotal: size,
+        uploadComplete: false,
+        uploadStarted: null
+      },
+      size,
+      isGhost: false,
+      isRemote: file.isRemote || false,
+      remote: file.remote,
+      preview: file.preview
+    };
+  }
+  function _startIfAutoProceed2() {
+    if (this.opts.autoProceed && !this.scheduledAutoProceed) {
+      this.scheduledAutoProceed = setTimeout(() => {
+        this.scheduledAutoProceed = null;
+        this.upload().catch((err) => {
+          if (!err.isRestriction) {
+            this.log(err.stack || err.message || err);
+          }
+        });
+      }, 4);
+    }
+  }
+  function _checkAndUpdateFileState2(filesToAdd) {
+    const {
+      files: existingFiles
+    } = this.getState();
+    const nextFilesState = {
+      ...existingFiles
+    };
+    const validFilesToAdd = [];
+    const errors = [];
+    for (const fileToAdd of filesToAdd) {
+      try {
+        var _existingFiles$newFil;
+        let newFile = _classPrivateFieldLooseBase3(this, _transformFile)[_transformFile](fileToAdd);
+        const isGhost = (_existingFiles$newFil = existingFiles[newFile.id]) == null ? void 0 : _existingFiles$newFil.isGhost;
+        if (isGhost) {
+          const existingFileState = existingFiles[newFile.id];
+          newFile = {
+            ...existingFileState,
+            isGhost: false,
+            data: fileToAdd.data
+          };
+          this.log(`Replaced the blob in the restored ghost file: ${newFile.name}, ${newFile.id}`);
+        }
+        const onBeforeFileAddedResult = this.opts.onBeforeFileAdded(newFile, nextFilesState);
+        if (!onBeforeFileAddedResult && this.checkIfFileAlreadyExists(newFile.id)) {
+          var _newFile$name;
+          throw new RestrictionError(this.i18n("noDuplicates", {
+            fileName: (_newFile$name = newFile.name) != null ? _newFile$name : this.i18n("unnamed")
+          }), {
+            file: fileToAdd
+          });
+        }
+        if (onBeforeFileAddedResult === false && !isGhost) {
+          throw new RestrictionError("Cannot add the file because onBeforeFileAdded returned false.", {
+            isUserFacing: false,
+            file: fileToAdd
+          });
+        } else if (typeof onBeforeFileAddedResult === "object" && onBeforeFileAddedResult !== null) {
+          newFile = onBeforeFileAddedResult;
+        }
+        _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validateSingleFile(newFile);
+        nextFilesState[newFile.id] = newFile;
+        validFilesToAdd.push(newFile);
+      } catch (err) {
+        errors.push(err);
+      }
+    }
+    try {
+      _classPrivateFieldLooseBase3(this, _restricter)[_restricter].validateAggregateRestrictions(Object.values(existingFiles), validFilesToAdd);
+    } catch (err) {
+      errors.push(err);
+      return {
+        nextFilesState: existingFiles,
+        validFilesToAdd: [],
+        errors
+      };
+    }
+    return {
+      nextFilesState,
+      validFilesToAdd,
+      errors
+    };
+  }
+  function _updateTotalProgress2() {
+    var _totalProgressPercent, _totalProgressPercent2;
+    const totalProgress = _classPrivateFieldLooseBase3(this, _calculateTotalProgress)[_calculateTotalProgress]();
+    let totalProgressPercent = null;
+    if (totalProgress != null) {
+      totalProgressPercent = Math.round(totalProgress * 100);
+      if (totalProgressPercent > 100)
+        totalProgressPercent = 100;
+      else if (totalProgressPercent < 0)
+        totalProgressPercent = 0;
+    }
+    this.emit("progress", (_totalProgressPercent = totalProgressPercent) != null ? _totalProgressPercent : 0);
+    this.setState({
+      totalProgress: (_totalProgressPercent2 = totalProgressPercent) != null ? _totalProgressPercent2 : 0
+    });
+  }
+  function _calculateTotalProgress2() {
+    const files = this.getFiles();
+    const filesInProgress = files.filter((file) => {
+      return file.progress.uploadStarted || file.progress.preprocess || file.progress.postprocess;
+    });
+    if (filesInProgress.length === 0) {
+      return 0;
+    }
+    if (filesInProgress.every((file) => file.progress.uploadComplete)) {
+      return 1;
+    }
+    const isSizedFile = (file) => file.progress.bytesTotal != null && file.progress.bytesTotal !== 0;
+    const sizedFilesInProgress = filesInProgress.filter(isSizedFile);
+    const unsizedFilesInProgress = filesInProgress.filter((file) => !isSizedFile(file));
+    if (sizedFilesInProgress.every((file) => file.progress.uploadComplete) && unsizedFilesInProgress.length > 0 && !unsizedFilesInProgress.every((file) => file.progress.uploadComplete)) {
+      return null;
+    }
+    const totalFilesSize = sizedFilesInProgress.reduce((acc, file) => {
+      var _file$progress$bytesT;
+      return acc + ((_file$progress$bytesT = file.progress.bytesTotal) != null ? _file$progress$bytesT : 0);
+    }, 0);
+    const totalUploadedSize = sizedFilesInProgress.reduce((acc, file) => acc + (file.progress.bytesUploaded || 0), 0);
+    return totalFilesSize === 0 ? 0 : totalUploadedSize / totalFilesSize;
+  }
+  function _addListeners2() {
+    const errorHandler = (error2, file, response) => {
+      let errorMsg = error2.message || "Unknown error";
+      if (error2.details) {
+        errorMsg += ` ${error2.details}`;
+      }
+      this.setState({
+        error: errorMsg
+      });
+      if (file != null && file.id in this.getState().files) {
+        this.setFileState(file.id, {
+          error: errorMsg,
+          response
+        });
+      }
+    };
+    this.on("error", errorHandler);
+    this.on("upload-error", (file, error2, response) => {
+      errorHandler(error2, file, response);
+      if (typeof error2 === "object" && error2.message) {
+        var _file$name;
+        this.log(error2.message, "error");
+        const newError = new Error(this.i18n("failedToUpload", {
+          file: (_file$name = file == null ? void 0 : file.name) != null ? _file$name : ""
+        }));
+        newError.isUserFacing = true;
+        newError.details = error2.message;
+        if (error2.details) {
+          newError.details += ` ${error2.details}`;
+        }
+        _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit]([newError]);
+      } else {
+        _classPrivateFieldLooseBase3(this, _informAndEmit)[_informAndEmit]([error2]);
+      }
+    });
+    let uploadStalledWarningRecentlyEmitted = null;
+    this.on("upload-stalled", (error2, files) => {
+      const {
+        message
+      } = error2;
+      const details = files.map((file) => file.meta.name).join(", ");
+      if (!uploadStalledWarningRecentlyEmitted) {
+        this.info({
+          message,
+          details
+        }, "warning", this.opts.infoTimeout);
+        uploadStalledWarningRecentlyEmitted = setTimeout(() => {
+          uploadStalledWarningRecentlyEmitted = null;
+        }, this.opts.infoTimeout);
+      }
+      this.log(`${message} ${details}`.trim(), "warning");
+    });
+    this.on("upload", () => {
+      this.setState({
+        error: null
+      });
+    });
+    const onUploadStarted = (files) => {
+      const filesFiltered = files.filter((file) => {
+        const exists = file != null && this.getFile(file.id);
+        if (!exists)
+          this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return exists;
+      });
+      const filesState = Object.fromEntries(filesFiltered.map((file) => [file.id, {
+        progress: {
+          uploadStarted: Date.now(),
+          uploadComplete: false,
+          bytesUploaded: 0,
+          bytesTotal: file.size
+        }
+      }]));
+      this.patchFilesState(filesState);
+    };
+    this.on("upload-start", onUploadStarted);
+    this.on("upload-progress", _classPrivateFieldLooseBase3(this, _handleUploadProgress)[_handleUploadProgress]);
+    this.on("upload-success", (file, uploadResp) => {
+      if (file == null || !this.getFile(file.id)) {
+        this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return;
+      }
+      const currentProgress = this.getFile(file.id).progress;
+      this.setFileState(file.id, {
+        progress: {
+          ...currentProgress,
+          postprocess: _classPrivateFieldLooseBase3(this, _postProcessors)[_postProcessors].size > 0 ? {
+            mode: "indeterminate"
+          } : void 0,
+          uploadComplete: true,
+          percentage: 100,
+          bytesUploaded: currentProgress.bytesTotal
+        },
+        response: uploadResp,
+        uploadURL: uploadResp.uploadURL,
+        isPaused: false
+      });
+      if (file.size == null) {
+        this.setFileState(file.id, {
+          size: uploadResp.bytesUploaded || currentProgress.bytesTotal
+        });
+      }
+      _classPrivateFieldLooseBase3(this, _updateTotalProgressThrottled)[_updateTotalProgressThrottled]();
+    });
+    this.on("preprocess-progress", (file, progress) => {
+      if (file == null || !this.getFile(file.id)) {
+        this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return;
+      }
+      this.setFileState(file.id, {
+        progress: {
+          ...this.getFile(file.id).progress,
+          preprocess: progress
+        }
+      });
+    });
+    this.on("preprocess-complete", (file) => {
+      if (file == null || !this.getFile(file.id)) {
+        this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return;
+      }
+      const files = {
+        ...this.getState().files
+      };
+      files[file.id] = {
+        ...files[file.id],
+        progress: {
+          ...files[file.id].progress
+        }
+      };
+      delete files[file.id].progress.preprocess;
+      this.setState({
+        files
+      });
+    });
+    this.on("postprocess-progress", (file, progress) => {
+      if (file == null || !this.getFile(file.id)) {
+        this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return;
+      }
+      this.setFileState(file.id, {
+        progress: {
+          ...this.getState().files[file.id].progress,
+          postprocess: progress
+        }
+      });
+    });
+    this.on("postprocess-complete", (file) => {
+      if (file == null || !this.getFile(file.id)) {
+        this.log(`Not setting progress for a file that has been removed: ${file == null ? void 0 : file.id}`);
+        return;
+      }
+      const files = {
+        ...this.getState().files
+      };
+      files[file.id] = {
+        ...files[file.id],
+        progress: {
+          ...files[file.id].progress
+        }
+      };
+      delete files[file.id].progress.postprocess;
+      this.setState({
+        files
+      });
+    });
+    this.on("restored", () => {
+      _classPrivateFieldLooseBase3(this, _updateTotalProgressThrottled)[_updateTotalProgressThrottled]();
+    });
+    this.on("dashboard:file-edit-complete", (file) => {
+      if (file) {
+        _classPrivateFieldLooseBase3(this, _checkRequiredMetaFieldsOnFile)[_checkRequiredMetaFieldsOnFile](file);
+      }
+    });
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener("online", _classPrivateFieldLooseBase3(this, _updateOnlineStatus)[_updateOnlineStatus]);
+      window.addEventListener("offline", _classPrivateFieldLooseBase3(this, _updateOnlineStatus)[_updateOnlineStatus]);
+      setTimeout(_classPrivateFieldLooseBase3(this, _updateOnlineStatus)[_updateOnlineStatus], 3e3);
+    }
+  }
+  function _createUpload2(fileIDs, opts) {
+    if (opts === void 0) {
+      opts = {};
+    }
+    const {
+      forceAllowNewUpload = false
+    } = opts;
+    const {
+      allowNewUpload,
+      currentUploads
+    } = this.getState();
+    if (!allowNewUpload && !forceAllowNewUpload) {
+      throw new Error("Cannot create a new upload: already uploading.");
+    }
+    const uploadID = nanoid();
+    this.emit("upload", uploadID, this.getFilesByIds(fileIDs));
+    this.setState({
+      allowNewUpload: this.opts.allowMultipleUploadBatches !== false && this.opts.allowMultipleUploads !== false,
+      currentUploads: {
+        ...currentUploads,
+        [uploadID]: {
+          fileIDs,
+          step: 0,
+          result: {}
+        }
+      }
+    });
+    return uploadID;
+  }
+  function _getUpload2(uploadID) {
+    const {
+      currentUploads
+    } = this.getState();
+    return currentUploads[uploadID];
+  }
+  function _removeUpload2(uploadID) {
+    const currentUploads = {
+      ...this.getState().currentUploads
+    };
+    delete currentUploads[uploadID];
+    this.setState({
+      currentUploads
+    });
+  }
+  async function _runUpload2(uploadID) {
+    const getCurrentUpload = () => {
+      const {
+        currentUploads
+      } = this.getState();
+      return currentUploads[uploadID];
+    };
+    let currentUpload = getCurrentUpload();
+    const steps = [..._classPrivateFieldLooseBase3(this, _preProcessors)[_preProcessors], ..._classPrivateFieldLooseBase3(this, _uploaders)[_uploaders], ..._classPrivateFieldLooseBase3(this, _postProcessors)[_postProcessors]];
+    try {
+      for (let step = currentUpload.step || 0; step < steps.length; step++) {
+        if (!currentUpload) {
+          break;
+        }
+        const fn2 = steps[step];
+        this.setState({
+          currentUploads: {
+            ...this.getState().currentUploads,
+            [uploadID]: {
+              ...currentUpload,
+              step
+            }
+          }
+        });
+        const {
+          fileIDs
+        } = currentUpload;
+        await fn2(fileIDs, uploadID);
+        currentUpload = getCurrentUpload();
+      }
+    } catch (err) {
+      _classPrivateFieldLooseBase3(this, _removeUpload)[_removeUpload](uploadID);
+      throw err;
+    }
+    if (currentUpload) {
+      currentUpload.fileIDs.forEach((fileID) => {
+        const file = this.getFile(fileID);
+        if (file && file.progress.postprocess) {
+          this.emit("postprocess-complete", file);
+        }
+      });
+      const files = currentUpload.fileIDs.map((fileID) => this.getFile(fileID));
+      const successful = files.filter((file) => !file.error);
+      const failed = files.filter((file) => file.error);
+      this.addResultData(uploadID, {
+        successful,
+        failed,
+        uploadID
+      });
+      currentUpload = getCurrentUpload();
+    }
+    let result;
+    if (currentUpload) {
+      result = currentUpload.result;
+      this.emit("complete", result);
+      _classPrivateFieldLooseBase3(this, _removeUpload)[_removeUpload](uploadID);
+    }
+    if (result == null) {
+      this.log(`Not setting result for an upload that has been removed: ${uploadID}`);
+    }
+    return result;
+  }
+  Uppy.VERSION = packageJson2.version;
+  var Uppy_default = Uppy;
+
+  // node_modules/preact/dist/preact.module.js
+  var n;
+  var l;
+  var u;
+  var t;
+  var i;
+  var o;
+  var r;
+  var f;
+  var e;
+  var c;
+  var s;
+  var a;
+  var h = {};
+  var v = [];
+  var p = /acit|ex(?:s|g|n|p|$)|rph|grid|ows|mnc|ntw|ine[ch]|zoo|^ord|itera/i;
+  var y = Array.isArray;
+  function d(n3, l4) {
+    for (var u4 in l4)
+      n3[u4] = l4[u4];
+    return n3;
+  }
+  function w(n3) {
+    n3 && n3.parentNode && n3.parentNode.removeChild(n3);
+  }
+  function _(l4, u4, t4) {
+    var i4, o4, r4, f4 = {};
+    for (r4 in u4)
+      "key" == r4 ? i4 = u4[r4] : "ref" == r4 ? o4 = u4[r4] : f4[r4] = u4[r4];
+    if (arguments.length > 2 && (f4.children = arguments.length > 3 ? n.call(arguments, 2) : t4), "function" == typeof l4 && null != l4.defaultProps)
+      for (r4 in l4.defaultProps)
+        void 0 === f4[r4] && (f4[r4] = l4.defaultProps[r4]);
+    return g(l4, f4, i4, o4, null);
+  }
+  function g(n3, t4, i4, o4, r4) {
+    var f4 = { type: n3, props: t4, key: i4, ref: o4, __k: null, __: null, __b: 0, __e: null, __d: void 0, __c: null, constructor: void 0, __v: null == r4 ? ++u : r4, __i: -1, __u: 0 };
+    return null == r4 && null != l.vnode && l.vnode(f4), f4;
+  }
+  function m() {
+    return { current: null };
+  }
+  function b(n3) {
+    return n3.children;
+  }
+  function k(n3, l4) {
+    this.props = n3, this.context = l4;
+  }
+  function x(n3, l4) {
+    if (null == l4)
+      return n3.__ ? x(n3.__, n3.__i + 1) : null;
+    for (var u4; l4 < n3.__k.length; l4++)
+      if (null != (u4 = n3.__k[l4]) && null != u4.__e)
+        return u4.__e;
+    return "function" == typeof n3.type ? x(n3) : null;
+  }
+  function C(n3) {
+    var l4, u4;
+    if (null != (n3 = n3.__) && null != n3.__c) {
+      for (n3.__e = n3.__c.base = null, l4 = 0; l4 < n3.__k.length; l4++)
+        if (null != (u4 = n3.__k[l4]) && null != u4.__e) {
+          n3.__e = n3.__c.base = u4.__e;
+          break;
+        }
+      return C(n3);
+    }
+  }
+  function S(n3) {
+    (!n3.__d && (n3.__d = true) && i.push(n3) && !M.__r++ || o !== l.debounceRendering) && ((o = l.debounceRendering) || r)(M);
+  }
+  function M() {
+    var n3, u4, t4, o4, r4, e4, c4, s4;
+    for (i.sort(f); n3 = i.shift(); )
+      n3.__d && (u4 = i.length, o4 = void 0, e4 = (r4 = (t4 = n3).__v).__e, c4 = [], s4 = [], t4.__P && ((o4 = d({}, r4)).__v = r4.__v + 1, l.vnode && l.vnode(o4), O(t4.__P, o4, r4, t4.__n, t4.__P.namespaceURI, 32 & r4.__u ? [e4] : null, c4, null == e4 ? x(r4) : e4, !!(32 & r4.__u), s4), o4.__v = r4.__v, o4.__.__k[o4.__i] = o4, j(c4, o4, s4), o4.__e != e4 && C(o4)), i.length > u4 && i.sort(f));
+    M.__r = 0;
+  }
+  function P(n3, l4, u4, t4, i4, o4, r4, f4, e4, c4, s4) {
+    var a4, p4, y4, d4, w4, _3 = t4 && t4.__k || v, g3 = l4.length;
+    for (u4.__d = e4, $(u4, l4, _3), e4 = u4.__d, a4 = 0; a4 < g3; a4++)
+      null != (y4 = u4.__k[a4]) && (p4 = -1 === y4.__i ? h : _3[y4.__i] || h, y4.__i = a4, O(n3, y4, p4, i4, o4, r4, f4, e4, c4, s4), d4 = y4.__e, y4.ref && p4.ref != y4.ref && (p4.ref && N(p4.ref, null, y4), s4.push(y4.ref, y4.__c || d4, y4)), null == w4 && null != d4 && (w4 = d4), 65536 & y4.__u || p4.__k === y4.__k ? e4 = I(y4, e4, n3) : "function" == typeof y4.type && void 0 !== y4.__d ? e4 = y4.__d : d4 && (e4 = d4.nextSibling), y4.__d = void 0, y4.__u &= -196609);
+    u4.__d = e4, u4.__e = w4;
+  }
+  function $(n3, l4, u4) {
+    var t4, i4, o4, r4, f4, e4 = l4.length, c4 = u4.length, s4 = c4, a4 = 0;
+    for (n3.__k = [], t4 = 0; t4 < e4; t4++)
+      null != (i4 = l4[t4]) && "boolean" != typeof i4 && "function" != typeof i4 ? (r4 = t4 + a4, (i4 = n3.__k[t4] = "string" == typeof i4 || "number" == typeof i4 || "bigint" == typeof i4 || i4.constructor == String ? g(null, i4, null, null, null) : y(i4) ? g(b, { children: i4 }, null, null, null) : void 0 === i4.constructor && i4.__b > 0 ? g(i4.type, i4.props, i4.key, i4.ref ? i4.ref : null, i4.__v) : i4).__ = n3, i4.__b = n3.__b + 1, o4 = null, -1 !== (f4 = i4.__i = L(i4, u4, r4, s4)) && (s4--, (o4 = u4[f4]) && (o4.__u |= 131072)), null == o4 || null === o4.__v ? (-1 == f4 && a4--, "function" != typeof i4.type && (i4.__u |= 65536)) : f4 !== r4 && (f4 == r4 - 1 ? a4-- : f4 == r4 + 1 ? a4++ : (f4 > r4 ? a4-- : a4++, i4.__u |= 65536))) : i4 = n3.__k[t4] = null;
+    if (s4)
+      for (t4 = 0; t4 < c4; t4++)
+        null != (o4 = u4[t4]) && 0 == (131072 & o4.__u) && (o4.__e == n3.__d && (n3.__d = x(o4)), V(o4, o4));
+  }
+  function I(n3, l4, u4) {
+    var t4, i4;
+    if ("function" == typeof n3.type) {
+      for (t4 = n3.__k, i4 = 0; t4 && i4 < t4.length; i4++)
+        t4[i4] && (t4[i4].__ = n3, l4 = I(t4[i4], l4, u4));
+      return l4;
+    }
+    n3.__e != l4 && (l4 && n3.type && !u4.contains(l4) && (l4 = x(n3)), u4.insertBefore(n3.__e, l4 || null), l4 = n3.__e);
+    do {
+      l4 = l4 && l4.nextSibling;
+    } while (null != l4 && 8 === l4.nodeType);
+    return l4;
+  }
+  function H(n3, l4) {
+    return l4 = l4 || [], null == n3 || "boolean" == typeof n3 || (y(n3) ? n3.some(function(n4) {
+      H(n4, l4);
+    }) : l4.push(n3)), l4;
+  }
+  function L(n3, l4, u4, t4) {
+    var i4 = n3.key, o4 = n3.type, r4 = u4 - 1, f4 = u4 + 1, e4 = l4[u4];
+    if (null === e4 || e4 && i4 == e4.key && o4 === e4.type && 0 == (131072 & e4.__u))
+      return u4;
+    if (t4 > (null != e4 && 0 == (131072 & e4.__u) ? 1 : 0))
+      for (; r4 >= 0 || f4 < l4.length; ) {
+        if (r4 >= 0) {
+          if ((e4 = l4[r4]) && 0 == (131072 & e4.__u) && i4 == e4.key && o4 === e4.type)
+            return r4;
+          r4--;
+        }
+        if (f4 < l4.length) {
+          if ((e4 = l4[f4]) && 0 == (131072 & e4.__u) && i4 == e4.key && o4 === e4.type)
+            return f4;
+          f4++;
+        }
+      }
+    return -1;
+  }
+  function T(n3, l4, u4) {
+    "-" === l4[0] ? n3.setProperty(l4, null == u4 ? "" : u4) : n3[l4] = null == u4 ? "" : "number" != typeof u4 || p.test(l4) ? u4 : u4 + "px";
+  }
+  function A(n3, l4, u4, t4, i4) {
+    var o4;
+    n:
+      if ("style" === l4)
+        if ("string" == typeof u4)
+          n3.style.cssText = u4;
+        else {
+          if ("string" == typeof t4 && (n3.style.cssText = t4 = ""), t4)
+            for (l4 in t4)
+              u4 && l4 in u4 || T(n3.style, l4, "");
+          if (u4)
+            for (l4 in u4)
+              t4 && u4[l4] === t4[l4] || T(n3.style, l4, u4[l4]);
+        }
+      else if ("o" === l4[0] && "n" === l4[1])
+        o4 = l4 !== (l4 = l4.replace(/(PointerCapture)$|Capture$/i, "$1")), l4 = l4.toLowerCase() in n3 || "onFocusOut" === l4 || "onFocusIn" === l4 ? l4.toLowerCase().slice(2) : l4.slice(2), n3.l || (n3.l = {}), n3.l[l4 + o4] = u4, u4 ? t4 ? u4.u = t4.u : (u4.u = e, n3.addEventListener(l4, o4 ? s : c, o4)) : n3.removeEventListener(l4, o4 ? s : c, o4);
+      else {
+        if ("http://www.w3.org/2000/svg" == i4)
+          l4 = l4.replace(/xlink(H|:h)/, "h").replace(/sName$/, "s");
+        else if ("width" != l4 && "height" != l4 && "href" != l4 && "list" != l4 && "form" != l4 && "tabIndex" != l4 && "download" != l4 && "rowSpan" != l4 && "colSpan" != l4 && "role" != l4 && "popover" != l4 && l4 in n3)
+          try {
+            n3[l4] = null == u4 ? "" : u4;
+            break n;
+          } catch (n4) {
+          }
+        "function" == typeof u4 || (null == u4 || false === u4 && "-" !== l4[4] ? n3.removeAttribute(l4) : n3.setAttribute(l4, "popover" == l4 && 1 == u4 ? "" : u4));
+      }
+  }
+  function F(n3) {
+    return function(u4) {
+      if (this.l) {
+        var t4 = this.l[u4.type + n3];
+        if (null == u4.t)
+          u4.t = e++;
+        else if (u4.t < t4.u)
+          return;
+        return t4(l.event ? l.event(u4) : u4);
+      }
+    };
+  }
+  function O(n3, u4, t4, i4, o4, r4, f4, e4, c4, s4) {
+    var a4, h4, v4, p4, w4, _3, g3, m4, x3, C4, S3, M3, $3, I3, H3, L3, T4 = u4.type;
+    if (void 0 !== u4.constructor)
+      return null;
+    128 & t4.__u && (c4 = !!(32 & t4.__u), r4 = [e4 = u4.__e = t4.__e]), (a4 = l.__b) && a4(u4);
+    n:
+      if ("function" == typeof T4)
+        try {
+          if (m4 = u4.props, x3 = "prototype" in T4 && T4.prototype.render, C4 = (a4 = T4.contextType) && i4[a4.__c], S3 = a4 ? C4 ? C4.props.value : a4.__ : i4, t4.__c ? g3 = (h4 = u4.__c = t4.__c).__ = h4.__E : (x3 ? u4.__c = h4 = new T4(m4, S3) : (u4.__c = h4 = new k(m4, S3), h4.constructor = T4, h4.render = q), C4 && C4.sub(h4), h4.props = m4, h4.state || (h4.state = {}), h4.context = S3, h4.__n = i4, v4 = h4.__d = true, h4.__h = [], h4._sb = []), x3 && null == h4.__s && (h4.__s = h4.state), x3 && null != T4.getDerivedStateFromProps && (h4.__s == h4.state && (h4.__s = d({}, h4.__s)), d(h4.__s, T4.getDerivedStateFromProps(m4, h4.__s))), p4 = h4.props, w4 = h4.state, h4.__v = u4, v4)
+            x3 && null == T4.getDerivedStateFromProps && null != h4.componentWillMount && h4.componentWillMount(), x3 && null != h4.componentDidMount && h4.__h.push(h4.componentDidMount);
+          else {
+            if (x3 && null == T4.getDerivedStateFromProps && m4 !== p4 && null != h4.componentWillReceiveProps && h4.componentWillReceiveProps(m4, S3), !h4.__e && (null != h4.shouldComponentUpdate && false === h4.shouldComponentUpdate(m4, h4.__s, S3) || u4.__v === t4.__v)) {
+              for (u4.__v !== t4.__v && (h4.props = m4, h4.state = h4.__s, h4.__d = false), u4.__e = t4.__e, u4.__k = t4.__k, u4.__k.some(function(n4) {
+                n4 && (n4.__ = u4);
+              }), M3 = 0; M3 < h4._sb.length; M3++)
+                h4.__h.push(h4._sb[M3]);
+              h4._sb = [], h4.__h.length && f4.push(h4);
+              break n;
+            }
+            null != h4.componentWillUpdate && h4.componentWillUpdate(m4, h4.__s, S3), x3 && null != h4.componentDidUpdate && h4.__h.push(function() {
+              h4.componentDidUpdate(p4, w4, _3);
+            });
+          }
+          if (h4.context = S3, h4.props = m4, h4.__P = n3, h4.__e = false, $3 = l.__r, I3 = 0, x3) {
+            for (h4.state = h4.__s, h4.__d = false, $3 && $3(u4), a4 = h4.render(h4.props, h4.state, h4.context), H3 = 0; H3 < h4._sb.length; H3++)
+              h4.__h.push(h4._sb[H3]);
+            h4._sb = [];
+          } else
+            do {
+              h4.__d = false, $3 && $3(u4), a4 = h4.render(h4.props, h4.state, h4.context), h4.state = h4.__s;
+            } while (h4.__d && ++I3 < 25);
+          h4.state = h4.__s, null != h4.getChildContext && (i4 = d(d({}, i4), h4.getChildContext())), x3 && !v4 && null != h4.getSnapshotBeforeUpdate && (_3 = h4.getSnapshotBeforeUpdate(p4, w4)), P(n3, y(L3 = null != a4 && a4.type === b && null == a4.key ? a4.props.children : a4) ? L3 : [L3], u4, t4, i4, o4, r4, f4, e4, c4, s4), h4.base = u4.__e, u4.__u &= -161, h4.__h.length && f4.push(h4), g3 && (h4.__E = h4.__ = null);
+        } catch (n4) {
+          if (u4.__v = null, c4 || null != r4) {
+            for (u4.__u |= c4 ? 160 : 128; e4 && 8 === e4.nodeType && e4.nextSibling; )
+              e4 = e4.nextSibling;
+            r4[r4.indexOf(e4)] = null, u4.__e = e4;
+          } else
+            u4.__e = t4.__e, u4.__k = t4.__k;
+          l.__e(n4, u4, t4);
+        }
+      else
+        null == r4 && u4.__v === t4.__v ? (u4.__k = t4.__k, u4.__e = t4.__e) : u4.__e = z(t4.__e, u4, t4, i4, o4, r4, f4, c4, s4);
+    (a4 = l.diffed) && a4(u4);
+  }
+  function j(n3, u4, t4) {
+    u4.__d = void 0;
+    for (var i4 = 0; i4 < t4.length; i4++)
+      N(t4[i4], t4[++i4], t4[++i4]);
+    l.__c && l.__c(u4, n3), n3.some(function(u5) {
+      try {
+        n3 = u5.__h, u5.__h = [], n3.some(function(n4) {
+          n4.call(u5);
+        });
+      } catch (n4) {
+        l.__e(n4, u5.__v);
+      }
+    });
+  }
+  function z(u4, t4, i4, o4, r4, f4, e4, c4, s4) {
+    var a4, v4, p4, d4, _3, g3, m4, b3 = i4.props, k4 = t4.props, C4 = t4.type;
+    if ("svg" === C4 ? r4 = "http://www.w3.org/2000/svg" : "math" === C4 ? r4 = "http://www.w3.org/1998/Math/MathML" : r4 || (r4 = "http://www.w3.org/1999/xhtml"), null != f4) {
+      for (a4 = 0; a4 < f4.length; a4++)
+        if ((_3 = f4[a4]) && "setAttribute" in _3 == !!C4 && (C4 ? _3.localName === C4 : 3 === _3.nodeType)) {
+          u4 = _3, f4[a4] = null;
+          break;
+        }
+    }
+    if (null == u4) {
+      if (null === C4)
+        return document.createTextNode(k4);
+      u4 = document.createElementNS(r4, C4, k4.is && k4), c4 && (l.__m && l.__m(t4, f4), c4 = false), f4 = null;
+    }
+    if (null === C4)
+      b3 === k4 || c4 && u4.data === k4 || (u4.data = k4);
+    else {
+      if (f4 = f4 && n.call(u4.childNodes), b3 = i4.props || h, !c4 && null != f4)
+        for (b3 = {}, a4 = 0; a4 < u4.attributes.length; a4++)
+          b3[(_3 = u4.attributes[a4]).name] = _3.value;
+      for (a4 in b3)
+        if (_3 = b3[a4], "children" == a4)
+          ;
+        else if ("dangerouslySetInnerHTML" == a4)
+          p4 = _3;
+        else if (!(a4 in k4)) {
+          if ("value" == a4 && "defaultValue" in k4 || "checked" == a4 && "defaultChecked" in k4)
+            continue;
+          A(u4, a4, null, _3, r4);
+        }
+      for (a4 in k4)
+        _3 = k4[a4], "children" == a4 ? d4 = _3 : "dangerouslySetInnerHTML" == a4 ? v4 = _3 : "value" == a4 ? g3 = _3 : "checked" == a4 ? m4 = _3 : c4 && "function" != typeof _3 || b3[a4] === _3 || A(u4, a4, _3, b3[a4], r4);
+      if (v4)
+        c4 || p4 && (v4.__html === p4.__html || v4.__html === u4.innerHTML) || (u4.innerHTML = v4.__html), t4.__k = [];
+      else if (p4 && (u4.innerHTML = ""), P(u4, y(d4) ? d4 : [d4], t4, i4, o4, "foreignObject" === C4 ? "http://www.w3.org/1999/xhtml" : r4, f4, e4, f4 ? f4[0] : i4.__k && x(i4, 0), c4, s4), null != f4)
+        for (a4 = f4.length; a4--; )
+          w(f4[a4]);
+      c4 || (a4 = "value", "progress" === C4 && null == g3 ? u4.removeAttribute("value") : void 0 !== g3 && (g3 !== u4[a4] || "progress" === C4 && !g3 || "option" === C4 && g3 !== b3[a4]) && A(u4, a4, g3, b3[a4], r4), a4 = "checked", void 0 !== m4 && m4 !== u4[a4] && A(u4, a4, m4, b3[a4], r4));
+    }
+    return u4;
+  }
+  function N(n3, u4, t4) {
+    try {
+      if ("function" == typeof n3) {
+        var i4 = "function" == typeof n3.__u;
+        i4 && n3.__u(), i4 && null == u4 || (n3.__u = n3(u4));
+      } else
+        n3.current = u4;
+    } catch (n4) {
+      l.__e(n4, t4);
+    }
+  }
+  function V(n3, u4, t4) {
+    var i4, o4;
+    if (l.unmount && l.unmount(n3), (i4 = n3.ref) && (i4.current && i4.current !== n3.__e || N(i4, null, u4)), null != (i4 = n3.__c)) {
+      if (i4.componentWillUnmount)
+        try {
+          i4.componentWillUnmount();
+        } catch (n4) {
+          l.__e(n4, u4);
+        }
+      i4.base = i4.__P = null;
+    }
+    if (i4 = n3.__k)
+      for (o4 = 0; o4 < i4.length; o4++)
+        i4[o4] && V(i4[o4], u4, t4 || "function" != typeof n3.type);
+    t4 || w(n3.__e), n3.__c = n3.__ = n3.__e = n3.__d = void 0;
+  }
+  function q(n3, l4, u4) {
+    return this.constructor(n3, u4);
+  }
+  function B(u4, t4, i4) {
+    var o4, r4, f4, e4;
+    l.__ && l.__(u4, t4), r4 = (o4 = "function" == typeof i4) ? null : i4 && i4.__k || t4.__k, f4 = [], e4 = [], O(t4, u4 = (!o4 && i4 || t4).__k = _(b, null, [u4]), r4 || h, h, t4.namespaceURI, !o4 && i4 ? [i4] : r4 ? null : t4.firstChild ? n.call(t4.childNodes) : null, f4, !o4 && i4 ? i4 : r4 ? r4.__e : t4.firstChild, o4, e4), j(f4, u4, e4);
+  }
+  function E(l4, u4, t4) {
+    var i4, o4, r4, f4, e4 = d({}, l4.props);
+    for (r4 in l4.type && l4.type.defaultProps && (f4 = l4.type.defaultProps), u4)
+      "key" == r4 ? i4 = u4[r4] : "ref" == r4 ? o4 = u4[r4] : e4[r4] = void 0 === u4[r4] && void 0 !== f4 ? f4[r4] : u4[r4];
+    return arguments.length > 2 && (e4.children = arguments.length > 3 ? n.call(arguments, 2) : t4), g(l4.type, e4, i4 || l4.key, o4 || l4.ref, null);
+  }
+  n = v.slice, l = { __e: function(n3, l4, u4, t4) {
+    for (var i4, o4, r4; l4 = l4.__; )
+      if ((i4 = l4.__c) && !i4.__)
+        try {
+          if ((o4 = i4.constructor) && null != o4.getDerivedStateFromError && (i4.setState(o4.getDerivedStateFromError(n3)), r4 = i4.__d), null != i4.componentDidCatch && (i4.componentDidCatch(n3, t4 || {}), r4 = i4.__d), r4)
+            return i4.__E = i4;
+        } catch (l5) {
+          n3 = l5;
+        }
+    throw n3;
+  } }, u = 0, t = function(n3) {
+    return null != n3 && null == n3.constructor;
+  }, k.prototype.setState = function(n3, l4) {
+    var u4;
+    u4 = null != this.__s && this.__s !== this.state ? this.__s : this.__s = d({}, this.state), "function" == typeof n3 && (n3 = n3(d({}, u4), this.props)), n3 && d(u4, n3), null != n3 && this.__v && (l4 && this._sb.push(l4), S(this));
+  }, k.prototype.forceUpdate = function(n3) {
+    this.__v && (this.__e = true, n3 && this.__h.push(n3), S(this));
+  }, k.prototype.render = b, i = [], r = "function" == typeof Promise ? Promise.prototype.then.bind(Promise.resolve()) : setTimeout, f = function(n3, l4) {
+    return n3.__v.__b - l4.__v.__b;
+  }, M.__r = 0, e = 0, c = F(false), s = F(true), a = 0;
+
+  // node_modules/@uppy/utils/lib/isDOMElement.js
+  function isDOMElement(obj) {
+    if (typeof obj !== "object" || obj === null)
+      return false;
+    if (!("nodeType" in obj))
+      return false;
+    return obj.nodeType === Node.ELEMENT_NODE;
+  }
+
+  // node_modules/@uppy/utils/lib/findDOMElement.js
+  function findDOMElement(element, context) {
+    if (context === void 0) {
+      context = document;
+    }
+    if (typeof element === "string") {
+      return context.querySelector(element);
+    }
+    if (isDOMElement(element)) {
+      return element;
+    }
+    return null;
+  }
+  var findDOMElement_default = findDOMElement;
+
+  // node_modules/@uppy/utils/lib/getTextDirection.js
+  function getTextDirection(element) {
+    var _element;
+    while (element && !element.dir) {
+      element = element.parentNode;
+    }
+    return (_element = element) == null ? void 0 : _element.dir;
+  }
+  var getTextDirection_default = getTextDirection;
+
+  // node_modules/@uppy/core/lib/BasePlugin.js
+  var BasePlugin = class {
+    constructor(uppy, opts) {
+      this.uppy = uppy;
+      this.opts = opts != null ? opts : {};
+    }
+    getPluginState() {
+      const {
+        plugins
+      } = this.uppy.getState();
+      return (plugins == null ? void 0 : plugins[this.id]) || {};
+    }
+    setPluginState(update) {
+      const {
+        plugins
+      } = this.uppy.getState();
+      this.uppy.setState({
+        plugins: {
+          ...plugins,
+          [this.id]: {
+            ...plugins[this.id],
+            ...update
+          }
+        }
+      });
+    }
+    setOptions(newOpts) {
+      this.opts = {
+        ...this.opts,
+        ...newOpts
+      };
+      this.setPluginState(void 0);
+      this.i18nInit();
+    }
+    i18nInit() {
+      const translator = new Translator([this.defaultLocale, this.uppy.locale, this.opts.locale]);
+      this.i18n = translator.translate.bind(translator);
+      this.i18nArray = translator.translateArray.bind(translator);
+      this.setPluginState(void 0);
+    }
+    /**
+     * Extendable methods
+     * ==================
+     * These methods are here to serve as an overview of the extendable methods as well as
+     * making them not conditional in use, such as `if (this.afterUpdate)`.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    addTarget(plugin) {
+      throw new Error("Extend the addTarget method to add your plugin to another plugin's target");
+    }
+    install() {
+    }
+    uninstall() {
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    update(state) {
+    }
+    // Called after every state update, after everything's mounted. Debounced.
+    afterUpdate() {
+    }
+  };
+
+  // node_modules/@uppy/core/lib/UIPlugin.js
+  function _classPrivateFieldLooseBase4(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id4 = 0;
+  function _classPrivateFieldLooseKey4(e4) {
+    return "__private_" + id4++ + "_" + e4;
+  }
+  function debounce3(fn2) {
+    let calling = null;
+    let latestArgs;
+    return function() {
+      for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+        args[_key] = arguments[_key];
+      }
+      latestArgs = args;
+      if (!calling) {
+        calling = Promise.resolve().then(() => {
+          calling = null;
+          return fn2(...latestArgs);
+        });
+      }
+      return calling;
+    };
+  }
+  var _updateUI = /* @__PURE__ */ _classPrivateFieldLooseKey4("updateUI");
+  var UIPlugin = class _UIPlugin extends BasePlugin {
+    constructor() {
+      super(...arguments);
+      Object.defineProperty(this, _updateUI, {
+        writable: true,
+        value: void 0
+      });
+    }
+    getTargetPlugin(target) {
+      let targetPlugin;
+      if (typeof (target == null ? void 0 : target.addTarget) === "function") {
+        targetPlugin = target;
+        if (!(targetPlugin instanceof _UIPlugin)) {
+          console.warn(new Error("The provided plugin is not an instance of UIPlugin. This is an indication of a bug with the way Uppy is bundled.", {
+            cause: {
+              targetPlugin,
+              UIPlugin: _UIPlugin
+            }
+          }));
+        }
+      } else if (typeof target === "function") {
+        const Target = target;
+        this.uppy.iteratePlugins((p4) => {
+          if (p4 instanceof Target) {
+            targetPlugin = p4;
+          }
+        });
+      }
+      return targetPlugin;
+    }
+    /**
+     * Check if supplied `target` is a DOM element or an `object`.
+     * If it’s an object — target is a plugin, and we search `plugins`
+     * for a plugin with same name and return its target.
+     */
+    mount(target, plugin) {
+      const callerPluginName = plugin.id;
+      const targetElement = findDOMElement_default(target);
+      if (targetElement) {
+        this.isTargetDOMEl = true;
+        const uppyRootElement = document.createElement("div");
+        uppyRootElement.classList.add("uppy-Root");
+        _classPrivateFieldLooseBase4(this, _updateUI)[_updateUI] = debounce3((state) => {
+          if (!this.uppy.getPlugin(this.id))
+            return;
+          B(this.render(state, uppyRootElement), uppyRootElement);
+          this.afterUpdate();
+        });
+        this.uppy.log(`Installing ${callerPluginName} to a DOM element '${target}'`);
+        if (this.opts.replaceTargetContent) {
+          targetElement.innerHTML = "";
+        }
+        B(this.render(this.uppy.getState(), uppyRootElement), uppyRootElement);
+        this.el = uppyRootElement;
+        targetElement.appendChild(uppyRootElement);
+        uppyRootElement.dir = this.opts.direction || getTextDirection_default(uppyRootElement) || "ltr";
+        this.onMount();
+        return this.el;
+      }
+      const targetPlugin = this.getTargetPlugin(target);
+      if (targetPlugin) {
+        this.uppy.log(`Installing ${callerPluginName} to ${targetPlugin.id}`);
+        this.parent = targetPlugin;
+        this.el = targetPlugin.addTarget(plugin);
+        this.onMount();
+        return this.el;
+      }
+      this.uppy.log(`Not installing ${callerPluginName}`);
+      let message = `Invalid target option given to ${callerPluginName}.`;
+      if (typeof target === "function") {
+        message += " The given target is not a Plugin class. Please check that you're not specifying a React Component instead of a plugin. If you are using @uppy/* packages directly, make sure you have only 1 version of @uppy/core installed: run `npm ls @uppy/core` on the command line and verify that all the versions match and are deduped correctly.";
+      } else {
+        message += "If you meant to target an HTML element, please make sure that the element exists. Check that the <script> tag initializing Uppy is right before the closing </body> tag at the end of the page. (see https://github.com/transloadit/uppy/issues/1042)\n\nIf you meant to target a plugin, please confirm that your `import` statements or `require` calls are correct.";
+      }
+      throw new Error(message);
+    }
+    /**
+     * Called when plugin is mounted, whether in DOM or into another plugin.
+     * Needed because sometimes plugins are mounted separately/after `install`,
+     * so this.el and this.parent might not be available in `install`.
+     * This is the case with @uppy/react plugins, for example.
+     */
+    render(state, container) {
+      throw new Error("Extend the render method to add your plugin to a DOM element");
+    }
+    update(state) {
+      if (this.el != null) {
+        var _classPrivateFieldLoo, _classPrivateFieldLoo2;
+        (_classPrivateFieldLoo = (_classPrivateFieldLoo2 = _classPrivateFieldLooseBase4(this, _updateUI))[_updateUI]) == null || _classPrivateFieldLoo.call(_classPrivateFieldLoo2, state);
+      }
+    }
+    unmount() {
+      if (this.isTargetDOMEl) {
+        var _this$el;
+        (_this$el = this.el) == null || _this$el.remove();
+      }
+      this.onUnmount();
+    }
+    onMount() {
+    }
+    onUnmount() {
+    }
+  };
+  var UIPlugin_default = UIPlugin;
+
+  // node_modules/@uppy/utils/lib/emaFilter.js
+  function emaFilter(newValue, previousSmoothedValue, halfLife, dt) {
+    if (halfLife === 0 || newValue === previousSmoothedValue)
+      return newValue;
+    if (dt === 0)
+      return previousSmoothedValue;
+    return newValue + (previousSmoothedValue - newValue) * 2 ** (-dt / halfLife);
+  }
+
+  // node_modules/@uppy/status-bar/lib/StatusBarStates.js
+  var StatusBarStates_default = {
+    STATE_ERROR: "error",
+    STATE_WAITING: "waiting",
+    STATE_PREPROCESSING: "preprocessing",
+    STATE_UPLOADING: "uploading",
+    STATE_POSTPROCESSING: "postprocessing",
+    STATE_COMPLETE: "complete"
+  };
+
+  // node_modules/@uppy/status-bar/lib/StatusBarUI.js
+  var import_classnames2 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/status-bar/lib/calculateProcessingProgress.js
+  function calculateProcessingProgress(files) {
+    const values = [];
+    let mode = "indeterminate";
+    let message;
+    for (const {
+      progress
+    } of Object.values(files)) {
+      const {
+        preprocess,
+        postprocess
+      } = progress;
+      if (message == null && (preprocess || postprocess)) {
+        ;
+        ({
+          mode,
+          message
+        } = preprocess || postprocess);
+      }
+      if ((preprocess == null ? void 0 : preprocess.mode) === "determinate")
+        values.push(preprocess.value);
+      if ((postprocess == null ? void 0 : postprocess.mode) === "determinate")
+        values.push(postprocess.value);
+    }
+    const value = values.reduce((total, progressValue) => {
+      return total + progressValue / values.length;
+    }, 0);
+    return {
+      mode,
+      message,
+      value
+    };
+  }
+
+  // node_modules/@uppy/status-bar/lib/Components.js
+  var import_classnames = __toESM(require_classnames(), 1);
+  var import_prettier_bytes2 = __toESM(require_prettierBytes(), 1);
+
+  // node_modules/@uppy/utils/lib/secondsToTime.js
+  function secondsToTime(rawSeconds) {
+    const hours = Math.floor(rawSeconds / 3600) % 24;
+    const minutes = Math.floor(rawSeconds / 60) % 60;
+    const seconds = Math.floor(rawSeconds % 60);
+    return {
+      hours,
+      minutes,
+      seconds
+    };
+  }
+
+  // node_modules/@uppy/utils/lib/prettyETA.js
+  function prettyETA(seconds) {
+    const time = secondsToTime(seconds);
+    const hoursStr = time.hours === 0 ? "" : `${time.hours}h`;
+    const minutesStr = time.minutes === 0 ? "" : `${time.hours === 0 ? time.minutes : ` ${time.minutes.toString(10).padStart(2, "0")}`}m`;
+    const secondsStr = time.hours !== 0 ? "" : `${time.minutes === 0 ? time.seconds : ` ${time.seconds.toString(10).padStart(2, "0")}`}s`;
+    return `${hoursStr}${minutesStr}${secondsStr}`;
+  }
+
+  // node_modules/@uppy/status-bar/lib/Components.js
+  var DOT = `\xB7`;
+  var renderDot = () => ` ${DOT} `;
+  function UploadBtn(props) {
+    const {
+      newFiles,
+      isUploadStarted,
+      recoveredState,
+      i18n,
+      uploadState,
+      isSomeGhost,
+      startUpload
+    } = props;
+    const uploadBtnClassNames = (0, import_classnames.default)("uppy-u-reset", "uppy-c-btn", "uppy-StatusBar-actionBtn", "uppy-StatusBar-actionBtn--upload", {
+      "uppy-c-btn-primary": uploadState === StatusBarStates_default.STATE_WAITING
+    }, {
+      "uppy-StatusBar-actionBtn--disabled": isSomeGhost
+    });
+    const uploadBtnText = newFiles && isUploadStarted && !recoveredState ? i18n("uploadXNewFiles", {
+      smart_count: newFiles
+    }) : i18n("uploadXFiles", {
+      smart_count: newFiles
+    });
+    return _("button", {
+      type: "button",
+      className: uploadBtnClassNames,
+      "aria-label": i18n("uploadXFiles", {
+        smart_count: newFiles
+      }),
+      onClick: startUpload,
+      disabled: isSomeGhost,
+      "data-uppy-super-focusable": true
+    }, uploadBtnText);
+  }
+  function RetryBtn(props) {
+    const {
+      i18n,
+      uppy
+    } = props;
+    return _("button", {
+      type: "button",
+      className: "uppy-u-reset uppy-c-btn uppy-StatusBar-actionBtn uppy-StatusBar-actionBtn--retry",
+      "aria-label": i18n("retryUpload"),
+      onClick: () => uppy.retryAll().catch(() => {
+      }),
+      "data-uppy-super-focusable": true,
+      "data-cy": "retry"
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "8",
+      height: "10",
+      viewBox: "0 0 8 10"
+    }, _("path", {
+      d: "M4 2.408a2.75 2.75 0 1 0 2.75 2.75.626.626 0 0 1 1.25.018v.023a4 4 0 1 1-4-4.041V.25a.25.25 0 0 1 .389-.208l2.299 1.533a.25.25 0 0 1 0 .416l-2.3 1.533A.25.25 0 0 1 4 3.316v-.908z"
+    })), i18n("retry"));
+  }
+  function CancelBtn(props) {
+    const {
+      i18n,
+      uppy
+    } = props;
+    return _("button", {
+      type: "button",
+      className: "uppy-u-reset uppy-StatusBar-actionCircleBtn",
+      title: i18n("cancel"),
+      "aria-label": i18n("cancel"),
+      onClick: () => uppy.cancelAll(),
+      "data-cy": "cancel",
+      "data-uppy-super-focusable": true
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 16 16"
+    }, _("g", {
+      fill: "none",
+      fillRule: "evenodd"
+    }, _("circle", {
+      fill: "#888",
+      cx: "8",
+      cy: "8",
+      r: "8"
+    }), _("path", {
+      fill: "#FFF",
+      d: "M9.283 8l2.567 2.567-1.283 1.283L8 9.283 5.433 11.85 4.15 10.567 6.717 8 4.15 5.433 5.433 4.15 8 6.717l2.567-2.567 1.283 1.283z"
+    }))));
+  }
+  function PauseResumeButton(props) {
+    const {
+      isAllPaused,
+      i18n,
+      isAllComplete,
+      resumableUploads,
+      uppy
+    } = props;
+    const title = isAllPaused ? i18n("resume") : i18n("pause");
+    function togglePauseResume() {
+      if (isAllComplete)
+        return;
+      if (!resumableUploads) {
+        uppy.cancelAll();
+        return;
+      }
+      if (isAllPaused) {
+        uppy.resumeAll();
+        return;
+      }
+      uppy.pauseAll();
+    }
+    return _("button", {
+      title,
+      "aria-label": title,
+      className: "uppy-u-reset uppy-StatusBar-actionCircleBtn",
+      type: "button",
+      onClick: togglePauseResume,
+      "data-cy": "togglePauseResume",
+      "data-uppy-super-focusable": true
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "16",
+      height: "16",
+      viewBox: "0 0 16 16"
+    }, _("g", {
+      fill: "none",
+      fillRule: "evenodd"
+    }, _("circle", {
+      fill: "#888",
+      cx: "8",
+      cy: "8",
+      r: "8"
+    }), _("path", {
+      fill: "#FFF",
+      d: isAllPaused ? "M6 4.25L11.5 8 6 11.75z" : "M5 4.5h2v7H5v-7zm4 0h2v7H9v-7z"
+    }))));
+  }
+  function DoneBtn(props) {
+    const {
+      i18n,
+      doneButtonHandler
+    } = props;
+    return _("button", {
+      type: "button",
+      className: "uppy-u-reset uppy-c-btn uppy-StatusBar-actionBtn uppy-StatusBar-actionBtn--done",
+      onClick: doneButtonHandler,
+      "data-uppy-super-focusable": true
+    }, i18n("done"));
+  }
+  function LoadingSpinner() {
+    return _("svg", {
+      className: "uppy-StatusBar-spinner",
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "14",
+      height: "14"
+    }, _("path", {
+      d: "M13.983 6.547c-.12-2.509-1.64-4.893-3.939-5.936-2.48-1.127-5.488-.656-7.556 1.094C.524 3.367-.398 6.048.162 8.562c.556 2.495 2.46 4.52 4.94 5.183 2.932.784 5.61-.602 7.256-3.015-1.493 1.993-3.745 3.309-6.298 2.868-2.514-.434-4.578-2.349-5.153-4.84a6.226 6.226 0 0 1 2.98-6.778C6.34.586 9.74 1.1 11.373 3.493c.407.596.693 1.282.842 1.988.127.598.073 1.197.161 1.794.078.525.543 1.257 1.15.864.525-.341.49-1.05.456-1.592-.007-.15.02.3 0 0",
+      fillRule: "evenodd"
+    }));
+  }
+  function ProgressBarProcessing(props) {
+    const {
+      progress
+    } = props;
+    const {
+      value,
+      mode,
+      message
+    } = progress;
+    const dot = `\xB7`;
+    return _("div", {
+      className: "uppy-StatusBar-content"
+    }, _(LoadingSpinner, null), mode === "determinate" ? `${Math.round(value * 100)}% ${dot} ` : "", message);
+  }
+  function ProgressDetails(props) {
+    const {
+      numUploads,
+      complete,
+      totalUploadedSize,
+      totalSize,
+      totalETA,
+      i18n
+    } = props;
+    const ifShowFilesUploadedOfTotal = numUploads > 1;
+    const totalUploadedSizeStr = (0, import_prettier_bytes2.default)(totalUploadedSize);
+    return _("div", {
+      className: "uppy-StatusBar-statusSecondary"
+    }, ifShowFilesUploadedOfTotal && i18n("filesUploadedOfTotal", {
+      complete,
+      smart_count: numUploads
+    }), _("span", {
+      className: "uppy-StatusBar-additionalInfo"
+    }, ifShowFilesUploadedOfTotal && renderDot(), totalSize != null ? i18n("dataUploadedOfTotal", {
+      complete: totalUploadedSizeStr,
+      total: (0, import_prettier_bytes2.default)(totalSize)
+    }) : i18n("dataUploadedOfUnknown", {
+      complete: totalUploadedSizeStr
+    }), renderDot(), totalETA != null && i18n("xTimeLeft", {
+      time: prettyETA(totalETA)
+    })));
+  }
+  function FileUploadCount(props) {
+    const {
+      i18n,
+      complete,
+      numUploads
+    } = props;
+    return _("div", {
+      className: "uppy-StatusBar-statusSecondary"
+    }, i18n("filesUploadedOfTotal", {
+      complete,
+      smart_count: numUploads
+    }));
+  }
+  function UploadNewlyAddedFiles(props) {
+    const {
+      i18n,
+      newFiles,
+      startUpload
+    } = props;
+    const uploadBtnClassNames = (0, import_classnames.default)("uppy-u-reset", "uppy-c-btn", "uppy-StatusBar-actionBtn", "uppy-StatusBar-actionBtn--uploadNewlyAdded");
+    return _("div", {
+      className: "uppy-StatusBar-statusSecondary"
+    }, _("div", {
+      className: "uppy-StatusBar-statusSecondaryHint"
+    }, i18n("xMoreFilesAdded", {
+      smart_count: newFiles
+    })), _("button", {
+      type: "button",
+      className: uploadBtnClassNames,
+      "aria-label": i18n("uploadXFiles", {
+        smart_count: newFiles
+      }),
+      onClick: startUpload
+    }, i18n("upload")));
+  }
+  function ProgressBarUploading(props) {
+    const {
+      i18n,
+      supportsUploadProgress: supportsUploadProgress2,
+      totalProgress,
+      showProgressDetails,
+      isUploadStarted,
+      isAllComplete,
+      isAllPaused,
+      newFiles,
+      numUploads,
+      complete,
+      totalUploadedSize,
+      totalSize,
+      totalETA,
+      startUpload
+    } = props;
+    const showUploadNewlyAddedFiles = newFiles && isUploadStarted;
+    if (!isUploadStarted || isAllComplete) {
+      return null;
+    }
+    const title = isAllPaused ? i18n("paused") : i18n("uploading");
+    function renderProgressDetails() {
+      if (!isAllPaused && !showUploadNewlyAddedFiles && showProgressDetails) {
+        if (supportsUploadProgress2) {
+          return _(ProgressDetails, {
+            numUploads,
+            complete,
+            totalUploadedSize,
+            totalSize,
+            totalETA,
+            i18n
+          });
+        }
+        return _(FileUploadCount, {
+          i18n,
+          complete,
+          numUploads
+        });
+      }
+      return null;
+    }
+    return _("div", {
+      className: "uppy-StatusBar-content",
+      "aria-label": title,
+      title
+    }, !isAllPaused ? _(LoadingSpinner, null) : null, _("div", {
+      className: "uppy-StatusBar-status"
+    }, _("div", {
+      className: "uppy-StatusBar-statusPrimary"
+    }, supportsUploadProgress2 && totalProgress !== 0 ? `${title}: ${totalProgress}%` : title), renderProgressDetails(), showUploadNewlyAddedFiles ? _(UploadNewlyAddedFiles, {
+      i18n,
+      newFiles,
+      startUpload
+    }) : null));
+  }
+  function ProgressBarComplete(props) {
+    const {
+      i18n
+    } = props;
+    return _("div", {
+      className: "uppy-StatusBar-content",
+      role: "status",
+      title: i18n("complete")
+    }, _("div", {
+      className: "uppy-StatusBar-status"
+    }, _("div", {
+      className: "uppy-StatusBar-statusPrimary"
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-StatusBar-statusIndicator uppy-c-icon",
+      width: "15",
+      height: "11",
+      viewBox: "0 0 15 11"
+    }, _("path", {
+      d: "M.414 5.843L1.627 4.63l3.472 3.472L13.202 0l1.212 1.213L5.1 10.528z"
+    })), i18n("complete"))));
+  }
+  function ProgressBarError(props) {
+    const {
+      error: error2,
+      i18n,
+      complete,
+      numUploads
+    } = props;
+    function displayErrorAlert() {
+      const errorMessage = `${i18n("uploadFailed")} 
+
+ ${error2}`;
+      alert(errorMessage);
+    }
+    return _("div", {
+      className: "uppy-StatusBar-content",
+      title: i18n("uploadFailed")
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-StatusBar-statusIndicator uppy-c-icon",
+      width: "11",
+      height: "11",
+      viewBox: "0 0 11 11"
+    }, _("path", {
+      d: "M4.278 5.5L0 1.222 1.222 0 5.5 4.278 9.778 0 11 1.222 6.722 5.5 11 9.778 9.778 11 5.5 6.722 1.222 11 0 9.778z"
+    })), _("div", {
+      className: "uppy-StatusBar-status"
+    }, _("div", {
+      className: "uppy-StatusBar-statusPrimary"
+    }, i18n("uploadFailed"), _("button", {
+      className: "uppy-u-reset uppy-StatusBar-details",
+      "aria-label": i18n("showErrorDetails"),
+      "data-microtip-position": "top-right",
+      "data-microtip-size": "medium",
+      onClick: displayErrorAlert,
+      type: "button"
+    }, "?")), _(FileUploadCount, {
+      i18n,
+      complete,
+      numUploads
+    })));
+  }
+
+  // node_modules/@uppy/status-bar/lib/StatusBarUI.js
+  var {
+    STATE_ERROR,
+    STATE_WAITING,
+    STATE_PREPROCESSING,
+    STATE_UPLOADING,
+    STATE_POSTPROCESSING,
+    STATE_COMPLETE
+  } = StatusBarStates_default;
+  function StatusBarUI(_ref) {
+    let {
+      newFiles,
+      allowNewUpload,
+      isUploadInProgress,
+      isAllPaused,
+      resumableUploads,
+      error: error2,
+      hideUploadButton = void 0,
+      hidePauseResumeButton = false,
+      hideCancelButton = false,
+      hideRetryButton = false,
+      recoveredState,
+      uploadState,
+      totalProgress,
+      files,
+      supportsUploadProgress: supportsUploadProgress2,
+      hideAfterFinish = false,
+      isSomeGhost,
+      doneButtonHandler = void 0,
+      isUploadStarted,
+      i18n,
+      startUpload,
+      uppy,
+      isAllComplete,
+      showProgressDetails = void 0,
+      numUploads,
+      complete,
+      totalSize,
+      totalETA,
+      totalUploadedSize
+    } = _ref;
+    function getProgressValue() {
+      switch (uploadState) {
+        case STATE_POSTPROCESSING:
+        case STATE_PREPROCESSING: {
+          const progress = calculateProcessingProgress(files);
+          if (progress.mode === "determinate") {
+            return progress.value * 100;
+          }
+          return totalProgress;
+        }
+        case STATE_ERROR: {
+          return null;
+        }
+        case STATE_UPLOADING: {
+          if (!supportsUploadProgress2) {
+            return null;
+          }
+          return totalProgress;
+        }
+        default:
+          return totalProgress;
+      }
+    }
+    function getIsIndeterminate() {
+      switch (uploadState) {
+        case STATE_POSTPROCESSING:
+        case STATE_PREPROCESSING: {
+          const {
+            mode
+          } = calculateProcessingProgress(files);
+          return mode === "indeterminate";
+        }
+        case STATE_UPLOADING: {
+          if (!supportsUploadProgress2) {
+            return true;
+          }
+          return false;
+        }
+        default:
+          return false;
+      }
+    }
+    const progressValue = getProgressValue();
+    const width = progressValue != null ? progressValue : 100;
+    const showUploadBtn = !error2 && newFiles && (!isUploadInProgress && !isAllPaused || recoveredState) && allowNewUpload && !hideUploadButton;
+    const showCancelBtn = !hideCancelButton && uploadState !== STATE_WAITING && uploadState !== STATE_COMPLETE;
+    const showPauseResumeBtn = resumableUploads && !hidePauseResumeButton && uploadState === STATE_UPLOADING;
+    const showRetryBtn = error2 && !isAllComplete && !hideRetryButton;
+    const showDoneBtn = doneButtonHandler && uploadState === STATE_COMPLETE;
+    const progressClassNames = (0, import_classnames2.default)("uppy-StatusBar-progress", {
+      "is-indeterminate": getIsIndeterminate()
+    });
+    const statusBarClassNames = (0, import_classnames2.default)("uppy-StatusBar", `is-${uploadState}`, {
+      "has-ghosts": isSomeGhost
+    });
+    const progressBarStateEl = (() => {
+      switch (uploadState) {
+        case STATE_PREPROCESSING:
+        case STATE_POSTPROCESSING:
+          return _(ProgressBarProcessing, {
+            progress: calculateProcessingProgress(files)
+          });
+        case STATE_COMPLETE:
+          return _(ProgressBarComplete, {
+            i18n
+          });
+        case STATE_ERROR:
+          return _(ProgressBarError, {
+            error: error2,
+            i18n,
+            numUploads,
+            complete
+          });
+        case STATE_UPLOADING:
+          return _(ProgressBarUploading, {
+            i18n,
+            supportsUploadProgress: supportsUploadProgress2,
+            totalProgress,
+            showProgressDetails,
+            isUploadStarted,
+            isAllComplete,
+            isAllPaused,
+            newFiles,
+            numUploads,
+            complete,
+            totalUploadedSize,
+            totalSize,
+            totalETA,
+            startUpload
+          });
+        default:
+          return null;
+      }
+    })();
+    const atLeastOneAction = showUploadBtn || showRetryBtn || showPauseResumeBtn || showCancelBtn || showDoneBtn;
+    const thereIsNothingInside = !atLeastOneAction && !progressBarStateEl;
+    const isHidden = thereIsNothingInside || uploadState === STATE_COMPLETE && hideAfterFinish;
+    return _("div", {
+      className: statusBarClassNames,
+      "aria-hidden": isHidden
+    }, _("div", {
+      className: progressClassNames,
+      style: {
+        width: `${width}%`
+      },
+      role: "progressbar",
+      "aria-label": `${width}%`,
+      "aria-valuetext": `${width}%`,
+      "aria-valuemin": 0,
+      "aria-valuemax": 100,
+      "aria-valuenow": progressValue
+    }), progressBarStateEl, _("div", {
+      className: "uppy-StatusBar-actions"
+    }, showUploadBtn ? _(UploadBtn, {
+      newFiles,
+      isUploadStarted,
+      recoveredState,
+      i18n,
+      isSomeGhost,
+      startUpload,
+      uploadState
+    }) : null, showRetryBtn ? _(RetryBtn, {
+      i18n,
+      uppy
+    }) : null, showPauseResumeBtn ? _(PauseResumeButton, {
+      isAllPaused,
+      i18n,
+      isAllComplete,
+      resumableUploads,
+      uppy
+    }) : null, showCancelBtn ? _(CancelBtn, {
+      i18n,
+      uppy
+    }) : null, showDoneBtn ? _(DoneBtn, {
+      i18n,
+      doneButtonHandler
+    }) : null));
+  }
+
+  // node_modules/@uppy/status-bar/lib/locale.js
+  var locale_default2 = {
+    strings: {
+      // Shown in the status bar while files are being uploaded.
+      uploading: "Uploading",
+      // Shown in the status bar once all files have been uploaded.
+      complete: "Complete",
+      // Shown in the status bar if an upload failed.
+      uploadFailed: "Upload failed",
+      // Shown in the status bar while the upload is paused.
+      paused: "Paused",
+      // Used as the label for the button that retries an upload.
+      retry: "Retry",
+      // Used as the label for the button that cancels an upload.
+      cancel: "Cancel",
+      // Used as the label for the button that pauses an upload.
+      pause: "Pause",
+      // Used as the label for the button that resumes an upload.
+      resume: "Resume",
+      // Used as the label for the button that resets the upload state after an upload
+      done: "Done",
+      // When `showProgressDetails` is set, shows the number of files that have been fully uploaded so far.
+      filesUploadedOfTotal: {
+        0: "%{complete} of %{smart_count} file uploaded",
+        1: "%{complete} of %{smart_count} files uploaded"
+      },
+      // When `showProgressDetails` is set, shows the amount of bytes that have been uploaded so far.
+      dataUploadedOfTotal: "%{complete} of %{total}",
+      dataUploadedOfUnknown: "%{complete} of unknown",
+      // When `showProgressDetails` is set, shows an estimation of how long the upload will take to complete.
+      xTimeLeft: "%{time} left",
+      // Used as the label for the button that starts an upload.
+      uploadXFiles: {
+        0: "Upload %{smart_count} file",
+        1: "Upload %{smart_count} files"
+      },
+      // Used as the label for the button that starts an upload, if another upload has been started in the past
+      // and new files were added later.
+      uploadXNewFiles: {
+        0: "Upload +%{smart_count} file",
+        1: "Upload +%{smart_count} files"
+      },
+      upload: "Upload",
+      retryUpload: "Retry upload",
+      xMoreFilesAdded: {
+        0: "%{smart_count} more file added",
+        1: "%{smart_count} more files added"
+      },
+      showErrorDetails: "Show error details"
+    }
+  };
+
+  // node_modules/@uppy/status-bar/lib/StatusBar.js
+  function _classPrivateFieldLooseBase5(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id5 = 0;
+  function _classPrivateFieldLooseKey5(e4) {
+    return "__private_" + id5++ + "_" + e4;
+  }
+  var packageJson3 = {
+    "version": "4.0.6"
+  };
+  var speedFilterHalfLife = 2e3;
+  var ETAFilterHalfLife = 2e3;
+  function getUploadingState(error2, isAllComplete, recoveredState, files) {
+    if (error2) {
+      return StatusBarStates_default.STATE_ERROR;
+    }
+    if (isAllComplete) {
+      return StatusBarStates_default.STATE_COMPLETE;
+    }
+    if (recoveredState) {
+      return StatusBarStates_default.STATE_WAITING;
+    }
+    let state = StatusBarStates_default.STATE_WAITING;
+    const fileIDs = Object.keys(files);
+    for (let i4 = 0; i4 < fileIDs.length; i4++) {
+      const {
+        progress
+      } = files[fileIDs[i4]];
+      if (progress.uploadStarted && !progress.uploadComplete) {
+        return StatusBarStates_default.STATE_UPLOADING;
+      }
+      if (progress.preprocess) {
+        state = StatusBarStates_default.STATE_PREPROCESSING;
+      }
+      if (progress.postprocess && state !== StatusBarStates_default.STATE_PREPROCESSING) {
+        state = StatusBarStates_default.STATE_POSTPROCESSING;
+      }
+    }
+    return state;
+  }
+  var defaultOptions2 = {
+    hideUploadButton: false,
+    hideRetryButton: false,
+    hidePauseResumeButton: false,
+    hideCancelButton: false,
+    showProgressDetails: false,
+    hideAfterFinish: true,
+    doneButtonHandler: null
+  };
+  var _lastUpdateTime = /* @__PURE__ */ _classPrivateFieldLooseKey5("lastUpdateTime");
+  var _previousUploadedBytes = /* @__PURE__ */ _classPrivateFieldLooseKey5("previousUploadedBytes");
+  var _previousSpeed = /* @__PURE__ */ _classPrivateFieldLooseKey5("previousSpeed");
+  var _previousETA = /* @__PURE__ */ _classPrivateFieldLooseKey5("previousETA");
+  var _computeSmoothETA = /* @__PURE__ */ _classPrivateFieldLooseKey5("computeSmoothETA");
+  var _onUploadStart = /* @__PURE__ */ _classPrivateFieldLooseKey5("onUploadStart");
+  var StatusBar = class extends UIPlugin_default {
+    constructor(uppy, opts) {
+      super(uppy, {
+        ...defaultOptions2,
+        ...opts
+      });
+      Object.defineProperty(this, _computeSmoothETA, {
+        value: _computeSmoothETA2
+      });
+      Object.defineProperty(this, _lastUpdateTime, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _previousUploadedBytes, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _previousSpeed, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _previousETA, {
+        writable: true,
+        value: void 0
+      });
+      this.startUpload = () => {
+        return this.uppy.upload().catch(() => {
+        });
+      };
+      Object.defineProperty(this, _onUploadStart, {
+        writable: true,
+        value: () => {
+          const {
+            recoveredState
+          } = this.uppy.getState();
+          _classPrivateFieldLooseBase5(this, _previousSpeed)[_previousSpeed] = null;
+          _classPrivateFieldLooseBase5(this, _previousETA)[_previousETA] = null;
+          if (recoveredState) {
+            _classPrivateFieldLooseBase5(this, _previousUploadedBytes)[_previousUploadedBytes] = Object.values(recoveredState.files).reduce((pv, _ref) => {
+              let {
+                progress
+              } = _ref;
+              return pv + progress.bytesUploaded;
+            }, 0);
+            this.uppy.emit("restore-confirmed");
+            return;
+          }
+          _classPrivateFieldLooseBase5(this, _lastUpdateTime)[_lastUpdateTime] = performance.now();
+          _classPrivateFieldLooseBase5(this, _previousUploadedBytes)[_previousUploadedBytes] = 0;
+        }
+      });
+      this.id = this.opts.id || "StatusBar";
+      this.title = "StatusBar";
+      this.type = "progressindicator";
+      this.defaultLocale = locale_default2;
+      this.i18nInit();
+      this.render = this.render.bind(this);
+      this.install = this.install.bind(this);
+    }
+    render(state) {
+      const {
+        capabilities,
+        files,
+        allowNewUpload,
+        totalProgress,
+        error: error2,
+        recoveredState
+      } = state;
+      const {
+        newFiles,
+        startedFiles,
+        completeFiles,
+        isUploadStarted,
+        isAllComplete,
+        isAllPaused,
+        isUploadInProgress,
+        isSomeGhost
+      } = this.uppy.getObjectOfFilesPerState();
+      const newFilesOrRecovered = recoveredState ? Object.values(files) : newFiles;
+      const resumableUploads = !!capabilities.resumableUploads;
+      const supportsUploadProgress2 = capabilities.uploadProgress !== false;
+      let totalSize = null;
+      let totalUploadedSize = 0;
+      if (startedFiles.every((f4) => f4.progress.bytesTotal != null && f4.progress.bytesTotal !== 0)) {
+        totalSize = 0;
+        startedFiles.forEach((file) => {
+          totalSize += file.progress.bytesTotal || 0;
+          totalUploadedSize += file.progress.bytesUploaded || 0;
+        });
+      }
+      startedFiles.forEach((file) => {
+        totalUploadedSize += file.progress.bytesUploaded || 0;
+      });
+      const totalETA = _classPrivateFieldLooseBase5(this, _computeSmoothETA)[_computeSmoothETA]({
+        uploaded: totalUploadedSize,
+        total: totalSize
+      });
+      return StatusBarUI({
+        error: error2,
+        uploadState: getUploadingState(error2, isAllComplete, recoveredState, state.files || {}),
+        allowNewUpload,
+        totalProgress,
+        totalSize,
+        totalUploadedSize,
+        isAllComplete: false,
+        isAllPaused,
+        isUploadStarted,
+        isUploadInProgress,
+        isSomeGhost,
+        recoveredState,
+        complete: completeFiles.length,
+        newFiles: newFilesOrRecovered.length,
+        numUploads: startedFiles.length,
+        totalETA,
+        files,
+        i18n: this.i18n,
+        uppy: this.uppy,
+        startUpload: this.startUpload,
+        doneButtonHandler: this.opts.doneButtonHandler,
+        resumableUploads,
+        supportsUploadProgress: supportsUploadProgress2,
+        showProgressDetails: this.opts.showProgressDetails,
+        hideUploadButton: this.opts.hideUploadButton,
+        hideRetryButton: this.opts.hideRetryButton,
+        hidePauseResumeButton: this.opts.hidePauseResumeButton,
+        hideCancelButton: this.opts.hideCancelButton,
+        hideAfterFinish: this.opts.hideAfterFinish
+      });
+    }
+    onMount() {
+      const element = this.el;
+      const direction = getTextDirection_default(element);
+      if (!direction) {
+        element.dir = "ltr";
+      }
+    }
+    install() {
+      const {
+        target
+      } = this.opts;
+      if (target) {
+        this.mount(target, this);
+      }
+      this.uppy.on("upload", _classPrivateFieldLooseBase5(this, _onUploadStart)[_onUploadStart]);
+      _classPrivateFieldLooseBase5(this, _lastUpdateTime)[_lastUpdateTime] = performance.now();
+      _classPrivateFieldLooseBase5(this, _previousUploadedBytes)[_previousUploadedBytes] = this.uppy.getFiles().reduce((pv, file) => pv + file.progress.bytesUploaded, 0);
+    }
+    uninstall() {
+      this.unmount();
+      this.uppy.off("upload", _classPrivateFieldLooseBase5(this, _onUploadStart)[_onUploadStart]);
+    }
+  };
+  function _computeSmoothETA2(totalBytes) {
+    var _classPrivateFieldLoo, _classPrivateFieldLoo2;
+    if (totalBytes.total == null || totalBytes.total === 0) {
+      return null;
+    }
+    const remaining = totalBytes.total - totalBytes.uploaded;
+    if (remaining <= 0) {
+      return null;
+    }
+    (_classPrivateFieldLoo2 = (_classPrivateFieldLoo = _classPrivateFieldLooseBase5(this, _lastUpdateTime))[_lastUpdateTime]) != null ? _classPrivateFieldLoo2 : _classPrivateFieldLoo[_lastUpdateTime] = performance.now();
+    const dt = performance.now() - _classPrivateFieldLooseBase5(this, _lastUpdateTime)[_lastUpdateTime];
+    if (dt === 0) {
+      var _classPrivateFieldLoo3;
+      return Math.round(((_classPrivateFieldLoo3 = _classPrivateFieldLooseBase5(this, _previousETA)[_previousETA]) != null ? _classPrivateFieldLoo3 : 0) / 100) / 10;
+    }
+    const uploadedBytesSinceLastTick = totalBytes.uploaded - _classPrivateFieldLooseBase5(this, _previousUploadedBytes)[_previousUploadedBytes];
+    _classPrivateFieldLooseBase5(this, _previousUploadedBytes)[_previousUploadedBytes] = totalBytes.uploaded;
+    if (uploadedBytesSinceLastTick <= 0) {
+      var _classPrivateFieldLoo4;
+      return Math.round(((_classPrivateFieldLoo4 = _classPrivateFieldLooseBase5(this, _previousETA)[_previousETA]) != null ? _classPrivateFieldLoo4 : 0) / 100) / 10;
+    }
+    const currentSpeed = uploadedBytesSinceLastTick / dt;
+    const filteredSpeed = _classPrivateFieldLooseBase5(this, _previousSpeed)[_previousSpeed] == null ? currentSpeed : emaFilter(currentSpeed, _classPrivateFieldLooseBase5(this, _previousSpeed)[_previousSpeed], speedFilterHalfLife, dt);
+    _classPrivateFieldLooseBase5(this, _previousSpeed)[_previousSpeed] = filteredSpeed;
+    const instantETA = remaining / filteredSpeed;
+    const updatedPreviousETA = Math.max(_classPrivateFieldLooseBase5(this, _previousETA)[_previousETA] - dt, 0);
+    const filteredETA = _classPrivateFieldLooseBase5(this, _previousETA)[_previousETA] == null ? instantETA : emaFilter(instantETA, updatedPreviousETA, ETAFilterHalfLife, dt);
+    _classPrivateFieldLooseBase5(this, _previousETA)[_previousETA] = filteredETA;
+    _classPrivateFieldLooseBase5(this, _lastUpdateTime)[_lastUpdateTime] = performance.now();
+    return Math.round(filteredETA / 100) / 10;
+  }
+  StatusBar.VERSION = packageJson3.version;
+
+  // node_modules/@uppy/informer/lib/FadeIn.js
+  var TRANSITION_MS = 300;
+  var FadeIn = class extends k {
+    constructor() {
+      super(...arguments);
+      this.ref = m();
+    }
+    componentWillEnter(callback) {
+      this.ref.current.style.opacity = "1";
+      this.ref.current.style.transform = "none";
+      setTimeout(callback, TRANSITION_MS);
+    }
+    componentWillLeave(callback) {
+      this.ref.current.style.opacity = "0";
+      this.ref.current.style.transform = "translateY(350%)";
+      setTimeout(callback, TRANSITION_MS);
+    }
+    render() {
+      const {
+        children
+      } = this.props;
+      return _("div", {
+        className: "uppy-Informer-animated",
+        ref: this.ref
+      }, children);
+    }
+  };
+
+  // node_modules/@uppy/informer/lib/TransitionGroup.js
+  function assign(obj, props) {
+    return Object.assign(obj, props);
+  }
+  function getKey(vnode, fallback) {
+    var _vnode$key;
+    return (_vnode$key = vnode == null ? void 0 : vnode.key) != null ? _vnode$key : fallback;
+  }
+  function linkRef(component, name) {
+    const cache2 = component._ptgLinkedRefs || (component._ptgLinkedRefs = {});
+    return cache2[name] || (cache2[name] = (c4) => {
+      component.refs[name] = c4;
+    });
+  }
+  function getChildMapping(children) {
+    const out = {};
+    for (let i4 = 0; i4 < children.length; i4++) {
+      if (children[i4] != null) {
+        const key = getKey(children[i4], i4.toString(36));
+        out[key] = children[i4];
+      }
+    }
+    return out;
+  }
+  function mergeChildMappings(prev, next) {
+    prev = prev || {};
+    next = next || {};
+    const getValueForKey = (key) => next.hasOwnProperty(key) ? next[key] : prev[key];
+    const nextKeysPending = {};
+    let pendingKeys = [];
+    for (const prevKey in prev) {
+      if (next.hasOwnProperty(prevKey)) {
+        if (pendingKeys.length) {
+          nextKeysPending[prevKey] = pendingKeys;
+          pendingKeys = [];
+        }
+      } else {
+        pendingKeys.push(prevKey);
+      }
+    }
+    const childMapping = {};
+    for (const nextKey in next) {
+      if (nextKeysPending.hasOwnProperty(nextKey)) {
+        for (let i4 = 0; i4 < nextKeysPending[nextKey].length; i4++) {
+          const pendingNextKey = nextKeysPending[nextKey][i4];
+          childMapping[nextKeysPending[nextKey][i4]] = getValueForKey(pendingNextKey);
+        }
+      }
+      childMapping[nextKey] = getValueForKey(nextKey);
+    }
+    for (let i4 = 0; i4 < pendingKeys.length; i4++) {
+      childMapping[pendingKeys[i4]] = getValueForKey(pendingKeys[i4]);
+    }
+    return childMapping;
+  }
+  var identity = (i4) => i4;
+  var TransitionGroup = class extends k {
+    constructor(props, context) {
+      super(props, context);
+      this.refs = {};
+      this.state = {
+        children: getChildMapping(H(H(this.props.children)) || [])
+      };
+      this.performAppear = this.performAppear.bind(this);
+      this.performEnter = this.performEnter.bind(this);
+      this.performLeave = this.performLeave.bind(this);
+    }
+    componentWillMount() {
+      this.currentlyTransitioningKeys = {};
+      this.keysToAbortLeave = [];
+      this.keysToEnter = [];
+      this.keysToLeave = [];
+    }
+    componentDidMount() {
+      const initialChildMapping = this.state.children;
+      for (const key in initialChildMapping) {
+        if (initialChildMapping[key]) {
+          this.performAppear(key);
+        }
+      }
+    }
+    componentWillReceiveProps(nextProps) {
+      const nextChildMapping = getChildMapping(H(nextProps.children) || []);
+      const prevChildMapping = this.state.children;
+      this.setState((prevState) => ({
+        children: mergeChildMappings(prevState.children, nextChildMapping)
+      }));
+      let key;
+      for (key in nextChildMapping) {
+        if (nextChildMapping.hasOwnProperty(key)) {
+          const hasPrev = prevChildMapping && prevChildMapping.hasOwnProperty(key);
+          if (nextChildMapping[key] && hasPrev && this.currentlyTransitioningKeys[key]) {
+            this.keysToEnter.push(key);
+            this.keysToAbortLeave.push(key);
+          } else if (nextChildMapping[key] && !hasPrev && !this.currentlyTransitioningKeys[key]) {
+            this.keysToEnter.push(key);
+          }
+        }
+      }
+      for (key in prevChildMapping) {
+        if (prevChildMapping.hasOwnProperty(key)) {
+          const hasNext = nextChildMapping && nextChildMapping.hasOwnProperty(key);
+          if (prevChildMapping[key] && !hasNext && !this.currentlyTransitioningKeys[key]) {
+            this.keysToLeave.push(key);
+          }
+        }
+      }
+    }
+    componentDidUpdate() {
+      const {
+        keysToEnter
+      } = this;
+      this.keysToEnter = [];
+      keysToEnter.forEach(this.performEnter);
+      const {
+        keysToLeave
+      } = this;
+      this.keysToLeave = [];
+      keysToLeave.forEach(this.performLeave);
+    }
+    _finishAbort(key) {
+      const idx = this.keysToAbortLeave.indexOf(key);
+      if (idx !== -1) {
+        this.keysToAbortLeave.splice(idx, 1);
+      }
+    }
+    performAppear(key) {
+      this.currentlyTransitioningKeys[key] = true;
+      const component = this.refs[key];
+      if (component != null && component.componentWillAppear) {
+        component.componentWillAppear(this._handleDoneAppearing.bind(this, key));
+      } else {
+        this._handleDoneAppearing(key);
+      }
+    }
+    _handleDoneAppearing(key) {
+      const component = this.refs[key];
+      if (component != null && component.componentDidAppear) {
+        component.componentDidAppear();
+      }
+      delete this.currentlyTransitioningKeys[key];
+      this._finishAbort(key);
+      const currentChildMapping = getChildMapping(H(this.props.children) || []);
+      if (!currentChildMapping || !currentChildMapping.hasOwnProperty(key)) {
+        this.performLeave(key);
+      }
+    }
+    performEnter(key) {
+      this.currentlyTransitioningKeys[key] = true;
+      const component = this.refs[key];
+      if (component != null && component.componentWillEnter) {
+        component.componentWillEnter(this._handleDoneEntering.bind(this, key));
+      } else {
+        this._handleDoneEntering(key);
+      }
+    }
+    _handleDoneEntering(key) {
+      const component = this.refs[key];
+      if (component != null && component.componentDidEnter) {
+        component.componentDidEnter();
+      }
+      delete this.currentlyTransitioningKeys[key];
+      this._finishAbort(key);
+      const currentChildMapping = getChildMapping(H(this.props.children) || []);
+      if (!currentChildMapping || !currentChildMapping.hasOwnProperty(key)) {
+        this.performLeave(key);
+      }
+    }
+    performLeave(key) {
+      const idx = this.keysToAbortLeave.indexOf(key);
+      if (idx !== -1) {
+        return;
+      }
+      this.currentlyTransitioningKeys[key] = true;
+      const component = this.refs[key];
+      if (component != null && component.componentWillLeave) {
+        component.componentWillLeave(this._handleDoneLeaving.bind(this, key));
+      } else {
+        this._handleDoneLeaving(key);
+      }
+    }
+    _handleDoneLeaving(key) {
+      const idx = this.keysToAbortLeave.indexOf(key);
+      if (idx !== -1) {
+        return;
+      }
+      const component = this.refs[key];
+      if (component != null && component.componentDidLeave) {
+        component.componentDidLeave();
+      }
+      delete this.currentlyTransitioningKeys[key];
+      const currentChildMapping = getChildMapping(H(this.props.children) || []);
+      if (currentChildMapping && currentChildMapping.hasOwnProperty(key)) {
+        this.performEnter(key);
+      } else {
+        const children = assign({}, this.state.children);
+        delete children[key];
+        this.setState({
+          children
+        });
+      }
+    }
+    render(_ref, _ref2) {
+      let {
+        childFactory,
+        transitionLeave,
+        transitionName: transitionName2,
+        transitionAppear,
+        transitionEnter,
+        transitionLeaveTimeout,
+        transitionEnterTimeout,
+        transitionAppearTimeout,
+        component,
+        ...props
+      } = _ref;
+      let {
+        children
+      } = _ref2;
+      const childrenToRender = Object.entries(children).map((_ref3) => {
+        let [key, child] = _ref3;
+        if (!child)
+          return void 0;
+        const ref = linkRef(this, key);
+        return E(childFactory(child), {
+          ref,
+          key
+        });
+      }).filter(Boolean);
+      return _(component, props, childrenToRender);
+    }
+  };
+  TransitionGroup.defaultProps = {
+    component: "span",
+    childFactory: identity
+  };
+  var TransitionGroup_default = TransitionGroup;
+
+  // node_modules/@uppy/informer/lib/Informer.js
+  var packageJson4 = {
+    "version": "4.1.2"
+  };
+  var Informer = class extends UIPlugin_default {
+    constructor(uppy, opts) {
+      super(uppy, opts);
+      this.render = (state) => {
+        return _("div", {
+          className: "uppy uppy-Informer"
+        }, _(TransitionGroup_default, null, state.info.map((info) => _(FadeIn, {
+          key: info.message
+        }, _("p", {
+          role: "alert"
+        }, info.message, " ", info.details && _("span", {
+          "aria-label": info.details,
+          "data-microtip-position": "top-left",
+          "data-microtip-size": "medium",
+          role: "tooltip",
+          onClick: () => (
+            // eslint-disable-next-line no-alert
+            alert(`${info.message} 
+
+ ${info.details}`)
+          )
+        }, "?"))))));
+      };
+      this.type = "progressindicator";
+      this.id = this.opts.id || "Informer";
+      this.title = "Informer";
+    }
+    install() {
+      const {
+        target
+      } = this.opts;
+      if (target) {
+        this.mount(target, this);
+      }
+    }
+  };
+  Informer.VERSION = packageJson4.version;
+
+  // node_modules/@uppy/utils/lib/dataURItoBlob.js
+  var DATA_URL_PATTERN = /^data:([^/]+\/[^,;]+(?:[^,]*?))(;base64)?,([\s\S]*)$/;
+  function dataURItoBlob(dataURI, opts, toFile) {
+    var _ref, _opts$mimeType;
+    const dataURIData = DATA_URL_PATTERN.exec(dataURI);
+    const mimeType = (_ref = (_opts$mimeType = opts.mimeType) != null ? _opts$mimeType : dataURIData == null ? void 0 : dataURIData[1]) != null ? _ref : "plain/text";
+    let data;
+    if ((dataURIData == null ? void 0 : dataURIData[2]) != null) {
+      const binary = atob(decodeURIComponent(dataURIData[3]));
+      const bytes = new Uint8Array(binary.length);
+      for (let i4 = 0; i4 < binary.length; i4++) {
+        bytes[i4] = binary.charCodeAt(i4);
+      }
+      data = [bytes];
+    } else if ((dataURIData == null ? void 0 : dataURIData[3]) != null) {
+      data = [decodeURIComponent(dataURIData[3])];
+    }
+    if (toFile) {
+      return new File(data, opts.name || "", {
+        type: mimeType
+      });
+    }
+    return new Blob(data, {
+      type: mimeType
+    });
+  }
+  var dataURItoBlob_default = dataURItoBlob;
+
+  // node_modules/@uppy/utils/lib/isObjectURL.js
+  function isObjectURL(url) {
+    return url.startsWith("blob:");
+  }
+
+  // node_modules/@uppy/utils/lib/isPreviewSupported.js
+  function isPreviewSupported(fileType) {
+    if (!fileType)
+      return false;
+    return /^[^/]+\/(jpe?g|gif|png|svg|svg\+xml|bmp|webp|avif)$/.test(fileType);
+  }
+
+  // node_modules/exifr/dist/mini.esm.mjs
+  function e2(e4, t4, s4) {
+    return t4 in e4 ? Object.defineProperty(e4, t4, { value: s4, enumerable: true, configurable: true, writable: true }) : e4[t4] = s4, e4;
+  }
+  var t2 = "undefined" != typeof self ? self : global;
+  var s2 = "undefined" != typeof navigator;
+  var i2 = s2 && "undefined" == typeof HTMLImageElement;
+  var n2 = !("undefined" == typeof global || "undefined" == typeof process || !process.versions || !process.versions.node);
+  var r2 = t2.Buffer;
+  var a2 = !!r2;
+  var h2 = (e4) => void 0 !== e4;
+  function f2(e4) {
+    return void 0 === e4 || (e4 instanceof Map ? 0 === e4.size : 0 === Object.values(e4).filter(h2).length);
+  }
+  function l2(e4) {
+    let t4 = new Error(e4);
+    throw delete t4.stack, t4;
+  }
+  function o2(e4) {
+    let t4 = function(e5) {
+      let t5 = 0;
+      return e5.ifd0.enabled && (t5 += 1024), e5.exif.enabled && (t5 += 2048), e5.makerNote && (t5 += 2048), e5.userComment && (t5 += 1024), e5.gps.enabled && (t5 += 512), e5.interop.enabled && (t5 += 100), e5.ifd1.enabled && (t5 += 1024), t5 + 2048;
+    }(e4);
+    return e4.jfif.enabled && (t4 += 50), e4.xmp.enabled && (t4 += 2e4), e4.iptc.enabled && (t4 += 14e3), e4.icc.enabled && (t4 += 6e3), t4;
+  }
+  var u2 = (e4) => String.fromCharCode.apply(null, e4);
+  var d2 = "undefined" != typeof TextDecoder ? new TextDecoder("utf-8") : void 0;
+  var c2 = class _c {
+    static from(e4, t4) {
+      return e4 instanceof this && e4.le === t4 ? e4 : new _c(e4, void 0, void 0, t4);
+    }
+    constructor(e4, t4 = 0, s4, i4) {
+      if ("boolean" == typeof i4 && (this.le = i4), Array.isArray(e4) && (e4 = new Uint8Array(e4)), 0 === e4)
+        this.byteOffset = 0, this.byteLength = 0;
+      else if (e4 instanceof ArrayBuffer) {
+        void 0 === s4 && (s4 = e4.byteLength - t4);
+        let i5 = new DataView(e4, t4, s4);
+        this._swapDataView(i5);
+      } else if (e4 instanceof Uint8Array || e4 instanceof DataView || e4 instanceof _c) {
+        void 0 === s4 && (s4 = e4.byteLength - t4), (t4 += e4.byteOffset) + s4 > e4.byteOffset + e4.byteLength && l2("Creating view outside of available memory in ArrayBuffer");
+        let i5 = new DataView(e4.buffer, t4, s4);
+        this._swapDataView(i5);
+      } else if ("number" == typeof e4) {
+        let t5 = new DataView(new ArrayBuffer(e4));
+        this._swapDataView(t5);
+      } else
+        l2("Invalid input argument for BufferView: " + e4);
+    }
+    _swapArrayBuffer(e4) {
+      this._swapDataView(new DataView(e4));
+    }
+    _swapBuffer(e4) {
+      this._swapDataView(new DataView(e4.buffer, e4.byteOffset, e4.byteLength));
+    }
+    _swapDataView(e4) {
+      this.dataView = e4, this.buffer = e4.buffer, this.byteOffset = e4.byteOffset, this.byteLength = e4.byteLength;
+    }
+    _lengthToEnd(e4) {
+      return this.byteLength - e4;
+    }
+    set(e4, t4, s4 = _c) {
+      return e4 instanceof DataView || e4 instanceof _c ? e4 = new Uint8Array(e4.buffer, e4.byteOffset, e4.byteLength) : e4 instanceof ArrayBuffer && (e4 = new Uint8Array(e4)), e4 instanceof Uint8Array || l2("BufferView.set(): Invalid data argument."), this.toUint8().set(e4, t4), new s4(this, t4, e4.byteLength);
+    }
+    subarray(e4, t4) {
+      return t4 = t4 || this._lengthToEnd(e4), new _c(this, e4, t4);
+    }
+    toUint8() {
+      return new Uint8Array(this.buffer, this.byteOffset, this.byteLength);
+    }
+    getUint8Array(e4, t4) {
+      return new Uint8Array(this.buffer, this.byteOffset + e4, t4);
+    }
+    getString(e4 = 0, t4 = this.byteLength) {
+      let s4 = this.getUint8Array(e4, t4);
+      return i4 = s4, d2 ? d2.decode(i4) : a2 ? Buffer.from(i4).toString("utf8") : decodeURIComponent(escape(u2(i4)));
+      var i4;
+    }
+    getLatin1String(e4 = 0, t4 = this.byteLength) {
+      let s4 = this.getUint8Array(e4, t4);
+      return u2(s4);
+    }
+    getUnicodeString(e4 = 0, t4 = this.byteLength) {
+      const s4 = [];
+      for (let i4 = 0; i4 < t4 && e4 + i4 < this.byteLength; i4 += 2)
+        s4.push(this.getUint16(e4 + i4));
+      return u2(s4);
+    }
+    getInt8(e4) {
+      return this.dataView.getInt8(e4);
+    }
+    getUint8(e4) {
+      return this.dataView.getUint8(e4);
+    }
+    getInt16(e4, t4 = this.le) {
+      return this.dataView.getInt16(e4, t4);
+    }
+    getInt32(e4, t4 = this.le) {
+      return this.dataView.getInt32(e4, t4);
+    }
+    getUint16(e4, t4 = this.le) {
+      return this.dataView.getUint16(e4, t4);
+    }
+    getUint32(e4, t4 = this.le) {
+      return this.dataView.getUint32(e4, t4);
+    }
+    getFloat32(e4, t4 = this.le) {
+      return this.dataView.getFloat32(e4, t4);
+    }
+    getFloat64(e4, t4 = this.le) {
+      return this.dataView.getFloat64(e4, t4);
+    }
+    getFloat(e4, t4 = this.le) {
+      return this.dataView.getFloat32(e4, t4);
+    }
+    getDouble(e4, t4 = this.le) {
+      return this.dataView.getFloat64(e4, t4);
+    }
+    getUintBytes(e4, t4, s4) {
+      switch (t4) {
+        case 1:
+          return this.getUint8(e4, s4);
+        case 2:
+          return this.getUint16(e4, s4);
+        case 4:
+          return this.getUint32(e4, s4);
+        case 8:
+          return this.getUint64 && this.getUint64(e4, s4);
+      }
+    }
+    getUint(e4, t4, s4) {
+      switch (t4) {
+        case 8:
+          return this.getUint8(e4, s4);
+        case 16:
+          return this.getUint16(e4, s4);
+        case 32:
+          return this.getUint32(e4, s4);
+        case 64:
+          return this.getUint64 && this.getUint64(e4, s4);
+      }
+    }
+    toString(e4) {
+      return this.dataView.toString(e4, this.constructor.name);
+    }
+    ensureChunk() {
+    }
+  };
+  function p2(e4, t4) {
+    l2(`${e4} '${t4}' was not loaded, try using full build of exifr.`);
+  }
+  var g2 = class extends Map {
+    constructor(e4) {
+      super(), this.kind = e4;
+    }
+    get(e4, t4) {
+      return this.has(e4) || p2(this.kind, e4), t4 && (e4 in t4 || function(e5, t5) {
+        l2(`Unknown ${e5} '${t5}'.`);
+      }(this.kind, e4), t4[e4].enabled || p2(this.kind, e4)), super.get(e4);
+    }
+    keyList() {
+      return Array.from(this.keys());
+    }
+  };
+  var m2 = new g2("file parser");
+  var y2 = new g2("segment parser");
+  var b2 = new g2("file reader");
+  var w2 = t2.fetch;
+  function k2(e4, t4) {
+    return (i4 = e4).startsWith("data:") || i4.length > 1e4 ? v2(e4, t4, "base64") : n2 && e4.includes("://") ? O2(e4, t4, "url", S2) : n2 ? v2(e4, t4, "fs") : s2 ? O2(e4, t4, "url", S2) : void l2("Invalid input argument");
+    var i4;
+  }
+  async function O2(e4, t4, s4, i4) {
+    return b2.has(s4) ? v2(e4, t4, s4) : i4 ? async function(e5, t5) {
+      let s5 = await t5(e5);
+      return new c2(s5);
+    }(e4, i4) : void l2(`Parser ${s4} is not loaded`);
+  }
+  async function v2(e4, t4, s4) {
+    let i4 = new (b2.get(s4))(e4, t4);
+    return await i4.read(), i4;
+  }
+  var S2 = (e4) => w2(e4).then((e5) => e5.arrayBuffer());
+  var A2 = (e4) => new Promise((t4, s4) => {
+    let i4 = new FileReader();
+    i4.onloadend = () => t4(i4.result || new ArrayBuffer()), i4.onerror = s4, i4.readAsArrayBuffer(e4);
+  });
+  var U = class extends Map {
+    get tagKeys() {
+      return this.allKeys || (this.allKeys = Array.from(this.keys())), this.allKeys;
+    }
+    get tagValues() {
+      return this.allValues || (this.allValues = Array.from(this.values())), this.allValues;
+    }
+  };
+  function x2(e4, t4, s4) {
+    let i4 = new U();
+    for (let [e5, t5] of s4)
+      i4.set(e5, t5);
+    if (Array.isArray(t4))
+      for (let s5 of t4)
+        e4.set(s5, i4);
+    else
+      e4.set(t4, i4);
+    return i4;
+  }
+  function C2(e4, t4, s4) {
+    let i4, n3 = e4.get(t4);
+    for (i4 of s4)
+      n3.set(i4[0], i4[1]);
+  }
+  var B2 = /* @__PURE__ */ new Map();
+  var V2 = /* @__PURE__ */ new Map();
+  var I2 = /* @__PURE__ */ new Map();
+  var L2 = ["chunked", "firstChunkSize", "firstChunkSizeNode", "firstChunkSizeBrowser", "chunkSize", "chunkLimit"];
+  var T2 = ["jfif", "xmp", "icc", "iptc", "ihdr"];
+  var z2 = ["tiff", ...T2];
+  var P2 = ["ifd0", "ifd1", "exif", "gps", "interop"];
+  var F2 = [...z2, ...P2];
+  var j2 = ["makerNote", "userComment"];
+  var E2 = ["translateKeys", "translateValues", "reviveValues", "multiSegment"];
+  var M2 = [...E2, "sanitize", "mergeOutput", "silentErrors"];
+  var _2 = class {
+    get translate() {
+      return this.translateKeys || this.translateValues || this.reviveValues;
+    }
+  };
+  var D = class extends _2 {
+    get needed() {
+      return this.enabled || this.deps.size > 0;
+    }
+    constructor(t4, s4, i4, n3) {
+      if (super(), e2(this, "enabled", false), e2(this, "skip", /* @__PURE__ */ new Set()), e2(this, "pick", /* @__PURE__ */ new Set()), e2(this, "deps", /* @__PURE__ */ new Set()), e2(this, "translateKeys", false), e2(this, "translateValues", false), e2(this, "reviveValues", false), this.key = t4, this.enabled = s4, this.parse = this.enabled, this.applyInheritables(n3), this.canBeFiltered = P2.includes(t4), this.canBeFiltered && (this.dict = B2.get(t4)), void 0 !== i4)
+        if (Array.isArray(i4))
+          this.parse = this.enabled = true, this.canBeFiltered && i4.length > 0 && this.translateTagSet(i4, this.pick);
+        else if ("object" == typeof i4) {
+          if (this.enabled = true, this.parse = false !== i4.parse, this.canBeFiltered) {
+            let { pick: e4, skip: t5 } = i4;
+            e4 && e4.length > 0 && this.translateTagSet(e4, this.pick), t5 && t5.length > 0 && this.translateTagSet(t5, this.skip);
+          }
+          this.applyInheritables(i4);
+        } else
+          true === i4 || false === i4 ? this.parse = this.enabled = i4 : l2(`Invalid options argument: ${i4}`);
+    }
+    applyInheritables(e4) {
+      let t4, s4;
+      for (t4 of E2)
+        s4 = e4[t4], void 0 !== s4 && (this[t4] = s4);
+    }
+    translateTagSet(e4, t4) {
+      if (this.dict) {
+        let s4, i4, { tagKeys: n3, tagValues: r4 } = this.dict;
+        for (s4 of e4)
+          "string" == typeof s4 ? (i4 = r4.indexOf(s4), -1 === i4 && (i4 = n3.indexOf(Number(s4))), -1 !== i4 && t4.add(Number(n3[i4]))) : t4.add(s4);
+      } else
+        for (let s4 of e4)
+          t4.add(s4);
+    }
+    finalizeFilters() {
+      !this.enabled && this.deps.size > 0 ? (this.enabled = true, X(this.pick, this.deps)) : this.enabled && this.pick.size > 0 && X(this.pick, this.deps);
+    }
+  };
+  var N2 = { jfif: false, tiff: true, xmp: false, icc: false, iptc: false, ifd0: true, ifd1: false, exif: true, gps: true, interop: false, ihdr: void 0, makerNote: false, userComment: false, multiSegment: false, skip: [], pick: [], translateKeys: true, translateValues: true, reviveValues: true, sanitize: true, mergeOutput: true, silentErrors: true, chunked: true, firstChunkSize: void 0, firstChunkSizeNode: 512, firstChunkSizeBrowser: 65536, chunkSize: 65536, chunkLimit: 5 };
+  var $2 = /* @__PURE__ */ new Map();
+  var R = class extends _2 {
+    static useCached(e4) {
+      let t4 = $2.get(e4);
+      return void 0 !== t4 || (t4 = new this(e4), $2.set(e4, t4)), t4;
+    }
+    constructor(e4) {
+      super(), true === e4 ? this.setupFromTrue() : void 0 === e4 ? this.setupFromUndefined() : Array.isArray(e4) ? this.setupFromArray(e4) : "object" == typeof e4 ? this.setupFromObject(e4) : l2(`Invalid options argument ${e4}`), void 0 === this.firstChunkSize && (this.firstChunkSize = s2 ? this.firstChunkSizeBrowser : this.firstChunkSizeNode), this.mergeOutput && (this.ifd1.enabled = false), this.filterNestedSegmentTags(), this.traverseTiffDependencyTree(), this.checkLoadedPlugins();
+    }
+    setupFromUndefined() {
+      let e4;
+      for (e4 of L2)
+        this[e4] = N2[e4];
+      for (e4 of M2)
+        this[e4] = N2[e4];
+      for (e4 of j2)
+        this[e4] = N2[e4];
+      for (e4 of F2)
+        this[e4] = new D(e4, N2[e4], void 0, this);
+    }
+    setupFromTrue() {
+      let e4;
+      for (e4 of L2)
+        this[e4] = N2[e4];
+      for (e4 of M2)
+        this[e4] = N2[e4];
+      for (e4 of j2)
+        this[e4] = true;
+      for (e4 of F2)
+        this[e4] = new D(e4, true, void 0, this);
+    }
+    setupFromArray(e4) {
+      let t4;
+      for (t4 of L2)
+        this[t4] = N2[t4];
+      for (t4 of M2)
+        this[t4] = N2[t4];
+      for (t4 of j2)
+        this[t4] = N2[t4];
+      for (t4 of F2)
+        this[t4] = new D(t4, false, void 0, this);
+      this.setupGlobalFilters(e4, void 0, P2);
+    }
+    setupFromObject(e4) {
+      let t4;
+      for (t4 of (P2.ifd0 = P2.ifd0 || P2.image, P2.ifd1 = P2.ifd1 || P2.thumbnail, Object.assign(this, e4), L2))
+        this[t4] = W(e4[t4], N2[t4]);
+      for (t4 of M2)
+        this[t4] = W(e4[t4], N2[t4]);
+      for (t4 of j2)
+        this[t4] = W(e4[t4], N2[t4]);
+      for (t4 of z2)
+        this[t4] = new D(t4, N2[t4], e4[t4], this);
+      for (t4 of P2)
+        this[t4] = new D(t4, N2[t4], e4[t4], this.tiff);
+      this.setupGlobalFilters(e4.pick, e4.skip, P2, F2), true === e4.tiff ? this.batchEnableWithBool(P2, true) : false === e4.tiff ? this.batchEnableWithUserValue(P2, e4) : Array.isArray(e4.tiff) ? this.setupGlobalFilters(e4.tiff, void 0, P2) : "object" == typeof e4.tiff && this.setupGlobalFilters(e4.tiff.pick, e4.tiff.skip, P2);
+    }
+    batchEnableWithBool(e4, t4) {
+      for (let s4 of e4)
+        this[s4].enabled = t4;
+    }
+    batchEnableWithUserValue(e4, t4) {
+      for (let s4 of e4) {
+        let e5 = t4[s4];
+        this[s4].enabled = false !== e5 && void 0 !== e5;
+      }
+    }
+    setupGlobalFilters(e4, t4, s4, i4 = s4) {
+      if (e4 && e4.length) {
+        for (let e5 of i4)
+          this[e5].enabled = false;
+        let t5 = K(e4, s4);
+        for (let [e5, s5] of t5)
+          X(this[e5].pick, s5), this[e5].enabled = true;
+      } else if (t4 && t4.length) {
+        let e5 = K(t4, s4);
+        for (let [t5, s5] of e5)
+          X(this[t5].skip, s5);
+      }
+    }
+    filterNestedSegmentTags() {
+      let { ifd0: e4, exif: t4, xmp: s4, iptc: i4, icc: n3 } = this;
+      this.makerNote ? t4.deps.add(37500) : t4.skip.add(37500), this.userComment ? t4.deps.add(37510) : t4.skip.add(37510), s4.enabled || e4.skip.add(700), i4.enabled || e4.skip.add(33723), n3.enabled || e4.skip.add(34675);
+    }
+    traverseTiffDependencyTree() {
+      let { ifd0: e4, exif: t4, gps: s4, interop: i4 } = this;
+      i4.needed && (t4.deps.add(40965), e4.deps.add(40965)), t4.needed && e4.deps.add(34665), s4.needed && e4.deps.add(34853), this.tiff.enabled = P2.some((e5) => true === this[e5].enabled) || this.makerNote || this.userComment;
+      for (let e5 of P2)
+        this[e5].finalizeFilters();
+    }
+    get onlyTiff() {
+      return !T2.map((e4) => this[e4].enabled).some((e4) => true === e4) && this.tiff.enabled;
+    }
+    checkLoadedPlugins() {
+      for (let e4 of z2)
+        this[e4].enabled && !y2.has(e4) && p2("segment parser", e4);
+    }
+  };
+  function K(e4, t4) {
+    let s4, i4, n3, r4, a4 = [];
+    for (n3 of t4) {
+      for (r4 of (s4 = B2.get(n3), i4 = [], s4))
+        (e4.includes(r4[0]) || e4.includes(r4[1])) && i4.push(r4[0]);
+      i4.length && a4.push([n3, i4]);
+    }
+    return a4;
+  }
+  function W(e4, t4) {
+    return void 0 !== e4 ? e4 : void 0 !== t4 ? t4 : void 0;
+  }
+  function X(e4, t4) {
+    for (let s4 of t4)
+      e4.add(s4);
+  }
+  e2(R, "default", N2);
+  var H2 = class {
+    constructor(t4) {
+      e2(this, "parsers", {}), e2(this, "output", {}), e2(this, "errors", []), e2(this, "pushToErrors", (e4) => this.errors.push(e4)), this.options = R.useCached(t4);
+    }
+    async read(e4) {
+      this.file = await function(e5, t4) {
+        return "string" == typeof e5 ? k2(e5, t4) : s2 && !i2 && e5 instanceof HTMLImageElement ? k2(e5.src, t4) : e5 instanceof Uint8Array || e5 instanceof ArrayBuffer || e5 instanceof DataView ? new c2(e5) : s2 && e5 instanceof Blob ? O2(e5, t4, "blob", A2) : void l2("Invalid input argument");
+      }(e4, this.options);
+    }
+    setup() {
+      if (this.fileParser)
+        return;
+      let { file: e4 } = this, t4 = e4.getUint16(0);
+      for (let [s4, i4] of m2)
+        if (i4.canHandle(e4, t4))
+          return this.fileParser = new i4(this.options, this.file, this.parsers), e4[s4] = true;
+      this.file.close && this.file.close(), l2("Unknown file format");
+    }
+    async parse() {
+      let { output: e4, errors: t4 } = this;
+      return this.setup(), this.options.silentErrors ? (await this.executeParsers().catch(this.pushToErrors), t4.push(...this.fileParser.errors)) : await this.executeParsers(), this.file.close && this.file.close(), this.options.silentErrors && t4.length > 0 && (e4.errors = t4), f2(s4 = e4) ? void 0 : s4;
+      var s4;
+    }
+    async executeParsers() {
+      let { output: e4 } = this;
+      await this.fileParser.parse();
+      let t4 = Object.values(this.parsers).map(async (t5) => {
+        let s4 = await t5.parse();
+        t5.assignToOutput(e4, s4);
+      });
+      this.options.silentErrors && (t4 = t4.map((e5) => e5.catch(this.pushToErrors))), await Promise.all(t4);
+    }
+    async extractThumbnail() {
+      this.setup();
+      let { options: e4, file: t4 } = this, s4 = y2.get("tiff", e4);
+      var i4;
+      if (t4.tiff ? i4 = { start: 0, type: "tiff" } : t4.jpeg && (i4 = await this.fileParser.getOrFindSegment("tiff")), void 0 === i4)
+        return;
+      let n3 = await this.fileParser.ensureSegmentChunk(i4), r4 = this.parsers.tiff = new s4(n3, e4, t4), a4 = await r4.extractThumbnail();
+      return t4.close && t4.close(), a4;
+    }
+  };
+  async function Y(e4, t4) {
+    let s4 = new H2(t4);
+    return await s4.read(e4), s4.parse();
+  }
+  var G = Object.freeze({ __proto__: null, parse: Y, Exifr: H2, fileParsers: m2, segmentParsers: y2, fileReaders: b2, tagKeys: B2, tagValues: V2, tagRevivers: I2, createDictionary: x2, extendDictionary: C2, fetchUrlAsArrayBuffer: S2, readBlobAsArrayBuffer: A2, chunkedProps: L2, otherSegments: T2, segments: z2, tiffBlocks: P2, segmentsAndBlocks: F2, tiffExtractables: j2, inheritables: E2, allFormatters: M2, Options: R });
+  var J = class {
+    static findPosition(e4, t4) {
+      let s4 = e4.getUint16(t4 + 2) + 2, i4 = "function" == typeof this.headerLength ? this.headerLength(e4, t4, s4) : this.headerLength, n3 = t4 + i4, r4 = s4 - i4;
+      return { offset: t4, length: s4, headerLength: i4, start: n3, size: r4, end: n3 + r4 };
+    }
+    static parse(e4, t4 = {}) {
+      return new this(e4, new R({ [this.type]: t4 }), e4).parse();
+    }
+    normalizeInput(e4) {
+      return e4 instanceof c2 ? e4 : new c2(e4);
+    }
+    constructor(t4, s4 = {}, i4) {
+      e2(this, "errors", []), e2(this, "raw", /* @__PURE__ */ new Map()), e2(this, "handleError", (e4) => {
+        if (!this.options.silentErrors)
+          throw e4;
+        this.errors.push(e4.message);
+      }), this.chunk = this.normalizeInput(t4), this.file = i4, this.type = this.constructor.type, this.globalOptions = this.options = s4, this.localOptions = s4[this.type], this.canTranslate = this.localOptions && this.localOptions.translate;
+    }
+    translate() {
+      this.canTranslate && (this.translated = this.translateBlock(this.raw, this.type));
+    }
+    get output() {
+      return this.translated ? this.translated : this.raw ? Object.fromEntries(this.raw) : void 0;
+    }
+    translateBlock(e4, t4) {
+      let s4 = I2.get(t4), i4 = V2.get(t4), n3 = B2.get(t4), r4 = this.options[t4], a4 = r4.reviveValues && !!s4, h4 = r4.translateValues && !!i4, f4 = r4.translateKeys && !!n3, l4 = {};
+      for (let [t5, r5] of e4)
+        a4 && s4.has(t5) ? r5 = s4.get(t5)(r5) : h4 && i4.has(t5) && (r5 = this.translateValue(r5, i4.get(t5))), f4 && n3.has(t5) && (t5 = n3.get(t5) || t5), l4[t5] = r5;
+      return l4;
+    }
+    translateValue(e4, t4) {
+      return t4[e4] || t4.DEFAULT || e4;
+    }
+    assignToOutput(e4, t4) {
+      this.assignObjectToOutput(e4, this.constructor.type, t4);
+    }
+    assignObjectToOutput(e4, t4, s4) {
+      if (this.globalOptions.mergeOutput)
+        return Object.assign(e4, s4);
+      e4[t4] ? Object.assign(e4[t4], s4) : e4[t4] = s4;
+    }
+  };
+  e2(J, "headerLength", 4), e2(J, "type", void 0), e2(J, "multiSegment", false), e2(J, "canHandle", () => false);
+  function q2(e4) {
+    return 192 === e4 || 194 === e4 || 196 === e4 || 219 === e4 || 221 === e4 || 218 === e4 || 254 === e4;
+  }
+  function Q(e4) {
+    return e4 >= 224 && e4 <= 239;
+  }
+  function Z(e4, t4, s4) {
+    for (let [i4, n3] of y2)
+      if (n3.canHandle(e4, t4, s4))
+        return i4;
+  }
+  var ee2 = class extends class {
+    constructor(t4, s4, i4) {
+      e2(this, "errors", []), e2(this, "ensureSegmentChunk", async (e4) => {
+        let t5 = e4.start, s5 = e4.size || 65536;
+        if (this.file.chunked)
+          if (this.file.available(t5, s5))
+            e4.chunk = this.file.subarray(t5, s5);
+          else
+            try {
+              e4.chunk = await this.file.readChunk(t5, s5);
+            } catch (t6) {
+              l2(`Couldn't read segment: ${JSON.stringify(e4)}. ${t6.message}`);
+            }
+        else
+          this.file.byteLength > t5 + s5 ? e4.chunk = this.file.subarray(t5, s5) : void 0 === e4.size ? e4.chunk = this.file.subarray(t5) : l2("Segment unreachable: " + JSON.stringify(e4));
+        return e4.chunk;
+      }), this.extendOptions && this.extendOptions(t4), this.options = t4, this.file = s4, this.parsers = i4;
+    }
+    injectSegment(e4, t4) {
+      this.options[e4].enabled && this.createParser(e4, t4);
+    }
+    createParser(e4, t4) {
+      let s4 = new (y2.get(e4))(t4, this.options, this.file);
+      return this.parsers[e4] = s4;
+    }
+    createParsers(e4) {
+      for (let t4 of e4) {
+        let { type: e5, chunk: s4 } = t4, i4 = this.options[e5];
+        if (i4 && i4.enabled) {
+          let t5 = this.parsers[e5];
+          t5 && t5.append || t5 || this.createParser(e5, s4);
+        }
+      }
+    }
+    async readSegments(e4) {
+      let t4 = e4.map(this.ensureSegmentChunk);
+      await Promise.all(t4);
+    }
+  } {
+    constructor(...t4) {
+      super(...t4), e2(this, "appSegments", []), e2(this, "jpegSegments", []), e2(this, "unknownSegments", []);
+    }
+    static canHandle(e4, t4) {
+      return 65496 === t4;
+    }
+    async parse() {
+      await this.findAppSegments(), await this.readSegments(this.appSegments), this.mergeMultiSegments(), this.createParsers(this.mergedAppSegments || this.appSegments);
+    }
+    setupSegmentFinderArgs(e4) {
+      true === e4 ? (this.findAll = true, this.wanted = new Set(y2.keyList())) : (e4 = void 0 === e4 ? y2.keyList().filter((e5) => this.options[e5].enabled) : e4.filter((e5) => this.options[e5].enabled && y2.has(e5)), this.findAll = false, this.remaining = new Set(e4), this.wanted = new Set(e4)), this.unfinishedMultiSegment = false;
+    }
+    async findAppSegments(e4 = 0, t4) {
+      this.setupSegmentFinderArgs(t4);
+      let { file: s4, findAll: i4, wanted: n3, remaining: r4 } = this;
+      if (!i4 && this.file.chunked && (i4 = Array.from(n3).some((e5) => {
+        let t5 = y2.get(e5), s5 = this.options[e5];
+        return t5.multiSegment && s5.multiSegment;
+      }), i4 && await this.file.readWhole()), e4 = this.findAppSegmentsInRange(e4, s4.byteLength), !this.options.onlyTiff && s4.chunked) {
+        let t5 = false;
+        for (; r4.size > 0 && !t5 && (s4.canReadNextChunk || this.unfinishedMultiSegment); ) {
+          let { nextChunkOffset: i5 } = s4, n4 = this.appSegments.some((e5) => !this.file.available(e5.offset || e5.start, e5.length || e5.size));
+          if (t5 = e4 > i5 && !n4 ? !await s4.readNextChunk(e4) : !await s4.readNextChunk(i5), void 0 === (e4 = this.findAppSegmentsInRange(e4, s4.byteLength)))
+            return;
+        }
+      }
+    }
+    findAppSegmentsInRange(e4, t4) {
+      t4 -= 2;
+      let s4, i4, n3, r4, a4, h4, { file: f4, findAll: l4, wanted: o4, remaining: u4, options: d4 } = this;
+      for (; e4 < t4; e4++)
+        if (255 === f4.getUint8(e4)) {
+          if (s4 = f4.getUint8(e4 + 1), Q(s4)) {
+            if (i4 = f4.getUint16(e4 + 2), n3 = Z(f4, e4, i4), n3 && o4.has(n3) && (r4 = y2.get(n3), a4 = r4.findPosition(f4, e4), h4 = d4[n3], a4.type = n3, this.appSegments.push(a4), !l4 && (r4.multiSegment && h4.multiSegment ? (this.unfinishedMultiSegment = a4.chunkNumber < a4.chunkCount, this.unfinishedMultiSegment || u4.delete(n3)) : u4.delete(n3), 0 === u4.size)))
+              break;
+            d4.recordUnknownSegments && (a4 = J.findPosition(f4, e4), a4.marker = s4, this.unknownSegments.push(a4)), e4 += i4 + 1;
+          } else if (q2(s4)) {
+            if (i4 = f4.getUint16(e4 + 2), 218 === s4 && false !== d4.stopAfterSos)
+              return;
+            d4.recordJpegSegments && this.jpegSegments.push({ offset: e4, length: i4, marker: s4 }), e4 += i4 + 1;
+          }
+        }
+      return e4;
+    }
+    mergeMultiSegments() {
+      if (!this.appSegments.some((e5) => e5.multiSegment))
+        return;
+      let e4 = function(e5, t4) {
+        let s4, i4, n3, r4 = /* @__PURE__ */ new Map();
+        for (let a4 = 0; a4 < e5.length; a4++)
+          s4 = e5[a4], i4 = s4[t4], r4.has(i4) ? n3 = r4.get(i4) : r4.set(i4, n3 = []), n3.push(s4);
+        return Array.from(r4);
+      }(this.appSegments, "type");
+      this.mergedAppSegments = e4.map(([e5, t4]) => {
+        let s4 = y2.get(e5, this.options);
+        if (s4.handleMultiSegments) {
+          return { type: e5, chunk: s4.handleMultiSegments(t4) };
+        }
+        return t4[0];
+      });
+    }
+    getSegment(e4) {
+      return this.appSegments.find((t4) => t4.type === e4);
+    }
+    async getOrFindSegment(e4) {
+      let t4 = this.getSegment(e4);
+      return void 0 === t4 && (await this.findAppSegments(0, [e4]), t4 = this.getSegment(e4)), t4;
+    }
+  };
+  e2(ee2, "type", "jpeg"), m2.set("jpeg", ee2);
+  var te = [void 0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4];
+  var se = class extends J {
+    parseHeader() {
+      var e4 = this.chunk.getUint16();
+      18761 === e4 ? this.le = true : 19789 === e4 && (this.le = false), this.chunk.le = this.le, this.headerParsed = true;
+    }
+    parseTags(e4, t4, s4 = /* @__PURE__ */ new Map()) {
+      let { pick: i4, skip: n3 } = this.options[t4];
+      i4 = new Set(i4);
+      let r4 = i4.size > 0, a4 = 0 === n3.size, h4 = this.chunk.getUint16(e4);
+      e4 += 2;
+      for (let f4 = 0; f4 < h4; f4++) {
+        let h5 = this.chunk.getUint16(e4);
+        if (r4) {
+          if (i4.has(h5) && (s4.set(h5, this.parseTag(e4, h5, t4)), i4.delete(h5), 0 === i4.size))
+            break;
+        } else
+          !a4 && n3.has(h5) || s4.set(h5, this.parseTag(e4, h5, t4));
+        e4 += 12;
+      }
+      return s4;
+    }
+    parseTag(e4, t4, s4) {
+      let { chunk: i4 } = this, n3 = i4.getUint16(e4 + 2), r4 = i4.getUint32(e4 + 4), a4 = te[n3];
+      if (a4 * r4 <= 4 ? e4 += 8 : e4 = i4.getUint32(e4 + 8), (n3 < 1 || n3 > 13) && l2(`Invalid TIFF value type. block: ${s4.toUpperCase()}, tag: ${t4.toString(16)}, type: ${n3}, offset ${e4}`), e4 > i4.byteLength && l2(`Invalid TIFF value offset. block: ${s4.toUpperCase()}, tag: ${t4.toString(16)}, type: ${n3}, offset ${e4} is outside of chunk size ${i4.byteLength}`), 1 === n3)
+        return i4.getUint8Array(e4, r4);
+      if (2 === n3)
+        return "" === (h4 = function(e5) {
+          for (; e5.endsWith("\0"); )
+            e5 = e5.slice(0, -1);
+          return e5;
+        }(h4 = i4.getString(e4, r4)).trim()) ? void 0 : h4;
+      var h4;
+      if (7 === n3)
+        return i4.getUint8Array(e4, r4);
+      if (1 === r4)
+        return this.parseTagValue(n3, e4);
+      {
+        let t5 = new (function(e5) {
+          switch (e5) {
+            case 1:
+              return Uint8Array;
+            case 3:
+              return Uint16Array;
+            case 4:
+              return Uint32Array;
+            case 5:
+              return Array;
+            case 6:
+              return Int8Array;
+            case 8:
+              return Int16Array;
+            case 9:
+              return Int32Array;
+            case 10:
+              return Array;
+            case 11:
+              return Float32Array;
+            case 12:
+              return Float64Array;
+            default:
+              return Array;
+          }
+        }(n3))(r4), s5 = a4;
+        for (let i5 = 0; i5 < r4; i5++)
+          t5[i5] = this.parseTagValue(n3, e4), e4 += s5;
+        return t5;
+      }
+    }
+    parseTagValue(e4, t4) {
+      let { chunk: s4 } = this;
+      switch (e4) {
+        case 1:
+          return s4.getUint8(t4);
+        case 3:
+          return s4.getUint16(t4);
+        case 4:
+          return s4.getUint32(t4);
+        case 5:
+          return s4.getUint32(t4) / s4.getUint32(t4 + 4);
+        case 6:
+          return s4.getInt8(t4);
+        case 8:
+          return s4.getInt16(t4);
+        case 9:
+          return s4.getInt32(t4);
+        case 10:
+          return s4.getInt32(t4) / s4.getInt32(t4 + 4);
+        case 11:
+          return s4.getFloat(t4);
+        case 12:
+          return s4.getDouble(t4);
+        case 13:
+          return s4.getUint32(t4);
+        default:
+          l2(`Invalid tiff type ${e4}`);
+      }
+    }
+  };
+  var ie = class extends se {
+    static canHandle(e4, t4) {
+      return 225 === e4.getUint8(t4 + 1) && 1165519206 === e4.getUint32(t4 + 4) && 0 === e4.getUint16(t4 + 8);
+    }
+    async parse() {
+      this.parseHeader();
+      let { options: e4 } = this;
+      return e4.ifd0.enabled && await this.parseIfd0Block(), e4.exif.enabled && await this.safeParse("parseExifBlock"), e4.gps.enabled && await this.safeParse("parseGpsBlock"), e4.interop.enabled && await this.safeParse("parseInteropBlock"), e4.ifd1.enabled && await this.safeParse("parseThumbnailBlock"), this.createOutput();
+    }
+    safeParse(e4) {
+      let t4 = this[e4]();
+      return void 0 !== t4.catch && (t4 = t4.catch(this.handleError)), t4;
+    }
+    findIfd0Offset() {
+      void 0 === this.ifd0Offset && (this.ifd0Offset = this.chunk.getUint32(4));
+    }
+    findIfd1Offset() {
+      if (void 0 === this.ifd1Offset) {
+        this.findIfd0Offset();
+        let e4 = this.chunk.getUint16(this.ifd0Offset), t4 = this.ifd0Offset + 2 + 12 * e4;
+        this.ifd1Offset = this.chunk.getUint32(t4);
+      }
+    }
+    parseBlock(e4, t4) {
+      let s4 = /* @__PURE__ */ new Map();
+      return this[t4] = s4, this.parseTags(e4, t4, s4), s4;
+    }
+    async parseIfd0Block() {
+      if (this.ifd0)
+        return;
+      let { file: e4 } = this;
+      this.findIfd0Offset(), this.ifd0Offset < 8 && l2("Malformed EXIF data"), !e4.chunked && this.ifd0Offset > e4.byteLength && l2(`IFD0 offset points to outside of file.
+this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tiff && await e4.ensureChunk(this.ifd0Offset, o2(this.options));
+      let t4 = this.parseBlock(this.ifd0Offset, "ifd0");
+      return 0 !== t4.size ? (this.exifOffset = t4.get(34665), this.interopOffset = t4.get(40965), this.gpsOffset = t4.get(34853), this.xmp = t4.get(700), this.iptc = t4.get(33723), this.icc = t4.get(34675), this.options.sanitize && (t4.delete(34665), t4.delete(40965), t4.delete(34853), t4.delete(700), t4.delete(33723), t4.delete(34675)), t4) : void 0;
+    }
+    async parseExifBlock() {
+      if (this.exif)
+        return;
+      if (this.ifd0 || await this.parseIfd0Block(), void 0 === this.exifOffset)
+        return;
+      this.file.tiff && await this.file.ensureChunk(this.exifOffset, o2(this.options));
+      let e4 = this.parseBlock(this.exifOffset, "exif");
+      return this.interopOffset || (this.interopOffset = e4.get(40965)), this.makerNote = e4.get(37500), this.userComment = e4.get(37510), this.options.sanitize && (e4.delete(40965), e4.delete(37500), e4.delete(37510)), this.unpack(e4, 41728), this.unpack(e4, 41729), e4;
+    }
+    unpack(e4, t4) {
+      let s4 = e4.get(t4);
+      s4 && 1 === s4.length && e4.set(t4, s4[0]);
+    }
+    async parseGpsBlock() {
+      if (this.gps)
+        return;
+      if (this.ifd0 || await this.parseIfd0Block(), void 0 === this.gpsOffset)
+        return;
+      let e4 = this.parseBlock(this.gpsOffset, "gps");
+      return e4 && e4.has(2) && e4.has(4) && (e4.set("latitude", ne(...e4.get(2), e4.get(1))), e4.set("longitude", ne(...e4.get(4), e4.get(3)))), e4;
+    }
+    async parseInteropBlock() {
+      if (!this.interop && (this.ifd0 || await this.parseIfd0Block(), void 0 !== this.interopOffset || this.exif || await this.parseExifBlock(), void 0 !== this.interopOffset))
+        return this.parseBlock(this.interopOffset, "interop");
+    }
+    async parseThumbnailBlock(e4 = false) {
+      if (!this.ifd1 && !this.ifd1Parsed && (!this.options.mergeOutput || e4))
+        return this.findIfd1Offset(), this.ifd1Offset > 0 && (this.parseBlock(this.ifd1Offset, "ifd1"), this.ifd1Parsed = true), this.ifd1;
+    }
+    async extractThumbnail() {
+      if (this.headerParsed || this.parseHeader(), this.ifd1Parsed || await this.parseThumbnailBlock(true), void 0 === this.ifd1)
+        return;
+      let e4 = this.ifd1.get(513), t4 = this.ifd1.get(514);
+      return this.chunk.getUint8Array(e4, t4);
+    }
+    get image() {
+      return this.ifd0;
+    }
+    get thumbnail() {
+      return this.ifd1;
+    }
+    createOutput() {
+      let e4, t4, s4, i4 = {};
+      for (t4 of P2)
+        if (e4 = this[t4], !f2(e4))
+          if (s4 = this.canTranslate ? this.translateBlock(e4, t4) : Object.fromEntries(e4), this.options.mergeOutput) {
+            if ("ifd1" === t4)
+              continue;
+            Object.assign(i4, s4);
+          } else
+            i4[t4] = s4;
+      return this.makerNote && (i4.makerNote = this.makerNote), this.userComment && (i4.userComment = this.userComment), i4;
+    }
+    assignToOutput(e4, t4) {
+      if (this.globalOptions.mergeOutput)
+        Object.assign(e4, t4);
+      else
+        for (let [s4, i4] of Object.entries(t4))
+          this.assignObjectToOutput(e4, s4, i4);
+    }
+  };
+  function ne(e4, t4, s4, i4) {
+    var n3 = e4 + t4 / 60 + s4 / 3600;
+    return "S" !== i4 && "W" !== i4 || (n3 *= -1), n3;
+  }
+  e2(ie, "type", "tiff"), e2(ie, "headerLength", 10), y2.set("tiff", ie);
+  var re = Object.freeze({ __proto__: null, default: G, Exifr: H2, fileParsers: m2, segmentParsers: y2, fileReaders: b2, tagKeys: B2, tagValues: V2, tagRevivers: I2, createDictionary: x2, extendDictionary: C2, fetchUrlAsArrayBuffer: S2, readBlobAsArrayBuffer: A2, chunkedProps: L2, otherSegments: T2, segments: z2, tiffBlocks: P2, segmentsAndBlocks: F2, tiffExtractables: j2, inheritables: E2, allFormatters: M2, Options: R, parse: Y });
+  var ae = { ifd0: false, ifd1: false, exif: false, gps: false, interop: false, sanitize: false, reviveValues: true, translateKeys: false, translateValues: false, mergeOutput: false };
+  var he = Object.assign({}, ae, { firstChunkSize: 4e4, gps: [1, 2, 3, 4] });
+  var le = Object.assign({}, ae, { tiff: false, ifd1: true, mergeOutput: false });
+  var de = Object.assign({}, ae, { firstChunkSize: 4e4, ifd0: [274] });
+  async function ce(e4) {
+    let t4 = new H2(de);
+    await t4.read(e4);
+    let s4 = await t4.parse();
+    if (s4 && s4.ifd0)
+      return s4.ifd0[274];
+  }
+  var pe = Object.freeze({ 1: { dimensionSwapped: false, scaleX: 1, scaleY: 1, deg: 0, rad: 0 }, 2: { dimensionSwapped: false, scaleX: -1, scaleY: 1, deg: 0, rad: 0 }, 3: { dimensionSwapped: false, scaleX: 1, scaleY: 1, deg: 180, rad: 180 * Math.PI / 180 }, 4: { dimensionSwapped: false, scaleX: -1, scaleY: 1, deg: 180, rad: 180 * Math.PI / 180 }, 5: { dimensionSwapped: true, scaleX: 1, scaleY: -1, deg: 90, rad: 90 * Math.PI / 180 }, 6: { dimensionSwapped: true, scaleX: 1, scaleY: 1, deg: 90, rad: 90 * Math.PI / 180 }, 7: { dimensionSwapped: true, scaleX: 1, scaleY: -1, deg: 270, rad: 270 * Math.PI / 180 }, 8: { dimensionSwapped: true, scaleX: 1, scaleY: 1, deg: 270, rad: 270 * Math.PI / 180 } });
+  var ge = true;
+  var me = true;
+  if ("object" == typeof navigator) {
+    let e4 = navigator.userAgent;
+    if (e4.includes("iPad") || e4.includes("iPhone")) {
+      let t4 = e4.match(/OS (\d+)_(\d+)/);
+      if (t4) {
+        let [, e5, s4] = t4, i4 = Number(e5) + 0.1 * Number(s4);
+        ge = i4 < 13.4, me = false;
+      }
+    } else if (e4.includes("OS X 10")) {
+      let [, t4] = e4.match(/OS X 10[_.](\d+)/);
+      ge = me = Number(t4) < 15;
+    }
+    if (e4.includes("Chrome/")) {
+      let [, t4] = e4.match(/Chrome\/(\d+)/);
+      ge = me = Number(t4) < 81;
+    } else if (e4.includes("Firefox/")) {
+      let [, t4] = e4.match(/Firefox\/(\d+)/);
+      ge = me = Number(t4) < 77;
+    }
+  }
+  async function ye(e4) {
+    let t4 = await ce(e4);
+    return Object.assign({ canvas: ge, css: me }, pe[t4]);
+  }
+  var be = class extends c2 {
+    constructor(...t4) {
+      super(...t4), e2(this, "ranges", new we()), 0 !== this.byteLength && this.ranges.add(0, this.byteLength);
+    }
+    _tryExtend(e4, t4, s4) {
+      if (0 === e4 && 0 === this.byteLength && s4) {
+        let e5 = new DataView(s4.buffer || s4, s4.byteOffset, s4.byteLength);
+        this._swapDataView(e5);
+      } else {
+        let s5 = e4 + t4;
+        if (s5 > this.byteLength) {
+          let { dataView: e5 } = this._extend(s5);
+          this._swapDataView(e5);
+        }
+      }
+    }
+    _extend(e4) {
+      let t4;
+      t4 = a2 ? r2.allocUnsafe(e4) : new Uint8Array(e4);
+      let s4 = new DataView(t4.buffer, t4.byteOffset, t4.byteLength);
+      return t4.set(new Uint8Array(this.buffer, this.byteOffset, this.byteLength), 0), { uintView: t4, dataView: s4 };
+    }
+    subarray(e4, t4, s4 = false) {
+      return t4 = t4 || this._lengthToEnd(e4), s4 && this._tryExtend(e4, t4), this.ranges.add(e4, t4), super.subarray(e4, t4);
+    }
+    set(e4, t4, s4 = false) {
+      s4 && this._tryExtend(t4, e4.byteLength, e4);
+      let i4 = super.set(e4, t4);
+      return this.ranges.add(t4, i4.byteLength), i4;
+    }
+    async ensureChunk(e4, t4) {
+      this.chunked && (this.ranges.available(e4, t4) || await this.readChunk(e4, t4));
+    }
+    available(e4, t4) {
+      return this.ranges.available(e4, t4);
+    }
+  };
+  var we = class {
+    constructor() {
+      e2(this, "list", []);
+    }
+    get length() {
+      return this.list.length;
+    }
+    add(e4, t4, s4 = 0) {
+      let i4 = e4 + t4, n3 = this.list.filter((t5) => ke(e4, t5.offset, i4) || ke(e4, t5.end, i4));
+      if (n3.length > 0) {
+        e4 = Math.min(e4, ...n3.map((e5) => e5.offset)), i4 = Math.max(i4, ...n3.map((e5) => e5.end)), t4 = i4 - e4;
+        let s5 = n3.shift();
+        s5.offset = e4, s5.length = t4, s5.end = i4, this.list = this.list.filter((e5) => !n3.includes(e5));
+      } else
+        this.list.push({ offset: e4, length: t4, end: i4 });
+    }
+    available(e4, t4) {
+      let s4 = e4 + t4;
+      return this.list.some((t5) => t5.offset <= e4 && s4 <= t5.end);
+    }
+  };
+  function ke(e4, t4, s4) {
+    return e4 <= t4 && t4 <= s4;
+  }
+  var Oe = class extends be {
+    constructor(t4, s4) {
+      super(0), e2(this, "chunksRead", 0), this.input = t4, this.options = s4;
+    }
+    async readWhole() {
+      this.chunked = false, await this.readChunk(this.nextChunkOffset);
+    }
+    async readChunked() {
+      this.chunked = true, await this.readChunk(0, this.options.firstChunkSize);
+    }
+    async readNextChunk(e4 = this.nextChunkOffset) {
+      if (this.fullyRead)
+        return this.chunksRead++, false;
+      let t4 = this.options.chunkSize, s4 = await this.readChunk(e4, t4);
+      return !!s4 && s4.byteLength === t4;
+    }
+    async readChunk(e4, t4) {
+      if (this.chunksRead++, 0 !== (t4 = this.safeWrapAddress(e4, t4)))
+        return this._readChunk(e4, t4);
+    }
+    safeWrapAddress(e4, t4) {
+      return void 0 !== this.size && e4 + t4 > this.size ? Math.max(0, this.size - e4) : t4;
+    }
+    get nextChunkOffset() {
+      if (0 !== this.ranges.list.length)
+        return this.ranges.list[0].length;
+    }
+    get canReadNextChunk() {
+      return this.chunksRead < this.options.chunkLimit;
+    }
+    get fullyRead() {
+      return void 0 !== this.size && this.nextChunkOffset === this.size;
+    }
+    read() {
+      return this.options.chunked ? this.readChunked() : this.readWhole();
+    }
+    close() {
+    }
+  };
+  b2.set("blob", class extends Oe {
+    async readWhole() {
+      this.chunked = false;
+      let e4 = await A2(this.input);
+      this._swapArrayBuffer(e4);
+    }
+    readChunked() {
+      return this.chunked = true, this.size = this.input.size, super.readChunked();
+    }
+    async _readChunk(e4, t4) {
+      let s4 = t4 ? e4 + t4 : void 0, i4 = this.input.slice(e4, s4), n3 = await A2(i4);
+      return this.set(n3, e4, true);
+    }
+  });
+
+  // node_modules/@uppy/thumbnail-generator/lib/locale.js
+  var locale_default3 = {
+    strings: {
+      generatingThumbnails: "Generating thumbnails..."
+    }
+  };
+
+  // node_modules/@uppy/thumbnail-generator/lib/index.js
+  var packageJson5 = {
+    "version": "4.0.2"
+  };
+  function canvasToBlob(canvas, type, quality) {
+    try {
+      canvas.getContext("2d").getImageData(0, 0, 1, 1);
+    } catch (err) {
+      if (err.code === 18) {
+        return Promise.reject(new Error("cannot read image, probably an svg with external resources"));
+      }
+    }
+    if (canvas.toBlob) {
+      return new Promise((resolve) => {
+        canvas.toBlob(resolve, type, quality);
+      }).then((blob) => {
+        if (blob === null) {
+          throw new Error("cannot read image, probably an svg with external resources");
+        }
+        return blob;
+      });
+    }
+    return Promise.resolve().then(() => {
+      return dataURItoBlob_default(canvas.toDataURL(type, quality), {});
+    }).then((blob) => {
+      if (blob === null) {
+        throw new Error("could not extract blob, probably an old browser");
+      }
+      return blob;
+    });
+  }
+  function rotateImage(image, translate) {
+    let w4 = image.width;
+    let h4 = image.height;
+    if (translate.deg === 90 || translate.deg === 270) {
+      w4 = image.height;
+      h4 = image.width;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = w4;
+    canvas.height = h4;
+    const context = canvas.getContext("2d");
+    context.translate(w4 / 2, h4 / 2);
+    if (translate.canvas) {
+      context.rotate(translate.rad);
+      context.scale(translate.scaleX, translate.scaleY);
+    }
+    context.drawImage(image, -image.width / 2, -image.height / 2, image.width, image.height);
+    return canvas;
+  }
+  function protect(image) {
+    const ratio = image.width / image.height;
+    const maxSquare = 5e6;
+    const maxSize = 4096;
+    let maxW = Math.floor(Math.sqrt(maxSquare * ratio));
+    let maxH = Math.floor(maxSquare / Math.sqrt(maxSquare * ratio));
+    if (maxW > maxSize) {
+      maxW = maxSize;
+      maxH = Math.round(maxW / ratio);
+    }
+    if (maxH > maxSize) {
+      maxH = maxSize;
+      maxW = Math.round(ratio * maxH);
+    }
+    if (image.width > maxW) {
+      const canvas = document.createElement("canvas");
+      canvas.width = maxW;
+      canvas.height = maxH;
+      canvas.getContext("2d").drawImage(image, 0, 0, maxW, maxH);
+      return canvas;
+    }
+    return image;
+  }
+  var defaultOptions3 = {
+    thumbnailWidth: null,
+    thumbnailHeight: null,
+    thumbnailType: "image/jpeg",
+    waitForThumbnailsBeforeUpload: false,
+    lazy: false
+  };
+  var ThumbnailGenerator = class extends UIPlugin_default {
+    constructor(uppy, opts) {
+      super(uppy, {
+        ...defaultOptions3,
+        ...opts
+      });
+      this.onFileAdded = (file) => {
+        if (!file.preview && file.data && isPreviewSupported(file.type) && !file.isRemote) {
+          this.addToQueue(file.id);
+        }
+      };
+      this.onCancelRequest = (file) => {
+        const index = this.queue.indexOf(file.id);
+        if (index !== -1) {
+          this.queue.splice(index, 1);
+        }
+      };
+      this.onFileRemoved = (file) => {
+        const index = this.queue.indexOf(file.id);
+        if (index !== -1) {
+          this.queue.splice(index, 1);
+        }
+        if (file.preview && isObjectURL(file.preview)) {
+          URL.revokeObjectURL(file.preview);
+        }
+      };
+      this.onRestored = () => {
+        const restoredFiles = this.uppy.getFiles().filter((file) => file.isRestored);
+        restoredFiles.forEach((file) => {
+          if (!file.preview || isObjectURL(file.preview)) {
+            this.addToQueue(file.id);
+          }
+        });
+      };
+      this.onAllFilesRemoved = () => {
+        this.queue = [];
+      };
+      this.waitUntilAllProcessed = (fileIDs) => {
+        fileIDs.forEach((fileID) => {
+          const file = this.uppy.getFile(fileID);
+          this.uppy.emit("preprocess-progress", file, {
+            mode: "indeterminate",
+            message: this.i18n("generatingThumbnails")
+          });
+        });
+        const emitPreprocessCompleteForAll = () => {
+          fileIDs.forEach((fileID) => {
+            const file = this.uppy.getFile(fileID);
+            this.uppy.emit("preprocess-complete", file);
+          });
+        };
+        return new Promise((resolve) => {
+          if (this.queueProcessing) {
+            this.uppy.once("thumbnail:all-generated", () => {
+              emitPreprocessCompleteForAll();
+              resolve();
+            });
+          } else {
+            emitPreprocessCompleteForAll();
+            resolve();
+          }
+        });
+      };
+      this.type = "modifier";
+      this.id = this.opts.id || "ThumbnailGenerator";
+      this.title = "Thumbnail Generator";
+      this.queue = [];
+      this.queueProcessing = false;
+      this.defaultThumbnailDimension = 200;
+      this.thumbnailType = this.opts.thumbnailType;
+      this.defaultLocale = locale_default3;
+      this.i18nInit();
+      if (this.opts.lazy && this.opts.waitForThumbnailsBeforeUpload) {
+        throw new Error("ThumbnailGenerator: The `lazy` and `waitForThumbnailsBeforeUpload` options are mutually exclusive. Please ensure at most one of them is set to `true`.");
+      }
+    }
+    createThumbnail(file, targetWidth, targetHeight) {
+      const originalUrl = URL.createObjectURL(file.data);
+      const onload = new Promise((resolve, reject) => {
+        const image = new Image();
+        image.src = originalUrl;
+        image.addEventListener("load", () => {
+          URL.revokeObjectURL(originalUrl);
+          resolve(image);
+        });
+        image.addEventListener("error", (event) => {
+          URL.revokeObjectURL(originalUrl);
+          reject(event.error || new Error("Could not create thumbnail"));
+        });
+      });
+      const orientationPromise = ye(file.data).catch(() => 1);
+      return Promise.all([onload, orientationPromise]).then((_ref) => {
+        let [image, orientation] = _ref;
+        const dimensions = this.getProportionalDimensions(image, targetWidth, targetHeight, orientation.deg);
+        const rotatedImage = rotateImage(image, orientation);
+        const resizedImage = this.resizeImage(rotatedImage, dimensions.width, dimensions.height);
+        return canvasToBlob(resizedImage, this.thumbnailType, 80);
+      }).then((blob) => {
+        return URL.createObjectURL(blob);
+      });
+    }
+    /**
+     * Get the new calculated dimensions for the given image and a target width
+     * or height. If both width and height are given, only width is taken into
+     * account. If neither width nor height are given, the default dimension
+     * is used.
+     */
+    getProportionalDimensions(img, width, height, deg) {
+      let aspect = img.width / img.height;
+      if (deg === 90 || deg === 270) {
+        aspect = img.height / img.width;
+      }
+      if (width != null) {
+        return {
+          width,
+          height: Math.round(width / aspect)
+        };
+      }
+      if (height != null) {
+        return {
+          width: Math.round(height * aspect),
+          height
+        };
+      }
+      return {
+        width: this.defaultThumbnailDimension,
+        height: Math.round(this.defaultThumbnailDimension / aspect)
+      };
+    }
+    /**
+     * Resize an image to the target `width` and `height`.
+     *
+     * Returns a Canvas with the resized image on it.
+     */
+    // eslint-disable-next-line class-methods-use-this
+    resizeImage(image, targetWidth, targetHeight) {
+      let img = protect(image);
+      let steps = Math.ceil(Math.log2(img.width / targetWidth));
+      if (steps < 1) {
+        steps = 1;
+      }
+      let sW = targetWidth * 2 ** (steps - 1);
+      let sH = targetHeight * 2 ** (steps - 1);
+      const x3 = 2;
+      while (steps--) {
+        const canvas = document.createElement("canvas");
+        canvas.width = sW;
+        canvas.height = sH;
+        canvas.getContext("2d").drawImage(img, 0, 0, sW, sH);
+        img = canvas;
+        sW = Math.round(sW / x3);
+        sH = Math.round(sH / x3);
+      }
+      return img;
+    }
+    /**
+     * Set the preview URL for a file.
+     */
+    setPreviewURL(fileID, preview) {
+      this.uppy.setFileState(fileID, {
+        preview
+      });
+    }
+    addToQueue(fileID) {
+      this.queue.push(fileID);
+      if (this.queueProcessing === false) {
+        this.processQueue();
+      }
+    }
+    processQueue() {
+      this.queueProcessing = true;
+      if (this.queue.length > 0) {
+        const current = this.uppy.getFile(this.queue.shift());
+        if (!current) {
+          this.uppy.log("[ThumbnailGenerator] file was removed before a thumbnail could be generated, but not removed from the queue. This is probably a bug", "error");
+          return Promise.resolve();
+        }
+        return this.requestThumbnail(current).catch(() => {
+        }).then(() => this.processQueue());
+      }
+      this.queueProcessing = false;
+      this.uppy.log("[ThumbnailGenerator] Emptied thumbnail queue");
+      this.uppy.emit("thumbnail:all-generated");
+      return Promise.resolve();
+    }
+    requestThumbnail(file) {
+      if (isPreviewSupported(file.type) && !file.isRemote) {
+        return this.createThumbnail(file, this.opts.thumbnailWidth, this.opts.thumbnailHeight).then((preview) => {
+          this.setPreviewURL(file.id, preview);
+          this.uppy.log(`[ThumbnailGenerator] Generated thumbnail for ${file.id}`);
+          this.uppy.emit("thumbnail:generated", this.uppy.getFile(file.id), preview);
+        }).catch((err) => {
+          this.uppy.log(`[ThumbnailGenerator] Failed thumbnail for ${file.id}:`, "warning");
+          this.uppy.log(err, "warning");
+          this.uppy.emit("thumbnail:error", this.uppy.getFile(file.id), err);
+        });
+      }
+      return Promise.resolve();
+    }
+    install() {
+      this.uppy.on("file-removed", this.onFileRemoved);
+      this.uppy.on("cancel-all", this.onAllFilesRemoved);
+      if (this.opts.lazy) {
+        this.uppy.on("thumbnail:request", this.onFileAdded);
+        this.uppy.on("thumbnail:cancel", this.onCancelRequest);
+      } else {
+        this.uppy.on("thumbnail:request", this.onFileAdded);
+        this.uppy.on("file-added", this.onFileAdded);
+        this.uppy.on("restored", this.onRestored);
+      }
+      if (this.opts.waitForThumbnailsBeforeUpload) {
+        this.uppy.addPreProcessor(this.waitUntilAllProcessed);
+      }
+    }
+    uninstall() {
+      this.uppy.off("file-removed", this.onFileRemoved);
+      this.uppy.off("cancel-all", this.onAllFilesRemoved);
+      if (this.opts.lazy) {
+        this.uppy.off("thumbnail:request", this.onFileAdded);
+        this.uppy.off("thumbnail:cancel", this.onCancelRequest);
+      } else {
+        this.uppy.off("thumbnail:request", this.onFileAdded);
+        this.uppy.off("file-added", this.onFileAdded);
+        this.uppy.off("restored", this.onRestored);
+      }
+      if (this.opts.waitForThumbnailsBeforeUpload) {
+        this.uppy.removePreProcessor(this.waitUntilAllProcessed);
+      }
+    }
+  };
+  ThumbnailGenerator.VERSION = packageJson5.version;
+
+  // node_modules/@uppy/utils/lib/findAllDOMElements.js
+  function findAllDOMElements(element) {
+    if (typeof element === "string") {
+      const elements = document.querySelectorAll(element);
+      return elements.length === 0 ? null : Array.from(elements);
+    }
+    if (typeof element === "object" && isDOMElement(element)) {
+      return [element];
+    }
+    return null;
+  }
+  var findAllDOMElements_default = findAllDOMElements;
+
+  // node_modules/@uppy/utils/lib/toArray.js
+  var toArray_default = Array.from;
+
+  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/getFilesAndDirectoriesFromDirectory.js
+  function getFilesAndDirectoriesFromDirectory(directoryReader, oldEntries, logDropError, _ref) {
+    let {
+      onSuccess
+    } = _ref;
+    directoryReader.readEntries(
+      (entries2) => {
+        const newEntries = [...oldEntries, ...entries2];
+        if (entries2.length) {
+          queueMicrotask(() => {
+            getFilesAndDirectoriesFromDirectory(directoryReader, newEntries, logDropError, {
+              onSuccess
+            });
+          });
+        } else {
+          onSuccess(newEntries);
+        }
+      },
+      // Make sure we resolve on error anyway, it's fine if only one directory couldn't be parsed!
+      (error2) => {
+        logDropError(error2);
+        onSuccess(oldEntries);
+      }
+    );
+  }
+
+  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/index.js
+  function getAsFileSystemHandleFromEntry(entry, logDropError) {
+    if (entry == null)
+      return entry;
+    return {
+      kind: (
+        // eslint-disable-next-line no-nested-ternary
+        entry.isFile ? "file" : entry.isDirectory ? "directory" : void 0
+      ),
+      name: entry.name,
+      getFile() {
+        return new Promise((resolve, reject) => entry.file(resolve, reject));
+      },
+      async *values() {
+        const directoryReader = entry.createReader();
+        const entries2 = await new Promise((resolve) => {
+          getFilesAndDirectoriesFromDirectory(directoryReader, [], logDropError, {
+            onSuccess: (dirEntries) => resolve(dirEntries.map((file) => getAsFileSystemHandleFromEntry(file, logDropError)))
+          });
+        });
+        yield* entries2;
+      },
+      isSameEntry: void 0
+    };
+  }
+  function createPromiseToAddFileOrParseDirectory(entry, relativePath, lastResortFile) {
+    try {
+      if (lastResortFile === void 0) {
+        lastResortFile = void 0;
+      }
+      return async function* () {
+        const getNextRelativePath = () => `${relativePath}/${entry.name}`;
+        if (entry.kind === "file") {
+          const file = await entry.getFile();
+          if (file != null) {
+            ;
+            file.relativePath = relativePath ? getNextRelativePath() : null;
+            yield file;
+          } else if (lastResortFile != null)
+            yield lastResortFile;
+        } else if (entry.kind === "directory") {
+          for await (const handle of entry.values()) {
+            yield* createPromiseToAddFileOrParseDirectory(handle, relativePath ? getNextRelativePath() : entry.name);
+          }
+        } else if (lastResortFile != null)
+          yield lastResortFile;
+      }();
+    } catch (e4) {
+      return Promise.reject(e4);
+    }
+  }
+  async function* getFilesFromDataTransfer(dataTransfer, logDropError) {
+    const fileSystemHandles = await Promise.all(Array.from(dataTransfer.items, async (item) => {
+      var _fileSystemHandle;
+      let fileSystemHandle;
+      const getAsEntry = () => typeof item.getAsEntry === "function" ? item.getAsEntry() : item.webkitGetAsEntry();
+      (_fileSystemHandle = fileSystemHandle) != null ? _fileSystemHandle : fileSystemHandle = getAsFileSystemHandleFromEntry(getAsEntry(), logDropError);
+      return {
+        fileSystemHandle,
+        lastResortFile: item.getAsFile()
+        // can be used as a fallback in case other methods fail
+      };
+    }));
+    for (const {
+      lastResortFile,
+      fileSystemHandle
+    } of fileSystemHandles) {
+      if (fileSystemHandle != null) {
+        try {
+          yield* createPromiseToAddFileOrParseDirectory(fileSystemHandle, "", lastResortFile);
+        } catch (err) {
+          if (lastResortFile != null) {
+            yield lastResortFile;
+          } else {
+            logDropError(err);
+          }
+        }
+      } else if (lastResortFile != null)
+        yield lastResortFile;
+    }
+  }
+
+  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/fallbackApi.js
+  function fallbackApi(dataTransfer) {
+    const files = toArray_default(dataTransfer.files);
+    return Promise.resolve(files);
+  }
+
+  // node_modules/@uppy/utils/lib/getDroppedFiles/index.js
+  async function getDroppedFiles(dataTransfer, options2) {
+    var _options$logDropError;
+    const logDropError = (_options$logDropError = options2 == null ? void 0 : options2.logDropError) != null ? _options$logDropError : Function.prototype;
+    try {
+      const accumulator = [];
+      for await (const file of getFilesFromDataTransfer(dataTransfer, logDropError)) {
+        accumulator.push(file);
+      }
+      return accumulator;
+    } catch {
+      return fallbackApi(dataTransfer);
+    }
+  }
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
+  var import_classnames6 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/utils/lib/remoteFileObjToLocal.js
+  function remoteFileObjToLocal(file) {
+    return {
+      ...file,
+      type: file.mimeType,
+      extension: file.name ? getFileNameAndExtension(file.name).extension : null
+    };
+  }
+
+  // node_modules/preact/hooks/dist/hooks.module.js
+  var t3;
+  var r3;
+  var u3;
+  var i3;
+  var o3 = 0;
+  var f3 = [];
+  var c3 = l;
+  var e3 = c3.__b;
+  var a3 = c3.__r;
+  var v3 = c3.diffed;
+  var l3 = c3.__c;
+  var m3 = c3.unmount;
+  var s3 = c3.__;
+  function d3(n3, t4) {
+    c3.__h && c3.__h(r3, n3, o3 || t4), o3 = 0;
+    var u4 = r3.__H || (r3.__H = { __: [], __h: [] });
+    return n3 >= u4.__.length && u4.__.push({}), u4.__[n3];
+  }
+  function h3(n3) {
+    return o3 = 1, p3(D2, n3);
+  }
+  function p3(n3, u4, i4) {
+    var o4 = d3(t3++, 2);
+    if (o4.t = n3, !o4.__c && (o4.__ = [i4 ? i4(u4) : D2(void 0, u4), function(n4) {
+      var t4 = o4.__N ? o4.__N[0] : o4.__[0], r4 = o4.t(t4, n4);
+      t4 !== r4 && (o4.__N = [r4, o4.__[1]], o4.__c.setState({}));
+    }], o4.__c = r3, !r3.u)) {
+      var f4 = function(n4, t4, r4) {
+        if (!o4.__c.__H)
+          return true;
+        var u5 = o4.__c.__H.__.filter(function(n5) {
+          return !!n5.__c;
+        });
+        if (u5.every(function(n5) {
+          return !n5.__N;
+        }))
+          return !c4 || c4.call(this, n4, t4, r4);
+        var i5 = false;
+        return u5.forEach(function(n5) {
+          if (n5.__N) {
+            var t5 = n5.__[0];
+            n5.__ = n5.__N, n5.__N = void 0, t5 !== n5.__[0] && (i5 = true);
+          }
+        }), !(!i5 && o4.__c.props === n4) && (!c4 || c4.call(this, n4, t4, r4));
+      };
+      r3.u = true;
+      var c4 = r3.shouldComponentUpdate, e4 = r3.componentWillUpdate;
+      r3.componentWillUpdate = function(n4, t4, r4) {
+        if (this.__e) {
+          var u5 = c4;
+          c4 = void 0, f4(n4, t4, r4), c4 = u5;
+        }
+        e4 && e4.call(this, n4, t4, r4);
+      }, r3.shouldComponentUpdate = f4;
+    }
+    return o4.__N || o4.__;
+  }
+  function y3(n3, u4) {
+    var i4 = d3(t3++, 3);
+    !c3.__s && C3(i4.__H, u4) && (i4.__ = n3, i4.i = u4, r3.__H.__h.push(i4));
+  }
+  function A3(n3) {
+    return o3 = 5, T3(function() {
+      return { current: n3 };
+    }, []);
+  }
+  function T3(n3, r4) {
+    var u4 = d3(t3++, 7);
+    return C3(u4.__H, r4) && (u4.__ = n3(), u4.__H = r4, u4.__h = n3), u4.__;
+  }
+  function q3(n3, t4) {
+    return o3 = 8, T3(function() {
+      return n3;
+    }, t4);
+  }
+  function j3() {
+    for (var n3; n3 = f3.shift(); )
+      if (n3.__P && n3.__H)
+        try {
+          n3.__H.__h.forEach(z3), n3.__H.__h.forEach(B3), n3.__H.__h = [];
+        } catch (t4) {
+          n3.__H.__h = [], c3.__e(t4, n3.__v);
+        }
+  }
+  c3.__b = function(n3) {
+    r3 = null, e3 && e3(n3);
+  }, c3.__ = function(n3, t4) {
+    n3 && t4.__k && t4.__k.__m && (n3.__m = t4.__k.__m), s3 && s3(n3, t4);
+  }, c3.__r = function(n3) {
+    a3 && a3(n3), t3 = 0;
+    var i4 = (r3 = n3.__c).__H;
+    i4 && (u3 === r3 ? (i4.__h = [], r3.__h = [], i4.__.forEach(function(n4) {
+      n4.__N && (n4.__ = n4.__N), n4.i = n4.__N = void 0;
+    })) : (i4.__h.forEach(z3), i4.__h.forEach(B3), i4.__h = [], t3 = 0)), u3 = r3;
+  }, c3.diffed = function(n3) {
+    v3 && v3(n3);
+    var t4 = n3.__c;
+    t4 && t4.__H && (t4.__H.__h.length && (1 !== f3.push(t4) && i3 === c3.requestAnimationFrame || ((i3 = c3.requestAnimationFrame) || w3)(j3)), t4.__H.__.forEach(function(n4) {
+      n4.i && (n4.__H = n4.i), n4.i = void 0;
+    })), u3 = r3 = null;
+  }, c3.__c = function(n3, t4) {
+    t4.some(function(n4) {
+      try {
+        n4.__h.forEach(z3), n4.__h = n4.__h.filter(function(n5) {
+          return !n5.__ || B3(n5);
+        });
+      } catch (r4) {
+        t4.some(function(n5) {
+          n5.__h && (n5.__h = []);
+        }), t4 = [], c3.__e(r4, n4.__v);
+      }
+    }), l3 && l3(n3, t4);
+  }, c3.unmount = function(n3) {
+    m3 && m3(n3);
+    var t4, r4 = n3.__c;
+    r4 && r4.__H && (r4.__H.__.forEach(function(n4) {
+      try {
+        z3(n4);
+      } catch (n5) {
+        t4 = n5;
+      }
+    }), r4.__H = void 0, t4 && c3.__e(t4, r4.__v));
+  };
+  var k3 = "function" == typeof requestAnimationFrame;
+  function w3(n3) {
+    var t4, r4 = function() {
+      clearTimeout(u4), k3 && cancelAnimationFrame(t4), setTimeout(n3);
+    }, u4 = setTimeout(r4, 100);
+    k3 && (t4 = requestAnimationFrame(r4));
+  }
+  function z3(n3) {
+    var t4 = r3, u4 = n3.__c;
+    "function" == typeof u4 && (n3.__c = void 0, u4()), r3 = t4;
+  }
+  function B3(n3) {
+    var t4 = r3;
+    n3.__c = n3.__(), r3 = t4;
+  }
+  function C3(n3, t4) {
+    return !n3 || n3.length !== t4.length || t4.some(function(t5, r4) {
+      return t5 !== n3[r4];
+    });
+  }
+  function D2(n3, t4) {
+    return "function" == typeof t4 ? t4(n3) : t4;
+  }
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/AuthView.js
+  function GoogleIcon() {
+    return _("svg", {
+      width: "26",
+      height: "26",
+      viewBox: "0 0 26 26",
+      xmlns: "http://www.w3.org/2000/svg"
+    }, _("g", {
+      fill: "none",
+      "fill-rule": "evenodd"
+    }, _("circle", {
+      fill: "#FFF",
+      cx: "13",
+      cy: "13",
+      r: "13"
+    }), _("path", {
+      d: "M21.64 13.205c0-.639-.057-1.252-.164-1.841H13v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z",
+      fill: "#4285F4",
+      "fill-rule": "nonzero"
+    }), _("path", {
+      d: "M13 22c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H4.957v2.332A8.997 8.997 0 0013 22z",
+      fill: "#34A853",
+      "fill-rule": "nonzero"
+    }), _("path", {
+      d: "M7.964 14.71A5.41 5.41 0 017.682 13c0-.593.102-1.17.282-1.71V8.958H4.957A8.996 8.996 0 004 13c0 1.452.348 2.827.957 4.042l3.007-2.332z",
+      fill: "#FBBC05",
+      "fill-rule": "nonzero"
+    }), _("path", {
+      d: "M13 7.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C17.463 4.891 15.426 4 13 4a8.997 8.997 0 00-8.043 4.958l3.007 2.332C8.672 9.163 10.656 7.58 13 7.58z",
+      fill: "#EA4335",
+      "fill-rule": "nonzero"
+    }), _("path", {
+      d: "M4 4h18v18H4z"
+    })));
+  }
+  function DefaultForm(_ref) {
+    let {
+      pluginName,
+      i18n,
+      onAuth
+    } = _ref;
+    const isGoogleDrive = pluginName === "Google Drive";
+    const onSubmit = q3((e4) => {
+      e4.preventDefault();
+      onAuth();
+    }, [onAuth]);
+    return _("form", {
+      onSubmit
+    }, isGoogleDrive ? _("button", {
+      type: "submit",
+      className: "uppy-u-reset uppy-c-btn uppy-c-btn-primary uppy-Provider-authBtn uppy-Provider-btn-google",
+      "data-uppy-super-focusable": true
+    }, _(GoogleIcon, null), i18n("signInWithGoogle")) : _("button", {
+      type: "submit",
+      className: "uppy-u-reset uppy-c-btn uppy-c-btn-primary uppy-Provider-authBtn",
+      "data-uppy-super-focusable": true
+    }, i18n("authenticateWith", {
+      pluginName
+    })));
+  }
+  var defaultRenderForm = (_ref2) => {
+    let {
+      pluginName,
+      i18n,
+      onAuth
+    } = _ref2;
+    return _(DefaultForm, {
+      pluginName,
+      i18n,
+      onAuth
+    });
+  };
+  function AuthView(_ref3) {
+    let {
+      loading,
+      pluginName,
+      pluginIcon,
+      i18n,
+      handleAuth,
+      renderForm = defaultRenderForm
+    } = _ref3;
+    return _("div", {
+      className: "uppy-Provider-auth"
+    }, _("div", {
+      className: "uppy-Provider-authIcon"
+    }, pluginIcon()), _("div", {
+      className: "uppy-Provider-authTitle"
+    }, i18n("authenticateWithTitle", {
+      pluginName
+    })), renderForm({
+      pluginName,
+      i18n,
+      loading,
+      onAuth: handleAuth
+    }));
+  }
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/Header.js
+  var import_classnames3 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/User.js
+  function User(_ref) {
+    let {
+      i18n,
+      logout: logout2,
+      username
+    } = _ref;
+    return _(b, null, username && _("span", {
+      className: "uppy-ProviderBrowser-user",
+      key: "username"
+    }, username), _("button", {
+      type: "button",
+      onClick: logout2,
+      className: "uppy-u-reset uppy-c-btn uppy-ProviderBrowser-userLogout",
+      key: "logout"
+    }, i18n("logOut")));
+  }
+
+  // node_modules/@uppy/provider-views/lib/Breadcrumbs.js
+  function Breadcrumbs(props) {
+    const {
+      openFolder,
+      title,
+      breadcrumbsIcon,
+      breadcrumbs,
+      i18n
+    } = props;
+    return _("div", {
+      className: "uppy-Provider-breadcrumbs"
+    }, _("div", {
+      className: "uppy-Provider-breadcrumbsIcon"
+    }, breadcrumbsIcon), breadcrumbs.map((folder, index) => {
+      var _folder$data$name;
+      return _(b, null, _("button", {
+        key: folder.id,
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        onClick: () => openFolder(folder.id)
+      }, folder.type === "root" ? title : (_folder$data$name = folder.data.name) != null ? _folder$data$name : i18n("unnamed")), breadcrumbs.length === index + 1 ? "" : " / ");
+    }));
+  }
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/Header.js
+  function Header(props) {
+    return _("div", {
+      className: "uppy-ProviderBrowser-header"
+    }, _("div", {
+      className: (0, import_classnames3.default)("uppy-ProviderBrowser-headerBar", !props.showBreadcrumbs && "uppy-ProviderBrowser-headerBar--simple")
+    }, props.showBreadcrumbs && _(Breadcrumbs, {
+      openFolder: props.openFolder,
+      breadcrumbs: props.breadcrumbs,
+      breadcrumbsIcon: props.pluginIcon && props.pluginIcon(),
+      title: props.title,
+      i18n: props.i18n
+    }), _(User, {
+      logout: props.logout,
+      username: props.username,
+      i18n: props.i18n
+    })));
+  }
+
+  // node_modules/@uppy/utils/lib/VirtualList.js
+  function _extends() {
+    return _extends = Object.assign ? Object.assign.bind() : function(n3) {
+      for (var e4 = 1; e4 < arguments.length; e4++) {
+        var t4 = arguments[e4];
+        for (var r4 in t4)
+          ({}).hasOwnProperty.call(t4, r4) && (n3[r4] = t4[r4]);
+      }
+      return n3;
+    }, _extends.apply(null, arguments);
+  }
+  var STYLE_INNER = {
+    position: "relative",
+    // Disabled for our use case: the wrapper elements around FileList already deal with overflow,
+    // and this additional property would hide things that we want to show.
+    //
+    // overflow: 'hidden',
+    width: "100%",
+    minHeight: "100%"
+  };
+  var STYLE_CONTENT = {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    // Because the `top` value gets set to some offset, this `height` being 100% would make the scrollbar
+    // stretch far beyond the content. For our use case, the content div actually can get its height from
+    // the elements inside it, so we don't need to specify a `height` property at all.
+    //
+    // height: '100%',
+    width: "100%",
+    overflow: "visible"
+  };
+  var VirtualList = class extends k {
+    constructor(props) {
+      super(props);
+      this.handleScroll = () => {
+        this.setState({
+          offset: this.base.scrollTop
+        });
+      };
+      this.handleResize = () => {
+        this.resize();
+      };
+      this.focusElement = null;
+      this.state = {
+        offset: 0,
+        height: 0
+      };
+    }
+    componentDidMount() {
+      this.resize();
+      window.addEventListener("resize", this.handleResize);
+    }
+    // TODO: refactor to stable lifecycle method
+    // eslint-disable-next-line
+    componentWillUpdate() {
+      if (this.base.contains(document.activeElement)) {
+        this.focusElement = document.activeElement;
+      }
+    }
+    componentDidUpdate() {
+      if (this.focusElement && this.focusElement.parentNode && document.activeElement !== this.focusElement) {
+        this.focusElement.focus();
+      }
+      this.focusElement = null;
+      this.resize();
+    }
+    componentWillUnmount() {
+      window.removeEventListener("resize", this.handleResize);
+    }
+    resize() {
+      const {
+        height
+      } = this.state;
+      if (height !== this.base.offsetHeight) {
+        this.setState({
+          height: this.base.offsetHeight
+        });
+      }
+    }
+    render(_ref) {
+      let {
+        data,
+        rowHeight,
+        renderRow,
+        overscanCount = 10,
+        ...props
+      } = _ref;
+      const {
+        offset: offset2,
+        height
+      } = this.state;
+      let start3 = Math.floor(offset2 / rowHeight);
+      let visibleRowCount = Math.floor(height / rowHeight);
+      if (overscanCount) {
+        start3 = Math.max(0, start3 - start3 % overscanCount);
+        visibleRowCount += overscanCount;
+      }
+      const end2 = start3 + visibleRowCount + 4;
+      const selection = data.slice(start3, end2);
+      const styleInner = {
+        ...STYLE_INNER,
+        height: data.length * rowHeight
+      };
+      const styleContent = {
+        ...STYLE_CONTENT,
+        top: start3 * rowHeight
+      };
+      return (
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        _("div", _extends({
+          onScroll: this.handleScroll
+        }, props), _("div", {
+          role: "presentation",
+          style: styleInner
+        }, _("div", {
+          role: "presentation",
+          style: styleContent
+        }, selection.map(renderRow))))
+      );
+    }
+  };
+  var VirtualList_default = VirtualList;
+
+  // node_modules/@uppy/provider-views/lib/Item/index.js
+  var import_classnames4 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/provider-views/lib/Item/components/ItemIcon.js
+  function FileIcon() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: 11,
+      height: 14.5,
+      viewBox: "0 0 44 58"
+    }, _("path", {
+      d: "M27.437.517a1 1 0 0 0-.094.03H4.25C2.037.548.217 2.368.217 4.58v48.405c0 2.212 1.82 4.03 4.03 4.03H39.03c2.21 0 4.03-1.818 4.03-4.03V15.61a1 1 0 0 0-.03-.28 1 1 0 0 0 0-.093 1 1 0 0 0-.03-.032 1 1 0 0 0 0-.03 1 1 0 0 0-.032-.063 1 1 0 0 0-.03-.063 1 1 0 0 0-.032 0 1 1 0 0 0-.03-.063 1 1 0 0 0-.032-.03 1 1 0 0 0-.03-.063 1 1 0 0 0-.063-.062l-14.593-14a1 1 0 0 0-.062-.062A1 1 0 0 0 28 .708a1 1 0 0 0-.374-.157 1 1 0 0 0-.156 0 1 1 0 0 0-.03-.03l-.003-.003zM4.25 2.547h22.218v9.97c0 2.21 1.82 4.03 4.03 4.03h10.564v36.438a2.02 2.02 0 0 1-2.032 2.032H4.25c-1.13 0-2.032-.9-2.032-2.032V4.58c0-1.13.902-2.032 2.03-2.032zm24.218 1.345l10.375 9.937.75.718H30.5c-1.13 0-2.032-.9-2.032-2.03V3.89z"
+    }));
+  }
+  function FolderIcon() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      style: {
+        minWidth: 16,
+        marginRight: 3
+      },
+      viewBox: "0 0 276.157 276.157"
+    }, _("path", {
+      d: "M273.08 101.378c-3.3-4.65-8.86-7.32-15.254-7.32h-24.34V67.59c0-10.2-8.3-18.5-18.5-18.5h-85.322c-3.63 0-9.295-2.875-11.436-5.805l-6.386-8.735c-4.982-6.814-15.104-11.954-23.546-11.954H58.73c-9.292 0-18.638 6.608-21.737 15.372l-2.033 5.752c-.958 2.71-4.72 5.37-7.596 5.37H18.5C8.3 49.09 0 57.39 0 67.59v167.07c0 .886.16 1.73.443 2.52.152 3.306 1.18 6.424 3.053 9.064 3.3 4.652 8.86 7.32 15.255 7.32h188.487c11.395 0 23.27-8.425 27.035-19.18l40.677-116.188c2.11-6.035 1.43-12.164-1.87-16.816zM18.5 64.088h8.864c9.295 0 18.64-6.607 21.738-15.37l2.032-5.75c.96-2.712 4.722-5.373 7.597-5.373h29.565c3.63 0 9.295 2.876 11.437 5.806l6.386 8.735c4.982 6.815 15.104 11.954 23.546 11.954h85.322c1.898 0 3.5 1.602 3.5 3.5v26.47H69.34c-11.395 0-23.27 8.423-27.035 19.178L15 191.23V67.59c0-1.898 1.603-3.5 3.5-3.5zm242.29 49.15l-40.676 116.188c-1.674 4.78-7.812 9.135-12.877 9.135H18.75c-1.447 0-2.576-.372-3.02-.997-.442-.625-.422-1.814.057-3.18l40.677-116.19c1.674-4.78 7.812-9.134 12.877-9.134h188.487c1.448 0 2.577.372 3.02.997.443.625.423 1.814-.056 3.18z"
+    }));
+  }
+  function VideoIcon() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      style: {
+        width: 16,
+        marginRight: 4
+      },
+      viewBox: "0 0 58 58"
+    }, _("path", {
+      d: "M36.537 28.156l-11-7a1.005 1.005 0 0 0-1.02-.033C24.2 21.3 24 21.635 24 22v14a1 1 0 0 0 1.537.844l11-7a1.002 1.002 0 0 0 0-1.688zM26 34.18V23.82L34.137 29 26 34.18z"
+    }), _("path", {
+      d: "M57 6H1a1 1 0 0 0-1 1v44a1 1 0 0 0 1 1h56a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1zM10 28H2v-9h8v9zm-8 2h8v9H2v-9zm10 10V8h34v42H12V40zm44-12h-8v-9h8v9zm-8 2h8v9h-8v-9zm8-22v9h-8V8h8zM2 8h8v9H2V8zm0 42v-9h8v9H2zm54 0h-8v-9h8v9z"
+    }));
+  }
+  function ItemIcon(_ref) {
+    let {
+      itemIconString,
+      alt = void 0
+    } = _ref;
+    if (itemIconString === null)
+      return null;
+    switch (itemIconString) {
+      case "file":
+        return _(FileIcon, null);
+      case "folder":
+        return _(FolderIcon, null);
+      case "video":
+        return _(VideoIcon, null);
+      default: {
+        return _("img", {
+          src: itemIconString,
+          alt,
+          referrerPolicy: "no-referrer",
+          loading: "lazy",
+          width: 16,
+          height: 16
+        });
+      }
+    }
+  }
+
+  // node_modules/@uppy/provider-views/lib/Item/components/GridItem.js
+  function GridItem(_ref) {
+    var _file$data$name, _file$data$name2;
+    let {
+      file,
+      toggleCheckbox,
+      className,
+      isDisabled,
+      restrictionError,
+      showTitles,
+      children = null,
+      i18n
+    } = _ref;
+    return _("li", {
+      className,
+      title: isDisabled && restrictionError ? restrictionError : void 0
+    }, _("input", {
+      type: "checkbox",
+      className: "uppy-u-reset uppy-ProviderBrowserItem-checkbox uppy-ProviderBrowserItem-checkbox--grid",
+      onChange: toggleCheckbox,
+      name: "listitem",
+      id: file.id,
+      checked: file.status === "checked",
+      disabled: isDisabled,
+      "data-uppy-super-focusable": true
+    }), _("label", {
+      htmlFor: file.id,
+      "aria-label": (_file$data$name = file.data.name) != null ? _file$data$name : i18n("unnamed"),
+      className: "uppy-u-reset uppy-ProviderBrowserItem-inner"
+    }, _(ItemIcon, {
+      itemIconString: file.data.thumbnail || file.data.icon
+    }), showTitles && ((_file$data$name2 = file.data.name) != null ? _file$data$name2 : i18n("unnamed")), children));
+  }
+  var GridItem_default = GridItem;
+
+  // node_modules/@uppy/provider-views/lib/Item/components/ListItem.js
+  function ListItem(_ref) {
+    var _file$data$name, _file$data$name2, _file$data$name3;
+    let {
+      file,
+      openFolder,
+      className,
+      isDisabled,
+      restrictionError,
+      toggleCheckbox,
+      showTitles,
+      i18n
+    } = _ref;
+    return _("li", {
+      className,
+      title: file.status !== "checked" && restrictionError ? restrictionError : void 0
+    }, _("input", {
+      type: "checkbox",
+      className: "uppy-u-reset uppy-ProviderBrowserItem-checkbox",
+      onChange: toggleCheckbox,
+      name: "listitem",
+      id: file.id,
+      checked: file.status === "checked",
+      "aria-label": file.data.isFolder ? i18n("allFilesFromFolderNamed", {
+        name: (_file$data$name = file.data.name) != null ? _file$data$name : i18n("unnamed")
+      }) : null,
+      disabled: isDisabled,
+      "data-uppy-super-focusable": true
+    }), file.data.isFolder ? (
+      // button to open a folder
+      _("button", {
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn uppy-ProviderBrowserItem-inner",
+        onClick: () => openFolder(file.id),
+        "aria-label": i18n("openFolderNamed", {
+          name: (_file$data$name2 = file.data.name) != null ? _file$data$name2 : i18n("unnamed")
+        })
+      }, _("div", {
+        className: "uppy-ProviderBrowserItem-iconWrap"
+      }, _(ItemIcon, {
+        itemIconString: file.data.icon
+      })), showTitles && file.data.name ? _("span", null, file.data.name) : i18n("unnamed"))
+    ) : _("label", {
+      htmlFor: file.id,
+      className: "uppy-u-reset uppy-ProviderBrowserItem-inner"
+    }, _("div", {
+      className: "uppy-ProviderBrowserItem-iconWrap"
+    }, _(ItemIcon, {
+      itemIconString: file.data.icon
+    })), showTitles && ((_file$data$name3 = file.data.name) != null ? _file$data$name3 : i18n("unnamed"))));
+  }
+
+  // node_modules/@uppy/provider-views/lib/Item/index.js
+  function Item(props) {
+    const {
+      viewType,
+      toggleCheckbox,
+      showTitles,
+      i18n,
+      openFolder,
+      file
+    } = props;
+    const restrictionError = file.type === "folder" ? null : file.restrictionError;
+    const isDisabled = !!restrictionError && file.status !== "checked";
+    const ourProps = {
+      file,
+      openFolder,
+      toggleCheckbox,
+      i18n,
+      viewType,
+      showTitles,
+      className: (0, import_classnames4.default)("uppy-ProviderBrowserItem", {
+        "uppy-ProviderBrowserItem--disabled": isDisabled
+      }, {
+        "uppy-ProviderBrowserItem--noPreview": file.data.icon === "video"
+      }, {
+        "uppy-ProviderBrowserItem--is-checked": file.status === "checked"
+      }, {
+        "uppy-ProviderBrowserItem--is-partial": file.status === "partial"
+      }),
+      isDisabled,
+      restrictionError
+    };
+    switch (viewType) {
+      case "grid":
+        return _(GridItem_default, ourProps);
+      case "list":
+        return _(ListItem, ourProps);
+      case "unsplash":
+        return _(GridItem_default, ourProps, _("a", {
+          href: `${file.data.author.url}?utm_source=Companion&utm_medium=referral`,
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "uppy-ProviderBrowserItem-author",
+          tabIndex: -1
+        }, file.data.author.name));
+      default:
+        throw new Error(`There is no such type ${viewType}`);
+    }
+  }
+
+  // node_modules/@uppy/provider-views/lib/Browser.js
+  function Browser(props) {
+    const {
+      displayedPartialTree,
+      viewType,
+      toggleCheckbox,
+      handleScroll,
+      showTitles,
+      i18n,
+      isLoading,
+      openFolder,
+      noResultsLabel,
+      virtualList
+    } = props;
+    const [isShiftKeyPressed, setIsShiftKeyPressed] = h3(false);
+    y3(() => {
+      const handleKeyUp = (e4) => {
+        if (e4.key === "Shift")
+          setIsShiftKeyPressed(false);
+      };
+      const handleKeyDown = (e4) => {
+        if (e4.key === "Shift")
+          setIsShiftKeyPressed(true);
+      };
+      document.addEventListener("keyup", handleKeyUp);
+      document.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.removeEventListener("keyup", handleKeyUp);
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, []);
+    if (isLoading) {
+      return _("div", {
+        className: "uppy-Provider-loading"
+      }, typeof isLoading === "string" ? isLoading : i18n("loading"));
+    }
+    if (displayedPartialTree.length === 0) {
+      return _("div", {
+        className: "uppy-Provider-empty"
+      }, noResultsLabel);
+    }
+    const renderItem = (item) => _(Item, {
+      viewType,
+      toggleCheckbox: (event) => {
+        var _document$getSelectio;
+        event.stopPropagation();
+        event.preventDefault();
+        (_document$getSelectio = document.getSelection()) == null || _document$getSelectio.removeAllRanges();
+        toggleCheckbox(item, isShiftKeyPressed);
+      },
+      showTitles,
+      i18n,
+      openFolder,
+      file: item
+    });
+    if (virtualList) {
+      return _("div", {
+        className: "uppy-ProviderBrowser-body"
+      }, _("ul", {
+        className: "uppy-ProviderBrowser-list"
+      }, _(VirtualList_default, {
+        data: displayedPartialTree,
+        renderRow: renderItem,
+        rowHeight: 31
+      })));
+    }
+    return _("div", {
+      className: "uppy-ProviderBrowser-body"
+    }, _("ul", {
+      className: "uppy-ProviderBrowser-list",
+      onScroll: handleScroll,
+      role: "listbox",
+      tabIndex: -1
+    }, displayedPartialTree.map(renderItem)));
+  }
+  var Browser_default = Browser;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterOpenFolder.js
+  var afterOpenFolder = (oldPartialTree, discoveredItems, clickedFolder, currentPagePath, validateSingleFile) => {
+    const discoveredFolders = discoveredItems.filter((i4) => i4.isFolder === true);
+    const discoveredFiles = discoveredItems.filter((i4) => i4.isFolder === false);
+    const isParentFolderChecked = clickedFolder.type === "folder" && clickedFolder.status === "checked";
+    const folders = discoveredFolders.map((folder) => ({
+      type: "folder",
+      id: folder.requestPath,
+      cached: false,
+      nextPagePath: null,
+      status: isParentFolderChecked ? "checked" : "unchecked",
+      parentId: clickedFolder.id,
+      data: folder
+    }));
+    const files = discoveredFiles.map((file) => {
+      const restrictionError = validateSingleFile(file);
+      return {
+        type: "file",
+        id: file.requestPath,
+        restrictionError,
+        status: isParentFolderChecked && !restrictionError ? "checked" : "unchecked",
+        parentId: clickedFolder.id,
+        data: file
+      };
+    });
+    const updatedClickedFolder = {
+      ...clickedFolder,
+      cached: true,
+      nextPagePath: currentPagePath
+    };
+    const partialTreeWithUpdatedClickedFolder = oldPartialTree.map((folder) => folder.id === updatedClickedFolder.id ? updatedClickedFolder : folder);
+    const newPartialTree = [...partialTreeWithUpdatedClickedFolder, ...folders, ...files];
+    return newPartialTree;
+  };
+  var afterOpenFolder_default = afterOpenFolder;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterScrollFolder.js
+  var afterScrollFolder = (oldPartialTree, currentFolderId, items, nextPagePath, validateSingleFile) => {
+    const currentFolder = oldPartialTree.find((i4) => i4.id === currentFolderId);
+    const newFolders = items.filter((i4) => i4.isFolder === true);
+    const newFiles = items.filter((i4) => i4.isFolder === false);
+    const scrolledFolder = {
+      ...currentFolder,
+      nextPagePath
+    };
+    const partialTreeWithUpdatedScrolledFolder = oldPartialTree.map((folder) => folder.id === scrolledFolder.id ? scrolledFolder : folder);
+    const isParentFolderChecked = scrolledFolder.type === "folder" && scrolledFolder.status === "checked";
+    const folders = newFolders.map((folder) => ({
+      type: "folder",
+      id: folder.requestPath,
+      cached: false,
+      nextPagePath: null,
+      status: isParentFolderChecked ? "checked" : "unchecked",
+      parentId: scrolledFolder.id,
+      data: folder
+    }));
+    const files = newFiles.map((file) => {
+      const restrictionError = validateSingleFile(file);
+      return {
+        type: "file",
+        id: file.requestPath,
+        restrictionError,
+        status: isParentFolderChecked && !restrictionError ? "checked" : "unchecked",
+        parentId: scrolledFolder.id,
+        data: file
+      };
+    });
+    const newPartialTree = [...partialTreeWithUpdatedScrolledFolder, ...folders, ...files];
+    return newPartialTree;
+  };
+  var afterScrollFolder_default = afterScrollFolder;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/shallowClone.js
+  var shallowClone = (partialTree) => {
+    return partialTree.map((item) => ({
+      ...item
+    }));
+  };
+  var shallowClone_default = shallowClone;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterToggleCheckbox.js
+  var percolateDown = (tree, id12, shouldMarkAsChecked) => {
+    const children = tree.filter((item) => item.type !== "root" && item.parentId === id12);
+    children.forEach((item) => {
+      item.status = shouldMarkAsChecked && !(item.type === "file" && item.restrictionError) ? "checked" : "unchecked";
+      percolateDown(tree, item.id, shouldMarkAsChecked);
+    });
+  };
+  var percolateUp = (tree, id12) => {
+    const folder = tree.find((item) => item.id === id12);
+    if (folder.type === "root")
+      return;
+    const validChildren = tree.filter((item) => (
+      // is a child
+      item.type !== "root" && item.parentId === folder.id && // does pass validations
+      !(item.type === "file" && item.restrictionError)
+    ));
+    const areAllChildrenChecked = validChildren.every((item) => item.status === "checked");
+    const areAllChildrenUnchecked = validChildren.every((item) => item.status === "unchecked");
+    if (areAllChildrenChecked) {
+      folder.status = "checked";
+    } else if (areAllChildrenUnchecked) {
+      folder.status = "unchecked";
+    } else {
+      folder.status = "partial";
+    }
+    percolateUp(tree, folder.parentId);
+  };
+  var afterToggleCheckbox = (oldTree, clickedRange) => {
+    const tree = shallowClone_default(oldTree);
+    if (clickedRange.length >= 2) {
+      const newlyCheckedItems = tree.filter((item) => item.type !== "root" && clickedRange.includes(item.id));
+      newlyCheckedItems.forEach((item) => {
+        if (item.type === "file") {
+          item.status = item.restrictionError ? "unchecked" : "checked";
+        } else {
+          item.status = "checked";
+        }
+      });
+      newlyCheckedItems.forEach((item) => {
+        percolateDown(tree, item.id, true);
+      });
+      percolateUp(tree, newlyCheckedItems[0].parentId);
+    } else {
+      const clickedItem = tree.find((item) => item.id === clickedRange[0]);
+      clickedItem.status = clickedItem.status === "checked" ? "unchecked" : "checked";
+      percolateDown(tree, clickedItem.id, clickedItem.status === "checked");
+      percolateUp(tree, clickedItem.parentId);
+    }
+    return tree;
+  };
+  var afterToggleCheckbox_default = afterToggleCheckbox;
+
+  // node_modules/eventemitter3/index.mjs
+  var import_index = __toESM(require_eventemitter3(), 1);
+
+  // node_modules/p-timeout/index.js
+  var TimeoutError = class extends Error {
+    constructor(message) {
+      super(message);
+      this.name = "TimeoutError";
+    }
+  };
+  var AbortError = class extends Error {
+    constructor(message) {
+      super();
+      this.name = "AbortError";
+      this.message = message;
+    }
+  };
+  var getDOMException = (errorMessage) => globalThis.DOMException === void 0 ? new AbortError(errorMessage) : new DOMException(errorMessage);
+  var getAbortedReason = (signal) => {
+    const reason = signal.reason === void 0 ? getDOMException("This operation was aborted.") : signal.reason;
+    return reason instanceof Error ? reason : getDOMException(reason);
+  };
+  function pTimeout(promise, options2) {
+    const {
+      milliseconds,
+      fallback,
+      message,
+      customTimers = { setTimeout, clearTimeout }
+    } = options2;
+    let timer;
+    const wrappedPromise = new Promise((resolve, reject) => {
+      if (typeof milliseconds !== "number" || Math.sign(milliseconds) !== 1) {
+        throw new TypeError(`Expected \`milliseconds\` to be a positive number, got \`${milliseconds}\``);
+      }
+      if (options2.signal) {
+        const { signal } = options2;
+        if (signal.aborted) {
+          reject(getAbortedReason(signal));
+        }
+        const abortHandler = () => {
+          reject(getAbortedReason(signal));
+        };
+        signal.addEventListener("abort", abortHandler, { once: true });
+        promise.finally(() => {
+          signal.removeEventListener("abort", abortHandler);
+        });
+      }
+      if (milliseconds === Number.POSITIVE_INFINITY) {
+        promise.then(resolve, reject);
+        return;
+      }
+      const timeoutError = new TimeoutError();
+      timer = customTimers.setTimeout.call(void 0, () => {
+        if (fallback) {
+          try {
+            resolve(fallback());
+          } catch (error2) {
+            reject(error2);
+          }
+          return;
+        }
+        if (typeof promise.cancel === "function") {
+          promise.cancel();
+        }
+        if (message === false) {
+          resolve();
+        } else if (message instanceof Error) {
+          reject(message);
+        } else {
+          timeoutError.message = message ?? `Promise timed out after ${milliseconds} milliseconds`;
+          reject(timeoutError);
+        }
+      }, milliseconds);
+      (async () => {
+        try {
+          resolve(await promise);
+        } catch (error2) {
+          reject(error2);
+        }
+      })();
+    });
+    const cancelablePromise = wrappedPromise.finally(() => {
+      cancelablePromise.clear();
+    });
+    cancelablePromise.clear = () => {
+      customTimers.clearTimeout.call(void 0, timer);
+      timer = void 0;
+    };
+    return cancelablePromise;
+  }
+
+  // node_modules/p-queue/dist/lower-bound.js
+  function lowerBound(array, value, comparator) {
+    let first = 0;
+    let count = array.length;
+    while (count > 0) {
+      const step = Math.trunc(count / 2);
+      let it = first + step;
+      if (comparator(array[it], value) <= 0) {
+        first = ++it;
+        count -= step + 1;
+      } else {
+        count = step;
+      }
+    }
+    return first;
+  }
+
+  // node_modules/p-queue/dist/priority-queue.js
+  var PriorityQueue = class {
+    #queue = [];
+    enqueue(run, options2) {
+      options2 = {
+        priority: 0,
+        ...options2
+      };
+      const element = {
+        priority: options2.priority,
+        run
+      };
+      if (this.size && this.#queue[this.size - 1].priority >= options2.priority) {
+        this.#queue.push(element);
+        return;
+      }
+      const index = lowerBound(this.#queue, element, (a4, b3) => b3.priority - a4.priority);
+      this.#queue.splice(index, 0, element);
+    }
+    dequeue() {
+      const item = this.#queue.shift();
+      return item?.run;
+    }
+    filter(options2) {
+      return this.#queue.filter((element) => element.priority === options2.priority).map((element) => element.run);
+    }
+    get size() {
+      return this.#queue.length;
+    }
+  };
+
+  // node_modules/p-queue/dist/index.js
+  var PQueue = class extends import_index.default {
+    #carryoverConcurrencyCount;
+    #isIntervalIgnored;
+    #intervalCount = 0;
+    #intervalCap;
+    #interval;
+    #intervalEnd = 0;
+    #intervalId;
+    #timeoutId;
+    #queue;
+    #queueClass;
+    #pending = 0;
+    // The `!` is needed because of https://github.com/microsoft/TypeScript/issues/32194
+    #concurrency;
+    #isPaused;
+    #throwOnTimeout;
+    /**
+        Per-operation timeout in milliseconds. Operations fulfill once `timeout` elapses if they haven't already.
+    
+        Applies to each future operation.
+        */
+    timeout;
+    // TODO: The `throwOnTimeout` option should affect the return types of `add()` and `addAll()`
+    constructor(options2) {
+      super();
+      options2 = {
+        carryoverConcurrencyCount: false,
+        intervalCap: Number.POSITIVE_INFINITY,
+        interval: 0,
+        concurrency: Number.POSITIVE_INFINITY,
+        autoStart: true,
+        queueClass: PriorityQueue,
+        ...options2
+      };
+      if (!(typeof options2.intervalCap === "number" && options2.intervalCap >= 1)) {
+        throw new TypeError(`Expected \`intervalCap\` to be a number from 1 and up, got \`${options2.intervalCap?.toString() ?? ""}\` (${typeof options2.intervalCap})`);
+      }
+      if (options2.interval === void 0 || !(Number.isFinite(options2.interval) && options2.interval >= 0)) {
+        throw new TypeError(`Expected \`interval\` to be a finite number >= 0, got \`${options2.interval?.toString() ?? ""}\` (${typeof options2.interval})`);
+      }
+      this.#carryoverConcurrencyCount = options2.carryoverConcurrencyCount;
+      this.#isIntervalIgnored = options2.intervalCap === Number.POSITIVE_INFINITY || options2.interval === 0;
+      this.#intervalCap = options2.intervalCap;
+      this.#interval = options2.interval;
+      this.#queue = new options2.queueClass();
+      this.#queueClass = options2.queueClass;
+      this.concurrency = options2.concurrency;
+      this.timeout = options2.timeout;
+      this.#throwOnTimeout = options2.throwOnTimeout === true;
+      this.#isPaused = options2.autoStart === false;
+    }
+    get #doesIntervalAllowAnother() {
+      return this.#isIntervalIgnored || this.#intervalCount < this.#intervalCap;
+    }
+    get #doesConcurrentAllowAnother() {
+      return this.#pending < this.#concurrency;
+    }
+    #next() {
+      this.#pending--;
+      this.#tryToStartAnother();
+      this.emit("next");
+    }
+    #onResumeInterval() {
+      this.#onInterval();
+      this.#initializeIntervalIfNeeded();
+      this.#timeoutId = void 0;
+    }
+    get #isIntervalPaused() {
+      const now = Date.now();
+      if (this.#intervalId === void 0) {
+        const delay = this.#intervalEnd - now;
+        if (delay < 0) {
+          this.#intervalCount = this.#carryoverConcurrencyCount ? this.#pending : 0;
+        } else {
+          if (this.#timeoutId === void 0) {
+            this.#timeoutId = setTimeout(() => {
+              this.#onResumeInterval();
+            }, delay);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+    #tryToStartAnother() {
+      if (this.#queue.size === 0) {
+        if (this.#intervalId) {
+          clearInterval(this.#intervalId);
+        }
+        this.#intervalId = void 0;
+        this.emit("empty");
+        if (this.#pending === 0) {
+          this.emit("idle");
+        }
+        return false;
+      }
+      if (!this.#isPaused) {
+        const canInitializeInterval = !this.#isIntervalPaused;
+        if (this.#doesIntervalAllowAnother && this.#doesConcurrentAllowAnother) {
+          const job = this.#queue.dequeue();
+          if (!job) {
+            return false;
+          }
+          this.emit("active");
+          job();
+          if (canInitializeInterval) {
+            this.#initializeIntervalIfNeeded();
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+    #initializeIntervalIfNeeded() {
+      if (this.#isIntervalIgnored || this.#intervalId !== void 0) {
+        return;
+      }
+      this.#intervalId = setInterval(() => {
+        this.#onInterval();
+      }, this.#interval);
+      this.#intervalEnd = Date.now() + this.#interval;
+    }
+    #onInterval() {
+      if (this.#intervalCount === 0 && this.#pending === 0 && this.#intervalId) {
+        clearInterval(this.#intervalId);
+        this.#intervalId = void 0;
+      }
+      this.#intervalCount = this.#carryoverConcurrencyCount ? this.#pending : 0;
+      this.#processQueue();
+    }
+    /**
+    Executes all queued functions until it reaches the limit.
+    */
+    #processQueue() {
+      while (this.#tryToStartAnother()) {
+      }
+    }
+    get concurrency() {
+      return this.#concurrency;
+    }
+    set concurrency(newConcurrency) {
+      if (!(typeof newConcurrency === "number" && newConcurrency >= 1)) {
+        throw new TypeError(`Expected \`concurrency\` to be a number from 1 and up, got \`${newConcurrency}\` (${typeof newConcurrency})`);
+      }
+      this.#concurrency = newConcurrency;
+      this.#processQueue();
+    }
+    async #throwOnAbort(signal) {
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => {
+          reject(signal.reason);
+        }, { once: true });
+      });
+    }
+    async add(function_, options2 = {}) {
+      options2 = {
+        timeout: this.timeout,
+        throwOnTimeout: this.#throwOnTimeout,
+        ...options2
+      };
+      return new Promise((resolve, reject) => {
+        this.#queue.enqueue(async () => {
+          this.#pending++;
+          this.#intervalCount++;
+          try {
+            options2.signal?.throwIfAborted();
+            let operation = function_({ signal: options2.signal });
+            if (options2.timeout) {
+              operation = pTimeout(Promise.resolve(operation), { milliseconds: options2.timeout });
+            }
+            if (options2.signal) {
+              operation = Promise.race([operation, this.#throwOnAbort(options2.signal)]);
+            }
+            const result = await operation;
+            resolve(result);
+            this.emit("completed", result);
+          } catch (error2) {
+            if (error2 instanceof TimeoutError && !options2.throwOnTimeout) {
+              resolve();
+              return;
+            }
+            reject(error2);
+            this.emit("error", error2);
+          } finally {
+            this.#next();
+          }
+        }, options2);
+        this.emit("add");
+        this.#tryToStartAnother();
+      });
+    }
+    async addAll(functions, options2) {
+      return Promise.all(functions.map(async (function_) => this.add(function_, options2)));
+    }
+    /**
+    Start (or resume) executing enqueued tasks within concurrency limit. No need to call this if queue is not paused (via `options.autoStart = false` or by `.pause()` method.)
+    */
+    start() {
+      if (!this.#isPaused) {
+        return this;
+      }
+      this.#isPaused = false;
+      this.#processQueue();
+      return this;
+    }
+    /**
+    Put queue execution on hold.
+    */
+    pause() {
+      this.#isPaused = true;
+    }
+    /**
+    Clear the queue.
+    */
+    clear() {
+      this.#queue = new this.#queueClass();
+    }
+    /**
+        Can be called multiple times. Useful if you for example add additional items at a later time.
+    
+        @returns A promise that settles when the queue becomes empty.
+        */
+    async onEmpty() {
+      if (this.#queue.size === 0) {
+        return;
+      }
+      await this.#onEvent("empty");
+    }
+    /**
+        @returns A promise that settles when the queue size is less than the given limit: `queue.size < limit`.
+    
+        If you want to avoid having the queue grow beyond a certain size you can `await queue.onSizeLessThan()` before adding a new item.
+    
+        Note that this only limits the number of items waiting to start. There could still be up to `concurrency` jobs already running that this call does not include in its calculation.
+        */
+    async onSizeLessThan(limit) {
+      if (this.#queue.size < limit) {
+        return;
+      }
+      await this.#onEvent("next", () => this.#queue.size < limit);
+    }
+    /**
+        The difference with `.onEmpty` is that `.onIdle` guarantees that all work from the queue has finished. `.onEmpty` merely signals that the queue is empty, but it could mean that some promises haven't completed yet.
+    
+        @returns A promise that settles when the queue becomes empty, and all promises have completed; `queue.size === 0 && queue.pending === 0`.
+        */
+    async onIdle() {
+      if (this.#pending === 0 && this.#queue.size === 0) {
+        return;
+      }
+      await this.#onEvent("idle");
+    }
+    async #onEvent(event, filter) {
+      return new Promise((resolve) => {
+        const listener = () => {
+          if (filter && !filter()) {
+            return;
+          }
+          this.off(event, listener);
+          resolve();
+        };
+        this.on(event, listener);
+      });
+    }
+    /**
+    Size of the queue, the number of queued items waiting to run.
+    */
+    get size() {
+      return this.#queue.size;
+    }
+    /**
+        Size of the queue, filtered by the given options.
+    
+        For example, this can be used to find the number of items remaining in the queue with a specific priority level.
+        */
+    sizeBy(options2) {
+      return this.#queue.filter(options2).length;
+    }
+    /**
+    Number of running items (no longer in the queue).
+    */
+    get pending() {
+      return this.#pending;
+    }
+    /**
+    Whether the queue is currently paused.
+    */
+    get isPaused() {
+      return this.#isPaused;
+    }
+  };
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterFill.js
+  var recursivelyFetch = async (queue, poorTree, poorFolder, apiList, validateSingleFile) => {
+    let items = [];
+    let currentPath = poorFolder.cached ? poorFolder.nextPagePath : poorFolder.id;
+    while (currentPath) {
+      const response = await apiList(currentPath);
+      items = items.concat(response.items);
+      currentPath = response.nextPagePath;
+    }
+    const newFolders = items.filter((i4) => i4.isFolder === true);
+    const newFiles = items.filter((i4) => i4.isFolder === false);
+    const folders = newFolders.map((folder) => ({
+      type: "folder",
+      id: folder.requestPath,
+      cached: false,
+      nextPagePath: null,
+      status: "checked",
+      parentId: poorFolder.id,
+      data: folder
+    }));
+    const files = newFiles.map((file) => {
+      const restrictionError = validateSingleFile(file);
+      return {
+        type: "file",
+        id: file.requestPath,
+        restrictionError,
+        status: restrictionError ? "unchecked" : "checked",
+        parentId: poorFolder.id,
+        data: file
+      };
+    });
+    poorFolder.cached = true;
+    poorFolder.nextPagePath = null;
+    poorTree.push(...files, ...folders);
+    folders.forEach(async (folder) => {
+      queue.add(() => recursivelyFetch(queue, poorTree, folder, apiList, validateSingleFile));
+    });
+  };
+  var afterFill = async (partialTree, apiList, validateSingleFile, reportProgress) => {
+    const queue = new PQueue({
+      concurrency: 6
+    });
+    const poorTree = shallowClone_default(partialTree);
+    const poorFolders = poorTree.filter((item) => item.type === "folder" && item.status === "checked" && // either "not yet cached at all" or "some pages are left to fetch"
+    (item.cached === false || item.nextPagePath));
+    poorFolders.forEach((poorFolder) => {
+      queue.add(() => recursivelyFetch(queue, poorTree, poorFolder, apiList, validateSingleFile));
+    });
+    queue.on("completed", () => {
+      const nOfFilesChecked = poorTree.filter((i4) => i4.type === "file" && i4.status === "checked").length;
+      reportProgress(nOfFilesChecked);
+    });
+    await queue.onIdle();
+    return poorTree;
+  };
+  var afterFill_default = afterFill;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/index.js
+  var PartialTreeUtils_default = {
+    afterOpenFolder: afterOpenFolder_default,
+    afterScrollFolder: afterScrollFolder_default,
+    afterToggleCheckbox: afterToggleCheckbox_default,
+    afterFill: afterFill_default
+  };
+
+  // node_modules/@uppy/provider-views/lib/utils/shouldHandleScroll.js
+  var shouldHandleScroll = (event) => {
+    const {
+      scrollHeight,
+      scrollTop,
+      offsetHeight
+    } = event.target;
+    const scrollPosition = scrollHeight - (scrollTop + offsetHeight);
+    return scrollPosition < 50;
+  };
+  var shouldHandleScroll_default = shouldHandleScroll;
+
+  // node_modules/@uppy/provider-views/lib/utils/handleError.js
+  var handleError = (uppy) => (error2) => {
+    if (error2.isAuthError) {
+      return;
+    }
+    if (error2.name === "AbortError") {
+      uppy.log("Aborting request", "warning");
+      return;
+    }
+    uppy.log(error2, "error");
+    if (error2.name === "UserFacingApiError") {
+      uppy.info({
+        message: uppy.i18n("companionError"),
+        details: uppy.i18n(error2.message)
+      }, "warning", 5e3);
+    }
+  };
+  var handleError_default = handleError;
+
+  // node_modules/@uppy/provider-views/lib/utils/getClickedRange.js
+  var getClickedRange = (clickedId, displayedPartialTree, isShiftKeyPressed, lastCheckbox) => {
+    const lastCheckboxIndex = displayedPartialTree.findIndex((item) => item.id === lastCheckbox);
+    if (lastCheckboxIndex !== -1 && isShiftKeyPressed) {
+      const newCheckboxIndex = displayedPartialTree.findIndex((item) => item.id === clickedId);
+      const clickedRange = displayedPartialTree.slice(Math.min(lastCheckboxIndex, newCheckboxIndex), Math.max(lastCheckboxIndex, newCheckboxIndex) + 1);
+      return clickedRange.map((item) => item.id);
+    }
+    return [clickedId];
+  };
+  var getClickedRange_default = getClickedRange;
+
+  // node_modules/@uppy/provider-views/node_modules/nanoid/non-secure/index.js
+  var urlAlphabet2 = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
+  var nanoid2 = (size = 21) => {
+    let id12 = "";
+    let i4 = size | 0;
+    while (i4--) {
+      id12 += urlAlphabet2[Math.random() * 64 | 0];
+    }
+    return id12;
+  };
+
+  // node_modules/@uppy/provider-views/lib/SearchInput.js
+  function SearchInput(_ref) {
+    let {
+      searchString,
+      setSearchString,
+      submitSearchString,
+      wrapperClassName,
+      inputClassName,
+      inputLabel,
+      clearSearchLabel = "",
+      showButton = false,
+      buttonLabel = "",
+      buttonCSSClassName = ""
+    } = _ref;
+    const onInput = (e4) => {
+      setSearchString(e4.target.value);
+    };
+    const submit = q3((ev) => {
+      ev.preventDefault();
+      submitSearchString();
+    }, [submitSearchString]);
+    const [form] = h3(() => {
+      const formEl = document.createElement("form");
+      formEl.setAttribute("tabindex", "-1");
+      formEl.id = nanoid2();
+      return formEl;
+    });
+    y3(() => {
+      document.body.appendChild(form);
+      form.addEventListener("submit", submit);
+      return () => {
+        form.removeEventListener("submit", submit);
+        document.body.removeChild(form);
+      };
+    }, [form, submit]);
+    return _("section", {
+      className: wrapperClassName
+    }, _("input", {
+      className: `uppy-u-reset ${inputClassName}`,
+      type: "search",
+      "aria-label": inputLabel,
+      placeholder: inputLabel,
+      value: searchString,
+      onInput,
+      form: form.id,
+      "data-uppy-super-focusable": true
+    }), !showButton && // 🔍
+    _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon uppy-ProviderBrowser-searchFilterIcon",
+      width: "12",
+      height: "12",
+      viewBox: "0 0 12 12"
+    }, _("path", {
+      d: "M8.638 7.99l3.172 3.172a.492.492 0 1 1-.697.697L7.91 8.656a4.977 4.977 0 0 1-2.983.983C2.206 9.639 0 7.481 0 4.819 0 2.158 2.206 0 4.927 0c2.721 0 4.927 2.158 4.927 4.82a4.74 4.74 0 0 1-1.216 3.17zm-3.71.685c2.176 0 3.94-1.726 3.94-3.856 0-2.129-1.764-3.855-3.94-3.855C2.75.964.984 2.69.984 4.819c0 2.13 1.765 3.856 3.942 3.856z"
+    })), !showButton && searchString && // ❌
+    _("button", {
+      className: "uppy-u-reset uppy-ProviderBrowser-searchFilterReset",
+      type: "button",
+      "aria-label": clearSearchLabel,
+      title: clearSearchLabel,
+      onClick: () => setSearchString("")
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      viewBox: "0 0 19 19"
+    }, _("path", {
+      d: "M17.318 17.232L9.94 9.854 9.586 9.5l-.354.354-7.378 7.378h.707l-.62-.62v.706L9.318 9.94l.354-.354-.354-.354L1.94 1.854v.707l.62-.62h-.706l7.378 7.378.354.354.354-.354 7.378-7.378h-.707l.622.62v-.706L9.854 9.232l-.354.354.354.354 7.378 7.378.708-.707-7.38-7.378v.708l7.38-7.38.353-.353-.353-.353-.622-.622-.353-.353-.354.352-7.378 7.38h.708L2.56 1.23 2.208.88l-.353.353-.622.62-.353.355.352.353 7.38 7.38v-.708l-7.38 7.38-.353.353.352.353.622.622.353.353.354-.353 7.38-7.38h-.708l7.38 7.38z"
+    }))), showButton && _("button", {
+      className: `uppy-u-reset uppy-c-btn uppy-c-btn-primary ${buttonCSSClassName}`,
+      type: "submit",
+      form: form.id
+    }, buttonLabel));
+  }
+  var SearchInput_default = SearchInput;
+
+  // node_modules/@uppy/provider-views/lib/FooterActions.js
+  var import_classnames5 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getNumberOfSelectedFiles.js
+  var getNumberOfSelectedFiles = (partialTree) => {
+    const checkedLeaves = partialTree.filter((item) => {
+      if (item.type === "file" && item.status === "checked") {
+        return true;
+      }
+      if (item.type === "folder" && item.status === "checked") {
+        const doesItHaveChildren = partialTree.some((i4) => i4.type !== "root" && i4.parentId === item.id);
+        return !doesItHaveChildren;
+      }
+      return false;
+    });
+    return checkedLeaves.length;
+  };
+  var getNumberOfSelectedFiles_default = getNumberOfSelectedFiles;
+
+  // node_modules/@uppy/provider-views/lib/FooterActions.js
+  function FooterActions(_ref) {
+    let {
+      cancelSelection,
+      donePicking,
+      i18n,
+      partialTree,
+      validateAggregateRestrictions
+    } = _ref;
+    const aggregateRestrictionError = T3(() => {
+      return validateAggregateRestrictions(partialTree);
+    }, [partialTree, validateAggregateRestrictions]);
+    const nOfSelectedFiles = T3(() => {
+      return getNumberOfSelectedFiles_default(partialTree);
+    }, [partialTree]);
+    if (nOfSelectedFiles === 0) {
+      return null;
+    }
+    return _("div", {
+      className: "uppy-ProviderBrowser-footer"
+    }, _("div", {
+      className: "uppy-ProviderBrowser-footer-buttons"
+    }, _("button", {
+      className: (0, import_classnames5.default)("uppy-u-reset uppy-c-btn uppy-c-btn-primary", {
+        "uppy-c-btn--disabled": aggregateRestrictionError
+      }),
+      disabled: !!aggregateRestrictionError,
+      onClick: donePicking,
+      type: "button"
+    }, i18n("selectX", {
+      smart_count: nOfSelectedFiles
+    })), _("button", {
+      className: "uppy-u-reset uppy-c-btn uppy-c-btn-link",
+      onClick: cancelSelection,
+      type: "button"
+    }, i18n("cancel"))), aggregateRestrictionError && _("div", {
+      className: "uppy-ProviderBrowser-footer-error"
+    }, aggregateRestrictionError));
+  }
+
+  // node_modules/@uppy/provider-views/lib/utils/getTagFile.js
+  var getTagFile = (file, plugin, provider) => {
+    var _file$author, _file$author2;
+    const tagFile = {
+      id: file.id,
+      source: plugin.id,
+      name: file.name || file.id,
+      type: file.mimeType,
+      isRemote: true,
+      data: file,
+      preview: file.thumbnail || void 0,
+      meta: {
+        authorName: (_file$author = file.author) == null ? void 0 : _file$author.name,
+        authorUrl: (_file$author2 = file.author) == null ? void 0 : _file$author2.url,
+        // We need to do this `|| null` check, because null value
+        // for .relDirPath is `undefined` and for .relativePath is `null`.
+        // I do think we should just use `null` everywhere.
+        relativePath: file.relDirPath || null,
+        absolutePath: file.absDirPath
+      },
+      body: {
+        fileId: file.id
+      },
+      remote: {
+        companionUrl: plugin.opts.companionUrl,
+        url: `${provider.fileUrl(file.requestPath)}`,
+        body: {
+          fileId: file.id
+        },
+        providerName: provider.name,
+        provider: provider.provider,
+        requestClientId: provider.provider
+      }
+    };
+    return tagFile;
+  };
+  var getTagFile_default = getTagFile;
+
+  // node_modules/@uppy/provider-views/lib/utils/addFiles.js
+  var addFiles = (companionFiles, plugin, provider) => {
+    const tagFiles = companionFiles.map((f4) => getTagFile_default(f4, plugin, provider));
+    const filesToAdd = [];
+    const filesAlreadyAdded = [];
+    tagFiles.forEach((tagFile) => {
+      if (plugin.uppy.checkIfFileAlreadyExists(getSafeFileId(tagFile, plugin.uppy.getID()))) {
+        filesAlreadyAdded.push(tagFile);
+      } else {
+        filesToAdd.push(tagFile);
+      }
+    });
+    if (filesToAdd.length > 0) {
+      plugin.uppy.info(plugin.uppy.i18n("addedNumFiles", {
+        numFiles: filesToAdd.length
+      }));
+    }
+    if (filesAlreadyAdded.length > 0) {
+      plugin.uppy.info(`Not adding ${filesAlreadyAdded.length} files because they already exist`);
+    }
+    plugin.uppy.addFiles(filesToAdd);
+  };
+  var addFiles_default = addFiles;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getCheckedFilesWithPaths.js
+  var getPath = (partialTree, id12, cache2) => {
+    const sId = id12 === null ? "null" : id12;
+    if (cache2[sId])
+      return cache2[sId];
+    const file = partialTree.find((f4) => f4.id === id12);
+    if (file.type === "root")
+      return [];
+    const meAndParentPath = [...getPath(partialTree, file.parentId, cache2), file];
+    cache2[sId] = meAndParentPath;
+    return meAndParentPath;
+  };
+  var getCheckedFilesWithPaths = (partialTree) => {
+    const cache2 = /* @__PURE__ */ Object.create(null);
+    const checkedFiles = partialTree.filter((item) => item.type === "file" && item.status === "checked");
+    const companionFilesWithInjectedPaths = checkedFiles.map((file) => {
+      const absFolders = getPath(partialTree, file.id, cache2);
+      const firstCheckedFolderIndex = absFolders.findIndex((i4) => i4.type === "folder" && i4.status === "checked");
+      const relFolders = absFolders.slice(firstCheckedFolderIndex);
+      const absDirPath = `/${absFolders.map((i4) => i4.data.name).join("/")}`;
+      const relDirPath = relFolders.length === 1 ? (
+        // Must return `undefined` (which later turns into `null` in `.getTagFile()`)
+        // (https://github.com/transloadit/uppy/pull/4537#issuecomment-1629136652)
+        void 0
+      ) : relFolders.map((i4) => i4.data.name).join("/");
+      return {
+        ...file.data,
+        absDirPath,
+        relDirPath
+      };
+    });
+    return companionFilesWithInjectedPaths;
+  };
+  var getCheckedFilesWithPaths_default = getCheckedFilesWithPaths;
+
+  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getBreadcrumbs.js
+  var getBreadcrumbs = (partialTree, currentFolderId) => {
+    let folder = partialTree.find((f4) => f4.id === currentFolderId);
+    let breadcrumbs = [];
+    while (true) {
+      breadcrumbs = [folder, ...breadcrumbs];
+      if (folder.type === "root")
+        break;
+      const currentParentId = folder.parentId;
+      folder = partialTree.find((f4) => f4.id === currentParentId);
+    }
+    return breadcrumbs;
+  };
+  var getBreadcrumbs_default = getBreadcrumbs;
+
+  // node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
+  function _classPrivateFieldLooseBase6(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id6 = 0;
+  function _classPrivateFieldLooseKey6(e4) {
+    return "__private_" + id6++ + "_" + e4;
+  }
+  var packageJson6 = {
+    "version": "4.2.0"
+  };
+  function defaultPickerIcon() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "30",
+      height: "30",
+      viewBox: "0 0 30 30"
+    }, _("path", {
+      d: "M15 30c8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15C6.716 0 0 6.716 0 15c0 8.284 6.716 15 15 15zm4.258-12.676v6.846h-8.426v-6.846H5.204l9.82-12.364 9.82 12.364H19.26z"
+    }));
+  }
+  var getDefaultState = (rootFolderId) => ({
+    authenticated: void 0,
+    // we don't know yet
+    partialTree: [{
+      type: "root",
+      id: rootFolderId,
+      cached: false,
+      nextPagePath: null
+    }],
+    currentFolderId: rootFolderId,
+    searchString: "",
+    didFirstRender: false,
+    username: null,
+    loading: false
+  });
+  var _abortController = /* @__PURE__ */ _classPrivateFieldLooseKey6("abortController");
+  var _withAbort = /* @__PURE__ */ _classPrivateFieldLooseKey6("withAbort");
+  var ProviderView = class {
+    constructor(plugin, opts) {
+      Object.defineProperty(this, _withAbort, {
+        value: _withAbort2
+      });
+      this.isHandlingScroll = false;
+      this.lastCheckbox = null;
+      Object.defineProperty(this, _abortController, {
+        writable: true,
+        value: void 0
+      });
+      this.validateSingleFile = (file) => {
+        const companionFile = remoteFileObjToLocal(file);
+        const result = this.plugin.uppy.validateSingleFile(companionFile);
+        return result;
+      };
+      this.getDisplayedPartialTree = () => {
+        const {
+          partialTree,
+          currentFolderId,
+          searchString
+        } = this.plugin.getPluginState();
+        const inThisFolder = partialTree.filter((item) => item.type !== "root" && item.parentId === currentFolderId);
+        const filtered = searchString === "" ? inThisFolder : inThisFolder.filter((item) => {
+          var _item$data$name;
+          return ((_item$data$name = item.data.name) != null ? _item$data$name : this.plugin.uppy.i18n("unnamed")).toLowerCase().indexOf(searchString.toLowerCase()) !== -1;
+        });
+        return filtered;
+      };
+      this.validateAggregateRestrictions = (partialTree) => {
+        const checkedFiles = partialTree.filter((item) => item.type === "file" && item.status === "checked");
+        const uppyFiles = checkedFiles.map((file) => file.data);
+        return this.plugin.uppy.validateAggregateRestrictions(uppyFiles);
+      };
+      this.plugin = plugin;
+      this.provider = opts.provider;
+      const defaultOptions8 = {
+        viewType: "list",
+        showTitles: true,
+        showFilter: true,
+        showBreadcrumbs: true,
+        loadAllFiles: false,
+        virtualList: false
+      };
+      this.opts = {
+        ...defaultOptions8,
+        ...opts
+      };
+      this.openFolder = this.openFolder.bind(this);
+      this.logout = this.logout.bind(this);
+      this.handleAuth = this.handleAuth.bind(this);
+      this.handleScroll = this.handleScroll.bind(this);
+      this.resetPluginState = this.resetPluginState.bind(this);
+      this.donePicking = this.donePicking.bind(this);
+      this.render = this.render.bind(this);
+      this.cancelSelection = this.cancelSelection.bind(this);
+      this.toggleCheckbox = this.toggleCheckbox.bind(this);
+      this.resetPluginState();
+      this.plugin.uppy.on("dashboard:close-panel", this.resetPluginState);
+      this.plugin.uppy.registerRequestClient(this.provider.provider, this.provider);
+    }
+    resetPluginState() {
+      this.plugin.setPluginState(getDefaultState(this.plugin.rootFolderId));
+    }
+    // eslint-disable-next-line class-methods-use-this
+    tearDown() {
+    }
+    setLoading(loading) {
+      this.plugin.setPluginState({
+        loading
+      });
+    }
+    cancelSelection() {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const newPartialTree = partialTree.map((item) => item.type === "root" ? item : {
+        ...item,
+        status: "unchecked"
+      });
+      this.plugin.setPluginState({
+        partialTree: newPartialTree
+      });
+    }
+    async openFolder(folderId) {
+      this.lastCheckbox = null;
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const clickedFolder = partialTree.find((folder) => folder.id === folderId);
+      if (clickedFolder.cached) {
+        this.plugin.setPluginState({
+          currentFolderId: folderId,
+          searchString: ""
+        });
+        return;
+      }
+      this.setLoading(true);
+      await _classPrivateFieldLooseBase6(this, _withAbort)[_withAbort](async (signal) => {
+        let currentPagePath = folderId;
+        let currentItems = [];
+        do {
+          const {
+            username,
+            nextPagePath,
+            items
+          } = await this.provider.list(currentPagePath, {
+            signal
+          });
+          this.plugin.setPluginState({
+            username
+          });
+          currentPagePath = nextPagePath;
+          currentItems = currentItems.concat(items);
+          this.setLoading(this.plugin.uppy.i18n("loadedXFiles", {
+            numFiles: currentItems.length
+          }));
+        } while (this.opts.loadAllFiles && currentPagePath);
+        const newPartialTree = PartialTreeUtils_default.afterOpenFolder(partialTree, currentItems, clickedFolder, currentPagePath, this.validateSingleFile);
+        this.plugin.setPluginState({
+          partialTree: newPartialTree,
+          currentFolderId: folderId,
+          searchString: ""
+        });
+      }).catch(handleError_default(this.plugin.uppy));
+      this.setLoading(false);
+    }
+    /**
+     * Removes session token on client side.
+     */
+    async logout() {
+      await _classPrivateFieldLooseBase6(this, _withAbort)[_withAbort](async (signal) => {
+        const res = await this.provider.logout({
+          signal
+        });
+        if (res.ok) {
+          if (!res.revoked) {
+            const message = this.plugin.uppy.i18n("companionUnauthorizeHint", {
+              provider: this.plugin.title,
+              url: res.manual_revoke_url
+            });
+            this.plugin.uppy.info(message, "info", 7e3);
+          }
+          this.plugin.setPluginState({
+            ...getDefaultState(this.plugin.rootFolderId),
+            authenticated: false
+          });
+        }
+      }).catch(handleError_default(this.plugin.uppy));
+    }
+    async handleAuth(authFormData) {
+      await _classPrivateFieldLooseBase6(this, _withAbort)[_withAbort](async (signal) => {
+        this.setLoading(true);
+        await this.provider.login({
+          authFormData,
+          signal
+        });
+        this.plugin.setPluginState({
+          authenticated: true
+        });
+        await Promise.all([this.provider.fetchPreAuthToken(), this.openFolder(this.plugin.rootFolderId)]);
+      }).catch(handleError_default(this.plugin.uppy));
+      this.setLoading(false);
+    }
+    async handleScroll(event) {
+      const {
+        partialTree,
+        currentFolderId
+      } = this.plugin.getPluginState();
+      const currentFolder = partialTree.find((i4) => i4.id === currentFolderId);
+      if (shouldHandleScroll_default(event) && !this.isHandlingScroll && currentFolder.nextPagePath) {
+        this.isHandlingScroll = true;
+        await _classPrivateFieldLooseBase6(this, _withAbort)[_withAbort](async (signal) => {
+          const {
+            nextPagePath,
+            items
+          } = await this.provider.list(currentFolder.nextPagePath, {
+            signal
+          });
+          const newPartialTree = PartialTreeUtils_default.afterScrollFolder(partialTree, currentFolderId, items, nextPagePath, this.validateSingleFile);
+          this.plugin.setPluginState({
+            partialTree: newPartialTree
+          });
+        }).catch(handleError_default(this.plugin.uppy));
+        this.isHandlingScroll = false;
+      }
+    }
+    async donePicking() {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      this.setLoading(true);
+      await _classPrivateFieldLooseBase6(this, _withAbort)[_withAbort](async (signal) => {
+        const enrichedTree = await PartialTreeUtils_default.afterFill(partialTree, (path) => this.provider.list(path, {
+          signal
+        }), this.validateSingleFile, (n3) => {
+          this.setLoading(this.plugin.uppy.i18n("addedNumFiles", {
+            numFiles: n3
+          }));
+        });
+        const aggregateRestrictionError = this.validateAggregateRestrictions(enrichedTree);
+        if (aggregateRestrictionError) {
+          this.plugin.setPluginState({
+            partialTree: enrichedTree
+          });
+          return;
+        }
+        const companionFiles = getCheckedFilesWithPaths_default(enrichedTree);
+        addFiles_default(companionFiles, this.plugin, this.provider);
+        this.resetPluginState();
+      }).catch(handleError_default(this.plugin.uppy));
+      this.setLoading(false);
+    }
+    toggleCheckbox(ourItem, isShiftKeyPressed) {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const clickedRange = getClickedRange_default(ourItem.id, this.getDisplayedPartialTree(), isShiftKeyPressed, this.lastCheckbox);
+      const newPartialTree = PartialTreeUtils_default.afterToggleCheckbox(partialTree, clickedRange);
+      this.plugin.setPluginState({
+        partialTree: newPartialTree
+      });
+      this.lastCheckbox = ourItem.id;
+    }
+    render(state, viewOptions) {
+      if (viewOptions === void 0) {
+        viewOptions = {};
+      }
+      const {
+        didFirstRender
+      } = this.plugin.getPluginState();
+      const {
+        i18n
+      } = this.plugin.uppy;
+      if (!didFirstRender) {
+        this.plugin.setPluginState({
+          didFirstRender: true
+        });
+        this.provider.fetchPreAuthToken();
+        this.openFolder(this.plugin.rootFolderId);
+      }
+      const opts = {
+        ...this.opts,
+        ...viewOptions
+      };
+      const {
+        authenticated,
+        loading
+      } = this.plugin.getPluginState();
+      const pluginIcon = this.plugin.icon || defaultPickerIcon;
+      if (authenticated === false) {
+        return _(AuthView, {
+          pluginName: this.plugin.title,
+          pluginIcon,
+          handleAuth: this.handleAuth,
+          i18n: this.plugin.uppy.i18n,
+          renderForm: opts.renderAuthForm,
+          loading
+        });
+      }
+      const {
+        partialTree,
+        currentFolderId,
+        username,
+        searchString
+      } = this.plugin.getPluginState();
+      const breadcrumbs = getBreadcrumbs_default(partialTree, currentFolderId);
+      return _("div", {
+        className: (0, import_classnames6.default)("uppy-ProviderBrowser", `uppy-ProviderBrowser-viewType--${opts.viewType}`)
+      }, _(Header, {
+        showBreadcrumbs: opts.showBreadcrumbs,
+        openFolder: this.openFolder,
+        breadcrumbs,
+        pluginIcon,
+        title: this.plugin.title,
+        logout: this.logout,
+        username,
+        i18n
+      }), opts.showFilter && _(SearchInput_default, {
+        searchString,
+        setSearchString: (s4) => {
+          this.plugin.setPluginState({
+            searchString: s4
+          });
+        },
+        submitSearchString: () => {
+        },
+        inputLabel: i18n("filter"),
+        clearSearchLabel: i18n("resetFilter"),
+        wrapperClassName: "uppy-ProviderBrowser-searchFilter",
+        inputClassName: "uppy-ProviderBrowser-searchFilterInput"
+      }), _(Browser_default, {
+        toggleCheckbox: this.toggleCheckbox,
+        displayedPartialTree: this.getDisplayedPartialTree(),
+        openFolder: this.openFolder,
+        virtualList: opts.virtualList,
+        noResultsLabel: i18n("noFilesFound"),
+        handleScroll: this.handleScroll,
+        viewType: opts.viewType,
+        showTitles: opts.showTitles,
+        i18n: this.plugin.uppy.i18n,
+        isLoading: loading
+      }), _(FooterActions, {
+        partialTree,
+        donePicking: this.donePicking,
+        cancelSelection: this.cancelSelection,
+        i18n,
+        validateAggregateRestrictions: this.validateAggregateRestrictions
+      }));
+    }
+  };
+  async function _withAbort2(op) {
+    var _classPrivateFieldLoo;
+    (_classPrivateFieldLoo = _classPrivateFieldLooseBase6(this, _abortController)[_abortController]) == null || _classPrivateFieldLoo.abort();
+    const abortController = new AbortController();
+    _classPrivateFieldLooseBase6(this, _abortController)[_abortController] = abortController;
+    const cancelRequest = () => {
+      abortController.abort();
+    };
+    try {
+      this.plugin.uppy.on("dashboard:close-panel", cancelRequest);
+      this.plugin.uppy.on("cancel-all", cancelRequest);
+      await op(abortController.signal);
+    } finally {
+      this.plugin.uppy.off("dashboard:close-panel", cancelRequest);
+      this.plugin.uppy.off("cancel-all", cancelRequest);
+      _classPrivateFieldLooseBase6(this, _abortController)[_abortController] = void 0;
+    }
+  }
+  ProviderView.VERSION = packageJson6.version;
+
+  // node_modules/@uppy/provider-views/lib/SearchProviderView/SearchProviderView.js
+  var import_classnames7 = __toESM(require_classnames(), 1);
+  var packageJson7 = {
+    "version": "4.2.0"
+  };
+  var defaultState = {
+    loading: false,
+    searchString: "",
+    partialTree: [{
+      type: "root",
+      id: null,
+      cached: false,
+      nextPagePath: null
+    }],
+    currentFolderId: null,
+    isInputMode: true
+  };
+  var SearchProviderView = class {
+    constructor(plugin, opts) {
+      this.isHandlingScroll = false;
+      this.lastCheckbox = null;
+      this.validateSingleFile = (file) => {
+        const companionFile = remoteFileObjToLocal(file);
+        const result = this.plugin.uppy.validateSingleFile(companionFile);
+        return result;
+      };
+      this.getDisplayedPartialTree = () => {
+        const {
+          partialTree
+        } = this.plugin.getPluginState();
+        return partialTree.filter((item) => item.type !== "root");
+      };
+      this.setSearchString = (searchString) => {
+        this.plugin.setPluginState({
+          searchString
+        });
+        if (searchString === "") {
+          this.plugin.setPluginState({
+            partialTree: []
+          });
+        }
+      };
+      this.validateAggregateRestrictions = (partialTree) => {
+        const checkedFiles = partialTree.filter((item) => item.type === "file" && item.status === "checked");
+        const uppyFiles = checkedFiles.map((file) => file.data);
+        return this.plugin.uppy.validateAggregateRestrictions(uppyFiles);
+      };
+      this.plugin = plugin;
+      this.provider = opts.provider;
+      const defaultOptions8 = {
+        viewType: "grid",
+        showTitles: true,
+        showFilter: true
+      };
+      this.opts = {
+        ...defaultOptions8,
+        ...opts
+      };
+      this.setSearchString = this.setSearchString.bind(this);
+      this.search = this.search.bind(this);
+      this.resetPluginState = this.resetPluginState.bind(this);
+      this.handleScroll = this.handleScroll.bind(this);
+      this.donePicking = this.donePicking.bind(this);
+      this.cancelSelection = this.cancelSelection.bind(this);
+      this.toggleCheckbox = this.toggleCheckbox.bind(this);
+      this.render = this.render.bind(this);
+      this.resetPluginState();
+      this.plugin.uppy.on("dashboard:close-panel", this.resetPluginState);
+      this.plugin.uppy.registerRequestClient(this.provider.provider, this.provider);
+    }
+    // eslint-disable-next-line class-methods-use-this
+    tearDown() {
+    }
+    setLoading(loading) {
+      this.plugin.setPluginState({
+        loading
+      });
+    }
+    resetPluginState() {
+      this.plugin.setPluginState(defaultState);
+    }
+    cancelSelection() {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const newPartialTree = partialTree.map((item) => item.type === "root" ? item : {
+        ...item,
+        status: "unchecked"
+      });
+      this.plugin.setPluginState({
+        partialTree: newPartialTree
+      });
+    }
+    async search() {
+      const {
+        searchString
+      } = this.plugin.getPluginState();
+      if (searchString === "")
+        return;
+      this.setLoading(true);
+      try {
+        const response = await this.provider.search(searchString);
+        const newPartialTree = [{
+          type: "root",
+          id: null,
+          cached: false,
+          nextPagePath: response.nextPageQuery
+        }, ...response.items.map((item) => ({
+          type: "file",
+          id: item.requestPath,
+          status: "unchecked",
+          parentId: null,
+          data: item
+        }))];
+        this.plugin.setPluginState({
+          partialTree: newPartialTree,
+          isInputMode: false
+        });
+      } catch (error2) {
+        handleError_default(this.plugin.uppy)(error2);
+      }
+      this.setLoading(false);
+    }
+    async handleScroll(event) {
+      const {
+        partialTree,
+        searchString
+      } = this.plugin.getPluginState();
+      const root = partialTree.find((i4) => i4.type === "root");
+      if (shouldHandleScroll_default(event) && !this.isHandlingScroll && root.nextPagePath) {
+        this.isHandlingScroll = true;
+        try {
+          const response = await this.provider.search(searchString, root.nextPagePath);
+          const newRoot = {
+            ...root,
+            nextPagePath: response.nextPageQuery
+          };
+          const oldItems = partialTree.filter((i4) => i4.type !== "root");
+          const newPartialTree = [newRoot, ...oldItems, ...response.items.map((item) => ({
+            type: "file",
+            id: item.requestPath,
+            status: "unchecked",
+            parentId: null,
+            data: item
+          }))];
+          this.plugin.setPluginState({
+            partialTree: newPartialTree
+          });
+        } catch (error2) {
+          handleError_default(this.plugin.uppy)(error2);
+        }
+        this.isHandlingScroll = false;
+      }
+    }
+    async donePicking() {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const companionFiles = getCheckedFilesWithPaths_default(partialTree);
+      addFiles_default(companionFiles, this.plugin, this.provider);
+      this.resetPluginState();
+    }
+    toggleCheckbox(ourItem, isShiftKeyPressed) {
+      const {
+        partialTree
+      } = this.plugin.getPluginState();
+      const clickedRange = getClickedRange_default(ourItem.id, this.getDisplayedPartialTree(), isShiftKeyPressed, this.lastCheckbox);
+      const newPartialTree = PartialTreeUtils_default.afterToggleCheckbox(partialTree, clickedRange);
+      this.plugin.setPluginState({
+        partialTree: newPartialTree
+      });
+      this.lastCheckbox = ourItem.id;
+    }
+    render(state, viewOptions) {
+      if (viewOptions === void 0) {
+        viewOptions = {};
+      }
+      const {
+        isInputMode,
+        searchString,
+        loading,
+        partialTree
+      } = this.plugin.getPluginState();
+      const {
+        i18n
+      } = this.plugin.uppy;
+      const opts = {
+        ...this.opts,
+        ...viewOptions
+      };
+      if (isInputMode) {
+        return _(SearchInput_default, {
+          searchString,
+          setSearchString: this.setSearchString,
+          submitSearchString: this.search,
+          inputLabel: i18n("enterTextToSearch"),
+          buttonLabel: i18n("searchImages"),
+          wrapperClassName: "uppy-SearchProvider",
+          inputClassName: "uppy-c-textInput uppy-SearchProvider-input",
+          showButton: true,
+          buttonCSSClassName: "uppy-SearchProvider-searchButton"
+        });
+      }
+      return _("div", {
+        className: (0, import_classnames7.default)("uppy-ProviderBrowser", `uppy-ProviderBrowser-viewType--${opts.viewType}`)
+      }, opts.showFilter && _(SearchInput_default, {
+        searchString,
+        setSearchString: this.setSearchString,
+        submitSearchString: this.search,
+        inputLabel: i18n("search"),
+        clearSearchLabel: i18n("resetSearch"),
+        wrapperClassName: "uppy-ProviderBrowser-searchFilter",
+        inputClassName: "uppy-ProviderBrowser-searchFilterInput"
+      }), _(Browser_default, {
+        toggleCheckbox: this.toggleCheckbox,
+        displayedPartialTree: this.getDisplayedPartialTree(),
+        handleScroll: this.handleScroll,
+        openFolder: async () => {
+        },
+        noResultsLabel: i18n("noSearchResults"),
+        viewType: opts.viewType,
+        showTitles: opts.showTitles,
+        isLoading: loading,
+        i18n,
+        virtualList: false
+      }), _(FooterActions, {
+        partialTree,
+        donePicking: this.donePicking,
+        cancelSelection: this.cancelSelection,
+        i18n,
+        validateAggregateRestrictions: this.validateAggregateRestrictions
+      }));
+    }
+  };
+  SearchProviderView.VERSION = packageJson7.version;
+
+  // node_modules/@uppy/dashboard/node_modules/nanoid/non-secure/index.js
+  var urlAlphabet3 = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
+  var nanoid3 = (size = 21) => {
+    let id12 = "";
+    let i4 = size | 0;
+    while (i4--) {
+      id12 += urlAlphabet3[Math.random() * 64 | 0];
+    }
+    return id12;
+  };
+
+  // node_modules/memoize-one/dist/memoize-one.esm.js
+  var safeIsNaN = Number.isNaN || function ponyfill(value) {
+    return typeof value === "number" && value !== value;
+  };
+  function isEqual(first, second) {
+    if (first === second) {
+      return true;
+    }
+    if (safeIsNaN(first) && safeIsNaN(second)) {
+      return true;
+    }
+    return false;
+  }
+  function areInputsEqual(newInputs, lastInputs) {
+    if (newInputs.length !== lastInputs.length) {
+      return false;
+    }
+    for (var i4 = 0; i4 < newInputs.length; i4++) {
+      if (!isEqual(newInputs[i4], lastInputs[i4])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  function memoizeOne(resultFn, isEqual2) {
+    if (isEqual2 === void 0) {
+      isEqual2 = areInputsEqual;
+    }
+    var cache2 = null;
+    function memoized() {
+      var newArgs = [];
+      for (var _i = 0; _i < arguments.length; _i++) {
+        newArgs[_i] = arguments[_i];
+      }
+      if (cache2 && cache2.lastThis === this && isEqual2(newArgs, cache2.lastArgs)) {
+        return cache2.lastResult;
+      }
+      var lastResult = resultFn.apply(this, newArgs);
+      cache2 = {
+        lastResult,
+        lastArgs: newArgs,
+        lastThis: this
+      };
+      return lastResult;
+    }
+    memoized.clear = function clear() {
+      cache2 = null;
+    };
+    return memoized;
+  }
+
+  // node_modules/@uppy/utils/lib/FOCUSABLE_ELEMENTS.js
+  var FOCUSABLE_ELEMENTS_default = ['a[href]:not([tabindex^="-"]):not([inert]):not([aria-hidden])', 'area[href]:not([tabindex^="-"]):not([inert]):not([aria-hidden])', "input:not([disabled]):not([inert]):not([aria-hidden])", "select:not([disabled]):not([inert]):not([aria-hidden])", "textarea:not([disabled]):not([inert]):not([aria-hidden])", "button:not([disabled]):not([inert]):not([aria-hidden])", 'iframe:not([tabindex^="-"]):not([inert]):not([aria-hidden])', 'object:not([tabindex^="-"]):not([inert]):not([aria-hidden])', 'embed:not([tabindex^="-"]):not([inert]):not([aria-hidden])', '[contenteditable]:not([tabindex^="-"]):not([inert]):not([aria-hidden])', '[tabindex]:not([tabindex^="-"]):not([inert]):not([aria-hidden])'];
+
+  // node_modules/@uppy/dashboard/lib/utils/getActiveOverlayEl.js
+  function getActiveOverlayEl(dashboardEl, activeOverlayType) {
+    if (activeOverlayType) {
+      const overlayEl = dashboardEl.querySelector(`[data-uppy-paneltype="${activeOverlayType}"]`);
+      if (overlayEl)
+        return overlayEl;
+    }
+    return dashboardEl;
+  }
+
+  // node_modules/@uppy/dashboard/lib/utils/trapFocus.js
+  function focusOnFirstNode(event, nodes) {
+    const node = nodes[0];
+    if (node) {
+      node.focus();
+      event.preventDefault();
+    }
+  }
+  function focusOnLastNode(event, nodes) {
+    const node = nodes[nodes.length - 1];
+    if (node) {
+      node.focus();
+      event.preventDefault();
+    }
+  }
+  function isFocusInOverlay(activeOverlayEl) {
+    return activeOverlayEl.contains(document.activeElement);
+  }
+  function trapFocus(event, activeOverlayType, dashboardEl) {
+    const activeOverlayEl = getActiveOverlayEl(dashboardEl, activeOverlayType);
+    const focusableNodes = toArray_default(activeOverlayEl.querySelectorAll(FOCUSABLE_ELEMENTS_default));
+    const focusedItemIndex = focusableNodes.indexOf(document.activeElement);
+    if (!isFocusInOverlay(activeOverlayEl)) {
+      focusOnFirstNode(event, focusableNodes);
+    } else if (event.shiftKey && focusedItemIndex === 0) {
+      focusOnLastNode(event, focusableNodes);
+    } else if (!event.shiftKey && focusedItemIndex === focusableNodes.length - 1) {
+      focusOnFirstNode(event, focusableNodes);
+    }
+  }
+  function forInline(event, activeOverlayType, dashboardEl) {
+    if (activeOverlayType === null) {
+    } else {
+      trapFocus(event, activeOverlayType, dashboardEl);
+    }
+  }
+
+  // node_modules/@uppy/dashboard/lib/utils/createSuperFocus.js
+  var import_debounce2 = __toESM(require_debounce(), 1);
+  function createSuperFocus() {
+    let lastFocusWasOnSuperFocusableEl = false;
+    const superFocus = (dashboardEl, activeOverlayType) => {
+      const overlayEl = getActiveOverlayEl(dashboardEl, activeOverlayType);
+      const isFocusInOverlay2 = overlayEl.contains(document.activeElement);
+      if (isFocusInOverlay2 && lastFocusWasOnSuperFocusableEl)
+        return;
+      const superFocusableEl = overlayEl.querySelector("[data-uppy-super-focusable]");
+      if (isFocusInOverlay2 && !superFocusableEl)
+        return;
+      if (superFocusableEl) {
+        superFocusableEl.focus({
+          preventScroll: true
+        });
+        lastFocusWasOnSuperFocusableEl = true;
+      } else {
+        const firstEl = overlayEl.querySelector(FOCUSABLE_ELEMENTS_default);
+        firstEl == null || firstEl.focus({
+          preventScroll: true
+        });
+        lastFocusWasOnSuperFocusableEl = false;
+      }
+    };
+    return (0, import_debounce2.default)(superFocus, 260);
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/Dashboard.js
+  var import_classnames14 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/utils/lib/isDragDropSupported.js
+  function isDragDropSupported() {
+    const div = document.body;
+    if (!("draggable" in div) || !("ondragstart" in div && "ondrop" in div)) {
+      return false;
+    }
+    if (!("FormData" in window)) {
+      return false;
+    }
+    if (!("FileReader" in window)) {
+      return false;
+    }
+    return true;
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/index.js
+  var import_classnames8 = __toESM(require_classnames(), 1);
+
+  // node_modules/shallow-equal/dist/index.modern.mjs
+  function shallowEqualObjects(objA, objB) {
+    if (objA === objB) {
+      return true;
+    }
+    if (!objA || !objB) {
+      return false;
+    }
+    const aKeys = Object.keys(objA);
+    const bKeys = Object.keys(objB);
+    const len = aKeys.length;
+    if (bKeys.length !== len) {
+      return false;
+    }
+    for (let i4 = 0; i4 < len; i4++) {
+      const key = aKeys[i4];
+      if (objA[key] !== objB[key] || !Object.prototype.hasOwnProperty.call(objB, key)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // node_modules/@uppy/dashboard/lib/utils/getFileTypeIcon.js
+  function iconImage() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("g", {
+      fill: "#686DE0",
+      fillRule: "evenodd"
+    }, _("path", {
+      d: "M5 7v10h15V7H5zm0-1h15a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z",
+      fillRule: "nonzero"
+    }), _("path", {
+      d: "M6.35 17.172l4.994-5.026a.5.5 0 0 1 .707 0l2.16 2.16 3.505-3.505a.5.5 0 0 1 .707 0l2.336 2.31-.707.72-1.983-1.97-3.505 3.505a.5.5 0 0 1-.707 0l-2.16-2.159-3.938 3.939-1.409.026z",
+      fillRule: "nonzero"
+    }), _("circle", {
+      cx: "7.5",
+      cy: "9.5",
+      r: "1.5"
+    })));
+  }
+  function iconAudio() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("path", {
+      d: "M9.5 18.64c0 1.14-1.145 2-2.5 2s-2.5-.86-2.5-2c0-1.14 1.145-2 2.5-2 .557 0 1.079.145 1.5.396V7.25a.5.5 0 0 1 .379-.485l9-2.25A.5.5 0 0 1 18.5 5v11.64c0 1.14-1.145 2-2.5 2s-2.5-.86-2.5-2c0-1.14 1.145-2 2.5-2 .557 0 1.079.145 1.5.396V8.67l-8 2v7.97zm8-11v-2l-8 2v2l8-2zM7 19.64c.855 0 1.5-.484 1.5-1s-.645-1-1.5-1-1.5.484-1.5 1 .645 1 1.5 1zm9-2c.855 0 1.5-.484 1.5-1s-.645-1-1.5-1-1.5.484-1.5 1 .645 1 1.5 1z",
+      fill: "#049BCF",
+      fillRule: "nonzero"
+    }));
+  }
+  function iconVideo() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("path", {
+      d: "M16 11.834l4.486-2.691A1 1 0 0 1 22 10v6a1 1 0 0 1-1.514.857L16 14.167V17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2.834zM15 9H5v8h10V9zm1 4l5 3v-6l-5 3z",
+      fill: "#19AF67",
+      fillRule: "nonzero"
+    }));
+  }
+  function iconPDF() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("path", {
+      d: "M9.766 8.295c-.691-1.843-.539-3.401.747-3.726 1.643-.414 2.505.938 2.39 3.299-.039.79-.194 1.662-.537 3.148.324.49.66.967 1.055 1.51.17.231.382.488.629.757 1.866-.128 3.653.114 4.918.655 1.487.635 2.192 1.685 1.614 2.84-.566 1.133-1.839 1.084-3.416.249-1.141-.604-2.457-1.634-3.51-2.707a13.467 13.467 0 0 0-2.238.426c-1.392 4.051-4.534 6.453-5.707 4.572-.986-1.58 1.38-4.206 4.914-5.375.097-.322.185-.656.264-1.001.08-.353.306-1.31.407-1.737-.678-1.059-1.2-2.031-1.53-2.91zm2.098 4.87c-.033.144-.068.287-.104.427l.033-.01-.012.038a14.065 14.065 0 0 1 1.02-.197l-.032-.033.052-.004a7.902 7.902 0 0 1-.208-.271c-.197-.27-.38-.526-.555-.775l-.006.028-.002-.003c-.076.323-.148.632-.186.8zm5.77 2.978c1.143.605 1.832.632 2.054.187.26-.519-.087-1.034-1.113-1.473-.911-.39-2.175-.608-3.55-.608.845.766 1.787 1.459 2.609 1.894zM6.559 18.789c.14.223.693.16 1.425-.413.827-.648 1.61-1.747 2.208-3.206-2.563 1.064-4.102 2.867-3.633 3.62zm5.345-10.97c.088-1.793-.351-2.48-1.146-2.28-.473.119-.564 1.05-.056 2.405.213.566.52 1.188.908 1.859.18-.858.268-1.453.294-1.984z",
+      fill: "#E2514A",
+      fillRule: "nonzero"
+    }));
+  }
+  function iconArchive() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("path", {
+      d: "M10.45 2.05h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5V2.55a.5.5 0 0 1 .5-.5zm2.05 1.024h1.05a.5.5 0 0 1 .5.5V3.6a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5v-.001zM10.45 0h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5V.5a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-2.05 3.074h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-2.05 1.024h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm-2.05 1.025h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-1.656 3.074l-.82 5.946c.52.302 1.174.458 1.976.458.803 0 1.455-.156 1.975-.458l-.82-5.946h-2.311zm0-1.025h2.312c.512 0 .946.378 1.015.885l.82 5.946c.056.412-.142.817-.501 1.026-.686.398-1.515.597-2.49.597-.974 0-1.804-.199-2.49-.597a1.025 1.025 0 0 1-.5-1.026l.819-5.946c.07-.507.503-.885 1.015-.885zm.545 6.6a.5.5 0 0 1-.397-.561l.143-.999a.5.5 0 0 1 .495-.429h.74a.5.5 0 0 1 .495.43l.143.998a.5.5 0 0 1-.397.561c-.404.08-.819.08-1.222 0z",
+      fill: "#00C469",
+      fillRule: "nonzero"
+    }));
+  }
+  function iconFile() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("g", {
+      fill: "#A7AFB7",
+      fillRule: "nonzero"
+    }, _("path", {
+      d: "M5.5 22a.5.5 0 0 1-.5-.5v-18a.5.5 0 0 1 .5-.5h10.719a.5.5 0 0 1 .367.16l3.281 3.556a.5.5 0 0 1 .133.339V21.5a.5.5 0 0 1-.5.5h-14zm.5-1h13V7.25L16 4H6v17z"
+    }), _("path", {
+      d: "M15 4v3a1 1 0 0 0 1 1h3V7h-3V4h-1z"
+    })));
+  }
+  function iconText() {
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "25",
+      height: "25",
+      viewBox: "0 0 25 25"
+    }, _("path", {
+      d: "M4.5 7h13a.5.5 0 1 1 0 1h-13a.5.5 0 0 1 0-1zm0 3h15a.5.5 0 1 1 0 1h-15a.5.5 0 1 1 0-1zm0 3h15a.5.5 0 1 1 0 1h-15a.5.5 0 1 1 0-1zm0 3h10a.5.5 0 1 1 0 1h-10a.5.5 0 1 1 0-1z",
+      fill: "#5A5E69",
+      fillRule: "nonzero"
+    }));
+  }
+  function getIconByMime(fileType) {
+    const defaultChoice = {
+      color: "#838999",
+      icon: iconFile()
+    };
+    if (!fileType)
+      return defaultChoice;
+    const fileTypeGeneral = fileType.split("/")[0];
+    const fileTypeSpecific = fileType.split("/")[1];
+    if (fileTypeGeneral === "text") {
+      return {
+        color: "#5a5e69",
+        icon: iconText()
+      };
+    }
+    if (fileTypeGeneral === "image") {
+      return {
+        color: "#686de0",
+        icon: iconImage()
+      };
+    }
+    if (fileTypeGeneral === "audio") {
+      return {
+        color: "#068dbb",
+        icon: iconAudio()
+      };
+    }
+    if (fileTypeGeneral === "video") {
+      return {
+        color: "#19af67",
+        icon: iconVideo()
+      };
+    }
+    if (fileTypeGeneral === "application" && fileTypeSpecific === "pdf") {
+      return {
+        color: "#e25149",
+        icon: iconPDF()
+      };
+    }
+    const archiveTypes = ["zip", "x-7z-compressed", "x-zip-compressed", "x-rar-compressed", "x-tar", "x-gzip", "x-apple-diskimage"];
+    if (fileTypeGeneral === "application" && archiveTypes.indexOf(fileTypeSpecific) !== -1) {
+      return {
+        color: "#00C469",
+        icon: iconArchive()
+      };
+    }
+    return defaultChoice;
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FilePreview.js
+  function FilePreview(props) {
+    const {
+      file
+    } = props;
+    if (file.preview) {
+      return _("img", {
+        className: "uppy-Dashboard-Item-previewImg",
+        alt: file.name,
+        src: file.preview
+      });
+    }
+    const {
+      color,
+      icon
+    } = getIconByMime(file.type);
+    return _("div", {
+      className: "uppy-Dashboard-Item-previewIconWrap"
+    }, _("span", {
+      className: "uppy-Dashboard-Item-previewIcon",
+      style: {
+        color
+      }
+    }, icon), _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-Dashboard-Item-previewIconBg",
+      width: "58",
+      height: "76",
+      viewBox: "0 0 58 76"
+    }, _("rect", {
+      fill: "#FFF",
+      width: "58",
+      height: "76",
+      rx: "3",
+      fillRule: "evenodd"
+    })));
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/MetaErrorMessage.js
+  var metaFieldIdToName = (metaFieldId, metaFields) => {
+    const fields = typeof metaFields === "function" ? metaFields() : metaFields;
+    const field = fields.filter((f4) => f4.id === metaFieldId);
+    return field[0].name;
+  };
+  function MetaErrorMessage(props) {
+    const {
+      file,
+      toggleFileCard,
+      i18n,
+      metaFields
+    } = props;
+    const {
+      missingRequiredMetaFields
+    } = file;
+    if (!(missingRequiredMetaFields != null && missingRequiredMetaFields.length)) {
+      return null;
+    }
+    const metaFieldsString = missingRequiredMetaFields.map((missingMetaField) => metaFieldIdToName(missingMetaField, metaFields)).join(", ");
+    return _("div", {
+      className: "uppy-Dashboard-Item-errorMessage"
+    }, i18n("missingRequiredMetaFields", {
+      smart_count: missingRequiredMetaFields.length,
+      fields: metaFieldsString
+    }), " ", _("button", {
+      type: "button",
+      class: "uppy-u-reset uppy-Dashboard-Item-errorMessageBtn",
+      onClick: () => toggleFileCard(true, file.id)
+    }, i18n("editFile")));
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/FilePreviewAndLink/index.js
+  function FilePreviewAndLink(props) {
+    const {
+      file,
+      i18n,
+      toggleFileCard,
+      metaFields,
+      showLinkToFileUploadResult
+    } = props;
+    const white = "rgba(255, 255, 255, 0.5)";
+    const previewBackgroundColor = file.preview ? white : getIconByMime(file.type).color;
+    return _("div", {
+      className: "uppy-Dashboard-Item-previewInnerWrap",
+      style: {
+        backgroundColor: previewBackgroundColor
+      }
+    }, showLinkToFileUploadResult && file.uploadURL && _("a", {
+      className: "uppy-Dashboard-Item-previewLink",
+      href: file.uploadURL,
+      rel: "noreferrer noopener",
+      target: "_blank",
+      "aria-label": file.meta.name
+    }, _("span", {
+      hidden: true
+    }, file.meta.name)), _(FilePreview, {
+      file
+    }), _(MetaErrorMessage, {
+      file,
+      i18n,
+      toggleFileCard,
+      metaFields
+    }));
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/FileProgress/index.js
+  function onPauseResumeCancelRetry(props) {
+    if (props.isUploaded)
+      return;
+    if (props.error && !props.hideRetryButton) {
+      props.uppy.retryUpload(props.file.id);
+      return;
+    }
+    if (props.resumableUploads && !props.hidePauseResumeButton) {
+      props.uppy.pauseResume(props.file.id);
+    } else if (props.individualCancellation && !props.hideCancelButton) {
+      props.uppy.removeFile(props.file.id);
+    }
+  }
+  function progressIndicatorTitle(props) {
+    if (props.isUploaded) {
+      return props.i18n("uploadComplete");
+    }
+    if (props.error) {
+      return props.i18n("retryUpload");
+    }
+    if (props.resumableUploads) {
+      if (props.file.isPaused) {
+        return props.i18n("resumeUpload");
+      }
+      return props.i18n("pauseUpload");
+    }
+    if (props.individualCancellation) {
+      return props.i18n("cancelUpload");
+    }
+    return "";
+  }
+  function ProgressIndicatorButton(props) {
+    return _("div", {
+      className: "uppy-Dashboard-Item-progress"
+    }, _("button", {
+      className: "uppy-u-reset uppy-c-btn uppy-Dashboard-Item-progressIndicator",
+      type: "button",
+      "aria-label": progressIndicatorTitle(props),
+      title: progressIndicatorTitle(props),
+      onClick: () => onPauseResumeCancelRetry(props)
+    }, props.children));
+  }
+  function ProgressCircleContainer(_ref) {
+    let {
+      children
+    } = _ref;
+    return _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "70",
+      height: "70",
+      viewBox: "0 0 36 36",
+      className: "uppy-c-icon uppy-Dashboard-Item-progressIcon--circle"
+    }, children);
+  }
+  function ProgressCircle(_ref2) {
+    let {
+      progress
+    } = _ref2;
+    const circleLength = 2 * Math.PI * 15;
+    return _("g", null, _("circle", {
+      className: "uppy-Dashboard-Item-progressIcon--bg",
+      r: "15",
+      cx: "18",
+      cy: "18",
+      "stroke-width": "2",
+      fill: "none"
+    }), _("circle", {
+      className: "uppy-Dashboard-Item-progressIcon--progress",
+      r: "15",
+      cx: "18",
+      cy: "18",
+      transform: "rotate(-90, 18, 18)",
+      fill: "none",
+      "stroke-width": "2",
+      "stroke-dasharray": circleLength,
+      "stroke-dashoffset": circleLength - circleLength / 100 * progress
+    }));
+  }
+  function FileProgress(props) {
+    if (!props.file.progress.uploadStarted) {
+      return null;
+    }
+    if (props.file.progress.percentage === void 0) {
+      return null;
+    }
+    if (props.isUploaded) {
+      return _("div", {
+        className: "uppy-Dashboard-Item-progress"
+      }, _("div", {
+        className: "uppy-Dashboard-Item-progressIndicator"
+      }, _(ProgressCircleContainer, null, _("circle", {
+        r: "15",
+        cx: "18",
+        cy: "18",
+        fill: "#1bb240"
+      }), _("polygon", {
+        className: "uppy-Dashboard-Item-progressIcon--check",
+        transform: "translate(2, 3)",
+        points: "14 22.5 7 15.2457065 8.99985857 13.1732815 14 18.3547104 22.9729883 9 25 11.1005634"
+      }))));
+    }
+    if (props.recoveredState) {
+      return null;
+    }
+    if (props.error && !props.hideRetryButton) {
+      return (
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        _(ProgressIndicatorButton, props, _("svg", {
+          "aria-hidden": "true",
+          focusable: "false",
+          className: "uppy-c-icon uppy-Dashboard-Item-progressIcon--retry",
+          width: "28",
+          height: "31",
+          viewBox: "0 0 16 19"
+        }, _("path", {
+          d: "M16 11a8 8 0 1 1-8-8v2a6 6 0 1 0 6 6h2z"
+        }), _("path", {
+          d: "M7.9 3H10v2H7.9z"
+        }), _("path", {
+          d: "M8.536.5l3.535 3.536-1.414 1.414L7.12 1.914z"
+        }), _("path", {
+          d: "M10.657 2.621l1.414 1.415L8.536 7.57 7.12 6.157z"
+        })))
+      );
+    }
+    if (props.resumableUploads && !props.hidePauseResumeButton) {
+      return (
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        _(ProgressIndicatorButton, props, _(ProgressCircleContainer, null, _(ProgressCircle, {
+          progress: props.file.progress.percentage
+        }), props.file.isPaused ? _("polygon", {
+          className: "uppy-Dashboard-Item-progressIcon--play",
+          transform: "translate(3, 3)",
+          points: "12 20 12 10 20 15"
+        }) : _("g", {
+          className: "uppy-Dashboard-Item-progressIcon--pause",
+          transform: "translate(14.5, 13)"
+        }, _("rect", {
+          x: "0",
+          y: "0",
+          width: "2",
+          height: "10",
+          rx: "0"
+        }), _("rect", {
+          x: "5",
+          y: "0",
+          width: "2",
+          height: "10",
+          rx: "0"
+        }))))
+      );
+    }
+    if (!props.resumableUploads && props.individualCancellation && !props.hideCancelButton) {
+      return (
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        _(ProgressIndicatorButton, props, _(ProgressCircleContainer, null, _(ProgressCircle, {
+          progress: props.file.progress.percentage
+        }), _("polygon", {
+          className: "cancel",
+          transform: "translate(2, 2)",
+          points: "19.8856516 11.0625 16 14.9481516 12.1019737 11.0625 11.0625 12.1143484 14.9481516 16 11.0625 19.8980263 12.1019737 20.9375 16 17.0518484 19.8856516 20.9375 20.9375 19.8980263 17.0518484 16 20.9375 12"
+        })))
+      );
+    }
+    return _("div", {
+      className: "uppy-Dashboard-Item-progress"
+    }, _("div", {
+      className: "uppy-Dashboard-Item-progressIndicator"
+    }, _(ProgressCircleContainer, null, _(ProgressCircle, {
+      progress: props.file.progress.percentage
+    }))));
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
+  var import_prettier_bytes3 = __toESM(require_prettierBytes(), 1);
+
+  // node_modules/@uppy/utils/lib/truncateString.js
+  var separator = "...";
+  function truncateString(string, maxLength) {
+    if (maxLength === 0)
+      return "";
+    if (string.length <= maxLength)
+      return string;
+    if (maxLength <= separator.length + 1)
+      return `${string.slice(0, maxLength - 1)}\u2026`;
+    const charsToShow = maxLength - separator.length;
+    const frontChars = Math.ceil(charsToShow / 2);
+    const backChars = Math.floor(charsToShow / 2);
+    return string.slice(0, frontChars) + separator + string.slice(-backChars);
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
+  var renderFileName = (props) => {
+    const {
+      author,
+      name
+    } = props.file.meta;
+    function getMaxNameLength() {
+      if (props.isSingleFile && props.containerHeight >= 350) {
+        return 90;
+      }
+      if (props.containerWidth <= 352) {
+        return 35;
+      }
+      if (props.containerWidth <= 576) {
+        return 60;
+      }
+      return author ? 20 : 30;
+    }
+    return _("div", {
+      className: "uppy-Dashboard-Item-name",
+      title: name
+    }, truncateString(name, getMaxNameLength()));
+  };
+  var renderAuthor = (props) => {
+    var _props$file$remote;
+    const {
+      author
+    } = props.file.meta;
+    const providerName = (_props$file$remote = props.file.remote) == null ? void 0 : _props$file$remote.providerName;
+    const dot = `\xB7`;
+    if (!author) {
+      return null;
+    }
+    return _("div", {
+      className: "uppy-Dashboard-Item-author"
+    }, _("a", {
+      href: `${author.url}?utm_source=Companion&utm_medium=referral`,
+      target: "_blank",
+      rel: "noopener noreferrer"
+    }, truncateString(author.name, 13)), providerName ? _(Fragment, null, ` ${dot} `, providerName, ` ${dot} `) : null);
+  };
+  var renderFileSize = (props) => props.file.size && _("div", {
+    className: "uppy-Dashboard-Item-statusSize"
+  }, (0, import_prettier_bytes3.default)(props.file.size));
+  var ReSelectButton = (props) => props.file.isGhost && _("span", null, " \u2022 ", _("button", {
+    className: "uppy-u-reset uppy-c-btn uppy-Dashboard-Item-reSelect",
+    type: "button",
+    onClick: () => props.toggleAddFilesPanel(true)
+  }, props.i18n("reSelect")));
+  var ErrorButton = (_ref) => {
+    let {
+      file,
+      onClick
+    } = _ref;
+    if (file.error) {
+      return _("button", {
+        className: "uppy-u-reset uppy-c-btn uppy-Dashboard-Item-errorDetails",
+        "aria-label": file.error,
+        "data-microtip-position": "bottom",
+        "data-microtip-size": "medium",
+        onClick,
+        type: "button"
+      }, "?");
+    }
+    return null;
+  };
+  function FileInfo(props) {
+    const {
+      file,
+      i18n,
+      toggleFileCard,
+      metaFields,
+      toggleAddFilesPanel,
+      isSingleFile,
+      containerHeight,
+      containerWidth
+    } = props;
+    return _("div", {
+      className: "uppy-Dashboard-Item-fileInfo",
+      "data-uppy-file-source": file.source
+    }, _("div", {
+      className: "uppy-Dashboard-Item-fileName"
+    }, renderFileName({
+      file,
+      isSingleFile,
+      containerHeight,
+      containerWidth
+    }), _(ErrorButton, {
+      file,
+      onClick: () => alert(file.error)
+    })), _("div", {
+      className: "uppy-Dashboard-Item-status"
+    }, renderAuthor({
+      file
+    }), renderFileSize({
+      file
+    }), ReSelectButton({
+      file,
+      toggleAddFilesPanel,
+      i18n
+    })), _(MetaErrorMessage, {
+      file,
+      i18n,
+      toggleFileCard,
+      metaFields
+    }));
+  }
+
+  // node_modules/@uppy/dashboard/lib/utils/copyToClipboard.js
+  function copyToClipboard(textToCopy, fallbackString) {
+    if (fallbackString === void 0) {
+      fallbackString = "Copy the URL below";
+    }
+    return new Promise((resolve) => {
+      const textArea = document.createElement("textarea");
+      textArea.setAttribute("style", {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "2em",
+        height: "2em",
+        padding: 0,
+        border: "none",
+        outline: "none",
+        boxShadow: "none",
+        background: "transparent"
+      });
+      textArea.value = textToCopy;
+      document.body.appendChild(textArea);
+      textArea.select();
+      const magicCopyFailed = () => {
+        document.body.removeChild(textArea);
+        window.prompt(fallbackString, textToCopy);
+        resolve();
+      };
+      try {
+        const successful = document.execCommand("copy");
+        if (!successful) {
+          return magicCopyFailed();
+        }
+        document.body.removeChild(textArea);
+        return resolve();
+      } catch (err) {
+        document.body.removeChild(textArea);
+        return magicCopyFailed();
+      }
+    });
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/Buttons/index.js
+  function EditButton(_ref) {
+    let {
+      file,
+      uploadInProgressOrComplete,
+      metaFields,
+      canEditFile,
+      i18n,
+      onClick
+    } = _ref;
+    if (!uploadInProgressOrComplete && metaFields && metaFields.length > 0 || !uploadInProgressOrComplete && canEditFile(file)) {
+      return _("button", {
+        className: "uppy-u-reset uppy-c-btn uppy-Dashboard-Item-action uppy-Dashboard-Item-action--edit",
+        type: "button",
+        "aria-label": i18n("editFileWithFilename", {
+          file: file.meta.name
+        }),
+        title: i18n("editFileWithFilename", {
+          file: file.meta.name
+        }),
+        onClick: () => onClick()
+      }, _("svg", {
+        "aria-hidden": "true",
+        focusable: "false",
+        className: "uppy-c-icon",
+        width: "14",
+        height: "14",
+        viewBox: "0 0 14 14"
+      }, _("g", {
+        fillRule: "evenodd"
+      }, _("path", {
+        d: "M1.5 10.793h2.793A1 1 0 0 0 5 10.5L11.5 4a1 1 0 0 0 0-1.414L9.707.793a1 1 0 0 0-1.414 0l-6.5 6.5A1 1 0 0 0 1.5 8v2.793zm1-1V8L9 1.5l1.793 1.793-6.5 6.5H2.5z",
+        fillRule: "nonzero"
+      }), _("rect", {
+        x: "1",
+        y: "12.293",
+        width: "11",
+        height: "1",
+        rx: ".5"
+      }), _("path", {
+        fillRule: "nonzero",
+        d: "M6.793 2.5L9.5 5.207l.707-.707L7.5 1.793z"
+      }))));
+    }
+    return null;
+  }
+  function RemoveButton(_ref2) {
+    let {
+      i18n,
+      onClick,
+      file
+    } = _ref2;
+    return _("button", {
+      className: "uppy-u-reset uppy-Dashboard-Item-action uppy-Dashboard-Item-action--remove",
+      type: "button",
+      "aria-label": i18n("removeFile", {
+        file: file.meta.name
+      }),
+      title: i18n("removeFile", {
+        file: file.meta.name
+      }),
+      onClick: () => onClick()
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "18",
+      height: "18",
+      viewBox: "0 0 18 18"
+    }, _("path", {
+      d: "M9 0C4.034 0 0 4.034 0 9s4.034 9 9 9 9-4.034 9-9-4.034-9-9-9z"
+    }), _("path", {
+      fill: "#FFF",
+      d: "M13 12.222l-.778.778L9 9.778 5.778 13 5 12.222 8.222 9 5 5.778 5.778 5 9 8.222 12.222 5l.778.778L9.778 9z"
+    })));
+  }
+  function CopyLinkButton(_ref3) {
+    let {
+      file,
+      uppy,
+      i18n
+    } = _ref3;
+    const copyLinkToClipboard = (event) => {
+      copyToClipboard(file.uploadURL, i18n("copyLinkToClipboardFallback")).then(() => {
+        uppy.log("Link copied to clipboard.");
+        uppy.info(i18n("copyLinkToClipboardSuccess"), "info", 3e3);
+      }).catch(uppy.log).then(() => event.target.focus({
+        preventScroll: true
+      }));
+    };
+    return _("button", {
+      className: "uppy-u-reset uppy-Dashboard-Item-action uppy-Dashboard-Item-action--copyLink",
+      type: "button",
+      "aria-label": i18n("copyLink"),
+      title: i18n("copyLink"),
+      onClick: (event) => copyLinkToClipboard(event)
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "14",
+      height: "14",
+      viewBox: "0 0 14 12"
+    }, _("path", {
+      d: "M7.94 7.703a2.613 2.613 0 0 1-.626 2.681l-.852.851a2.597 2.597 0 0 1-1.849.766A2.616 2.616 0 0 1 2.764 7.54l.852-.852a2.596 2.596 0 0 1 2.69-.625L5.267 7.099a1.44 1.44 0 0 0-.833.407l-.852.851a1.458 1.458 0 0 0 1.03 2.486c.39 0 .755-.152 1.03-.426l.852-.852c.231-.231.363-.522.406-.824l1.04-1.038zm4.295-5.937A2.596 2.596 0 0 0 10.387 1c-.698 0-1.355.272-1.849.766l-.852.851a2.614 2.614 0 0 0-.624 2.688l1.036-1.036c.041-.304.173-.6.407-.833l.852-.852c.275-.275.64-.426 1.03-.426a1.458 1.458 0 0 1 1.03 2.486l-.852.851a1.442 1.442 0 0 1-.824.406l-1.04 1.04a2.596 2.596 0 0 0 2.683-.628l.851-.85a2.616 2.616 0 0 0 0-3.697zm-6.88 6.883a.577.577 0 0 0 .82 0l3.474-3.474a.579.579 0 1 0-.819-.82L5.355 7.83a.579.579 0 0 0 0 .819z"
+    })));
+  }
+  function Buttons(props) {
+    const {
+      uppy,
+      file,
+      uploadInProgressOrComplete,
+      canEditFile,
+      metaFields,
+      showLinkToFileUploadResult,
+      showRemoveButton,
+      i18n,
+      toggleFileCard,
+      openFileEditor
+    } = props;
+    const editAction = () => {
+      if (metaFields && metaFields.length > 0) {
+        toggleFileCard(true, file.id);
+      } else {
+        openFileEditor(file);
+      }
+    };
+    return _("div", {
+      className: "uppy-Dashboard-Item-actionWrapper"
+    }, _(EditButton, {
+      i18n,
+      file,
+      uploadInProgressOrComplete,
+      canEditFile,
+      metaFields,
+      onClick: editAction
+    }), showLinkToFileUploadResult && file.uploadURL ? _(CopyLinkButton, {
+      file,
+      uppy,
+      i18n
+    }) : null, showRemoveButton ? _(RemoveButton, {
+      i18n,
+      file,
+      onClick: () => uppy.removeFile(file.id)
+    }) : null);
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileItem/index.js
+  var FileItem = class extends k {
+    componentDidMount() {
+      const {
+        file
+      } = this.props;
+      if (!file.preview) {
+        this.props.handleRequestThumbnail(file);
+      }
+    }
+    shouldComponentUpdate(nextProps) {
+      return !shallowEqualObjects(this.props, nextProps);
+    }
+    // VirtualList mounts FileItems again and they emit `thumbnail:request`
+    // Otherwise thumbnails are broken or missing after Golden Retriever restores files
+    componentDidUpdate() {
+      const {
+        file
+      } = this.props;
+      if (!file.preview) {
+        this.props.handleRequestThumbnail(file);
+      }
+    }
+    componentWillUnmount() {
+      const {
+        file
+      } = this.props;
+      if (!file.preview) {
+        this.props.handleCancelThumbnail(file);
+      }
+    }
+    render() {
+      const {
+        file
+      } = this.props;
+      const isProcessing = file.progress.preprocess || file.progress.postprocess;
+      const isUploaded = !!file.progress.uploadComplete && !isProcessing && !file.error;
+      const uploadInProgressOrComplete = !!file.progress.uploadStarted || !!isProcessing;
+      const uploadInProgress = file.progress.uploadStarted && !file.progress.uploadComplete || isProcessing;
+      const error2 = file.error || false;
+      const {
+        isGhost
+      } = file;
+      let showRemoveButton = this.props.individualCancellation ? !isUploaded : !uploadInProgress && !isUploaded;
+      if (isUploaded && this.props.showRemoveButtonAfterComplete) {
+        showRemoveButton = true;
+      }
+      const dashboardItemClass = (0, import_classnames8.default)({
+        "uppy-Dashboard-Item": true,
+        "is-inprogress": uploadInProgress && !this.props.recoveredState,
+        "is-processing": isProcessing,
+        "is-complete": isUploaded,
+        "is-error": !!error2,
+        "is-resumable": this.props.resumableUploads,
+        "is-noIndividualCancellation": !this.props.individualCancellation,
+        "is-ghost": isGhost
+      });
+      return _("div", {
+        className: dashboardItemClass,
+        id: `uppy_${file.id}`,
+        role: this.props.role
+      }, _("div", {
+        className: "uppy-Dashboard-Item-preview"
+      }, _(FilePreviewAndLink, {
+        file,
+        showLinkToFileUploadResult: this.props.showLinkToFileUploadResult,
+        i18n: this.props.i18n,
+        toggleFileCard: this.props.toggleFileCard,
+        metaFields: this.props.metaFields
+      }), _(FileProgress, {
+        uppy: this.props.uppy,
+        file,
+        error: error2,
+        isUploaded,
+        hideRetryButton: this.props.hideRetryButton,
+        hideCancelButton: this.props.hideCancelButton,
+        hidePauseResumeButton: this.props.hidePauseResumeButton,
+        recoveredState: this.props.recoveredState,
+        resumableUploads: this.props.resumableUploads,
+        individualCancellation: this.props.individualCancellation,
+        i18n: this.props.i18n
+      })), _("div", {
+        className: "uppy-Dashboard-Item-fileInfoAndButtons"
+      }, _(FileInfo, {
+        file,
+        containerWidth: this.props.containerWidth,
+        containerHeight: this.props.containerHeight,
+        i18n: this.props.i18n,
+        toggleAddFilesPanel: this.props.toggleAddFilesPanel,
+        toggleFileCard: this.props.toggleFileCard,
+        metaFields: this.props.metaFields,
+        isSingleFile: this.props.isSingleFile
+      }), _(Buttons, {
+        file,
+        metaFields: this.props.metaFields,
+        showLinkToFileUploadResult: this.props.showLinkToFileUploadResult,
+        showRemoveButton,
+        canEditFile: this.props.canEditFile,
+        uploadInProgressOrComplete,
+        toggleFileCard: this.props.toggleFileCard,
+        openFileEditor: this.props.openFileEditor,
+        uppy: this.props.uppy,
+        i18n: this.props.i18n
+      })));
+    }
+  };
+
+  // node_modules/@uppy/dashboard/lib/components/FileList.js
+  function chunks(list2, size) {
+    const chunked = [];
+    let currentChunk = [];
+    list2.forEach((item) => {
+      if (currentChunk.length < size) {
+        currentChunk.push(item);
+      } else {
+        chunked.push(currentChunk);
+        currentChunk = [item];
+      }
+    });
+    if (currentChunk.length)
+      chunked.push(currentChunk);
+    return chunked;
+  }
+  function FileList(_ref) {
+    let {
+      id: id12,
+      i18n,
+      uppy,
+      files,
+      resumableUploads,
+      hideRetryButton,
+      hidePauseResumeButton,
+      hideCancelButton,
+      showLinkToFileUploadResult,
+      showRemoveButtonAfterComplete,
+      metaFields,
+      isSingleFile,
+      toggleFileCard,
+      handleRequestThumbnail,
+      handleCancelThumbnail,
+      recoveredState,
+      individualCancellation,
+      itemsPerRow,
+      openFileEditor,
+      canEditFile,
+      toggleAddFilesPanel,
+      containerWidth,
+      containerHeight
+    } = _ref;
+    const rowHeight = itemsPerRow === 1 ? (
+      // Mobile
+      71
+    ) : 200;
+    const rows = T3(() => {
+      const sortByGhostComesFirst = (file1, file2) => Number(files[file2].isGhost) - Number(files[file1].isGhost);
+      const fileIds = Object.keys(files);
+      if (recoveredState)
+        fileIds.sort(sortByGhostComesFirst);
+      return chunks(fileIds, itemsPerRow);
+    }, [files, itemsPerRow, recoveredState]);
+    const renderRow = (row) => _("div", {
+      class: "uppy-Dashboard-filesInner",
+      role: "presentation",
+      key: row[0]
+    }, row.map((fileID) => _(FileItem, {
+      key: fileID,
+      uppy,
+      id: id12,
+      i18n,
+      resumableUploads,
+      individualCancellation,
+      hideRetryButton,
+      hidePauseResumeButton,
+      hideCancelButton,
+      showLinkToFileUploadResult,
+      showRemoveButtonAfterComplete,
+      metaFields,
+      recoveredState,
+      isSingleFile,
+      containerWidth,
+      containerHeight,
+      toggleFileCard,
+      handleRequestThumbnail,
+      handleCancelThumbnail,
+      role: "listitem",
+      openFileEditor,
+      canEditFile,
+      toggleAddFilesPanel,
+      file: files[fileID]
+    })));
+    if (isSingleFile) {
+      return _("div", {
+        class: "uppy-Dashboard-files"
+      }, renderRow(rows[0]));
+    }
+    return _(VirtualList_default, {
+      class: "uppy-Dashboard-files",
+      role: "list",
+      data: rows,
+      renderRow,
+      rowHeight
+    });
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/AddFiles.js
+  var AddFiles = class extends k {
+    constructor() {
+      super(...arguments);
+      this.fileInput = null;
+      this.folderInput = null;
+      this.mobilePhotoFileInput = null;
+      this.mobileVideoFileInput = null;
+      this.triggerFileInputClick = () => {
+        var _this$fileInput;
+        (_this$fileInput = this.fileInput) == null || _this$fileInput.click();
+      };
+      this.triggerFolderInputClick = () => {
+        var _this$folderInput;
+        (_this$folderInput = this.folderInput) == null || _this$folderInput.click();
+      };
+      this.triggerVideoCameraInputClick = () => {
+        var _this$mobileVideoFile;
+        (_this$mobileVideoFile = this.mobileVideoFileInput) == null || _this$mobileVideoFile.click();
+      };
+      this.triggerPhotoCameraInputClick = () => {
+        var _this$mobilePhotoFile;
+        (_this$mobilePhotoFile = this.mobilePhotoFileInput) == null || _this$mobilePhotoFile.click();
+      };
+      this.onFileInputChange = (event) => {
+        this.props.handleInputChange(event);
+        event.currentTarget.value = "";
+      };
+      this.renderHiddenInput = (isFolder, refCallback) => {
+        var _this$props$allowedFi;
+        return _("input", {
+          className: "uppy-Dashboard-input",
+          hidden: true,
+          "aria-hidden": "true",
+          tabIndex: -1,
+          webkitdirectory: isFolder,
+          type: "file",
+          name: "files[]",
+          multiple: this.props.maxNumberOfFiles !== 1,
+          onChange: this.onFileInputChange,
+          accept: (_this$props$allowedFi = this.props.allowedFileTypes) == null ? void 0 : _this$props$allowedFi.join(", "),
+          ref: refCallback
+        });
+      };
+      this.renderHiddenCameraInput = (type, nativeCameraFacingMode, refCallback) => {
+        const typeToAccept = {
+          photo: "image/*",
+          video: "video/*"
+        };
+        const accept = typeToAccept[type];
+        return _("input", {
+          className: "uppy-Dashboard-input",
+          hidden: true,
+          "aria-hidden": "true",
+          tabIndex: -1,
+          type: "file",
+          name: `camera-${type}`,
+          onChange: this.onFileInputChange,
+          capture: nativeCameraFacingMode,
+          accept,
+          ref: refCallback
+        });
+      };
+      this.renderMyDeviceAcquirer = () => {
+        return _("div", {
+          className: "uppy-DashboardTab",
+          role: "presentation",
+          "data-uppy-acquirer-id": "MyDevice"
+        }, _("button", {
+          type: "button",
+          className: "uppy-u-reset uppy-c-btn uppy-DashboardTab-btn",
+          role: "tab",
+          tabIndex: 0,
+          "data-uppy-super-focusable": true,
+          onClick: this.triggerFileInputClick
+        }, _("div", {
+          className: "uppy-DashboardTab-inner"
+        }, _("svg", {
+          className: "uppy-DashboardTab-iconMyDevice",
+          "aria-hidden": "true",
+          focusable: "false",
+          width: "32",
+          height: "32",
+          viewBox: "0 0 32 32"
+        }, _("path", {
+          d: "M8.45 22.087l-1.305-6.674h17.678l-1.572 6.674H8.45zm4.975-12.412l1.083 1.765a.823.823 0 00.715.386h7.951V13.5H8.587V9.675h4.838zM26.043 13.5h-1.195v-2.598c0-.463-.336-.75-.798-.75h-8.356l-1.082-1.766A.823.823 0 0013.897 8H7.728c-.462 0-.815.256-.815.718V13.5h-.956a.97.97 0 00-.746.37.972.972 0 00-.19.81l1.724 8.565c.095.44.484.755.933.755H24c.44 0 .824-.3.929-.727l2.043-8.568a.972.972 0 00-.176-.825.967.967 0 00-.753-.38z",
+          fill: "currentcolor",
+          "fill-rule": "evenodd"
+        }))), _("div", {
+          className: "uppy-DashboardTab-name"
+        }, this.props.i18n("myDevice"))));
+      };
+      this.renderPhotoCamera = () => {
+        return _("div", {
+          className: "uppy-DashboardTab",
+          role: "presentation",
+          "data-uppy-acquirer-id": "MobilePhotoCamera"
+        }, _("button", {
+          type: "button",
+          className: "uppy-u-reset uppy-c-btn uppy-DashboardTab-btn",
+          role: "tab",
+          tabIndex: 0,
+          "data-uppy-super-focusable": true,
+          onClick: this.triggerPhotoCameraInputClick
+        }, _("div", {
+          className: "uppy-DashboardTab-inner"
+        }, _("svg", {
+          "aria-hidden": "true",
+          focusable: "false",
+          width: "32",
+          height: "32",
+          viewBox: "0 0 32 32"
+        }, _("path", {
+          d: "M23.5 9.5c1.417 0 2.5 1.083 2.5 2.5v9.167c0 1.416-1.083 2.5-2.5 2.5h-15c-1.417 0-2.5-1.084-2.5-2.5V12c0-1.417 1.083-2.5 2.5-2.5h2.917l1.416-2.167C13 7.167 13.25 7 13.5 7h5c.25 0 .5.167.667.333L20.583 9.5H23.5zM16 11.417a4.706 4.706 0 00-4.75 4.75 4.704 4.704 0 004.75 4.75 4.703 4.703 0 004.75-4.75c0-2.663-2.09-4.75-4.75-4.75zm0 7.825c-1.744 0-3.076-1.332-3.076-3.074 0-1.745 1.333-3.077 3.076-3.077 1.744 0 3.074 1.333 3.074 3.076s-1.33 3.075-3.074 3.075z",
+          fill: "#02B383",
+          "fill-rule": "nonzero"
+        }))), _("div", {
+          className: "uppy-DashboardTab-name"
+        }, this.props.i18n("takePictureBtn"))));
+      };
+      this.renderVideoCamera = () => {
+        return _("div", {
+          className: "uppy-DashboardTab",
+          role: "presentation",
+          "data-uppy-acquirer-id": "MobileVideoCamera"
+        }, _("button", {
+          type: "button",
+          className: "uppy-u-reset uppy-c-btn uppy-DashboardTab-btn",
+          role: "tab",
+          tabIndex: 0,
+          "data-uppy-super-focusable": true,
+          onClick: this.triggerVideoCameraInputClick
+        }, _("div", {
+          className: "uppy-DashboardTab-inner"
+        }, _("svg", {
+          "aria-hidden": "true",
+          width: "32",
+          height: "32",
+          viewBox: "0 0 32 32"
+        }, _("path", {
+          fill: "#FF675E",
+          fillRule: "nonzero",
+          d: "m21.254 14.277 2.941-2.588c.797-.313 1.243.818 1.09 1.554-.01 2.094.02 4.189-.017 6.282-.126.915-1.145 1.08-1.58.34l-2.434-2.142c-.192.287-.504 1.305-.738.468-.104-1.293-.028-2.596-.05-3.894.047-.312.381.823.426 1.069.063-.384.206-.744.362-1.09zm-12.939-3.73c3.858.013 7.717-.025 11.574.02.912.129 1.492 1.237 1.351 2.217-.019 2.412.04 4.83-.03 7.239-.17 1.025-1.166 1.59-2.029 1.429-3.705-.012-7.41.025-11.114-.019-.913-.129-1.492-1.237-1.352-2.217.018-2.404-.036-4.813.029-7.214.136-.82.83-1.473 1.571-1.454z "
+        }))), _("div", {
+          className: "uppy-DashboardTab-name"
+        }, this.props.i18n("recordVideoBtn"))));
+      };
+      this.renderBrowseButton = (text2, onClickFn) => {
+        const numberOfAcquirers = this.props.acquirers.length;
+        return _("button", {
+          type: "button",
+          className: "uppy-u-reset uppy-c-btn uppy-Dashboard-browse",
+          onClick: onClickFn,
+          "data-uppy-super-focusable": numberOfAcquirers === 0
+        }, text2);
+      };
+      this.renderDropPasteBrowseTagline = (numberOfAcquirers) => {
+        const browseFiles = this.renderBrowseButton(this.props.i18n("browseFiles"), this.triggerFileInputClick);
+        const browseFolders = this.renderBrowseButton(this.props.i18n("browseFolders"), this.triggerFolderInputClick);
+        const lowerFMSelectionType = this.props.fileManagerSelectionType;
+        const camelFMSelectionType = lowerFMSelectionType.charAt(0).toUpperCase() + lowerFMSelectionType.slice(1);
+        return _(
+          "div",
+          {
+            class: "uppy-Dashboard-AddFiles-title"
+          },
+          // eslint-disable-next-line no-nested-ternary
+          this.props.disableLocalFiles ? this.props.i18n("importFiles") : numberOfAcquirers > 0 ? this.props.i18nArray(`dropPasteImport${camelFMSelectionType}`, {
+            browseFiles,
+            browseFolders,
+            browse: browseFiles
+          }) : this.props.i18nArray(`dropPaste${camelFMSelectionType}`, {
+            browseFiles,
+            browseFolders,
+            browse: browseFiles
+          })
+        );
+      };
+      this.renderAcquirer = (acquirer) => {
+        var _this$props$activePic;
+        return _("div", {
+          className: "uppy-DashboardTab",
+          role: "presentation",
+          "data-uppy-acquirer-id": acquirer.id
+        }, _("button", {
+          type: "button",
+          className: "uppy-u-reset uppy-c-btn uppy-DashboardTab-btn",
+          role: "tab",
+          tabIndex: 0,
+          "data-cy": acquirer.id,
+          "aria-controls": `uppy-DashboardContent-panel--${acquirer.id}`,
+          "aria-selected": ((_this$props$activePic = this.props.activePickerPanel) == null ? void 0 : _this$props$activePic.id) === acquirer.id,
+          "data-uppy-super-focusable": true,
+          onClick: () => this.props.showPanel(acquirer.id)
+        }, _("div", {
+          className: "uppy-DashboardTab-inner"
+        }, acquirer.icon()), _("div", {
+          className: "uppy-DashboardTab-name"
+        }, acquirer.name)));
+      };
+      this.renderAcquirers = (acquirers) => {
+        const acquirersWithoutLastTwo = [...acquirers];
+        const lastTwoAcquirers = acquirersWithoutLastTwo.splice(acquirers.length - 2, acquirers.length);
+        return _(b, null, acquirersWithoutLastTwo.map((acquirer) => this.renderAcquirer(acquirer)), _("span", {
+          role: "presentation",
+          style: {
+            "white-space": "nowrap"
+          }
+        }, lastTwoAcquirers.map((acquirer) => this.renderAcquirer(acquirer))));
+      };
+      this.renderSourcesList = (acquirers, disableLocalFiles) => {
+        const {
+          showNativePhotoCameraButton,
+          showNativeVideoCameraButton
+        } = this.props;
+        let list2 = [];
+        const myDeviceKey = "myDevice";
+        if (!disableLocalFiles)
+          list2.push({
+            key: myDeviceKey,
+            elements: this.renderMyDeviceAcquirer()
+          });
+        if (showNativePhotoCameraButton)
+          list2.push({
+            key: "nativePhotoCameraButton",
+            elements: this.renderPhotoCamera()
+          });
+        if (showNativeVideoCameraButton)
+          list2.push({
+            key: "nativePhotoCameraButton",
+            elements: this.renderVideoCamera()
+          });
+        list2.push(...acquirers.map((acquirer) => ({
+          key: acquirer.id,
+          elements: this.renderAcquirer(acquirer)
+        })));
+        const hasOnlyMyDevice = list2.length === 1 && list2[0].key === myDeviceKey;
+        if (hasOnlyMyDevice)
+          list2 = [];
+        const listWithoutLastTwo = [...list2];
+        const lastTwo = listWithoutLastTwo.splice(list2.length - 2, list2.length);
+        return _(b, null, this.renderDropPasteBrowseTagline(list2.length), _("div", {
+          className: "uppy-Dashboard-AddFiles-list",
+          role: "tablist"
+        }, listWithoutLastTwo.map((_ref) => {
+          let {
+            key,
+            elements
+          } = _ref;
+          return _(b, {
+            key
+          }, elements);
+        }), _("span", {
+          role: "presentation",
+          style: {
+            "white-space": "nowrap"
+          }
+        }, lastTwo.map((_ref2) => {
+          let {
+            key,
+            elements
+          } = _ref2;
+          return _(b, {
+            key
+          }, elements);
+        }))));
+      };
+    }
+    [Symbol.for("uppy test: disable unused locale key warning")]() {
+      this.props.i18nArray("dropPasteBoth");
+      this.props.i18nArray("dropPasteFiles");
+      this.props.i18nArray("dropPasteFolders");
+      this.props.i18nArray("dropPasteImportBoth");
+      this.props.i18nArray("dropPasteImportFiles");
+      this.props.i18nArray("dropPasteImportFolders");
+    }
+    renderPoweredByUppy() {
+      const {
+        i18nArray
+      } = this.props;
+      const uppyBranding = _("span", null, _("svg", {
+        "aria-hidden": "true",
+        focusable: "false",
+        className: "uppy-c-icon uppy-Dashboard-poweredByIcon",
+        width: "11",
+        height: "11",
+        viewBox: "0 0 11 11"
+      }, _("path", {
+        d: "M7.365 10.5l-.01-4.045h2.612L5.5.806l-4.467 5.65h2.604l.01 4.044h3.718z",
+        fillRule: "evenodd"
+      })), _("span", {
+        className: "uppy-Dashboard-poweredByUppy"
+      }, "Uppy"));
+      const linkText = i18nArray("poweredBy", {
+        uppy: uppyBranding
+      });
+      return _("a", {
+        tabIndex: -1,
+        href: "https://uppy.io",
+        rel: "noreferrer noopener",
+        target: "_blank",
+        className: "uppy-Dashboard-poweredBy"
+      }, linkText);
+    }
+    render() {
+      const {
+        showNativePhotoCameraButton,
+        showNativeVideoCameraButton,
+        nativeCameraFacingMode
+      } = this.props;
+      return _("div", {
+        className: "uppy-Dashboard-AddFiles"
+      }, this.renderHiddenInput(false, (ref) => {
+        this.fileInput = ref;
+      }), this.renderHiddenInput(true, (ref) => {
+        this.folderInput = ref;
+      }), showNativePhotoCameraButton && this.renderHiddenCameraInput("photo", nativeCameraFacingMode, (ref) => {
+        this.mobilePhotoFileInput = ref;
+      }), showNativeVideoCameraButton && this.renderHiddenCameraInput("video", nativeCameraFacingMode, (ref) => {
+        this.mobileVideoFileInput = ref;
+      }), this.renderSourcesList(this.props.acquirers, this.props.disableLocalFiles), _("div", {
+        className: "uppy-Dashboard-AddFiles-info"
+      }, this.props.note && _("div", {
+        className: "uppy-Dashboard-note"
+      }, this.props.note), this.props.proudlyDisplayPoweredByUppy && this.renderPoweredByUppy()));
+    }
+  };
+  var AddFiles_default = AddFiles;
+
+  // node_modules/@uppy/dashboard/lib/components/AddFilesPanel.js
+  var import_classnames9 = __toESM(require_classnames(), 1);
+  var AddFilesPanel = (props) => {
+    return _("div", {
+      className: (0, import_classnames9.default)("uppy-Dashboard-AddFilesPanel", props.className),
+      "data-uppy-panelType": "AddFiles",
+      "aria-hidden": !props.showAddFilesPanel
+    }, _("div", {
+      className: "uppy-DashboardContent-bar"
+    }, _("div", {
+      className: "uppy-DashboardContent-title",
+      role: "heading",
+      "aria-level": "1"
+    }, props.i18n("addingMoreFiles")), _("button", {
+      className: "uppy-DashboardContent-back",
+      type: "button",
+      onClick: () => props.toggleAddFilesPanel(false)
+    }, props.i18n("back"))), _(AddFiles_default, props));
+  };
+  var AddFilesPanel_default = AddFilesPanel;
+
+  // node_modules/@uppy/dashboard/lib/components/PickerPanelContent.js
+  var import_classnames10 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/dashboard/lib/utils/ignoreEvent.js
+  function ignoreEvent(ev) {
+    const {
+      tagName
+    } = ev.target;
+    if (tagName === "INPUT" || tagName === "TEXTAREA") {
+      ev.stopPropagation();
+      return;
+    }
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+  var ignoreEvent_default = ignoreEvent;
+
+  // node_modules/@uppy/dashboard/lib/components/PickerPanelContent.js
+  function PickerPanelContent(_ref) {
+    let {
+      activePickerPanel,
+      className,
+      hideAllPanels,
+      i18n,
+      state,
+      uppy
+    } = _ref;
+    const ref = A3(null);
+    return _("div", {
+      className: (0, import_classnames10.default)("uppy-DashboardContent-panel", className),
+      role: "tabpanel",
+      "data-uppy-panelType": "PickerPanel",
+      id: `uppy-DashboardContent-panel--${activePickerPanel.id}`,
+      onDragOver: ignoreEvent_default,
+      onDragLeave: ignoreEvent_default,
+      onDrop: ignoreEvent_default,
+      onPaste: ignoreEvent_default
+    }, _("div", {
+      className: "uppy-DashboardContent-bar"
+    }, _("div", {
+      className: "uppy-DashboardContent-title",
+      role: "heading",
+      "aria-level": "1"
+    }, i18n("importFrom", {
+      name: activePickerPanel.name
+    })), _("button", {
+      className: "uppy-DashboardContent-back",
+      type: "button",
+      onClick: hideAllPanels
+    }, i18n("cancel"))), _("div", {
+      ref,
+      className: "uppy-DashboardContent-panelBody"
+    }, uppy.getPlugin(activePickerPanel.id).render(state, ref.current)));
+  }
+  var PickerPanelContent_default = PickerPanelContent;
+
+  // node_modules/@uppy/dashboard/lib/components/EditorPanel.js
+  var import_classnames11 = __toESM(require_classnames(), 1);
+  function EditorPanel(props) {
+    const file = props.files[props.fileCardFor];
+    const handleCancel = () => {
+      props.uppy.emit("file-editor:cancel", file);
+      props.closeFileEditor();
+    };
+    return _("div", {
+      className: (0, import_classnames11.default)("uppy-DashboardContent-panel", props.className),
+      role: "tabpanel",
+      "data-uppy-panelType": "FileEditor",
+      id: "uppy-DashboardContent-panel--editor"
+    }, _("div", {
+      className: "uppy-DashboardContent-bar"
+    }, _("div", {
+      className: "uppy-DashboardContent-title",
+      role: "heading",
+      "aria-level": "1"
+    }, props.i18nArray("editing", {
+      file: _("span", {
+        className: "uppy-DashboardContent-titleFile"
+      }, file.meta ? file.meta.name : file.name)
+    })), _("button", {
+      className: "uppy-DashboardContent-back",
+      type: "button",
+      onClick: handleCancel
+    }, props.i18n("cancel")), _("button", {
+      className: "uppy-DashboardContent-save",
+      type: "button",
+      onClick: props.saveFileEditor
+    }, props.i18n("save"))), _("div", {
+      className: "uppy-DashboardContent-panelBody"
+    }, props.editors.map((target) => {
+      return props.uppy.getPlugin(target.id).render(props.state);
+    })));
+  }
+  var EditorPanel_default = EditorPanel;
+
+  // node_modules/@uppy/dashboard/lib/components/PickerPanelTopBar.js
+  var uploadStates = {
+    STATE_ERROR: "error",
+    STATE_WAITING: "waiting",
+    STATE_PREPROCESSING: "preprocessing",
+    STATE_UPLOADING: "uploading",
+    STATE_POSTPROCESSING: "postprocessing",
+    STATE_COMPLETE: "complete",
+    STATE_PAUSED: "paused"
+  };
+  function getUploadingState2(isAllErrored, isAllComplete, isAllPaused, files) {
+    if (files === void 0) {
+      files = {};
+    }
+    if (isAllErrored) {
+      return uploadStates.STATE_ERROR;
+    }
+    if (isAllComplete) {
+      return uploadStates.STATE_COMPLETE;
+    }
+    if (isAllPaused) {
+      return uploadStates.STATE_PAUSED;
+    }
+    let state = uploadStates.STATE_WAITING;
+    const fileIDs = Object.keys(files);
+    for (let i4 = 0; i4 < fileIDs.length; i4++) {
+      const {
+        progress
+      } = files[fileIDs[i4]];
+      if (progress.uploadStarted && !progress.uploadComplete) {
+        return uploadStates.STATE_UPLOADING;
+      }
+      if (progress.preprocess && state !== uploadStates.STATE_UPLOADING) {
+        state = uploadStates.STATE_PREPROCESSING;
+      }
+      if (progress.postprocess && state !== uploadStates.STATE_UPLOADING && state !== uploadStates.STATE_PREPROCESSING) {
+        state = uploadStates.STATE_POSTPROCESSING;
+      }
+    }
+    return state;
+  }
+  function UploadStatus(_ref) {
+    let {
+      files,
+      i18n,
+      isAllComplete,
+      isAllErrored,
+      isAllPaused,
+      inProgressNotPausedFiles,
+      newFiles,
+      processingFiles
+    } = _ref;
+    const uploadingState = getUploadingState2(isAllErrored, isAllComplete, isAllPaused, files);
+    switch (uploadingState) {
+      case "uploading":
+        return i18n("uploadingXFiles", {
+          smart_count: inProgressNotPausedFiles.length
+        });
+      case "preprocessing":
+      case "postprocessing":
+        return i18n("processingXFiles", {
+          smart_count: processingFiles.length
+        });
+      case "paused":
+        return i18n("uploadPaused");
+      case "waiting":
+        return i18n("xFilesSelected", {
+          smart_count: newFiles.length
+        });
+      case "complete":
+        return i18n("uploadComplete");
+      case "error":
+        return i18n("error");
+      default:
+    }
+  }
+  function PanelTopBar(props) {
+    const {
+      i18n,
+      isAllComplete,
+      hideCancelButton,
+      maxNumberOfFiles,
+      toggleAddFilesPanel,
+      uppy
+    } = props;
+    let {
+      allowNewUpload
+    } = props;
+    if (allowNewUpload && maxNumberOfFiles) {
+      allowNewUpload = props.totalFileCount < props.maxNumberOfFiles;
+    }
+    return _("div", {
+      className: "uppy-DashboardContent-bar"
+    }, !isAllComplete && !hideCancelButton ? _("button", {
+      className: "uppy-DashboardContent-back",
+      type: "button",
+      onClick: () => uppy.cancelAll()
+    }, i18n("cancel")) : _("div", null), _("div", {
+      className: "uppy-DashboardContent-title",
+      role: "heading",
+      "aria-level": "1"
+    }, _(UploadStatus, props)), allowNewUpload ? _("button", {
+      className: "uppy-DashboardContent-addMore",
+      type: "button",
+      "aria-label": i18n("addMoreFiles"),
+      title: i18n("addMoreFiles"),
+      onClick: () => toggleAddFilesPanel(true)
+    }, _("svg", {
+      "aria-hidden": "true",
+      focusable: "false",
+      className: "uppy-c-icon",
+      width: "15",
+      height: "15",
+      viewBox: "0 0 15 15"
+    }, _("path", {
+      d: "M8 6.5h6a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H8v6a.5.5 0 0 1-.5.5H7a.5.5 0 0 1-.5-.5V8h-6a.5.5 0 0 1-.5-.5V7a.5.5 0 0 1 .5-.5h6v-6A.5.5 0 0 1 7 0h.5a.5.5 0 0 1 .5.5v6z"
+    })), _("span", {
+      className: "uppy-DashboardContent-addMoreCaption"
+    }, i18n("addMore"))) : _("div", null));
+  }
+  var PickerPanelTopBar_default = PanelTopBar;
+
+  // node_modules/@uppy/dashboard/lib/components/FileCard/index.js
+  var import_classnames12 = __toESM(require_classnames(), 1);
+
+  // node_modules/@uppy/dashboard/lib/components/FileCard/RenderMetaFields.js
+  function RenderMetaFields(props) {
+    const {
+      computedMetaFields,
+      requiredMetaFields,
+      updateMeta,
+      form,
+      formState
+    } = props;
+    const fieldCSSClasses = {
+      text: "uppy-u-reset uppy-c-textInput uppy-Dashboard-FileCard-input"
+    };
+    return computedMetaFields.map((field) => {
+      const id12 = `uppy-Dashboard-FileCard-input-${field.id}`;
+      const required = requiredMetaFields.includes(field.id);
+      return _("fieldset", {
+        key: field.id,
+        className: "uppy-Dashboard-FileCard-fieldset"
+      }, _("label", {
+        className: "uppy-Dashboard-FileCard-label",
+        htmlFor: id12
+      }, field.name), field.render !== void 0 ? field.render({
+        value: formState[field.id],
+        onChange: (newVal) => updateMeta(newVal, field.id),
+        fieldCSSClasses,
+        required,
+        form: form.id
+      }, _) : _("input", {
+        className: fieldCSSClasses.text,
+        id: id12,
+        form: form.id,
+        type: field.type || "text",
+        required,
+        value: formState[field.id],
+        placeholder: field.placeholder,
+        onInput: (ev) => updateMeta(ev.target.value, field.id),
+        "data-uppy-super-focusable": true
+      }));
+    });
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/FileCard/index.js
+  function FileCard(props) {
+    var _getMetaFields;
+    const {
+      files,
+      fileCardFor,
+      toggleFileCard,
+      saveFileCard,
+      metaFields,
+      requiredMetaFields,
+      openFileEditor,
+      i18n,
+      i18nArray,
+      className,
+      canEditFile
+    } = props;
+    const getMetaFields = () => {
+      return typeof metaFields === "function" ? metaFields(files[fileCardFor]) : metaFields;
+    };
+    const file = files[fileCardFor];
+    const computedMetaFields = (_getMetaFields = getMetaFields()) != null ? _getMetaFields : [];
+    const showEditButton = canEditFile(file);
+    const storedMetaData = {};
+    computedMetaFields.forEach((field) => {
+      var _file$meta$field$id;
+      storedMetaData[field.id] = (_file$meta$field$id = file.meta[field.id]) != null ? _file$meta$field$id : "";
+    });
+    const [formState, setFormState] = h3(storedMetaData);
+    const handleSave = q3((ev) => {
+      ev.preventDefault();
+      saveFileCard(formState, fileCardFor);
+    }, [saveFileCard, formState, fileCardFor]);
+    const updateMeta = (newVal, name) => {
+      setFormState({
+        ...formState,
+        [name]: newVal
+      });
+    };
+    const handleCancel = () => {
+      toggleFileCard(false);
+    };
+    const [form] = h3(() => {
+      const formEl = document.createElement("form");
+      formEl.setAttribute("tabindex", "-1");
+      formEl.id = nanoid3();
+      return formEl;
+    });
+    y3(() => {
+      document.body.appendChild(form);
+      form.addEventListener("submit", handleSave);
+      return () => {
+        form.removeEventListener("submit", handleSave);
+        document.body.removeChild(form);
+      };
+    }, [form, handleSave]);
+    return _("div", {
+      className: (0, import_classnames12.default)("uppy-Dashboard-FileCard", className),
+      "data-uppy-panelType": "FileCard",
+      onDragOver: ignoreEvent_default,
+      onDragLeave: ignoreEvent_default,
+      onDrop: ignoreEvent_default,
+      onPaste: ignoreEvent_default
+    }, _("div", {
+      className: "uppy-DashboardContent-bar"
+    }, _("div", {
+      className: "uppy-DashboardContent-title",
+      role: "heading",
+      "aria-level": "1"
+    }, i18nArray("editing", {
+      file: _("span", {
+        className: "uppy-DashboardContent-titleFile"
+      }, file.meta ? file.meta.name : file.name)
+    })), _("button", {
+      className: "uppy-DashboardContent-back",
+      type: "button",
+      form: form.id,
+      title: i18n("finishEditingFile"),
+      onClick: handleCancel
+    }, i18n("cancel"))), _("div", {
+      className: "uppy-Dashboard-FileCard-inner"
+    }, _("div", {
+      className: "uppy-Dashboard-FileCard-preview",
+      style: {
+        backgroundColor: getIconByMime(file.type).color
+      }
+    }, _(FilePreview, {
+      file
+    }), showEditButton && _("button", {
+      type: "button",
+      className: "uppy-u-reset uppy-c-btn uppy-Dashboard-FileCard-edit",
+      onClick: (event) => {
+        handleSave(event);
+        openFileEditor(file);
+      }
+    }, i18n("editImage"))), _("div", {
+      className: "uppy-Dashboard-FileCard-info"
+    }, _(RenderMetaFields, {
+      computedMetaFields,
+      requiredMetaFields,
+      updateMeta,
+      form,
+      formState
+    })), _("div", {
+      className: "uppy-Dashboard-FileCard-actions"
+    }, _("button", {
+      className: "uppy-u-reset uppy-c-btn uppy-c-btn-primary uppy-Dashboard-FileCard-actionsBtn",
+      type: "submit",
+      form: form.id
+    }, i18n("saveChanges")), _("button", {
+      className: "uppy-u-reset uppy-c-btn uppy-c-btn-link uppy-Dashboard-FileCard-actionsBtn",
+      type: "button",
+      onClick: handleCancel,
+      form: form.id
+    }, i18n("cancel")))));
+  }
+
+  // node_modules/@uppy/dashboard/lib/components/Slide.js
+  var import_classnames13 = __toESM(require_classnames(), 1);
+  var transitionName = "uppy-transition-slideDownUp";
+  var duration = 250;
+  function Slide(_ref) {
+    let {
+      children
+    } = _ref;
+    const [cachedChildren, setCachedChildren] = h3(null);
+    const [className, setClassName] = h3("");
+    const enterTimeoutRef = A3();
+    const leaveTimeoutRef = A3();
+    const animationFrameRef = A3();
+    const handleEnterTransition = () => {
+      setClassName(`${transitionName}-enter`);
+      cancelAnimationFrame(animationFrameRef.current);
+      clearTimeout(leaveTimeoutRef.current);
+      leaveTimeoutRef.current = void 0;
+      animationFrameRef.current = requestAnimationFrame(() => {
+        setClassName(`${transitionName}-enter ${transitionName}-enter-active`);
+        enterTimeoutRef.current = setTimeout(() => {
+          setClassName("");
+        }, duration);
+      });
+    };
+    const handleLeaveTransition = () => {
+      setClassName(`${transitionName}-leave`);
+      cancelAnimationFrame(animationFrameRef.current);
+      clearTimeout(enterTimeoutRef.current);
+      enterTimeoutRef.current = void 0;
+      animationFrameRef.current = requestAnimationFrame(() => {
+        setClassName(`${transitionName}-leave ${transitionName}-leave-active`);
+        leaveTimeoutRef.current = setTimeout(() => {
+          setCachedChildren(null);
+          setClassName("");
+        }, duration);
+      });
+    };
+    y3(() => {
+      const child = H(children)[0];
+      if (cachedChildren === child)
+        return;
+      if (child && !cachedChildren) {
+        handleEnterTransition();
+      } else if (cachedChildren && !child && !leaveTimeoutRef.current) {
+        handleLeaveTransition();
+      }
+      setCachedChildren(child);
+    }, [children, cachedChildren]);
+    y3(() => {
+      return () => {
+        clearTimeout(enterTimeoutRef.current);
+        clearTimeout(leaveTimeoutRef.current);
+        cancelAnimationFrame(animationFrameRef.current);
+      };
+    }, []);
+    if (!cachedChildren)
+      return null;
+    return E(cachedChildren, {
+      className: (0, import_classnames13.default)(className, cachedChildren.props.className)
+    });
+  }
+  var Slide_default = Slide;
+
+  // node_modules/@uppy/dashboard/lib/components/Dashboard.js
+  function _extends2() {
+    return _extends2 = Object.assign ? Object.assign.bind() : function(n3) {
+      for (var e4 = 1; e4 < arguments.length; e4++) {
+        var t4 = arguments[e4];
+        for (var r4 in t4)
+          ({}).hasOwnProperty.call(t4, r4) && (n3[r4] = t4[r4]);
+      }
+      return n3;
+    }, _extends2.apply(null, arguments);
+  }
+  var WIDTH_XL = 900;
+  var WIDTH_LG = 700;
+  var WIDTH_MD = 576;
+  var HEIGHT_MD = 330;
+  function Dashboard(props) {
+    const isNoFiles = props.totalFileCount === 0;
+    const isSingleFile = props.totalFileCount === 1;
+    const isSizeMD = props.containerWidth > WIDTH_MD;
+    const isSizeHeightMD = props.containerHeight > HEIGHT_MD;
+    const dashboardClassName = (0, import_classnames14.default)({
+      "uppy-Dashboard": true,
+      "uppy-Dashboard--isDisabled": props.disabled,
+      "uppy-Dashboard--animateOpenClose": props.animateOpenClose,
+      "uppy-Dashboard--isClosing": props.isClosing,
+      "uppy-Dashboard--isDraggingOver": props.isDraggingOver,
+      "uppy-Dashboard--modal": !props.inline,
+      "uppy-size--md": props.containerWidth > WIDTH_MD,
+      "uppy-size--lg": props.containerWidth > WIDTH_LG,
+      "uppy-size--xl": props.containerWidth > WIDTH_XL,
+      "uppy-size--height-md": props.containerHeight > HEIGHT_MD,
+      // We might want to enable this in the future
+      // 'uppy-size--height-lg': props.containerHeight > HEIGHT_LG,
+      // 'uppy-size--height-xl': props.containerHeight > HEIGHT_XL,
+      "uppy-Dashboard--isAddFilesPanelVisible": props.showAddFilesPanel,
+      "uppy-Dashboard--isInnerWrapVisible": props.areInsidesReadyToBeVisible,
+      // Only enable “centered single file” mode when Dashboard is tall enough
+      "uppy-Dashboard--singleFile": props.singleFileFullScreen && isSingleFile && isSizeHeightMD
+    });
+    let itemsPerRow = 1;
+    if (props.containerWidth > WIDTH_XL) {
+      itemsPerRow = 5;
+    } else if (props.containerWidth > WIDTH_LG) {
+      itemsPerRow = 4;
+    } else if (props.containerWidth > WIDTH_MD) {
+      itemsPerRow = 3;
+    }
+    const showFileList = props.showSelectedFiles && !isNoFiles;
+    const numberOfFilesForRecovery = props.recoveredState ? Object.keys(props.recoveredState.files).length : null;
+    const numberOfGhosts = props.files ? Object.keys(props.files).filter((fileID) => props.files[fileID].isGhost).length : 0;
+    const renderRestoredText = () => {
+      if (numberOfGhosts > 0) {
+        return props.i18n("recoveredXFiles", {
+          smart_count: numberOfGhosts
+        });
+      }
+      return props.i18n("recoveredAllFiles");
+    };
+    const dashboard = _("div", {
+      className: dashboardClassName,
+      "data-uppy-theme": props.theme,
+      "data-uppy-num-acquirers": props.acquirers.length,
+      "data-uppy-drag-drop-supported": !props.disableLocalFiles && isDragDropSupported(),
+      "aria-hidden": props.inline ? "false" : props.isHidden,
+      "aria-disabled": props.disabled,
+      "aria-label": !props.inline ? props.i18n("dashboardWindowTitle") : props.i18n("dashboardTitle"),
+      onPaste: props.handlePaste,
+      onDragOver: props.handleDragOver,
+      onDragLeave: props.handleDragLeave,
+      onDrop: props.handleDrop
+    }, _("div", {
+      "aria-hidden": "true",
+      className: "uppy-Dashboard-overlay",
+      tabIndex: -1,
+      onClick: props.handleClickOutside
+    }), _("div", {
+      className: "uppy-Dashboard-inner",
+      "aria-modal": !props.inline && "true",
+      role: props.inline ? void 0 : "dialog",
+      style: {
+        width: props.inline && props.width ? props.width : "",
+        height: props.inline && props.height ? props.height : ""
+      }
+    }, !props.inline ? _("button", {
+      className: "uppy-u-reset uppy-Dashboard-close",
+      type: "button",
+      "aria-label": props.i18n("closeModal"),
+      title: props.i18n("closeModal"),
+      onClick: props.closeModal
+    }, _("span", {
+      "aria-hidden": "true"
+    }, "\xD7")) : null, _("div", {
+      className: "uppy-Dashboard-innerWrap"
+    }, _("div", {
+      className: "uppy-Dashboard-dropFilesHereHint"
+    }, props.i18n("dropHint")), showFileList && _(PickerPanelTopBar_default, props), numberOfFilesForRecovery && _("div", {
+      className: "uppy-Dashboard-serviceMsg"
+    }, _("svg", {
+      className: "uppy-Dashboard-serviceMsg-icon",
+      "aria-hidden": "true",
+      focusable: "false",
+      width: "21",
+      height: "16",
+      viewBox: "0 0 24 19"
+    }, _("g", {
+      transform: "translate(0 -1)",
+      fill: "none",
+      fillRule: "evenodd"
+    }, _("path", {
+      d: "M12.857 1.43l10.234 17.056A1 1 0 0122.234 20H1.766a1 1 0 01-.857-1.514L11.143 1.429a1 1 0 011.714 0z",
+      fill: "#FFD300"
+    }), _("path", {
+      fill: "#000",
+      d: "M11 6h2l-.3 8h-1.4z"
+    }), _("circle", {
+      fill: "#000",
+      cx: "12",
+      cy: "17",
+      r: "1"
+    }))), _("strong", {
+      className: "uppy-Dashboard-serviceMsg-title"
+    }, props.i18n("sessionRestored")), _("div", {
+      className: "uppy-Dashboard-serviceMsg-text"
+    }, renderRestoredText())), showFileList ? _(FileList, {
+      id: props.id,
+      i18n: props.i18n,
+      uppy: props.uppy,
+      files: props.files,
+      resumableUploads: props.resumableUploads,
+      hideRetryButton: props.hideRetryButton,
+      hidePauseResumeButton: props.hidePauseResumeButton,
+      hideCancelButton: props.hideCancelButton,
+      showLinkToFileUploadResult: props.showLinkToFileUploadResult,
+      showRemoveButtonAfterComplete: props.showRemoveButtonAfterComplete,
+      metaFields: props.metaFields,
+      toggleFileCard: props.toggleFileCard,
+      handleRequestThumbnail: props.handleRequestThumbnail,
+      handleCancelThumbnail: props.handleCancelThumbnail,
+      recoveredState: props.recoveredState,
+      individualCancellation: props.individualCancellation,
+      openFileEditor: props.openFileEditor,
+      canEditFile: props.canEditFile,
+      toggleAddFilesPanel: props.toggleAddFilesPanel,
+      isSingleFile,
+      itemsPerRow,
+      containerWidth: props.containerWidth,
+      containerHeight: props.containerHeight
+    }) : _(AddFiles_default, {
+      i18n: props.i18n,
+      i18nArray: props.i18nArray,
+      acquirers: props.acquirers,
+      handleInputChange: props.handleInputChange,
+      maxNumberOfFiles: props.maxNumberOfFiles,
+      allowedFileTypes: props.allowedFileTypes,
+      showNativePhotoCameraButton: props.showNativePhotoCameraButton,
+      showNativeVideoCameraButton: props.showNativeVideoCameraButton,
+      nativeCameraFacingMode: props.nativeCameraFacingMode,
+      showPanel: props.showPanel,
+      activePickerPanel: props.activePickerPanel,
+      disableLocalFiles: props.disableLocalFiles,
+      fileManagerSelectionType: props.fileManagerSelectionType,
+      note: props.note,
+      proudlyDisplayPoweredByUppy: props.proudlyDisplayPoweredByUppy
+    }), _(Slide_default, null, props.showAddFilesPanel ? _(AddFilesPanel_default, _extends2({
+      key: "AddFiles"
+    }, props, {
+      isSizeMD
+    })) : null), _(Slide_default, null, props.fileCardFor ? _(FileCard, _extends2({
+      key: "FileCard"
+    }, props)) : null), _(Slide_default, null, props.activePickerPanel ? _(PickerPanelContent_default, _extends2({
+      key: "Picker"
+    }, props)) : null), _(Slide_default, null, props.showFileEditor ? _(EditorPanel_default, _extends2({
+      key: "Editor"
+    }, props)) : null), _("div", {
+      className: "uppy-Dashboard-progressindicators"
+    }, props.progressindicators.map((target) => {
+      return props.uppy.getPlugin(target.id).render(props.state);
+    })))));
+    return dashboard;
+  }
+
+  // node_modules/@uppy/dashboard/lib/locale.js
+  var locale_default4 = {
+    strings: {
+      // When `inline: false`, used as the screen reader label for the button that closes the modal.
+      closeModal: "Close Modal",
+      // Used as the screen reader label for the plus (+) button that shows the “Add more files” screen
+      addMoreFiles: "Add more files",
+      addingMoreFiles: "Adding more files",
+      // Used as the header for import panels, e.g., “Import from Google Drive”.
+      importFrom: "Import from %{name}",
+      // When `inline: false`, used as the screen reader label for the dashboard modal.
+      dashboardWindowTitle: "Uppy Dashboard Window (Press escape to close)",
+      // When `inline: true`, used as the screen reader label for the dashboard area.
+      dashboardTitle: "Uppy Dashboard",
+      // Shown in the Informer when a link to a file was copied to the clipboard.
+      copyLinkToClipboardSuccess: "Link copied to clipboard.",
+      // Used when a link cannot be copied automatically — the user has to select the text from the
+      // input element below this string.
+      copyLinkToClipboardFallback: "Copy the URL below",
+      // Used as the hover title and screen reader label for buttons that copy a file link.
+      copyLink: "Copy link",
+      back: "Back",
+      // Used as the screen reader label for buttons that remove a file.
+      removeFile: "Remove file",
+      // Used as the screen reader label for buttons that open the metadata editor panel for a file.
+      editFile: "Edit file",
+      editImage: "Edit image",
+      // Shown in the panel header for the metadata editor. Rendered as “Editing image.png”.
+      editing: "Editing %{file}",
+      // Shown on the main upload screen when an upload error occurs
+      error: "Error",
+      // Used as the screen reader label for the button that saves metadata edits and returns to the
+      // file list view.
+      finishEditingFile: "Finish editing file",
+      saveChanges: "Save changes",
+      // Used as the label for the tab button that opens the system file selection dialog.
+      myDevice: "My Device",
+      dropHint: "Drop your files here",
+      // Used as the hover text and screen reader label for file progress indicators when
+      // they have been fully uploaded.
+      uploadComplete: "Upload complete",
+      uploadPaused: "Upload paused",
+      // Used as the hover text and screen reader label for the buttons to resume paused uploads.
+      resumeUpload: "Resume upload",
+      // Used as the hover text and screen reader label for the buttons to pause uploads.
+      pauseUpload: "Pause upload",
+      // Used as the hover text and screen reader label for the buttons to retry failed uploads.
+      retryUpload: "Retry upload",
+      // Used as the hover text and screen reader label for the buttons to cancel uploads.
+      cancelUpload: "Cancel upload",
+      // Used in a title, how many files are currently selected
+      xFilesSelected: {
+        0: "%{smart_count} file selected",
+        1: "%{smart_count} files selected"
+      },
+      uploadingXFiles: {
+        0: "Uploading %{smart_count} file",
+        1: "Uploading %{smart_count} files"
+      },
+      processingXFiles: {
+        0: "Processing %{smart_count} file",
+        1: "Processing %{smart_count} files"
+      },
+      // The "powered by Uppy" link at the bottom of the Dashboard.
+      poweredBy: "Powered by %{uppy}",
+      addMore: "Add more",
+      editFileWithFilename: "Edit file %{file}",
+      save: "Save",
+      cancel: "Cancel",
+      dropPasteFiles: "Drop files here or %{browseFiles}",
+      dropPasteFolders: "Drop files here or %{browseFolders}",
+      dropPasteBoth: "Drop files here, %{browseFiles} or %{browseFolders}",
+      dropPasteImportFiles: "Drop files here, %{browseFiles} or import from:",
+      dropPasteImportFolders: "Drop files here, %{browseFolders} or import from:",
+      dropPasteImportBoth: "Drop files here, %{browseFiles}, %{browseFolders} or import from:",
+      importFiles: "Import files from:",
+      browseFiles: "browse files",
+      browseFolders: "browse folders",
+      recoveredXFiles: {
+        0: "We could not fully recover 1 file. Please re-select it and resume the upload.",
+        1: "We could not fully recover %{smart_count} files. Please re-select them and resume the upload."
+      },
+      recoveredAllFiles: "We restored all files. You can now resume the upload.",
+      sessionRestored: "Session restored",
+      reSelect: "Re-select",
+      missingRequiredMetaFields: {
+        0: "Missing required meta field: %{fields}.",
+        1: "Missing required meta fields: %{fields}."
+      },
+      // Used for native device camera buttons on mobile
+      takePictureBtn: "Take Picture",
+      recordVideoBtn: "Record Video"
+    }
+  };
+
+  // node_modules/@uppy/dashboard/lib/Dashboard.js
+  function _classPrivateFieldLooseBase7(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id7 = 0;
+  function _classPrivateFieldLooseKey7(e4) {
+    return "__private_" + id7++ + "_" + e4;
+  }
+  var packageJson8 = {
+    "version": "4.1.3"
+  };
+  var memoize = memoizeOne.default || memoizeOne;
+  var TAB_KEY = 9;
+  var ESC_KEY = 27;
+  function createPromise() {
+    const o4 = {};
+    o4.promise = new Promise((resolve, reject) => {
+      o4.resolve = resolve;
+      o4.reject = reject;
+    });
+    return o4;
+  }
+  var defaultOptions4 = {
+    target: "body",
+    metaFields: [],
+    thumbnailWidth: 280,
+    thumbnailType: "image/jpeg",
+    waitForThumbnailsBeforeUpload: false,
+    defaultPickerIcon,
+    showLinkToFileUploadResult: false,
+    showProgressDetails: false,
+    hideUploadButton: false,
+    hideCancelButton: false,
+    hideRetryButton: false,
+    hidePauseResumeButton: false,
+    hideProgressAfterFinish: false,
+    note: null,
+    singleFileFullScreen: true,
+    disableStatusBar: false,
+    disableInformer: false,
+    disableThumbnailGenerator: false,
+    fileManagerSelectionType: "files",
+    proudlyDisplayPoweredByUppy: true,
+    showSelectedFiles: true,
+    showRemoveButtonAfterComplete: false,
+    showNativePhotoCameraButton: false,
+    showNativeVideoCameraButton: false,
+    theme: "light",
+    autoOpen: null,
+    disabled: false,
+    disableLocalFiles: false,
+    nativeCameraFacingMode: "",
+    onDragLeave: () => {
+    },
+    onDragOver: () => {
+    },
+    onDrop: () => {
+    },
+    plugins: [],
+    // Dynamic default options, they have to be defined in the constructor (because
+    // they require access to the `this` keyword), but we still want them to
+    // appear in the default options so TS knows they'll be defined.
+    doneButtonHandler: void 0,
+    onRequestCloseModal: null,
+    // defaultModalOptions
+    inline: false,
+    animateOpenClose: true,
+    browserBackButtonClose: false,
+    closeAfterFinish: false,
+    closeModalOnClickOutside: false,
+    disablePageScrollWhenModalOpen: true,
+    trigger: null,
+    // defaultInlineOptions
+    width: 750,
+    height: 550
+  };
+  var _disabledNodes = /* @__PURE__ */ _classPrivateFieldLooseKey7("disabledNodes");
+  var _generateLargeThumbnailIfSingleFile = /* @__PURE__ */ _classPrivateFieldLooseKey7("generateLargeThumbnailIfSingleFile");
+  var _openFileEditorWhenFilesAdded = /* @__PURE__ */ _classPrivateFieldLooseKey7("openFileEditorWhenFilesAdded");
+  var _attachRenderFunctionToTarget = /* @__PURE__ */ _classPrivateFieldLooseKey7("attachRenderFunctionToTarget");
+  var _isTargetSupported = /* @__PURE__ */ _classPrivateFieldLooseKey7("isTargetSupported");
+  var _getAcquirers = /* @__PURE__ */ _classPrivateFieldLooseKey7("getAcquirers");
+  var _getProgressIndicators = /* @__PURE__ */ _classPrivateFieldLooseKey7("getProgressIndicators");
+  var _getEditors = /* @__PURE__ */ _classPrivateFieldLooseKey7("getEditors");
+  var _addSpecifiedPluginsFromOptions = /* @__PURE__ */ _classPrivateFieldLooseKey7("addSpecifiedPluginsFromOptions");
+  var _autoDiscoverPlugins = /* @__PURE__ */ _classPrivateFieldLooseKey7("autoDiscoverPlugins");
+  var _addSupportedPluginIfNoTarget = /* @__PURE__ */ _classPrivateFieldLooseKey7("addSupportedPluginIfNoTarget");
+  var _getStatusBarOpts = /* @__PURE__ */ _classPrivateFieldLooseKey7("getStatusBarOpts");
+  var _getThumbnailGeneratorOpts = /* @__PURE__ */ _classPrivateFieldLooseKey7("getThumbnailGeneratorOpts");
+  var _getInformerOpts = /* @__PURE__ */ _classPrivateFieldLooseKey7("getInformerOpts");
+  var _getStatusBarId = /* @__PURE__ */ _classPrivateFieldLooseKey7("getStatusBarId");
+  var _getThumbnailGeneratorId = /* @__PURE__ */ _classPrivateFieldLooseKey7("getThumbnailGeneratorId");
+  var _getInformerId = /* @__PURE__ */ _classPrivateFieldLooseKey7("getInformerId");
+  var Dashboard2 = class extends UIPlugin_default {
+    // Timeouts
+    constructor(uppy, _opts) {
+      var _opts$autoOpen, _this$opts, _this$opts$onRequestC;
+      const autoOpen = (_opts$autoOpen = _opts == null ? void 0 : _opts.autoOpen) != null ? _opts$autoOpen : null;
+      super(uppy, {
+        ...defaultOptions4,
+        ..._opts,
+        autoOpen
+      });
+      Object.defineProperty(this, _getInformerId, {
+        value: _getInformerId2
+      });
+      Object.defineProperty(this, _getThumbnailGeneratorId, {
+        value: _getThumbnailGeneratorId2
+      });
+      Object.defineProperty(this, _getStatusBarId, {
+        value: _getStatusBarId2
+      });
+      Object.defineProperty(this, _getInformerOpts, {
+        value: _getInformerOpts2
+      });
+      Object.defineProperty(this, _getThumbnailGeneratorOpts, {
+        value: _getThumbnailGeneratorOpts2
+      });
+      Object.defineProperty(this, _getStatusBarOpts, {
+        value: _getStatusBarOpts2
+      });
+      Object.defineProperty(this, _disabledNodes, {
+        writable: true,
+        value: void 0
+      });
+      this.modalName = `uppy-Dashboard-${nanoid3()}`;
+      this.superFocus = createSuperFocus();
+      this.ifFocusedOnUppyRecently = false;
+      this.removeTarget = (plugin) => {
+        const pluginState = this.getPluginState();
+        const newTargets = pluginState.targets.filter((target) => target.id !== plugin.id);
+        this.setPluginState({
+          targets: newTargets
+        });
+      };
+      this.addTarget = (plugin) => {
+        const callerPluginId = plugin.id || plugin.constructor.name;
+        const callerPluginName = plugin.title || callerPluginId;
+        const callerPluginType = plugin.type;
+        if (callerPluginType !== "acquirer" && callerPluginType !== "progressindicator" && callerPluginType !== "editor") {
+          const msg = "Dashboard: can only be targeted by plugins of types: acquirer, progressindicator, editor";
+          this.uppy.log(msg, "error");
+          return null;
+        }
+        const target = {
+          id: callerPluginId,
+          name: callerPluginName,
+          type: callerPluginType
+        };
+        const state = this.getPluginState();
+        const newTargets = state.targets.slice();
+        newTargets.push(target);
+        this.setPluginState({
+          targets: newTargets
+        });
+        return this.el;
+      };
+      this.hideAllPanels = () => {
+        var _state$activePickerPa;
+        const state = this.getPluginState();
+        const update = {
+          activePickerPanel: void 0,
+          showAddFilesPanel: false,
+          activeOverlayType: null,
+          fileCardFor: null,
+          showFileEditor: false
+        };
+        if (state.activePickerPanel === update.activePickerPanel && state.showAddFilesPanel === update.showAddFilesPanel && state.showFileEditor === update.showFileEditor && state.activeOverlayType === update.activeOverlayType) {
+          return;
+        }
+        this.setPluginState(update);
+        this.uppy.emit("dashboard:close-panel", (_state$activePickerPa = state.activePickerPanel) == null ? void 0 : _state$activePickerPa.id);
+      };
+      this.showPanel = (id12) => {
+        const {
+          targets
+        } = this.getPluginState();
+        const activePickerPanel = targets.find((target) => {
+          return target.type === "acquirer" && target.id === id12;
+        });
+        this.setPluginState({
+          activePickerPanel,
+          activeOverlayType: "PickerPanel"
+        });
+        this.uppy.emit("dashboard:show-panel", id12);
+      };
+      this.canEditFile = (file) => {
+        const {
+          targets
+        } = this.getPluginState();
+        const editors = _classPrivateFieldLooseBase7(this, _getEditors)[_getEditors](targets);
+        return editors.some((target) => this.uppy.getPlugin(target.id).canEditFile(file));
+      };
+      this.openFileEditor = (file) => {
+        const {
+          targets
+        } = this.getPluginState();
+        const editors = _classPrivateFieldLooseBase7(this, _getEditors)[_getEditors](targets);
+        this.setPluginState({
+          showFileEditor: true,
+          fileCardFor: file.id || null,
+          activeOverlayType: "FileEditor"
+        });
+        editors.forEach((editor) => {
+          ;
+          this.uppy.getPlugin(editor.id).selectFile(file);
+        });
+      };
+      this.closeFileEditor = () => {
+        const {
+          metaFields
+        } = this.getPluginState();
+        const isMetaEditorEnabled = metaFields && metaFields.length > 0;
+        if (isMetaEditorEnabled) {
+          this.setPluginState({
+            showFileEditor: false,
+            activeOverlayType: "FileCard"
+          });
+        } else {
+          this.setPluginState({
+            showFileEditor: false,
+            fileCardFor: null,
+            activeOverlayType: "AddFiles"
+          });
+        }
+      };
+      this.saveFileEditor = () => {
+        const {
+          targets
+        } = this.getPluginState();
+        const editors = _classPrivateFieldLooseBase7(this, _getEditors)[_getEditors](targets);
+        editors.forEach((editor) => {
+          ;
+          this.uppy.getPlugin(editor.id).save();
+        });
+        this.closeFileEditor();
+      };
+      this.openModal = () => {
+        const {
+          promise,
+          resolve
+        } = createPromise();
+        this.savedScrollPosition = window.pageYOffset;
+        this.savedActiveElement = document.activeElement;
+        if (this.opts.disablePageScrollWhenModalOpen) {
+          document.body.classList.add("uppy-Dashboard-isFixed");
+        }
+        if (this.opts.animateOpenClose && this.getPluginState().isClosing) {
+          const handler = () => {
+            this.setPluginState({
+              isHidden: false
+            });
+            this.el.removeEventListener("animationend", handler, false);
+            resolve();
+          };
+          this.el.addEventListener("animationend", handler, false);
+        } else {
+          this.setPluginState({
+            isHidden: false
+          });
+          resolve();
+        }
+        if (this.opts.browserBackButtonClose) {
+          this.updateBrowserHistory();
+        }
+        document.addEventListener("keydown", this.handleKeyDownInModal);
+        this.uppy.emit("dashboard:modal-open");
+        return promise;
+      };
+      this.closeModal = (opts) => {
+        var _opts$manualClose;
+        const manualClose = (_opts$manualClose = opts == null ? void 0 : opts.manualClose) != null ? _opts$manualClose : true;
+        const {
+          isHidden,
+          isClosing
+        } = this.getPluginState();
+        if (isHidden || isClosing) {
+          return void 0;
+        }
+        const {
+          promise,
+          resolve
+        } = createPromise();
+        if (this.opts.disablePageScrollWhenModalOpen) {
+          document.body.classList.remove("uppy-Dashboard-isFixed");
+        }
+        if (this.opts.animateOpenClose) {
+          this.setPluginState({
+            isClosing: true
+          });
+          const handler = () => {
+            this.setPluginState({
+              isHidden: true,
+              isClosing: false
+            });
+            this.superFocus.cancel();
+            this.savedActiveElement.focus();
+            this.el.removeEventListener("animationend", handler, false);
+            resolve();
+          };
+          this.el.addEventListener("animationend", handler, false);
+        } else {
+          this.setPluginState({
+            isHidden: true
+          });
+          this.superFocus.cancel();
+          this.savedActiveElement.focus();
+          resolve();
+        }
+        document.removeEventListener("keydown", this.handleKeyDownInModal);
+        if (manualClose) {
+          if (this.opts.browserBackButtonClose) {
+            var _history$state;
+            if ((_history$state = history.state) != null && _history$state[this.modalName]) {
+              history.back();
+            }
+          }
+        }
+        this.uppy.emit("dashboard:modal-closed");
+        return promise;
+      };
+      this.isModalOpen = () => {
+        return !this.getPluginState().isHidden || false;
+      };
+      this.requestCloseModal = () => {
+        if (this.opts.onRequestCloseModal) {
+          return this.opts.onRequestCloseModal();
+        }
+        return this.closeModal();
+      };
+      this.setDarkModeCapability = (isDarkModeOn) => {
+        const {
+          capabilities
+        } = this.uppy.getState();
+        this.uppy.setState({
+          capabilities: {
+            ...capabilities,
+            darkMode: isDarkModeOn
+          }
+        });
+      };
+      this.handleSystemDarkModeChange = (event) => {
+        const isDarkModeOnNow = event.matches;
+        this.uppy.log(`[Dashboard] Dark mode is ${isDarkModeOnNow ? "on" : "off"}`);
+        this.setDarkModeCapability(isDarkModeOnNow);
+      };
+      this.toggleFileCard = (show, fileID) => {
+        const file = this.uppy.getFile(fileID);
+        if (show) {
+          this.uppy.emit("dashboard:file-edit-start", file);
+        } else {
+          this.uppy.emit("dashboard:file-edit-complete", file);
+        }
+        this.setPluginState({
+          fileCardFor: show ? fileID : null,
+          activeOverlayType: show ? "FileCard" : null
+        });
+      };
+      this.toggleAddFilesPanel = (show) => {
+        this.setPluginState({
+          showAddFilesPanel: show,
+          activeOverlayType: show ? "AddFiles" : null
+        });
+      };
+      this.addFiles = (files) => {
+        const descriptors = files.map((file) => ({
+          source: this.id,
+          name: file.name,
+          type: file.type,
+          data: file,
+          meta: {
+            // path of the file relative to the ancestor directory the user selected.
+            // e.g. 'docs/Old Prague/airbnb.pdf'
+            relativePath: file.relativePath || file.webkitRelativePath || null
+          }
+        }));
+        try {
+          this.uppy.addFiles(descriptors);
+        } catch (err) {
+          this.uppy.log(err);
+        }
+      };
+      this.startListeningToResize = () => {
+        this.resizeObserver = new ResizeObserver((entries2) => {
+          const uppyDashboardInnerEl = entries2[0];
+          const {
+            width,
+            height
+          } = uppyDashboardInnerEl.contentRect;
+          this.setPluginState({
+            containerWidth: width,
+            containerHeight: height,
+            areInsidesReadyToBeVisible: true
+          });
+        });
+        this.resizeObserver.observe(this.el.querySelector(".uppy-Dashboard-inner"));
+        this.makeDashboardInsidesVisibleAnywayTimeout = setTimeout(() => {
+          const pluginState = this.getPluginState();
+          const isModalAndClosed = !this.opts.inline && pluginState.isHidden;
+          if (
+            // We might want to enable this in the future
+            // if ResizeObserver hasn't yet fired,
+            !pluginState.areInsidesReadyToBeVisible && // and it's not due to the modal being closed
+            !isModalAndClosed
+          ) {
+            this.uppy.log("[Dashboard] resize event didn\u2019t fire on time: defaulted to mobile layout", "warning");
+            this.setPluginState({
+              areInsidesReadyToBeVisible: true
+            });
+          }
+        }, 1e3);
+      };
+      this.stopListeningToResize = () => {
+        this.resizeObserver.disconnect();
+        clearTimeout(this.makeDashboardInsidesVisibleAnywayTimeout);
+      };
+      this.recordIfFocusedOnUppyRecently = (event) => {
+        if (this.el.contains(event.target)) {
+          this.ifFocusedOnUppyRecently = true;
+        } else {
+          this.ifFocusedOnUppyRecently = false;
+          this.superFocus.cancel();
+        }
+      };
+      this.disableInteractiveElements = (disable) => {
+        var _classPrivateFieldLoo;
+        const NODES_TO_DISABLE = ["a[href]", "input:not([disabled])", "select:not([disabled])", "textarea:not([disabled])", "button:not([disabled])", '[role="button"]:not([disabled])'];
+        const nodesToDisable = (_classPrivateFieldLoo = _classPrivateFieldLooseBase7(this, _disabledNodes)[_disabledNodes]) != null ? _classPrivateFieldLoo : toArray_default(this.el.querySelectorAll(NODES_TO_DISABLE)).filter((node) => !node.classList.contains("uppy-Dashboard-close"));
+        for (const node of nodesToDisable) {
+          if (node.tagName === "A") {
+            node.setAttribute("aria-disabled", disable);
+          } else {
+            node.disabled = disable;
+          }
+        }
+        if (disable) {
+          _classPrivateFieldLooseBase7(this, _disabledNodes)[_disabledNodes] = nodesToDisable;
+        } else {
+          _classPrivateFieldLooseBase7(this, _disabledNodes)[_disabledNodes] = null;
+        }
+        this.dashboardIsDisabled = disable;
+      };
+      this.updateBrowserHistory = () => {
+        var _history$state2;
+        if (!((_history$state2 = history.state) != null && _history$state2[this.modalName])) {
+          history.pushState({
+            // eslint-disable-next-line no-restricted-globals
+            ...history.state,
+            [this.modalName]: true
+          }, "");
+        }
+        window.addEventListener("popstate", this.handlePopState, false);
+      };
+      this.handlePopState = (event) => {
+        var _event$state;
+        if (this.isModalOpen() && (!event.state || !event.state[this.modalName])) {
+          this.closeModal({
+            manualClose: false
+          });
+        }
+        if (!this.isModalOpen() && (_event$state = event.state) != null && _event$state[this.modalName]) {
+          history.back();
+        }
+      };
+      this.handleKeyDownInModal = (event) => {
+        if (event.keyCode === ESC_KEY)
+          this.requestCloseModal();
+        if (event.keyCode === TAB_KEY)
+          trapFocus(event, this.getPluginState().activeOverlayType, this.el);
+      };
+      this.handleClickOutside = () => {
+        if (this.opts.closeModalOnClickOutside)
+          this.requestCloseModal();
+      };
+      this.handlePaste = (event) => {
+        this.uppy.iteratePlugins((plugin) => {
+          if (plugin.type === "acquirer") {
+            ;
+            plugin.handleRootPaste == null || plugin.handleRootPaste(event);
+          }
+        });
+        const files = toArray_default(event.clipboardData.files);
+        if (files.length > 0) {
+          this.uppy.log("[Dashboard] Files pasted");
+          this.addFiles(files);
+        }
+      };
+      this.handleInputChange = (event) => {
+        event.preventDefault();
+        const files = toArray_default(event.currentTarget.files || []);
+        if (files.length > 0) {
+          this.uppy.log("[Dashboard] Files selected through input");
+          this.addFiles(files);
+        }
+      };
+      this.handleDragOver = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const canSomePluginHandleRootDrop = () => {
+          let somePluginCanHandleRootDrop2 = true;
+          this.uppy.iteratePlugins((plugin) => {
+            if (plugin.canHandleRootDrop != null && plugin.canHandleRootDrop(event)) {
+              somePluginCanHandleRootDrop2 = true;
+            }
+          });
+          return somePluginCanHandleRootDrop2;
+        };
+        const doesEventHaveFiles = () => {
+          const {
+            types
+          } = event.dataTransfer;
+          return types.some((type) => type === "Files");
+        };
+        const somePluginCanHandleRootDrop = canSomePluginHandleRootDrop();
+        const hasFiles = doesEventHaveFiles();
+        if (!somePluginCanHandleRootDrop && !hasFiles || this.opts.disabled || // opts.disableLocalFiles should only be taken into account if no plugins
+        // can handle the datatransfer
+        this.opts.disableLocalFiles && (hasFiles || !somePluginCanHandleRootDrop) || !this.uppy.getState().allowNewUpload) {
+          event.dataTransfer.dropEffect = "none";
+          return;
+        }
+        event.dataTransfer.dropEffect = "copy";
+        this.setPluginState({
+          isDraggingOver: true
+        });
+        this.opts.onDragOver(event);
+      };
+      this.handleDragLeave = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.setPluginState({
+          isDraggingOver: false
+        });
+        this.opts.onDragLeave(event);
+      };
+      this.handleDrop = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        this.setPluginState({
+          isDraggingOver: false
+        });
+        this.uppy.iteratePlugins((plugin) => {
+          if (plugin.type === "acquirer") {
+            ;
+            plugin.handleRootDrop == null || plugin.handleRootDrop(event);
+          }
+        });
+        let executedDropErrorOnce = false;
+        const logDropError = (error2) => {
+          this.uppy.log(error2, "error");
+          if (!executedDropErrorOnce) {
+            this.uppy.info(error2.message, "error");
+            executedDropErrorOnce = true;
+          }
+        };
+        this.uppy.log("[Dashboard] Processing dropped files");
+        const files = await getDroppedFiles(event.dataTransfer, {
+          logDropError
+        });
+        if (files.length > 0) {
+          this.uppy.log("[Dashboard] Files dropped");
+          this.addFiles(files);
+        }
+        this.opts.onDrop(event);
+      };
+      this.handleRequestThumbnail = (file) => {
+        if (!this.opts.waitForThumbnailsBeforeUpload) {
+          this.uppy.emit("thumbnail:request", file);
+        }
+      };
+      this.handleCancelThumbnail = (file) => {
+        if (!this.opts.waitForThumbnailsBeforeUpload) {
+          this.uppy.emit("thumbnail:cancel", file);
+        }
+      };
+      this.handleKeyDownInInline = (event) => {
+        if (event.keyCode === TAB_KEY)
+          forInline(event, this.getPluginState().activeOverlayType, this.el);
+      };
+      this.handlePasteOnBody = (event) => {
+        const isFocusInOverlay2 = this.el.contains(document.activeElement);
+        if (isFocusInOverlay2) {
+          this.handlePaste(event);
+        }
+      };
+      this.handleComplete = (_ref) => {
+        let {
+          failed
+        } = _ref;
+        if (this.opts.closeAfterFinish && !(failed != null && failed.length)) {
+          this.requestCloseModal();
+        }
+      };
+      this.handleCancelRestore = () => {
+        this.uppy.emit("restore-canceled");
+      };
+      Object.defineProperty(this, _generateLargeThumbnailIfSingleFile, {
+        writable: true,
+        value: () => {
+          if (this.opts.disableThumbnailGenerator) {
+            return;
+          }
+          const LARGE_THUMBNAIL = 600;
+          const files = this.uppy.getFiles();
+          if (files.length === 1) {
+            const thumbnailGenerator = this.uppy.getPlugin(`${this.id}:ThumbnailGenerator`);
+            thumbnailGenerator == null || thumbnailGenerator.setOptions({
+              thumbnailWidth: LARGE_THUMBNAIL
+            });
+            const fileForThumbnail = {
+              ...files[0],
+              preview: void 0
+            };
+            thumbnailGenerator == null || thumbnailGenerator.requestThumbnail(fileForThumbnail).then(() => {
+              thumbnailGenerator == null || thumbnailGenerator.setOptions({
+                thumbnailWidth: this.opts.thumbnailWidth
+              });
+            });
+          }
+        }
+      });
+      Object.defineProperty(this, _openFileEditorWhenFilesAdded, {
+        writable: true,
+        value: (files) => {
+          const firstFile = files[0];
+          const {
+            metaFields
+          } = this.getPluginState();
+          const isMetaEditorEnabled = metaFields && metaFields.length > 0;
+          const isImageEditorEnabled = this.canEditFile(firstFile);
+          if (isMetaEditorEnabled && this.opts.autoOpen === "metaEditor") {
+            this.toggleFileCard(true, firstFile.id);
+          } else if (isImageEditorEnabled && this.opts.autoOpen === "imageEditor") {
+            this.openFileEditor(firstFile);
+          }
+        }
+      });
+      this.initEvents = () => {
+        if (this.opts.trigger && !this.opts.inline) {
+          const showModalTrigger = findAllDOMElements_default(this.opts.trigger);
+          if (showModalTrigger) {
+            showModalTrigger.forEach((trigger) => trigger.addEventListener("click", this.openModal));
+          } else {
+            this.uppy.log("Dashboard modal trigger not found. Make sure `trigger` is set in Dashboard options, unless you are planning to call `dashboard.openModal()` method yourself", "warning");
+          }
+        }
+        this.startListeningToResize();
+        document.addEventListener("paste", this.handlePasteOnBody);
+        this.uppy.on("plugin-added", _classPrivateFieldLooseBase7(this, _addSupportedPluginIfNoTarget)[_addSupportedPluginIfNoTarget]);
+        this.uppy.on("plugin-remove", this.removeTarget);
+        this.uppy.on("file-added", this.hideAllPanels);
+        this.uppy.on("dashboard:modal-closed", this.hideAllPanels);
+        this.uppy.on("complete", this.handleComplete);
+        this.uppy.on("files-added", _classPrivateFieldLooseBase7(this, _generateLargeThumbnailIfSingleFile)[_generateLargeThumbnailIfSingleFile]);
+        this.uppy.on("file-removed", _classPrivateFieldLooseBase7(this, _generateLargeThumbnailIfSingleFile)[_generateLargeThumbnailIfSingleFile]);
+        document.addEventListener("focus", this.recordIfFocusedOnUppyRecently, true);
+        document.addEventListener("click", this.recordIfFocusedOnUppyRecently, true);
+        if (this.opts.inline) {
+          this.el.addEventListener("keydown", this.handleKeyDownInInline);
+        }
+        if (this.opts.autoOpen) {
+          this.uppy.on("files-added", _classPrivateFieldLooseBase7(this, _openFileEditorWhenFilesAdded)[_openFileEditorWhenFilesAdded]);
+        }
+      };
+      this.removeEvents = () => {
+        const showModalTrigger = findAllDOMElements_default(this.opts.trigger);
+        if (!this.opts.inline && showModalTrigger) {
+          showModalTrigger.forEach((trigger) => trigger.removeEventListener("click", this.openModal));
+        }
+        this.stopListeningToResize();
+        document.removeEventListener("paste", this.handlePasteOnBody);
+        window.removeEventListener("popstate", this.handlePopState, false);
+        this.uppy.off("plugin-added", _classPrivateFieldLooseBase7(this, _addSupportedPluginIfNoTarget)[_addSupportedPluginIfNoTarget]);
+        this.uppy.off("plugin-remove", this.removeTarget);
+        this.uppy.off("file-added", this.hideAllPanels);
+        this.uppy.off("dashboard:modal-closed", this.hideAllPanels);
+        this.uppy.off("complete", this.handleComplete);
+        this.uppy.off("files-added", _classPrivateFieldLooseBase7(this, _generateLargeThumbnailIfSingleFile)[_generateLargeThumbnailIfSingleFile]);
+        this.uppy.off("file-removed", _classPrivateFieldLooseBase7(this, _generateLargeThumbnailIfSingleFile)[_generateLargeThumbnailIfSingleFile]);
+        document.removeEventListener("focus", this.recordIfFocusedOnUppyRecently);
+        document.removeEventListener("click", this.recordIfFocusedOnUppyRecently);
+        if (this.opts.inline) {
+          this.el.removeEventListener("keydown", this.handleKeyDownInInline);
+        }
+        if (this.opts.autoOpen) {
+          this.uppy.off("files-added", _classPrivateFieldLooseBase7(this, _openFileEditorWhenFilesAdded)[_openFileEditorWhenFilesAdded]);
+        }
+      };
+      this.superFocusOnEachUpdate = () => {
+        const isFocusInUppy = this.el.contains(document.activeElement);
+        const isFocusNowhere = document.activeElement === document.body || document.activeElement === null;
+        const isInformerHidden = this.uppy.getState().info.length === 0;
+        const isModal = !this.opts.inline;
+        if (
+          // If update is connected to showing the Informer - let the screen reader calmly read it.
+          isInformerHidden && // If we are in a modal - always superfocus without concern for other elements
+          // on the page (user is unlikely to want to interact with the rest of the page)
+          (isModal || // If we are already inside of Uppy, or
+          isFocusInUppy || // If we are not focused on anything BUT we have already, at least once, focused on uppy
+          //   1. We focus when isFocusNowhere, because when the element we were focused
+          //      on disappears (e.g. an overlay), - focus gets lost. If user is typing
+          //      something somewhere else on the page, - focus won't be 'nowhere'.
+          //   2. We only focus when focus is nowhere AND this.ifFocusedOnUppyRecently,
+          //      to avoid focus jumps if we do something else on the page.
+          //   [Practical check] Without '&& this.ifFocusedOnUppyRecently', in Safari, in inline mode,
+          //                     when file is uploading, - navigate via tab to the checkbox,
+          //                     try to press space multiple times. Focus will jump to Uppy.
+          isFocusNowhere && this.ifFocusedOnUppyRecently)
+        ) {
+          this.superFocus(this.el, this.getPluginState().activeOverlayType);
+        } else {
+          this.superFocus.cancel();
+        }
+      };
+      this.afterUpdate = () => {
+        if (this.opts.disabled && !this.dashboardIsDisabled) {
+          this.disableInteractiveElements(true);
+          return;
+        }
+        if (!this.opts.disabled && this.dashboardIsDisabled) {
+          this.disableInteractiveElements(false);
+        }
+        this.superFocusOnEachUpdate();
+      };
+      this.saveFileCard = (meta, fileID) => {
+        this.uppy.setFileMeta(fileID, meta);
+        this.toggleFileCard(false, fileID);
+      };
+      Object.defineProperty(this, _attachRenderFunctionToTarget, {
+        writable: true,
+        value: (target) => {
+          const plugin = this.uppy.getPlugin(target.id);
+          return {
+            ...target,
+            icon: plugin.icon || this.opts.defaultPickerIcon,
+            render: plugin.render
+          };
+        }
+      });
+      Object.defineProperty(this, _isTargetSupported, {
+        writable: true,
+        value: (target) => {
+          const plugin = this.uppy.getPlugin(target.id);
+          if (typeof plugin.isSupported !== "function") {
+            return true;
+          }
+          return plugin.isSupported();
+        }
+      });
+      Object.defineProperty(this, _getAcquirers, {
+        writable: true,
+        value: memoize((targets) => {
+          return targets.filter((target) => target.type === "acquirer" && _classPrivateFieldLooseBase7(this, _isTargetSupported)[_isTargetSupported](target)).map(_classPrivateFieldLooseBase7(this, _attachRenderFunctionToTarget)[_attachRenderFunctionToTarget]);
+        })
+      });
+      Object.defineProperty(this, _getProgressIndicators, {
+        writable: true,
+        value: memoize((targets) => {
+          return targets.filter((target) => target.type === "progressindicator").map(_classPrivateFieldLooseBase7(this, _attachRenderFunctionToTarget)[_attachRenderFunctionToTarget]);
+        })
+      });
+      Object.defineProperty(this, _getEditors, {
+        writable: true,
+        value: memoize((targets) => {
+          return targets.filter((target) => target.type === "editor").map(_classPrivateFieldLooseBase7(this, _attachRenderFunctionToTarget)[_attachRenderFunctionToTarget]);
+        })
+      });
+      this.render = (state) => {
+        const pluginState = this.getPluginState();
+        const {
+          files,
+          capabilities,
+          allowNewUpload
+        } = state;
+        const {
+          newFiles,
+          uploadStartedFiles,
+          completeFiles,
+          erroredFiles,
+          inProgressFiles,
+          inProgressNotPausedFiles,
+          processingFiles,
+          isUploadStarted,
+          isAllComplete,
+          isAllPaused
+        } = this.uppy.getObjectOfFilesPerState();
+        const acquirers = _classPrivateFieldLooseBase7(this, _getAcquirers)[_getAcquirers](pluginState.targets);
+        const progressindicators = _classPrivateFieldLooseBase7(this, _getProgressIndicators)[_getProgressIndicators](pluginState.targets);
+        const editors = _classPrivateFieldLooseBase7(this, _getEditors)[_getEditors](pluginState.targets);
+        let theme;
+        if (this.opts.theme === "auto") {
+          theme = capabilities.darkMode ? "dark" : "light";
+        } else {
+          theme = this.opts.theme;
+        }
+        if (["files", "folders", "both"].indexOf(this.opts.fileManagerSelectionType) < 0) {
+          this.opts.fileManagerSelectionType = "files";
+          console.warn(`Unsupported option for "fileManagerSelectionType". Using default of "${this.opts.fileManagerSelectionType}".`);
+        }
+        return Dashboard({
+          state,
+          isHidden: pluginState.isHidden,
+          files,
+          newFiles,
+          uploadStartedFiles,
+          completeFiles,
+          erroredFiles,
+          inProgressFiles,
+          inProgressNotPausedFiles,
+          processingFiles,
+          isUploadStarted,
+          isAllComplete,
+          isAllPaused,
+          totalFileCount: Object.keys(files).length,
+          totalProgress: state.totalProgress,
+          allowNewUpload,
+          acquirers,
+          theme,
+          disabled: this.opts.disabled,
+          disableLocalFiles: this.opts.disableLocalFiles,
+          direction: this.opts.direction,
+          activePickerPanel: pluginState.activePickerPanel,
+          showFileEditor: pluginState.showFileEditor,
+          saveFileEditor: this.saveFileEditor,
+          closeFileEditor: this.closeFileEditor,
+          disableInteractiveElements: this.disableInteractiveElements,
+          animateOpenClose: this.opts.animateOpenClose,
+          isClosing: pluginState.isClosing,
+          progressindicators,
+          editors,
+          autoProceed: this.uppy.opts.autoProceed,
+          id: this.id,
+          closeModal: this.requestCloseModal,
+          handleClickOutside: this.handleClickOutside,
+          handleInputChange: this.handleInputChange,
+          handlePaste: this.handlePaste,
+          inline: this.opts.inline,
+          showPanel: this.showPanel,
+          hideAllPanels: this.hideAllPanels,
+          i18n: this.i18n,
+          i18nArray: this.i18nArray,
+          uppy: this.uppy,
+          note: this.opts.note,
+          recoveredState: state.recoveredState,
+          metaFields: pluginState.metaFields,
+          resumableUploads: capabilities.resumableUploads || false,
+          individualCancellation: capabilities.individualCancellation,
+          isMobileDevice: capabilities.isMobileDevice,
+          fileCardFor: pluginState.fileCardFor,
+          toggleFileCard: this.toggleFileCard,
+          toggleAddFilesPanel: this.toggleAddFilesPanel,
+          showAddFilesPanel: pluginState.showAddFilesPanel,
+          saveFileCard: this.saveFileCard,
+          openFileEditor: this.openFileEditor,
+          canEditFile: this.canEditFile,
+          width: this.opts.width,
+          height: this.opts.height,
+          showLinkToFileUploadResult: this.opts.showLinkToFileUploadResult,
+          fileManagerSelectionType: this.opts.fileManagerSelectionType,
+          proudlyDisplayPoweredByUppy: this.opts.proudlyDisplayPoweredByUppy,
+          hideCancelButton: this.opts.hideCancelButton,
+          hideRetryButton: this.opts.hideRetryButton,
+          hidePauseResumeButton: this.opts.hidePauseResumeButton,
+          showRemoveButtonAfterComplete: this.opts.showRemoveButtonAfterComplete,
+          containerWidth: pluginState.containerWidth,
+          containerHeight: pluginState.containerHeight,
+          areInsidesReadyToBeVisible: pluginState.areInsidesReadyToBeVisible,
+          parentElement: this.el,
+          allowedFileTypes: this.uppy.opts.restrictions.allowedFileTypes,
+          maxNumberOfFiles: this.uppy.opts.restrictions.maxNumberOfFiles,
+          requiredMetaFields: this.uppy.opts.restrictions.requiredMetaFields,
+          showSelectedFiles: this.opts.showSelectedFiles,
+          showNativePhotoCameraButton: this.opts.showNativePhotoCameraButton,
+          showNativeVideoCameraButton: this.opts.showNativeVideoCameraButton,
+          nativeCameraFacingMode: this.opts.nativeCameraFacingMode,
+          singleFileFullScreen: this.opts.singleFileFullScreen,
+          handleCancelRestore: this.handleCancelRestore,
+          handleRequestThumbnail: this.handleRequestThumbnail,
+          handleCancelThumbnail: this.handleCancelThumbnail,
+          // drag props
+          isDraggingOver: pluginState.isDraggingOver,
+          handleDragOver: this.handleDragOver,
+          handleDragLeave: this.handleDragLeave,
+          handleDrop: this.handleDrop
+        });
+      };
+      Object.defineProperty(this, _addSpecifiedPluginsFromOptions, {
+        writable: true,
+        value: () => {
+          const {
+            plugins
+          } = this.opts;
+          plugins.forEach((pluginID) => {
+            const plugin = this.uppy.getPlugin(pluginID);
+            if (plugin) {
+              ;
+              plugin.mount(this, plugin);
+            } else {
+              this.uppy.log(`[Uppy] Dashboard could not find plugin '${pluginID}', make sure to uppy.use() the plugins you are specifying`, "warning");
+            }
+          });
+        }
+      });
+      Object.defineProperty(this, _autoDiscoverPlugins, {
+        writable: true,
+        value: () => {
+          this.uppy.iteratePlugins(_classPrivateFieldLooseBase7(this, _addSupportedPluginIfNoTarget)[_addSupportedPluginIfNoTarget]);
+        }
+      });
+      Object.defineProperty(this, _addSupportedPluginIfNoTarget, {
+        writable: true,
+        value: (plugin) => {
+          var _plugin$opts;
+          const typesAllowed = ["acquirer", "editor"];
+          if (plugin && !((_plugin$opts = plugin.opts) != null && _plugin$opts.target) && typesAllowed.includes(plugin.type)) {
+            const pluginAlreadyAdded = this.getPluginState().targets.some((installedPlugin) => plugin.id === installedPlugin.id);
+            if (!pluginAlreadyAdded) {
+              ;
+              plugin.mount(this, plugin);
+            }
+          }
+        }
+      });
+      this.install = () => {
+        this.setPluginState({
+          isHidden: true,
+          fileCardFor: null,
+          activeOverlayType: null,
+          showAddFilesPanel: false,
+          activePickerPanel: void 0,
+          showFileEditor: false,
+          metaFields: this.opts.metaFields,
+          targets: [],
+          // We'll make them visible once .containerWidth is determined
+          areInsidesReadyToBeVisible: false,
+          isDraggingOver: false
+        });
+        const {
+          inline: inline2,
+          closeAfterFinish
+        } = this.opts;
+        if (inline2 && closeAfterFinish) {
+          throw new Error("[Dashboard] `closeAfterFinish: true` cannot be used on an inline Dashboard, because an inline Dashboard cannot be closed at all. Either set `inline: false`, or disable the `closeAfterFinish` option.");
+        }
+        const {
+          allowMultipleUploads,
+          allowMultipleUploadBatches
+        } = this.uppy.opts;
+        if ((allowMultipleUploads || allowMultipleUploadBatches) && closeAfterFinish) {
+          this.uppy.log("[Dashboard] When using `closeAfterFinish`, we recommended setting the `allowMultipleUploadBatches` option to `false` in the Uppy constructor. See https://uppy.io/docs/uppy/#allowMultipleUploads-true", "warning");
+        }
+        const {
+          target
+        } = this.opts;
+        if (target) {
+          this.mount(target, this);
+        }
+        if (!this.opts.disableStatusBar) {
+          this.uppy.use(StatusBar, {
+            id: _classPrivateFieldLooseBase7(this, _getStatusBarId)[_getStatusBarId](),
+            target: this,
+            ..._classPrivateFieldLooseBase7(this, _getStatusBarOpts)[_getStatusBarOpts]()
+          });
+        }
+        if (!this.opts.disableInformer) {
+          this.uppy.use(Informer, {
+            id: _classPrivateFieldLooseBase7(this, _getInformerId)[_getInformerId](),
+            target: this,
+            ..._classPrivateFieldLooseBase7(this, _getInformerOpts)[_getInformerOpts]()
+          });
+        }
+        if (!this.opts.disableThumbnailGenerator) {
+          this.uppy.use(ThumbnailGenerator, {
+            id: _classPrivateFieldLooseBase7(this, _getThumbnailGeneratorId)[_getThumbnailGeneratorId](),
+            ..._classPrivateFieldLooseBase7(this, _getThumbnailGeneratorOpts)[_getThumbnailGeneratorOpts]()
+          });
+        }
+        this.darkModeMediaQuery = typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+        const isDarkModeOnFromTheStart = this.darkModeMediaQuery ? this.darkModeMediaQuery.matches : false;
+        this.uppy.log(`[Dashboard] Dark mode is ${isDarkModeOnFromTheStart ? "on" : "off"}`);
+        this.setDarkModeCapability(isDarkModeOnFromTheStart);
+        if (this.opts.theme === "auto") {
+          var _this$darkModeMediaQu;
+          (_this$darkModeMediaQu = this.darkModeMediaQuery) == null || _this$darkModeMediaQu.addListener(this.handleSystemDarkModeChange);
+        }
+        _classPrivateFieldLooseBase7(this, _addSpecifiedPluginsFromOptions)[_addSpecifiedPluginsFromOptions]();
+        _classPrivateFieldLooseBase7(this, _autoDiscoverPlugins)[_autoDiscoverPlugins]();
+        this.initEvents();
+      };
+      this.uninstall = () => {
+        if (!this.opts.disableInformer) {
+          const informer = this.uppy.getPlugin(`${this.id}:Informer`);
+          if (informer)
+            this.uppy.removePlugin(informer);
+        }
+        if (!this.opts.disableStatusBar) {
+          const statusBar = this.uppy.getPlugin(`${this.id}:StatusBar`);
+          if (statusBar)
+            this.uppy.removePlugin(statusBar);
+        }
+        if (!this.opts.disableThumbnailGenerator) {
+          const thumbnail = this.uppy.getPlugin(`${this.id}:ThumbnailGenerator`);
+          if (thumbnail)
+            this.uppy.removePlugin(thumbnail);
+        }
+        const {
+          plugins
+        } = this.opts;
+        plugins.forEach((pluginID) => {
+          const plugin = this.uppy.getPlugin(pluginID);
+          if (plugin)
+            plugin.unmount();
+        });
+        if (this.opts.theme === "auto") {
+          var _this$darkModeMediaQu2;
+          (_this$darkModeMediaQu2 = this.darkModeMediaQuery) == null || _this$darkModeMediaQu2.removeListener(this.handleSystemDarkModeChange);
+        }
+        if (this.opts.disablePageScrollWhenModalOpen) {
+          document.body.classList.remove("uppy-Dashboard-isFixed");
+        }
+        this.unmount();
+        this.removeEvents();
+      };
+      this.id = this.opts.id || "Dashboard";
+      this.title = "Dashboard";
+      this.type = "orchestrator";
+      this.defaultLocale = locale_default4;
+      if (this.opts.doneButtonHandler === void 0) {
+        this.opts.doneButtonHandler = () => {
+          this.uppy.clear();
+          this.requestCloseModal();
+        };
+      }
+      (_this$opts$onRequestC = (_this$opts = this.opts).onRequestCloseModal) != null ? _this$opts$onRequestC : _this$opts.onRequestCloseModal = () => this.closeModal();
+      this.i18nInit();
+    }
+    setOptions(opts) {
+      var _this$uppy$getPlugin, _this$uppy$getPlugin2;
+      super.setOptions(opts);
+      (_this$uppy$getPlugin = this.uppy.getPlugin(_classPrivateFieldLooseBase7(this, _getStatusBarId)[_getStatusBarId]())) == null || _this$uppy$getPlugin.setOptions(_classPrivateFieldLooseBase7(this, _getStatusBarOpts)[_getStatusBarOpts]());
+      (_this$uppy$getPlugin2 = this.uppy.getPlugin(_classPrivateFieldLooseBase7(this, _getThumbnailGeneratorId)[_getThumbnailGeneratorId]())) == null || _this$uppy$getPlugin2.setOptions(_classPrivateFieldLooseBase7(this, _getThumbnailGeneratorOpts)[_getThumbnailGeneratorOpts]());
+    }
+  };
+  function _getStatusBarOpts2() {
+    const {
+      hideUploadButton,
+      hideRetryButton,
+      hidePauseResumeButton,
+      hideCancelButton,
+      showProgressDetails,
+      hideProgressAfterFinish,
+      locale: l4,
+      doneButtonHandler
+    } = this.opts;
+    return {
+      hideUploadButton,
+      hideRetryButton,
+      hidePauseResumeButton,
+      hideCancelButton,
+      showProgressDetails,
+      hideAfterFinish: hideProgressAfterFinish,
+      locale: l4,
+      doneButtonHandler
+    };
+  }
+  function _getThumbnailGeneratorOpts2() {
+    const {
+      thumbnailWidth,
+      thumbnailHeight,
+      thumbnailType,
+      waitForThumbnailsBeforeUpload
+    } = this.opts;
+    return {
+      thumbnailWidth,
+      thumbnailHeight,
+      thumbnailType,
+      waitForThumbnailsBeforeUpload,
+      // If we don't block on thumbnails, we can lazily generate them
+      lazy: !waitForThumbnailsBeforeUpload
+    };
+  }
+  function _getInformerOpts2() {
+    return {
+      // currently no options
+    };
+  }
+  function _getStatusBarId2() {
+    return `${this.id}:StatusBar`;
+  }
+  function _getThumbnailGeneratorId2() {
+    return `${this.id}:ThumbnailGenerator`;
+  }
+  function _getInformerId2() {
+    return `${this.id}:Informer`;
+  }
+  Dashboard2.VERSION = packageJson8.version;
+
+  // node_modules/@uppy/image-editor/lib/Editor.js
+  var import_cropperjs = __toESM(require_cropper(), 1);
+
+  // node_modules/@uppy/image-editor/lib/utils/getCanvasDataThatFitsPerfectlyIntoContainer.js
+  function getCanvasDataThatFitsPerfectlyIntoContainer(containerData, canvasData) {
+    const widthRatio = containerData.width / canvasData.width;
+    const heightRatio = containerData.height / canvasData.height;
+    const scaleFactor = Math.min(widthRatio, heightRatio);
+    const newWidth = canvasData.width * scaleFactor;
+    const newHeight = canvasData.height * scaleFactor;
+    const newLeft = (containerData.width - newWidth) / 2;
+    const newTop = (containerData.height - newHeight) / 2;
+    return {
+      width: newWidth,
+      height: newHeight,
+      left: newLeft,
+      top: newTop
+    };
+  }
+  var getCanvasDataThatFitsPerfectlyIntoContainer_default = getCanvasDataThatFitsPerfectlyIntoContainer;
+
+  // node_modules/@uppy/image-editor/lib/utils/getScaleFactorThatRemovesDarkCorners.js
+  function toRadians(angle) {
+    return angle * (Math.PI / 180);
+  }
+  function getScaleFactorThatRemovesDarkCorners(w4, h4, granularAngle) {
+    const \u03B1 = Math.abs(toRadians(granularAngle));
+    const scaleFactor = Math.max((Math.sin(\u03B1) * w4 + Math.cos(\u03B1) * h4) / h4, (Math.sin(\u03B1) * h4 + Math.cos(\u03B1) * w4) / w4);
+    return scaleFactor;
+  }
+  var getScaleFactorThatRemovesDarkCorners_default = getScaleFactorThatRemovesDarkCorners;
+
+  // node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnMove.js
+  function limitCropboxMovementOnMove(canvas, cropbox, prevCropbox) {
+    if (cropbox.left < canvas.left) {
+      return {
+        left: canvas.left,
+        width: prevCropbox.width
+      };
+    }
+    if (cropbox.top < canvas.top) {
+      return {
+        top: canvas.top,
+        height: prevCropbox.height
+      };
+    }
+    if (cropbox.left + cropbox.width > canvas.left + canvas.width) {
+      return {
+        left: canvas.left + canvas.width - prevCropbox.width,
+        width: prevCropbox.width
+      };
+    }
+    if (cropbox.top + cropbox.height > canvas.top + canvas.height) {
+      return {
+        top: canvas.top + canvas.height - prevCropbox.height,
+        height: prevCropbox.height
+      };
+    }
+    return null;
+  }
+  var limitCropboxMovementOnMove_default = limitCropboxMovementOnMove;
+
+  // node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnResize.js
+  function limitCropboxMovementOnResize(canvas, cropboxData, prevCropbox) {
+    if (cropboxData.left < canvas.left) {
+      return {
+        left: canvas.left,
+        width: prevCropbox.left + prevCropbox.width - canvas.left
+      };
+    }
+    if (cropboxData.top < canvas.top) {
+      return {
+        top: canvas.top,
+        height: prevCropbox.top + prevCropbox.height - canvas.top
+      };
+    }
+    if (cropboxData.left + cropboxData.width > canvas.left + canvas.width) {
+      return {
+        left: prevCropbox.left,
+        width: canvas.left + canvas.width - prevCropbox.left
+      };
+    }
+    if (cropboxData.top + cropboxData.height > canvas.top + canvas.height) {
+      return {
+        top: prevCropbox.top,
+        height: canvas.top + canvas.height - prevCropbox.top
+      };
+    }
+    return null;
+  }
+  var limitCropboxMovementOnResize_default = limitCropboxMovementOnResize;
+
+  // node_modules/@uppy/image-editor/lib/Editor.js
+  var Editor = class extends k {
+    constructor(props) {
+      super(props);
+      this.onRotate90Deg = () => {
+        const {
+          angle90Deg
+        } = this.state;
+        const newAngle = angle90Deg - 90;
+        this.setState({
+          angle90Deg: newAngle,
+          angleGranular: 0
+        });
+        this.cropper.scale(1);
+        this.cropper.rotateTo(newAngle);
+        const canvasData = this.cropper.getCanvasData();
+        const containerData = this.cropper.getContainerData();
+        const newCanvasData = getCanvasDataThatFitsPerfectlyIntoContainer_default(containerData, canvasData);
+        this.cropper.setCanvasData(newCanvasData);
+        this.cropper.setCropBoxData(newCanvasData);
+      };
+      this.onRotateGranular = (ev) => {
+        const newGranularAngle = Number(ev.target.value);
+        this.setState({
+          angleGranular: newGranularAngle
+        });
+        const {
+          angle90Deg
+        } = this.state;
+        const newAngle = angle90Deg + newGranularAngle;
+        this.cropper.rotateTo(newAngle);
+        const image = this.cropper.getImageData();
+        const scaleFactor = getScaleFactorThatRemovesDarkCorners_default(image.naturalWidth, image.naturalHeight, newGranularAngle);
+        const scaleFactorX = this.cropper.getImageData().scaleX < 0 ? -scaleFactor : scaleFactor;
+        this.cropper.scale(scaleFactorX, scaleFactor);
+      };
+      this.state = {
+        angle90Deg: 0,
+        angleGranular: 0,
+        prevCropboxData: null
+      };
+      this.storePrevCropboxData = this.storePrevCropboxData.bind(this);
+      this.limitCropboxMovement = this.limitCropboxMovement.bind(this);
+    }
+    componentDidMount() {
+      const {
+        opts,
+        storeCropperInstance
+      } = this.props;
+      this.cropper = new import_cropperjs.default(this.imgElement, opts.cropperOptions);
+      this.imgElement.addEventListener("cropstart", this.storePrevCropboxData);
+      this.imgElement.addEventListener("cropend", this.limitCropboxMovement);
+      storeCropperInstance(this.cropper);
+    }
+    componentWillUnmount() {
+      this.cropper.destroy();
+      this.imgElement.removeEventListener("cropstart", this.storePrevCropboxData);
+      this.imgElement.removeEventListener("cropend", this.limitCropboxMovement);
+    }
+    // eslint-disable-next-line react/sort-comp
+    storePrevCropboxData() {
+      this.setState({
+        prevCropboxData: this.cropper.getCropBoxData()
+      });
+    }
+    limitCropboxMovement(event) {
+      const canvasData = this.cropper.getCanvasData();
+      const cropboxData = this.cropper.getCropBoxData();
+      const {
+        prevCropboxData
+      } = this.state;
+      if (event.detail.action === "all") {
+        const newCropboxData = limitCropboxMovementOnMove_default(canvasData, cropboxData, prevCropboxData);
+        if (newCropboxData)
+          this.cropper.setCropBoxData(newCropboxData);
+      } else {
+        const newCropboxData = limitCropboxMovementOnResize_default(canvasData, cropboxData, prevCropboxData);
+        if (newCropboxData)
+          this.cropper.setCropBoxData(newCropboxData);
+      }
+    }
+    renderGranularRotate() {
+      const {
+        i18n
+      } = this.props;
+      const {
+        angleGranular
+      } = this.state;
+      return _("label", {
+        role: "tooltip",
+        "aria-label": `${angleGranular}\xBA`,
+        "data-microtip-position": "top",
+        className: "uppy-ImageCropper-rangeWrapper"
+      }, _("input", {
+        className: "uppy-ImageCropper-range uppy-u-reset",
+        type: "range",
+        onInput: this.onRotateGranular,
+        onChange: this.onRotateGranular,
+        value: angleGranular,
+        min: "-45",
+        max: "45",
+        "aria-label": i18n("rotate")
+      }));
+    }
+    renderRevert() {
+      const {
+        i18n,
+        opts
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("revert"),
+        onClick: () => {
+          this.cropper.reset();
+          this.cropper.setAspectRatio(opts.cropperOptions.initialAspectRatio);
+          this.setState({
+            angle90Deg: 0,
+            angleGranular: 0
+          });
+        }
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M0 0h24v24H0z",
+        fill: "none"
+      }), _("path", {
+        d: "M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"
+      })));
+    }
+    renderRotate() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("rotate"),
+        onClick: this.onRotate90Deg
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M0 0h24v24H0V0zm0 0h24v24H0V0z",
+        fill: "none"
+      }), _("path", {
+        d: "M14 10a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2v-7a2 2 0 012-2h8zm0 1.75H6a.25.25 0 00-.243.193L5.75 12v7a.25.25 0 00.193.243L6 19.25h8a.25.25 0 00.243-.193L14.25 19v-7a.25.25 0 00-.193-.243L14 11.75zM12 .76V4c2.3 0 4.61.88 6.36 2.64a8.95 8.95 0 012.634 6.025L21 13a1 1 0 01-1.993.117L19 13h-.003a6.979 6.979 0 00-2.047-4.95 6.97 6.97 0 00-4.652-2.044L12 6v3.24L7.76 5 12 .76z"
+      })));
+    }
+    renderFlip() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("flipHorizontal"),
+        onClick: () => this.cropper.scaleX(-this.cropper.getData().scaleX || -1)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M0 0h24v24H0z",
+        fill: "none"
+      }), _("path", {
+        d: "M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z"
+      })));
+    }
+    renderZoomIn() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("zoomIn"),
+        onClick: () => this.cropper.zoom(0.1)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        height: "24",
+        viewBox: "0 0 24 24",
+        width: "24"
+      }, _("path", {
+        d: "M0 0h24v24H0V0z",
+        fill: "none"
+      }), _("path", {
+        d: "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+      }), _("path", {
+        d: "M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z"
+      })));
+    }
+    renderZoomOut() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("zoomOut"),
+        onClick: () => this.cropper.zoom(-0.1)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M0 0h24v24H0V0z",
+        fill: "none"
+      }), _("path", {
+        d: "M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"
+      })));
+    }
+    renderCropSquare() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("aspectRatioSquare"),
+        onClick: () => this.cropper.setAspectRatio(1)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M0 0h24v24H0z",
+        fill: "none"
+      }), _("path", {
+        d: "M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"
+      })));
+    }
+    renderCropWidescreen() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        className: "uppy-u-reset uppy-c-btn",
+        "aria-label": i18n("aspectRatioLandscape"),
+        onClick: () => this.cropper.setAspectRatio(16 / 9)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M 19,4.9999992 V 17.000001 H 4.9999998 V 6.9999992 H 19 m 0,-2 H 4.9999998 c -1.0999999,0 -1.9999999,0.9000001 -1.9999999,2 V 17.000001 c 0,1.1 0.9,2 1.9999999,2 H 19 c 1.1,0 2,-0.9 2,-2 V 6.9999992 c 0,-1.0999999 -0.9,-2 -2,-2 z"
+      }), _("path", {
+        fill: "none",
+        d: "M0 0h24v24H0z"
+      })));
+    }
+    renderCropWidescreenVertical() {
+      const {
+        i18n
+      } = this.props;
+      return _("button", {
+        role: "button tooltip",
+        "data-microtip-position": "top",
+        type: "button",
+        "aria-label": i18n("aspectRatioPortrait"),
+        className: "uppy-u-reset uppy-c-btn",
+        onClick: () => this.cropper.setAspectRatio(9 / 16)
+      }, _("svg", {
+        "aria-hidden": "true",
+        className: "uppy-c-icon",
+        width: "24",
+        height: "24",
+        viewBox: "0 0 24 24"
+      }, _("path", {
+        d: "M 19.000001,19 H 6.999999 V 5 h 10.000002 v 14 m 2,0 V 5 c 0,-1.0999999 -0.9,-1.9999999 -2,-1.9999999 H 6.999999 c -1.1,0 -2,0.9 -2,1.9999999 v 14 c 0,1.1 0.9,2 2,2 h 10.000002 c 1.1,0 2,-0.9 2,-2 z"
+      }), _("path", {
+        d: "M0 0h24v24H0z",
+        fill: "none"
+      })));
+    }
+    render() {
+      const {
+        currentImage,
+        opts
+      } = this.props;
+      const {
+        actions
+      } = opts;
+      const imageURL = URL.createObjectURL(currentImage.data);
+      return _("div", {
+        className: "uppy-ImageCropper"
+      }, _("div", {
+        className: "uppy-ImageCropper-container"
+      }, _("img", {
+        className: "uppy-ImageCropper-image",
+        alt: currentImage.name,
+        src: imageURL,
+        ref: (ref) => {
+          this.imgElement = ref;
+        }
+      })), _("div", {
+        className: "uppy-ImageCropper-controls"
+      }, actions.revert && this.renderRevert(), actions.rotate && this.renderRotate(), actions.granularRotate && this.renderGranularRotate(), actions.flip && this.renderFlip(), actions.zoomIn && this.renderZoomIn(), actions.zoomOut && this.renderZoomOut(), actions.cropSquare && this.renderCropSquare(), actions.cropWidescreen && this.renderCropWidescreen(), actions.cropWidescreenVertical && this.renderCropWidescreenVertical()));
+    }
+  };
+
+  // node_modules/@uppy/image-editor/lib/locale.js
+  var locale_default5 = {
+    strings: {
+      revert: "Reset",
+      rotate: "Rotate 90\xB0",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      flipHorizontal: "Flip horizontally",
+      aspectRatioSquare: "Crop square",
+      aspectRatioLandscape: "Crop landscape (16:9)",
+      aspectRatioPortrait: "Crop portrait (9:16)"
+    }
+  };
+
+  // node_modules/@uppy/image-editor/lib/ImageEditor.js
+  var packageJson9 = {
+    "version": "3.2.1"
+  };
+  var defaultCropperOptions = {
+    viewMode: 0,
+    background: false,
+    autoCropArea: 1,
+    responsive: true,
+    minCropBoxWidth: 70,
+    minCropBoxHeight: 70,
+    croppedCanvasOptions: {},
+    initialAspectRatio: 0
+  };
+  var defaultActions = {
+    revert: true,
+    rotate: true,
+    granularRotate: true,
+    flip: true,
+    zoomIn: true,
+    zoomOut: true,
+    cropSquare: true,
+    cropWidescreen: true,
+    cropWidescreenVertical: true
+  };
+  var defaultOptions5 = {
+    // `quality: 1` increases the image size by orders of magnitude - 0.8 seems to be the sweet spot.
+    // see https://github.com/fengyuanchen/cropperjs/issues/538#issuecomment-1776279427
+    quality: 0.8,
+    actions: defaultActions,
+    cropperOptions: defaultCropperOptions
+  };
+  var ImageEditor = class extends UIPlugin_default {
+    constructor(uppy, opts) {
+      super(uppy, {
+        ...defaultOptions5,
+        ...opts,
+        actions: {
+          ...defaultActions,
+          ...opts == null ? void 0 : opts.actions
+        },
+        cropperOptions: {
+          ...defaultCropperOptions,
+          ...opts == null ? void 0 : opts.cropperOptions
+        }
+      });
+      this.save = () => {
+        const saveBlobCallback = (blob) => {
+          var _name;
+          const {
+            currentImage: currentImage2
+          } = this.getPluginState();
+          this.uppy.setFileState(currentImage2.id, {
+            // Reinserting image's name and type, because .toBlob loses both.
+            data: new File([blob], (_name = currentImage2.name) != null ? _name : this.i18n("unnamed"), {
+              type: blob.type
+            }),
+            size: blob.size,
+            preview: void 0
+          });
+          const updatedFile = this.uppy.getFile(currentImage2.id);
+          this.uppy.emit("thumbnail:request", updatedFile);
+          this.setPluginState({
+            currentImage: updatedFile
+          });
+          this.uppy.emit("file-editor:complete", updatedFile);
+        };
+        const {
+          currentImage
+        } = this.getPluginState();
+        const croppedCanvas = this.cropper.getCroppedCanvas({});
+        if (croppedCanvas.width % 2 !== 0) {
+          this.cropper.setData({
+            width: croppedCanvas.width - 1
+          });
+        }
+        if (croppedCanvas.height % 2 !== 0) {
+          this.cropper.setData({
+            height: croppedCanvas.height - 1
+          });
+        }
+        this.cropper.getCroppedCanvas(this.opts.cropperOptions.croppedCanvasOptions).toBlob(saveBlobCallback, currentImage.type, this.opts.quality);
+      };
+      this.storeCropperInstance = (cropper) => {
+        this.cropper = cropper;
+      };
+      this.selectFile = (file) => {
+        this.uppy.emit("file-editor:start", file);
+        this.setPluginState({
+          currentImage: file
+        });
+      };
+      this.id = this.opts.id || "ImageEditor";
+      this.title = "Image Editor";
+      this.type = "editor";
+      this.defaultLocale = locale_default5;
+      this.i18nInit();
+    }
+    // eslint-disable-next-line class-methods-use-this
+    canEditFile(file) {
+      if (!file.type || file.isRemote) {
+        return false;
+      }
+      const fileTypeSpecific = file.type.split("/")[1];
+      if (/^(jpe?g|gif|png|bmp|webp)$/.test(fileTypeSpecific)) {
+        return true;
+      }
+      return false;
+    }
+    install() {
+      this.setPluginState({
+        currentImage: null
+      });
+      const {
+        target
+      } = this.opts;
+      if (target) {
+        this.mount(target, this);
+      }
+    }
+    uninstall() {
+      const {
+        currentImage
+      } = this.getPluginState();
+      if (currentImage) {
+        const file = this.uppy.getFile(currentImage.id);
+        this.uppy.emit("file-editor:cancel", file);
+      }
+      this.unmount();
+    }
+    render() {
+      const {
+        currentImage
+      } = this.getPluginState();
+      if (currentImage === null || currentImage.isRemote) {
+        return null;
+      }
+      return _(Editor, {
+        currentImage,
+        storeCropperInstance: this.storeCropperInstance,
+        save: this.save,
+        opts: this.opts,
+        i18n: this.i18n
+      });
+    }
+  };
+  ImageEditor.VERSION = packageJson9.version;
+
+  // node_modules/@uppy/core/lib/EventManager.js
+  function _classPrivateFieldLooseBase8(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id8 = 0;
+  function _classPrivateFieldLooseKey8(e4) {
+    return "__private_" + id8++ + "_" + e4;
+  }
+  var _uppy = /* @__PURE__ */ _classPrivateFieldLooseKey8("uppy");
+  var _events = /* @__PURE__ */ _classPrivateFieldLooseKey8("events");
+  var EventManager = class {
+    constructor(uppy) {
+      Object.defineProperty(this, _uppy, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _events, {
+        writable: true,
+        value: []
+      });
+      _classPrivateFieldLooseBase8(this, _uppy)[_uppy] = uppy;
+    }
+    on(event, fn2) {
+      _classPrivateFieldLooseBase8(this, _events)[_events].push([event, fn2]);
+      return _classPrivateFieldLooseBase8(this, _uppy)[_uppy].on(event, fn2);
+    }
+    remove() {
+      for (const [event, fn2] of _classPrivateFieldLooseBase8(this, _events)[_events].splice(0)) {
+        _classPrivateFieldLooseBase8(this, _uppy)[_uppy].off(event, fn2);
+      }
+    }
+    onFilePause(fileID, cb) {
+      this.on("upload-pause", (file, isPaused) => {
+        if (fileID === (file == null ? void 0 : file.id)) {
+          cb(isPaused);
+        }
+      });
+    }
+    onFileRemove(fileID, cb) {
+      this.on("file-removed", (file) => {
+        if (fileID === file.id)
+          cb(file.id);
+      });
+    }
+    onPause(fileID, cb) {
+      this.on("upload-pause", (file, isPaused) => {
+        if (fileID === (file == null ? void 0 : file.id)) {
+          cb(isPaused);
+        }
+      });
+    }
+    onRetry(fileID, cb) {
+      this.on("upload-retry", (file) => {
+        if (fileID === (file == null ? void 0 : file.id)) {
+          cb();
+        }
+      });
+    }
+    onRetryAll(fileID, cb) {
+      this.on("retry-all", () => {
+        if (!_classPrivateFieldLooseBase8(this, _uppy)[_uppy].getFile(fileID))
+          return;
+        cb();
+      });
+    }
+    onPauseAll(fileID, cb) {
+      this.on("pause-all", () => {
+        if (!_classPrivateFieldLooseBase8(this, _uppy)[_uppy].getFile(fileID))
+          return;
+        cb();
+      });
+    }
+    onCancelAll(fileID, eventHandler) {
+      var _this = this;
+      this.on("cancel-all", function() {
+        if (!_classPrivateFieldLooseBase8(_this, _uppy)[_uppy].getFile(fileID))
+          return;
+        eventHandler(...arguments);
+      });
+    }
+    onResumeAll(fileID, cb) {
+      this.on("resume-all", () => {
+        if (!_classPrivateFieldLooseBase8(this, _uppy)[_uppy].getFile(fileID))
+          return;
+        cb();
+      });
+    }
+  };
+
+  // node_modules/@uppy/utils/lib/RateLimitedQueue.js
+  function _classPrivateFieldLooseBase9(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id9 = 0;
+  function _classPrivateFieldLooseKey9(e4) {
+    return "__private_" + id9++ + "_" + e4;
+  }
+  function createCancelError(cause) {
+    return new Error("Cancelled", {
+      cause
+    });
+  }
+  function abortOn(signal) {
+    if (signal != null) {
+      var _this$then;
+      const abortPromise = () => this.abort(signal.reason);
+      signal.addEventListener("abort", abortPromise, {
+        once: true
+      });
+      const removeAbortListener = () => {
+        signal.removeEventListener("abort", abortPromise);
+      };
+      (_this$then = this.then) == null || _this$then.call(this, removeAbortListener, removeAbortListener);
+    }
+    return this;
+  }
+  var _activeRequests = /* @__PURE__ */ _classPrivateFieldLooseKey9("activeRequests");
+  var _queuedHandlers = /* @__PURE__ */ _classPrivateFieldLooseKey9("queuedHandlers");
+  var _paused = /* @__PURE__ */ _classPrivateFieldLooseKey9("paused");
+  var _pauseTimer = /* @__PURE__ */ _classPrivateFieldLooseKey9("pauseTimer");
+  var _downLimit = /* @__PURE__ */ _classPrivateFieldLooseKey9("downLimit");
+  var _upperLimit = /* @__PURE__ */ _classPrivateFieldLooseKey9("upperLimit");
+  var _rateLimitingTimer = /* @__PURE__ */ _classPrivateFieldLooseKey9("rateLimitingTimer");
+  var _call = /* @__PURE__ */ _classPrivateFieldLooseKey9("call");
+  var _queueNext = /* @__PURE__ */ _classPrivateFieldLooseKey9("queueNext");
+  var _next = /* @__PURE__ */ _classPrivateFieldLooseKey9("next");
+  var _queue = /* @__PURE__ */ _classPrivateFieldLooseKey9("queue");
+  var _dequeue = /* @__PURE__ */ _classPrivateFieldLooseKey9("dequeue");
+  var _resume = /* @__PURE__ */ _classPrivateFieldLooseKey9("resume");
+  var _increaseLimit = /* @__PURE__ */ _classPrivateFieldLooseKey9("increaseLimit");
+  var RateLimitedQueue = class {
+    constructor(limit) {
+      Object.defineProperty(this, _dequeue, {
+        value: _dequeue2
+      });
+      Object.defineProperty(this, _queue, {
+        value: _queue2
+      });
+      Object.defineProperty(this, _next, {
+        value: _next2
+      });
+      Object.defineProperty(this, _queueNext, {
+        value: _queueNext2
+      });
+      Object.defineProperty(this, _call, {
+        value: _call2
+      });
+      Object.defineProperty(this, _activeRequests, {
+        writable: true,
+        value: 0
+      });
+      Object.defineProperty(this, _queuedHandlers, {
+        writable: true,
+        value: []
+      });
+      Object.defineProperty(this, _paused, {
+        writable: true,
+        value: false
+      });
+      Object.defineProperty(this, _pauseTimer, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _downLimit, {
+        writable: true,
+        value: 1
+      });
+      Object.defineProperty(this, _upperLimit, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _rateLimitingTimer, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _resume, {
+        writable: true,
+        value: () => this.resume()
+      });
+      Object.defineProperty(this, _increaseLimit, {
+        writable: true,
+        value: () => {
+          if (_classPrivateFieldLooseBase9(this, _paused)[_paused]) {
+            _classPrivateFieldLooseBase9(this, _rateLimitingTimer)[_rateLimitingTimer] = setTimeout(_classPrivateFieldLooseBase9(this, _increaseLimit)[_increaseLimit], 0);
+            return;
+          }
+          _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit] = this.limit;
+          this.limit = Math.ceil((_classPrivateFieldLooseBase9(this, _upperLimit)[_upperLimit] + _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit]) / 2);
+          for (let i4 = _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit]; i4 <= this.limit; i4++) {
+            _classPrivateFieldLooseBase9(this, _queueNext)[_queueNext]();
+          }
+          if (_classPrivateFieldLooseBase9(this, _upperLimit)[_upperLimit] - _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit] > 3) {
+            _classPrivateFieldLooseBase9(this, _rateLimitingTimer)[_rateLimitingTimer] = setTimeout(_classPrivateFieldLooseBase9(this, _increaseLimit)[_increaseLimit], 2e3);
+          } else {
+            _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit] = Math.floor(_classPrivateFieldLooseBase9(this, _downLimit)[_downLimit] / 2);
+          }
+        }
+      });
+      if (typeof limit !== "number" || limit === 0) {
+        this.limit = Infinity;
+      } else {
+        this.limit = limit;
+      }
+    }
+    run(fn2, queueOptions) {
+      if (!_classPrivateFieldLooseBase9(this, _paused)[_paused] && _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] < this.limit) {
+        return _classPrivateFieldLooseBase9(this, _call)[_call](fn2);
+      }
+      return _classPrivateFieldLooseBase9(this, _queue)[_queue](fn2, queueOptions);
+    }
+    wrapSyncFunction(fn2, queueOptions) {
+      var _this = this;
+      return function() {
+        for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
+          args[_key] = arguments[_key];
+        }
+        const queuedRequest = _this.run(() => {
+          fn2(...args);
+          queueMicrotask(() => queuedRequest.done());
+          return () => {
+          };
+        }, queueOptions);
+        return {
+          abortOn,
+          abort() {
+            queuedRequest.abort();
+          }
+        };
+      };
+    }
+    wrapPromiseFunction(fn2, queueOptions) {
+      var _this2 = this;
+      return function() {
+        for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+          args[_key2] = arguments[_key2];
+        }
+        let queuedRequest;
+        const outerPromise = new Promise((resolve, reject) => {
+          queuedRequest = _this2.run(() => {
+            let cancelError;
+            let innerPromise;
+            try {
+              innerPromise = Promise.resolve(fn2(...args));
+            } catch (err) {
+              innerPromise = Promise.reject(err);
+            }
+            innerPromise.then((result) => {
+              if (cancelError) {
+                reject(cancelError);
+              } else {
+                queuedRequest.done();
+                resolve(result);
+              }
+            }, (err) => {
+              if (cancelError) {
+                reject(cancelError);
+              } else {
+                queuedRequest.done();
+                reject(err);
+              }
+            });
+            return (cause) => {
+              cancelError = createCancelError(cause);
+            };
+          }, queueOptions);
+        });
+        outerPromise.abort = (cause) => {
+          queuedRequest.abort(cause);
+        };
+        outerPromise.abortOn = abortOn;
+        return outerPromise;
+      };
+    }
+    resume() {
+      _classPrivateFieldLooseBase9(this, _paused)[_paused] = false;
+      clearTimeout(_classPrivateFieldLooseBase9(this, _pauseTimer)[_pauseTimer]);
+      for (let i4 = 0; i4 < this.limit; i4++) {
+        _classPrivateFieldLooseBase9(this, _queueNext)[_queueNext]();
+      }
+    }
+    /**
+     * Freezes the queue for a while or indefinitely.
+     *
+     * @param {number | null } [duration] Duration for the pause to happen, in milliseconds.
+     *                                    If omitted, the queue won't resume automatically.
+     */
+    pause(duration2) {
+      if (duration2 === void 0) {
+        duration2 = null;
+      }
+      _classPrivateFieldLooseBase9(this, _paused)[_paused] = true;
+      clearTimeout(_classPrivateFieldLooseBase9(this, _pauseTimer)[_pauseTimer]);
+      if (duration2 != null) {
+        _classPrivateFieldLooseBase9(this, _pauseTimer)[_pauseTimer] = setTimeout(_classPrivateFieldLooseBase9(this, _resume)[_resume], duration2);
+      }
+    }
+    /**
+     * Pauses the queue for a duration, and lower the limit of concurrent requests
+     * when the queue resumes. When the queue resumes, it tries to progressively
+     * increase the limit in `this.#increaseLimit` until another call is made to
+     * `this.rateLimit`.
+     * Call this function when using the RateLimitedQueue for network requests and
+     * the remote server responds with 429 HTTP code.
+     *
+     * @param {number} duration in milliseconds.
+     */
+    rateLimit(duration2) {
+      clearTimeout(_classPrivateFieldLooseBase9(this, _rateLimitingTimer)[_rateLimitingTimer]);
+      this.pause(duration2);
+      if (this.limit > 1 && Number.isFinite(this.limit)) {
+        _classPrivateFieldLooseBase9(this, _upperLimit)[_upperLimit] = this.limit - 1;
+        this.limit = _classPrivateFieldLooseBase9(this, _downLimit)[_downLimit];
+        _classPrivateFieldLooseBase9(this, _rateLimitingTimer)[_rateLimitingTimer] = setTimeout(_classPrivateFieldLooseBase9(this, _increaseLimit)[_increaseLimit], duration2);
+      }
+    }
+    get isPaused() {
+      return _classPrivateFieldLooseBase9(this, _paused)[_paused];
+    }
+  };
+  function _call2(fn2) {
+    _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] += 1;
+    let done = false;
+    let cancelActive;
+    try {
+      cancelActive = fn2();
+    } catch (err) {
+      _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] -= 1;
+      throw err;
+    }
+    return {
+      abort: (cause) => {
+        if (done)
+          return;
+        done = true;
+        _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] -= 1;
+        cancelActive == null || cancelActive(cause);
+        _classPrivateFieldLooseBase9(this, _queueNext)[_queueNext]();
+      },
+      done: () => {
+        if (done)
+          return;
+        done = true;
+        _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] -= 1;
+        _classPrivateFieldLooseBase9(this, _queueNext)[_queueNext]();
+      }
+    };
+  }
+  function _queueNext2() {
+    queueMicrotask(() => _classPrivateFieldLooseBase9(this, _next)[_next]());
+  }
+  function _next2() {
+    if (_classPrivateFieldLooseBase9(this, _paused)[_paused] || _classPrivateFieldLooseBase9(this, _activeRequests)[_activeRequests] >= this.limit) {
+      return;
+    }
+    if (_classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].length === 0) {
+      return;
+    }
+    const next = _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].shift();
+    if (next == null) {
+      throw new Error("Invariant violation: next is null");
+    }
+    const handler = _classPrivateFieldLooseBase9(this, _call)[_call](next.fn);
+    next.abort = handler.abort;
+    next.done = handler.done;
+  }
+  function _queue2(fn2, options2) {
+    const handler = {
+      fn: fn2,
+      priority: (options2 == null ? void 0 : options2.priority) || 0,
+      abort: () => {
+        _classPrivateFieldLooseBase9(this, _dequeue)[_dequeue](handler);
+      },
+      done: () => {
+        throw new Error("Cannot mark a queued request as done: this indicates a bug");
+      }
+    };
+    const index = _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].findIndex((other2) => {
+      return handler.priority > other2.priority;
+    });
+    if (index === -1) {
+      _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].push(handler);
+    } else {
+      _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].splice(index, 0, handler);
+    }
+    return handler;
+  }
+  function _dequeue2(handler) {
+    const index = _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].indexOf(handler);
+    if (index !== -1) {
+      _classPrivateFieldLooseBase9(this, _queuedHandlers)[_queuedHandlers].splice(index, 1);
+    }
+  }
+  var internalRateLimitedQueue = Symbol("__queue");
+
+  // node_modules/@uppy/utils/lib/NetworkError.js
+  var NetworkError = class extends Error {
+    constructor(error2, xhr) {
+      if (xhr === void 0) {
+        xhr = null;
+      }
+      super(`This looks like a network error, the endpoint might be blocked by an internet provider or a firewall.`);
+      this.cause = error2;
+      this.isNetworkError = true;
+      this.request = xhr;
+    }
+  };
+  var NetworkError_default = NetworkError;
+
+  // node_modules/@uppy/utils/lib/isNetworkError.js
+  function isNetworkError(xhr) {
+    if (!xhr) {
+      return false;
+    }
+    return xhr.readyState !== 0 && xhr.readyState !== 4 || xhr.status === 0;
+  }
+  var isNetworkError_default = isNetworkError;
+
+  // node_modules/@uppy/utils/lib/ProgressTimeout.js
+  function _classPrivateFieldLooseBase10(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id10 = 0;
+  function _classPrivateFieldLooseKey10(e4) {
+    return "__private_" + id10++ + "_" + e4;
+  }
+  var _aliveTimer = /* @__PURE__ */ _classPrivateFieldLooseKey10("aliveTimer");
+  var _isDone = /* @__PURE__ */ _classPrivateFieldLooseKey10("isDone");
+  var _onTimedOut = /* @__PURE__ */ _classPrivateFieldLooseKey10("onTimedOut");
+  var _timeout = /* @__PURE__ */ _classPrivateFieldLooseKey10("timeout");
+  var ProgressTimeout = class {
+    constructor(timeout, timeoutHandler) {
+      Object.defineProperty(this, _aliveTimer, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _isDone, {
+        writable: true,
+        value: false
+      });
+      Object.defineProperty(this, _onTimedOut, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _timeout, {
+        writable: true,
+        value: void 0
+      });
+      _classPrivateFieldLooseBase10(this, _timeout)[_timeout] = timeout;
+      _classPrivateFieldLooseBase10(this, _onTimedOut)[_onTimedOut] = () => timeoutHandler(timeout);
+    }
+    progress() {
+      if (_classPrivateFieldLooseBase10(this, _isDone)[_isDone])
+        return;
+      if (_classPrivateFieldLooseBase10(this, _timeout)[_timeout] > 0) {
+        clearTimeout(_classPrivateFieldLooseBase10(this, _aliveTimer)[_aliveTimer]);
+        _classPrivateFieldLooseBase10(this, _aliveTimer)[_aliveTimer] = setTimeout(_classPrivateFieldLooseBase10(this, _onTimedOut)[_onTimedOut], _classPrivateFieldLooseBase10(this, _timeout)[_timeout]);
+      }
+    }
+    done() {
+      if (!_classPrivateFieldLooseBase10(this, _isDone)[_isDone]) {
+        clearTimeout(_classPrivateFieldLooseBase10(this, _aliveTimer)[_aliveTimer]);
+        _classPrivateFieldLooseBase10(this, _aliveTimer)[_aliveTimer] = void 0;
+        _classPrivateFieldLooseBase10(this, _isDone)[_isDone] = true;
+      }
+    }
+  };
+  var ProgressTimeout_default = ProgressTimeout;
+
+  // node_modules/@uppy/utils/lib/fetcher.js
+  var noop = () => {
+  };
+  function fetcher(url, options2) {
+    if (options2 === void 0) {
+      options2 = {};
+    }
+    const {
+      body = null,
+      headers = {},
+      method = "GET",
+      onBeforeRequest = noop,
+      onUploadProgress = noop,
+      shouldRetry = () => true,
+      onAfterResponse = noop,
+      onTimeout = noop,
+      responseType,
+      retries = 3,
+      signal = null,
+      timeout = 3e4,
+      withCredentials = false
+    } = options2;
+    const delay = (attempt) => 0.3 * 2 ** (attempt - 1) * 1e3;
+    const timer = new ProgressTimeout_default(timeout, onTimeout);
+    function requestWithRetry(retryCount) {
+      if (retryCount === void 0) {
+        retryCount = 0;
+      }
+      return new Promise(async (resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url, true);
+        xhr.withCredentials = withCredentials;
+        if (responseType) {
+          xhr.responseType = responseType;
+        }
+        signal == null || signal.addEventListener("abort", () => {
+          xhr.abort();
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+        xhr.onload = async () => {
+          await onAfterResponse(xhr, retryCount);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            timer.done();
+            resolve(xhr);
+          } else if (shouldRetry(xhr) && retryCount < retries) {
+            setTimeout(() => {
+              requestWithRetry(retryCount + 1).then(resolve, reject);
+            }, delay(retryCount));
+          } else {
+            timer.done();
+            reject(new NetworkError_default(xhr.statusText, xhr));
+          }
+        };
+        xhr.onerror = () => {
+          if (shouldRetry(xhr) && retryCount < retries) {
+            setTimeout(() => {
+              requestWithRetry(retryCount + 1).then(resolve, reject);
+            }, delay(retryCount));
+          } else {
+            timer.done();
+            reject(new NetworkError_default(xhr.statusText, xhr));
+          }
+        };
+        xhr.upload.onprogress = (event) => {
+          timer.progress();
+          onUploadProgress(event);
+        };
+        if (headers) {
+          Object.keys(headers).forEach((key) => {
+            xhr.setRequestHeader(key, headers[key]);
+          });
+        }
+        await onBeforeRequest(xhr, retryCount);
+        xhr.send(body);
+      });
+    }
+    return requestWithRetry();
+  }
+
+  // node_modules/@uppy/utils/lib/fileFilters.js
+  function filterNonFailedFiles(files) {
+    const hasError = (file) => "error" in file && !!file.error;
+    return files.filter((file) => !hasError(file));
+  }
+  function filterFilesToEmitUploadStarted(files) {
+    return files.filter((file) => {
+      var _file$progress;
+      return !((_file$progress = file.progress) != null && _file$progress.uploadStarted) || !file.isRestored;
+    });
+  }
+
+  // node_modules/@uppy/utils/lib/getAllowedMetaFields.js
+  function getAllowedMetaFields(fields, meta) {
+    if (fields === true) {
+      return Object.keys(meta);
+    }
+    if (Array.isArray(fields)) {
+      return fields;
+    }
+    return [];
+  }
+
+  // node_modules/@uppy/xhr-upload/lib/locale.js
+  var locale_default6 = {
+    strings: {
+      // Shown in the Informer if an upload is being canceled because it stalled for too long.
+      uploadStalled: "Upload has not made any progress for %{seconds} seconds. You may want to retry it."
+    }
+  };
+
+  // node_modules/@uppy/xhr-upload/lib/index.js
+  function _classPrivateFieldLooseBase11(e4, t4) {
+    if (!{}.hasOwnProperty.call(e4, t4))
+      throw new TypeError("attempted to use private field on non-instance");
+    return e4;
+  }
+  var id11 = 0;
+  function _classPrivateFieldLooseKey11(e4) {
+    return "__private_" + id11++ + "_" + e4;
+  }
+  var packageJson10 = {
+    "version": "4.2.3"
+  };
+  function buildResponseError(xhr, err) {
+    let error2 = err;
+    if (!error2)
+      error2 = new Error("Upload error");
+    if (typeof error2 === "string")
+      error2 = new Error(error2);
+    if (!(error2 instanceof Error)) {
+      error2 = Object.assign(new Error("Upload error"), {
+        data: error2
+      });
+    }
+    if (isNetworkError_default(xhr)) {
+      error2 = new NetworkError_default(error2, xhr);
+      return error2;
+    }
+    error2.request = xhr;
+    return error2;
+  }
+  function setTypeInBlob(file) {
+    const dataWithUpdatedType = file.data.slice(0, file.data.size, file.meta.type);
+    return dataWithUpdatedType;
+  }
+  var defaultOptions6 = {
+    formData: true,
+    fieldName: "file",
+    method: "post",
+    allowedMetaFields: true,
+    bundle: false,
+    headers: {},
+    timeout: 30 * 1e3,
+    limit: 5,
+    withCredentials: false,
+    responseType: ""
+  };
+  var _getFetcher = /* @__PURE__ */ _classPrivateFieldLooseKey11("getFetcher");
+  var _uploadLocalFile = /* @__PURE__ */ _classPrivateFieldLooseKey11("uploadLocalFile");
+  var _uploadBundle = /* @__PURE__ */ _classPrivateFieldLooseKey11("uploadBundle");
+  var _getCompanionClientArgs = /* @__PURE__ */ _classPrivateFieldLooseKey11("getCompanionClientArgs");
+  var _uploadFiles = /* @__PURE__ */ _classPrivateFieldLooseKey11("uploadFiles");
+  var _handleUpload = /* @__PURE__ */ _classPrivateFieldLooseKey11("handleUpload");
+  var XHRUpload = class extends BasePlugin {
+    constructor(uppy, _opts) {
+      super(uppy, {
+        ...defaultOptions6,
+        fieldName: _opts.bundle ? "files[]" : "file",
+        ..._opts
+      });
+      Object.defineProperty(this, _uploadFiles, {
+        value: _uploadFiles2
+      });
+      Object.defineProperty(this, _getCompanionClientArgs, {
+        value: _getCompanionClientArgs2
+      });
+      Object.defineProperty(this, _uploadBundle, {
+        value: _uploadBundle2
+      });
+      Object.defineProperty(this, _uploadLocalFile, {
+        value: _uploadLocalFile2
+      });
+      Object.defineProperty(this, _getFetcher, {
+        writable: true,
+        value: void 0
+      });
+      Object.defineProperty(this, _handleUpload, {
+        writable: true,
+        value: async (fileIDs) => {
+          if (fileIDs.length === 0) {
+            this.uppy.log("[XHRUpload] No files to upload!");
+            return;
+          }
+          if (this.opts.limit === 0 && !this.opts[internalRateLimitedQueue]) {
+            this.uppy.log("[XHRUpload] When uploading multiple files at once, consider setting the `limit` option (to `10` for example), to limit the number of concurrent uploads, which helps prevent memory and network issues: https://uppy.io/docs/xhr-upload/#limit-0", "warning");
+          }
+          this.uppy.log("[XHRUpload] Uploading...");
+          const files = this.uppy.getFilesByIds(fileIDs);
+          const filesFiltered = filterNonFailedFiles(files);
+          const filesToEmit = filterFilesToEmitUploadStarted(filesFiltered);
+          this.uppy.emit("upload-start", filesToEmit);
+          if (this.opts.bundle) {
+            const isSomeFileRemote = filesFiltered.some((file) => file.isRemote);
+            if (isSomeFileRemote) {
+              throw new Error("Can\u2019t upload remote files when the `bundle: true` option is set");
+            }
+            if (typeof this.opts.headers === "function") {
+              throw new TypeError("`headers` may not be a function when the `bundle: true` option is set");
+            }
+            await _classPrivateFieldLooseBase11(this, _uploadBundle)[_uploadBundle](filesFiltered);
+          } else {
+            await _classPrivateFieldLooseBase11(this, _uploadFiles)[_uploadFiles](filesFiltered);
+          }
+        }
+      });
+      this.type = "uploader";
+      this.id = this.opts.id || "XHRUpload";
+      this.defaultLocale = locale_default6;
+      this.i18nInit();
+      if (internalRateLimitedQueue in this.opts) {
+        this.requests = this.opts[internalRateLimitedQueue];
+      } else {
+        this.requests = new RateLimitedQueue(this.opts.limit);
+      }
+      if (this.opts.bundle && !this.opts.formData) {
+        throw new Error("`opts.formData` must be true when `opts.bundle` is enabled.");
+      }
+      if (this.opts.bundle && typeof this.opts.headers === "function") {
+        throw new Error("`opts.headers` can not be a function when the `bundle: true` option is set.");
+      }
+      if ((_opts == null ? void 0 : _opts.allowedMetaFields) === void 0 && "metaFields" in this.opts) {
+        throw new Error("The `metaFields` option has been renamed to `allowedMetaFields`.");
+      }
+      this.uploaderEvents = /* @__PURE__ */ Object.create(null);
+      _classPrivateFieldLooseBase11(this, _getFetcher)[_getFetcher] = (files) => {
+        return async (url, options2) => {
+          try {
+            var _this$opts$getRespons, _this$opts2, _body2;
+            const res = await fetcher(url, {
+              ...options2,
+              onBeforeRequest: (xhr, retryCount) => {
+                var _this$opts$onBeforeRe, _this$opts;
+                return (_this$opts$onBeforeRe = (_this$opts = this.opts).onBeforeRequest) == null ? void 0 : _this$opts$onBeforeRe.call(_this$opts, xhr, retryCount, files);
+              },
+              shouldRetry: this.opts.shouldRetry,
+              onAfterResponse: this.opts.onAfterResponse,
+              onTimeout: (timeout) => {
+                const seconds = Math.ceil(timeout / 1e3);
+                const error2 = new Error(this.i18n("uploadStalled", {
+                  seconds
+                }));
+                this.uppy.emit("upload-stalled", error2, files);
+              },
+              onUploadProgress: (event) => {
+                if (event.lengthComputable) {
+                  for (const {
+                    id: id12
+                  } of files) {
+                    var _file$progress$upload;
+                    const file = this.uppy.getFile(id12);
+                    this.uppy.emit("upload-progress", file, {
+                      uploadStarted: (_file$progress$upload = file.progress.uploadStarted) != null ? _file$progress$upload : 0,
+                      bytesUploaded: event.loaded / event.total * file.size,
+                      bytesTotal: file.size
+                    });
+                  }
+                }
+              }
+            });
+            let body = await ((_this$opts$getRespons = (_this$opts2 = this.opts).getResponseData) == null ? void 0 : _this$opts$getRespons.call(_this$opts2, res));
+            try {
+              var _body;
+              (_body = body) != null ? _body : body = JSON.parse(res.responseText);
+            } catch (cause) {
+              throw new Error("@uppy/xhr-upload expects a JSON response (with a `url` property). To parse non-JSON responses, use `getResponseData` to turn your response into JSON.", {
+                cause
+              });
+            }
+            const uploadURL = typeof ((_body2 = body) == null ? void 0 : _body2.url) === "string" ? body.url : void 0;
+            for (const {
+              id: id12
+            } of files) {
+              this.uppy.emit("upload-success", this.uppy.getFile(id12), {
+                status: res.status,
+                body,
+                uploadURL
+              });
+            }
+            return res;
+          } catch (error2) {
+            if (error2.name === "AbortError") {
+              return void 0;
+            }
+            if (error2 instanceof NetworkError_default) {
+              const request = error2.request;
+              for (const file of files) {
+                this.uppy.emit("upload-error", this.uppy.getFile(file.id), buildResponseError(request, error2), request);
+              }
+            }
+            throw error2;
+          }
+        };
+      };
+    }
+    getOptions(file) {
+      const overrides = this.uppy.getState().xhrUpload;
+      const {
+        headers
+      } = this.opts;
+      const opts = {
+        ...this.opts,
+        ...overrides || {},
+        ...file.xhrUpload || {},
+        headers: {}
+      };
+      if (typeof headers === "function") {
+        opts.headers = headers(file);
+      } else {
+        Object.assign(opts.headers, this.opts.headers);
+      }
+      if (overrides) {
+        Object.assign(opts.headers, overrides.headers);
+      }
+      if (file.xhrUpload) {
+        Object.assign(opts.headers, file.xhrUpload.headers);
+      }
+      return opts;
+    }
+    // eslint-disable-next-line class-methods-use-this
+    addMetadata(formData, meta, opts) {
+      const allowedMetaFields = getAllowedMetaFields(opts.allowedMetaFields, meta);
+      allowedMetaFields.forEach((item) => {
+        const value = meta[item];
+        if (Array.isArray(value)) {
+          value.forEach((subItem) => formData.append(item, subItem));
+        } else {
+          formData.append(item, value);
+        }
+      });
+    }
+    createFormDataUpload(file, opts) {
+      const formPost = new FormData();
+      this.addMetadata(formPost, file.meta, opts);
+      const dataWithUpdatedType = setTypeInBlob(file);
+      if (file.name) {
+        formPost.append(opts.fieldName, dataWithUpdatedType, file.meta.name);
+      } else {
+        formPost.append(opts.fieldName, dataWithUpdatedType);
+      }
+      return formPost;
+    }
+    createBundledUpload(files, opts) {
+      const formPost = new FormData();
+      const {
+        meta
+      } = this.uppy.getState();
+      this.addMetadata(formPost, meta, opts);
+      files.forEach((file) => {
+        const options2 = this.getOptions(file);
+        const dataWithUpdatedType = setTypeInBlob(file);
+        if (file.name) {
+          formPost.append(options2.fieldName, dataWithUpdatedType, file.name);
+        } else {
+          formPost.append(options2.fieldName, dataWithUpdatedType);
+        }
+      });
+      return formPost;
+    }
+    install() {
+      if (this.opts.bundle) {
+        const {
+          capabilities
+        } = this.uppy.getState();
+        this.uppy.setState({
+          capabilities: {
+            ...capabilities,
+            individualCancellation: false
+          }
+        });
+      }
+      this.uppy.addUploader(_classPrivateFieldLooseBase11(this, _handleUpload)[_handleUpload]);
+    }
+    uninstall() {
+      if (this.opts.bundle) {
+        const {
+          capabilities
+        } = this.uppy.getState();
+        this.uppy.setState({
+          capabilities: {
+            ...capabilities,
+            individualCancellation: true
+          }
+        });
+      }
+      this.uppy.removeUploader(_classPrivateFieldLooseBase11(this, _handleUpload)[_handleUpload]);
+    }
+  };
+  async function _uploadLocalFile2(file) {
+    const events = new EventManager(this.uppy);
+    const controller = new AbortController();
+    const uppyFetch = this.requests.wrapPromiseFunction(async () => {
+      const opts = this.getOptions(file);
+      const fetch3 = _classPrivateFieldLooseBase11(this, _getFetcher)[_getFetcher]([file]);
+      const body = opts.formData ? this.createFormDataUpload(file, opts) : file.data;
+      return fetch3(opts.endpoint, {
+        ...opts,
+        body,
+        signal: controller.signal
+      });
+    });
+    events.onFileRemove(file.id, () => controller.abort());
+    events.onCancelAll(file.id, () => {
+      controller.abort();
+    });
+    try {
+      await uppyFetch().abortOn(controller.signal);
+    } catch (error2) {
+      if (error2.message !== "Cancelled") {
+        throw error2;
+      }
+    } finally {
+      events.remove();
+    }
+  }
+  async function _uploadBundle2(files) {
+    const controller = new AbortController();
+    const uppyFetch = this.requests.wrapPromiseFunction(async () => {
+      var _this$uppy$getState$x;
+      const optsFromState = (_this$uppy$getState$x = this.uppy.getState().xhrUpload) != null ? _this$uppy$getState$x : {};
+      const fetch3 = _classPrivateFieldLooseBase11(this, _getFetcher)[_getFetcher](files);
+      const body = this.createBundledUpload(files, {
+        ...this.opts,
+        ...optsFromState
+      });
+      return fetch3(this.opts.endpoint, {
+        // headers can't be a function with bundle: true
+        ...this.opts,
+        body,
+        signal: controller.signal
+      });
+    });
+    function abort() {
+      controller.abort();
+    }
+    this.uppy.once("cancel-all", abort);
+    try {
+      await uppyFetch().abortOn(controller.signal);
+    } catch (error2) {
+      if (error2.message !== "Cancelled") {
+        throw error2;
+      }
+    } finally {
+      this.uppy.off("cancel-all", abort);
+    }
+  }
+  function _getCompanionClientArgs2(file) {
+    var _file$remote;
+    const opts = this.getOptions(file);
+    const allowedMetaFields = getAllowedMetaFields(opts.allowedMetaFields, file.meta);
+    return {
+      ...(_file$remote = file.remote) == null ? void 0 : _file$remote.body,
+      protocol: "multipart",
+      endpoint: opts.endpoint,
+      size: file.data.size,
+      fieldname: opts.fieldName,
+      metadata: Object.fromEntries(allowedMetaFields.map((name) => [name, file.meta[name]])),
+      httpMethod: opts.method,
+      useFormData: opts.formData,
+      headers: opts.headers
+    };
+  }
+  async function _uploadFiles2(files) {
+    await Promise.allSettled(files.map((file) => {
+      if (file.isRemote) {
+        const getQueue = () => this.requests;
+        const controller = new AbortController();
+        const removedHandler = (removedFile) => {
+          if (removedFile.id === file.id)
+            controller.abort();
+        };
+        this.uppy.on("file-removed", removedHandler);
+        const uploadPromise = this.uppy.getRequestClientForFile(file).uploadRemoteFile(file, _classPrivateFieldLooseBase11(this, _getCompanionClientArgs)[_getCompanionClientArgs](file), {
+          signal: controller.signal,
+          getQueue
+        });
+        this.requests.wrapSyncFunction(() => {
+          this.uppy.off("file-removed", removedHandler);
+        }, {
+          priority: -1
+        })();
+        return uploadPromise;
+      }
+      return _classPrivateFieldLooseBase11(this, _uploadLocalFile)[_uploadLocalFile](file);
+    }));
+  }
+  XHRUpload.VERSION = packageJson10.version;
 
   // src/js/support/dom_element.js
   var dom_element_default = class {
@@ -7914,8 +23958,166 @@ ${text2}</tr>
     }
   }
 
+  // src/js/controllers/attachment_input_controller.js
+  var attachment_input_controller_default = class extends Controller {
+    static values = {
+      identifier: String,
+      maxFileSize: { type: Number, default: null },
+      minFileSize: { type: Number, default: null },
+      maxTotalSize: { type: Number, default: null },
+      maxFileNum: { type: Number, default: null },
+      minFileNum: { type: Number, default: null },
+      allowedFileTypes: { type: Array, default: null },
+      requiredMetaFields: { type: Array, default: [] }
+    };
+    static outlets = ["attachment-preview", "attachment-preview-container"];
+    //======= Lifecycle
+    connect() {
+      this.uploadedFiles = [];
+      this.element.style["display"] = "none";
+      this.configureUppy();
+      this.buildTriggers();
+    }
+    disconnect() {
+      this.uppy = null;
+    }
+    attachmentPreviewOutletConnected(outlet, element) {
+      this.onAttachmentsChanged();
+    }
+    attachmentPreviewOutletDisconnected(outlet, element) {
+      this.onAttachmentsChanged();
+    }
+    //======= Config
+    configureUppy() {
+      this.uppy = new Uppy_default({
+        restrictions: {
+          maxFileSize: this.maxFileSizeValue,
+          minFileSize: this.minFileSizeValue,
+          maxTotalFileSize: this.maxTotalSizeValue,
+          maxNumberOfFiles: this.maxFileNumValue,
+          minNumberOfFiles: this.minFileNumValue,
+          allowedFileTypes: this.allowedFileTypesValue,
+          requiredMetaFields: this.requiredMetaFieldsValue
+        }
+      }).use(Dashboard2, { inline: false, closeAfterFinish: true }).use(ImageEditor, { target: Dashboard2 });
+      this.configureUploader();
+      this.configureEventHandlers();
+    }
+    configureUploader() {
+      this.uppy.use(XHRUpload, {
+        endpoint: "/upload"
+        // path to the upload endpoint
+      });
+    }
+    configureEventHandlers() {
+      this.uppy.on("upload-success", this.onUploadSuccess.bind(this));
+    }
+    //======= Events
+    onModalTriggered() {
+      let theme = document.documentElement.getAttribute("data-bs-theme") || "auto";
+      this.dashboard.setOptions({ theme });
+      let file = null;
+      while (file = this.uploadedFiles.pop())
+        this.uppy.removeFile(file.id);
+      this.dashboard.openModal();
+    }
+    onUploadSuccess(file, response) {
+      this.uploadedFiles.push(file);
+      if (!this.multiple)
+        this.attachmentPreviewOutlets.forEach((a4) => a4.remove());
+      const uploadedFileData = response.body["data"];
+      const uploadedFileUrl = response.body["url"];
+      this.attachmentPreviewContainerOutlet.element.appendChild(
+        this.buildPreview(uploadedFileData, uploadedFileUrl)
+      );
+    }
+    onAttachmentsChanged() {
+      if (!this.deleteAllTrigger)
+        return;
+      const len = this.attachmentPreviewOutlets.length;
+      if (len > 1) {
+        this.deleteAllTrigger.style["display"] = "initial";
+        this.deleteAllTrigger.textContent = `Delete ${this.attachmentPreviewOutlets.length}`;
+      } else {
+        this.deleteAllTrigger.style["display"] = "none";
+      }
+    }
+    //======= Builders
+    buildTriggers() {
+      this.triggerContainer = document.createElement("div");
+      this.triggerContainer.classList.add("mb-2");
+      this.element.insertAdjacentElement("afterend", this.triggerContainer);
+      this.buildUploadTrigger();
+      this.buildDeleteAllTrigger();
+      if (this.uploadTrigger)
+        this.triggerContainer.append(this.uploadTrigger);
+      if (this.deleteAllTrigger)
+        this.triggerContainer.append(this.deleteAllTrigger);
+    }
+    buildUploadTrigger() {
+      const triggerPrompt = this.multiple ? "Choose files" : "Choose file";
+      this.uploadTrigger = dom_element_default.fromTemplate(
+        `<button type="button" class="attachment-input-trigger btn btn-outline-secondary">${triggerPrompt}</button>`,
+        false
+      );
+      this.uploadTrigger.addEventListener("click", this.onModalTriggered.bind(this));
+    }
+    buildDeleteAllTrigger() {
+      this.deleteAllTrigger = dom_element_default.fromTemplate(
+        `<button type="button" class="attachment-input-trigger btn btn-outline-danger mx-1">Delete ${this.attachmentPreviewOutlets.length}</button>`,
+        false
+      );
+      this.deleteAllTrigger.addEventListener("click", () => {
+        if (confirm("Are you sure?"))
+          this.attachmentPreviewContainerOutlet.clear();
+      });
+      this.onAttachmentsChanged();
+    }
+    buildPreview(data, url) {
+      const filename = data.metadata.filename;
+      const extension = filename.substring(filename.lastIndexOf(".") + 1, filename.length) || filename;
+      const multiple = this.multiple ? "multiple" : "";
+      const mimeType = data.metadata.mime_type;
+      const previewElem = dom_element_default.fromTemplate(this.buildPreviewTemplate(filename, extension, mimeType, url));
+      const inputElem = dom_element_default.fromTemplate(`<input name="${this.element.name}" ${multiple} type="hidden" />`);
+      inputElem.value = JSON.stringify(data);
+      previewElem.appendChild(inputElem);
+      return previewElem;
+    }
+    buildPreviewTemplate(filename, extension, mimeType, url) {
+      const thumbnailUrl = /image\/*/.test(mimeType) ? url : null;
+      return `
+      <div class="${this.identifierValue} attachment-preview d-inline-block text-center" title="${filename}"
+            data-controller="attachment-preview" data-attachment-preview-mime-type-value="${mimeType}"
+            data-attachment-preview-thumbnail-url-value="${thumbnailUrl}">
+          <figure class="figure my-1" style="width: 160px;">
+              <div class="d-inline-block img-thumbnail" data-attachment-preview-target="thumbnail">
+                <a class="d-block text-decoration-none user-select-none fs-5 font-monospace text-body-secondary"
+                    style="width:150px; height:150px; line-height: 150px;" target="blank"
+                    href="${url}"
+                    data-attachment-preview-target="thumbnailLink">${extension}</a>
+              </div>
+              <figcaption class="figure-caption text-truncate">
+                  <a class="text-decoration-none" target="blank" href="${url}">${filename}</a>
+                  <p class="text-danger m-0" role="button" data-action="click->attachment-preview#remove">
+                    <span class="bi bi-trash"> Delete</span>
+                  </p>
+              </figcaption>
+          </figure>
+      </div>
+  `;
+    }
+    //======= Getters
+    get dashboard() {
+      return this.uppy.getPlugin("Dashboard");
+    }
+    get multiple() {
+      return this.maxFileNumValue != 1;
+    }
+  };
+
   // src/js/support/mime_icon.js
-  function iconImage() {
+  function iconImage2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" width="25" height="25" viewBox="0 0 25 25">
       <g fill="#686DE0" fillRule="evenodd">
@@ -7926,35 +24128,35 @@ ${text2}</tr>
     </svg>
   `);
   }
-  function iconAudio() {
+  function iconAudio2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" className="uppy-c-icon" width="25" height="25" viewBox="0 0 25 25">
       <path d="M9.5 18.64c0 1.14-1.145 2-2.5 2s-2.5-.86-2.5-2c0-1.14 1.145-2 2.5-2 .557 0 1.079.145 1.5.396V7.25a.5.5 0 0 1 .379-.485l9-2.25A.5.5 0 0 1 18.5 5v11.64c0 1.14-1.145 2-2.5 2s-2.5-.86-2.5-2c0-1.14 1.145-2 2.5-2 .557 0 1.079.145 1.5.396V8.67l-8 2v7.97zm8-11v-2l-8 2v2l8-2zM7 19.64c.855 0 1.5-.484 1.5-1s-.645-1-1.5-1-1.5.484-1.5 1 .645 1 1.5 1zm9-2c.855 0 1.5-.484 1.5-1s-.645-1-1.5-1-1.5.484-1.5 1 .645 1 1.5 1z" fill="#049BCF" fillRule="nonzero" />
     </svg>
   `);
   }
-  function iconVideo() {
+  function iconVideo2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" className="uppy-c-icon" width="25" height="25" viewBox="0 0 25 25">
       <path d="M16 11.834l4.486-2.691A1 1 0 0 1 22 10v6a1 1 0 0 1-1.514.857L16 14.167V17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2.834zM15 9H5v8h10V9zm1 4l5 3v-6l-5 3z" fill="#19AF67" fillRule="nonzero" />
     </svg>
   `);
   }
-  function iconPDF() {
+  function iconPDF2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" className="uppy-c-icon" width="25" height="25" viewBox="0 0 25 25">
       <path d="M9.766 8.295c-.691-1.843-.539-3.401.747-3.726 1.643-.414 2.505.938 2.39 3.299-.039.79-.194 1.662-.537 3.148.324.49.66.967 1.055 1.51.17.231.382.488.629.757 1.866-.128 3.653.114 4.918.655 1.487.635 2.192 1.685 1.614 2.84-.566 1.133-1.839 1.084-3.416.249-1.141-.604-2.457-1.634-3.51-2.707a13.467 13.467 0 0 0-2.238.426c-1.392 4.051-4.534 6.453-5.707 4.572-.986-1.58 1.38-4.206 4.914-5.375.097-.322.185-.656.264-1.001.08-.353.306-1.31.407-1.737-.678-1.059-1.2-2.031-1.53-2.91zm2.098 4.87c-.033.144-.068.287-.104.427l.033-.01-.012.038a14.065 14.065 0 0 1 1.02-.197l-.032-.033.052-.004a7.902 7.902 0 0 1-.208-.271c-.197-.27-.38-.526-.555-.775l-.006.028-.002-.003c-.076.323-.148.632-.186.8zm5.77 2.978c1.143.605 1.832.632 2.054.187.26-.519-.087-1.034-1.113-1.473-.911-.39-2.175-.608-3.55-.608.845.766 1.787 1.459 2.609 1.894zM6.559 18.789c.14.223.693.16 1.425-.413.827-.648 1.61-1.747 2.208-3.206-2.563 1.064-4.102 2.867-3.633 3.62zm5.345-10.97c.088-1.793-.351-2.48-1.146-2.28-.473.119-.564 1.05-.056 2.405.213.566.52 1.188.908 1.859.18-.858.268-1.453.294-1.984z" fill="#E2514A" fillRule="nonzero" />
     </svg>
   `);
   }
-  function iconArchive() {
+  function iconArchive2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" width="25" height="25" viewBox="0 0 25 25">
       <path d="M10.45 2.05h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5V2.55a.5.5 0 0 1 .5-.5zm2.05 1.024h1.05a.5.5 0 0 1 .5.5V3.6a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5v-.001zM10.45 0h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5V.5a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-2.05 3.074h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-2.05 1.024h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm-2.05 1.025h1.05a.5.5 0 0 1 .5.5v.025a.5.5 0 0 1-.5.5h-1.05a.5.5 0 0 1-.5-.5v-.025a.5.5 0 0 1 .5-.5zm2.05 1.025h1.05a.5.5 0 0 1 .5.5v.024a.5.5 0 0 1-.5.5H12.5a.5.5 0 0 1-.5-.5v-.024a.5.5 0 0 1 .5-.5zm-1.656 3.074l-.82 5.946c.52.302 1.174.458 1.976.458.803 0 1.455-.156 1.975-.458l-.82-5.946h-2.311zm0-1.025h2.312c.512 0 .946.378 1.015.885l.82 5.946c.056.412-.142.817-.501 1.026-.686.398-1.515.597-2.49.597-.974 0-1.804-.199-2.49-.597a1.025 1.025 0 0 1-.5-1.026l.819-5.946c.07-.507.503-.885 1.015-.885zm.545 6.6a.5.5 0 0 1-.397-.561l.143-.999a.5.5 0 0 1 .495-.429h.74a.5.5 0 0 1 .495.43l.143.998a.5.5 0 0 1-.397.561c-.404.08-.819.08-1.222 0z" fill="#00C469" fillRule="nonzero" />
     </svg>
   `);
   }
-  function iconFile() {
+  function iconFile2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" className="uppy-c-icon" width="25" height="25" viewBox="0 0 25 25">
       <g fill="#A7AFB7" fillRule="nonzero">
@@ -7964,17 +24166,17 @@ ${text2}</tr>
     </svg>
   `);
   }
-  function iconText() {
+  function iconText2() {
     return dom_element_default.fromTemplate(`
     <svg aria-hidden="true" focusable="false" className="uppy-c-icon" width="25" height="25" viewBox="0 0 25 25">
       <path d="M4.5 7h13a.5.5 0 1 1 0 1h-13a.5.5 0 0 1 0-1zm0 3h15a.5.5 0 1 1 0 1h-15a.5.5 0 1 1 0-1zm0 3h15a.5.5 0 1 1 0 1h-15a.5.5 0 1 1 0-1zm0 3h10a.5.5 0 1 1 0 1h-10a.5.5 0 1 1 0-1z" fill="#5A5E69" fillRule="nonzero" />
     </svg>
   `);
   }
-  function getIconByMime(fileType) {
+  function getIconByMime2(fileType) {
     const defaultChoice = {
       color: "#838999",
-      icon: iconFile()
+      icon: iconFile2()
     };
     if (!fileType)
       return defaultChoice;
@@ -7983,38 +24185,38 @@ ${text2}</tr>
     if (fileTypeGeneral === "text") {
       return {
         color: "#5a5e69",
-        icon: iconText()
+        icon: iconText2()
       };
     }
     if (fileTypeGeneral === "image") {
       return {
         color: "#686de0",
-        icon: iconImage()
+        icon: iconImage2()
       };
     }
     if (fileTypeGeneral === "audio") {
       return {
         color: "#068dbb",
-        icon: iconAudio()
+        icon: iconAudio2()
       };
     }
     if (fileTypeGeneral === "video") {
       return {
         color: "#19af67",
-        icon: iconVideo()
+        icon: iconVideo2()
       };
     }
     if (fileTypeGeneral === "application" && fileTypeSpecific === "pdf") {
       return {
         color: "#e25149",
-        icon: iconPDF()
+        icon: iconPDF2()
       };
     }
     const archiveTypes = ["zip", "x-7z-compressed", "x-rar-compressed", "x-tar", "x-gzip", "x-apple-diskimage"];
     if (fileTypeGeneral === "application" && archiveTypes.indexOf(fileTypeSpecific) !== -1) {
       return {
         color: "#00C469",
-        icon: iconArchive()
+        icon: iconArchive2()
       };
     }
     return defaultChoice;
@@ -8041,13 +24243,13 @@ ${text2}</tr>
     }
     useThumbnailPreview() {
       const thumbnail = dom_element_default.fromTemplate(`
-      <img src="${this.thumbnailUrlValue}" class="w-full h-full object-cover rounded-lg" />
+      <img src="${this.thumbnailUrlValue}" class="w-full h-full object-cover" />
     `);
       this.thumbnailLinkTarget.innerHTML = null;
       this.thumbnailLinkTarget.appendChild(thumbnail);
     }
     useMimeIconPreview() {
-      const mime = getIconByMime(this.mimeTypeValue);
+      const mime = getIconByMime2(this.mimeTypeValue);
       mime.icon.classList.add(
         "w-3/5",
         // 60% width
@@ -8098,6 +24300,7 @@ ${text2}</tr>
     application2.register("intl-tel-input", intl_tel_input_controller_default);
     application2.register("select-navigator", select_navigator_default);
     application2.register("resource-tab-list", resource_tab_list_controller_default);
+    application2.register("attachment-input", attachment_input_controller_default);
     application2.register("attachment-preview", attachment_preview_controller_default);
     application2.register("attachment-preview-container", attachment_preview_container_controller_default);
   }
@@ -8466,24 +24669,24 @@ ${text2}</tr>
     return new DOMParser().parseFromString(html3, "text/html");
   }
   function unindent(strings, ...values) {
-    const lines = interpolate(strings, values).replace(/^\n/, "").split("\n");
-    const match = lines[0].match(/^\s+/);
-    const indent = match ? match[0].length : 0;
+    const lines = interpolate2(strings, values).replace(/^\n/, "").split("\n");
+    const match2 = lines[0].match(/^\s+/);
+    const indent = match2 ? match2[0].length : 0;
     return lines.map((line) => line.slice(indent)).join("\n");
   }
-  function interpolate(strings, values) {
-    return strings.reduce((result, string, i) => {
-      const value = values[i] == void 0 ? "" : values[i];
+  function interpolate2(strings, values) {
+    return strings.reduce((result, string, i4) => {
+      const value = values[i4] == void 0 ? "" : values[i4];
       return result + string + value;
     }, "");
   }
   function uuid() {
-    return Array.from({ length: 36 }).map((_, i) => {
-      if (i == 8 || i == 13 || i == 18 || i == 23) {
+    return Array.from({ length: 36 }).map((_3, i4) => {
+      if (i4 == 8 || i4 == 13 || i4 == 18 || i4 == 23) {
         return "-";
-      } else if (i == 14) {
+      } else if (i4 == 14) {
         return "4";
-      } else if (i == 19) {
+      } else if (i4 == 19) {
         return (Math.floor(Math.random() * 4) + 8).toString(16);
       } else {
         return Math.floor(Math.random() * 15).toString(16);
@@ -8595,7 +24798,7 @@ ${text2}</tr>
   function getLocationForLink(link2) {
     return expandURL(link2.getAttribute("href") || "");
   }
-  function debounce3(fn2, delay) {
+  function debounce5(fn2, delay) {
     let timeoutId = null;
     return (...args) => {
       const callback = () => fn2.apply(this, args);
@@ -9143,23 +25346,23 @@ ${text2}</tr>
     get permanentElements() {
       return queryPermanentElementsAll(this.element);
     }
-    getPermanentElementById(id) {
-      return getPermanentElementById(this.element, id);
+    getPermanentElementById(id12) {
+      return getPermanentElementById(this.element, id12);
     }
     getPermanentElementMapForSnapshot(snapshot) {
       const permanentElementMap = {};
       for (const currentPermanentElement of this.permanentElements) {
-        const { id } = currentPermanentElement;
-        const newPermanentElement = snapshot.getPermanentElementById(id);
+        const { id: id12 } = currentPermanentElement;
+        const newPermanentElement = snapshot.getPermanentElementById(id12);
         if (newPermanentElement) {
-          permanentElementMap[id] = [currentPermanentElement, newPermanentElement];
+          permanentElementMap[id12] = [currentPermanentElement, newPermanentElement];
         }
       }
       return permanentElementMap;
     }
   };
-  function getPermanentElementById(node, id) {
-    return node.querySelector(`#${id}[data-turbo-permanent]`);
+  function getPermanentElementById(node, id12) {
+    return node.querySelector(`#${id12}[data-turbo-permanent]`);
   }
   function queryPermanentElementsAll(node) {
     return node.querySelectorAll("[id][data-turbo-permanent]");
@@ -9250,8 +25453,8 @@ ${text2}</tr>
         }
       }
     }
-    scrollToPosition({ x, y }) {
-      this.scrollRoot.scrollTo(x, y);
+    scrollToPosition({ x: x3, y: y4 }) {
+      this.scrollRoot.scrollTo(x3, y4);
     }
     scrollToTop() {
       this.scrollToPosition({ x: 0, y: 0 });
@@ -9465,15 +25668,15 @@ ${text2}</tr>
       this.permanentElementMap = permanentElementMap;
     }
     enter() {
-      for (const id in this.permanentElementMap) {
-        const [currentPermanentElement, newPermanentElement] = this.permanentElementMap[id];
+      for (const id12 in this.permanentElementMap) {
+        const [currentPermanentElement, newPermanentElement] = this.permanentElementMap[id12];
         this.delegate.enteringBardo(currentPermanentElement, newPermanentElement);
         this.replaceNewPermanentElementWithPlaceholder(newPermanentElement);
       }
     }
     leave() {
-      for (const id in this.permanentElementMap) {
-        const [currentPermanentElement] = this.permanentElementMap[id];
+      for (const id12 in this.permanentElementMap) {
+        const [currentPermanentElement] = this.permanentElementMap[id12];
         this.replaceCurrentPermanentElementWithClone(currentPermanentElement);
         this.replacePlaceholderWithPermanentElement(currentPermanentElement);
         this.delegate.leavingBardo(currentPermanentElement);
@@ -9491,8 +25694,8 @@ ${text2}</tr>
       const placeholder = this.getPlaceholderById(permanentElement.id);
       placeholder?.replaceWith(permanentElement);
     }
-    getPlaceholderById(id) {
-      return this.placeholders.find((element) => element.content == id);
+    getPlaceholderById(id12) {
+      return this.placeholders.find((element) => element.content == id12);
     }
     get placeholders() {
       return [...document.querySelectorAll("meta[name=turbo-permanent-placeholder][content]")];
@@ -9915,7 +26118,7 @@ ${text2}</tr>
       return document.startViewTransition;
     }
   };
-  var defaultOptions = {
+  var defaultOptions7 = {
     action: "advance",
     historyChanged: false,
     visitCachedSnapshot: () => {
@@ -9978,7 +26181,7 @@ ${text2}</tr>
         acceptsStreamResponse,
         direction
       } = {
-        ...defaultOptions,
+        ...defaultOptions7,
         ...options2
       };
       this.action = action;
@@ -10484,9 +26687,9 @@ ${text2}</tr>
       }
     }
     #findFrameElement(element, submitter) {
-      const id = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame");
-      if (id && id != "_top") {
-        const frame = this.element.querySelector(`#${id}:not([disabled])`);
+      const id12 = submitter?.getAttribute("data-turbo-frame") || element.getAttribute("data-turbo-frame");
+      if (id12 && id12 != "_top") {
+        const frame = this.element.querySelector(`#${id12}:not([disabled])`);
         if (frame instanceof FrameElement) {
           return frame;
         }
@@ -10969,11 +27172,11 @@ ${text2}</tr>
     const permanentElementsInDocument = queryPermanentElementsAll(document.documentElement);
     const permanentElementMap = {};
     for (const permanentElementInDocument of permanentElementsInDocument) {
-      const { id } = permanentElementInDocument;
+      const { id: id12 } = permanentElementInDocument;
       for (const streamElement of fragment.querySelectorAll("turbo-stream")) {
-        const elementInStream = getPermanentElementById(streamElement.templateElement.content, id);
+        const elementInStream = getPermanentElementById(streamElement.templateElement.content, id12);
         if (elementInStream) {
-          permanentElementMap[id] = [permanentElementInDocument, elementInStream];
+          permanentElementMap[id12] = [permanentElementInDocument, elementInStream];
         }
       }
     }
@@ -11292,8 +27495,8 @@ ${text2}</tr>
             to.setAttribute(fromAttribute.name, fromAttribute.value);
           }
         }
-        for (let i = toAttributes.length - 1; 0 <= i; i--) {
-          const toAttribute = toAttributes[i];
+        for (let i4 = toAttributes.length - 1; 0 <= i4; i4--) {
+          const toAttribute = toAttributes[i4];
           if (ignoreAttribute(toAttribute.name, to, "remove", ctx)) {
             continue;
           }
@@ -11615,24 +27818,24 @@ ${text2}</tr>
       tempNode.remove();
       ctx.callbacks.afterNodeRemoved(tempNode);
     }
-    function isIdInConsideration(ctx, id) {
-      return !ctx.deadIds.has(id);
+    function isIdInConsideration(ctx, id12) {
+      return !ctx.deadIds.has(id12);
     }
-    function idIsWithinNode(ctx, id, targetNode) {
+    function idIsWithinNode(ctx, id12, targetNode) {
       let idSet = ctx.idMap.get(targetNode) || EMPTY_SET;
-      return idSet.has(id);
+      return idSet.has(id12);
     }
     function removeIdsFromConsideration(ctx, node) {
       let idSet = ctx.idMap.get(node) || EMPTY_SET;
-      for (const id of idSet) {
-        ctx.deadIds.add(id);
+      for (const id12 of idSet) {
+        ctx.deadIds.add(id12);
       }
     }
     function getIdIntersectionCount(ctx, node1, node2) {
       let sourceSet = ctx.idMap.get(node1) || EMPTY_SET;
       let matchCount = 0;
-      for (const id of sourceSet) {
-        if (isIdInConsideration(ctx, id) && idIsWithinNode(ctx, id, node2)) {
+      for (const id12 of sourceSet) {
+        if (isIdInConsideration(ctx, id12) && idIsWithinNode(ctx, id12, node2)) {
           ++matchCount;
         }
       }
@@ -12065,7 +28268,7 @@ ${text2}</tr>
         const responseHTML = await fetchResponse.responseHTML;
         const snapshot = PageSnapshot.fromHTMLString(responseHTML);
         this.snapshotCache.put(fetchRequest.url, snapshot);
-      } catch (_) {
+      } catch (_3) {
       }
     }
     requestStarted(fetchRequest) {
@@ -12213,7 +28416,7 @@ ${text2}</tr>
       return this.#pageRefreshDebouncePeriod;
     }
     set pageRefreshDebouncePeriod(value) {
-      this.refresh = debounce3(this.debouncedRefresh.bind(this), value);
+      this.refresh = debounce5(this.debouncedRefresh.bind(this), value);
       this.#pageRefreshDebouncePeriod = value;
     }
     // Preloader delegate
@@ -12842,18 +29045,18 @@ ${text2}</tr>
       return session.visit(location2, { response: { redirected, statusCode, responseHTML } });
     }
     #findFrameElement(element, submitter) {
-      const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target");
-      return getFrameElementById(id) ?? this.element;
+      const id12 = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target");
+      return getFrameElementById(id12) ?? this.element;
     }
     async extractForeignFrameElement(container) {
       let element;
-      const id = CSS.escape(this.id);
+      const id12 = CSS.escape(this.id);
       try {
-        element = activateElement(container.querySelector(`turbo-frame#${id}`), this.sourceURL);
+        element = activateElement(container.querySelector(`turbo-frame#${id12}`), this.sourceURL);
         if (element) {
           return element;
         }
-        element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id}]`), this.sourceURL);
+        element = activateElement(container.querySelector(`turbo-frame[src][recurse~=${id12}]`), this.sourceURL);
         if (element) {
           await element.loaded;
           return await this.extractForeignFrameElement(element);
@@ -12869,15 +29072,15 @@ ${text2}</tr>
       return locationIsVisitable(expandURL(action), this.rootLocation);
     }
     #shouldInterceptNavigation(element, submitter) {
-      const id = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target");
+      const id12 = getAttribute("data-turbo-frame", submitter, element) || this.element.getAttribute("target");
       if (element instanceof HTMLFormElement && !this.#formActionIsVisitable(element, submitter)) {
         return false;
       }
-      if (!this.enabled || id == "_top") {
+      if (!this.enabled || id12 == "_top") {
         return false;
       }
-      if (id) {
-        const frameElement = getFrameElementById(id);
+      if (id12) {
+        const frameElement = getFrameElementById(id12);
         if (frameElement) {
           return !frameElement.disabled;
         }
@@ -12945,9 +29148,9 @@ ${text2}</tr>
       delete this.currentNavigationElement;
     }
   };
-  function getFrameElementById(id) {
-    if (id != null) {
-      const element = document.getElementById(id);
+  function getFrameElementById(id12) {
+    if (id12 != null) {
+      const element = document.getElementById(id12);
       if (element instanceof FrameElement) {
         return element;
       }
@@ -12971,24 +29174,24 @@ ${text2}</tr>
   }
   var StreamActions = {
     after() {
-      this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e.nextSibling));
+      this.targetElements.forEach((e4) => e4.parentElement?.insertBefore(this.templateContent, e4.nextSibling));
     },
     append() {
       this.removeDuplicateTargetChildren();
-      this.targetElements.forEach((e) => e.append(this.templateContent));
+      this.targetElements.forEach((e4) => e4.append(this.templateContent));
     },
     before() {
-      this.targetElements.forEach((e) => e.parentElement?.insertBefore(this.templateContent, e));
+      this.targetElements.forEach((e4) => e4.parentElement?.insertBefore(this.templateContent, e4));
     },
     prepend() {
       this.removeDuplicateTargetChildren();
-      this.targetElements.forEach((e) => e.prepend(this.templateContent));
+      this.targetElements.forEach((e4) => e4.prepend(this.templateContent));
     },
     remove() {
-      this.targetElements.forEach((e) => e.remove());
+      this.targetElements.forEach((e4) => e4.remove());
     },
     replace() {
-      this.targetElements.forEach((e) => e.replaceWith(this.templateContent));
+      this.targetElements.forEach((e4) => e4.replaceWith(this.templateContent));
     },
     update() {
       this.targetElements.forEach((targetElement) => {
@@ -13032,15 +29235,15 @@ ${text2}</tr>
      * Removes duplicate children (by ID)
      */
     removeDuplicateTargetChildren() {
-      this.duplicateChildren.forEach((c) => c.remove());
+      this.duplicateChildren.forEach((c4) => c4.remove());
     }
     /**
      * Gets the list of duplicate children (i.e. those with the same ID)
      */
     get duplicateChildren() {
-      const existingChildren = this.targetElements.flatMap((e) => [...e.children]).filter((c) => !!c.id);
-      const newChildrenIds = [...this.templateContent?.children || []].filter((c) => !!c.id).map((c) => c.id);
-      return existingChildren.filter((c) => newChildrenIds.includes(c.id));
+      const existingChildren = this.targetElements.flatMap((e4) => [...e4.children]).filter((c4) => !!c4.id);
+      const newChildrenIds = [...this.templateContent?.children || []].filter((c4) => !!c4.id).map((c4) => c4.id);
+      return existingChildren.filter((c4) => newChildrenIds.includes(c4.id));
     }
     /**
      * Gets the action function to be performed.
@@ -13236,8 +29439,38 @@ ${text2}</tr>
  */
 /*! Bundled license information:
 
+classnames/index.js:
+  (*!
+  	Copyright (c) 2018 Jed Watson.
+  	Licensed under the MIT License (MIT), see
+  	http://jedwatson.github.io/classnames
+  *)
+
+cropperjs/dist/cropper.js:
+  (*!
+   * Cropper.js v1.6.2
+   * https://fengyuanchen.github.io/cropperjs
+   *
+   * Copyright 2015-present Chen Fengyuan
+   * Released under the MIT license
+   *
+   * Date: 2024-04-21T07:43:05.335Z
+   *)
+
 dompurify/dist/purify.es.mjs:
   (*! @license DOMPurify 3.2.2 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.2.2/LICENSE *)
+
+@uppy/utils/lib/Translator.js:
+  (**
+   * Takes a string with placeholder variables like `%{smart_count} file selected`
+   * and replaces it with values from options `{smart_count: 5}`
+   *
+   * @license https://github.com/airbnb/polyglot.js/blob/master/LICENSE
+   * taken from https://github.com/airbnb/polyglot.js/blob/master/lib/polyglot.js#L299
+   *
+   * @param phrase that needs interpolation, with placeholders
+   * @param options with values that will be used to replace placeholders
+   *)
 
 @hotwired/turbo/dist/turbo.es2017-esm.js:
   (*!

@@ -13,7 +13,7 @@ import FlatpickrController from "./flatpickr_controller.js"
 import IntlTelInputController from "./intl_tel_input_controller.js"
 import SelectNavigatorController from "./select_navigator.js"
 import ResourceTabListController from "./resource_tab_list_controller.js"
-// import AttachmentInputController from "./attachment_input_controller.js"
+import AttachmentInputController from "./attachment_input_controller.js"
 import AttachmentPreviewController from "./attachment_preview_controller.js"
 import AttachmentPreviewContainerController from "./attachment_preview_container_controller.js"
 
@@ -33,7 +33,7 @@ export default function (application) {
   application.register("intl-tel-input", IntlTelInputController)
   application.register("select-navigator", SelectNavigatorController)
   application.register("resource-tab-list", ResourceTabListController)
-  // application.register("attachment-input", AttachmentInputController)
+  application.register("attachment-input", AttachmentInputController)
   application.register("attachment-preview", AttachmentPreviewController)
   application.register("attachment-preview-container", AttachmentPreviewContainerController)
 }

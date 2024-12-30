@@ -37,6 +37,11 @@ module Plutonium
             create_component(Components::IntlTelInput, :int_tel_input, **, &)
           end
           alias_method :phone_tag, :int_tel_input_tag
+
+          def uppy_tag(**, &)
+            create_component(Components::Uppy, :uppy, **, &)
+          end
+          alias_method :file_tag, :uppy_tag
         end
 
         private

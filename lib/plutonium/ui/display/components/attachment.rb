@@ -39,7 +39,7 @@ module Plutonium
             ) do
               a(
                 href: attachment.url,
-                class: "block w-full h-full",
+                class: "block aspect-square overflow-hidden rounded-lg",
                 target: :blank,
                 data: {attachment_preview_target: "thumbnailLink"}
               ) do
@@ -47,7 +47,7 @@ module Plutonium
                 if thumbnail_url
                   img(
                     src: thumbnail_url,
-                    class: "w-full h-full object-cover rounded-lg"
+                    class: "w-full h-full object-cover"
                   )
                 else
                   div(class: "w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400 font-mono") do
