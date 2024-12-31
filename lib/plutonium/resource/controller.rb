@@ -90,34 +90,12 @@ module Plutonium
         )
       end
 
-      # Creates a resource presenter
-      # @param [Class] resource_class The resource class
-      # @param [ActiveRecord::Base] resource_record The resource record
-      # @return [Object] The resource presenter
-      def resource_presenter(resource_class, resource_record)
-        presenter_class = [current_package, "#{resource_class}Presenter"].compact.join("::").constantize
-        presenter_class.new resource_context, resource_record
-      rescue NameError
-        super
-      end
-
       # Creates a resource definition
       # @param [Class] resource_class The resource class
       # @return [Object] The resource definition
       def resource_definition(resource_class)
         definition_class = [current_package, "#{resource_class}Definition"].compact.join("::").constantize
         definition_class.new
-      rescue NameError
-        super
-      end
-
-      # Creates a resource query object
-      # @param [Class] resource_class The resource class
-      # @param [ActionController::Parameters] params The request parameters
-      # @return [Object] The resource query object
-      def resource_query_object(resource_class, params)
-        query_object_class = [current_package, "#{resource_class}QueryObject"].compact.join("::").constantize
-        query_object_class.new resource_context, params
       rescue NameError
         super
       end

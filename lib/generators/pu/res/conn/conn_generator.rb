@@ -43,8 +43,6 @@ module Pu
               template "app/definitions/resource_definition.rb",
                 "packages/#{package_namespace}/app/definitions/#{package_namespace}/#{resource.underscore}_definition.rb"
             end
-            # template "app/presenters/resource_presenter.rb", "packages/#{package_namespace}/app/presenters/#{package_namespace}/#{resource.underscore}_presenter.rb" unless expected_parent_presenter
-            # template "app/query_objects/resource_query_object.rb", "packages/#{package_namespace}/app/query_objects/#{package_namespace}/#{resource.underscore}_query_object.rb" unless expected_parent_query_object
 
             template "app/controllers/resource_controller.rb",
               "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
@@ -86,24 +84,6 @@ module Pu
 
       def parent_policy
         expected_parent_policy || "ResourcePolicy"
-      end
-
-      def expected_parent_presenter
-        expected_parent_presenter = "::#{resource_class.classify}Presenter".safe_constantize
-        expected_parent_presenter if expected_parent_presenter.present? && expected_parent_presenter < ::ResourcePresenter
-      end
-
-      def parent_presenter
-        expected_parent_presenter || "ResourcePresenter"
-      end
-
-      def expected_parent_query_object
-        expected_parent_query_object = "::#{resource_class.classify}QueryObject".safe_constantize
-        expected_parent_query_object if expected_parent_query_object.present? && expected_parent_query_object < ::ResourceQueryObject
-      end
-
-      def parent_query_object
-        expected_parent_query_object || "ResourceQueryObject"
       end
 
       def expected_parent_definition
