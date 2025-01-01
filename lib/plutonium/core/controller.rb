@@ -70,7 +70,8 @@ module Plutonium
           else
             controller_chain << element.class.to_s.pluralize
             if index == args.length - 1
-              url_args[:id] = element.to_param
+              resource_route_config = current_engine.routes.resource_route_config_for(element.model_name.plural)[0]
+              url_args[:id] = element.to_param unless resource_route_config[:route_type] == :resource
               url_args[:action] ||= :show
             else
               url_args[element.model_name.singular_route_key.to_sym] = element.to_param
