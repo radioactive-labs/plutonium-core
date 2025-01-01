@@ -19,7 +19,7 @@ module Plutonium
       # @yield An optional block for additional resource configuration.
       # @return [void]
       def register_resource(resource, options = {}, &)
-        route_config = route_set.register_resource(resource, &)
+        route_config = route_set.register_resource(resource, options, &)
         define_resource_routes(route_config, resource)
         resource_route_concern_names << route_config[:concern_name]
       end
@@ -65,7 +65,7 @@ module Plutonium
       # @return [void]
       def define_resource_routes(route_config, resource)
         concern route_config[:concern_name] do
-          resources route_config[:route_name], **route_config[:route_options] do
+          send route_config[:route_type], route_config[:route_name], **route_config[:route_options] do
             instance_exec(&route_config[:block]) if route_config[:block]
             define_nested_resource_routes(resource)
           end

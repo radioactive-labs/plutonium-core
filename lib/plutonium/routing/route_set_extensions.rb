@@ -49,17 +49,18 @@ module Plutonium
       # Registers a resource for routing.
       #
       # @param resource [Class] The resource class to be registered.
+      # @param options [Hash] Additional options for resource registration.
       # @yield An optional block for additional resource configuration.
       # @return [Hash] The configuration for the registered resource.
       # @raise [ArgumentError] If the engine is not supported.
-      def register_resource(resource, &)
+      def register_resource(resource, options = {}, &)
         self.class.validate_engine! engine
         engine.resource_register.register(resource)
 
         route_name = resource.model_name.plural
         concern_name = :"#{route_name}_routes"
 
-        config = create_resource_config(resource, route_name, concern_name, &)
+        config = create_resource_config(resource, route_name, concern_name, options, &)
         resource_route_config_lookup[route_name] = config
 
         config
@@ -101,15 +102,17 @@ module Plutonium
       # @param resource_name [String] The name of the resource.
       # @param route_name [String] The pluralized name for routes.
       # @param concern_name [Symbol] The name of the concern for this resource.
+      # @param options [Hash] Additional options for resource registration.
       # @yield An optional block for additional resource configuration.
       # @return [Hash] The complete resource configuration.
-      def create_resource_config(resource, route_name, concern_name, &block)
+      def create_resource_config(resource, route_name, concern_name, options = {}, &block)
         {
+          route_type: options[:singular] ? :resource : :resources,
           route_name: route_name,
           concern_name: concern_name,
           route_options: {
             controller: resource.to_s.pluralize.underscore,
-            path: resource.model_name.collection,
+            path: options[:singular] ? resource.model_name.singular : resource.model_name.collection,
             concerns: %i[interactive_resource_actions]
           },
           block: block
