@@ -144,7 +144,13 @@ module Plutonium
         #
         # @return [Object] the subject for the policy (either resource_record or resource_class)
         def current_policy_subject
-          resource_record || resource_class
+          # We have an "inconsistency" here where resource_record?
+          # will return an actual record instead of nil for routes such as :new when dealing with singular resources.
+          # It impacts mainly attribute policies, such as when getting the allowed attributes for forms.
+          # But while it is an an inconsistency, I believe it is expected behaviour.
+          # You did mark the resource as singular after all.
+          # So you should disable :create? in your policy when a record exists.
+          resource_record? || resource_class
         end
       end
     end

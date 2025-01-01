@@ -49,11 +49,25 @@ module Plutonium
         self.class.resource_class
       end
 
-      # Returns the resource record based on path parameters
-      # @return [ActiveRecord::Base, nil] The resource record
+      def resource_record_relation
+        @resource_record_relation ||= begin
+          resource_route_config = current_engine.routes.resource_route_config_for(resource_class.model_name.plural)[0]
+          if resource_route_config[:route_type] == :resource
+            current_authorized_scope
+          elsif params[:id]
+            current_authorized_scope.from_path_param(params[:id])
+          else
+            current_authorized_scope.none
+          end
+        end
+      end
+
       def resource_record
-        @resource_record ||= current_authorized_scope.from_path_param(params[:id]).first! if params[:id]
-        @resource_record
+        @resource_record ||= resource_record_relation.first!
+      end
+
+      def resource_record?
+        @resource_record ||= resource_record_relation.first
       end
 
       # Returns the submitted resource parameters
