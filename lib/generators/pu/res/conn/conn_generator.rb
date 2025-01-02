@@ -6,27 +6,20 @@ module Pu
   module Res
     class ConnGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::ResourceSelector
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Create a connection between a resource and an app"
+      desc(
+        "Create a connection between a resource and a portal\n\n" \
+        "e.g. rails g pu:res:conn todo --dest=dashboard_portal"
+      )
 
       # argument :name
 
       def start
-        source_feature = feature_option :src, prompt: "Select source feature"
-        source_module = (source_feature == "main_app") ? "ApplicationRecord" : "#{source_feature.camelize}::ResourceRecord"
-
-        Plutonium.eager_load_rails!
-
-        available_resources = source_module.constantize.descendants.reject do |model|
-          next true if model.abstract_class?
-          next true if source_module == "ApplicationRecord" && model.ancestors.any? { |ancestor| ancestor.to_s.end_with?("::ResourceRecord") }
-        end.map(&:to_s).sort
-        error "No resources found" if available_resources.blank?
-        selected_resources = prompt.multi_select("Select resources", available_resources)
-
-        @app_namespace = select_portal.camelize
+        selected_resources = resources_selection
+        @app_namespace = portal_option(:dest, prompt: "Select destination portal").camelize
 
         selected_resources.each do |resource|
           @resource_class = resource
