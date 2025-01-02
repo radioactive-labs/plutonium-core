@@ -22,7 +22,17 @@ module Plutonium
 
           record_association = klass.find_association_to_self_from_record(record)
           if record_association
-            # TODO: add a warning here about a potentially poor performing query
+            Plutonium.logger.warn do
+              [
+                "Using indirect association from #{record.class} to #{klass.name}",
+                "via '#{record_association.name}'.",
+                "This may result in poor query performance for large datasets",
+                "as it requires loading records to perform the association.",
+                "",
+                "Consider defining a direct association or implementing",
+                "a custom scope '#{named_scope}' for better performance."
+              ].join("\n")
+            end
             return where(id: record.public_send(record_association.name))
           end
 
