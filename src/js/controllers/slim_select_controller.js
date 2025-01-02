@@ -16,6 +16,8 @@ export default class extends Controller {
 
   reconnect() {
     this.disconnect()
-    this.connect()
+    // dispatch this on the next frame.
+    // there's some funny issue where my elements get removed from the DOM
+    setTimeout(() => this.connect(), 10)
   }
 }
