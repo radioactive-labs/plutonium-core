@@ -11,6 +11,10 @@ module PlutoniumGenerators
         say format_log(msg, :info), :blue
       end
 
+      def warn(msg)
+        say format_log(msg, :warn), :yellow
+      end
+
       def success(msg)
         say format_log(msg, :success), :green
       end

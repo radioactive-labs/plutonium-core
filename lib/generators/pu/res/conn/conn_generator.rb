@@ -18,6 +18,7 @@ module Pu
         source_module = (source_feature == "main_app") ? "ApplicationRecord" : "#{source_feature.camelize}::ResourceRecord"
 
         Plutonium.eager_load_rails!
+
         available_resources = source_module.constantize.descendants.reject do |model|
           next true if model.abstract_class?
           next true if source_module == "ApplicationRecord" && model.ancestors.any? { |ancestor| ancestor.to_s.end_with?("::ResourceRecord") }
@@ -97,13 +98,7 @@ module Pu
 
       def attributes
         resource_klass = resource_class.constantize
-        unwanted_attrs = [
-          resource_klass.primary_key.to_sym, # primary_key
-          :created_at, :updated_at # timestamps
-        ]
         resource_klass.content_columns.filter_map { |col|
-          next if unwanted_attrs.include? col.name.to_sym
-
           PlutoniumGenerators::ModelGeneratorBase::GeneratedAttribute.parse resource_class, "#{col.name}:#{col.type}"
         }
       rescue ActiveRecord::StatementInvalid
@@ -116,11 +111,11 @@ module Pu
       end
 
       def policy_attributes_for_create
-        default_policy_attributes
+        default_policy_attributes - [:created_at, :updated_at]
       end
 
       def policy_attributes_for_read
-        default_policy_attributes + [:created_at, :updated_at]
+        default_policy_attributes
       end
     end
   end

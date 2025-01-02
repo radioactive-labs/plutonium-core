@@ -4,6 +4,7 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Res
+    # run `rails g pu:res:scaffold existing_resource` without any arguments to import an existing resource
     class ScaffoldGenerator < PlutoniumGenerators::ModelGeneratorBase
       include PlutoniumGenerators::Generator
 
@@ -17,9 +18,13 @@ module Pu
         return unless options[:model]
 
         model_class = class_name.safe_constantize
-        if model_class.present? && attributes.empty? && prompt.yes?("Existing model class found. Do you want to import its attributes?")
-          attributes_str = model_class.content_columns.map { |col| "#{col.name}:#{col.type}" }
-          self.attributes = parse_attributes_internal!(attributes_str)
+        if model_class.present?
+          if attributes.empty?
+            attributes_str = model_class.content_columns.map { |col| "#{col.name}:#{col.type}" }
+            self.attributes = parse_attributes_internal!(attributes_str)
+          else
+            warn("Overwriting existing resource. You can leave out the attributes to import an existing resource.")
+          end
         end
       end
 
@@ -56,11 +61,11 @@ module Pu
       end
 
       def policy_attributes_for_create
-        default_policy_attributes
+        default_policy_attributes - [:created_at, :updated_at]
       end
 
       def policy_attributes_for_read
-        default_policy_attributes + [:created_at, :updated_at]
+        default_policy_attributes
       end
     end
   end
