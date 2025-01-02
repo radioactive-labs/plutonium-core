@@ -36,10 +36,10 @@ module Plutonium
         end
 
         def build_detail
-          current_definition.detail_class.new(resource_record, resource_fields: presentable_attributes, resource_associations: permitted_associations, resource_definition: current_definition)
+          current_definition.detail_class.new(resource_record!, resource_fields: presentable_attributes, resource_associations: permitted_associations, resource_definition: current_definition)
         end
 
-        def build_form(record = resource_record)
+        def build_form(record = resource_record!)
           current_definition.form_class.new(record, resource_fields: submittable_attributes, resource_definition: current_definition)
         end
       end

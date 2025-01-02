@@ -21,8 +21,8 @@ module Plutonium
 
         # GET /resources/1(.{format})
         def show
-          authorize_current! resource_record
-          set_page_title resource_record.to_label.titleize
+          authorize_current! resource_record!
+          set_page_title resource_record!.to_label.titleize
 
           render :show
         end
@@ -46,7 +46,7 @@ module Plutonium
           @resource_record = resource_class.new resource_params
 
           respond_to do |format|
-            if resource_record.save
+            if resource_record!.save
               format.html do
                 redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully created."
@@ -57,7 +57,7 @@ module Plutonium
                 render :new, status: :unprocessable_entity
               end
               format.any do
-                @errors = resource_record.errors
+                @errors = resource_record!.errors
                 render "errors", status: :unprocessable_entity
               end
             end
@@ -66,8 +66,8 @@ module Plutonium
 
         # GET /resources/1/edit
         def edit
-          authorize_current! resource_record
-          set_page_title "Update #{resource_record.to_label.titleize}"
+          authorize_current! resource_record!
+          set_page_title "Update #{resource_record!.to_label.titleize}"
 
           maybe_apply_submitted_resource_params!
 
@@ -76,11 +76,11 @@ module Plutonium
 
         # PATCH/PUT /resources/1(.{format})
         def update
-          authorize_current! resource_record
-          set_page_title "Update #{resource_record.to_label.titleize}"
+          authorize_current! resource_record!
+          set_page_title "Update #{resource_record!.to_label.titleize}"
 
           respond_to do |format|
-            if resource_record.update(resource_params)
+            if resource_record!.update(resource_params)
               format.html do
                 redirect_to redirect_url_after_submit, notice: "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
@@ -91,7 +91,7 @@ module Plutonium
                 render :edit, status: :unprocessable_entity
               end
               format.any do
-                @errors = resource_record.errors
+                @errors = resource_record!.errors
                 render "errors", status: :unprocessable_entity
               end
             end
@@ -100,10 +100,10 @@ module Plutonium
 
         # DELETE /resources/1(.{format})
         def destroy
-          authorize_current! resource_record
+          authorize_current! resource_record!
 
           respond_to do |format|
-            resource_record.destroy
+            resource_record!.destroy
 
             format.html do
               redirect_to redirect_url_after_destroy,
@@ -112,11 +112,11 @@ module Plutonium
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey
             format.html do
-              redirect_to resource_url_for(resource_record),
+              redirect_to resource_url_for(resource_record!),
                 alert: "#{resource_class.model_name.human} is referenced by other records."
             end
             format.any do
-              @errors = ActiveModel::Errors.new resource_record
+              @errors = ActiveModel::Errors.new resource_record!
               @errors.add :base, :existing_references, message: "is referenced by other records"
 
               render "errors", status: :unprocessable_entity
@@ -133,9 +133,9 @@ module Plutonium
 
           url = case preferred_action_after_submit
           when "show"
-            resource_url_for(resource_record) if current_policy.allowed_to? :show?
+            resource_url_for(resource_record!) if current_policy.allowed_to? :show?
           when "edit"
-            resource_url_for(resource_record, action: :edit) if current_policy.allowed_to? :edit?
+            resource_url_for(resource_record!, action: :edit) if current_policy.allowed_to? :edit?
           when "new"
             resource_url_for(resource_class, action: :new) if current_policy.allowed_to? :new?
           when "index"
@@ -144,7 +144,7 @@ module Plutonium
             # ensure we have a valid value
             session[:action_after_submit_preference] = "show"
           end
-          url || resource_url_for(resource_record)
+          url || resource_url_for(resource_record!)
         end
 
         def redirect_url_after_destroy

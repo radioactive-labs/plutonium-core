@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          current_definition.show_page_title || super || display_name_of(resource_record)
+          current_definition.show_page_title || super || display_name_of(resource_record!)
         end
 
         def page_description

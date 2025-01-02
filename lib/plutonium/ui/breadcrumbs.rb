@@ -87,7 +87,7 @@ module Plutonium
             end
 
             # Record
-            if resource_record.present?
+            if resource_record?
               # Record Resource
               li(class: "flex items-center") do
                 svg(
@@ -112,7 +112,7 @@ module Plutonium
               end
 
               # Record Itself
-              if resource_record.persisted? && action_name != "show"
+              if resource_record!.persisted? && action_name != "show"
                 li(class: "flex items-center") do
                   svg(
                     class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
@@ -129,8 +129,8 @@ module Plutonium
                       d: "m1 9 4-4-4-4"
                     )
                   end
-                  link_to display_name_of(resource_record),
-                    resource_url_for(resource_record),
+                  link_to display_name_of(resource_record!),
+                    resource_url_for(resource_record!),
                     class:
                       "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
                 end

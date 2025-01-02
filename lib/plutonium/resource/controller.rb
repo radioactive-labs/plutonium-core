@@ -19,7 +19,7 @@ module Plutonium
         # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
         after_action { pagy_headers_merge(@pagy) if @pagy }
 
-        helper_method :current_parent, :resource_record, :resource_param_key, :resource_class
+        helper_method :current_parent, :resource_record!, :resource_record?, :resource_param_key, :resource_class
       end
 
       class_methods do
@@ -62,7 +62,7 @@ module Plutonium
         end
       end
 
-      def resource_record
+      def resource_record!
         @resource_record ||= resource_record_relation.first!
       end
 
@@ -117,7 +117,7 @@ module Plutonium
       # Applies submitted resource params if they have been passed
       def maybe_apply_submitted_resource_params!
         ensure_get_request
-        resource_record.attributes = submitted_resource_params if params[resource_param_key]
+        resource_record!.attributes = submitted_resource_params if params[resource_param_key]
       end
 
       # Returns the current parent based on path parameters

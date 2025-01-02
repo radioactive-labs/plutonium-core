@@ -42,7 +42,7 @@ module Plutonium
           if outcome.success?
             outcome.to_response.process(self) do |value|
               respond_to do |format|
-                return_url = redirect_url_after_action_on(resource_record)
+                return_url = redirect_url_after_action_on(resource_record!)
                 format.any { redirect_to return_url, status: :see_other }
                 if helpers.current_turbo_frame == "modal"
                   format.turbo_stream do
@@ -202,7 +202,7 @@ module Plutonium
 
         def authorize_interactive_record_action!
           interactive_resource_action = params[:interactive_action]&.to_sym
-          authorize_current! resource_record, to: :"#{interactive_resource_action}?"
+          authorize_current! resource_record!, to: :"#{interactive_resource_action}?"
         end
 
         def authorize_interactive_resource_action!
@@ -216,7 +216,7 @@ module Plutonium
 
         def build_interactive_record_action_interaction
           @interaction = current_interactive_action.interaction.new(view_context:)
-          @interaction.attributes = interaction_params.merge(resource: resource_record)
+          @interaction.attributes = interaction_params.merge(resource: resource_record!)
           @interaction
         end
 

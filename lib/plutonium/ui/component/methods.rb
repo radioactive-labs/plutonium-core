@@ -10,18 +10,6 @@ module Plutonium
 
         private
 
-        def resource_class
-          helpers.controller.send(:resource_class)
-        end
-
-        def resource_record
-          helpers.controller.send(:resource_record)
-        end
-
-        def current_parent
-          helpers.controller.send(:current_parent)
-        end
-
         def params
           helpers.controller.params
         end
@@ -35,11 +23,15 @@ module Plutonium
         end
 
         delegate \
+          :resource_class,
+          :resource_record!,
+          :resource_record?,
           :resource_name,
           :resource_name_plural,
           :display_name_of,
           :resource_url_for,
           :current_user,
+          :current_parent,
           :current_definition,
           :current_query_object,
           :raw_resource_query_params,

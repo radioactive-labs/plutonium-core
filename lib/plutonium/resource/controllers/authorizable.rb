@@ -12,7 +12,7 @@ module Plutonium
       #     include Plutonium::Resource::Controllers::Authorizable
       #   end
       #
-      # @note This module assumes the existence of methods like `resource_record`,
+      # @note This module assumes the existence of methods like `resource_record!`,
       #   `resource_class`, `current_parent`, and `entity_scope_for_authorize`.
       #
       # @see ActionPolicy
