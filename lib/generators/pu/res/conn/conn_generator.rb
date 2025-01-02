@@ -14,7 +14,7 @@ module Pu
       # argument :name
 
       def start
-        source_feature = select_feature msg: "Select source feature"
+        source_feature = feature_option :src, prompt: "Select source feature"
         source_module = (source_feature == "main_app") ? "ApplicationRecord" : "#{source_feature.camelize}::ResourceRecord"
 
         Plutonium.eager_load_rails!

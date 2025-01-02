@@ -11,8 +11,6 @@ module Pu
 
       desc "Eject layout shell (i.e header, sidebar) into your own project"
 
-      class_option :dest, type: :string
-
       def start
         destination_dir = (destination_portal == "main_app") ? "app/views/" : "packages/#{destination_portal}/app/views"
         [
@@ -28,7 +26,7 @@ module Pu
       private
 
       def destination_portal
-        @destination_portal || select_portal(options[:dest], msg: "Select destination portal")
+        portal_option(:dest, prompt: "Select destination portal")
       end
 
       def copy_file(source_path, destination_path)

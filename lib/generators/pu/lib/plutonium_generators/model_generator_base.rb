@@ -13,8 +13,6 @@ module PlutoniumGenerators
     remove_task :create_module_file
     # remove_task :check_class_collision
 
-    class_option :dest, type: :string
-
     # def check_class_collision # :doc:
     #   class_collisions "#{options[:prefix]}#{name}#{options[:suffix]}"
     # end
@@ -41,7 +39,6 @@ module PlutoniumGenerators
     def name
       @pu_name ||= begin
         @original_name = @name
-        @selected_destination_feature = select_feature selected_destination_feature, msg: "Select destination feature"
         @name = [main_app? ? nil : selected_destination_feature.underscore, super.singularize.underscore].compact.join "/"
         set_destination_root!
         @name
@@ -57,7 +54,7 @@ module PlutoniumGenerators
     end
 
     def selected_destination_feature
-      @selected_destination_feature || options[:dest]
+      feature_option :dest, prompt: "Select destination feature"
     end
 
     def set_destination_root!
