@@ -11208,7 +11208,7 @@ ${text2}</tr>
     }
     reconnect() {
       this.disconnect();
-      this.connect();
+      setTimeout(() => this.connect(), 10);
     }
   };
 
