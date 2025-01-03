@@ -19,16 +19,6 @@ module Plutonium
             select_tag(**attributes, class!: "", &)
           end
 
-          def belongs_to_tag(**attributes, &)
-            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
-            create_component(Components::BelongsTo, :belongs_to, **attributes, &)
-          end
-
-          def has_many_tag(**attributes, &)
-            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
-            create_component(Components::HasMany, :has_many, **attributes, &)
-          end
-
           def flatpickr_tag(**, &)
             create_component(Components::Flatpickr, :flatpickr, **, &)
           end
@@ -42,6 +32,28 @@ module Plutonium
             create_component(Components::Uppy, :uppy, **, &)
           end
           alias_method :file_tag, :uppy_tag
+
+          def secure_association_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
+            create_component(Components::SecureAssociation, :association, **attributes, &)
+          end
+          # preserve original methods with prefix
+          alias_method :basic_belongs_to_tag, :belongs_to_tag
+          alias_method :basic_has_many_tag, :has_many_tag
+          alias_method :basic_has_one_tag, :has_one_tag
+          # use new methods as defaults
+          alias_method :belongs_to_tag, :secure_association_tag
+          alias_method :has_many_tag, :secure_association_tag
+          alias_method :has_one_tag, :secure_association_tag
+
+          def secure_polymorphic_association_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
+            create_component(Components::SecurePolymorphicAssociation, :polymorphic_association, **attributes, &)
+          end
+          # preserve original methods with prefix
+          alias_method :basic_polymorphic_belongs_to_tag, :polymorphic_belongs_to_tag
+          # use new methods as defaults
+          alias_method :polymorphic_belongs_to_tag, :secure_polymorphic_association_tag
         end
 
         private

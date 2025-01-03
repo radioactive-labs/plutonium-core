@@ -91,7 +91,6 @@ module Plutonium
           # @param [Symbol] name The name of the nested resource field
           # @raise [ArgumentError] if the nested input definition is missing required configuration
           def render_nested_resource_field(name)
-            # debugger if $extracting_input
             context = NestedFieldContext.new(
               name: name,
               definition: build_nested_fields_definition(name),

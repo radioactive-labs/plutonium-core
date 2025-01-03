@@ -51,7 +51,18 @@ module Plutonium
             uppy: :file,
             valid_uppy: :valid_file,
             invalid_uppy: :invalid_file,
-            neutral_uppy: :neutral_file
+            neutral_uppy: :neutral_file,
+
+            association: :select,
+            valid_association: :valid_select,
+            invalid_association: :invalid_select,
+            neutral_association: :neutral_select,
+
+            polymorpic_association: :association,
+            valid_polymorpic_association: :valid_association,
+            invalid_polymorpic_association: :invalid_association,
+            neutral_polymorpic_association: :neutral_association
+
           })
         end
       end

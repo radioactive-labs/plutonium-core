@@ -14,10 +14,10 @@ module PlutoniumGenerators
       def available_resources(source_module)
         Plutonium.eager_load_rails!
 
-        source_module.constantize.descendants.reject do |model|
-          next true if model.abstract_class?
+        source_module.constantize.descendants.reject do |resource_klass|
+          next true if resource_klass.abstract_class?
           next true if source_module == "ApplicationRecord" &&
-            model.ancestors.any? { |ancestor| ancestor.to_s.end_with?("::ResourceRecord") }
+            resource_klass.ancestors.any? { |ancestor| ancestor.to_s.end_with?("::ResourceRecord") }
         end.map(&:to_s).sort
       end
 
