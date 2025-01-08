@@ -76,15 +76,15 @@ module PlutoniumGenerators
           type = type.to_sym if type
 
           if dangerous_name?(name)
-            raise Error, "Could not generate field '#{name}', as it is already defined by Active Record."
+            raise "Could not generate field '#{name}', as it is already defined by Active Record."
           end
 
           if type && !valid_type?(type)
-            raise Error, "Could not generate field '#{name}' with unknown type '#{type}'."
+            raise "Could not generate field '#{name}' with unknown type '#{type}'."
           end
 
           if index_type && !valid_index_type?(index_type)
-            raise Error, "Could not generate field '#{name}' with unknown index '#{index_type}'."
+            raise "Could not generate field '#{name}' with unknown index '#{index_type}'."
           end
 
           if type && reference?(type)
