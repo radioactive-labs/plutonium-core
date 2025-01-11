@@ -1,6 +1,8 @@
-gem "plutonium"
-
 after_bundle do
+  Bundler.with_unbundled_env do
+    run "bundle add plutonium"
+  end
+
   generate "pu:core:install"
 
   git add: "."

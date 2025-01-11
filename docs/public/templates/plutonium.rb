@@ -3,7 +3,12 @@ after_bundle do
   git(add: ".") && git(commit: %( -m 'initial commit' ))
 
   # Run the base install
-  rails_command "app:template LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb"
+  template_location = if ENV["LOCAL"]
+    "/Users/stefan/Documents/plutonium/plutonium-core/docs/public/templates/base.rb"
+  else
+    "https://radioactive-labs.github.io/plutonium-core/templates/base.rb"
+  end
+  rails_command "app:template LOCATION=#{template_location}"
 
   # Add development tools
   generate "pu:gem:dotenv"
