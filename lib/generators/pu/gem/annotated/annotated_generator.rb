@@ -9,10 +9,11 @@ module Pu
 
       source_root File.expand_path("templates", __dir__)
 
-      desc "Install the annnotate gem"
+      desc "Install the annnotated gem"
 
       def start
-        bundle "annotate", group: :development
+        bundle "annotated", group: :development
+        generate "annotated:install"
         copy_file "lib/tasks/auto_annotate_models.rake"
       rescue => e
         exception "#{self.class} failed:", e

@@ -14,7 +14,7 @@ after_bundle do
   generate "pu:gem:dotenv"
   git(add: ".") && git(commit: %( -m 'add dotenv' ))
 
-  generate "pu:gem:annotate"
+  generate "pu:gem:annotated"
   git(add: ".") && git(commit: %( -m 'add annotate' ))
 
   generate "pu:gem:standard"

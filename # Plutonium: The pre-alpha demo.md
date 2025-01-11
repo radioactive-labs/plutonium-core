@@ -12,7 +12,7 @@
   ```
 - Install useful gems
   ```bash
-  rails g pu:gem:annotate
+  rails g pu:gem:annotated
   ```
 - Install rodauth
   ```bash

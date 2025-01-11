@@ -224,7 +224,7 @@ Add helpful development gems:
 
 ```ruby
 # Generate model annotations
-rails generate pu:gem:annotate
+rails generate pu:gem:annotated
 
 # Set up environment variables
 rails generate pu:gem:dotenv

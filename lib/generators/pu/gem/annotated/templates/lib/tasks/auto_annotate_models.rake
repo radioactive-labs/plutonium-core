@@ -3,11 +3,11 @@
 # NOTE: to have a dev-mode tool do its thing in production.
 return unless Rails.env.development?
 
-require "annotate"
+require "annotated"
 task :set_annotation_options do
   # You can override any of these by setting an environment variable of the
   # same name.
-  Annotate.set_defaults(
+  Annotated.set_defaults(
     "active_admin" => "false",
     "additional_file_patterns" => [],
     "routes" => "false",
@@ -56,4 +56,4 @@ task :set_annotation_options do
   )
 end
 
-Annotate.load_tasks
+Annotated.load_tasks
