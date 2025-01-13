@@ -4,13 +4,13 @@ class <%= app_namespace %>::<%= resource_class %>Policy < ::<%= parent_policy %>
 
   # Core actions
 
-  def create?
-    true
-  end
+  # def create?
+  #   true
+  # end
 
-  def read?
-    true
-  end
+  # def read?
+  #   true
+  # end
 
   # Core attributes
 
