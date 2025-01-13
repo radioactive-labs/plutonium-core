@@ -4,7 +4,7 @@ require_relative "../../lib/plutonium_generators"
 
 module Pu
   module Gem
-    class AnnotateGenerator < Rails::Generators::Base
+    class AnnotatedGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
       source_root File.expand_path("templates", __dir__)
