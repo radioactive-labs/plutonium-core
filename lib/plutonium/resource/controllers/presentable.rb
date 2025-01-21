@@ -13,9 +13,10 @@ module Plutonium
         def presentable_attributes
           @presentable_attributes ||= begin
             presentable_attributes = permitted_attributes
-            if current_parent
+            if current_parent && !present_parent?
               presentable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
-            elsif scoped_to_entity?
+            end
+            if scoped_to_entity? && !present_scoped_entity?
               presentable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
             end
             presentable_attributes
@@ -25,8 +26,12 @@ module Plutonium
         def submittable_attributes
           @submittable_attributes ||= begin
             submittable_attributes = permitted_attributes
-            submittable_attributes -= [parent_input_param, :"#{parent_input_param}_id"] if current_parent
-            submittable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"] if scoped_to_entity?
+            if current_parent && !submit_parent?
+              submittable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
+            end
+            if scoped_to_entity? && !submit_scoped_entity?
+              submittable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
+            end
             submittable_attributes
           end
         end
@@ -42,6 +47,14 @@ module Plutonium
         def build_form(record = resource_record!)
           current_definition.form_class.new(record, resource_fields: submittable_attributes, resource_definition: current_definition)
         end
+
+        def present_parent? = false
+
+        def present_scoped_entity? = false
+
+        def submit_parent? = present_parent?
+
+        def submit_scoped_entity? = present_scoped_entity?
       end
     end
   end
