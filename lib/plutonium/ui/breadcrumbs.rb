@@ -88,27 +88,29 @@ module Plutonium
 
             # Record
             if resource_record?
-              # Record Resource
-              li(class: "flex items-center") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
+              unless current_engine.routes.resource_route_config_lookup[resource_class.model_name.plural][:route_type] == :resource
+                # Record Resource
+                li(class: "flex items-center") do
+                  svg(
+                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                    aria_hidden: "true",
+                    xmlns: "http://www.w3.org/2000/svg",
+                    fill: "none",
+                    viewbox: "0 0 6 10"
+                  ) do |s|
+                    s.path(
+                      stroke: "currentColor",
+                      stroke_linecap: "round",
+                      stroke_linejoin: "round",
+                      stroke_width: "2",
+                      d: "m1 9 4-4-4-4"
+                    )
+                  end
+                  link_to resource_name_plural(resource_class),
+                    resource_url_for(resource_class),
+                    class:
+                      "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
                 end
-                link_to resource_name_plural(resource_class),
-                  resource_url_for(resource_class),
-                  class:
-                    "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
               end
 
               # Record Itself

@@ -82,12 +82,12 @@ module Plutonium
         @engine ||= determine_engine
       end
 
-      private
-
       # @return [Hash] A lookup table for resource route configurations.
       def resource_route_config_lookup
         @resource_route_config_lookup ||= {}
       end
+
+      private
 
       # Determines the appropriate engine based on the current scope.
       #
