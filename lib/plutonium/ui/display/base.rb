@@ -20,6 +20,11 @@ module Plutonium
           def attachment_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Attachment, :attachment, **, &)
           end
+
+          def phlexi_render_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::PhlexiRender, :phlexi_render, **, &)
+          end
+          alias_method :phlexi_tag, :phlexi_render_tag
         end
 
         private

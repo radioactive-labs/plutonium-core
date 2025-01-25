@@ -22,7 +22,8 @@ module Plutonium
             json: "text-sm text-gray-900 dark:text-white mb-1 whitespace-pre font-mono shadow-inner p-4",
             prefixed_icon: "w-8 h-8 mr-2",
             markdown: "format dark:format-invert format-primary",
-            attachment_value_wrapper: "grid grid-cols-[repeat(auto-fill,minmax(0,180px))]"
+            attachment_value_wrapper: "grid grid-cols-[repeat(auto-fill,minmax(0,180px))]",
+            phlexi_render: :string
           })
         end
       end
