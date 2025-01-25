@@ -16,7 +16,7 @@ module Plutonium
 
           def slim_select_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
-            select_tag(**attributes, class!: "", &)
+            select_tag(**attributes, required: false, class!: "", &)
           end
 
           def flatpickr_tag(**, &)
