@@ -53,11 +53,16 @@ module Plutonium
 
               field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
 
+              display_definition = resource_definition.defined_displays[name] || {}
+              display_options = display_definition[:options] || {}
+
               column_definition = resource_definition.defined_columns[name] || {}
               column_options = column_definition[:options] || {}
 
-              tag = column_options[:as] || field_options[:as]
-              tag_attributes = column_options.except(:wrapper, :as, :align)
+              tag = column_options[:as] || display_definition[:as] || field_options[:as]
+              display_tag_attributes = display_options.except(:wrapper, :as)
+              column_tag_attributes = column_options.except(:wrapper, :as, :align)
+              tag_attributes = display_tag_attributes.merge(column_tag_attributes)
               tag_block = column_definition[:block] || ->(wrapped_object, key) {
                 f = wrapped_object.field(key)
                 tag ||= f.inferred_field_component
