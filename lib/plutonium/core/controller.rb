@@ -29,8 +29,8 @@ module Plutonium
         @page_title = page_title
       end
 
-      def make_page_title(title)
-        [title.presence, helpers.application_name].compact.join(" | ")
+      def make_page_title(title, app_name: helpers.application_name)
+        [title.presence, app_name].compact.join(" | ")
       end
 
       #
