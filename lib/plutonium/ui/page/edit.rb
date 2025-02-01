@@ -17,6 +17,8 @@ module Plutonium
         def render_default_content
           render "resource_form"
         end
+
+        def page_type = :edit_page
       end
     end
   end

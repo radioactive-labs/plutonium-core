@@ -26,6 +26,7 @@ module Plutonium
     class Base
       include DefineableProps
       include ConfigAttr
+      include InheritableConfigAttr
       include Actions
       include Sorting
       include Search
@@ -63,6 +64,14 @@ module Plutonium
         :show_page_title, :show_page_description,
         :new_page_title, :new_page_description,
         :edit_page_title, :edit_page_description
+
+      # breadcrumbs
+      inheritable_config_attr :breadcrumbs,
+        :index_page_breadcrumbs, :new_page_breadcrumbs,
+        :edit_page_breadcrumbs, :show_page_breadcrumbs,
+        :interactive_action_page_breadcrumbs
+      # global default
+      breadcrumbs true
 
       def initialize
         super
