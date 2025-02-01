@@ -21,6 +21,8 @@ module Plutonium
         def render_default_content
           render "resource_details"
         end
+
+        def page_type = :show_page
       end
     end
   end

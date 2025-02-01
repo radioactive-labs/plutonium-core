@@ -17,6 +17,8 @@ module Plutonium
         def render_default_content
           render "interactive_action_form"
         end
+
+        def page_type = :interactive_action_page
       end
     end
   end

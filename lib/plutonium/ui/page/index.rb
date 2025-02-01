@@ -21,6 +21,8 @@ module Plutonium
         def render_default_content
           render "resource_table"
         end
+
+        def page_type = :index_page
       end
     end
   end

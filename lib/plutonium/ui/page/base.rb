@@ -43,7 +43,15 @@ module Plutonium
         end
 
         def render_breadcrumbs
+          return unless render_breadcrumbs?
+
           Breadcrumbs()
+        end
+
+        def render_breadcrumbs?
+          # Check specific page setting first, fall back to global setting
+          page_specific_setting = current_definition.send(:"#{page_type}_breadcrumbs")
+          page_specific_setting.nil? ? current_definition.breadcrumbs : page_specific_setting
         end
 
         def render_page_header
@@ -106,6 +114,8 @@ module Plutonium
 
         def render_after_footer
         end
+
+        def page_type = raise NotImplementedError, "#{self.class}#page_type"
       end
     end
   end
