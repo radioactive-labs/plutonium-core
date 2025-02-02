@@ -25,6 +25,10 @@ module Plutonium
             invalid_input: "bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 placeholder-red-700 dark:placeholder-red-500 focus:ring-red-500 focus:border-red-500",
             valid_input: "bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500",
             neutral_input: "border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500",
+            # checkbox
+            checkbox: "p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700",
+            # radio buttons
+            radio_button: "p-2 border shadow-sm font-medium text-sm dark:bg-gray-700",
             # color
             color: "pu-color-input appearance-none bg-transparent border-none cursor-pointer w-10 h-10",
             invalid_color: nil,
