@@ -25,7 +25,7 @@ module Plutonium
         end
 
         def submit_button(*, **)
-          super(*, **) do
+          super do
             object.label
           end
         end
