@@ -12,11 +12,12 @@ module Plutonium
         before_action do
           next unless defined?(ActiveStorage)
 
-          ActiveStorage::Current.url_options = {protocol: request.protocol, host: request.host, port: request.port}
+          ActiveStorage::Current.url_options = { protocol: request.protocol, host: request.host, port: request.port }
         end
 
         helper Plutonium::Helpers
-        helper_method :make_page_title, :resource_url_for, :resource_url_args_for, :root_path
+        helper_method :make_page_title, :resource_url_for,
+          :resource_url_args_for, :root_path, :app_name
 
         append_view_path File.expand_path("app/views", Plutonium.root)
         layout -> { turbo_frame_request? ? false : "resource" }
@@ -29,8 +30,24 @@ module Plutonium
         @page_title = page_title
       end
 
-      def make_page_title(title, app_name: helpers.application_name)
+      def make_page_title(title)
         [title.presence, app_name].compact.join(" | ")
+      end
+
+      # Returns the name of the application as defined in the configuration
+      #
+      # This value can be overridden to provide a custom name for the application
+      # which will then be used to set the page title
+      #
+      # For example, if the application name is "Acme", the page title
+      # will be set to "Login | Acme"
+      #
+      # example:
+      #   def app_name = "Acme"
+      #
+      # @return [String] the name of the application
+      def app_name
+        helpers.application_name
       end
 
       #
@@ -61,7 +78,7 @@ module Plutonium
       # @return [Hash] args to pass to `url_for`
       #
       def resource_url_args_for(*args, action: nil, parent: nil, **kwargs)
-        url_args = {**kwargs, action: action}.compact
+        url_args = { **kwargs, action: action }.compact
 
         controller_chain = [current_package&.to_s].compact
         [*args].compact.each_with_index do |element, index|
