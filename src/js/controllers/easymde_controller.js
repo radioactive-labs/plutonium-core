@@ -10,8 +10,10 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.easyMDE.toTextArea()
-    this.easyMDE = null
+    if (this.easyMDE) {
+      this.easyMDE.toTextArea()
+      this.easyMDE = null
+    }
   }
 
   reconnect() {

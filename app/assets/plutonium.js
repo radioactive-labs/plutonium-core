@@ -11161,8 +11161,10 @@ ${text2}</tr>
       this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect");
     }
     disconnect() {
-      this.easyMDE.toTextArea();
-      this.easyMDE = null;
+      if (this.easyMDE) {
+        this.easyMDE.toTextArea();
+        this.easyMDE = null;
+      }
     }
     reconnect() {
       this.disconnect();
@@ -11203,8 +11205,10 @@ ${text2}</tr>
       this.element.setAttribute("data-action", "turbo:morph-element->slim-select#reconnect");
     }
     disconnect() {
-      this.slimSelect.destroy();
-      this.slimSelect = null;
+      if (this.slimSelect) {
+        this.slimSelect.destroy();
+        this.slimSelect = null;
+      }
     }
     reconnect() {
       this.disconnect();
@@ -11219,8 +11223,10 @@ ${text2}</tr>
       this.element.setAttribute("data-action", "turbo:morph-element->flatpickr#reconnect");
     }
     disconnect() {
-      this.picker.destroy();
-      this.picker = null;
+      if (this.picker) {
+        this.picker.destroy();
+        this.picker = null;
+      }
     }
     reconnect() {
       this.disconnect();
@@ -11253,9 +11259,10 @@ ${text2}</tr>
       this.inputTarget.setAttribute("data-action", "turbo:morph-element->intl-tel-input#reconnect");
     }
     inputTargetDisconnected() {
-      if (this.iti)
+      if (this.iti) {
         this.iti.destroy();
-      this.iti = null;
+        this.iti = null;
+      }
     }
     reconnect() {
       this.inputTargetDisconnected();

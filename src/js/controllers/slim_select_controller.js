@@ -10,8 +10,10 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.slimSelect.destroy()
-    this.slimSelect = null
+    if (this.slimSelect) {
+      this.slimSelect.destroy()
+      this.slimSelect = null
+    }
   }
 
   reconnect() {
