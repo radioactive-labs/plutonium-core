@@ -24,6 +24,7 @@ module Plutonium
         # @private
         def render_sidebar_container(&)
           aside(
+            data: {controller: "sidebar"},
             id: "sidebar-navigation",
             aria: {label: "Sidebar Navigation"},
             class: "fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full lg:translate-x-0",
