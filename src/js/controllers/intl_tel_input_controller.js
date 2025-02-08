@@ -19,8 +19,10 @@ export default class extends Controller {
   }
 
   inputTargetDisconnected() {
-    if (this.iti) this.iti.destroy()
-    this.iti = null
+    if (this.iti) {
+      this.iti.destroy()
+      this.iti = null
+    }
   }
 
   reconnect() {

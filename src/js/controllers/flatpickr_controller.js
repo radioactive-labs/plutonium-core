@@ -8,8 +8,10 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.picker.destroy()
-    this.picker = null
+    if (this.picker) {
+      this.picker.destroy()
+      this.picker = null
+    }
   }
 
   reconnect() {

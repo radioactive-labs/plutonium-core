@@ -13,13 +13,13 @@ module Pu
 
       def start
         in_root do
-          [".env", ".env.local", ".env.template", ".env.local.template"].each do |file|
+          [".env", ".env.local", ".env.template", ".env.local.template", ".env.test.local"].each do |file|
             copy_file file
           end
 
           copy_file "config/initializers/001_ensure_required_env.rb"
 
-          gitignore "!/.env.template", "!/.env.local.template", "!/.env"
+          gitignore "!/.env", "!/.env.template", "!/.env.local.template", "!/.env.test.local"
 
           insert_into_file "Gemfile", "\ngem \"dotenv\", groups: %i[development test]\n", after: /^gem ["']rails["'].*\n/
           bundle!
