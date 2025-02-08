@@ -24306,8 +24306,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/sidebar_controller.js
+  var sidebar_controller_default = class extends Controller {
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
+    application2.register("sidebar", sidebar_controller_default);
     application2.register("resource-header", resource_header_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);
     application2.register("form", form_controller_default);
