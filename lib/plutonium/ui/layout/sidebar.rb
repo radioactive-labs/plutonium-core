@@ -24,6 +24,7 @@ module Plutonium
         # @private
         def render_sidebar_container(&)
           aside(
+            data: {controller: "sidebar"},
             id: "sidebar-navigation",
             aria: {label: "Sidebar Navigation"},
             class: "fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full lg:translate-x-0",
@@ -43,7 +44,7 @@ module Plutonium
 
         # @private
         def render_color_mode_controls
-          div(class: "hidden absolute bottom-0 left-0 justify-center p-4 space-x-4 w-full lg:flex bg-white dark:bg-gray-800 z-20 border-r border-gray-200 dark:border-gray-700") do
+          div(class: "absolute bottom-0 left-0 justify-center p-4 space-x-4 w-full flex bg-white dark:bg-gray-800 z-20 border-r border-gray-200 dark:border-gray-700") do
             render ColorModeSelector.new
           end
         end

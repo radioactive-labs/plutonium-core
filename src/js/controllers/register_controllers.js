@@ -16,9 +16,11 @@ import ResourceTabListController from "./resource_tab_list_controller.js"
 import AttachmentInputController from "./attachment_input_controller.js"
 import AttachmentPreviewController from "./attachment_preview_controller.js"
 import AttachmentPreviewContainerController from "./attachment_preview_container_controller.js"
+import SidebarController from "./sidebar_controller.js"
 
 export default function (application) {
   // Register controllers here
+  application.register("sidebar", SidebarController)
   application.register("resource-header", ResourceHeaderController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
   application.register("form", FormController)

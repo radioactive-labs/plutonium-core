@@ -44,7 +44,7 @@ module Plutonium
             class: "bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50",
             data: {
               controller: "resource-header",
-              header_sidebar_outlet: "#sidebar-navigation"
+              resource_header_sidebar_outlet: "#sidebar-navigation"
             }
           ) do
             div(class: "flex flex-wrap justify-between items-center") do
@@ -70,7 +70,7 @@ module Plutonium
         # @private
         def render_sidebar_toggle
           button(
-            data_action: "header#toggleDrawer",
+            data_action: "resource-header#toggleDrawer",
             aria_controls: "#sidebar-navigation",
             class: %(p-2 mr-2 text-gray-600 rounded-lg cursor-pointer lg:hidden hover:text-gray-900
                     hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2
@@ -97,11 +97,11 @@ module Plutonium
         # Renders the toggle icons for the sidebar button
         # @private
         def render_toggle_icons
-          span(data_header_target: "openIcon") do
+          span(data_resource_header_target: "openIcon") do
             render Phlex::TablerIcons::Menu.new(class: "w-6 h-6")
           end
 
-          span(data_header_target: "closeIcon", class: "hidden", aria_hidden: "true") do
+          span(data_resource_header_target: "closeIcon", class: "hidden", aria_hidden: "true") do
             render Phlex::TablerIcons::X.new(class: "w-6 h-6")
           end
 
