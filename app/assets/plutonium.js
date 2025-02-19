@@ -24317,8 +24317,24 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var sidebar_controller_default = class extends Controller {
   };
 
+  // src/js/controllers/password_visibility_controller.js
+  var password_visibility_controller_default = class extends Controller {
+    static targets = ["password", "checkbox"];
+    connect() {
+      this.checkboxTarget.checked = false;
+    }
+    toggle() {
+      if (this.passwordTarget.type == "password") {
+        this.passwordTargets.forEach((passwordTarget) => passwordTarget.type = "text");
+      } else {
+        this.passwordTargets.forEach((passwordTarget) => passwordTarget.type = "password");
+      }
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
+    application2.register("password-visibility", password_visibility_controller_default);
     application2.register("sidebar", sidebar_controller_default);
     application2.register("resource-header", resource_header_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);

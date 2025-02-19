@@ -17,9 +17,11 @@ import AttachmentInputController from "./attachment_input_controller.js"
 import AttachmentPreviewController from "./attachment_preview_controller.js"
 import AttachmentPreviewContainerController from "./attachment_preview_container_controller.js"
 import SidebarController from "./sidebar_controller.js"
+import PasswordVisibilityController from "./password_visibility_controller.js"
 
 export default function (application) {
   // Register controllers here
+  application.register("password-visibility", PasswordVisibilityController)
   application.register("sidebar", SidebarController)
   application.register("resource-header", ResourceHeaderController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)
