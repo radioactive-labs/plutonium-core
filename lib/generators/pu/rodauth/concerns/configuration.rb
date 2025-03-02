@@ -71,6 +71,7 @@ module Pu
             }
           },
           reset_password_notify: {default: true},
+          password_grace_period: {},
           change_login: {
             default: true,
             views: %w[change_login]

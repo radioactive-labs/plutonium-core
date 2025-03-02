@@ -1,0 +1,11 @@
+namespace :rodauth do
+  desc "Create a <%= display_name %> account"
+  task <%= normalized_name %>: :environment do
+    require "tty-prompt"
+
+    prompt = TTY::Prompt.new
+    email = ENV["EMAIL"] || prompt.ask("Email:", required: true)
+
+    RodauthApp.rodauth(:<%= normalized_name %>).create_account(login: email)
+  end
+end

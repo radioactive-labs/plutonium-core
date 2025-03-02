@@ -47,9 +47,9 @@ module Plutonium
       setup_phlexi_themes
     end
 
-    rake_tasks do
-      load "tasks/create_rodauth_admin.rake"
-    end
+    # rake_tasks do
+    #   load "tasks/create_rodauth_admin.rake"
+    # end
 
     config.after_initialize do
       Plutonium::Reloader.start! if Plutonium.configuration.enable_hotreload
