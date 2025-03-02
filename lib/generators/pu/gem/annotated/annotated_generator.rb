@@ -14,7 +14,7 @@ module Pu
       def start
         bundle "annotated", group: :development
         generate "annotated:install"
-        copy_file "lib/tasks/auto_annotate_models.rake"
+        copy_file "lib/tasks/auto_annotate_models.rake", force: true
       rescue => e
         exception "#{self.class} failed:", e
       end
