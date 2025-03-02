@@ -41,6 +41,8 @@ module Pu
       end
 
       def add_dev_config
+        return if Rails.version.to_f >= 8.0
+
         insert_into_file "config/environments/development.rb",
           "\n  config.action_mailer.default_url_options = { host: '127.0.0.1', port: ENV.fetch('PORT', 3000) }\n",
           before: /^end/
