@@ -1,6 +1,6 @@
 {
   "name": "@radioactive-labs/plutonium",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Core assets for the Plutonium gem",
   "type": "module",
   "main": "src/js/core.js",
@@ -30,9 +30,9 @@
     "marked": "^15.0.3"
   },
   "devDependencies": {
-    "@tailwindcss/forms": "^0.5.7",
-    "@tailwindcss/typography": "^0.5.15",
-    "autoprefixer": "^10.4.18",
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/postcss": "^4.0.9",
+    "@tailwindcss/typography": "^0.5.16",
     "concurrently": "^8.2.2",
     "cssnano": "^7.0.2",
     "esbuild": "^0.20.1",
@@ -42,7 +42,8 @@
     "postcss": "^8.4.35",
     "postcss-cli": "^11.0.0",
     "postcss-hash": "^3.0.0",
-    "tailwindcss": "^3.4.1",
+    "postcss-import": "^16.1.0",
+    "tailwindcss": "^4.0.9",
     "vitepress": "^1.4.1",
     "vitepress-plugin-mermaid": "^2.0.17"
   },
@@ -50,9 +51,9 @@
     "dev": "concurrently \"npm run css:dev\" \"npm run js:dev\"",
     "build": "npm run js:prod && npm run css:prod",
     "prepare": "npm run build",
-    "css:dev": "postcss src/css/plutonium.css -o src/build/plutonium.css --watch --dev",
+    "css:dev": "postcss src/css/plutonium.entry.css -o src/build/plutonium.css --watch --dev",
     "js:dev": "node esbuild.config.js --dev",
-    "css:prod": "postcss src/css/plutonium.css -o app/assets/plutonium.css && postcss src/css/plutonium.css -o src/dist/css/plutonium.css",
+    "css:prod": "postcss src/css/plutonium.entry.css -o app/assets/plutonium.css && postcss src/css/plutonium.entry.css -o src/dist/css/plutonium.css",
     "js:prod": "node esbuild.config.js",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",

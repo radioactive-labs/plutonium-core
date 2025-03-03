@@ -31,11 +31,15 @@ module Pu
       def install_dependencies
         [
           "@radioactive-labs/plutonium",
-          "@tailwindcss/forms", "@tailwindcss/typography", "flowbite-typography",
-          "postcss-cli", "cssnano marked"
+          "postcss", "postcss-cli", "postcss-import",
+          "@tailwindcss/postcss", "@tailwindcss/forms", "@tailwindcss/typography",
+          "cssnano", "marked",
+          "flowbite-typography"
         ].each do |package|
           run "yarn add #{package}"
         end
+
+        run "yarn upgrade tailwindcss --latest"
       end
 
       def configure_application
@@ -43,6 +47,10 @@ module Pu
 
           import { registerControllers } from "@radioactive-labs/plutonium"
           registerControllers(application)
+        EOT
+
+        insert_into_file "app/assets/stylesheets/application.tailwind.css", <<~EOT, after: /@import "tailwindcss";\n/
+          @config '../../../tailwind.config.js';
         EOT
 
         configure_plutonium "config.assets.stylesheet = \"application\""
