@@ -1,5 +1,6 @@
 @import "plutonium.css";
 
+@import 'tailwindcss';
 @config '../../tailwind.config.js';
 
 /*
