@@ -17,7 +17,7 @@ module Plutonium
 
         helper Plutonium::Helpers
         helper_method :make_page_title, :resource_url_for,
-          :resource_url_args_for, :root_path, :app_name
+          :resource_url_args_for, :root_path, :app_name, :route_options_to_url
 
         append_view_path File.expand_path("app/views", Plutonium.root)
         layout -> { turbo_frame_request? ? false : "resource" }
@@ -110,6 +110,33 @@ module Plutonium
 
       def registered_resources
         current_engine.resource_register.resources
+      end
+
+      # Converts RouteOptions into a URL using the appropriate URL resolver.
+      #
+      # This method takes a RouteOptions object and generates a URL based on the url_resolver
+      # specified within the RouteOptions. It supports different resolution strategies:
+      # - If the route_options responds to :to_proc, executes it as a Proc in the current instance context
+      # - For :resource_url_for resolver, generates a URL using the provided subject
+      # - For :url_for resolver, generates a URL using only the url_options from route_options
+      #
+      # @param [RouteOptions, #to_proc] route_options The RouteOptions object or callable to convert to a URL
+      # @param [Object] subject The subject to use when generating URLs with :resource_url_for
+      # @return [String] The generated URL
+      # @raise [NotImplementedError] If an unsupported url_resolver is specified
+      def route_options_to_url(route_options, subject = nil)
+        url_resolver = route_options.url_resolver
+
+        if url_resolver == :resource_url_for
+          raise ArgumentError, "subject is required when url_resolver is: :resource_url_for" unless subject
+          resource_url_for(subject, *route_options.url_args, **route_options.url_options)
+        elsif url_resolver == :url_for
+          url_for(**route_options.url_options)
+        elsif url_resolver.respond_to?(:to_proc)
+          instance_exec(subject, &url_resolver)
+        else
+          raise NotImplementedError, "url_resolver: #{url_resolver}"
+        end
       end
     end
   end

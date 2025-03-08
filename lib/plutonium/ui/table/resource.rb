@@ -35,7 +35,7 @@ module Plutonium
           EmptyCard("No #{resource_name_plural(resource_class)} match your query") {
             action = resource_definition.defined_actions[:new]
             if action&.permitted_by?(current_policy)
-              url = resource_url_for(resource_class, *action.route_options.url_args, **action.route_options.url_options)
+              url = route_options_to_url(action.route_options, resource_class)
               ActionButton(action, url:)
             end
           }
@@ -85,14 +85,7 @@ module Plutonium
                   .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
                   .values
                   .each do |action|
-                    # TODO: extract this
-                    url = case action.route_options.url_resolver
-                    when :resource_url_for
-                      resource_url_for(record, *action.route_options.url_args, **action.route_options.url_options)
-                    else
-                      raise NotImplementedError, "url_resolver: #{action.route_options.url_resolver}"
-                    end
-
+                    url = route_options_to_url(action.route_options, record)
                     ActionButton(action, url:, variant: :table)
                   end
               end

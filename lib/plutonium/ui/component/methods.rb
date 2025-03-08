@@ -30,6 +30,7 @@ module Plutonium
           :resource_name_plural,
           :display_name_of,
           :resource_url_for,
+          :route_options_to_url,
           :current_user,
           :current_parent,
           :current_definition,

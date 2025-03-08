@@ -93,6 +93,9 @@ module Plutonium
         case options
         when RouteOptions
           options
+        when Array
+          kwargs = options.extract_options!
+          RouteOptions.new(*options, **kwargs)
         when Hash
           RouteOptions.new(**options)
         when nil

@@ -40,7 +40,8 @@ module Plutonium
 
       def render_actions
         @actions.each do |action|
-          url = resource_url_for(resource_record? || resource_class, *action.route_options.url_args, **action.route_options.url_options)
+          subject = resource_record? || resource_class
+          url = route_options_to_url(action.route_options, subject)
           ActionButton(action, url:)
         end
       end
