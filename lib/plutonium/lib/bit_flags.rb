@@ -44,6 +44,19 @@ module Plutonium
         value & check == check
       end
 
+      # Sets the specified flags in the given value.
+      #
+      # @param value [Integer] The original value to modify.
+      # @param flags [Array<Symbol, String>] The flags to set.
+      # @return [Integer] A new value with the specified flags set.
+      # @example
+      #   flags.set!(2, :read, :execute)  # => 6
+      def set!(value, *flags)
+        normalized_flags = normalize_flags(flags)
+        bits_to_set = bits(*normalized_flags)
+        value | bits_to_set
+      end
+
       # Extracts the flags that are set in the given value.
       #
       # @param value [Integer] The value to extract flags from.
