@@ -49,11 +49,6 @@ module Pu
           registerControllers(application)
         EOT
 
-        # For older versions tailwindcss, specifically v3
-        gsub_file "app/assets/stylesheets/application.tailwind.css", %r{@tailwind\s+base;\s*@tailwind\s+components;\s*@tailwind\s+utilities;\s*} do
-          "@import \"tailwindcss\";\n@config '../../../tailwind.config.js';\n"
-        end
-
         insert_into_file "app/assets/stylesheets/application.tailwind.css", <<~EOT, after: /@import "tailwindcss";\n/
           @config '../../../tailwind.config.js';
         EOT
