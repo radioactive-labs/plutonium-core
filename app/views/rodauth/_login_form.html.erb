@@ -6,7 +6,10 @@
 >
   Sign in to your account
 </h1>
-<%= form_with url: rodauth.login_path, method: :post, data: { turbo: false, controller: "password-visibility" }, class: "space-y-4" do |form| %>
+<%= form_with url: rodauth.login_path,
+  method: :post,
+  data: { turbo: false, controller: "password-visibility" },
+  class: "space-y-4" do |form| %>
   <div>
     <%= form.label "login",
                rodauth.login_label,
@@ -37,7 +40,6 @@
       end %>
     <% end %>
   </div>
-
   <% unless rodauth.skip_password_field_on_login? %>
     <div>
       <%= form.label "password",
@@ -72,10 +74,8 @@
         )
       end %>
     </div>
+    <%= render "password_visibility" %>
   <% end %>
-
-  <%= render "password_visibility" %>
-
   <%= form.submit rodauth.login_button,
               class:
                 "w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" %>
