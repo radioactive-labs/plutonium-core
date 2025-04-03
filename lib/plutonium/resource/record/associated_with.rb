@@ -59,11 +59,11 @@ module Plutonium
           def query_based_on_association(assoc, record)
             case assoc.macro
             when :has_one
-              joins(assoc.name).where(assoc.name => {record.class.primary_key => record.id})
+              joins(assoc.name).where(assoc.name => {record.class.primary_key => record})
             when :belongs_to
               where(assoc.name => record)
             when :has_many
-              joins(assoc.name).where(assoc.klass.table_name => record)
+              joins(assoc.name).where(assoc.name => {record.class.primary_key => record})
             else
               raise NotImplementedError, "associated_with->##{assoc.macro}"
             end
