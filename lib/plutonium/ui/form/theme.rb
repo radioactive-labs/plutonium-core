@@ -37,7 +37,7 @@ module Plutonium
             # file
             # file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
             # hint themes
-            hint: "mt-2 text-sm text-gray-500 dark:text-gray-200",
+            hint: "mt-2 text-sm text-gray-500 dark:text-gray-200 whitespace-pre",
             # error themes
             error: "mt-2 text-sm text-red-600 dark:text-red-500",
             # button themes
