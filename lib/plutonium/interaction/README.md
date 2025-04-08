@@ -262,6 +262,65 @@ class MyInteraction < Plutonium::Interaction::Base
 end
 ```
 
+### Interactions with Nested Attributes
+
+This example demonstrates how to handle nested attributes—specifically,
+a `User` with multiple `Address` records—using a Plutonium `Interaction`.
+
+The key points include:
+
+- Defining the main attributes and validating them.
+- Mapping nested attributes using a custom setter.
+- Using nested_input to define the nested structure and how it's handled in
+  the form and params.
+
+```ruby
+module Users
+  module Interactions
+    class CreateUserInteraction < Plutonium::Interaction::Base
+      presents label: "Add new user" # Sets the label used in forms or admin UIs
+
+      # Define top-level input attributes
+      attribute :first_name, :string
+      attribute :last_name, :string
+      attribute :email, :string
+      attribute :addresses # Accepts a nested collection of addresses
+
+      # Basic validations for presence and email format
+      validates :first_name, :last_name, presence: true
+      validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+      # Custom setter for nested address attributes (must have)
+      def addresses_attributes=(attributes)
+        # Builds Address objects from the incoming form parameters
+        self.addresses = attributes.map do |params|
+          Address.new(params.except(:_destroy))
+        end
+      end
+
+      # Describes how nested inputs for addresses should be handled
+      nested_input :addresses,
+                   using: AddressDefinition, # Defines the structure and validations for an address
+                   fields: %i[label google_plus_code], # Permitted fields for address input
+                   description: "Add or update user addresses."
+
+      private
+
+      def execute
+        # Attempt to build and save the user with the provided attributes
+        user = User.new(self.attributes)
+
+        if user.save
+          success(user).with_message("User was successfully created.")
+        else
+          failure(user.errors)
+        end
+      end
+    end
+  end
+end
+```
+
 ## Examples
 
 ### Chaining Operations
@@ -310,7 +369,6 @@ By following these guidelines and examples, you can effectively implement and us
 This example demonstrates how to chain multiple operations, handle potential failures at each step, and return an appropriate outcome.
 
 By following these guidelines and examples, you can effectively implement and use the Use Case Driven Design pattern in your Rails applications, leading to more maintainable and testable code.
-
 
 ### Example interaction with workflow
 
@@ -366,7 +424,6 @@ module Orders
   end
 end
 ```
-
 
   class Sample < Phlex::HTML
     def view_template
