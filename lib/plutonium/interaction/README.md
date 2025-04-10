@@ -265,55 +265,110 @@ end
 ### Interactions with Nested Attributes
 
 This example demonstrates how to handle nested attributes—specifically,
-a `User` with multiple `Address` records—using a Plutonium `Interaction`.
+a `User` with multiple `Contact` and `UserAddress` records using
+a Plutonium `Interaction`.
 
-The key points include:
+#### Key Highlights
 
-- Defining the main attributes and validating them.
-- Mapping nested attributes using a custom setter.
-- Using nested_input to define the nested structure and how it's handled in
-  the form and params.
+The model definitions are included here for completeness, but the primary focus
+remains on demonstrating how to build interactions that handle nested
+attributes.
+
+- Core user attributes (`first_name`, `last_name`, `email`) are declared and
+  validated at the top level of the interaction.
+
+- Nested associations (`contacts`, `addresses`) are managed via
+  `accepts_nested_attributes_for`. The optional `reject_if` condition is used
+  to discard entries that lack required fields—helping ensure data integrity at
+  the input level.
+
+- The `nested_input` DSL provides a declarative way to structure nested inputs,
+  specifying accepted fields and mapping them to their respective definition
+  classes (`ContactDefinition` and `UserAddressDefinition`).
+
+- During execution, a `User` instance is initialized with both top-level and
+  nested attributes, then persisted with all applicable validations.
+
+**Note:** The `class_name` option is explicitly defined in the interaction's
+`accepts_nested_attributes_for` macro because the `addresses` association does
+not directly map to its underlying model name. Simply provide the class name,
+for example, `class_name: "UserAddress"`, to ensure the correct model is used.
+
+**This is essential only when the association name differs from the actual
+class name.**
+
+This approach enables seamless handling of complex nested input from forms or
+API requests, while keeping validation logic clean, maintainable, and modular.
 
 ```ruby
+# app/models/user.rb
+class User < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  has_many :contacts
+  has_many :addresses, class_name: "UserAddress"
+
+  accepts_nested_attributes_for :contacts, :addresses
+end
+
+# app/models/contact.rb
+class Contact < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  belongs_to :user
+  validates :label, :phone_number, presence: true
+end
+
+# app/models/user_address.rb
+class UserAddress < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  belongs_to :user
+  validates :label, :map_url, presence: true
+end
+
+# app/interactions/users/interactions/create_user_interaction.rb
 module Users
   module Interactions
     class CreateUserInteraction < Plutonium::Interaction::Base
-      presents label: "Add new user" # Sets the label used in forms or admin UIs
+      include Plutonium::Definition::Presentable
 
-      # Define top-level input attributes
+      presents label: "Add a new user", icon: Phlex::Tabler::UserPlus
+
       attribute :first_name, :string
       attribute :last_name, :string
       attribute :email, :string
-      attribute :addresses # Accepts a nested collection of addresses
+      attribute :contacts
+      attribute :addresses
 
-      # Basic validations for presence and email format
       validates :first_name, :last_name, presence: true
       validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
-      # Custom setter for nested address attributes (must have)
-      def addresses_attributes=(attributes)
-        # Builds Address objects from the incoming form parameters
-        self.addresses = attributes.map do |params|
-          Address.new(params.except(:_destroy))
-        end
-      end
+      accepts_nested_attributes_for :contacts,
+        reject_if: proc { |attributes| attributes[:label].blank? }
 
-      # Describes how nested inputs for addresses should be handled
+      accepts_nested_attributes_for :addresses, class_name: "UserAddress",
+        reject_if: proc { |attributes| attributes[:label].blank? }
+
+      nested_input :contacts,
+        using: ContactDefinition,
+        fields: %i[label phone_number],
+        description: "Add one or more contacts for this user."
+
       nested_input :addresses,
-                   using: AddressDefinition, # Defines the structure and validations for an address
-                   fields: %i[label google_plus_code], # Permitted fields for address input
-                   description: "Add or update user addresses."
+        using: UserAddressDefinition,
+        fields: %i[label map_url],
+        description: "Add one or more addresses for this user."
 
       private
 
       def execute
-        # Attempt to build and save the user with the provided attributes
         user = User.new(self.attributes)
 
         if user.save
-          success(user).with_message("User was successfully created.")
+          success(user).with_message("User created successfully")
         else
-          failure(user.errors)
+          failed(user.errors)
         end
       end
     end
