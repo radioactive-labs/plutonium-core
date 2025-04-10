@@ -69,28 +69,28 @@ module Plutonium
               end
             end
 
-          define_method("#{association}_attributes=") do |attributes|
+          define_method(:"#{association}_attributes=") do |attributes|
             result =
               case attributes
               when Hash
                 attrs = attributes.except(:_destroy)
                 unless should_destroy.call(attributes[:_destroy]) ||
-                         should_reject.call(attrs)
+                    should_reject.call(attrs)
                   assoc_class.new(attrs)
                 end
               when Array
                 attributes.filter_map do |attrs|
                   unless should_destroy.call(attrs[:_destroy]) ||
-                           should_reject.call(attrs)
+                      should_reject.call(attrs)
                     assoc_class.new(attrs.except(:_destroy))
                   end
                 end
               end
 
-            send("#{association}=", result)
+            send(:"#{association}=", result)
           end
 
-          define_method("#{association}_attributes") do
+          define_method(:"#{association}_attributes") do
             Array(send(association)).map(&:attributes)
           end
         end
