@@ -46,16 +46,20 @@ module Plutonium
           @resource_record = resource_class.new resource_params
 
           respond_to do |format|
-            if resource_record!.save
+            if params[:pre_submit]
+              format.html { render :new, status: :unprocessable_entity }
+            elsif resource_record!.save
               format.html do
                 redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully created."
               end
-              format.any { render :show, status: :created, location: redirect_url_after_submit }
-            else
-              format.html do
-                render :new, status: :unprocessable_entity
+              format.any do
+                render :show,
+                  status: :created,
+                  location: redirect_url_after_submit
               end
+            else
+              format.html { render :new, status: :unprocessable_entity }
               format.any do
                 @errors = resource_record!.errors
                 render "errors", status: :unprocessable_entity
@@ -79,17 +83,23 @@ module Plutonium
           authorize_current! resource_record!
           set_page_title "Update #{resource_record!.to_label.titleize}"
 
+          resource_record!.attributes = resource_params
+
           respond_to do |format|
-            if resource_record!.update(resource_params)
+            if params[:pre_submit]
+              format.html { render :edit, status: :unprocessable_entity }
+            elsif resource_record!.save
               format.html do
-                redirect_to redirect_url_after_submit, notice: "#{resource_class.model_name.human} was successfully updated.",
+                redirect_to redirect_url_after_submit,
+                  notice:
+                    "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
               end
-              format.any { render :show, status: :ok, location: redirect_url_after_submit }
-            else
-              format.html do
-                render :edit, status: :unprocessable_entity
+              format.any do
+                render :show, status: :ok, location: redirect_url_after_submit
               end
+            else
+              format.html { render :edit, status: :unprocessable_entity }
               format.any do
                 @errors = resource_record!.errors
                 render "errors", status: :unprocessable_entity
@@ -107,17 +117,21 @@ module Plutonium
 
             format.html do
               redirect_to redirect_url_after_destroy,
-                notice: "#{resource_class.model_name.human} was successfully deleted."
+                notice:
+                  "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey
             format.html do
               redirect_to resource_url_for(resource_record!),
-                alert: "#{resource_class.model_name.human} is referenced by other records."
+                alert:
+                  "#{resource_class.model_name.human} is referenced by other records."
             end
             format.any do
               @errors = ActiveModel::Errors.new resource_record!
-              @errors.add :base, :existing_references, message: "is referenced by other records"
+              @errors.add :base,
+                :existing_references,
+                message: "is referenced by other records"
 
               render "errors", status: :unprocessable_entity
             end
