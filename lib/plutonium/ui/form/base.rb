@@ -84,6 +84,12 @@ module Plutonium
 
           @form_action ||= url_for(object, action: object.new_record? ? :create : :update)
         end
+
+        def initialize_attributes
+          super
+
+          attributes["data-controller"] = "form"
+        end
       end
     end
   end

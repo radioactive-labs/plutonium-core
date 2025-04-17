@@ -39,7 +39,15 @@ module Plutonium
           build_interactive_record_action_interaction
 
           outcome = @interaction.call
-          if outcome.success?
+
+          if params[:pre_submit]
+            respond_to do |format|
+              format.html do
+                render :interactive_record_action,
+                  status: :unprocessable_entity
+              end
+            end
+          elsif outcome.success?
             outcome.to_response.process(self) do |value|
               respond_to do |format|
                 return_url = redirect_url_after_action_on(resource_record!)
@@ -93,7 +101,15 @@ module Plutonium
           build_interactive_resource_action_interaction
 
           outcome = @interaction.call
-          if outcome.success?
+
+          if params[:pre_submit]
+            respond_to do |format|
+              format.html do
+                render :interactive_resource_action,
+                  status: :unprocessable_entity
+              end
+            end
+          elsif outcome.success?
             outcome.to_response.process(self) do |value|
               respond_to do |format|
                 return_url = redirect_url_after_action_on(resource_class)
