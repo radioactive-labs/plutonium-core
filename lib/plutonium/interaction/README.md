@@ -262,6 +262,120 @@ class MyInteraction < Plutonium::Interaction::Base
 end
 ```
 
+### Interactions with Nested Attributes
+
+This example demonstrates how to handle nested attributes—specifically,
+a `User` with multiple `Contact` and `UserAddress` records using
+a Plutonium `Interaction`.
+
+#### Key Highlights
+
+The model definitions are included here for completeness, but the primary focus
+remains on demonstrating how to build interactions that handle nested
+attributes.
+
+- Core user attributes (`first_name`, `last_name`, `email`) are declared and
+  validated at the top level of the interaction.
+
+- Nested associations (`contacts`, `addresses`) are managed via
+  `accepts_nested_attributes_for`. The optional `reject_if` condition is used
+  to discard entries that lack required fields—helping ensure data integrity at
+  the input level.
+
+- The `nested_input` DSL provides a declarative way to structure nested inputs,
+  specifying accepted fields and mapping them to their respective definition
+  classes (`ContactDefinition` and `UserAddressDefinition`).
+
+- During execution, a `User` instance is initialized with both top-level and
+  nested attributes, then persisted with all applicable validations.
+
+**Note:** The `class_name` option is explicitly defined in the interaction's
+`accepts_nested_attributes_for` macro because the `addresses` association does
+not directly map to its underlying model name. Simply provide the class name,
+for example, `class_name: "UserAddress"`, to ensure the correct model is used.
+
+**This is essential only when the association name differs from the actual
+class name.**
+
+This approach enables seamless handling of complex nested input from forms or
+API requests, while keeping validation logic clean, maintainable, and modular.
+
+```ruby
+# app/models/user.rb
+class User < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  has_many :contacts
+  has_many :addresses, class_name: "UserAddress"
+
+  accepts_nested_attributes_for :contacts, :addresses
+end
+
+# app/models/contact.rb
+class Contact < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  belongs_to :user
+  validates :label, :phone_number, presence: true
+end
+
+# app/models/user_address.rb
+class UserAddress < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  belongs_to :user
+  validates :label, :map_url, presence: true
+end
+
+# app/interactions/users/interactions/create_user_interaction.rb
+module Users
+  module Interactions
+    class CreateUserInteraction < Plutonium::Interaction::Base
+      include Plutonium::Definition::Presentable
+
+      presents label: "Add a new user", icon: Phlex::Tabler::UserPlus
+
+      attribute :first_name, :string
+      attribute :last_name, :string
+      attribute :email, :string
+      attribute :contacts
+      attribute :addresses
+
+      validates :first_name, :last_name, presence: true
+      validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
+
+      accepts_nested_attributes_for :contacts,
+        reject_if: proc { |attributes| attributes[:label].blank? }
+
+      accepts_nested_attributes_for :addresses, class_name: "UserAddress",
+        reject_if: proc { |attributes| attributes[:label].blank? }
+
+      nested_input :contacts,
+        using: ContactDefinition,
+        fields: %i[label phone_number],
+        description: "Add one or more contacts for this user."
+
+      nested_input :addresses,
+        using: UserAddressDefinition,
+        fields: %i[label map_url],
+        description: "Add one or more addresses for this user."
+
+      private
+
+      def execute
+        user = User.new(self.attributes)
+
+        if user.save
+          success(user).with_message("User created successfully")
+        else
+          failed(user.errors)
+        end
+      end
+    end
+  end
+end
+```
+
 ## Examples
 
 ### Chaining Operations
@@ -310,7 +424,6 @@ By following these guidelines and examples, you can effectively implement and us
 This example demonstrates how to chain multiple operations, handle potential failures at each step, and return an appropriate outcome.
 
 By following these guidelines and examples, you can effectively implement and use the Use Case Driven Design pattern in your Rails applications, leading to more maintainable and testable code.
-
 
 ### Example interaction with workflow
 
@@ -366,7 +479,6 @@ module Orders
   end
 end
 ```
-
 
   class Sample < Phlex::HTML
     def view_template

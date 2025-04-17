@@ -25,6 +25,8 @@ module Plutonium
       include Plutonium::Definition::DefineableProps
       include Plutonium::Definition::ConfigAttr
       include Plutonium::Definition::Presentable
+      include Plutonium::Definition::NestedInputs
+      include Plutonium::Interaction::NestedAttributes
       # include Plutonium::Interaction::Concerns::WorkflowDSL
 
       class Form < Plutonium::UI::Form::Interaction; end
@@ -89,6 +91,7 @@ module Plutonium
       def succeed(value = nil)
         Plutonium::Interaction::Outcome::Success.new(value)
       end
+
       alias_method :success, :succeed
 
       def failed(errors = nil, attribute = :base)
