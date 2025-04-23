@@ -8,6 +8,8 @@ module Plutonium
 
         attr_reader :resource_fields, :resource_definition
 
+        alias_method :record, :object
+
         def initialize(*, resource_fields:, resource_definition:, **, &)
           super(*, **, &)
           @resource_fields = resource_fields
@@ -59,12 +61,23 @@ module Plutonium
           input_definition = definition.defined_inputs[name] || {}
           input_options = input_definition[:options] || {}
 
+          condition = input_options[:condition] || field_options[:condition]
+          return if condition && !instance_exec(&condition)
+
           tag = input_options[:as] || field_options[:as]
-          tag_attributes = input_options.except(:wrapper, :as)
-          tag_block = input_definition[:block] || ->(f) {
-            tag ||= f.inferred_field_component
-            f.send(:"#{tag}_tag", **tag_attributes)
-          }
+          tag_attributes =
+            input_options.except(:wrapper, :as, :pre_submit, :condition)
+          if input_options[:pre_submit]
+            tag_attributes[
+              "data-action"
+            ] = "change->form#preSubmit"
+          end
+          tag_block =
+            input_definition[:block] ||
+            ->(f) do
+              tag ||= f.inferred_field_component
+              f.send(:"#{tag}_tag", **tag_attributes)
+            end
 
           wrapper_options = input_options[:wrapper] || {}
           if !wrapper_options[:class] || !wrapper_options[:class].include?("col-span")
@@ -73,8 +86,10 @@ module Plutonium
             wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
           end
 
-          field_options = field_options.except(:as)
-          render form.field(name, **field_options).wrapped(**wrapper_options) do |f|
+          field_options = field_options.except(:as, :condition)
+          render form.field(name, **field_options).wrapped(
+            **wrapper_options
+          ) do |f|
             render instance_exec(f, &tag_block)
           end
         end

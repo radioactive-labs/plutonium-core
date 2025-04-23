@@ -38,12 +38,24 @@ module Plutonium
         def commit_interactive_record_action
           build_interactive_record_action_interaction
 
+          if params[:pre_submit]
+            respond_to do |format|
+              format.html do
+                render :interactive_record_action, status: :unprocessable_entity
+              end
+            end
+            return
+          end
+
           outcome = @interaction.call
-          if outcome.success?
-            outcome.to_response.process(self) do |value|
-              respond_to do |format|
-                return_url = redirect_url_after_action_on(resource_record!)
+
+          outcome.to_response.process(self) do |value|
+            respond_to do |format|
+              if outcome.success?
+                return_url = redirect_url_after_action_on(resource_class)
+
                 format.any { redirect_to return_url, status: :see_other }
+
                 if helpers.current_turbo_frame == "modal"
                   format.turbo_stream do
                     render turbo_stream: [
@@ -51,18 +63,16 @@ module Plutonium
                     ]
                   end
                 end
-              end
-            end
-          else
-            outcome.to_response.process(self) do
-              respond_to do |format|
+              else
                 format.html do
                   render :interactive_record_action, status: :unprocessable_entity
                 end
+
                 format.any do
                   @errors = @interaction.errors
                   render "errors", status: :unprocessable_entity
                 end
+
                 if helpers.current_turbo_frame == "modal"
                   format.turbo_stream do
                     render turbo_stream: [
@@ -92,12 +102,24 @@ module Plutonium
           skip_verify_current_authorized_scope!
           build_interactive_resource_action_interaction
 
+          if params[:pre_submit]
+            respond_to do |format|
+              format.html do
+                render :interactive_resource_action, status: :unprocessable_entity
+              end
+            end
+            return
+          end
+
           outcome = @interaction.call
-          if outcome.success?
-            outcome.to_response.process(self) do |value|
-              respond_to do |format|
+
+          outcome.to_response.process(self) do |value|
+            respond_to do |format|
+              if outcome.success?
                 return_url = redirect_url_after_action_on(resource_class)
+
                 format.any { redirect_to return_url, status: :see_other }
+
                 if helpers.current_turbo_frame == "modal"
                   format.turbo_stream do
                     render turbo_stream: [
@@ -105,18 +127,16 @@ module Plutonium
                     ]
                   end
                 end
-              end
-            end
-          else
-            outcome.to_response.process(self) do
-              respond_to do |format|
+              else
                 format.html do
-                  render :interactive_record_action, status: :unprocessable_entity
+                  render :interactive_resource_action, status: :unprocessable_entity
                 end
+
                 format.any do
                   @errors = @interaction.errors
                   render "errors", status: :unprocessable_entity
                 end
+
                 if helpers.current_turbo_frame == "modal"
                   format.turbo_stream do
                     render turbo_stream: [
