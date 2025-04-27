@@ -25,139 +25,6 @@
     mod
   ));
 
-  // node_modules/lodash.debounce/index.js
-  var require_lodash = __commonJS({
-    "node_modules/lodash.debounce/index.js"(exports, module) {
-      var FUNC_ERROR_TEXT = "Expected a function";
-      var NAN = 0 / 0;
-      var symbolTag = "[object Symbol]";
-      var reTrim = /^\s+|\s+$/g;
-      var reIsBadHex = /^[-+]0x[0-9a-f]+$/i;
-      var reIsBinary = /^0b[01]+$/i;
-      var reIsOctal = /^0o[0-7]+$/i;
-      var freeParseInt = parseInt;
-      var freeGlobal = typeof global == "object" && global && global.Object === Object && global;
-      var freeSelf = typeof self == "object" && self && self.Object === Object && self;
-      var root = freeGlobal || freeSelf || Function("return this")();
-      var objectProto = Object.prototype;
-      var objectToString = objectProto.toString;
-      var nativeMax = Math.max;
-      var nativeMin = Math.min;
-      var now = function() {
-        return root.Date.now();
-      };
-      function debounce6(func, wait, options2) {
-        var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
-        if (typeof func != "function") {
-          throw new TypeError(FUNC_ERROR_TEXT);
-        }
-        wait = toNumber(wait) || 0;
-        if (isObject(options2)) {
-          leading = !!options2.leading;
-          maxing = "maxWait" in options2;
-          maxWait = maxing ? nativeMax(toNumber(options2.maxWait) || 0, wait) : maxWait;
-          trailing = "trailing" in options2 ? !!options2.trailing : trailing;
-        }
-        function invokeFunc(time) {
-          var args = lastArgs, thisArg = lastThis;
-          lastArgs = lastThis = void 0;
-          lastInvokeTime = time;
-          result = func.apply(thisArg, args);
-          return result;
-        }
-        function leadingEdge(time) {
-          lastInvokeTime = time;
-          timerId = setTimeout(timerExpired, wait);
-          return leading ? invokeFunc(time) : result;
-        }
-        function remainingWait(time) {
-          var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime, result2 = wait - timeSinceLastCall;
-          return maxing ? nativeMin(result2, maxWait - timeSinceLastInvoke) : result2;
-        }
-        function shouldInvoke(time) {
-          var timeSinceLastCall = time - lastCallTime, timeSinceLastInvoke = time - lastInvokeTime;
-          return lastCallTime === void 0 || timeSinceLastCall >= wait || timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= maxWait;
-        }
-        function timerExpired() {
-          var time = now();
-          if (shouldInvoke(time)) {
-            return trailingEdge(time);
-          }
-          timerId = setTimeout(timerExpired, remainingWait(time));
-        }
-        function trailingEdge(time) {
-          timerId = void 0;
-          if (trailing && lastArgs) {
-            return invokeFunc(time);
-          }
-          lastArgs = lastThis = void 0;
-          return result;
-        }
-        function cancel() {
-          if (timerId !== void 0) {
-            clearTimeout(timerId);
-          }
-          lastInvokeTime = 0;
-          lastArgs = lastCallTime = lastThis = timerId = void 0;
-        }
-        function flush() {
-          return timerId === void 0 ? result : trailingEdge(now());
-        }
-        function debounced() {
-          var time = now(), isInvoking = shouldInvoke(time);
-          lastArgs = arguments;
-          lastThis = this;
-          lastCallTime = time;
-          if (isInvoking) {
-            if (timerId === void 0) {
-              return leadingEdge(lastCallTime);
-            }
-            if (maxing) {
-              timerId = setTimeout(timerExpired, wait);
-              return invokeFunc(lastCallTime);
-            }
-          }
-          if (timerId === void 0) {
-            timerId = setTimeout(timerExpired, wait);
-          }
-          return result;
-        }
-        debounced.cancel = cancel;
-        debounced.flush = flush;
-        return debounced;
-      }
-      function isObject(value) {
-        var type = typeof value;
-        return !!value && (type == "object" || type == "function");
-      }
-      function isObjectLike(value) {
-        return !!value && typeof value == "object";
-      }
-      function isSymbol(value) {
-        return typeof value == "symbol" || isObjectLike(value) && objectToString.call(value) == symbolTag;
-      }
-      function toNumber(value) {
-        if (typeof value == "number") {
-          return value;
-        }
-        if (isSymbol(value)) {
-          return NAN;
-        }
-        if (isObject(value)) {
-          var other2 = typeof value.valueOf == "function" ? value.valueOf() : value;
-          value = isObject(other2) ? other2 + "" : other2;
-        }
-        if (typeof value != "string") {
-          return value === 0 ? value : +value;
-        }
-        value = value.replace(reTrim, "");
-        var isBinary = reIsBinary.test(value);
-        return isBinary || reIsOctal.test(value) ? freeParseInt(value.slice(2), isBinary ? 2 : 8) : reIsBadHex.test(value) ? NAN : +value;
-      }
-      module.exports = debounce6;
-    }
-  });
-
   // node_modules/namespace-emitter/index.js
   var require_namespace_emitter = __commonJS({
     "node_modules/namespace-emitter/index.js"(exports, module) {
@@ -431,7 +298,7 @@
       var FUNC_ERROR_TEXT = "Expected a function";
       var nativeMax = Math.max;
       var nativeMin = Math.min;
-      function debounce6(func, wait, options2) {
+      function debounce5(func, wait, options2) {
         var lastArgs, lastThis, maxWait, result, timerId, lastCallTime, lastInvokeTime = 0, leading = false, maxing = false, trailing = true;
         if (typeof func != "function") {
           throw new TypeError(FUNC_ERROR_TEXT);
@@ -512,14 +379,14 @@
         debounced.flush = flush;
         return debounced;
       }
-      module.exports = debounce6;
+      module.exports = debounce5;
     }
   });
 
   // node_modules/lodash/throttle.js
   var require_throttle = __commonJS({
     "node_modules/lodash/throttle.js"(exports, module) {
-      var debounce6 = require_debounce();
+      var debounce5 = require_debounce();
       var isObject = require_isObject();
       var FUNC_ERROR_TEXT = "Expected a function";
       function throttle2(func, wait, options2) {
@@ -531,7 +398,7 @@
           leading = "leading" in options2 ? !!options2.leading : leading;
           trailing = "trailing" in options2 ? !!options2.trailing : trailing;
         }
-        return debounce6(func, wait, {
+        return debounce5(func, wait, {
           "leading": leading,
           "maxWait": wait,
           "trailing": trailing
@@ -6271,9 +6138,17 @@
   };
 
   // src/js/controllers/form_controller.js
-  var import_lodash = __toESM(require_lodash(), 1);
   var form_controller_default = class extends Controller {
     connect() {
+    }
+    preSubmit() {
+      const hiddenField = document.createElement("input");
+      hiddenField.type = "hidden";
+      hiddenField.name = "pre_submit";
+      hiddenField.value = "true";
+      this.element.appendChild(hiddenField);
+      this.element.setAttribute("novalidate", "");
+      this.submit();
     }
     submit() {
       this.element.requestSubmit();
@@ -7562,7 +7437,7 @@
   }
 
   // node_modules/@popperjs/core/lib/utils/debounce.js
-  function debounce2(fn2) {
+  function debounce(fn2) {
     var pending;
     return function() {
       if (!pending) {
@@ -7687,7 +7562,7 @@
         },
         // Async and optimistically optimized update – it will not be executed if
         // not necessary (debounced to run at most once-per-tick)
-        update: debounce2(function() {
+        update: debounce(function() {
           return new Promise(function(resolve) {
             instance.forceUpdate();
             resolve(state);
@@ -14009,7 +13884,7 @@ Uppy plugins must have unique \`id\` options.`;
   function _classPrivateFieldLooseKey4(e4) {
     return "__private_" + id4++ + "_" + e4;
   }
-  function debounce3(fn2) {
+  function debounce2(fn2) {
     let calling = null;
     let latestArgs;
     return function() {
@@ -14069,7 +13944,7 @@ Uppy plugins must have unique \`id\` options.`;
         this.isTargetDOMEl = true;
         const uppyRootElement = document.createElement("div");
         uppyRootElement.classList.add("uppy-Root");
-        _classPrivateFieldLooseBase4(this, _updateUI)[_updateUI] = debounce3((state) => {
+        _classPrivateFieldLooseBase4(this, _updateUI)[_updateUI] = debounce2((state) => {
           if (!this.uppy.getPlugin(this.id))
             return;
           E(this.render(state, uppyRootElement), uppyRootElement);
@@ -24904,7 +24779,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   function getLocationForLink(link2) {
     return expandURL(link2.getAttribute("href") || "");
   }
-  function debounce5(fn2, delay) {
+  function debounce4(fn2, delay) {
     let timeoutId = null;
     return (...args) => {
       const callback = () => fn2.apply(this, args);
@@ -28663,7 +28538,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       return this.#pageRefreshDebouncePeriod;
     }
     set pageRefreshDebouncePeriod(value) {
-      this.refresh = debounce5(this.debouncedRefresh.bind(this), value);
+      this.refresh = debounce4(this.debouncedRefresh.bind(this), value);
       this.#pageRefreshDebouncePeriod = value;
     }
     // Preloader delegate
