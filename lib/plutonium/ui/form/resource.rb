@@ -62,7 +62,7 @@ module Plutonium
           input_options = input_definition[:options] || {}
 
           condition = input_options[:condition] || field_options[:condition]
-          hidden = condition && !instance_exec(&condition)
+          conditionally_hidden = condition && !instance_exec(&condition)
 
           tag = input_options[:as] || field_options[:as]
           tag_attributes =
@@ -91,10 +91,20 @@ module Plutonium
           end
 
           field_options = field_options.except(:as, :condition)
-          render form.field(name, **field_options).wrapped(
-            **wrapper_options
-          ) do |f|
-            render instance_exec(f, &tag_block)
+          if conditionally_hidden
+            # Do not render the field, but still create field
+            # Phlexi form will record it without rendering it, allowing us to extract its value
+            form.field(name, **field_options).wrapped(
+              **wrapper_options
+            ) do |f|
+              instance_exec(f, &tag_block)
+            end
+          else
+            render form.field(name, **field_options).wrapped(
+              **wrapper_options
+            ) do |f|
+              render instance_exec(f, &tag_block)
+            end
           end
         end
 
