@@ -62,19 +62,14 @@ module Plutonium
           input_options = input_definition[:options] || {}
 
           tag = input_options[:as] || field_options[:as]
-          tag_attributes =
-            input_options.except(:wrapper, :as, :pre_submit, :condition)
+          tag_attributes = input_options.except(:wrapper, :as, :pre_submit, :condition)
           if input_options[:pre_submit]
-            tag_attributes[
-              "data-action"
-            ] = "change->form#preSubmit"
+            tag_attributes["data-action"] = "change->form#preSubmit"
           end
-          tag_block =
-            input_definition[:block] ||
-            ->(f) do
-              tag ||= f.inferred_field_component
-              f.send(:"#{tag}_tag", **tag_attributes)
-            end
+          tag_block = input_definition[:block] || ->(f) do
+            tag ||= f.inferred_field_component
+            f.send(:"#{tag}_tag", **tag_attributes)
+          end
 
           field_options = field_options.except(:as, :condition)
 
