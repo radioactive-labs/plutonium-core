@@ -62,7 +62,7 @@ module Plutonium
           input_options = input_definition[:options] || {}
 
           condition = input_options[:condition] || field_options[:condition]
-          return if condition && !instance_exec(&condition)
+          hidden = condition && !instance_exec(&condition)
 
           tag = input_options[:as] || field_options[:as]
           tag_attributes =
@@ -84,6 +84,10 @@ module Plutonium
             # temp hack to allow col span overrides
             # TODO: remove once we complete theming, which will support merges
             wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
+          end
+
+          if hidden
+            wrapper_options[:class] = tokens("hidden", wrapper_options[:class])
           end
 
           field_options = field_options.except(:as, :condition)
