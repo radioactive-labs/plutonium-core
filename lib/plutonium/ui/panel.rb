@@ -1,8 +1,6 @@
 module Plutonium
   module UI
     class Panel < Plutonium::UI::Component::Base
-      include Phlex::DeferredRender
-
       def initialize
         @items = []
       end
@@ -17,6 +15,15 @@ module Plutonium
 
       def with_content(content)
         @content = content
+      end
+
+      def before_template
+        vanish do
+          @items.each do |item|
+            render item
+          end
+        end
+        super
       end
 
       def view_template
