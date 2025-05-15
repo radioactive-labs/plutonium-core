@@ -7,6 +7,7 @@ module Plutonium
         extend ActiveSupport::Concern
         include Methods
         include Kit
+        include Tokens
 
         if Rails.env.development?
           def around_template(&)
