@@ -17,8 +17,8 @@ module Plutonium
         def render_before_main
           super
 
-          render("resource_header")
-          render("resource_sidebar")
+          render partial("resource_header")
+          render partial("resource_sidebar")
         end
       end
     end

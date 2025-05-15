@@ -59,7 +59,7 @@ module Plutonium
         end
 
         def render_flash
-          render "flash"
+          render partial("flash")
         end
 
         def render_before_content

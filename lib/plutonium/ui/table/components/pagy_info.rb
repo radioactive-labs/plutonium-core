@@ -34,11 +34,6 @@ module Plutonium
           end
 
           def per_page_selector
-            original_attributes = Phlex::HTML::EVENT_ATTRIBUTES
-            temp_attributes = Phlex::HTML::EVENT_ATTRIBUTES.dup
-            temp_attributes.delete("onchange")
-            Phlex::HTML.const_set(:EVENT_ATTRIBUTES, temp_attributes)
-
             div(
               class: "flex items-center space-x-2 mt-2 md:mt-0",
               data_controller: "select-navigator"
@@ -55,9 +50,6 @@ module Plutonium
                 end
               end
             end
-          ensure
-            # TODO: remove this once Phlex adds support for SafeValues
-            Phlex::HTML.const_set(:EVENT_ATTRIBUTES, original_attributes)
           end
 
           def select_classes

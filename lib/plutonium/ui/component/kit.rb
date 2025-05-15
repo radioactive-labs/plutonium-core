@@ -12,7 +12,7 @@ module Plutonium
       #   class MyView
       #     include Plutonium::UI::Component::Kit
       #
-      #     def template
+      #     def view_template
       #       PageHeader(title: "Dashboard")
       #       TabList(items: tabs)
       #       Panel(class: "mt-4") do

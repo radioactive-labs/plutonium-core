@@ -23,7 +23,7 @@ module Plutonium
 
           def render_value(value)
             article(**attributes) {
-              unsafe_raw(render_markdown(value))
+              raw(safe(render_markdown(value)))
             }
           end
 
