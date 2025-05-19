@@ -5,8 +5,10 @@ module Plutonium
     module Component
       module Behaviour
         extend ActiveSupport::Concern
+        include Phlexi::Field::Common::Tokens
         include Methods
         include Kit
+        include Tokens
 
         if Rails.env.development?
           def around_template(&)

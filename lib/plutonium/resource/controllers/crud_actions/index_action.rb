@@ -14,7 +14,7 @@ module Plutonium
           def filtered_resource_collection
             query_params = current_definition
               .query_form.new(nil, query_object: current_query_object, page_size: nil)
-              .extract_input(params)[:q]
+              .extract_input(params, view_context:)[:q]
 
             base_query = current_authorized_scope
             current_query_object.apply(base_query, query_params)

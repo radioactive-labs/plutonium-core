@@ -7,6 +7,7 @@ module Plutonium
         include Plutonium::UI::Component::Behaviour
 
         class Builder < Builder
+          include Phlexi::Field::Common::Tokens
           include Plutonium::UI::Form::Options::InferredTypes
 
           def easymde_tag(**, &)

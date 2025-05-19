@@ -19,7 +19,7 @@ module Plutonium
         end
 
         def render_default_content
-          render "resource_table"
+          render partial("resource_table")
         end
 
         def page_type = :index_page

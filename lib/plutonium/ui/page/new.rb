@@ -15,7 +15,7 @@ module Plutonium
         end
 
         def render_default_content
-          render "resource_form"
+          render partial("resource_form")
         end
 
         def page_type = :new_page
