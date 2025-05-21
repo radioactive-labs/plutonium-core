@@ -17,12 +17,8 @@ module Plutonium
         @content = content
       end
 
-      def before_template
-        vanish do
-          @items.each do |item|
-            render item
-          end
-        end
+      def before_template(&)
+        vanish(&)
         super
       end
 
