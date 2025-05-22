@@ -140,9 +140,8 @@
         end %>
       </div>
     <% end %>
+    <%= render "password_visibility" %>
   <% end %>
-
-  <%= render "password_visibility" %>
 
   <%= form.submit rodauth.create_account_button,
               class:
