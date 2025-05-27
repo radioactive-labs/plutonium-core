@@ -1,6 +1,6 @@
 /**
- * Slim Select with Tailwind CSS
- * Converted to use Tailwind design tokens and dark mode support
+ * Slim Select with Tailwind CSS - Matched to Form Theme
+ * Updated to match the Plutonium form input styling
  */
 
 /* Animation keyframes */
@@ -33,9 +33,9 @@
   @apply !hidden;
 }
 
-/* Main container */
+/* Main container - Updated to match form input theme */
 .ss-main {
-  @apply flex flex-row relative select-none w-full min-h-8 p-1 cursor-pointer border border-gray-300 rounded bg-white text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200;
+  @apply flex flex-row relative select-none w-full min-h-8 p-2 cursor-pointer border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
 }
 
 .ss-main.ss-disabled {
@@ -60,7 +60,7 @@
 }
 
 .ss-main .ss-values .ss-placeholder {
-  @apply flex px-2 py-1 my-auto leading-none items-center w-full text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap dark:text-gray-400;
+  @apply flex px-0 py-0 my-auto leading-none items-center w-full text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap dark:text-gray-400;
 }
 
 .ss-main .ss-values .ss-max {
@@ -68,7 +68,7 @@
 }
 
 .ss-main .ss-values .ss-single {
-  @apply flex my-auto ml-1;
+  @apply flex my-auto;
 }
 
 .ss-main .ss-values .ss-value {
@@ -100,7 +100,7 @@
   stroke-linejoin: round;
 }
 
-/* Deselect button */
+/* Deselect button - Updated colors to match theme */
 .ss-main .ss-deselect {
   @apply flex-none flex items-center justify-center w-fit h-auto px-2;
 }
@@ -110,27 +110,27 @@
 }
 
 .ss-main .ss-deselect svg path {
-  @apply fill-none stroke-gray-700 dark:stroke-gray-300;
+  @apply fill-none stroke-gray-700 dark:stroke-white;
   stroke-width: 20;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-/* Arrow */
+/* Arrow - Updated colors */
 .ss-main .ss-arrow {
   @apply flex-none flex items-center justify-end w-3 h-3 mx-2 my-auto;
 }
 
 .ss-main .ss-arrow path {
-  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-gray-300;
+  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-white;
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
-/* Content container */
+/* Content container - Updated to match shadow and borders */
 .ss-content {
-  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-white shadow-lg transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-gray-800 dark:border-gray-600;
+  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-white shadow-sm transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-gray-700 dark:border-gray-600;
   transform: scaleY(0);
   transform-origin: top;
 }
@@ -144,31 +144,31 @@
 }
 
 .ss-content.ss-open-above {
-  @apply flex-col-reverse opacity-100 rounded-t;
+  @apply flex-col-reverse opacity-100 rounded-t-md;
   transform: scaleY(1);
   transform-origin: bottom;
 }
 
 .ss-content.ss-open-below {
-  @apply opacity-100 rounded-b;
+  @apply opacity-100 rounded-b-md;
   transform: scaleY(1);
   transform-origin: top;
 }
 
-/* Search */
+/* Search - Updated to match form input styling */
 .ss-content .ss-search {
   @apply flex-none flex flex-row p-2;
 }
 
 .ss-content .ss-search input {
-  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded bg-white outline-none text-left placeholder:text-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400;
+  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white outline-none text-left placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
   box-sizing: border-box;
   font-size: inherit;
   line-height: inherit;
 }
 
 .ss-content .ss-search .ss-addable {
-  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded dark:border-gray-600;
+  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded-md shadow-sm dark:border-gray-600;
 }
 
 .ss-content .ss-search .ss-addable svg {
@@ -176,7 +176,7 @@
 }
 
 .ss-content .ss-search .ss-addable svg path {
-  @apply fill-none stroke-gray-700 dark:stroke-gray-300;
+  @apply fill-none stroke-gray-700 dark:stroke-white;
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -192,20 +192,20 @@
 }
 
 .ss-content .ss-list .ss-searching {
-  @apply text-gray-700 p-2 dark:text-gray-200;
+  @apply text-gray-700 p-2 dark:text-white;
 }
 
 .ss-content .ss-list .ss-optgroup.ss-close .ss-option {
   @apply !hidden;
 }
 
-/* Option groups */
+/* Option groups - Updated colors */
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label {
-  @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-700;
+  @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-600;
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {
-  @apply flex-auto font-bold text-gray-700 dark:text-gray-200;
+  @apply flex-auto font-bold text-gray-700 dark:text-white;
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label:has(.ss-arrow) {
@@ -255,7 +255,7 @@
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow path {
-  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-gray-300;
+  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-white;
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -265,9 +265,9 @@
   @apply p-1 pl-6;
 }
 
-/* Options */
+/* Options - Updated text colors to match theme */
 .ss-content .ss-list .ss-option {
-  @apply block p-2 whitespace-normal text-gray-700 cursor-pointer select-none hover:bg-primary-500 hover:text-white dark:text-gray-200 dark:hover:bg-primary-500 dark:hover:text-white;
+  @apply block p-2 whitespace-normal text-gray-700 cursor-pointer select-none hover:bg-primary-500 hover:text-white dark:text-white dark:hover:bg-primary-500 dark:hover:text-white;
   min-height: 0;
 }
 
@@ -290,4 +290,21 @@
 
 .ss-content .ss-list .ss-option .ss-search-highlight {
   @apply inline-block bg-yellow-200 dark:bg-yellow-300;
+}
+
+/* Additional state classes to match form validation states */
+.ss-main.ss-invalid {
+  @apply bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 focus:ring-red-500 focus:border-red-500;
+}
+
+.ss-main.ss-invalid .ss-values .ss-placeholder {
+  @apply text-red-700 dark:text-red-500;
+}
+
+.ss-main.ss-valid {
+  @apply bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 focus:ring-green-500 focus:border-green-500;
+}
+
+.ss-main.ss-valid .ss-values .ss-placeholder {
+  @apply text-green-700 dark:text-green-500;
 }
