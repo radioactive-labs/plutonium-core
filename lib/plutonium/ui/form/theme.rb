@@ -21,7 +21,7 @@ module Plutonium
             valid_label: "text-green-700 dark:text-green-500",
             neutral_label: "text-gray-500 dark:text-gray-400",
             # input themes
-            input: "w-full p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700",
+            input: "w-full p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:ring-2",
             invalid_input: "bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 placeholder-red-700 dark:placeholder-red-500 focus:ring-red-500 focus:border-red-500",
             valid_input: "bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500",
             neutral_input: "border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500",
@@ -36,6 +36,7 @@ module Plutonium
             neutral_color: nil,
             # file
             # file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
+            file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none focus:ring-2 [&::file-selector-button]:mr-3 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-gray-50 [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-l-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-medium [&::file-selector-button]:text-gray-700 [&::file-selector-button]:hover:bg-gray-100 [&::file-selector-button]:cursor-pointer dark:[&::file-selector-button]:bg-gray-600 dark:[&::file-selector-button]:text-gray-200 dark:[&::file-selector-button]:hover:bg-gray-500",
             # hint themes
             hint: "mt-2 text-sm text-gray-500 dark:text-gray-200 whitespace-pre",
             # error themes

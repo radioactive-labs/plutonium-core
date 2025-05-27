@@ -1,13 +1,16 @@
-@layer components {
-  .pu-color-input::-webkit-color-swatch-wrapper {
-    @apply p-0;
-  }
+/**
+ * Color Input Styles for Tailwind v4
+ * Converted from @layer components to work with v4
+ */
 
-  .pu-color-input::-webkit-color-swatch {
-    @apply border-none rounded-lg;
-  }
+.pu-color-input::-webkit-color-swatch-wrapper {
+  @apply p-0;
+}
 
-  .pu-color-input::-moz-color-swatch {
-    @apply border-none rounded-lg;
-  }
+.pu-color-input::-webkit-color-swatch {
+  @apply border-none rounded-lg;
+}
+
+.pu-color-input::-moz-color-swatch {
+  @apply border-none rounded-lg;
 }

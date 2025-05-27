@@ -1,313 +1,293 @@
 /**
-* Slim Select Styles
-* Based on https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.min.css
-* Adapted for Flowbite with dark mode support
-*/
+ * Slim Select with Tailwind CSS
+ * Converted to use Tailwind design tokens and dark mode support
+ */
 
-@layer components {
-  :root {
-    --ss-primary-color: theme('colors.primary.500');
-    --ss-bg-color: theme('colors.white');
-    --ss-font-color: theme('colors.gray.900');
-    --ss-font-placeholder-color: theme('colors.gray.500');
-    --ss-disabled-color: theme('colors.gray.100');
-    --ss-border-color: theme('colors.gray.300');
-    --ss-highlight-color: theme('colors.yellow.200');
-    --ss-success-color: theme('colors.green.500');
-    --ss-error-color: theme('colors.red.500');
-    --ss-focus-color: theme('colors.primary.500');
+/* Animation keyframes */
+@keyframes ss-valueIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
   }
 
-  .dark {
-    --ss-primary-color: theme('colors.primary.400');
-    --ss-bg-color: theme('colors.gray.700');
-    --ss-font-color: theme('colors.white');
-    --ss-font-placeholder-color: theme('colors.gray.400');
-    --ss-disabled-color: theme('colors.gray.800');
-    --ss-border-color: theme('colors.gray.600');
-    --ss-highlight-color: theme('colors.yellow.300');
-    --ss-success-color: theme('colors.green.400');
-    --ss-error-color: theme('colors.red.400');
-    --ss-focus-color: theme('colors.primary.400');
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ss-valueOut {
+  0% {
+    transform: scale(1);
+    opacity: 1;
   }
 
-  @keyframes ss-valueIn {
-    0% {
-      transform: scale(0);
-      opacity: 0;
-    }
-
-    100% {
-      transform: scale(1);
-      opacity: 1;
-    }
+  100% {
+    transform: scale(0);
+    opacity: 0;
   }
+}
 
-  @keyframes ss-valueOut {
-    0% {
-      transform: scale(1);
-      opacity: 1;
-    }
+/* Hide utility */
+.ss-hide {
+  @apply !hidden;
+}
 
-    100% {
-      transform: scale(0);
-      opacity: 0;
-    }
-  }
+/* Main container */
+.ss-main {
+  @apply flex flex-row relative select-none w-full min-h-8 p-1 cursor-pointer border border-gray-300 rounded bg-white text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200;
+}
 
-  .ss-hide {
-    display: none;
-  }
+.ss-main.ss-disabled {
+  @apply cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-400;
+}
 
-  .ss-main {
-    @apply flex flex-row relative select-none w-full p-2 border rounded-md shadow-sm font-medium text-sm border-gray-300 bg-white text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none cursor-pointer transition-colors duration-200 overflow-hidden;
-  }
+.ss-main.ss-disabled .ss-values .ss-value .ss-value-delete {
+  @apply cursor-not-allowed;
+}
 
-  .ss-main:focus {
-    @apply ring-1 ring-primary-500 border-primary-500;
-  }
+.ss-main.ss-open-above {
+  @apply rounded-t-none;
+}
 
-  .ss-main.ss-disabled {
-    @apply cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
-  }
+.ss-main.ss-open-below {
+  @apply rounded-b-none;
+}
 
-  .ss-main.ss-open-above {
-    @apply rounded-b-md rounded-t-none;
-  }
+/* Values container */
+.ss-main .ss-values {
+  @apply inline-flex flex-wrap gap-1 flex-1;
+}
 
-  .ss-main.ss-open-below {
-    @apply rounded-t-md rounded-b-none;
-  }
+.ss-main .ss-values .ss-placeholder {
+  @apply flex px-2 py-1 my-auto leading-none items-center w-full text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap dark:text-gray-400;
+}
 
-  .ss-main .ss-values {
-    @apply inline-flex flex-wrap gap-[5px] flex-1;
-  }
+.ss-main .ss-values .ss-max {
+  @apply flex select-none items-center w-fit text-xs text-white leading-none px-2 py-1 bg-primary-500 rounded;
+}
 
-  .ss-main .ss-values .ss-placeholder {
-    @apply flex p-0 m-0 leading-normal items-center w-full text-gray-500 dark:text-gray-400 overflow-hidden truncate whitespace-nowrap;
-  }
+.ss-main .ss-values .ss-single {
+  @apply flex my-auto ml-1;
+}
 
-  .ss-main .ss-values .ss-max {
-    @apply flex select-none items-center w-fit text-xs text-white dark:text-gray-900 leading-normal p-[3px_5px] bg-primary-500 rounded-md;
-  }
+.ss-main .ss-values .ss-value {
+  @apply flex select-none items-center w-fit bg-primary-500 rounded text-white;
+  animation: ss-valueIn 0.2s ease-out forwards;
+}
 
-  .ss-main .ss-values .ss-single {
-    @apply flex m-0;
-  }
+.ss-main .ss-values .ss-value.ss-value-out {
+  animation: ss-valueOut 0.2s ease-out forwards;
+}
 
-  .ss-main .ss-values .ss-value {
-    @apply flex select-none items-center w-fit bg-primary-500 rounded-md text-white;
-    animation: ss-valueIn 0.2s ease-out forwards;
-  }
+.ss-main .ss-values .ss-value .ss-value-text {
+  @apply text-xs leading-none px-2 py-1;
+}
 
-  .ss-main .ss-values .ss-value.ss-value-out {
-    animation: ss-valueOut 0.2s ease-out forwards;
-  }
+.ss-main .ss-values .ss-value .ss-value-delete {
+  @apply flex items-center h-2 w-2 px-2 py-1 cursor-pointer border-l border-solid border-white;
+  box-sizing: content-box;
+}
 
-  .ss-main .ss-values .ss-value .ss-value-text {
-    @apply text-xs leading-normal p-[3px_5px];
-  }
+.ss-main .ss-values .ss-value .ss-value-delete svg {
+  @apply h-2 w-2;
+}
 
-  .ss-main .ss-values .ss-value .ss-value-delete {
-    @apply flex items-center h-[7px] w-[7px] p-[3px_5px] cursor-pointer border-l border-solid border-white box-content;
-  }
+.ss-main .ss-values .ss-value .ss-value-delete svg path {
+  @apply fill-none stroke-white;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-main .ss-values .ss-value .ss-value-delete svg {
-    @apply h-[7px] w-[7px];
-  }
+/* Deselect button */
+.ss-main .ss-deselect {
+  @apply flex-none flex items-center justify-center w-fit h-auto px-2;
+}
 
-  .ss-main .ss-values .ss-value .ss-value-delete svg path {
-    @apply fill-none stroke-white;
-    stroke-width: 18;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-main .ss-deselect svg {
+  @apply w-2 h-2;
+}
 
-  .ss-main .ss-deselect {
-    @apply flex-none flex items-center justify-center w-fit h-auto p-[0_5px];
-  }
+.ss-main .ss-deselect svg path {
+  @apply fill-none stroke-gray-700 dark:stroke-gray-300;
+  stroke-width: 20;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-main .ss-deselect svg {
-    @apply w-[8px] h-[8px];
-  }
+/* Arrow */
+.ss-main .ss-arrow {
+  @apply flex-none flex items-center justify-end w-3 h-3 mx-2 my-auto;
+}
 
-  .ss-main .ss-deselect svg path {
-    @apply fill-none stroke-gray-500 dark:stroke-gray-400;
-    stroke-width: 20;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-main .ss-arrow path {
+  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-gray-300;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-main .ss-arrow {
-    @apply flex-none flex items-center justify-end w-4 h-4 m-auto;
-  }
+/* Content container */
+.ss-content {
+  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-white shadow-lg transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-gray-800 dark:border-gray-600;
+  transform: scaleY(0);
+  transform-origin: top;
+}
 
-  .ss-main .ss-arrow path {
-    @apply fill-none stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-content.ss-relative {
+  @apply relative h-full;
+}
 
-  .ss-content {
-    @apply absolute flex h-auto flex-col w-auto max-h-[300px] box-border border rounded-b-md shadow-lg border-gray-300 bg-white dark:bg-gray-700 dark:border-gray-600 transition-all duration-200 opacity-0 z-[10000];
-    transform: scaleY(0);
-    transform-origin: top;
-  }
+.ss-content.ss-fixed {
+  @apply fixed;
+}
 
-  .ss-content.ss-relative {
-    @apply relative h-full;
-  }
+.ss-content.ss-open-above {
+  @apply flex-col-reverse opacity-100 rounded-t;
+  transform: scaleY(1);
+  transform-origin: bottom;
+}
 
-  .ss-content.ss-fixed {
-    @apply fixed;
-  }
+.ss-content.ss-open-below {
+  @apply opacity-100 rounded-b;
+  transform: scaleY(1);
+  transform-origin: top;
+}
 
-  .ss-content.ss-open-above {
-    @apply flex-col-reverse opacity-100 rounded-t-md;
-    transform: scaleY(1);
-    transform-origin: bottom;
-  }
+/* Search */
+.ss-content .ss-search {
+  @apply flex-none flex flex-row p-2;
+}
 
-  .ss-content.ss-open-below {
-    @apply opacity-100 rounded-b-md;
-    transform: scaleY(1);
-    transform-origin: top;
-  }
+.ss-content .ss-search input {
+  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded bg-white outline-none text-left placeholder:text-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder:text-gray-400;
+  box-sizing: border-box;
+  font-size: inherit;
+  line-height: inherit;
+}
 
-  .ss-content .ss-search {
-    @apply flex-none flex flex-row p-2;
-  }
+.ss-content .ss-search .ss-addable {
+  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded dark:border-gray-600;
+}
 
-  .ss-content .ss-search input {
-    @apply inline-flex text-base leading-normal flex-auto w-full min-w-0 p-2 m-0 border rounded-md shadow-sm font-medium text-sm border-gray-300 bg-gray-100 text-gray-900 placeholder-gray-400 dark:bg-gray-800 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none text-left box-border;
-  }
+.ss-content .ss-search .ss-addable svg {
+  @apply flex items-center justify-end flex-none w-3 h-3 mx-2 my-auto;
+}
 
-  .ss-content .ss-search .ss-addable {
-    @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border shadow-sm border-gray-300 dark:border-gray-600;
-  }
+.ss-content .ss-search .ss-addable svg path {
+  @apply fill-none stroke-gray-700 dark:stroke-gray-300;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-content .ss-search .ss-addable svg {
-    @apply flex items-center justify-end flex-none w-4 h-4 m-2;
-  }
+/* List */
+.ss-content .ss-list {
+  @apply flex-auto h-auto overflow-x-hidden overflow-y-auto;
+}
 
-  .ss-content .ss-search .ss-addable svg path {
-    @apply fill-none stroke-gray-500 dark:stroke-gray-400;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-content .ss-list .ss-error {
+  @apply text-red-500 p-2 dark:text-red-400;
+}
 
-  .ss-content .ss-list {
-    @apply flex-auto h-auto overflow-x-hidden overflow-y-auto;
-  }
+.ss-content .ss-list .ss-searching {
+  @apply text-gray-700 p-2 dark:text-gray-200;
+}
 
-  .ss-content .ss-list .ss-error {
-    @apply text-red-500 dark:text-red-400 p-2;
-  }
+.ss-content .ss-list .ss-optgroup.ss-close .ss-option {
+  @apply !hidden;
+}
 
-  .ss-content .ss-list .ss-searching {
-    @apply text-gray-900 dark:text-white p-2;
-  }
+/* Option groups */
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label {
+  @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-700;
+}
 
-  .ss-content .ss-list .ss-optgroup.ss-close .ss-option {
-    display: none;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {
+  @apply flex-auto font-bold text-gray-700 dark:text-gray-200;
+}
 
-  /* Update the specific no results style */
-  .ss-content .ss-list .ss-search {
-    @apply flex-none text-sm text-gray-500 dark:text-gray-400 p-2 font-medium;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label:has(.ss-arrow) {
+  @apply cursor-pointer;
+}
 
-  /* The original search container styles should be scoped properly */
-  .ss-content>.ss-search {
-    @apply flex-none flex flex-row p-2;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions {
+  @apply flex-none flex flex-row items-center justify-center gap-1;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label {
-    @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-800;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall {
+  @apply flex-none flex flex-row cursor-pointer hover:opacity-50;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {
-    @apply flex-auto font-bold text-gray-900 dark:text-white;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall.ss-selected svg path {
+  @apply stroke-red-500 dark:stroke-red-400;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label:has(.ss-arrow) {
-    @apply cursor-pointer;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall span {
+  @apply flex-none flex items-center justify-center text-[60%] text-center pr-1;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions {
-    @apply flex-none flex flex-row items-center justify-center gap-2;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg {
+  @apply flex-none w-3 h-3;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall {
-    @apply flex-none flex flex-row cursor-pointer hover:opacity-50;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg path {
+  @apply fill-none stroke-green-500 dark:stroke-green-400;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall.ss-selected svg path {
-    @apply stroke-red-500 dark:stroke-red-400;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg:first-child {
+  stroke-width: 5;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall span {
-    @apply flex-none flex items-center justify-center text-[60%] text-center pr-1;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg:last-child {
+  stroke-width: 11;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg {
-    @apply flex-none w-[13px] h-[13px];
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable {
+  @apply flex-none flex flex-row cursor-pointer;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg path {
-    @apply fill-none stroke-green-500 dark:stroke-green-400;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow {
+  @apply flex-auto w-2.5 h-2.5;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg:first-child {
-    stroke-width: 5;
-  }
+.ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow path {
+  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-gray-300;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-selectall svg:last-child {
-    stroke-width: 11;
-  }
+.ss-content .ss-list .ss-optgroup .ss-option {
+  @apply p-1 pl-6;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable {
-    @apply flex-none flex flex-row cursor-pointer;
-  }
+/* Options */
+.ss-content .ss-list .ss-option {
+  @apply block p-2 whitespace-normal text-gray-700 cursor-pointer select-none hover:bg-primary-500 hover:text-white dark:text-gray-200 dark:hover:bg-primary-500 dark:hover:text-white;
+  min-height: 0;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow {
-    @apply flex-auto w-[10px] h-[10px];
-  }
+.ss-content .ss-list .ss-option:empty {
+  @apply hidden p-0 m-0;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow path {
-    @apply fill-none stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+.ss-content .ss-list .ss-option.ss-highlighted,
+.ss-content .ss-list .ss-option:not(.ss-disabled).ss-selected {
+  @apply text-white bg-primary-500;
+}
 
-  .ss-content .ss-list .ss-optgroup .ss-option {
-    @apply p-2 pl-6;
-  }
+.ss-content .ss-list .ss-option.ss-disabled {
+  @apply cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+}
 
-  .ss-content .ss-list .ss-option {
-    @apply block p-2 whitespace-normal text-gray-900 dark:text-white cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600;
-    min-height: 0;
-  }
+.ss-content .ss-list .ss-option.ss-disabled:hover {
+  @apply text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800;
+}
 
-  .ss-content .ss-list .ss-option:empty {
-    @apply hidden p-0 m-0;
-  }
-
-  .ss-content .ss-list .ss-option.ss-highlighted,
-  .ss-content .ss-list .ss-option:not(.ss-disabled).ss-selected {
-    @apply text-white dark:text-gray-900 bg-primary-500;
-  }
-
-  .ss-content .ss-list .ss-option.ss-disabled {
-    @apply cursor-not-allowed bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
-  }
-
-  .ss-content .ss-list .ss-option .ss-search-highlight {
-    @apply inline-block bg-yellow-200 dark:bg-yellow-300;
-  }
+.ss-content .ss-list .ss-option .ss-search-highlight {
+  @apply inline-block bg-yellow-200 dark:bg-yellow-300;
 }
