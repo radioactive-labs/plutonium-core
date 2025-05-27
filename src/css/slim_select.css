@@ -1,6 +1,7 @@
 /**
- * Slim Select with Tailwind CSS - Matched to Form Theme
- * Updated to match the Plutonium form input styling
+ * Slim Select with Tailwind CSS
+ * Overrides for theming with Tailwind colors and dark mode support
+ * Import this AFTER the original slim_select.css
  */
 
 /* Animation keyframes */

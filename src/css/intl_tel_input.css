@@ -1,0 +1,259 @@
+/**
+ * International Telephone Input - Complete Tailwind v4 Overrides
+ * Overrides to match Plutonium form theme using Tailwind colors
+ * Import this AFTER the original intl_tel_input.css
+ */
+
+/* Override CSS variables with Tailwind colors */
+:root {
+  --iti-hover-color: theme(colors.primary.50);
+  --iti-border-color: theme(colors.gray.300);
+  --iti-dialcode-color: theme(colors.gray.500);
+  --iti-dropdown-bg: theme(colors.white);
+  --iti-arrow-color: theme(colors.gray.700);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --iti-hover-color: theme(colors.primary.900 / 0.3);
+    --iti-border-color: theme(colors.gray.600);
+    --iti-dialcode-color: theme(colors.gray.400);
+    --iti-dropdown-bg: theme(colors.gray.700);
+    --iti-arrow-color: theme(colors.white);
+  }
+}
+
+/* Manual dark mode class support */
+.dark {
+  --iti-hover-color: theme(colors.primary.900 / 0.3);
+  --iti-border-color: theme(colors.gray.600);
+  --iti-dialcode-color: theme(colors.gray.400);
+  --iti-dropdown-bg: theme(colors.gray.700);
+  --iti-arrow-color: theme(colors.white);
+}
+
+/* ITI wrapper to ensure full width */
+.iti {
+  @apply w-full;
+}
+
+/* Main container - match form input styling */
+.iti input.iti__tel-input,
+.iti input.iti__tel-input[type=tel],
+.iti input.iti__tel-input[type=text] {
+  @apply w-full border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  padding: theme(spacing.2);
+  padding-left: 52px;
+  /* Space for country selector */
+}
+
+/* Country container positioning */
+.iti .iti__country-container {
+  @apply absolute top-0 bottom-0 left-0 z-10;
+  padding: theme(spacing.2);
+  width: 52px;
+  /* Fixed width to match input padding */
+}
+
+/* Selected country button styling */
+.iti .iti__selected-country {
+  @apply bg-transparent border-0 text-gray-700 dark:text-white;
+}
+
+/* Selected country primary container */
+.iti .iti__selected-country-primary {
+  @apply px-2 text-gray-700 dark:text-white;
+}
+
+/* Arrow styling with Tailwind colors */
+.iti .iti__arrow {
+  @apply ml-1;
+  border-top-color: theme(colors.gray.700);
+}
+
+.dark .iti .iti__arrow {
+  border-top-color: theme(colors.white);
+}
+
+.iti .iti__arrow--up {
+  border-bottom-color: theme(colors.gray.700);
+  border-top-color: transparent;
+}
+
+.dark .iti .iti__arrow--up {
+  border-bottom-color: theme(colors.white);
+}
+
+/* Dropdown content styling to match form theme */
+.iti .iti__dropdown-content {
+  @apply border border-gray-300 bg-white shadow-sm rounded-md dark:bg-gray-700 dark:border-gray-600;
+}
+
+/* Search input to match form theme */
+.iti .iti__search-input {
+  @apply w-full p-2 border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  margin: theme(spacing.2);
+  width: calc(100% - theme(spacing.4));
+}
+
+/* Search input border top */
+.iti .iti__search-input+.iti__country-list {
+  @apply border-t border-gray-300 dark:border-gray-600;
+}
+
+/* Country list styling */
+.iti .iti__country-list {
+  @apply max-h-48 overflow-y-auto;
+}
+
+/* Individual country styling */
+.iti .iti__country {
+  @apply px-2 py-2 text-gray-700 hover:bg-primary-500 hover:text-white dark:text-white dark:hover:bg-primary-500;
+}
+
+/* Country name and flag spacing */
+.iti .iti__country-name,
+.iti .iti__country-list .iti__flag {
+  @apply mr-2 dark:mr-2;
+}
+
+/* RTL support */
+[dir="rtl"] .iti .iti__country-name,
+[dir="rtl"] .iti .iti__country-list .iti__flag {
+  @apply mr-0 ml-2;
+}
+
+/* Dial code styling */
+.iti .iti__dial-code {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+/* Selected dial code */
+.iti .iti__selected-dial-code {
+  @apply ml-1 text-gray-500 dark:text-gray-400;
+}
+
+[dir="rtl"] .iti .iti__selected-dial-code {
+  @apply ml-0 mr-1;
+}
+
+/* Prevent any styling when aria-activedescendant is set (dropdown navigation) */
+.iti .iti__selected-country[aria-activedescendant],
+.iti .iti__selected-country-primary[aria-activedescendant] {
+  background-color: transparent !important;
+}
+
+/* Prevent hover styling when dropdown content is being hovered */
+.iti .iti__selected-country:has(+ .iti__dropdown-content:hover),
+.iti .iti__selected-country-primary:has(~ .iti__dropdown-content:hover) {
+  background-color: transparent !important;
+}
+
+/* Remove all hover states from country container completely */
+.iti--allow-dropdown .iti__country-container:hover,
+.iti--allow-dropdown .iti__country-container:hover .iti__selected-country,
+.iti--allow-dropdown .iti__country-container:hover .iti__selected-country-primary {
+  background-color: transparent !important;
+}
+
+/* Ensure flags never get background colors on hover or when aria-activedescendant is set */
+.iti .iti__flag,
+.iti .iti__selected-country[aria-activedescendant] .iti__flag,
+.iti .iti__selected-country-primary[aria-activedescendant] .iti__flag,
+.iti .iti__country-container:hover .iti__flag {
+  background-color: transparent !important;
+}
+
+/* Globe icon maintains its specific background */
+.iti .iti__flag.iti__globe {
+  @apply bg-gray-100 dark:bg-gray-600;
+  background-color: theme(colors.gray.100) !important;
+}
+
+.dark .iti .iti__flag.iti__globe {
+  background-color: theme(colors.gray.600) !important;
+}
+
+/* Country highlight state */
+.iti .iti__country.iti__highlight {
+  @apply bg-primary-500 text-white;
+}
+
+/* Fullscreen popup styling for mobile */
+.iti--fullscreen-popup.iti--container {
+  @apply bg-black/50;
+}
+
+.iti--fullscreen-popup .iti__dropdown-content {
+  @apply bg-white dark:bg-gray-700;
+}
+
+.iti--fullscreen-popup .iti__country {
+  @apply py-3 text-base;
+}
+
+/* Globe icon visibility fix for dark mode */
+.iti .iti__flag.iti__globe {
+  @apply bg-gray-100 dark:bg-gray-600;
+  background-blend-mode: multiply;
+}
+
+.dark .iti .iti__flag.iti__globe {
+  filter: invert(1) brightness(0.8);
+}
+
+/* Validation state overrides */
+.iti.iti-invalid input.iti__tel-input,
+.iti.iti-invalid input.iti__tel-input[type=tel],
+.iti.iti-invalid input.iti__tel-input[type=text] {
+  @apply bg-red-50 border-red-500 text-red-900 focus:ring-red-500 focus:border-red-500 dark:border-red-500 dark:text-red-500;
+}
+
+.iti.iti-valid input.iti__tel-input,
+.iti.iti-valid input.iti__tel-input[type=tel],
+.iti.iti-valid input.iti__tel-input[type=text] {
+  @apply bg-green-50 border-green-500 text-green-900 focus:ring-green-500 focus:border-green-500 dark:border-green-500 dark:text-green-400;
+}
+
+/* Validation state arrow colors */
+.iti.iti-invalid .iti__arrow {
+  border-top-color: theme(colors.red.500);
+}
+
+.iti.iti-invalid .iti__arrow--up {
+  border-bottom-color: theme(colors.red.500);
+  border-top-color: transparent;
+}
+
+.iti.iti-valid .iti__arrow {
+  border-top-color: theme(colors.green.500);
+}
+
+.iti.iti-valid .iti__arrow--up {
+  border-bottom-color: theme(colors.green.500);
+  border-top-color: transparent;
+}
+
+/* Disabled state */
+.iti input.iti__tel-input:disabled,
+.iti input.iti__tel-input[type=tel]:disabled,
+.iti input.iti__tel-input[type=text]:disabled {
+  @apply cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-400;
+}
+
+.iti input.iti__tel-input:disabled+.iti__country-container {
+  @apply cursor-not-allowed;
+}
+
+.iti input.iti__tel-input:disabled+.iti__country-container .iti__selected-country {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.iti input.iti__tel-input:disabled+.iti__country-container .iti__arrow {
+  border-top-color: theme(colors.gray.400);
+}
+
+.dark .iti input.iti__tel-input:disabled+.iti__country-container .iti__arrow {
+  border-top-color: theme(colors.gray.600);
+}
