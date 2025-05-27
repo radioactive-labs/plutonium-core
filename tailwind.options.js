@@ -2,7 +2,6 @@ export const content = [
   `${__dirname}/src/css/**/*.css`,
   `${__dirname}/src/js/**/*.js`,
   `${__dirname}/app/views/**/*.{rb,erb,js}`,
-  `${__dirname}/config/initializers/simple_form.rb`,
   `${__dirname}/lib/plutonium/**/*.rb`,
 ];
 
