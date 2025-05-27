@@ -161,6 +161,14 @@ module Plutonium
               "sha384-Wk0+fOnKCX5R8Clls7c6jbYFLDZe43o6j9HFR9AUmOrc+TQZH6B4DFnXhvwhNPyG",
             crossorigin: "anonymous"
           )
+          link(
+            rel: "stylesheet",
+            href:
+              "https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css",
+            integrity:
+              "uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_scripts
