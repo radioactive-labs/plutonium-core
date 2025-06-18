@@ -31,14 +31,8 @@ module AdminPortal
     # This inclusion provides all portal functionality.
     include Plutonium::Portal::Engine
 
-    # This is required for portal routing and namespacing.
-    isolate_namespace AdminPortal
-
     # (Optional) Configure entity scoping for multi-tenancy.
     scope_to_entity Organization, strategy: :path
-
-    # (Optional) Portal-specific configuration.
-    config.portal_name = "Admin Portal"
   end
 end
 ```

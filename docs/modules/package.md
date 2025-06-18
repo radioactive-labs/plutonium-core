@@ -102,6 +102,10 @@ Dir.glob(File.expand_path("../packages/**/lib/engine.rb", __dir__)) do |package|
 end
 ```
 
+::: tip
+You can package and ship your packages as gems.
+:::
+
 ## Generator Integration
 
 ### Package Generator

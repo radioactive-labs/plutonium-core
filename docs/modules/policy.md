@@ -130,6 +130,10 @@ Use `relation_scope` to filter which records appear in a collection (e.g., on th
 ```ruby [Simple Scope]
 class PostPolicy < Plutonium::Resource::Policy
   relation_scope do |relation|
+    # make sure to call super unless you want to bypass the default behavior
+    # plutonium offers
+    relation = super(relation)
+
     if user.admin?
       relation # Admins see all posts
     else
@@ -167,12 +171,6 @@ class PostPolicy < Plutonium::Resource::Policy
   # especially for nested forms or displays.
   def permitted_associations
     [:comments, :author, :tags]
-  end
-
-  # You can also define permissions for specific associations.
-  # Can the user view the comments for this post?
-  def show_comments?
-    record.comments_public? || user.admin?
   end
 end
 ```
