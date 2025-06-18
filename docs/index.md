@@ -3,45 +3,38 @@
 layout: home
 
 hero:
-  name: Plutonium RADKit
-  tagline: The Ultimate Rapid Application Development Toolkit (RADKit) for Rails
+  name: Plutonium
+  text: The Rails RAD Toolkit
+  tagline: Build feature-rich, enterprise-ready applications at lightning speed. Stop writing boilerplate, start building features.
   image:
     src: /plutonium.png
     alt: Plutonium
   actions:
     - theme: brand
-      text: Get started
-      link: /guide/getting-started/
+      text: Start the Tutorial
+      link: /guide/tutorial/01-project-setup
     - theme: alt
-      text: Learn more
-      link: /guide/what-is-plutonium
+      text: Core Concepts
+      link: /guide/introduction/02-core-concepts
 
 features:
-  # Core Value Proposition - Start with the main benefit
-  - title: Rich Resource Management
-    details: Beautiful, modern interfaces with production-ready components for rapid development
+  - icon: 🚀
+    title: Unmatched Developer Experience
+    details: Smart generators, convention-over-configuration, and intelligent defaults let you focus on what matters.
+  - icon: 🏗️
+    title: Robust Architecture
+    details: Built-in multitenancy, modular packages, and advanced authorization provide a solid foundation for any project.
+  - icon: 🎨
+    title: Flexible UI & Theming
+    details: Start with a beautiful, modern UI out-of-the-box, then customize any aspect with a powerful and expressive API.
 
-  # Core Architecture Features - Foundation pieces
-  - title: Built-in Multitenancy
-    details: Row-level multitenancy that works out of the box - perfect for SaaS and enterprise apps
-
-  - title: Advanced Authorization
-    details: Comprehensive access control built on Action Policy's proven authorization framework
-
-  - title: Seamless Authentication
-    details: Integrate your existing auth or use our Rodauth integration - ready in seconds
-
-  # Developer Experience Features - How it makes development easier
-  - title: Intelligent Fields
-    details: Smart field detection with automatic Rails model mapping and zero configuration needed
-
-  - title: Advanced Nested Resources
-    details: Complex resource relationships made simple through intelligent relationship mapping
-
-  # Extensibility Features - How it grows with your needs
-  - title: Extensible Workflows
-    details: Add custom actions and business workflows with a simple, declarative API
-
-  - title: Flexible UI Customization
-    details: Customize any aspect of your interfaces with elegant builder APIs
 ---
+
+<style>
+:root {
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #da8ee7 30%, #5f4dff);
+
+  --vp-home-hero-image-filter: blur(56px);
+}
+</style>

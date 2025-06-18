@@ -17,38 +17,71 @@ export default defineConfig(withMermaid({
     },
     nav: [
       { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/getting-started" },
+      { text: "Guide", link: "/guide/introduction/01-what-is-plutonium" },
+      { text: "Tutorial", link: "/guide/tutorial/01-project-setup" },
+      { text: "Modules", link: "/modules/" },
       { text: "Demo", link: "https://plutonium-app.onrender.com/" }
     ],
     sidebar: {
       '/guide/': [
-
-        {
-          text: "Introduction",
-          items: [
-            { text: "What is Plutonium?", link: "/guide/what-is-plutonium" },
-            { text: "Tutorial", link: "/guide/tutorial" },
-          ]
-        },
         {
           text: "Getting Started",
           items: [
-            { text: "Overview", link: "/guide/getting-started/" },
-            { text: "Installation", link: "/guide/getting-started/installation" },
-            { text: "Core Concepts", link: "/guide/getting-started/core-concepts" },
-            { text: "Resources", link: "/guide/getting-started/resources" },
-            { text: "Authorization", link: "/guide/getting-started/authorization" },
+            { text: "Installation", link: "/guide/getting-started/01-installation" },
           ]
         },
-        // { text: "Quick Start", link: "/installation" },
-
-        // {
-        //   text: "Examples",
-        //   items: [
-        //     { text: "Markdown Examples", link: "/installation" },
-        //     { text: "Runtime API Examples", link: "/api-examples" }
-        //   ]
-        // }
+        {
+          text: "Introduction",
+          items: [
+            { text: "What is Plutonium?", link: "/guide/introduction/01-what-is-plutonium" },
+            { text: "Core Concepts", link: "/guide/introduction/02-core-concepts" },
+          ]
+        },
+        {
+          text: "Tutorial (Building a Blog)",
+          collapsed: false,
+          items: [
+            { text: "1. Project Setup", link: "/guide/tutorial/01-project-setup" },
+            { text: "2. Creating a Feature Package", link: "/guide/tutorial/02-creating-a-feature-package" },
+            { text: "3. Defining Resources", link: "/guide/tutorial/03-defining-resources" },
+            { text: "4. Creating a Portal", link: "/guide/tutorial/04-creating-a-portal" },
+            { text: "5. Customizing the UI", link: "/guide/tutorial/05-customizing-the-ui" },
+            { text: "6. Adding Custom Actions", link: "/guide/tutorial/06-adding-custom-actions" },
+            { text: "7. Implementing Authorization", link: "/guide/tutorial/07-implementing-authorization" },
+          ]
+        },
+        {
+          text: "Deep Dive",
+          items: [
+            { text: "Resources", link: "/guide/deep-dive/resources" },
+            { text: "Authorization", link: "/guide/deep-dive/authorization" },
+          ]
+        }
+      ],
+      '/modules/': [
+        {
+          text: "Modules",
+          items: [
+            { text: "Overview", link: "/modules/" },
+            { text: "Action", link: "/modules/action" },
+            { text: "Auth", link: "/modules/auth" },
+            { text: "Authentication", link: "/modules/authentication" },
+            { text: "Configuration", link: "/modules/configuration" },
+            { text: "Core", link: "/modules/core" },
+            { text: "Definition", link: "/modules/definition" },
+            { text: "Display", link: "/modules/display" },
+            { text: "Form", link: "/modules/form" },
+            { text: "Generator", link: "/modules/generator" },
+            { text: "Interaction", link: "/modules/interaction" },
+            { text: "Package", link: "/modules/package" },
+            { text: "Policy", link: "/modules/policy" },
+            { text: "Portal", link: "/modules/portal" },
+            { text: "Query", link: "/modules/query" },
+            { text: "Resource", link: "/modules/resource" },
+            { text: "Table", link: "/modules/table" },
+            { text: "UI", link: "/modules/ui" },
+          ]
+        }
       ]
     },
     socialLinks: [
