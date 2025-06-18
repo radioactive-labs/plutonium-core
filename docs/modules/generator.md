@@ -18,62 +18,6 @@ The Generator module is located in `lib/generators/pu/`.
 - **Authentication Setup**: Rodauth integration with multi-account support.
 - **Interactive CLI**: TTY-powered interactive prompts for generator options.
 
-## Core Architecture
-
-### Base Generator (`lib/generators/pu/lib/plutonium_generators/generator.rb`)
-
-All Plutonium generators inherit from a common base that provides:
-
-```ruby
-module PlutoniumGenerators
-  module Generator
-    include Concerns::Config
-    include Concerns::Logger
-    include Concerns::Serializer
-    include Concerns::Actions
-    include Concerns::PackageSelector
-
-    # Interactive prompts with TTY
-    def prompt
-      @prompt ||= TTY::Prompt.new
-    end
-
-    # Version checking for feature compatibility
-    def pug_installed?(feature, version: nil)
-      installed_version = read_config(:installed, feature)
-      return false unless installed_version.present?
-
-      version.present? ? SemanticRange.satisfies?(installed_version, ">=#{version}") : true
-    end
-  end
-end
-```
-
-### Generator Concerns
-
-#### Configuration Management (`concerns/config.rb`)
-```ruby
-module PlutoniumGenerators::Concerns::Config
-  def write_config(scope, **kwargs)
-    write_config! config.deep_merge({scope => kwargs})
-  end
-
-  def read_config(scope, key, default: nil)
-    config.dig(scope, key) || default
-  end
-
-  private
-
-  def config
-    YAML.load_file(config_filename) || {}
-  end
-
-  def config_filename
-    ".pu"
-  end
-end
-```
-
 ## Core Generators
 
 ### Installation Generator (`pu:core:install`)
@@ -304,7 +248,7 @@ rails generate pu:eject:shell --dest=admin_portal
 
 ### Interactive Mode
 
-All generators support interactive prompts:
+Many generators support interactive prompts:
 
 ```bash
 # Interactive package selection
@@ -340,15 +284,5 @@ Add generator shortcuts to your IDE:
   ]
 }
 ```
-
-## Best Practices
-
-### Generator Design
-
-1. **Idempotent Operations**: Generators should be safe to run multiple times
-2. **Interactive Prompts**: Provide sensible defaults with override options
-3. **Template Flexibility**: Use configurable templates for customization
-4. **Error Recovery**: Implement cleanup on failure
-5. **Documentation**: Include comprehensive help text
 
 The Generator module provides a comprehensive foundation for rapid application development with Plutonium, automating repetitive tasks while maintaining flexibility and customization options.
