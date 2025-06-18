@@ -5,4 +5,4 @@ ActiveSupport.on_load(:active_record) do
       json(*args, **options)
     end
   end
-end 
+end
