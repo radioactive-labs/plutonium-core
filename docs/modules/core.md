@@ -193,6 +193,6 @@ end
 ## Related Modules
 
 - **[Resource](./resource.md)** - Resource definitions and CRUD operations
-- **[Auth](./auth.md)** - Authentication and authorization
+- **[Authentication](./authentication.md)** - Authentication and authorization
 - **[Interaction](./interaction.md)** - Business logic encapsulation
 - **[UI](./ui.md)** - User interface components

@@ -9,6 +9,7 @@ export default defineConfig(withMermaid({
   title: "Plutonium",
   description: "The Ultimate Rapid Application Development Toolkit (RADKit) for Rails",
   head: [["link", { rel: "icon", href: `${base}favicon.ico` }]],
+  ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: "/plutonium.png",
