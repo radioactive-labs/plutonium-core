@@ -1,9 +1,10 @@
-<script setup>
-import { withBase } from 'vitepress'
-</script>
 ---
 title: Cursor Rules for Plutonium Development
 ---
+
+<script setup>
+import { withBase } from 'vitepress'
+</script>
 
 # Cursor Rules for Plutonium Development
 
