@@ -23,119 +23,262 @@ The Definition module is located in `lib/plutonium/definition/`. Resource defini
 
 ### Field, Display, and Input
 
-The three core methods for defining a resource's attributes are `field`, `display`, and `input`.
+The three core methods for defining a resource's attributes are `field`, `display`, and `input`. **All model attributes are automatically detected** - you only need to declare them when you want to override defaults or add custom options.
 
 ::: code-group
 ```ruby [field]
-# Defines a basic property of the resource.
-# Use `as:` to specify the type.
+# Field declarations are OPTIONAL - all attributes are auto-detected
+# You only need to declare fields when overriding auto-detected behavior
 class PostDefinition < Plutonium::Resource::Definition
-  field :title, as: :string
-  field :content, as: :text
-  field :published_at, as: :datetime
-  field :author_id, as: :hidden # Hidden but still processed
+  # These are all auto-detected from your Post model:
+  # - :title (string column)
+  # - :content (text column)
+  # - :published_at (datetime column)
+  # - :published (boolean column)
+  # - :author (belongs_to association)
+  # - :tags (has_many association)
+  # - :featured_image (has_one_attached)
+
+  # Only declare fields when you want to override:
+  field :content, as: :rich_text    # Override text -> rich_text
+  field :author_id, as: :hidden     # Override integer -> hidden
+  field :internal_notes, as: :text  # Add custom field options
 end
 ```
 ```ruby [display]
-# Customizes HOW a field is rendered on show/index pages.
+# Display declarations are also OPTIONAL for auto-detected fields
+# Only declare when you want custom display behavior
 class PostDefinition < Plutonium::Resource::Definition
-  display :title, as: :string
-  display :content, as: :markdown
-  display :author, as: :association
+  # All model attributes auto-detected and displayed appropriately
 
-  # With custom rendering block
-  display :status do |f|
-    f.badge_tag(color: f.value == 'published' ? :green : :gray)
+  # Only override when you need custom display:
+  display :content, as: :markdown      # Override text -> markdown
+  display :published_at, as: :date     # Override datetime -> date only
+  display :view_count, class: "font-bold"  # Add custom styling
+
+  # Custom display with block for complex rendering
+  display :status do |field|
+    field.phlexi_render_tag(with: ->(value, attrs) {
+      StatusBadgeComponent.new(value: value, **attrs)
+    })
   end
 end
 ```
 ```ruby [input]
-# Configures form inputs for new/edit pages.
+# Input declarations are also OPTIONAL for auto-detected fields
+# Only declare when you need custom input behavior
 class PostDefinition < Plutonium::Resource::Definition
-  input :title, as: :string, placeholder: "Enter post title"
-  input :content, as: :rich_text
-  input :category, as: :select, collection: %w[Tech Business]
+  # All editable attributes auto-detected with appropriate inputs
+
+  # Only override when you need custom input behavior:
+  input :content, as: :rich_text               # Override text -> rich_text
+  input :title, placeholder: "Enter title"    # Add placeholder
+  input :category, as: :select, collection: %w[Tech Business]  # Add options
+  input :published_at, as: :date               # Override datetime -> date only
 end
 ```
 :::
 
-::: details Available Field Types
-You can use a wide range of types for inputs and displays.
+## Field Type Auto-Detection
+
+**Plutonium automatically detects ALL model attributes** and creates appropriate field, display, and input configurations. The system inspects your ActiveRecord model to discover:
+
+- **Database columns** (string, text, integer, boolean, datetime, etc.)
+- **Associations** (belongs_to, has_many, has_one, etc.)
+- **Active Storage attachments** (has_one_attached, has_many_attached)
+- **Enum attributes**
+- **Virtual attributes** (with proper accessor methods)
+
+::: details Complete Auto-Detection Logic
+```ruby
+# Database columns are automatically detected:
+# CREATE TABLE posts (
+#   id bigint PRIMARY KEY,
+#   title varchar(255),        # → field :title, as: :string
+#   content text,              # → field :content, as: :text
+#   published_at timestamp,    # → field :published_at, as: :datetime
+#   published boolean,         # → field :published, as: :boolean
+#   view_count integer,        # → field :view_count, as: :number
+#   rating decimal(3,2),       # → field :rating, as: :decimal
+#   created_at timestamp,      # → field :created_at, as: :datetime
+#   updated_at timestamp       # → field :updated_at, as: :datetime
+# );
+
+# Associations are automatically detected:
+class Post < ApplicationRecord
+  belongs_to :author, class_name: 'User'  # → field :author, as: :association
+  has_many :comments                       # → field :comments, as: :association
+  has_many :tags, through: :post_tags     # → field :tags, as: :association
+end
+
+# Active Storage attachments are automatically detected:
+class Post < ApplicationRecord
+  has_one_attached :featured_image         # → field :featured_image, as: :attachment
+  has_many_attached :documents             # → field :documents, as: :attachment
+end
+
+# Enums are automatically detected:
+class Post < ApplicationRecord
+  enum status: { draft: 0, published: 1, archived: 2 }  # → field :status, as: :select
+end
+```
+:::
+
+## When to Declare Fields
+
+You only need to explicitly declare fields, displays, or inputs in these scenarios:
+
+### 1. **Override Auto-Detected Type**
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  # Text fields
-  input :title, as: :string
-  input :content, as: :text, rows: 10
-  input :body, as: :rich_text # or :markdown
+  # Change text column to rich text editor
+  input :content, as: :rich_text
 
-  # Numeric fields
-  input :view_count, as: :number
-  input :rating, as: :number, min: 1, max: 5
+  # Change datetime to date-only picker
+  input :published_at, as: :date
 
-  # Boolean fields
-  input :published, as: :boolean
-
-  # Date/time fields
-  input :published_at, as: :datetime
-  input :created_at, as: :date
-  input :reminder_time, as: :time
-
-  # Selection fields
-  input :category, as: :select, collection: %w[Tech Business]
-  input :author, as: :select, collection: -> { User.pluck(:name, :id) }
-
-  # File uploads
-  input :avatar, as: :file
-  input :documents, as: :file, multiple: true
-
-  # Associations
-  input :author, as: :association
-  input :tags, as: :association, multiple: true
+  # Change text display to markdown rendering
+  display :content, as: :markdown
 end
 ```
-:::
 
-## Dynamic Configuration & Policies
-
-::: danger IMPORTANT
-Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file. Use policies for user-based logic.
-:::
-
-The `display` and `input` methods **only configure how a field is rendered**, not *whether* it is visible. Field visibility is controlled by policies.
-
-::: code-group
-```ruby [Static Definition]
-# app/definitions/post_definition.rb
+### 2. **Add Custom Options**
+```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  # This configuration is static.
-  # The :admin_notes field is always defined here.
-  def customize_fields
-    field :admin_notes, as: :text
+  # Add placeholder text
+  input :title, placeholder: "Enter an engaging title"
+
+  # Add custom CSS classes
+  display :title, class: "text-2xl font-bold"
+
+  # Add wrapper styling
+  display :content, wrapper: {class: "prose max-w-none"}
+end
+```
+
+### 3. **Configure Select Options**
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Provide options for select inputs
+  input :category, as: :select, collection: %w[Tech Business Lifestyle]
+  input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+end
+```
+
+### 4. **Add Conditional Logic**
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Show field only under certain conditions
+  # Note: conditions are evaluated in the form/view rendering context,
+  # so current_user and other helpers ARE available
+  input :admin_notes, condition: -> { current_user&.admin? }
+  display :internal_id, condition: -> { Rails.env.development? }
+  input :debug_info, condition: -> { current_user&.developer? && Rails.env.development? }
+
+  # Conditions can access the same context as collections:
+  input :team_projects, condition: -> { current_user.team_lead? }
+  display :sensitive_data, condition: -> { current_user.security_clearance >= 3 }
+  input :parent_category, condition: -> { current_parent.present? }
+end
+```
+
+::: tip Condition Context
+Condition procs are evaluated in the form/view rendering context, which means they have access to:
+- `current_user` - The authenticated user
+- `current_parent` - Parent record for nested resources
+- `object` - The record being edited/displayed
+- `request` and `params` - Request information
+- All helper methods available in the rendering context
+
+This is the same context as `collection` procs, allowing for dynamic, user-specific field visibility.
+:::
+
+### 5. **Create Custom Display Blocks**
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Use a component class - gets instantiated with (value, **attrs)
+  display :status do |field|
+    field.phlexi_render_tag(with: StatusBadgeComponent)
   end
 
-  def customize_displays
-    display :admin_notes, as: :text
+  # Use a proc/lambda for dynamic component creation
+  display :metrics do |field|
+    field.phlexi_render_tag(with: ->(value, attrs) {
+      MetricsChartComponent.new(data: value, **attrs)
+    })
   end
 
-  def customize_inputs
-    input :admin_notes, as: :text
+  # Pass additional attributes to the component
+  display :user_avatar do |field|
+    field.phlexi_render_tag(
+      with: AvatarComponent,
+      size: :large,
+      class: "rounded-full"
+    )
+  end
+
+  # Complex conditional rendering
+  display :content do |field|
+    field.phlexi_render_tag(with: ->(value, attrs) {
+      if value.present?
+        MarkdownComponent.new(content: value, **attrs)
+      else
+        EmptyStateComponent.new(message: "No content available", **attrs)
+      end
+    })
   end
 end
 ```
-```ruby [Dynamic Policy]
-# app/policies/post_policy.rb
-class PostPolicy < Plutonium::Resource::Policy
-  # The policy determines if the user can SEE the field.
-  def permitted_attributes_for_show
-    if user.admin?
-      [:title, :content, :admin_notes] # Admin sees admin_notes
-    else
-      [:title, :content]               # Regular users do not
-    end
-  end
-end
+
+::: tip phlexi_render_tag Usage
+The `phlexi_render_tag` method allows you to use custom Phlex components for field rendering:
+
+**Component Class**: Pass a component class that will be instantiated with `(value, **attributes)`
+```ruby
+field.phlexi_render_tag(with: MyComponent)
+# Equivalent to: MyComponent.new(value, **attributes)
+```
+
+**Proc/Lambda**: Pass a callable that receives `(value, attributes)` and returns a component instance
+```ruby
+field.phlexi_render_tag(with: ->(value, attrs) {
+  MyComponent.new(data: value, **attrs)
+})
+```
+
+**Additional Attributes**: Any extra options are passed to the component
+```ruby
+field.phlexi_render_tag(with: MyComponent, size: :large, theme: :dark)
+# Component receives: MyComponent.new(value, size: :large, theme: :dark)
 ```
 :::
+
+## Minimal Definition Example
+
+Here's what a typical definition looks like when leveraging auto-detection:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # No field declarations needed! All attributes auto-detected.
+  # Post model columns, associations, and attachments are automatically available.
+
+  # Only customize what you need to override:
+  input :content, as: :rich_text
+  display :content, as: :markdown
+
+  # Add search and filtering:
+  search do |scope, query|
+    scope.where("title ILIKE ? OR content ILIKE ?", "%#{query}%", "%#{query}%")
+  end
+
+  filter :status, with: Plutonium::Query::Filters::Text, predicate: :eq
+
+  # Add custom actions:
+  action :publish, interaction: PublishPostInteraction
+end
+```
+
+This approach means you can create a fully functional admin interface with just a few lines of configuration, while still having the flexibility to customize anything you need.
 
 ## Search, Filters, and Scopes
 
@@ -146,17 +289,19 @@ Configure how users can query the resource index.
 # Defines the global search logic for the resource.
 class PostDefinition < Plutonium::Resource::Definition
   search do |scope, query|
-    scope.where("title ILIKE ?", "%#{query}%")
+    scope.where("title ILIKE ? OR content ILIKE ?", "%#{query}%", "%#{query}%")
   end
 end
 ```
 ```ruby [Filters]
-# Defines individual, type-aware filters.
+# Currently, only Text filter is implemented
 class PostDefinition < Plutonium::Resource::Definition
-  filter :published, with: Plutonium::Query::Filters::BooleanFilter
-  filter :category, with: Plutonium::Query::Filters::SelectFilter,
-         choices: %w[Tech Business Lifestyle]
-  filter :created_at, with: Plutonium::Query::Filters::DateRangeFilter
+  filter :title, with: Plutonium::Query::Filters::Text, predicate: :contains
+  filter :status, with: Plutonium::Query::Filters::Text, predicate: :eq
+  filter :category, with: Plutonium::Query::Filters::Text, predicate: :eq
+
+  # Available predicates: :eq, :not_eq, :contains, :not_contains,
+  # :starts_with, :ends_with, :matches, :not_matches
 end
 ```
 ```ruby [Scopes]
@@ -292,14 +437,12 @@ Definitions are automatically discovered and used by resource controllers:
 ```ruby
 # app/definitions/post_definition.rb
 class PostDefinition < Plutonium::Resource::Definition
-  # Each method call configures ONE field
-  display :title, as: :string
-  display :author, as: :association
-  display :published_at, as: :datetime
+  # All model attributes are auto-detected!
+  # No field declarations needed unless overriding
 
-  input :title, as: :string
-  input :content, as: :rich_text
-  input :published, as: :boolean
+  # Only customize what you need:
+  input :content, as: :rich_text    # Override text -> rich_text
+  display :content, as: :markdown   # Override text -> markdown
 
   search { |scope, search| scope.where("title ILIKE ?", "%#{search}%") }
 end
@@ -333,23 +476,36 @@ end
 
 ## Best Practices
 
+### Field Type Philosophy
+- **Let auto-detection work**: Don't declare fields unless you need to override
+- **Override when needed**: Use declarations to change text to rich_text, datetime to date, etc.
+- **Use conditions sparingly**: Prefer policy-based visibility over conditional fields
+
 ### Separation of Concerns
 - **Definitions**: Configure HOW fields are rendered and processed
 - **Policies**: Control WHAT fields are visible and editable
 - **Interactions**: Handle business logic and operations
 
-### Policy-First Approach
+### Minimal Configuration Approach
 ```ruby
-# Define what's visible in policy
-def permitted_attributes_for_show
-  [:title, :content, :author]
+# Preferred: Let auto-detection work, only override what you need
+class PostDefinition < Plutonium::Resource::Definition
+  # All fields auto-detected from Post model
+
+  # Only declare overrides:
+  input :content, as: :rich_text
+  display :content, as: :markdown
+
+  search { |scope, search| scope.where("title ILIKE ?", "%#{search}%") }
 end
 
-# Then customize how it's displayed in definition
-def customize_displays
-  display :title, as: :string
-  display :content, as: :markdown
-  display :author, as: :association
+# Avoid: Over-declaring fields that would be auto-detected anyway
+class PostDefinition < Plutonium::Resource::Definition
+  field :title, as: :string      # Unnecessary - auto-detected
+  field :content, as: :text      # Unnecessary - auto-detected
+  field :author, as: :association # Unnecessary - auto-detected
+
+  # This creates extra maintenance burden
 end
 ```
 
@@ -362,3 +518,130 @@ The Definition module provides a clean, declarative way to configure resource be
 - **[Query](./query.md)** - Query objects and filtering
 - **[Action](./action.md)** - Custom actions and operations
 - **[Interaction](./interaction.md)** - Business logic encapsulation
+
+## Available Field Types
+
+### Input Types (Form Components)
+- **Text**: `:string`, `:text`, `:email`, `:url`, `:tel`, `:password`
+- **Rich Text**: `:rich_text`, `:markdown` (uses EasyMDE)
+- **Numeric**: `:number`, `:integer`, `:decimal`, `:range`
+- **Boolean**: `:boolean`
+- **Date/Time**: `:date`, `:time`, `:datetime` (uses Flatpickr)
+- **Selection**: `:select`, `:slim_select`, `:radio_buttons`, `:check_boxes`
+- **Files**: `:file`, `:uppy`, `:attachment` (uses Uppy)
+- **Associations**: `:association`, `:secure_association`, `:belongs_to`, `:has_many`, `:has_one`
+- **Special**: `:hidden`, `:color`, `:phone` (uses IntlTelInput)
+
+### Display Types (Show/Index Components)
+- **Text**: `:string`, `:text`, `:email`, `:url`, `:phone`
+- **Rich Content**: `:markdown` (renders with Redcarpet)
+- **Numeric**: `:number`, `:integer`, `:decimal`
+- **Boolean**: `:boolean`
+- **Date/Time**: `:date`, `:time`, `:datetime`
+- **Associations**: `:association` (auto-links to show page)
+- **Files**: `:attachment` (shows previews/downloads)
+- **Custom**: `:phlexi_render` (for custom components)
+
+## Available Configuration Options
+
+### Field Options
+```ruby
+field :name, as: :string, class: "custom-class", wrapper: {class: "field-wrapper"}
+```
+
+### Input Options
+```ruby
+input :title,
+  as: :string,
+  placeholder: "Enter title",
+  required: true,
+  class: "custom-input",
+  wrapper: {class: "input-wrapper"},
+  data: {controller: "custom"},
+  condition: -> { current_user.admin? }
+```
+
+### Display Options
+```ruby
+display :content,
+  as: :markdown,
+  class: "prose",
+  wrapper: {class: "content-wrapper"},
+  condition: -> { current_user.can_see_content? }
+```
+
+### Collection Options (for selects)
+```ruby
+input :category, as: :select, collection: %w[Tech Business Lifestyle]
+input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+
+# Collection procs are executed in the form rendering context
+# and have access to current_user and other helpers:
+input :team_members, as: :select, collection: -> {
+  current_user.organization.users.active.pluck(:name, :id)
+}
+
+# You can also access the form object being edited:
+input :related_posts, as: :select, collection: -> {
+  Post.where.not(id: object.id).published.pluck(:title, :id) if object.persisted?
+}
+```
+
+::: tip Collection Context
+Collection procs are evaluated in the form rendering context, which means they have access to:
+- `current_user` - The authenticated user
+- `current_parent` - Parent record for nested resources
+- `object` - The record being edited (in edit forms)
+- `request` and `params` - Request information
+- All helper methods available in the form context
+
+This is the same context as `condition` procs, allowing for dynamic, user-specific collections.
+:::
+
+### File Upload Options
+```ruby
+input :avatar, as: :file, multiple: false
+input :documents, as: :file, multiple: true,
+  allowed_file_types: ['.pdf', '.doc', '.docx'],
+  max_file_size: 5.megabytes
+```
+
+## Dynamic Configuration & Policies
+
+::: danger IMPORTANT
+Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file itself. However, conditions in `input` and `display` methods ARE evaluated in the form/view rendering context where `current_user` is available. Use policies for controlling field visibility and permissions.
+:::
+
+The `display` and `input` methods **only configure how a field is rendered**, not *whether* it is visible. Field visibility is controlled by policies.
+
+::: code-group
+```ruby [Static Definition]
+# app/definitions/post_definition.rb
+class PostDefinition < Plutonium::Resource::Definition
+  # This configuration is static.
+  # The :admin_notes field is always defined here.
+  def customize_fields
+    field :admin_notes, as: :text
+  end
+
+  def customize_displays
+    display :admin_notes, as: :text
+  end
+
+  def customize_inputs
+    input :admin_notes, as: :text
+  end
+end
+```
+```ruby [Dynamic Policy]
+# app/policies/post_policy.rb
+class PostPolicy < Plutonium::Resource::Policy
+  # The policy determines if the user can SEE the field.
+  def permitted_attributes_for_show
+    if user.admin?
+      [:title, :content, :admin_notes] # Admin sees admin_notes
+    else
+      [:title, :content]               # Regular users do not
+    end
+  end
+end

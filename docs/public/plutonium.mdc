@@ -1,0 +1,618 @@
+---
+description: Expert Plutonium framework guidelines for AI-assisted Rails development with auto-detection, resource architecture, component-based UI, and RAD patterns
+globs:
+alwaysApply: true
+---
+You are an expert Ruby on Rails developer specializing in the Plutonium framework. This cursor rule compiles comprehensive guidelines for building robust, maintainable Plutonium applications.
+
+# Plutonium Framework Development Guidelines
+
+## Framework Overview
+
+Plutonium is a Rapid Application Development (RAD) toolkit that extends Rails with powerful conventions, patterns, and tools. It provides:
+- Resource-oriented architecture with declarative definitions
+- Modular packaging system (Feature Packages and Portal Packages)
+- Built-in authentication, authorization, and multi-tenancy
+- Component-based UI system built on Phlex
+- Business logic encapsulation through Interactions
+- Query objects for filtering and searching
+
+## Project Structure & Setup
+
+### Initial Setup
+- Use Ruby 3.2.2+ and Rails 7.1+
+- Create new apps with: `rails new app_name -a propshaft -j esbuild -c tailwind -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb`
+- For existing apps: `bin/rails app:template LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb`
+- Run `rails generate pu:core:install` after adding the gem
+
+### Directory Structure
+```
+app/
+├── controllers/
+│   ├── plutonium_controller.rb     # Base controller
+│   └── resource_controller.rb      # Base for resources
+├── definitions/                     # Resource definitions
+├── interactions/                    # Business logic
+├── models/
+└── policies/                       # Authorization policies
+config/
+├── initializers/plutonium.rb       # Main configuration
+└── packages.rb                     # Package registration
+packages/                           # Modular features
+```
+
+## Resource Architecture
+
+### Resource Components
+Every resource consists of 4 core components:
+1. **Model** - ActiveRecord model with `include Plutonium::Resource::Record`
+2. **Definition** - Declarative UI and behavior configuration
+3. **Policy** - Authorization and access control
+4. **Controller** - Auto-generated CRUD operations
+
+### Creating Resources
+```bash
+# Scaffold a complete resource
+rails generate pu:res:scaffold Post user:belongs_to title:string content:text 'published_at:datetime?'
+
+# Individual components
+rails generate pu:res:model Post title:string content:text
+rails generate pu:res:definition Post
+rails generate pu:res:policy Post
+```
+
+### Resource Models
+```ruby
+class Post < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  belongs_to :user
+  has_many :comments, dependent: :destroy
+
+  validates :title, :content, presence: true
+
+  scope :published, -> { where.not(published_at: nil) }
+  scope :drafts, -> { where(published_at: nil) }
+end
+```
+
+### Resource Definitions
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Field declarations are OPTIONAL - all attributes are auto-detected from the model
+  # You only need to declare fields when overriding auto-detected behavior
+
+  # These would be auto-detected from your Post model:
+  # - :title (string column) → :string field
+  # - :content (text column) → :text field
+  # - :published_at (datetime column) → :datetime field
+  # - :author (belongs_to association) → :association field
+
+  # Only declare fields when you want to override defaults:
+  field :content, as: :rich_text  # Override text → rich_text
+  field :status, as: :select, collection: %w[draft published archived]
+
+  # Display customization (show/index pages)
+  display :title, as: :string
+  display :content, as: :markdown
+  display :status, as: :string
+  display :author, as: :association
+
+  # Custom display with block (for complex rendering)
+  display :custom_field do |field|
+    field.phlexi_render_tag(with: ->(value, attrs) {
+      CustomComponent.new(value: value, **attrs)
+    })
+  end
+
+  # Input configuration (new/edit forms)
+  input :title, placeholder: "Enter post title"  # No need for as: :string (auto-detected)
+  input :content, as: :rich_text
+  input :category, as: :select, collection: %w[Tech Business Lifestyle]
+
+  # Conditional inputs (conditions are evaluated in form/view rendering context)
+  input :admin_notes, condition: -> { current_user&.admin? }
+  input :debug_info, condition: -> { Rails.env.development? }
+  input :team_projects, condition: -> { current_user.team_lead? }
+  input :parent_category, condition: -> { current_parent.present? }
+
+  # Search functionality
+  search do |scope, query|
+    scope.where("title ILIKE ? OR content ILIKE ?", "%#{query}%", "%#{query}%")
+  end
+
+  # Filters
+  filter :published, with: Plutonium::Query::Filters::Text, predicate: :eq
+  filter :category, with: Plutonium::Query::Filters::Text, predicate: :contains
+  filter :title, with: Plutonium::Query::Filters::Text, predicate: :contains
+
+  # Scopes (appear as buttons)
+  scope :published
+  scope :drafts
+  scope :recent, -> { where('created_at > ?', 1.week.ago) }
+
+  # Custom actions
+  action :publish, interaction: PublishPostInteraction, icon: Phlex::TablerIcons::Send
+  action :archive, interaction: ArchivePostInteraction, color: :warning
+
+  # Page customization
+  index_page_title "All Posts"
+  show_page_title "Post Details"
+end
+```
+
+### Available Field Types (Auto-Detected from Model)
+- Text: `:string`, `:text`, `:rich_text`, `:markdown`
+- Numeric: `:number`, `:integer`, `:decimal`
+- Boolean: `:boolean`
+- Date/Time: `:date`, `:datetime`, `:time`
+- Selection: `:select`, `:radio_buttons`, `:check_boxes`
+- Files: `:file` (with `multiple: true` for multiple files)
+- Associations: `:association`
+- Special: `:hidden`, `:email`, `:url`, `:color`
+
+### Available Configuration Options
+
+#### Field Options
+```ruby
+field :name, as: :string, class: "custom-class", wrapper: {class: "field-wrapper"}
+```
+
+#### Input Options
+```ruby
+input :title,
+  as: :string,
+  placeholder: "Enter title",
+  required: true,
+  class: "custom-input",
+  wrapper: {class: "input-wrapper"},
+  data: {controller: "custom"},
+  condition: -> { current_user&.admin? }  # Evaluated in form context
+```
+
+#### Display Options
+```ruby
+display :content,
+  as: :markdown,
+  class: "prose",
+  wrapper: {class: "content-wrapper"},
+  condition: -> { current_user&.can_see_content? }  # Evaluated in view context
+```
+
+#### Collection Options (for selects)
+```ruby
+input :category, as: :select, collection: %w[Tech Business Lifestyle]
+input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+
+# Collection procs are executed in form rendering context with access to:
+# current_user, current_parent, object, request, params, and helpers
+input :team_members, as: :select, collection: -> {
+  current_user.organization.users.active.pluck(:name, :id)
+}
+input :related_posts, as: :select, collection: -> {
+  Post.where.not(id: object.id).published.pluck(:title, :id) if object.persisted?
+}
+```
+
+#### File Upload Options
+```ruby
+input :avatar, as: :file, multiple: false
+input :documents, as: :file, multiple: true,
+  allowed_file_types: ['.pdf', '.doc', '.docx'],
+  max_file_size: 5.megabytes
+```
+
+### Resource Policies
+```ruby
+class PostPolicy < Plutonium::Resource::Policy
+  # CRUD permissions
+  def index?
+    true # Everyone can view list
+  end
+
+  def show?
+    record.published? || record.author == user || user.admin?
+  end
+
+  def create?
+    user.present?
+  end
+
+  def update?
+    record.author == user || user.admin?
+  end
+
+  def destroy?
+    user.admin?
+  end
+
+  # Custom action permissions
+  def publish?
+    update? && record.draft?
+  end
+
+  # Attribute permissions
+  def permitted_attributes_for_read
+    attrs = [:title, :content, :category, :published_at]
+    attrs << :internal_notes if user.admin?
+    attrs
+  end
+
+  def permitted_attributes_for_create
+    [:title, :content, :category]
+  end
+
+  def permitted_attributes_for_update
+    attrs = permitted_attributes_for_create
+    attrs << :slug if user.admin?
+    attrs
+  end
+
+  # Collection scoping
+  relation_scope do |relation|
+    relation = super(relation) # Apply entity scoping first
+
+    if user.admin?
+      relation
+    else
+      # Users see only their posts or published posts
+      relation.where(author: user).or(relation.where(published: true))
+    end
+  end
+
+  # Association permissions
+  def permitted_associations
+    [:comments, :author, :tags]
+  end
+end
+```
+
+## Business Logic with Interactions
+
+### Interaction Structure
+```ruby
+class PublishPostInteraction < Plutonium::Resource::Interaction
+  # Metadata for UI
+  presents label: "Publish Post",
+           icon: Phlex::TablerIcons::Send,
+           description: "Make this post visible to readers"
+
+  # Attributes (form inputs)
+  attribute :resource, class: Post
+  attribute :publish_date, :datetime, default: -> { Time.current }
+  attribute :notify_subscribers, :boolean, default: true
+
+  # Validations
+  validates :resource, presence: true
+  validates :publish_date, presence: true
+
+  private
+
+  def execute
+    # Business logic
+    resource.transaction do
+      resource.update!(
+        published_at: publish_date,
+        status: 'published'
+      )
+
+      # Side effects
+      NotifySubscribersJob.perform_later(resource) if notify_subscribers
+
+      # Return successful outcome
+      succeed(resource)
+        .with_message("Post published successfully!")
+        .with_redirect_response(resource_path(resource))
+    end
+  rescue => error
+    # Return failure outcome
+    failed(error.message)
+  end
+end
+```
+
+### Interaction Types (Auto-detected)
+- **Record Actions**: Have `attribute :resource` - work on single records
+- **Bulk Actions**: Have `attribute :resources` - work on multiple records
+- **Resource Actions**: Have neither - work at resource level (imports, etc.)
+
+### Interaction Execution Patterns
+- **Immediate**: Only `resource`/`resources` attribute → executes on click
+- **Modal**: Additional attributes → shows form modal first
+
+## Package Architecture
+
+### Feature Packages
+Contain business logic and domain models:
+```bash
+rails generate pu:pkg:package blogging
+```
+
+Structure:
+```
+packages/blogging/
+├── app/
+│   ├── models/blogging/
+│   ├── definitions/blogging/
+│   ├── policies/blogging/
+│   ├── interactions/blogging/
+│   └── controllers/blogging/
+└── lib/engine.rb
+```
+
+### Portal Packages
+Provide web interfaces with routing and authentication:
+```bash
+rails generate pu:pkg:portal admin
+```
+
+Portal Engine:
+```ruby
+module AdminPortal
+  class Engine < ::Rails::Engine
+    include Plutonium::Portal::Engine
+
+    # Multi-tenancy
+    scope_to_entity Organization, strategy: :path
+  end
+end
+```
+
+Portal Routes:
+```ruby
+AdminPortal::Engine.routes.draw do
+  register_resource Blog::Post
+  register_resource Blog::Comment
+  register_resource User
+end
+```
+
+Portal Controller:
+```ruby
+module AdminPortal
+  module Concerns
+    module Controller
+      extend ActiveSupport::Concern
+      include Plutonium::Portal::Controller
+      include Plutonium::Auth::Rodauth(:admin)
+
+      included do
+        before_action :ensure_admin_access
+        layout "admin_portal"
+      end
+
+      private
+
+      def ensure_admin_access
+        redirect_to root_path unless current_user&.admin?
+      end
+    end
+  end
+end
+```
+
+## Authentication & Authorization
+
+### Rodauth Setup
+```bash
+# Install Rodauth
+rails generate pu:rodauth:install
+
+# Create user account
+rails generate pu:rodauth:account user
+
+# Create admin account with MFA
+rails generate pu:rodauth:account admin --no-defaults \
+  --login --logout --remember --lockout \
+  --create-account --verify-account --close-account \
+  --change-password --reset-password --reset-password-notify \
+  --active-sessions --password-grace-period --otp \
+  --recovery-codes --audit-logging --internal-request
+```
+
+### Authentication Integration
+```ruby
+# In portal controller concerns
+include Plutonium::Auth::Rodauth(:user)     # For user authentication
+include Plutonium::Auth::Rodauth(:admin)    # For admin authentication
+include Plutonium::Auth::Public             # For public access
+```
+
+## Multi-Tenancy & Entity Scoping
+
+### Path-Based Scoping
+```ruby
+# Portal engine
+scope_to_entity Organization, strategy: :path
+
+# Generates routes like: /organizations/:organization_id/posts
+# Automatically scopes all queries to the organization
+```
+
+### Database Associations for Scoping
+```ruby
+# Direct association (auto-detected)
+class Post < ApplicationRecord
+  belongs_to :organization
+end
+
+# Indirect association (auto-detected)
+class Post < ApplicationRecord
+  belongs_to :author, class_name: 'User'
+  has_one :organization, through: :author
+end
+
+# Custom scope (manual)
+class Comment < ApplicationRecord
+  belongs_to :post
+
+  scope :associated_with_organization, ->(organization) do
+    joins(post: :author).where(users: { organization_id: organization.id })
+  end
+end
+```
+
+## Query Objects & Filtering
+
+### Automatic Query Handling
+Controllers automatically handle:
+- Search: `?q[search]=rails`
+- Filters: `?q[published]=true`
+- Sorting: `?q[sort_fields][]=created_at&q[sort_directions][created_at]=desc`
+- Scopes: `?q[scope]=published`
+
+### Custom Query Objects
+```ruby
+query_object = Plutonium::Resource::QueryObject.new(Post, params[:q] || {}, request.path) do |query|
+  # Custom search
+  query.define_search proc { |scope, search:|
+    scope.joins(:author, :tags)
+         .where("posts.title ILIKE :search OR users.name ILIKE :search", search: "%#{search}%")
+         .distinct
+  }
+
+  # Custom filter
+  query.define_filter :date_range, proc { |scope, start_date:, end_date:|
+    scope.where(created_at: start_date.beginning_of_day..end_date.end_of_day)
+  }
+
+  # Custom sorter
+  query.define_sorter :author_name, proc { |scope, direction:|
+    scope.joins(:author).order("users.name #{direction}")
+  }
+end
+```
+
+## UI Components & Theming
+
+### Component Architecture
+Built on Phlex, components inherit from `Plutonium::UI::Component::Base`:
+
+```ruby
+class CustomComponent < Plutonium::UI::Component::Base
+  def initialize(title:, content: nil)
+    @title = title
+    @content = content
+  end
+
+  def view_template
+    div(class: "custom-component") do
+      h2(class: "text-xl font-bold") { @title }
+      div(class: "content") { @content } if @content
+    end
+  end
+end
+```
+
+### Layout Customization
+```ruby
+# Custom page classes in definitions
+class PostDefinition < Plutonium::Resource::Definition
+  class ShowPage < Plutonium::UI::Page::Show
+    def render_content
+      # Custom show page rendering
+      super
+    end
+  end
+end
+```
+
+## Configuration
+
+### Main Configuration
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure do |config|
+  config.load_defaults 1.0
+
+  # Development settings
+  config.development = Rails.env.development?
+  config.cache_discovery = !Rails.env.development?
+  config.enable_hotreload = Rails.env.development?
+
+  # Assets
+  config.assets.logo = "custom_logo.png"
+  config.assets.stylesheet = "custom_theme.css"
+  config.assets.script = "custom_plutonium.js"
+  config.assets.favicon = "custom_favicon.ico"
+end
+```
+
+## Generator Commands
+
+### Core Setup
+```bash
+# Install Plutonium in existing app
+bin/rails app:template LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
+rails generate pu:core:install
+
+# Install authentication
+rails generate pu:rodauth:install
+rails generate pu:rodauth:account user
+```
+
+### Package Creation
+```bash
+# Create feature package
+rails generate pu:pkg:package blogging
+
+# Create portal package
+rails generate pu:pkg:portal admin
+```
+
+### Resource Management
+```bash
+# Full resource scaffold
+rails generate pu:res:scaffold Post user:belongs_to title:string content:text
+
+# Individual resource components
+rails generate pu:res:model Post title:string content:text
+rails generate pu:res:definition Post
+rails generate pu:res:policy Post
+```
+
+## Best Practices
+
+### Resource Design
+1. Keep models focused on data and basic validations
+2. Use definitions for UI configuration, not business logic
+3. Implement complex business logic in interactions
+4. Use policies for all authorization logic
+5. Leverage scopes for common queries
+
+### Package Organization
+1. Create feature packages for domain logic
+2. Use portal packages for different user interfaces
+3. Keep packages focused and cohesive
+4. Namespace everything properly to avoid conflicts
+
+### Security
+1. Always define explicit permissions in policies
+2. Use secure defaults (deny by default)
+3. Implement proper entity scoping for multi-tenancy
+4. Validate all user inputs in interactions
+5. Use CSRF protection and implement rate limiting
+
+### Performance
+1. Use `includes` and `joins` in relation scopes
+2. Add database indexes for filtered and sorted fields
+3. Implement caching where appropriate
+4. Use background jobs for heavy operations
+5. Monitor N+1 queries with tools like Prosopite
+
+### Code Organization
+1. Follow Rails naming conventions
+2. Keep controllers thin - use interactions for business logic
+3. Use consistent patterns across resources
+4. Write comprehensive tests for policies and interactions
+5. Document complex business logic
+
+### Development Workflow
+1. Start with resource scaffolding for rapid prototyping
+2. Customize definitions for UI requirements
+3. Implement business logic through interactions
+4. Add proper authorization with policies
+5. Create appropriate packages for organization
+6. Set up portals for different user types
+
+This comprehensive guide should enable you to build robust, maintainable Plutonium applications following the framework's conventions and best practices.

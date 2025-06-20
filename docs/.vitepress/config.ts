@@ -57,6 +57,12 @@ export default defineConfig(withMermaid({
             { text: "Resources", link: "/guide/deep-dive/resources" },
             { text: "Authorization", link: "/guide/deep-dive/authorization" },
           ]
+        },
+        {
+          text: "Developer Tools",
+          items: [
+            { text: "Cursor Rules", link: "/guide/cursor-rules" },
+          ]
         }
       ],
       '/modules/': [
