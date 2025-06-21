@@ -168,29 +168,48 @@ end
 ### 4. **Add Conditional Logic**
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  # Show field only under certain conditions
-  # Note: conditions are evaluated in the form/view rendering context,
-  # so current_user and other helpers ARE available
-  input :admin_notes, condition: -> { current_user&.admin? }
-  display :internal_id, condition: -> { Rails.env.development? }
-  input :debug_info, condition: -> { current_user&.developer? && Rails.env.development? }
+  # Conditional logic is for showing/hiding fields based on the application's
+  # state or other field values. It is not for authorization. Use policies
+  # to control access to data.
 
-  # Conditions can access the same context as collections:
-  input :team_projects, condition: -> { current_user.team_lead? }
-  display :sensitive_data, condition: -> { current_user.security_clearance >= 3 }
-  input :parent_category, condition: -> { current_parent.present? }
+  # Conditional fields based on the object's state
+  display :published_at, condition: -> { object.published? }
+  display :reason_for_rejection, condition: -> { object.rejected? }
+  column :published_at, condition: -> { object.published? }
+
+  # Use `pre_submit` to create dynamic forms where inputs appear based on other inputs.
+  input :send_notifications, as: :boolean, pre_submit: true
+  input :notification_channel, as: :select, collection: %w[Email SMS],
+        condition: -> { object.send_notifications? }
+
+  # Show debug fields only in development
+  field :debug_info, as: :string, condition: -> { Rails.env.development? }
 end
 ```
 
-::: tip Condition Context
-Condition procs are evaluated in the form/view rendering context, which means they have access to:
-- `current_user` - The authenticated user
-- `current_parent` - Parent record for nested resources
-- `object` - The record being edited/displayed
-- `request` and `params` - Request information
-- All helper methods available in the rendering context
+::: danger Authorization with Policies
+While the rendering context may provide access to `current_user`, it is strongly recommended to use **policies** for authorization logic (i.e., controlling who can see what data). The `condition` option is intended for cosmetic or state-based logic, such as hiding a field based on another field's value or the record's status. JSON requests for example are not affected by this.
+:::
 
-This is the same context as `collection` procs, allowing for dynamic, user-specific field visibility.
+::: tip Condition Context & Dynamic Forms
+`condition` procs are evaluated in their respective rendering contexts and have access to contextual data.
+
+**For `input` fields** (form rendering context):
+- `object` - The record being edited
+- `current_parent` - Parent record for nested resources
+- `request` and `params` - Request information
+- All helper methods available in the form context
+
+**For `display` fields** (display rendering context):
+- `object` - The record being displayed
+- `current_parent` - Parent record for nested resources
+- All helper methods available in the display context
+
+**For `column` fields** (table rendering context):
+- `current_parent` - Parent record for nested resources
+- All helper methods available in the table context
+
+To create forms that dynamically show/hide inputs based on other form values, pair a `condition` option with `pre_submit: true` on the "trigger" input. This will cause the form to re-render whenever that input's value changes, re-evaluating any conditions that depend on it.
 :::
 
 ### 5. **Create Custom Display Blocks**
@@ -609,10 +628,10 @@ input :documents, as: :file, multiple: true,
 ## Dynamic Configuration & Policies
 
 ::: danger IMPORTANT
-Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file itself. However, conditions in `input` and `display` methods ARE evaluated in the form/view rendering context where `current_user` is available. Use policies for controlling field visibility and permissions.
+Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file itself. However, `condition` and `collection` procs ARE evaluated in the rendering context where `current_user` and the record (`object`) are available.
 :::
 
-The `display` and `input` methods **only configure how a field is rendered**, not *whether* it is visible. Field visibility is controlled by policies.
+The `condition` option configures **if an input is rendered**. It does not control if a field's *value* is accessible. For that, you must use policies.
 
 ::: code-group
 ```ruby [Static Definition]

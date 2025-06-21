@@ -59,9 +59,14 @@ module Plutonium
               column_definition = resource_definition.defined_columns[name] || {}
               column_options = column_definition[:options] || {}
 
+              # Check for conditional rendering
+              condition = column_options[:condition] || display_options[:condition] || field_options[:condition]
+              conditionally_hidden = condition && !instance_exec(&condition)
+              next if conditionally_hidden
+
               tag = column_options[:as] || display_definition[:as] || field_options[:as]
-              display_tag_attributes = display_options.except(:wrapper, :as)
-              column_tag_attributes = column_options.except(:wrapper, :as, :align)
+              display_tag_attributes = display_options.except(:wrapper, :as, :condition)
+              column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition)
               tag_attributes = display_tag_attributes.merge(column_tag_attributes)
               tag_block = column_definition[:block] || ->(wrapped_object, key) {
                 f = wrapped_object.field(key)
@@ -69,7 +74,7 @@ module Plutonium
                 f.send(:"#{tag}_tag", **tag_attributes)
               }
 
-              field_options = field_options.merge(**column_options.slice(:align))
+              field_options = field_options.except(:condition).merge(**column_options.slice(:align))
               table.column name,
                 **field_options,
                 sort_params: current_query_object.sort_params_for(name),

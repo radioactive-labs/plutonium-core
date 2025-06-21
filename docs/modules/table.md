@@ -122,6 +122,32 @@ end
 
 ## Key Features
 
+### Conditional Columns
+
+You can conditionally show or hide table columns using the `:condition` option in your resource definition. This is useful for creating tables that adapt to different contexts, such as showing debugging information only in development.
+
+**Note:** Conditional columns are for cosmetic or contextual logic. For controlling data visibility based on user roles or permissions, use **policies** to filter the list of permitted attributes.
+
+```ruby
+# app/definitions/post_definition.rb
+class PostDefinition < Plutonium::Resource::Definition
+  # Show debug columns only in development environment.
+  column :internal_id, condition: -> { Rails.env.development? }
+  column :debug_info, condition: -> { Rails.env.development? }
+
+  # Show a column based on the presence of a parent resource.
+  column :parent_name, condition: -> { current_parent.present? }
+end
+```
+
+::: tip Condition Context
+`condition` procs for `column` fields are evaluated in the table rendering context, which means they have access to:
+- `object` - The record being displayed
+- All helper methods available in the table context
+
+This allows for dynamic column visibility based on environment or other contextual information.
+:::
+
 ### Sorting
 
 Enable sorting by defining `sort` rules in your resource definition.

@@ -430,26 +430,6 @@ end
 field(:brand_color).color_picker_tag
 ```
 
-### Conditional Fields
-
-```ruby
-class PostForm < Plutonium::UI::Form::Resource
-  def form_template
-    field(:title).input_tag(as: :string)
-    field(:content).easymde_tag
-
-    # Conditional field based on user role
-    if current_user.admin?
-      field(:featured).input_tag(as: :boolean)
-      field(:priority).select_tag(choices: priority_options)
-    end
-
-    # Conditional field based on form data
-    field(:publish_at).flatpickr_tag if object.published?
-  end
-end
-```
-
 ### Nested Resources
 
 ```ruby
@@ -563,25 +543,22 @@ end
 
 ### Dynamic Forms
 
-```ruby
-# Forms that update based on user input
-class DynamicForm < Plutonium::UI::Form::Base
-  def form_template
-    field(:category).select_tag(
-      choices: categories,
-      data: {
-        action: "change->form#preSubmit"  # Trigger form update
-      }
-    )
+The recommended way to create dynamic forms is by using the `condition` and `pre_submit` options in your resource definition file. This keeps the logic declarative and out of custom form classes.
 
-    # Fields that appear based on category selection
-    if object.category == 'product'
-      field(:price).input_tag(as: :number)
-      field(:inventory).input_tag(as: :number)
-    elsif object.category == 'service'
-      field(:duration).input_tag(as: :number)
-      field(:rate).input_tag(as: :number)
-    end
-  end
+```ruby
+# app/definitions/post_definition.rb
+class PostDefinition < Plutonium::Resource::Definition
+  # This input will trigger a form refresh whenever its value changes.
+  input :send_notifications, as: :boolean, pre_submit: true
+
+  # This input will only be shown if the `condition` evaluates to true.
+  # The condition is re-evaluated after a pre-submit refresh.
+  input :notification_channel,
+        as: :select,
+        collection: %w[Email SMS Push],
+        condition: -> { object.send_notifications? }
 end
 ```
+::: tip
+For more details on how to configure conditional inputs, see the [Definition Module documentation](./definition.md#4-add-conditional-logic).
+:::

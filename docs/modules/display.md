@@ -391,6 +391,36 @@ field(:status).phlexi_render_tag(with: StatusBadgeComponent)
 
 ### Conditional Display
 
+You can conditionally show or hide display fields using the `:condition` option in your resource definition. This is useful for creating dynamic views that adapt to the state of your data.
+
+**Note:** Conditional display is for cosmetic or state-based logic. For controlling data visibility based on user roles or permissions, use **policies**.
+
+```ruby
+# app/definitions/post_definition.rb
+class PostDefinition < Plutonium::Resource::Definition
+  # Show a field only when the object is in a certain state.
+  display :published_at, condition: -> { object.published? }
+  display :reason_for_rejection, condition: -> { object.rejected? }
+  display :scheduled_for, condition: -> { object.scheduled? }
+
+  # Show a field based on the object's attributes.
+  display :comments, condition: -> { object.comments_enabled? }
+
+  # Show debug information only in development.
+  display :debug_info, condition: -> { Rails.env.development? }
+end
+```
+
+::: tip Condition Context
+`condition` procs for `display` fields are evaluated in the display rendering context, which means they have access to:
+- `object` - The record being displayed
+- All helper methods available in the display context
+
+This allows for dynamic field visibility based on the record's state or other contextual information.
+:::
+
+You can also implement custom conditional logic by overriding the rendering methods:
+
 ```ruby
 class PostDisplay < Plutonium::UI::Display::Resource
   private
