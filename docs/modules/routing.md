@@ -635,7 +635,7 @@ end
 The Routing module works seamlessly with other Plutonium components:
 
 - **[Controller](./controller.md)**: HTTP request handling and URL generation methods
-- **[Resource](./resource.md)**: Resource definitions that drive route generation
+- **[Resource Record](./resource_record.md)**: Resource definitions that drive route generation
 - **[Portal](./portal.md)**: Multi-tenant portal functionality and route scoping
 - **[Action](./action.md)**: Interactive actions that create dynamic routes
 - **[Authentication](./authentication.md)**: Route protection and authentication constraints

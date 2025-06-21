@@ -596,7 +596,10 @@ Comment.associated_with(post)  # Uses WHERE clause
 # ⚠️ Less efficient: Reverse association
 Post.associated_with(comment)  # Uses JOIN + WHERE
 
-# ✅ Optimal: Custom scope
+# ✅ Optimal: Direct association
+belongs_to :post
+
+# ✅ Alternative: Custom scope (when direct association is not possible)
 scope :associated_with_comment, ->(comment) do
   where(id: comment.post_id)  # Direct ID lookup
 end

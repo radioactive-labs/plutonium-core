@@ -464,7 +464,7 @@ end
 
 ## Related Modules
 
-- **[Resource](./resource.md)** - Resource definitions and CRUD operations
+- **[Resource Record](./resource_record.md)** - Resource definitions and CRUD operations
 - **[Definition](./definition.md)** - Resource definition DSL
 - **[Core](./core.md)** - Base controller functionality
 - **[Action](./action.md)** - Custom actions and operations

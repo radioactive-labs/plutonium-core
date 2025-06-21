@@ -56,6 +56,7 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Resources", link: "/guide/deep-dive/resources" },
             { text: "Authorization", link: "/guide/deep-dive/authorization" },
+            { text: "Modules", link: "/modules/" },
           ]
         },
         {
@@ -83,7 +84,8 @@ export default defineConfig(withMermaid({
             { text: "Policy", link: "/modules/policy" },
             { text: "Portal", link: "/modules/portal" },
             { text: "Query", link: "/modules/query" },
-            { text: "Resource", link: "/modules/resource" },
+            { text: "Resource Record", link: "/modules/resource_record" },
+            { text: "Routing", link: "/modules/routing" },
             { text: "Table", link: "/modules/table" },
             { text: "UI", link: "/modules/ui" },
           ]

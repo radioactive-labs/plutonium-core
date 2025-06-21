@@ -308,9 +308,9 @@ end
 
 ## Integration with Other Modules
 
-- **[Resource](./resource.md)** - Builds on Core for full CRUD functionality
+- **[Resource Record](./resource_record.md)** - Builds on Core for full CRUD functionality
 - **[Portal](./portal.md)** - Uses Core for multi-tenant portal applications
 - **[Routing](./routing.md)** - Works with Core's URL generation methods
-- **[Auth](./auth.md)** - Integrates with Core's authorization system
+- **[Authorization](/guide/deep-dive/authorization.md)** - Integrates with Core's authorization system
 
 The Core module provides a solid, focused foundation that other Plutonium modules build upon, handling the essential plumbing that makes the framework's conventions work seamlessly.

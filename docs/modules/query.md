@@ -283,5 +283,5 @@ The Query module provides a powerful foundation for building searchable, filtera
 ## Related Modules
 
 - **[Definition](./definition.md)** - Resource definitions and DSL
-- **[Resource](./resource.md)** - Resource controllers and CRUD operations
+- **[Resource Record](./resource_record.md)** - Resource controllers and CRUD operations
 - **[UI](./ui.md)** - User interface components

@@ -742,7 +742,7 @@ The Definition module provides a clean, declarative way to configure resource be
 
 ## Related Modules
 
-- **[Resource](./resource.md)** - Resource controllers and CRUD operations
+- **[Resource Record](./resource_record.md)** - Resource controllers and CRUD operations
 - **[UI](./ui.md)** - User interface components
 - **[Query](./query.md)** - Query objects and filtering
 - **[Action](./action.md)** - Custom actions and operations

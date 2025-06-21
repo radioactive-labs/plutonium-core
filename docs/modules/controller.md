@@ -390,7 +390,7 @@ It currently supports HTML, JSON, and Turbo Streams.
 The Controller module works seamlessly with other Plutonium components:
 
 - **[Core](./core.md)**: Foundation and essential utilities
-- **[Resource](./resource.md)**: CRUD operations and resource management
+- **[Resource Record](./resource_record.md)**: CRUD operations and resource management
 - **[Portal](./portal.md)**: Multi-tenant portal functionality
 - **[Authentication](./authentication.md)**: User authentication and session management
 - **[Policy](./policy.md)**: Authorization and access control

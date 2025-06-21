@@ -63,8 +63,8 @@ The tools for defining your application's data structures, business rules, and o
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div class="card">
-    <a href="./resource" class="block p-4">
-      <h3 class="font-bold">Resource Module</h3>
+    <a href="./resource_record" class="block p-4">
+      <h3 class="font-bold">Resource Record Module</h3>
       <p class="text-sm">The heart of your application—define models, their behavior, and how they interact with the world.</p>
     </a>
   </div>

@@ -706,5 +706,5 @@ The Portal module works seamlessly with other Plutonium components:
 - **[Authentication](./authentication.md)**: Portal-specific authentication strategies and session management
 - **[Policy](./policy.md)**: Entity-aware authorization and portal-specific access control
 - **[Package](./package.md)**: Package-based organization and resource registration
-- **[Resource](./resource.md)**: Resource controllers work seamlessly within portal contexts
+- **[Resource Record](./resource_record.md)**: Resource controllers work seamlessly within portal contexts
 - **[Routing](./routing.md)**: Automatic route generation with entity scoping and portal isolation
