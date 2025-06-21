@@ -49,6 +49,7 @@ class Plutonium::UI::Display::Base < Phlexi::Display::Base
     def phlexi_render_tag(**options, &block)
       create_component(Plutonium::UI::Display::Components::PhlexiRender, :phlexi_render, **options, &block)
     end
+    alias_method :phlexi_tag, :phlexi_render_tag
   end
 end
 ```
@@ -85,7 +86,7 @@ Renders associated objects with automatic linking to the resource's show page if
 ::: code-group
 ```ruby [Usage]
 # Automatically used for association fields
-field(:author).association_tag
+render field(:author).association_tag
 ```
 ```ruby [Implementation]
 class Plutonium::UI::Display::Components::Association
@@ -110,11 +111,11 @@ Provides a rich display for file attachments with thumbnails for images and icon
 ::: code-group
 ```ruby [Basic Usage]
 # Automatically used for attachment fields
-field(:featured_image).attachment_tag
+render field(:featured_image).attachment_tag
 ```
 ```ruby [With Options]
-field(:documents).attachment_tag(caption: false)
-field(:gallery).attachment_tag(
+render field(:documents).attachment_tag(caption: false)
+render field(:gallery).attachment_tag(
   caption: ->(attachment) { attachment.description }
 )
 ```
@@ -158,7 +159,7 @@ Securely renders markdown content with syntax highlighting for code blocks.
 ::: code-group
 ```ruby [Usage]
 # Automatically used for :markdown fields
-field(:description).markdown_tag
+render field(:description).markdown_tag
 ```
 ```ruby [Implementation]
 class Plutonium::UI::Display::Components::Markdown
@@ -190,14 +191,20 @@ end
 Renders a given value using a custom Phlex component, allowing for complex, specialized displays.
 
 ::: code-group
-```ruby [Usage]
-# Render with a new component instance
-field(:chart_data).phlexi_render_tag(with: ->(data, attrs) {
-  ChartComponent.new(data: data, **attrs)
-})
+```ruby [Block Syntax (Recommended)]
+# Render with conditional logic
+render field(:chart_data) do |f|
+  if f.value.present?
+    render ChartComponent.new(data: f.value, class: f.dom.css_class)
+  else
+    span(class: "text-gray-500") { "No chart data" }
+  end
+end
 
-# Render with a component class
-field(:status_badge).phlexi_render_tag(with: StatusBadgeComponent)
+# Simple component rendering
+render field(:status_badge) do |f|
+  render StatusBadgeComponent.new(status: f.value, class: f.dom.css_class)
+end
 ```
 ```ruby [Implementation]
 class Plutonium::UI::Display::Components::PhlexiRender
@@ -224,17 +231,17 @@ The display system automatically selects the appropriate component based on the 
 ::: code-group
 ```ruby [Automatic Inference]
 # Based on Active Record column types or Active Storage attachments
-field(:title)          # -> :string
-field(:content)        # -> :text
-field(:published_at)   # -> :datetime
-field(:author)         # -> :association
-field(:featured_image) # -> :attachment
-field(:description)    # -> :markdown (if configured in definition)
+render field(:title).string_tag          # -> :string
+render field(:content).text_tag          # -> :text
+render field(:published_at).datetime_tag # -> :datetime
+render field(:author).association_tag    # -> :association
+render field(:featured_image).attachment_tag # -> :attachment
+render field(:description).markdown_tag  # -> :markdown (if configured in definition)
 ```
 ```ruby [Manual Override]
-field(:title).string_tag
-field(:content).markdown_tag
-field(:author).association_tag
+render field(:title).string_tag
+render field(:content).markdown_tag
+render field(:author).association_tag
 ```
 :::
 
@@ -328,10 +335,43 @@ end
 # Simple field display
 class PostDisplay < Plutonium::UI::Display::Base
   def display_template
-    field(:title).string_tag
-    field(:content).text_tag
-    field(:published_at).datetime_tag
-    field(:author).association_tag
+    render field(:title).string_tag
+    render field(:content).text_tag
+    render field(:published_at).datetime_tag
+    render field(:author).association_tag
+  end
+end
+```
+
+### Field Rendering and Wrappers
+
+Fields must be explicitly rendered using the `render` method. You can also use wrappers to control the layout and styling:
+
+```ruby
+class PostDisplay < Plutonium::UI::Display::Base
+  def display_template
+    # Basic field rendering
+    render field(:title).string_tag
+
+    # Field with wrapper options
+    render field(:content).wrapped(class: "col-span-full prose") do |f|
+      render f.markdown_tag
+    end
+
+    # Field with custom wrapper and styling
+    render field(:author).wrapped(
+      class: "border rounded-lg p-4",
+      data: { controller: "tooltip" }
+    ) do |f|
+      render f.association_tag
+    end
+
+    # Multiple fields with consistent wrapper
+    [:created_at, :updated_at].each do |field_name|
+      render field(field_name).wrapped(class: "text-sm text-gray-500") do |f|
+        render f.datetime_tag
+      end
+    end
   end
 end
 ```
@@ -386,7 +426,9 @@ class StatusBadgeComponent < Plutonium::UI::Component::Base
 end
 
 # Use in display
-field(:status).phlexi_render_tag(with: StatusBadgeComponent)
+render field(:status) do |f|
+  render StatusBadgeComponent.new(status: f.value)
+end
 ```
 
 ### Conditional Display
@@ -464,13 +506,13 @@ class PostDisplay < Plutonium::UI::Display::Base
 end
 
 # Full-width fields
-field(:description).wrapped(class: "col-span-full") do |f|
-  f.markdown_tag
+render field(:description).wrapped(class: "col-span-full") do |f|
+  render f.markdown_tag
 end
 
 # Compact display
-field(:tags).wrapped(class: "col-span-1") do |f|
-  f.collection_tag
+render field(:tags).wrapped(class: "col-span-1") do |f|
+  render f.collection_tag
 end
 ```
 
@@ -592,12 +634,12 @@ CUSTOM_RENDERER = Redcarpet::Markdown.new(
 # Lazy loading for expensive displays
 class PostDisplay < Plutonium::UI::Display::Base
   def display_template
-    field(:title).string_tag
+    render field(:title).string_tag
 
     # Only render associations if not in turbo frame
     if current_turbo_frame.nil?
-      field(:comments_count).number_tag
-      field(:recent_comments).collection_tag
+      render field(:comments_count).number_tag
+      render field(:recent_comments).collection_tag
     end
   end
 end

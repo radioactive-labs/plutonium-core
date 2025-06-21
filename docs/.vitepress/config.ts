@@ -71,7 +71,6 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Overview", link: "/modules/" },
             { text: "Action", link: "/modules/action" },
-            { text: "Auth", link: "/modules/auth" },
             { text: "Authentication", link: "/modules/authentication" },
             { text: "Configuration", link: "/modules/configuration" },
             { text: "Core", link: "/modules/core" },

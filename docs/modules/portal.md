@@ -4,59 +4,80 @@ title: Portal Module
 
 # Portal Module
 
-The Portal module provides application segmentation and multi-tenancy capabilities for Plutonium applications. It enables the creation of isolated application contexts with their own routing, authentication, and resource access patterns.
+The Portal module is your key to building sophisticated, multi-tenant applications with distinct user experiences. Think of portals as separate "faces" of your application—each designed for different types of users, with their own authentication, styling, and access controls, while sharing the same underlying business logic.
 
 ::: tip
-The Portal module is located in `lib/plutonium/portal/`. Portals are typically generated in the `packages/` directory.
+The Portal module is located in `lib/plutonium/portal/`. Portals are typically generated as packages in the `packages/` directory.
 :::
 
-## Overview
+## What Portals Solve
 
-- **Application Segmentation**: Create distinct web interfaces (e.g., admin, customer, public).
-- **Multi-Tenant Architecture**: Scope resources to specific entities like organizations or accounts.
-- **Isolated Routing**: Each portal has its own independent route namespace.
-- **Portal-Specific Authentication**: Apply different authentication strategies to each portal.
+Modern applications often need to serve different types of users with completely different interfaces:
 
-## Defining a Portal
+- **Admin Portal**: Full system access for administrators and staff
+- **Customer Portal**: Self-service interface for customers and clients
+- **Partner Portal**: Specialized access for business partners
+- **Public Portal**: Public-facing content and marketing pages
 
-Portals are Rails Engines that include `Plutonium::Portal::Engine`. They are best created with the `pu:pkg:portal` generator.
+Each portal can have its own authentication system, visual design, feature set, and data access patterns, while sharing the same core business logic and data models.
+
+## Core Portal Capabilities
+
+- **Application Segmentation**: Create completely isolated user experiences
+- **Multi-Tenant Architecture**: Automatically scope data to organizations, accounts, or other entities
+- **Independent Routing**: Each portal has its own URL structure and route namespace
+- **Portal-Specific Authentication**: Different login systems and security requirements per portal
+- **Flexible Access Control**: Fine-grained permissions tailored to each user type
+
+## Creating a Portal
+
+Portals are Rails Engines enhanced with Plutonium's portal functionality. The easiest way to create one is with the generator:
 
 ::: code-group
 ```bash [Generate a Portal]
 rails generate pu:pkg:portal admin
 ```
+
 ```ruby [packages/admin_portal/lib/engine.rb]
 module AdminPortal
   class Engine < ::Rails::Engine
-    # This inclusion provides all portal functionality.
+    # This inclusion provides all portal functionality
     include Plutonium::Portal::Engine
 
-    # (Optional) Configure entity scoping for multi-tenancy.
+    # Optional: Configure multi-tenancy
     scope_to_entity Organization, strategy: :path
   end
 end
 ```
+
 ```ruby [packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb]
-# A base concern is created for portal-wide logic.
+# A base concern is created for portal-wide logic
 module AdminPortal
   module Concerns
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
 
-      # Include authentication specific to this portal.
+      # Include authentication specific to this portal
       include Plutonium::Auth::Rodauth(:admin)
 
       included do
-        # Add portal-specific logic, e.g., authorization.
+        # Add portal-specific logic
         before_action :ensure_admin_access
         layout "admin_portal"
+
+        # Portal-wide error handling
+        rescue_from AdminPortal::AccessDenied, with: :handle_access_denied
       end
 
       private
 
       def ensure_admin_access
-        redirect_to root_path unless current_user&.admin?
+        redirect_to root_path, error: "Admin access required" unless current_user&.admin?
+      end
+
+      def handle_access_denied(exception)
+        redirect_to admin_root_path, error: "Access denied: #{exception.message}"
       end
     end
   end
@@ -64,79 +85,92 @@ end
 ```
 :::
 
-## Multi-Tenancy and Entity Scoping
+## Multi-Tenancy with Entity Scoping
 
-Portals can automatically scope all data to a "scoping entity," such as an `Organization` or `Account`.
+One of the most powerful features of portals is automatic multi-tenancy through entity scoping. When you scope a portal to an entity (like Organization or Account), all data access is automatically filtered and secured.
 
 ### Path-Based Scoping
 
-The most common strategy is `:path`, which uses a URL parameter like `/organizations/:organization_id/...`.
+The most straightforward approach uses URL parameters to identify the tenant:
 
 ::: code-group
 ```ruby [Engine Configuration]
 # packages/admin_portal/lib/engine.rb
 scope_to_entity Organization, strategy: :path
 ```
+
 ```ruby [Route Configuration]
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
-  # These routes are now automatically nested under /organizations/:organization_id
+  # These routes are automatically nested under /organizations/:organization_id
   register_resource Blog::Post
   register_resource Blog::Comment
 end
-# Generates routes like:
-# /organizations/:organization_id/posts/:id
+
+# Generated routes:
+# GET /organizations/:organization_id/posts
+# GET /organizations/:organization_id/posts/:id
+# POST /organizations/:organization_id/posts
 ```
-```ruby [Controller Behavior]
-# In any controller within the Admin Portal...
+
+```ruby [Automatic Data Scoping]
+# In any controller within the Admin Portal
 class AdminPortal::PostsController < AdminPortal::ResourceController
   def index
-    # `current_scoped_entity` returns the Organization from the URL.
-    # Queries are automatically scoped. This becomes:
+    # current_scoped_entity returns the Organization from the URL
+    # All queries are automatically scoped to this organization
     # @posts = current_scoped_entity.posts.authorized_scope(...)
   end
 end
 ```
 :::
 
-::: details Custom Scoping Strategies
-You can implement custom scoping strategies, such as by subdomain.
-```ruby
-# 1. Configure the engine
-scope_to_entity Account, strategy: :subdomain
+### Custom Scoping Strategies
 
-# 2. Implement the lookup in your portal's base controller
-class CustomerPortal::ResourceController < Plutonium::Resource::Controller
+For more sophisticated multi-tenancy, implement custom scoping strategies:
+
+::: code-group
+```ruby [Engine Configuration]
+# Use subdomain-based tenancy
+scope_to_entity Account, strategy: :current_account
+```
+
+```ruby [Controller Implementation]
+module CustomerPortal::Concerns::Controller
   private
 
-  # This method is used by Plutonium to get the current tenant
-  def current_scoped_entity
-    @current_scoped_entity ||= Account.find_by!(subdomain: request.subdomain)
+  # Method name must match the strategy name exactly
+  def current_account
+    @current_account ||= Account.find_by!(subdomain: request.subdomain)
+  rescue ActiveRecord::RecordNotFound
+    redirect_to root_path, error: "Invalid account subdomain"
   end
 end
 ```
 :::
 
-### Database Association Scoping
+### Database Association Requirements
 
-For automatic scoping to work, Plutonium needs to find a path from the resource to the scoping entity (`Organization` in this case).
+For automatic scoping to work, Plutonium needs to find a path from your resources to the scoping entity:
 
 ::: code-group
-```ruby [Direct Association]
-# Plutonium will automatically find this.
+```ruby [Direct Association (Preferred)]
+# Plutonium automatically finds this relationship
 class Post < ApplicationRecord
   belongs_to :organization
 end
 ```
+
 ```ruby [Indirect Association]
-# Plutonium can traverse one level of `has_one` or `belongs_to`.
+# Plutonium can traverse one level of has_one or belongs_to
 class Post < ApplicationRecord
   belongs_to :author, class_name: 'User'
-  has_one :organization, through: :author # This works
+  has_one :organization, through: :author
 end
 ```
-```ruby [Manual Scope]
-# For complex cases, define a scope named `associated_with_<entity_name>`.
+
+```ruby [Manual Scope (For Complex Cases)]
+# Define a scope for complex relationships
 class Comment < ApplicationRecord
   belongs_to :post
 
@@ -147,11 +181,14 @@ end
 ```
 :::
 
-## Portal Examples
+## Portal Examples and Use Cases
 
-::: details Admin Portal
-An internal interface for managing the entire application, scoped to a tenant.
-```ruby
+### Admin Portal: Internal Management
+
+Perfect for system administrators and internal staff who need full access:
+
+::: code-group
+```ruby [Configuration]
 # packages/admin_portal/lib/engine.rb
 scope_to_entity Organization, strategy: :path
 
@@ -159,48 +196,83 @@ scope_to_entity Organization, strategy: :path
 register_resource User
 register_resource Organization
 register_resource Blog::Post
+register_resource Analytics::Report
+```
 
+```ruby [Authentication & Authorization]
 # packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
 include Plutonium::Auth::Rodauth(:admin)
-before_action :require_admin
+
+included do
+  before_action :require_admin_role
+  before_action :set_admin_context
+end
+
+private
+
+def require_admin_role
+  redirect_to root_path unless current_user&.admin?
+end
 ```
 :::
 
-::: details Customer Portal
-A self-service interface for customers, often scoped by subdomain.
-```ruby
+### Customer Portal: Self-Service Interface
+
+Designed for customers to manage their own accounts and data:
+
+::: code-group
+```ruby [Configuration]
 # packages/customer_portal/lib/engine.rb
-scope_to_entity Organization, strategy: :subdomain
+scope_to_entity Organization, strategy: :current_organization
 
 # packages/customer_portal/config/routes.rb
 register_resource Project
 register_resource Invoice
 register_resource SupportTicket
+```
 
+```ruby [Custom Scoping]
 # packages/customer_portal/app/controllers/customer_portal/concerns/controller.rb
 include Plutonium::Auth::Rodauth(:customer)
+
+private
+
+def current_organization
+  @current_organization ||= current_user&.organization
+end
 ```
 :::
 
-::: details Public Portal
-A public-facing portal with no authentication.
-```ruby
+### Public Portal: No Authentication Required
+
+For marketing sites, blogs, and public content:
+
+::: code-group
+```ruby [Configuration]
 # packages/public_portal/lib/engine.rb
-# No `scope_to_entity`
+# No scope_to_entity - public data
 
 # packages/public_portal/config/routes.rb
-register_resource Blog::Post # e.g., for a public blog
+register_resource Blog::Post
+register_resource Page
+register_resource ContactForm
+```
 
+```ruby [Public Access]
 # packages/public_portal/app/controllers/public_portal/concerns/controller.rb
-include Plutonium::Auth::Public # No authentication
+# No authentication required
+include Plutonium::Portal::Controller
+
+# Custom public-specific logic
+before_action :track_visitor_analytics
 ```
 :::
 
 ## Authentication Integration
 
-### Rodauth Integration
+### Rodauth Multi-Account Setup
 
-Portals integrate seamlessly with Rodauth for authentication:
+Portals integrate seamlessly with Rodauth for sophisticated authentication:
 
 ```ruby
 # config/rodauth.rb
@@ -219,7 +291,7 @@ class RodauthApp < Roda
       two_factor_auth_required? true
     end
 
-    # Customer authentication
+    # Customer authentication with user-friendly features
     rodauth :customer do
       enable :login, :logout, :create_account, :verify_account,
              :reset_password, :change_password, :remember
@@ -227,11 +299,20 @@ class RodauthApp < Roda
       rails_account_model { Customer }
       rails_controller { Rodauth::CustomerController }
       prefix "/auth"
+
+      # Remember me functionality
+      remember_deadline 30.days
     end
   end
 end
+```
 
-# Portal-specific authentication
+### Portal-Specific Authentication
+
+Each portal includes its appropriate authentication:
+
+```ruby
+# Admin Portal - High security
 module AdminPortal
   module Concerns
     module Controller
@@ -240,6 +321,7 @@ module AdminPortal
   end
 end
 
+# Customer Portal - User-friendly
 module CustomerPortal
   module Concerns
     module Controller
@@ -249,9 +331,9 @@ module CustomerPortal
 end
 ```
 
-### Route Constraints
+### Route-Level Authentication
 
-Authentication can be enforced at the routing level:
+Enforce authentication at the routing level:
 
 ```ruby
 # config/routes.rb
@@ -271,14 +353,14 @@ Rails.application.routes.draw do
 end
 ```
 
-## Resource Registration and Access Control
+## Resource Management and Access Control
 
 ### Resource Registration
 
-Resources are explicitly registered with each portal:
+Resources must be explicitly registered with each portal:
 
 ```ruby
-# Admin portal - full access
+# Admin portal - comprehensive access
 AdminPortal::Engine.routes.draw do
   register_resource User
   register_resource Organization
@@ -288,24 +370,25 @@ AdminPortal::Engine.routes.draw do
   register_resource Billing::Invoice
 end
 
-# Customer portal - limited access
+# Customer portal - limited, relevant resources
 CustomerPortal::Engine.routes.draw do
   register_resource Project
-  register_resource Billing::Invoice, only: [:index, :show]
+  register_resource Billing::Invoice  # Access controlled via policy
   register_resource SupportTicket
 end
 
-# Public portal - read-only access
+# Public portal - read-only, published content
 PublicPortal::Engine.routes.draw do
-  register_resource Blog::Post, only: [:index, :show]
-  register_resource Page, only: [:show]
+  register_resource Blog::Post  # Only published posts via policy
+  register_resource Page        # Only public pages via policy
 end
 ```
 
 ### Conditional Resource Registration
 
+Dynamically register resources based on configuration or environment:
+
 ```ruby
-# Dynamic resource registration based on configuration
 AdminPortal::Engine.routes.draw do
   register_resource User
   register_resource Organization
@@ -316,59 +399,110 @@ AdminPortal::Engine.routes.draw do
 
   # Environment-specific resources
   register_resource SystemLog if Rails.env.development?
+  register_resource PerformanceMetric if Rails.env.production?
 end
 ```
 
-### Portal-Specific Policies
+### Portal-Specific Access Control
 
-Each portal can have its own policy implementations:
+Since `register_resource` doesn't support Rails' `only:` and `except:` options, access control is handled through portal-specific policies:
 
 ```ruby
-# packages/admin_portal/app/policies/admin_portal/user_policy.rb
+# Customer portal - read-only invoice access
+class CustomerPortal::Billing::InvoicePolicy < Plutonium::Resource::Policy
+  def create?
+    false  # Customers can't create invoices
+  end
+
+  def update?
+    false  # Customers can't modify invoices
+  end
+
+  def destroy?
+    false  # Customers can't delete invoices
+  end
+
+  def read?
+    record.organization == user.organization  # Only their org's invoices
+  end
+end
+
+# Public portal - only published content
+class PublicPortal::Blog::PostPolicy < Plutonium::Resource::Policy
+  def create?
+    false  # No creation in public portal
+  end
+
+  def update?
+    false  # No editing in public portal
+  end
+
+  def destroy?
+    false  # No deletion in public portal
+  end
+
+  def read?
+    record.published? && record.public?  # Only published, public posts
+  end
+end
+```
+
+### Portal-Specific Policy Inheritance
+
+Create portal-specific policy variations:
+
+```ruby
+# Admin portal - enhanced permissions for admins
 module AdminPortal
   class UserPolicy < ::UserPolicy
-    # Admins can do everything
     def create?
-      user.super_admin?
+      user.super_admin?  # Only super admins can create users
     end
 
     def destroy?
-      user.super_admin? && record != user
+      user.super_admin? && record != user  # Can't delete themselves
+    end
+
+    def impersonate?
+      user.super_admin? && Rails.env.development?
     end
   end
 end
 
-# packages/customer_portal/app/policies/customer_portal/project_policy.rb
+# Customer portal - restricted permissions
 module CustomerPortal
   class ProjectPolicy < ::ProjectPolicy
-    # Customers can only see their own projects
     def index?
-      true
+      true  # Can list their projects
     end
 
     def show?
-      record.organization == user.organization
+      record.organization == user.organization  # Only their org's projects
     end
 
     def create?
-      user.can_create_projects?
+      user.can_create_projects? && user.organization.active?
+    end
+
+    def destroy?
+      false  # Customers can't delete projects
     end
   end
 end
 ```
 
-## Advanced Portal Configuration
+## Advanced Portal Customization
 
-### Portal-Specific Layouts
+### Portal-Specific Layouts and Styling
 
-Each portal can have its own layout and styling:
+Each portal can have completely different visual designs:
 
 ```erb
 <!-- packages/admin_portal/app/views/layouts/admin_portal.html.erb -->
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Admin Portal</title>
+    <title>Admin Portal - <%= @page_title || "Dashboard" %></title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -376,14 +510,27 @@ Each portal can have its own layout and styling:
     <%= javascript_include_tag "admin_portal", "data-turbo-track": "reload", defer: true %>
   </head>
 
-  <body class="admin-theme">
+  <body class="admin-theme dark-mode">
+    <!-- Admin-specific navigation -->
     <nav class="admin-nav">
-      <%= link_to "Dashboard", admin_portal.root_path %>
-      <%= link_to "Users", admin_portal.users_path %>
-      <%= link_to "Organizations", admin_portal.organizations_path %>
+      <%= link_to "Dashboard", admin_portal.root_path, class: "nav-link" %>
+      <%= link_to "Users", admin_portal.users_path, class: "nav-link" %>
+      <%= link_to "Organizations", admin_portal.organizations_path, class: "nav-link" %>
+
+      <div class="nav-user">
+        <%= current_user.name %>
+        <%= link_to "Logout", admin_portal.logout_path, method: :delete %>
+      </div>
     </nav>
 
-    <main>
+    <main class="admin-content">
+      <!-- Flash messages with admin styling -->
+      <% flash.each do |type, message| %>
+        <div class="alert alert-<%= type %> admin-alert">
+          <%= message %>
+        </div>
+      <% end %>
+
       <%= yield %>
     </main>
   </body>
@@ -392,6 +539,8 @@ Each portal can have its own layout and styling:
 
 ### Portal-Specific Components
 
+Create reusable components tailored to each portal:
+
 ```ruby
 # packages/admin_portal/app/components/admin_portal/sidebar_component.rb
 module AdminPortal
@@ -399,17 +548,32 @@ module AdminPortal
     def view_template
       aside(class: "admin-sidebar") do
         nav do
-          ul do
-            li { link_to "Dashboard", root_path }
-            li { link_to "Users", users_path }
-            li { link_to "Organizations", organizations_path }
+          ul(class: "nav-menu") do
+            li { link_to "Dashboard", root_path, class: nav_link_class("dashboard") }
+            li { link_to "Users", users_path, class: nav_link_class("users") }
+            li { link_to "Organizations", organizations_path, class: nav_link_class("organizations") }
 
+            # Conditional navigation based on permissions
             if current_user.super_admin?
-              li { link_to "System Logs", system_logs_path }
+              li { link_to "System Logs", system_logs_path, class: nav_link_class("logs") }
+              li { link_to "Analytics", analytics_path, class: nav_link_class("analytics") }
+            end
+
+            # Feature-flagged navigation
+            if FeatureFlag.enabled?(:billing_portal)
+              li { link_to "Billing", billing_path, class: nav_link_class("billing") }
             end
           end
         end
       end
+    end
+
+    private
+
+    def nav_link_class(section)
+      base_class = "nav-link"
+      base_class += " active" if current_section == section
+      base_class
     end
   end
 end
@@ -417,28 +581,28 @@ end
 
 ## Portal Generation and Setup
 
-### Generating Portals
+### Using Generators
 
-Plutonium provides generators for creating portals:
+Plutonium provides comprehensive generators for portal creation:
 
 ```bash
-# Generate a new admin portal
-rails generate pu:pkg:portal admin --auth=admin
+# Generate a full-featured admin portal
+rails generate pu:pkg:portal admin
 
 # Generate a customer portal
-rails generate pu:pkg:portal customer --auth=customer
+rails generate pu:pkg:portal customer
 
 # Generate a public portal
-rails generate pu:pkg:portal public --public
+rails generate pu:pkg:portal public
 
-# Connect resources to portals
+# Connect existing resources to portals
 rails generate pu:res:conn post --dest=admin_portal
 rails generate pu:res:conn project --dest=customer_portal
 ```
 
-### Portal Structure
+### Generated Portal Structure
 
-Generated portals follow a consistent structure:
+Generators create a well-organized portal structure:
 
 ```
 packages/admin_portal/
@@ -446,52 +610,101 @@ packages/admin_portal/
 │   ├── controllers/
 │   │   └── admin_portal/
 │   │       ├── concerns/
-│   │       │   └── controller.rb
-│   │       ├── dashboard_controller.rb
-│   │       ├── plutonium_controller.rb
-│   │       └── resource_controller.rb
+│   │       │   └── controller.rb          # Portal-wide controller logic
+│   │       ├── dashboard_controller.rb     # Portal dashboard
+│   │       ├── plutonium_controller.rb     # Base controller
+│   │       └── resource_controller.rb      # Resource controller base
 │   ├── policies/
-│   │   └── admin_portal/
+│   │   └── admin_portal/                   # Portal-specific policies
 │   ├── definitions/
-│   │   └── admin_portal/
+│   │   └── admin_portal/                   # Portal-specific resource definitions
 │   └── views/
 │       └── layouts/
-│           └── admin_portal.html.erb
+│           └── admin_portal.html.erb       # Portal-specific layout
 ├── config/
-│   └── routes.rb
+│   └── routes.rb                           # Portal routes
 └── lib/
-    └── engine.rb
+    └── engine.rb                           # Portal engine configuration
 ```
 
 ## Best Practices
 
-### Portal Design
+### Multi-Tenancy Best Practices
 
-1. **Single Responsibility**: Each portal should serve a specific user type or use case
-2. **Clear Boundaries**: Maintain clear separation between different portal contexts
-3. **Consistent Navigation**: Provide intuitive navigation within each portal
-4. **Security First**: Apply appropriate authentication and authorization for each portal
+**Entity Modeling**
+Design clear entity relationships:
 
-### Multi-Tenancy
+```ruby
+# ✅ Good - clear entity hierarchy
+class Organization < ApplicationRecord
+  has_many :users
+  has_many :projects
+  has_many :invoices
+end
 
-1. **Entity Modeling**: Design clear entity relationships for scoping
+class User < ApplicationRecord
+  belongs_to :organization
+  has_many :projects
+end
 
-### Resource Management
+class Project < ApplicationRecord
+  belongs_to :organization
+  belongs_to :user
+end
+```
 
-1. **Explicit Registration**: Always explicitly register resources with portals
-2. **Portal-Specific Policies**: Create portal-specific policies when needed
+**Consistent Scoping**
+Use the same scoping strategy throughout your portal:
 
-### Authentication Strategy
+```ruby
+# ✅ Good - consistent scoping
+class AdminPortal::Engine < Rails::Engine
+  scope_to_entity Organization, strategy: :path
+end
 
-1. **Portal-Specific Auth**: Use appropriate authentication for each portal type
-2. **Security Headers**: Implement proper security headers for each portal
-3. **Session Management**: Handle sessions appropriately across portals
-4. **Route Constraints**: Use route constraints to enforce authentication
+# All controllers automatically scope to organization
+# All policies receive the scoped organization context
+```
 
-## Integration Points
+### Security First
 
-- **Core Module**: Provides base controller functionality and entity scoping
-- **Authentication Module**: Portal-specific authentication strategies
-- **Policy Module**: Entity-aware authorization and scoping
-- **Package Module**: Package-based organization and resource registration
-- **Resource Module**: Resource controllers work seamlessly within portals
+**Portal-Specific Authentication**
+Use appropriate authentication for each portal:
+
+```ruby
+# ✅ Good - tailored authentication
+module AdminPortal::Concerns::Controller
+  include Plutonium::Auth::Rodauth(:admin)
+end
+
+module CustomerPortal::Concerns::Controller
+  include Plutonium::Auth::Rodauth(:customer)
+end
+```
+
+**Route Constraints**
+Enforce authentication at the routing level:
+
+```ruby
+# ✅ Good - route-level security
+Rails.application.routes.draw do
+  constraints Rodauth::Rails.authenticate(:admin) do
+    mount AdminPortal::Engine, at: "/admin"
+  end
+
+  constraints Rodauth::Rails.authenticate(:customer) do
+    mount CustomerPortal::Engine, at: "/app"
+  end
+end
+```
+
+## Integration with Other Modules
+
+The Portal module works seamlessly with other Plutonium components:
+
+- **[Core](./core.md)**: Provides base controller functionality and entity scoping capabilities
+- **[Authentication](./authentication.md)**: Portal-specific authentication strategies and session management
+- **[Policy](./policy.md)**: Entity-aware authorization and portal-specific access control
+- **[Package](./package.md)**: Package-based organization and resource registration
+- **[Resource](./resource.md)**: Resource controllers work seamlessly within portal contexts
+- **[Routing](./routing.md)**: Automatic route generation with entity scoping and portal isolation

@@ -16,8 +16,6 @@ The UI module is located in `lib/plutonium/ui/`.
 - **Responsive Layouts**: Mobile-first responsive design patterns.
 - **Theme System**: Consistent styling with dark mode support.
 - **Modern Interactions**: Hotwire/Turbo integration for dynamic experiences.
-- **Accessibility**: ARIA-compliant components with keyboard navigation.
-- **Extensible Design**: Easy customization and extension of components.
 
 ## Core Architecture
 
@@ -439,7 +437,15 @@ class PostDisplay < Plutonium::UI::Display::Base
     field(:content).markdown_tag
     field(:author).association_tag
     field(:attachments).attachment_tag
-    field(:custom_data).phlexi_render_tag(with: CustomRenderer)
+
+    # Custom component with block syntax
+    field(:chart_data) do |f|
+      if f.value.present?
+        render ChartComponent.new(data: f.value, class: f.dom.css_class)
+      else
+        span(class: "text-gray-500") { "No chart data" }
+      end
+    end
   end
 end
 ```
@@ -456,10 +462,17 @@ field(:author).association_tag
 # File attachment display
 field(:documents).attachment_tag
 
-# Custom component rendering
-field(:chart_data).phlexi_render_tag(with: ->(data, attrs) {
-  ChartComponent.new(data: data, **attrs)
-})
+# Custom component with conditional logic
+field(:status) do |f|
+  case f.value
+  when 'active'
+    span(class: "badge bg-green-100 text-green-800") { "Active" }
+  when 'pending'
+    span(class: "badge bg-yellow-100 text-yellow-800") { "Pending" }
+  else
+    render f.string_tag
+  end
+end
 ```
 
 ## Table Components
@@ -553,74 +566,6 @@ class MyComponent < Plutonium::UI::Component::Base
 end
 ```
 
-## Advanced Features
-
-### Responsive Design
-
-All components are built with mobile-first responsive design:
-
-```ruby
-div(class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4") do
-  # Responsive grid layout
-end
-
-div(class: "hidden lg:block") do
-  # Desktop-only content
-end
-
-div(class: "block lg:hidden") do
-  # Mobile-only content
-end
-```
-
-### Dark Mode Support
-
-Automatic dark mode with system preference detection:
-
-```ruby
-# Theme classes automatically include dark mode variants
-div(class: "bg-white dark:bg-gray-800 text-gray-900 dark:text-white")
-
-# JavaScript controller handles theme switching
-html(data_controller: "color-mode")
-```
-
-### Accessibility Features
-
-Components include comprehensive accessibility support:
-
-```ruby
-# ARIA attributes
-button(aria_label: "Close dialog", aria_expanded: "false")
-
-# Semantic HTML
-nav(aria_label: "Breadcrumb") do
-  ol(role: "list") do
-    li(role: "listitem") { "Home" }
-  end
-end
-
-# Keyboard navigation
-div(tabindex: "0", role: "button")
-```
-
-### Performance Optimizations
-
-```ruby
-# Conditional rendering
-def render?
-  current_user&.admin? && resource_record.present?
-end
-
-# Lazy loading
-def expensive_component
-  @expensive_component ||= calculate_expensive_data
-end
-
-# Turbo permanent elements
-div(data_turbo_permanent: true, id: "persistent-sidebar")
-```
-
 ## Custom Components
 
 ### Creating Custom Components
@@ -684,107 +629,3 @@ class MyView < Plutonium::UI::Component::Base
   end
 end
 ```
-
-## Testing
-
-### Component Testing
-
-```ruby
-RSpec.describe CustomCard do
-  let(:component) { described_class.new(title: "Test Card") }
-
-  it "renders the title" do
-    expect(render(component)).to include("Test Card")
-  end
-
-  it "applies variant classes" do
-    success_card = described_class.new(title: "Success", variant: :success)
-    expect(render(success_card)).to include("border-green-200")
-  end
-
-  it "renders block content" do
-    html = render(component) { "Block content" }
-    expect(html).to include("Block content")
-  end
-end
-```
-
-### System Testing
-
-```ruby
-RSpec.describe "UI Components", type: :system do
-  it "renders responsive navigation" do
-    visit root_path
-
-    # Desktop navigation
-    expect(page).to have_css(".lg\\:block", visible: :all)
-
-    # Mobile navigation (hidden by default)
-    expect(page).to have_css(".lg\\:hidden", visible: :hidden)
-  end
-
-  it "supports dark mode toggle" do
-    visit root_path
-
-    # Toggle dark mode
-    find("[data-action='click->color-mode#toggle']").click
-
-    expect(page).to have_css("html.dark")
-  end
-end
-```
-
-### Accessibility Testing
-
-```ruby
-RSpec.describe "Accessibility", type: :system do
-  it "provides keyboard navigation" do
-    visit root_path
-
-    # Tab through navigation
-    page.driver.browser.action.send_keys(:tab).perform
-    expect(page).to have_css(":focus")
-  end
-
-  it "includes ARIA attributes" do
-    visit posts_path
-
-    expect(page).to have_css("[aria-label='Breadcrumb']")
-    expect(page).to have_css("[role='button']")
-  end
-end
-```
-
-## Best Practices
-
-### Component Design
-
-1. **Single Responsibility**: Each component should have a clear, single purpose
-2. **Composition Over Inheritance**: Use slots and composition for flexibility
-3. **Consistent API**: Follow consistent patterns for initialization and options
-4. **Responsive First**: Design for mobile first, enhance for larger screens
-5. **Accessible by Default**: Include accessibility features from the start
-
-### Performance
-
-1. **Conditional Rendering**: Use `render?` methods to avoid unnecessary rendering
-2. **Lazy Loading**: Defer expensive computations until needed
-3. **Efficient CSS**: Use utility classes and avoid inline styles
-4. **Turbo Optimization**: Leverage Turbo for dynamic updates
-5. **Asset Optimization**: Minimize CSS and JavaScript bundles
-
-### Maintainability
-
-1. **Clear Naming**: Use descriptive component and method names
-2. **Documentation**: Document component APIs and usage examples
-3. **Testing**: Write comprehensive tests for all components
-4. **Consistency**: Follow established patterns and conventions
-5. **Modularity**: Keep components small and focused
-
-### User Experience
-
-1. **Loading States**: Provide feedback during async operations
-2. **Error Handling**: Display helpful error messages
-3. **Progressive Enhancement**: Ensure functionality without JavaScript
-4. **Consistent Interactions**: Use familiar UI patterns
-5. **Responsive Design**: Ensure usability across all device sizes

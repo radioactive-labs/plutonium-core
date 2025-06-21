@@ -98,23 +98,35 @@ class PostDefinition < Plutonium::Resource::Definition
   display :status, as: :string
   display :author, as: :association
 
+  # Conditional displays (for table columns and show pages)
+  # Use for COSMETIC/STATE-BASED logic only, NOT authorization (use policies for that)
+  display :debug_info, condition: -> { Rails.env.development? }
+  display :internal_notes, condition: -> { object.status == 'draft' }
+  display :parent_category, condition: -> { current_parent.present? }
+
   # Custom display with block (for complex rendering)
   display :custom_field do |field|
-    field.phlexi_render_tag(with: ->(value, attrs) {
-      CustomComponent.new(value: value, **attrs)
-    })
+    # Return component instances directly in definition blocks (no 'render' needed)
+    CustomComponent.new(value: field.value)
   end
+
+  # Advanced custom display with phlexi_tag (use sparingly)
+  display :status, as: :phlexi_tag, with: ->(value, attrs) {
+    # SGML methods available here because proc is evaluated in rendering context
+    span(class: "badge badge-#{value}") { value.humanize }
+  }
 
   # Input configuration (new/edit forms)
   input :title, placeholder: "Enter post title"  # No need for as: :string (auto-detected)
   input :content, as: :rich_text
   input :category, as: :select, collection: %w[Tech Business Lifestyle]
 
-  # Conditional inputs (conditions are evaluated in form/view rendering context)
-  input :admin_notes, condition: -> { current_user&.admin? }
+  # Conditional inputs (for forms only)
+  # Use for COSMETIC/STATE-BASED logic only, NOT authorization (use policies for that)
   input :debug_info, condition: -> { Rails.env.development? }
-  input :team_projects, condition: -> { current_user.team_lead? }
+  input :internal_notes, condition: -> { object.status == 'draft' }
   input :parent_category, condition: -> { current_parent.present? }
+  input :team_projects, condition: -> { current_user.team_lead? }
 
   # Search functionality
   search do |scope, query|
@@ -151,6 +163,40 @@ end
 - Associations: `:association`
 - Special: `:hidden`, `:email`, `:url`, `:color`
 
+### Conditional Rendering Guidelines
+
+**IMPORTANT**: Use conditions for COSMETIC/STATE-BASED logic only, NOT for authorization.
+
+#### ✅ Appropriate Uses
+- **Environment-based**: Show debug info in development only
+- **Object state-based**: Show fields based on record status
+- **Context-based**: Show fields based on parent presence
+- **Dynamic behavior**: Show dependent fields conditionally
+
+```ruby
+# Environment-based visibility
+display :debug_info, condition: -> { Rails.env.development? }
+
+# Object state-based visibility
+display :approval_date, condition: -> { object.approved? }
+input :rejection_reason, condition: -> { object.rejected? }
+
+# Parent context-based visibility
+display :parent_category, condition: -> { current_parent.present? }
+
+# Dynamic form behavior
+input :end_date, condition: -> { object.start_date.present? }
+```
+
+#### ❌ Inappropriate Uses
+Authorization logic belongs in policies, not conditions:
+
+```ruby
+# DON'T use conditions for role-based authorization
+display :admin_notes, condition: -> { current_user&.admin? }  # Use policy instead
+input :sensitive_data, condition: -> { current_user&.can_edit_sensitive? }  # Use policy instead
+```
+
 ### Available Configuration Options
 
 #### Field Options
@@ -167,7 +213,7 @@ input :title,
   class: "custom-input",
   wrapper: {class: "input-wrapper"},
   data: {controller: "custom"},
-  condition: -> { current_user&.admin? }  # Evaluated in form context
+  condition: -> { object.status == 'draft' }  # Cosmetic condition only
 ```
 
 #### Display Options
@@ -176,7 +222,7 @@ display :content,
   as: :markdown,
   class: "prose",
   wrapper: {class: "content-wrapper"},
-  condition: -> { current_user&.can_see_content? }  # Evaluated in view context
+  condition: -> { Rails.env.development? }  # Cosmetic condition only
 ```
 
 #### Collection Options (for selects)
@@ -197,12 +243,15 @@ input :related_posts, as: :select, collection: -> {
 #### File Upload Options
 ```ruby
 input :avatar, as: :file, multiple: false
-input :documents, as: :file, multiple: true,
-  allowed_file_types: ['.pdf', '.doc', '.docx'],
-  max_file_size: 5.megabytes
+input :documents, as: :file, multiple: true
+# Note: Advanced file options like allowed_file_types and max_file_size
+# are not currently supported by the framework
 ```
 
 ### Resource Policies
+
+Policies control authorization and data access. They define who can perform what actions and what data users can see.
+
 ```ruby
 class PostPolicy < Plutonium::Resource::Policy
   # CRUD permissions
@@ -231,7 +280,7 @@ class PostPolicy < Plutonium::Resource::Policy
     update? && record.draft?
   end
 
-  # Attribute permissions
+  # Attribute permissions - control which fields are accessible
   def permitted_attributes_for_read
     attrs = [:title, :content, :category, :published_at]
     attrs << :internal_notes if user.admin?
@@ -248,7 +297,7 @@ class PostPolicy < Plutonium::Resource::Policy
     attrs
   end
 
-  # Collection scoping
+  # Collection scoping - filter what records users can see
   relation_scope do |relation|
     relation = super(relation) # Apply entity scoping first
 

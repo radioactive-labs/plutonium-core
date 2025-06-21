@@ -50,7 +50,7 @@ The cursor rules file contains comprehensive guidelines for:
 
 ### 🎨 **UI Customization**
 - **Component architecture** with Phlex
-- **Custom display blocks** with `phlexi_render_tag`
+- **Custom display blocks** with `phlexi_tag`
 - **Conditional rendering** with context awareness
 - **Layout customization** patterns
 

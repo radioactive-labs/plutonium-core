@@ -1,19 +1,20 @@
 # Core Concepts
 
 ::: tip What you'll learn
-- Understanding Plutonium's architecture and core abstractions
-- How resources and packages work together
-- How to organize your application effectively
-- Best practices for building maintainable applications
+- Plutonium's architecture and how its core components work together
+- The role of Resources as your application's building blocks
+- How Packages help organize and modularize your code
+- Entity Scoping for building multi-tenant applications
+- Best practices for maintainable, scalable applications
 :::
 
-## Resources
+## Understanding Resources
 
-Resources are the fundamental building blocks of a Plutonium application. They represent your business domain objects and their associated behavior.
+Think of Resources as the DNA of your Plutonium application. Every meaningful piece of data or functionality in your app—whether it's a User, Product, or Blog Post—is represented as a Resource. But unlike traditional Rails models, Plutonium Resources are rich, self-contained units that know how to display themselves, authorize access, and handle user interactions.
 
-### Anatomy of a Resource
+### The Anatomy of a Resource
 
-A resource consists of several interconnected components:
+Each Resource is composed of four key components that work together seamlessly:
 
 ```mermaid
 graph TD
@@ -30,7 +31,14 @@ graph TD
     G --> M[User Operations]
 ```
 
+- **Model**: Your familiar Active Record model with validations, associations, and business logic
+- **Definition**: Describes how the Resource appears and behaves in the UI
+- **Policy**: Controls who can access what and when
+- **Actions**: Custom operations users can perform on the Resource
+
 ::: details Complete Resource Example
+
+Let's see how all these pieces fit together in a real User resource:
 
 ::: code-group
 ```ruby [Model]
@@ -38,15 +46,15 @@ graph TD
 class User < ApplicationRecord
   include Plutonium::Resource::Record
 
-  # Associations
+  # Standard Rails associations
   has_many :posts
   has_many :comments
   belongs_to :organization
 
-  # Scopes
+  # Helpful scopes for filtering
   scope :active, -> { where(status: :active) }
 
-  # Validations
+  # Standard validations
   validates :name, presence: true
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: {in: %w[admin user]}
@@ -58,33 +66,33 @@ end
 ```ruby [Definition]
 # app/definitions/user_definition.rb
 class UserDefinition < Plutonium::Resource::Definition
-  # Display configuration
+  # How fields appear in forms and tables
   field :name, as: :string
   field :email, as: :email
 
-  # Search configuration
+  # Enable search functionality
   search do |scope, query|
     scope.where("name LIKE :q OR email LIKE :q", q: "%#{query}%")
   end
 
-  # Filters
+  # Add filters for easy data browsing
   filter :role, with: SelectFilter, choices: %w[admin user guest]
   filter :status, with: SelectFilter, choices: %w[active inactive]
 
-  # Scopes
+  # Expose useful scopes
   scope :active
 
   scope :admins do
     where(role: :admin)
   end
 
-  # Actions
+  # Custom actions users can perform
   action :deactivate,
     interaction: DeactivateUser,
     color: :warning,
     icon: Phlex::TablerIcons::UserOff
 
-  # UI Customization
+  # Customize the detail page
   show_page_title "User Details"
   show_page_description "View and manage user information"
 end
@@ -93,29 +101,29 @@ end
 ```ruby [Policy]
 # app/policies/user_policy.rb
 class UserPolicy < Plutonium::Resource::Policy
-  # Basic permissions
+  # Basic CRUD permissions
   def read?
-    true
+    true # Everyone can view users
   end
 
   def create?
-    user.admin?
+    user.admin? # Only admins can create users
   end
 
   def update?
-    user.admin? || record.id == user.id
+    user.admin? || record.id == user.id # Admins or self
   end
 
   def destroy?
-    user.admin? && record.id != user.id
+    user.admin? && record.id != user.id # Admins, but not themselves
   end
 
-  # Action permissions
+  # Custom action permissions
   def deactivate?
     user.admin? && record.status == :active && record.id != user.id
   end
 
-  # Attribute permissions
+  # Control which fields are visible/editable
   def permitted_attributes_for_read
     if user.admin?
       %i[name email role status created_at updated_at]
@@ -140,32 +148,31 @@ class UserPolicy < Plutonium::Resource::Policy
     end
   end
 
-  # Association permissions
+  # Control access to related resources
   def permitted_associations
     %i[posts comments]
   end
 end
 ```
 
-
 ```ruby [Deactivate Interaction]
 # app/interactions/user_interactions/deactivate.rb
 module UserInteractions
   class Deactivate < Plutonium::Resource::Interaction
-    # Define presentable metadata
+    # How this action appears in the UI
     presents label: "Deactivate User",
              icon: Phlex::TablerIcons::UserOff,
              description: "Deactivate user account"
 
-    # Define attributes
+    # What data this action needs
     attribute :resource, class: User
     attribute :reason, :string
 
-    # Validations
+    # Validation rules
     validates :resource, presence: true
     validates :reason, presence: true
 
-    # Business logic
+    # The actual business logic
     def execute
       resource.transaction do
         resource.status = :inactive
@@ -186,23 +193,21 @@ end
 ```
 :::
 
-## Packages
+## Organizing with Packages
 
-Packages are the way Plutonium helps you modularize your application. They're built on top of Rails Engines but provide additional structure and conventions.
+As your application grows, you need a way to organize your code that doesn't turn into a tangled mess. That's where Packages come in. Think of them as specialized containers that help you group related functionality and keep your application modular.
 
-There are two main types:
+Plutonium uses two types of packages, each with a specific purpose:
 
-### Feature Packages
+### Feature Packages: Your Business Logic Containers
 
+Feature packages are where your core business logic lives. They're self-contained modules that focus on a specific domain area of your application—like blogging, e-commerce, or user management.
 
-Feature packages help you organize your application into logical, reusable modules.
-They contain your business domain logic and resources. They're self-contained and independent.
-
-::: tip Key Characteristics
-- Domain Models
-- Business Logic
-- No Web Interface
-- Reusable Components
+::: tip What Makes a Good Feature Package
+- **Domain-focused**: Centers around a specific business area
+- **Self-contained**: Has everything it needs to function
+- **No web interface**: Pure business logic, no controllers or views
+- **Reusable**: Can be used across different parts of your app
 :::
 
 ::: code-group
@@ -238,23 +243,20 @@ packages/
 module Blogging
   class Engine < ::Rails::Engine
     include Plutonium::Package::Engine
-
-    # Package configuration goes here
-    isolate_namespace Blogging
   end
 end
 ```
 :::
 
-### Portal Packages
+### Portal Packages: Your User Interface Gateways
 
-Portal packages provide web interfaces and control how users interact with features.
+Portal packages are the web-facing part of your application. They take the business logic from Feature packages and present it to users through a web interface. Each portal typically serves a specific audience—like administrators, customers, or partners.
 
-::: tip Key Characteristics
-- Web Interface
-- Authentication
-- Resource Access Control
-- Feature Composition
+::: tip What Makes a Good Portal Package
+- **User-focused**: Designed for a specific type of user
+- **Interface-heavy**: Controllers, views, and authentication
+- **Feature composition**: Combines multiple feature packages
+- **Access control**: Manages who can see and do what
 :::
 
 ::: code-group
@@ -283,7 +285,7 @@ module AdminPortal
   class Engine < ::Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Scope all resources to organization
+    # All resources in this portal are scoped to an organization
     scope_to_entity Organization, strategy: :path
   end
 end
@@ -294,7 +296,7 @@ end
 AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
-  # Register resources from feature packages
+  # Make resources from feature packages available in this portal
   register_resource Blogging::Post
   register_resource Blogging::Comment
 end
@@ -304,10 +306,11 @@ end
 # packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
 module AdminPortal
   module Concerns
-    class Controller < ::Rails::Engine
+    module Controller
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
-      # Integrate authentication
+
+      # Add authentication to this portal
       include Plutonium::Auth::Rodauth(:admin)
     end
   end
@@ -315,102 +318,107 @@ end
 ```
 :::
 
-## Entity Scoping
+## Entity Scoping: Building Multi-Tenant Applications
 
-Entity scoping is a powerful feature that allows you to partition resources based on a parent entity (like Organization or Account).
-It's how Plutonium achieve's multitenancy.
+One of Plutonium's most powerful features is Entity Scoping—a clean way to build multi-tenant applications where data is automatically partitioned based on a parent entity like Organization, Account, or Team.
 
-By properly defining associations to an entity, row-level multitenancy comes for free, out of the box.
+Here's the magic: when you properly set up entity scoping, Plutonium automatically ensures users only see and can access data that belongs to their organization. No manual filtering required!
+
+### How It Works
 
 ```ruby
-# Scope definition in engine
+# 1. Configure scoping in your portal engine
 module AdminPortal
   class Engine < ::Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Path-based scoping (/org_123/posts)
+    # Path-based scoping creates URLs like /org_123/posts
     scope_to_entity Organization, strategy: :path
 
-    # Or custom scoping
+    # Or use a custom strategy for more control
     scope_to_entity Organization, strategy: :current_organization
   end
 end
 
-# Model implementation
+# 2. Set up your models with proper associations
 class Post < ApplicationRecord
   include Plutonium::Resource::Record
 
-  # Define a direct relationship to the entity
+  # Direct relationship to the scoping entity
   belongs_to :user
   belongs_to :organization, through: :user
 
-  # Alternatively, if there's no direct relationship
+  # Alternative: custom scoping for complex relationships
   scope :associated_with_organization, ->(organization) do
-    # custom scoping logic goes here
     joins(:user).where(users: { organization_id: organization.id })
   end
 end
 
-# Controller config
-class ResourceController < PlutoniumController
-  include Plutonium::Resource::Controller
-
+# 3. Implement the scoping strategy in your controller
+module AdminPortal::Concerns::Controller
   private
 
+  # This method name must match your strategy name
   def current_organization
-    # Get tenant from the current subdomain
-    @current_organization ||= Organization.where(subdomain: request.subdomain).first!
+    # Extract tenant from subdomain, path, or any other source
+    @current_organization ||= Organization.find_by!(subdomain: request.subdomain)
   end
 end
 ```
 
-## Best Practices
+### The Result
 
-### Package Organization
+With this setup, when a user visits `/posts`, they automatically see only posts from their organization. When they create a new post, it's automatically associated with their organization. All of this happens transparently—no extra code needed in your controllers or views.
+
+## Best Practices for Success
+
+### Organizing Your Packages
 
 ::: tip Feature Packages
-1. Keep domain logic isolated
-2. Clear boundaries between features
-3. Minimal dependencies between packages
-4. Well-defined interfaces
+- **Keep domains separate**: Each package should focus on one business area
+- **Minimize dependencies**: Packages should be as independent as possible
+- **Clear interfaces**: Use well-defined APIs for package interactions
+- **Single responsibility**: One clear purpose per package
 :::
 
 ::: tip Portal Packages
-1. Single responsibility (admin, customer)
-2. Consistent authentication strategy
-3. Clear resource scoping rules
-4. Feature composition over duplication
+- **User-centric design**: Each portal serves a specific user type
+- **Consistent authentication**: Use the same auth strategy throughout a portal
+- **Clear scoping rules**: Be explicit about data access boundaries
+- **Compose, don't duplicate**: Reuse feature packages rather than rebuilding
 :::
 
-### Resource Design
+### Designing Robust Resources
 
 ::: tip Model Layer
-1. Clear validations and constraints
-2. Proper association setup
-3. Meaningful scopes
+- **Clear validations**: Make invalid states impossible
+- **Meaningful associations**: Reflect real business relationships
+- **Useful scopes**: Provide common query patterns
+- **Business methods**: Encode domain logic in the model
 :::
 
 ::: tip Definition Layer
-1. Appropriate field types
-2. Clear action definitions
-3. Efficient search implementation
+- **Appropriate field types**: Match the UI to the data
+- **Efficient search**: Index searchable fields properly
+- **Logical grouping**: Organize fields and actions intuitively
+- **Clear labeling**: Use human-friendly names and descriptions
 :::
 
 ::: tip Policy Layer
-1. Granular permissions
-2. Attribute-level access control
-3. Action-specific rules
-4. Association permissions
+- **Granular permissions**: Control access at the field level when needed
+- **Explicit rules**: Make authorization logic clear and testable
+- **Action-specific controls**: Different actions may need different rules
+- **Association security**: Control access to related data
 :::
 
-### Security Considerations
+### Security First
 
-::: warning Important
-1. Always implement proper policies
-2. Use entity scoping consistently
-3. Validate all inputs
-4. Control association access
-5. Audit sensitive actions
+::: warning Critical Security Practices
+- **Always implement policies**: Never rely on "security through obscurity"
+- **Use entity scoping consistently**: Don't mix scoped and unscoped access
+- **Validate all inputs**: Trust nothing from the user
+- **Control associations**: Prevent unauthorized data access through relationships
+- **Audit sensitive actions**: Log important operations for compliance
 :::
 
 ## Generator Support

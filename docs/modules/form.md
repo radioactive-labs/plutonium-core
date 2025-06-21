@@ -89,11 +89,11 @@ A client-side markdown editor with live preview, based on [EasyMDE](https://gith
 ::: code-group
 ```ruby [Basic Usage]
 # Automatically used for :markdown fields
-field(:content).easymde_tag
+render field(:content).easymde_tag
 ```
 
 ```ruby [With Options]
-field(:description).easymde_tag(
+render field(:description).easymde_tag(
   toolbar: ["bold", "italic", "heading", "|", "quote"],
   spellChecker: false,
   autosave: { enabled: true, uniqueId: "post_content" }
@@ -108,25 +108,31 @@ A powerful and lightweight date and time picker from [Flatpickr](https://flatpic
 ::: code-group
 ```ruby [Date Picker]
 # Automatically used for :date fields
-field(:published_at).flatpickr_tag
-```
-```ruby [Date Range]
-field(:event_dates).flatpickr_tag(mode: "range")
+render field(:published_at).flatpickr_tag
 ```
 ```ruby [Time Picker]
-field(:meeting_time).flatpickr_tag(
-  enableTime: true,
-  noCalendar: true,
-  dateFormat: "H:i"
-)
+# Automatically used for :time fields
+render field(:meeting_time).flatpickr_tag
 ```
 ```ruby [Datetime Picker]
 # Automatically used for :datetime fields
-field(:deadline).flatpickr_tag(
-  enableTime: true,
-  dateFormat: "Y-m-d H:i"
+render field(:deadline).flatpickr_tag
+```
+```ruby [With HTML Attributes]
+render field(:event_date).flatpickr_tag(
+  class: "custom-date-picker",
+  placeholder: "Select date..."
 )
 ```
+:::
+
+::: warning Flatpickr Configuration
+The current implementation uses automatic configuration based on field type:
+- **Date fields**: Basic date picker with `altInput: true`
+- **Time fields**: Time picker with `enableTime: true, noCalendar: true`
+- **Datetime fields**: Date and time picker with `enableTime: true`
+
+Custom Flatpickr options (like `dateFormat`, `mode: "range"`) are not currently supported through tag attributes.
 :::
 
 ### File Upload (Uppy)
@@ -136,20 +142,20 @@ A sleek, modern file uploader powered by [Uppy](https://uppy.io/).
 ::: code-group
 ```ruby [Single File]
 # Automatically used for :file or :attachment fields
-field(:avatar).uppy_tag
+render field(:avatar).uppy_tag
 ```
 ```ruby [Multiple Files]
-field(:documents).uppy_tag(multiple: true)
+render field(:documents).uppy_tag(multiple: true)
 ```
 ```ruby [With Restrictions]
-field(:gallery).uppy_tag(
+render field(:gallery).uppy_tag(
   multiple: true,
   allowed_file_types: ['.jpg', '.jpeg', '.png'],
   max_file_size: 5.megabytes
 )
 ```
 ```ruby [Direct to Cloud]
-field(:videos).uppy_tag(
+render field(:videos).uppy_tag(
   direct_upload: true, # For S3, etc.
   max_total_size: 100.megabytes
 )
@@ -202,14 +208,27 @@ A user-friendly phone number input with country code selection, using [intl-tel-
 ::: code-group
 ```ruby [Basic Usage]
 # Automatically used for :tel fields
-field(:phone).int_tel_input_tag
+render field(:phone).int_tel_input_tag
 ```
-```ruby [With Restrictions]
-field(:mobile).int_tel_input_tag(
-  onlyCountries: ['us', 'ca', 'mx'],
-  preferredCountries: ['us']
+```ruby [Phone Tag Alias]
+# Alias for int_tel_input_tag
+render field(:mobile).phone_tag
+```
+```ruby [With HTML Attributes]
+render field(:contact_phone).int_tel_input_tag(
+  class: "custom-phone-input",
+  placeholder: "Enter phone number"
 )
 ```
+:::
+
+::: warning Int Tel Input Configuration
+The current implementation uses a fixed configuration:
+- **Strict Mode**: Enabled for validation
+- **Utils Loading**: Automatically loads validation utilities
+- **Hidden Input**: Creates hidden field for form submission
+
+Custom intl-tel-input options (like `onlyCountries`, `preferredCountries`) are not currently supported through tag attributes.
 :::
 
 ### Secure Association Inputs
@@ -219,19 +238,19 @@ Plutonium's association inputs are secure by default, using SGIDs to prevent par
 ::: code-group
 ```ruby [Belongs To]
 # Automatically used for belongs_to associations
-field(:author).belongs_to_tag
+render field(:author).belongs_to_tag
 ```
 ```ruby [Has Many]
 # Automatically used for has_many associations
-field(:tags).has_many_tag
+render field(:tags).has_many_tag
 ```
 ```ruby [With Custom Choices]
-field(:category).belongs_to_tag(
+render field(:category).belongs_to_tag(
   choices: Category.published.pluck(:name, :id)
 )
 ```
 ```ruby [With Add Action]
-field(:publisher).belongs_to_tag(
+render field(:publisher).belongs_to_tag(
   add_action: new_publisher_path
 )
 ```
@@ -272,18 +291,18 @@ The system automatically selects appropriate input components:
 
 ```ruby
 # Automatic inference based on Active Record column types
-field(:title)          # → input_tag (string)
-field(:content)        # → easymde_tag (text/rich_text)
-field(:published_at)   # → flatpickr_tag (datetime)
-field(:author)         # → secure_association_tag (belongs_to)
-field(:featured_image) # → uppy_tag (Active Storage)
-field(:category)       # → slim_select_tag (select)
+render field(:title).input_tag          # → input_tag (string)
+render field(:content).easymde_tag        # → easymde_tag (text/rich_text)
+render field(:published_at).flatpickr_tag   # → flatpickr_tag (datetime)
+render field(:author).secure_association_tag         # → secure_association_tag (belongs_to)
+render field(:featured_image).uppy_tag # → uppy_tag (Active Storage)
+render field(:category).slim_select_tag       # → slim_select_tag (select)
 
 # Manual override
-field(:title).input_tag(as: :string)
-field(:content).easymde_tag
-field(:published_at).flatpickr_tag
-field(:documents).uppy_tag(multiple: true)
+render field(:title).input_tag(as: :string)
+render field(:content).easymde_tag
+render field(:published_at).flatpickr_tag
+render field(:documents).uppy_tag(multiple: true)
 ```
 
 ### Type Mapping
@@ -363,10 +382,36 @@ end
 # Simple form
 class ContactForm < Plutonium::UI::Form::Base
   def form_template
-    field(:name).input_tag(as: :string)
-    field(:email).input_tag(as: :email)
-    field(:message).textarea_tag
-    field(:phone).int_tel_input_tag
+    render field(:name).input_tag(as: :string)
+    render field(:email).input_tag(as: :email)
+    render field(:message).textarea_tag
+    render field(:phone).int_tel_input_tag
+  end
+end
+```
+
+### Field Rendering and Wrappers
+
+All fields must be explicitly rendered using the `render` method. Use wrappers to control layout and styling:
+
+```ruby
+class PostForm < Plutonium::UI::Form::Resource
+  def form_template
+    # Basic field rendering
+    render field(:title).input_tag
+
+    # Field with wrapper styling
+    render field(:content).wrapped(class: "col-span-full") do |f|
+      render f.easymde_tag
+    end
+
+    # Custom wrapper with data attributes
+    render field(:author).wrapped(
+      class: "border rounded-lg p-4",
+      data: { controller: "tooltip" }
+    ) do |f|
+      render f.belongs_to_tag
+    end
   end
 end
 ```
@@ -427,7 +472,7 @@ class CustomFormBuilder < Plutonium::UI::Form::Base::Builder
 end
 
 # Use in form
-field(:brand_color).color_picker_tag
+render field(:brand_color).color_picker_tag
 ```
 
 ### Nested Resources
@@ -435,7 +480,7 @@ field(:brand_color).color_picker_tag
 ```ruby
 class PostForm < Plutonium::UI::Form::Resource
   def form_template
-    field(:title).input_tag(as: :string)
+    field(:title).input_tag
     field(:content).easymde_tag
 
     # Nested comments
@@ -449,30 +494,17 @@ end
 
 ## JavaScript Integration
 
-### External Dependencies
+### Automatic Dependencies
 
-Plutonium automatically includes required JavaScript libraries:
-
-```ruby
-# Automatically included in layouts
-# - EasyMDE for markdown editing
-# - Flatpickr for date/time picking
-# - SlimSelect for enhanced selects
-# - Intl-Tel-Input for phone inputs
-# - Uppy for file uploads
-
-# External CDN resources are loaded in base layout
-def render_external_scripts
-  script(src: "https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js")
-  script(src: "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js")
-  script(src: "https://cdn.jsdelivr.net/npm/slim-select@2.10.0/dist/slimselect.umd.min.js")
-  script(src: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/intlTelInput.min.js")
-end
-```
+Plutonium automatically includes JavaScript libraries for enhanced form components:
+- **EasyMDE** for markdown editing
+- **Flatpickr** for date/time picking
+- **Intl-Tel-Input** for phone inputs
+- **Uppy** for file uploads
 
 ### Stimulus Controllers
 
-Each enhanced component has a corresponding Stimulus controller:
+Each enhanced component uses a Stimulus controller for initialization and cleanup:
 
 ```javascript
 // easymde_controller.js
@@ -496,16 +528,25 @@ export default class extends Controller {
 // flatpickr_controller.js
 export default class extends Controller {
   connect() {
-    this.flatpickr = flatpickr(this.element, {
-      enableTime: this.element.dataset.enableTime === "true",
-      dateFormat: this.element.dataset.dateFormat || "Y-m-d"
-    });
+    this.picker = new flatpickr(this.element, this.#buildOptions());
   }
 
   disconnect() {
-    if (this.flatpickr) {
-      this.flatpickr.destroy();
+    if (this.picker) {
+      this.picker.destroy();
+      this.picker = null;
     }
+  }
+
+  #buildOptions() {
+    let options = { altInput: true };
+    if (this.element.attributes.type.value == "datetime-local") {
+      options.enableTime = true;
+    } else if (this.element.attributes.type.value == "time") {
+      options.enableTime = true;
+      options.noCalendar = true;
+    }
+    return options;
   }
 }
 ```
@@ -518,19 +559,19 @@ export default class extends Controller {
 class PostForm < Plutonium::UI::Form::Resource
   def form_template
     # Client-side validation attributes
-    field(:title).input_tag(
+    render field(:title).input_tag(
       required: true,
       minlength: 3,
       maxlength: 100
     )
 
-    field(:email).input_tag(
+    render field(:email).input_tag(
       type: :email,
       pattern: "[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
     )
 
     # Custom validation with JavaScript
-    field(:password).input_tag(
+    render field(:password).input_tag(
       type: :password,
       data: {
         controller: "password-validator",

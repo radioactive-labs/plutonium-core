@@ -58,9 +58,7 @@ class PostDefinition < Plutonium::Resource::Definition
 
   # Custom display with block for complex rendering
   display :status do |field|
-    field.phlexi_render_tag(with: ->(value, attrs) {
-      StatusBadgeComponent.new(value: value, **attrs)
-    })
+    StatusBadgeComponent.new(value: field.value, class: field.dom.css_class)
   end
 end
 ```
@@ -212,63 +210,123 @@ While the rendering context may provide access to `current_user`, it is strongly
 To create forms that dynamically show/hide inputs based on other form values, pair a `condition` option with `pre_submit: true` on the "trigger" input. This will cause the form to re-render whenever that input's value changes, re-evaluating any conditions that depend on it.
 :::
 
-### 5. **Create Custom Display Blocks**
-```ruby
+### 5. Custom Field Rendering
+
+Plutonium offers three main approaches for rendering fields in a definition. Choose the one that best fits your needs for clarity, flexibility, and control.
+
+#### 1. The `as:` Option (Recommended)
+
+The `as:` option is the simplest and most common way to specify a rendering component for an `input` or `display` declaration. It's ideal for using standard built-in components or overriding auto-detected types.
+
+**Use When:**
+- Using standard or enhanced built-in components.
+- You want clean, readable code with minimal boilerplate.
+- Overriding an auto-detected type (e.g., `text` to `rich_text`).
+
+::: code-group
+```ruby [Input Fields]
+# Simple and concise overrides
 class PostDefinition < Plutonium::Resource::Definition
-  # Use a component class - gets instantiated with (value, **attrs)
-  display :status do |field|
-    field.phlexi_render_tag(with: StatusBadgeComponent)
-  end
+  input :content, as: :rich_text
+  input :published_at, as: :date
+  input :avatar, as: :uppy
 
-  # Use a proc/lambda for dynamic component creation
-  display :metrics do |field|
-    field.phlexi_render_tag(with: ->(value, attrs) {
-      MetricsChartComponent.new(data: value, **attrs)
-    })
-  end
+  # With options
+  input :email, as: :email, placeholder: "Enter email"
+end
+```
+```ruby [Display Fields]
+# Simple and concise overrides
+class PostDefinition < Plutonium::Resource::Definition
+  display :content, as: :markdown
+  display :author, as: :association
+  display :documents, as: :attachment
 
-  # Pass additional attributes to the component
-  display :user_avatar do |field|
-    field.phlexi_render_tag(
-      with: AvatarComponent,
-      size: :large,
-      class: "rounded-full"
-    )
-  end
+  # With styling options
+  display :status, as: :string, class: "badge badge-success"
+end
+```
+:::
 
-  # Complex conditional rendering
-  display :content do |field|
-    field.phlexi_render_tag(with: ->(value, attrs) {
-      if value.present?
-        MarkdownComponent.new(content: value, **attrs)
-      else
-        EmptyStateComponent.new(message: "No content available", **attrs)
-      end
-    })
-  end
+#### 2. The Block Syntax
+
+The block syntax offers more control over rendering, allowing for custom components, complex layouts, and conditional logic. The block receives a `field` object that you can use to render custom output.
+
+**Use When:**
+- Integrating custom-built Phlex or ViewComponent components.
+- Building complex layouts with multiple components or custom HTML.
+- You need conditional logic to determine which component to render.
+
+::: code-group
+```ruby [Custom Display Components]
+# Custom display component
+display :chart_data do |field|
+  ChartComponent.new(data: field.value, type: :bar)
+end
+```
+```ruby [Custom Input Components]
+# Custom input component
+input :color do |field|
+  ColorPickerComponent.new(field)
 end
 ```
 
-::: tip phlexi_render_tag Usage
-The `phlexi_render_tag` method allows you to use custom Phlex components for field rendering:
-
-**Component Class**: Pass a component class that will be instantiated with `(value, **attributes)`
-```ruby
-field.phlexi_render_tag(with: MyComponent)
-# Equivalent to: MyComponent.new(value, **attributes)
 ```
-
-**Proc/Lambda**: Pass a callable that receives `(value, attributes)` and returns a component instance
-```ruby
-field.phlexi_render_tag(with: ->(value, attrs) {
-  MyComponent.new(data: value, **attrs)
-})
+```ruby [Conditional Rendering]
+# Conditional display based on value
+display :metrics do |field|
+  if field.value.present?
+    MetricsChartComponent.new(data: field.value)
+  else
+    EmptyStateComponent.new(message: "No metrics available")
+  end
+end
 ```
+:::
 
-**Additional Attributes**: Any extra options are passed to the component
-```ruby
-field.phlexi_render_tag(with: MyComponent, size: :large, theme: :dark)
-# Component receives: MyComponent.new(value, size: :large, theme: :dark)
+#### 3. `as: :phlexi_tag` (Advanced)
+
+`phlexi_tag` provides maximum rendering flexibility for `display` declarations. It's a powerful tool for building reusable component libraries and handling highly dynamic or polymorphic data.
+
+**Use When:**
+- Building reusable component libraries that need to be highly configurable.
+- Working with polymorphic data that requires specialized renderers.
+- You need complex rendering logic but want to keep it inline in the definition.
+
+::: code-group
+```ruby [With a Component Class]
+# Pass a component class for rendering.
+# The component's #initialize will receive (value, **attrs).
+display :status, as: :phlexi_tag, with: StatusBadgeComponent
+```
+```ruby [With an Inline Proc]
+# Use a proc for complex inline logic.
+# The proc receives (value, attrs).
+display :priority, as: :phlexi_tag, with: ->(value, attrs) {
+  case value
+  when 'high'
+    span(class: tokens("badge badge-danger", attrs[:class])) { "High" }
+  when 'medium'
+    span(class: tokens("badge badge-warning", attrs[:class])) { "Medium" }
+  else
+    span(class: tokens("badge badge-info", attrs[:class])) { "Low" }
+  end
+}
+```
+```ruby [Handling Polymorphic Content]
+# Dynamically render different components based on content type.
+display :rich_content, as: :phlexi_tag, with: ->(value, attrs) {
+  # `value` is the rich_content object itself
+  case value&.content_type
+  when 'markdown'
+    MarkdownComponent.new(content: value.body, **attrs)
+  when 'image'
+    # Must return a proc for inline HTML rendering with Phlex
+    proc { img(src: value.url, alt: value.caption, **attrs) }
+  else
+    nil # Fallback to default rendering: <p>#{value}</p>
+  end
+}
 ```
 :::
 
@@ -357,36 +415,144 @@ end
 
 ### Page Titles and Descriptions
 
+Page titles and descriptions are rendered using `phlexi_render`, which means they can be **strings**, **procs**, or **component instances**:
+
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
+  # Static strings
   index_page_title "All Posts"
   index_page_description "Manage your blog posts"
 
-  show_page_title "Post Details"
-  show_page_description "View post information"
+  # Dynamic procs (have access to context)
+  show_page_title -> { h1 { "#{current_record!.title} - Post Details" } }
+  show_page_description -> { h2 { "Created by #{current_record!.author.name} on #{current_record!.created_at.strftime('%B %d, %Y')}" } }
 
-  new_page_title "Create New Post"
-  edit_page_title "Edit Post"
+  # Component instances for complex rendering
+  new_page_title -> { PageTitleComponent.new(text: "Create New Post", icon: :plus) }
+  edit_page_title -> { PageTitleComponent.new(text: "Edit: #{current_record!.title}", icon: :edit) }
+
+  # Conditional titles based on state
+  index_page_title -> {
+    case params[:status]
+    when 'published' then "Published Posts"
+    when 'draft' then "Draft Posts"
+    else "All Posts"
+    end
+  }
 end
 ```
 
+::: tip phlexi_render Context
+Title and description procs are evaluated in the page rendering context, giving you access to:
+- `current_record!` - The current record (for show/edit pages)
+- `params` - Request parameters
+- `current_user` - The authenticated user
+- All helper methods available in the view context
+:::
+
 ### Custom Page Classes
 
-Override page classes for custom rendering:
+Override page classes for complete control over page rendering:
 
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  class IndexPage < Plutonium::UI::Page::Index
-    def render_content
-      # Custom index page rendering
-      super
+  class IndexPage < Plutonium::UI::Page::Resource::Index
+    def view_template(&block)
+      # Custom page header
+      div(class: "mb-8") do
+        h1(class: "text-3xl font-bold") { "Content Management" }
+        p(class: "text-gray-600") { "Manage your blog posts and articles" }
+
+        # Custom stats dashboard
+        div(class: "grid grid-cols-1 md:grid-cols-4 gap-4 mt-6") do
+          render_stat_card("Total Posts", Post.count)
+          render_stat_card("Published", Post.published.count)
+          render_stat_card("Drafts", Post.draft.count)
+          render_stat_card("This Month", Post.where(created_at: 1.month.ago..Time.current).count)
+        end
+      end
+
+      # Standard table rendering
+      super(&block)
+    end
+
+    private
+
+    def render_stat_card(title, value)
+      div(class: "bg-white p-4 rounded-lg shadow") do
+        div(class: "text-sm text-gray-500") { title }
+        div(class: "text-2xl font-bold") { value }
+      end
     end
   end
 
-  class ShowPage < Plutonium::UI::Page::Show
-    def render_content
-      # Custom show page rendering
-      super
+  class ShowPage < Plutonium::UI::Page::Resource::Show
+    def view_template(&block)
+      div(class: "max-w-4xl mx-auto") do
+        # Custom breadcrumbs
+        nav(class: "mb-6") do
+          ol(class: "flex space-x-2 text-sm") do
+            li { link_to("Posts", posts_path, class: "text-blue-600") }
+            li { span(class: "text-gray-500") { "/" } }
+            li { span(class: "text-gray-900") { current_record.title.truncate(50) } }
+          end
+        end
+
+        # Two-column layout
+        div(class: "grid grid-cols-1 lg:grid-cols-3 gap-8") do
+          # Main content
+          div(class: "lg:col-span-2") do
+            super(&block)
+          end
+
+          # Sidebar with metadata
+          div(class: "lg:col-span-1") do
+            render_metadata_sidebar
+          end
+        end
+      end
+    end
+
+    private
+
+    def render_metadata_sidebar
+      div(class: "bg-gray-50 p-6 rounded-lg") do
+        h3(class: "text-lg font-medium mb-4") { "Post Metadata" }
+
+        dl(class: "space-y-3") do
+          render_metadata_item("Status", current_record.status.humanize)
+          render_metadata_item("Created", time_ago_in_words(current_record.created_at))
+          render_metadata_item("Updated", time_ago_in_words(current_record.updated_at))
+          render_metadata_item("Views", current_record.view_count)
+        end
+      end
+    end
+
+    def render_metadata_item(label, value)
+      div do
+        dt(class: "text-sm text-gray-500") { label }
+        dd(class: "text-sm font-medium") { value }
+      end
+    end
+  end
+
+  class NewPage < Plutonium::UI::Page::Resource::New
+    def page_title
+      "Create New #{current_record.class.model_name.human}"
+    end
+
+    def page_description
+      "Fill out the form below to create a new post. All fields marked with * are required."
+    end
+  end
+
+  class EditPage < Plutonium::UI::Page::Resource::Edit
+    def page_title
+      "Edit: #{current_record.title}"
+    end
+
+    def page_description
+      "Last updated #{time_ago_in_words(current_record.updated_at)} ago"
     end
   end
 end
@@ -394,14 +560,58 @@ end
 
 ### Custom Form Classes
 
-Override form classes for custom form rendering:
+Override form classes for complete control over form rendering:
 
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   class Form < Plutonium::UI::Form::Resource
-    def render_fields
-      # Custom form field rendering
-      super
+    def form_template
+      # Custom form layout
+      div(class: "grid grid-cols-1 lg:grid-cols-3 gap-8") do
+        # Main content area
+        div(class: "lg:col-span-2") do
+          render_main_fields
+        end
+
+        # Sidebar
+        div(class: "lg:col-span-1") do
+          render_sidebar_fields
+        end
+      end
+
+      render_actions
+    end
+
+    private
+
+    def render_main_fields
+      # Group related fields
+      fieldset(class: "space-y-6") do
+        legend(class: "text-lg font-medium") { "Content" }
+
+        render field(:title).input_tag(placeholder: "Enter a compelling title")
+        render field(:content).easymde_tag
+        render field(:excerpt).input_tag(as: :textarea, rows: 3)
+      end
+    end
+
+    def render_sidebar_fields
+      # Publishing controls
+      fieldset(class: "space-y-4") do
+        legend(class: "text-lg font-medium") { "Publishing" }
+
+        render field(:status).input_tag(as: :select)
+        render field(:published_at).flatpickr_tag
+        render field(:featured).input_tag(as: :boolean)
+      end
+
+      # Categorization
+      fieldset(class: "space-y-4 mt-8") do
+        legend(class: "text-lg font-medium") { "Categorization" }
+
+        render field(:category).belongs_to_tag
+        render field(:tags).has_many_tag
+      end
     end
   end
 end
