@@ -66,4 +66,21 @@ module Rabl
   end
 end
 
+# Rails 8 compatible template handler registration
+Rails.application.config.to_prepare do
+  unless ActionView::Template::Handlers.extensions.include?(:rabl)
+    # Create a proper callable handler for Rails 8
+    rabl_handler = lambda do |template, source|
+      # Rails 8 expects the handler to return Ruby code that will be evaluated
+      # The code should return the rendered content
+      %{
+        rabl_engine = Rabl::Engine.new(#{source.inspect})
+        rabl_engine.render(self, assigns.merge(local_assigns))
+      }
+    end
+
+    ActionView::Template.register_template_handler(:rabl, rabl_handler)
+  end
+end
+
 Rabl.register!
