@@ -1,5 +1,5 @@
 module Plutonium
-  VERSION = "0.23.5"
+  VERSION = "0.24.0"
   NEXT_MAJOR_VERSION = VERSION.split(".").tap { |v|
     v[1] = v[1].to_i + 1
     v[2] = 0
