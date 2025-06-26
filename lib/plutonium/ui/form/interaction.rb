@@ -15,8 +15,34 @@ module Plutonium
         private
 
         def form_action
-          # interactive action forms post to the same page
-          nil
+          # Build the correct commit URL for the interactive action
+          action = helpers.current_interactive_action
+          return nil unless action
+
+          # Create route options for the commit action (convert GET to POST action)
+          commit_route_options = action.route_options.merge(
+            Plutonium::Action::RouteOptions.new(
+              method: :post,
+              action: commit_action_name(action.route_options.url_options[:action])
+            )
+          )
+
+          # Use existing infrastructure to build the URL
+          subject = action.record_action? ? helpers.resource_record! : helpers.resource_class
+          helpers.route_options_to_url(commit_route_options, subject)
+        end
+
+        def commit_action_name(action_name)
+          case action_name
+          when :interactive_record_action
+            :commit_interactive_record_action
+          when :interactive_resource_action
+            :commit_interactive_resource_action
+          when :interactive_collection_action
+            :commit_interactive_bulk_action
+          else
+            action_name
+          end
         end
 
         def initialize_attributes
