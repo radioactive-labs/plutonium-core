@@ -11,7 +11,7 @@ module Plutonium
         end
 
         def main_attributes = mix(super, {
-          class: "flex flex-col items-center justify-center px-6 py-8 mx-auto lg:py-0"
+          class: "flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0"
         })
 
         def render_content(&)
@@ -25,8 +25,8 @@ module Plutonium
         end
 
         def render_logo
-          link_to root_path, class: "flex items-center text-2xl font-semibold text-gray-900 dark:text-white" do
-            helpers.resource_logo_tag classname: "w-24 h-24 mr-2"
+          link_to root_path, class: "flex items-center text-2xl font-semibold text-gray-900 dark:text-white mb-2" do
+            helpers.resource_logo_tag classname: "w-24 h-24 mr-2 rounded-md"
           end
         end
 
