@@ -61,7 +61,7 @@ module Plutonium
               identifier: title.parameterize,
               title: -> { h5(class: "text-2xl font-bold tracking-tight text-gray-900 dark:text-white") { title } }
             ) do
-              FrameNavigatorPanel(title: "", src:)
+              FrameNavigatorPanel(title: "", src:, panel_id: "association-panel-#{title.parameterize}")
             end
           end
 

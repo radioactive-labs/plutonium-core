@@ -41,20 +41,22 @@ module Plutonium
       end
 
       class PanelContent < Plutonium::UI::Component::Base
-        def initialize(src:)
+        def initialize(id:, src:)
+          @id = id
           @src = src
         end
 
         def view_template
-          DynaFrameHost src: @src, loading: :lazy, data: {"frame-navigator-target": "frame"} do
+          DynaFrameHost id: @id, src: @src, loading: :lazy, data: {"frame-navigator-target": "frame"} do
             SkeletonTable()
           end
         end
       end
 
-      def initialize(title:, src:)
+      def initialize(title:, src:, panel_id: nil)
         @title = title
         @src = src
+        @panel_id = panel_id
       end
 
       def view_template
@@ -65,7 +67,7 @@ module Plutonium
             panel.with_item PanelItem.new(label: "Back", icon: Phlex::TablerIcons::ChevronLeft, data_frame_navigator_target: "backButton")
             panel.with_item PanelItem.new(label: "Refresh", icon: Phlex::TablerIcons::RefreshDot, data_frame_navigator_target: "refreshButton")
             panel.with_item PanelLink.new(label: "Maximize", icon: Phlex::TablerIcons::WindowMaximize, href: @src, data_frame_navigator_target: "maximizeLink")
-            panel.with_content PanelContent.new(src: @src)
+            panel.with_content PanelContent.new(id: @panel_id, src: @src)
           end
         end
       end
