@@ -214,17 +214,26 @@ To create forms that dynamically show/hide inputs based on other form values, pa
 
 Plutonium offers three main approaches for rendering fields in a definition. Choose the one that best fits your needs for clarity, flexibility, and control.
 
+**Quick Reference:**
+- **`as: :symbol`** - Use built-in components for input and display (e.g., `:rich_text`, `:date`, `:markdown`)
+- **`as: ComponentClass`** - Use custom component classes for input and display (new feature)
+- **Block syntax** - Use for conditional logic and custom builder method calls
+- **`as: :phlexi_tag`** - Advanced inline rendering with maximum flexibility (display only)
+
 #### 1. The `as:` Option (Recommended)
 
-The `as:` option is the simplest and most common way to specify a rendering component for an `input` or `display` declaration. It's ideal for using standard built-in components or overriding auto-detected types.
+The `as:` option is the simplest and most common way to specify a rendering component for both `input` and `display` declarations. It's ideal for using standard built-in components or overriding auto-detected types.
+
+**New Feature**: You can now pass a component class directly to the `as:` option for custom rendering in both input and display contexts.
 
 **Use When:**
-- Using standard or enhanced built-in components.
+- Using standard or enhanced built-in components for input or display.
 - You want clean, readable code with minimal boilerplate.
-- Overriding an auto-detected type (e.g., `text` to `rich_text`).
+- Overriding an auto-detected type (e.g., `text` to `rich_text` for input, or `text` to `markdown` for display).
+- Using custom component classes for rendering.
 
 ::: code-group
-```ruby [Input Fields]
+```ruby [Standard Input Fields]
 # Simple and concise overrides
 class PostDefinition < Plutonium::Resource::Definition
   input :content, as: :rich_text
@@ -235,7 +244,19 @@ class PostDefinition < Plutonium::Resource::Definition
   input :email, as: :email, placeholder: "Enter email"
 end
 ```
-```ruby [Display Fields]
+```ruby [Custom Component Classes]
+# Using custom component classes
+class PostDefinition < Plutonium::Resource::Definition
+  # Pass component class to input
+  input :color_picker, as: ColorPickerComponent
+  input :custom_widget, as: MyCustomInputComponent
+
+  # Pass component class to display
+  display :status_badge, as: StatusBadgeComponent
+  display :chart, as: ChartComponent
+end
+```
+```ruby [Standard Display Fields]
 # Simple and concise overrides
 class PostDefinition < Plutonium::Resource::Definition
   display :content, as: :markdown
@@ -252,25 +273,34 @@ end
 
 The block syntax offers more control over rendering, allowing for custom components, complex layouts, and conditional logic. The block receives a `field` object that you can use to render custom output.
 
+**Important for Input Blocks**: When using blocks with `input` declarations, you can only use existing form builder methods (like `f.date_tag`, `f.text_tag`, etc.). You cannot return arbitrary components because the form system requires inputs to be registered internally.
+
 **Use When:**
-- Integrating custom-built Phlex or ViewComponent components.
-- Building complex layouts with multiple components or custom HTML.
+- Integrating custom-built Phlex or ViewComponent components (for `display` only).
+- Building complex layouts with multiple components or custom HTML (for `display` only).
 - You need conditional logic to determine which component to render.
+- You need to call specific form builder methods with custom logic (for `input`).
 
 ::: code-group
 ```ruby [Custom Display Components]
-# Custom display component
+# Custom display component - can return any component
 display :chart_data do |field|
   ChartComponent.new(data: field.value, type: :bar)
 end
 ```
-```ruby [Custom Input Components]
-# Custom input component
-input :color do |field|
-  ColorPickerComponent.new(field)
+```ruby [Custom Input with Builder Methods]
+# Custom input - can only use form builder methods
+input :birth_date do |f|
+  # Can use builder methods with custom logic
+  case object.age_category
+  when 'adult'
+    f.date_tag(min: 18.years.ago.to_date)
+  when 'minor'
+    f.date_tag(max: 18.years.ago.to_date)
+  else
+    f.date_tag
+  end
 end
-```
-
 ```
 ```ruby [Conditional Rendering]
 # Conditional display based on value

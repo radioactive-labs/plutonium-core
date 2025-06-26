@@ -92,7 +92,11 @@ module Plutonium
             tag_attributes = display_options.except(:wrapper, :as, :condition)
             tag_block = display_definition[:block] || ->(f) {
               tag ||= f.inferred_field_component
-              f.send(:"#{tag}_tag", **tag_attributes)
+              if tag.is_a?(Class)
+                f.send :create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym
+              else
+                f.send(:"#{tag}_tag", **tag_attributes)
+              end
             }
 
             wrapper_options = display_options[:wrapper] || {}

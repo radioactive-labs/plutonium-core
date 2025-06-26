@@ -68,7 +68,11 @@ module Plutonium
           end
           tag_block = input_definition[:block] || ->(f) do
             tag ||= f.inferred_field_component
-            f.send(:"#{tag}_tag", **tag_attributes)
+            if tag.is_a?(Class)
+              f.send :create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym
+            else
+              f.send(:"#{tag}_tag", **tag_attributes)
+            end
           end
 
           field_options = field_options.except(:as, :condition)

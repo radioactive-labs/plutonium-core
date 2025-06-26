@@ -124,6 +124,36 @@ end
 
 Plutonium replaces standard form inputs with enhanced versions that provide a modern user experience.
 
+### Input Block Syntax
+
+Input blocks provide additional flexibility for custom logic while ensuring proper form integration. **Important**: Input blocks can only use existing form builder methods (like `date_tag`, `text_tag`, etc.) because the form system requires inputs to be registered internally.
+
+::: code-group
+```ruby [Input Block Example]
+# Valid: Using form builder methods with custom logic
+input :birth_date do |f|
+  case object.age_category
+  when 'adult'
+    f.date_tag(min: 18.years.ago.to_date)
+  when 'minor'
+    f.date_tag(max: 18.years.ago.to_date)
+  else
+    f.date_tag
+  end
+end
+```
+
+```ruby [Custom Component Classes]
+# New: Pass component classes directly to as: option
+# Works for both input and display
+input :color_picker, as: ColorPickerComponent
+input :custom_slider, as: RangeSliderComponent
+
+display :status_badge, as: StatusBadgeComponent
+display :progress_chart, as: ProgressChartComponent
+```
+:::
+
 ### Markdown Editor (Easymde)
 
 For rich text content, Plutonium integrates a client-side markdown editor based on [EasyMDE](https://github.com/Ionaru/easy-markdown-editor). It's automatically used for `rich_text` fields (like ActionText) and provides a live preview.
