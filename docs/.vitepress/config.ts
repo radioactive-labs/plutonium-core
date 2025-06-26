@@ -56,6 +56,7 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Resources", link: "/guide/deep-dive/resources" },
             { text: "Authorization", link: "/guide/deep-dive/authorization" },
+            { text: "Multitenancy", link: "/guide/deep-dive/multitenancy" },
             { text: "Modules", link: "/modules/" },
           ]
         },

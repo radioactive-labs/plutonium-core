@@ -76,7 +76,7 @@ The Bootable concern automatically detects which package and engine a controller
 
 ```ruby
 # In packages/admin_portal/app/controllers/users_controller.rb
-class UsersController < PlutoniumController
+class UsersController < ResourceController
   # Automatically detects:
   # current_package => AdminPortal
   # current_engine  => AdminPortal::Engine
@@ -221,13 +221,13 @@ The Core module is typically used through other Plutonium modules:
 
 ```ruby
 # For resource controllers
-class UsersController < PlutoniumController
+class UsersController < ResourceController
   include Plutonium::Resource::Controller
   # Core module included automatically
 end
 
 # For portal controllers
-class DashboardController < PlutoniumController
+class DashboardController < ResourceController
   include Plutonium::Portal::Controller
   # Core module included automatically
 end
@@ -294,12 +294,12 @@ Let the Bootable concern handle package detection automatically:
 
 ```ruby
 # ✅ Good - automatic detection
-class AdminPortal::UsersController < PlutoniumController
+class AdminPortal::UsersController < ResourceController
   # Package and engine automatically detected
 end
 
 # ❌ Avoid - manual configuration
-class UsersController < PlutoniumController
+class UsersController < ResourceController
   def current_package
     AdminPortal # Don't override unless necessary
   end

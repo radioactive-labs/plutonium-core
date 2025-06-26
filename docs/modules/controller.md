@@ -188,7 +188,7 @@ Portal Controllers provide specialized functionality for multi-tenant applicatio
 
 ```ruby
 module AdminPortal
-  class PostsController < PlutoniumController
+  class PostsController < ResourceController
     include AdminPortal::Concerns::Controller
 
     # Automatically inherits from ::PostsController
