@@ -373,6 +373,55 @@ bulk_action_url(Post, :archive, ids: [1, 2, 3])
 # => "/posts/bulk_actions/archive?ids[]=1&ids[]=2&ids[]=3"
 ```
 
+### Dynamic URL Generation for Actions
+
+For actions that need context-aware URL generation, use `RouteOptions` with custom `url_resolver`:
+
+```ruby
+# In a resource definition
+class ProjectDefinition < Plutonium::Resource::Definition
+  # Dynamic parent-child navigation
+  action :create_deployment,
+    label: "Create Deployment",
+    icon: Phlex::TablerIcons::Rocket,
+    record_action: true,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        resource_url_for(UniversalFlow::Deployment, action: :new, parent: subject)
+      }
+    )
+
+  # Conditional routing based on permissions
+  action :manage_settings,
+    label: "Settings",
+    resource_action: true,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        if current_user.admin?
+          admin_project_settings_path(subject)
+        else
+          project_settings_path(subject)
+        end
+      }
+    )
+
+  # External system integration
+  action :view_in_external_system,
+    label: "View Externally",
+    record_action: true,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        "https://external-system.com/projects/#{subject.external_id}"
+      }
+    )
+end
+```
+
+The `url_resolver` lambda receives:
+- **For record actions**: The current record instance
+- **For resource actions**: The resource class
+- **For bulk actions**: The resource class (with selected IDs available in params)
+
 ### Context-Aware URL Generation
 
 In nested controller contexts, URLs automatically include proper context:

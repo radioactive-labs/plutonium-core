@@ -113,6 +113,53 @@ action :documentation,
 ```
 :::
 
+### Dynamic Route Options
+
+For actions that need dynamic URL generation based on the current record or context, use the `RouteOptions` class with a custom `url_resolver`:
+
+::: code-group
+```ruby [Dynamic Parent-Child Navigation]
+# Navigate to create a child resource with the current record as parent
+action :create_deployment,
+       label: "Create Deployment",
+       icon: Phlex::TablerIcons::Rocket,
+       record_action: true,
+       route_options: Plutonium::Action::RouteOptions.new(
+         url_resolver: ->(subject) {
+           resource_url_for(UniversalFlow::Deployment, action: :new, parent: subject)
+         }
+       )
+```
+```ruby [Conditional Routing]
+# Different routes based on user permissions or record state
+action :manage_settings,
+       label: "Manage Settings",
+       resource_action: true,
+       route_options: Plutonium::Action::RouteOptions.new(
+         url_resolver: ->(subject) {
+           if current_user.admin?
+             admin_settings_path(subject)
+           else
+             basic_settings_path(subject)
+           end
+         }
+       )
+```
+```ruby [External Integration]
+# Dynamic external URLs based on record attributes
+action :view_external,
+       label: "View in External System",
+       record_action: true,
+       route_options: Plutonium::Action::RouteOptions.new(
+         url_resolver: ->(subject) {
+           "https://external-system.com/items/#{subject.external_id}"
+         }
+       )
+```
+:::
+
+The `url_resolver` lambda receives the current record (for record actions) or resource class (for resource actions) as the `subject` parameter, allowing you to generate URLs dynamically based on the context.
+
 ### Interactive Actions
 
 Interactive actions are powered by an `Interaction` class and handle business logic. The action's properties (label, description, etc.) are often inferred from the interaction itself.
@@ -172,6 +219,13 @@ end
 3. **Appropriate Icons**: Choose icons that clearly represent the action
 4. **Meaningful Confirmations**: Use confirmation messages for destructive actions
 5. **Logical Positioning**: Order actions by importance and frequency of use
+
+### Dynamic Route Actions
+
+1. **Context Awareness**: Use the subject parameter to make routing decisions based on the current record or resource
+2. **Error Handling**: Handle cases where dynamic URLs might fail (e.g., missing external IDs)
+3. **Performance**: Keep url_resolver lambdas simple to avoid performance issues
+4. **Security**: Validate permissions within the lambda when generating sensitive URLs
 
 ### Interactive Actions
 

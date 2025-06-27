@@ -314,6 +314,178 @@ class PostDefinition < Plutonium::Resource::Definition
 end
 ```
 
+### Dynamic Route Actions
+
+For actions that need dynamic URL generation, combine interactions with custom route options:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Simple interaction with static route
+  action :publish, interaction: PublishPostInteraction
+
+  # Complex action with dynamic route generation using RouteOptions
+  action :create_deployment,
+    label: "Create Deployment",
+    icon: Phlex::TablerIcons::Rocket,
+    record_action: true,
+    interaction: CreateDeploymentInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        resource_url_for(Deployment, action: :new, parent: subject)
+      }
+    )
+
+  # Conditional routing based on user permissions
+  action :manage_advanced_settings,
+    label: "Advanced Settings",
+    resource_action: true,
+    interaction: ManageAdvancedSettingsInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        if current_user.admin?
+          admin_settings_path(subject)
+        else
+          basic_settings_path(subject)
+        end
+      }
+    )
+
+  # External system integration with dynamic URLs
+  action :sync_with_external,
+    label: "Sync External",
+    record_action: true,
+    interaction: SyncExternalInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        "https://api.external-system.com/sync/#{subject.external_id}"
+      }
+    )
+end
+```
+
+The `url_resolver` lambda provides powerful flexibility:
+- **Record Actions**: Receive the current record as `subject`
+- **Resource Actions**: Receive the resource class as `subject`
+- **Bulk Actions**: Receive the resource class with selected records available in params
+- **Context Access**: Full access to controller context including `current_user`, helper methods, etc.
+
+### Advanced Dynamic Routing Examples
+
+```ruby
+class ProjectDefinition < Plutonium::Resource::Definition
+  # Multi-step workflow routing
+  action :start_workflow,
+    label: "Start Workflow",
+    record_action: true,
+    interaction: StartWorkflowInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        case subject.status
+        when 'draft'
+          new_project_review_path(subject)
+        when 'review'
+          project_approval_path(subject)
+        else
+          project_path(subject)
+        end
+      }
+    )
+
+  # Dynamic nested resource creation
+  action :add_team_member,
+    label: "Add Team Member",
+    record_action: true,
+    interaction: AddTeamMemberInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        if subject.team.full?
+          project_team_waitlist_path(subject)
+        else
+          new_project_team_member_path(subject)
+        end
+      }
+    )
+
+  # Conditional external redirects
+  action :open_in_ide,
+    label: "Open in IDE",
+    record_action: true,
+    interaction: OpenInIDEInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        if subject.repository_url.present?
+          "vscode://vscode.git/clone?url=#{subject.repository_url}"
+        else
+          project_repository_setup_path(subject)
+        end
+      }
+    )
+end
+```
+
+### Custom Interaction with Dynamic Routing
+
+```ruby
+class CreateChildResourceInteraction < Plutonium::Interaction::Base
+  attribute :parent_id, :integer
+  attribute :resource_type, :string
+  attribute :attributes, :hash
+
+  validates :parent_id, :resource_type, presence: true
+
+  private
+
+  def execute
+    parent = find_parent_resource
+    child_class = resource_type.constantize
+    child = child_class.new(attributes.merge(parent_key => parent))
+
+    if child.save
+      succeed(child)
+        .with_message("#{resource_type} created successfully")
+        .with_redirect_response(resource_url_for(child, parent: parent))
+    else
+      failed(child.errors)
+    end
+  end
+
+  def find_parent_resource
+    # Dynamic parent resolution based on context
+    case resource_type
+    when 'Deployment'
+      Project.find(parent_id)
+    when 'Task'
+      Project.find(parent_id)
+    else
+      raise ArgumentError, "Unknown resource type: #{resource_type}"
+    end
+  end
+
+  def parent_key
+    case resource_type
+    when 'Deployment', 'Task'
+      :project_id
+    else
+      raise ArgumentError, "Unknown parent key for: #{resource_type}"
+    end
+  end
+end
+
+# Usage in resource definition
+class ProjectDefinition < Plutonium::Resource::Definition
+  action :create_deployment,
+    label: "Create Deployment",
+    record_action: true,
+    interaction: CreateChildResourceInteraction,
+    route_options: Plutonium::Action::RouteOptions.new(
+      url_resolver: ->(subject) {
+        # The subject here will be the Project record
+        new_deployment_path(project_id: subject.id)
+      }
+    )
+end
+```
+
 ### Controller Integration
 
 Controllers can call interactions directly, but this requires manual setup:

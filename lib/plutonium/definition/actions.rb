@@ -48,6 +48,18 @@ module Plutonium
           record_action: true, collection_record_action: true, category: :danger,
           icon: Phlex::TablerIcons::Trash, position: 100,
           confirmation: "Are you sure?", turbo_frame: "_top")
+
+        # Example of dynamic route options using custom url_resolver:
+        #
+        # action(:create_deployment,
+        #   label: "Create Deployment",
+        #   icon: Phlex::TablerIcons::Rocket,
+        #   record_action: true,
+        #   route_options: Plutonium::Action::RouteOptions.new(
+        #     url_resolver: ->(subject) {
+        #       resource_url_for(UniversalFlow::Deployment, action: :new, parent: subject)
+        #     }
+        #   ))
       end
     end
   end
