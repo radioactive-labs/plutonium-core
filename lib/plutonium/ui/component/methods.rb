@@ -45,7 +45,7 @@ module Plutonium
           :allowed_to?,
           :registered_resources,
           :root_path,
-          to: :helpers
+          to: :view_context
       end
     end
   end

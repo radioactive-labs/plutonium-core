@@ -83,7 +83,7 @@ module Plutonium
             # Do not render the field, but still create field
             # Phlexi form will record it without rendering it, allowing us to extract its value
             form.field(name, **field_options) do |f|
-              instance_exec(f, &tag_block)
+              vanish { render instance_exec(f, &tag_block) }
             end
           else
             wrapper_options = input_options[:wrapper] || {}
