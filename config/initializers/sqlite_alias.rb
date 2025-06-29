@@ -4,5 +4,9 @@ ActiveSupport.on_load(:active_record) do
     def jsonb(*args, **options)
       json(*args, **options)
     end
+
+    def uuid(*args, **options)
+      string(*args, **options)
+    end
   end
 end
