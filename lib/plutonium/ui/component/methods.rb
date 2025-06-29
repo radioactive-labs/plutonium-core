@@ -23,6 +23,7 @@ module Plutonium
         end
 
         delegate \
+          :main_app,
           :resource_class,
           :resource_record!,
           :resource_record?,
