@@ -1,7 +1,7 @@
 module Plutonium
   module Helpers
     module TurboStreamActionsHelper
-      def redirect(url)
+      def turbo_stream_redirect(url)
         turbo_stream_action_tag :redirect, url:
       end
     end

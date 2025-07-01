@@ -59,7 +59,7 @@ module Plutonium
                 if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
-                      turbo_stream.redirect(return_url)
+                      helpers.turbo_stream_redirect(return_url)
                     ]
                   end
                 end
@@ -73,13 +73,6 @@ module Plutonium
                   render "errors", status: :unprocessable_entity
                 end
 
-                if helpers.current_turbo_frame == "remote_modal"
-                  format.turbo_stream do
-                    render turbo_stream: [
-                      turbo_stream.replace(:remote_modal, partial: "interactive_action_form")
-                    ]
-                  end
-                end
               end
             end
           end
@@ -123,7 +116,7 @@ module Plutonium
                 if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
-                      turbo_stream.redirect(return_url)
+                      helpers.turbo_stream_redirect(return_url)
                     ]
                   end
                 end
@@ -137,13 +130,6 @@ module Plutonium
                   render "errors", status: :unprocessable_entity
                 end
 
-                if helpers.current_turbo_frame == "remote_modal"
-                  format.turbo_stream do
-                    render turbo_stream: [
-                      turbo_stream.replace(:remote_modal, partial: "interactive_action_form")
-                    ]
-                  end
-                end
               end
             end
           end
@@ -179,7 +165,7 @@ module Plutonium
           #     if helpers.current_turbo_frame == "remote_modal"
           #       format.turbo_stream do
           #         render turbo_stream: [
-          #           turbo_stream.redirect(resource_url_for(resource_class))
+          #           helpers.turbo_stream_redirect(resource_url_for(resource_class))
           #         ]
           #       end
           #     end
@@ -190,12 +176,6 @@ module Plutonium
           #     format.any do
           #       @errors = @interaction.errors
           #       render "errors", status: :unprocessable_entity
-          #     end
-
-          #     if helpers.current_turbo_frame == "remote_modal"
-          #       format.turbo_stream do
-          #         render turbo_stream: turbo_stream.replace(:remote_modal, partial: "interactive_bulk_action_form")
-          #       end
           #     end
           #   end
           # end
