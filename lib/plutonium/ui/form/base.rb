@@ -61,7 +61,7 @@ module Plutonium
         private
 
         def render_actions
-          input name: :return_to, value: request.params[:return_to], type: :hidden, hidden: true
+          input name: "return_to", value: request.params[:return_to], type: :hidden, hidden: true
 
           actions_wrapper {
             render submit_button

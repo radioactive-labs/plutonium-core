@@ -23,8 +23,14 @@ module Plutonium
       private
 
       def render_link
+        uri = URI.parse(@url)
+        params = Rack::Utils.parse_nested_query(uri.query)
+        params["return_to"] = request.original_url
+        uri.query = params.to_query
+        uri.to_s
+
         link_to(
-          @url,
+          uri.to_s,
           class: button_classes,
           data: {turbo_frame: @action.turbo_frame}
         ) do

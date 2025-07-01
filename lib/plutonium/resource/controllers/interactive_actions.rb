@@ -52,7 +52,7 @@ module Plutonium
           outcome.to_response.process(self) do |value|
             respond_to do |format|
               if outcome.success?
-                return_url = redirect_url_after_action_on(resource_class)
+                return_url = redirect_url_after_action_on(resource_record!)
 
                 format.any { redirect_to return_url, status: :see_other }
 
