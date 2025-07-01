@@ -5,8 +5,8 @@ module Plutonium
         request.headers["Turbo-Frame"]
       end
 
-      def modal_frame_tag(&)
-        turbo_frame_tag("modal", &)
+      def remote_modal_frame_tag(&)
+        turbo_frame_tag("remote_modal", &)
       end
     end
   end

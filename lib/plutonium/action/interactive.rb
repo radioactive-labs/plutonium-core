@@ -22,6 +22,7 @@ module Plutonium
         options[:label] ||= interaction.label
         options[:description] ||= interaction.description
         options[:icon] ||= interaction.icon
+        options[:turbo_frame] = "remote_modal" unless options.key?(:turbo_frame)
 
         super(name, **options)
       end

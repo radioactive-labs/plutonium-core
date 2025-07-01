@@ -24278,6 +24278,21 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/remote_modal_controller.js
+  var remote_modal_controller_default = class extends Controller {
+    connect() {
+      this.originalScrollPosition = window.scrollY;
+      this.element.showModal();
+      this.element.addEventListener("close", this.handleClose.bind(this));
+    }
+    disconnect() {
+      this.element.removeEventListener("close", this.handleClose);
+    }
+    handleClose() {
+      window.scrollTo(0, this.originalScrollPosition);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -24299,6 +24314,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("attachment-input", attachment_input_controller_default);
     application2.register("attachment-preview", attachment_preview_controller_default);
     application2.register("attachment-preview-container", attachment_preview_container_controller_default);
+    application2.register("remote-modal", remote_modal_controller_default);
   }
 
   // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js

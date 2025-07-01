@@ -8,6 +8,7 @@ module Plutonium
         include Phlex::Rails::Helpers::FaviconLinkTag
         include Phlex::Rails::Helpers::StylesheetLinkTag
         include Phlex::Rails::Helpers::JavascriptIncludeTag
+        include Phlex::Rails::Helpers::TurboFrameTag
 
         def view_template(&)
           doctype
@@ -66,6 +67,7 @@ module Plutonium
         end
 
         def render_after_main
+          turbo_frame_tag("remote_modal")
         end
 
         def render_content(&)

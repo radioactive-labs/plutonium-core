@@ -4,6 +4,8 @@ module Plutonium
   module UI
     module Page
       class InteractiveAction < Base
+        include Phlex::Rails::Helpers::TurboFrameTag
+
         private
 
         def page_title
@@ -15,7 +17,25 @@ module Plutonium
         end
 
         def render_default_content
-          render partial("interactive_action_form")
+          if helpers.current_turbo_frame == "remote_modal"
+            dialog(
+              closedby: "any",
+              class:
+                "rounded-md w-full max-w-3xl
+                backdrop:bg-black/60 backdrop:backdrop-blur-sm
+                top-auto md:top-1/2 md:-translate-y-1/2 left-1/2 -translate-x-1/2
+                max-h-[80%] p-6
+                hidden open:flex flex-col
+                relative opacity-0 open:opacity-100
+                transition-opacity duration-300 ease-in-out",
+              data: {controller: "remote-modal"}
+            ) do
+              render_page_header
+              render partial("interactive_action_form")
+            end
+          else
+            render partial("interactive_action_form")
+          end
         end
 
         def page_type = :interactive_action_page

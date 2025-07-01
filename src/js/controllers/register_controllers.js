@@ -18,6 +18,7 @@ import AttachmentPreviewController from "./attachment_preview_controller.js"
 import AttachmentPreviewContainerController from "./attachment_preview_container_controller.js"
 import SidebarController from "./sidebar_controller.js"
 import PasswordVisibilityController from "./password_visibility_controller.js"
+import RemoteModalController from "./remote_modal_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -40,4 +41,5 @@ export default function (application) {
   application.register("attachment-input", AttachmentInputController)
   application.register("attachment-preview", AttachmentPreviewController)
   application.register("attachment-preview-container", AttachmentPreviewContainerController)
+  application.register("remote-modal", RemoteModalController)
 }

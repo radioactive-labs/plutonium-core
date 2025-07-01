@@ -27,7 +27,7 @@ module Plutonium
         def interactive_record_action
           build_interactive_record_action_interaction
 
-          if helpers.current_turbo_frame == "modal"
+          if helpers.current_turbo_frame == "remote_modal"
             render layout: false
           else
             render :interactive_record_action
@@ -56,7 +56,7 @@ module Plutonium
 
                 format.any { redirect_to return_url, status: :see_other }
 
-                if helpers.current_turbo_frame == "modal"
+                if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
                       turbo_stream.redirect(return_url)
@@ -73,10 +73,10 @@ module Plutonium
                   render "errors", status: :unprocessable_entity
                 end
 
-                if helpers.current_turbo_frame == "modal"
+                if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
-                      turbo_stream.replace(:modal, partial: "interactive_action_form")
+                      turbo_stream.replace(:remote_modal, partial: "interactive_action_form")
                     ]
                   end
                 end
@@ -90,7 +90,7 @@ module Plutonium
           skip_verify_current_authorized_scope!
           build_interactive_resource_action_interaction
 
-          if helpers.current_turbo_frame == "modal"
+          if helpers.current_turbo_frame == "remote_modal"
             render layout: false
           else
             render :interactive_resource_action
@@ -120,7 +120,7 @@ module Plutonium
 
                 format.any { redirect_to return_url, status: :see_other }
 
-                if helpers.current_turbo_frame == "modal"
+                if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
                       turbo_stream.redirect(return_url)
@@ -137,10 +137,10 @@ module Plutonium
                   render "errors", status: :unprocessable_entity
                 end
 
-                if helpers.current_turbo_frame == "modal"
+                if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
-                      turbo_stream.replace(:modal, partial: "interactive_action_form")
+                      turbo_stream.replace(:remote_modal, partial: "interactive_action_form")
                     ]
                   end
                 end
@@ -156,7 +156,7 @@ module Plutonium
           # interactive_bulk
           # @interaction = current_interactive_action.interaction.new((params[:interaction] || {}).except(:resources))
 
-          # if helpers.current_turbo_frame == "modal"
+          # if helpers.current_turbo_frame == "remote_modal"
           #   render layout: false
           # else
           #   render :interactive_bulk_action
@@ -176,7 +176,7 @@ module Plutonium
           #     flash[:notice] = "TODO:#{current_interactive_action} #{collection_count} #{resource_class.model_name.human.pluralize(collection_count)} successfully updated."
 
           #     format.html { redirect_to resource_url_for(resource_class) }
-          #     if helpers.current_turbo_frame == "modal"
+          #     if helpers.current_turbo_frame == "remote_modal"
           #       format.turbo_stream do
           #         render turbo_stream: [
           #           turbo_stream.redirect(resource_url_for(resource_class))
@@ -192,9 +192,9 @@ module Plutonium
           #       render "errors", status: :unprocessable_entity
           #     end
 
-          #     if helpers.current_turbo_frame == "modal"
+          #     if helpers.current_turbo_frame == "remote_modal"
           #       format.turbo_stream do
-          #         render turbo_stream: turbo_stream.replace(:modal, partial: "interactive_bulk_action_form")
+          #         render turbo_stream: turbo_stream.replace(:remote_modal, partial: "interactive_bulk_action_form")
           #       end
           #     end
           #   end
