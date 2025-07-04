@@ -35,6 +35,10 @@ module Plutonium
           alias_method :file_tag, :uppy_tag
           alias_method :attachment_tag, :uppy_tag
 
+          def key_value_store_tag(**, &)
+            create_component(Components::KeyValueStore, :key_value_store, **, &)
+          end
+
           def secure_association_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
             create_component(Components::SecureAssociation, :association, **attributes, &)
