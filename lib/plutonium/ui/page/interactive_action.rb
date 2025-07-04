@@ -32,6 +32,29 @@ module Plutonium
                       transition-opacity duration-300 ease-in-out",
               data: {controller: "remote-modal"}
             ) do
+              # Close button
+              button(
+                type: "button",
+                class: "absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200",
+                data: {action: "remote-modal#close"},
+                "aria-label": "Close dialog"
+              ) do
+                svg(
+                  class: "w-5 h-5",
+                  fill: "none",
+                  stroke: "currentColor",
+                  viewBox: "0 0 24 24",
+                  xmlns: "http://www.w3.org/2000/svg"
+                ) do |s|
+                  s.path(
+                    stroke_linecap: "round",
+                    stroke_linejoin: "round",
+                    stroke_width: "2",
+                    d: "M6 18L18 6M6 6l12 12"
+                  )
+                end
+              end
+
               render_page_header
               render partial("interactive_action_form")
             end
