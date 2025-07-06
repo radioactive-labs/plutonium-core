@@ -11,13 +11,6 @@ export default class extends Controller {
       this.dropdownContainer = document.createElement("div");
       this.dropdownContainer.className = "ss-dropdown-container";
 
-      // Enhanced styling for better positioning
-      this.dropdownContainer.style.cssText = `
-        position: absolute;
-        inset: 40% 0px auto;
-        pointer-events: none; /* By default, don't intercept clicks */
-      `;
-
       // Make the select wrapper position relative to contain the absolute dropdown
       const selectWrapper = this.element.parentNode;
       const originalPosition = getComputedStyle(selectWrapper).position;
@@ -35,9 +28,6 @@ export default class extends Controller {
       settings.contentLocation = this.dropdownContainer;
       settings.contentPosition = "absolute";
       settings.openPosition = "auto";
-
-      // Add custom CSS for better dropdown styling
-      this.addCustomStyles();
     }
 
     this.slimSelect = new SlimSelect({
@@ -65,46 +55,6 @@ export default class extends Controller {
     );
   }
 
-  addCustomStyles() {
-    if (!document.getElementById("slim-select-custom-styles")) {
-      const style = document.createElement("style");
-      style.id = "slim-select-custom-styles";
-      style.textContent = `
-        /* Let SlimSelect handle its own styling and colors */
-        .ss-dropdown-container .ss-content {
-          position: static !important;
-          transform: none !important;
-          width: 100% !important;
-          border-radius: 0 !important;
-          margin: 0 !important;
-          pointer-events: none !important; /* Disabled by default */
-        }
-
-        /* When active (dropdown is expanded), enable pointer events */
-        .ss-dropdown-container.ss-active .ss-content {
-          pointer-events: auto !important;
-        }
-
-        .ss-dropdown-container .ss-list {
-          max-height: 250px !important;
-          overflow-y: auto !important;
-        }
-
-        /* Ensure the dropdown doesn't block other elements when closed */
-        .ss-dropdown-container:not(:has(.ss-content)),
-        .ss-dropdown-container:not(.ss-active) {
-          pointer-events: none !important;
-        }
-
-        /* Prevent interaction with closed dropdown */
-        .ss-dropdown-container:not(.ss-active) * {
-          pointer-events: none !important;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-  }
-
   handleDropdownPosition() {
     if (this.dropdownContainer) {
       // Reposition dropdown when window resizes or scrolls
@@ -122,7 +72,6 @@ export default class extends Controller {
           this.dropdownContainer.style.borderRadius = "0.375rem 0.375rem 0 0";
         } else {
           // Position below (default)
-          // this.dropdownContainer.style.top = "100%";
           this.dropdownContainer.style.bottom = "auto";
           this.dropdownContainer.style.borderRadius = "0 0 0.375rem 0.375rem";
         }
@@ -146,16 +95,6 @@ export default class extends Controller {
       this.dropdownContainer.style.height = "auto";
       this.dropdownContainer.style.overflow = "visible";
 
-      // Make sure the content can be interacted with when expanded
-      const contentElement =
-        this.dropdownContainer.querySelector(".ss-content");
-      if (contentElement) {
-        contentElement.style.pointerEvents = "auto";
-      }
-
-      // Make container visible to mouse events when dropdown is open
-      this.dropdownContainer.style.pointerEvents = "auto";
-
       // Add open class for better CSS targeting
       this.dropdownContainer.classList.add("ss-active");
 
@@ -172,18 +111,8 @@ export default class extends Controller {
 
   handleDropdownClose() {
     if (this.dropdownContainer) {
-      // When dropdown closes, make container and content "invisible" to mouse events
-      this.dropdownContainer.style.pointerEvents = "none";
-
       // Remove active class
       this.dropdownContainer.classList.remove("ss-active");
-
-      // Ensure the content cannot be interacted with when closed
-      const contentElement =
-        this.dropdownContainer.querySelector(".ss-content");
-      if (contentElement) {
-        contentElement.style.pointerEvents = "none";
-      }
     }
   }
 
