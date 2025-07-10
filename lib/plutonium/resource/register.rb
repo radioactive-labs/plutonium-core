@@ -44,7 +44,7 @@ module Plutonium
       def route_key_lookup
         freeze
         resources.to_h do |resource|
-          [resource.model_name.singular_route_key.to_sym, resource]
+          [resource.model_name.singular.to_sym, resource]
         end
       end
       # memoize_unless_reloading :route_key_lookup

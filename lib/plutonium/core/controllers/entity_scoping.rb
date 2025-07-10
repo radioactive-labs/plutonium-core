@@ -43,6 +43,11 @@ module Plutonium
           current_engine.scoped_entity_param_key
         end
 
+        def scoped_entity_route_key
+          ensure_legal_entity_scoping_method_access!(__method__)
+          current_engine.scoped_entity_route_key
+        end
+
         # Returns the class of the scoped entity.
         #
         # @return [Class] the scoped entity class

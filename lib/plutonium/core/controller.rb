@@ -79,13 +79,13 @@ module Plutonium
               url_args[:id] = element.to_param unless resource_route_config[:route_type] == :resource
               url_args[:action] ||= :show
             else
-              url_args[element.model_name.singular_route_key.to_sym] = element.to_param
+              url_args[element.model_name.singular.to_sym] = element.to_param
             end
           end
         end
         url_args[:controller] = "/#{controller_chain.join("::").underscore}"
 
-        url_args[:"#{parent.model_name.singular_route_key}_id"] = parent.to_param if parent.present?
+        url_args[:"#{parent.model_name.singular}_id"] = parent.to_param if parent.present?
         if scoped_to_entity? && scoped_entity_strategy == :path
           url_args[scoped_entity_param_key] = current_scoped_entity
         end
