@@ -91,12 +91,18 @@ module Plutonium
           # @param [Symbol] name The name of the nested resource field
           # @raise [ArgumentError] if the nested input definition is missing required configuration
           def render_nested_resource_field(name)
+            nested_input_definition = resource_definition.defined_nested_inputs[name]
+            condition = nested_input_definition[:options]&.fetch(:condition, nil)
+            if condition && !instance_exec(&condition)
+              return
+            end
+
             context = NestedFieldContext.new(
               name: name,
               definition: build_nested_fields_definition(name),
               resource_class: resource_class,
               resource_definition: resource_definition,
-              object_class: resource_definition.defined_nested_inputs[name][:options]&.fetch(:object_class, nil)
+              object_class: nested_input_definition[:options]&.fetch(:object_class, nil)
             )
 
             render_nested_field_container(context) do
@@ -171,7 +177,7 @@ module Plutonium
           end
 
           def render_template_for_nested_fields(context, options, nesting_method:)
-            template_tag data_nested_resource_form_fields_target: "template" do
+            template data_nested_resource_form_fields_target: "template" do
               send(nesting_method, context.name, as: context.nested_fields_input_param, **options, template: true) do |nested|
                 render_nested_fields_fieldset(nested, context)
               end
