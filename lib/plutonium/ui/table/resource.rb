@@ -60,7 +60,7 @@ module Plutonium
               column_options = column_definition[:options] || {}
 
               # Check for conditional rendering
-              condition = column_options[:condition] || display_options[:condition] || field_options[:condition]
+              condition = column_options[:condition]
               conditionally_hidden = condition && !instance_exec(&condition)
               next if conditionally_hidden
 
