@@ -71,7 +71,7 @@ class PostDefinition < Plutonium::Resource::Definition
   # Only override when you need custom input behavior:
   input :content, as: :rich_text               # Override text -> rich_text
   input :title, placeholder: "Enter title"    # Add placeholder
-  input :category, as: :select, collection: %w[Tech Business]  # Add options
+  input :category, as: :select, choices: %w[Tech Business]  # Add options
   input :published_at, as: :date               # Override datetime -> date only
 end
 ```
@@ -158,8 +158,8 @@ end
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   # Provide options for select inputs
-  input :category, as: :select, collection: %w[Tech Business Lifestyle]
-  input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+  input :category, as: :select, choices: %w[Tech Business Lifestyle]
+  input :author, as: :select, choices: -> { User.active.pluck(:name, :id) }
 end
 ```
 
@@ -177,7 +177,7 @@ class PostDefinition < Plutonium::Resource::Definition
 
   # Use `pre_submit` to create dynamic forms where inputs appear based on other inputs.
   input :send_notifications, as: :boolean, pre_submit: true
-  input :notification_channel, as: :select, collection: %w[Email SMS],
+  input :notification_channel, as: :select, choices: %w[Email SMS],
         condition: -> { object.send_notifications? }
 
   # Show debug fields only in development
@@ -280,6 +280,7 @@ The block syntax offers more control over rendering, allowing for custom compone
 - Building complex layouts with multiple components or custom HTML (for `display` only).
 - You need conditional logic to determine which component to render.
 - You need to call specific form builder methods with custom logic (for `input`).
+- **You need dynamic choices for select inputs** (since `choices:` option only accepts static arrays).
 
 ::: code-group
 ```ruby [Custom Display Components]
@@ -300,6 +301,29 @@ input :birth_date do |f|
   else
     f.date_tag
   end
+end
+```
+```ruby [Dynamic Choices for Select Inputs]
+# Dynamic choices based on object state
+input :widget_type do |f|
+  choices = case object.question_type
+  when nil, ""
+    []
+  when "text"
+    ["input", "textarea"]
+  when "choice"
+    ["radio", "select", "checkbox"]
+  when "scale"
+    ["slider", "radio_scale", "select_scale"]
+  when "date"
+    ["date_picker", "datetime_picker"]
+  when "boolean"
+    ["checkbox", "toggle", "yes_no"]
+  else
+    Question::WIDGET_TYPES
+  end
+
+  f.select_tag choices: choices
 end
 ```
 ```ruby [Conditional Rendering]
@@ -829,32 +853,43 @@ display :content,
   condition: -> { current_user.can_see_content? }
 ```
 
-### Collection Options (for selects)
+### Choices Options (for selects)
 ```ruby
-input :category, as: :select, collection: %w[Tech Business Lifestyle]
-input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+# Static choices
+input :category, as: :select, choices: %w[Tech Business Lifestyle]
 
-# Collection procs are executed in the form rendering context
-# and have access to current_user and other helpers:
-input :team_members, as: :select, collection: -> {
-  current_user.organization.users.active.pluck(:name, :id)
-}
+# Dynamic choices require block form
+input :author do |f|
+  choices = User.active.pluck(:name, :id)
+  f.select_tag choices: choices
+end
 
-# You can also access the form object being edited:
-input :related_posts, as: :select, collection: -> {
-  Post.where.not(id: object.id).published.pluck(:title, :id) if object.persisted?
-}
+# Dynamic choices with access to context
+input :team_members do |f|
+  choices = current_user.organization.users.active.pluck(:name, :id)
+  f.select_tag choices: choices
+end
+
+# Dynamic choices based on object state
+input :related_posts do |f|
+  choices = if object.persisted?
+    Post.where.not(id: object.id).published.pluck(:title, :id)
+  else
+    []
+  end
+  f.select_tag choices: choices
+end
 ```
 
-::: tip Collection Context
-Collection procs are evaluated in the form rendering context, which means they have access to:
+::: tip Dynamic Choices Context
+When using block forms for dynamic choices, you have access to:
 - `current_user` - The authenticated user
 - `current_parent` - Parent record for nested resources
 - `object` - The record being edited (in edit forms)
 - `request` and `params` - Request information
 - All helper methods available in the form context
 
-This is the same context as `condition` procs, allowing for dynamic, user-specific collections.
+Block forms are required for dynamic choices since the `choices:` option only accepts static arrays.
 :::
 
 ### File Upload Options
@@ -868,7 +903,7 @@ input :documents, as: :file, multiple: true,
 ## Dynamic Configuration & Policies
 
 ::: danger IMPORTANT
-Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file itself. However, `condition` and `collection` procs ARE evaluated in the rendering context where `current_user` and the record (`object`) are available.
+Definitions are instantiated outside the controller context, which means **`current_user` and other controller methods are NOT available** within the definition file itself. However, `condition` procs and input blocks ARE evaluated in the rendering context where `current_user` and the record (`object`) are available.
 :::
 
 The `condition` option configures **if an input is rendered**. It does not control if a field's *value* is accessible. For that, you must use policies.

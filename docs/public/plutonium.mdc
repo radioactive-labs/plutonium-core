@@ -90,7 +90,7 @@ class PostDefinition < Plutonium::Resource::Definition
 
   # Only declare fields when you want to override defaults:
   field :content, as: :rich_text  # Override text → rich_text
-  field :status, as: :select, collection: %w[draft published archived]
+  field :status, as: :select, choices: %w[draft published archived]
 
   # Display customization (show/index pages)
   display :title, as: :string
@@ -119,7 +119,7 @@ class PostDefinition < Plutonium::Resource::Definition
   # Input configuration (new/edit forms)
   input :title, placeholder: "Enter post title"  # No need for as: :string (auto-detected)
   input :content, as: :rich_text
-  input :category, as: :select, collection: %w[Tech Business Lifestyle]
+  input :category, as: :select, choices: %w[Tech Business Lifestyle]
 
   # New: Custom component classes
   input :color_picker, as: ColorPickerComponent
@@ -239,19 +239,32 @@ display :content,
   condition: -> { Rails.env.development? }  # Cosmetic condition only
 ```
 
-#### Collection Options (for selects)
+#### Choices Options (for selects)
 ```ruby
-input :category, as: :select, collection: %w[Tech Business Lifestyle]
-input :author, as: :select, collection: -> { User.active.pluck(:name, :id) }
+# Static choices
+input :category, as: :select, choices: %w[Tech Business Lifestyle]
 
-# Collection procs are executed in form rendering context with access to:
-# current_user, current_parent, object, request, params, and helpers
-input :team_members, as: :select, collection: -> {
-  current_user.organization.users.active.pluck(:name, :id)
-}
-input :related_posts, as: :select, collection: -> {
-  Post.where.not(id: object.id).published.pluck(:title, :id) if object.persisted?
-}
+# Dynamic choices require block form
+input :author do |f|
+  choices = User.active.pluck(:name, :id)
+  f.select_tag choices: choices
+end
+
+# Dynamic choices with access to context
+input :team_members do |f|
+  choices = current_user.organization.users.active.pluck(:name, :id)
+  f.select_tag choices: choices
+end
+
+# Dynamic choices based on object state  
+input :related_posts do |f|
+  choices = if object.persisted?
+    Post.where.not(id: object.id).published.pluck(:title, :id)
+  else
+    []
+  end
+  f.select_tag choices: choices
+end
 ```
 
 #### File Upload Options

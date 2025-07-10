@@ -65,7 +65,7 @@ column :published_at, as: :datetime
 column :is_active, as: :boolean
 column :priority, as: :badge
 column :profile_picture, as: :attachment
-column :metadata, as: :json
+column :metadata, as: :key_value_store
 ```
 
 ### Alignment

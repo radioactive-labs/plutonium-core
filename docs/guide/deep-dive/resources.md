@@ -371,7 +371,7 @@ class PostDefinition < Plutonium::Resource::Definition
 
   # Add filters to the sidebar
   filter :published, with: ->(scope, value) { value ? scope.where.not(published_at: nil) : scope.where(published_at: nil) }, as: :boolean
-  filter :user, as: :select, collection: -> { User.pluck(:name, :id) }
+  filter :user, as: :select, choices: User.pluck(:name, :id)
 
   # Define named scopes that appear as buttons
   scope :all
