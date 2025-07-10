@@ -309,3 +309,40 @@
 .ss-main.ss-valid .ss-values .ss-placeholder {
   @apply text-green-700 dark:text-green-500;
 }
+
+/* Modal-specific styles for SlimSelect dropdown */
+.ss-dropdown-container {
+  position: absolute;
+  z-index: 9999;
+  inset: 40% 0px auto;
+}
+
+.ss-dropdown-container .ss-content {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  pointer-events: none !important; /* Disabled by default */
+}
+
+/* When active (dropdown is expanded), enable pointer events */
+.ss-dropdown-container.ss-active .ss-content {
+  pointer-events: auto !important;
+}
+
+.ss-dropdown-container .ss-list {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+}
+
+/* Ensure the dropdown doesn't block other elements when closed */
+.ss-dropdown-container:not(:has(.ss-content)),
+.ss-dropdown-container:not(.ss-active) {
+  pointer-events: none !important;
+}
+
+/* Prevent interaction with closed dropdown */
+.ss-dropdown-container:not(.ss-active) * {
+  pointer-events: none !important;
+}
