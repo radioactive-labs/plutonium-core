@@ -12,16 +12,25 @@ module Plutonium
         # @param controller [ActionController::Base] The controller instance.
         # @return [void]
         def execute(controller)
-          controller.instance_eval do
-            url = url_for(*@args)
+          # Capture the instance variables before entering instance_eval
+          redirect_args = @args
+          redirect_options = @options
 
-            format.any { redirect_to(url, **@options) }
-            if helpers.current_turbo_frame == "remote_modal"
+          controller.instance_eval do
+            url = url_for(*redirect_args)
+
+            respond_to do |format|
               format.turbo_stream do
-                render turbo_stream: [
-                  helpers.turbo_stream_redirect(url)
-                ]
+                if helpers.current_turbo_frame == "remote_modal"
+                  render turbo_stream: [
+                    helpers.turbo_stream_redirect(url)
+                  ]
+                else
+                  redirect_to(url, **redirect_options)
+                end
               end
+
+              format.any { redirect_to(url, **redirect_options) }
             end
           end
         end
