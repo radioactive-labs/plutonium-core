@@ -53,7 +53,7 @@ module Plutonium
 
           def render_existing_attachments
             Array(field.value).each do |attachment|
-              next unless attachment&.url.present?
+              next unless attachment.respond_to?(:url) && attachment&.url.present?
 
               render_attachment_preview(attachment)
             end
