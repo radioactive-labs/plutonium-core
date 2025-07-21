@@ -17,7 +17,7 @@ module Pu
         desc: "Specify the authentication account name", required: true
 
       def start
-        ensure_customer_model_exists!
+        ensure_customer_model_exists! if behavior == :invoke
         generate_entity_resource
         generate_membership_resource
       end
