@@ -17,11 +17,21 @@ module Pu
         desc: "Specify the authentication account name", required: true
 
       def start
+        ensure_customer_model_exists!
         generate_entity_resource
         generate_membership_resource
       end
 
       private
+
+      def ensure_customer_model_exists!
+        customer_model_path = File.join("app", "models", "#{normalized_auth_account_name}.rb")
+        unless File.exist?(customer_model_path)
+          raise "Customer model '#{normalized_auth_account_name}' does not exist. Please create it first."
+        end
+      rescue => e
+        exception "#{self.class} failed:", e
+      end
 
       def generate_entity_resource
         Rails::Generators.invoke(
