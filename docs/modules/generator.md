@@ -25,9 +25,11 @@ The Generator module is located in `lib/generators/pu/`.
 Sets up the base requirements for a Plutonium application.
 
 ::: code-group
+
 ```bash [Command]
 rails generate pu:core:install
 ```
+
 ```text [Generated Structure]
 config/
 ├── packages.rb          # Package loading configuration
@@ -49,6 +51,7 @@ app/views/
 └── layouts/
     └── resource.html.erb            # Ejected layout for customization
 ```
+
 :::
 
 ### Package Generators
@@ -58,6 +61,7 @@ app/views/
 Creates a complete portal package, which acts as a user-facing entry point to your application, often with its own authentication.
 
 ::: code-group
+
 ```bash [Command]
 # Creates an "admin" portal with authentication
 rails generate pu:pkg:portal admin
@@ -65,6 +69,7 @@ rails generate pu:pkg:portal admin
 # Creates a "customer" portal with public access
 rails generate pu:pkg:portal customer --public
 ```
+
 ```text [Generated Structure]
 packages/admin_portal/
 ├── lib/
@@ -83,6 +88,7 @@ packages/admin_portal/
     └── definitions/
         └── admin_portal/
 ```
+
 ```ruby [Authentication Integration]
 # Automatic Rodauth integration is added to the controller concern
 # packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
@@ -98,6 +104,7 @@ module AdminPortal
   end
 end
 ```
+
 :::
 
 #### Package Generator (`pu:pkg:package`)
@@ -105,9 +112,11 @@ end
 Creates a standard feature package for encapsulating domain logic.
 
 ::: code-group
+
 ```bash [Command]
 rails generate pu:pkg:package blogging
 ```
+
 ```text [Generated Structure]
 packages/blogging/
 ├── lib/
@@ -124,6 +133,7 @@ packages/blogging/
     └── interactions/
         └── blogging/
 ```
+
 :::
 
 ### Resource Generators
@@ -133,10 +143,12 @@ packages/blogging/
 Creates a complete resource with a model, controller, policy, and definition, including full CRUD operations.
 
 ::: code-group
+
 ```bash [Command]
 # Generate a new resource with attributes, placing it in the 'blogging' package
 rails generate pu:res:scaffold Post title:string content:text author:references published:boolean --dest=blogging
 ```
+
 ```ruby [Generated Model]
 # packages/blogging/app/models/blogging/post.rb
 class Blogging::Post < Blogging::ResourceRecord
@@ -146,6 +158,7 @@ class Blogging::Post < Blogging::ResourceRecord
   validates :content, presence: true
 end
 ```
+
 ```ruby [Generated Policy]
 # packages/blogging/app/policies/blogging/post_policy.rb
 class Blogging::PostPolicy < Blogging B::ResourcePolicy
@@ -158,6 +171,7 @@ class Blogging::PostPolicy < Blogging B::ResourcePolicy
   end
 end
 ```
+
 ```ruby [Generated Definition]
 # packages/blogging/app/definitions/blogging/post_definition.rb
 class Blogging::PostDefinition < Blogging::ResourceDefinition
@@ -172,19 +186,80 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   filter :author, with: :select
 end
 ```
+
 :::
 
 ### Authentication Generators
+
+#### Rodauth Customer Generator (`pu:rodauth:customer`)
+
+Easily add multitenancy and SaaS-ready authentication to your Plutonium app. This generator creates a customer-oriented Rodauth account, an entity model, and a membership join model, wiring up all necessary relationships for multi-tenant architectures.
+
+> **Note:** If you omit the `--entity` parameter, the entity name will default to `Entity` and the join relation will be `EntityCustomer`. **It is strongly recommended to always provide a meaningful entity name using `--entity=YourEntityName` to ensure clarity and proper model relationships in your application.**
+
+> **Option:** `--allow-signup` determines whether the customer user is allowed to sign up on the platform. If not allowed, new customer accounts will typically be created by platform admins and users notified. Use `--no-allow-signup` to restrict self-signup.
+
+::: code-group
+
+```bash [Command]
+rails generate pu:rodauth:customer Customer --entity=Organization
+```
+
+```text [Generated Structure]
+app/
+├── models/
+│   ├── customer.rb
+│   ├── organization.rb
+│   └── organization_customer.rb
+└── rodauth/
+    ├── customer_rodauth.rb
+    └── customer_rodauth_plugin.rb
+db/
+└── migrate/
+    ├── ..._create_customers.rb
+    ├── ..._create_organizations.rb
+    └── ..._create_organization_customers.rb
+```
+
+```ruby [Generated Models]
+# app/models/organization.rb
+class Organization < ::ResourceRecord
+  has_many :organization_customers
+  has_many :customers, through: :organization_customers
+end
+
+# app/models/customer.rb
+class Customer < ResourceRecord
+  include Rodauth::Rails.model(:customer)
+
+  has_many :organization_customers
+  has_many :organizations, through: :organization_customers
+end
+
+# app/models/organization_customer.rb
+class OrganizationCustomer < ::ResourceRecord
+
+  belongs_to :organization
+  belongs_to :customer
+  enum role: { member: 0, admin: 1 }
+end
+```
+
+:::
+
+> **Note:** If you already have a customer user model and want to add an entity (for example, as your project evolves into a SaaS), use the Entity Resource Generator below to generate just the entity and membership join model.
 
 #### Rodauth Account Generator (`pu:rodauth:account`)
 
 Generates the necessary files for a Rodauth authentication setup for a given account type.
 
 ::: code-group
+
 ```bash [Command]
 # Generate a 'user' account with common features
 rails generate pu:rodauth:account user --features login logout create-account verify-account reset-password remember
 ```
+
 ```text [Generated Structure]
 app/
 ├── controllers/
@@ -201,6 +276,7 @@ db/
 └── migrate/
     └── ..._create_users.rb
 ```
+
 :::
 
 #### Rodauth Admin Generator (`pu:rodauth:admin`)
@@ -208,9 +284,11 @@ db/
 A specialized generator for creating a secure admin account with enhanced features like MFA and audit logging.
 
 ::: code-group
+
 ```bash [Command]
 rails generate pu:rodauth:admin admin
 ```
+
 ```ruby [Generated Plugin]
 # app/rodauth/admin_rodauth_plugin.rb
 class AdminRodauthPlugin < RodauthPlugin
@@ -224,6 +302,40 @@ class AdminRodauthPlugin < RodauthPlugin
   end
 end
 ```
+
+:::
+
+### Entity Resource Generator (`pu:res:entity`)
+
+Creates an entity model and a membership join model for associating customers with entities. Use this if you already have a customer model and want to add multitenancy or evolve your project into a SaaS platform.
+
+::: code-group
+
+```bash [Command]
+rails generate pu:res:entity Organization --auth-account=Customer
+```
+
+```text [Generated Structure]
+app/
+├── models/
+│   ├── organization.rb
+│   └── organization_customer.rb
+db/
+└── migrate/
+    ├── ..._create_organizations.rb
+    └── ..._create_organization_customers.rb
+```
+
+```ruby [Generated Membership Model]
+# app/models/organization_customer.rb
+class OrganizationCustomer < ResourceRecord
+  belongs_to :organization
+  belongs_to :customer
+
+  enum role: { member: 0, admin: 1 } # not added by default
+end
+```
+
 :::
 
 ### Ejection Generators
