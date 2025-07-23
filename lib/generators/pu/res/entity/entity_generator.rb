@@ -70,6 +70,10 @@ module Pu
           normalized_entity_membership_name,
           ["#{normalized_name}_id", "#{normalized_auth_account_name}_id"]
         )
+
+        add_default_to_role_column
+        add_role_enum_to_model
+        add_unique_validation_to_model
       end
 
       private
@@ -117,6 +121,36 @@ module Pu
           "#{normalized_auth_account_name}:references",
           "role:integer"
         ]
+      end
+
+      def add_default_to_role_column
+        migration_dir = File.join("db", "migrate")
+        migration_file = Dir[File.join(migration_dir, "*_create_#{normalized_entity_membership_name.pluralize}.rb")].first
+
+        if migration_file && File.exist?(migration_file)
+          gsub_file migration_file, /t\.integer :role, null: false/, "t.integer :role, null: false, default: 2  # Member by default"
+          success "Added default value to role column in #{normalized_entity_membership_name.pluralize}"
+        end
+      end
+
+      def add_role_enum_to_model
+        model_file = File.join("app", "models", "#{normalized_entity_membership_name}.rb")
+
+        if File.exist?(model_file)
+          enum_definition = "\nenum :role, owner: 1, member: 2"
+          insert_into_file model_file, indent(enum_definition, 2), before: /^\s*# add model configurations above\./
+          success "Added role enum to #{normalized_entity_membership_name} model"
+        end
+      end
+
+      def add_unique_validation_to_model
+        model_file = File.join("app", "models", "#{normalized_entity_membership_name}.rb")
+
+        if File.exist?(model_file)
+          validation_definition = "validates :#{normalized_auth_account_name}, uniqueness: {scope: :#{normalized_name}_id, message: \"is already a member of this entity\"}\n"
+          insert_into_file model_file, indent(validation_definition, 2), before: /^\s*# add validations above\./
+          success "Added unique validation to #{normalized_entity_membership_name} model"
+        end
       end
     end
   end
