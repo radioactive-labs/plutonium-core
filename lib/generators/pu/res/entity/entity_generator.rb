@@ -127,7 +127,7 @@ module Pu
         migration_file = Dir[File.join(migration_dir, "*_create_#{normalized_entity_membership_name.pluralize}.rb")].first
 
         modify_file_if_exists(migration_file) do |file|
-          gsub_file file, /t\.integer :role, null: false/, "t.integer :role, null: false, default: 2  # Member by default"
+          gsub_file file, /t\.integer :role, null: false/, "t.integer :role, null: false, default: 0  # Member by default"
         end
       end
 
@@ -135,7 +135,7 @@ module Pu
         model_file = File.join("app", "models", "#{normalized_entity_membership_name}.rb")
 
         modify_file_if_exists(model_file) do |file|
-          enum_definition = "\nenum :role, owner: 1, member: 2"
+          enum_definition = "\nenum :role, member: 0, owner: 1"
           insert_into_file file, indent(enum_definition, 2), before: /^\s*# add model configurations above\./
         end
       end

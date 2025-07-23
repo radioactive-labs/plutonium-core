@@ -238,7 +238,7 @@ end
 
 # app/models/organization_customer.rb
 class OrganizationCustomer < ::ResourceRecord
-  enum :role, owner: 1, member: 2
+  enum :role, member: 0, owner: 1
 
   belongs_to :organization
   belongs_to :customer
