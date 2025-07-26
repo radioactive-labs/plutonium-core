@@ -31,6 +31,32 @@ module Plutonium
           }
         end
 
+        def render_actions
+          input name: "return_to", value: request.params[:return_to], type: :hidden, hidden: true
+
+          actions_wrapper {
+            if object.respond_to?(:new_record?)
+              if object.new_record?
+                button(
+                  type: :submit,
+                  name: "return_to",
+                  value: request.url,
+                  class: "px-4 py-2 bg-secondary-600 text-white rounded-md hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+                ) { "Create and add another" }
+              else
+                button(
+                  type: :submit,
+                  name: "return_to",
+                  value: request.url,
+                  class: "px-4 py-2 bg-secondary-600 text-white rounded-md hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+                ) { "Update and continue editing" }
+              end
+            end
+
+            render submit_button
+          }
+        end
+
         def form_action
           return @form_action unless object.present? && @form_action != false && helpers.present?
 
