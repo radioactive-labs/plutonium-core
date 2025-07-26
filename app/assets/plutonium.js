@@ -29304,6 +29304,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var attachment_input_controller_default = class extends Controller {
     static values = {
       identifier: String,
+      endpoint: String,
       maxFileSize: { type: Number, default: null },
       minFileSize: { type: Number, default: null },
       maxTotalSize: { type: Number, default: null },
@@ -29348,7 +29349,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #configureUploader() {
       this.uppy.use(XHRUpload, {
-        endpoint: "/upload"
+        endpoint: this.endpointValue
         // path to the upload endpoint
       });
     }
