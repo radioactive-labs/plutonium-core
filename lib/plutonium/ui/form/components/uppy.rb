@@ -154,7 +154,8 @@ module Plutonium
               max_file_num: attributes.fetch(:size, field.multiple? ? field.limit : 1),
               min_file_num: nil,
               allowed_file_types: nil,
-              required_meta_fields: nil
+              required_meta_fields: nil,
+              endpoint: attributes[:endpoint] || "/upload"
             }.each do |key, default_value|
               value = attributes.key?(key) ? attributes.delete(key) : default_value
               direct_upload_options[:data][:"attachment_input_#{key}_value"] = value

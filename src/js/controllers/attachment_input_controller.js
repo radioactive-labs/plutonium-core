@@ -10,6 +10,7 @@ import DomElement from "../support/dom_element"
 export default class extends Controller {
   static values = {
     identifier: String,
+    endpoint: String,
 
     maxFileSize: { type: Number, default: null },
     minFileSize: { type: Number, default: null },
@@ -75,7 +76,7 @@ export default class extends Controller {
   #configureUploader() {
     this.uppy
       .use(XHRUpload, {
-        endpoint: '/upload', // path to the upload endpoint
+        endpoint: this.endpointValue, // path to the upload endpoint
       })
   }
 
