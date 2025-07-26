@@ -238,10 +238,10 @@ end
 
 # app/models/organization_customer.rb
 class OrganizationCustomer < ::ResourceRecord
+  enum :role, member: 0, owner: 1
 
   belongs_to :organization
   belongs_to :customer
-  enum role: { member: 0, admin: 1 }
 end
 ```
 

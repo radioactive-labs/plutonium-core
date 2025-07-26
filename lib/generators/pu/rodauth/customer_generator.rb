@@ -54,7 +54,6 @@ module Pu
             has_many :#{normalized_entity_membership_name.pluralize}
               has_many :#{normalized_name.pluralize}, through: :#{normalized_entity_membership_name.pluralize}
           RUBY
-          success "Added relationship to #{normalized_entity_name} model"
         end
 
         customer_model_path = File.join("app", "models", "#{normalized_name}.rb")
@@ -63,7 +62,6 @@ module Pu
             has_many :#{normalized_entity_membership_name.pluralize}
               has_many :#{normalized_entity_name.pluralize}, through: :#{normalized_entity_membership_name.pluralize}
           RUBY
-          success "Added relationship to #{normalized_name} model"
         end
       end
 

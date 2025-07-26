@@ -70,6 +70,10 @@ module Pu
           normalized_entity_membership_name,
           ["#{normalized_name}_id", "#{normalized_auth_account_name}_id"]
         )
+
+        add_default_to_role_column
+        add_role_enum_to_model
+        add_unique_validation_to_model
       end
 
       private
@@ -88,10 +92,9 @@ module Pu
         migration_dir = File.join("db", "migrate")
         migration_file = Dir[File.join(migration_dir, "*_create_#{model_name.pluralize}.rb")].first
 
-        if migration_file && File.exist?(migration_file)
+        modify_file_if_exists(migration_file) do |file|
           index_definition = build_index_definition(model_name, index_columns)
           insert_into_file migration_file, indent(index_definition, 4), before: /^  end\s*$/
-          success "Added unique index to #{model_name.pluralize}"
         end
       end
 
@@ -117,6 +120,38 @@ module Pu
           "#{normalized_auth_account_name}:references",
           "role:integer"
         ]
+      end
+
+      def add_default_to_role_column
+        migration_dir = File.join("db", "migrate")
+        migration_file = Dir[File.join(migration_dir, "*_create_#{normalized_entity_membership_name.pluralize}.rb")].first
+
+        modify_file_if_exists(migration_file) do |file|
+          gsub_file file, /t\.integer :role, null: false/, "t.integer :role, null: false, default: 0  # Member by default"
+        end
+      end
+
+      def add_role_enum_to_model
+        model_file = File.join("app", "models", "#{normalized_entity_membership_name}.rb")
+
+        modify_file_if_exists(model_file) do |file|
+          enum_definition = "\nenum :role, member: 0, owner: 1"
+          insert_into_file file, indent(enum_definition, 2), before: /^\s*# add model configurations above\./
+        end
+      end
+
+      def add_unique_validation_to_model
+        model_file = File.join("app", "models", "#{normalized_entity_membership_name}.rb")
+
+        modify_file_if_exists(model_file) do |file|
+          validation_definition = "validates :#{normalized_auth_account_name}, uniqueness: {scope: :#{normalized_name}_id, message: \"is already a member of this entity\"}\n"
+          insert_into_file file, indent(validation_definition, 2), before: /^\s*# add validations above\./
+        end
+      end
+
+      def modify_file_if_exists(file_path)
+        return unless file_path && File.exist?(file_path)
+        yield(file_path)
       end
     end
   end
