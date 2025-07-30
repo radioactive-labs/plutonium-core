@@ -3,6 +3,19 @@ import { Controller } from "@hotwired/stimulus";
 // Connects to data-controller="slim-select"
 export default class extends Controller {
   connect() {
+    if (this.slimSelect) return;
+
+    this.#setupSlimSelect();
+
+    // Just recreate SlimSelect after morphing - the DOM will have correct selections
+    this.element.addEventListener("turbo:morph-element", (event) => {
+      if (event.target === this.element) {
+        requestAnimationFrame(() => this.#handleMorph());
+      }
+    });
+  }
+
+  #setupSlimSelect() {
     const settings = {};
     const modal = document.querySelector('[data-controller="remote-modal"]');
 
@@ -48,11 +61,6 @@ export default class extends Controller {
 
     // Add mutation observer to track aria-expanded attribute
     this.setupAriaObserver();
-
-    this.element.setAttribute(
-      "data-action",
-      "turbo:morph-element->slim-select#reconnect"
-    );
   }
 
   handleDropdownPosition() {
@@ -162,6 +170,20 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.#cleanupSlimSelect();
+  }
+
+  #handleMorph() {
+    if (!this.element.isConnected) return;
+
+    // Clean up the old instance without DOM manipulation
+    this.#cleanupSlimSelect();
+
+    // Recreate the select - it will automatically pick up the current DOM selections
+    this.#setupSlimSelect();
+  }
+
+  #cleanupSlimSelect() {
     // Clean up event listeners
     if (this.element) {
       if (this.boundHandleDropdownOpen) {
@@ -207,12 +229,5 @@ export default class extends Controller {
       this.modifiedSelectWrapper.style.position = "";
       this.modifiedSelectWrapper = null;
     }
-  }
-
-  reconnect() {
-    this.disconnect();
-    // dispatch this on the next frame.
-    // there's some funny issue where my elements get removed from the DOM
-    setTimeout(() => this.connect(), 10);
   }
 }

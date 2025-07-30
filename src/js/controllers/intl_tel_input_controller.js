@@ -12,10 +12,20 @@ export default class extends Controller {
   }
 
   inputTargetConnected() {
-    if (!this.hasInputTarget) return;
+    if (!this.hasInputTarget || this.iti) return;
 
     this.iti = window.intlTelInput(this.inputTarget, this.#buildOptions())
-    this.inputTarget.setAttribute("data-action", "turbo:morph-element->intl-tel-input#reconnect")
+
+    // Just recreate IntlTelInput after morphing - the DOM will have correct value
+    this.element.addEventListener("turbo:morph-element", (event) => {
+      if (event.target === this.element && !this.morphing) {
+        this.morphing = true;
+        requestAnimationFrame(() => {
+          this.#handleMorph();
+          this.morphing = false;
+        });
+      }
+    });
   }
 
   inputTargetDisconnected() {
@@ -25,9 +35,17 @@ export default class extends Controller {
     }
   }
 
-  reconnect() {
-    this.inputTargetDisconnected()
-    this.inputTargetConnected()
+  #handleMorph() {
+    if (!this.inputTarget || !this.inputTarget.isConnected) return;
+
+    // Clean up the old instance
+    if (this.iti) {
+      this.iti.destroy();
+      this.iti = null;
+    }
+
+    // Recreate the intl tel input - it will pick up the current DOM value
+    this.iti = window.intlTelInput(this.inputTarget, this.#buildOptions());
   }
 
   #buildOptions() {

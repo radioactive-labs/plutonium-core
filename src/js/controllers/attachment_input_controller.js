@@ -26,6 +26,8 @@ export default class extends Controller {
   //======= Lifecycle
 
   connect() {
+    if (this.uppy) return;
+
     // initialize
     this.uploadedFiles = []
 
@@ -38,10 +40,48 @@ export default class extends Controller {
     this.#buildTriggers()
     // init state
     this.#onAttachmentsChanged()
+
+    // Just recreate Uppy after morphing - preserve existing attachments
+    this.element.addEventListener("turbo:morph-element", (event) => {
+      if (event.target === this.element && !this.morphing) {
+        this.morphing = true;
+        requestAnimationFrame(() => {
+          this.#handleMorph();
+          this.morphing = false;
+        });
+      }
+    });
   }
 
   disconnect() {
-    this.uppy = null
+    this.#cleanupUppy();
+  }
+
+  #handleMorph() {
+    if (!this.element.isConnected) return;
+
+    // Clean up the old instance
+    this.#cleanupUppy();
+
+    // Recreate everything - Uppy, triggers, etc.
+    this.uploadedFiles = []
+    this.element.style["display"] = "none"
+    this.configureUppy()
+    this.#buildTriggers()
+    this.#onAttachmentsChanged()
+  }
+
+  #cleanupUppy() {
+    if (this.uppy) {
+      this.uppy.destroy();
+      this.uppy = null;
+    }
+    
+    // Clean up triggers
+    if (this.triggerContainer && this.triggerContainer.parentNode) {
+      this.triggerContainer.parentNode.removeChild(this.triggerContainer);
+      this.triggerContainer = null;
+    }
   }
 
   attachmentPreviewOutletConnected(outlet, element) {

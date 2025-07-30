@@ -16290,19 +16290,46 @@ ${text2}</tr>
 
   // src/js/controllers/easymde_controller.js
   var easymde_controller_default = class extends Controller {
+    static targets = ["textarea"];
     connect() {
+      if (this.easyMDE)
+        return;
+      this.originalValue = this.element.value;
       this.easyMDE = new EasyMDE(this.#buildOptions());
-      this.element.setAttribute("data-action", "turbo:morph-element->easymde#reconnect");
+      this.element.addEventListener("turbo:before-morph-element", (event) => {
+        if (event.target === this.element && this.easyMDE) {
+          this.storedValue = this.easyMDE.value();
+        }
+      });
+      this.element.addEventListener("turbo:morph-element", (event) => {
+        if (event.target === this.element) {
+          requestAnimationFrame(() => this.#handleMorph());
+        }
+      });
     }
     disconnect() {
       if (this.easyMDE) {
-        this.easyMDE.toTextArea();
+        try {
+          if (this.element.isConnected && this.element.parentNode) {
+            this.easyMDE.toTextArea();
+          }
+        } catch (error2) {
+          console.warn("EasyMDE cleanup error:", error2);
+        }
         this.easyMDE = null;
       }
     }
-    reconnect() {
-      this.disconnect();
-      this.connect();
+    #handleMorph() {
+      if (!this.element.isConnected)
+        return;
+      if (this.easyMDE) {
+        this.easyMDE = null;
+      }
+      this.easyMDE = new EasyMDE(this.#buildOptions());
+      if (this.storedValue !== void 0) {
+        this.easyMDE.value(this.storedValue);
+        this.storedValue = void 0;
+      }
     }
     #buildOptions() {
       let options2 = {
@@ -16333,6 +16360,16 @@ ${text2}</tr>
   // src/js/controllers/slim_select_controller.js
   var slim_select_controller_default = class extends Controller {
     connect() {
+      if (this.slimSelect)
+        return;
+      this.#setupSlimSelect();
+      this.element.addEventListener("turbo:morph-element", (event) => {
+        if (event.target === this.element) {
+          requestAnimationFrame(() => this.#handleMorph());
+        }
+      });
+    }
+    #setupSlimSelect() {
       const settings = {};
       const modal = document.querySelector('[data-controller="remote-modal"]');
       if (modal) {
@@ -16362,10 +16399,6 @@ ${text2}</tr>
       this.element.addEventListener("ss:open", this.boundHandleDropdownOpen);
       this.element.addEventListener("ss:close", this.boundHandleDropdownClose);
       this.setupAriaObserver();
-      this.element.setAttribute(
-        "data-action",
-        "turbo:morph-element->slim-select#reconnect"
-      );
     }
     handleDropdownPosition() {
       if (this.dropdownContainer) {
@@ -16444,6 +16477,15 @@ ${text2}</tr>
       }
     }
     disconnect() {
+      this.#cleanupSlimSelect();
+    }
+    #handleMorph() {
+      if (!this.element.isConnected)
+        return;
+      this.#cleanupSlimSelect();
+      this.#setupSlimSelect();
+    }
+    #cleanupSlimSelect() {
       if (this.element) {
         if (this.boundHandleDropdownOpen) {
           this.element.removeEventListener(
@@ -16480,21 +16522,24 @@ ${text2}</tr>
         this.modifiedSelectWrapper = null;
       }
     }
-    reconnect() {
-      this.disconnect();
-      setTimeout(() => this.connect(), 10);
-    }
   };
 
   // src/js/controllers/flatpickr_controller.js
   var flatpickr_controller_default = class extends Controller {
     connect() {
+      if (this.picker)
+        return;
       this.modal = document.querySelector("[data-controller=remote-modal]");
       this.picker = new flatpickr(this.element, this.#buildOptions());
-      this.element.setAttribute(
-        "data-action",
-        "turbo:morph-element->flatpickr#reconnect"
-      );
+      this.element.addEventListener("turbo:morph-element", (event) => {
+        if (event.target === this.element && !this.morphing) {
+          this.morphing = true;
+          requestAnimationFrame(() => {
+            this.#handleMorph();
+            this.morphing = false;
+          });
+        }
+      });
     }
     disconnect() {
       if (this.picker) {
@@ -16502,9 +16547,15 @@ ${text2}</tr>
         this.picker = null;
       }
     }
-    reconnect() {
-      this.disconnect();
-      this.connect();
+    #handleMorph() {
+      if (!this.element.isConnected)
+        return;
+      if (this.picker) {
+        this.picker.destroy();
+        this.picker = null;
+      }
+      this.modal = document.querySelector("[data-controller=remote-modal]");
+      this.picker = new flatpickr(this.element, this.#buildOptions());
     }
     #buildOptions() {
       let options2 = { altInput: true };
@@ -16530,10 +16581,18 @@ ${text2}</tr>
       this.inputTargetDisconnected();
     }
     inputTargetConnected() {
-      if (!this.hasInputTarget)
+      if (!this.hasInputTarget || this.iti)
         return;
       this.iti = window.intlTelInput(this.inputTarget, this.#buildOptions());
-      this.inputTarget.setAttribute("data-action", "turbo:morph-element->intl-tel-input#reconnect");
+      this.element.addEventListener("turbo:morph-element", (event) => {
+        if (event.target === this.element && !this.morphing) {
+          this.morphing = true;
+          requestAnimationFrame(() => {
+            this.#handleMorph();
+            this.morphing = false;
+          });
+        }
+      });
     }
     inputTargetDisconnected() {
       if (this.iti) {
@@ -16541,9 +16600,14 @@ ${text2}</tr>
         this.iti = null;
       }
     }
-    reconnect() {
-      this.inputTargetDisconnected();
-      this.inputTargetConnected();
+    #handleMorph() {
+      if (!this.inputTarget || !this.inputTarget.isConnected)
+        return;
+      if (this.iti) {
+        this.iti.destroy();
+        this.iti = null;
+      }
+      this.iti = window.intlTelInput(this.inputTarget, this.#buildOptions());
     }
     #buildOptions() {
       return {
@@ -29316,14 +29380,45 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     static outlets = ["attachment-preview", "attachment-preview-container"];
     //======= Lifecycle
     connect() {
+      if (this.uppy)
+        return;
+      this.uploadedFiles = [];
+      this.element.style["display"] = "none";
+      this.configureUppy();
+      this.#buildTriggers();
+      this.#onAttachmentsChanged();
+      this.element.addEventListener("turbo:morph-element", (event) => {
+        if (event.target === this.element && !this.morphing) {
+          this.morphing = true;
+          requestAnimationFrame(() => {
+            this.#handleMorph();
+            this.morphing = false;
+          });
+        }
+      });
+    }
+    disconnect() {
+      this.#cleanupUppy();
+    }
+    #handleMorph() {
+      if (!this.element.isConnected)
+        return;
+      this.#cleanupUppy();
       this.uploadedFiles = [];
       this.element.style["display"] = "none";
       this.configureUppy();
       this.#buildTriggers();
       this.#onAttachmentsChanged();
     }
-    disconnect() {
-      this.uppy = null;
+    #cleanupUppy() {
+      if (this.uppy) {
+        this.uppy.destroy();
+        this.uppy = null;
+      }
+      if (this.triggerContainer && this.triggerContainer.parentNode) {
+        this.triggerContainer.parentNode.removeChild(this.triggerContainer);
+        this.triggerContainer = null;
+      }
     }
     attachmentPreviewOutletConnected(outlet, element) {
       this.#onAttachmentsChanged();
