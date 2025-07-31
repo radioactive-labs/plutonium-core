@@ -4,11 +4,7 @@ after_bundle do
 
   # Run the base install
   template_location = if ENV["LOCAL"]
-    if File.exist?("/Users/stefan/Documents/plutonium/plutonium-core/docs/public/templates/base.rb")
-      "/Users/stefan/Documents/plutonium/plutonium-core/docs/public/templates/base.rb"
-    elsif File.exist?("/home/thelazyprogrammer/plutonium-core/docs/public/templates/base.rb")
-      "/home/thelazyprogrammer/plutonium-core/docs/public/templates/base.rb"
-    end
+    "/Users/stefan/Documents/plutonium/plutonium-core/docs/public/templates/base.rb"
   else
     "https://radioactive-labs.github.io/plutonium-core/templates/base.rb"
   end
