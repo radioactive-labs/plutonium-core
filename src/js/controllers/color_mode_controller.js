@@ -1,40 +1,50 @@
-import { Controller } from "@hotwired/stimulus"
-
+import { Controller } from "@hotwired/stimulus";
 
 // Connects to data-controller="color-mode"
 export default class extends Controller {
-  // static targets = ["trigger", "menu"]
+  static values = { current: String };
 
   connect() {
-    this.updateColorMode()
+    // Set initial mode from localStorage or default
+    const mode = localStorage.theme || "light";
+    this.setMode(mode);
   }
 
-  disconnect() {
+  toggleMode() {
+    const current = this.currentValue || "light";
+    const next = current === "light" ? "dark" : "light";
+    this.setMode(next);
   }
 
-  updateColorMode() {
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark')
+  setMode(mode) {
+    // Update html class
+    if (mode === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.theme = "dark";
     } else {
-      document.documentElement.classList.remove('dark')
+      document.documentElement.classList.remove("dark");
+      localStorage.theme = "light";
     }
+
+    // Update button state
+    this.currentValue = mode;
+
+    // Show/hide icons
+    this.toggleIcons(mode);
   }
 
-  setLightColorMode() {
-    // Whenever the user explicitly chooses light mode
-    localStorage.theme = 'light'
-    this.updateColorMode()
-  }
+  toggleIcons(mode) {
+    const sun = this.element.querySelector(".color-mode-icon-light");
+    const moon = this.element.querySelector(".color-mode-icon-dark");
 
-  setDarkColorMode() {
-    // Whenever the user explicitly chooses dark mode
-    localStorage.theme = 'dark'
-    this.updateColorMode()
-  }
-
-  setSystemColorMode() {
-    // Whenever the user explicitly chooses to respect the OS preference
-    localStorage.removeItem('theme')
-    this.updateColorMode()
+    if (sun && moon) {
+      if (mode === "light") {
+        sun.classList.remove("hidden");
+        moon.classList.add("hidden");
+      } else {
+        sun.classList.add("hidden");
+        moon.classList.remove("hidden");
+      }
+    }
   }
 }

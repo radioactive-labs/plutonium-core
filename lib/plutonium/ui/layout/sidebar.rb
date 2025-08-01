@@ -15,7 +15,6 @@ module Plutonium
         def view_template(&)
           render_sidebar_container do
             render_content(&) if block_given?
-            render_color_mode_controls
           end
         end
 
@@ -40,13 +39,6 @@ module Plutonium
             class: "overflow-y-auto py-5 px-3 h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700",
             &
           )
-        end
-
-        # @private
-        def render_color_mode_controls
-          div(class: "absolute bottom-0 left-0 justify-center p-4 space-x-4 w-full flex bg-white dark:bg-gray-800 z-20 border-r border-gray-200 dark:border-gray-700") do
-            render ColorModeSelector.new
-          end
         end
       end
     end
