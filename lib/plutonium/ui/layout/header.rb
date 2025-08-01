@@ -56,6 +56,14 @@ module Plutonium
 
         private
 
+        # Renders the color mode toggle controls
+        # @private
+        def render_color_mode_controls
+          div(class: "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700") do
+            render ColorModeSelector.new
+          end
+        end
+
         # Renders the left section of the header including sidebar toggle, brand elements,
         # and any yielded content
         # @private
@@ -111,8 +119,12 @@ module Plutonium
         # Renders the action buttons section
         # @private
         def render_actions
-          div(class: "flex items-center lg:order-2") do
-            action_slots.each { |action| render action }
+          div(class: "flex items-center space-x-2") do
+            render_color_mode_controls
+
+            div(class: "flex items-center lg:order-2") do
+              action_slots.each { |action| render action }
+            end
           end
         end
       end
