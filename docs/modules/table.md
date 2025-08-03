@@ -31,6 +31,9 @@ class PostDefinition < Plutonium::Resource::Definition
   # Define sorting
   sort :title
   sort :published_at
+  
+  # Define default sort (newest first)
+  default_sort :created_at, :desc
 
   # Enable search
   search do |scope, query|
@@ -200,6 +203,11 @@ class PostDefinition < Plutonium::Resource::Definition
   sort :author_name, using: "users.name" do |scope, direction:|
     scope.joins(:author).order("users.name #{direction}")
   end
+  
+  # Default sort when no user sorting is applied
+  default_sort :created_at, :desc  # Simple form
+  # or with a block for complex sorting:
+  # default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }
 end
 ```
 

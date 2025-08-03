@@ -43,6 +43,9 @@ class PostDefinition < Plutonium::Resource::Definition
   sort :title
   sort :created_at
   sort :view_count
+  
+  # Define default sort (when no sort params are provided)
+  default_sort :created_at, :desc  # or default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }
 end
 ```
 
@@ -272,6 +275,13 @@ end
 - Use ILIKE for case-insensitive matching
 - Consider performance impact of JOINs in search queries
 - Use `.distinct` when searching across associations
+
+### Default Sorting
+- Define a default sort to show newest items first by default: `default_sort :id, :desc`
+- Use field and direction: `default_sort :created_at, :desc`
+- Or use a block for complex sorting: `default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }`
+- The default sort is only applied when no sort parameters are provided by the user
+- Child definitions inherit the default sort from parent definitions
 
 ### URL Structure
 - The `q` parameter namespace keeps query params organized

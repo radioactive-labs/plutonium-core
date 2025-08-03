@@ -190,6 +190,9 @@ class BlogDefinition < Plutonium::Resource::Definition
   # Configure sorting
   sort :title
   sort :published_at
+  
+  # Configure default sorting (newest first)
+  default_sort :published_at, :desc
 end
 ```
 

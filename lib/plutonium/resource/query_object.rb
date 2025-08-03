@@ -2,6 +2,7 @@ module Plutonium
   module Resource
     class QueryObject
       attr_reader :search_filter, :search_query
+      attr_accessor :default_sort_config
 
       # Initializes a QueryObject with the given resource_class and parameters.
       #
@@ -221,12 +222,20 @@ module Plutonium
       # @return [Object] The modified scope.
       def apply_sorts(scope, params)
         selected_sort_directions = extract_sort_directions(params)
-        selected_sort_fields.each do |name|
-          next unless (sorter = sort_definitions[name])
 
-          direction = selected_sort_directions[name] || "ASC"
-          scope = sorter.apply(scope, direction:)
+        if selected_sort_fields.any?
+          # Apply user-selected sorts
+          selected_sort_fields.each do |name|
+            next unless (sorter = sort_definitions[name])
+
+            direction = selected_sort_directions[name] || "ASC"
+            scope = sorter.apply(scope, direction:)
+          end
+        elsif default_sort_config
+          # Apply default sort when no sorts are selected
+          scope = apply_default_sort(scope)
         end
+
         scope
       end
 
@@ -249,6 +258,24 @@ module Plutonium
             value.presence
           end
         end.compact
+      end
+
+      # Applies the default sort to the given scope
+      #
+      # @param scope [Object] The initial scope
+      # @return [Object] The sorted scope
+      def apply_default_sort(scope)
+        case default_sort_config
+        when Proc
+          # Block form: default_sort { |scope| scope.order(...) }
+          default_sort_config.call(scope)
+        when Array
+          # Field/direction form: default_sort :created_at, :desc
+          field, direction = default_sort_config
+          scope.order(field => direction)
+        else
+          scope
+        end
       end
     end
   end

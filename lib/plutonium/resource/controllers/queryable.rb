@@ -25,6 +25,10 @@ module Plutonium
                 query_object.define_sorter key, value[:block], **value[:options]
               end
 
+              if current_definition.respond_to?(:default_sort) && current_definition.default_sort
+                query_object.default_sort_config = current_definition.default_sort
+              end
+
               current_definition.defined_filters.each do |key, value|
                 with = value[:options][:with]
                 if with.is_a?(Class) && with < Plutonium::Query::Filter
