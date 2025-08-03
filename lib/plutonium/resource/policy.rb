@@ -5,7 +5,7 @@ module Plutonium
     # Policy class to define permissions and attributes for a resource.
     # This class provides methods to check permissions for various actions
     # and to retrieve permitted attributes for these actions.
-    class Policy < ActionPolicy::Base
+    class Policy < ::ActionPolicy::Base
       authorize :user, allow_nil: false
       authorize :entity_scope, allow_nil: true
 

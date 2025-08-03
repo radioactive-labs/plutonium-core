@@ -54,7 +54,7 @@ module Plutonium
     config.after_initialize do
       Plutonium::Reloader.start! if Plutonium.configuration.enable_hotreload
       Plutonium::Loader.eager_load if Rails.env.production?
-      ActionPolicy::PerThreadCache.enabled = !Rails.env.local?
+      ::ActionPolicy::PerThreadCache.enabled = !Rails.env.local?
     end
 
     private

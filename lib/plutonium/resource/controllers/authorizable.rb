@@ -20,10 +20,10 @@ module Plutonium
         extend ActiveSupport::Concern
 
         # Custom exception for missing authorize_current call
-        class ActionMissingAuthorizeCurrent < ActionPolicy::UnauthorizedAction; end
+        class ActionMissingAuthorizeCurrent < ::ActionPolicy::UnauthorizedAction; end
 
         # Custom exception for missing current_authorized_scope call
-        class ActionMissingCurrentAuthorizedScope < ActionPolicy::UnauthorizedAction; end
+        class ActionMissingCurrentAuthorizedScope < ::ActionPolicy::UnauthorizedAction; end
 
         included do
           after_action :verify_authorize_current
@@ -95,7 +95,7 @@ module Plutonium
 
         # Returns the policy for the current resource
         #
-        # @return [ActionPolicy::Base] the policy for the current resource
+        # @return [::ActionPolicy::Base] the policy for the current resource
         def current_policy
           @current_policy ||= policy_for(record: current_policy_subject, context: current_policy_context)
         end
@@ -119,7 +119,7 @@ module Plutonium
         #
         # @param record [Object] the record to authorize
         # @param options [Hash] additional options for authorization
-        # @raise [ActionPolicy::Unauthorized] if the action is not authorized
+        # @raise [::ActionPolicy::Unauthorized] if the action is not authorized
         def authorize_current!(record, **options)
           options[:context] = (options[:context] || {}).deep_merge(current_policy_context)
           authorize!(record, **options)

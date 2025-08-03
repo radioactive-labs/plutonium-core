@@ -5,7 +5,7 @@ module Plutonium
     module Controllers
       module Authorizable
         extend ActiveSupport::Concern
-        include ActionPolicy::Controller
+        include ::ActionPolicy::Controller
 
         included do
           authorize :user, through: :current_user
@@ -23,7 +23,7 @@ module Plutonium
             raise ArgumentError("Expected resource to be a class inheriting ActiveRecord::Base")
           end
 
-          options[:with] ||= ActionPolicy.lookup(resource, namespace: authorization_namespace)
+          options[:with] ||= ::ActionPolicy.lookup(resource, namespace: authorization_namespace)
           relation ||= resource.all
 
           authorized_scope(relation, **options)
