@@ -16,7 +16,7 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to
 
       # Initialize a new action.
       #
@@ -29,6 +29,7 @@ module Plutonium
       # @option options [String] :confirmation The confirmation message to display before executing the action.
       # @option options [RouteOptions, Hash] :route_options The routing options for the action.
       # @option options [String] :turbo_frame The Turbo Frame ID for the action (used in Hotwire/Turbo Drive applications).
+      # @option options [String, Symbol] :return_to Override the return_to URL for this action. If not provided, defaults to current URL.
       # @option options [Boolean] :bulk_action (false) If true, applies to a bulk selection of records (e.g., "Mark Selected as Read").
       # @option options [Boolean] :collection_record_action (false) If true, applies to records in a collection (e.g., "Edit Record" button in a table).
       # @option options [Boolean] :record_action (false) If true, applies to an individual record (e.g., "Delete" button on a Show page).
@@ -49,6 +50,7 @@ module Plutonium
         @route_options = build_route_options(options[:route_options])
         @turbo = options[:turbo]
         @turbo_frame = options[:turbo_frame]
+        @return_to = options[:return_to]
         @bulk_action = options[:bulk_action] || false
         @collection_record_action = options[:collection_record_action] || false
         @record_action = options[:record_action] || false

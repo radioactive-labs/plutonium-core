@@ -25,7 +25,7 @@ module Plutonium
       def render_link
         uri = URI.parse(@url)
         params = Rack::Utils.parse_nested_query(uri.query)
-        params["return_to"] = request.original_url
+        params["return_to"] = @action.return_to.nil? ? request.original_url : @action.return_to
         uri.query = params.to_query
         uri.to_s
 
@@ -42,7 +42,7 @@ module Plutonium
         button_to(
           @url,
           method: @action.route_options.method,
-          name: :return_to, value: request.original_url,
+          name: :return_to, value: (@action.return_to.nil? ? request.original_url : @action.return_to),
           class: "inline-block",
           form: {
             data: {
