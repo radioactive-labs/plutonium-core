@@ -21,7 +21,7 @@ module Plutonium
             header_cell_sort_wrapper: "flex items-center",
             header_cell_sort_indicator: "ml-1.5",
             body_row: "bg-white border-b last:border-none dark:bg-gray-800 dark:border-gray-700",
-            body_cell: "px-6 py-4 whitespace-pre max-w-[310px] hover:max-w-[600px] overflow-hidden text-ellipsis transition-all duration-300 ease-in-out",
+            body_cell: "px-6 py-4 whitespace-pre max-w-[450px] overflow-hidden text-ellipsis transition-all duration-300 ease-in-out",
             sort_icon: "w-3 h-3",
             sort_icon_active: "text-primary-600",
             sort_icon_inactive: "text-gray-600 dark:text-gray-500",
