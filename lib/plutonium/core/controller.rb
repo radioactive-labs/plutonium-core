@@ -77,15 +77,14 @@ module Plutonium
             model_class = element.class
             if model_class.respond_to?(:base_class) && model_class != model_class.base_class
               # Check if the STI model is registered, if not use base class
-              route_configs = current_engine.routes.resource_route_config_for(model_class.to_s.pluralize.underscore)
-              model_class = model_class.base_class if route_configs.nil? || route_configs.empty?
+              route_configs = current_engine.routes.resource_route_config_for(model_class.model_name.plural)
+              model_class = model_class.base_class if route_configs.empty?
             end
 
             controller_chain << model_class.to_s.pluralize
             if index == args.length - 1
-              resource_route_configs = current_engine.routes.resource_route_config_for(model_class.to_s.pluralize.underscore)
-              resource_route_config = resource_route_configs&.first
-              url_args[:id] = element.to_param unless resource_route_config && resource_route_config[:route_type] == :resource
+              resource_route_config = current_engine.routes.resource_route_config_for(model_class.model_name.plural)[0]
+              url_args[:id] = element.to_param unless resource_route_config[:route_type] == :resource
               url_args[:action] ||= :show
             else
               url_args[model_class.to_s.underscore.singularize.to_sym] = element.to_param
