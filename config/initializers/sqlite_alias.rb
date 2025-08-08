@@ -1,4 +1,6 @@
 # Alias json to jsonb in SQLite migrations
+return unless defined?(ActiveRecord::ConnectionAdapters::SQLite3)
+
 ActiveSupport.on_load(:active_record) do
   next unless ActiveRecord::Base.connection.adapter_name.downcase.include?("sqlite")
 
