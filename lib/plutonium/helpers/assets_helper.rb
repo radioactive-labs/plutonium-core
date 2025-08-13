@@ -32,14 +32,7 @@ module Plutonium
       # @param classname [String] CSS class name for the image tag
       # @return [ActiveSupport::SafeBuffer] HTML image tag
       def resource_logo_tag(classname:)
-        image_tag(resource_logo_asset, class: classname)
-      end
-
-      # Get the logo asset path
-      #
-      # @return [String] path to the logo asset
-      def resource_logo_asset
-        Plutonium.configuration.assets.logo
+        render Plutonium::UI::Display::Components::Logo.new(classname:)
       end
 
       # Get the stylesheet asset path
