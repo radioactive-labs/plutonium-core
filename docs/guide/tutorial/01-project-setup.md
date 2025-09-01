@@ -63,7 +63,7 @@ plutonium_blog/
 Let's boot up the Rails server to make sure everything is working correctly.
 
 ```bash
-rails server
+bin/dev
 ```
 
 Open your web browser and navigate to [http://localhost:3000](http://localhost:3000). You should see the default Rails welcome page.
