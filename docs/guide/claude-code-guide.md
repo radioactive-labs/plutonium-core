@@ -1,48 +1,47 @@
 ---
-title: Cursor Rules for Plutonium Development
+title: Claude Code Guide for Plutonium Development
 ---
 
 <script setup>
 import { withBase } from 'vitepress'
 </script>
 
-# Cursor Rules for Plutonium Development
+# Claude Code Guide for Plutonium Development
 
-This page provides comprehensive cursor rules for building Plutonium applications effectively. These rules are designed to help AI assistants and developers understand the framework's patterns and best practices.
+This page provides comprehensive development guidance for building Plutonium applications effectively. This guide is designed to help AI assistants and developers understand the framework's patterns and best practices.
 
 ## Quick Start
 
-**Download the Rules File**: <a :href="withBase('/plutonium.mdc')" target="_blank">📄 plutonium.mdc</a>
+**Download the CLAUDE.md File**: <a :href="withBase('/CLAUDE.md')" target="_blank">📄 CLAUDE.md</a>
 
 **Or download directly from your terminal**:
 
 ::: code-group
 
 ```bash [Unix/Linux/macOS/WSL]
-mkdir -p .cursor/rules && curl -o .cursor/rules/plutonium.mdc https://radioactive-labs.github.io/plutonium-core/plutonium.mdc
+curl -o CLAUDE.md https://radioactive-labs.github.io/plutonium-core/CLAUDE.md
 ```
 
 ```cmd [Windows]
-mkdir .cursor\rules 2>nul & curl -o .cursor\rules\plutonium.mdc https://radioactive-labs.github.io/plutonium-core/plutonium.mdc
+curl -o CLAUDE.md https://radioactive-labs.github.io/plutonium-core/CLAUDE.md
 ```
 
 :::
 
-## Using These Rules
+## Using This Guide
 
-Cursor uses Project Rules stored in `.cursor/rules/` directory:
+Claude Code uses CLAUDE.md files for project-specific context:
 
-1. **Download the rules file**: Right-click the link above and "Save As" to download the `.plutonium.mdc` file
-2. **Open Cursor Settings** → Rules → Project Rules
-3. **Click "Add new rule"** and give it a name (e.g., "plutonium")
-4. **Copy the downloaded content** into the new rule file
-5. The rule will be saved as `.cursor/rules/plutonium.mdc`
+1. **Download the guide**: Right-click the link above and "Save As" to download the `CLAUDE.md` file
+2. **Place in your project root** as `CLAUDE.md`
+3. **Claude Code automatically loads** this file for project context
+4. **Enhance with your own instructions** by adding project-specific details
 
-**Legacy Method**: You can also place the downloaded `.plutonium.mdc` file in your project root, but this method is deprecated.
+The guide provides comprehensive patterns and examples for building Plutonium applications with AI assistance.
 
 ## What's Included
 
-The cursor rules file contains comprehensive guidelines for:
+The CLAUDE.md guide contains comprehensive guidelines for:
 
 ### 🏗️ **Framework Architecture**
 - Resource-oriented development patterns

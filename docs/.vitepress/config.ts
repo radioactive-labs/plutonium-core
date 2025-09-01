@@ -63,7 +63,7 @@ export default defineConfig(withMermaid({
         {
           text: "Developer Tools",
           items: [
-            { text: "Cursor Rules", link: "/guide/cursor-rules" },
+            { text: "Claude Code Guide", link: "/guide/claude-code-guide" },
           ]
         }
       ],

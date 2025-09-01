@@ -85,7 +85,7 @@ There's one last step. We need to tell our main Rails application how to handle 
 
 ## See it in Action!
 
-Let's check our progress. Start your Rails server (`rails s`) and navigate to [http://localhost:3000](http://localhost:3000).
+Let's check our progress. Start your Rails server (`bin/dev`) and navigate to [http://localhost:3000](http://localhost:3000).
 
 You will be redirected to `/dashboard` and should see the login page.
 
