@@ -61,20 +61,57 @@ rails new app_name -a propshaft -j esbuild -c tailwind \
 rails generate pu:core:install
 ```
 
-### Authentication Setup
+### Authentication Setup (Optional)
+
+Authentication is optional in Plutonium. You can build apps without auth using `Plutonium::Auth::Public`. When you do need authentication:
+
+#### Basic Setup Workflow
 ```bash
-# Install Rodauth
+# 1. Install Rodauth infrastructure
 rails generate pu:rodauth:install
 
-# Create user account with auth
+# 2. Create account types as needed
 rails generate pu:rodauth:account user
 
-# Create admin account with enhanced security
+# 3. Run migrations
+rails db:migrate
+
+# 4. Connect auth to portals (see Portal Integration below)
+```
+
+#### Account Type Options
+```bash
+# Standard user accounts
+rails generate pu:rodauth:account user
+
+# Enhanced admin accounts with MFA and security features
 rails generate pu:rodauth:admin admin
 
-# Multi-tenant customer setup
+# Multi-tenant customer accounts with entity scoping
 rails generate pu:rodauth:customer Customer --entity=Organization
+
+# Custom feature set (specify exact features needed)
+rails generate pu:rodauth:account api_user \
+  --no-defaults --login --logout --jwt --verify-account
 ```
+
+#### Portal Integration
+```ruby
+# For authenticated portals - add to controller concerns:
+include Plutonium::Auth::Rodauth(:user)    # Links to user auth
+include Plutonium::Auth::Rodauth(:admin)   # Links to admin auth
+
+# For public portals - no authentication required:
+include Plutonium::Auth::Public
+
+# This provides: current_user, logout_url helpers in controllers/views
+```
+
+#### Available Auth Features
+- **Core**: `login`, `logout`, `create_account`, `verify_account`, `reset_password`, `change_password`
+- **Security**: `remember`, `lockout`, `active_sessions`, `audit_logging`
+- **MFA**: `otp`, `recovery_codes`, `sms_codes`, `webauthn`
+- **Advanced**: `password_grace_period`, `single_session`, `jwt`, `internal_request`
 
 ### Package Generators
 ```bash
@@ -98,10 +135,16 @@ rails generate pu:res:scaffold Order customer:belongs_to inventory/product:belon
 rails generate pu:res:model Article title:string body:text author:belongs_to --dest=blogging
 rails generate pu:res:model Review user:belongs_to inventory/product:belongs_to rating:integer --dest=reviews
 
-# Connect resources to portals (can be non-interactive with explicit args)
-rails generate pu:res:conn BlogManagement::Post BlogManagement::Comment --dest=admin_portal
-# Or interactive mode (will prompt for selection)
+# CRITICAL: Use connection generator to expose resources in portals
+# Always use the generator - NEVER manually connect resources
+
+# Use full namespaced path (package_name/model_name format)
+rails generate pu:res:conn blog_management/post blog_management/comment --dest=admin_portal
+
+# Interactive mode (will prompt for resource and portal selection)
 rails generate pu:res:conn
+
+# The generator handles all routing, controller, and policy connections automatically
 ```
 
 ### Other Useful Generators
@@ -165,9 +208,13 @@ packages/admin_portal/
 ## Development Patterns
 
 ### 1. Resource Definition (UI Configuration)
+
+**CRITICAL**: Plutonium automatically detects all fields from your model - database columns, associations, and Active Storage attachments. Definitions should only contain customizations, not field declarations.
+
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  # All model attributes auto-detected - only declare overrides
+  # NO NEED to declare fields - they're auto-detected from the model
+  # Only add customizations below when you want to change default behavior
 
   # Form inputs (only override when changing auto-detected behavior)
   input :content, as: :rich_text
@@ -338,14 +385,14 @@ end
 ### 3. Generator Usage
 - Start with `pu:res:scaffold` for complete resources
 - Use `--dest=package_name` to specify target package
-- Use `pu:res:conn` with explicit resource names for connections
+- **CRITICAL**: Use `pu:res:conn` generator to connect resources to portals - never manually connect
 - Definitions only need overrides - auto-detection handles defaults
 
 ### 4. UI Customization
 - Policies control WHAT (authorization)
-- Definitions control HOW (presentation)
+- Definitions control HOW (presentation) - **fields are auto-detected, only add customizations**
 - Interactions control business logic
-- Use auto-detection, override selectively
+- Trust auto-detection, customize only when needed
 
 ### 5. Common Field Types
 **Input Types**: `:string`, `:text`, `:rich_text`, `:email`, `:url`, `:tel`, `:password`, `:number`, `:boolean`, `:date`, `:datetime`, `:select`, `:file`, `:uppy`, `:association`
@@ -459,7 +506,7 @@ end
 rails generate pu:pkg:package feature_name                    # Create feature package
 rails generate pu:res:scaffold Resource --dest=feature_name   # Create complete resource
 rails generate pu:pkg:portal portal_name                      # Create portal
-rails generate pu:res:conn Feature::Resource --dest=portal    # Connect resources to portal
+rails generate pu:res:conn Feature::Resource --dest=portal    # CRITICAL: Always use generator to connect
 
 # Authentication
 rails generate pu:rodauth:install              # Install auth system
