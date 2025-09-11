@@ -120,6 +120,7 @@ end
 - **Enhanced Flash Messages**: Extended message types (`:success`, `:warning`, `:error`)
 - **View Integration**: Automatic view path resolution and layout management
 - **Resource Management**: Access to registered resources and metadata
+- **CSRF Protection**: Automatic CSRF protection with smart handling for API requests
 
 **Essential Methods:**
 ```ruby
@@ -384,6 +385,50 @@ resource_url_for(Post, parent: @user)     # => "/users/123/nested_posts"
 
 Plutonium automatically handles different response formats for you.
 It currently supports HTML, JSON, and Turbo Streams.
+
+### CSRF Protection
+
+Plutonium provides intelligent CSRF (Cross-Site Request Forgery) protection that automatically adapts to different request types:
+
+```ruby
+# Automatically configured in Plutonium::Core::Controller
+protect_from_forgery with: :null_session, if: -> { request.headers['Authorization'].present? }
+```
+
+**How It Works:**
+- **Session-based requests** (typical web forms, SPA AJAX calls): Full CSRF protection is enforced
+- **Token-based requests** (API calls with Authorization headers): CSRF protection is skipped using `:null_session`
+
+**Security Benefits:**
+- SPAs using session cookies remain protected against CSRF attacks
+- API clients using Bearer tokens, Basic auth, or other Authorization headers bypass CSRF (as intended)
+- No configuration needed - works automatically based on request characteristics
+
+**Authorization Header Examples:**
+```http
+# These requests will skip CSRF protection:
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
+Authorization: Basic dXNlcjpwYXNzd29yZA==
+Authorization: ApiKey abc123
+```
+
+**For SPA Development:**
+If your SPA uses session-based authentication, include CSRF tokens in your AJAX requests:
+
+```javascript
+// Include CSRF token in meta tags
+<%= csrf_meta_tags %>
+
+// Send token in AJAX requests
+fetch('/api/posts', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+  },
+  body: JSON.stringify(data)
+})
+```
 
 ## Related Modules
 

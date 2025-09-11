@@ -8,6 +8,8 @@ module Plutonium
 
       included do
         add_flash_types :success, :warning, :error
+        
+        protect_from_forgery with: :null_session, if: -> { request.headers['Authorization'].present? }
 
         before_action do
           next unless defined?(ActiveStorage)
