@@ -139,7 +139,7 @@ class ApplicationController < ActionController::Base
       end
     else
       outcome.messages.each { |msg, type| flash.now[type] = msg }
-      render json: { errors: outcome.errors }, status: :unprocessable_entity
+      render json: { errors: outcome.errors }, status: :unprocessable_content
     end
   end
 end

@@ -47,7 +47,7 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.html { render :new, status: :unprocessable_entity }
+              format.html { render :new, status: :unprocessable_content }
             elsif resource_record!.save
               format.html do
                 redirect_to redirect_url_after_submit,
@@ -59,10 +59,10 @@ module Plutonium
                   location: redirect_url_after_submit
               end
             else
-              format.html { render :new, status: :unprocessable_entity }
+              format.html { render :new, status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
-                render "errors", status: :unprocessable_entity
+                render "errors", status: :unprocessable_content
               end
             end
           end
@@ -87,7 +87,7 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.html { render :edit, status: :unprocessable_entity }
+              format.html { render :edit, status: :unprocessable_content }
             elsif resource_record!.save
               format.html do
                 redirect_to redirect_url_after_submit,
@@ -99,10 +99,10 @@ module Plutonium
                 render :show, status: :ok, location: redirect_url_after_submit
               end
             else
-              format.html { render :edit, status: :unprocessable_entity }
+              format.html { render :edit, status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
-                render "errors", status: :unprocessable_entity
+                render "errors", status: :unprocessable_content
               end
             end
           end
@@ -133,7 +133,7 @@ module Plutonium
                 :existing_references,
                 message: "is referenced by other records"
 
-              render "errors", status: :unprocessable_entity
+              render "errors", status: :unprocessable_content
             end
           end
         end

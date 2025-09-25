@@ -41,7 +41,7 @@ module Plutonium
           if params[:pre_submit]
             respond_to do |format|
               format.html do
-                render :interactive_record_action, status: :unprocessable_entity
+                render :interactive_record_action, status: :unprocessable_content
               end
             end
             return
@@ -65,12 +65,12 @@ module Plutonium
                 end
               else
                 format.html do
-                  render :interactive_record_action, status: :unprocessable_entity
+                  render :interactive_record_action, status: :unprocessable_content
                 end
 
                 format.any do
                   @errors = @interaction.errors
-                  render "errors", status: :unprocessable_entity
+                  render "errors", status: :unprocessable_content
                 end
 
               end
@@ -98,7 +98,7 @@ module Plutonium
           if params[:pre_submit]
             respond_to do |format|
               format.html do
-                render :interactive_resource_action, status: :unprocessable_entity
+                render :interactive_resource_action, status: :unprocessable_content
               end
             end
             return
@@ -122,12 +122,12 @@ module Plutonium
                 end
               else
                 format.html do
-                  render :interactive_resource_action, status: :unprocessable_entity
+                  render :interactive_resource_action, status: :unprocessable_content
                 end
 
                 format.any do
                   @errors = @interaction.errors
-                  render "errors", status: :unprocessable_entity
+                  render "errors", status: :unprocessable_content
                 end
 
               end
@@ -171,11 +171,11 @@ module Plutonium
           #     end
           #   else
           #     format.html do
-          #       render :interactive_bulk_action, status: :unprocessable_entity
+          #       render :interactive_bulk_action, status: :unprocessable_content
           #     end
           #     format.any do
           #       @errors = @interaction.errors
-          #       render "errors", status: :unprocessable_entity
+          #       render "errors", status: :unprocessable_content
           #     end
           #   end
           # end
