@@ -119,7 +119,7 @@ Handles controller responses after successful interactions.
 **Render Response**
 ```ruby
 .with_render_response(:show, locals: { user: user })
-.with_render_response(:edit, status: :unprocessable_entity)
+.with_render_response(:edit, status: :unprocessable_content)
 ```
 
 **File Response**
@@ -147,7 +147,7 @@ class ApplicationController < ActionController::Base
       end
     else
       outcome.messages.each { |msg, type| flash.now[type || :error] = msg }
-      render json: { errors: outcome.errors }, status: :unprocessable_entity
+      render json: { errors: outcome.errors }, status: :unprocessable_content
     end
   end
 end
