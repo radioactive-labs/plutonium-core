@@ -7,7 +7,10 @@ require "rodauth"
 module Rodauth
   Feature.define(:case_insensitive_login, :CaseInsensitiveLogin) do
     def param(key)
-      if [login_param, login_confirm_param].include?(key)
+      logins = [login_param]
+      logins << login_confirm_param if respond_to?(:login_confirm_param)
+
+      if [logins].include?(key)
         super.downcase
       else
         super
