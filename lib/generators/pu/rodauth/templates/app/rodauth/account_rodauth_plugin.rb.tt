@@ -246,6 +246,9 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
     remember_cookie_key "_<%= table_prefix %>_remember"
 <% end -%>
 
+    # Session security
+    session_key "_<%= table_prefix %>_session"
+
     # ==> Hooks
 
     # Validate custom fields in the create account form.
