@@ -1,4 +1,4 @@
-# Deep Dive: Authorization
+# Advanced Concept: Authorization
 
 Plutonium provides a robust authorization system built on top of [Action Policy](https://actionpolicy.evilmartians.io/). It's designed to be secure by default while offering fine-grained control over every aspect of your application's access control.
 
@@ -31,6 +31,7 @@ end
 Plutonium policies are secure by default. If a permission is not explicitly granted, it's denied. This is achieved through a clear inheritance chain.
 
 ::: code-group
+
 ```ruby [Core Permissions]
 # These are the base permissions.
 # They both default to `false`. You MUST override them.
@@ -42,6 +43,7 @@ def read?
   false
 end
 ```
+
 ```ruby [Derived Permissions]
 # These permissions inherit from the core ones.
 # You can override them for more granular control.
@@ -61,6 +63,7 @@ def show?
   read?
 end
 ```
+
 :::
 
 ::: danger Always Define Core Permissions
@@ -76,6 +79,7 @@ Beyond actions, policies also control access to a resource's data at a granular 
 Attribute permissions control which fields a user can see or submit in a form. They follow a similar inheritance chain.
 
 ::: code-group
+
 ```ruby [Read Attributes]
 # Controls which fields are returned for `index` and `show` actions.
 def permitted_attributes_for_read
@@ -83,6 +87,7 @@ def permitted_attributes_for_read
   # but MUST be overridden for production.
 end
 ```
+
 ```ruby [Create/Update Attributes]
 # Controls which fields are allowed in `create` and `update` actions.
 def permitted_attributes_for_create
@@ -95,6 +100,7 @@ def permitted_attributes_for_update
   permitted_attributes_for_create
 end
 ```
+
 :::
 
 ::: warning Override in Production
@@ -118,6 +124,7 @@ end
 A policy's `relation_scope` is used to filter down a collection of records to only what the current user should see. This is applied automatically on `index` pages.
 
 ::: code-group
+
 ```ruby [Simple Scope]
 class PostPolicy < Plutonium::Resource::Policy
   relation_scope do |relation|
@@ -130,6 +137,7 @@ class PostPolicy < Plutonium::Resource::Policy
   end
 end
 ```
+
 ```ruby [Multi-Tenant Scope]
 class PostPolicy < Plutonium::Resource::Policy
   relation_scope do |relation|
@@ -146,14 +154,15 @@ class PostPolicy < Plutonium::Resource::Policy
   end
 end
 ```
+
 :::
 
 ## Authorization Context
 
 Policies have access to a `context` object. By default, Plutonium provides two:
 
--   **`user`**: The current authenticated user. This is **required**.
--   **`entity_scope`**: The current portal's multi-tenancy record (e.g., the current `Organization`). This is optional.
+- **`user`**: The current authenticated user. This is **required**.
+- **`entity_scope`**: The current portal's multi-tenancy record (e.g., the current `Organization`). This is optional.
 
 You can add your own custom context objects for more complex scenarios.
 
@@ -161,6 +170,7 @@ You can add your own custom context objects for more complex scenarios.
 Imagine you have a separate `Ability` system that you also want to check.
 
 **1. Define the context in the Policy:**
+
 ```ruby
 class PostPolicy < ResourcePolicy
   authorize :ability, allow_nil: true
@@ -173,6 +183,7 @@ end
 ```
 
 **2. Provide the context from the Controller:**
+
 ```ruby
 class PostsController < ResourceController
   # This tells the policy how to find the `ability` object.
@@ -186,4 +197,5 @@ class PostsController < ResourceController
   end
 end
 ```
+
 :::

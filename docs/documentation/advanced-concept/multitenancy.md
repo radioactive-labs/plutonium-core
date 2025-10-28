@@ -1,16 +1,17 @@
-# Deep Dive: Multitenancy
+# Advanced Concept: Multitenancy
 
 Plutonium is designed to make building sophisticated, multi-tenant applications straightforward. Multitenancy allows you to serve distinct groups of users (like different companies or teams) from a single application instance, ensuring each group's data is kept private and isolated.
 
 This is achieved through a powerful feature called **Entity Scoping**, which automates data isolation, URL generation, and authorization with minimal setup.
 
 ::: tip What You'll Learn
+
 - The core concept of Entity Scoping
 - A step-by-step guide to configuring multitenancy
 - The practical benefits of automatic data isolation and routing
 - Advanced patterns for complex multi-tenant scenarios
 - Best practices for security, testing, and performance
-:::
+  :::
 
 ## How Entity Scoping Works
 
@@ -19,6 +20,7 @@ Entity Scoping is the heart of Plutonium's multitenancy. Instead of manually fil
 Once configured, Plutonium handles the rest automatically.
 
 ::: code-group
+
 ```ruby [Without Plutonium Scoping]
 # Manual filtering is required everywhere
 class PostsController < ApplicationController
@@ -52,6 +54,7 @@ class PostsController < ResourceController
   end
 end
 ```
+
 :::
 
 ## Setting Up Your Multi-Tenant Portal
@@ -65,6 +68,7 @@ First, you tell your portal which entity to scope to and which strategy to use. 
 A **Scoping Strategy** tells Plutonium how to identify the current tenant for each request.
 
 ::: code-group
+
 ```ruby [Path Strategy (Most Common)]
 # packages/admin_portal/lib/engine.rb
 # Tenant is identified by a URL parameter, e.g., /organizations/:organization_id
@@ -84,6 +88,7 @@ scope_to_entity Client,
   strategy: :path,
   param_key: :client_slug # URL -> /clients/:client_slug
 ```
+
 :::
 
 You can also use any custom name for your strategy method (the method name becomes the strategy).
@@ -95,6 +100,7 @@ If you use any strategy other than `:path`, you must implement a controller meth
 This logic typically lives in your portal's base controller concern.
 
 ::: code-group
+
 ```ruby [Subdomain Strategy]
 # packages/customer_portal/app/controllers/customer_portal/concerns/controller.rb
 private
@@ -124,6 +130,7 @@ rescue ActiveRecord::RecordNotFound
   redirect_to workspace_selection_path, error: "Please select a workspace"
 end
 ```
+
 :::
 
 ### 3. Connect Your Models
@@ -131,6 +138,7 @@ end
 Plutonium needs to understand how your resources relate to the scoping entity. It automatically discovers these relationships in three ways:
 
 ::: code-group
+
 ```ruby [1. Direct Association (Preferred)]
 # The model belongs directly to the scoping entity.
 class Post < ApplicationRecord
@@ -159,6 +167,7 @@ class Invoice < ApplicationRecord
   end
 end
 ```
+
 :::
 
 ## The Benefits in Practice

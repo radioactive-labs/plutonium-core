@@ -4,6 +4,8 @@ Plutonium is a Rapid Application Development (RAD) toolkit that extends Rails wi
 
 It acts as a higher-level abstraction on top of Rails, providing ready-to-use solutions for common application needs while preserving Rails' elegance.
 
+Skip the long talk and [Get Started](/documentation/installation/01-installation)
+
 ## Core Architecture
 
 ### Rails-Native Design
@@ -97,6 +99,7 @@ end
 ### Business Applications
 
 ::: details Enterprise Resource Planning (ERP)
+
 ```ruby
 class InvoiceDefinition < ResourceDefinition
   # Rich field handling
@@ -114,9 +117,11 @@ class InvoiceDefinition < ResourceDefinition
   scope :approved
 end
 ```
+
 :::
 
 ::: details Multi-tenant SaaS
+
 ```ruby
 module CustomerPortal
   class Engine < Rails::Engine
@@ -126,11 +131,13 @@ module CustomerPortal
   end
 end
 ```
+
 :::
 
 ### Administrative Systems
 
 ::: details Back-office Applications
+
 ```ruby
 class OrderDefinition < ResourceDefinition
   # Advanced filtering
@@ -147,9 +154,11 @@ class OrderDefinition < ResourceDefinition
   end
 end
 ```
+
 :::
 
 ::: details Content Management
+
 ```ruby
 class ArticleDefinition < ResourceDefinition
   field :content, as: :markdown
@@ -165,23 +174,27 @@ class ArticleDefinition < ResourceDefinition
   scope :scheduled
 end
 ```
+
 :::
 
 ## Key Benefits
 
 ### Accelerated Development
+
 - Pre-built components for common functionality
 - Smart generators for boilerplate code
 - Convention-based resource handling
 - Integrated authentication and authorization
 
 ### Maintainable Architecture
+
 - Clear separation of concerns through packages
 - Consistent patterns across the application
 - Deep Rails integration
 - Progressive enhancement
 
 ### Enterprise Ready
+
 - Flexible and robust access control
 - Multi-tenancy support
 - Extensible component system
@@ -190,18 +203,20 @@ end
 ## Best For
 
 ::: tip IDEAL USE CASES
+
 - Complex business applications
 - Multi-tenant SaaS platforms
 - Administrative systems
 - Content management systems
 - Resource management systems
-:::
+  :::
 
 ::: warning MIGHT NOT BE THE BEST FIT
+
 - Simple blogs or brochure sites
 - Basic CRUD applications
 - Pure API-only services
-:::
+  :::
 
 ## Prerequisites
 
