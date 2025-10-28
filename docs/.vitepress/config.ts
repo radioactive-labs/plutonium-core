@@ -1,73 +1,56 @@
-import { defineConfig } from "vitepress"
+import { text } from "mermaid/dist/rendering-util/rendering-elements/shapes/text.js";
+import { defineConfig } from "vitepress";
 import { withMermaid } from "vitepress-plugin-mermaid";
 
-const base = "/plutonium-core/"
+const base = "/plutonium-core/";
 
 // https://vitepress.dev/reference/site-config
-export default defineConfig(withMermaid({
-  base: base,
-  title: "Plutonium",
-  description: "The Ultimate Rapid Application Development Toolkit (RADKit) for Rails",
-  head: [["link", { rel: "icon", href: `${base}favicon.ico` }]],
-  ignoreDeadLinks: 'localhostLinks',
-  themeConfig: {
-    // https://vitepress.dev/reference/default-theme-config
-    logo: "/plutonium.png",
-    search: {
-      provider: 'local'
-    },
-    nav: [
-      { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/introduction/01-what-is-plutonium" },
-      { text: "Tutorial", link: "/guide/tutorial/01-project-setup" },
-      { text: "Modules", link: "/modules/" },
-      { text: "Demo", link: "https://plutonium-app.onrender.com/" }
-    ],
-    sidebar: {
-      '/guide/': [
+export default defineConfig(
+  withMermaid({
+    base: base,
+    title: "Plutonium",
+    description:
+      "The Ultimate Rapid Application Development Toolkit (RADKit) for Rails",
+    head: [["link", { rel: "icon", href: `${base}favicon.ico` }]],
+    ignoreDeadLinks: "localhostLinks",
+    themeConfig: {
+      // https://vitepress.dev/reference/default-theme-config
+      logo: "/plutonium.png",
+      search: {
+        provider: "local",
+      },
+
+      nav: [
         {
-          text: "Getting Started",
+          text: "Fundamentals",
           items: [
-            { text: "Installation", link: "/guide/getting-started/01-installation" },
-          ]
+            {
+              text: "What is Plutonium?",
+              link: "/documentation/fundamental-idea/01-what-is-plutonium",
+            },
+            {
+              text: "Core Concepts",
+              link: "/documentation/fundamental-idea/02-core-concepts",
+            },
+          ],
         },
         {
-          text: "Introduction",
+          text: "Documentation",
           items: [
-            { text: "What is Plutonium?", link: "/guide/introduction/01-what-is-plutonium" },
-            { text: "Core Concepts", link: "/guide/introduction/02-core-concepts" },
-          ]
+            {
+              text: "Installation",
+              link: "/documentation/installation/01-installation",
+            },
+            {
+              text: "Tutorial (Building a Blog)",
+              link: "/documentation/tutorial/01-project-setup",
+            },
+            {
+              text: "Advanced Concepts",
+              link: "/documentation/advanced-concept/authorization",
+            },
+          ],
         },
-        {
-          text: "Tutorial (Building a Blog)",
-          collapsed: false,
-          items: [
-            { text: "1. Project Setup", link: "/guide/tutorial/01-project-setup" },
-            { text: "2. Creating a Feature Package", link: "/guide/tutorial/02-creating-a-feature-package" },
-            { text: "3. Defining Resources", link: "/guide/tutorial/03-defining-resources" },
-            { text: "4. Creating a Portal", link: "/guide/tutorial/04-creating-a-portal" },
-            { text: "5. Customizing the UI", link: "/guide/tutorial/05-customizing-the-ui" },
-            { text: "6. Adding Custom Actions", link: "/guide/tutorial/06-adding-custom-actions" },
-            { text: "7. Implementing Authorization", link: "/guide/tutorial/07-implementing-authorization" },
-          ]
-        },
-        {
-          text: "Deep Dive",
-          items: [
-            { text: "Resources", link: "/guide/deep-dive/resources" },
-            { text: "Authorization", link: "/guide/deep-dive/authorization" },
-            { text: "Multitenancy", link: "/guide/deep-dive/multitenancy" },
-            { text: "Modules", link: "/modules/" },
-          ]
-        },
-        {
-          text: "Developer Tools",
-          items: [
-            { text: "Claude Code Guide", link: "/guide/claude-code-guide" },
-          ]
-        }
-      ],
-      '/modules/': [
         {
           text: "Modules",
           items: [
@@ -89,17 +72,165 @@ export default defineConfig(withMermaid({
             { text: "Routing", link: "/modules/routing" },
             { text: "Table", link: "/modules/table" },
             { text: "UI", link: "/modules/ui" },
-          ]
-        }
-      ]
+          ],
+        },
+        {
+          text: "Help",
+          items: [
+            {
+              text: "Contribute",
+              link: "https://github.com/radioactive-labs/plutonium-core",
+            },
+            {
+              text: "Open an issue",
+              link: "https://github.com/radioactive-labs/plutonium-core/issues/",
+            },
+            {
+              text: "Claude Code Guide",
+              link: "/documentation/claude-code-guide",
+            },
+          ],
+        },
+        {
+          text: "Plutonium in 30 mins",
+          link: "https://youtu.be/HMjzj-vVLIU?si=plRAOK2y5xIXcrDX",
+        },
+      ],
+
+      sidebar: {
+        "/documentation/": [
+          {
+            text: "Fundamentals",
+            items: [
+              {
+                text: "What is Plutonium?",
+                link: "/documentation/fundamental-idea/01-what-is-plutonium",
+              },
+              {
+                text: "Core Concepts",
+                link: "/documentation/",
+              },
+            ],
+          },
+          {
+            text: "Documentation",
+            items: [
+              {
+                text: "Installation",
+                link: "/documentation/installation/01-installation",
+              },
+              {
+                text: "Tutorial (Building a Blog)",
+                collapsed: false,
+                items: [
+                  {
+                    text: "1. Project Setup",
+                    link: "/documentation/tutorial/01-project-setup",
+                  },
+                  {
+                    text: "2. Creating a Feature Package",
+                    link: "/documentation/tutorial/02-creating-a-feature-package",
+                  },
+                  {
+                    text: "3. Defining Resources",
+                    link: "/documentation/tutorial/03-defining-resources",
+                  },
+                  {
+                    text: "4. Creating a Portal",
+                    link: "/documentation/tutorial/04-creating-a-portal",
+                  },
+                  {
+                    text: "5. Customizing the UI",
+                    link: "/documentation/tutorial/05-customizing-the-ui",
+                  },
+                  {
+                    text: "6. Adding Custom Actions",
+                    link: "/documentation/tutorial/06-adding-custom-actions",
+                  },
+                  {
+                    text: "7. Implementing Authorization",
+                    link: "/documentation/tutorial/07-implementing-authorization",
+                  },
+                ],
+              },
+              {
+                text: "Advanced Concepts",
+                collapsed: false,
+                items: [
+                  {
+                    text: "Resources",
+                    link: "/documentation/advanced-concept/resources",
+                  },
+                  {
+                    text: "Authorization",
+                    link: "/documentation/advanced-concept/authorization",
+                  },
+                  {
+                    text: "Multitenancy",
+                    link: "/documentation/advanced-concept/multitenancy",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            text: "Modules",
+            collapsed: true,
+            items: [
+              { text: "Overview", link: "/modules/" },
+              { text: "Action", link: "/modules/action" },
+              { text: "Authentication", link: "/modules/authentication" },
+              { text: "Configuration", link: "/modules/configuration" },
+              { text: "Core", link: "/modules/core" },
+              { text: "Definition", link: "/modules/definition" },
+              { text: "Display", link: "/modules/display" },
+              { text: "Form", link: "/modules/form" },
+              { text: "Generator", link: "/modules/generator" },
+              { text: "Interaction", link: "/modules/interaction" },
+              { text: "Package", link: "/modules/package" },
+              { text: "Policy", link: "/modules/policy" },
+              { text: "Portal", link: "/modules/portal" },
+              { text: "Query", link: "/modules/query" },
+              { text: "Resource Record", link: "/modules/resource_record" },
+              { text: "Routing", link: "/modules/routing" },
+              { text: "Table", link: "/modules/table" },
+              { text: "UI", link: "/modules/ui" },
+            ],
+          },
+          {
+            text: "Help",
+            items: [
+              {
+                text: "Contribute",
+                link: "https://github.com/radioactive-labs/plutonium-core",
+              },
+              {
+                text: "Open an issue",
+                link: "https://github.com/radioactive-labs/plutonium-core/issues/",
+              },
+              {
+                text: "Claude Code Guide",
+                link: "/documentation/claude-code-guide",
+              },
+            ],
+          },
+          {
+            text: "Plutonium in 30 mins",
+            link: "https://youtu.be/HMjzj-vVLIU?si=plRAOK2y5xIXcrDX",
+          },
+        ],
+      },
+      socialLinks: [
+        {
+          icon: "github",
+          link: "https://github.com/radioactive-labs/plutonium-core",
+        },
+      ],
+      footer: {
+        message: "Released under the MIT License.",
+        copyright: `Copyright © ${new Date().getFullYear()} - Radioactive Labs`,
+      },
     },
-    socialLinks: [
-      { icon: "github", link: "https://github.com/radioactive-labs/plutonium-core" }
-    ],
-    footer: {
-      message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present Stefan Froelich'
-    }
-  },
-  cleanUrls: true,
-}))
+    cleanUrls: true,
+  })
+);
