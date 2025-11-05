@@ -74,6 +74,8 @@ namespace :release do
 
   desc "Publish the gem to RubyGems"
   task :publish do
+    # Reload version constant in case it was updated
+    load "lib/plutonium/version.rb"
     version = Plutonium::VERSION
 
     # Build the gem
