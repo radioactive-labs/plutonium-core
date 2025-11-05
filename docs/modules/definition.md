@@ -143,16 +143,34 @@ end
 ### 2. **Add Custom Options**
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
-  # Add placeholder text
-  input :title, placeholder: "Enter an engaging title"
+  # Field-level options for inputs (affect the field wrapper)
+  input :title,
+    label: "Article Title",
+    hint: "Enter a descriptive title",
+    placeholder: "e.g. My First Post"
 
-  # Add custom CSS classes
+  # Field-level options for displays (affect the field wrapper)
+  display :content,
+    label: "Article Content",
+    description: "Published article content",
+    placeholder: "No content available"
+
+  # Tag-level options (passed to the HTML element)
+  input :slug, class: "font-mono"
   display :title, class: "text-2xl font-bold"
 
-  # Add wrapper styling
+  # Wrapper styling
   display :content, wrapper: {class: "prose max-w-none"}
 end
 ```
+
+::: tip Field-level vs Tag-level Options
+Plutonium distinguishes between two types of options:
+- **Field-level options** (`label`, `hint`, `description`, `placeholder`) - Processed by the field wrapper, affect labels and help text
+- **Tag-level options** (`class`, `data`, `required`, etc.) - Passed directly to the HTML element
+
+The framework automatically routes each option to the correct destination.
+:::
 
 ### 3. **Configure Select Options**
 ```ruby
@@ -794,6 +812,308 @@ end
 
 The Definition module provides a clean, declarative way to configure resource behavior while maintaining clear separation between configuration (definitions), authorization (policies), and business logic (interactions).
 
+## Structuring Your Definition File
+
+A well-structured definition file is easy to read, maintain, and understand. Here's the recommended organization:
+
+### 1. Logical Grouping
+
+Group related declarations together for better readability:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # === Field Type Overrides ===
+  # Group all basic field type changes together
+  field :content, as: :rich_text
+  field :author_id, as: :hidden
+  field :metadata, as: :json
+
+  # === Input Customizations ===
+  # Group form-specific configurations
+  input :title,
+    label: "Post Title",
+    hint: "Enter a descriptive title",
+    placeholder: "e.g. Getting Started with Plutonium"
+
+  input :slug,
+    label: "URL Slug",
+    hint: "Leave blank to auto-generate from title",
+    class: "font-mono"
+
+  input :category, as: :select, choices: %w[Tech Business Lifestyle]
+
+  # === Display Customizations ===
+  # Group show page configurations
+  display :content, as: :markdown
+  display :view_count, label: "Views", class: "font-bold"
+  display :metadata, wrapper: {class: "col-span-full"}
+
+  # === Column Customizations ===
+  # Group table-specific configurations
+  column :title, label: "Article Title"
+  column :view_count, align: :end, label: "Views"
+  column :published_at, align: :end
+
+  # === Search & Filtering ===
+  # Group query-related configurations
+  search do |scope, query|
+    scope.where("title ILIKE ? OR content ILIKE ?", "%#{query}%", "%#{query}%")
+  end
+
+  filter :status, as: :select, choices: %w[draft published archived]
+  filter :category, as: :select, choices: %w[Tech Business Lifestyle]
+
+  # === Scopes ===
+  scope :published
+  scope :draft
+  scope :archived
+
+  # === Sorting ===
+  sort :title
+  sort :created_at
+  sort :view_count
+
+  # === Actions ===
+  action :publish, interaction: Posts::Publish
+  action :archive, interaction: Posts::Archive
+end
+```
+
+### 2. Use Comments to Delineate Sections
+
+Add section headers with comments to make the file scannable:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # ========================================
+  # Field Configuration
+  # ========================================
+
+  field :content, as: :rich_text
+
+  # ========================================
+  # Form Inputs
+  # ========================================
+
+  input :title, hint: "Enter a descriptive title"
+
+  # ========================================
+  # Display Fields
+  # ========================================
+
+  display :content, as: :markdown
+
+  # ========================================
+  # Table Columns
+  # ========================================
+
+  column :view_count, align: :end
+
+  # ========================================
+  # Search, Filters & Scopes
+  # ========================================
+
+  search { |scope, query| scope.where("title ILIKE ?", "%#{query}%") }
+  filter :status, as: :select, choices: %w[draft published]
+
+  # ========================================
+  # Actions
+  # ========================================
+
+  action :publish, interaction: Posts::Publish
+end
+```
+
+### 3. Order Within Each Section
+
+Within each section, order declarations logically:
+
+**For fields/inputs/displays:**
+1. Basic field type overrides first
+2. Fields with simple options next
+3. Fields with complex options or blocks last
+
+**For filters and scopes:**
+1. Most commonly used first
+2. Grouped by related functionality
+
+**For actions:**
+1. Primary actions first (create, publish)
+2. Secondary actions next (archive, duplicate)
+3. Destructive actions last (delete)
+
+### 4. Use `field` vs `input` vs `display` Appropriately
+
+Understanding when to use each declaration:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Use `field` when the configuration applies to ALL contexts
+  # (form inputs, show page displays, and table columns)
+  field :content, as: :rich_text  # Changes type everywhere
+
+  # Use `input` for form-specific options
+  input :title, hint: "Shown only in forms", placeholder: "Form placeholder"
+
+  # Use `display` for show-page-specific options
+  display :content,
+    description: "Shown only on show pages",
+    wrapper: {class: "col-span-full"}
+
+  # Use `column` for table-specific options
+  column :title, label: "Custom header", align: :center
+end
+```
+
+### 5. Avoid Redundant Declarations
+
+Remember that **all model attributes are auto-detected**. Only declare overrides:
+
+::: code-group
+```ruby [✅ Good - Only Overrides]
+class PostDefinition < Plutonium::Resource::Definition
+  # Only override what needs customization
+  field :content, as: :rich_text
+  input :title, hint: "Enter a descriptive title"
+  display :metadata, wrapper: {class: "col-span-full"}
+end
+```
+
+```ruby [❌ Bad - Redundant]
+class PostDefinition < Plutonium::Resource::Definition
+  # Unnecessary - these are auto-detected correctly
+  field :title, as: :string
+  field :content, as: :text
+  field :published_at, as: :datetime
+  field :author, as: :association
+
+  # Only these override defaults
+  field :content, as: :rich_text  # This actually works, overrides the earlier :text
+  input :title, hint: "Enter a descriptive title"
+end
+```
+:::
+
+### 6. Complex Customizations at the End
+
+Place complex blocks and custom components at the end of their sections:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Simple overrides first
+  input :title, hint: "Enter title"
+  input :category, as: :select, choices: %w[Tech Business]
+
+  # Complex blocks last
+  input :related_posts do |f|
+    choices = if object.persisted?
+      Post.where.not(id: object.id).published.pluck(:title, :id)
+    else
+      []
+    end
+    f.select_tag choices: choices
+  end
+
+  display :status do |f|
+    StatusBadgeComponent.new(
+      status: f.value,
+      class: "inline-flex items-center"
+    )
+  end
+end
+```
+
+### 7. Example: Well-Structured Definition
+
+Here's a complete example following all best practices:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # ========================================
+  # Field Type Overrides
+  # ========================================
+
+  field :content, as: :rich_text
+  field :author_id, as: :hidden
+
+  # ========================================
+  # Form Inputs
+  # ========================================
+
+  # Basic fields with simple options
+  input :title,
+    label: "Post Title",
+    hint: "Enter a descriptive title",
+    placeholder: "e.g. Getting Started"
+
+  input :slug,
+    hint: "Leave blank to auto-generate",
+    class: "font-mono"
+
+  # Select inputs
+  input :category, as: :select, choices: %w[Tech Business Lifestyle]
+  input :author, as: :association
+
+  # Conditional inputs
+  input :published_at,
+    condition: -> { object.published? },
+    hint: "When this post was published"
+
+  # ========================================
+  # Display Fields
+  # ========================================
+
+  display :content, as: :markdown
+  display :view_count, label: "Total Views", class: "font-bold text-lg"
+  display :metadata, wrapper: {class: "col-span-full"}
+
+  # ========================================
+  # Table Columns
+  # ========================================
+
+  column :title, label: "Article Title"
+  column :category, align: :center
+  column :view_count, align: :end, label: "Views"
+  column :published_at, align: :end
+
+  # ========================================
+  # Search & Filtering
+  # ========================================
+
+  search do |scope, query|
+    scope.where("title ILIKE ? OR content ILIKE ?", "%#{query}%", "%#{query}%")
+  end
+
+  filter :status, as: :select, choices: %w[draft published archived]
+  filter :category, as: :select, choices: %w[Tech Business Lifestyle]
+  filter :published_after, as: :date
+
+  # ========================================
+  # Scopes
+  # ========================================
+
+  scope :published
+  scope :draft
+  scope :scheduled
+
+  # ========================================
+  # Sorting
+  # ========================================
+
+  sort :title
+  sort :published_at
+  sort :view_count
+
+  # ========================================
+  # Actions
+  # ========================================
+
+  action :publish, interaction: Posts::Publish
+  action :schedule, interaction: Posts::Schedule
+  action :archive, interaction: Posts::Archive
+end
+```
+
 ## Related Modules
 
 - **[Resource Record](./resource_record.md)** - Resource controllers and CRUD operations
@@ -836,22 +1156,69 @@ field :name, as: :string, class: "custom-class", wrapper: {class: "field-wrapper
 ```ruby
 input :title,
   as: :string,
-  placeholder: "Enter title",
+  # Field-level options (passed to the field wrapper):
+  label: "Article Title",          # Custom field label
+  hint: "Enter a descriptive title", # Help text shown below input
+  placeholder: "e.g. My First Post", # Input placeholder text
+  # Tag-level options (passed to the input tag):
   required: true,
   class: "custom-input",
-  wrapper: {class: "input-wrapper"},
   data: {controller: "custom"},
-  condition: -> { current_user.admin? }
+  # Wrapper options:
+  wrapper: {class: "input-wrapper"},
+  # Conditional rendering:
+  condition: -> { current_user.admin? },
+  # Pre-submit for dynamic forms:
+  pre_submit: false
 ```
+
+::: tip Field-level vs Tag-level Options
+- **Field-level options** (`label`, `hint`, `placeholder`) are processed by the field wrapper and affect the field's label and help text display
+- **Tag-level options** (like `class`, `data`, `required`) are passed directly to the HTML input element
+- The system automatically routes options to the correct destination
+:::
 
 ### Display Options
 ```ruby
 display :content,
   as: :markdown,
+  # Field-level options (passed to the field wrapper):
+  label: "Article Content",        # Custom field label
+  description: "Published content", # Description text shown below value
+  placeholder: "No content yet",    # Shown when value is empty
+  # Tag-level options (passed to the display tag):
   class: "prose",
+  # Wrapper options:
   wrapper: {class: "content-wrapper"},
+  # Conditional rendering:
   condition: -> { current_user.can_see_content? }
 ```
+
+::: tip Display Uses Description, Forms Use Hint
+- **Display fields** use `:description` for explanatory text below the value
+- **Form fields** use `:hint` for help text below the input
+- Both support `:label` and `:placeholder` options
+:::
+
+### Column Options
+```ruby
+column :title,
+  as: :string,
+  # Column-level options:
+  label: "Article Title",    # Custom column header
+  align: :start,             # Alignment: :start, :center, :end
+  # Tag-level options (passed to the cell renderer):
+  class: "font-bold",
+  # Conditional rendering:
+  condition: -> { current_user.admin? }
+```
+
+::: tip Table Columns
+Table columns support a minimal set of field-level options since they render in a compact table format:
+- `:label` - Column header text
+- `:align` - Column alignment
+- Options like `:description` and `:placeholder` are filtered out as they don't make sense in table cells
+:::
 
 ### Choices Options (for selects)
 ```ruby
