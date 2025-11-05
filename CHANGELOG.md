@@ -4,6 +4,10 @@
 
 - Add field-level options support for input/display/column definitions
 
+### 🐛 Bug Fixes
+
+- Reload version constant in release:publish task
+
 ### 📚 Documentation
 
 - Setup contribution guidelines using Conventional Commits
