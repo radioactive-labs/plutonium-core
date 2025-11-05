@@ -65,8 +65,12 @@ module Plutonium
               next if conditionally_hidden
 
               tag = column_options[:as] || display_definition[:as] || field_options[:as]
-              display_tag_attributes = display_options.except(:wrapper, :as, :condition)
-              column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition)
+
+              # Extract field-level options from display_options and column_options
+              # These are Phlexi field options that should NOT be passed to the tag builder
+              field_level_keys = [:label, :description, :placeholder]
+              display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
+              column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
               tag_attributes = display_tag_attributes.merge(column_tag_attributes)
               tag_block = column_definition[:block] || ->(wrapped_object, key) {
                 f = wrapped_object.field(key)
@@ -74,7 +78,9 @@ module Plutonium
                 f.send(:"#{tag}_tag", **tag_attributes)
               }
 
-              field_options = field_options.except(:condition).merge(**column_options.slice(:align))
+              # For table columns, only extract column-level options (label and align)
+              # Field-level options like description and placeholder don't make sense in table cells
+              field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
               table.column name,
                 **field_options,
                 sort_params: current_query_object.sort_params_for(name),

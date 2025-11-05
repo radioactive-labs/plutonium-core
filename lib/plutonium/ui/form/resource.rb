@@ -88,7 +88,15 @@ module Plutonium
           input_options = input_definition[:options] || {}
 
           tag = input_options[:as] || field_options[:as]
-          tag_attributes = input_options.except(:wrapper, :as, :pre_submit, :condition)
+
+          # Extract field-level options from input_options and merge into field_options
+          # These are Phlexi field options that should be passed to form.field(), not to the tag builder
+          # Note: forms use :hint, displays use :description
+          field_level_keys = [:hint, :label, :placeholder]
+          field_level_options = input_options.slice(*field_level_keys)
+          field_options = field_options.merge(field_level_options)
+
+          tag_attributes = input_options.except(:wrapper, :as, :pre_submit, :condition, *field_level_keys)
           if input_options[:pre_submit]
             tag_attributes["data-action"] = "change->form#preSubmit"
           end

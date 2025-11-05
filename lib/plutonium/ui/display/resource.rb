@@ -89,7 +89,14 @@ module Plutonium
             return if conditionally_hidden
 
             tag = display_options[:as] || field_options[:as]
-            tag_attributes = display_options.except(:wrapper, :as, :condition)
+
+            # Extract field-level options from display_options and merge into field_options
+            # These are Phlexi field options that should be passed to field(), not to the tag builder
+            field_level_keys = [:label, :description, :placeholder]
+            field_level_options = display_options.slice(*field_level_keys)
+            field_options = field_options.merge(field_level_options)
+
+            tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
             tag_block = display_definition[:block] || ->(f) {
               tag ||= f.inferred_field_component
               if tag.is_a?(Class)
