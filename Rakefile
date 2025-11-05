@@ -2,6 +2,9 @@ require "bundler/gem_tasks"
 require "rake/testtask"
 require "standard/rake"
 
+# Load custom rake tasks
+Dir.glob("lib/tasks/**/*.rake").each { |r| load r }
+
 task default: %i[test standard]
 
 task :assets do
