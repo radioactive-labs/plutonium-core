@@ -1,12 +1,13 @@
-# Working with Resources
+# Advanced Concept: Working with Resources
 
 ::: tip What you'll learn
+
 - How to create and manage resources in Plutonium
 - Understanding resource definitions and configurations
 - Working with fields, associations, and nested resources
 - Implementing resource policies and scoping
 - Best practices for resource organization
-:::
+  :::
 
 ## Introduction
 
@@ -24,6 +25,7 @@ rails generate pu:res:scaffold Blog user:belongs_to \
 This generates several files, including:
 
 ::: code-group
+
 ```ruby [app/models/blog.rb]
 class Blog < ResourceRecord
   belongs_to :user
@@ -54,11 +56,13 @@ end
 class BlogDefinition < Plutonium::Resource::Definition
 end
 ```
+
 :::
 
 ## Resource Definitions
 
 Resource definitions customize how a resource behaves in your application. They define:
+
 - Fields and their types
 - Available actions
 - Search and filtering capabilities
@@ -68,6 +72,7 @@ Resource definitions customize how a resource behaves in your application. They 
 ### Basic Field Configuration
 
 ::: code-group
+
 ```ruby [Simple Fields]
 class BlogDefinition < Plutonium::Resource::Definition
   # Basic field definitions
@@ -92,6 +97,7 @@ class BlogDefinition < Plutonium::Resource::Definition
   column :published_at, align: :end
 end
 ```
+
 :::
 
 <!--
@@ -190,7 +196,7 @@ class BlogDefinition < Plutonium::Resource::Definition
   # Configure sorting
   sort :title
   sort :published_at
-  
+
   # Configure default sorting (newest first)
   default_sort :published_at, :desc
 end
@@ -238,19 +244,21 @@ end
 ## Best Practices
 
 ::: tip Resource Organization
+
 1. Keep resource definitions focused and cohesive
 2. Use packages to organize related resources
 3. Leverage policy scopes for authorization
 4. Extract complex logic into interactions
 5. Use presenters for view-specific logic
-:::
+   :::
 
 ::: warning Common Pitfalls
+
 - Avoid putting business logic in definitions
 - Don't bypass policy checks
 - Remember to scope resources appropriately
 - Test your interactions and policies
-:::
+  :::
 
 # Deep Dive: Building a Resource
 
@@ -267,6 +275,7 @@ rails generate pu:res:scaffold Post user:belongs_to title:string content:text pu
 ```
 
 This command generates:
+
 - A `Post` model with the specified attributes and a `belongs_to :user` association.
 - A `PostsController`.
 - A `PostPolicy` with basic permissions.
@@ -277,6 +286,7 @@ This command generates:
 The **Definition** file (`app/definitions/post_definition.rb`) is where you declaratively configure how your resource is displayed and edited. Let's start by defining the fields for our table, detail page, and form.
 
 ::: code-group
+
 ```ruby [app/definitions/post_definition.rb]
 class PostDefinition < Plutonium::Resource::Definition
   # Configure the table (index view)
@@ -293,6 +303,7 @@ class PostDefinition < Plutonium::Resource::Definition
   input :content, as: :rich_text
 end
 ```
+
 ```ruby [app/policies/post_policy.rb]
 # In the policy, we must permit these attributes to be read and written.
 class PostPolicy < Plutonium::Resource::Policy
@@ -311,6 +322,7 @@ class PostPolicy < Plutonium::Resource::Policy
   end
 end
 ```
+
 :::
 
 Here, we've used the `display` helper to control the `index` and `show` views, and the `input` helper for the forms. We've also specified `:rich_text` to get a WYSIWYG editor for our content. Notice that we also had to permit these attributes in the policy.
@@ -320,6 +332,7 @@ Here, we've used the `display` helper to control the `index` and `show` views, a
 Standard CRUD is great, but most applications have custom business logic. Let's add a "Publish" action. This involves creating an **Interaction** for the logic and registering it in the definition.
 
 ::: code-group
+
 ```ruby [app/interactions/post_interactions/publish.rb]
 module PostInteractions
   class Publish < Plutonium::Resource::Interaction
@@ -334,6 +347,7 @@ module PostInteractions
   end
 end
 ```
+
 ```ruby [app/definitions/post_definition.rb]
 class PostDefinition < Plutonium::Resource::Definition
   # ... (display and input helpers)
@@ -343,6 +357,7 @@ class PostDefinition < Plutonium::Resource::Definition
     category: :primary
 end
 ```
+
 ```ruby [app/policies/post_policy.rb]
 class PostPolicy < Plutonium::Resource::Policy
   # ... (attribute permissions)
@@ -354,6 +369,7 @@ class PostPolicy < Plutonium::Resource::Policy
   end
 end
 ```
+
 :::
 
 We now have a "Publish" button on our `Post` detail page that only appears when appropriate, thanks to the combination of the Interaction, Definition, and Policy.

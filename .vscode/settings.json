@@ -8,10 +8,7 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
-  "editor.rulers": [
-    80,
-    120
-  ],
+  "editor.rulers": [80, 120],
   "solargraph.formatting": true,
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
@@ -23,13 +20,13 @@
   },
   "[erb]": {
     "editor.defaultFormatter": "aliariff.vscode-erb-beautify",
-    "editor.formatOnSave": false
+    "editor.formatOnSave": true
   },
   "files.associations": {
     "*.html.erb": "erb",
-    "Gemfile": "ruby",
+    "Gemfile": "ruby"
   },
   "rubyLsp.enabledFeatures": {
-    "diagnostics": false, // uses rubocop. our projects uses standard
+    "diagnostics": false // uses rubocop. our projects uses standard
   }
 }
