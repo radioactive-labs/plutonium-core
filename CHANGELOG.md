@@ -1,3 +1,12 @@
+## [0.28.0] - 2025-11-12
+
+### 🚀 Features
+
+- Add sgid support and improve association serialization in API
+
+### 🐛 Bug Fixes
+
+- Make controller_for inheritable and respect custom inflections
 ## [0.27.0] - 2025-11-05
 
 ### 🚀 Features
