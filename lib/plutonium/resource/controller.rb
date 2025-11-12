@@ -20,6 +20,9 @@ module Plutonium
         after_action { pagy_headers_merge(@pagy) if @pagy }
 
         helper_method :current_parent, :resource_record!, :resource_record?, :resource_param_key, :resource_class
+
+        # Use class_attribute for proper inheritance
+        class_attribute :_resource_class, instance_accessor: false
       end
 
       class_methods do
@@ -28,15 +31,16 @@ module Plutonium
         # Sets the resource class for the controller
         # @param [ActiveRecord::Base] resource_class The resource class
         def controller_for(resource_class)
-          @resource_class = resource_class
+          self._resource_class = resource_class
         end
 
         # Gets the resource class for the controller
         # @return [ActiveRecord::Base] The resource class
         def resource_class
-          return @resource_class if @resource_class
+          return _resource_class if _resource_class
 
-          name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").classify.constantize
+          # Use singularize + camelize to respect custom inflections
+          name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").singularize.camelize.constantize
         rescue NameError
           raise NameError, "Failed to determine the resource class. Please call `controller_for(MyResource)` in #{name}."
         end
