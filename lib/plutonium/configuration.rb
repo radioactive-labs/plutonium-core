@@ -91,6 +91,9 @@ module Plutonium
       # @return [String] path to logo file
       attr_accessor :logo
 
+      # @return [String] path to logo file for dark mode
+      attr_accessor :logo_dark
+
       # @return [String] path to favicon file
       attr_accessor :favicon
 
@@ -125,6 +128,8 @@ module Plutonium
     # @return [void]
     def configure
       yield(configuration)
+
+      configuration.assets.logo_dark ||= configuration.assets.logo
     end
   end
 end
