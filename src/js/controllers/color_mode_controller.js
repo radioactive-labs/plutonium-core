@@ -6,8 +6,23 @@ export default class extends Controller {
 
   connect() {
     // Set initial mode from localStorage or default
-    const mode = localStorage.theme || "light";
+    const mode = localStorage.getItem('theme') || "light";
     this.setMode(mode);
+
+    // Listen for cross-tab theme changes
+    this.handleStorageChange = (e) => {
+      console.log('Storage event received in color-mode controller:', e.key, e.newValue, e.oldValue)
+      if (e.key === 'theme' && e.newValue) {
+        console.log('Updating color-mode theme to:', e.newValue)
+        this.setMode(e.newValue);
+      }
+    };
+    window.addEventListener('storage', this.handleStorageChange);
+  }
+
+  disconnect() {
+    // Clean up event listener
+    window.removeEventListener('storage', this.handleStorageChange);
   }
 
   toggleMode() {
@@ -20,10 +35,8 @@ export default class extends Controller {
     // Update html class
     if (mode === "dark") {
       document.documentElement.classList.add("dark");
-      localStorage.theme = "dark";
     } else {
       document.documentElement.classList.remove("dark");
-      localStorage.theme = "light";
     }
 
     // Update button state
@@ -31,6 +44,9 @@ export default class extends Controller {
 
     // Show/hide icons
     this.toggleIcons(mode);
+
+    // Store in localStorage to trigger storage events in other tabs
+    localStorage.setItem('theme', mode);
   }
 
   toggleIcons(mode) {
