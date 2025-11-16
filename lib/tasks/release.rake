@@ -46,9 +46,18 @@ namespace :release do
     # Update version.rb
     version_file = "lib/plutonium/version.rb"
     content = File.read(version_file)
-    updated_content = content.gsub(/VERSION = "[\d.]+"/, %{VERSION = "#{version}"})
+    updated_content = content.gsub(/VERSION = "[\d.]+"/, %(VERSION = "#{version}"))
     File.write(version_file, updated_content)
     puts "✓ Updated #{version_file}"
+
+    # Update package.json version
+    package_json_file = "package.json"
+    if File.exist?(package_json_file)
+      package_content = File.read(package_json_file)
+      updated_package = package_content.gsub(/"version":\s*"[\d.]+"/, %{"version": "#{version}"})
+      File.write(package_json_file, updated_package)
+      puts "✓ Updated #{package_json_file}"
+    end
 
     # Generate changelog using git-cliff
     if system("which git-cliff > /dev/null 2>&1")
@@ -68,12 +77,19 @@ namespace :release do
     puts "3. Create and push the tag:"
     puts "   git tag v#{version}"
     puts "   git push origin main --tags"
-    puts "4. Build and release the gem:"
+    puts "4. Build and release:"
     puts "   rake release:publish"
   end
 
+  desc "Build front-end assets"
+  task :build_frontend do
+    puts "Building front-end assets..."
+    system("npm run build") || abort("Front-end build failed")
+    puts "✓ Built front-end assets"
+  end
+
   desc "Publish the gem to RubyGems"
-  task :publish do
+  task :publish_gem do
     # Reload version constant in case it was updated
     load "lib/plutonium/version.rb"
     version = Plutonium::VERSION
@@ -92,6 +108,30 @@ namespace :release do
     # Clean up
     File.delete(gem_file) if File.exist?(gem_file)
   end
+
+  desc "Publish the npm package"
+  task :publish_npm do
+    puts "Publishing npm package..."
+
+    # Check if user is logged in to npm
+    unless system("npm whoami > /dev/null 2>&1")
+      puts "⚠ You are not logged in to npm. Please run: npm login"
+      abort("npm authentication required")
+    end
+
+    # Publish to npm
+    system("npm publish --access public") || abort("npm publish failed")
+
+    # Get version from package.json
+    require "json"
+    package_json = JSON.parse(File.read("package.json"))
+    version = package_json["version"]
+
+    puts "✓ Published @radioactive-labs/plutonium #{version} to npm"
+  end
+
+  desc "Publish both gem and npm package"
+  task publish: [:build_frontend, :publish_gem, :publish_npm]
 
   desc "Full release workflow"
   task :full, [:version] do |_t, args|
@@ -133,8 +173,8 @@ namespace :release do
     # Push commit (without tags yet)
     system("git push origin #{current_branch}")
 
-    # Publish gem (do this BEFORE tagging)
-    puts "\nPublishing gem to RubyGems..."
+    # Build and publish (do this BEFORE tagging)
+    puts "\nBuilding and publishing gem and npm package..."
     Rake::Task["release:publish"].invoke
 
     # Only tag and push tag if publish succeeded
