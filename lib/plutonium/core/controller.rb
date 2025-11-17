@@ -100,6 +100,11 @@ module Plutonium
           url_args[scoped_entity_param_key] = current_scoped_entity
         end
 
+        # Preserve the request format unless explicitly specified
+        if !url_args.key?(:format) && request.present? && request.format.present? && request.format.symbol != :html
+          url_args[:format] = request.format.symbol
+        end
+
         url_args
       end
 
