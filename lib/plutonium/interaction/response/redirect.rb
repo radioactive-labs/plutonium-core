@@ -17,6 +17,14 @@ module Plutonium
           redirect_options = @options
 
           controller.instance_eval do
+            # Preserve the request format unless explicitly specified
+            url_options = redirect_args.last.is_a?(Hash) ? redirect_args.last : {}
+            if !url_options.key?(:format) && request.format.symbol != :html
+              url_options = url_options.merge(format: request.format.symbol)
+              redirect_args = [*redirect_args[0...-1], url_options] if redirect_args.last.is_a?(Hash)
+              redirect_args = [*redirect_args, url_options] unless redirect_args.last.is_a?(Hash)
+            end
+
             url = url_for(*redirect_args)
 
             respond_to do |format|
