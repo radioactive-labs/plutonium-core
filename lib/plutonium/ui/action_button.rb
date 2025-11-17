@@ -70,23 +70,29 @@ module Plutonium
           base_classes,
           color_classes,
           size_classes,
-          -> { @action.icon && @variant != :table } => "space-x-1"
+          -> { @action.icon && @variant != :table } => "space-x-xs"
         )
       end
 
       def base_classes
         if @variant == :table
-          "inline-flex items-center justify-center py-1 px-2 rounded-lg focus:outline-none focus:ring-2"
+          tokens(
+            theme_class(:button, variant: :table),
+            "inline-flex items-center justify-center py-xs px-sm rounded-sm focus:outline-none focus:ring-2"
+          )
         else
-          "flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-4"
+          tokens(
+            theme_class(:button),
+            "flex items-center justify-center px-md py-sm text-sm font-medium rounded-sm focus:outline-none focus:ring-4"
+          )
         end
       end
 
       def icon_classes
         if @variant == :table
-          "h-4 w-4 mr-1"
+          "h-4 w-4 mr-xs"
         else
-          "h-3.5 w-3.5 -ml-1"
+          "h-3.5 w-3.5 -ml-xs"
         end
       end
 

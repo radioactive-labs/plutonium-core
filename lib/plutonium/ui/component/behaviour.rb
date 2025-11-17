@@ -10,6 +10,14 @@ module Plutonium
         include Kit
         include Tokens
 
+        # Generate custom CSS class for theming
+        # @example
+        #   theme_class(:button) # => "pu-button"
+        #   theme_class(:button, variant: :table) # => "pu-button-table"
+        def theme_class(component, variant: nil, element: nil)
+          Theme.custom_class(component, variant:, element:)
+        end
+
         if Rails.env.development?
           def around_template(&)
             comment { "open:#{self.class.name}" }

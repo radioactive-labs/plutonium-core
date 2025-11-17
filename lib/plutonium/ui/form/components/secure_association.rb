@@ -8,7 +8,7 @@ module Plutonium
           include Plutonium::UI::Component::Methods
 
           def view_template
-            div(class: "flex space-x-1") do
+            div(class: "flex space-x-xs") do
               super
               render_add_button
             end
@@ -24,7 +24,7 @@ module Plutonium
             a(
               href: add_url,
               class:
-                "bg-gray-100 dark:bg-gray-600 dark:hover:bg-gray-700 dark:border-gray-500 hover:bg-gray-200 border border-gray-300 rounded-lg p-3 focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none dark:text-white"
+                "bg-gray-100 dark:bg-gray-600 dark:hover:bg-gray-700 dark:border-gray-500 hover:bg-gray-200 border border-gray-300 rounded-sm p-sm focus:ring-gray-100 dark:focus:ring-gray-700 focus:ring-2 focus:outline-none dark:text-white"
             ) do
               render Phlex::TablerIcons::Plus.new(class: "w-3 h-3")
             end

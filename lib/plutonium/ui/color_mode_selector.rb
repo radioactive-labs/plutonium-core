@@ -8,8 +8,8 @@ module Plutonium
     class ColorModeSelector < Plutonium::UI::Component::Base
       # Common CSS classes used across the component
       COMMON_CLASSES = {
-        button: "inline-flex justify-center items-center p-2 text-gray-500 rounded cursor-pointer dark:hover:text-white dark:text-gray-200 hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200",
-        icon: "w-5 h-5"
+        button: "pu-color-mode-button inline-flex justify-center items-center p-2 text-gray-500 rounded cursor-pointer dark:hover:text-white dark:text-gray-200 hover:text-gray-900 hover:bg-interactive dark:hover:bg-interactive-dark transition-colors duration-200",
+        icon: "pu-color-mode-icon w-5 h-5"
       }.freeze
 
       # Available color modes with their associated icons and actions

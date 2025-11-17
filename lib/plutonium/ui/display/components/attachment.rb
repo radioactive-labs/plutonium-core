@@ -34,12 +34,12 @@ module Plutonium
             return unless attachment.url.present?
 
             div(
-              class: "w-full aspect-square bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
+              class: "w-full aspect-square bg-white border border-gray-200 rounded-sm shadow hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
               data: {attachment_preview_target: "thumbnail"}
             ) do
               a(
                 href: attachment.url,
-                class: "block aspect-square overflow-hidden rounded-lg",
+                class: "block aspect-square overflow-hidden rounded-sm",
                 target: :blank,
                 data: {attachment_preview_target: "thumbnailLink"}
               ) do
