@@ -9,7 +9,7 @@
   --iti-hover-color: theme(colors.primary.50);
   --iti-border-color: theme(colors.gray.300);
   --iti-dialcode-color: theme(colors.gray.500);
-  --iti-dropdown-bg: theme(colors.white);
+  --iti-dropdown-bg: theme(colors.surface.DEFAULT);
   --iti-arrow-color: theme(colors.gray.700);
 }
 
@@ -19,7 +19,7 @@
     --iti-hover-color: theme(colors.primary.900 / 0.3);
     --iti-border-color: theme(colors.gray.600);
     --iti-dialcode-color: theme(colors.gray.400);
-    --iti-dropdown-bg: theme(colors.gray.700);
+    --iti-dropdown-bg: theme(colors.surface.dark);
     --iti-arrow-color: theme(colors.white);
   }
 }
@@ -29,7 +29,7 @@
   --iti-hover-color: theme(colors.primary.900 / 0.3);
   --iti-border-color: theme(colors.gray.600);
   --iti-dialcode-color: theme(colors.gray.400);
-  --iti-dropdown-bg: theme(colors.gray.700);
+  --iti-dropdown-bg: theme(colors.surface.dark);
   --iti-arrow-color: theme(colors.white);
 }
 
@@ -42,7 +42,7 @@
 .iti input.iti__tel-input,
 .iti input.iti__tel-input[type=tel],
 .iti input.iti__tel-input[type=text] {
-  @apply w-full border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply w-full border border-gray-300 rounded shadow-sm font-medium text-sm bg-surface text-gray-700 outline-none transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-elevated-dark dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
   padding: theme(spacing.2);
   padding-left: 52px;
   /* Space for country selector */
@@ -87,12 +87,12 @@
 
 /* Dropdown content styling to match form theme */
 .iti .iti__dropdown-content {
-  @apply border border-gray-300 bg-white shadow-sm rounded-md dark:bg-gray-700 dark:border-gray-600;
+  @apply border border-gray-300 bg-surface shadow-sm rounded dark:bg-surface-dark dark:border-gray-600;
 }
 
 /* Search input to match form theme */
 .iti .iti__search-input {
-  @apply w-full p-2 border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply w-full p-2 border border-gray-300 rounded shadow-sm font-medium text-sm bg-surface text-gray-700 outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-elevated-dark dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
   margin: theme(spacing.2);
   width: calc(100% - theme(spacing.4));
 }
@@ -186,7 +186,7 @@
 }
 
 .iti--fullscreen-popup .iti__dropdown-content {
-  @apply bg-white dark:bg-gray-700;
+  @apply bg-surface dark:bg-surface-dark;
 }
 
 .iti--fullscreen-popup .iti__country {

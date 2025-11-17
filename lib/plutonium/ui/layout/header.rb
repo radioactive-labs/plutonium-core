@@ -41,7 +41,7 @@ module Plutonium
         # @return [void]
         def view_template
           nav(
-            class: "bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50",
+            class: tokens(theme_class(:header), "bg-surface border-b border-gray-200 px-md py-sm dark:bg-surface-dark dark:border-gray-700 fixed left-0 right-0 top-0 z-50"),
             data: {
               controller: "resource-header",
               resource_header_sidebar_outlet: "#sidebar-navigation"
@@ -59,7 +59,7 @@ module Plutonium
         # Renders the color mode toggle controls
         # @private
         def render_color_mode_controls
-          div(class: "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700") do
+          div(class: "bg-surface dark:bg-surface-dark border-gray-200 dark:border-gray-700") do
             render ColorModeSelector.new
           end
         end
@@ -80,10 +80,13 @@ module Plutonium
           button(
             data_action: "resource-header#toggleDrawer",
             aria_controls: "#sidebar-navigation",
-            class: %(p-2 mr-2 text-gray-600 rounded-lg cursor-pointer lg:hidden hover:text-gray-900
-                    hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2
+            class: tokens(
+              theme_class(:header, element: :sidebar_toggle),
+              %(p-2 mr-sm text-gray-600 rounded-sm cursor-pointer lg:hidden hover:text-gray-900
+                    hover:bg-interactive focus:bg-interactive dark:focus:bg-interactive-dark focus:ring-2
                     focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-200
-                    dark:hover:bg-gray-700 dark:hover:text-white)
+                    dark:hover:bg-interactive-dark dark:hover:text-white)
+            )
           ) do
             render_toggle_icons
           end
@@ -92,7 +95,7 @@ module Plutonium
         # Renders the brand section with logo and/or name
         # @private
         def render_brand
-          a(href: root_path, class: "flex items-center space-x-2 md:min-w-60") do
+          a(href: root_path, class: "flex items-center space-x-sm md:min-w-60") do
             render brand_logo_slot if brand_logo_slot?
             if brand_name_slot?
               span(class: "self-center text-2xl font-semibold whitespace-nowrap dark:text-white hidden xs:block") do
@@ -119,7 +122,7 @@ module Plutonium
         # Renders the action buttons section
         # @private
         def render_actions
-          div(class: "flex items-center space-x-2") do
+          div(class: "flex items-center space-x-sm") do
             render_color_mode_controls
 
             div(class: "flex items-center lg:order-2") do

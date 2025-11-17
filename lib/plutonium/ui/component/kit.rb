@@ -15,7 +15,7 @@ module Plutonium
       #     def view_template
       #       PageHeader(title: "Dashboard")
       #       TabList(items: tabs)
-      #       Panel(class: "mt-4") do
+      #       Panel(class: "mt-md") do
       #         content
       #       end
       #     end

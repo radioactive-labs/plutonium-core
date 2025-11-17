@@ -20,19 +20,20 @@ module Plutonium
 
       def view_template
         div(
+          class: theme_class(:tab, element: :list),
           data_controller: "resource-tab-list",
           data_resource_tab_list_active_classes_value: "focus:outline-none text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:hover:text-primary-500 border-primary-600 dark:border-primary-500",
           data_resource_tab_list_in_active_classes_value: "dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300"
         ) do
-          div(class: "mb-4 border-b border-gray-200 dark:border-gray-700") do
+          div(class: "mb-md border-b border-gray-200 dark:border-gray-700") do
             ul(
-              class: "flex flex-wrap -mb-px text-sm font-medium text-center space-x-2",
+              class: "flex flex-wrap -mb-px text-sm font-medium text-center space-x-sm",
               role: "tablist"
             ) do
               @tabs.each do |tab|
                 li(role: "presentation") do
                   button(
-                    class: "inline-block p-4 border-b-2 rounded-t-lg",
+                    class: tokens(theme_class(:tab, element: :button), "inline-block p-md border-b-2 rounded-t-lg"),
                     id: "#{tab[:identifier]}-tab",
                     type: "button",
                     role: "tab",
@@ -54,6 +55,7 @@ module Plutonium
           div do
             @tabs.each do |tab|
               div(
+                class: theme_class(:tab, element: :panel),
                 hidden: true,
                 id: "#{tab[:identifier]}-tabpanel",
                 role: "tabpanel",

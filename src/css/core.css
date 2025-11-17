@@ -8,9 +8,9 @@
 }
 
 .pu-color-input::-webkit-color-swatch {
-  @apply border-none rounded-lg;
+  @apply border-none rounded-sm;
 }
 
 .pu-color-input::-moz-color-swatch {
-  @apply border-none rounded-lg;
+  @apply border-none rounded-sm;
 }
