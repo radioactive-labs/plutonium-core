@@ -42,6 +42,8 @@ export default class extends Controller {
     // Update button state
     this.currentValue = mode;
 
+    this.dispatch("changed", { detail: { mode }, target: document });
+
     // Show/hide icons
     this.toggleIcons(mode);
 
