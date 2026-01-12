@@ -1,3 +1,8 @@
+## [0.32.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- *(ui)* Move fontFamily to theme root level
 ## [0.31.0] - 2026-01-12
 
 ### 🚀 Features
