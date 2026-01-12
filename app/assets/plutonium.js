@@ -13299,8 +13299,19 @@
   var color_mode_controller_default = class extends Controller {
     static values = { current: String };
     connect() {
-      const mode = localStorage.theme || "light";
+      const mode = localStorage.getItem("theme") || "light";
       this.setMode(mode);
+      this.handleStorageChange = (e4) => {
+        console.log("Storage event received in color-mode controller:", e4.key, e4.newValue, e4.oldValue);
+        if (e4.key === "theme" && e4.newValue) {
+          console.log("Updating color-mode theme to:", e4.newValue);
+          this.setMode(e4.newValue);
+        }
+      };
+      window.addEventListener("storage", this.handleStorageChange);
+    }
+    disconnect() {
+      window.removeEventListener("storage", this.handleStorageChange);
     }
     toggleMode() {
       const current = this.currentValue || "light";
@@ -13310,14 +13321,13 @@
     setMode(mode) {
       if (mode === "dark") {
         document.documentElement.classList.add("dark");
-        localStorage.theme = "dark";
       } else {
         document.documentElement.classList.remove("dark");
-        localStorage.theme = "light";
       }
       this.currentValue = mode;
       this.dispatch("changed", { detail: { mode }, target: document });
       this.toggleIcons(mode);
+      localStorage.setItem("theme", mode);
     }
     toggleIcons(mode) {
       const sun = this.element.querySelector(".color-mode-icon-light");

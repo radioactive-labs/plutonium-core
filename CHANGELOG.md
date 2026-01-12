@@ -1,3 +1,19 @@
+## [0.29.0] - 2026-01-12
+
+### 🚀 Features
+
+- *(ui)* Add cross-tab color mode synchronization
+- *(release)* Add npm package publishing support
+- *(ui)* Add semantic design token system for theming
+
+### 🐛 Bug Fixes
+
+- *(core)* Preserve request format in redirects
+- *(api)* Reset policy cache before rendering create response for api calls
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Build assets during prepare phase
 ## [0.28.0] - 2025-11-12
 
 ### 🚀 Features
