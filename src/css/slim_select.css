@@ -36,7 +36,7 @@
 
 /* Main container - Updated to match form input theme */
 .ss-main {
-  @apply flex flex-row relative select-none w-full min-h-8 p-2 cursor-pointer border border-gray-300 rounded shadow-sm font-medium text-sm bg-surface text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-elevated-dark dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply flex flex-row relative select-none w-full min-h-8 p-2 cursor-pointer border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
 }
 
 .ss-main.ss-disabled {
@@ -131,7 +131,7 @@
 
 /* Content container - Updated to match shadow and borders */
 .ss-content {
-  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-surface shadow-sm transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-surface-dark dark:border-gray-600;
+  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-white shadow-sm transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-gray-700 dark:border-gray-600;
   transform: scaleY(0);
   transform-origin: top;
 }
@@ -162,14 +162,14 @@
 }
 
 .ss-content .ss-search input {
-  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded shadow-sm font-medium text-sm bg-surface outline-none text-left placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-elevated-dark dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white outline-none text-left placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
   box-sizing: border-box;
   font-size: inherit;
   line-height: inherit;
 }
 
 .ss-content .ss-search .ss-addable {
-  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded shadow-sm dark:border-gray-600;
+  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded-md shadow-sm dark:border-gray-600;
 }
 
 .ss-content .ss-search .ss-addable svg {
@@ -202,7 +202,7 @@
 
 /* Option groups - Updated colors */
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label {
-  @apply flex flex-row items-center justify-between p-2 bg-elevated dark:bg-elevated-dark;
+  @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-600;
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {

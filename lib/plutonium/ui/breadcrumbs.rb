@@ -6,15 +6,13 @@ module Plutonium
 
       def view_template
         nav(
-          class: tokens(
-            theme_class(:breadcrumbs),
-            "flex py-sm text-gray-700 mb-sm"
-          ),
+          class:
+            "flex py-3 text-gray-700 mb-2",
           aria_label: "Breadcrumb"
         ) do
           ol(
             class:
-              "inline-flex items-center space-x-xs md:space-x-sm rtl:space-x-reverse"
+              "inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse"
           ) do
             # Dashboard
             li(class: "inline-flex items-center") do
@@ -44,7 +42,7 @@ module Plutonium
               # Parent Resource
               li(class: "flex items-center") do
                 svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-xs text-gray-400",
+                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
                   aria_hidden: "true",
                   xmlns: "http://www.w3.org/2000/svg",
                   fill: "none",
@@ -67,7 +65,7 @@ module Plutonium
               # Parent Itself
               li(class: "flex items-center") do
                 svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-xs text-gray-400",
+                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
                   aria_hidden: "true",
                   xmlns: "http://www.w3.org/2000/svg",
                   fill: "none",
@@ -94,7 +92,7 @@ module Plutonium
                 # Record Resource
                 li(class: "flex items-center") do
                   svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-xs text-gray-400",
+                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
                     aria_hidden: "true",
                     xmlns: "http://www.w3.org/2000/svg",
                     fill: "none",
@@ -119,7 +117,7 @@ module Plutonium
               if resource_record!.persisted? && action_name != "show"
                 li(class: "flex items-center") do
                   svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-xs text-gray-400",
+                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
                     aria_hidden: "true",
                     xmlns: "http://www.w3.org/2000/svg",
                     fill: "none",
@@ -144,7 +142,7 @@ module Plutonium
             # Trailing Caret
             li(class: "flex items-center") do
               svg(
-                class: "rtl:rotate-180 block w-3 h-3 mx-xs text-gray-400",
+                class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
                 aria_hidden: "true",
                 xmlns: "http://www.w3.org/2000/svg",
                 fill: "none",

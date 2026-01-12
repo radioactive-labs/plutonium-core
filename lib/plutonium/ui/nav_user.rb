@@ -18,8 +18,7 @@ module Plutonium
         def view_template
           a(
             class: tokens(
-              theme_class(:nav_user, element: :link),
-              "flex justify-between items-center py-sm px-md text-sm hover:bg-interactive dark:hover:bg-interactive-dark dark:hover:text-white",
+              "flex justify-between items-center py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white",
               @attributes.delete(:class)
             ),
             href: @href,
@@ -41,7 +40,7 @@ module Plutonium
 
         def view_template
           ul(
-            class: tokens(theme_class(:nav_user, element: :section), "text-gray-700 dark:text-gray-300"),
+            class: "text-gray-700 dark:text-gray-300",
             aria: {labelledby: "user-nav-dropdown-toggle"}
           ) do
             link_slots.each do |link|
@@ -60,7 +59,7 @@ module Plutonium
       end
 
       def view_template
-        div(class: theme_class(:nav_user), data: {controller: "resource-drop-down"}) do
+        div(data: {controller: "resource-drop-down"}) do
           render_trigger_button
           render_dropdown_menu
         end
@@ -79,7 +78,7 @@ module Plutonium
       def render_avatar_button
         button(
           type: "button",
-          class: tokens(theme_class(:nav_user, element: :button), "flex mx-sm text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"),
+          class: "flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600",
           aria: {expanded: "false"},
           id: "user-nav-dropdown-toggle",
           data: {resource_drop_down_target: "trigger"}
@@ -92,7 +91,7 @@ module Plutonium
       def render_default_button
         button(
           type: "button",
-          class: tokens(theme_class(:nav_user, element: :button), "flex mx-sm text-sm border border-gray-600 text-gray-500 hover:text-gray-900 hover:bg-interactive dark:text-gray-400 dark:hover:text-white dark:hover:bg-interactive-dark rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"),
+          class: "flex mx-3 text-sm border border-gray-600 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600",
           aria: {expanded: "false"},
           id: "user-nav-dropdown-toggle",
           data: {resource_drop_down_target: "trigger"}
@@ -104,10 +103,10 @@ module Plutonium
 
       def render_dropdown_menu
         div(
-          class: tokens(theme_class(:nav_user, element: :menu), "hidden z-50 my-md w-56 text-base list-none bg-surface divide-y divide-gray-100 shadow dark:bg-elevated-dark dark:divide-gray-600 rounded"),
+          class: "hidden z-50 my-4 w-56 text-base list-none bg-white divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600 rounded-xl",
           data: {resource_drop_down_target: "menu"}
         ) do
-          div(class: "py-sm px-md") do
+          div(class: "py-3 px-4") do
             if @name.present?
               span(class: "block text-sm font-semibold text-gray-900 dark:text-white") { @name }
             end

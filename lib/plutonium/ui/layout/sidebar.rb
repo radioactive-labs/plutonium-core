@@ -26,7 +26,7 @@ module Plutonium
             data: {controller: "sidebar"},
             id: "sidebar-navigation",
             aria: {label: "Sidebar Navigation"},
-            class: tokens(theme_class(:sidebar, element: :container), "fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full lg:translate-x-0"),
+            class: "fixed top-0 left-0 z-40 w-64 h-screen pt-14 transition-transform -translate-x-full lg:translate-x-0",
             &
           )
         end
@@ -36,7 +36,7 @@ module Plutonium
           div(
             id: "sidebar-navigation-content",
             data: {turbo_permanent: true},
-            class: tokens(theme_class(:sidebar, element: :content), "overflow-y-auto py-md px-sm h-full bg-surface border-r border-gray-200 dark:bg-surface-dark dark:border-gray-700"),
+            class: "overflow-y-auto py-5 px-3 h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700",
             &
           )
         end

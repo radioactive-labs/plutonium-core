@@ -32,17 +32,17 @@ module Plutonium
       private
 
       def wrapped(&)
-        div(class: tokens(theme_class(:panel), "mt-lg"), &)
+        div(class: "mt-6", &)
       end
 
       def render_toolbar
-        div(class: %(flex justify-between items-center mb-md)) do
+        div(class: %(flex justify-between items-center mb-4)) do
           if @title
             h5(class: %(text-2xl font-bold tracking-tight text-gray-900 dark:text-white)) do
               @title
             end
           end
-          div(class: "flex space-x-md") do
+          div(class: "flex space-x-4") do
             @items.each do |item|
               render item
             end

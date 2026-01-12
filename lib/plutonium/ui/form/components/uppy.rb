@@ -8,7 +8,7 @@ module Plutonium
           include Phlexi::Form::Components::Concerns::UploadsFile
 
           def view_template
-            div(class: tokens(field.dom.id, "flex flex-col-reverse gap-sm")) do
+            div(class: tokens(field.dom.id, "flex flex-col-reverse gap-2")) do
               div do
                 # Hidden field for ensuring removal of esp. has_one_attached attachments
                 input(type: :hidden, name: attributes[:name], multiple: attributes[:multiple], value: nil, autocomplete: "off", hidden: true)
@@ -16,7 +16,7 @@ module Plutonium
                 next if field.value.nil?
 
                 div(
-                  class: "attachment-preview-container grid grid-cols-[repeat(auto-fill,minmax(0,180px))] gap-md",
+                  class: "attachment-preview-container grid grid-cols-[repeat(auto-fill,minmax(0,180px))] gap-4",
                   data_controller: "attachment-preview-container"
                 ) do
                   render_existing_attachments
@@ -67,7 +67,7 @@ module Plutonium
             end
 
             div(
-              class: "attachment-preview group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-sm shadow-sm hover:shadow-md transition-all duration-300",
+              class: "attachment-preview group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300",
               data: {
                 controller: "attachment-preview",
                 attachment_preview_mime_type_value: attachment.content_type,
@@ -109,7 +109,7 @@ module Plutonium
 
           def render_filename(attachment)
             div(
-              class: "px-sm py-xs.5 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 truncate text-center bg-white dark:bg-gray-800",
+              class: "px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 truncate text-center bg-white dark:bg-gray-800",
               title: attachment.filename
             ) do
               plain attachment.filename.to_s
@@ -119,7 +119,7 @@ module Plutonium
           def render_delete_button
             button(
               type: "button",
-              class: "w-full py-sm px-md text-sm text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-b-lg transition-colors duration-200 flex items-center justify-center gap-sm border-t border-gray-200 dark:border-gray-700",
+              class: "w-full py-2 px-4 text-sm text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-b-lg transition-colors duration-200 flex items-center justify-center gap-2 border-t border-gray-200 dark:border-gray-700",
               data: {action: "click->attachment-preview#remove"}
             ) do
               span(class: "bi bi-trash")

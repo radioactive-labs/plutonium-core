@@ -4,10 +4,7 @@ module Plutonium
       def view_template(&)
         raise ArgumentError, "Block requires a content block" unless block_given?
 
-        div class: tokens(
-          theme_class(:block),
-          "relative bg-surface dark:bg-surface-dark shadow-md sm:rounded-sm my-sm"
-        ) do
+        div class: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3" do
           yield
         end
       end

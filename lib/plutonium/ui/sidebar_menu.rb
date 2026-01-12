@@ -13,34 +13,34 @@ module Plutonium
         def self.theme
           super.merge({
             # Base container styles
-            nav: "pu-sidebar-menu space-y-sm pb-lg mb-lg",
-            items_container: "pu-sidebar-menu-items space-y-sm",
+            nav: "space-y-2 pb-6 mb-6",
+            items_container: "space-y-2",
 
             # Item wrapper styles
-            item_wrapper: "pu-sidebar-menu-item w-full transition-colors duration-200 ease-in-out",
+            item_wrapper: "w-full transition-colors duration-200 ease-in-out",
             item_parent: nil,
 
             # Link and button base styles
-            item_link: "pu-sidebar-menu-link flex items-center p-sm text-base font-normal text-gray-900 rounded-sm dark:text-white hover:bg-interactive dark:hover:bg-interactive-dark group",
-            item_span: "pu-sidebar-menu-button flex items-center p-sm w-full text-base font-normal text-gray-900 rounded-sm transition duration-75 group hover:bg-interactive dark:text-white dark:hover:bg-interactive-dark",
+            item_link: "flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group",
+            item_span: "flex items-center p-2 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700",
 
             # Label and content styles
-            item_label: ->(depth) { "pu-sidebar-menu-label flex-1 #{(depth > 0) ? "ml-9" : "ml-sm"} text-left whitespace-nowrap" },
+            item_label: ->(depth) { "flex-1 #{(depth > 0) ? "ml-9" : "ml-3"} text-left whitespace-nowrap" },
 
             # Badge styles
-            leading_badge: "pu-sidebar-menu-badge-leading inline-flex justify-center items-center w-5 h-5 text-xs font-semibold rounded-full text-primary-800 bg-primary-100 dark:bg-primary-200 dark:text-primary-800",
-            trailing_badge: "pu-sidebar-menu-badge-trailing inline-flex justify-center items-center px-sm ml-sm text-sm font-medium text-gray-800 bg-elevated rounded-full dark:bg-elevated-dark dark:text-gray-300",
+            leading_badge: "inline-flex justify-center items-center w-5 h-5 text-xs font-semibold rounded-full text-primary-800 bg-primary-100 dark:bg-primary-200 dark:text-primary-800",
+            trailing_badge: "inline-flex justify-center items-center px-2 ml-3 text-sm font-medium text-gray-800 bg-gray-200 rounded-full dark:bg-gray-700 dark:text-gray-300",
 
             # Icon styles
-            icon_wrapper: "pu-sidebar-menu-icon-wrapper shrink-0 w-6 h-6 flex items-center justify-center",
-            icon: "pu-sidebar-menu-icon text-gray-400 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white",
+            icon_wrapper: "shrink-0 w-6 h-6 flex items-center justify-center",
+            icon: "text-gray-400 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white",
 
             # Collapse icon styles
-            collapse_icon: "pu-sidebar-menu-collapse-icon w-6 h-6 ml-auto transition-transform duration-200",
+            collapse_icon: "w-6 h-6 ml-auto transition-transform duration-200",
             collapse_icon_expanded: "transform rotate-180",
 
             # Submenu styles
-            sub_items_container: "pu-sidebar-menu-sub-items hidden py-sm space-y-sm",
+            sub_items_container: "hidden py-2 space-y-2",
 
             # Due to how we use turbo frames, we can't set active states
             active: nil
