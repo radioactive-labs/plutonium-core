@@ -17,11 +17,8 @@ class RodauthPlugin < Rodauth::Rails::Auth
     # ==> General
 
     # Initialize Sequel and have it reuse Active Record's database connection.
-<% if RUBY_ENGINE == "jruby" -%>
-    db Sequel.connect("jdbc:<%= sequel_adapter %>://", extensions: :activerecord_connection, keep_reference: false)
-<% else -%>
-    db Sequel.<%= sequel_adapter %>(extensions: :activerecord_connection, keep_reference: false)
-<% end -%>
+    # The adapter is detected dynamically at runtime to support database changes.
+    db Plutonium::Auth::SequelAdapter.db
 
     # Change prefix of table and foreign key column names from default "account"
     # accounts_table :users
