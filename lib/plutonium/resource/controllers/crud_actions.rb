@@ -54,6 +54,7 @@ module Plutonium
                   notice: "#{resource_class.model_name.human} was successfully created."
               end
               format.any do
+                @current_policy = nil # Reset cached policy so it uses the instance instead of class
                 render :show,
                   status: :created,
                   location: redirect_url_after_submit
