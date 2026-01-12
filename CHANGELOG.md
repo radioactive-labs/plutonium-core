@@ -1,3 +1,8 @@
+## [0.33.0] - 2026-01-12
+
+### ◀️ Revert
+
+- *(ui)* Remove semantic design token system
 ## [0.32.0] - 2026-01-12
 
 ### 🐛 Bug Fixes
