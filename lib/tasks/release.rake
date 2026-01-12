@@ -68,6 +68,9 @@ namespace :release do
       puts "  Skipping changelog generation"
     end
 
+    # Build front-end assets
+    Rake::Task["release:build_frontend"].invoke
+
     puts "\nNext steps:"
     puts "1. Review the changes:"
     puts "   git diff"
