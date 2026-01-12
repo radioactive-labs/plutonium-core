@@ -10,24 +10,24 @@ module Plutonium
           def view_template
             div(
               class:
-                # "flex flex-wrap justify-between items-center gap-md p-md bg-white border border-gray-200 rounded-sm dark:bg-gray-800 dark:border-gray-700 mb-md"
-                "flex flex-wrap justify-between items-center gap-md mb-md"
+                # "flex flex-wrap justify-between items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 mb-4"
+                "flex flex-wrap justify-between items-center gap-4 mb-4"
             ) do
-              div(class: "flex flex-wrap items-center gap-sm") do
+              div(class: "flex flex-wrap items-center gap-2") do
                 name = "all"
                 if current_scope.blank?
                   a(
                     id: "#{name}-scope",
                     href: current_query_object.build_url(scope: nil),
                     class:
-                      "px-md py-sm text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-sm hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                      "px-4 py-2 text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-lg hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                   ) { name.humanize }
                 else
                   a(
                     id: "#{name}-scope",
                     href: current_query_object.build_url(scope: nil),
                     class:
-                      "px-md py-sm text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
+                      "px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
                   ) { name.humanize }
                 end
 
@@ -37,26 +37,26 @@ module Plutonium
                       id: "#{name}-scope",
                       href: current_query_object.build_url(scope: name),
                       class:
-                        "px-md py-sm text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-sm hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+                        "px-4 py-2 text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-lg hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
                     ) { name.humanize }
                   else
                     a(
                       id: "#{name}-scope",
                       href: current_query_object.build_url(scope: name),
                       class:
-                        "px-md py-sm text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-sm hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
+                        "px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
                     ) { name.humanize }
                   end
                 end
               end
 
-              # div(class: "flex flex-wrap items-center gap-sm") do
+              # div(class: "flex flex-wrap items-center gap-2") do
               #   button(
               #     class:
-              #       "inline-flex items-center px-sm py-sm text-sm font-medium text-white bg-red-700 rounded-sm hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+              #       "inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
               #   ) do
               #     svg(
-              #       class: "w-4 h-4 mr-sm",
+              #       class: "w-4 h-4 mr-2",
               #       fill: "none",
               #       stroke: "currentColor",
               #       viewbox: "0 0 24 24",
@@ -74,10 +74,10 @@ module Plutonium
               #   end
               #   button(
               #     class:
-              #       "inline-flex items-center px-sm py-sm text-sm font-medium text-white bg-yellow-700 rounded-sm hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800"
+              #       "inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-yellow-700 rounded-lg hover:bg-yellow-800 focus:ring-4 focus:outline-none focus:ring-yellow-300 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:focus:ring-yellow-800"
               #   ) do
               #     svg(
-              #       class: "w-4 h-4 mr-sm",
+              #       class: "w-4 h-4 mr-2",
               #       fill: "none",
               #       stroke: "currentColor",
               #       viewbox: "0 0 24 24",
@@ -97,13 +97,13 @@ module Plutonium
               #     id: "dropdownActionButton",
               #     data_dropdown_toggle: "dropdownAction",
               #     class:
-              #       "inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-sm text-sm px-sm py-sm dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700",
+              #       "inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-3 py-2 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700",
               #     type: "button"
               #   ) do
               #     span(class: "sr-only") { "Action button" }
               #     plain " More Actions "
               #     svg(
-              #       class: "w-2.5 h-2.5 ml-sm",
+              #       class: "w-2.5 h-2.5 ml-2.5",
               #       aria_hidden: "true",
               #       xmlns: "http://www.w3.org/2000/svg",
               #       fill: "none",

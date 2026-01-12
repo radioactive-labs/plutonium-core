@@ -26,9 +26,9 @@ module Plutonium
 
         def html_attributes = {lang:, data_controller: "color-mode"}
 
-        def body_attributes = {class: tokens(theme_class(:layout, element: :body), "antialiased min-h-screen bg-page dark:bg-page-dark")}
+        def body_attributes = {class: "antialiased min-h-screen bg-gray-50 dark:bg-gray-900"}
 
-        def main_attributes = {class: tokens(theme_class(:layout, element: :main), "p-md min-h-screen")}
+        def main_attributes = {class: "p-4 min-h-screen"}
 
         def render_head
           head {

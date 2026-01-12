@@ -41,14 +41,14 @@ module Plutonium
                   type: :submit,
                   name: "return_to",
                   value: request.url,
-                  class: tokens(theme_class(:form, element: :button_secondary), "px-md py-sm bg-secondary-600 text-white rounded hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500")
+                  class: "px-4 py-2 bg-secondary-600 text-white rounded-md hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500"
                 ) { "Create and add another" }
               else
                 button(
                   type: :submit,
                   name: "return_to",
                   value: request.url,
-                  class: tokens(theme_class(:form, element: :button_secondary), "px-md py-sm bg-secondary-600 text-white rounded hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500")
+                  class: "px-4 py-2 bg-secondary-600 text-white rounded-md hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500"
                 ) { "Update and continue editing" }
               end
             end

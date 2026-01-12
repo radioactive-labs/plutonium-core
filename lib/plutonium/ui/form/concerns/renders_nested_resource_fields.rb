@@ -132,7 +132,7 @@ module Plutonium
 
           def render_nested_field_container(context, &)
             div(
-              class: "col-span-full space-y-sm my-md",
+              class: "col-span-full space-y-2 my-4",
               data: {
                 controller: "nested-resource-form-fields",
                 nested_resource_form_fields_limit_value: context.options[:limit]
@@ -193,7 +193,7 @@ module Plutonium
           def render_nested_fields_fieldset(nested, context)
             fieldset(
               data_new_record: !nested.object&.persisted?,
-              class: "nested-resource-form-fields border border-gray-200 dark:border-gray-700 rounded-sm p-md space-y-md relative"
+              class: "nested-resource-form-fields border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4 relative"
             ) do
               render_nested_fields_fieldset_content(nested, context)
               render_nested_fields_delete_button(nested, context.options)
@@ -201,7 +201,7 @@ module Plutonium
           end
 
           def render_nested_fields_fieldset_content(nested, context)
-            div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-md grid-flow-row-dense") do
+            div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense") do
               render_nested_fields_hidden_fields(nested, context)
               render_nested_fields_visible_fields(nested, context)
             end
@@ -259,8 +259,8 @@ module Plutonium
           end
 
           def render_nested_fields_add_button_content(name)
-            span(class: "bg-secondary-700 text-white hover:bg-secondary-800 focus:ring-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-700 dark:focus:ring-secondary-800 flex items-center justify-center px-md py-xs.5 text-sm font-medium rounded-sm focus:outline-none focus:ring-4") do
-              render Phlex::TablerIcons::Plus.new(class: "w-4 h-4 mr-xs")
+            span(class: "bg-secondary-700 text-white hover:bg-secondary-800 focus:ring-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-700 dark:focus:ring-secondary-800 flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-lg focus:outline-none focus:ring-4") do
+              render Phlex::TablerIcons::Plus.new(class: "w-4 h-4 mr-1")
               span { "Add #{name.to_s.singularize.humanize}" }
             end
           end

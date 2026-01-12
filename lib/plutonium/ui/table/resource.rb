@@ -91,7 +91,7 @@ module Plutonium
               record = wrapped_object.unwrapped
               policy = policy_for(record:)
 
-              div(class: "flex space-x-sm") do
+              div(class: "flex space-x-2") do
                 resource_definition.defined_actions
                   .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
                   .values
@@ -105,7 +105,7 @@ module Plutonium
         end
 
         def render_footer
-          div(class: tokens(theme_class(:table, element: :footer), "lg:sticky lg:dyna:static bottom-[-2px] mt-xs p-md pb-lg w-full z-30 bg-page dark:bg-page-dark")) {
+          div(class: "lg:sticky lg:dyna:static bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-gray-50 dark:bg-gray-900") {
             TableInfo(pagy_instance)
             TablePagination(pagy_instance)
           }

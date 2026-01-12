@@ -6,43 +6,43 @@ module Plutonium
       class Theme < Phlexi::Form::Theme
         def self.theme
           super.merge({
-            base: "pu-form relative bg-surface dark:bg-surface-dark shadow-md sm:rounded-sm my-sm p-lg space-y-lg",
-            fields_wrapper: "pu-form-fields grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-md grid-flow-row-dense",
-            actions_wrapper: "pu-form-actions flex justify-end space-x-sm",
-            wrapper: "pu-form-field",
-            inner_wrapper: "pu-form-field-inner w-full",
+            base: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3 p-6 space-y-6",
+            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense",
+            actions_wrapper: "flex justify-end space-x-2",
+            wrapper: nil,
+            inner_wrapper: "w-full",
             # errors
-            form_errors_wrapper: "pu-form-errors flex p-md mb-md text-sm text-red-800 rounded-sm bg-red-50 dark:bg-surface-dark dark:text-red-400",
-            form_errors_message: "pu-form-errors-message font-medium",
-            form_errors_list: "pu-form-errors-list mt-xs.5 list-disc list-inside",
+            form_errors_wrapper: "flex p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400",
+            form_errors_message: "font-medium",
+            form_errors_list: "mt-1.5 list-disc list-inside",
             # label themes
-            label: "pu-form-label mt-sm block mb-sm text-base font-bold",
+            label: "mt-2 block mb-2 text-base font-bold",
             invalid_label: "text-red-700 dark:text-red-500",
             valid_label: "text-green-700 dark:text-green-500",
             neutral_label: "text-gray-500 dark:text-gray-400",
             # input themes
-            input: "pu-form-input w-full p-sm border rounded shadow-sm font-medium text-sm dark:bg-elevated-dark focus:ring-2",
+            input: "w-full p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:ring-2",
             invalid_input: "bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 placeholder-red-700 dark:placeholder-red-500 focus:ring-red-500 focus:border-red-500",
             valid_input: "bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500",
             neutral_input: "border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500",
             # checkbox
-            checkbox: "pu-form-checkbox p-sm border rounded shadow-sm font-medium text-sm dark:bg-elevated-dark",
+            checkbox: "p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700",
             # radio buttons
-            radio_button: "pu-form-radio p-sm border shadow-sm font-medium text-sm dark:bg-elevated-dark",
+            radio_button: "p-2 border shadow-sm font-medium text-sm dark:bg-gray-700",
             # color
             color: "pu-color-input appearance-none bg-transparent border-none cursor-pointer w-10 h-10",
             invalid_color: nil,
             valid_color: nil,
             neutral_color: nil,
             # file
-            # file: "w-full border rounded shadow-sm font-medium text-sm dark:bg-elevated-dark focus:outline-none",
-            file: "pu-form-file w-full border rounded shadow-sm font-medium text-sm dark:bg-elevated-dark border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none focus:ring-2 [&::file-selector-button]:mr-sm [&::file-selector-button]:px-md [&::file-selector-button]:py-sm [&::file-selector-button]:bg-page [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-l-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-medium [&::file-selector-button]:text-gray-700 [&::file-selector-button]:hover:bg-interactive [&::file-selector-button]:cursor-pointer dark:[&::file-selector-button]:bg-gray-600 dark:[&::file-selector-button]:text-gray-200 dark:[&::file-selector-button]:hover:bg-gray-500",
+            # file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
+            file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none focus:ring-2 [&::file-selector-button]:mr-3 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-gray-50 [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-l-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-medium [&::file-selector-button]:text-gray-700 [&::file-selector-button]:hover:bg-gray-100 [&::file-selector-button]:cursor-pointer dark:[&::file-selector-button]:bg-gray-600 dark:[&::file-selector-button]:text-gray-200 dark:[&::file-selector-button]:hover:bg-gray-500",
             # hint themes
-            hint: "pu-form-hint mt-sm text-sm text-gray-500 dark:text-gray-200 whitespace-pre",
+            hint: "mt-2 text-sm text-gray-500 dark:text-gray-200 whitespace-pre",
             # error themes
-            error: "pu-form-error mt-sm text-sm text-red-600 dark:text-red-500",
+            error: "mt-2 text-sm text-red-600 dark:text-red-500",
             # button themes
-            button: "pu-form-button px-md py-sm bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500",
+            button: "px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500",
             # flatpickr
             flatpickr: :input,
             valid_flatpickr: :valid_input,

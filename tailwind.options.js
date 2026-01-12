@@ -1,4 +1,5 @@
 export const content = [
+  `${__dirname}/src/css/**/*.css`,
   `${__dirname}/src/js/**/*.js`,
   `${__dirname}/app/views/**/*.{rb,erb,js}`,
   `${__dirname}/lib/plutonium/**/*.rb`,
@@ -63,36 +64,7 @@ export const theme = {
         },
       },
     }),
-    // Semantic spacing scale - affects padding, margin, gap, space utilities
-    spacing: {
-      'xs': '0.5rem',    // 8px - extra small spacing
-      'sm': '0.75rem',   // 12px - small spacing (inputs, buttons, small gaps)
-      'md': '1rem',      // 16px - medium spacing (cards, tabs, standard gaps)
-      'lg': '1.5rem',    // 24px - large spacing (forms, displays, large spacing)
-      'xl': '2rem',      // 32px - extra large spacing
-      '2xl': '2.5rem',   // 40px - 2x extra large spacing
-      '3xl': '3rem',     // 48px - 3x extra large spacing
-    },
     colors: {
-      // Semantic background colors for theming - minimal, modern palette
-      surface: {
-        DEFAULT: '#ffffff',           // Light mode surface (cards, forms, tables, panels)
-        dark: '#1f2937',              // Dark mode surface - gray-800
-      },
-      page: {
-        DEFAULT: 'rgb(248 248 248)',  // Light mode page - neutral gray
-        dark: '#111827',              // Dark mode page - gray-900
-      },
-      elevated: {
-        DEFAULT: 'rgb(244 244 245)',  // Light mode elevated - subtle
-        dark: '#374151',              // Dark mode elevated - gray-700
-      },
-      interactive: {
-        DEFAULT: 'rgb(244 244 245)',  // Light mode hover - subtle
-        dark: '#374151',              // Dark mode hover - gray-700
-      },
-
-      // Brand colors
       primary: {
         50: '#F0FDFD',
         100: '#E0FAFA',
@@ -234,7 +206,7 @@ export const theme = {
       'Courier New',
       'monospace'
     ]
-  },
+  }
 };
 
 export const safelist = [

@@ -19,7 +19,7 @@ module Plutonium
 
           def render_thumbnail(attachment)
             div(
-              class: "w-24 h-24 bg-white border border-gray-200 rounded-sm shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
+              class: "w-24 h-24 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
               data: {
                 controller: "attachment-preview",
                 attachment_preview_mime_type_value: attachment.content_type,
@@ -30,7 +30,7 @@ module Plutonium
             ) do
               a(
                 href: attachment.url,
-                class: "block aspect-square overflow-hidden rounded-sm",
+                class: "block aspect-square overflow-hidden rounded-lg",
                 target: :blank,
                 data: {
                   attachment_preview_target: "thumbnailLink"
