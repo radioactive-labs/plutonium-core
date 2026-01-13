@@ -1,19 +1,12 @@
 require "rails/generators/base"
 require "rails/generators/active_record/migration"
 require "securerandom"
+require "plutonium/auth/sequel_adapter"
 
 module Pu
   module Rodauth
     class InstallGenerator < ::Rails::Generators::Base
       include ::ActiveRecord::Generators::Migration
-
-      SEQUEL_ADAPTERS = {
-        "postgresql" => (RUBY_ENGINE == "jruby") ? "postgresql" : "postgres",
-        "mysql2" => (RUBY_ENGINE == "jruby") ? "mysql" : "mysql2",
-        "sqlite3" => "sqlite",
-        "oracle_enhanced" => "oracle",
-        "sqlserver" => (RUBY_ENGINE == "jruby") ? "mssql" : "tinytds"
-      }
 
       source_root "#{__dir__}/templates"
 
@@ -65,15 +58,18 @@ module Pu
 
       private
 
+      # Delegates to the SequelAdapter module to avoid code duplication.
       def sequel_adapter
-        SEQUEL_ADAPTERS[activerecord_adapter] || activerecord_adapter
+        Plutonium::Auth::SequelAdapter.sequel_adapter
       end
 
+      # Delegates to the SequelAdapter module's internal ActiveRecord adapter detection.
+      # We still provide this method for use in create_install_migration.
       def activerecord_adapter
         if ActiveRecord::Base.respond_to?(:connection_db_config)
-          ActiveRecord::Base.connection_db_config.adapter
+          ActiveRecord::Base.connection_db_config&.adapter
         else
-          ActiveRecord::Base.connection_config.fetch(:adapter)
+          ActiveRecord::Base.connection_config&.fetch(:adapter, nil)
         end
       end
     end

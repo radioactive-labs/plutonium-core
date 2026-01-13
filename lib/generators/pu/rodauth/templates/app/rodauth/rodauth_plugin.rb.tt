@@ -1,4 +1,5 @@
 require "sequel/core"
+require "plutonium/auth/sequel_adapter"
 
 class RodauthPlugin < Rodauth::Rails::Auth
   attr_accessor :url_options
