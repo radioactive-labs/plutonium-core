@@ -1,7 +1,9 @@
 return if ENV["SECRET_KEY_BASE_DUMMY"].present?
 
 # Add required env vars to this list
-required_env_vars = %w[]
+required_env_vars = %w[
+  RAILS_DEFAULT_URL
+]
 
 if Rails.env.production?
   required_env_vars += %w[RAILS_MASTER_KEY DATABASE_URL]
