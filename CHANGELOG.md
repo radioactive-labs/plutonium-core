@@ -1,3 +1,8 @@
+## [0.33.1] - 2026-01-14
+
+### 🐛 Bug Fixes
+
+- *(controllers)* Handle turbo_stream format in CRUD and interactive actions
 ## [0.33.0] - 2026-01-12
 
 ### ◀️ Revert
