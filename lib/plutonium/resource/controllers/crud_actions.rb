@@ -16,7 +16,10 @@ module Plutonium
 
           setup_index_action!
 
-          render :index
+          respond_to do |format|
+            format.any(:html, :turbo_stream) { render :index, formats: [:html] }
+            format.any { render :index }
+          end
         end
 
         # GET /resources/1(.{format})
@@ -24,7 +27,10 @@ module Plutonium
           authorize_current! resource_record!
           set_page_title resource_record!.to_label.titleize
 
-          render :show
+          respond_to do |format|
+            format.any(:html, :turbo_stream) { render :show, formats: [:html] }
+            format.any { render :show }
+          end
         end
 
         # GET /resources/new
@@ -35,7 +41,7 @@ module Plutonium
           @resource_record = resource_class.new
           maybe_apply_submitted_resource_params!
 
-          render :new
+          render :new, formats: [:html]
         end
 
         # POST /resources(.{format})
@@ -47,9 +53,9 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.html { render :new, status: :unprocessable_content }
+              format.any(:html, :turbo_stream) { render :new, formats: [:html], status: :unprocessable_content }
             elsif resource_record!.save
-              format.html do
+              format.any(:html, :turbo_stream) do
                 redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully created."
               end
@@ -60,7 +66,7 @@ module Plutonium
                   location: redirect_url_after_submit
               end
             else
-              format.html { render :new, status: :unprocessable_content }
+              format.any(:html, :turbo_stream) { render :new, formats: [:html], status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
                 render "errors", status: :unprocessable_content
@@ -76,7 +82,7 @@ module Plutonium
 
           maybe_apply_submitted_resource_params!
 
-          render :edit
+          render :edit, formats: [:html]
         end
 
         # PATCH/PUT /resources/1(.{format})
@@ -88,19 +94,18 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.html { render :edit, status: :unprocessable_content }
+              format.any(:html, :turbo_stream) { render :edit, formats: [:html], status: :unprocessable_content }
             elsif resource_record!.save
-              format.html do
+              format.any(:html, :turbo_stream) do
                 redirect_to redirect_url_after_submit,
-                  notice:
-                    "#{resource_class.model_name.human} was successfully updated.",
+                  notice: "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
               end
               format.any do
                 render :show, status: :ok, location: redirect_url_after_submit
               end
             else
-              format.html { render :edit, status: :unprocessable_content }
+              format.any(:html, :turbo_stream) { render :edit, formats: [:html], status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
                 render "errors", status: :unprocessable_content
@@ -116,17 +121,15 @@ module Plutonium
           respond_to do |format|
             resource_record!.destroy
 
-            format.html do
+            format.any(:html, :turbo_stream) do
               redirect_to redirect_url_after_destroy,
-                notice:
-                  "#{resource_class.model_name.human} was successfully deleted."
+                notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey
-            format.html do
+            format.any(:html, :turbo_stream) do
               redirect_to resource_url_for(resource_record!),
-                alert:
-                  "#{resource_class.model_name.human} is referenced by other records."
+                alert: "#{resource_class.model_name.human} is referenced by other records."
             end
             format.any do
               @errors = ActiveModel::Errors.new resource_record!

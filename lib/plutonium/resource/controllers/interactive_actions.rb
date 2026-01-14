@@ -28,9 +28,9 @@ module Plutonium
           build_interactive_record_action_interaction
 
           if helpers.current_turbo_frame == "remote_modal"
-            render layout: false
+            render layout: false, formats: [:html]
           else
-            render :interactive_record_action
+            render :interactive_record_action, formats: [:html]
           end
         end
 
@@ -39,11 +39,7 @@ module Plutonium
           build_interactive_record_action_interaction
 
           if params[:pre_submit]
-            respond_to do |format|
-              format.html do
-                render :interactive_record_action, status: :unprocessable_content
-              end
-            end
+            render :interactive_record_action, formats: [:html], status: :unprocessable_content
             return
           end
 
@@ -54,8 +50,6 @@ module Plutonium
               if outcome.success?
                 return_url = redirect_url_after_action_on(resource_record!)
 
-                format.any { redirect_to return_url, status: :see_other }
-
                 if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
@@ -63,16 +57,16 @@ module Plutonium
                     ]
                   end
                 end
-              else
-                format.html do
-                  render :interactive_record_action, status: :unprocessable_content
-                end
 
+                format.any { redirect_to return_url, status: :see_other }
+              else
+                format.any(:html, :turbo_stream) do
+                  render :interactive_record_action, formats: [:html], status: :unprocessable_content
+                end
                 format.any do
                   @errors = @interaction.errors
                   render "errors", status: :unprocessable_content
                 end
-
               end
             end
           end
@@ -83,10 +77,14 @@ module Plutonium
           skip_verify_current_authorized_scope!
           build_interactive_resource_action_interaction
 
-          if helpers.current_turbo_frame == "remote_modal"
-            render layout: false
-          else
-            render :interactive_resource_action
+          respond_to do |format|
+            format.any(:html, :turbo_stream) do
+              if helpers.current_turbo_frame == "remote_modal"
+                render layout: false, formats: [:html]
+              else
+                render :interactive_resource_action, formats: [:html]
+              end
+            end
           end
         end
 
@@ -97,8 +95,8 @@ module Plutonium
 
           if params[:pre_submit]
             respond_to do |format|
-              format.html do
-                render :interactive_resource_action, status: :unprocessable_content
+              format.any(:html, :turbo_stream) do
+                render :interactive_resource_action, formats: [:html], status: :unprocessable_content
               end
             end
             return
@@ -111,8 +109,6 @@ module Plutonium
               if outcome.success?
                 return_url = redirect_url_after_action_on(resource_class)
 
-                format.any { redirect_to return_url, status: :see_other }
-
                 if helpers.current_turbo_frame == "remote_modal"
                   format.turbo_stream do
                     render turbo_stream: [
@@ -120,16 +116,16 @@ module Plutonium
                     ]
                   end
                 end
-              else
-                format.html do
-                  render :interactive_resource_action, status: :unprocessable_content
-                end
 
+                format.any { redirect_to return_url, status: :see_other }
+              else
+                format.any(:html, :turbo_stream) do
+                  render :interactive_resource_action, formats: [:html], status: :unprocessable_content
+                end
                 format.any do
                   @errors = @interaction.errors
                   render "errors", status: :unprocessable_content
                 end
-
               end
             end
           end
