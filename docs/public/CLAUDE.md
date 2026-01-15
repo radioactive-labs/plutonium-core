@@ -20,11 +20,13 @@ rails generate pu:rodauth:account user
 rails generate pu:pkg:package blog_management
 rails generate pu:pkg:portal admin_portal
 
-# Create complete resource
+# Create complete resource (always specify --dest to avoid prompts)
 rails generate pu:res:scaffold Post user:belongs_to title:string content:text --dest=blog_management
+rails generate pu:res:scaffold User name:string email:string:uniq --dest=main_app  # main app resource
 
 # Connect to portal
 rails generate pu:res:conn BlogManagement::Post --dest=admin_portal
+rails generate pu:res:conn User --dest=admin_portal  # main app resource (no namespace)
 ```
 
 ### Start Building
@@ -123,26 +125,32 @@ rails generate pu:pkg:portal admin_dashboard
 ```
 
 ### Resource Generators (Most Important)
+
+**Always specify `--dest`** to avoid interactive prompts:
+
 ```bash
-# Complete resource scaffold (preferred) - use --dest for package
+# Main app resource (not in a package)
+rails generate pu:res:scaffold Post user:belongs_to title:string 'content:text?' --dest=main_app
+
+# Package resource
 rails generate pu:res:scaffold Post user:belongs_to title:string content:text 'published_at:datetime?' --dest=blogging
 
 # Referencing namespaced models in associations
 rails generate pu:res:scaffold Comment user:belongs_to blogging/post:belongs_to body:text --dest=comments
 rails generate pu:res:scaffold Order customer:belongs_to inventory/product:belongs_to quantity:integer --dest=commerce
 
-# Model only - use --dest for package
+# Model only
 rails generate pu:res:model Article title:string body:text author:belongs_to --dest=blogging
 rails generate pu:res:model Review user:belongs_to inventory/product:belongs_to rating:integer --dest=reviews
 
 # CRITICAL: Use connection generator to expose resources in portals
 # Always use the generator - NEVER manually connect resources
 
-# Use full namespaced path (package_name/model_name format)
-rails generate pu:res:conn blog_management/post blog_management/comment --dest=admin_portal
+# Use full class name for namespaced resources
+rails generate pu:res:conn BlogManagement::Post BlogManagement::Comment --dest=admin_portal
 
-# Interactive mode (will prompt for resource and portal selection)
-rails generate pu:res:conn
+# Main app resources (not namespaced)
+rails generate pu:res:conn Post Comment --dest=admin_portal
 
 # The generator handles all routing, controller, and policy connections automatically
 ```
@@ -406,17 +414,49 @@ end
 ### Database Setup
 - Use standard Rails migration conventions
 - Always inline indexes and constraints in create_table blocks
-- Use nullable fields with `'field:type?'` syntax
-- Reference namespaced models: `package_name/model:belongs_to`
 - Leverage Rails associations (`belongs_to`, `has_many`, etc.)
+
+### Generator Field Syntax
+
+**IMPORTANT**: Quote fields containing `?` or `{}` to prevent shell expansion.
+
+**IMPORTANT**: Always specify `--dest` to avoid interactive prompts:
+- `--dest=main_app` for resources in the main application
+- `--dest=package_name` for resources in a feature package
+
+```bash
+# Nullable fields
+'name:string?'                    # null: true
+'parent:belongs_to?'              # null: true + optional: true in model
+
+# Decimal precision (only works for decimal type)
+'price:decimal{10,2}'             # precision: 10, scale: 2
+'amount:decimal?{10,2}'           # nullable with precision
+
+# For default values on other types (boolean, integer, etc.),
+# edit the migration manually after generation
+
+# Indexes
+email:string:index                # Regular index
+email:string:uniq                 # Unique index
+
+# Cross-package references
+blogging/post:belongs_to          # belongs_to :post, class_name: "Blogging::Post"
+```
 
 ### Cross-Package Associations
 ```bash
-# When generating models that reference other packages
-rails generate pu:res:scaffold Comment user:belongs_to blogging/post:belongs_to body:text --dest=comments
+# Reference models from other packages using package/model syntax
+rails generate pu:res:scaffold Comment \
+    user:belongs_to \
+    blogging/post:belongs_to \
+    'parent:belongs_to?' \
+    body:text \
+    --dest=comments
 
-# This creates the correct association:
+# Generates:
 # belongs_to :post, class_name: "Blogging::Post"
+# belongs_to :parent, optional: true
 ```
 
 ### Entity Scoping (Multi-Tenancy) Setup
@@ -502,9 +542,10 @@ end
 ## Quick Reference Commands
 
 ```bash
-# Essential workflow
+# Essential workflow (always use --dest to avoid prompts)
 rails generate pu:pkg:package feature_name                    # Create feature package
-rails generate pu:res:scaffold Resource --dest=feature_name   # Create complete resource
+rails generate pu:res:scaffold Resource --dest=main_app       # Main app resource
+rails generate pu:res:scaffold Resource --dest=feature_name   # Package resource
 rails generate pu:pkg:portal portal_name                      # Create portal
 rails generate pu:res:conn Feature::Resource --dest=portal    # CRITICAL: Always use generator to connect
 

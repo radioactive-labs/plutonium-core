@@ -432,8 +432,8 @@ rails generate pu:pkg:package blogging
 # Create a new portal package
 rails generate pu:pkg:portal admin
 
-# Create a new resource
-rails generate pu:res:scaffold post title:string content:text
+# Create a new resource (quote fields with ? or {})
+rails generate pu:res:scaffold post title:string 'content:text?' 'published_at:datetime?'
 
 # Connect a resource to a portal
 rails generate pu:res:conn

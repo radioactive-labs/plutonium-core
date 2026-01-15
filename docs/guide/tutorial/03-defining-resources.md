@@ -36,6 +36,14 @@ Let's scaffold our `Post` resource. It will have a title, some text content, and
 rails generate pu:res:scaffold Post user:belongs_to title:string content:text 'published_at:datetime?'
 ```
 
+::: tip Field Syntax
+- Use `?` suffix for nullable fields: `'published_at:datetime?'`
+- Use `{precision,scale}` for decimals only: `'price:decimal{10,2}'`
+- Use `:uniq` or `:index` for indexes: `email:string:uniq`
+- **Always quote fields with `?` or `{}`** to prevent shell expansion
+- For default values, edit the migration manually after generation
+:::
+
 The generator will prompt you to choose which package this resource belongs to. **Select `blogging`**.
 
 This command generates several important files inside your `packages/blogging` directory:
