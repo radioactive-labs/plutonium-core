@@ -19,6 +19,57 @@ The Definition module is located in `lib/plutonium/definition/`. Resource defini
 - **Action Definitions**: Define custom actions and operations.
 - **Conditional Logic**: Dynamic configuration based on context.
 
+## Definition Hierarchy
+
+Definitions exist at multiple levels, allowing for both shared behavior and portal-specific customization.
+
+### Main App Definitions
+
+Main app definitions are created by the scaffold generator and provide the default configuration:
+
+```ruby
+# app/definitions/resource_definition.rb (base - created during install)
+class ResourceDefinition < Plutonium::Resource::Definition
+  # Shared across all resources in your app
+  action :archive, interaction: ArchiveInteraction, color: :danger, position: 1000
+end
+
+# app/definitions/post_definition.rb (resource-specific - created by scaffold)
+class PostDefinition < ResourceDefinition
+  # Inherits from ResourceDefinition, adds resource-specific config
+  scope :published
+  input :content, as: :rich_text
+end
+```
+
+### Portal-Specific Overrides
+
+After connecting a resource to a portal, you can create a portal-specific definition to override the main app definition for that portal only:
+
+```ruby
+# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
+class AdminPortal::PostDefinition < ::PostDefinition
+  # Override or extend for admin portal only
+  input :internal_notes, as: :text  # Only admins see this input
+  scope :pending_review             # Admin-specific scope
+
+  action :feature, interaction: FeaturePostInteraction  # Admin-only action
+end
+```
+
+This lets you:
+- Show different fields per portal
+- Add portal-specific actions
+- Customize search/filters per context
+- Keep main app definition clean and shared
+
+::: tip When to Use Portal-Specific Definitions
+Create a portal-specific definition when you need different UI behavior for the same resource in different contexts. For example:
+- Admin portal might show internal notes, audit fields
+- Customer portal might hide sensitive fields
+- API portal might have different default sorting
+:::
+
 ## Core DSL Methods
 
 ### Field, Display, and Input
@@ -226,6 +277,118 @@ While the rendering context may provide access to `current_user`, it is strongly
 - All helper methods available in the table context
 
 To create forms that dynamically show/hide inputs based on other form values, pair a `condition` option with `pre_submit: true` on the "trigger" input. This will cause the form to re-render whenever that input's value changes, re-evaluating any conditions that depend on it.
+:::
+
+### Dynamic Forms with `pre_submit`
+
+Use `pre_submit: true` to create forms that dynamically show/hide fields based on other field values. When a `pre_submit` field changes, the form re-renders server-side and conditions are re-evaluated.
+
+#### How It Works
+
+1. User changes a `pre_submit: true` field
+2. Form submits via Turbo (no page reload)
+3. Server re-renders the form with updated `object` state
+4. Fields with `condition` procs are re-evaluated
+5. Newly visible fields appear, hidden fields disappear
+
+#### Basic Pattern
+
+```ruby
+class PostDefinition < ResourceDefinition
+  # Trigger field - causes form to re-render on change
+  input :send_notifications, pre_submit: true
+
+  # Dependent field - only shown when condition is true
+  input :notification_channel,
+    as: :select,
+    choices: %w[Email SMS],
+    condition: -> { object.send_notifications? }
+end
+```
+
+#### Multiple Dependent Fields
+
+```ruby
+class QuestionDefinition < ResourceDefinition
+  # Primary selector
+  input :question_type, as: :select,
+    choices: %w[text choice scale date boolean],
+    pre_submit: true
+
+  # Conditional fields based on question_type
+  input :max_length,
+    as: :integer,
+    condition: -> { object.question_type == "text" }
+
+  input :choices,
+    as: :text,
+    hint: "One choice per line",
+    condition: -> { object.question_type == "choice" }
+
+  input :min_value,
+    as: :integer,
+    condition: -> { object.question_type == "scale" }
+
+  input :max_value,
+    as: :integer,
+    condition: -> { object.question_type == "scale" }
+end
+```
+
+#### Cascading Dependencies
+
+```ruby
+class PropertyDefinition < ResourceDefinition
+  # First level
+  input :property_type, as: :select,
+    choices: %w[residential commercial],
+    pre_submit: true
+
+  # Second level - depends on property_type
+  input :residential_type, as: :select,
+    choices: %w[apartment house condo],
+    condition: -> { object.property_type == "residential" },
+    pre_submit: true
+
+  input :commercial_type, as: :select,
+    choices: %w[office retail warehouse],
+    condition: -> { object.property_type == "commercial" },
+    pre_submit: true
+
+  # Third level - depends on residential_type
+  input :apartment_floor,
+    as: :integer,
+    condition: -> { object.residential_type == "apartment" }
+end
+```
+
+#### Dynamic Choices with pre_submit
+
+Combine `pre_submit` with block-based dynamic choices:
+
+```ruby
+class SurveyResponseDefinition < ResourceDefinition
+  input :category, as: :select,
+    choices: Category.pluck(:name, :id),
+    pre_submit: true
+
+  # Choices change based on selected category
+  input :subcategory do |f|
+    choices = if object.category.present?
+      Category.find(object.category).subcategories.pluck(:name, :id)
+    else
+      []
+    end
+    f.select_tag choices: choices
+  end
+end
+```
+
+::: tip Pre-submit Tips
+- Only add `pre_submit: true` to fields that control visibility of other fields
+- Keep dependencies simple - deeply nested conditions are hard to debug
+- The form submits on change, so avoid `pre_submit` on frequently-changed fields like text inputs
+- Conditions are Ruby code - keep them as simple predicates
 :::
 
 ### 5. Custom Field Rendering
