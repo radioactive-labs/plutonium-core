@@ -268,5 +268,7 @@ end
 - `definition-query` - Search, filters, scopes, sorting
 - `policy` - Authorization and permissions
 - `controller` - Controller customization
+- `package` - Feature and portal packages
+- `portal` - Portal configuration and entity scoping
 - `create-resource` - Scaffold generator details
 - `connect-resource` - Portal connection details
