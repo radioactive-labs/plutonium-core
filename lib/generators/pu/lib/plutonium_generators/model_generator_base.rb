@@ -109,12 +109,12 @@ module PlutoniumGenerators
         private
 
         def parse_type_and_options(type)
+          nullable = type&.include?("?")
+          type = type&.sub("?", "") if nullable
+
           parsed_type, parsed_options = super
 
-          if type&.ends_with?("?")
-            parsed_type.remove!("?")
-            parsed_options[:null] = true
-          end
+          parsed_options[:null] = true if nullable
 
           [parsed_type, parsed_options]
         end
@@ -144,7 +144,9 @@ module PlutoniumGenerators
       end
 
       def required?
-        super || attr_options[:null] != true
+        return false if attr_options[:null] == true
+
+        super
       end
 
       def cents?
