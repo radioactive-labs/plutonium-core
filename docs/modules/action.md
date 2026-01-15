@@ -94,23 +94,32 @@ action :delete, category: :danger, position: 100
 
 ### Simple Actions
 
-Simple actions are for basic navigation or links. They are defined with `route_options`.
+Simple actions link to existing routes. **The target route must already exist** - these don't create new functionality, just navigation links.
 
 ::: code-group
-```ruby [Internal Link]
-# Navigates to the #reports action on the current controller
-action :view_reports,
-       label: "View Reports",
-       route_options: { action: :reports },
-       icon: Phlex::TablerIcons::ChartBar
-```
 ```ruby [External Link]
-# Links to an external URL
+# Links to an external URL - works directly
 action :documentation,
        label: "Documentation",
        route_options: { url: "https://docs.example.com" },
-       icon: Phlex::TablerIcons::Book
+       icon: Phlex::TablerIcons::Book,
+       resource_action: true
 ```
+```ruby [Internal Link]
+# Navigates to a custom controller action
+# NOTE: You must add the controller action and route yourself
+action :view_reports,
+       label: "View Reports",
+       route_options: { action: :reports },
+       icon: Phlex::TablerIcons::ChartBar,
+       resource_action: true
+```
+:::
+
+::: warning Simple Actions Require Existing Routes
+For internal links with `route_options: { action: :reports }`, the controller action and route must already exist. Simple actions are navigation links, not operation definitions.
+
+**For custom operations with business logic, use Interactive Actions with an Interaction class instead.** That's the recommended approach for most custom actions.
 :::
 
 ### Dynamic Route Options
@@ -209,6 +218,55 @@ class ScheduledPublishInteraction < Plutonium::Interaction::Base
 end
 ```
 :::
+
+## Action Inheritance
+
+### Inherited Actions
+
+Actions defined in your base `ResourceDefinition` (created during install) are inherited by all resource definitions:
+
+```ruby
+# app/definitions/resource_definition.rb (created during install)
+class ResourceDefinition < Plutonium::Resource::Definition
+  # All resources get this archive action
+  action :archive,
+    interaction: ArchiveInteraction,
+    color: :danger,
+    position: 1000
+end
+
+# app/definitions/post_definition.rb
+class PostDefinition < ResourceDefinition
+  # Inherits :archive automatically
+  # Add resource-specific actions
+  action :publish, interaction: PublishInteraction
+end
+```
+
+### Portal-Specific Actions
+
+After connecting a resource to a portal, you can add or override actions for that portal only:
+
+```ruby
+# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
+class AdminPortal::PostDefinition < ::PostDefinition
+  # Add admin-only actions
+  action :feature, interaction: FeaturePostInteraction
+  action :bulk_publish,
+    interaction: BulkPublishInteraction,
+    bulk_action: true
+
+  # Override inherited action options for this portal
+  action :archive,
+    interaction: ArchiveInteraction,
+    collection_record_action: true  # Show in table rows for admins
+end
+```
+
+This lets you:
+- Add portal-specific actions (admin-only operations)
+- Override action visibility per portal
+- Customize action behavior for different user types
 
 ## Best Practices
 
