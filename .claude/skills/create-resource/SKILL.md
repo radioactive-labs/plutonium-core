@@ -27,15 +27,39 @@ rails g pu:res:scaffold MODEL_NAME \
 'field:decimal?{10,2}'     # Both - must quote
 ```
 
-## Scaffolding Existing Resources
+## From Existing Models
 
-Run without attributes to scaffold an existing model:
+For existing Rails projects with models you want to convert to Plutonium resources:
+
+### Option 1: Model already includes Plutonium::Resource::Record
 
 ```bash
-rails g pu:res:scaffold ExistingModel --dest=main_app
+rails g pu:res:scaffold Post --no-migration --dest=main_app
 ```
 
-This auto-imports fields from `model.content_columns` and generates controller, policy, and definition with the correct attributes.
+This generates only the definition, policy, and controller - leaving your model unchanged.
+
+### Option 2: Let the generator update the model
+
+```bash
+rails g pu:res:scaffold Post --dest=main_app
+```
+
+Run without attributes to auto-import fields from `model.content_columns`. This regenerates the model file, so review changes carefully.
+
+### Don't forget to include the module
+
+Your model must include `Plutonium::Resource::Record` (directly or via inheritance):
+
+```ruby
+class Post < ApplicationRecord
+  include Plutonium::Resource::Record
+end
+
+# Or inherit from a base class
+class Post < ResourceRecord
+end
+```
 
 ## Field Type Syntax
 
@@ -110,7 +134,8 @@ Token fields automatically get a unique index in the migration.
 - `--dest=DESTINATION` - Target destination (**always required** to avoid prompts)
   - `main_app` for main application resources
   - `package_name` for feature package resources
-- `--no-model` - Skip model and migration generation
+- `--no-model` - Skip model generation (keeps existing model)
+- `--no-migration` - Skip migration generation (use with `--no-model` for existing models)
 
 ## What Gets Generated
 
