@@ -265,6 +265,7 @@ end
 - `definition` - Definition overview and structure
 - `definition-fields` - Fields, inputs, displays, columns
 - `definition-actions` - Actions and interactions
+- `interaction` - Writing interaction classes
 - `definition-query` - Search, filters, scopes, sorting
 - `policy` - Authorization and permissions
 - `controller` - Controller customization

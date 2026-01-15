@@ -378,3 +378,5 @@ end
 - `definition` - Overview and structure
 - `definition-fields` - Fields, inputs, displays
 - `definition-query` - Search, filters, scopes
+- `interaction` - Writing interaction classes
+- `policy` - Controlling action access
