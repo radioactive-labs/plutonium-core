@@ -12,7 +12,7 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
   # add model configurations above.
 
 <% attributes.select(&:reference?).each do |attribute| -%>
-  belongs_to :<%= attribute.name %><%= ", polymorphic: true" if attribute.polymorphic? %><%= ", class_name: \"#{attribute.attr_options[:class_name]}\"" if attribute.attr_options[:class_name] %>
+  belongs_to :<%= attribute.name %><%= ", optional: true" unless attribute.required? %><%= ", polymorphic: true" if attribute.polymorphic? %><%= ", class_name: \"#{attribute.attr_options[:class_name]}\"" if attribute.attr_options[:class_name] %>
 <% end -%>
   # add belongs_to associations above.
 
