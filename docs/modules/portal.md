@@ -596,8 +596,8 @@ rails generate pu:pkg:portal customer
 rails generate pu:pkg:portal public
 
 # Connect existing resources to portals
-rails generate pu:res:conn post --dest=admin_portal
-rails generate pu:res:conn project --dest=customer_portal
+rails generate pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
+rails generate pu:res:conn Projects::Project --dest=customer_portal
 ```
 
 ### Generated Portal Structure

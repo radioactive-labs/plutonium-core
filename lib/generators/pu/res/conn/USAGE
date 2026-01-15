@@ -1,0 +1,71 @@
+Description:
+    Connects resources to a portal for web access. Creates portal-specific
+    controller, policy, and definition, and registers routes.
+
+Usage:
+    rails g pu:res:conn [RESOURCES...] [options]
+
+Options:
+    --dest=PORTAL        Target portal package (e.g., admin_portal)
+    --src=PACKAGE        Source feature package (optional)
+                         Use main_app for resources in the main application
+                         Use package name for resources in a feature package
+
+Arguments:
+    RESOURCES            Space-separated list of model names to connect.
+                         Use full namespaced names for packaged resources.
+                         If omitted, prompts for interactive selection.
+
+Examples:
+    # Connect main_app resource (not in a package)
+    rails g pu:res:conn PropertyAmenity --dest=admin_portal
+
+    # Connect multiple main_app resources
+    rails g pu:res:conn Post Comment Tag --dest=admin_portal
+
+    # Connect namespaced resources (from a feature package)
+    rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
+
+    # Interactive mode (prompts for everything)
+    rails g pu:res:conn
+
+    # Specify source package explicitly
+    rails g pu:res:conn --src=blogging --dest=admin_portal
+
+    # Specify main_app as source explicitly
+    rails g pu:res:conn --src=main_app --dest=admin_portal
+
+Generated Files:
+    For resource Post connected to admin_portal:
+
+    Controller: packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
+    Policy:     packages/admin_portal/app/policies/admin_portal/post_policy.rb (if needed)
+    Definition: packages/admin_portal/app/definitions/admin_portal/post_definition.rb (if needed)
+    Routes:     Updates packages/admin_portal/config/routes.rb
+
+Generated Code:
+    Controller inherits from resource's base controller:
+        class AdminPortal::PostsController < ::PostsController
+          include AdminPortal::Concerns::Controller
+        end
+
+    Policy inherits from resource's base policy with portal mixin:
+        class AdminPortal::PostPolicy < ::PostPolicy
+          include AdminPortal::ResourcePolicy
+        end
+
+    Routes register the resource:
+        register_resource ::Blogging::Post
+
+Workflow:
+    1. Create feature package:  rails g pu:pkg:package blogging
+    2. Create resources:        rails g pu:res:scaffold Post ... --dest=blogging
+    3. Run migrations:          rails db:migrate
+    4. Create portal:           rails g pu:pkg:portal admin
+    5. Connect to portal:       rails g pu:res:conn Blogging::Post --dest=admin_portal
+
+Notes:
+    - Always use this generator instead of manually connecting resources
+    - Portal policies/definitions allow per-portal customization
+    - Run after creating resources with pu:res:scaffold
+    - Run after migrations so attributes can be detected

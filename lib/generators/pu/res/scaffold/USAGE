@@ -1,0 +1,85 @@
+Description:
+    Generates a complete Plutonium resource with model, migration, controller,
+    policy, and definition.
+
+Usage:
+    rails g pu:res:scaffold NAME [field:type field:type] --dest=DESTINATION
+
+Options:
+    --dest=DESTINATION   Target destination (required to avoid interactive prompts)
+                         Use 'main_app' for main application resources
+                         Use 'package_name' for feature package resources
+    --no-model           Skip model and migration generation
+
+Field Syntax:
+    name:type            Required field
+    'name:type?'         Nullable field (quote to prevent shell expansion)
+    name:type:index      Field with index
+    name:type:uniq       Field with unique index
+
+Supported Types:
+    string, text, integer, float, decimal, boolean, date, datetime, time,
+    binary, belongs_to, references, rich_text, attachment, attachments, token
+
+Type Options (decimal only):
+    'field:decimal{10,2}'      Precision and scale
+    'field:decimal?{10,2}'     Nullable with precision
+
+    Note: The {precision,scale} syntax only works for decimal types.
+    For default values on other types, edit the migration manually.
+
+Examples:
+    # Main app resource
+    rails g pu:res:scaffold post title:string 'body:text?' --dest=main_app
+
+    # Package resource with associations and indexes
+    rails g pu:res:scaffold article \
+        user:belongs_to \
+        title:string \
+        slug:string:uniq \
+        'content:text?' \
+        'published_at:datetime?' \
+        --dest=blogging
+
+    # Nullable association
+    rails g pu:res:scaffold comment \
+        user:belongs_to \
+        'parent:belongs_to?' \
+        body:text \
+        --dest=main_app
+
+    # With decimal precision
+    rails g pu:res:scaffold product \
+        name:string \
+        'price:decimal{10,2}' \
+        'weight:decimal?{8,3}' \
+        --dest=inventory
+
+    # Scaffold existing model (imports columns automatically)
+    rails g pu:res:scaffold ExistingModel --dest=main_app
+
+    # Cross-package reference
+    rails g pu:res:scaffold order \
+        customer:belongs_to \
+        inventory/product:belongs_to \
+        quantity:integer \
+        --dest=sales
+
+Generated Files (main_app):
+    Model:      app/models/[name].rb
+    Migration:  db/migrate/xxx_create_[names].rb
+    Controller: app/controllers/[names]_controller.rb
+    Policy:     app/policies/[name]_policy.rb
+    Definition: app/definitions/[name]_definition.rb
+
+Generated Files (package):
+    Model:      app/models/[package]/[name].rb
+    Migration:  db/migrate/xxx_create_[package]_[names].rb
+    Controller: packages/[package]/app/controllers/[package]/[names]_controller.rb
+    Policy:     packages/[package]/app/policies/[package]/[name]_policy.rb
+    Definition: packages/[package]/app/definitions/[package]/[name]_definition.rb
+
+After Generation:
+    1. Review migration (add cascade delete, defaults, composite indexes)
+    2. Run: rails db:migrate
+    3. Connect to portal: rails g pu:res:conn Post --dest=admin_portal

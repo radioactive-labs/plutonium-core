@@ -145,8 +145,20 @@ Creates a complete resource with a model, controller, policy, and definition, in
 ::: code-group
 
 ```bash [Command]
-# Generate a new resource with attributes, placing it in the 'blogging' package
-rails generate pu:res:scaffold Post title:string content:text author:references published:boolean --dest=blogging
+# Generate a main_app resource
+rails generate pu:res:scaffold Post \
+    user:belongs_to \
+    title:string \
+    'content:text?' \
+    --dest=main_app
+
+# Generate a package resource
+rails generate pu:res:scaffold Post \
+    user:belongs_to \
+    title:string \
+    'content:text?' \
+    'published_at:datetime?' \
+    --dest=blogging
 ```
 
 ```ruby [Generated Model]
@@ -184,6 +196,140 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Filter configuration
   filter :published, with: :boolean
   filter :author, with: :select
+end
+```
+
+:::
+
+### Field Type Syntax
+
+When defining resource attributes, use the following syntax patterns:
+
+::: warning Shell Quoting
+**Always quote fields containing `?` or `{}`** to prevent shell expansion:
+```bash
+'field:type?'              # Nullable - must quote
+'field:decimal{10,2}'      # Options - must quote
+'field:decimal?{10,2}'     # Both - must quote
+```
+:::
+
+#### Basic Types
+
+| Type | Description |
+|------|-------------|
+| `string` | VARCHAR column |
+| `text` | TEXT column |
+| `integer` | INTEGER column |
+| `float` | FLOAT column |
+| `decimal` | DECIMAL column |
+| `boolean` | BOOLEAN column |
+| `date` | DATE column |
+| `datetime` | DATETIME column |
+| `time` | TIME column |
+| `binary` | BINARY column |
+
+#### Nullable Fields
+
+Append `?` to make any field nullable:
+
+```bash
+'name:string?'               # null: true
+'score:integer?'             # null: true
+'parent:belongs_to?'         # null: true + optional: true in model
+```
+
+#### Type Options (Decimal Only)
+
+The `{precision,scale}` syntax only works for decimal types:
+
+```bash
+'price:decimal{10,2}'        # precision: 10, scale: 2
+'amount:decimal?{10,2}'      # nullable with precision
+```
+
+For default values on other types (boolean, integer, etc.), edit the migration manually after generation.
+
+#### Indexes
+
+```bash
+email:string:index           # Regular index
+email:string:uniq            # Unique index
+'code:string{50}:uniq'       # With limit and unique index
+```
+
+#### Associations
+
+```bash
+user:belongs_to              # Required foreign key
+'parent:belongs_to?'         # Optional (null: true, optional: true)
+user:references              # Same as belongs_to
+blogging/post:belongs_to     # Cross-package reference
+```
+
+#### Special Types
+
+```bash
+password_digest              # has_secure_password
+auth_token:token             # has_secure_token (auto unique index)
+content:rich_text            # has_rich_text (ActionText)
+avatar:attachment            # has_one_attached
+photos:attachments           # has_many_attached
+price_cents:integer          # has_cents (money field)
+```
+
+#### Connection Generator (`pu:res:conn`)
+
+Connects existing resources to a portal for web access. This creates portal-specific controllers, policies, and definitions.
+
+::: warning Important
+Always use the connection generator to expose resources in portals. Never manually connect resources.
+:::
+
+::: code-group
+
+```bash [Command]
+# Connect main_app resource (not in a package)
+rails generate pu:res:conn PropertyAmenity --dest=admin_portal
+
+# Connect namespaced resources (from a feature package)
+rails generate pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
+
+# Interactive mode (prompts for selection)
+# Select main_app as source for non-packaged resources
+rails generate pu:res:conn
+```
+
+```text [Generated Structure]
+packages/admin_portal/
+├── app/
+│   ├── controllers/admin_portal/
+│   │   └── posts_controller.rb      # Portal controller
+│   ├── policies/admin_portal/
+│   │   └── post_policy.rb           # Portal policy
+│   └── definitions/admin_portal/
+│       └── post_definition.rb       # Portal definition
+└── config/
+    └── routes.rb                    # Updated with register_resource
+```
+
+```ruby [Generated Controller]
+class AdminPortal::PostsController < ::PostsController
+  include AdminPortal::Concerns::Controller
+end
+```
+
+```ruby [Generated Policy]
+class AdminPortal::PostPolicy < ::PostPolicy
+  include AdminPortal::ResourcePolicy
+
+  def permitted_attributes_for_create
+    [:title, :content, :user_id]
+  end
+
+  def permitted_attributes_for_read
+    [:title, :content, :user_id, :created_at, :updated_at]
+  end
 end
 ```
 
@@ -358,17 +504,20 @@ rails generate pu:eject:shell --dest=admin_portal
 
 ## Generator Configuration
 
-### Interactive Mode
+### Non-Interactive Mode
 
-Many generators support interactive prompts:
+Always specify `--dest` to avoid interactive prompts:
 
 ```bash
-# Interactive package selection
+# Main app resource
+rails generate pu:res:scaffold Post title:string --dest=main_app
+
+# Package resource
+rails generate pu:res:scaffold Post title:string --dest=blogging
+
+# Without --dest, generators will prompt for selection (not recommended for scripts/CI)
 rails generate pu:res:scaffold Post title:string
 # Prompts: "Select destination feature: [blogging, user_management, main_app]"
-
-# Non-interactive mode
-rails generate pu:res:scaffold Post title:string --dest=blogging
 ```
 
 ## Development Workflow Integration

@@ -263,8 +263,19 @@ This guide will walk you through building a complete `Post` resource from scratc
 We'll start with the scaffold generator, which creates all the necessary files for our `Post` resource.
 
 ```bash
-rails generate pu:res:scaffold Post user:belongs_to title:string content:text published_at:datetime
+rails generate pu:res:scaffold Post \
+    user:belongs_to \
+    title:string \
+    content:text \
+    'published_at:datetime?'
 ```
+
+::: tip Field Syntax
+- Append `?` to make fields nullable: `'published_at:datetime?'`
+- Use `{precision,scale}` for decimals: `'price:decimal{10,2}'`
+- Add indexes with `:index` or `:uniq`: `email:string:uniq`
+- **Always quote fields with `?` or `{}`** to prevent shell expansion
+:::
 
 This command generates:
 - A `Post` model with the specified attributes and a `belongs_to :user` association.
