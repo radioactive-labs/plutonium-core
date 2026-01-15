@@ -6,6 +6,10 @@ require_relative "../<%= class_path.last.underscore %>"
 class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::" %>
   # add concerns above.
 
+  # add constants above.
+
+  # add enums above.
+
 <% attributes.select(&:cents?).each do |attribute| -%>
   has_cents :<%= attribute.name %>
 <% end -%>
@@ -51,6 +55,6 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
 <% end -%>
   # add misc attribute macros above.
 
-  # add methods above.
+  # add methods above. add private methods below.
 end
 <% end -%>

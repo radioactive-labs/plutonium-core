@@ -1,0 +1,14 @@
+Description:
+    Syncs Claude Code skills from the Plutonium gem into your project's
+    .claude/skills/ directory.
+
+    This gives Claude Code access to Plutonium-specific skills for:
+    - Creating resources (scaffold generator)
+    - Connecting resources to portals
+    - Definition configuration (fields, actions, queries)
+
+Example:
+    rails generate pu:skills:sync
+
+    This will copy all skills from the Plutonium gem to:
+        .claude/skills/
