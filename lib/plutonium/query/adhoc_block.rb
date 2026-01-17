@@ -11,8 +11,12 @@ module Plutonium
         @body = body
       end
 
-      def apply(scope, **)
-        body.call(scope, **)
+      def apply(scope, context: nil, **)
+        if context
+          context.instance_exec(scope, **, &body)
+        else
+          body.call(scope, **)
+        end
       end
     end
   end

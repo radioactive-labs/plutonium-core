@@ -11,7 +11,7 @@ module Plutonium
         @name = name
       end
 
-      def apply(scope, **)
+      def apply(scope, context: nil, **)
         scope.public_send(name, **)
       end
     end
