@@ -17,7 +17,7 @@ module Plutonium
               .extract_input(params, view_context:)[:q]
 
             base_query = current_authorized_scope
-            current_query_object.apply(base_query, query_params)
+            current_query_object.apply(base_query, query_params, context: self)
           end
         end
       end

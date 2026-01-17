@@ -82,11 +82,13 @@ module Plutonium
       # Applies the defined filters and sorts to the given scope.
       #
       # @param scope [Object] The initial scope to which filters and sorts are applied.
+      # @param params [Hash] The query parameters.
+      # @param context [Object] Optional context (e.g., controller) for executing scope blocks.
       # @return [Object] The modified scope.
-      def apply(scope, params)
+      def apply(scope, params, context: nil)
         params = deep_compact(params.with_indifferent_access)
         scope = search_filter.apply(scope, search: params[:search]) if search_filter && params[:search]
-        scope = scope_definitions[params[:scope]].apply(scope, **{}) if scope_definitions[params[:scope]]
+        scope = scope_definitions[params[:scope]].apply(scope, context:) if scope_definitions[params[:scope]]
         scope = apply_sorts(scope, params)
         apply_filters(scope, params)
       end
