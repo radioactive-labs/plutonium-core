@@ -93,13 +93,13 @@ module PlutoniumGenerators
             end
 
             if name.include? "/"
-              attr_options[:to_table] = name.tr("/", "_").pluralize.to_sym
+              attr_options[:to_table] = name.underscore.tr("/", "_").pluralize.to_sym
               attr_options[:class_name] = name.classify
+              name = name.underscore
               if (shared_namespace = find_shared_namespace(model_name, name, separator: "/"))
-                name = name.sub "#{shared_namespace}/", ""
+                name = name.sub("#{shared_namespace}/", "")
               end
-
-              name = name.tr "/", "_"
+              name = name.tr("/", "_")
             end
           end
 
@@ -114,7 +114,7 @@ module PlutoniumGenerators
 
           parsed_type, parsed_options = super
 
-          parsed_options[:null] = true if nullable
+          parsed_options[:null] = nullable ? true : false
 
           [parsed_type, parsed_options]
         end
@@ -122,14 +122,10 @@ module PlutoniumGenerators
         private
 
         def find_shared_namespace(model1, model2, separator: "::")
-          # Split the model names by separator to get the namespaces and class names as arrays
-          parts1 = model1.split(separator)
-          parts2 = model2.split(separator)
+          parts1 = model1.underscore.split(separator)
+          parts2 = model2.underscore.split(separator)
 
-          # Initialize an array to hold the shared namespace parts
           shared_namespace = []
-
-          # Iterate over the shorter of the two arrays
           [parts1.length, parts2.length].min.times do |i|
             if parts1[i] == parts2[i]
               shared_namespace << parts1[i]
@@ -138,7 +134,6 @@ module PlutoniumGenerators
             end
           end
 
-          # Return the shared namespace, joined by '::' or nil if there's no shared namespace
           shared_namespace.empty? ? nil : shared_namespace.join(separator)
         end
       end
