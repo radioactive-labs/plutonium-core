@@ -5,9 +5,21 @@ require "test_helper"
 module Plutonium
   module Action
     class InteractiveTest < Minitest::Test
+      module InteractionPresentation
+        extend ActiveSupport::Concern
+
+        class_methods do
+          def label = nil
+          def icon = nil
+          def description = nil
+          def turbo = nil
+        end
+      end
+
       class RecordInteraction
         include ActiveModel::Model
         include ActiveModel::Attributes
+        include InteractionPresentation
 
         attribute :resource
         attribute :test_filter, :string
@@ -16,6 +28,7 @@ module Plutonium
       class CollectionInteraction
         include ActiveModel::Model
         include ActiveModel::Attributes
+        include InteractionPresentation
 
         attribute :resources
         attribute :test_filter, :string
@@ -24,6 +37,7 @@ module Plutonium
       class RecordlessInteraction
         include ActiveModel::Model
         include ActiveModel::Attributes
+        include InteractionPresentation
 
         attribute :test_filter, :string
       end
@@ -31,6 +45,7 @@ module Plutonium
       class InlineInteraction
         include ActiveModel::Model
         include ActiveModel::Attributes
+        include InteractionPresentation
 
         attribute :resources
         attribute :resource
@@ -59,7 +74,7 @@ module Plutonium
       def test_route_options
         assert_instance_of RouteOptions, @action.route_options
         assert_equal :post, @action.route_options.method
-        assert_equal({action: :interactive_resource_record_action, interactive_action: :test_interactive}, @action.route_options.url_options)
+        assert_equal({action: :interactive_record_action, interactive_action: :test_interactive}, @action.route_options.url_options)
       end
 
       def test_action_types

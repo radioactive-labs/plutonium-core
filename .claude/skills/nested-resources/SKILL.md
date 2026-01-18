@@ -18,9 +18,9 @@ register_resource ::Property  # has belongs_to :company
 ```
 
 Plutonium automatically creates nested routes:
-- `/companies/:company_id/nested_properties` - Properties scoped to company
-- `/companies/:company_id/nested_properties/new` - New property for company
-- `/companies/:company_id/nested_properties/:id` - Property in company context
+- `/companies/:company_id/properties` - Properties scoped to company
+- `/companies/:company_id/properties/new` - New property for company
+- `/companies/:company_id/properties/:id` - Property in company context
 
 ## Automatic Behavior
 
@@ -39,7 +39,7 @@ When accessing nested routes, Plutonium automatically:
 Returns the parent record from the URL:
 
 ```ruby
-# URL: /companies/123/nested_properties
+# URL: /companies/123/properties
 current_parent  # => Company.find(123)
 ```
 
@@ -120,19 +120,19 @@ Use `resource_url_for` with the `parent:` option:
 ```ruby
 # Child collection
 resource_url_for(Property, parent: company)
-# => /companies/123/nested_properties
+# => /companies/123/properties
 
 # Child record
 resource_url_for(property, parent: company)
-# => /companies/123/nested_properties/456
+# => /companies/123/properties/456
 
 # New child form
 resource_url_for(Property, action: :new, parent: company)
-# => /companies/123/nested_properties/new
+# => /companies/123/properties/new
 
 # Edit child
 resource_url_for(property, action: :edit, parent: company)
-# => /companies/123/nested_properties/456/edit
+# => /companies/123/properties/456/edit
 ```
 
 ## Association Panels
@@ -185,7 +185,7 @@ end
 Parent is automatically injected into resource params:
 
 ```ruby
-# When creating a property under /companies/123/nested_properties
+# When creating a property under /companies/123/properties
 resource_params
 # => { name: "...", company: <Company:123>, company_id: 123 }
 ```
@@ -263,8 +263,8 @@ end
 ```
 
 Generates nested routes:
-- `/companies/:company_id/nested_properties/:id/analytics`
-- `/companies/:company_id/nested_properties/:id/archive`
+- `/companies/:company_id/properties/:id/analytics`
+- `/companies/:company_id/properties/:id/archive`
 
 ## Related Skills
 

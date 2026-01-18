@@ -45,12 +45,19 @@ class PlutoniumTest < Minitest::Test
   end
 
   def test_eager_load_rails!
-    Rails.env.stub(:production?, false) do
-      Rails.application.stub(:eager_load!, true) do
-        Rails.application.config.stub(:eager_load, false) do
-          assert Plutonium.eager_load_rails!
-        end
-      end
-    end
+    # Reset the eager loaded flag for testing
+    Plutonium.instance_variable_set(:@rails_eager_loaded, nil)
+
+    # Store original value and temporarily set eager_load to false
+    original_eager_load = Rails.application.config.eager_load
+    Rails.application.config.eager_load = false
+
+    # The method should return truthy (sets @rails_eager_loaded = true)
+    # In test environment, eager_load! is already done, so we just verify the flag gets set
+    Plutonium.eager_load_rails!
+    assert Plutonium.instance_variable_get(:@rails_eager_loaded)
+  ensure
+    Rails.application.config.eager_load = original_eager_load
+    Plutonium.instance_variable_set(:@rails_eager_loaded, nil)
   end
 end

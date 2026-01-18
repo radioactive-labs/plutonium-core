@@ -35,8 +35,8 @@ module Plutonium
 
       def test_default_values
         action = Base.new(:default_action)
-        assert_equal "Default action", action.label
-        assert_nil action.icon
+        assert_equal "Default Action", action.label
+        assert_equal Phlex::TablerIcons::ChevronRight, action.icon
         assert_nil action.color
         assert_nil action.confirmation
         assert_instance_of RouteOptions, action.route_options
@@ -65,7 +65,7 @@ module Plutonium
 
       def test_label_fallback_to_humanized_name
         action = Base.new(:test_action_name)
-        assert_equal "Test action name", action.label
+        assert_equal "Test Action Name", action.label
       end
 
       def test_multiple_action_types

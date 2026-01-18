@@ -1,17 +1,17 @@
-# Uncomment and update these requires as needed
-require "plutonium"
+# frozen_string_literal: true
 
-require "combustion"
-Combustion.path = "test/internal"
-Combustion.initialize! :all
+# Set the Rails env to test
+ENV["RAILS_ENV"] ||= "test"
+
+# Load the dummy Rails application
+require_relative "dummy/config/environment"
+
+# Ensure database exists and run migrations
+# Ensure migration paths include the absolute paths from Rails config
+ActiveRecord::Migrator.migrations_paths = Rails.application.config.paths["db/migrate"].to_a
+ActiveRecord::Tasks::DatabaseTasks.create_current
+ActiveRecord::Tasks::DatabaseTasks.migrate
 
 require "minitest/autorun"
-# Uncomment if you decide to use spec-style syntax
-# require "minitest/spec"
-
 require "minitest/reporters"
 Minitest::Reporters.use!
-
-# Uncomment and adjust Rails environment setup if needed
-# ENV["RAILS_ENV"] = "test"
-# require File.expand_path("../config/environment", __dir__) if defined?(Rails)

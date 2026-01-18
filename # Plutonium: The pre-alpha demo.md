@@ -43,8 +43,10 @@
   ```ruby
   # packages/dashboard_app/lib/engine.rb
 
-  scope_to_entity User, strategy:  :current_user
-  # add directives above.
+  config.after_initialize do
+    scope_to_entity User, strategy: :current_user
+    # add directives above.
+  end
   ```
 
 - Demonstrate queries

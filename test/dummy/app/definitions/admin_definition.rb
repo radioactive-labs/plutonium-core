@@ -1,0 +1,2 @@
+class AdminDefinition < ::ResourceDefinition
+end
