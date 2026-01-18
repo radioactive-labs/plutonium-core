@@ -10,7 +10,12 @@ Interactions encapsulate business logic into reusable, testable units. They hand
 ## Basic Structure
 
 ```ruby
-class PublishPostInteraction < Plutonium::Resource::Interaction
+# app/interactions/resource_interaction.rb (generated during install)
+class ResourceInteraction < Plutonium::Resource::Interaction
+end
+
+# app/interactions/publish_post_interaction.rb
+class PublishPostInteraction < ResourceInteraction
   # Presentation
   presents label: "Publish",
            icon: Phlex::TablerIcons::Send,
@@ -372,5 +377,6 @@ end
 ## Related Skills
 
 - `definition-actions` - Declaring actions in definitions
+- `forms` - Custom interaction form templates
 - `policy` - Controlling access to actions
 - `resource` - How interactions fit in the architecture

@@ -93,8 +93,10 @@ module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Optional: multi-tenancy
-    scope_to_entity Organization, strategy: :path
+    config.after_initialize do
+      # Optional: multi-tenancy
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 ```

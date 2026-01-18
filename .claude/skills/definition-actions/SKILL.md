@@ -87,8 +87,12 @@ action :name,
 ### Basic Structure
 
 ```ruby
+# app/interactions/resource_interaction.rb (generated during install)
+class ResourceInteraction < Plutonium::Resource::Interaction
+end
+
 # app/interactions/archive_interaction.rb
-class ArchiveInteraction < Plutonium::Resource::Interaction
+class ArchiveInteraction < ResourceInteraction
   presents label: "Archive",
            icon: Phlex::TablerIcons::Archive,
            description: "Archive this record"

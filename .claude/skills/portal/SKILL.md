@@ -26,8 +26,10 @@ module DashboardPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Optional: multi-tenancy
-    scope_to_entity Organization, strategy: :path
+    config.after_initialize do
+      # Optional: multi-tenancy
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 ```
@@ -93,7 +95,10 @@ Entity ID in URL path:
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    scope_to_entity Organization, strategy: :path
+
+    config.after_initialize do
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 ```
@@ -108,7 +113,10 @@ Implement your own lookup method:
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    scope_to_entity Organization, strategy: :current_organization
+
+    config.after_initialize do
+      scope_to_entity Organization, strategy: :current_organization
+    end
   end
 end
 
@@ -335,7 +343,10 @@ end
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    scope_to_entity Organization, strategy: :path
+
+    config.after_initialize do
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 
@@ -343,7 +354,10 @@ end
 module DashboardPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    scope_to_entity Organization, strategy: :path
+
+    config.after_initialize do
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 
@@ -364,6 +378,7 @@ Each portal can:
 ## Related Skills
 
 - `package` - Package overview (features vs portals)
+- `rodauth` - Authentication setup and configuration
 - `connect-resource` - Connecting resources to portals
 - `policy` - Portal-specific policies
 - `definition` - Portal-specific definitions
