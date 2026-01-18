@@ -6,10 +6,25 @@ namespace :release do
     current_version = Plutonium::VERSION
     puts "Current version: #{current_version}"
 
+    # Find the tag to compare against
+    version_tag = "v#{current_version}"
+    tag_exists = system("git rev-parse #{version_tag} >/dev/null 2>&1")
+
+    unless tag_exists
+      # Fall back to most recent tag
+      version_tag = `git describe --tags --abbrev=0 2>/dev/null`.strip
+      if version_tag.empty?
+        puts "No tags found, comparing against initial commit"
+        version_tag = `git rev-list --max-parents=0 HEAD`.strip
+      else
+        puts "Tag v#{current_version} not found, comparing against #{version_tag}"
+      end
+    end
+
     # Check for breaking changes, features, or fixes since last tag
-    breaking = `git log v#{current_version}..HEAD --oneline | grep -i "BREAKING CHANGE"`.strip
-    features = `git log v#{current_version}..HEAD --oneline | grep "^[a-f0-9]* feat"`.strip
-    fixes = `git log v#{current_version}..HEAD --oneline | grep "^[a-f0-9]* fix"`.strip
+    breaking = `git log #{version_tag}..HEAD --oneline | grep -i "BREAKING CHANGE"`.strip
+    features = `git log #{version_tag}..HEAD --oneline | grep "^[a-f0-9]* feat"`.strip
+    fixes = `git log #{version_tag}..HEAD --oneline | grep "^[a-f0-9]* fix"`.strip
 
     major, minor, patch = current_version.split(".").map(&:to_i)
 
