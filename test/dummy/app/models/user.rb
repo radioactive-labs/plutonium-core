@@ -1,5 +1,6 @@
 class User < ResourceRecord
   include Rodauth::Rails.model(:user)
+
   # add concerns above.
 
   # add model configurations above.

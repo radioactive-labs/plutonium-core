@@ -54,7 +54,7 @@ namespace :release do
     package_json_file = "package.json"
     if File.exist?(package_json_file)
       package_content = File.read(package_json_file)
-      updated_package = package_content.gsub(/"version":\s*"[\d.]+"/, %{"version": "#{version}"})
+      updated_package = package_content.gsub(/"version":\s*"[\d.]+"/, %("version": "#{version}"))
       File.write(package_json_file, updated_package)
       puts "✓ Updated #{package_json_file}"
     end

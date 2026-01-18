@@ -166,7 +166,6 @@ class AdminRodauthPlugin < RodauthPlugin
       request.halt unless internal_request?
     end
 
-
     # Validate custom fields in the create account form.
     # before_create_account do
     #   throw_error_status(422, "name", "must be present") if param("name").empty?
