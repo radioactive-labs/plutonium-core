@@ -33,8 +33,8 @@ class InteractionTest < Minitest::Test
   def test_interaction_presents
     interaction_class = Class.new(Plutonium::Resource::Interaction) do
       presents label: "Test Action",
-               icon: Phlex::TablerIcons::Star,
-               description: "A test action"
+        icon: Phlex::TablerIcons::Star,
+        description: "A test action"
     end
 
     assert_equal "Test Action", interaction_class.label

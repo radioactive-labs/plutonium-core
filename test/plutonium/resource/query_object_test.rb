@@ -116,7 +116,7 @@ module Plutonium
 
       def test_define_scope_with_proc
         query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
-          qo.define_scope :recent, -> (scope) { scope.where("created_at > ?", 1.week.ago) }
+          qo.define_scope :recent, ->(scope) { scope.where("created_at > ?", 1.week.ago) }
         end
 
         assert query_object.scope_definitions.key?(:recent)

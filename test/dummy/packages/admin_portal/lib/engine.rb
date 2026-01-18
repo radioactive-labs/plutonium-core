@@ -1,6 +1,7 @@
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
+
     # add concerns above.
 
     config.after_initialize do

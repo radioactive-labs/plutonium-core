@@ -1,5 +1,6 @@
 class Admin < ResourceRecord
   include Rodauth::Rails.model(:admin)
+
   # add concerns above.
 
   # add model configurations above.

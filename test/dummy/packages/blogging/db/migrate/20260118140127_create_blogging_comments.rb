@@ -3,7 +3,7 @@ class CreateBloggingComments < ActiveRecord::Migration[[Rails::VERSION::MAJOR, R
     create_table :blogging_comments do |t|
       t.text :body, null: false
       t.belongs_to :user, null: false, foreign_key: true
-      t.belongs_to :post, null: false, foreign_key: {:to_table=>:blogging_posts}
+      t.belongs_to :post, null: false, foreign_key: {to_table: :blogging_posts}
 
       t.timestamps
     end

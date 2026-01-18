@@ -140,6 +140,7 @@ module Plutonium
       def test_redefining_existing_property
         test_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
         end
 
@@ -169,6 +170,7 @@ module Plutonium
       def test_property_with_block
         test_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
 
           field :with_block, as: :string do
@@ -183,6 +185,7 @@ module Plutonium
       def test_property_block_inheritance
         parent_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
 
           field :parent_field, as: :string do
@@ -204,6 +207,7 @@ module Plutonium
       def test_property_block_override
         parent_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
 
           field :overridden_field, as: :string do
@@ -225,6 +229,7 @@ module Plutonium
       def test_property_without_block
         test_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
 
           field :without_block, as: :string
@@ -237,6 +242,7 @@ module Plutonium
       def test_instance_level_property_with_block
         test_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
         end
 
@@ -251,6 +257,7 @@ module Plutonium
       def test_property_block_inheritance_without_child_block
         parent_class = Class.new do
           include DefineableProps
+
           defineable_prop :field
 
           field :inherited_field, as: :string do

@@ -27,6 +27,7 @@ module Plutonium
       include Plutonium::Definition::Presentable
       include Plutonium::Definition::NestedInputs
       include Plutonium::Interaction::NestedAttributes
+
       # include Plutonium::Interaction::Concerns::WorkflowDSL
 
       class Form < Plutonium::UI::Form::Interaction; end
