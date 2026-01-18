@@ -182,15 +182,15 @@ class PostDefinition < ResourceDefinition
   breadcrumbs true
   show_page_breadcrumbs false
 
-  # Custom page classes
-  class IndexPage < Plutonium::UI::Page::Index
+  # Custom page classes (inherit from parent's nested class)
+  class IndexPage < IndexPage
     def view_template(&block)
       div(class: "custom-header") { h1 { "Custom" } }
       super(&block)
     end
   end
 
-  class Form < Plutonium::UI::Form::Resource
+  class Form < Form
     def form_template
       div(class: "grid grid-cols-2") do
         render field(:title).input_tag
@@ -215,3 +215,4 @@ end
 - `definition-fields` - Fields, inputs, displays, columns
 - `definition-actions` - Actions and interactions
 - `definition-query` - Search, filters, scopes, sorting
+- `views` - Custom page, form, display, and table classes

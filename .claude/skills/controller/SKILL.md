@@ -219,7 +219,10 @@ When a portal is scoped to an entity:
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    scope_to_entity Organization, strategy: :path
+
+    config.after_initialize do
+      scope_to_entity Organization, strategy: :path
+    end
   end
 end
 ```
@@ -294,4 +297,6 @@ end
 - `resource` - How controllers fit in the resource architecture
 - `policy` - Authorization (used by controllers)
 - `definition-actions` - Interactive actions (preferred over custom controller actions)
+- `views` - Custom page, form, display, and table classes
+- `nested-resources` - Parent/child routes and scoping
 - `model` - Resource models

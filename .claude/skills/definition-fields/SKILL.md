@@ -321,16 +321,92 @@ column :amount, align: :end     # Right
 
 ## Nested Inputs
 
-For `accepts_nested_attributes_for`:
+Render inline forms for associated records. Requires `accepts_nested_attributes_for` on the model.
+
+### Model Setup
+
+```ruby
+class Post < ResourceRecord
+  has_many :comments
+  has_one :metadata
+
+  accepts_nested_attributes_for :comments, allow_destroy: true, limit: 10
+  accepts_nested_attributes_for :metadata, update_only: true
+end
+```
+
+### Basic Declaration
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  nested_input :comments do
-    input :body, as: :text
-    input :author, as: :association
+  # Block syntax
+  nested_input :comments do |n|
+    n.input :body, as: :text
+    n.input :author_name
   end
+
+  # Using another definition
+  nested_input :metadata, using: PostMetadataDefinition, fields: %i[seo_title seo_description]
 end
 ```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `limit` | Max records (auto-detected from model, default: 10) |
+| `allow_destroy` | Show delete checkbox (auto-detected from model) |
+| `update_only` | Hide "Add" button, only edit existing |
+| `description` | Help text above the section |
+| `condition` | Proc to show/hide section |
+| `using` | Reference another Definition class |
+| `fields` | Which fields to render from the definition |
+
+```ruby
+nested_input :amenities,
+  allow_destroy: true,
+  limit: 20,
+  description: "Add property amenities" do |n|
+    n.input :name
+    n.input :icon, as: :select, choices: ICONS
+  end
+```
+
+### Singular Associations
+
+For `has_one` and `belongs_to`, limit is automatically 1:
+
+```ruby
+nested_input :profile do |n|  # has_one
+  n.input :bio
+  n.input :website
+end
+```
+
+### Conditional Nested Inputs
+
+```ruby
+nested_input :shipping_address,
+  condition: -> { object.requires_shipping? } do |n|
+    n.input :street
+    n.input :city
+  end
+```
+
+### How It Works
+
+1. Renders a template (hidden) for new records
+2. Renders fieldsets for existing records
+3. Stimulus controller handles Add/Remove
+4. `_destroy` checkbox marks records for deletion
+5. Parameters submitted as `model[association_attributes][id][field]`
+
+### Gotchas
+
+- Model must have `accepts_nested_attributes_for`
+- For custom class names, use `class_name:` in both model and `using:` in definition
+- `update_only: true` hides the Add button
+- Limit is enforced in UI (Add button hidden when reached)
 
 ## File Uploads
 
@@ -394,3 +470,5 @@ Inside `condition` procs and `input` blocks:
 - `definition` - Overview and structure
 - `definition-actions` - Actions and interactions
 - `definition-query` - Search, filters, scopes
+- `forms` - Custom form templates and field builders
+- `views` - Custom page and display templates

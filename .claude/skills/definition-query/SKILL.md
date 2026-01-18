@@ -144,17 +144,39 @@ end
 
 ### Inline Scope
 
-```ruby
-scope :recent, -> { where('created_at > ?', 1.week.ago) }
-scope :this_month, -> { where(created_at: Time.current.all_month) }
-```
-
-### With Context
+Use block syntax with the scope passed as an argument:
 
 ```ruby
-scope :my_posts, -> { where(author: current_user) }
-scope :my_team, -> { where(team: current_user.team) }
+scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }
+scope(:this_month) { |scope| scope.where(created_at: Time.current.all_month) }
 ```
+
+### With Controller Context
+
+Inline scopes have access to controller context like `current_user`:
+
+```ruby
+scope(:mine) { |scope| scope.where(author: current_user) }
+scope(:my_team) { |scope| scope.where(team: current_user.team) }
+```
+
+### Default Scope
+
+Set a scope as default to apply it when no scope is explicitly selected:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  scope :published, default: true  # Applied by default
+  scope :draft
+  scope :archived
+end
+```
+
+When a default scope is set:
+- The default scope is applied on initial page load
+- The default scope button is highlighted (not "All")
+- Clicking "All" shows all records without any scope filter
+- URL without scope param uses the default; URL with `?q[scope]=` uses "All"
 
 ## Sorting
 
@@ -216,9 +238,9 @@ end
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  scope :today, -> { where(created_at: Time.current.all_day) }
-  scope :this_week, -> { where(created_at: Time.current.all_week) }
-  scope :this_month, -> { where(created_at: Time.current.all_month) }
+  scope(:today) { |scope| scope.where(created_at: Time.current.all_day) }
+  scope(:this_week) { |scope| scope.where(created_at: Time.current.all_week) }
+  scope(:this_month) { |scope| scope.where(created_at: Time.current.all_month) }
 end
 ```
 
@@ -283,11 +305,11 @@ class PostDefinition < ResourceDefinition
   filter :category, with: Plutonium::Query::Filters::Text, predicate: :eq
   filter :title, with: Plutonium::Query::Filters::Text, predicate: :contains
 
-  # Quick scopes
+  # Quick scopes (reference model scopes)
   scope :published
   scope :draft
   scope :featured
-  scope :recent, -> { where('created_at > ?', 1.week.ago) }
+  scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }
 
   # Sortable columns
   sorts :title, :created_at, :view_count, :published_at

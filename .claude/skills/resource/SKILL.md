@@ -269,7 +269,13 @@ end
 - `definition-query` - Search, filters, scopes, sorting
 - `policy` - Authorization and permissions
 - `controller` - Controller customization
+- `views` - Custom pages, displays, tables using Phlex
+- `forms` - Custom form templates and field builders
+- `assets` - TailwindCSS and component theming
 - `package` - Feature and portal packages
 - `portal` - Portal configuration and entity scoping
+- `nested-resources` - Parent/child routes and scoping
+- `installation` - Setting up Plutonium
+- `rodauth` - Authentication setup
 - `create-resource` - Scaffold generator details
 - `connect-resource` - Portal connection details
