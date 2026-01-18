@@ -1,7 +1,7 @@
 {
   "name": "@radioactive-labs/plutonium",
   "version": "0.34.1",
-  "description": "Build production-ready Rails apps in hours, not weeks. Convention-driven, fully customizable, AI-ready.",
+  "description": "Build production-ready Rails apps in minutes, not days. Convention-driven, fully customizable, AI-ready.",
   "type": "module",
   "main": "src/js/core.js",
   "files": [
