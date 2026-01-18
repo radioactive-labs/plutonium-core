@@ -1,8 +1,39 @@
-## [0.33.1] - 2026-01-14
+## [0.34.0] - 2026-01-18
+
+### 🚀 Features
+
+- *(generators)* Configure default_url_options via RAILS_DEFAULT_URL env var
+- *(generators)* Add pu:skills:sync to install Claude Code skills
+- *(query)* Execute adhoc blocks in controller context
+- *(railtie)* Map ActionPolicy::Unauthorized to 403 Forbidden
+- *(query)* Add default scope support for resource queries
 
 ### 🐛 Bug Fixes
 
 - *(controllers)* Handle turbo_stream format in CRUD and interactive actions
+- *(generators)* Support nullable syntax with type options
+- *(generators)* Prevent overwriting existing url_options configuration
+- *(generators)* Normalize reference names before comparing namespaces
+- *(package)* Include engine migrations in programmatic migration paths
+- *(release)* Handle missing version tag in next_version task
+
+### 📚 Documentation
+
+- Add Claude Code skills and improve generator documentation
+- Add definition skills and update module documentation
+- Add comprehensive Claude Code skills for resources
+- Add package and portal skills
+- Add interaction skill for business logic actions
+- *(skills)* Add new Claude Code skills and enhance existing ones
+
+### 🎨 Styling
+
+- Standardrb linting
+
+### ⚙️ Miscellaneous Tasks
+
+- Overhaul documentation structure and test infrastructure
+- Move brakeman config to config/ and update ignore list
 ## [0.33.0] - 2026-01-12
 
 ### ◀️ Revert
