@@ -7,7 +7,7 @@ const base = "/plutonium-core/"
 export default defineConfig(withMermaid({
   base: base,
   title: "Plutonium",
-  description: "The Ultimate Rapid Application Development Toolkit (RADKit) for Rails",
+  description: "Rapid Application Development for Rails",
   head: [["link", { rel: "icon", href: `${base}favicon.ico` }]],
   ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
@@ -18,77 +18,162 @@ export default defineConfig(withMermaid({
     },
     nav: [
       { text: "Home", link: "/" },
-      { text: "Guide", link: "/guide/introduction/01-what-is-plutonium" },
-      { text: "Tutorial", link: "/guide/tutorial/01-project-setup" },
-      { text: "Modules", link: "/modules/" },
-      { text: "Demo", link: "https://plutonium-app.onrender.com/" }
+      { text: "Getting Started", link: "/getting-started/" },
+      { text: "Guides", link: "/guides/" },
+      { text: "Reference", link: "/reference/" },
+      { text: "Cookbook", link: "/cookbook/" },
+      { text: "Demo", link: "https://github.com/radioactive-labs/plutonium-core/tree/master/test/dummy" }
     ],
     sidebar: {
-      '/guide/': [
+      '/getting-started/': [
         {
           text: "Getting Started",
           items: [
-            { text: "Installation", link: "/guide/getting-started/01-installation" },
+            { text: "Overview", link: "/getting-started/" },
+            { text: "Installation", link: "/getting-started/installation" },
           ]
         },
         {
-          text: "Introduction",
-          items: [
-            { text: "What is Plutonium?", link: "/guide/introduction/01-what-is-plutonium" },
-            { text: "Core Concepts", link: "/guide/introduction/02-core-concepts" },
-          ]
-        },
-        {
-          text: "Tutorial (Building a Blog)",
+          text: "Tutorial: Building a Blog",
           collapsed: false,
           items: [
-            { text: "1. Project Setup", link: "/guide/tutorial/01-project-setup" },
-            { text: "2. Creating a Feature Package", link: "/guide/tutorial/02-creating-a-feature-package" },
-            { text: "3. Defining Resources", link: "/guide/tutorial/03-defining-resources" },
-            { text: "4. Creating a Portal", link: "/guide/tutorial/04-creating-a-portal" },
-            { text: "5. Customizing the UI", link: "/guide/tutorial/05-customizing-the-ui" },
-            { text: "6. Adding Custom Actions", link: "/guide/tutorial/06-adding-custom-actions" },
-            { text: "7. Implementing Authorization", link: "/guide/tutorial/07-implementing-authorization" },
-          ]
-        },
-        {
-          text: "Deep Dive",
-          items: [
-            { text: "Resources", link: "/guide/deep-dive/resources" },
-            { text: "Authorization", link: "/guide/deep-dive/authorization" },
-            { text: "Multitenancy", link: "/guide/deep-dive/multitenancy" },
-            { text: "Modules", link: "/modules/" },
-          ]
-        },
-        {
-          text: "Developer Tools",
-          items: [
-            { text: "Claude Code Guide", link: "/guide/claude-code-guide" },
+            { text: "Overview", link: "/getting-started/tutorial/" },
+            { text: "1. Project Setup", link: "/getting-started/tutorial/01-setup" },
+            { text: "2. First Resource", link: "/getting-started/tutorial/02-first-resource" },
+            { text: "3. Authentication", link: "/getting-started/tutorial/03-authentication" },
+            { text: "4. Authorization", link: "/getting-started/tutorial/04-authorization" },
+            { text: "5. Custom Actions", link: "/getting-started/tutorial/05-custom-actions" },
+            { text: "6. Nested Resources", link: "/getting-started/tutorial/06-nested-resources" },
+            { text: "7. Customizing UI", link: "/getting-started/tutorial/07-customizing-ui" },
           ]
         }
       ],
-      '/modules/': [
+      '/concepts/': [
         {
-          text: "Modules",
+          text: "Core Concepts",
           items: [
-            { text: "Overview", link: "/modules/" },
-            { text: "Action", link: "/modules/action" },
-            { text: "Authentication", link: "/modules/authentication" },
-            { text: "Configuration", link: "/modules/configuration" },
-            { text: "Core", link: "/modules/core" },
-            { text: "Definition", link: "/modules/definition" },
-            { text: "Display", link: "/modules/display" },
-            { text: "Form", link: "/modules/form" },
-            { text: "Generator", link: "/modules/generator" },
-            { text: "Interaction", link: "/modules/interaction" },
-            { text: "Package", link: "/modules/package" },
-            { text: "Policy", link: "/modules/policy" },
-            { text: "Portal", link: "/modules/portal" },
-            { text: "Query", link: "/modules/query" },
-            { text: "Resource Record", link: "/modules/resource_record" },
-            { text: "Routing", link: "/modules/routing" },
-            { text: "Table", link: "/modules/table" },
-            { text: "UI", link: "/modules/ui" },
+            { text: "Overview", link: "/concepts/" },
+            { text: "Architecture", link: "/concepts/architecture" },
+            { text: "Resources", link: "/concepts/resources" },
+            { text: "Packages & Portals", link: "/concepts/packages-portals" },
+            { text: "Auto-Detection", link: "/concepts/auto-detection" },
+          ]
+        }
+      ],
+      '/guides/': [
+        {
+          text: "Guides",
+          items: [
+            { text: "Overview", link: "/guides/" },
+          ]
+        },
+        {
+          text: "Setup & Resources",
+          items: [
+            { text: "Adding Resources", link: "/guides/adding-resources" },
+            { text: "Creating Packages", link: "/guides/creating-packages" },
+          ]
+        },
+        {
+          text: "Auth",
+          items: [
+            { text: "Authentication", link: "/guides/authentication" },
+            { text: "Authorization", link: "/guides/authorization" },
+          ]
+        },
+        {
+          text: "Features",
+          items: [
+            { text: "Custom Actions", link: "/guides/custom-actions" },
+            { text: "Nested Resources", link: "/guides/nested-resources" },
+            { text: "Multi-tenancy", link: "/guides/multi-tenancy" },
+            { text: "Search & Filtering", link: "/guides/search-filtering" },
+          ]
+        },
+        {
+          text: "Customization",
+          items: [
+            { text: "Theming", link: "/guides/theming" },
+          ]
+        }
+      ],
+      '/reference/': [
+        {
+          text: "Reference",
+          items: [
+            { text: "Overview", link: "/reference/" },
+          ]
+        },
+        {
+          text: "Model",
+          collapsed: false,
+          items: [
+            { text: "Model", link: "/reference/model/" },
+            { text: "Features", link: "/reference/model/features" },
+          ]
+        },
+        {
+          text: "Definition",
+          collapsed: false,
+          items: [
+            { text: "Definition", link: "/reference/definition/" },
+            { text: "Fields", link: "/reference/definition/fields" },
+            { text: "Actions", link: "/reference/definition/actions" },
+            { text: "Query", link: "/reference/definition/query" },
+          ]
+        },
+        {
+          text: "Policy",
+          collapsed: false,
+          items: [
+            { text: "Policy", link: "/reference/policy/" },
+          ]
+        },
+        {
+          text: "Controller",
+          collapsed: false,
+          items: [
+            { text: "Controller", link: "/reference/controller/" },
+          ]
+        },
+        {
+          text: "Interaction",
+          collapsed: false,
+          items: [
+            { text: "Interaction", link: "/reference/interaction/" },
+          ]
+        },
+        {
+          text: "Views",
+          collapsed: false,
+          items: [
+            { text: "Views", link: "/reference/views/" },
+            { text: "Forms", link: "/reference/views/forms" },
+          ]
+        },
+        {
+          text: "Assets",
+          collapsed: false,
+          items: [
+            { text: "Assets", link: "/reference/assets/" },
+          ]
+        },
+        {
+          text: "Infrastructure",
+          collapsed: false,
+          items: [
+            { text: "Generators", link: "/reference/generators/" },
+            { text: "Portal", link: "/reference/portal/" },
+          ]
+        }
+      ],
+      '/cookbook/': [
+        {
+          text: "Cookbook",
+          items: [
+            { text: "Overview", link: "/cookbook/" },
+            { text: "Blog Application", link: "/cookbook/blog" },
+            { text: "SaaS Application", link: "/cookbook/saas" },
           ]
         }
       ]

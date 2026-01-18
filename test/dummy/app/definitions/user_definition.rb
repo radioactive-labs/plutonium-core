@@ -1,0 +1,2 @@
+class UserDefinition < ::ResourceDefinition
+end

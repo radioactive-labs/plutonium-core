@@ -1,0 +1,2 @@
+class PlutoniumController < ApplicationController
+end

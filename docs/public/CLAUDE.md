@@ -45,7 +45,7 @@ bin/dev  # Visit http://localhost:3000
 - **Entity Scoping**: Built-in multi-tenancy support
 
 ### 2. Key Components
-- **Models**: ActiveRecord + `Plutonium::Resource::Record` for enhanced functionality
+- **Models**: ActiveRecord with `ResourceRecord` base class for enhanced functionality
 - **Definitions**: Declarative UI configuration (how fields render)
 - **Policies**: Authorization control (what users can access)
 - **Interactions**: Business logic encapsulation (what actions do)
@@ -466,13 +466,15 @@ Plutonium provides powerful multi-tenancy through Entity Scoping, which automati
 #### 1. Configure Portal Engine
 ```ruby
 # In packages/admin_portal/lib/engine.rb
-scope_to_entity Organization, strategy: :path  # URLs: /organizations/:organization_id/posts
+config.after_initialize do
+  scope_to_entity Organization, strategy: :path  # URLs: /organizations/:organization_id/posts
 
-# Custom strategy (subdomain-based)
-scope_to_entity Organization, strategy: :current_organization  # URLs: /posts on acme.app.com
+  # Custom strategy (subdomain-based)
+  scope_to_entity Organization, strategy: :current_organization  # URLs: /posts on acme.app.com
 
-# Custom parameter name
-scope_to_entity Client, strategy: :path, param_key: :client_slug  # URLs: /clients/:client_slug/posts
+  # Custom parameter name
+  scope_to_entity Client, strategy: :path, param_key: :client_slug  # URLs: /clients/:client_slug/posts
+end
 ```
 
 #### 2. Implement Custom Strategy Methods
