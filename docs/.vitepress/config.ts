@@ -11,14 +11,14 @@ export default defineConfig(withMermaid({
   head: [
     ["link", { rel: "icon", href: `${base}favicon.ico` }],
     ["meta", { property: "og:type", content: "website" }],
-    ["meta", { property: "og:title", content: "Plutonium" }],
+    ["meta", { property: "og:title", content: "Plutonium - Build Production-Ready Rails Apps in Hours" }],
     ["meta", { property: "og:description", content: "Build production-ready Rails applications in hours, not weeks. Convention-driven, fully customizable. Built for the AI era." }],
-    ["meta", { property: "og:image", content: "https://radioactive-labs.github.io/plutonium-core/plutonium.png" }],
+    ["meta", { property: "og:image", content: "https://radioactive-labs.github.io/plutonium-core/og-image.png" }],
     ["meta", { property: "og:url", content: "https://radioactive-labs.github.io/plutonium-core/" }],
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
-    ["meta", { name: "twitter:title", content: "Plutonium" }],
+    ["meta", { name: "twitter:title", content: "Plutonium - Build Production-Ready Rails Apps in Hours" }],
     ["meta", { name: "twitter:description", content: "Build production-ready Rails applications in hours, not weeks. Convention-driven, fully customizable. Built for the AI era." }],
-    ["meta", { name: "twitter:image", content: "https://radioactive-labs.github.io/plutonium-core/plutonium.png" }],
+    ["meta", { name: "twitter:image", content: "https://radioactive-labs.github.io/plutonium-core/og-image.png" }],
   ],
   ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
