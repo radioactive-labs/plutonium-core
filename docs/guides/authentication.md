@@ -19,7 +19,8 @@ Plutonium uses [Rodauth](http://rodauth.jeremyevans.net/) via [rodauth-rails](ht
 The Plutonium template installs Rodauth automatically:
 
 ```bash
-rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new myapp -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
 ### Existing Applications

@@ -7,7 +7,8 @@ This guide covers installing Plutonium in both new and existing Rails applicatio
 The fastest way to get started is with our application template:
 
 ```bash
-rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new myapp -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
 This template:

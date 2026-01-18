@@ -381,7 +381,8 @@ rails generate pu:eject:shell
 
 ```bash
 # Create Rails app with Plutonium template
-rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new myapp -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 
 # Or add to existing app
 rails generate pu:core:install

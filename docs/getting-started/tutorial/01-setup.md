@@ -7,7 +7,8 @@ In this chapter, you'll create a new Plutonium application and explore its struc
 Open your terminal and run:
 
 ```bash
-rails new blog -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new blog -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
 This creates a new Rails application with Plutonium pre-configured.
