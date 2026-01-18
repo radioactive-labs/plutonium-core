@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Stefan Froelich"]
   spec.email = ["sfroelich01@gmail.com"]
 
-  spec.summary = "Build production-ready Rails apps in hours, not weeks"
+  spec.summary = "Build production-ready Rails apps in minutes, not days"
   spec.description = "Plutonium is a Rapid Application Development toolkit for Rails. " \
                      "Convention-driven and fully customizable, it adds application-level concepts like resources, policies, " \
                      "definitions, and portals that make building complex apps faster. Built for the AI era with Claude Code skills."
