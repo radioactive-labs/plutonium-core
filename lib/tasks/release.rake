@@ -162,6 +162,13 @@ namespace :release do
 
     puts "Starting release workflow for v#{version}..."
 
+    # Check npm authentication early
+    unless system("npm whoami > /dev/null 2>&1")
+      puts "Error: You are not logged in to npm. Please run: npm login"
+      exit 1
+    end
+    puts "✓ npm authenticated as: #{`npm whoami`.strip}"
+
     # Check for uncommitted changes
     unless `git status --porcelain`.strip.empty?
       puts "Error: You have uncommitted changes. Please commit or stash them first."
