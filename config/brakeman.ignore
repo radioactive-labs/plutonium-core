@@ -1,0 +1,239 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "271a450b0b138f9d6bddd60e7b4df305530443e5208d1a3b1f87d1218f553af0",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 41,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where.not(\"#{key} LIKE ?\", \"%#{sanitize_like(query)}%\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is sanitized and parameterized."
+    },
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "44b743fbf29936c657fcbd797826e3a9b826dce80eb82b93292505b355407f74",
+      "check_name": "Evaluation",
+      "message": "Dynamic string evaluated as code",
+      "file": "lib/plutonium/definition/defineable_props.rb",
+      "line": 38,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "class_eval(\"            def self.#{property_name}(name, **options, &block)\\n              #{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}[name] = { options:, block:}.compact\\n            end\\n\\n            def self.#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}\\n              @#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"} ||= {}\\n            end\\n\\n            def #{property_name}(name, **options, &block)\\n              instance_#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}[name] = { options:, block:}.compact\\n            end\\n\\n            def #{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}\\n              @merged_#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"} ||= begin\\n                customize_#{property_name.to_s.pluralize.to_sym}\\n                merged = {}\\n                self.class.#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}.each do |name, data|\\n                  merged[name] = {\\n                    options: data[:options].dup,\\n                    block: data[:block]\\n                  }.compact\\n                end\\n                instance_#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}.each do |name, data|\\n                  if merged.key?(name)\\n                    merged[name][:options].merge!(data[:options])\\n                    merged[name][:block] = data[:block] if data[:block]\\n                  else\\n                    merged[name] = data\\n                  end\\n                  # merged[name].compact!\\n                end\\n                Plutonium::Lib::DeepFreezer.freeze(merged)\\n              end\\n            end\\n\\n            def customize_#{property_name.to_s.pluralize.to_sym}\\n              # Override in subclass to add or modify #{property_name.to_s.pluralize.to_sym}\\n            end\\n\\n            private\\n\\n            def instance_#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"}\\n              @instance_#{:\"defined_#{property_name.to_s.pluralize.to_sym}\"} ||= {}\\n            end\\n\", \"lib/plutonium/definition/defineable_props.rb\", 39)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Definition::DefineableProps",
+        "method": "defineable_prop"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "cwe_id": [
+        913,
+        95
+      ],
+      "note": "False positive: Metaprogramming DSL for definition properties. 'property_name' is a developer-controlled symbol from defineable_prop(:field) calls, not user input."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "518d4c5f2010311d92fb26011b5192b9c445f68b2705c67ed7606a3a7290d872",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 37,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where(\"#{key} LIKE ?\", \"%#{sanitize_like(query)}\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is sanitized and parameterized."
+    },
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "8ad6a5b14be66113bd7655b8e01de4b18eb6d3026d59afa208335c3f8a578938",
+      "check_name": "Evaluation",
+      "message": "Dynamic string evaluated as code",
+      "file": "lib/plutonium/resource/record/associations.rb",
+      "line": 35,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "Module.new.module_eval(\"              extend ActiveSupport::Concern\\n\\n              #{generate_sgid_methods(association_type, name)}\\n\\n              define_singleton_method(:to_s) { \\\"Plutonium::Resource::Record::Associations::#{association_type.to_s.camelize}(:#{name})\\\" }\\n              define_singleton_method(:inspect) { \\\"Plutonium::Resource::Record::Associations::#{association_type.to_s.camelize}(:#{name})\\\" }\\n\", \"lib/plutonium/resource/record/associations.rb\", 36)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Resource::Record::Associations",
+        "method": "include_secure_association_methods"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "cwe_id": [
+        913,
+        95
+      ],
+      "note": "False positive: Metaprogramming to generate SGID methods. 'association_type' and 'name' come from Rails association declarations (belongs_to, has_many), not user input."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "8dfe5c4b519a9f0b86a541c70c54e42e4ad9aff7e2be6b1df88c9c46441f9fa1",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 33,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where.not(\"#{key} LIKE ?\", query.tr(\"*\", \"%\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is parameterized."
+    },
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "a14cf69ee743ba0aa405725f018c186d6fdfa3f3f57a381613de1b2048621170",
+      "check_name": "Evaluation",
+      "message": "Dynamic string evaluated as code",
+      "file": "lib/plutonium/auth/rodauth.rb",
+      "line": 6,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "Module.new.module_eval(\"          extend ActiveSupport::Concern\\n\\n          included do\\n            helper_method :current_user\\n            helper_method :logout_url\\n          end\\n\\n          private\\n\\n          def rodauth(name = :#{name})\\n            instance = super(name)\\n            instance.url_options = default_url_options.presence\\n            instance\\n          end\\n\\n          def current_user\\n            rodauth.rails_account\\n          end\\n\\n          def logout_url\\n            rodauth.logout_path\\n          end\\n\\n          define_singleton_method(:to_s) { \\\"Plutonium::Auth::Rodauth(:#{name})\\\" }\\n          define_singleton_method(:inspect) { \\\"Plutonium::Auth::Rodauth(:#{name})\\\" }\\n\", \"lib/plutonium/auth/rodauth.rb\", 7)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Auth::Rodauth",
+        "method": "s(:self).for"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "cwe_id": [
+        913,
+        95
+      ],
+      "note": "False positive: Metaprogramming to generate auth module. 'name' is the Rodauth account name symbol from Plutonium::Auth::Rodauth(:user) calls, not user input."
+    },
+    {
+      "warning_type": "Dangerous Eval",
+      "warning_code": 13,
+      "fingerprint": "ac51d516bdbc88a0a624795dad1b3efc1d2744b3f2d7be7feb67e0b5cebab763",
+      "check_name": "Evaluation",
+      "message": "Dynamic string evaluated as code",
+      "file": "lib/plutonium/models/has_cents.rb",
+      "line": 134,
+      "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
+      "code": "class_eval(\"            # Getter method for the decimal representation of the cents value.\\n            #\\n            # @return [BigDecimal, nil] The decimal value or nil if cents_name is not present.\\n            def #{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym)}\\n              #{cents_name.to_sym}.to_d / #{rate} if #{cents_name.to_sym}.present?\\n            end\\n\\n            # Setter method for the decimal representation of the cents value.\\n            #\\n            # @param value [Numeric, nil] The decimal value to be set.\\n            def #{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym)}=(value)\\n              self.#{cents_name.to_sym} = begin\\n                (BigDecimal(value.to_s) * #{rate}).to_i if value.present?\\n              rescue ArgumentError\\n                nil\\n              end\\n            end\\n\\n            # Mark decimal field as invalid if cents field is not valid\\n            after_validation do\\n              next unless errors[#{cents_name.to_sym.inspect}].present?\\n\\n              errors.add(#{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym).inspect}, :invalid)\\n            end\\n\", \"lib/plutonium/models/has_cents.rb\", 135)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Models::HasCents::ClassMethods",
+        "method": "has_cents"
+      },
+      "user_input": null,
+      "confidence": "Weak",
+      "cwe_id": [
+        913,
+        95
+      ],
+      "note": "False positive: Metaprogramming to generate cents accessor methods. 'cents_name' is a developer-controlled column name from has_cents(:price_cents) calls, not user input."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "afed6c7afaebbaa728ff00e57bb65c966487b639ce86dffbdd0ccdba17d71cb4",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 35,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where(\"#{key} LIKE ?\", \"#{sanitize_like(query)}%\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is sanitized and parameterized."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "b29525bf43d1696a7d20fdc6141a163199345bd32f6ac5667e9051ead7d0594e",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 39,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where(\"#{key} LIKE ?\", \"%#{sanitize_like(query)}%\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is sanitized and parameterized."
+    },
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "ca69d5ed79a379a2bc2d94d18662967f6d9e2af05d49bb9feb8be4de83a14035",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "lib/plutonium/query/filters/text.rb",
+      "line": 31,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "scope.where(\"#{key} LIKE ?\", query.tr(\"*\", \"%\"))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Query::Filters::Text",
+        "method": "apply"
+      },
+      "user_input": "key",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is parameterized."
+    }
+  ],
+  "brakeman_version": "7.1.1"
+}

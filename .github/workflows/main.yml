@@ -26,6 +26,6 @@ jobs:
       - name: Format ruby
         run: bundle exec standardrb
       - name: Analyze ruby
-        run: bundle exec brakeman -i brakeman.ignore
+        run: bundle exec brakeman -i config/brakeman.ignore --no-pager
       - name: Audit bundle
         run: bundle exec bundle-audit
