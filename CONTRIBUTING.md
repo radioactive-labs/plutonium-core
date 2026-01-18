@@ -92,29 +92,83 @@ git push origin main --tags
 # 4. GitHub Actions will automatically publish to RubyGems
 ```
 
-## Version Bumping Rules
-
-Following semantic versioning:
-
-- **MAJOR** (X.0.0): Breaking changes
-- **MINOR** (0.X.0): New features (backwards compatible)
-- **PATCH** (0.0.X): Bug fixes (backwards compatible)
-
-The automation determines the version bump based on commits since the last tag:
-- Any commit with `BREAKING CHANGE:` or `!` after type → MAJOR
-- Any `feat:` commits → MINOR
-- Any `fix:` commits → PATCH
-
 ## Development Setup
 
+### Prerequisites
+
+- Ruby 3.2+
+- Node.js 18+
+- PostgreSQL (for tests)
+
+### Install Dependencies
+
 ```bash
-# Install dependencies
 bundle install
+npm install
+```
 
-# Run tests
-bundle exec rspec
+### Environment
 
-# Install git-cliff for changelog generation (optional)
+Set this when working on Plutonium:
+
+```bash
+export PLUTONIUM_DEV=1
+```
+
+This uses local assets and enables hot reloading.
+
+### Building Assets
+
+Frontend source is in `src/`. When making JS or CSS changes:
+
+```bash
+# Watch mode - keeps rebuilding as you edit
+npm run dev
+
+# Production build - run before committing
+npm run build
+```
+
+### Running Tests
+
+Tests run via [Appraisal](https://github.com/thoughtbot/appraisal) against multiple Rails versions:
+
+```bash
+# Full test suite (all Rails versions)
+bundle exec appraisal rake test
+
+# Specific Rails version
+bundle exec appraisal rails-8.1 rake test
+
+# Specific test file
+bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/resource/policy_test.rb
+```
+
+Available appraisals: `rails-7`, `rails-8.0`, `rails-8.1`
+
+### Testing Generators
+
+Use the dummy app:
+
+```bash
+cd test/dummy
+rails g pu:res:scaffold TestModel name:string --dest=main_app
+rails db:migrate
+bin/dev
+```
+
+### Documentation
+
+```bash
+cd docs
+pnpm install
+pnpm dev          # Preview at localhost:5173
+pnpm build        # Check for errors
+```
+
+### Changelog Generation (optional)
+
+```bash
 brew install git-cliff  # macOS
 # or
 cargo install git-cliff  # via Rust
@@ -125,9 +179,9 @@ cargo install git-cliff  # via Rust
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
 3. Make your changes with conventional commits
-4. Run tests: `bundle exec rspec`
-5. Push and create a pull request
-6. The PR title should also follow conventional commit format
+4. Run tests: `bundle exec appraisal rake test`
+5. Build assets: `npm run build`
+6. Push and create a pull request
 
 ## Questions?
 
