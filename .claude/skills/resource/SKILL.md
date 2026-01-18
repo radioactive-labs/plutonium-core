@@ -91,13 +91,13 @@ rails g pu:res:conn Post --dest=admin_portal
 Resources must be connected to a portal to be accessible:
 
 ```bash
-rails g pu:res:conn Post --portal AdminPortal
+rails g pu:res:conn Post --dest=admin_portal
 ```
 
 This:
-- Registers the resource in the portal
-- Creates a route
-- Optionally creates portal-specific definition override
+- Registers the resource in portal routes
+- Creates portal-specific controller
+- Creates portal-specific policy with attribute permissions
 
 See `connect-resource` skill for details.
 
@@ -253,8 +253,8 @@ end
 
 ## Workflow Summary
 
-1. **Generate** - `rails g pu:res:scaffold Model attributes...`
-2. **Connect** - `rails g pu:res:conn Model --portal PortalName`
+1. **Generate** - `rails g pu:res:scaffold Model attributes... --dest=main_app`
+2. **Connect** - `rails g pu:res:conn Model --dest=portal_name`
 3. **Customize** - Edit definition/policy as needed (model rarely needs changes)
 4. **Override per portal** - Create portal-specific definitions when needed
 

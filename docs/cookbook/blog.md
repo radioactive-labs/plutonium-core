@@ -389,17 +389,16 @@ end
 ```bash
 # Generate the structure
 rails generate pu:pkg:package blogging
-rails generate pu:res:scaffold Post title:string slug:string body:text published:boolean --package blogging
-rails generate pu:res:scaffold Comment body:text approved:boolean post:belongs_to --package blogging
-rails generate pu:res:scaffold Category name:string slug:string --package blogging
+rails generate pu:res:scaffold Post title:string slug:string body:text published:boolean --dest=blogging
+rails generate pu:res:scaffold Comment body:text approved:boolean post:belongs_to --dest=blogging
+rails generate pu:res:scaffold Category name:string slug:string --dest=blogging
 
 # Create portals
 rails generate pu:pkg:portal admin
 rails generate pu:pkg:portal public
 
-# Connect resources
-rails generate pu:res:conn Post --package blogging --portal admin
-rails generate pu:res:conn Comment --package blogging --portal admin --parent post
+# Connect resources to portal
+rails generate pu:res:conn Blogging::Post Blogging::Comment Blogging::Category --dest=admin_portal
 
 rails db:migrate
 ```

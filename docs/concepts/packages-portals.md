@@ -51,7 +51,7 @@ end
 ### Adding Resources to a Feature Package
 
 ```bash
-rails generate pu:res:scaffold Post title:string body:text --package blogging
+rails generate pu:res:scaffold Post title:string body:text --dest=blogging
 ```
 
 Resources are namespaced under the package:
@@ -126,13 +126,13 @@ end
 ### Connecting Resources to Portals
 
 ```bash
-rails generate pu:res:conn Post --package blogging --portal admin
+rails generate pu:res:conn Blogging::Post --dest=admin_portal
 ```
 
 This:
-1. Creates portal-specific routes
-2. Optionally creates portal-specific controller
-3. Registers the resource with the portal
+1. Registers the resource in portal routes
+2. Creates portal-specific controller
+3. Creates portal-specific policy with attribute permissions
 
 ## Multiple Portals
 
