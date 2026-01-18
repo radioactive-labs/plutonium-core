@@ -198,8 +198,8 @@ end
   <h2>Ready to Build Faster?</h2>
   <p>Get a complete admin interface running in under 5 minutes.</p>
   <div class="cta-buttons">
-    <a href="/getting-started/" class="cta-primary">Get Started</a>
-    <a href="/getting-started/tutorial/" class="cta-secondary">Follow the Tutorial</a>
+    <a href="./getting-started/" class="cta-primary">Get Started</a>
+    <a href="./getting-started/tutorial/" class="cta-secondary">Follow the Tutorial</a>
   </div>
 </section>
 
