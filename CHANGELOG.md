@@ -1,3 +1,9 @@
+## [0.34.1] - 2026-01-18
+
+### 🐛 Bug Fixes
+
+- *(release)* Check npm auth early in release workflow
+- *(docs)* Correct generator flags to use --dest instead of --portal/--package
 ## [0.34.0] - 2026-01-18
 
 ### 🚀 Features
