@@ -1,0 +1,65 @@
+Description:
+    Generates a Plutonium portal package (web interface).
+
+Usage:
+    rails g pu:pkg:portal NAME [options]
+
+Options:
+    --auth=NAME      Rodauth account to authenticate with (e.g., --auth=user)
+    --public         Grant public access (no authentication required)
+    --byo       Bring your own authentication (configure manually)
+
+    Without options, the generator prompts interactively for authentication choice.
+
+Examples:
+    # Interactive mode (prompts for auth configuration)
+    rails g pu:pkg:portal admin
+
+    # With Rodauth authentication
+    rails g pu:pkg:portal admin --auth=admin
+    rails g pu:pkg:portal dashboard --auth=user
+
+    # Public access (no authentication)
+    rails g pu:pkg:portal api --public
+
+    # Custom authentication (implement your own)
+    rails g pu:pkg:portal custom --byo
+
+Generated Structure:
+    packages/[name]_portal/
+    ├── app/
+    │   ├── controllers/[name]_portal/
+    │   │   ├── concerns/controller.rb
+    │   │   ├── plutonium_controller.rb
+    │   │   ├── resource_controller.rb
+    │   │   └── dashboard_controller.rb
+    │   ├── definitions/[name]_portal/
+    │   ├── policies/[name]_portal/
+    │   └── views/[name]_portal/
+    ├── config/
+    │   └── routes.rb
+    └── lib/
+        └── engine.rb
+
+Authentication Modes:
+    Rodauth:
+        Uses Plutonium::Auth::Rodauth(:account_name) in controller concern.
+        Requires rodauth account to be set up first.
+
+    Public:
+        Uses Plutonium::Auth::Public in controller concern.
+        No authentication required for any routes.
+
+    Bring Your Own:
+        Uses Plutonium::Auth::Public as base.
+        Implement current_user method in controller concern.
+
+After Generation:
+    1. Mount the portal in config/routes.rb:
+       mount AdminPortal::Engine, at: "/admin"
+
+    2. Connect resources to the portal:
+       rails g pu:res:conn Post --dest=admin_portal
+
+    3. Optionally configure entity scoping in engine.rb:
+       scope_to_entity Organization, strategy: :path
