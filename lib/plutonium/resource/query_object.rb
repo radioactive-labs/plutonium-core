@@ -1,7 +1,7 @@
 module Plutonium
   module Resource
     class QueryObject
-      attr_reader :search_filter, :search_query
+      attr_reader :search_filter, :search_query, :default_scope_name
       attr_accessor :default_sort_config
 
       # Initializes a QueryObject with the given resource_class and parameters.
@@ -31,9 +31,11 @@ module Plutonium
       #
       # @param name [Symbol] The name of the scope.
       # @param body [Proc, nil] The body of the scope.
-      def define_scope(name, body = nil)
+      # @param default [Boolean] Whether this scope is the default.
+      def define_scope(name, body = nil, default: false, **)
         body ||= name
         scope_definitions[name] = build_query(body)
+        @default_scope_name = name.to_s if default
       end
 
       # Defines a sort with the given name and body.
@@ -68,14 +70,26 @@ module Plutonium
         q = {}
 
         q[:search] = options.key?(:search) ? options[:search].presence : search_query
-        q[:scope] = options.key?(:scope) ? options[:scope].presence : selected_scope_filter
+        q[:scope] = if options.key?(:scope)
+          options[:scope].presence
+        else
+          selected_scope_filter
+        end
 
         q[:sort_directions] = selected_sort_directions.dup
         q[:sort_fields] = selected_sort_fields.dup
         handle_sort_options!(q, options)
 
         q.merge! params.slice(*filter_definitions.keys)
-        query_params = deep_compact({q: q}).to_param
+        compacted = deep_compact({q: q})
+
+        # Preserve explicit "All" selection (scope: nil in options means show all)
+        if options.key?(:scope) && options[:scope].nil?
+          compacted[:q] ||= {}
+          compacted[:q][:scope] = ""
+        end
+
+        query_params = compacted.to_param
         "#{@request_path}?#{query_params}"
       end
 
@@ -88,12 +102,20 @@ module Plutonium
       def apply(scope, params, context: nil)
         params = deep_compact(params.with_indifferent_access)
         scope = search_filter.apply(scope, search: params[:search]) if search_filter && params[:search]
-        scope = scope_definitions[params[:scope]].apply(scope, context:) if scope_definitions[params[:scope]]
+        # Use selected_scope which includes the default when no explicit selection
+        effective_scope = @selected_scope_filter
+        scope = scope_definitions[effective_scope].apply(scope, context:) if effective_scope && scope_definitions[effective_scope]
         scope = apply_sorts(scope, params)
         apply_filters(scope, params)
       end
 
       def scope_definitions = @scope_definitions ||= {}.with_indifferent_access
+
+      # Returns true if user explicitly selected "All" scope (no filtering)
+      def all_scope_selected? = @all_scope_selected
+
+      # Returns the currently selected scope (may be default if none explicitly selected)
+      def selected_scope = @selected_scope_filter
 
       def filter_definitions = @filter_definitions ||= {}.with_indifferent_access
 
@@ -127,8 +149,14 @@ module Plutonium
       #
       # @param params [Hash] The parameters to extract.
       def extract_filter_params
-        @search_query = params[:search]
-        @selected_scope_filter = params[:scope]
+        @search_query = params[:search].presence&.strip
+        # Track if user explicitly selected "all" (scope param present but blank)
+        @all_scope_selected = params.key?(:scope) && params[:scope].blank?
+        @selected_scope_filter = if @all_scope_selected
+          nil  # User clicked "All"
+        else
+          params[:scope].presence || default_scope_name
+        end
       end
 
       # Extracts sort parameters from the given params.

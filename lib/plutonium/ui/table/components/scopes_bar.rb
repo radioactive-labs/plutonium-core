@@ -14,39 +14,9 @@ module Plutonium
                 "flex flex-wrap justify-between items-center gap-4 mb-4"
             ) do
               div(class: "flex flex-wrap items-center gap-2") do
-                name = "all"
-                if current_scope.blank?
-                  a(
-                    id: "#{name}-scope",
-                    href: current_query_object.build_url(scope: nil),
-                    class:
-                      "px-4 py-2 text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-lg hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                  ) { name.humanize }
-                else
-                  a(
-                    id: "#{name}-scope",
-                    href: current_query_object.build_url(scope: nil),
-                    class:
-                      "px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
-                  ) { name.humanize }
-                end
-
-                current_query_object.scope_definitions.each do |name, definition|
-                  if name == current_scope
-                    a(
-                      id: "#{name}-scope",
-                      href: current_query_object.build_url(scope: name),
-                      class:
-                        "px-4 py-2 text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-lg hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
-                    ) { name.humanize }
-                  else
-                    a(
-                      id: "#{name}-scope",
-                      href: current_query_object.build_url(scope: name),
-                      class:
-                        "px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
-                    ) { name.humanize }
-                  end
+                render_all_scope_button
+                current_query_object.scope_definitions.each_key do |name|
+                  render_scope_button(name)
                 end
               end
 
@@ -124,7 +94,42 @@ module Plutonium
 
           private
 
-          def current_scope = raw_resource_query_params[:scope]
+          def render_all_scope_button
+            active = all_scope_active?
+            a(
+              id: "all-scope",
+              href: current_query_object.build_url(scope: nil),
+              class: active ? active_scope_class : inactive_scope_class
+            ) { "All" }
+          end
+
+          def render_scope_button(name)
+            active = name.to_s == current_scope
+            a(
+              id: "#{name}-scope",
+              href: current_query_object.build_url(scope: name),
+              class: active ? active_scope_class : inactive_scope_class
+            ) { name.to_s.humanize }
+          end
+
+          def current_scope
+            # Use the effective scope (includes default when no selection)
+            current_query_object.selected_scope
+          end
+
+          def all_scope_active?
+            # Active if user explicitly selected "All" OR no scope param and no default
+            current_query_object.all_scope_selected? ||
+              (!raw_resource_query_params.key?(:scope) && current_query_object.default_scope_name.blank?)
+          end
+
+          def active_scope_class
+            "px-4 py-2 text-sm font-medium text-white bg-primary-700 border border-primary-700 rounded-lg hover:bg-primary-800 focus:z-10 focus:ring-2 focus:ring-primary-700 focus:text-white dark:bg-primary-600 dark:border-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800"
+          end
+
+          def inactive_scope_class
+            "px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-300 focus:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:focus:text-white"
+          end
 
           def render?
             current_query_object.scope_definitions.present?
