@@ -13,7 +13,22 @@ Portals are Rails engines that provide web interfaces for specific user types.
 rails g pu:pkg:portal dashboard
 ```
 
-The generator asks about authentication:
+### Generator Options
+
+| Option | Description |
+|--------|-------------|
+| `--auth=NAME` | Rodauth account to authenticate with (e.g., `--auth=user`) |
+| `--public` | Grant public access (no authentication) |
+| `--byo` | Bring your own authentication |
+
+```bash
+# Non-interactive examples
+rails g pu:pkg:portal admin --auth=admin
+rails g pu:pkg:portal api --public
+rails g pu:pkg:portal custom --byo
+```
+
+Without flags, the generator prompts interactively:
 - **Rodauth account** - Use existing Rodauth authentication
 - **Public access** - No authentication required
 - **Bring your own** - Implement custom `current_user`
