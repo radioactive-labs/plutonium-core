@@ -3,7 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/plutonium.svg)](https://badge.fury.io/rb/plutonium)
 [![Ruby](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml/badge.svg)](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml)
 
-A Rapid Application Development toolkit for Rails. Plutonium picks up where Rails left off, adding application-level concepts that make building complex apps faster.
+Build production-ready Rails apps in hours, not weeks. Convention-driven, fully customizable, and AI-ready. Plutonium picks up where Rails left off, adding application-level concepts that make building complex apps faster.
 
 ## Quick Start
 

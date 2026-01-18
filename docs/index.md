@@ -3,7 +3,7 @@ layout: home
 hero:
   name: Plutonium
   text: Ship Rails Apps 10x Faster
-  tagline: Build production-ready Rails applications in minutes, not months. Convention-driven, fully customizable. Built for the AI era.
+  tagline: Build production-ready Rails applications in hours, not weeks. Convention-driven, fully customizable. Built for the AI era.
   image:
     src: /plutonium.png
     alt: Plutonium
