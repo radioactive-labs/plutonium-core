@@ -103,24 +103,21 @@ end
 ### Success Outcomes
 
 ```ruby
-# Basic success
+# Basic success (redirects automatically to resource)
 succeed(resource)
 
 # With message
 succeed(resource).with_message("Done!")
 succeed(resource).with_message("Warning!", :alert)
 
-# With redirect
-succeed(resource).with_redirect_response(posts_path)
+# With custom redirect (only if different from default)
+succeed(resource).with_redirect_response(custom_path)
 
 # With file download
 succeed(resource).with_file_response(file_path, filename: "report.pdf")
-
-# Chaining
-succeed(resource)
-  .with_message("Created!")
-  .with_redirect_response(resource_path(resource))
 ```
+
+**Note:** Redirect is automatic on success - the controller redirects to the resource by default. Only use `with_redirect_response` if you need a different destination.
 
 ### Failure Outcomes
 
@@ -183,9 +180,13 @@ class ArchiveInteraction < Plutonium::Resource::Interaction
   def execute
     resource.update!(archived: true)
     succeed(resource)
+  rescue ActiveRecord::RecordInvalid => e
+    failed(e.record.errors)
   end
 end
 ```
+
+**Note:** `ActiveRecord::RecordInvalid` is NOT rescued automatically. Always rescue it when using bang methods (`create!`, `update!`, `save!`).
 
 ### Resource Actions
 
@@ -344,9 +345,7 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
     )
     UserInviteMailer.invitation(invite).deliver_later
 
-    succeed(resource)
-      .with_message("Invitation sent to #{email}")
-      .with_redirect_response(resource)
+    succeed(resource).with_message("Invitation sent to #{email}")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end

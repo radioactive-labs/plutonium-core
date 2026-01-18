@@ -188,12 +188,12 @@ end
 
 ```ruby
 def execute
-  # Success with message
+  # Success with message (redirects to resource automatically)
   succeed(resource).with_message("Done!")
 
-  # Success with redirect
+  # Success with custom redirect (only if different from default)
   succeed(resource)
-    .with_redirect_response(resource_url_for(resource))
+    .with_redirect_response(custom_dashboard_path)
     .with_message("Redirecting...")
 
   # Failure with field errors
@@ -206,6 +206,8 @@ def execute
   failed("Invalid value", :email)
 end
 ```
+
+**Note:** Redirect is automatic on success. Only use `with_redirect_response` for a different destination.
 
 ## Interaction Context
 
