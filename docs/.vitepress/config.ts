@@ -7,8 +7,19 @@ const base = "/plutonium-core/"
 export default defineConfig(withMermaid({
   base: base,
   title: "Plutonium",
-  description: "Rapid Application Development for Rails",
-  head: [["link", { rel: "icon", href: `${base}favicon.ico` }]],
+  description: "Build production-ready Rails apps in hours, not weeks",
+  head: [
+    ["link", { rel: "icon", href: `${base}favicon.ico` }],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:title", content: "Plutonium" }],
+    ["meta", { property: "og:description", content: "Build production-ready Rails applications in hours, not weeks. Convention-driven, fully customizable. Built for the AI era." }],
+    ["meta", { property: "og:image", content: "https://radioactive-labs.github.io/plutonium-core/plutonium.png" }],
+    ["meta", { property: "og:url", content: "https://radioactive-labs.github.io/plutonium-core/" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["meta", { name: "twitter:title", content: "Plutonium" }],
+    ["meta", { name: "twitter:description", content: "Build production-ready Rails applications in hours, not weeks. Convention-driven, fully customizable. Built for the AI era." }],
+    ["meta", { name: "twitter:image", content: "https://radioactive-labs.github.io/plutonium-core/plutonium.png" }],
+  ],
   ignoreDeadLinks: 'localhostLinks',
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
