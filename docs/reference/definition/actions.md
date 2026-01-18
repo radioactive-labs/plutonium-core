@@ -322,12 +322,12 @@ end
 
 ```ruby
 def execute
-  # Success with message
+  # Success with message (redirects to resource automatically)
   succeed(resource).with_message("Done!")
 
-  # Success with redirect
+  # Success with custom redirect (only if different from default)
   succeed(resource)
-    .with_redirect_response(resource_url_for(resource))
+    .with_redirect_response(custom_dashboard_path)
     .with_message("Redirecting...")
 
   # Failure with field errors
@@ -337,6 +337,10 @@ def execute
   failed("Something went wrong")
 end
 ```
+
+::: tip Automatic Redirect
+Redirect is automatic on success. You can use `with_redirect_response` for a different destination.
+:::
 
 ## Inherited Actions
 

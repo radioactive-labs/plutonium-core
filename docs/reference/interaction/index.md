@@ -156,6 +156,10 @@ rescue ActiveRecord::RecordInvalid => e
 end
 ```
 
+::: warning Handle RecordInvalid
+`ActiveRecord::RecordInvalid` is **not** rescued automatically. Always rescue it when using bang methods (`create!`, `update!`, `save!`).
+:::
+
 ## Constructor
 
 Interactions require `view_context:` and accept attributes as keyword arguments:
@@ -193,10 +197,14 @@ outcome = interaction.call
 
 ## Success Outcomes
 
+::: tip Automatic Redirect
+On success, the controller automatically redirects to the resource.
+:::
+
 ### Basic Success
 
 ```ruby
-succeed(resource)
+succeed(resource)  # Redirects to resource automatically
 ```
 
 ### With Message
@@ -206,11 +214,12 @@ succeed(resource).with_message("Post published!")
 succeed(resource).with_message("Warning: limited visibility", :alert)
 ```
 
-### With Redirect
+### With Custom Redirect
+
+Useful when redirecting somewhere other than the default:
 
 ```ruby
-succeed(resource).with_redirect_response(posts_path)
-succeed(resource).with_redirect_response(resource, status: :see_other)
+succeed(resource).with_redirect_response(custom_dashboard_path)
 ```
 
 ### With File Download
@@ -327,9 +336,7 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
     )
     UserInviteMailer.invitation(invite).deliver_later
 
-    succeed(resource)
-      .with_message("Invitation sent to #{email}")
-      .with_redirect_response(resource)
+    succeed(resource).with_message("Invitation sent to #{email}")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end
@@ -434,9 +441,6 @@ end
 1. **Keep interactions focused** - One action per interaction
 2. **Use validations** - Validate all inputs before execution
 3. **Handle errors gracefully** - Rescue exceptions and return `failed()`
-4. **Return meaningful messages** - Help users understand what happened
-5. **Use `and_then` for chains** - Compose complex workflows from simple interactions
-6. **Declare attributes explicitly** - Always declare `resource` or `resources` attributes
 
 ## Related
 

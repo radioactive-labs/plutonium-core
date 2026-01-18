@@ -307,6 +307,10 @@ action :bulk_delete,
 
 ### Success
 
+::: tip Automatic Redirect
+On success, the controller automatically redirects to the resource. You can use `with_redirect_response` if you want a **different** destination.
+:::
+
 ```ruby
 def execute
   # ... do work ...
