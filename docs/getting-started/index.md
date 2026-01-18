@@ -24,7 +24,8 @@ Before you begin, make sure you have:
 If you're starting fresh, use our application template:
 
 ```bash
-rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new myapp -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
 This creates a fully configured Plutonium application with authentication ready to go.

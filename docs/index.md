@@ -45,7 +45,8 @@ Building admin panels, dashboards, and internal tools in Rails often means:
 
 ```bash
 # Create a new Plutonium app
-rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+rails new myapp -a propshaft -j esbuild -c tailwind \
+  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 
 # Generate a resource
 rails g pu:res:scaffold Post title:string body:text published:boolean
