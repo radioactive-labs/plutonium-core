@@ -461,12 +461,12 @@ rails generate pu:pkg:package billing
 rails generate pu:pkg:portal app
 
 # Generate models
-rails generate pu:res:scaffold Organization name:string slug:string --package core
-rails generate pu:res:scaffold Membership role:string organization:belongs_to user:belongs_to --package core
-rails generate pu:res:scaffold Project name:string organization:belongs_to --package projects
+rails generate pu:res:scaffold Organization name:string slug:string --dest=core
+rails generate pu:res:scaffold Membership role:string organization:belongs_to user:belongs_to --dest=core
+rails generate pu:res:scaffold Project name:string organization:belongs_to --dest=projects
 
 # Connect to portal
-rails generate pu:res:conn Project --package projects --portal app
+rails generate pu:res:conn Projects::Project --dest=app_portal
 
 rails db:migrate
 ```

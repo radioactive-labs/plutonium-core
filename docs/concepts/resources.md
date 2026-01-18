@@ -112,7 +112,7 @@ end
 Resources must be registered with a portal to be accessible:
 
 ```bash
-rails generate pu:res:conn Post --portal admin
+rails generate pu:res:conn Post --dest=admin_portal
 ```
 
 Or manually in routes:
@@ -120,7 +120,7 @@ Or manually in routes:
 ```ruby
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
-  resources :posts
+  register_resource ::Post
 end
 ```
 

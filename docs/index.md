@@ -51,7 +51,7 @@ rails new myapp -m https://radioactive-labs.github.io/plutonium-core/templates/p
 rails g pu:res:scaffold Post title:string body:text published:boolean
 
 # Connect it to a portal
-rails g pu:res:conn Post --portal AdminPortal
+rails g pu:res:conn Post --dest=admin_portal
 
 # Done. Full CRUD with auth, policies, and UI.
 ```
