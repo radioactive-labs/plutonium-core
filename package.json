@@ -1,6 +1,6 @@
 {
   "name": "@radioactive-labs/plutonium",
-  "version": "0.33.1",
+  "version": "0.34.0",
   "description": "Core assets for the Plutonium gem",
   "type": "module",
   "main": "src/js/core.js",
