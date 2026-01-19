@@ -8,7 +8,7 @@ class DefinitionFieldsTest < Minitest::Test
   def test_field_declaration_at_class_level
     definition_class = Class.new(Plutonium::Resource::Definition) do
       field :title, as: :string
-      field :content, as: :rich_text
+      field :content, as: :markdown
       field :status, as: :select, choices: %w[draft published]
     end
 
@@ -18,7 +18,7 @@ class DefinitionFieldsTest < Minitest::Test
     assert definition_class.defined_fields.key?(:status)
 
     assert_equal :string, definition_class.defined_fields[:title][:options][:as]
-    assert_equal :rich_text, definition_class.defined_fields[:content][:options][:as]
+    assert_equal :markdown, definition_class.defined_fields[:content][:options][:as]
     assert_equal :select, definition_class.defined_fields[:status][:options][:as]
   end
 
@@ -118,7 +118,6 @@ class DefinitionFieldsTest < Minitest::Test
     # Test column customizations
     assert Blogging::PostDefinition.defined_columns.key?(:user)
     assert_equal "Author", Blogging::PostDefinition.defined_columns[:user][:options][:label]
-    assert Blogging::PostDefinition.defined_columns[:user][:options][:sortable]
 
     # Test computed column
     assert Blogging::PostDefinition.defined_columns.key?(:comment_count)

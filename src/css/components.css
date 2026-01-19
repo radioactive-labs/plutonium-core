@@ -263,6 +263,9 @@
          text-base
          focus:outline-none;
 }
+.pu-input-icon-left {
+  @apply pl-10;
+}
 .pu-input::placeholder {
   color: var(--pu-input-placeholder);
 }

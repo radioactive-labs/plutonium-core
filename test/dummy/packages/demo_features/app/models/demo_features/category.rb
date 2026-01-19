@@ -1,31 +1,7 @@
 require_relative "../demo_features"
 
 class DemoFeatures::Category < DemoFeatures::ResourceRecord
-  # add concerns above.
+  has_many :products, class_name: "DemoFeatures::Product", dependent: :nullify
 
-  # add constants above.
-
-  # add enums above.
-
-  # add model configurations above.
-
-  # add belongs_to associations above.
-
-  # add has_one associations above.
-
-  # add has_many associations above.
-
-  # add attachments above.
-
-  # add scopes above.
-
-  # add validations above.
-
-  # add callbacks above.
-
-  # add delegations above.
-
-  # add misc attribute macros above.
-
-  # add methods above. add private methods below.
+  validates :name, presence: true
 end

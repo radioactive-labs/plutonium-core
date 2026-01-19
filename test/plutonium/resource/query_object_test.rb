@@ -38,6 +38,10 @@ module Plutonium
         def self.belongs_to_association_field_names
           []
         end
+
+        def self.column_names
+          %w[id title created_at status]
+        end
       end
 
       # Mock scope that tracks calls

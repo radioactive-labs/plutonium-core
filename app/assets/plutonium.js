@@ -13008,11 +13008,14 @@
   // src/js/controllers/resource_drop_down_controller.js
   var resource_drop_down_controller_default = class extends Controller {
     static targets = ["trigger", "menu"];
+    static values = {
+      placement: { type: String, default: "bottom" }
+    };
     connect() {
       this.visible = false;
       this.initialized = false;
       this.options = {
-        placement: "bottom",
+        placement: this.placementValue,
         triggerType: "click",
         offsetSkidding: 0,
         offsetDistance: 10,
@@ -13031,6 +13034,21 @@
               name: "offset",
               options: {
                 offset: [this.options.offsetSkidding, this.options.offsetDistance]
+              }
+            },
+            {
+              name: "flip",
+              options: {
+                fallbackPlacements: ["left-end", "right-start", "right-end", "bottom-start", "bottom-end", "top-start", "top-end"],
+                boundary: "clippingParents"
+              }
+            },
+            {
+              name: "preventOverflow",
+              options: {
+                boundary: "clippingParents",
+                altAxis: true,
+                padding: 8
               }
             }
           ]
@@ -13099,7 +13117,8 @@
             }
           });
         }
-        if (clickedEl !== this.menuTarget && !this.menuTarget.contains(clickedEl) && !this.triggerTarget.contains(clickedEl) && !isIgnored && this.visible) {
+        const isFloatingUI = clickedEl.closest(".flatpickr-calendar, .ss-main, .ss-content");
+        if (clickedEl !== this.menuTarget && !this.menuTarget.contains(clickedEl) && !this.triggerTarget.contains(clickedEl) && !isIgnored && !isFloatingUI && this.visible) {
           this.hide();
         }
       };

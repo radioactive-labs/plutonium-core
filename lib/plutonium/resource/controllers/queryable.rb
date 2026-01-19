@@ -31,10 +31,12 @@ module Plutonium
 
               current_definition.defined_filters.each do |key, value|
                 with = value[:options][:with]
-                if with.is_a?(Class) && with < Plutonium::Query::Filter
+                if with
+                  # Resolve symbol types (e.g., :text, :select) to filter classes
+                  filter_class = Plutonium::Query::Filter.lookup(with)
                   options = value[:options].except(:with)
                   options[:key] ||= key
-                  with = with.new(**options)
+                  with = filter_class.new(**options)
                 end
                 query_object.define_filter key, with, &value[:block]
               end

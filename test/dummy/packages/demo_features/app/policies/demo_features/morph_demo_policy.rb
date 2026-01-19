@@ -9,7 +9,7 @@ class DemoFeatures::MorphDemoPolicy < DemoFeatures::ResourcePolicy
     true
   end
 
-  def conditional_form_test?
+  def conditional_form_demo?
     true
   end
 

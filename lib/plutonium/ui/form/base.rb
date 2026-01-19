@@ -39,6 +39,10 @@ module Plutonium
             create_component(Components::KeyValueStore, :key_value_store, **, &)
           end
 
+          def resource_select_tag(**attributes, &)
+            create_component(Components::ResourceSelect, :select, **attributes, &)
+          end
+
           def secure_association_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config
             create_component(Components::SecureAssociation, :association, **attributes, &)

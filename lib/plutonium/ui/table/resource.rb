@@ -32,7 +32,7 @@ module Plutonium
         end
 
         def render_empty_card
-          EmptyCard("No #{resource_name_plural(resource_class)} match your query") {
+          EmptyCard("No #{resource_name_plural(resource_class).downcase} available") {
             action = resource_definition.defined_actions[:new]
             if action&.permitted_by?(current_policy)
               url = route_options_to_url(action.route_options, resource_class)

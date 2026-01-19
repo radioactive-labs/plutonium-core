@@ -4,6 +4,9 @@ import { createPopper } from '@popperjs/core'
 // Connects to data-controller="resource-drop-down"
 export default class extends Controller {
   static targets = ["trigger", "menu"]
+  static values = {
+    placement: { type: String, default: 'bottom' }
+  }
 
   connect() {
     this.visible = false
@@ -11,7 +14,7 @@ export default class extends Controller {
 
     // Default options matching Flowbite's defaults
     this.options = {
-      placement: 'bottom',
+      placement: this.placementValue,
       triggerType: 'click',
       offsetSkidding: 0,
       offsetDistance: 10,
@@ -34,6 +37,21 @@ export default class extends Controller {
             name: 'offset',
             options: {
               offset: [this.options.offsetSkidding, this.options.offsetDistance],
+            },
+          },
+          {
+            name: 'flip',
+            options: {
+              fallbackPlacements: ['left-end', 'right-start', 'right-end', 'bottom-start', 'bottom-end', 'top-start', 'top-end'],
+              boundary: 'clippingParents',
+            },
+          },
+          {
+            name: 'preventOverflow',
+            options: {
+              boundary: 'clippingParents',
+              altAxis: true,
+              padding: 8,
             },
           },
         ],
@@ -118,11 +136,15 @@ export default class extends Controller {
         })
       }
 
+      // Ignore clicks on flatpickr calendars and other floating UI elements
+      const isFloatingUI = clickedEl.closest('.flatpickr-calendar, .ss-main, .ss-content')
+
       if (
         clickedEl !== this.menuTarget &&
         !this.menuTarget.contains(clickedEl) &&
         !this.triggerTarget.contains(clickedEl) &&
         !isIgnored &&
+        !isFloatingUI &&
         this.visible
       ) {
         this.hide()
