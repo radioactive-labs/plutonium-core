@@ -1,0 +1,49 @@
+<%= render Plutonium::UI::Layout::Header.new do |header| %>
+  <% header.with_brand_logo do %>
+    <%= resource_logo_tag(classname: "h-10 rounded-md") %>
+  <% end %>
+
+  <% header.with_action do %>
+    <%=
+      render Plutonium::UI::NavGridMenu.new(label: "Apps", icon: Phlex::TablerIcons::Apps) do |menu|
+        menu.with_item(name: "Dashboard", icon: Phlex::TablerIcons::Dashboard, href: "#")
+        menu.with_item(name: "Settings", icon: Phlex::TablerIcons::Settings, href: "#")
+        menu.with_item(name: "Profile", icon: Phlex::TablerIcons::User, href: "#")
+      end
+    %>
+  <% end %>
+
+  <% header.with_action do %>
+    <%=
+      render Plutonium::UI::NavUser.new(
+        name: nil,
+        email: current_user.try(:email) || current_user
+      ) do |nav|
+        nav.with_section do |section|
+          section.with_link(label: "My profile", href: "#")
+          section.with_link(label: "Account settings", href: "#")
+        end
+
+        nav.with_section do |section|
+          section.with_link(label: "My likes", href: "#") do |link|
+            link.with_leading do
+              render Phlex::TablerIcons::Heart.new(class: "mr-2 text-gray-400 w-4 h-4")
+            end
+          end
+          section.with_link(label: "Pro version", href: "#") do |link|
+            link.with_leading do
+              render Phlex::TablerIcons::Flame.new(class: "mr-2 text-primary-600 dark:text-primary-500 w-4 h-4")
+            end
+            link.with_trailing do
+              render Phlex::TablerIcons::CaretRight.new(class: "w-3 h-3")
+            end
+          end
+        end
+
+        nav.with_section do |section|
+          section.with_link(label: "Sign out", href: try(:logout_url) || "#", class: "rounded-b-lg", data: {turbo: false})
+        end
+      end
+    %>
+  <% end %>
+<% end %>
