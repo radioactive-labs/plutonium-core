@@ -13,14 +13,10 @@ class DemoFeatures::TagDefinition < DemoFeatures::ResourceDefinition
 
   # Fields
   field :name, as: :string
-  field :color, as: :string
-  input :color, as: :color  # Color picker input
+  field :color, as: :color
 
   # Columns
   column :name
-  column :color do |tag|
-    tag.color
-  end
   column :products_count do |tag|
     tag.products.count
   end
