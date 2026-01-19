@@ -412,3 +412,9 @@ Brand Colors:
 .ai-prompt p {
   font-style: italic;
 }
+
+/* Fix VitePress doc h2 text cutoff at bottom */
+.vp-doc h2 {
+  line-height: 1.5;
+  padding-bottom: 4px;
+}
