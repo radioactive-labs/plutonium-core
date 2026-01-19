@@ -73,7 +73,7 @@ end
 
 # Predefined scopes (reference model scopes)
 scope :published, default: true  # Applied by default, uses Post.published
-scope :drafts                    # Uses Post.draft
+scope :drafts                    # Uses Post.drafts
 
 # Inline scope with block
 scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }

@@ -146,7 +146,7 @@ module Blogging
     # Scopes
     scope :all, default: true
     scope :published, -> { where(published: true) }, badge: true
-    scope :drafts, -> { where(published: false) }, badge: true
+    scope :drafts, -> { where(published: [false, nil]) }, badge: true
     scope :featured, -> { where(featured: true) }
 
     # Filters

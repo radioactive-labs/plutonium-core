@@ -51,6 +51,15 @@ class Blogging::Post < Blogging::ResourceRecord
 end
 ```
 
+Add scopes for filtering posts by publication status:
+
+```ruby
+class Blogging::Post < Blogging::ResourceRecord
+  scope :published, -> { where(published: true) }
+  scope :drafts, -> { where(published: [false, nil]) }
+end
+```
+
 ### Definition (`packages/blogging/app/definitions/blogging/post_definition.rb`)
 
 ```ruby

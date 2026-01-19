@@ -20,7 +20,7 @@ class Blogging::Post < Blogging::ResourceRecord
   # add attachments above.
 
   scope :published, -> { where(published: true) }
-  scope :drafts, -> { where(published: false) }
+  scope :drafts, -> { where(published: [false, nil]) }
   # add scopes above.
 
   # add validations above.
