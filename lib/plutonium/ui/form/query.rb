@@ -121,7 +121,7 @@ module Plutonium
               class: "hidden z-[100] bg-[var(--pu-surface)] shadow-lg flex flex-col " \
                      "max-md:!fixed max-md:!inset-0 max-md:!transform-none " \
                      "md:w-80 md:max-h-[70vh] md:border md:border-[var(--pu-border)] md:rounded-[var(--pu-radius-lg)]",
-              data: {resource_drop_down_target: "menu"},
+              data: {resource_drop_down_target: "menu", controller: "filter-panel"},
               aria_hidden: "true"
             ) do
               render_filter_panel
@@ -143,10 +143,10 @@ module Plutonium
               end
               span(class: "text-sm font-semibold text-[var(--pu-text)]") { "Filters" }
             end
-            render field(:reset).submit_button_tag(
-              name: nil,
-              type: :reset,
-              class!: "text-sm text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
+            button(
+              type: "button",
+              class: "text-sm text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
+              data: {action: "filter-panel#clear"}
             ) { "Clear all" }
           end
 

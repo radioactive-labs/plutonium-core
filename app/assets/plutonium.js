@@ -30415,6 +30415,35 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/filter_panel_controller.js
+  var filter_panel_controller_default = class extends Controller {
+    clear() {
+      this.element.querySelectorAll("input, select, textarea").forEach((input) => {
+        if (input.type === "checkbox" || input.type === "radio") {
+          input.checked = false;
+        } else if (input.tagName === "SELECT") {
+          input.selectedIndex = 0;
+        } else if (input.type === "hidden") {
+          if (input.dataset.controller === "flatpickr") {
+            input.value = "";
+          }
+        } else {
+          input.value = "";
+        }
+      });
+      this.element.querySelectorAll('[data-controller="flatpickr"]').forEach((input) => {
+        const controller = this.application.getControllerForElementAndIdentifier(input, "flatpickr");
+        if (controller?.picker) {
+          controller.picker.clear();
+        }
+      });
+      const form = this.element.closest("form");
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -30442,7 +30471,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("logo", logo_controller_default);
 =======
     application2.register("bulk-actions", bulk_actions_controller_default);
+<<<<<<< HEAD
 >>>>>>> bc1c3a8 (feat: implement bulk actions for resource tables)
+=======
+    application2.register("filter-panel", filter_panel_controller_default);
+>>>>>>> 1050382 (feat(filters): add clear all button with filter-panel controller)
   }
 
   // src/js/turbo/turbo_actions.js
