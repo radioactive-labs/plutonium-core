@@ -38,8 +38,8 @@ Columns are auto-inferred from your model. Only declare columns when customizing
 ### Column Configuration
 
 ```ruby
-# Custom label and sortable
-column :user, label: "Author", sortable: true
+# Custom label
+column :user, label: "Author"
 
 # Computed column with block
 column :comment_count do |post|

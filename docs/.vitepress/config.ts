@@ -59,18 +59,6 @@ export default defineConfig(withMermaid({
           ]
         }
       ],
-      '/concepts/': [
-        {
-          text: "Core Concepts",
-          items: [
-            { text: "Overview", link: "/concepts/" },
-            { text: "Architecture", link: "/concepts/architecture" },
-            { text: "Resources", link: "/concepts/resources" },
-            { text: "Packages & Portals", link: "/concepts/packages-portals" },
-            { text: "Auto-Detection", link: "/concepts/auto-detection" },
-          ]
-        }
-      ],
       '/guides/': [
         {
           text: "Guides",

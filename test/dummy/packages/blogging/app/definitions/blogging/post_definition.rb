@@ -7,7 +7,7 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   field :body, as: :text
 
   # Column customizations
-  column :user, label: "Author", sortable: true
+  column :user, label: "Author"
 
   # Computed column
   column :comment_count do |post|
