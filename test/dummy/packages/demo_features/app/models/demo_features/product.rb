@@ -19,7 +19,6 @@ class DemoFeatures::Product < DemoFeatures::ResourceRecord
   validates :sku, presence: true, uniqueness: true
   validates :price, numericality: {greater_than_or_equal_to: 0}, allow_nil: true
   validates :stock_count, numericality: {greater_than_or_equal_to: 0}
-  validates :rating, numericality: {in: 1..5}, allow_nil: true
 
   before_validation :generate_slug, if: -> { slug.blank? && name.present? }
 
