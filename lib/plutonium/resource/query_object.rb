@@ -198,7 +198,7 @@ module Plutonium
       # @return [Symbol] The sort field.
       # @raise [RuntimeError] If unable to determine sort logic.
       def determine_sort_field(name)
-        if resource_class.primary_key == name.to_s || resource_class.content_column_field_names.include?(name)
+        if resource_class.column_names.include?(name.to_s)
           name
         elsif resource_class.belongs_to_association_field_names.include?(name)
           resource_class.reflect_on_association(name).foreign_key.to_sym

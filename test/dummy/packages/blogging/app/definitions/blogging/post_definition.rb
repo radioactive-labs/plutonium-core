@@ -23,8 +23,10 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   scope :published
   scope :drafts
 
-  # Filters
-  filter :title, with: Plutonium::Query::Filters::Text, predicate: :contains
+  # Filters - using symbol syntax
+  filter :title, with: :text, predicate: :contains
+  filter :published, with: :boolean
+  filter :user, with: :association, scope: ->(scope) { scope.verified }
 
   # Sorting
   sort :title

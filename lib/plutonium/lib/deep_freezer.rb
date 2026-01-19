@@ -4,6 +4,9 @@ module Plutonium
   module Lib
     class DeepFreezer
       def self.freeze(object)
+        # Never freeze Class or Module objects - they have mutable state that Rails needs
+        return object if object.is_a?(Class) || object.is_a?(Module)
+
         #  Recursive calling #deep_freeze for enumerable objects.
         if object.respond_to? :each
           if object.instance_of?(Hash)
@@ -12,13 +15,6 @@ module Plutonium
             object.each { |val| freeze(val) }
           end
         end
-
-        # #  Freezing of all instance variable values.
-        # object.instance_variables.each do |var|
-        #   frozen_val = instance_variable_get(var)
-        #   frozen_val.deep_freeze
-        #   instance_variable_set(var, frozen_val)
-        # end
 
         if object.frozen?
           object
