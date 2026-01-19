@@ -16,6 +16,7 @@ module Plutonium
           def markdown_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Markdown, :markdown, **, &)
           end
+          alias_method :rich_text_tag, :markdown_tag
 
           def attachment_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Attachment, :attachment, **, &)
@@ -24,6 +25,20 @@ module Plutonium
           def phlexi_render_tag(**, &)
             create_component(Plutonium::UI::Display::Components::PhlexiRender, :phlexi_render, **, &)
           end
+
+          def boolean_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Boolean, :boolean, **, &)
+          end
+
+          def color_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Color, :color, **, &)
+          end
+
+          # Type aliases for common column types
+          alias_method :float_tag, :number_tag
+          alias_method :decimal_tag, :number_tag
+          alias_method :jsonb_tag, :json_tag
+          alias_method :key_value_tag, :hstore_tag
           alias_method :phlexi_tag, :phlexi_render_tag
         end
 
