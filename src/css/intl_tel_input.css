@@ -43,7 +43,7 @@
 .iti input.iti__tel-input[type=tel],
 .iti input.iti__tel-input[type=text] {
   @apply w-full border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
-  padding: theme(spacing.2);
+  padding: theme(spacing.3) theme(spacing.4);
   padding-left: 52px;
   /* Space for country selector */
 }
@@ -51,7 +51,7 @@
 /* Country container positioning */
 .iti .iti__country-container {
   @apply absolute top-0 bottom-0 left-0 z-10;
-  padding: theme(spacing.2);
+  padding: theme(spacing.3) theme(spacing.2);
   width: 52px;
   /* Fixed width to match input padding */
 }
