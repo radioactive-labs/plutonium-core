@@ -21,7 +21,7 @@ Resource definitions configure **HOW** resources are rendered and interacted wit
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   # Fields, inputs, displays, columns (see definition-fields skill)
-  field :content, as: :rich_text
+  field :content, as: :markdown
   input :title, hint: "Be descriptive"
   display :content, as: :markdown
   column :title, align: :center
@@ -52,7 +52,7 @@ end
 # app/definitions/post_definition.rb (resource-specific - created by scaffold)
 class PostDefinition < ResourceDefinition
   scope :published
-  input :content, as: :rich_text
+  input :content, as: :markdown
 end
 ```
 
@@ -79,7 +79,7 @@ This lets you:
 
 | Layer | Purpose | Example |
 |-------|---------|---------|
-| **Definition** | HOW fields render | `input :content, as: :rich_text` |
+| **Definition** | HOW fields render | `input :content, as: :markdown` |
 | **Policy** | WHAT is visible/editable | `permitted_attributes_for_read` |
 | **Interaction** | Business logic | `resource.update!(state: :archived)` |
 
@@ -99,7 +99,7 @@ Plutonium automatically detects from your model:
 ```ruby
 class PostDefinition < ResourceDefinition
   # 1. Override auto-detected type
-  field :content, as: :rich_text      # text -> rich_text
+  field :content, as: :markdown      # text -> rich_text
   input :published_at, as: :date      # datetime -> date only
 
   # 2. Add custom options
@@ -125,7 +125,7 @@ class PostDefinition < ResourceDefinition
   # No field declarations needed - all auto-detected!
 
   # Only customize what you need:
-  input :content, as: :rich_text
+  input :content, as: :markdown
   display :content, as: :markdown
 
   scope :published

@@ -21,7 +21,7 @@ Configure how fields are rendered using `field`, `input`, `display`, and `column
 ```ruby
 class PostDefinition < ResourceDefinition
   # field - changes type everywhere
-  field :content, as: :rich_text
+  field :content, as: :markdown
 
   # input - form-specific
   input :title,
@@ -48,7 +48,7 @@ end
 | Category | Types |
 |----------|-------|
 | **Text** | `:string`, `:text`, `:email`, `:url`, `:tel`, `:password` |
-| **Rich Text** | `:rich_text`, `:markdown` |
+| **Rich Text** | `:markdown` (EasyMDE editor) |
 | **Numeric** | `:number`, `:integer`, `:decimal`, `:range` |
 | **Boolean** | `:boolean` |
 | **Date/Time** | `:date`, `:time`, `:datetime` |
@@ -453,7 +453,7 @@ input :documents, as: :uppy,
 ### Rich Text Content
 
 ```ruby
-field :content, as: :rich_text    # Form: rich editor
+field :content, as: :markdown    # Form: rich editor
 display :content, as: :markdown   # Show: rendered markdown
 ```
 

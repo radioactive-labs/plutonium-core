@@ -16,7 +16,7 @@ Complete reference for field configuration in definitions.
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   # field - changes type everywhere
-  field :content, as: :rich_text
+  field :content, as: :markdown
 
   # input - form-specific
   input :title,
@@ -43,7 +43,7 @@ end
 | Category | Types |
 |----------|-------|
 | **Text** | `:string`, `:text`, `:email`, `:url`, `:tel`, `:password` |
-| **Rich Text** | `:rich_text`, `:markdown` |
+| **Rich Text** | `:markdown` (uses EasyMDE editor) |
 | **Numeric** | `:number`, `:integer`, `:decimal`, `:range` |
 | **Boolean** | `:boolean` |
 | **Date/Time** | `:date`, `:time`, `:datetime` |
@@ -302,7 +302,7 @@ input :documents, as: :uppy,
 ### Rich Text Content
 
 ```ruby
-field :content, as: :rich_text    # Form: rich editor
+field :content, as: :markdown     # Form: EasyMDE editor
 display :content, as: :markdown   # Show: rendered markdown
 ```
 

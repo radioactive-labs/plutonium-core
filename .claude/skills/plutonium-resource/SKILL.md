@@ -129,7 +129,7 @@ The model handles:
 ```ruby
 class PostDefinition < ResourceDefinition
   # Override auto-detected field types
-  input :content, as: :rich_text
+  input :content, as: :markdown
 
   # Add filters and scopes
   filter :published, with: Plutonium::Query::Filters::Boolean
