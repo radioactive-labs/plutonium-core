@@ -21,7 +21,7 @@ A blog application with:
 ## Prerequisites
 
 - Ruby 3.2+
-- Rails 8.0+ (or 7.1+)
+- Rails 7.2+ (Rails 8 recommended)
 - Node.js 18+
 - PostgreSQL (or SQLite for development)
 
