@@ -58,8 +58,8 @@ module Plutonium
                 # field :name, as: :string
                 # column :description, class: "text-red-700"
                 # column :age, align: :end
-                # column :dob do |proxy|
-                #   proxy.field(:dob).date_tag
+                # column :description do |record|
+                #   record.description&.truncate(50)
                 # end
 
                 field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
@@ -83,11 +83,17 @@ module Plutonium
                 display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
                 column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
                 tag_attributes = display_tag_attributes.merge(column_tag_attributes)
-                tag_block = column_definition[:block] || ->(wrapped_object, key) {
-                  f = wrapped_object.field(key)
-                  tag ||= f.inferred_field_component
-                  f.send(:"#{tag}_tag", **tag_attributes)
-                }
+                tag_block = if column_definition[:block]
+                  # User-provided blocks receive the raw record for convenience
+                  user_block = column_definition[:block]
+                  ->(wrapped_object, _key) { user_block.call(wrapped_object.unwrapped) }
+                else
+                  ->(wrapped_object, key) {
+                    f = wrapped_object.field(key)
+                    tag ||= f.inferred_field_component
+                    f.send(:"#{tag}_tag", **tag_attributes)
+                  }
+                end
 
                 # For table columns, only extract column-level options (label and align)
                 # Field-level options like description and placeholder don't make sense in table cells
