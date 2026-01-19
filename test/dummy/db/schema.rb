@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_18_140127) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_18_222654) do
   create_table "admin_active_session_keys", primary_key: ["admin_id", "session_id"], force: :cascade do |t|
     t.integer "admin_id"
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -87,11 +87,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_140127) do
   create_table "blogging_posts", force: :cascade do |t|
     t.text "body", null: false
     t.datetime "created_at", null: false
-    t.boolean "published", null: false
+    t.boolean "published"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id"], name: "index_blogging_posts_on_user_id"
+  end
+
+  create_table "demo_features_categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "demo_features_morph_demos", force: :cascade do |t|
+    t.integer "category_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.string "phone"
+    t.string "priority"
+    t.integer "record_type", null: false
+    t.datetime "scheduled_at"
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id"], name: "index_demo_features_morph_demos_on_category_id"
   end
 
   create_table "user_login_change_keys", force: :cascade do |t|
@@ -136,6 +157,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_140127) do
   add_foreign_key "blogging_comments", "blogging_posts", column: "post_id"
   add_foreign_key "blogging_comments", "users"
   add_foreign_key "blogging_posts", "users"
+  add_foreign_key "demo_features_morph_demos", "demo_features_categories", column: "category_id"
   add_foreign_key "user_login_change_keys", "users", column: "id"
   add_foreign_key "user_password_reset_keys", "users", column: "id"
   add_foreign_key "user_remember_keys", "users", column: "id"
