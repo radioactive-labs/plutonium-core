@@ -13,7 +13,7 @@ Welcome to Plutonium! This guide will help you get up and running quickly.
 Before you begin, make sure you have:
 
 - **Ruby 3.2+** installed
-- **Rails 7.1+** (Rails 8 recommended)
+- **Rails 7.2+** (Rails 8 recommended)
 - **Node.js 18+** (for asset compilation)
 - Basic familiarity with Ruby on Rails
 
