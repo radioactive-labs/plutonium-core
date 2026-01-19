@@ -1,6 +1,6 @@
 module DemoFeatures
-  # Test interaction for conditional form fields with pre_submit
-  class ConditionalFormTest < DemoFeatures::ResourceInteraction
+  # Demo interaction for conditional form fields with pre_submit
+  class ConditionalFormDemo < DemoFeatures::ResourceInteraction
     presents label: "Test Conditional Form",
       description: "Tests pre_submit and conditional field rendering",
       icon: Phlex::TablerIcons::TestPipe

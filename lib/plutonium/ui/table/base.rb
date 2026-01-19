@@ -6,6 +6,9 @@ module Plutonium
       class Base < Phlexi::Table::Base
         include Plutonium::UI::Component::Behaviour
 
+        # Use custom SelectionColumn with Stimulus data attributes
+        class SelectionColumn < Plutonium::UI::Table::Components::SelectionColumn; end
+
         class Display < Plutonium::UI::Display::Base
           class Builder < Builder
             def attachment_tag(**, &)

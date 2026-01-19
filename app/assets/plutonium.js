@@ -16383,8 +16383,12 @@ ${text2}</tr>
         return;
       this.#setupSlimSelect();
       this.element.addEventListener("turbo:morph-element", (event) => {
-        if (event.target === this.element) {
-          requestAnimationFrame(() => this.#handleMorph());
+        if (event.target === this.element && !this.morphing) {
+          this.morphing = true;
+          requestAnimationFrame(() => {
+            this.#handleMorph();
+            this.morphing = false;
+          });
         }
       });
     }
@@ -29890,6 +29894,81 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/bulk_actions_controller.js
+  var bulk_actions_controller_default = class extends Controller {
+    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell"];
+    static values = {
+      hasActions: { type: Boolean, default: false }
+    };
+    connect() {
+      if (this.hasActionsValue) {
+        this.enableSelection();
+      }
+    }
+    enableSelection() {
+      this.selectionCellTargets.forEach((el) => el.classList.remove("hidden"));
+    }
+    toggle() {
+      this.updateUI();
+    }
+    toggleAll(event) {
+      const checked = event.target.checked;
+      this.checkboxTargets.forEach((cb) => cb.checked = checked);
+      this.updateUI();
+    }
+    updateUI() {
+      const checked = this.checked;
+      const total = this.checkboxTargets.length;
+      if (this.hasCheckboxAllTarget) {
+        this.checkboxAllTarget.checked = checked.length === total && total > 0;
+        this.checkboxAllTarget.indeterminate = checked.length > 0 && checked.length < total;
+      }
+      if (this.hasToolbarTarget) {
+        this.toolbarTarget.classList.toggle("hidden", checked.length === 0);
+      }
+      if (this.hasSelectedCountTarget) {
+        this.selectedCountTarget.textContent = checked.length;
+      }
+      this.updateActionButtons();
+    }
+    updateActionButtons() {
+      const checked = this.checked;
+      const ids = checked.map((cb) => cb.value);
+      const idsParam = ids.map((id12) => `ids[]=${encodeURIComponent(id12)}`).join("&");
+      const allowedActions = this.computeAllowedActions(checked);
+      this.actionButtonTargets.forEach((button) => {
+        const baseUrl = button.dataset.bulkActionUrl;
+        const actionName = button.dataset.bulkActionName;
+        if (baseUrl) {
+          button.href = idsParam ? `${baseUrl}?${idsParam}` : baseUrl;
+        }
+        button.style.display = allowedActions.has(actionName) ? "" : "none";
+      });
+    }
+    // Compute the intersection of allowed actions across all selected checkboxes
+    computeAllowedActions(checked) {
+      if (checked.length === 0) {
+        return /* @__PURE__ */ new Set();
+      }
+      let intersection = new Set(this.getAllowedActionsForCheckbox(checked[0]));
+      for (let i4 = 1; i4 < checked.length; i4++) {
+        const actions = this.getAllowedActionsForCheckbox(checked[i4]);
+        intersection = new Set([...intersection].filter((a4) => actions.includes(a4)));
+      }
+      return intersection;
+    }
+    getAllowedActionsForCheckbox(checkbox) {
+      const allowedActions = checkbox.dataset.allowedActions;
+      return allowedActions ? allowedActions.split(",").filter((a4) => a4) : [];
+    }
+    get checked() {
+      return this.checkboxTargets.filter((cb) => cb.checked);
+    }
+    get unchecked() {
+      return this.checkboxTargets.filter((cb) => !cb.checked);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -29913,11 +29992,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("attachment-preview-container", attachment_preview_container_controller_default);
     application2.register("remote-modal", remote_modal_controller_default);
     application2.register("key-value-store", key_value_store_controller_default);
+    application2.register("bulk-actions", bulk_actions_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
   Turbo.StreamActions.redirect = function() {
-    Turbo.clearCache();
+    Turbo.cache.clear();
     const url = this.getAttribute("url");
     Turbo.visit(url);
   };

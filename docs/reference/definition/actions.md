@@ -277,6 +277,10 @@ end
 
 ### Bulk Action
 
+Bulk actions operate on multiple selected records. When registered, the resource table automatically shows:
+- **Selection checkboxes** in each row
+- **Bulk actions toolbar** that appears when records are selected
+
 ```ruby
 class BulkArchiveInteraction < Plutonium::Resource::Interaction
   presents label: "Archive Selected", icon: Phlex::TablerIcons::Archive
@@ -295,6 +299,33 @@ class BulkArchiveInteraction < Plutonium::Resource::Interaction
   end
 end
 ```
+
+Register in definition:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  action :bulk_archive, interaction: BulkArchiveInteraction
+  # bulk_action: true is automatically inferred from `resources` attribute
+end
+```
+
+Add the policy method (checked per-record):
+
+```ruby
+class PostPolicy < ResourcePolicy
+  def bulk_archive?
+    # Can use record attributes - checked for each selected record
+    user.admin? || record.author == user
+  end
+end
+```
+
+::: tip Bulk Action Authorization
+Bulk actions use **per-record authorization**:
+- Policy method (e.g., `bulk_archive?`) is checked for **each selected record** - you can use `record` attributes
+- Backend rejects the entire request if any record fails authorization
+- UI only shows actions that **all** selected records support
+:::
 
 ### Resource Action (No Record)
 

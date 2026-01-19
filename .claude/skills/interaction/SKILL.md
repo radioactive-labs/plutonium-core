@@ -209,11 +209,11 @@ end
 
 ### Bulk Actions (Multiple Records)
 
-Act on multiple selected records:
+Act on multiple selected records. When registered, the table shows checkboxes and a toolbar appears when records are selected.
 
 ```ruby
 class BulkArchiveInteraction < Plutonium::Resource::Interaction
-  attribute :resources  # Collection of records
+  attribute :resources  # Collection of records (note: plural)
 
   def execute
     resources.update_all(archived: true)
@@ -221,6 +221,8 @@ class BulkArchiveInteraction < Plutonium::Resource::Interaction
   end
 end
 ```
+
+**Authorization:** Bulk actions use per-record authorization. The policy method is checked for each selected record - if any fails, the entire request is rejected. The UI only shows actions that all selected records support.
 
 ## Connecting to Definitions
 

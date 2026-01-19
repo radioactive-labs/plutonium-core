@@ -38,7 +38,7 @@ module Plutonium
             :commit_interactive_record_action
           when :interactive_resource_action
             :commit_interactive_resource_action
-          when :interactive_collection_action
+          when :interactive_bulk_action
             :commit_interactive_bulk_action
           else
             action_name
@@ -49,6 +49,21 @@ module Plutonium
           super
           attributes[:id] = :interaction_form
           attributes.fetch(:data_turbo) { attributes[:data_turbo] = object.turbo.to_s }
+        end
+
+        def render_bulk_action_ids
+          action = helpers.current_interactive_action
+          return unless action&.bulk_action?
+
+          ids = Array(helpers.params[:ids])
+          ids.each do |id|
+            input(type: :hidden, name: "ids[]", value: id)
+          end
+        end
+
+        def form_template
+          render_bulk_action_ids
+          super
         end
 
         def submit_button(*, **)

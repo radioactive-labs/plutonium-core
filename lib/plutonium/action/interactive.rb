@@ -79,7 +79,7 @@ module Plutonium
           if attribute_names.include?(:resource)
             :interactive_record_action
           elsif attribute_names.include?(:resources)
-            :interactive_collection_action
+            :interactive_bulk_action
           else
             :interactive_resource_action
           end
@@ -99,7 +99,7 @@ module Plutonium
         # @return [Hash] The action options
         def self.determine_action_options(action_type)
           {
-            bulk_action: action_type == :interactive_collection_action,
+            bulk_action: action_type == :interactive_bulk_action,
             record_action: action_type == :interactive_record_action,
             collection_record_action: action_type == :interactive_record_action,
             resource_action: action_type == :interactive_resource_action

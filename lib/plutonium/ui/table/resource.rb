@@ -42,66 +42,91 @@ module Plutonium
         end
 
         def render_table
-          render Plutonium::UI::Table::Base.new(collection) do |table|
-            @resource_fields.each do |name|
-              # field :name, as: :string
-              # column :description, class: "text-red-700"
-              # column :age, align: :end
-              # column :dob do |proxy|
-              #   proxy.field(:dob).date_tag
-              # end
+          # Wrap table in Stimulus controller for bulk actions
+          div(data: bulk_actions_controller_data) do
+            # Bulk actions toolbar (hidden by default, shown when items selected)
+            render Plutonium::UI::Table::Components::BulkActionsToolbar.new(bulk_actions:) if bulk_actions.any?
 
-              field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
+            render Plutonium::UI::Table::Base.new(collection) do |table|
+              # Selection column for bulk actions (hidden by default, Stimulus shows it)
+              # Pass bulk actions and policy resolver for per-record authorization
+              table.selection_column :id,
+                bulk_actions:,
+                policy_resolver: ->(record) { policy_for(record:) }
 
-              display_definition = resource_definition.defined_displays[name] || {}
-              display_options = display_definition[:options] || {}
+              @resource_fields.each do |name|
+                # field :name, as: :string
+                # column :description, class: "text-red-700"
+                # column :age, align: :end
+                # column :dob do |proxy|
+                #   proxy.field(:dob).date_tag
+                # end
 
-              column_definition = resource_definition.defined_columns[name] || {}
-              column_options = column_definition[:options] || {}
+                field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
 
-              # Check for conditional rendering
-              condition = column_options[:condition]
-              conditionally_hidden = condition && !instance_exec(&condition)
-              next if conditionally_hidden
+                display_definition = resource_definition.defined_displays[name] || {}
+                display_options = display_definition[:options] || {}
 
-              tag = column_options[:as] || display_definition[:as] || field_options[:as]
+                column_definition = resource_definition.defined_columns[name] || {}
+                column_options = column_definition[:options] || {}
 
-              # Extract field-level options from display_options and column_options
-              # These are Phlexi field options that should NOT be passed to the tag builder
-              field_level_keys = [:label, :description, :placeholder]
-              display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
-              column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
-              tag_attributes = display_tag_attributes.merge(column_tag_attributes)
-              tag_block = column_definition[:block] || ->(wrapped_object, key) {
-                f = wrapped_object.field(key)
-                tag ||= f.inferred_field_component
-                f.send(:"#{tag}_tag", **tag_attributes)
-              }
+                # Check for conditional rendering
+                condition = column_options[:condition]
+                conditionally_hidden = condition && !instance_exec(&condition)
+                next if conditionally_hidden
 
-              # For table columns, only extract column-level options (label and align)
-              # Field-level options like description and placeholder don't make sense in table cells
-              field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
-              table.column name,
-                **field_options,
-                sort_params: current_query_object.sort_params_for(name),
-                &tag_block
-            end
+                tag = column_options[:as] || display_definition[:as] || field_options[:as]
 
-            table.actions do |wrapped_object|
-              record = wrapped_object.unwrapped
-              policy = policy_for(record:)
+                # Extract field-level options from display_options and column_options
+                # These are Phlexi field options that should NOT be passed to the tag builder
+                field_level_keys = [:label, :description, :placeholder]
+                display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
+                column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
+                tag_attributes = display_tag_attributes.merge(column_tag_attributes)
+                tag_block = column_definition[:block] || ->(wrapped_object, key) {
+                  f = wrapped_object.field(key)
+                  tag ||= f.inferred_field_component
+                  f.send(:"#{tag}_tag", **tag_attributes)
+                }
 
-              div(class: "flex space-x-2") do
-                resource_definition.defined_actions
-                  .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
-                  .values
-                  .each do |action|
-                    url = route_options_to_url(action.route_options, record)
-                    ActionButton(action, url:, variant: :table)
-                  end
+                # For table columns, only extract column-level options (label and align)
+                # Field-level options like description and placeholder don't make sense in table cells
+                field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
+                table.column name,
+                  **field_options,
+                  sort_params: current_query_object.sort_params_for(name),
+                  &tag_block
+              end
+
+              table.actions do |wrapped_object|
+                record = wrapped_object.unwrapped
+                policy = policy_for(record:)
+
+                div(class: "flex space-x-2") do
+                  resource_definition.defined_actions
+                    .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
+                    .values
+                    .each do |action|
+                      url = route_options_to_url(action.route_options, record)
+                      ActionButton(action, url:, variant: :table)
+                    end
+                end
               end
             end
           end
+        end
+
+        def bulk_actions
+          @bulk_actions ||= resource_definition.defined_actions
+            .select { |k, a| a.bulk_action? }
+            .values
+        end
+
+        def bulk_actions_controller_data
+          {
+            controller: "bulk-actions",
+            bulk_actions_has_actions_value: bulk_actions.any?
+          }
         end
 
         def render_footer
