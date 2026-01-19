@@ -1,4 +1,4 @@
-# Chapter 7: Customizing the UI
+# Chapter 8: Customizing the UI
 
 In this chapter, you'll customize forms, tables, and pages to create a polished interface.
 
@@ -244,6 +244,7 @@ Congratulations! You've built a complete blog application with:
 - Authorization with policies
 - Custom actions with Interactions
 - Nested resources
+- Multiple portals (Admin and Author)
 - Customized UI
 
 Continue exploring:

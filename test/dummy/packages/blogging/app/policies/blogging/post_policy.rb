@@ -6,6 +6,8 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   end
 
   def read?
+    return true unless record_instance?
+
     record.published? || owner?
   end
 
@@ -36,7 +38,11 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
     end
   end
 
-  def permitted_attributes_for_read
+  def permitted_attributes_for_index
+    [:title, :body, :published, :created_at, :user]
+  end
+
+  def permitted_attributes_for_show
     if owner? || record.published?
       [:title, :body, :published, :created_at, :user]
     else
@@ -61,7 +67,11 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 
   private
 
+  def record_instance?
+    record.is_a?(Blogging::Post)
+  end
+
   def owner?
-    record.user_id == user.id
+    record_instance? && record.user_id == user.id
   end
 end

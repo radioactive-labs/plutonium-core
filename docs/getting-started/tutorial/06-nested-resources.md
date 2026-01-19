@@ -142,6 +142,6 @@ Plutonium supports one level of nesting. For deeper hierarchies (e.g., Replies t
 
 ## What's Next
 
-Our blog has posts and comments. In the final chapter, we'll customize the UI to make it look polished.
+Our blog has posts and comments. In the next chapter, we'll create an Author Portal to show how multiple portals can share resources with different access levels.
 
-[Continue to Chapter 7: Customizing the UI →](./07-customizing-ui)
+[Continue to Chapter 7: Creating an Author Portal →](./07-author-portal)

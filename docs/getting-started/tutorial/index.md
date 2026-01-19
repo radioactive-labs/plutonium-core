@@ -49,7 +49,10 @@ Create a "Publish" action using Interactions for business logic.
 ### [6. Nested Resources](./06-nested-resources)
 Add Comments as a nested resource under Posts.
 
-### [7. Customizing the UI](./07-customizing-ui)
+### [7. Creating an Author Portal](./07-author-portal)
+Create a second portal with different access levels for content authors.
+
+### [8. Customizing the UI](./08-customizing-ui)
 Customize forms, tables, and views to match your requirements.
 
 ## Getting Help

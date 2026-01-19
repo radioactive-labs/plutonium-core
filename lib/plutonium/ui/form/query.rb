@@ -151,7 +151,7 @@ module Plutonium
 
           field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options] : {}
 
-          input_definition = definition.defined_inputs[name] || {}
+          input_definition = resource_definition.defined_inputs[name] || {}
           input_options = input_definition[:options] || {}
 
           tag = input_options[:as] || field_options[:as]
