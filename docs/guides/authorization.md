@@ -238,6 +238,39 @@ relation_scope do |relation|
 end
 ```
 
+## Controller & View Helpers
+
+These helpers are available in controllers and views for authorization checks.
+
+### authorized_resource_scope
+
+Get an authorized scope for a resource other than the current controller's resource. Useful in dashboards and custom views:
+
+```ruby
+# In a view or controller
+authorized_resource_scope(Post)                    # => Post.where(...)
+authorized_resource_scope(Post).count              # => 42
+authorized_resource_scope(Comment, relation: post.comments)
+```
+
+### policy_for
+
+Get the policy instance for any record:
+
+```ruby
+policy_for(@post)                    # => PostPolicy instance
+policy_for(@post).update?            # => true/false
+```
+
+### allowed_to?
+
+Check if an action is permitted:
+
+```ruby
+allowed_to?(:edit?, @post)           # => true/false
+allowed_to?(:create?, Post)          # => true/false
+```
+
 ## Portal-Specific Policies
 
 Override policies for specific portals:
