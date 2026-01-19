@@ -329,7 +329,7 @@
   border: 1px solid var(--pu-card-border);
   border-radius: var(--pu-radius-lg);
   box-shadow: var(--pu-shadow-sm);
-  @apply overflow-hidden;
+  @apply overflow-x-auto;
 }
 
 .pu-table {
