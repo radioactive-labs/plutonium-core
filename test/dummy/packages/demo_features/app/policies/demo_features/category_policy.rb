@@ -9,6 +9,11 @@ class DemoFeatures::CategoryPolicy < DemoFeatures::ResourcePolicy
     true
   end
 
+  # Bulk actions
+  def bulk_set_description?
+    record.description.blank?
+  end
+
   # Core attributes
 
   def permitted_attributes_for_create

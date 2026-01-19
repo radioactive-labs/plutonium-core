@@ -1,6 +1,6 @@
 class DemoFeatures::MorphDemoDefinition < DemoFeatures::ResourceDefinition
   # Resource action for testing conditional forms in interactions
-  action :conditional_form_test, interaction: DemoFeatures::ConditionalFormTest
+  action :conditional_form_demo, interaction: DemoFeatures::ConditionalFormDemo
 
   # Record type determines which fields are shown
   input :record_type, choices: DemoFeatures::MorphDemo.record_types.keys, pre_submit: true

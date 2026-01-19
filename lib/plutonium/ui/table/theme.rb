@@ -6,7 +6,9 @@ module Plutonium
       class Theme < Phlexi::Table::Theme
         def self.theme
           super.merge({
-            selection_checkbox: "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+            selection_checkbox: "size-4 rounded border-gray-300 text-primary-700 focus:ring-primary-500 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer",
+            selection_header_cell: "w-12 px-4 py-3",
+            selection_body_cell: "w-12 px-4 py-4",
             name_column: "font-medium text-gray-900 whitespace-nowrap dark:text-white",
             align_start: "text-start",
             align_end: "text-end",

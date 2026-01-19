@@ -218,6 +218,10 @@ action :export, interaction: ExportInteraction, resource_action: true
 
 ## Bulk Action Interaction
 
+Bulk actions operate on multiple selected records. When a definition has bulk actions, the resource table automatically shows:
+- **Selection checkboxes** in each row
+- **Bulk actions toolbar** that appears when records are selected
+
 ```ruby
 class BulkPublishInteraction < ResourceInteraction
   presents label: "Publish Selected",
@@ -239,6 +243,34 @@ class BulkPublishInteraction < ResourceInteraction
   end
 end
 ```
+
+Register in your definition:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  action :bulk_publish, interaction: BulkPublishInteraction
+  # bulk_action: true is automatically inferred from `resources` attribute
+end
+```
+
+Add the policy method (checked per-record):
+
+```ruby
+class PostPolicy < ResourcePolicy
+  def bulk_publish?
+    # Can use record attributes - checked for each selected record
+    user.admin? || record.author == user
+  end
+end
+```
+
+::: tip Bulk Action Authorization
+Bulk actions use **per-record authorization**:
+- The policy method (e.g., `bulk_publish?`) is checked for **each selected record** - you can use `record` attributes
+- Backend rejects the entire request if any record fails authorization
+- UI only shows actions that **all** selected records support (buttons hide dynamically as you select)
+- Records are fetched from `current_authorized_scope` - only accessible records can be selected
+:::
 
 ## Resource Action (No Record)
 

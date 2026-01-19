@@ -18,8 +18,11 @@ module Plutonium
           ]
 
           before_action :authorize_interactive_resource_action!, only: %i[
-            interactive_bulk_action commit_interactive_bulk_action
             interactive_resource_action commit_interactive_resource_action
+          ]
+
+          before_action :authorize_interactive_bulk_action!, only: %i[
+            interactive_bulk_action commit_interactive_bulk_action
           ]
         end
 
@@ -129,48 +132,51 @@ module Plutonium
 
         # GET /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
         def interactive_bulk_action
-          raise NotImplementedError
-          # # TODO: ensure that the selected list matches the returned value
-          # interactive_bulk
-          # @interaction = current_interactive_action.interaction.new((params[:interaction] || {}).except(:resources))
+          build_interactive_bulk_action_interaction
 
-          # if helpers.current_turbo_frame == "remote_modal"
-          #   render layout: false
-          # else
-          #   render :interactive_bulk_action
-          # end
+          if helpers.current_turbo_frame == "remote_modal"
+            render layout: false, formats: [:html]
+          else
+            render :interactive_bulk_action, formats: [:html]
+          end
         end
 
         # POST /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
         def commit_interactive_bulk_action
-          raise NotImplementedError
-          # respond_to do |format|
-          #   inputs = interaction_params.merge(resources: interactive_bulk)
-          #   @interaction = current_interactive_action.interaction.run(inputs)
+          build_interactive_bulk_action_interaction
 
-          #   if @interaction.valid?
-          #     collection_count = interactive_bulk.size
+          if params[:pre_submit]
+            respond_to do |format|
+              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.html { render :interactive_bulk_action, formats: [:html], status: :unprocessable_content }
+            end
+            return
+          end
 
-          #     flash[:notice] = "TODO:#{current_interactive_action} #{collection_count} #{resource_class.model_name.human.pluralize(collection_count)} successfully updated."
+          outcome = @interaction.call
 
-          #     format.html { redirect_to resource_url_for(resource_class) }
-          #     if helpers.current_turbo_frame == "remote_modal"
-          #       format.turbo_stream do
-          #         render turbo_stream: [
-          #           helpers.turbo_stream_redirect(resource_url_for(resource_class))
-          #         ]
-          #       end
-          #     end
-          #   else
-          #     format.html do
-          #       render :interactive_bulk_action, status: :unprocessable_content
-          #     end
-          #     format.any do
-          #       @errors = @interaction.errors
-          #       render "errors", status: :unprocessable_content
-          #     end
-          #   end
-          # end
+          outcome.to_response.process(self) do |value|
+            respond_to do |format|
+              if outcome.success?
+                return_url = redirect_url_after_action_on(resource_class)
+
+                format.turbo_stream do
+                  render turbo_stream: helpers.turbo_stream_redirect(return_url)
+                end
+                format.html do
+                  redirect_to return_url, status: :see_other
+                end
+              else
+                format.any(:html, :turbo_stream) do
+                  render :interactive_bulk_action, formats: [:html], status: :unprocessable_content
+                end
+                format.any do
+                  @errors = @interaction.errors
+                  render "errors", status: :unprocessable_content
+                end
+              end
+            end
+          end
         end
 
         private
@@ -202,6 +208,16 @@ module Plutonium
           authorize_current! resource_class, to: :"#{interactive_resource_action}?"
         end
 
+        def authorize_interactive_bulk_action!
+          action_name = params[:interactive_action]&.to_sym
+          policy_method = :"#{action_name}?"
+
+          # Authorize each record individually - fail if any record is not authorized
+          interactive_bulk.each do |record|
+            authorize_current! record, to: policy_method
+          end
+        end
+
         def interactive_bulk
           @interactive_bulk ||= current_authorized_scope.from_path_param(params.require(:ids))
         end
@@ -215,6 +231,12 @@ module Plutonium
         def build_interactive_resource_action_interaction
           @interaction = current_interactive_action.interaction.new(view_context:)
           @interaction.attributes = interaction_params
+          @interaction
+        end
+
+        def build_interactive_bulk_action_interaction
+          @interaction = current_interactive_action.interaction.new(view_context:)
+          @interaction.attributes = interaction_params.merge(resources: interactive_bulk)
           @interaction
         end
 
