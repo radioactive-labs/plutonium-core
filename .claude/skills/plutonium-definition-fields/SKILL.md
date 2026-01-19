@@ -311,12 +311,40 @@ input :color_picker, as: ColorPickerComponent
 display :chart, as: ChartComponent
 ```
 
-## Column Alignment
+## Column Options
+
+### Alignment
 
 ```ruby
 column :title, align: :start    # Left (default)
 column :status, align: :center  # Center
 column :amount, align: :end     # Right
+```
+
+### Custom Column Rendering
+
+Use a block to customize how a column value is displayed. The block receives the raw record:
+
+```ruby
+column :price do |record|
+  "$#{"%.2f" % record.price}" if record.price
+end
+
+column :status do |record|
+  case record.status
+  when 'active' then "✓ Active"
+  when 'pending' then "⏳ Pending"
+  else record.status.humanize
+  end
+end
+
+column :description do |record|
+  record.description&.truncate(50)
+end
+
+column :author do |record|
+  record.author&.name || "Unknown"
+end
 ```
 
 ## Nested Inputs
