@@ -215,5 +215,4 @@ scope :filtered, -> { where(status: 'active') }
 ## Related
 
 - [Model Features](./features)
-- [Resources Concept](/concepts/resources)
 - [Definition Reference](/reference/definition/)

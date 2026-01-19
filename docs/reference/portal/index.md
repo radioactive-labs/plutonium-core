@@ -364,6 +364,5 @@ end
 
 ## Related
 
-- [Packages and Portals Concept](/concepts/packages-portals)
 - [Authentication Guide](/guides/authentication)
 - [Multi-tenancy Guide](/guides/multi-tenancy)
