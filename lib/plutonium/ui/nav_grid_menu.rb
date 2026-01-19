@@ -32,13 +32,13 @@ module Plutonium
 
         def view_template
           a(
-            class: "block p-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 group",
+            class: "block p-4 rounded-[var(--pu-radius-md)] hover:bg-[var(--pu-surface-alt)] group transition-colors",
             href: @href
           ) do
             render @icon.new(
-              class: "text-gray-400 group-hover:text-gray-500 dark:text-gray-200 dark:group-hover:text-gray-400 w-8 h-8 mx-auto"
+              class: "text-[var(--pu-text-muted)] group-hover:text-[var(--pu-text)] w-8 h-8 mx-auto transition-colors"
             )
-            div(class: "text-sm text-gray-900 dark:text-white text-center") { @name }
+            div(class: "text-sm text-[var(--pu-text)] text-center mt-1") { @name }
           end
         end
       end
@@ -67,7 +67,7 @@ module Plutonium
         button(
           type: "button",
           data: {resource_drop_down_target: "trigger"},
-          class: "p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600"
+          class: "p-2 text-[var(--pu-text-muted)] rounded-[var(--pu-radius-md)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] focus:ring-2 focus:ring-[var(--pu-border)] transition-colors"
         ) do
           span(class: "sr-only") { "View #{@label}" }
           render @icon.new(class: "w-6 h-6")
@@ -76,11 +76,12 @@ module Plutonium
 
       def render_dropdown_menu
         div(
-          class: "hidden overflow-hidden z-50 my-4 max-w-sm text-base list-none bg-white divide-y divide-gray-100 shadow-lg dark:bg-gray-700 dark:divide-gray-600 rounded-xl",
+          class: "hidden overflow-hidden z-50 my-4 max-w-sm text-base list-none bg-[var(--pu-surface)] divide-y divide-[var(--pu-border-muted)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]",
+          style: "box-shadow: var(--pu-shadow-lg)",
           data: {resource_drop_down_target: "menu"}
         ) do
           div(
-            class: "block py-2 px-4 text-base font-medium text-center text-gray-700 bg-gray-50 dark:bg-gray-600 dark:text-gray-300"
+            class: "block py-2 px-4 text-base font-medium text-center text-[var(--pu-text)] bg-[var(--pu-surface-alt)]"
           ) { @label }
 
           div(class: "grid grid-cols-3 gap-4 p-4") do

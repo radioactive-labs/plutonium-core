@@ -4,7 +4,7 @@ module Plutonium
       def view_template(&)
         raise ArgumentError, "Block requires a content block" unless block_given?
 
-        div class: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3" do
+        div class: "relative bg-[var(--pu-surface)] rounded-[var(--pu-radius-lg)] my-3", style: "box-shadow: var(--pu-shadow-md)" do
           yield
         end
       end

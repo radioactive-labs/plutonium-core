@@ -143,13 +143,13 @@ module Plutonium
 
           def render_nested_field_header(context)
             div do
-              h2(class: "text-lg font-semibold text-gray-900 dark:text-white") { context.name.to_s.humanize }
+              h2(class: "text-lg font-semibold text-[var(--pu-text)]") { context.name.to_s.humanize }
               render_nested_fields_header_description(context.options[:description]) if context.options[:description]
             end
           end
 
           def render_nested_fields_header_description(description)
-            p(class: "text-md font-normal text-gray-500 dark:text-gray-400") { description }
+            p(class: "text-md font-normal text-[var(--pu-text-muted)]") { description }
           end
 
           def render_nested_field_content(context)
@@ -193,7 +193,7 @@ module Plutonium
           def render_nested_fields_fieldset(nested, context)
             fieldset(
               data_new_record: !nested.object&.persisted?,
-              class: "nested-resource-form-fields border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4 relative"
+              class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
             ) do
               render_nested_fields_fieldset_content(nested, context)
               render_nested_fields_delete_button(nested, context.options)
@@ -238,7 +238,7 @@ module Plutonium
           def render_nested_fields_delete_checkbox
             input(
               type: :checkbox,
-              class: "w-4 h-4 ms-2 text-red-600 bg-red-100 border-red-300 rounded focus:ring-red-500 dark:focus:ring-red-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer",
+              class: "w-4 h-4 ms-2 text-danger-600 bg-danger-100 border-danger-300 rounded focus:ring-danger-500 dark:focus:ring-danger-600 focus:ring-2 dark:bg-[var(--pu-surface-alt)] dark:border-[var(--pu-border)] cursor-pointer",
               data_action: "nested-resource-form-fields#remove"
             )
           end

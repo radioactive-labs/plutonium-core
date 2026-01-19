@@ -1,0 +1,456 @@
+/**
+ * Plutonium Component Classes
+ *
+ * Modern, clean component styles with refined aesthetics.
+ */
+
+/* ===================
+   BUTTONS - Modern, refined
+   =================== */
+
+.pu-btn {
+  @apply inline-flex items-center justify-center gap-2
+         font-semibold
+         transition-all duration-200 ease-out
+         focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+  border-radius: var(--pu-radius-md);
+}
+
+.pu-btn-md {
+  @apply px-5 py-2.5 text-sm;
+}
+
+.pu-btn-sm {
+  @apply px-4 py-2 text-sm;
+}
+
+.pu-btn-xs {
+  @apply px-3 py-1.5 text-xs;
+}
+
+/* Primary - Solid with subtle gradient */
+.pu-btn-primary {
+  @apply bg-primary-600 text-white
+         hover:bg-primary-500
+         active:bg-primary-700
+         focus-visible:ring-primary-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-primary:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+.pu-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--pu-shadow-sm);
+}
+
+/* Secondary */
+.pu-btn-secondary {
+  @apply bg-secondary-600 text-white
+         hover:bg-secondary-500
+         active:bg-secondary-700
+         focus-visible:ring-secondary-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-secondary:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Danger */
+.pu-btn-danger {
+  @apply bg-danger-600 text-white
+         hover:bg-danger-500
+         active:bg-danger-700
+         focus-visible:ring-danger-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-danger:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Success */
+.pu-btn-success {
+  @apply bg-success-600 text-white
+         hover:bg-success-500
+         active:bg-success-700
+         focus-visible:ring-success-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-success:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Warning */
+.pu-btn-warning {
+  @apply bg-warning-600 text-white
+         hover:bg-warning-500
+         active:bg-warning-700
+         focus-visible:ring-warning-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-warning:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Info */
+.pu-btn-info {
+  @apply bg-info-600 text-white
+         hover:bg-info-500
+         active:bg-info-700
+         focus-visible:ring-info-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-info:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Accent */
+.pu-btn-accent {
+  @apply bg-accent-600 text-white
+         hover:bg-accent-500
+         active:bg-accent-700
+         focus-visible:ring-accent-500;
+  box-shadow: var(--pu-shadow-sm), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+}
+.pu-btn-accent:hover {
+  box-shadow: var(--pu-shadow-md), inset 0 1px 0 0 rgb(255 255 255 / 0.1);
+  transform: translateY(-1px);
+}
+
+/* Ghost - Minimal, text-like */
+.pu-btn-ghost {
+  @apply bg-transparent
+         text-slate-600 hover:text-slate-900
+         hover:bg-slate-100
+         active:bg-slate-200
+         focus-visible:ring-slate-500;
+}
+.dark .pu-btn-ghost {
+  @apply text-slate-400 hover:text-slate-100
+         hover:bg-slate-700
+         active:bg-slate-600;
+}
+
+/* Soft variants - Tinted backgrounds */
+.pu-btn-soft-primary {
+  @apply bg-primary-50 text-primary-700
+         hover:bg-primary-100
+         active:bg-primary-200
+         focus-visible:ring-primary-500;
+}
+.dark .pu-btn-soft-primary {
+  @apply bg-primary-950/50 text-primary-300
+         hover:bg-primary-900/60
+         active:bg-primary-900/80;
+}
+
+.pu-btn-soft-danger {
+  @apply bg-danger-50 text-danger-700
+         hover:bg-danger-100
+         active:bg-danger-200
+         focus-visible:ring-danger-500;
+}
+.dark .pu-btn-soft-danger {
+  @apply bg-danger-950/50 text-danger-300
+         hover:bg-danger-900/60
+         active:bg-danger-900/80;
+}
+
+.pu-btn-soft-success {
+  @apply bg-success-50 text-success-700
+         hover:bg-success-100
+         active:bg-success-200
+         focus-visible:ring-success-500;
+}
+.dark .pu-btn-soft-success {
+  @apply bg-success-950/50 text-success-300
+         hover:bg-success-900/60
+         active:bg-success-900/80;
+}
+
+.pu-btn-soft-warning {
+  @apply bg-warning-50 text-warning-700
+         hover:bg-warning-100
+         active:bg-warning-200
+         focus-visible:ring-warning-500;
+}
+.dark .pu-btn-soft-warning {
+  @apply bg-warning-950/50 text-warning-300
+         hover:bg-warning-900/60
+         active:bg-warning-900/80;
+}
+
+.pu-btn-soft-info {
+  @apply bg-info-50 text-info-700
+         hover:bg-info-100
+         active:bg-info-200
+         focus-visible:ring-info-500;
+}
+.dark .pu-btn-soft-info {
+  @apply bg-info-950/50 text-info-300
+         hover:bg-info-900/60
+         active:bg-info-900/80;
+}
+
+.pu-btn-soft-secondary {
+  @apply bg-secondary-50 text-secondary-700
+         hover:bg-secondary-100
+         active:bg-secondary-200
+         focus-visible:ring-secondary-500;
+}
+.dark .pu-btn-soft-secondary {
+  @apply bg-secondary-950/50 text-secondary-300
+         hover:bg-secondary-900/60
+         active:bg-secondary-900/80;
+}
+
+.pu-btn-soft-accent {
+  @apply bg-accent-50 text-accent-700
+         hover:bg-accent-100
+         active:bg-accent-200
+         focus-visible:ring-accent-500;
+}
+.dark .pu-btn-soft-accent {
+  @apply bg-accent-950/50 text-accent-300
+         hover:bg-accent-900/60
+         active:bg-accent-900/80;
+}
+
+/* ===================
+   CARDS - Clean, elevated
+   =================== */
+
+.pu-card {
+  background-color: var(--pu-card-bg);
+  border: 1px solid var(--pu-card-border);
+  border-radius: var(--pu-radius-lg);
+  box-shadow: var(--pu-shadow-sm);
+}
+
+.pu-card-body {
+  padding: var(--pu-space-lg);
+}
+
+/* ===================
+   FORM INPUTS - Clean, modern
+   =================== */
+
+.pu-input {
+  background-color: var(--pu-input-bg);
+  border: 1px solid var(--pu-input-border);
+  border-radius: var(--pu-radius-md);
+  color: var(--pu-text);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  @apply w-full px-4 py-3
+         text-base
+         focus:outline-none;
+}
+.pu-input::placeholder {
+  color: var(--pu-input-placeholder);
+}
+.pu-input:hover {
+  border-color: var(--pu-border-strong);
+}
+.pu-input:focus {
+  border-color: var(--pu-input-focus-ring);
+  box-shadow: 0 0 0 3px theme(colors.primary.500 / 15%);
+}
+
+.pu-input-invalid {
+  @apply border-danger-500 bg-danger-50/50
+         text-danger-900 placeholder:text-danger-400;
+}
+.pu-input-invalid:focus {
+  box-shadow: 0 0 0 3px theme(colors.danger.500 / 15%);
+}
+.dark .pu-input-invalid {
+  @apply bg-danger-950/20 border-danger-500/70
+         text-danger-200 placeholder:text-danger-400;
+}
+
+.pu-input-valid {
+  @apply border-success-500 bg-success-50/50
+         text-success-900 placeholder:text-success-400;
+}
+.pu-input-valid:focus {
+  box-shadow: 0 0 0 3px theme(colors.success.500 / 15%);
+}
+.dark .pu-input-valid {
+  @apply bg-success-950/20 border-success-500/70
+         text-success-200 placeholder:text-success-400;
+}
+
+.pu-label {
+  color: var(--pu-text);
+  @apply block mb-2 text-base font-semibold;
+}
+
+.pu-label-required::after {
+  content: " *";
+  @apply text-danger-500;
+}
+
+.pu-hint {
+  color: var(--pu-text-muted);
+  @apply mt-2 text-sm;
+}
+
+.pu-error {
+  @apply mt-2 text-sm font-medium text-danger-600;
+}
+.dark .pu-error {
+  @apply text-danger-400;
+}
+
+/* ===================
+   TABLE - Minimal, clean
+   =================== */
+
+.pu-table-wrapper {
+  background-color: var(--pu-card-bg);
+  border: 1px solid var(--pu-card-border);
+  border-radius: var(--pu-radius-lg);
+  box-shadow: var(--pu-shadow-sm);
+  @apply overflow-hidden;
+}
+
+.pu-table {
+  color: var(--pu-text);
+  @apply w-full text-base text-left;
+}
+
+.pu-table-header {
+  background-color: var(--pu-table-header-bg);
+  color: var(--pu-table-header-text);
+  border-bottom: 1px solid var(--pu-table-border);
+  @apply text-xs font-semibold uppercase tracking-wider;
+}
+
+.pu-table-header-cell {
+  @apply px-6 py-4;
+}
+
+.pu-table-body-row {
+  background-color: var(--pu-table-row-bg);
+  border-bottom: 1px solid var(--pu-table-border);
+  transition: background-color 150ms ease;
+  @apply last:border-b-0;
+}
+.pu-table-body-row:hover {
+  background-color: var(--pu-table-row-hover);
+}
+
+.pu-table-body-row-selected {
+  background-color: var(--pu-table-row-selected);
+}
+
+.pu-table-body-cell {
+  color: var(--pu-text);
+  @apply px-6 py-4;
+}
+
+/* ===================
+   TOOLBAR - Clean, integrated
+   =================== */
+
+.pu-toolbar {
+  background: linear-gradient(to right, theme(colors.primary.50), theme(colors.primary.100/50%));
+  border: 1px solid theme(colors.primary.200);
+  border-radius: var(--pu-radius-lg);
+  @apply items-center gap-4
+         px-5 py-3 mb-4;
+}
+.dark .pu-toolbar {
+  background: linear-gradient(to right, theme(colors.primary.950/40%), theme(colors.primary.900/30%));
+  border-color: theme(colors.primary.800/50%);
+}
+
+.pu-toolbar-text {
+  @apply text-base font-semibold text-primary-700;
+}
+.dark .pu-toolbar-text {
+  @apply text-primary-300;
+}
+
+.pu-toolbar-actions {
+  @apply flex items-center gap-2;
+}
+
+/* ===================
+   CHECKBOX - Modern
+   =================== */
+
+.pu-checkbox {
+  @apply size-5 rounded-md
+         bg-white border-2 border-slate-300
+         accent-primary-600
+         focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0
+         cursor-pointer
+         transition-all duration-150
+         checked:bg-primary-600 checked:border-primary-600
+         indeterminate:bg-primary-600 indeterminate:border-primary-600
+         hover:border-primary-400;
+}
+.dark .pu-checkbox {
+  @apply bg-slate-700 border-slate-500
+         hover:border-primary-400;
+}
+
+/* ===================
+   EMPTY STATE
+   =================== */
+
+.pu-empty-state {
+  @apply flex flex-col items-center justify-center
+         py-16 px-8
+         text-center;
+}
+
+.pu-empty-state-icon {
+  color: var(--pu-text-subtle);
+  @apply w-16 h-16 mb-6;
+}
+
+.pu-empty-state-title {
+  color: var(--pu-text);
+  @apply text-xl font-semibold mb-3;
+}
+
+.pu-empty-state-description {
+  color: var(--pu-text-muted);
+  @apply text-base max-w-md leading-relaxed;
+}
+
+/* ===================
+   PANEL HEADER
+   =================== */
+
+.pu-panel-header {
+  background-color: var(--pu-surface-alt);
+  border-bottom: 1px solid var(--pu-border);
+  @apply px-6 py-5;
+}
+
+.pu-panel-title {
+  color: var(--pu-text);
+  @apply text-xl font-semibold;
+}
+
+.pu-panel-description {
+  color: var(--pu-text-muted);
+  @apply mt-1 text-base;
+}
+
+/* ===================
+   SELECTION CELL
+   =================== */
+
+.pu-selection-cell {
+  @apply w-14 px-6 py-4;
+}

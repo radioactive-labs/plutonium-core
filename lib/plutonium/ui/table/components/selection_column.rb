@@ -77,7 +77,7 @@ module Plutonium
             if @allowed_actions.empty?
               # Show X when no actions available for this record
               span(
-                class: "inline-flex items-center justify-center size-4 text-gray-400 dark:text-gray-600",
+                class: "inline-flex items-center justify-center size-4 text-[var(--pu-text-subtle)]",
                 title: "No bulk actions available"
               ) { "✕" }
             else

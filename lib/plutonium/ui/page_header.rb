@@ -8,7 +8,7 @@ module Plutonium
       end
 
       def view_template
-        div(class: "sm:flex sm:space-y-0 sm:space-x-4 sm:flex-row items-center justify-between space-y-3 mb-6") {
+        div(class: "sm:flex sm:space-y-0 sm:gap-6 sm:flex-row items-center justify-between space-y-4 mb-8") {
           div {
             phlexi_render(@title) {
               render_title @title
@@ -18,7 +18,7 @@ module Plutonium
               render_description @description
             }
           }
-          div(class: "flex flex-row space-x-2") {
+          div(class: "flex flex-row gap-3") {
             render_actions
           }
         }
@@ -27,13 +27,13 @@ module Plutonium
       private
 
       def render_title(title)
-        h2(class: "mb-2 text-3xl font-extrabold leading-none tracking-tight text-gray-900 md:text-4xl dark:text-white") {
+        h2(class: "mb-2 text-3xl font-bold leading-none tracking-tight text-[var(--pu-text)] md:text-4xl") {
           title
         }
       end
 
       def render_description(description)
-        p(class: "text-gray-500 dark:text-gray-400") {
+        p(class: "text-lg text-[var(--pu-text-muted)]") {
           description
         }
       end

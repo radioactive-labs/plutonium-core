@@ -69,7 +69,7 @@ module Plutonium
           div(class: "relative") do
             div(class: "absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none") do
               svg(
-                class: "w-5 h-5 text-gray-500 dark:text-gray-400",
+                class: "w-5 h-5 text-[var(--pu-text-muted)]",
                 aria_hidden: "true",
                 fill: "currentColor",
                 viewbox: "0 0 20 20",
@@ -87,7 +87,7 @@ module Plutonium
               .placeholder("Search...")
               .input_tag(
                 value: search_query,
-                class: "block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500",
+                class: "block w-full p-2 pl-10 text-sm text-[var(--pu-text)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] bg-[var(--pu-surface)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder:text-[var(--pu-text-subtle)]",
                 data: {
                   action: "form#submit",
                   turbo_permanent: true
@@ -100,7 +100,7 @@ module Plutonium
           return if query_object.filter_definitions.blank?
 
           div(class: "flex flex-wrap items-center gap-4") do
-            span(class: "text-sm font-medium text-gray-900 dark:text-white") { "Filters:" }
+            span(class: "text-sm font-medium text-[var(--pu-text)]") { "Filters:" }
             div(class: "flex flex-wrap items-center gap-4 mr-auto") do
               div class: "flex flex-wrap items-center gap-4" do
                 query_object.filter_definitions.each do |filter_name, definition|
@@ -116,7 +116,7 @@ module Plutonium
               actions_wrapper do
                 render field(:submit).submit_button_tag(
                   name: nil,
-                  class!: "inline-flex items-center text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 py-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+                  class!: "pu-btn pu-btn-sm pu-btn-primary"
                 ) do
                   render Phlex::TablerIcons::Filter.new(class: "w-4 h-4 mr-2")
                   plain "Apply Filters"
@@ -125,7 +125,7 @@ module Plutonium
                 render field(:reset).submit_button_tag(
                   name: nil,
                   type: :reset,
-                  class!: "inline-flex items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-4 py-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                  class!: "pu-btn pu-btn-sm pu-btn-ghost"
                 ) do
                   render Phlex::TablerIcons::X.new(class: "w-4 h-4 mr-2")
                   plain "Clear Filters"

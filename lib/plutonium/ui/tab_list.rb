@@ -21,18 +21,18 @@ module Plutonium
       def view_template
         div(
           data_controller: "resource-tab-list",
-          data_resource_tab_list_active_classes_value: "focus:outline-none text-primary-600 hover:text-primary-600 dark:text-primary-500 dark:hover:text-primary-500 border-primary-600 dark:border-primary-500",
-          data_resource_tab_list_in_active_classes_value: "dark:border-transparent text-gray-500 hover:text-gray-600 dark:text-gray-400 border-gray-100 hover:border-gray-300 dark:border-gray-700 dark:hover:text-gray-300"
+          data_resource_tab_list_active_classes_value: "focus:outline-none text-primary-600 border-primary-600 dark:text-primary-400 dark:border-primary-400",
+          data_resource_tab_list_in_active_classes_value: "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] border-transparent hover:border-[var(--pu-border-strong)]"
         ) do
-          div(class: "mb-4 border-b border-gray-200 dark:border-gray-700") do
+          div(class: "mb-6 border-b border-[var(--pu-border)]") do
             ul(
-              class: "flex flex-wrap -mb-px text-sm font-medium text-center space-x-2",
+              class: "flex flex-wrap -mb-px text-base font-semibold text-center gap-1",
               role: "tablist"
             ) do
               @tabs.each do |tab|
                 li(role: "presentation") do
                   button(
-                    class: "inline-block p-4 border-b-2 rounded-t-lg",
+                    class: "inline-block px-5 py-3 border-b-2 rounded-t-lg transition-colors",
                     id: "#{tab[:identifier]}-tab",
                     type: "button",
                     role: "tab",

@@ -1,0 +1,149 @@
+/**
+ * Design Tokens for Plutonium UI
+ *
+ * Modern design system with refined colors, shadows, and spacing.
+ */
+
+:root {
+    /* ===================
+       Body/Page Background
+       =================== */
+    --pu-body: #f8fafc;
+
+    /* ===================
+       Surface Colors - Softer, more refined
+       =================== */
+    --pu-surface: #ffffff;
+    --pu-surface-alt: #f1f5f9;
+    --pu-surface-raised: #ffffff;
+    --pu-surface-overlay: rgba(255, 255, 255, 0.95);
+
+    /* ===================
+       Border Colors - Subtle
+       =================== */
+    --pu-border: #e2e8f0;
+    --pu-border-muted: #f1f5f9;
+    --pu-border-strong: #cbd5e1;
+
+    /* ===================
+       Text Colors - Better hierarchy
+       =================== */
+    --pu-text: #0f172a;
+    --pu-text-muted: #64748b;
+    --pu-text-subtle: #94a3b8;
+
+    /* ===================
+       Table Tokens - Clean minimal design
+       =================== */
+    --pu-table-header-bg: #f8fafc;
+    --pu-table-header-text: #475569;
+    --pu-table-row-bg: #ffffff;
+    --pu-table-row-hover: #f8fafc;
+    --pu-table-row-selected: theme(colors.primary.50);
+    --pu-table-border: #f1f5f9;
+
+    /* ===================
+       Form Tokens
+       =================== */
+    --pu-input-bg: #ffffff;
+    --pu-input-border: #e2e8f0;
+    --pu-input-focus-ring: theme(colors.primary.500);
+    --pu-input-placeholder: #94a3b8;
+
+    /* ===================
+       Card Tokens - Refined shadows
+       =================== */
+    --pu-card-bg: #ffffff;
+    --pu-card-border: #e2e8f0;
+
+    /* ===================
+       Shadow System - Layered, soft
+       =================== */
+    --pu-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    --pu-shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.04), 0 4px 6px -1px rgb(0 0 0 / 0.06);
+    --pu-shadow-lg: 0 4px 6px -2px rgb(0 0 0 / 0.03), 0 10px 15px -3px rgb(0 0 0 / 0.08);
+
+    /* ===================
+       Spacing Scale
+       =================== */
+    --pu-space-xs: 0.25rem;
+    --pu-space-sm: 0.5rem;
+    --pu-space-md: 1rem;
+    --pu-space-lg: 1.5rem;
+    --pu-space-xl: 2rem;
+
+    /* ===================
+       Border Radius - Refined
+       =================== */
+    --pu-radius-sm: 0.375rem;
+    --pu-radius-md: 0.5rem;
+    --pu-radius-lg: 0.75rem;
+    --pu-radius-xl: 1rem;
+    --pu-radius-full: 9999px;
+
+    /* ===================
+       Transitions - Smooth
+       =================== */
+    --pu-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --pu-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --pu-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+    /* ===================
+       Body/Page Background (Dark)
+       =================== */
+    --pu-body: #0f172a;
+
+    /* ===================
+       Surface Colors (Dark) - Rich, not too dark
+       =================== */
+    --pu-surface: #1e293b;
+    --pu-surface-alt: #0f172a;
+    --pu-surface-raised: #334155;
+    --pu-surface-overlay: rgba(30, 41, 59, 0.95);
+
+    /* ===================
+       Border Colors (Dark)
+       =================== */
+    --pu-border: #334155;
+    --pu-border-muted: #1e293b;
+    --pu-border-strong: #475569;
+
+    /* ===================
+       Text Colors (Dark)
+       =================== */
+    --pu-text: #f8fafc;
+    --pu-text-muted: #94a3b8;
+    --pu-text-subtle: #64748b;
+
+    /* ===================
+       Table Tokens (Dark)
+       =================== */
+    --pu-table-header-bg: #0f172a;
+    --pu-table-header-text: #cbd5e1;
+    --pu-table-row-bg: #1e293b;
+    --pu-table-row-hover: #334155;
+    --pu-table-row-selected: theme(colors.primary.900 / 40%);
+    --pu-table-border: #334155;
+
+    /* ===================
+       Form Tokens (Dark)
+       =================== */
+    --pu-input-bg: #1e293b;
+    --pu-input-border: #475569;
+    --pu-input-placeholder: #64748b;
+
+    /* ===================
+       Card Tokens (Dark)
+       =================== */
+    --pu-card-bg: #1e293b;
+    --pu-card-border: #334155;
+
+    /* ===================
+       Shadow System (Dark)
+       =================== */
+    --pu-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2), 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --pu-shadow-md: 0 2px 4px -1px rgb(0 0 0 / 0.25), 0 4px 6px -1px rgb(0 0 0 / 0.35);
+    --pu-shadow-lg: 0 4px 6px -2px rgb(0 0 0 / 0.2), 0 10px 15px -3px rgb(0 0 0 / 0.4);
+}
