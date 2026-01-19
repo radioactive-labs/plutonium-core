@@ -101,7 +101,8 @@ module Plutonium
         end
 
         # Preserve the request format unless explicitly specified
-        if !url_args.key?(:format) && request.present? && request.format.present? && request.format.symbol != :html
+        # Don't preserve turbo_stream as it's for streaming updates, not page navigation
+        if !url_args.key?(:format) && request.present? && request.format.present? && !request.format.symbol.in?([:html, :turbo_stream])
           url_args[:format] = request.format.symbol
         end
 
