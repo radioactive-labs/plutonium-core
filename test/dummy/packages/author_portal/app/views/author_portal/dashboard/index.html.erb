@@ -1,0 +1,84 @@
+<div class="bg-gray-50 dark:bg-gray-900 p-8 rounded-xl">
+  <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+    Resources Management Dashboard
+  </h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% registered_resources.each do |resource| %>
+      <% next unless allowed_to? :index?, resource %>
+      <div
+        class="
+          bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-md border-l-4
+          border-primary-600 dark:border-primary-500 transition-all duration-300
+          hover:translate-y-[-2px] hover:shadow-lg
+        "
+      >
+        <div class="flex p-6">
+          <div
+            class="
+              flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-md
+              bg-primary-50 dark:bg-primary-900/30
+            "
+          >
+            <svg
+              class="h-6 w-6 text-primary-600 dark:text-primary-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+              />
+            </svg>
+          </div>
+          <div class="ml-4 flex-1">
+            <h3
+              class="
+                text-lg font-semibold text-gray-900 dark:text-white flex items-center
+              "
+            >
+              <%= resource.model_name.human.titleize.pluralize %>
+              <span
+                class="
+                  ml-2 px-2 py-0.5 text-xs rounded-full bg-primary-100 text-primary-800
+                  dark:bg-primary-900 dark:text-primary-200
+                "
+              ><%= authorized_resource_scope(resource).count %></span>
+            </h3>
+          </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-3">
+          <div
+            class="
+              text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider
+            "
+          >Quick Actions</div>
+          <div class="mt-2 flex space-x-2">
+            <%# Check for resource creation permission %>
+            <% if allowed_to? :new?, resource %>
+              <a
+                href="<%= resource_url_for(resource, parent: nil, action: :new) %>"
+                class="
+                  px-2 py-1 text-xs font-medium rounded bg-white dark:bg-gray-700 text-gray-700
+                  dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-50
+                  dark:hover:bg-gray-600 transition-colors
+                "
+              >Add New</a>
+            <% end %>
+            <a
+              href="<%= resource_url_for(resource, parent: nil) %>"
+              class="
+                px-2 py-1 text-xs font-medium rounded bg-white dark:bg-gray-700 text-gray-700
+                dark:text-gray-300 border border-gray-200 dark:border-gray-600 hover:bg-gray-50
+                dark:hover:bg-gray-600 transition-colors
+              "
+            >View All</a>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

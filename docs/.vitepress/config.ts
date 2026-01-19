@@ -55,7 +55,8 @@ export default defineConfig(withMermaid({
             { text: "4. Authorization", link: "/getting-started/tutorial/04-authorization" },
             { text: "5. Custom Actions", link: "/getting-started/tutorial/05-custom-actions" },
             { text: "6. Nested Resources", link: "/getting-started/tutorial/06-nested-resources" },
-            { text: "7. Customizing UI", link: "/getting-started/tutorial/07-customizing-ui" },
+            { text: "7. Author Portal", link: "/getting-started/tutorial/07-author-portal" },
+            { text: "8. Customizing UI", link: "/getting-started/tutorial/08-customizing-ui" },
           ]
         }
       ],

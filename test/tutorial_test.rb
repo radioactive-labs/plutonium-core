@@ -74,7 +74,39 @@ class TutorialTest < Minitest::Test
     refute result.success?
   end
 
-  # Chapter 7: Customizing UI - Definition tests
+  # Chapter 7: Author Portal - Portal-specific policies
+  def test_author_portal_policy_scopes_posts_to_user
+    # Create posts for different users
+    other_user = User.create!(email: "other@example.com", password: "password123", status: "verified")
+    my_post = Blogging::Post.create!(title: "My Post", body: "Body", published: false, user: @user)
+    other_post = Blogging::Post.create!(title: "Other Post", body: "Body", published: false, user: other_user)
+
+    # Author portal policy should only show user's own posts
+    policy = AuthorPortal::Blogging::PostPolicy.new(record: my_post, user: @user, entity_scope: nil)
+    scoped = policy.relation_scope(Blogging::Post.all)
+
+    assert_includes scoped, my_post
+    refute_includes scoped, other_post
+  end
+
+  def test_author_portal_policy_allows_create
+    post = Blogging::Post.new(title: "New Post", body: "Body", user: @user)
+    policy = AuthorPortal::Blogging::PostPolicy.new(record: post, user: @user, entity_scope: nil)
+
+    assert policy.create?
+  end
+
+  def test_author_portal_policy_hides_user_id_from_create_form
+    post = Blogging::Post.new
+    policy = AuthorPortal::Blogging::PostPolicy.new(record: post, user: @user, entity_scope: nil)
+
+    permitted = policy.permitted_attributes_for_create
+    refute_includes permitted, :user_id
+    assert_includes permitted, :title
+    assert_includes permitted, :body
+  end
+
+  # Chapter 8: Customizing UI - Definition tests
   def test_post_definition_has_publish_action
     actions = Blogging::PostDefinition.defined_actions
 
