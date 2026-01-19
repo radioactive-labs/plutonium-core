@@ -45,7 +45,7 @@ module Plutonium
           # Wrap table in Stimulus controller for bulk actions
           div(data: bulk_actions_controller_data) do
             # Bulk actions toolbar (hidden by default, shown when items selected)
-            render Plutonium::UI::Table::Components::BulkActionsToolbar.new(bulk_actions:) if bulk_actions.any?
+            BulkActionsToolbar(bulk_actions:) if bulk_actions.any?
 
             render Plutonium::UI::Table::Base.new(collection) do |table|
               # Selection column for bulk actions (hidden by default, Stimulus shows it)
@@ -102,14 +102,24 @@ module Plutonium
                 record = wrapped_object.unwrapped
                 policy = policy_for(record:)
 
-                div(class: "flex space-x-2") do
-                  resource_definition.defined_actions
-                    .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
-                    .values
-                    .each do |action|
-                      url = route_options_to_url(action.route_options, record)
-                      ActionButton(action, url:, variant: :table)
-                    end
+                actions = resource_definition.defined_actions
+                  .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
+                  .values
+
+                primary_actions = actions.select { |a| a.category.primary? }.sort_by(&:position)
+                dropdown_actions = actions.reject { |a| a.category.primary? }.sort_by(&:position)
+
+                div(class: "flex items-center gap-1") do
+                  # Primary actions as buttons
+                  primary_actions.each do |action|
+                    url = route_options_to_url(action.route_options, record)
+                    ActionButton(action, url:, variant: :table)
+                  end
+
+                  # Secondary/danger actions in dropdown
+                  if dropdown_actions.any?
+                    RowActionsDropdown(actions: dropdown_actions, record:)
+                  end
                 end
               end
             end

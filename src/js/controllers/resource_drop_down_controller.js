@@ -25,7 +25,9 @@ export default class extends Controller {
   init() {
     if (this.triggerTarget && this.menuTarget && !this.initialized) {
       // Initialize popper instance
+      // Use 'fixed' strategy to escape overflow containers (e.g., table rows)
       this.popperInstance = createPopper(this.triggerTarget, this.menuTarget, {
+        strategy: 'fixed',
         placement: this.options.placement,
         modifiers: [
           {

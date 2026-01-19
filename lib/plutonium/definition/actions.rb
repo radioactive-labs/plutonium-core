@@ -37,11 +37,11 @@ module Plutonium
           icon: Phlex::TablerIcons::Plus, position: 10)
 
         action(:show, route_options: {action: :show},
-          collection_record_action: true,
+          collection_record_action: true, category: :primary,
           icon: Phlex::TablerIcons::Eye, position: 10)
 
         action(:edit, route_options: {action: :edit},
-          record_action: true, collection_record_action: true,
+          record_action: true, collection_record_action: true, category: :primary,
           icon: Phlex::TablerIcons::Edit, position: 20)
 
         action(:destroy, route_options: {method: :delete},

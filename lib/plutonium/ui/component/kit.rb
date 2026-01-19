@@ -70,6 +70,8 @@ module Plutonium
 
         def BuildActionButton(...) = Plutonium::UI::ActionButton.new(...)
 
+        def BuildActionsDropdown(...) = Plutonium::UI::ActionsDropdown.new(...)
+
         def BuildEmptyCard(...) = Plutonium::UI::EmptyCard.new(...)
 
         def BuildTableSearchBar(...) = Plutonium::UI::Table::Components::SearchBar.new(...)
@@ -79,6 +81,10 @@ module Plutonium
         def BuildTableInfo(...) = Plutonium::UI::Table::Components::PagyInfo.new(...)
 
         def BuildTablePagination(...) = Plutonium::UI::Table::Components::PagyPagination.new(...)
+
+        def BuildRowActionsDropdown(...) = Plutonium::UI::Table::Components::RowActionsDropdown.new(...)
+
+        def BuildBulkActionsToolbar(...) = Plutonium::UI::Table::Components::BulkActionsToolbar.new(...)
 
         def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)
       end

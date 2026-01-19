@@ -137,6 +137,18 @@
          active:bg-slate-600;
 }
 
+/* Outline - Bordered, transparent background */
+.pu-btn-outline {
+  @apply bg-transparent
+         border border-[var(--pu-border)]
+         text-[var(--pu-text-muted)]
+         hover:text-[var(--pu-text)]
+         hover:bg-[var(--pu-surface-alt)]
+         hover:border-[var(--pu-border-strong)]
+         active:bg-[var(--pu-border-muted)]
+         focus-visible:ring-[var(--pu-border)];
+}
+
 /* Soft variants - Tinted backgrounds */
 .pu-btn-soft-primary {
   @apply bg-primary-50 text-primary-700
