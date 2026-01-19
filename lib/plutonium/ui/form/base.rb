@@ -60,6 +60,21 @@ module Plutonium
           alias_method :basic_polymorphic_belongs_to_tag, :polymorphic_belongs_to_tag
           # use new methods as defaults
           alias_method :polymorphic_belongs_to_tag, :secure_polymorphic_association_tag
+
+          # Type aliases for common column types that map to different input types
+          alias_method :integer_tag, :number_tag
+          alias_method :float_tag, :number_tag
+          alias_method :decimal_tag, :number_tag
+          alias_method :text_tag, :textarea_tag
+          alias_method :datetime_tag, :flatpickr_tag
+          alias_method :date_tag, :flatpickr_tag
+          alias_method :time_tag, :flatpickr_tag
+          alias_method :rich_text_tag, :markdown_tag
+          alias_method :json_tag, :textarea_tag
+          alias_method :jsonb_tag, :textarea_tag
+          alias_method :hstore_tag, :key_value_store_tag
+          alias_method :key_value_tag, :key_value_store_tag
+          alias_method :association_tag, :secure_association_tag
         end
 
         private

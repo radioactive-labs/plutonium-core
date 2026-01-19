@@ -10,7 +10,7 @@ Definitions control how resources render - which fields appear in forms, how tab
 class PostDefinition < Plutonium::Resource::Definition
   # Field configuration
   field :title
-  field :body, as: :rich_text
+  field :body, as: :markdown
 
   # Form-specific
   input :title, placeholder: "Enter title"
@@ -81,7 +81,7 @@ Override selectively:
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   # Override just body field
-  field :body, as: :rich_text
+  field :body, as: :markdown
 
   # Other fields still auto-detected
 end

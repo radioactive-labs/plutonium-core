@@ -12,7 +12,7 @@ Fields control how attributes appear in forms and displays. Plutonium auto-infer
 # packages/blogging/app/definitions/blogging/post_definition.rb
 class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Rich text editor instead of plain textarea
-  field :body, as: :rich_text
+  field :body, as: :markdown
 
   # Select with predefined options
   input :status, as: :select, choices: %w[draft review published]
@@ -146,7 +146,7 @@ Control form layout using wrapper options in definitions:
 class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Full-width fields
   input :title, wrapper: {class: "col-span-full"}
-  input :body, as: :rich_text, wrapper: {class: "col-span-full"}
+  input :body, as: :markdown, wrapper: {class: "col-span-full"}
 
   # Side-by-side fields (default is col-span-full)
   input :published_at, wrapper: {class: "col-span-1"}
