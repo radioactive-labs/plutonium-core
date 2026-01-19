@@ -244,34 +244,36 @@ end
 
 ## Controller Hierarchy
 
-```
-::PlutoniumController (app-wide base)
-    ↓
-::ResourceController (resource handling)
-    ↓
-DashboardPortal::ResourceController (portal base)
-    ↓
-DashboardPortal::PostsController (resource-specific)
-```
+### Resource Controllers
 
-### Portal Controllers
+Portal resource controllers inherit from the feature package's controller:
 
-```ruby
-# packages/dashboard_portal/app/controllers/dashboard_portal/resource_controller.rb
-module DashboardPortal
-  class ResourceController < ::ResourceController
-    include DashboardPortal::Concerns::Controller
-  end
-end
 ```
-
-### Dynamic Controllers
+::PostsController (feature package controller)
+    ↓
+DashboardPortal::PostsController (portal-specific)
+```
 
 Controllers are auto-created if not defined. When accessing `DashboardPortal::PostsController`:
 
 1. If file exists, use it
 2. Otherwise, dynamically create inheriting from `::PostsController`
 3. Include `DashboardPortal::Concerns::Controller`
+
+### Non-Resource Controllers
+
+For portal pages not tied to a resource (dashboard, settings, etc.), inherit from `PlutoniumController`:
+
+```ruby
+# packages/dashboard_portal/app/controllers/dashboard_portal/dashboard_controller.rb
+module DashboardPortal
+  class DashboardController < PlutoniumController
+    def index
+      # Dashboard home page
+    end
+  end
+end
+```
 
 ## Portal-Specific Overrides
 
@@ -307,13 +309,13 @@ end
 
 ```ruby
 # packages/dashboard_portal/app/controllers/dashboard_portal/posts_controller.rb
-module DashboardPortal
-  class PostsController < ResourceController
-    private
+class DashboardPortal::PostsController < ::PostsController
+  include DashboardPortal::Concerns::Controller
 
-    def preferred_action_after_submit
-      "index"
-    end
+  private
+
+  def preferred_action_after_submit
+    "index"
   end
 end
 ```

@@ -23,7 +23,6 @@ rails g pu:pkg:package blogging
 packages/blogging/
 ├── app/
 │   ├── controllers/blogging/
-│   │   └── resource_controller.rb
 │   ├── definitions/blogging/
 │   │   └── resource_definition.rb
 │   ├── interactions/blogging/
@@ -87,8 +86,7 @@ packages/admin_portal/
 │   ├── controllers/admin_portal/
 │   │   ├── concerns/controller.rb
 │   │   ├── dashboard_controller.rb
-│   │   ├── plutonium_controller.rb
-│   │   └── resource_controller.rb
+│   │   └── plutonium_controller.rb
 │   ├── definitions/admin_portal/
 │   │   └── resource_definition.rb
 │   ├── policies/admin_portal/
@@ -348,30 +346,28 @@ end
 
 ```ruby
 # packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
-module AdminPortal
-  class PostsController < ResourceController
-    private
+class AdminPortal::PostsController < ::PostsController
+  include AdminPortal::Concerns::Controller
 
-    def preferred_action_after_submit
-      "index"
-    end
+  private
+
+  def preferred_action_after_submit
+    "index"
   end
 end
 ```
 
 ## Controller Hierarchy
 
+Portal controllers inherit from the feature package's controller:
+
 ```
-::PlutoniumController (app-wide base)
+::PostsController (feature package controller)
     ↓
-::ResourceController (resource handling)
-    ↓
-AdminPortal::ResourceController (portal base)
-    ↓
-AdminPortal::PostsController (resource-specific)
+AdminPortal::PostsController (portal-specific, includes Concerns::Controller)
 ```
 
-Controllers are auto-created if not defined.
+Controllers are auto-created if not defined. When accessing a portal resource controller, Plutonium dynamically creates it by inheriting from the feature package's controller and including the portal's controller concern.
 
 ## Related
 

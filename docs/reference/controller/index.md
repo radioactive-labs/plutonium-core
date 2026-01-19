@@ -20,23 +20,18 @@ class PostsController < ::ResourceController
 end
 ```
 
-For portals:
+For portals, controllers inherit from the feature package's controller and include the portal's concern:
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/resource_controller.rb
-module AdminPortal
-  class ResourceController < ::ResourceController
-    include AdminPortal::Concerns::Controller
-  end
-end
-
 # packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
-module AdminPortal
-  class PostsController < ResourceController
-    # Portal-specific customizations
-  end
+class AdminPortal::PostsController < ::PostsController
+  include AdminPortal::Concerns::Controller
+
+  # Portal-specific customizations
 end
 ```
+
+Controllers are auto-created if not defined. When accessing a portal resource controller, Plutonium dynamically creates it by inheriting from the feature package's controller.
 
 ## Built-in Actions
 

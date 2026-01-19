@@ -174,39 +174,26 @@ end
 
 ## Controllers
 
-### Base Controller
-
-```ruby
-# packages/admin_portal/app/controllers/admin_portal/resource_controller.rb
-module AdminPortal
-  class ResourceController < Plutonium::Portal::ResourceController
-    layout "admin_portal/application"
-
-    private
-
-    def after_sign_in_path
-      admin_root_path
-    end
-  end
-end
-```
-
 ### Resource Controllers
+
+Portal-specific controllers inherit from the feature package's controller and include the portal's controller concern:
 
 ```ruby
 # packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
-module AdminPortal
-  class PostsController < ResourceController
-    private
+class AdminPortal::PostsController < ::PostsController
+  include AdminPortal::Concerns::Controller
 
-    def build_resource
-      super.tap do |post|
-        post.user = current_user
-      end
+  private
+
+  def build_resource
+    super.tap do |post|
+      post.user = current_user
     end
   end
 end
 ```
+
+Controllers are auto-created if not defined. When accessing `AdminPortal::PostsController`, Plutonium will dynamically create it by inheriting from `::PostsController` and including `AdminPortal::Concerns::Controller`.
 
 ## Portal-Specific Overrides
 
@@ -298,7 +285,7 @@ end
 To allow unauthenticated access to specific actions:
 
 ```ruby
-class AdminPortal::PagesController < AdminPortal::ResourceController
+class AdminPortal::PagesController < AdminPortal::PlutoniumController
   skip_before_action :authenticate, only: [:health]
 
   def health
@@ -314,7 +301,7 @@ end
 ```ruby
 # packages/admin_portal/app/controllers/admin_portal/dashboard_controller.rb
 module AdminPortal
-  class DashboardController < ResourceController
+  class DashboardController < PlutoniumController
     def index
       @stats = {
         posts: Post.count,
