@@ -62,10 +62,13 @@ current_parent          # Parent record for nested routes
 ### Authorization
 
 ```ruby
-authorize_current!(record, to: :action?)  # Check permission
-current_policy                            # Policy for current resource
-permitted_attributes                      # Allowed attributes for action
-current_authorized_scope                  # Scoped records user can access
+authorize_current!(record, to: :action?)   # Check permission
+current_policy                             # Policy for current resource
+permitted_attributes                       # Allowed attributes for action
+current_authorized_scope                   # Scoped records user can access
+authorized_resource_scope(Post)            # Authorized scope for a different resource
+policy_for(record)                         # Get policy for any record
+allowed_to?(:edit?, record)                # Check if action is allowed
 ```
 
 ### Definition Access
