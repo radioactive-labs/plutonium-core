@@ -511,34 +511,6 @@ import CustomController from "./custom_controller"
 application.register("custom", CustomController)
 ```
 
-## Portal-Specific Themes
-
-Different portals can have different themes by overriding tokens per-portal:
-
-```css
-/* packages/admin_portal/app/assets/stylesheets/admin_portal.css */
-:root {
-  --pu-input-focus-ring: theme(colors.indigo.500);
-}
-```
-
-Or by overriding definitions:
-
-```ruby
-# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
-class AdminPortal::PostDefinition < ::PostDefinition
-  class Form < Form
-    class Theme < Plutonium::UI::Form::Theme
-      def self.theme
-        super.merge({
-          base: "pu-card bg-indigo-50 p-8",
-        })
-      end
-    end
-  end
-end
-```
-
 ## Related
 
 - [Custom Actions](./custom-actions)
