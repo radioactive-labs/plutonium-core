@@ -32,7 +32,6 @@ export default defineConfig(withMermaid({
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Guides", link: "/guides/" },
       { text: "Reference", link: "/reference/" },
-      { text: "Cookbook", link: "/cookbook/" },
       { text: "Demo", link: "https://github.com/radioactive-labs/plutonium-core/tree/master/test/dummy" }
     ],
     sidebar: {
@@ -179,16 +178,6 @@ export default defineConfig(withMermaid({
           ]
         }
       ],
-      '/cookbook/': [
-        {
-          text: "Cookbook",
-          items: [
-            { text: "Overview", link: "/cookbook/" },
-            { text: "Blog Application", link: "/cookbook/blog" },
-            { text: "SaaS Application", link: "/cookbook/saas" },
-          ]
-        }
-      ]
     },
     socialLinks: [
       { icon: "github", link: "https://github.com/radioactive-labs/plutonium-core" }
