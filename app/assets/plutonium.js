@@ -13024,6 +13024,7 @@
     init() {
       if (this.triggerTarget && this.menuTarget && !this.initialized) {
         this.popperInstance = createPopper(this.triggerTarget, this.menuTarget, {
+          strategy: "fixed",
           placement: this.options.placement,
           modifiers: [
             {

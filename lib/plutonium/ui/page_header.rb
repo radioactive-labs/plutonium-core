@@ -18,9 +18,7 @@ module Plutonium
               render_description @description
             }
           }
-          div(class: "flex flex-row gap-3") {
-            render_actions
-          }
+          render_actions if @actions.any?
         }
       end
 
@@ -39,11 +37,32 @@ module Plutonium
       end
 
       def render_actions
-        @actions.each do |action|
-          subject = resource_record? || resource_class
-          url = route_options_to_url(action.route_options, subject)
-          ActionButton(action, url:)
+        div(class: "flex flex-row items-center gap-2") do
+          # Primary actions shown as prominent buttons
+          primary_actions.each do |action|
+            url = route_options_to_url(action.route_options, action_subject)
+            ActionButton(action, url:)
+          end
+
+          # Secondary and danger actions in a dropdown
+          if dropdown_actions.any?
+            div(class: "relative") do
+              ActionsDropdown(actions: dropdown_actions, subject: action_subject)
+            end
+          end
         end
+      end
+
+      def action_subject
+        @action_subject ||= resource_record? || resource_class
+      end
+
+      def primary_actions
+        @primary_actions ||= @actions.select { |a| a.category.primary? }.sort_by(&:position)
+      end
+
+      def dropdown_actions
+        @dropdown_actions ||= @actions.reject { |a| a.category.primary? }.sort_by(&:position)
       end
     end
   end
