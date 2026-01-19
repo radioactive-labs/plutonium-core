@@ -53,9 +53,14 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.any(:html, :turbo_stream) { render :new, formats: [:html], status: :unprocessable_content }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form)) }
+              format.html { render :new, status: :unprocessable_content }
             elsif resource_record!.save
-              format.any(:html, :turbo_stream) do
+              format.turbo_stream do
+                flash.notice = "#{resource_class.model_name.human} was successfully created."
+                render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_submit)
+              end
+              format.html do
                 redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully created."
               end
@@ -94,9 +99,14 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.any(:html, :turbo_stream) { render :edit, formats: [:html], status: :unprocessable_content }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form)) }
+              format.html { render :edit, status: :unprocessable_content }
             elsif resource_record!.save
-              format.any(:html, :turbo_stream) do
+              format.turbo_stream do
+                flash.notice = "#{resource_class.model_name.human} was successfully updated."
+                render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_submit)
+              end
+              format.html do
                 redirect_to redirect_url_after_submit,
                   notice: "#{resource_class.model_name.human} was successfully updated.",
                   status: :see_other
@@ -121,13 +131,21 @@ module Plutonium
           respond_to do |format|
             resource_record!.destroy
 
-            format.any(:html, :turbo_stream) do
+            format.turbo_stream do
+              flash.notice = "#{resource_class.model_name.human} was successfully deleted."
+              render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_destroy)
+            end
+            format.html do
               redirect_to redirect_url_after_destroy,
                 notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey
-            format.any(:html, :turbo_stream) do
+            format.turbo_stream do
+              flash.alert = "#{resource_class.model_name.human} is referenced by other records."
+              render turbo_stream: helpers.turbo_stream_redirect(resource_url_for(resource_record!))
+            end
+            format.html do
               redirect_to resource_url_for(resource_record!),
                 alert: "#{resource_class.model_name.human} is referenced by other records."
             end

@@ -39,7 +39,10 @@ module Plutonium
           build_interactive_record_action_interaction
 
           if params[:pre_submit]
-            render :interactive_record_action, formats: [:html], status: :unprocessable_content
+            respond_to do |format|
+              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.html { render :interactive_record_action, formats: [:html], status: :unprocessable_content }
+            end
             return
           end
 
@@ -50,15 +53,12 @@ module Plutonium
               if outcome.success?
                 return_url = redirect_url_after_action_on(resource_record!)
 
-                if helpers.current_turbo_frame == "remote_modal"
-                  format.turbo_stream do
-                    render turbo_stream: [
-                      helpers.turbo_stream_redirect(return_url)
-                    ]
-                  end
+                format.turbo_stream do
+                  render turbo_stream: helpers.turbo_stream_redirect(return_url)
                 end
-
-                format.any { redirect_to return_url, status: :see_other }
+                format.html do
+                  redirect_to return_url, status: :see_other
+                end
               else
                 format.any(:html, :turbo_stream) do
                   render :interactive_record_action, formats: [:html], status: :unprocessable_content
@@ -95,9 +95,8 @@ module Plutonium
 
           if params[:pre_submit]
             respond_to do |format|
-              format.any(:html, :turbo_stream) do
-                render :interactive_resource_action, formats: [:html], status: :unprocessable_content
-              end
+              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.html { render :interactive_resource_action, status: :unprocessable_content }
             end
             return
           end
@@ -109,15 +108,12 @@ module Plutonium
               if outcome.success?
                 return_url = redirect_url_after_action_on(resource_class)
 
-                if helpers.current_turbo_frame == "remote_modal"
-                  format.turbo_stream do
-                    render turbo_stream: [
-                      helpers.turbo_stream_redirect(return_url)
-                    ]
-                  end
+                format.turbo_stream do
+                  render turbo_stream: helpers.turbo_stream_redirect(return_url)
                 end
-
-                format.any { redirect_to return_url, status: :see_other }
+                format.html do
+                  redirect_to return_url, status: :see_other
+                end
               else
                 format.any(:html, :turbo_stream) do
                   render :interactive_resource_action, formats: [:html], status: :unprocessable_content
