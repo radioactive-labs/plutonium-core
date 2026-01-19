@@ -182,7 +182,6 @@ packages/admin_portal/
 │   ├── controllers/admin_portal/
 │   │   ├── concerns/controller.rb
 │   │   ├── plutonium_controller.rb
-│   │   ├── resource_controller.rb
 │   │   └── dashboard_controller.rb
 │   ├── definitions/admin_portal/
 │   ├── policies/admin_portal/

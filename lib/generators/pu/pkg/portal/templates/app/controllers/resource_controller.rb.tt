@@ -1,5 +1,0 @@
-module <%= package_name %>
-  class ResourceController < ::ResourceController
-    include <%= package_name %>::Concerns::Controller
-  end
-end

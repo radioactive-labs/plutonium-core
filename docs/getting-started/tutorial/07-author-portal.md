@@ -31,7 +31,6 @@ packages/author_portal/
 │   ├── controllers/author_portal/
 │   │   ├── concerns/controller.rb
 │   │   ├── plutonium_controller.rb
-│   │   ├── resource_controller.rb
 │   │   └── dashboard_controller.rb
 │   ├── definitions/author_portal/
 │   ├── policies/author_portal/
