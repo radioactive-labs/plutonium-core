@@ -99,20 +99,20 @@ rails g pu:res:conn Post \
 
   <div class="feature-row">
     <div class="feature-text">
-      <h3>Policies Control Access</h3>
-      <p>Define who can do what. Attribute-level permissions. Automatic scoping. No more <code>if current_user.admin?</code> scattered everywhere.</p>
+      <h3>Resources Are Your Foundation</h3>
+      <p>Just ActiveRecord. Associations, scopes, validations you already know. No new ORM to learn.</p>
     </div>
     <div class="feature-code">
 
 ```ruby
-class PostPolicy < ResourcePolicy
-  def update?
-    record.author == user || user.admin?
-  end
+class Post < ApplicationRecord
+  include Plutonium::Resource::Record
 
-  def permitted_attributes_for_create
-    %i[title body]
-  end
+  belongs_to :author, class_name: "User"
+  has_many :comments
+
+  scope :published, -> { where.not(published_at: nil) }
+  scope :drafts, -> { where(published_at: nil) }
 end
 ```
 
@@ -163,6 +163,28 @@ class PublishPost < ResourceInteraction
     else
       failed(resource.errors)
     end
+  end
+end
+```
+
+  </div>
+  </div>
+
+  <div class="feature-row reverse">
+    <div class="feature-text">
+      <h3>Policies Control Access</h3>
+      <p>Define who can do what. Attribute-level permissions. Automatic scoping. No more <code>if current_user.admin?</code> scattered everywhere.</p>
+    </div>
+    <div class="feature-code">
+
+```ruby
+class PostPolicy < ResourcePolicy
+  def update?
+    record.author == user || user.admin?
+  end
+
+  def permitted_attributes_for_create
+    %i[title body]
   end
 end
 ```
