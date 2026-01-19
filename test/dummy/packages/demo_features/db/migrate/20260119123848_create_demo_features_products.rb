@@ -22,7 +22,7 @@ class CreateDemoFeaturesProducts < ActiveRecord::Migration[7.2]
       t.json :metadata, null: false
       t.json :specifications, null: false
       t.integer :status, null: false
-      t.belongs_to :category, null: true, foreign_key: true
+      t.belongs_to :category, null: true, foreign_key: {to_table: :demo_features_categories}
 
       t.timestamps
     end
