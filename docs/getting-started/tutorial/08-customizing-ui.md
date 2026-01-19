@@ -250,6 +250,5 @@ Congratulations! You've built a complete blog application with:
 Continue exploring:
 - [Guides](/guides/) - Deep dives on specific topics
 - [Reference](/reference/) - Complete API documentation
-- [Cookbook](/cookbook/) - Real-world recipes
 
 Happy building with Plutonium!
