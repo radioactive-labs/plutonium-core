@@ -67,7 +67,8 @@ module Plutonium
             end
 
             div(
-              class: "attachment-preview group relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300",
+              class: "attachment-preview group relative bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] hover:shadow-md transition-all duration-300",
+              style: "box-shadow: var(--pu-shadow-sm)",
               data: {
                 controller: "attachment-preview",
                 attachment_preview_mime_type_value: attachment.content_type,
@@ -99,7 +100,7 @@ module Plutonium
                 )
               else
                 div(
-                  class: "w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 text-gray-500 dark:text-gray-400 font-mono"
+                  class: "w-full h-full flex items-center justify-center bg-[var(--pu-surface-alt)] text-[var(--pu-text-muted)] font-mono"
                 ) do
                   ".#{attachment_extension(attachment)}"
                 end
@@ -109,7 +110,7 @@ module Plutonium
 
           def render_filename(attachment)
             div(
-              class: "px-2 py-1.5 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-200 dark:border-gray-700 truncate text-center bg-white dark:bg-gray-800",
+              class: "px-2 py-1.5 text-sm text-[var(--pu-text-muted)] border-t border-[var(--pu-border)] truncate text-center bg-[var(--pu-surface)]",
               title: attachment.filename
             ) do
               plain attachment.filename.to_s
@@ -119,7 +120,7 @@ module Plutonium
           def render_delete_button
             button(
               type: "button",
-              class: "w-full py-2 px-4 text-sm text-red-600 dark:text-red-400 bg-white dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/50 rounded-b-lg transition-colors duration-200 flex items-center justify-center gap-2 border-t border-gray-200 dark:border-gray-700",
+              class: "w-full py-2 px-4 text-sm text-danger-600 dark:text-danger-400 bg-[var(--pu-surface)] hover:bg-danger-50 dark:hover:bg-danger-900/50 rounded-b-[var(--pu-radius-md)] transition-colors duration-200 flex items-center justify-center gap-2 border-t border-[var(--pu-border)]",
               data: {action: "click->attachment-preview#remove"}
             ) do
               span(class: "bi bi-trash")

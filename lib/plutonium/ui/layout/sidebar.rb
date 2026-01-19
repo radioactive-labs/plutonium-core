@@ -36,7 +36,7 @@ module Plutonium
           div(
             id: "sidebar-navigation-content",
             data: {turbo_permanent: true},
-            class: "overflow-y-auto py-5 px-3 h-full bg-white border-r border-gray-200 dark:bg-gray-800 dark:border-gray-700",
+            class: "overflow-y-auto py-5 px-3 h-full bg-[var(--pu-surface)] border-r border-[var(--pu-border)]",
             &
           )
         end

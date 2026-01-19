@@ -59,7 +59,7 @@ module Plutonium
 
             tablist.with_tab(
               identifier: title.parameterize,
-              title: -> { h5(class: "text-2xl font-bold tracking-tight text-gray-900 dark:text-white") { title } }
+              title: -> { h5(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") { title } }
             ) do
               FrameNavigatorPanel(title: "", src:, panel_id: "association-panel-#{title.parameterize}")
             end

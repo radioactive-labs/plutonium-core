@@ -6,20 +6,17 @@ module Plutonium
 
       def view_template
         nav(
-          class:
-            "flex py-3 text-gray-700 mb-2",
+          class: "flex py-3 mb-2",
           aria_label: "Breadcrumb"
         ) do
           ol(
-            class:
-              "inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse"
+            class: "inline-flex items-center gap-1 md:gap-2"
           ) do
             # Dashboard
             li(class: "inline-flex items-center") do
               a(
                 href: helpers.root_path,
-                class:
-                  "inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-white"
+                class: "inline-flex items-center text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 transition-colors"
               ) do
                 svg(
                   class: "w-3 h-3 me-2.5",
@@ -42,7 +39,7 @@ module Plutonium
               # Parent Resource
               li(class: "flex items-center") do
                 svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
                   aria_hidden: "true",
                   xmlns: "http://www.w3.org/2000/svg",
                   fill: "none",
@@ -58,14 +55,13 @@ module Plutonium
                 end
                 link_to resource_name_plural(current_parent.class),
                   resource_url_for(current_parent.class, parent: nil),
-                  class:
-                    "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
+                  class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
               end
 
               # Parent Itself
               li(class: "flex items-center") do
                 svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
                   aria_hidden: "true",
                   xmlns: "http://www.w3.org/2000/svg",
                   fill: "none",
@@ -81,8 +77,7 @@ module Plutonium
                 end
                 link_to display_name_of(current_parent),
                   resource_url_for(current_parent, parent: nil),
-                  class:
-                    "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
+                  class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
               end
             end
 
@@ -92,7 +87,7 @@ module Plutonium
                 # Record Resource
                 li(class: "flex items-center") do
                   svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
                     aria_hidden: "true",
                     xmlns: "http://www.w3.org/2000/svg",
                     fill: "none",
@@ -108,8 +103,7 @@ module Plutonium
                   end
                   link_to resource_name_plural(resource_class),
                     resource_url_for(resource_class),
-                    class:
-                      "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
+                    class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
                 end
               end
 
@@ -117,7 +111,7 @@ module Plutonium
               if resource_record!.persisted? && action_name != "show"
                 li(class: "flex items-center") do
                   svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
                     aria_hidden: "true",
                     xmlns: "http://www.w3.org/2000/svg",
                     fill: "none",
@@ -133,8 +127,7 @@ module Plutonium
                   end
                   link_to display_name_of(resource_record!),
                     resource_url_for(resource_record!),
-                    class:
-                      "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 md:ms-2 dark:text-gray-200 dark:hover:text-white"
+                    class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
                 end
               end
             end
@@ -142,7 +135,7 @@ module Plutonium
             # Trailing Caret
             li(class: "flex items-center") do
               svg(
-                class: "rtl:rotate-180 block w-3 h-3 mx-1 text-gray-400",
+                class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
                 aria_hidden: "true",
                 xmlns: "http://www.w3.org/2000/svg",
                 fill: "none",

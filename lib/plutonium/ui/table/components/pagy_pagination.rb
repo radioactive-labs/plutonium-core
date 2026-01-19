@@ -12,8 +12,8 @@ module Plutonium
           end
 
           def view_template
-            nav(aria_label: "Page navigation", class: "flex justify-center mt-4") do
-              ul(class: "inline-flex -space-x-px text-sm") do
+            nav(aria_label: "Page navigation", class: "flex justify-center mt-6") do
+              ul(class: "inline-flex items-center gap-1 text-sm") do
                 prev_link
                 page_links
                 next_link
@@ -79,19 +79,24 @@ module Plutonium
           end
 
           def link_classes(first = false, last = false)
-            classes = ["flex", "items-center", "justify-center", "px-3", "h-8", "leading-tight", "text-gray-500", "bg-white", "border", "border-gray-300", "hover:bg-gray-100", "hover:text-gray-700", "dark:bg-gray-800", "dark:border-gray-700", "dark:text-gray-400", "dark:hover:bg-gray-700", "dark:hover:text-white"]
-            classes << "rounded-s-lg" if first
-            classes << "rounded-e-lg" if last
+            base = "flex items-center justify-center w-9 h-9 text-[var(--pu-text-muted)] bg-[var(--pu-surface)] border border-[var(--pu-border)] hover:bg-[var(--pu-surface-alt)] hover:text-[var(--pu-text)] transition-colors"
+            classes = [base]
+            classes << "rounded-l-lg" if first
+            classes << "rounded-r-lg" if last
+            classes << "rounded-lg" if !first && !last
             classes.join(" ")
           end
 
           def current_link_classes
-            "flex items-center justify-center px-3 h-8 text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white cursor-not-allowed"
+            "flex items-center justify-center w-9 h-9 text-white bg-primary-600 border border-primary-600 rounded-lg font-medium cursor-default"
           end
 
           def disabled_link_classes(first = false, last = false)
-            classes = link_classes(first, last).split
-            classes << "opacity-50" << "cursor-not-allowed"
+            base = "flex items-center justify-center w-9 h-9 text-[var(--pu-text-subtle)] bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] opacity-50 cursor-not-allowed"
+            classes = [base]
+            classes << "rounded-l-lg" if first
+            classes << "rounded-r-lg" if last
+            classes << "rounded-lg" if !first && !last
             classes.join(" ")
           end
 

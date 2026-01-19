@@ -18,7 +18,7 @@ module Plutonium
         def view_template
           a(
             class: tokens(
-              "flex justify-between items-center py-2 px-4 text-sm hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white",
+              "flex justify-between items-center py-2 px-4 text-sm text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors",
               @attributes.delete(:class)
             ),
             href: @href,
@@ -40,7 +40,7 @@ module Plutonium
 
         def view_template
           ul(
-            class: "text-gray-700 dark:text-gray-300",
+            class: "text-[var(--pu-text)]",
             aria: {labelledby: "user-nav-dropdown-toggle"}
           ) do
             link_slots.each do |link|
@@ -78,20 +78,20 @@ module Plutonium
       def render_avatar_button
         button(
           type: "button",
-          class: "flex mx-3 text-sm bg-gray-800 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600",
+          class: "flex mx-3 text-sm rounded-full md:mr-0 focus:ring-2 focus:ring-[var(--pu-border)] focus:ring-offset-2 transition-shadow",
           aria: {expanded: "false"},
           id: "user-nav-dropdown-toggle",
           data: {resource_drop_down_target: "trigger"}
         ) do
           span(class: "sr-only") { "Open user menu" }
-          img(class: "w-8 h-8 rounded-full", src: @avatar_url, alt: "avatar")
+          img(class: "w-8 h-8 rounded-full ring-2 ring-[var(--pu-border)]", src: @avatar_url, alt: "avatar")
         end
       end
 
       def render_default_button
         button(
           type: "button",
-          class: "flex mx-3 text-sm border border-gray-600 text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 rounded-full md:mr-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600",
+          class: "flex mx-3 p-1 text-sm border border-[var(--pu-border)] text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-full md:mr-0 focus:ring-2 focus:ring-[var(--pu-border)] focus:ring-offset-2 transition-colors",
           aria: {expanded: "false"},
           id: "user-nav-dropdown-toggle",
           data: {resource_drop_down_target: "trigger"}
@@ -103,14 +103,15 @@ module Plutonium
 
       def render_dropdown_menu
         div(
-          class: "hidden z-50 my-4 w-56 text-base list-none bg-white divide-y divide-gray-100 shadow dark:bg-gray-700 dark:divide-gray-600 rounded-xl",
+          class: "hidden z-50 my-4 w-56 text-base list-none bg-[var(--pu-surface)] divide-y divide-[var(--pu-border-muted)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]",
+          style: "box-shadow: var(--pu-shadow-lg)",
           data: {resource_drop_down_target: "menu"}
         ) do
           div(class: "py-3 px-4") do
             if @name.present?
-              span(class: "block text-sm font-semibold text-gray-900 dark:text-white") { @name }
+              span(class: "block text-sm font-semibold text-[var(--pu-text)]") { @name }
             end
-            span(class: "block text-sm text-gray-900 truncate dark:text-white") { @email }
+            span(class: "block text-sm text-[var(--pu-text-muted)] truncate") { @email }
           end
 
           section_slots.each { |section| render section }

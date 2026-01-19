@@ -20,22 +20,22 @@ module Plutonium
           if helpers.current_turbo_frame == "remote_modal"
             dialog(
               closedby: "any",
-              class: "rounded-md w-full max-w-3xl
-                      bg-white dark:bg-gray-800
-                      border border-gray-200 dark:border-gray-700
-                      shadow-lg dark:shadow-gray-900/20
+              class: "rounded-[var(--pu-radius-lg)] w-full max-w-3xl
+                      bg-[var(--pu-surface)]
+                      border border-[var(--pu-border)]
                       backdrop:bg-black/60 backdrop:backdrop-blur-sm
                       top-auto md:top-1/2 md:-translate-y-1/2 left-1/2 -translate-x-1/2
                       max-h-[80%] p-6
                       hidden open:flex flex-col
                       relative opacity-0 open:opacity-100
                       transition-opacity duration-300 ease-in-out",
+              style: "box-shadow: var(--pu-shadow-lg)",
               data: {controller: "remote-modal"}
             ) do
               # Close button
               button(
                 type: "button",
-                class: "absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors duration-200",
+                class: "absolute top-4 right-4 p-2 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors duration-200",
                 data: {action: "remote-modal#close"},
                 "aria-label": "Close dialog"
               ) do

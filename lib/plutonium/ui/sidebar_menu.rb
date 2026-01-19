@@ -14,33 +14,33 @@ module Plutonium
           super.merge({
             # Base container styles
             nav: "space-y-2 pb-6 mb-6",
-            items_container: "space-y-2",
+            items_container: "space-y-1",
 
             # Item wrapper styles
             item_wrapper: "w-full transition-colors duration-200 ease-in-out",
             item_parent: nil,
 
             # Link and button base styles
-            item_link: "flex items-center p-2 text-base font-normal text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group",
-            item_span: "flex items-center p-2 w-full text-base font-normal text-gray-900 rounded-lg transition duration-75 group hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700",
+            item_link: "flex items-center p-2.5 text-base font-medium text-[var(--pu-text)] rounded-[var(--pu-radius-md)] hover:bg-[var(--pu-surface-alt)] group transition-colors",
+            item_span: "flex items-center p-2.5 w-full text-base font-medium text-[var(--pu-text)] rounded-[var(--pu-radius-md)] transition-colors group hover:bg-[var(--pu-surface-alt)]",
 
             # Label and content styles
             item_label: ->(depth) { "flex-1 #{(depth > 0) ? "ml-9" : "ml-3"} text-left whitespace-nowrap" },
 
             # Badge styles
-            leading_badge: "inline-flex justify-center items-center w-5 h-5 text-xs font-semibold rounded-full text-primary-800 bg-primary-100 dark:bg-primary-200 dark:text-primary-800",
-            trailing_badge: "inline-flex justify-center items-center px-2 ml-3 text-sm font-medium text-gray-800 bg-gray-200 rounded-full dark:bg-gray-700 dark:text-gray-300",
+            leading_badge: "inline-flex justify-center items-center w-5 h-5 text-xs font-semibold rounded-full text-primary-700 bg-primary-100 dark:bg-primary-900/50 dark:text-primary-300",
+            trailing_badge: "inline-flex justify-center items-center px-2 ml-3 text-sm font-medium text-[var(--pu-text-muted)] bg-[var(--pu-surface-alt)] rounded-full",
 
             # Icon styles
             icon_wrapper: "shrink-0 w-6 h-6 flex items-center justify-center",
-            icon: "text-gray-400 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white",
+            icon: "text-[var(--pu-text-muted)] transition-colors group-hover:text-[var(--pu-text)]",
 
             # Collapse icon styles
-            collapse_icon: "w-6 h-6 ml-auto transition-transform duration-200",
+            collapse_icon: "w-6 h-6 ml-auto transition-transform duration-200 text-[var(--pu-text-muted)]",
             collapse_icon_expanded: "transform rotate-180",
 
             # Submenu styles
-            sub_items_container: "hidden py-2 space-y-2",
+            sub_items_container: "hidden py-2 space-y-1",
 
             # Due to how we use turbo frames, we can't set active states
             active: nil

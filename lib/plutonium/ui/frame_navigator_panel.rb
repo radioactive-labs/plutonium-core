@@ -12,7 +12,7 @@ module Plutonium
           button(
             title: @label,
             style: "display: none",
-            class: "text-gray-600 dark:text-gray-300",
+            class: "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
             **@attributes
           ) {
             render @icon.new(class: "w-6 h-6")
@@ -31,7 +31,7 @@ module Plutonium
         def view_template
           a(
             title: @label,
-            class: "text-gray-600 dark:text-gray-300",
+            class: "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
             href: @href,
             **@attributes
           ) {

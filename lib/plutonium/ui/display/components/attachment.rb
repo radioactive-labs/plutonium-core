@@ -34,12 +34,13 @@ module Plutonium
             return unless attachment.url.present?
 
             div(
-              class: "w-full aspect-square bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
+              class: "w-full aspect-square bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] hover:bg-[var(--pu-surface-alt)] transition-all duration-300",
+              style: "box-shadow: var(--pu-shadow-sm)",
               data: {attachment_preview_target: "thumbnail"}
             ) do
               a(
                 href: attachment.url,
-                class: "block aspect-square overflow-hidden rounded-lg",
+                class: "block aspect-square overflow-hidden rounded-[var(--pu-radius-md)]",
                 target: :blank,
                 data: {attachment_preview_target: "thumbnailLink"}
               ) do
@@ -50,7 +51,7 @@ module Plutonium
                     class: "w-full h-full object-cover"
                   )
                 else
-                  div(class: "w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400 font-mono") do
+                  div(class: "w-full h-full flex items-center justify-center text-[var(--pu-text-muted)] font-mono") do
                     ".#{attachment_extension(attachment)}"
                   end
                 end
@@ -61,11 +62,11 @@ module Plutonium
           def render_caption(attachment)
             return if attributes[:caption] == false
 
-            div(class: "w-full p-2 text-sm text-gray-700 dark:text-gray-300 truncate text-center") do
+            div(class: "w-full p-2 text-sm text-[var(--pu-text-muted)] truncate text-center") do
               caption = attributes[:caption] || attachment.filename
               a(
                 href: attachment.url,
-                class: "hover:text-primary-600 dark:hover:text-primary-500 transition-colors duration-200",
+                class: "hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200",
                 target: :blank
               ) do
                 phlexi_render(caption) {

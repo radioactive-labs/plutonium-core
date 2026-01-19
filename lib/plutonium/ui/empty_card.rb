@@ -8,9 +8,9 @@ module Plutonium
       end
 
       def view_template
-        div(class: "relative bg-white dark:bg-gray-800 shadow-md") do
-          div(class: "p-6 flex items-center flex-col gap-2") do
-            p(class: "text-gray-500 sm:text-lg dark:text-gray-200 text-center") { message }
+        div(class: "pu-card") do
+          div(class: "pu-empty-state") do
+            p(class: "pu-empty-state-description") { message }
             yield if block_given?
           end
         end

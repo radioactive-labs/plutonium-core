@@ -17,7 +17,7 @@ module Plutonium
         def render_content(&)
           render_logo
 
-          div(class: "w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700") {
+          div(class: "w-full bg-[var(--pu-surface)] rounded-[var(--pu-radius-lg)] border border-[var(--pu-border)] md:mt-0 sm:max-w-md xl:p-0", style: "box-shadow: var(--pu-shadow-md)") {
             div(class: "p-6 space-y-4 md:space-y-6 sm:p-8", &)
           }
 
@@ -25,8 +25,8 @@ module Plutonium
         end
 
         def render_logo
-          link_to root_path, class: "flex items-center text-2xl font-semibold text-gray-900 dark:text-white mb-2" do
-            helpers.resource_logo_tag classname: "w-24 h-24 mr-2 rounded-md"
+          link_to root_path, class: "flex items-center text-2xl font-semibold text-[var(--pu-text)] mb-2" do
+            helpers.resource_logo_tag classname: "w-24 h-24 mr-2 rounded-[var(--pu-radius-md)]"
           end
         end
 

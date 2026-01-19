@@ -1,3 +1,5 @@
+@import "tokens.css";
+@import "components.css";
 @import "core.css";
 @import "easymde.css";
 @import "slim_select.css";

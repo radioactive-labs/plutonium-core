@@ -6,68 +6,83 @@ module Plutonium
       class Theme < Phlexi::Form::Theme
         def self.theme
           super.merge({
-            base: "relative bg-white dark:bg-gray-800 shadow-md sm:rounded-lg my-3 p-6 space-y-6",
-            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense",
-            actions_wrapper: "flex justify-end space-x-2",
+            # Form structure
+            base: "pu-card my-4 p-8 space-y-8",
+            fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 grid-flow-row-dense",
+            actions_wrapper: "flex justify-end gap-3 pt-4 border-t border-[var(--pu-border-muted)]",
             wrapper: nil,
             inner_wrapper: "w-full",
-            # errors
-            form_errors_wrapper: "flex p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400",
-            form_errors_message: "font-medium",
-            form_errors_list: "mt-1.5 list-disc list-inside",
-            # label themes
-            label: "mt-2 block mb-2 text-base font-bold",
-            invalid_label: "text-red-700 dark:text-red-500",
-            valid_label: "text-green-700 dark:text-green-500",
-            neutral_label: "text-gray-500 dark:text-gray-400",
-            # input themes
-            input: "w-full p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:ring-2",
-            invalid_input: "bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 placeholder-red-700 dark:placeholder-red-500 focus:ring-red-500 focus:border-red-500",
-            valid_input: "bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 placeholder-green-700 dark:placeholder-green-500 focus:ring-green-500 focus:border-green-500",
-            neutral_input: "border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500",
-            # checkbox
-            checkbox: "p-2 border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700",
-            # radio buttons
-            radio_button: "p-2 border shadow-sm font-medium text-sm dark:bg-gray-700",
-            # color
-            color: "pu-color-input appearance-none bg-transparent border-none cursor-pointer w-10 h-10",
+
+            # Form errors
+            form_errors_wrapper: "flex items-start gap-3 p-4 mb-6 text-base text-danger-800 rounded-[var(--pu-radius-lg)] bg-danger-50 border border-danger-200 dark:bg-danger-950/30 dark:border-danger-800 dark:text-danger-300",
+            form_errors_message: "font-semibold",
+            form_errors_list: "mt-2 list-disc list-inside text-sm",
+
+            # Label themes
+            label: "mt-2 block mb-2 text-base font-semibold",
+            invalid_label: "text-danger-700 dark:text-danger-400",
+            valid_label: "text-success-700 dark:text-success-400",
+            neutral_label: "text-[var(--pu-text)]",
+
+            # Input themes
+            input: "pu-input",
+            invalid_input: "pu-input pu-input-invalid",
+            valid_input: "pu-input pu-input-valid",
+            neutral_input: "",
+
+            # Checkbox
+            checkbox: "pu-checkbox",
+
+            # Radio buttons
+            radio_button: "pu-checkbox",
+
+            # Color
+            color: "pu-color-input appearance-none bg-transparent border-none cursor-pointer w-12 h-12 rounded-lg",
             invalid_color: nil,
             valid_color: nil,
             neutral_color: nil,
-            # file
-            # file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 focus:outline-none",
-            file: "w-full border rounded-md shadow-sm font-medium text-sm dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white focus:ring-primary-500 focus:border-primary-500 focus:outline-none focus:ring-2 [&::file-selector-button]:mr-3 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-gray-50 [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-l-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-medium [&::file-selector-button]:text-gray-700 [&::file-selector-button]:hover:bg-gray-100 [&::file-selector-button]:cursor-pointer dark:[&::file-selector-button]:bg-gray-600 dark:[&::file-selector-button]:text-gray-200 dark:[&::file-selector-button]:hover:bg-gray-500",
-            # hint themes
-            hint: "mt-2 text-sm text-gray-500 dark:text-gray-200 whitespace-pre",
-            # error themes
-            error: "mt-2 text-sm text-red-600 dark:text-red-500",
-            # button themes
-            button: "px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500",
-            # flatpickr
+
+            # File input
+            file: "pu-input py-2 [&::file-selector-button]:mr-4 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-[var(--pu-surface-alt)] [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-semibold [&::file-selector-button]:text-[var(--pu-text-muted)] [&::file-selector-button]:hover:bg-[var(--pu-border)] [&::file-selector-button]:cursor-pointer [&::file-selector-button]:transition-colors",
+
+            # Hint themes
+            hint: "pu-hint whitespace-pre",
+
+            # Error themes
+            error: "pu-error",
+
+            # Button themes
+            button: "pu-btn pu-btn-md pu-btn-primary",
+
+            # Flatpickr
             flatpickr: :input,
             valid_flatpickr: :valid_input,
             invalid_flatpickr: :invalid_input,
             neutral_flatpickr: :neutral_input,
-            # int_tel_input
+
+            # Int tel input
             int_tel_input: :input,
             valid_int_tel_input: :valid_input,
             invalid_int_tel_input: :invalid_input,
             neutral_int_tel_input: :neutral_input,
+
+            # Uppy file upload
             uppy: :file,
             valid_uppy: :valid_file,
             invalid_uppy: :invalid_file,
             neutral_uppy: :neutral_file,
 
+            # Association
             association: :select,
             valid_association: :valid_select,
             invalid_association: :invalid_select,
             neutral_association: :neutral_select,
 
+            # Polymorphic association
             polymorpic_association: :association,
             valid_polymorpic_association: :valid_association,
             invalid_polymorpic_association: :invalid_association,
             neutral_polymorpic_association: :neutral_association
-
           })
         end
       end

@@ -19,7 +19,8 @@ module Plutonium
 
           def render_thumbnail(attachment)
             div(
-              class: "w-24 h-24 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 transition-all duration-300",
+              class: "w-24 h-24 bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] hover:bg-[var(--pu-surface-alt)] transition-all duration-300",
+              style: "box-shadow: var(--pu-shadow-sm)",
               data: {
                 controller: "attachment-preview",
                 attachment_preview_mime_type_value: attachment.content_type,
@@ -30,7 +31,7 @@ module Plutonium
             ) do
               a(
                 href: attachment.url,
-                class: "block aspect-square overflow-hidden rounded-lg",
+                class: "block aspect-square overflow-hidden rounded-[var(--pu-radius-md)]",
                 target: :blank,
                 data: {
                   attachment_preview_target: "thumbnailLink"
@@ -44,7 +45,7 @@ module Plutonium
                   )
                 else
                   div(
-                    class: "w-full h-full flex items-center justify-center text-gray-500 dark:text-gray-400 font-mono"
+                    class: "w-full h-full flex items-center justify-center text-[var(--pu-text-muted)] font-mono"
                   ) do
                     ".#{attachment_extension(attachment)}"
                   end
