@@ -9,8 +9,12 @@ export default class extends Controller {
 
     // Just recreate SlimSelect after morphing - the DOM will have correct selections
     this.element.addEventListener("turbo:morph-element", (event) => {
-      if (event.target === this.element) {
-        requestAnimationFrame(() => this.#handleMorph());
+      if (event.target === this.element && !this.morphing) {
+        this.morphing = true;
+        requestAnimationFrame(() => {
+          this.#handleMorph();
+          this.morphing = false;
+        });
       }
     });
   }

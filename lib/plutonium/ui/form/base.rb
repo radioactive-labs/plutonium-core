@@ -93,6 +93,7 @@ module Plutonium
         def initialize_attributes
           super
 
+          attributes[:id] ||= :resource_form
           attributes["data-controller"] = "form"
         end
       end
