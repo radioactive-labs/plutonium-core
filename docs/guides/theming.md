@@ -4,11 +4,224 @@ This guide covers customizing colors, styles, and branding.
 
 ## Overview
 
-Plutonium uses TailwindCSS 4 for styling. Customization happens through:
+Plutonium uses TailwindCSS 4 with a design token system for consistent styling. Customization happens through:
 
+- **Design Tokens** - CSS custom properties for colors, spacing, shadows
+- **Component Classes** - Pre-built `.pu-*` classes for buttons, inputs, tables
 - **Tailwind Configuration** - Extend colors and design tokens
 - **Component Themes** - Override form, table, and display styling
-- **Asset Configuration** - Custom CSS, JS, logo, and favicon
+
+## Design Token System
+
+Plutonium uses CSS custom properties (design tokens) for theming. These tokens automatically adapt to light and dark modes.
+
+### Available Tokens
+
+#### Surface Colors
+
+```css
+--pu-body            /* Page background */
+--pu-surface         /* Card/panel backgrounds */
+--pu-surface-alt     /* Alternate surface (headers, sidebars) */
+--pu-surface-raised  /* Elevated surfaces */
+--pu-surface-overlay /* Modal/dropdown overlays */
+```
+
+#### Border Colors
+
+```css
+--pu-border        /* Default borders */
+--pu-border-muted  /* Subtle borders */
+--pu-border-strong /* Emphasized borders */
+```
+
+#### Text Colors
+
+```css
+--pu-text        /* Primary text */
+--pu-text-muted  /* Secondary text */
+--pu-text-subtle /* Tertiary/placeholder text */
+```
+
+#### Table Tokens
+
+```css
+--pu-table-header-bg    /* Header background */
+--pu-table-header-text  /* Header text color */
+--pu-table-row-bg       /* Row background */
+--pu-table-row-hover    /* Row hover state */
+--pu-table-row-selected /* Selected row */
+--pu-table-border       /* Row borders */
+```
+
+#### Form Tokens
+
+```css
+--pu-input-bg          /* Input background */
+--pu-input-border      /* Input border */
+--pu-input-focus-ring  /* Focus ring color */
+--pu-input-placeholder /* Placeholder text */
+```
+
+#### Card Tokens
+
+```css
+--pu-card-bg     /* Card background */
+--pu-card-border /* Card border */
+```
+
+#### Shadow System
+
+```css
+--pu-shadow-sm  /* Subtle shadow */
+--pu-shadow-md  /* Medium shadow */
+--pu-shadow-lg  /* Large shadow */
+```
+
+#### Spacing Scale
+
+```css
+--pu-space-xs  /* 0.25rem */
+--pu-space-sm  /* 0.5rem */
+--pu-space-md  /* 1rem */
+--pu-space-lg  /* 1.5rem */
+--pu-space-xl  /* 2rem */
+```
+
+#### Border Radius
+
+```css
+--pu-radius-sm   /* 0.375rem */
+--pu-radius-md   /* 0.5rem */
+--pu-radius-lg   /* 0.75rem */
+--pu-radius-xl   /* 1rem */
+--pu-radius-full /* 9999px */
+```
+
+#### Transitions
+
+```css
+--pu-transition-fast   /* 150ms */
+--pu-transition-normal /* 200ms */
+--pu-transition-slow   /* 300ms */
+```
+
+### Overriding Tokens
+
+Override tokens in your CSS to customize the theme:
+
+```css
+/* app/assets/stylesheets/application.css */
+@import "tailwindcss";
+@import "gem:plutonium/src/css/plutonium.css";
+
+/* Light mode overrides */
+:root {
+  --pu-surface: #fafafa;
+  --pu-border: #d4d4d4;
+  --pu-input-focus-ring: #6366f1;
+}
+
+/* Dark mode overrides */
+.dark {
+  --pu-surface: #18181b;
+  --pu-border: #3f3f46;
+}
+```
+
+## Component Classes
+
+Plutonium provides pre-built component classes for common UI elements.
+
+### Buttons
+
+```html
+<!-- Sizes -->
+<button class="pu-btn pu-btn-md pu-btn-primary">Medium</button>
+<button class="pu-btn pu-btn-sm pu-btn-primary">Small</button>
+<button class="pu-btn pu-btn-xs pu-btn-primary">Extra Small</button>
+
+<!-- Solid variants -->
+<button class="pu-btn pu-btn-md pu-btn-primary">Primary</button>
+<button class="pu-btn pu-btn-md pu-btn-secondary">Secondary</button>
+<button class="pu-btn pu-btn-md pu-btn-success">Success</button>
+<button class="pu-btn pu-btn-md pu-btn-danger">Danger</button>
+<button class="pu-btn pu-btn-md pu-btn-warning">Warning</button>
+<button class="pu-btn pu-btn-md pu-btn-info">Info</button>
+<button class="pu-btn pu-btn-md pu-btn-accent">Accent</button>
+
+<!-- Soft variants (tinted backgrounds) -->
+<button class="pu-btn pu-btn-md pu-btn-soft-primary">Soft Primary</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-secondary">Soft Secondary</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-success">Soft Success</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-danger">Soft Danger</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-warning">Soft Warning</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-info">Soft Info</button>
+<button class="pu-btn pu-btn-md pu-btn-soft-accent">Soft Accent</button>
+
+<!-- Other styles -->
+<button class="pu-btn pu-btn-md pu-btn-ghost">Ghost</button>
+<button class="pu-btn pu-btn-md pu-btn-outline">Outline</button>
+```
+
+### Form Inputs
+
+```html
+<label class="pu-label">Email</label>
+<input type="email" class="pu-input" placeholder="you@example.com">
+<p class="pu-hint">We'll never share your email.</p>
+
+<!-- Validation states -->
+<input type="text" class="pu-input pu-input-invalid">
+<p class="pu-error">This field is required.</p>
+
+<input type="text" class="pu-input pu-input-valid">
+```
+
+### Checkboxes
+
+```html
+<input type="checkbox" class="pu-checkbox">
+```
+
+### Cards
+
+```html
+<div class="pu-card">
+  <div class="pu-card-body">
+    Card content here
+  </div>
+</div>
+```
+
+### Tables
+
+```html
+<div class="pu-table-wrapper">
+  <table class="pu-table">
+    <thead class="pu-table-header">
+      <tr>
+        <th class="pu-table-header-cell">Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="pu-table-body-row">
+        <td class="pu-table-body-cell">John</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+### Empty States
+
+```html
+<div class="pu-empty-state">
+  <svg class="pu-empty-state-icon">...</svg>
+  <h3 class="pu-empty-state-title">No items found</h3>
+  <p class="pu-empty-state-description">Get started by creating a new item.</p>
+</div>
+```
 
 ## Setup Custom Assets
 
@@ -125,7 +338,7 @@ Plutonium includes these semantic colors:
 @import "tailwindcss";
 @config '../../../tailwind.config.js';
 
-/* Your custom styles */
+/* Your custom styles and token overrides */
 ```
 
 ## Component Themes
@@ -140,14 +353,14 @@ class PostDefinition < ResourceDefinition
     class Theme < Plutonium::UI::Form::Theme
       def self.theme
         super.merge({
-          base: "bg-white dark:bg-gray-800 shadow-md rounded-lg p-6",
+          base: "pu-card my-4 p-8 space-y-8",
           fields_wrapper: "grid grid-cols-2 gap-6",
           actions_wrapper: "flex justify-end mt-6 space-x-2",
-          label: "block mb-2 text-base font-bold",
-          input: "w-full p-2 border rounded-md shadow-sm",
-          hint: "mt-2 text-sm text-gray-500",
-          error: "mt-2 text-sm text-red-600",
-          button: "px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700",
+          label: "pu-label",
+          input: "pu-input",
+          hint: "pu-hint",
+          error: "pu-error",
+          button: "pu-btn pu-btn-md pu-btn-primary",
         })
       end
     end
@@ -164,8 +377,8 @@ class PostDefinition < ResourceDefinition
       def self.theme
         super.merge({
           fields_wrapper: "grid grid-cols-3 gap-8",
-          label: "text-sm font-bold text-gray-500 mb-1",
-          string: "text-lg text-gray-900 dark:text-white",
+          label: "text-sm font-bold text-[var(--pu-text-muted)] mb-1",
+          string: "text-lg text-[var(--pu-text)]",
           link: "text-primary-600 hover:underline",
         })
       end
@@ -182,12 +395,12 @@ class PostDefinition < ResourceDefinition
     class Theme < Plutonium::UI::Table::Theme
       def self.theme
         super.merge({
-          wrapper: "overflow-x-auto shadow-md rounded-lg",
-          base: "w-full text-sm text-gray-500",
-          header: "text-xs uppercase bg-gray-100 dark:bg-gray-700",
-          header_cell: "px-6 py-3",
-          body_row: "bg-white border-b dark:bg-gray-800",
-          body_cell: "px-6 py-4",
+          wrapper: "pu-table-wrapper",
+          base: "pu-table",
+          header: "pu-table-header",
+          header_cell: "pu-table-header-cell",
+          body_row: "pu-table-body-row",
+          body_cell: "pu-table-body-cell",
         })
       end
     end
@@ -253,6 +466,8 @@ document.documentElement.classList.toggle('dark');
 
 Plutonium includes a color mode selector component that handles this automatically.
 
+Design tokens automatically adapt to dark mode - override the `.dark` selector in your CSS to customize dark mode colors.
+
 ## Stimulus Controllers
 
 Register Plutonium's Stimulus controllers in your application:
@@ -298,7 +513,16 @@ application.register("custom", CustomController)
 
 ## Portal-Specific Themes
 
-Different portals can have different themes by overriding definitions per-portal:
+Different portals can have different themes by overriding tokens per-portal:
+
+```css
+/* packages/admin_portal/app/assets/stylesheets/admin_portal.css */
+:root {
+  --pu-input-focus-ring: theme(colors.indigo.500);
+}
+```
+
+Or by overriding definitions:
 
 ```ruby
 # packages/admin_portal/app/definitions/admin_portal/post_definition.rb
@@ -307,7 +531,7 @@ class AdminPortal::PostDefinition < ::PostDefinition
     class Theme < Plutonium::UI::Form::Theme
       def self.theme
         super.merge({
-          base: "bg-blue-50 p-8",  # Admin-specific styling
+          base: "pu-card bg-indigo-50 p-8",
         })
       end
     end
