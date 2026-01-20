@@ -1,13 +1,21 @@
-<div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
+<div class="mb-4 text-sm text-[var(--pu-text-muted)]">
   <%== rodauth.unlock_account_explanatory_text %>
 </div>
 <%= form_with url: rodauth.unlock_account_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
   <% if rodauth.unlock_account_requires_password? %>
     <div>
-      <%= form.label "password", rodauth.password_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
-      <%= form.password_field rodauth.password_param, value: "", id: "password", autocomplete: rodauth.password_field_autocomplete_value, required: true, class: "bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 #{rodauth.field_error(rodauth.password_param) ? "border-red-600 focus:ring-red-600 focus:border-red-600 dark:border-red-400 dark:focus:ring-red-400" : "border-gray-300 dark:border-gray-700 dark:focus:border-emerald-400 dark:focus:ring-emerald-400" }", aria: ({ invalid: true, describedby: "password_error_message" } if rodauth.field_error(rodauth.password_param)) %>
-      <%= content_tag(:span, rodauth.field_error(rodauth.password_param), class: "block mt-1 text-red-600 text-xs dark:text-red-400", id: "password_error_message") if rodauth.field_error(rodauth.password_param) %>
+      <%= form.label "password", rodauth.password_label, class: "pu-label" %>
+      <%= form.password_field rodauth.password_param,
+                          value: "",
+                          id: "password",
+                          autocomplete: rodauth.password_field_autocomplete_value,
+                          required: true,
+                          class: "pu-input #{rodauth.field_error(rodauth.password_param) ? 'pu-input-invalid' : ''}",
+                          aria: (rodauth.field_error(rodauth.password_param) ? { invalid: true, describedby: "password_error_message" } : nil) %>
+      <% if rodauth.field_error(rodauth.password_param) %>
+        <span class="pu-error" id="password_error_message"><%= rodauth.field_error(rodauth.password_param) %></span>
+      <% end %>
     </div>
   <% end %>
-  <%= form.submit rodauth.unlock_account_button, class: "w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" %>
+  <%= form.submit rodauth.unlock_account_button, class: "w-full pu-btn pu-btn-md pu-btn-primary" %>
 <% end %>

@@ -31,10 +31,10 @@ module Plutonium
         end
 
         def render_links
-          div(class: "mt-4 flex items-center font-medium text-secondary-600 dark:text-secondary-400 hover:underline") {
-            render Phlex::TablerIcons::Home2.new
-            link_to "Home", root_path, class: "font-medium text-secondary-600 dark:text-secondary-400"
-          }
+          link_to root_path, class: "mt-4 inline-flex items-center gap-1.5 font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" do
+            render Phlex::TablerIcons::Home2.new(class: "size-5")
+            plain "Home"
+          end
         end
       end
     end
