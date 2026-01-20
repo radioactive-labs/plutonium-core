@@ -1,22 +1,32 @@
 <%= form_with url: rodauth.webauthn_remove_path, method: :post, id: "webauthn-remove-form", data: { turbo: false }, class: "space-y-4" do |form| %>
   <% if rodauth.two_factor_modifications_require_password? %>
     <div>
-      <%= form.label "password", rodauth.password_label, class: "block mb-2 text-sm font-semibold text-gray-900 dark:text-white" %>
-      <%= form.password_field rodauth.password_param, value: "", id: "password", autocomplete: rodauth.password_field_autocomplete_value, required: true, class: "bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 #{rodauth.field_error(rodauth.password_param) ? "border-red-600 focus:ring-red-600 focus:border-red-600 dark:border-red-400 dark:focus:ring-red-400" : "border-gray-300 dark:border-gray-700 dark:focus:border-emerald-400 dark:focus:ring-emerald-400" }", aria: ({ invalid: true, describedby: "password_error_message" } if rodauth.field_error(rodauth.password_param)) %>
-      <%= content_tag(:span, rodauth.field_error(rodauth.password_param), class: "block mt-1 text-red-600 text-xs dark:text-red-400", id: "password_error_message") if rodauth.field_error(rodauth.password_param) %>
+      <%= form.label "password", rodauth.password_label, class: "pu-label" %>
+      <%= form.password_field rodauth.password_param,
+                          value: "",
+                          id: "password",
+                          autocomplete: rodauth.password_field_autocomplete_value,
+                          required: true,
+                          class: "pu-input #{rodauth.field_error(rodauth.password_param) ? 'pu-input-invalid' : ''}",
+                          aria: (rodauth.field_error(rodauth.password_param) ? { invalid: true, describedby: "password_error_message" } : nil) %>
+      <% if rodauth.field_error(rodauth.password_param) %>
+        <span class="pu-error" id="password_error_message"><%= rodauth.field_error(rodauth.password_param) %></span>
+      <% end %>
     </div>
   <% end %>
 
-  <fieldset class="mb-6">
+  <fieldset class="mb-6 space-y-2">
     <% rodauth.account_webauthn_usage.each do |id, last_use| %>
       <div class="flex items-center space-x-2">
         <% last_use = last_use.strftime(rodauth.strftime_format) if last_use.is_a?(Time) %>
-        <%= form.radio_button rodauth.webauthn_remove_param, id, id: "webauthn-remove-#{id}", class: "dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-current dark:checked:border-current dark:checked:text-emerald-400 dark:focus:ring-emerald-400 dark:focus:ring-offset-gray-900" %>
-        <%= form.label "webauthn-remove-#{id}", "Last use: #{last_use}", class: "text-sm" %>
+        <%= form.radio_button rodauth.webauthn_remove_param, id, id: "webauthn-remove-#{id}", class: "pu-checkbox" %>
+        <%= form.label "webauthn-remove-#{id}", "Last use: #{last_use}", class: "text-sm text-[var(--pu-text)]" %>
       </div>
     <% end %>
-    <%= content_tag(:span, rodauth.field_error(rodauth.webauthn_remove_param), class: "block mt-1 text-red-600 text-xs dark:text-red-400", id: "webauthn_remove_error_message") if rodauth.field_error(rodauth.webauthn_remove_param) %>
+    <% if rodauth.field_error(rodauth.webauthn_remove_param) %>
+      <span class="pu-error" id="webauthn_remove_error_message"><%= rodauth.field_error(rodauth.webauthn_remove_param) %></span>
+    <% end %>
   </fieldset>
 
-  <%= form.submit rodauth.webauthn_remove_button, class: "w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" %>
+  <%= form.submit rodauth.webauthn_remove_button, class: "w-full pu-btn pu-btn-md pu-btn-warning" %>
 <% end %>

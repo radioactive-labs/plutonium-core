@@ -1,13 +1,13 @@
-<h1 class="text-lg font-bold leading-tight tracking-tight text-gray-900 md:text-xl dark:text-white">
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl">
   Log out of your session
 </h1>
 <%= form_with url: rodauth.logout_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
   <% if rodauth.features.include?(:active_sessions) %>
     <div class="mb-6 flex items-center space-x-2">
-      <%= form.check_box rodauth.global_logout_param, id: "global-logout", class: "w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600", include_hidden: false %>
-      <%= form.label "global-logout", rodauth.global_logout_label, class: "ms-2 text-sm font-medium text-gray-900 dark:text-gray-300" %>
+      <%= form.check_box rodauth.global_logout_param, id: "global-logout", class: "pu-checkbox", include_hidden: false %>
+      <%= form.label "global-logout", rodauth.global_logout_label, class: "ms-2 text-sm font-medium text-[var(--pu-text)]" %>
     </div>
   <% end %>
 
-  <%= form.submit rodauth.logout_button, class: "w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" %>
+  <%= form.submit rodauth.logout_button, class: "w-full pu-btn pu-btn-md pu-btn-primary" %>
 <% end %>

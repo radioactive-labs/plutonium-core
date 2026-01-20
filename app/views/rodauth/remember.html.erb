@@ -1,18 +1,18 @@
 <%= form_with url: rodauth.remember_path, method: :post, data: { turbo: false }, class: "space-y-4" do |form| %>
   <fieldset class="mb-6 space-y-2">
     <div class="flex items-center space-x-2">
-      <%= form.radio_button rodauth.remember_param, rodauth.remember_remember_param_value, id: "remember-remember", class: "dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-current dark:checked:border-current dark:checked:text-emerald-400 dark:focus:ring-emerald-400 dark:focus:ring-offset-gray-900" %>
-      <%= form.label "remember-remember", rodauth.remember_remember_label, class: "text-sm" %>
+      <%= form.radio_button rodauth.remember_param, rodauth.remember_remember_param_value, id: "remember-remember", class: "pu-checkbox" %>
+      <%= form.label "remember-remember", rodauth.remember_remember_label, class: "text-sm text-[var(--pu-text)]" %>
     </div>
     <div class="flex items-center space-x-2">
-      <%= form.radio_button rodauth.remember_param, rodauth.remember_forget_param_value, id: "remember-forget", class: "dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-current dark:checked:border-current dark:checked:text-emerald-400 dark:focus:ring-emerald-400 dark:focus:ring-offset-gray-900" %>
-      <%= form.label "remember-forget", rodauth.remember_forget_label, class: "text-sm" %>
+      <%= form.radio_button rodauth.remember_param, rodauth.remember_forget_param_value, id: "remember-forget", class: "pu-checkbox" %>
+      <%= form.label "remember-forget", rodauth.remember_forget_label, class: "text-sm text-[var(--pu-text)]" %>
     </div>
     <div class="flex items-center space-x-2">
-      <%= form.radio_button rodauth.remember_param, rodauth.remember_disable_param_value, id: "remember-disable", class: "dark:bg-gray-900 dark:border-gray-600 dark:checked:bg-current dark:checked:border-current dark:checked:text-emerald-400 dark:focus:ring-emerald-400 dark:focus:ring-offset-gray-900" %>
-      <%= form.label "remember-disable", rodauth.remember_disable_label, class: "text-sm" %>
+      <%= form.radio_button rodauth.remember_param, rodauth.remember_disable_param_value, id: "remember-disable", class: "pu-checkbox" %>
+      <%= form.label "remember-disable", rodauth.remember_disable_label, class: "text-sm text-[var(--pu-text)]" %>
     </div>
   </fieldset>
 
-  <%= form.submit rodauth.remember_button, class: "w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-semibold rounded-lg text-sm px-5 py-2.5 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800" %>
+  <%= form.submit rodauth.remember_button, class: "w-full pu-btn pu-btn-md pu-btn-primary" %>
 <% end %>

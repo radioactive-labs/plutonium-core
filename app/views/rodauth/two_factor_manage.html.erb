@@ -1,25 +1,25 @@
 <div>
   <% if rodauth.two_factor_setup_links.any? %>
-    <div class="text-2xl font-medium">
+    <div class="text-xl font-semibold text-[var(--pu-text)]">
       <%== rodauth.two_factor_setup_heading %>
     </div>
-    <ul class="mt-1">
+    <ul class="mt-2 space-y-1">
       <% rodauth.two_factor_setup_links.sort.each do |_, link, text| %>
-        <li><%= link_to text, link, class: "text-blue-600 rounded-sm text-sm hover:underline hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-blue-300 dark:hover:text-blue-400 dark:focus-visible:ring-2 dark:focus-visible:ring-blue-300" %></li>
+        <li><%= link_to text, link, class: "text-sm font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" %></li>
       <% end %>
     </ul>
   <% end %>
 
   <% if rodauth.two_factor_remove_links.any? %>
-    <div class="text-2xl font-medium mt-4">
+    <div class="text-xl font-semibold text-[var(--pu-text)] mt-6">
       <%== rodauth.two_factor_remove_heading %>
     </div>
-    <ul class="mt-1">
+    <ul class="mt-2 space-y-1">
       <% rodauth.two_factor_remove_links.sort.each do |_, link, text| %>
-        <li><%= link_to text, link, class: "text-blue-600 rounded-sm text-sm hover:underline hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-blue-300 dark:hover:text-blue-400 dark:focus-visible:ring-2 dark:focus-visible:ring-blue-300" %></li>
+        <li><%= link_to text, link, class: "text-sm font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" %></li>
       <% end %>
       <% if rodauth.two_factor_remove_links.length > 1 %>
-        <li><%= link_to rodauth.two_factor_disable_link_text, rodauth.two_factor_disable_path, class: "text-blue-600 rounded-sm text-sm hover:underline hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 dark:text-blue-300 dark:hover:text-blue-400 dark:focus-visible:ring-2 dark:focus-visible:ring-blue-300" %></li>
+        <li><%= link_to rodauth.two_factor_disable_link_text, rodauth.two_factor_disable_path, class: "text-sm font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" %></li>
       <% end %>
     </ul>
   <% end %>
