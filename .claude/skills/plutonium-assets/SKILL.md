@@ -1,11 +1,13 @@
 ---
 name: plutonium-assets
-description: Plutonium assets and theming - TailwindCSS configuration, custom styling, and component themes
+description: Plutonium asset setup - TailwindCSS configuration, Stimulus controllers, and Phlexi component themes
 ---
 
-# Plutonium Assets & Theming
+# Plutonium Assets & Setup
 
 Plutonium uses TailwindCSS 4 for styling with a customizable theme system for components.
+
+> **Note:** For CSS design tokens (`--pu-*` variables) and component classes (`.pu-btn`, `.pu-input`, etc.), see the `plutonium-theming` skill.
 
 ## Asset Configuration
 
@@ -154,9 +156,11 @@ Plutonium includes a color mode selector component that handles this automatical
 - International telephone input styles
 - Flatpickr (date picker) styles
 
-## Component Themes
+## Component Themes (Phlexi)
 
-Plutonium components use a theme system based on Phlexi. Each component type has a theme class with named style tokens.
+Plutonium components use a theme system based on Phlexi for customizing Form, Display, and Table components. Each component type has a theme class with named style tokens.
+
+> **Note:** This is different from the CSS design token system (`.pu-*` classes). For pre-built component classes, see `plutonium-theming`.
 
 ### Form Theme
 
@@ -411,6 +415,7 @@ theme: {
 
 ## Related Skills
 
+- `plutonium-theming` - CSS design tokens and component classes (`.pu-*`)
 - `plutonium-views` - Layout customization
 - `plutonium-forms` - Form theming
 - `plutonium-installation` - Initial setup
