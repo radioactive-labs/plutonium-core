@@ -1,3 +1,55 @@
+## [0.35.0] - 2026-01-20
+
+### 🚀 Features
+
+- Add demo_features package and demo_portal for testing
+- Implement bulk actions for resource tables
+- Modernize UI with design token system and component classes
+- Add actions dropdown for secondary and danger actions
+- Add form input type aliases for explicit field type declarations
+- Add built-in filter types with dropdown filter panel UI
+- *(display)* Add boolean and color components with type aliases
+- *(filters)* Add clear all button with filter-panel controller
+
+### 🐛 Bug Fixes
+
+- Use turbo stream redirect action instead of HTTP 302 for form submissions
+- Exclude turbo_stream format from URL preservation
+- Improve table container scroll and telephone input padding
+- Pass unwrapped record into custom column blocks
+- *(docs)* Prevent h2 text cutoff in VitePress docs
+
+### 🚜 Refactor
+
+- Remove ResourceController from portal generator
+- Rename skills with plutonium- prefix to avoid conflicts
+- Simplify dashboard templates with design system classes
+- *(ui)* Update auth pages with new design tokens
+
+### 📚 Documentation
+
+- Improve interaction docs
+- Overhaul README, CONTRIBUTING, and add CLAUDE.md for development
+- Redesign landing page with modern layout and AI messaging
+- Unify branding and add social preview meta tags
+- Fix broken links
+- Add Author Portal tutorial chapter
+- Fix minimum rails version
+- Fix drafts scope for posts
+- Remove cookbooks
+- Reorganize features section of homepage
+- Clean up docs and fix misc issues
+- Rewrite theming guide with design tokens and component classes
+- Removed potentially misleading section on per portal themes
+- Document authorization methods
+- Add skills for themeing specifically
+
+### ⚙️ Miscellaneous Tasks
+
+- Optimize og graph title and images
+- Realign marketing material
+- Add seeds for demo models and fix foreign keys
+- Standardrb
 ## [0.34.1] - 2026-01-18
 
 ### 🐛 Bug Fixes
