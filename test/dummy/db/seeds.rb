@@ -257,7 +257,7 @@ products = products_data.map do |data|
     specifications: {material: "Various", origin: "Imported"},
     release_date: Date.today - rand(1..365).days,
     discontinue_date: Date.today + rand(180..730).days,
-    published_at: data[:status] == :active ? Time.current - rand(1..90).days : Time.current,
+    published_at: (data[:status] == :active) ? Time.current - rand(1..90).days : Time.current,
     last_restocked_at: Time.current - rand(1..30).days,
     available_from_time: Time.parse("09:00"),
     available_until_time: Time.parse("21:00")

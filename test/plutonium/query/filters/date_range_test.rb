@@ -141,7 +141,7 @@ module Plutonium
           filter = DateRange.new(key: :created_at)
           scope = MockScope.new
 
-          result = filter.apply(scope, from: "not-a-date", to: "2024-01-31")
+          filter.apply(scope, from: "not-a-date", to: "2024-01-31")
 
           # Should still apply the valid to date
           assert_equal 1, scope.calls.size
