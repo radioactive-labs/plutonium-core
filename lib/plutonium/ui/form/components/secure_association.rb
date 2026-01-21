@@ -8,7 +8,7 @@ module Plutonium
           include Plutonium::UI::Component::Methods
 
           def view_template
-            div(class: "flex space-x-1") do
+            div(class: "flex items-center space-x-1") do
               super
               render_add_button
             end
@@ -23,9 +23,9 @@ module Plutonium
 
             a(
               href: add_url,
-              class: "bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-3 focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text)] transition-colors"
+              class: "bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] px-4 py-3 focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
             ) do
-              render Phlex::TablerIcons::Plus.new(class: "w-3 h-3")
+              render Phlex::TablerIcons::Plus.new(class: "w-6 h-6")
             end
           end
 
