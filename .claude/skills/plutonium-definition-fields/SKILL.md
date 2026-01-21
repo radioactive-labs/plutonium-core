@@ -321,6 +321,39 @@ column :status, align: :center  # Center
 column :amount, align: :end     # Right
 ```
 
+### Value Formatting
+
+Use `formatter` for simple value transformations without a full block:
+
+```ruby
+# Truncate long text
+column :description, formatter: ->(value) { value&.truncate(30) }
+
+# Format numbers
+column :price, formatter: ->(value) { "$%.2f" % value if value }
+
+# Transform values
+column :status, formatter: ->(value) { value&.humanize&.upcase }
+```
+
+The `formatter` option:
+- Receives the field value as its argument
+- Returns the transformed value for display
+- Works with `column` and `display` declarations
+- Is simpler than block syntax when you only need to transform the value
+
+**formatter vs block:** Use `formatter` when you only need the value. Use a block when you need access to the full record:
+
+```ruby
+# formatter - receives just the value
+column :name, formatter: ->(value) { value&.titleize }
+
+# block - receives the full record
+column :full_name do |record|
+  "#{record.first_name} #{record.last_name}"
+end
+```
+
 ### Custom Column Rendering
 
 Use a block to customize how a column value is displayed. The block receives the raw record:
