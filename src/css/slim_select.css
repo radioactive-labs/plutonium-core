@@ -36,11 +36,25 @@
 
 /* Main container - Updated to match form input theme */
 .ss-main {
-  @apply flex flex-row relative select-none w-full min-h-8 p-2 cursor-pointer border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white text-gray-700 outline-none transition-colors duration-200 overflow-hidden focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply flex flex-row items-center relative select-none w-full px-4 py-3 cursor-pointer border font-medium text-base leading-normal outline-none transition-colors duration-200 overflow-hidden focus:ring-2;
+  background-color: var(--pu-input-bg);
+  border-color: var(--pu-input-border);
+  border-radius: var(--pu-radius-md);
+  color: var(--pu-text);
+}
+.ss-main:hover {
+  border-color: var(--pu-border-strong);
+}
+.ss-main:focus,
+.ss-main[aria-expanded="true"] {
+  border-color: var(--pu-input-focus-ring);
+  box-shadow: 0 0 0 3px theme(colors.primary.500 / 15%);
 }
 
 .ss-main.ss-disabled {
-  @apply cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-gray-900 dark:text-gray-400;
+  @apply cursor-not-allowed;
+  background-color: var(--pu-surface-alt);
+  color: var(--pu-text-muted);
 }
 
 .ss-main.ss-disabled .ss-values .ss-value .ss-value-delete {
@@ -57,11 +71,12 @@
 
 /* Values container */
 .ss-main .ss-values {
-  @apply inline-flex flex-wrap gap-1 flex-1;
+  @apply inline-flex flex-wrap gap-1 flex-1 items-center min-h-[1.5em];
 }
 
 .ss-main .ss-values .ss-placeholder {
-  @apply flex px-0 py-0 my-auto leading-none items-center w-full text-gray-400 overflow-hidden text-ellipsis whitespace-nowrap dark:text-gray-400;
+  @apply flex px-0 py-0 my-auto items-center w-full overflow-hidden text-ellipsis whitespace-nowrap;
+  color: var(--pu-input-placeholder);
 }
 
 .ss-main .ss-values .ss-max {
@@ -111,7 +126,8 @@
 }
 
 .ss-main .ss-deselect svg path {
-  @apply fill-none stroke-gray-700 dark:stroke-white;
+  @apply fill-none;
+  stroke: var(--pu-text-muted);
   stroke-width: 20;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -123,7 +139,8 @@
 }
 
 .ss-main .ss-arrow path {
-  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-white;
+  @apply fill-none transition-transform duration-200;
+  stroke: var(--pu-text-muted);
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -131,7 +148,10 @@
 
 /* Content container - Updated to match shadow and borders */
 .ss-content {
-  @apply absolute flex h-auto flex-col w-auto max-h-72 border border-gray-300 bg-white shadow-sm transition-all duration-200 opacity-0 z-[10000] overflow-hidden dark:bg-gray-700 dark:border-gray-600;
+  @apply absolute flex h-auto flex-col w-auto max-h-72 border transition-all duration-200 opacity-0 z-[10000] overflow-hidden;
+  background-color: var(--pu-surface);
+  border-color: var(--pu-border);
+  box-shadow: var(--pu-shadow-md);
   transform: scaleY(0);
   transform-origin: top;
 }
@@ -162,14 +182,28 @@
 }
 
 .ss-content .ss-search input {
-  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border border-gray-300 rounded-md shadow-sm font-medium text-sm bg-white outline-none text-left placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400;
+  @apply inline-flex flex-auto w-full min-w-0 p-2 m-0 border font-medium text-sm outline-none text-left focus:ring-2;
+  background-color: var(--pu-input-bg);
+  border-color: var(--pu-input-border);
+  border-radius: var(--pu-radius-md);
+  color: var(--pu-text);
   box-sizing: border-box;
   font-size: inherit;
   line-height: inherit;
 }
+.ss-content .ss-search input::placeholder {
+  color: var(--pu-input-placeholder);
+}
+.ss-content .ss-search input:focus {
+  border-color: var(--pu-input-focus-ring);
+  box-shadow: 0 0 0 3px theme(colors.primary.500 / 15%);
+}
 
 .ss-content .ss-search .ss-addable {
-  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border border-gray-300 rounded-md shadow-sm dark:border-gray-600;
+  @apply inline-flex justify-center items-center cursor-pointer flex-none h-auto ml-2 border;
+  border-color: var(--pu-border);
+  border-radius: var(--pu-radius-md);
+  box-shadow: var(--pu-shadow-sm);
 }
 
 .ss-content .ss-search .ss-addable svg {
@@ -177,7 +211,8 @@
 }
 
 .ss-content .ss-search .ss-addable svg path {
-  @apply fill-none stroke-gray-700 dark:stroke-white;
+  @apply fill-none;
+  stroke: var(--pu-text);
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -193,7 +228,8 @@
 }
 
 .ss-content .ss-list .ss-searching {
-  @apply text-gray-700 p-2 dark:text-white;
+  @apply p-2;
+  color: var(--pu-text);
 }
 
 .ss-content .ss-list .ss-optgroup.ss-close .ss-option {
@@ -202,11 +238,13 @@
 
 /* Option groups - Updated colors */
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label {
-  @apply flex flex-row items-center justify-between p-2 bg-gray-50 dark:bg-gray-600;
+  @apply flex flex-row items-center justify-between p-2;
+  background-color: var(--pu-surface-alt);
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-label-text {
-  @apply flex-auto font-bold text-gray-700 dark:text-white;
+  @apply flex-auto font-bold;
+  color: var(--pu-text);
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label:has(.ss-arrow) {
@@ -256,7 +294,8 @@
 }
 
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label .ss-optgroup-actions .ss-closable .ss-arrow path {
-  @apply fill-none stroke-gray-700 transition-transform duration-200 dark:stroke-white;
+  @apply fill-none transition-transform duration-200;
+  stroke: var(--pu-text);
   stroke-width: 18;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -268,7 +307,8 @@
 
 /* Options - Updated text colors to match theme */
 .ss-content .ss-list .ss-option {
-  @apply block p-2 whitespace-normal text-gray-700 cursor-pointer select-none hover:bg-primary-500 hover:text-white dark:text-white dark:hover:bg-primary-500 dark:hover:text-white;
+  @apply block p-2 whitespace-normal cursor-pointer select-none hover:bg-primary-500 hover:text-white;
+  color: var(--pu-text);
   min-height: 0;
 }
 
@@ -282,11 +322,14 @@
 }
 
 .ss-content .ss-list .ss-option.ss-disabled {
-  @apply cursor-not-allowed bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+  @apply cursor-not-allowed;
+  background-color: var(--pu-surface-alt);
+  color: var(--pu-text-muted);
 }
 
 .ss-content .ss-list .ss-option.ss-disabled:hover {
-  @apply text-gray-500 bg-gray-100 dark:text-gray-400 dark:bg-gray-800;
+  background-color: var(--pu-surface-alt);
+  color: var(--pu-text-muted);
 }
 
 .ss-content .ss-list .ss-option .ss-search-highlight {
@@ -295,19 +338,33 @@
 
 /* Additional state classes to match form validation states */
 .ss-main.ss-invalid {
-  @apply bg-red-50 border-red-500 dark:border-red-500 text-red-900 dark:text-red-500 focus:ring-red-500 focus:border-red-500;
+  @apply border-danger-500 bg-danger-50/50 text-danger-900;
+}
+.ss-main.ss-invalid:focus,
+.ss-main.ss-invalid[aria-expanded="true"] {
+  box-shadow: 0 0 0 3px theme(colors.danger.500 / 15%);
+}
+.dark .ss-main.ss-invalid {
+  @apply bg-danger-950/20 border-danger-500/70 text-danger-200;
 }
 
 .ss-main.ss-invalid .ss-values .ss-placeholder {
-  @apply text-red-700 dark:text-red-500;
+  @apply text-danger-400;
 }
 
 .ss-main.ss-valid {
-  @apply bg-green-50 border-green-500 dark:border-green-500 text-green-900 dark:text-green-400 focus:ring-green-500 focus:border-green-500;
+  @apply border-success-500 bg-success-50/50 text-success-900;
+}
+.ss-main.ss-valid:focus,
+.ss-main.ss-valid[aria-expanded="true"] {
+  box-shadow: 0 0 0 3px theme(colors.success.500 / 15%);
+}
+.dark .ss-main.ss-valid {
+  @apply bg-success-950/20 border-success-500/70 text-success-200;
 }
 
 .ss-main.ss-valid .ss-values .ss-placeholder {
-  @apply text-green-700 dark:text-green-500;
+  @apply text-success-400;
 }
 
 /* Modal-specific styles for SlimSelect dropdown */
