@@ -1,3 +1,12 @@
+## [0.37.0] - 2026-01-21
+
+### 🚀 Features
+
+- *(ui)* Add textarea auto-grow functionality
+
+### 🚜 Refactor
+
+- *(ui)* Migrate slim-select styles to design tokens
 ## [0.36.0] - 2026-01-21
 
 ### 🚀 Features
