@@ -10,6 +10,11 @@ module Plutonium
           include Phlexi::Field::Common::Tokens
           include Plutonium::UI::Form::Options::InferredTypes
 
+          def textarea_tag(**attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "textarea-autogrow")
+            super
+          end
+
           def easymde_tag(**, &)
             create_component(Plutonium::UI::Form::Components::Easymde, :easymde, **, &)
           end
