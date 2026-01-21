@@ -22,6 +22,7 @@ import RemoteModalController from "./remote_modal_controller.js"
 import KeyValueStoreController from "./key_value_store_controller.js"
 import BulkActionsController from "./bulk_actions_controller.js"
 import FilterPanelController from "./filter_panel_controller.js"
+import TextareaAutogrowController from "./textarea_autogrow_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -48,4 +49,5 @@ export default function (application) {
   application.register("key-value-store", KeyValueStoreController)
   application.register("bulk-actions", BulkActionsController)
   application.register("filter-panel", FilterPanelController)
+  application.register("textarea-autogrow", TextareaAutogrowController)
 }
