@@ -1,3 +1,8 @@
+## [0.36.0] - 2026-01-21
+
+### 🚀 Features
+
+- *(generators)* Add pu:core:update to sync gem and npm versions
 ## [0.35.0] - 2026-01-20
 
 ### 🚀 Features
