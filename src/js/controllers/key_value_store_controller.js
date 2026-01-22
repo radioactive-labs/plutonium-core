@@ -25,6 +25,7 @@ export default class extends Controller {
     this.updatePairIndices(newPair, index)
 
     this.containerTarget.appendChild(newPair)
+    this.updateIndices()
     this.updateAddButtonState()
 
     // Focus on the key input of the new pair
@@ -52,9 +53,11 @@ export default class extends Controller {
 
       if (keyInput) {
         keyInput.name = keyInput.name.replace(/\[\d+\]/, `[${index}]`)
+        keyInput.id = keyInput.id.replace(/_\d+_/, `_${index}_`)
       }
       if (valueInput) {
         valueInput.name = valueInput.name.replace(/\[\d+\]/, `[${index}]`)
+        valueInput.id = valueInput.id.replace(/_\d+_/, `_${index}_`)
       }
     })
   }
@@ -64,6 +67,9 @@ export default class extends Controller {
     inputs.forEach(input => {
       if (input.name) {
         input.name = input.name.replace('__INDEX__', index)
+      }
+      if (input.id) {
+        input.id = input.id.replace('___INDEX___', `_${index}_`)
       }
     })
   }
