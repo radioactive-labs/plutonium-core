@@ -32,12 +32,7 @@ class DemoFeatures::ReviewDefinition < DemoFeatures::ResourceDefinition
   field :approved_at, as: :datetime
 
   # Columns
-  column :product
-  column :title
   column :rating do |review|
     "★" * review.rating + "☆" * (5 - review.rating)
   end
-  column :verified
-  column :approved_at
-  column :user
 end
