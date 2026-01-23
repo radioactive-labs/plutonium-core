@@ -10,6 +10,8 @@ class Blogging::Post < Blogging::ResourceRecord
   # add model configurations above.
 
   belongs_to :user
+  belongs_to :author, class_name: "User", optional: true, inverse_of: :authored_posts
+  belongs_to :editor, class_name: "User", optional: true, inverse_of: :edited_posts
   # add belongs_to associations above.
 
   has_one :post_metadata, foreign_key: :post_id, dependent: :destroy

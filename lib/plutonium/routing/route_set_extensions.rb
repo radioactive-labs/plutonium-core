@@ -109,6 +109,7 @@ module Plutonium
       # @return [Hash] The complete resource configuration.
       def create_resource_config(resource, route_name, concern_name, options = {}, &block)
         {
+          resource_class: resource,
           route_type: options[:singular] ? :resource : :resources,
           route_name: route_name,
           concern_name: concern_name,

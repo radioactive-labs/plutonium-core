@@ -8,11 +8,32 @@ module Plutonium
     class Policy < ::ActionPolicy::Base
       authorize :user, allow_nil: false
       authorize :entity_scope, allow_nil: true
+      authorize :parent, optional: true
+      authorize :parent_association, optional: true
 
       relation_scope do |relation|
-        next relation unless entity_scope
+        if parent || parent_association
+          unless parent && parent_association
+            raise ArgumentError, "parent and parent_association must both be provided together"
+          end
 
-        relation.associated_with(entity_scope)
+          # Parent association scoping (nested routes)
+          # The parent was already entity-scoped during authorization, so children
+          # accessed through the parent don't need additional entity scoping
+          assoc_reflection = parent.class.reflect_on_association(parent_association)
+          relation = if assoc_reflection.collection?
+            # has_many: merge with the association's scope
+            parent.public_send(parent_association).merge(relation)
+          else
+            # has_one: scope by foreign key
+            relation.where(assoc_reflection.foreign_key => parent.id)
+          end
+        elsif entity_scope
+          # Entity scoping (multi-tenancy)
+          relation = relation.associated_with(entity_scope)
+        end
+
+        relation
       end
 
       # Sends a method and raises an error if the method is not implemented.

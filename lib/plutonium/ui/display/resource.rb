@@ -48,11 +48,14 @@ module Plutonium
 
             title = object.class.human_attribute_name(name)
             src = case reflection.macro
-            when :belongs_to, :has_one
+            when :belongs_to
               associated = object.public_send name
               resource_url_for(associated, parent: nil) if associated
+            when :has_one
+              associated = object.public_send name
+              resource_url_for(associated, parent: object, association: name)
             when :has_many
-              resource_url_for(reflection.klass, parent: object)
+              resource_url_for(reflection.klass, parent: object, association: name)
             end
 
             next unless src
