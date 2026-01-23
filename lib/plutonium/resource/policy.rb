@@ -12,6 +12,56 @@ module Plutonium
       authorize :parent_association, optional: true
 
       relation_scope do |relation|
+        default_relation_scope(relation)
+      end
+
+      # Wraps apply_scope to verify default_relation_scope was called.
+      # This prevents accidental multi-tenancy leaks when overriding relation_scope.
+      def apply_scope(relation, type:, **options)
+        @_default_relation_scope_applied = false
+        result = super
+        verify_default_relation_scope_applied! if type == :active_record_relation
+        result
+      end
+
+      # Explicitly skip the default relation scope verification.
+      #
+      # Call this when you intentionally want to bypass parent/entity scoping.
+      # This should be rare - consider using a separate portal instead.
+      #
+      # @example Skipping default scoping (use sparingly)
+      #   relation_scope do |relation|
+      #     skip_default_relation_scope!
+      #     relation.where(featured: true)  # No parent/entity scoping
+      #   end
+      def skip_default_relation_scope!
+        @_default_relation_scope_applied = true
+      end
+
+      # Applies Plutonium's default scoping (parent or entity) to a relation.
+      #
+      # This method MUST be called in any custom relation_scope to ensure proper
+      # parent/entity scoping. Failure to call it will raise an error.
+      #
+      # @example Overriding inherited scope while keeping default scoping
+      #   # Parent policy has custom filtering you want to replace
+      #   class AdminPostPolicy < PostPolicy
+      #     relation_scope do |relation|
+      #       # Replace inherited scope but keep Plutonium's parent/entity scoping
+      #       default_relation_scope(relation)
+      #     end
+      #   end
+      #
+      # @example Adding filtering on top of default scoping
+      #   relation_scope do |relation|
+      #     default_relation_scope(relation).where(published: true)
+      #   end
+      #
+      # @param relation [ActiveRecord::Relation] The relation to scope
+      # @return [ActiveRecord::Relation] The scoped relation
+      def default_relation_scope(relation)
+        @_default_relation_scope_applied = true
+
         if parent || parent_association
           unless parent && parent_association
             raise ArgumentError, "parent and parent_association must both be provided together"
@@ -21,7 +71,7 @@ module Plutonium
           # The parent was already entity-scoped during authorization, so children
           # accessed through the parent don't need additional entity scoping
           assoc_reflection = parent.class.reflect_on_association(parent_association)
-          relation = if assoc_reflection.collection?
+          if assoc_reflection.collection?
             # has_many: merge with the association's scope
             parent.public_send(parent_association).merge(relation)
           else
@@ -30,10 +80,10 @@ module Plutonium
           end
         elsif entity_scope
           # Entity scoping (multi-tenancy)
-          relation = relation.associated_with(entity_scope)
+          relation.associated_with(entity_scope)
+        else
+          relation
         end
-
-        relation
       end
 
       # Sends a method and raises an error if the method is not implemented.
@@ -181,6 +231,18 @@ module Plutonium
 
       def resource_class
         record.instance_of?(Class) ? record : record.class
+      end
+
+      # Verifies that default_relation_scope was called during scope application.
+      # Raises an error if it wasn't, preventing accidental multi-tenancy leaks.
+      def verify_default_relation_scope_applied!
+        return if @_default_relation_scope_applied
+
+        raise <<~MSG.squish
+          #{self.class.name} did not call `default_relation_scope` in its relation_scope.
+          This can cause multi-tenancy leaks. Either call `default_relation_scope(relation)`
+          or `super(relation)` in your relation_scope block.
+        MSG
       end
 
       # Autodetects the permitted fields for a given method.
