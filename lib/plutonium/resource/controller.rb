@@ -55,7 +55,7 @@ module Plutonium
 
       def resource_record_relation
         @resource_record_relation ||= begin
-          resource_route_config = current_engine.routes.resource_route_config_for(resource_class.model_name.plural)[0]
+          resource_route_config = current_resource_route_config
           if resource_route_config[:route_type] == :resource
             current_authorized_scope
           elsif params[:id]
@@ -63,6 +63,17 @@ module Plutonium
           else
             current_authorized_scope.none
           end
+        end
+      end
+
+      def current_resource_route_config
+        @current_resource_route_config ||= begin
+          route_key = if current_parent
+            "#{current_parent.class.model_name.plural}/#{resource_class.model_name.plural}"
+          else
+            resource_class.model_name.plural
+          end
+          current_engine.routes.resource_route_config_for(route_key)[0]
         end
       end
 

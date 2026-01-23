@@ -11,6 +11,7 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def teardown
+    Blogging::PostMetadata.delete_all
     Blogging::Comment.delete_all
     Blogging::Post.delete_all
     User.delete_all
@@ -152,5 +153,84 @@ class NestedResourcesTest < Minitest::Test
     # Post -> Comments (via post association on Comment)
     post_comments = Blogging::Comment.associated_with(@post)
     assert_includes post_comments, comment
+  end
+
+  # has_one nested resource tests
+
+  def test_has_one_association_routes
+    # Test that model correctly identifies routable has_one associations
+    routes = Blogging::Post.has_one_association_routes
+
+    # "metadata" is uncountable so plural is still "metadata"
+    assert_includes routes, "blogging_post_metadata"
+  end
+
+  def test_has_one_associated_with_scope
+    # PostMetadata belongs_to :post, so associated_with(post) should work
+    metadata = Blogging::PostMetadata.create!(
+      post: @post,
+      seo_title: "Test SEO Title",
+      seo_description: "Test description"
+    )
+
+    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user)
+    other_metadata = Blogging::PostMetadata.create!(
+      post: other_post,
+      seo_title: "Other SEO Title"
+    )
+
+    scoped = Blogging::PostMetadata.associated_with(@post)
+
+    assert_includes scoped, metadata
+    refute_includes scoped, other_metadata
+  end
+
+  def test_has_one_route_config_registered_with_composite_key
+    # Test that has_one nested routes are registered with composite key
+    # Force routes to load
+    AdminPortal::Engine.routes.routes
+
+    route_key = "blogging_posts/blogging_post_metadata"
+    config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
+
+    assert config, "Expected nested route config for #{route_key}"
+    assert_equal :resource, config[:route_type], "has_one nested route should have :resource type"
+  end
+
+  def test_has_many_route_config_registered_with_composite_key
+    # Test that has_many nested routes are also registered with composite key
+    # Force routes to load
+    AdminPortal::Engine.routes.routes
+
+    route_key = "blogging_posts/blogging_comments"
+    config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
+
+    assert config, "Expected nested route config for #{route_key}"
+    assert_equal :resources, config[:route_type], "has_many nested route should have :resources type"
+  end
+
+  def test_top_level_route_config_has_resources_type
+    # Top-level PostMetadata should have :resources type
+    # Force routes to load
+    AdminPortal::Engine.routes.routes
+
+    route_key = "blogging_post_metadata"
+    config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
+
+    assert config, "Expected top-level route config for #{route_key}"
+    assert_equal :resources, config[:route_type], "Top-level route should have :resources type"
+  end
+
+  def test_has_one_destroy_cascades
+    # Test that destroying post cascades to metadata (via dependent: :destroy)
+    metadata = Blogging::PostMetadata.create!(
+      post: @post,
+      seo_title: "Test SEO Title"
+    )
+    metadata_id = metadata.id
+
+    @post.destroy!
+
+    assert_nil Blogging::PostMetadata.find_by(id: metadata_id)
   end
 end

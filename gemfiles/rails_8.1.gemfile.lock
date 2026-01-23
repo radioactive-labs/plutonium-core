@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.34.1)
+    plutonium (0.37.0)
       action_policy (~> 0.7.0)
       listen (~> 3.8)
       pagy (~> 9.0)
@@ -11,7 +11,7 @@ PATH
       phlex-tabler_icons
       phlexi-display (>= 0.2.0)
       phlexi-field (>= 0.2.0)
-      phlexi-form (>= 0.10.0)
+      phlexi-form (>= 0.13.0)
       phlexi-menu (>= 0.4.0)
       phlexi-table (>= 0.2.0)
       rabl (~> 0.16.1)
@@ -211,7 +211,7 @@ GEM
       fiber-local
       phlex (~> 2.0)
       zeitwerk
-    phlexi-form (0.11.0)
+    phlexi-form (0.13.0)
       activesupport
       phlex (~> 2.0)
       phlexi-field (~> 0.2.0)

@@ -77,10 +77,31 @@ module Plutonium
       # @param resource [Class] The parent resource class.
       # @return [void]
       def define_nested_resource_routes(resource)
-        nested_configs = route_set.resource_route_config_for(*resource.has_many_association_routes)
-        nested_configs.each do |nested_config|
+        # has_many associations use plural routes
+        has_many_configs = route_set.resource_route_config_for(*resource.has_many_association_routes)
+        has_many_configs.each do |nested_config|
+          # Register in config lookup with nested key: "parent_plural/child_plural"
+          nested_key = "#{resource.model_name.plural}/#{nested_config[:route_name]}"
+          route_set.resource_route_config_lookup[nested_key] = nested_config
+
           resources "nested_#{nested_config[:route_name]}", **nested_config[:route_options] do
             instance_exec(&nested_config[:block]) if nested_config[:block]
+          end
+        end
+
+        # has_one associations use singular routes
+        has_one_configs = route_set.resource_route_config_for(*resource.has_one_association_routes)
+        has_one_configs.each do |nested_config|
+          # Register in config lookup with nested key: "parent_plural/child_plural"
+          nested_key = "#{resource.model_name.plural}/#{nested_config[:route_name]}"
+          route_set.resource_route_config_lookup[nested_key] = nested_config.merge(route_type: :resource)
+
+          singular_path = nested_config[:route_name].singularize
+          resource "nested_#{singular_path}", **nested_config[:route_options].except(:path) do
+            original_collection = method(:collection)
+            define_singleton_method(:collection) { |&_| } # no-op for singular resources
+            instance_exec(&nested_config[:block]) if nested_config[:block]
+            define_singleton_method(:collection, original_collection)
           end
         end
       end

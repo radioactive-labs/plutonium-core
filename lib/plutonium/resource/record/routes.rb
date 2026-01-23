@@ -18,6 +18,14 @@ module Plutonium
             @has_many_association_routes = reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
           end
 
+          def has_one_association_routes
+            return @has_one_association_routes if defined?(@has_one_association_routes) && !Rails.env.local?
+
+            @has_one_association_routes = reflect_on_all_associations(:has_one)
+              .reject { |assoc| assoc.options[:through] }
+              .map { |assoc| assoc.klass.model_name.plural }
+          end
+
           def all_nested_attributes_options
             unless Rails.env.local?
               return @all_nested_attributes_options if defined?(@all_nested_attributes_options)
