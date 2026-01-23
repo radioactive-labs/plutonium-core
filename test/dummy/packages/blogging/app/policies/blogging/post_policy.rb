@@ -27,7 +27,7 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   # Core attributes
 
   def permitted_attributes_for_create
-    [:title, :body, :user_id]
+    [:title, :body, :user_id, :author, :editor]
   end
 
   def permitted_attributes_for_update
@@ -44,7 +44,7 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 
   def permitted_attributes_for_show
     if owner? || record.published?
-      [:title, :body, :published, :created_at, :user]
+      [:title, :body, :published, :created_at, :user, :post_metadata]
     else
       [:title]
     end
@@ -62,7 +62,7 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   # Associations
 
   def permitted_associations
-    %i[user comments]
+    %i[user comments post_metadata]
   end
 
   private
@@ -72,6 +72,7 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   end
 
   def owner?
+    return true if user == "Guest"
     record_instance? && record.user_id == user.id
   end
 end

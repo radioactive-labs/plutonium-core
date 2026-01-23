@@ -9,6 +9,8 @@ class User < ResourceRecord
 
   # add has_one associations above.
 
+  has_many :authored_posts, class_name: "Blogging::Post", foreign_key: :author_id, inverse_of: :author, dependent: :nullify
+  has_many :edited_posts, class_name: "Blogging::Post", foreign_key: :editor_id, inverse_of: :editor, dependent: :nullify
   # add has_many associations above.
 
   # add attachments above.

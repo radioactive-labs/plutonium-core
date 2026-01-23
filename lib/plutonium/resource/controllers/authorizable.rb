@@ -108,11 +108,16 @@ module Plutonium
           authorized_scope(resource_class.all, context: current_policy_context)
         end
 
-        # Sets the policy context scope value to the current parent if available
+        # Returns the policy context for the current resource
+        # Separates parent scoping (nested routes) from entity scoping (multi-tenancy)
         #
-        # @return [Hash] default context for the current resource's policy
+        # @return [Hash] context containing parent, parent_association, and entity_scope
         def current_policy_context
-          {entity_scope: current_parent || entity_scope_for_authorize}
+          {
+            parent: current_parent,
+            parent_association: current_nested_association,
+            entity_scope: entity_scope_for_authorize
+          }
         end
 
         # Authorizes the current action for the given record of the current resource

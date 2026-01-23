@@ -22,6 +22,6 @@ class UserPolicy < ::ResourcePolicy
   # Associations
 
   def permitted_associations
-    %i[]
+    %i[authored_posts edited_posts]
   end
 end

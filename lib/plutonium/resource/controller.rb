@@ -1,5 +1,6 @@
 require "action_controller"
 require "pagy"
+require_relative "../routing/mapper_extensions"
 
 module Plutonium
   module Resource
@@ -39,8 +40,11 @@ module Plutonium
         def resource_class
           return _resource_class if _resource_class
 
+          base_name = name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "")
+          singularized_name = base_name.singularize.camelize
+
           # Use singularize + camelize to respect custom inflections
-          name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").singularize.camelize.constantize
+          singularized_name.constantize
         rescue NameError
           # Check if inflection is the issue (e.g., PostMetadata -> PostMetadatum)
           if base_name != singularized_name && base_name.camelize.safe_constantize
@@ -60,7 +64,13 @@ module Plutonium
       private
 
       def resource_class
-        self.class.resource_class
+        if current_parent
+          # Nested route: resource_class must come from route config
+          current_resource_route_config&.dig(:resource_class) or
+            raise "No resource_class found in route config for nested route"
+        else
+          self.class.resource_class
+        end
       end
 
       def resource_record_relation
@@ -77,14 +87,25 @@ module Plutonium
       end
 
       def current_resource_route_config
-        @current_resource_route_config ||= begin
-          route_key = if current_parent
-            "#{current_parent.class.model_name.plural}/#{resource_class.model_name.plural}"
-          else
-            resource_class.model_name.plural
-          end
-          current_engine.routes.resource_route_config_for(route_key)[0]
+        @current_resource_route_config ||= if current_parent
+          current_engine.routes.resource_route_config_lookup["#{current_parent.class.model_name.plural}/#{current_nested_association}"]
+        else
+          current_engine.routes.resource_route_config_for(resource_class.model_name.plural)[0]
         end
+      end
+
+      # Extracts the association name from the current nested route
+      # e.g., for route /posts/:post_id/nested_comments, returns :comments
+      # @return [Symbol, nil] The association name
+      def current_nested_association
+        return unless parent_route_param
+
+        # Extract from request path: find the nested_* segment after the parent param
+        # e.g., /posts/123/nested_comments/456 => "comments"
+        prefix = Plutonium::Routing::NESTED_ROUTE_PREFIX
+        path_segments = request.path.split("/")
+        nested_segment = path_segments.find { |seg| seg.start_with?(prefix) }
+        nested_segment&.delete_prefix(prefix)&.to_sym
       end
 
       def resource_record!
@@ -114,9 +135,9 @@ module Plutonium
       end
 
       # Returns the resource parameter key
-      # @return [Symbol] The resource parameter key
+      # @return [Symbol] The resource parameter key (for form params)
       def resource_param_key
-        resource_class.model_name.singular_route_key
+        resource_class.model_name.param_key
       end
 
       # Creates a resource context
@@ -167,12 +188,30 @@ module Plutonium
         @parent_route_param ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }
       end
 
-      # Returns the parent input parameter
+      # Returns the parent input parameter (the belongs_to association name on the child)
+      # Finds the belongs_to association on the child that matches the parent's foreign key
       # @return [Symbol, nil] The parent input parameter
       def parent_input_param
         return unless current_parent
 
-        resource_class.reflect_on_all_associations(:belongs_to).find { |assoc| assoc.klass.name == current_parent.class.name }&.name&.to_sym
+        unless current_nested_association
+          raise "parent exists but current_nested_association is nil - routing misconfiguration"
+        end
+
+        parent_assoc = current_parent.class.reflect_on_association(current_nested_association)
+        unless parent_assoc
+          raise "#{current_parent.class} does not have association :#{current_nested_association}"
+        end
+
+        # Try inverse_of first (if explicitly set)
+        return parent_assoc.inverse_of.name.to_sym if parent_assoc.inverse_of
+
+        # Fall back to finding belongs_to by foreign key
+        foreign_key = parent_assoc.foreign_key.to_s
+        child_assoc = resource_class.reflect_on_all_associations(:belongs_to).find do |assoc|
+          assoc.foreign_key.to_s == foreign_key && assoc.klass == current_parent.class
+        end
+        child_assoc&.name&.to_sym
       end
 
       # Ensures the method is a GET request
@@ -216,6 +255,10 @@ module Plutonium
       # @return [Array] The URL arguments
       def resource_url_args_for(*, **kwargs)
         kwargs[:parent] = current_parent unless kwargs.key?(:parent)
+        # Pass the current association when in a nested context
+        if current_parent && !kwargs.key?(:association) && current_nested_association
+          kwargs[:association] = current_nested_association
+        end
         super
       end
     end

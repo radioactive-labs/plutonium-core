@@ -1,6 +1,7 @@
 AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
+  register_resource ::User
   register_resource ::Blogging::Post
   register_resource ::Blogging::Comment
   register_resource ::Blogging::PostMetadata

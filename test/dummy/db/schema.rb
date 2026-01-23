@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_19_123920) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_23_120000) do
   create_table "admin_active_session_keys", primary_key: ["admin_id", "session_id"], force: :cascade do |t|
     t.integer "admin_id"
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -84,13 +84,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_19_123920) do
     t.index ["user_id"], name: "index_blogging_comments_on_user_id"
   end
 
+  create_table "blogging_post_metadata", force: :cascade do |t|
+    t.string "canonical_url"
+    t.datetime "created_at", null: false
+    t.integer "post_id", null: false
+    t.text "seo_description"
+    t.string "seo_title"
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_blogging_post_metadata_on_post_id"
+  end
+
   create_table "blogging_posts", force: :cascade do |t|
+    t.integer "author_id"
     t.text "body", null: false
     t.datetime "created_at", null: false
+    t.integer "editor_id"
     t.boolean "published"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["author_id"], name: "index_blogging_posts_on_author_id"
+    t.index ["editor_id"], name: "index_blogging_posts_on_editor_id"
     t.index ["user_id"], name: "index_blogging_posts_on_user_id"
   end
 
@@ -228,7 +242,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_19_123920) do
   add_foreign_key "admin_verification_keys", "admins", column: "id"
   add_foreign_key "blogging_comments", "blogging_posts", column: "post_id"
   add_foreign_key "blogging_comments", "users"
+  add_foreign_key "blogging_post_metadata", "blogging_posts", column: "post_id", on_delete: :cascade
   add_foreign_key "blogging_posts", "users"
+  add_foreign_key "blogging_posts", "users", column: "author_id"
+  add_foreign_key "blogging_posts", "users", column: "editor_id"
   add_foreign_key "demo_features_morph_demos", "demo_features_categories", column: "category_id"
   add_foreign_key "demo_features_product_tags", "demo_features_products", column: "product_id"
   add_foreign_key "demo_features_product_tags", "demo_features_tags", column: "tag_id"

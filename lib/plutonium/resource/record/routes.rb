@@ -12,18 +12,40 @@ module Plutonium
         end
 
         class_methods do
+          # Returns metadata for has_many associations that can be routed
+          # @return [Array<Hash>] Array of hashes with :name, :klass, :plural keys
+          def routable_has_many_associations
+            return @routable_has_many_associations if defined?(@routable_has_many_associations) && !Rails.env.local?
+
+            @routable_has_many_associations = reflect_on_all_associations(:has_many).map do |assoc|
+              {name: assoc.name, klass: assoc.klass, plural: assoc.klass.model_name.plural}
+            end
+          end
+
+          # Returns metadata for has_one associations that can be routed
+          # @return [Array<Hash>] Array of hashes with :name, :klass, :plural keys
+          def routable_has_one_associations
+            return @routable_has_one_associations if defined?(@routable_has_one_associations) && !Rails.env.local?
+
+            @routable_has_one_associations = reflect_on_all_associations(:has_one)
+              .reject { |assoc| assoc.options[:through] }
+              .map do |assoc|
+                {name: assoc.name, klass: assoc.klass, plural: assoc.klass.model_name.plural}
+              end
+          end
+
+          # @deprecated Use routable_has_many_associations instead
           def has_many_association_routes
             return @has_many_association_routes if defined?(@has_many_association_routes) && !Rails.env.local?
 
-            @has_many_association_routes = reflect_on_all_associations(:has_many).map { |assoc| assoc.klass.model_name.plural }
+            @has_many_association_routes = routable_has_many_associations.map { |info| info[:plural] }
           end
 
+          # @deprecated Use routable_has_one_associations instead
           def has_one_association_routes
             return @has_one_association_routes if defined?(@has_one_association_routes) && !Rails.env.local?
 
-            @has_one_association_routes = reflect_on_all_associations(:has_one)
-              .reject { |assoc| assoc.options[:through] }
-              .map { |assoc| assoc.klass.model_name.plural }
+            @has_one_association_routes = routable_has_one_associations.map { |info| info[:plural] }
           end
 
           def all_nested_attributes_options

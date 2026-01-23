@@ -2,6 +2,9 @@
 
 module Plutonium
   module Routing
+    # Prefix used for nested resource routes to disambiguate from user-defined routes
+    NESTED_ROUTE_PREFIX = "nested_"
+
     # MapperExtensions module provides additional functionality for route mapping in Plutonium applications.
     #
     # This module extends the functionality of Rails' routing mapper to support Plutonium-specific features,
@@ -78,29 +81,41 @@ module Plutonium
       # @return [void]
       def define_nested_resource_routes(resource)
         # has_many associations use plural routes
-        has_many_configs = route_set.resource_route_config_for(*resource.has_many_association_routes)
-        has_many_configs.each do |nested_config|
-          # Register in config lookup with nested key: "parent_plural/child_plural"
-          nested_key = "#{resource.model_name.plural}/#{nested_config[:route_name]}"
+        resource.routable_has_many_associations.each do |assoc_info|
+          base_config = route_set.resource_route_config_for(assoc_info[:plural])[0]
+          next unless base_config
+
+          # Register with association-based key: "parent_plural/association_name"
+          nested_key = "#{resource.model_name.plural}/#{assoc_info[:name]}"
+          nested_config = base_config.merge(
+            association_name: assoc_info[:name],
+            resource_class: assoc_info[:klass]
+          )
           route_set.resource_route_config_lookup[nested_key] = nested_config
 
-          resources "nested_#{nested_config[:route_name]}", **nested_config[:route_options] do
-            instance_exec(&nested_config[:block]) if nested_config[:block]
+          resources "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}", **base_config[:route_options].except(:path) do
+            instance_exec(&base_config[:block]) if base_config[:block]
           end
         end
 
         # has_one associations use singular routes
-        has_one_configs = route_set.resource_route_config_for(*resource.has_one_association_routes)
-        has_one_configs.each do |nested_config|
-          # Register in config lookup with nested key: "parent_plural/child_plural"
-          nested_key = "#{resource.model_name.plural}/#{nested_config[:route_name]}"
-          route_set.resource_route_config_lookup[nested_key] = nested_config.merge(route_type: :resource)
+        resource.routable_has_one_associations.each do |assoc_info|
+          base_config = route_set.resource_route_config_for(assoc_info[:plural])[0]
+          next unless base_config
 
-          singular_path = nested_config[:route_name].singularize
-          resource "nested_#{singular_path}", **nested_config[:route_options].except(:path) do
+          # Register with association-based key and singular route type
+          nested_key = "#{resource.model_name.plural}/#{assoc_info[:name]}"
+          nested_config = base_config.merge(
+            route_type: :resource,
+            association_name: assoc_info[:name],
+            resource_class: assoc_info[:klass]
+          )
+          route_set.resource_route_config_lookup[nested_key] = nested_config
+
+          resource "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}", **base_config[:route_options].except(:path) do
             original_collection = method(:collection)
             define_singleton_method(:collection) { |&_| } # no-op for singular resources
-            instance_exec(&nested_config[:block]) if nested_config[:block]
+            instance_exec(&base_config[:block]) if base_config[:block]
             define_singleton_method(:collection, original_collection)
           end
         end

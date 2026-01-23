@@ -186,27 +186,31 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def test_has_one_route_config_registered_with_composite_key
-    # Test that has_one nested routes are registered with composite key
+    # Test that has_one nested routes are registered with composite key using association name
     # Force routes to load
     AdminPortal::Engine.routes.routes
 
-    route_key = "blogging_posts/blogging_post_metadata"
+    # Key uses association name (:post_metadata), not class plural (blogging_post_metadata)
+    route_key = "blogging_posts/post_metadata"
     config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
 
     assert config, "Expected nested route config for #{route_key}"
     assert_equal :resource, config[:route_type], "has_one nested route should have :resource type"
+    assert_equal :post_metadata, config[:association_name], "Config should store association name"
   end
 
   def test_has_many_route_config_registered_with_composite_key
-    # Test that has_many nested routes are also registered with composite key
+    # Test that has_many nested routes are registered with composite key using association name
     # Force routes to load
     AdminPortal::Engine.routes.routes
 
-    route_key = "blogging_posts/blogging_comments"
+    # Key uses association name (:comments), not class plural (blogging_comments)
+    route_key = "blogging_posts/comments"
     config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
 
     assert config, "Expected nested route config for #{route_key}"
     assert_equal :resources, config[:route_type], "has_many nested route should have :resources type"
+    assert_equal :comments, config[:association_name], "Config should store association name"
   end
 
   def test_top_level_route_config_has_resources_type
@@ -232,5 +236,99 @@ class NestedResourcesTest < Minitest::Test
     @post.destroy!
 
     assert_nil Blogging::PostMetadata.find_by(id: metadata_id)
+  end
+
+  # Multiple associations to same class tests
+
+  def test_user_has_multiple_associations_to_post
+    # Verify the associations exist
+    assert User.reflect_on_association(:authored_posts), "User should have authored_posts association"
+    assert User.reflect_on_association(:edited_posts), "User should have edited_posts association"
+
+    # Both point to Blogging::Post
+    assert_equal Blogging::Post, User.reflect_on_association(:authored_posts).klass
+    assert_equal Blogging::Post, User.reflect_on_association(:edited_posts).klass
+  end
+
+  def test_post_has_multiple_belongs_to_user
+    # Verify the belongs_to associations exist
+    assert Blogging::Post.reflect_on_association(:author), "Post should have author association"
+    assert Blogging::Post.reflect_on_association(:editor), "Post should have editor association"
+
+    # Both point to User
+    assert_equal User, Blogging::Post.reflect_on_association(:author).klass
+    assert_equal User, Blogging::Post.reflect_on_association(:editor).klass
+  end
+
+  def test_multiple_associations_route_configs_registered
+    # Force routes to load
+    AdminPortal::Engine.routes.routes
+
+    # Both associations should have their own route configs
+    authored_config = AdminPortal::Engine.routes.resource_route_config_for("users/authored_posts")[0]
+    edited_config = AdminPortal::Engine.routes.resource_route_config_for("users/edited_posts")[0]
+
+    assert authored_config, "Expected route config for users/authored_posts"
+    assert edited_config, "Expected route config for users/edited_posts"
+
+    assert_equal :authored_posts, authored_config[:association_name]
+    assert_equal :edited_posts, edited_config[:association_name]
+  end
+
+  def test_association_resolver_with_explicit_symbol
+    # Using explicit symbol should work without ambiguity
+    resolver = Object.new.extend(Plutonium::Core::Controllers::AssociationResolver)
+
+    result = resolver.resolve_association(:authored_posts, @user)
+    assert_equal :authored_posts, result
+
+    result = resolver.resolve_association(:edited_posts, @user)
+    assert_equal :edited_posts, result
+  end
+
+  def test_association_resolver_raises_when_no_matching_association
+    # Association names (authored_posts, edited_posts) don't match class name pattern
+    # (blogging_posts, posts), so resolver can't auto-detect
+    resolver = Object.new.extend(Plutonium::Core::Controllers::AssociationResolver)
+
+    error = assert_raises(ArgumentError) do
+      resolver.resolve_association(Blogging::Post, @user)
+    end
+
+    assert_match(/No association found/, error.message)
+    assert_match(/blogging_posts/, error.message)
+  end
+
+  def test_association_resolver_raises_on_truly_ambiguous_class
+    # Create a scenario with ambiguous associations that match class name pattern
+    # For this test, we'll use a mock since we can't easily modify User
+    parent_class = Class.new do
+      def self.reflect_on_association(name)
+        case name
+        when :blogging_posts
+          Struct.new(:klass).new(Blogging::Post)
+        when :posts
+          Struct.new(:klass).new(Blogging::Post)
+        end
+      end
+    end
+    parent = parent_class.new
+
+    resolver = Object.new.extend(Plutonium::Core::Controllers::AssociationResolver)
+
+    error = assert_raises(Plutonium::Core::Controllers::AssociationResolver::AmbiguousAssociationError) do
+      resolver.resolve_association(Blogging::Post, parent)
+    end
+
+    assert_match(/Multiple associations/, error.message)
+  end
+
+  def test_inverse_of_properly_configured
+    # Verify inverse_of is set up correctly for resolution
+    authored_assoc = User.reflect_on_association(:authored_posts)
+    edited_assoc = User.reflect_on_association(:edited_posts)
+
+    assert_equal :author, authored_assoc.inverse_of&.name
+    assert_equal :editor, edited_assoc.inverse_of&.name
   end
 end
