@@ -12,11 +12,11 @@ module Plutonium
       # Maps ActiveRecord adapter names to their corresponding Sequel adapter names.
       # JRuby uses JDBC adapters which have different naming conventions.
       SEQUEL_ADAPTERS = {
-        "postgresql" => RUBY_ENGINE == "jruby" ? "postgresql" : "postgres",
-        "mysql2" => RUBY_ENGINE == "jruby" ? "mysql" : "mysql2",
+        "postgresql" => (RUBY_ENGINE == "jruby") ? "postgresql" : "postgres",
+        "mysql2" => (RUBY_ENGINE == "jruby") ? "mysql" : "mysql2",
         "sqlite3" => "sqlite",
         "oracle_enhanced" => "oracle",
-        "sqlserver" => RUBY_ENGINE == "jruby" ? "mssql" : "tinytds"
+        "sqlserver" => (RUBY_ENGINE == "jruby") ? "mssql" : "tinytds"
       }.freeze
 
       class << self

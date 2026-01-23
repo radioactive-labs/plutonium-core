@@ -18,12 +18,12 @@ module Plutonium
       end
 
       def test_sequel_adapters_contains_postgresql_mapping
-        expected = RUBY_ENGINE == "jruby" ? "postgresql" : "postgres"
+        expected = (RUBY_ENGINE == "jruby") ? "postgresql" : "postgres"
         assert_equal expected, SequelAdapter::SEQUEL_ADAPTERS["postgresql"]
       end
 
       def test_sequel_adapters_contains_mysql2_mapping
-        expected = RUBY_ENGINE == "jruby" ? "mysql" : "mysql2"
+        expected = (RUBY_ENGINE == "jruby") ? "mysql" : "mysql2"
         assert_equal expected, SequelAdapter::SEQUEL_ADAPTERS["mysql2"]
       end
 
@@ -36,7 +36,7 @@ module Plutonium
       end
 
       def test_sequel_adapters_contains_sqlserver_mapping
-        expected = RUBY_ENGINE == "jruby" ? "mssql" : "tinytds"
+        expected = (RUBY_ENGINE == "jruby") ? "mssql" : "tinytds"
         assert_equal expected, SequelAdapter::SEQUEL_ADAPTERS["sqlserver"]
       end
 
