@@ -42,14 +42,14 @@ export default class extends Controller {
           {
             name: 'flip',
             options: {
-              fallbackPlacements: ['left-end', 'right-start', 'right-end', 'bottom-start', 'bottom-end', 'top-start', 'top-end'],
-              boundary: 'clippingParents',
+              fallbackPlacements: ['bottom-end', 'bottom-start', 'top', 'top-end', 'top-start'],
+              boundary: 'viewport',
             },
           },
           {
             name: 'preventOverflow',
             options: {
-              boundary: 'clippingParents',
+              boundary: 'viewport',
               altAxis: true,
               padding: 8,
             },
