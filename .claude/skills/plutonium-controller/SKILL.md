@@ -194,21 +194,44 @@ build_collection        # Build table component
 resource_url_for(@post)                    # URL for record
 resource_url_for(@post, action: :edit)     # Edit URL
 resource_url_for(Post)                     # Index URL
+
+# With parent (nested resources)
+resource_url_for(@comment, parent: @post)  # Nested URL
+resource_url_for(Comment, action: :new, parent: @post)
+
+# Cross-package URLs
+resource_url_for(@post, package: AdminPortal)
 ```
 
 ## Nested Resources
 
-Parent records are automatically resolved:
+Parent records are automatically resolved from routes with the `nested_` prefix:
 
 ```ruby
-# Route: /users/:user_id/posts/:id
+# Route: /users/:user_id/nested_posts/:id
 class PostsController < ::ResourceController
   # current_parent returns the User
+  # current_nested_association returns :posts
   # resource_record! returns the Post scoped to that User
 end
 ```
 
+### Key Methods for Nested Resources
+
+```ruby
+current_parent             # Parent record (e.g., User instance)
+current_nested_association # Association name (e.g., :posts)
+parent_route_param         # URL param (e.g., :user_id)
+parent_input_param         # Form param (e.g., :user)
+```
+
 Parent fields are automatically excluded from forms/displays. Override with presentation hooks (see above).
+
+### has_one Support
+
+For `has_one` associations, routes are singular:
+- `/users/:user_id/nested_profile` (no `:id` param)
+- Index redirects to show (or new if no record exists)
 
 ## Entity Scoping (Multi-tenancy)
 

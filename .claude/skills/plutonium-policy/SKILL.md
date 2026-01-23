@@ -182,13 +182,13 @@ relation_scope do |relation|
 end
 ```
 
-### With Entity Scoping
+### With Parent Scoping (Nested Resources)
 
-Call `super` to preserve automatic entity scoping:
+For nested resources, call `super` to apply automatic parent scoping:
 
 ```ruby
 relation_scope do |relation|
-  relation = super(relation)  # Apply entity scope first
+  relation = super(relation)  # Applies parent scoping automatically
 
   if user.admin?
     relation
@@ -197,6 +197,71 @@ relation_scope do |relation|
   end
 end
 ```
+
+**Parent scoping takes precedence over entity scoping.** When a parent is present:
+- For `has_many`: scopes via `parent.association_name`
+- For `has_one`: scopes via `where(foreign_key: parent.id)`
+
+### With Entity Scoping (Multi-tenancy)
+
+When no parent is present, `super` applies entity scoping:
+
+```ruby
+relation_scope do |relation|
+  relation = super(relation)  # Apply entity scope if no parent
+
+  if user.admin?
+    relation
+  else
+    relation.where(published: true)
+  end
+end
+```
+
+### default_relation_scope is Required
+
+Plutonium verifies that `default_relation_scope` is called in every `relation_scope`. This prevents accidental multi-tenancy leaks when overriding scopes.
+
+```ruby
+# ❌ This will raise an error
+relation_scope do |relation|
+  relation.where(published: true)  # Missing default_relation_scope!
+end
+
+# ✅ Correct - call default_relation_scope
+relation_scope do |relation|
+  default_relation_scope(relation).where(published: true)
+end
+
+# ✅ Also correct - super calls default_relation_scope
+relation_scope do |relation|
+  super(relation).where(published: true)
+end
+```
+
+When overriding an inherited scope:
+
+```ruby
+class AdminPostPolicy < PostPolicy
+  relation_scope do |relation|
+    # Replace inherited scope but keep Plutonium's parent/entity scoping
+    default_relation_scope(relation)
+  end
+end
+```
+
+### Skipping Default Scoping (Rare)
+
+If you intentionally need to skip scoping, call `skip_default_relation_scope!`:
+
+```ruby
+relation_scope do |relation|
+  skip_default_relation_scope!
+  relation  # No parent/entity scoping applied
+end
+```
+
+Consider using a separate portal instead of skipping scoping.
 
 ## Portal-Specific Policies
 
@@ -306,9 +371,31 @@ end
 Policies have access to:
 
 ```ruby
-user         # Current user (required)
-record       # The resource being authorized
-entity_scope # Current scoped entity (for multi-tenancy)
+user               # Current user (required)
+record             # The resource being authorized
+entity_scope       # Current scoped entity (for multi-tenancy)
+parent             # Parent record for nested resources (nil if not nested)
+parent_association # Association name on parent (e.g., :comments)
+```
+
+### Nested Resource Context
+
+For nested resources (e.g., `/posts/123/nested_comments`), the policy receives:
+
+```ruby
+class CommentPolicy < ResourcePolicy
+  def create?
+    # parent is the Post instance
+    # parent_association is :comments
+    parent.present? && user.can_comment_on?(parent)
+  end
+
+  relation_scope do |relation|
+    # super() uses parent and parent_association for scoping
+    relation = super(relation)
+    relation
+  end
+end
 ```
 
 ### Custom Context

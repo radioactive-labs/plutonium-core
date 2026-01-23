@@ -5,7 +5,7 @@ description: Plutonium nested resources - parent/child routes, scoping, and URL 
 
 # Nested Resources
 
-Plutonium automatically creates nested routes for `has_many` associations, scopes queries to the parent, and handles URL generation.
+Plutonium automatically creates nested routes for `has_many` and `has_one` associations, scopes queries to the parent, and handles URL generation.
 
 ## How It Works
 
@@ -15,12 +15,17 @@ When you register resources with parent-child relationships:
 # In portal routes
 register_resource ::Company
 register_resource ::Property  # has belongs_to :company
+register_resource ::CompanyProfile  # has belongs_to :company (has_one on Company)
 ```
 
-Plutonium automatically creates nested routes:
-- `/companies/:company_id/properties` - Properties scoped to company
-- `/companies/:company_id/properties/new` - New property for company
-- `/companies/:company_id/properties/:id` - Property in company context
+Plutonium automatically creates nested routes with a `nested_` prefix:
+- `/companies/:company_id/nested_properties` - Properties scoped to company (has_many)
+- `/companies/:company_id/nested_properties/new` - New property for company
+- `/companies/:company_id/nested_properties/:id` - Property in company context
+- `/companies/:company_id/nested_company_profile` - Singular profile (has_one)
+- `/companies/:company_id/nested_company_profile/new` - New profile for company
+
+The `nested_` prefix prevents route conflicts when the same resource is registered both as a top-level and nested resource.
 
 ## Automatic Behavior
 
@@ -81,25 +86,44 @@ end
 
 ## Query Scoping
 
-Collections are automatically scoped to the parent via policies:
+Collections are automatically scoped to the parent via policies. The policy receives `parent` and `parent_association` context:
 
 ```ruby
 class PropertyPolicy < ResourcePolicy
+  # parent: the parent record (e.g., Company instance)
+  # parent_association: the association name (e.g., :properties)
+
   relation_scope do |relation|
-    relation = super(relation)  # Applies associated_with(entity_scope)
-    # entity_scope is the current_parent
+    relation = super(relation)  # Applies parent scoping automatically
     relation
   end
 end
 ```
 
-The `associated_with` scope finds records belonging to the parent:
+### How Parent Scoping Works
+
+For **has_many** associations, scoping uses the association directly:
+```ruby
+# parent.properties => Company#properties
+parent.send(parent_association)
+```
+
+For **has_one** associations, scoping uses a where clause:
+```ruby
+# Property.where(company_id: company.id) with limit
+relation.where(foreign_key => parent.id)
+```
+
+### Parent vs Entity Scope
+
+When a parent is present, parent scoping takes precedence over entity scoping:
 
 ```ruby
-# Automatic detection via belongs_to
-Property.associated_with(company)
-# => Property.where(company: company)
+# With parent: scopes via parent association
+# Without parent: falls back to entity_scope (multi-tenancy)
 ```
+
+This prevents double-scoping - the parent was already authorized and entity-scoped during its own authorization.
 
 ### Custom Association Scope
 
@@ -118,21 +142,37 @@ end
 Use `resource_url_for` with the `parent:` option:
 
 ```ruby
-# Child collection
+# Child collection (has_many)
 resource_url_for(Property, parent: company)
-# => /companies/123/properties
+# => /companies/123/nested_properties
 
 # Child record
 resource_url_for(property, parent: company)
-# => /companies/123/properties/456
+# => /companies/123/nested_properties/456
 
 # New child form
 resource_url_for(Property, action: :new, parent: company)
-# => /companies/123/properties/new
+# => /companies/123/nested_properties/new
 
 # Edit child
 resource_url_for(property, action: :edit, parent: company)
-# => /companies/123/properties/456/edit
+# => /companies/123/nested_properties/456/edit
+
+# Singular resource (has_one)
+resource_url_for(company_profile, parent: company)
+# => /companies/123/nested_company_profile
+
+resource_url_for(CompanyProfile, action: :new, parent: company)
+# => /companies/123/nested_company_profile/new
+```
+
+### Cross-Package URL Generation
+
+Generate URLs for resources in a different package:
+
+```ruby
+# From AdminPortal, generate URL to CustomerPortal resource
+resource_url_for(property, parent: company, package: CustomerPortal)
 ```
 
 ## Association Panels
@@ -192,12 +232,32 @@ resource_params
 
 You don't need to include hidden fields for the parent in forms.
 
+## has_one Associations
+
+Plutonium supports both `has_many` and `has_one` associations:
+
+```ruby
+class Company < ResourceRecord
+  has_many :properties           # Plural routes
+  has_one :company_profile       # Singular routes
+end
+```
+
+Routes generated:
+- `has_many`: `/companies/:id/nested_properties` (plural, with `:id` param)
+- `has_one`: `/companies/:id/nested_company_profile` (singular, no `:id` param)
+
+For has_one associations:
+- Index redirects to show (or new if no record exists)
+- Only one record can exist per parent
+- Forms don't show parent field (determined by URL)
+
 ## Nesting Limitations
 
 Plutonium supports **one level of nesting**:
 
-- ✅ `/companies/:company_id/properties` (parent → child)
-- ❌ `/companies/:company_id/properties/:property_id/units` (grandparent → parent → child)
+- ✅ `/companies/:company_id/nested_properties` (parent → child)
+- ❌ `/companies/:company_id/nested_properties/:property_id/nested_units` (grandparent → parent → child)
 
 ## Common Patterns
 

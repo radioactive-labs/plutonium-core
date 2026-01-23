@@ -36,12 +36,16 @@ Inside a policy, you have access to:
 | `user` | Current authenticated user (required) |
 | `record` | Resource being authorized |
 | `entity_scope` | Current scoped entity (for multi-tenancy) |
+| `parent` | Parent record for nested resources (nil if not nested) |
+| `parent_association` | Association name on parent (e.g., `:comments`) |
 
 ```ruby
 def update?
-  user          # => Current user
-  record        # => The Post instance
-  entity_scope  # => Organization for multi-tenant portals
+  user               # => Current user
+  record             # => The Post instance
+  entity_scope       # => Organization for multi-tenant portals
+  parent             # => Parent record (for nested routes)
+  parent_association # => :comments (association name)
 end
 ```
 
@@ -218,9 +222,29 @@ class PostPolicy < Plutonium::Resource::Policy
 end
 ```
 
-### With Entity Scoping
+### With Parent Scoping (Nested Resources)
 
-Call `super` to preserve automatic entity scoping for multi-tenancy:
+Call `super` to apply automatic parent scoping for nested resources:
+
+```ruby
+relation_scope do |relation|
+  relation = super(relation)  # Applies parent scoping automatically
+
+  if user.admin?
+    relation
+  else
+    relation.where(approved: true)
+  end
+end
+```
+
+**Parent scoping takes precedence over entity scoping.** When a parent is present:
+- For `has_many` associations: scopes via `parent.association_name`
+- For `has_one` associations: scopes via `where(foreign_key: parent.id)`
+
+### With Entity Scoping (Multi-tenancy)
+
+When no parent is present, `super` applies entity scoping:
 
 ```ruby
 relation_scope do |relation|
@@ -234,7 +258,54 @@ relation_scope do |relation|
 end
 ```
 
-The default `relation_scope` automatically applies `relation.associated_with(entity_scope)` when an entity scope is present.
+The default `relation_scope` automatically applies `relation.associated_with(entity_scope)` when an entity scope is present and no parent is set.
+
+### default_relation_scope is Required
+
+Plutonium verifies that `default_relation_scope` is called in every `relation_scope`. This prevents accidental multi-tenancy leaks when overriding scopes.
+
+```ruby
+# ❌ This will raise an error
+relation_scope do |relation|
+  relation.where(published: true)  # Missing default_relation_scope!
+end
+
+# ✅ Correct - call default_relation_scope
+relation_scope do |relation|
+  default_relation_scope(relation).where(published: true)
+end
+
+# ✅ Also correct - super calls default_relation_scope
+relation_scope do |relation|
+  super(relation).where(published: true)
+end
+```
+
+When overriding an inherited scope:
+
+```ruby
+class AdminPostPolicy < PostPolicy
+  relation_scope do |relation|
+    # Replace inherited scope but keep Plutonium's parent/entity scoping
+    default_relation_scope(relation)
+  end
+end
+```
+
+This method applies parent scoping (for nested resources) or entity scoping (for multi-tenancy) directly, bypassing any inherited scope customizations.
+
+### Skipping Default Scoping
+
+If you intentionally need to bypass scoping, call `skip_default_relation_scope!`:
+
+```ruby
+relation_scope do |relation|
+  skip_default_relation_scope!
+  relation  # No parent/entity scoping applied
+end
+```
+
+This should be rare - consider using a separate portal with different scoping rules instead.
 
 ## Portal-Specific Policies
 

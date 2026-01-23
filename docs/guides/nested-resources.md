@@ -4,13 +4,15 @@ This guide covers setting up parent/child resource relationships.
 
 ## Overview
 
-Nested resources create URLs like `/posts/1/comments` where comments belong to a specific post. Plutonium automatically handles:
+Nested resources create URLs like `/posts/1/nested_comments` where comments belong to a specific post. Plutonium automatically handles:
 
 - Scoping queries to the parent
 - Assigning parent to new records
 - Hiding parent field in forms
 - URL generation with parent context
 - Breadcrumb navigation
+
+Plutonium supports both `has_many` (plural routes) and `has_one` (singular routes) associations.
 
 ## Setting Up Nested Resources
 
@@ -20,10 +22,15 @@ Nested resources create URLs like `/posts/1/comments` where comments belong to a
 # Parent model
 class Post < ResourceRecord
   has_many :comments, dependent: :destroy
+  has_one :post_metadata, dependent: :destroy
 end
 
-# Child model
+# Child models
 class Comment < ResourceRecord
+  belongs_to :post
+end
+
+class PostMetadata < ResourceRecord
   belongs_to :post
 end
 ```
@@ -35,14 +42,24 @@ end
 AdminPortal::Engine.routes.draw do
   register_resource ::Post
   register_resource ::Comment
+  register_resource ::PostMetadata
 end
 ```
 
-Plutonium automatically creates nested routes based on the `belongs_to` association:
-- `GET /posts/:post_id/comments`
-- `GET /posts/:post_id/comments/new`
-- `GET /posts/:post_id/comments/:id`
+Plutonium automatically creates nested routes with a `nested_` prefix based on the `belongs_to` association:
+
+**has_many routes (plural):**
+- `GET /posts/:post_id/nested_comments`
+- `GET /posts/:post_id/nested_comments/new`
+- `GET /posts/:post_id/nested_comments/:id`
 - etc.
+
+**has_one routes (singular):**
+- `GET /posts/:post_id/nested_post_metadata`
+- `GET /posts/:post_id/nested_post_metadata/new`
+- `GET /posts/:post_id/nested_post_metadata/edit`
+
+The `nested_` prefix prevents route conflicts when the same resource is registered both as a top-level and nested resource.
 
 ### 3. Enable Association Panel
 
@@ -112,28 +129,44 @@ parent_input_param  # => :post
 Use `resource_url_for` with the `parent:` option:
 
 ```ruby
-# Child collection
+# Child collection (has_many)
 resource_url_for(Comment, parent: @post)
-# => /posts/123/comments
+# => /posts/123/nested_comments
 
 # Child record
 resource_url_for(@comment, parent: @post)
-# => /posts/123/comments/456
+# => /posts/123/nested_comments/456
 
 # New child form
 resource_url_for(Comment, action: :new, parent: @post)
-# => /posts/123/comments/new
+# => /posts/123/nested_comments/new
 
 # Edit child
 resource_url_for(@comment, action: :edit, parent: @post)
-# => /posts/123/comments/456/edit
+# => /posts/123/nested_comments/456/edit
+
+# Singular resource (has_one)
+resource_url_for(@post_metadata, parent: @post)
+# => /posts/123/nested_post_metadata
+
+resource_url_for(PostMetadata, action: :new, parent: @post)
+# => /posts/123/nested_post_metadata/new
 ```
 
 Within a nested context, `parent:` defaults to `current_parent`:
 
 ```ruby
-# In CommentsController under /posts/:post_id/comments
+# In CommentsController under /posts/:post_id/nested_comments
 resource_url_for(@comment)  # parent: current_parent is automatic
+```
+
+### Cross-Package URL Generation
+
+Generate URLs for resources in a different package:
+
+```ruby
+# From AdminPortal, generate URL to CustomerPortal resource
+resource_url_for(@comment, parent: @post, package: CustomerPortal)
 ```
 
 ## Presentation Hooks
@@ -167,23 +200,47 @@ The parent is authorized for `:read?` before being returned:
 authorize! parent, to: :read?
 ```
 
-### Entity Scope Context
+### Parent Scoping Context
 
-The parent is passed to child policies as `entity_scope`:
+For nested resources, policies receive `parent` and `parent_association` context. This is used for automatic query scoping:
+
+```ruby
+class CommentPolicy < ResourcePolicy
+  # Available context:
+  # - parent: the parent record (e.g., Post instance)
+  # - parent_association: the association name (e.g., :comments)
+  # - entity_scope: the scoped entity (for multi-tenancy)
+
+  relation_scope do |relation|
+    relation = super(relation)  # Applies parent scoping automatically
+    relation
+  end
+end
+```
+
+**Parent scoping takes precedence over entity scoping** - when a parent is present, the policy scopes via the parent association rather than the entity scope. This prevents double-scoping since the parent was already authorized and entity-scoped.
+
+### has_many vs has_one Scoping
+
+For **has_many** associations, scoping uses the association directly:
+```ruby
+parent.send(parent_association)  # e.g., post.comments
+```
+
+For **has_one** associations, scoping uses a where clause:
+```ruby
+relation.where(foreign_key => parent.id)  # e.g., where(post_id: post.id)
+```
+
+### Entity Scope Fallback
+
+When no parent is present (top-level resource access), entity_scope is used:
 
 ```ruby
 class CommentPolicy < ResourcePolicy
   def create?
-    # entity_scope is the parent post
+    # entity_scope is available for multi-tenancy
     entity_scope.present? && user.can_comment_on?(entity_scope)
-  end
-
-  def update?
-    record.user_id == user.id
-  end
-
-  def destroy?
-    record.user_id == user.id || entity_scope&.user_id == user.id
   end
 end
 ```
@@ -195,13 +252,40 @@ Add role-based filtering on top of parent scoping:
 ```ruby
 class CommentPolicy < ResourcePolicy
   relation_scope do |relation|
-    relation = super(relation)  # Applies associated_with(entity_scope)
+    relation = super(relation)  # Applies parent scoping first
 
     if user.moderator?
       relation
     else
       relation.where(approved: true).or(relation.where(user: user))
     end
+  end
+end
+```
+
+### default_relation_scope is Required
+
+Plutonium verifies that `default_relation_scope` is called in every `relation_scope` to prevent multi-tenancy leaks:
+
+```ruby
+# ❌ This will raise an error
+relation_scope do |relation|
+  relation.where(approved: true)  # Missing default_relation_scope!
+end
+
+# ✅ Correct
+relation_scope do |relation|
+  default_relation_scope(relation).where(approved: true)
+end
+```
+
+When overriding an inherited scope but still wanting parent scoping:
+
+```ruby
+class AdminCommentPolicy < CommentPolicy
+  relation_scope do |relation|
+    # Replace inherited scope but keep parent scoping
+    default_relation_scope(relation)
   end
 end
 ```
@@ -257,15 +341,34 @@ class PostPolicy < ResourcePolicy
 end
 ```
 
+## has_one Associations
+
+Plutonium supports `has_one` associations with singular routes:
+
+```ruby
+class Post < ResourceRecord
+  has_one :post_metadata, dependent: :destroy
+end
+```
+
+Routes generated:
+- `GET /posts/:post_id/nested_post_metadata` - Show metadata
+- `GET /posts/:post_id/nested_post_metadata/new` - New metadata form
+- `GET /posts/:post_id/nested_post_metadata/edit` - Edit metadata form
+- `PATCH /posts/:post_id/nested_post_metadata` - Update metadata
+- `DELETE /posts/:post_id/nested_post_metadata` - Delete metadata
+
+Note: No `:id` parameter in singular routes - only one record can exist per parent.
+
 ## Nesting Depth
 
 Plutonium supports **one level of nesting**:
 
-- `/posts/:post_id/comments` (parent → child)
-- `/comments/:comment_id/replies` (parent → child)
+- `/posts/:post_id/nested_comments` (parent → child)
+- `/comments/:comment_id/nested_replies` (parent → child)
 
 Not supported:
-- `/posts/:post_id/comments/:comment_id/replies` (grandparent → parent → child)
+- `/posts/:post_id/nested_comments/:comment_id/nested_replies` (grandparent → parent → child)
 
 ### Working with Deep Hierarchies
 

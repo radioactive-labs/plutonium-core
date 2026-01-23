@@ -6,13 +6,21 @@ Common issues and their solutions when working with Plutonium.
 
 ### "Failed to determine the resource class" Error
 
-**Error message:**
+**Error messages:**
+```
+NameError: Failed to determine the resource class for MyPortal::PostMetadataController.
+Rails singularized "PostMetadata" to "PostMetadatum", but "PostMetadata" exists.
+Add an inflection rule to config/initializers/inflections.rb.
+```
+
+or:
+
 ```
 NameError: Failed to determine the resource class.
 Please call `controller_for(MyResource)` in MyPortal::MyResourceController.
 ```
 
-**Cause:** Plutonium infers the resource class from the controller name by singularizing it. For resources with names that don't follow standard Rails pluralization (like `PostMetadata`), Rails may singularize incorrectly (`PostMetadata` → `PostMetadatum`).
+**Cause:** Plutonium infers the resource class from the controller name by singularizing it. For resources with names that don't follow standard Rails pluralization (like `PostMetadata`), Rails may singularize incorrectly (`PostMetadata` → `PostMetadatum`). Plutonium detects this and provides a helpful error message.
 
 **Solution:** Add a custom inflection rule in `config/initializers/inflections.rb`:
 
@@ -43,6 +51,7 @@ end
 | Metadata | `PostMetadatum` | `PostMetadata` | `inflect.singular(/(M)etadata$/i, '\1etadata')` |
 | Media | `PostMedium` | `PostMedia` | `inflect.singular(/(M)edia$/i, '\1edia')` |
 | Data | `PostDatum` | `PostData` | `inflect.singular(/(D)ata$/i, '\1ata')` |
+| Criteria | `SearchCriterium` | `SearchCriteria` | `inflect.singular(/(C)riteria$/i, '\1riteria')` |
 
 ## URL Generation
 
@@ -65,3 +74,9 @@ url_for(controller: 'comments', action: 'show', id: @comment.id)
 ## Need More Help?
 
 If you encounter an issue not covered here, please [open an issue](https://github.com/radioactive-labs/plutonium-core/issues) on GitHub.
+
+## Related
+
+- [Nested Resources Guide](./nested-resources)
+- [Adding Resources Guide](./adding-resources)
+- [Rails Inflections Documentation](https://api.rubyonrails.org/classes/ActiveSupport/Inflector/Inflections.html)
