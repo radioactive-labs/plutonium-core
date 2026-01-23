@@ -12,6 +12,7 @@ class Blogging::Post < Blogging::ResourceRecord
   belongs_to :user
   # add belongs_to associations above.
 
+  has_one :post_metadata, foreign_key: :post_id, dependent: :destroy
   # add has_one associations above.
 
   has_many :comments, foreign_key: :post_id, dependent: :destroy

@@ -83,6 +83,8 @@ module Plutonium
       end
 
       # @return [Hash] A lookup table for resource route configurations.
+      # Keys are either plural names (e.g., "profiles") for top-level routes
+      # or "parent_plural/child_plural" (e.g., "users/profiles") for nested routes.
       def resource_route_config_lookup
         @resource_route_config_lookup ||= {}
       end

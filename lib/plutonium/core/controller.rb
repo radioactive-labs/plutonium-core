@@ -98,7 +98,14 @@ module Plutonium
 
             controller_chain << model_class.to_s.pluralize
             if index == args.length - 1
-              resource_route_config = current_engine.routes.resource_route_config_for(model_class.model_name.plural)[0]
+              # Check nested config when parent is present (handles has_one singular routes)
+              route_key = if parent.present?
+                "#{parent.class.model_name.plural}/#{model_class.model_name.plural}"
+              else
+                model_class.model_name.plural
+              end
+              resource_route_config = current_engine.routes.resource_route_config_for(route_key)[0]
+
               url_args[:id] = element.to_param unless resource_route_config[:route_type] == :resource
               url_args[:action] ||= :show
             else
