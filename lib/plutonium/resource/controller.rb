@@ -42,6 +42,16 @@ module Plutonium
           # Use singularize + camelize to respect custom inflections
           name.to_s.gsub(/^#{current_package}::/, "").gsub(/Controller$/, "").singularize.camelize.constantize
         rescue NameError
+          # Check if inflection is the issue (e.g., PostMetadata -> PostMetadatum)
+          if base_name != singularized_name && base_name.camelize.safe_constantize
+            raise NameError, <<~MSG.squish
+              Failed to determine the resource class for #{name}.
+              Rails singularized "#{base_name}" to "#{singularized_name}", but "#{base_name.camelize}" exists.
+              Add an inflection rule to config/initializers/inflections.rb.
+              See: https://radioactive-labs.github.io/plutonium-core/guides/troubleshooting
+            MSG
+          end
+
           raise NameError, "Failed to determine the resource class. Please call `controller_for(MyResource)` in #{name}."
         end
         # memoize_unless_reloading :resource_class

@@ -27,6 +27,10 @@ These guides show you how to accomplish specific tasks, with complete examples.
 
 - [Theming](./theming) - Customize colors, styles, and branding
 
+### Help
+
+- [Troubleshooting](./troubleshooting) - Common issues and solutions
+
 ## Finding What You Need
 
 | I want to... | Guide |
@@ -39,6 +43,7 @@ These guides show you how to accomplish specific tasks, with complete examples.
 | Separate data by company | [Multi-tenancy](./multi-tenancy) |
 | Add search to a list | [Search and Filtering](./search-filtering) |
 | Change the color scheme | [Theming](./theming) |
+| Fix a confusing error | [Troubleshooting](./troubleshooting) |
 
 ## Looking for Reference Docs?
 
