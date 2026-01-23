@@ -102,7 +102,7 @@ namespace :release do
   desc "Build front-end assets"
   task :build_frontend do
     puts "Building front-end assets..."
-    system("npm run build") || abort("Front-end build failed")
+    system("yarn build") || abort("Front-end build failed")
     puts "✓ Built front-end assets"
   end
 

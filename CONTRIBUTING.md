@@ -104,7 +104,7 @@ git push origin main --tags
 
 ```bash
 bundle install
-npm install
+yarn install
 ```
 
 ### Environment
@@ -123,10 +123,10 @@ Frontend source is in `src/`. When making JS or CSS changes:
 
 ```bash
 # Watch mode - keeps rebuilding as you edit
-npm run dev
+yarn dev
 
 # Production build - run before committing
-npm run build
+yarn build
 ```
 
 ### Running Tests
@@ -160,10 +160,8 @@ bin/dev
 ### Documentation
 
 ```bash
-cd docs
-pnpm install
-pnpm dev          # Preview at localhost:5173
-pnpm build        # Check for errors
+yarn docs:dev      # Preview at localhost:5173
+yarn docs:build    # Check for errors
 ```
 
 ### Changelog Generation (optional)
@@ -180,7 +178,7 @@ cargo install git-cliff  # via Rust
 2. Create a feature branch: `git checkout -b feat/my-feature`
 3. Make your changes with conventional commits
 4. Run tests: `bundle exec appraisal rake test`
-5. Build assets: `npm run build`
+5. Build assets: `yarn build`
 6. Push and create a pull request
 
 ## Questions?
