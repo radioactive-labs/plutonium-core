@@ -11,6 +11,19 @@ module Plutonium
 
         protect_from_forgery with: :null_session, if: -> { request.headers["Authorization"].present? }
 
+        rescue_from ::ActionPolicy::Unauthorized do |exception|
+          respond_to do |format|
+            format.any(:html, :turbo_stream) do
+              raise exception
+            end
+            format.any do
+              @errors = ActiveModel::Errors.new(exception.policy.record)
+              @errors.add(:base, :unauthorized, message: exception.result.message)
+              render "errors", status: :forbidden
+            end
+          end
+        end
+
         before_action do
           next unless defined?(ActiveStorage)
 
