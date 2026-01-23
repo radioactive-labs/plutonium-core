@@ -20,3 +20,18 @@ Rake::TestTask.new do |t|
   t.test_files = FileList["test/**/*_test.rb"]
   t.verbose = true
 end
+
+# Warn users to run tests through Appraisal
+Rake::Task["test"].enhance do
+  # This runs after test completes successfully - no action needed
+end
+
+task :check_appraisal do
+  unless ENV["BUNDLE_GEMFILE"]&.include?("gemfiles/")
+    warn "\n⚠️  Tests should be run through Appraisal for the correct gem environment:"
+    warn "   bundle exec appraisal rails-8.1 rake test"
+    warn "   bundle exec appraisal rake test  # runs all Rails versions\n\n"
+  end
+end
+
+Rake::Task["test"].enhance [:check_appraisal]
