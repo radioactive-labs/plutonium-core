@@ -229,10 +229,10 @@ class DefinitionQueryTest < Minitest::Test
     scope = Blogging::Post.all
 
     result = filter.apply(scope, value: "true")
-    assert_includes result.to_sql, %("blogging_posts"."published" = 1)
+    assert_match(/"blogging_posts"\."published" = (1|TRUE)/i, result.to_sql)
 
     result = filter.apply(scope, value: "false")
-    assert_includes result.to_sql, %("blogging_posts"."published" = 0)
+    assert_match(/"blogging_posts"\."published" = (0|FALSE)/i, result.to_sql)
   end
 
   def test_boolean_filter_blank_value_returns_unmodified_scope
@@ -249,7 +249,7 @@ class DefinitionQueryTest < Minitest::Test
     # Test that it still applies correctly
     scope = Blogging::Post.all
     result = filter.apply(scope, value: "true")
-    assert_includes result.to_sql, %("blogging_posts"."published" = 1)
+    assert_match(/"blogging_posts"\."published" = (1|TRUE)/i, result.to_sql)
   end
 
   # ============================================
@@ -375,8 +375,8 @@ class DefinitionQueryTest < Minitest::Test
   # Association Filter Tests
   # ============================================
 
-  def test_association_filter_with_class
-    filter = Plutonium::Query::Filters::Association.new(key: :user, class: User)
+  def test_association_filter_with_class_name
+    filter = Plutonium::Query::Filters::Association.new(key: :user, class_name: User)
     scope = Blogging::Post.all
 
     result = filter.apply(scope, value: "123")
@@ -392,7 +392,7 @@ class DefinitionQueryTest < Minitest::Test
   end
 
   def test_association_filter_multiple
-    filter = Plutonium::Query::Filters::Association.new(key: :user, class: User, multiple: true)
+    filter = Plutonium::Query::Filters::Association.new(key: :user, class_name: User, multiple: true)
     scope = Blogging::Post.all
 
     result = filter.apply(scope, value: ["1", "2", ""])
@@ -400,24 +400,26 @@ class DefinitionQueryTest < Minitest::Test
   end
 
   def test_association_filter_blank_value_returns_unmodified_scope
-    filter = Plutonium::Query::Filters::Association.new(key: :user, class: User)
+    filter = Plutonium::Query::Filters::Association.new(key: :user, class_name: User)
     scope = Blogging::Post.all
 
     result = filter.apply(scope, value: "")
     assert_equal scope.to_sql, result.to_sql
   end
 
-  def test_association_filter_requires_class_or_reflection
-    assert_raises(ArgumentError) do
-      # No class and no resource_class to detect from
-      Plutonium::Query::Filters::Association.new(key: :unknown_assoc)
-    end
+  def test_association_filter_infers_class_from_key
+    # When no class_name or resource_class provided, infers from key
+    filter = Plutonium::Query::Filters::Association.new(key: :user)
+    scope = Blogging::Post.all
+
+    result = filter.apply(scope, value: "789")
+    assert_includes result.to_sql, %("blogging_posts"."user_id" = 789)
   end
 
   def test_association_filter_with_scope_proc
     filter = Plutonium::Query::Filters::Association.new(
       key: :user,
-      class: User,
+      class_name: User,
       scope: ->(scope) { scope.verified }
     )
 
