@@ -49,9 +49,9 @@
     "vitepress-plugin-mermaid": "^2.0.17"
   },
   "scripts": {
-    "dev": "concurrently \"npm run css:dev\" \"npm run js:dev\"",
-    "build": "npm run js:prod && npm run css:prod",
-    "prepare": "npm run build",
+    "dev": "concurrently \"yarn css:dev\" \"yarn js:dev\"",
+    "build": "yarn js:prod && yarn css:prod",
+    "prepare": "yarn build",
     "css:dev": "chokidar \"src/css/**/*.css\" \"src/js/**/*.js\" \"app/views/**/*.{rb,erb,js}\" \"lib/plutonium/**/*.rb\" -c \"postcss src/css/plutonium.entry.css -o src/build/plutonium.css --dev\" --initial",
     "js:dev": "node esbuild.config.js --dev",
     "css:prod": "postcss src/css/plutonium.entry.css -o app/assets/plutonium.css && postcss src/css/plutonium.entry.css -o src/dist/css/plutonium.css",

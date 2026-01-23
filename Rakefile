@@ -8,7 +8,7 @@ Dir.glob("lib/tasks/**/*.rake").each { |r| load r }
 task default: %i[test standard]
 
 task :assets do
-  `npm run build`
+  `yarn build`
 end
 
 # https://stackoverflow.com/questions/15707940/rake-before-task-hook

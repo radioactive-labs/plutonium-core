@@ -77,16 +77,16 @@ When working on JavaScript or CSS in `src/`:
 
 ```bash
 # Watch mode (rebuilds on changes to src/build/)
-npm run dev
+yarn dev
 
 # Production build (to app/assets/)
-npm run build
+yarn build
 ```
 
-- `npm run dev` - watches and rebuilds to `src/build/` for development
-- `npm run build` - compiles to `app/assets/` for release
+- `yarn dev` - watches and rebuilds to `src/build/` for development
+- `yarn build` - compiles to `app/assets/` for release
 
-**Always run `npm run dev`** in a terminal when working on frontend code.
+**Always run `yarn dev`** in a terminal when working on frontend code.
 
 ### Running Tests
 
@@ -114,10 +114,8 @@ Generators are in `lib/generators/pu/`. Test by:
 ### Documentation
 
 ```bash
-cd docs
-pnpm install
-pnpm dev          # Local preview at localhost:5173
-pnpm build        # Build for production
+yarn docs:dev      # Local preview at localhost:5173
+yarn docs:build    # Build for production
 ```
 
 ## Code Conventions
@@ -212,4 +210,4 @@ This:
 ### Update documentation
 1. Edit files in `docs/`
 2. If user-facing behavior, update relevant skill in `.claude/skills/`
-3. Run `pnpm build` to verify no broken links
+3. Run `yarn docs:build` to verify no broken links
