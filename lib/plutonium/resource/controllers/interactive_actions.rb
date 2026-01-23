@@ -62,6 +62,9 @@ module Plutonium
                 format.html do
                   redirect_to return_url, status: :see_other
                 end
+                format.any do
+                  render :show, status: :ok, location: return_url
+                end
               else
                 format.any(:html, :turbo_stream) do
                   render :interactive_record_action, formats: [:html], status: :unprocessable_content
@@ -117,6 +120,9 @@ module Plutonium
                 format.html do
                   redirect_to return_url, status: :see_other
                 end
+                format.any do
+                  head :no_content, location: return_url
+                end
               else
                 format.any(:html, :turbo_stream) do
                   render :interactive_resource_action, formats: [:html], status: :unprocessable_content
@@ -165,6 +171,9 @@ module Plutonium
                 end
                 format.html do
                   redirect_to return_url, status: :see_other
+                end
+                format.any do
+                  head :no_content, location: return_url
                 end
               else
                 format.any(:html, :turbo_stream) do
