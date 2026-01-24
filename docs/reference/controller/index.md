@@ -258,7 +258,7 @@ end
 Parent records are automatically resolved:
 
 ```ruby
-# Route: /users/:user_id/posts/:id
+# Route: /users/:user_id/nested_posts/:id
 class PostsController < ::ResourceController
   # current_parent returns the User
   # resource_record! returns the Post scoped to that User

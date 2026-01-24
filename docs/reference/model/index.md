@@ -67,7 +67,7 @@ class Comment < ResourceRecord
 end
 ```
 
-When both `Post` and `Comment` are registered in a portal, Plutonium automatically creates nested routes (`/posts/:post_id/comments`). The `associated_with` scope is automatically available for querying.
+When both `Post` and `Comment` are registered in a portal, Plutonium automatically creates nested routes (`/posts/:post_id/nested_comments`). Queries are automatically scoped to the parent via the association.
 
 See the [Nested Resources Guide](/guides/nested-resources) for details.
 
