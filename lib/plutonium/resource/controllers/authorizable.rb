@@ -135,7 +135,15 @@ module Plutonium
         #
         # @return [Array<Symbol>] the list of permitted attributes for the current action
         def permitted_attributes
-          @permitted_attributes ||= current_policy.send_with_report(:"permitted_attributes_for_#{action_name}").freeze
+          @permitted_attributes ||= permitted_attributes_for(action_name)
+        end
+
+        # Returns the list of permitted attributes for a specific action on the current resource
+        #
+        # @param action [String, Symbol] the action to get permitted attributes for
+        # @return [Array<Symbol>] the list of permitted attributes for the action
+        def permitted_attributes_for(action)
+          current_policy.send_with_report(:"permitted_attributes_for_#{action}").freeze
         end
 
         # Returns the list of permitted associations for the current resource
