@@ -398,9 +398,9 @@ end
 ```
 
 Generates nested routes:
-- `POST /posts/:post_id/comments/:id/approve`
-- `POST /posts/:post_id/comments/:id/flag`
-- `GET /posts/:post_id/comments/pending`
+- `POST /posts/:post_id/nested_comments/:id/approve`
+- `POST /posts/:post_id/nested_comments/:id/flag`
+- `GET /posts/:post_id/nested_comments/pending`
 
 ## Breadcrumbs
 
