@@ -60,6 +60,12 @@ module Plutonium
           end
 
           def render_key_value_pairs
+            # Hidden sentinel input ensures the field is always present in params when the
+            # component is rendered. Without this, removing all pairs would submit nothing,
+            # making it impossible to distinguish "field not in form" from "field cleared".
+            # This allows normalize_input to return nil (preserve existing) vs {} (clear field).
+            input(type: :hidden, name: "#{field_name}[_submitted]", value: "1", autocomplete: "off", hidden: true)
+
             div(class: "key-value-pairs space-y-2", data_key_value_store_target: "container") do
               pairs.each_with_index do |(key, value), index|
                 render_key_value_pair(key, value, index)
@@ -196,19 +202,25 @@ module Plutonium
             attributes.fetch(:limit, DEFAULT_LIMIT)
           end
 
-          # Override from ExtractsInput concern to normalize form parameters
+          # Override from ExtractsInput concern to normalize form parameters.
+          # Returns nil if field wasn't submitted (preserves existing value),
+          # or a Hash (possibly empty) if the field was in the form.
           def normalize_input(input_value)
             case input_value
             when Hash
-              if input_value.keys.all? { |k| k.to_s.match?(/^\d+$/) }
+              # Remove the sentinel key before processing
+              params = input_value.except("_submitted", :_submitted)
+
+              if params.keys.all? { |k| k.to_s.match?(/^\d+$/) }
                 # Handle indexed form params: {"0" => {"key" => "foo", "value" => "bar"}}
-                process_indexed_params(input_value)
+                process_indexed_params(params)
               else
                 # Handle direct hash params
-                input_value.reject { |k, v| k.blank? || (v.blank? && v != false) }
+                params.reject { |k, v| k.blank? || (v.blank? && v != false) }
               end
             when nil
-              {}
+              # Field was not submitted at all - preserve existing value
+              nil
             end
           end
 
