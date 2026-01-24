@@ -24,16 +24,18 @@ module Plutonium
         end
 
         def submittable_attributes
-          @submittable_attributes ||= begin
-            submittable_attributes = permitted_attributes
-            if current_parent && !submit_parent?
-              submittable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
-            end
-            if scoped_to_entity? && !submit_scoped_entity?
-              submittable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
-            end
-            submittable_attributes
+          @submittable_attributes ||= submittable_attributes_for(action_name)
+        end
+
+        def submittable_attributes_for(action)
+          submittable_attributes = permitted_attributes_for(action)
+          if current_parent && !submit_parent?
+            submittable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
           end
+          if scoped_to_entity? && !submit_scoped_entity?
+            submittable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
+          end
+          submittable_attributes
         end
 
         def build_collection
@@ -44,8 +46,8 @@ module Plutonium
           current_definition.detail_class.new(resource_record!, resource_fields: presentable_attributes, resource_associations: permitted_associations, resource_definition: current_definition)
         end
 
-        def build_form(record = resource_record!)
-          current_definition.form_class.new(record, resource_fields: submittable_attributes, resource_definition: current_definition)
+        def build_form(record = resource_record!, action: action_name)
+          current_definition.form_class.new(record, resource_fields: submittable_attributes_for(action), resource_definition: current_definition)
         end
 
         def present_parent? = false
