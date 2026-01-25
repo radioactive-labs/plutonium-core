@@ -20,7 +20,7 @@ module Plutonium
         # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
         after_action { pagy_headers_merge(@pagy) if @pagy }
 
-        helper_method :current_parent, :resource_record!, :resource_record?, :resource_param_key, :resource_class
+        helper_method :current_parent, :current_nested_association, :resource_record!, :resource_record?, :resource_param_key, :resource_class
 
         # Use class_attribute for proper inheritance
         class_attribute :_resource_class, instance_accessor: false
@@ -63,6 +63,16 @@ module Plutonium
 
       private
 
+      # Override to prepend parent label for nested resources in the browser tab title.
+      # e.g., "John Doe › Authored Comments"
+      def set_page_title(page_title)
+        @page_title = if current_parent
+          "#{current_parent.to_label} › #{page_title}"
+        else
+          page_title
+        end
+      end
+
       def resource_class
         if current_parent
           # Nested route: resource_class must come from route config
@@ -102,10 +112,15 @@ module Plutonium
 
         # Extract from request path: find the nested_* segment after the parent param
         # e.g., /posts/123/nested_comments/456 => "comments"
+        # Note: Strip format extension (.json, .xml, etc.) from the segment
         prefix = Plutonium::Routing::NESTED_ROUTE_PREFIX
         path_segments = request.path.split("/")
         nested_segment = path_segments.find { |seg| seg.start_with?(prefix) }
-        nested_segment&.delete_prefix(prefix)&.to_sym
+        return unless nested_segment
+
+        # Remove prefix and any format extension (e.g., "nested_versions.json" -> "versions")
+        association_name = nested_segment.delete_prefix(prefix).sub(/\.\w+\z/, "")
+        association_name.to_sym
       end
 
       def resource_record!

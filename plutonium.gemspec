@@ -44,7 +44,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "phlex-rails"
   spec.add_dependency "phlex-tabler_icons"
   spec.add_dependency "phlexi-field", ">= 0.2.0"
-  spec.add_dependency "phlexi-form", ">= 0.13.0"
+  spec.add_dependency "phlexi-form", ">= 0.14.0"
   spec.add_dependency "phlexi-table", ">= 0.2.0"
   spec.add_dependency "phlexi-display", ">= 0.2.0"
   spec.add_dependency "phlexi-menu", ">= 0.4.0"
