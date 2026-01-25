@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          super || current_definition.index_page_title || resource_name_plural(resource_class)
+          super || current_definition.index_page_title || helpers.nestable_resource_name_plural(resource_class)
         end
 
         def page_description

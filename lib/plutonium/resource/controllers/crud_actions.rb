@@ -12,7 +12,7 @@ module Plutonium
         # GET /resources(.{format})
         def index
           authorize_current! resource_class
-          set_page_title resource_class.model_name.human.pluralize.titleize
+          set_page_title helpers.nestable_resource_name_plural(resource_class)
 
           setup_index_action!
 

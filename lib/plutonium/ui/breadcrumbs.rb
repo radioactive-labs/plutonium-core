@@ -101,7 +101,7 @@ module Plutonium
                       d: "m1 9 4-4-4-4"
                     )
                   end
-                  link_to resource_name_plural(resource_class),
+                  link_to helpers.nestable_resource_name_plural(resource_class),
                     resource_url_for(resource_class),
                     class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
                 end

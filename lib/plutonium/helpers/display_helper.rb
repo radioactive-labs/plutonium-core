@@ -14,6 +14,18 @@ module Plutonium
         resource_name resource_class, 2
       end
 
+      # Returns a human-readable name for a nested collection using the association name.
+      # Falls back to resource_name_plural if not in a nested context.
+      # Uses I18n via human_attribute_name for proper localization.
+      # e.g., "Authored Comments" for has_many :authored_comments
+      def nestable_resource_name_plural(resource_class)
+        if current_parent && current_nested_association
+          current_parent.class.human_attribute_name(current_nested_association).titleize
+        else
+          resource_name_plural(resource_class)
+        end
+      end
+
       def display_field(value:, helper: nil, **options)
         return "-" unless value.present?
 
