@@ -1,3 +1,39 @@
+## [0.38.0] - 2026-01-25
+
+### 🚀 Features
+
+- *(core)* Handle ActionPolicy::Unauthorized for non-HTML formats
+- *(interactive_actions)* Add non-HTML response handlers for successful actions
+- *(routing)* Add has_one nested resource support
+- *(routing)* [**breaking**] Refactor nested resource URL generation with named route helpers
+- *(policy)* Add default_relation_scope method with verification
+- *(nested)* Use association names for nested resource titles and breadcrumbs
+
+### 🐛 Bug Fixes
+
+- Remove duplicate kv store controller and move improvements into original
+- *(filters)* Improve association filter class resolution
+- *(ui)* Improve dropdown positioning with viewport boundary
+- *(crud)* Use correct action attributes for form re-rendering on errors
+- *(form)* Distinguish empty vs not-submitted key-value store fields
+- *(controller)* Use existing record context for form param extraction
+
+### 📚 Documentation
+
+- *(definition)* Document formatter option for columns and displays
+- Cleanup review definition
+- Add troubleshooting guide for inflection issue
+- Update nested resource routes to use nested_ prefix
+
+### 🧪 Testing
+
+- Refactor tests to use real module implementations instead of mocks
+
+### ⚙️ Miscellaneous Tasks
+
+- Use chokidar to fix dev build cyclic dependency issues
+- Warn when running tests without Appraisal
+- Switch to yarn
 ## [0.37.0] - 2026-01-21
 
 ### 🚀 Features
