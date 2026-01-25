@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 1200px;
+      height: 630px;
+      background: #1e2330;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 60px;
+    }
+
+    .logo {
+      width: 260px;
+      height: 260px;
+      object-fit: contain;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .title {
+      font-size: 88px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      font-size: 40px;
+      color: #b8bcc8;
+      font-weight: 400;
+    }
+
+    .features {
+      display: flex;
+      gap: 24px;
+      margin-top: 12px;
+      font-size: 26px;
+      color: #e07c5a;
+      font-weight: 500;
+    }
+
+    .features span:not(:last-child)::after {
+      content: '·';
+      margin-left: 24px;
+      color: #e07c5a;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="public/plutonium.png" alt="Plutonium" class="logo">
+    <div class="content">
+      <div class="title">Plutonium</div>
+      <div class="tagline">Build Rails Apps in Minutes, Not Days</div>
+      <div class="features">
+        <span>Convention-driven</span>
+        <span>AI-ready</span>
+        <span>Fully customizable</span>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
