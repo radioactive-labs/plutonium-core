@@ -134,7 +134,9 @@ module Plutonium
       # Returns the submitted resource parameters
       # @return [Hash] The submitted resource parameters
       def submitted_resource_params
-        @submitted_resource_params ||= build_form(resource_class.new).extract_input(params, view_context:)[resource_param_key.to_sym].compact
+        # Use existing record (cloned) for context during param extraction, or new instance for create
+        extraction_record = resource_record?&.dup || resource_class.new
+        @submitted_resource_params ||= build_form(extraction_record).extract_input(params, view_context:)[resource_param_key.to_sym].compact
       end
 
       # Returns the resource parameters, including scoped and parent parameters
