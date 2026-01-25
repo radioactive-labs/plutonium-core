@@ -118,52 +118,53 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   private
 
   def build_controller(action_name:, record: nil, policy_class: nil)
-    controller = Object.new
     policy_class ||= Blogging::PostPolicy
 
-    # Set up basic controller context
-    controller.define_singleton_method(:action_name) { action_name }
-    controller.define_singleton_method(:resource_class) { Blogging::Post }
-    controller.define_singleton_method(:resource_record!) { record || Blogging::Post.new }
-
-    # Mock current_parent and scoped_to_entity? for submittable_attributes_for
-    controller.define_singleton_method(:current_parent) { nil }
-    controller.define_singleton_method(:scoped_to_entity?) { false }
-    controller.define_singleton_method(:submit_parent?) { false }
-    controller.define_singleton_method(:submit_scoped_entity?) { false }
-
-    # Mock current_policy
-    policy_instance = policy_class.new(
-      record: record || Blogging::Post,
-      user: @user,
-      entity_scope: nil
-    )
-    controller.define_singleton_method(:current_policy) { policy_instance }
-
-    # Mock current_definition for build_form
-    definition = Blogging::PostDefinition.new
-    controller.define_singleton_method(:current_definition) { definition }
-
-    # Include the methods we're testing
-    controller.define_singleton_method(:permitted_attributes_for) do |action|
-      current_policy.send_with_report(:"permitted_attributes_for_#{action}").freeze
-    end
-
-    controller.define_singleton_method(:submittable_attributes_for) do |action|
-      submittable_attributes = permitted_attributes_for(action)
-      if current_parent && !submit_parent?
-        # Would filter parent params here
-      end
-      if scoped_to_entity? && !submit_scoped_entity?
-        # Would filter entity params here
-      end
-      submittable_attributes
-    end
-
-    controller.define_singleton_method(:build_form) do |rec = resource_record!, action: action_name|
-      current_definition.form_class.new(rec, resource_fields: submittable_attributes_for(action), resource_definition: current_definition)
-    end
-
+    controller = TestableController.new
+    controller.test_action_name = action_name
+    controller.test_record = record
+    controller.test_user = @user
+    controller.test_policy_class = policy_class
     controller
+  end
+
+  # Controller class that includes the real modules
+  class TestableController < ActionController::Base
+    include Plutonium::Resource::Controllers::Authorizable
+    include Plutonium::Resource::Controllers::Presentable
+
+    attr_accessor :test_action_name, :test_record, :test_user, :test_policy_class
+
+    def action_name
+      test_action_name
+    end
+
+    def resource_class
+      Blogging::Post
+    end
+
+    def resource_record!
+      test_record || Blogging::Post.new
+    end
+
+    def current_parent
+      nil
+    end
+
+    def scoped_to_entity?
+      false
+    end
+
+    def current_policy
+      @current_policy ||= test_policy_class.new(
+        record: test_record || Blogging::Post,
+        user: test_user,
+        entity_scope: nil
+      )
+    end
+
+    def current_definition
+      @current_definition ||= Blogging::PostDefinition.new
+    end
   end
 end
