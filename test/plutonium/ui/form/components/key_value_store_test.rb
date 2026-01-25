@@ -135,61 +135,47 @@ class Plutonium::UI::Form::Components::KeyValueStoreTest < Minitest::Test
 
   private
 
-  def build_component
-    # Create a minimal mock of the component for testing normalize_input
-    component = Object.new
+  def build_component(value: nil)
+    field = FieldStub.new(value)
+    Plutonium::UI::Form::Components::KeyValueStore.new(field)
+  end
 
-    # Include the normalize methods from KeyValueStore
-    component.define_singleton_method(:normalize_input) do |input_value|
-      case input_value
-      when Hash
-        # Remove the sentinel key before processing
-        params = input_value.except("_submitted", :_submitted)
+  # Minimal field stub for KeyValueStore component
+  class FieldStub
+    attr_reader :value
 
-        if params.keys.all? { |k| k.to_s.match?(/^\d+$/) }
-          # Handle indexed form params
-          params.values.each_with_object({}) do |pair, hash|
-            next unless pair.is_a?(Hash)
-
-            key = pair["key"] || pair[:key]
-            value = pair["value"] || pair[:value]
-
-            if key.present?
-              hash[key] = value
-            end
-          end
-        else
-          # Handle direct hash params
-          params.reject { |k, v| k.blank? || (v.blank? && v != false) }
-        end
-      when nil
-        nil
-      end
+    def initialize(value)
+      @value = value
     end
 
-    component.define_singleton_method(:normalize_value_to_pairs) do |value|
-      case value
-      when Hash
-        value.to_a
-      when String
-        return [] if value.blank?
-
-        begin
-          parsed = JSON.parse(value)
-          case parsed
-          when Hash
-            parsed.to_a
-          else
-            []
-          end
-        rescue JSON::ParserError
-          []
-        end
-      else
-        []
-      end
+    def dom
+      @dom ||= DomStub.new
     end
 
-    component
+    def key
+      :test_field
+    end
+
+    def has_errors?
+      false
+    end
+
+    def focused?
+      false
+    end
+
+    def class_for(_key)
+      nil
+    end
+
+    class DomStub
+      def id
+        "test_field_id"
+      end
+
+      def name
+        "test[field]"
+      end
+    end
   end
 end
