@@ -205,4 +205,51 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     assert_match %r{/admin/blogging/posts/#{@post.id}/nested_post_metadata$}, url
     refute_match %r{/demo/}, url
   end
+
+  # Interactive actions on nested resources
+
+  test "has_many: instance + parent + action :interactive_record_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @comment, parent: @post, action: :interactive_record_action, interactive_action: :archive)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/#{@comment.id}/record_actions/archive$}, url
+  end
+
+  test "has_many: class + parent + action :interactive_bulk_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :interactive_bulk_action, interactive_action: :bulk_delete)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/bulk_actions/bulk_delete$}, url
+  end
+
+  test "has_many: class + parent + action :interactive_resource_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :interactive_resource_action, interactive_action: :import)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
+  end
+
+  test "has_one: instance + parent + action :interactive_record_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @post_metadata, parent: @post, action: :interactive_record_action, interactive_action: :refresh)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_post_metadata/record_actions/refresh$}, url
+    refute_match %r{/#{@post_metadata.id}}, url
+  end
+
+  # Top-level interactive actions
+
+  test "top-level: instance + action :interactive_record_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @post, action: :interactive_record_action, interactive_action: :publish)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/record_actions/publish$}, url
+  end
+
+  test "top-level: class + action :interactive_bulk_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, Blogging::Post, action: :interactive_bulk_action, interactive_action: :bulk_publish)
+    assert_match %r{/demo/blogging/posts/bulk_actions/bulk_publish$}, url
+  end
+
+  test "top-level: class + action :interactive_resource_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, Blogging::Post, action: :interactive_resource_action, interactive_action: :export)
+    assert_match %r{/demo/blogging/posts/resource_actions/export$}, url
+  end
 end

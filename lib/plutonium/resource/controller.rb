@@ -274,7 +274,7 @@ module Plutonium
       def resource_url_args_for(*, **kwargs)
         kwargs[:parent] = current_parent unless kwargs.key?(:parent)
         # Pass the current association when in a nested context
-        if current_parent && !kwargs.key?(:association) && current_nested_association
+        if kwargs[:parent] && !kwargs.key?(:association) && current_nested_association
           kwargs[:association] = current_nested_association
         end
         super
