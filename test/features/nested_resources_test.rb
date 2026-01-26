@@ -331,4 +331,59 @@ class NestedResourcesTest < Minitest::Test
     assert_equal :author, authored_assoc.inverse_of&.name
     assert_equal :editor, edited_assoc.inverse_of&.name
   end
+
+  # Regression test for nested resource update form building
+  # See: https://github.com/radioactivetoy/plutonium-core/issues/XXX
+  #
+  # When extracting params for an update action, the controller clones the record
+  # (which sets id to nil) and builds a form with it. Previously, this would cause
+  # ActionController::UrlGenerationError because the form tried to generate its
+  # action URL using a record with nil id.
+
+  def test_form_extraction_with_cloned_nested_record_does_not_raise
+    # Create a nested resource (comment under post)
+    comment = Blogging::Comment.create!(body: "Test comment", post: @post, user: @user)
+
+    # Simulate what submitted_resource_params does:
+    # 1. Clone the existing record (this sets id to nil)
+    cloned_record = comment.dup
+    assert_nil cloned_record.id, "Cloned record should have nil id"
+    assert cloned_record.new_record?, "Cloned record should be a new record"
+
+    # 2. Build form with form_action: false to prevent URL generation
+    definition = Blogging::CommentDefinition.new
+    form_class = definition.form_class
+
+    # This should NOT raise ActionController::UrlGenerationError
+    form = form_class.new(
+      cloned_record,
+      resource_fields: [:body, :post, :user],
+      resource_definition: definition,
+      action: false  # This prevents URL generation
+    )
+
+    assert_kind_of Plutonium::UI::Form::Resource, form
+    assert_equal false, form.instance_variable_get(:@form_action)
+  end
+
+  def test_form_for_nested_update_without_form_action_false_would_need_valid_id
+    # This test documents the expected behavior when form_action is NOT disabled
+    # The form needs a valid record to generate its action URL
+    comment = Blogging::Comment.create!(body: "Test comment", post: @post, user: @user)
+
+    definition = Blogging::CommentDefinition.new
+    form_class = definition.form_class
+
+    # With the actual persisted record (not cloned), form can generate URL
+    form = form_class.new(
+      comment,
+      resource_fields: [:body],
+      resource_definition: definition
+      # Note: no action: false here
+    )
+
+    assert_kind_of Plutonium::UI::Form::Resource, form
+    # The form action will be computed lazily, not immediately set to false
+    refute_equal false, form.instance_variable_get(:@form_action)
+  end
 end

@@ -46,8 +46,10 @@ module Plutonium
           current_definition.detail_class.new(resource_record!, resource_fields: presentable_attributes, resource_associations: permitted_associations, resource_definition: current_definition)
         end
 
-        def build_form(record = resource_record!, action: action_name)
-          current_definition.form_class.new(record, resource_fields: submittable_attributes_for(action), resource_definition: current_definition)
+        def build_form(record = resource_record!, action: action_name, form_action: nil, **)
+          form_options = {resource_fields: submittable_attributes_for(action), resource_definition: current_definition, **}
+          form_options[:action] = form_action unless form_action.nil?
+          current_definition.form_class.new(record, **form_options)
         end
 
         def present_parent? = false
