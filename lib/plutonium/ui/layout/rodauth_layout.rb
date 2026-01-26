@@ -3,6 +3,7 @@ module Plutonium
     module Layout
       class RodauthLayout < Base
         include Phlex::Rails::Helpers::LinkTo
+        include Phlex::Rails::Helpers::ImageTag
 
         private
 

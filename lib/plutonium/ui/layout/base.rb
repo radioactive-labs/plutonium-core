@@ -3,6 +3,7 @@ module Plutonium
     module Layout
       class Base < Plutonium::UI::Component::Base
         include Plutonium::Helpers::AssetsHelper
+        include Phlex::Rails::Helpers::ImageTag
         include Phlex::Rails::Helpers::CSPMetaTag
         include Phlex::Rails::Helpers::CSRFMetaTags
         include Phlex::Rails::Helpers::FaviconLinkTag
