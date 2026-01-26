@@ -95,12 +95,92 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     assert_nil extraction_record
   end
 
+  # Regression test for submitted_resource_params with nested resources
+  # When updating a nested resource, the controller clones the record (id becomes nil)
+  # and builds a form for param extraction. This must not raise UrlGenerationError.
+  #
+  # This test verifies that build_form is called with form_action: false
+
+  def test_submitted_resource_params_builds_form_with_form_action_false
+    user = User.create!(email: "controller_test@example.com", status: :verified)
+    post = Blogging::Post.create!(title: "Test", body: "Content", user: user)
+    comment = Blogging::Comment.create!(body: "Test comment", post: post, user: user)
+
+    controller = build_submitted_params_controller(comment, user)
+    controller.test_params = ActionController::Parameters.new({
+      "comment" => {"body" => "Updated comment"}
+    })
+
+    # Track the form_action argument passed to build_form
+    form_action_received = :not_called
+    original_build_form = controller.method(:build_form)
+
+    controller.define_singleton_method(:build_form) do |record = nil, action: nil, form_action: nil, **|
+      form_action_received = form_action
+      # Return a mock form that responds to extract_input
+      mock_form = Object.new
+      mock_form.define_singleton_method(:extract_input) do |params, view_context:|
+        {comment: {body: params["comment"]["body"]}}
+      end
+      mock_form
+    end
+
+    controller.send(:submitted_resource_params)
+
+    # Verify build_form was called with form_action: false
+    assert_equal false, form_action_received, "build_form should be called with form_action: false"
+  ensure
+    Blogging::Comment.delete_all
+    Blogging::Post.delete_all
+    User.delete_all
+  end
+
+  def test_submitted_resource_params_clones_record_for_extraction
+    user = User.create!(email: "controller_test2@example.com", status: :verified)
+    post = Blogging::Post.create!(title: "Test", body: "Content", user: user)
+    comment = Blogging::Comment.create!(body: "Original", post: post, user: user)
+
+    controller = build_submitted_params_controller(comment, user)
+    controller.test_params = ActionController::Parameters.new({
+      "comment" => {"body" => "Updated"}
+    })
+
+    # Track the record passed to build_form
+    record_received = nil
+    controller.define_singleton_method(:build_form) do |record = nil, **|
+      record_received = record
+      mock_form = Object.new
+      mock_form.define_singleton_method(:extract_input) do |params, view_context:|
+        {comment: {body: params["comment"]["body"]}}
+      end
+      mock_form
+    end
+
+    controller.send(:submitted_resource_params)
+
+    # Verify the record passed to build_form is a dup (has nil id)
+    assert_nil record_received.id, "build_form should receive a cloned record with nil id"
+    # Original record should be unchanged
+    assert_equal comment.id, comment.reload.id, "Original record id should be unchanged"
+  ensure
+    Blogging::Comment.delete_all
+    Blogging::Post.delete_all
+    User.delete_all
+  end
+
   private
 
   def build_controller_stub(path, parent_param)
     controller = TestableController.new
     controller.test_request_path = path
     controller.test_parent_route_param = parent_param
+    controller
+  end
+
+  def build_submitted_params_controller(record, user)
+    controller = SubmittedParamsTestController.new
+    controller.test_record = record
+    controller.test_user = user
     controller
   end
 
@@ -126,6 +206,62 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
 
     def scoped_to_entity?
       false
+    end
+  end
+
+  # Controller for testing submitted_resource_params
+  class SubmittedParamsTestController < ActionController::Base
+    include Plutonium::Resource::Controller
+
+    attr_accessor :test_record, :test_user, :test_params
+
+    def resource_class
+      Blogging::Comment
+    end
+
+    def resource_record?
+      test_record
+    end
+
+    def resource_record!
+      test_record
+    end
+
+    def resource_param_key
+      :comment
+    end
+
+    def params
+      test_params
+    end
+
+    def action_name
+      "update"
+    end
+
+    def view_context
+      # Create a minimal view context for form extraction
+      @view_context ||= ActionView::Base.empty
+    end
+
+    def current_parent
+      nil
+    end
+
+    def scoped_to_entity?
+      false
+    end
+
+    def current_policy
+      @current_policy ||= Blogging::CommentPolicy.new(
+        record: test_record,
+        user: test_user,
+        entity_scope: nil
+      )
+    end
+
+    def current_definition
+      @current_definition ||= Blogging::CommentDefinition.new
     end
   end
 end
