@@ -16,7 +16,7 @@ module Plutonium
 
         def form_action
           # Build the correct commit URL for the interactive action
-          action = helpers.current_interactive_action
+          action = current_interactive_action
           return nil unless action
 
           # Create route options for the commit action (convert GET to POST action)
@@ -28,8 +28,8 @@ module Plutonium
           )
 
           # Use existing infrastructure to build the URL
-          subject = action.record_action? ? helpers.resource_record! : helpers.resource_class
-          helpers.route_options_to_url(commit_route_options, subject)
+          subject = action.record_action? ? resource_record! : resource_class
+          route_options_to_url(commit_route_options, subject)
         end
 
         def commit_action_name(action_name)
@@ -52,10 +52,10 @@ module Plutonium
         end
 
         def render_bulk_action_ids
-          action = helpers.current_interactive_action
+          action = current_interactive_action
           return unless action&.bulk_action?
 
-          ids = Array(helpers.params[:ids])
+          ids = Array(params[:ids])
           ids.each do |id|
             input(type: :hidden, name: "ids[]", value: id)
           end

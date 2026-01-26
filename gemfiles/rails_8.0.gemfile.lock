@@ -11,8 +11,8 @@ PATH
       phlex-tabler_icons
       phlexi-display (>= 0.2.0)
       phlexi-field (>= 0.2.0)
-      phlexi-form (>= 0.14.0)
-      phlexi-menu (>= 0.4.0)
+      phlexi-form (>= 0.14.1)
+      phlexi-menu (>= 0.4.1)
       phlexi-table (>= 0.2.0)
       rabl (~> 0.16.1)
       rails (>= 7.2)
@@ -209,12 +209,12 @@ GEM
       fiber-local
       phlex (~> 2.0)
       zeitwerk
-    phlexi-form (0.14.0)
+    phlexi-form (0.14.1)
       activesupport
       phlex (~> 2.0)
       phlexi-field (~> 0.2.0)
       zeitwerk
-    phlexi-menu (0.4.0)
+    phlexi-menu (0.4.1)
       phlex (~> 2.0)
       phlexi-field (~> 0.2.0)
       zeitwerk

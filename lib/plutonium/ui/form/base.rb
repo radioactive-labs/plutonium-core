@@ -109,7 +109,7 @@ module Plutonium
         end
 
         def form_action
-          return @form_action unless object.present? && @form_action != false && helpers.present?
+          return @form_action unless object.present? && @form_action != false && view_context.present?
 
           @form_action ||= url_for(object, action: object.new_record? ? :create : :update)
         end

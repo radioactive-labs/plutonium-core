@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          helpers.controller.instance_variable_get(:@page_title)
+          controller.instance_variable_get(:@page_title)
         end
 
         def main_attributes = mix(super, {
@@ -26,7 +26,7 @@ module Plutonium
 
         def render_logo
           link_to root_path, class: "flex items-center text-2xl font-semibold text-[var(--pu-text)] mb-2" do
-            helpers.resource_logo_tag classname: "w-24 h-24 mr-2 rounded-[var(--pu-radius-md)]"
+            resource_logo_tag classname: "w-24 h-24 mr-2 rounded-[var(--pu-radius-md)]"
           end
         end
 

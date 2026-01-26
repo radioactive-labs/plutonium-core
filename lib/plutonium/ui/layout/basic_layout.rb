@@ -5,8 +5,8 @@ module Plutonium
         private
 
         def page_title
-          helpers.make_page_title(
-            helpers.controller.instance_variable_get(:@page_title)
+          make_page_title(
+            controller.instance_variable_get(:@page_title)
           )
         end
       end
