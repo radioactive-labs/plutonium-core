@@ -127,7 +127,7 @@ module Plutonium
       def define_member_interactive_actions
         member do
           get "record_actions/:interactive_action", action: :interactive_record_action,
-            as: :record_action
+            as: :interactive_record_action
           post "record_actions/:interactive_action", action: :commit_interactive_record_action
         end
       end
@@ -138,11 +138,11 @@ module Plutonium
       def define_collection_interactive_actions
         collection do
           get "bulk_actions/:interactive_action", action: :interactive_bulk_action,
-            as: :bulk_action
+            as: :interactive_bulk_action
           post "bulk_actions/:interactive_action", action: :commit_interactive_bulk_action
 
           get "resource_actions/:interactive_action", action: :interactive_resource_action,
-            as: :resource_action
+            as: :interactive_resource_action
           post "resource_actions/:interactive_action", action: :commit_interactive_resource_action
         end
       end

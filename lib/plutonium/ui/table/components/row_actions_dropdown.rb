@@ -56,35 +56,13 @@ module Plutonium
 
           def render_danger_actions
             div(class: "py-1") do
-              danger_actions.each { |action| render_action_item(action, danger: true) }
+              danger_actions.each { |action| render_action_item(action) }
             end
           end
 
-          def render_action_item(action, danger: false)
+          def render_action_item(action)
             url = route_options_to_url(action.route_options, @record)
-
-            link_attrs = {
-              href: url,
-              class: tokens(
-                "flex items-center gap-2 px-3 py-1.5 text-sm transition-colors",
-                danger ? "text-danger-600 dark:text-danger-400 hover:bg-danger-50 dark:hover:bg-danger-900/30" : "text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
-              )
-            }
-
-            # Add turbo frame if specified
-            link_attrs[:data] = {turbo_frame: action.turbo_frame} if action.turbo_frame
-
-            # Add confirmation if specified
-            if action.confirmation
-              link_attrs[:data] ||= {}
-              link_attrs[:data][:turbo_method] = action.route_options.method if action.route_options.method
-              link_attrs[:data][:turbo_confirm] = action.confirmation
-            end
-
-            a(**link_attrs) do
-              render action.icon.new(class: "w-4 h-4") if action.icon
-              span { action.label }
-            end
+            render Plutonium::UI::ActionButton.new(action, url: url, variant: :row_dropdown)
           end
 
           def secondary_actions

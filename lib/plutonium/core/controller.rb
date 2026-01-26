@@ -166,9 +166,8 @@ module Plutonium
         end
 
         helper_suffix = case action
-        when :new then "new_"
-        when :edit then "edit_"
-        else ""
+        when :show, nil then ""
+        else "#{action}_"
         end
 
         helper_name = :"#{helper_suffix}#{helper_base}_path"
