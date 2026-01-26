@@ -1,3 +1,8 @@
+## [0.39.1] - 2026-01-26
+
+### 🐛 Bug Fixes
+
+- *(ui)* Include ImageTag helper for AssetsHelper compatibility
 ## [0.39.0] - 2026-01-26
 
 ### 🚀 Features
