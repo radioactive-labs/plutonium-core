@@ -1,4 +1,4 @@
-## [0.38.0] - 2026-01-25
+## [0.39.0] - 2026-01-26
 
 ### 🚀 Features
 
@@ -14,9 +14,14 @@
 - Remove duplicate kv store controller and move improvements into original
 - *(filters)* Improve association filter class resolution
 - *(ui)* Improve dropdown positioning with viewport boundary
+- *(auth)* Dynamically detect database adapter for Rodauth (#51)
 - *(crud)* Use correct action attributes for form re-rendering on errors
 - *(form)* Distinguish empty vs not-submitted key-value store fields
 - *(controller)* Use existing record context for form param extraction
+- *(controller)* Prevent UrlGenerationError when extracting params for nested resource update
+- *(routing)* Correct URL generation for interactive actions on nested resources
+- *(ui)* Replace deprecated phlex-rails `helpers` method with `view_context`
+- *(routing)* Add named routes for commit actions and document route naming requirement
 
 ### 📚 Documentation
 
@@ -34,6 +39,7 @@
 - Use chokidar to fix dev build cyclic dependency issues
 - Warn when running tests without Appraisal
 - Switch to yarn
+- Update og image
 ## [0.37.0] - 2026-01-21
 
 ### 🚀 Features
