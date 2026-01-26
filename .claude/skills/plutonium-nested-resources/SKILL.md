@@ -316,15 +316,17 @@ Add custom member/collection routes to nested resources:
 ```ruby
 register_resource ::Property do
   member do
-    get :analytics
-    post :archive
+    get :analytics, as: :analytics
+    post :archive, as: :archive
   end
 end
 ```
 
+**Important:** Always use the `as:` option to name custom routes. This ensures `resource_url_for` can generate correct URLs for nested resources. Without named routes, URL generation will fail.
+
 Generates nested routes:
-- `/companies/:company_id/properties/:id/analytics`
-- `/companies/:company_id/properties/:id/archive`
+- `/companies/:company_id/nested_properties/:id/analytics`
+- `/companies/:company_id/nested_properties/:id/archive`
 
 ## Related Skills
 
