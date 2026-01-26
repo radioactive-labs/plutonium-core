@@ -39,6 +39,20 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+::: warning Always Name Custom Routes
+When adding custom routes for actions, always use the `as:` option:
+
+```ruby
+resources :posts do
+  collection do
+    get :reports, as: :reports  # Named route required!
+  end
+end
+```
+
+This ensures `resource_url_for` can generate correct URLs, especially for nested resources.
+:::
+
 **Note:** For custom operations with business logic, use Interactive Actions with an Interaction class.
 
 ## Interactive Actions with Interactions

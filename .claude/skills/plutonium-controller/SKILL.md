@@ -151,6 +151,19 @@ class PostsController < ::ResourceController
 end
 ```
 
+**Important:** When adding custom routes, always use the `as:` option to name them:
+
+```ruby
+# config/routes.rb or portal routes
+resources :posts do
+  member do
+    post :publish, as: :publish  # Named route required!
+  end
+end
+```
+
+This ensures `resource_url_for` can generate correct URLs, especially for nested resources.
+
 Note: For most custom operations, use Interactive Actions in definitions instead.
 
 ## Key Methods

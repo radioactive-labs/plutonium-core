@@ -219,10 +219,14 @@ end
 # In portal routes or config/routes.rb
 register_resource Post do
   member do
-    post :publish
+    post :publish, as: :publish  # Always use as: option!
   end
 end
 ```
+
+::: warning Always Name Custom Routes
+Always use the `as:` option when defining custom routes. This ensures `resource_url_for` can generate correct URLs, especially for nested resources.
+:::
 
 ## Authorization
 

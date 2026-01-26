@@ -388,14 +388,18 @@ Add member/collection routes:
 ```ruby
 register_resource ::Comment do
   member do
-    post :approve
-    post :flag
+    post :approve, as: :approve
+    post :flag, as: :flag
   end
   collection do
-    get :pending
+    get :pending, as: :pending
   end
 end
 ```
+
+::: warning Always Name Custom Routes
+Always use the `as:` option when defining custom routes. This ensures `resource_url_for` can generate correct URLs. Without named routes, URL generation will fail for nested resources.
+:::
 
 Generates nested routes:
 - `POST /posts/:post_id/nested_comments/:id/approve`

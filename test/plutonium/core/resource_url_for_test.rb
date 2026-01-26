@@ -252,4 +252,24 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     url = controller.send(:resource_url_for, Blogging::Post, action: :interactive_resource_action, interactive_action: :export)
     assert_match %r{/demo/blogging/posts/resource_actions/export$}, url
   end
+
+  # Commit actions (POST) use same path as GET actions
+
+  test "has_many: instance + parent + action :commit_interactive_record_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @comment, parent: @post, action: :commit_interactive_record_action, interactive_action: :archive)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/#{@comment.id}/record_actions/archive$}, url
+  end
+
+  test "has_many: class + parent + action :commit_interactive_bulk_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :commit_interactive_bulk_action, interactive_action: :bulk_delete)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/bulk_actions/bulk_delete$}, url
+  end
+
+  test "has_many: class + parent + action :commit_interactive_resource_action" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :commit_interactive_resource_action, interactive_action: :import)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
+  end
 end
