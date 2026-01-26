@@ -22,7 +22,7 @@ module Plutonium
 
         def lang = nil
 
-        def page_title = helpers.controller.instance_variable_get(:@page_title)
+        def page_title = view_context.controller.instance_variable_get(:@page_title)
 
         def html_attributes = {lang:, data_controller: "color-mode"}
 

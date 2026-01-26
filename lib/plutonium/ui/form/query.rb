@@ -207,7 +207,7 @@ module Plutonium
         def count_active_filters
           count = 0
           query_object.filter_definitions.each do |filter_name, _|
-            filter_params = helpers.params.dig(:q, filter_name)
+            filter_params = params.dig(:q, filter_name)
             next unless filter_params.is_a?(Hash) || filter_params.is_a?(ActionController::Parameters)
 
             filter_params.each_value do |v|

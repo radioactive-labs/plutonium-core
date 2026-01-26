@@ -17,7 +17,7 @@ module Plutonium
         end
 
         def render_default_content
-          if helpers.current_turbo_frame == "remote_modal"
+          if current_turbo_frame == "remote_modal"
             dialog(
               closedby: "any",
               class: "rounded-[var(--pu-radius-lg)] w-full max-w-3xl

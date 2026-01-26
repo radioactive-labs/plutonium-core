@@ -11,15 +11,19 @@ module Plutonium
         private
 
         def params
-          helpers.controller.params
+          view_context.controller.params
         end
 
         def request
-          helpers.controller.request
+          view_context.controller.request
         end
 
         def pagy_instance
-          helpers.controller.instance_variable_get(:@pagy)
+          view_context.controller.instance_variable_get(:@pagy)
+        end
+
+        def controller
+          view_context.controller
         end
 
         delegate \
@@ -29,6 +33,7 @@ module Plutonium
           :resource_record?,
           :resource_name,
           :resource_name_plural,
+          :nestable_resource_name_plural,
           :display_name_of,
           :resource_url_for,
           :route_options_to_url,
@@ -46,6 +51,8 @@ module Plutonium
           :allowed_to?,
           :registered_resources,
           :root_path,
+          :make_page_title,
+          :resource_logo_tag,
           to: :view_context
       end
     end
