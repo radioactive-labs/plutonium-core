@@ -57,6 +57,13 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/new$}, url
   end
 
+  test "has_many: class + parent + action :create" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :create)
+    # :create uses collection path (HTTP POST determines create vs index)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments$}, url
+  end
+
   # Nested has_many: instance
 
   test "has_many: instance + parent + association" do
@@ -75,6 +82,21 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     get "/demo/blogging/posts/#{@post.id}"
     url = controller.send(:resource_url_for, @comment, parent: @post, association: :comments, action: :edit)
     assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/#{@comment.id}/edit$}, url
+  end
+
+  test "has_many: new instance + parent + action :create" do
+    get "/demo/blogging/posts/#{@post.id}"
+    new_comment = Blogging::Comment.new(post: @post)
+    url = controller.send(:resource_url_for, new_comment, parent: @post, association: :comments, action: :create)
+    # :create with new record uses collection path (no ID)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments$}, url
+  end
+
+  test "has_many: instance + parent + action :update" do
+    get "/demo/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @comment, parent: @post, association: :comments, action: :update)
+    # :update uses member path (HTTP PATCH/PUT determines update)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/#{@comment.id}$}, url
   end
 
   # Nested has_many: symbol

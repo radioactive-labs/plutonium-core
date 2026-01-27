@@ -154,19 +154,22 @@ module Plutonium
         # Determine the helper name based on action and route type
         # For singular routes (has_one), always use the association name as-is (no singularize)
         # For plural routes (has_many):
-        #   - :index action uses plural (blogging_post_nested_comments)
+        #   - :index/:create actions use plural (blogging_post_nested_comments) - collection routes
         #   - :new action uses singular (new_blogging_post_nested_comment)
-        #   - member actions (show/edit/destroy) use singular (blogging_post_nested_comment)
+        #   - member actions (show/edit/update/destroy) use singular (blogging_post_nested_comment)
+        is_collection_action = action == :index || action == :create || (no_record && action != :new)
         helper_base = if is_singular
           "#{parent_singular}_#{nested_resource_name}"
-        elsif action == :index || (no_record && action != :new)
+        elsif is_collection_action
           "#{parent_singular}_#{nested_resource_name}"
         else
           "#{parent_singular}_#{nested_resource_name.to_s.singularize}"
         end
 
+        # Only add helper prefix for actions that have named route helpers (new, edit)
+        # :create/:update use HTTP method to differentiate, not route helper prefix
         helper_suffix = case action
-        when :show, nil then ""
+        when :show, :create, :update, nil then ""
         else "#{action}_"
         end
 
@@ -175,7 +178,8 @@ module Plutonium
         # Build the arguments for the helper
         helper_args = [parent.to_param]
         # Include element ID for plural routes (has_many) when we have a record instance
-        unless is_singular || no_record
+        # Skip ID for collection actions (:index, :create) which don't need a member ID
+        unless is_singular || no_record || is_collection_action
           helper_args << element.to_param
         end
 
