@@ -1,3 +1,8 @@
+## [0.39.2] - 2026-01-27
+
+### 🐛 Bug Fixes
+
+- Handle create and update nested routes
 ## [0.39.1] - 2026-01-26
 
 ### 🐛 Bug Fixes
