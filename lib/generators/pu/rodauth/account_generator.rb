@@ -51,20 +51,27 @@ module Pu
 
       def configure_rodauth_plugin_load_memory
         in_root do
-          plugin_config = indent(
-            "rodauth#{"(:#{table_prefix})" unless primary?}.load_memory # autologin remembered #{table}\n", 4
-          )
-          gsub_file "app/rodauth/rodauth_app.rb", /.*# rodauth\.load_memory.*\n/, ""
+          rodauth_app = File.read("app/rodauth/rodauth_app.rb")
+          load_memory_pattern = primary? ? /rodauth\.load_memory/ : /rodauth\(:#{table_prefix}\)\.load_memory/
+
+          return if rodauth_app.match?(load_memory_pattern)
+
+          plugin_config = if primary?
+            indent("rodauth.load_memory # autologin remembered #{table}\n", 4)
+          else
+            indent(<<~RUBY, 4)
+              if r.path.start_with?("/#{table_prefix}_dashboard")
+                rodauth(:#{table_prefix}).load_memory # autologin remembered #{table}
+              end
+            RUBY
+          end
 
           if remember?
             insert_into_file "app/rodauth/rodauth_app.rb", plugin_config, after: "# plugin route configuration\n"
           else
-            gsub_file "app/rodauth/rodauth_app.rb", plugin_config, ""
-            in_root do
-              unless File.read("app/rodauth/rodauth_app.rb").match?(/.*\.load_memory # autologin/)
-                insert_into_file "app/rodauth/rodauth_app.rb", indent("# rodauth.load_memory # autologin remembered users\n", 4),
-                  after: "# plugin route configuration\n"
-              end
+            unless rodauth_app.match?(/\.load_memory # autologin/)
+              insert_into_file "app/rodauth/rodauth_app.rb", indent("# rodauth.load_memory # autologin remembered users\n", 4),
+                after: "# plugin route configuration\n"
             end
           end
         end
