@@ -21,6 +21,9 @@ module Pu
         desc: "Generate an entity model for customer accounts. Defaults to 'Entity'",
         aliases: ["--entity", "-e"]
 
+      class_option :extra_attributes, type: :array, default: [],
+        desc: "Additional attributes to add to the account model (e.g., name:string)"
+
       def start
         create_customer_account
         create_entity_model_and_membership
@@ -35,6 +38,7 @@ module Pu
         invoke "pu:rodauth:account", [name],
           defaults: false,
           **customer_features,
+          extra_attributes: Array(options[:extra_attributes]),
           force: options[:force],
           skip: options[:skip],
           lint: true

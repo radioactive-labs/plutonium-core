@@ -15,6 +15,12 @@ module Pu
 
       argument :name
 
+      class_option :roles, type: :array, default: %w[super_admin admin],
+        desc: "Available roles for admin accounts"
+
+      class_option :extra_attributes, type: :array, default: [],
+        desc: "Additional attributes to add to the account model (e.g., name:string)"
+
       def start
         generate_admin_account
         configure_admin_account
@@ -28,6 +34,7 @@ module Pu
         invoke "pu:rodauth:account", [name],
           defaults: false,
           **admin_features,
+          extra_attributes: ["role:integer"] + Array(options[:extra_attributes]),
           force: options[:force],
           skip: options[:skip]
       end
@@ -66,6 +73,28 @@ module Pu
         template "app/views/_login_form_footer.html.erb.tt", "app/views/rodauth/#{normalized_name}/_login_form_footer.html.erb"
 
         template "lib/tasks/rodauth_admin.rake", "lib/tasks/rodauth_#{normalized_name}.rake"
+
+        add_role_enum
+        create_invite_interaction
+      end
+
+      def add_role_enum
+        inject_into_file "app/models/#{normalized_name}.rb",
+          "enum :role, #{roles_enum}\n  ",
+          after: "# add misc attribute macros above.\n"
+      end
+
+      def create_invite_interaction
+        template "app/interactions/invite_admin_interaction.rb",
+          "app/interactions/#{normalized_name}/invite_interaction.rb"
+
+        inject_into_file "app/definitions/#{normalized_name}_definition.rb",
+          "  action :invite, interaction: #{name.classify}::InviteInteraction, collection: true, category: :primary\n",
+          after: /class #{name.classify}Definition < .+\n/
+
+        inject_into_file "app/policies/#{normalized_name}_policy.rb",
+          "def invite?\n    true\n  end\n\n  ",
+          before: "# Core attributes"
       end
 
       def admin_features
@@ -83,6 +112,22 @@ module Pu
       def display_name = name.humanize.downcase
 
       def normalized_name = name.underscore
+
+      def roles
+        Array(options[:roles]).flat_map { |r| r.split(",") }.map(&:strip)
+      end
+
+      def roles_enum
+        roles.each_with_index.map { |r, i| "#{r}: #{i}" }.join(", ")
+      end
+
+      def default_role
+        [1, roles.size - 1].min
+      end
+
+      def default_role_name
+        roles[default_role]
+      end
     end
   end
 end
