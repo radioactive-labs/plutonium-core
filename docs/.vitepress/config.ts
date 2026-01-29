@@ -87,6 +87,7 @@ export default defineConfig(withMermaid({
             { text: "Nested Resources", link: "/guides/nested-resources" },
             { text: "Multi-tenancy", link: "/guides/multi-tenancy" },
             { text: "Search & Filtering", link: "/guides/search-filtering" },
+            { text: "User Invites", link: "/guides/user-invites" },
           ]
         },
         {
