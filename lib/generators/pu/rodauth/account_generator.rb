@@ -18,6 +18,9 @@ module Pu
       desc "Generate a rodauth-rails account.\n\n" \
            "Configures a basic set of features as well as migrations, a model, mailer and views."
 
+      class_option :extra_attributes, type: :array, default: [],
+        desc: "Additional attributes to add to the account model (e.g., role:integer)"
+
       def install_dependencies
         Bundler.with_unbundled_env do
           run "bundle add jwt" if jwt? || jwt_refresh?
@@ -96,7 +99,8 @@ module Pu
         return unless base?
 
         template "app/models/account.rb", "app/models/#{account_path}.rb"
-        invoke "pu:res:scaffold", [table, "email:string", "status:integer"], dest: "main_app",
+        scaffold_attrs = ["email:string", "status:integer"] + Array(options[:extra_attributes])
+        invoke "pu:res:scaffold", [table, *scaffold_attrs], dest: "main_app",
           model: false,
           force: true,
           skip: options[:skip]

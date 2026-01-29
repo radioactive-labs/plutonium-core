@@ -1,0 +1,25 @@
+# frozen_string_literal: true
+
+class <%= name.classify %>::InviteInteraction < Plutonium::Resource::Interaction
+  presents label: "Invite <%= name.titleize %>", icon: Phlex::TablerIcons::Mail
+
+  attribute :email
+  attribute :role, default: :<%= default_role_name %>
+
+  validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
+  validates :role, presence: true, inclusion: {in: <%= name.classify %>.roles.keys}
+
+  input :role, as: :select, choices: <%= name.classify %>.roles.keys
+
+  def execute
+    account = nil
+    <%= name.classify %>.transaction do
+      RodauthApp.rodauth(:<%= normalized_name %>).create_account(login: email)
+      account = <%= name.classify %>.find_by!(email: email)
+      account.update!(role: role)
+    end
+    succeed(account).with_message("Invitation sent to #{email}")
+  rescue ::Rodauth::InternalRequestError => e
+    failed(email: e.message)
+  end
+end
