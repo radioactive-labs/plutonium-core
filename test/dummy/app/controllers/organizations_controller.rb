@@ -1,0 +1,2 @@
+class OrganizationsController < ::ResourceController
+end

@@ -1,0 +1,2 @@
+class OrganizationUserDefinition < ::ResourceDefinition
+end
