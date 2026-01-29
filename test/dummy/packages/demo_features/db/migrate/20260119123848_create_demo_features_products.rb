@@ -1,4 +1,4 @@
-class CreateDemoFeaturesProducts < ActiveRecord::Migration[7.2]
+class CreateDemoFeaturesProducts < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :demo_features_products do |t|
       t.string :name, null: false

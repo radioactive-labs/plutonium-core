@@ -1,4 +1,4 @@
-class CreateDemoFeaturesMorphDemos < ActiveRecord::Migration[8.1]
+class CreateDemoFeaturesMorphDemos < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :demo_features_morph_demos do |t|
       t.belongs_to :category, null: false, foreign_key: {to_table: :demo_features_categories}
