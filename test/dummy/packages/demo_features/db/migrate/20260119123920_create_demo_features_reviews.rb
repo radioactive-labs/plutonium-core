@@ -1,4 +1,4 @@
-class CreateDemoFeaturesReviews < ActiveRecord::Migration[7.2]
+class CreateDemoFeaturesReviews < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :demo_features_reviews do |t|
       t.belongs_to :product, null: false, foreign_key: {to_table: :demo_features_products}
