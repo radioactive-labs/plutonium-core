@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Invitation</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="csrf-param" content="authenticity_token" />
+  <meta name="csrf-token" content="<%%= form_authenticity_token %>" />
+  <%%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%%= javascript_importmap_tags %>
+</head>
+<body class="antialiased min-h-screen bg-[var(--pu-body)]">
+  <main class="p-4 min-h-screen flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0">
+    <%% if flash.any? %>
+      <%% flash.each do |type, message| %>
+        <div class="fixed z-50 top-16 inset-x-0 mx-auto flex items-center w-full max-w-md p-4 rounded-[var(--pu-radius-lg)]"
+             style="box-shadow: var(--pu-shadow-md); background: <%%= type == 'alert' ? 'var(--color-danger-50)' : 'var(--color-success-50)' %>; color: <%%= type == 'alert' ? 'var(--color-danger-600)' : 'var(--color-success-600)' %>"
+             role="alert">
+          <div class="ms-3 text-sm font-normal"><%%= message %></div>
+        </div>
+      <%% end %>
+    <%% end %>
+
+    <!-- Main content card -->
+    <div class="w-full sm:max-w-md bg-[var(--pu-card-bg)] border border-[var(--pu-card-border)] rounded-[var(--pu-radius-lg)]"
+         style="box-shadow: var(--pu-shadow-lg)">
+      <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+        <%%= yield %>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

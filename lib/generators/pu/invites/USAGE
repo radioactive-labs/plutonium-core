@@ -1,0 +1,27 @@
+Description:
+    Install user invites package with all required files.
+
+Example:
+    rails g pu:invites:install
+
+    This will create a packages/invites/ package with:
+        packages/invites/app/models/invites/user_invite.rb
+        packages/invites/app/mailers/invites/user_invite_mailer.rb
+        packages/invites/app/controllers/invites/user_invitations_controller.rb
+        packages/invites/app/views/invites/...
+        packages/invites/app/interactions/invites/resend_invite_interaction.rb
+        packages/invites/app/definitions/invites/user_invite_definition.rb
+        packages/invites/app/policies/invites/user_invite_policy.rb
+        db/migrate/TIMESTAMP_create_user_invites.rb
+
+Options:
+    --entity-model=NAME       Entity model name for scoping (default: Entity)
+    --user-model=NAME         User model name (default: User)
+    --membership-model=NAME   Membership model name (default: <Entity>User)
+    --roles=ROLES             Comma-separated roles (default: member,admin)
+    --rodauth=NAME            Rodauth configuration for signup (default: user)
+    --enforce-domain          Require user email domain to match entity domain
+
+After installation, use pu:invites:invitable to connect invitables:
+    rails g pu:invites:invitable Tenant
+    rails g pu:invites:invitable TeamMember --role=member

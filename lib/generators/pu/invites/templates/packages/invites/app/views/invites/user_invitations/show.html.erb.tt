@@ -1,0 +1,39 @@
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl">
+  Accept Invitation
+</h1>
+
+<div class="mb-6 p-4 bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]">
+  <div class="text-center">
+    <p class="text-[var(--pu-text-muted)] mb-2">You've been invited to join:</p>
+    <p class="text-xl font-semibold text-primary-600 dark:text-primary-400"><%%= @invite.entity.to_label %></p>
+  </div>
+</div>
+
+<div class="space-y-4">
+  <div>
+    <p class="text-[var(--pu-text-muted)] mb-2">Role:</p>
+    <p class="text-lg capitalize font-medium text-[var(--pu-text)]"><%%= @invite.role %></p>
+  </div>
+
+  <div>
+    <p class="text-[var(--pu-text-muted)] mb-2">Invited by:</p>
+    <p class="text-lg font-medium text-[var(--pu-text)]"><%%= @invite.invited_by.email %></p>
+  </div>
+
+  <%% if @invite.expires_at.present? %>
+    <div class="p-3 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded-[var(--pu-radius-md)]">
+      <p class="text-sm text-warning-800 dark:text-warning-200">
+        This invitation expires on <%%= @invite.expires_at.strftime("%B %d, %Y at %l:%M %p") %>
+      </p>
+    </div>
+  <%% end %>
+
+  <%%= form_with url: accept_invitation_path(token: params[:token]), method: :post, local: true do |form| %>
+    <div class="space-y-3 pt-4">
+      <%%= form.submit "Accept Invitation",
+          class: "w-full pu-btn pu-btn-md pu-btn-primary cursor-pointer" %>
+      <%%= link_to "Cancel", "/",
+          class: "w-full block pu-btn pu-btn-md pu-btn-outline text-center" %>
+    </div>
+  <%% end %>
+</div>

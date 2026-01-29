@@ -1,0 +1,7 @@
+# frozen_string_literal: true
+
+module Invites
+  class CancelInviteInteraction < Plutonium::Resource::Interaction
+    include Plutonium::Invites::Concerns::CancelInvite
+  end
+end

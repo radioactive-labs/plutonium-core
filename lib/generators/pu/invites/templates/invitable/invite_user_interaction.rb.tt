@@ -1,0 +1,33 @@
+# frozen_string_literal: true
+
+class <%= model_class %>::InviteUserInteraction < Plutonium::Resource::Interaction
+  include Plutonium::Invites::Concerns::InviteUser
+
+  input :email
+
+  private
+
+  def entity
+    current_entity
+  end
+
+  def invitable
+    resource
+  end
+
+  def role
+    :<%= role %>
+  end
+<% if membership_model != "EntityUser" -%>
+
+  def membership_class
+    <%= membership_model %>
+  end
+<% end -%>
+<% if user_model != "User" -%>
+
+  def user_class
+    <%= user_model %>
+  end
+<% end -%>
+end

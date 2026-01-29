@@ -1,0 +1,31 @@
+Description:
+    Connect an invitable model to send user invites.
+    The invitable is a model that triggers invites and gets notified on acceptance.
+
+Example:
+    rails g pu:invites:invitable Tenant
+    rails g pu:invites:invitable Tenant --role=tenant
+    rails g pu:invites:invitable TeamMember --role=member
+    rails g pu:invites:invitable Tenant --no-email-templates
+
+    This will create:
+        app/interactions/tenant/invite_user_interaction.rb
+        packages/invites/app/views/invites/user_invite_mailer/invitation_tenant.html.erb
+        packages/invites/app/views/invites/user_invite_mailer/invitation_tenant.text.erb
+
+    And inject:
+        - include Plutonium::Invites::Concerns::Invitable in the model
+        - action :invite_user in the definition
+        - invite_user? policy method
+
+    After generation, implement Tenant#on_invite_accepted(user):
+        def on_invite_accepted(user)
+          update!(user: user)
+        end
+
+Options:
+    --role=ROLE                 Role to assign to invited users (default: member)
+    --user-model=NAME           User model name (default: User)
+    --membership-model=NAME     Membership model (default: EntityUser)
+    --dest=PACKAGE              Destination package (default: main_app)
+    --[no-]email-templates      Generate custom email templates (default: true)

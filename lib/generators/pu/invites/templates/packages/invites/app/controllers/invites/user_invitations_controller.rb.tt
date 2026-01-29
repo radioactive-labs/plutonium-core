@@ -1,0 +1,77 @@
+# frozen_string_literal: true
+
+module Invites
+  class UserInvitationsController < ApplicationController
+    include Plutonium::Invites::Controller
+
+    layout "invites/invitation"
+
+    private
+
+    def invite_class
+      Invites::UserInvite
+    end
+
+    def user_class
+      <%= user_model %>
+    end
+
+    def after_accept_path
+      "/"
+    end
+
+    def login_path
+<% if rodauth? -%>
+      rodauth(:<%= rodauth_config %>).login_path
+<% else -%>
+      "/login"
+<% end -%>
+    end
+
+    def current_user
+<% if rodauth? -%>
+      rodauth(:<%= rodauth_config %>).rails_account if rodauth(:<%= rodauth_config %>).logged_in?
+<% else -%>
+      # TODO: Implement based on your authentication system
+      nil
+<% end -%>
+    end
+
+<% if rodauth? -%>
+    def create_user_for_signup(email, password)
+      rodauth_instance = rodauth(:<%= rodauth_config %>)
+      password_hash = rodauth_instance.password_hash(password)
+
+      if email.downcase == @invite.email.downcase
+        # Email matches invitation - create verified account directly
+        <%= user_model %>.create!(
+          email: email,
+          password_hash: password_hash,
+          status: 2 # verified
+        )
+      else
+        # Different email - normal flow with verification email
+        rodauth_instance.create_account(login: email, password: password)
+        <%= user_model %>.find_by(email: email)
+      end
+    end
+
+    def sign_in_user(user)
+      rodauth(:<%= rodauth_config %>).account_from_login(user.email)
+      rodauth(:<%= rodauth_config %>).login("signup")
+    end
+
+    def rodauth(name = :<%= rodauth_config %>)
+      request.env["rodauth.#{name}"]
+    end
+<% else -%>
+    def create_user_for_signup(email, password)
+      raise NotImplementedError, "Implement create_user_for_signup based on your auth system"
+    end
+
+    def sign_in_user(user)
+      # Implement based on your authentication system
+    end
+<% end -%>
+  end
+end

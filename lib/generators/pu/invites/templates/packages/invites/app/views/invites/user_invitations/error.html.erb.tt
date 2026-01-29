@@ -1,0 +1,24 @@
+<div class="text-center">
+  <div class="mb-4">
+    <svg class="mx-auto h-12 w-12 text-danger-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  </div>
+
+  <h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl mb-2">
+    <%%= @error_title %>
+  </h1>
+
+  <p class="text-[var(--pu-text-muted)] mb-6"><%%= @error_message %></p>
+
+  <div class="space-y-3">
+    <%%= link_to "Go to Home", "/",
+        class: "inline-block pu-btn pu-btn-md pu-btn-primary" %>
+
+    <%% unless current_user %>
+      <p class="text-sm text-[var(--pu-text-subtle)] mt-4">
+        Need a new invitation? Contact your administrator.
+      </p>
+    <%% end %>
+  </div>
+</div>

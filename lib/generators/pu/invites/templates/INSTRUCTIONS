@@ -1,0 +1,22 @@
+
+===============================================================================
+
+User invites package installed successfully!
+
+Next steps:
+
+1. Run migrations:
+   rails db:migrate
+
+2. Register Invites::UserInvite in your portal routes:
+   # packages/<portal>/config/routes.rb
+   register_resource ::Invites::UserInvite
+
+3. (Optional) Connect invitable models that trigger invites:
+   rails g pu:invites:invitable Tenant
+   rails g pu:invites:invitable TeamMember --role=member
+
+   Then implement on_invite_accepted(user) in your invitable model.
+
+===============================================================================
+

@@ -1,0 +1,49 @@
+<div class="mb-6 p-4 bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]">
+  <div class="text-center">
+    <p class="text-sm text-[var(--pu-text-muted)] mb-1">Joining:</p>
+    <p class="font-bold text-primary-600 dark:text-primary-400"><%%= @invite.entity.to_label %></p>
+    <p class="text-sm text-[var(--pu-text-muted)] mt-1">as <%%= @invite.role.capitalize %></p>
+  </div>
+</div>
+
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl">
+  Create Your Account
+</h1>
+
+<%%= form_with url: invitation_signup_path(token: @invite.token), method: :post, local: true, class: "space-y-4", data: { turbo: false } do |form| %>
+  <div>
+    <label for="email" class="pu-label">Email</label>
+    <%% if @invite.enforce_email? %>
+      <input type="email" name="email" value="<%%= @invite.email %>" disabled
+             class="pu-input cursor-not-allowed opacity-60">
+      <input type="hidden" name="email" value="<%%= @invite.email %>">
+      <p class="pu-hint">This email is required for your invitation</p>
+    <%% else %>
+      <%%= form.email_field :email, value: @invite.email, required: true,
+          placeholder: "you@example.com",
+          class: "pu-input" %>
+      <%% if (domain = @invite.enforce_domain) %>
+        <p class="pu-hint">Must be from <%%= domain %> domain</p>
+      <%% else %>
+        <p class="pu-hint">You can use a different email if needed</p>
+      <%% end %>
+    <%% end %>
+  </div>
+
+  <div>
+    <label for="password" class="pu-label">Password</label>
+    <%%= form.password_field :password, required: true, class: "pu-input" %>
+  </div>
+
+  <div>
+    <label for="password_confirmation" class="pu-label">Confirm Password</label>
+    <%%= form.password_field :password_confirmation, required: true, class: "pu-input" %>
+  </div>
+
+  <div class="space-y-3 pt-4">
+    <%%= form.submit "Create Account",
+        class: "w-full pu-btn pu-btn-md pu-btn-primary cursor-pointer" %>
+    <%%= link_to "Back", invitation_path(token: @invite.token),
+        class: "w-full block pu-btn pu-btn-md pu-btn-outline text-center" %>
+  </div>
+<%% end %>
