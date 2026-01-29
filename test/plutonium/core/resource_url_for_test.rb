@@ -252,7 +252,8 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     get "/demo/blogging/posts/#{@post.id}"
     url = controller.send(:resource_url_for, @post_metadata, parent: @post, action: :interactive_record_action, interactive_action: :refresh)
     assert_match %r{/demo/blogging/posts/#{@post.id}/nested_post_metadata/record_actions/refresh$}, url
-    refute_match %r{/#{@post_metadata.id}}, url
+    # has_one uses singular path: /nested_post_metadata/record_actions/refresh (no id segment)
+    refute_match %r{/nested_post_metadata/\d+/}, url
   end
 
   # Top-level interactive actions
