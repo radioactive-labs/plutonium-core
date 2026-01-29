@@ -94,40 +94,111 @@ Creates a secure admin account with:
 - Account lockout
 - Active sessions tracking
 - Audit logging
-- No public signup (accounts created via rake task)
+- Role-based access control
+- Invite interaction for adding new admins
+- No public signup (accounts created via rake task or invite)
 
 ```bash
 rails generate pu:rodauth:admin admin
+rails generate pu:rodauth:admin admin --roles=super_admin,admin,viewer
+rails generate pu:rodauth:admin admin --extra-attributes=name:string,department:string
+```
+
+**Options:**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--roles` | super_admin,admin | Comma-separated roles for admin accounts |
+| `--extra_attributes` | | Additional model attributes (e.g., name:string) |
+
+**Generated role enum:**
+```ruby
+# app/models/admin.rb
+enum :role, super_admin: 0, admin: 1
+```
+
+**Generated invite interaction:**
+```ruby
+# app/interactions/admin/invite_interaction.rb
+class Admin::InviteInteraction < Plutonium::Interaction::Base
+  attribute :email, :string
+  attribute :role, default: :admin  # Second role is default
+
+  def execute
+    # Creates admin via internal request and sends invite email
+  end
+end
 ```
 
 **Creates rake task:**
 ```bash
-# Create admin account
+# Create admin account directly
 rails rodauth_admin:create[admin@example.com,password123]
 ```
 
 ### Customer Account (`pu:rodauth:customer`)
 
-Creates a customer account with an associated entity (organization/company):
+Creates a customer account with an associated entity (organization/company) for multi-tenant applications:
 
 ```bash
 rails generate pu:rodauth:customer customer
 rails generate pu:rodauth:customer customer --entity=Organization
+rails generate pu:rodauth:customer customer --extra-attributes=name:string,phone:string
 rails generate pu:rodauth:customer customer --no-allow_signup
 ```
 
 **Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--entity=NAME` | Entity model name (default: "Entity") |
-| `--no-allow_signup` | Disable public registration |
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--entity=NAME` | Entity | Entity model name (Organization, Company, Team) |
+| `--extra_attributes` | | Additional account attributes (e.g., name:string) |
+| `--no-allow_signup` | | Disable public registration |
 
-This creates:
-- Customer account model
-- Entity model (Organization, Company, etc.)
-- Membership join model
-- Has-many-through associations
+**Generated Models:**
+
+1. **Customer account** - The user model with Rodauth authentication
+2. **Entity model** - The organization/company (e.g., `Organization`)
+3. **Membership model** - Join table linking customers to entities (e.g., `OrganizationCustomer`)
+
+```ruby
+# app/models/customer.rb
+class Customer < ApplicationRecord
+  include Rodauth::Rails.model(:customer)
+
+  has_many :organization_customers, dependent: :destroy
+  has_many :organizations, through: :organization_customers
+end
+
+# app/models/organization.rb
+class Organization < ApplicationRecord
+  has_many :organization_customers, dependent: :destroy
+  has_many :customers, through: :organization_customers
+end
+
+# app/models/organization_customer.rb
+class OrganizationCustomer < ApplicationRecord
+  belongs_to :organization
+  belongs_to :customer
+
+  enum :role, member: 0, owner: 1
+
+  validates :customer, uniqueness: {
+    scope: :organization_id,
+    message: "is already a member of this entity"
+  }
+end
+```
+
+**Membership Roles:**
+
+The membership model includes a role enum for access control within the entity:
+
+```ruby
+membership = OrganizationCustomer.find_by(organization: org, customer: current_user)
+membership.member?  # Default role
+membership.owner?   # Admin role for the entity
+```
 
 ## Connecting Auth to Controllers
 
@@ -450,3 +521,4 @@ User.create!(
 - `plutonium-installation` - Initial Plutonium setup
 - `plutonium-portal` - Portal configuration
 - `plutonium-policy` - Authorization after authentication
+- `plutonium-invites` - User invitation system for multi-tenant apps
