@@ -34,37 +34,33 @@ module Pu
       end
 
       def generate_entity_resource
-        Rails::Generators.invoke(
-          "pu:res:scaffold",
-          [
-            normalized_name,
-            "name:string",
-            "--model",
-            ("--force" if options[:force]),
-            ("--skip" if options[:skip]),
-            "--dest=#{selected_destination_feature}"
-          ].compact,
-          behavior: behavior,
-          destination_root: destination_root
-        )
+        # Use class-based invocation to avoid Thor's invoke caching
+        klass = Rails::Generators.find_by_namespace("pu:res:scaffold")
+        klass.new(
+          [normalized_name, "name:string"],
+          {
+            dest: selected_destination_feature,
+            model: true,
+            force: options[:force],
+            skip: options[:skip]
+          }
+        ).invoke_all
 
         add_unique_index_to_migration(normalized_name, [:name])
       end
 
       def generate_membership_resource
-        Rails::Generators.invoke(
-          "pu:res:scaffold",
-          [
-            normalized_entity_membership_name,
-            *membership_attributes,
-            "--model",
-            ("--force" if options[:force]),
-            ("--skip" if options[:skip]),
-            "--dest=#{selected_destination_feature}"
-          ].compact,
-          behavior: behavior,
-          destination_root: destination_root
-        )
+        # Use class-based invocation to avoid Thor's invoke caching
+        klass = Rails::Generators.find_by_namespace("pu:res:scaffold")
+        klass.new(
+          [normalized_entity_membership_name, *membership_attributes],
+          {
+            dest: selected_destination_feature,
+            model: true,
+            force: options[:force],
+            skip: options[:skip]
+          }
+        ).invoke_all
 
         add_unique_index_to_migration(
           normalized_entity_membership_name,
