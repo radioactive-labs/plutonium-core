@@ -1,0 +1,68 @@
+# frozen_string_literal: true
+
+module Invites
+  class WelcomeController < ApplicationController
+    include Plutonium::Invites::PendingInviteCheck
+
+    layout "invites/invitation"
+
+<% if rodauth? -%>
+    before_action :require_authentication
+<% end -%>
+
+    def index
+      @invite = pending_invite
+
+      if @invite
+        render :pending_invitation
+      else
+        redirect_to after_welcome_path, allow_other_host: false
+      end
+    end
+
+    private
+
+    def invite_class
+      Invites::UserInvite
+    end
+
+    # Returns the path to redirect to after the welcome flow completes.
+    # This reads from session[:after_welcome_redirect] which should be set
+    # by the after_login hook in Rodauth.
+    def after_welcome_path
+      session.delete(:after_welcome_redirect) || default_redirect_path
+    end
+
+    def default_redirect_path
+      "/"
+    end
+
+<% if rodauth? -%>
+    def require_authentication
+      redirect_to login_path unless current_user
+    end
+
+    def current_user
+      rodauth(:<%= rodauth_config %>).rails_account if rodauth(:<%= rodauth_config %>).logged_in?
+    end
+
+    def login_path
+      rodauth(:<%= rodauth_config %>).login_path
+    end
+
+    def rodauth(name = :<%= rodauth_config %>)
+      request.env["rodauth.#{name}"]
+    end
+<% else -%>
+    def require_authentication
+      # TODO: Implement based on your authentication system
+      redirect_to "/login" unless current_user
+    end
+
+    def current_user
+      # TODO: Implement based on your authentication system
+      nil
+    end
+<% end -%>
+  end
+end

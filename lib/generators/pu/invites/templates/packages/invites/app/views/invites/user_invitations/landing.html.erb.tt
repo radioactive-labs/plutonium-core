@@ -1,0 +1,40 @@
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl text-center">
+  You're Invited!
+</h1>
+
+<div class="mb-6 p-4 bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]">
+  <div class="text-center">
+    <p class="text-[var(--pu-text-muted)] mb-2">You've been invited to join:</p>
+    <p class="text-xl font-bold text-primary-600 dark:text-primary-400"><%%= @invite.entity.to_label %></p>
+
+    <div class="mt-3 text-sm text-[var(--pu-text-muted)]">
+      <p><strong>Role:</strong> <%%= @invite.role.capitalize %></p>
+      <p><strong>Invited by:</strong> <%%= @invite.invited_by.email %></p>
+      <%% if @invite.expires_at.present? %>
+        <p><strong>Expires:</strong> <%%= @invite.expires_at.strftime("%B %d, %Y") %></p>
+      <%% end %>
+    </div>
+  </div>
+</div>
+
+<div class="space-y-4">
+  <div class="text-center">
+    <p class="text-[var(--pu-text-muted)] mb-4">To accept this invitation, please:</p>
+  </div>
+
+  <%%= link_to "Create Account", invitation_signup_path(token: params[:token]),
+      class: "w-full block pu-btn pu-btn-md pu-btn-primary text-center" %>
+
+  <div class="text-center">
+    <span class="text-[var(--pu-text-subtle)]">or</span>
+  </div>
+
+  <%%= link_to "Sign In", login_path,
+      class: "w-full block pu-btn pu-btn-md pu-btn-outline text-center" %>
+
+  <div class="mt-6 pt-4 border-t border-[var(--pu-border)] text-center">
+    <p class="text-xs text-[var(--pu-text-subtle)]">
+      Don't want to join? You can simply ignore this invitation.
+    </p>
+  </div>
+</div>

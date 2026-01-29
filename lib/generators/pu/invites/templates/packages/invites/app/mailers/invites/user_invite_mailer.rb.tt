@@ -1,0 +1,34 @@
+# frozen_string_literal: true
+
+module Invites
+  class UserInviteMailer < ApplicationMailer
+    def invitation(user_invite)
+      @user_invite = user_invite
+      @invitation_url = invitation_url(token: user_invite.token)
+
+      mail(
+        to: user_invite.email,
+        subject: invitation_subject,
+        template_name: invitation_template_name
+      )
+    end
+
+    private
+
+    def invitation_subject
+      "You've been invited to join #{@user_invite.entity.to_label}"
+    end
+
+    def invitation_template_name
+      return "invitation" unless @user_invite.invitable_type.present?
+
+      # e.g., "TenantProfile" -> "invitation_tenant_profile"
+      template = "invitation_#{@user_invite.invitable_type.underscore}"
+      template_exists?(template) ? template : "invitation"
+    end
+
+    def template_exists?(name)
+      lookup_context.exists?(name, _prefixes, false, [], formats: [:html, :text])
+    end
+  end
+end

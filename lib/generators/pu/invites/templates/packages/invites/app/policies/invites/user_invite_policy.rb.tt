@@ -1,0 +1,33 @@
+# frozen_string_literal: true
+
+module Invites
+  class UserInvitePolicy < Invites::ResourcePolicy
+    def create?
+      false # Created via InviteUserInteraction
+    end
+
+    def read?
+      true
+    end
+
+    def cancel?
+      record.pending?
+    end
+
+    def resend?
+      record.pending?
+    end
+
+    def permitted_attributes_for_create
+      [:entity, :email, :role, :invited_by, :expires_at]
+    end
+
+    def permitted_attributes_for_read
+      [:entity, :email, :role, :state, :invited_by, :expires_at, :accepted_at, :<%= user_table %>]
+    end
+
+    def permitted_associations
+      []
+    end
+  end
+end
