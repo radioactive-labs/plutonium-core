@@ -22,6 +22,7 @@ These guides show you how to accomplish specific tasks, with complete examples.
 - [Nested Resources](./nested-resources) - Parent/child resource relationships
 - [Multi-tenancy](./multi-tenancy) - Scope data to organizations or accounts
 - [Search and Filtering](./search-filtering) - Implement search, filters, and scopes
+- [User Invites](./user-invites) - Invitation system for multi-tenant apps
 
 ### Customization
 
@@ -42,6 +43,7 @@ These guides show you how to accomplish specific tasks, with complete examples.
 | Show comments under posts | [Nested Resources](./nested-resources) |
 | Separate data by company | [Multi-tenancy](./multi-tenancy) |
 | Add search to a list | [Search and Filtering](./search-filtering) |
+| Invite users to an org | [User Invites](./user-invites) |
 | Change the color scheme | [Theming](./theming) |
 | Fix a confusing error | [Troubleshooting](./troubleshooting) |
 
