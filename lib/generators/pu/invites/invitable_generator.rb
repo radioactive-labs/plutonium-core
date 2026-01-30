@@ -131,7 +131,7 @@ module Pu
       end
 
       def interaction_path
-        dest = options[:dest]
+        dest = options[:dest]&.underscore
         if dest == "main_app"
           "app/interactions/#{model_table}/invite_user_interaction.rb"
         else

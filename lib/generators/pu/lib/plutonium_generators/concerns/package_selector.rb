@@ -37,8 +37,10 @@ module PlutoniumGenerators
 
       def select_package(selected_package = nil, msg: "Select package", pkgs: nil)
         pkgs ||= available_packages
-        if pkgs.include?(selected_package)
-          selected_package
+        # Normalize input to underscore format (e.g., "CustomerPortal" -> "customer_portal")
+        normalized = selected_package&.underscore
+        if pkgs.include?(normalized)
+          normalized
         else
           prompt.select(msg, pkgs)
         end
