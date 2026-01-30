@@ -4,6 +4,9 @@ module <%= package_name %>
     # add concerns above.
 
     config.after_initialize do
+<%- if scoped_to_entity? -%>
+      scope_to_entity <%= scoped_entity_class %>, strategy: :path
+<%- end -%>
       # add directives above.
     end
   end

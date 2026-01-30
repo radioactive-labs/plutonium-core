@@ -20,12 +20,16 @@ rails g pu:pkg:portal dashboard
 | `--auth=NAME` | Rodauth account to authenticate with (e.g., `--auth=user`) |
 | `--public` | Grant public access (no authentication) |
 | `--byo` | Bring your own authentication |
+| `--scope=CLASS` | Entity class to scope to for multi-tenancy (e.g., `--scope=Organization`) |
 
 ```bash
 # Non-interactive examples
 rails g pu:pkg:portal admin --auth=admin
 rails g pu:pkg:portal api --public
 rails g pu:pkg:portal custom --byo
+
+# With entity scoping (multi-tenancy)
+rails g pu:pkg:portal admin --auth=admin --scope=Organization
 ```
 
 Without flags, the generator prompts interactively:
