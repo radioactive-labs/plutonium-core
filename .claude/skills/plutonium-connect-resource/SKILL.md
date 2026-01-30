@@ -10,10 +10,17 @@ Use the `pu:res:conn` generator to connect resources to portals. This is require
 ## Command Syntax
 
 ```bash
-rails g pu:res:conn RESOURCE [RESOURCE...] --dest=PORTAL_NAME
+rails g pu:res:conn RESOURCE [RESOURCE...] --dest=PORTAL_NAME [--singular]
 ```
 
 **Always specify resources directly** - this avoids interactive prompts. The `--src` option is only needed for interactive mode and can be ignored.
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `--dest=NAME` | Target portal package (required) |
+| `--singular` | Register as a singular resource (e.g., profile, dashboard) |
 
 ## Usage Patterns
 
@@ -38,6 +45,16 @@ rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
 ```bash
 rails g pu:res:conn Property PropertyAmenity Unit Tenant --dest=admin_portal
 ```
+
+### Singular Resources
+
+For resources that represent a single record per user (e.g., profile, dashboard, settings):
+
+```bash
+rails g pu:res:conn Profile --dest=customer_portal --singular
+```
+
+This registers the resource with `singular: true`, generating routes like `/profile` instead of `/profiles/:id`.
 
 ## What Gets Generated
 
@@ -89,6 +106,7 @@ end
 ```ruby
 # In packages/admin_portal/config/routes.rb
 register_resource ::Post
+register_resource ::Profile, singular: true  # With --singular
 ```
 
 ## Typical Workflow
