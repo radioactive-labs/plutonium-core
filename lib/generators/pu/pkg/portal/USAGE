@@ -7,7 +7,8 @@ Usage:
 Options:
     --auth=NAME      Rodauth account to authenticate with (e.g., --auth=user)
     --public         Grant public access (no authentication required)
-    --byo       Bring your own authentication (configure manually)
+    --byo            Bring your own authentication (configure manually)
+    --scope=CLASS    Entity class to scope to for multi-tenancy (e.g., --scope=Organization)
 
     Without options, the generator prompts interactively for authentication choice.
 
@@ -24,6 +25,10 @@ Examples:
 
     # Custom authentication (implement your own)
     rails g pu:pkg:portal custom --byo
+
+    # With entity scoping (multi-tenancy)
+    rails g pu:pkg:portal admin --auth=admin --scope=Organization
+    rails g pu:pkg:portal customer --auth=customer --scope=Account
 
 Generated Structure:
     packages/[name]_portal/
@@ -61,5 +66,6 @@ After Generation:
     2. Connect resources to the portal:
        rails g pu:res:conn Post --dest=admin_portal
 
-    3. Optionally configure entity scoping in engine.rb:
+    3. If you used --scope, entity scoping is already configured in engine.rb.
+       Otherwise, you can manually add it:
        scope_to_entity Organization, strategy: :path

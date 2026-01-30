@@ -16,10 +16,12 @@ module Pu
       class_option :auth, type: :string, desc: "Rodauth account to authenticate with (e.g., --auth=user)"
       class_option :public, type: :boolean, default: false, desc: "Grant public access (no authentication)"
       class_option :byo, type: :boolean, default: false, desc: "Bring your own authentication"
+      class_option :scope, type: :string, desc: "Entity class to scope to (e.g., --scope=Organization)"
 
       def start
         validate_package_name name
         configure_authentication
+        configure_entity_scoping
 
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
         template "config/routes.rb", "packages/#{package_namespace}/config/routes.rb"
@@ -48,7 +50,7 @@ module Pu
 
       private
 
-      attr_reader :rodauth_account
+      attr_reader :rodauth_account, :scoped_entity_class
 
       def configure_authentication
         if options[:auth].present?
@@ -82,6 +84,12 @@ module Pu
       def public_access? = @public_access
 
       def bring_your_own_auth? = @bring_your_own_auth
+
+      def configure_entity_scoping
+        @scoped_entity_class = options[:scope].camelize if options[:scope].present?
+      end
+
+      def scoped_to_entity? = scoped_entity_class.present?
     end
   end
 end
