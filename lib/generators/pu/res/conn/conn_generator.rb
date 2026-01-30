@@ -12,10 +12,12 @@ module Pu
 
       desc(
         "Create a connection between a resource and a portal\n\n" \
-        "e.g. rails g pu:res:conn todo --dest=dashboard_portal"
+        "e.g. rails g pu:res:conn todo --dest=dashboard_portal\n" \
+        "     rails g pu:res:conn profile --dest=customer_portal --singular"
       )
 
-      # argument :name
+      class_option :singular, type: :boolean, default: false,
+        desc: "Register the resource as a singular resource (e.g., profile)"
 
       def start
         selected_resources = resources_selection
@@ -28,7 +30,7 @@ module Pu
 
           if app_namespace == "MainApp"
             insert_into_file "config/routes.rb",
-              indent("register_resource ::#{resource}\n", 2),
+              indent("register_resource ::#{resource}#{singular_option}\n", 2),
               after: /.*Rails\.application\.routes\.draw do.*\n/
           else
             unless expected_parent_policy
@@ -45,7 +47,7 @@ module Pu
               "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
 
             insert_into_file "packages/#{package_namespace}/config/routes.rb",
-              indent("register_resource ::#{resource}\n", 2),
+              indent("register_resource ::#{resource}#{singular_option}\n", 2),
               before: /.*# register resources above.*/
           end
         end
@@ -59,6 +61,10 @@ module Pu
 
       def package_namespace
         app_namespace.underscore
+      end
+
+      def singular_option
+        options[:singular] ? ", singular: true" : ""
       end
 
       def resource_namespace

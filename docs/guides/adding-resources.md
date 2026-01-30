@@ -196,6 +196,16 @@ Use the full class name for packaged resources:
 rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
 ```
 
+### Connecting Singular Resources
+
+For resources that represent a single record per user (e.g., profile):
+
+```bash
+rails g pu:res:conn Profile --dest=customer_portal --singular
+```
+
+This registers the resource with `singular: true`, generating routes like `/profile` instead of `/profiles/:id`.
+
 ### What Gets Generated
 
 ```

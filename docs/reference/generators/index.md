@@ -87,6 +87,13 @@ rails generate pu:res:conn Post --dest=admin_portal
 
 Creates portal-specific controller, definition, and policy (if needed) and registers the resource in the portal routes.
 
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--dest NAME` | Destination portal (prompted if not provided) |
+| `--singular` | Register as a singular resource (e.g., profile, dashboard) |
+
 #### Examples
 
 ```bash
@@ -95,6 +102,9 @@ rails generate pu:res:conn Post --dest=admin_portal
 
 # Connect multiple resources
 rails generate pu:res:conn Post Comment --dest=admin_portal
+
+# Connect a singular resource
+rails generate pu:res:conn Profile --dest=customer_portal --singular
 
 # Interactive mode (prompts for resource and portal)
 rails generate pu:res:conn

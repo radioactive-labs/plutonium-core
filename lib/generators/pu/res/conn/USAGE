@@ -10,6 +10,7 @@ Options:
     --src=PACKAGE        Source feature package (optional)
                          Use main_app for resources in the main application
                          Use package name for resources in a feature package
+    --singular           Register the resource as singular (e.g., profile, dashboard)
 
 Arguments:
     RESOURCES            Space-separated list of model names to connect.
@@ -25,6 +26,9 @@ Examples:
 
     # Connect namespaced resources (from a feature package)
     rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
+
+    # Connect a singular resource (e.g., profile, dashboard)
+    rails g pu:res:conn Profile --dest=customer_portal --singular
 
     # Interactive mode (prompts for everything)
     rails g pu:res:conn
@@ -56,6 +60,7 @@ Generated Code:
 
     Routes register the resource:
         register_resource ::Blogging::Post
+        register_resource ::Profile, singular: true  # With --singular
 
 Workflow:
     1. Create feature package:  rails g pu:pkg:package blogging
