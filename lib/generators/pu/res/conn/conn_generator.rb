@@ -21,8 +21,11 @@ module Pu
         selected_resources = resources_selection
         @app_namespace = portal_option(:dest, prompt: "Select destination portal").camelize
 
+        validate_resources!(selected_resources)
+
         selected_resources.each do |resource|
           @resource_class = resource
+
           if app_namespace == "MainApp"
             insert_into_file "config/routes.rb",
               indent("register_resource ::#{resource}\n", 2),
@@ -109,6 +112,23 @@ module Pu
 
       def policy_attributes_for_read
         default_policy_attributes
+      end
+
+      def validate_resources!(resources)
+        invalid = resources.reject { |r| resource_record?(r) }
+        return if invalid.empty?
+
+        invalid.each do |resource|
+          say_status :error, "#{resource} does not include Plutonium::Resource::Record", :red
+        end
+        error "All resources must include Plutonium::Resource::Record to be connected to a portal"
+      end
+
+      def resource_record?(resource)
+        klass = resource.safe_constantize
+        return false unless klass
+
+        klass.included_modules.any? { |mod| mod.to_s.include?("Plutonium::Resource::Record") }
       end
     end
   end
