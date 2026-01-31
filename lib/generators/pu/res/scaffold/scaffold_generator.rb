@@ -14,15 +14,18 @@ module Pu
 
       class_option :model, type: :boolean, default: true
 
-      def setup
-        return unless options[:model]
+      # Skip collision check when scaffolding for existing model
+      def check_class_collision
+        super if options[:model]
+      end
 
+      def setup
         model_class = class_name.safe_constantize
         if model_class.present?
           if attributes.empty?
             attributes_str = model_class.content_columns.map { |col| "#{col.name}:#{col.type}" }
             self.attributes = parse_attributes_internal!(attributes_str)
-          else
+          elsif options[:model]
             warn("Overwriting existing resource. You can leave out the attributes to import an existing resource.")
           end
         end

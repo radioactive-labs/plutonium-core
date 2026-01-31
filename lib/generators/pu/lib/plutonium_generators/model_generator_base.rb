@@ -39,7 +39,13 @@ module PlutoniumGenerators
     def name
       @pu_name ||= begin
         @original_name = @name
-        @name = [main_app? ? nil : selected_destination_feature.underscore, super.singularize.underscore].compact.join "/"
+        resource_name = super.singularize.underscore
+        dest_namespace = main_app? ? nil : selected_destination_feature.underscore
+        # Strip destination namespace from resource name if already present
+        if dest_namespace && resource_name.start_with?("#{dest_namespace}/")
+          resource_name = resource_name.sub("#{dest_namespace}/", "")
+        end
+        @name = [dest_namespace, resource_name].compact.join "/"
         set_destination_root!
         @name
       end
