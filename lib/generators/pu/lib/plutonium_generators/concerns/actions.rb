@@ -430,14 +430,27 @@ module PlutoniumGenerators
       end
 
       def bundle(*gems, **options)
-        gems = Array(gems).join " "
+        gems = Array(gems).flatten
+        # Skip gems already in bundle
+        gems = gems.reject { |g| gem_in_bundle?(g) }
+        return if gems.empty?
+
+        gems_str = gems.join(" ")
         options = hash_to_cli_options options
-        cmd_args = "add #{gems} #{options}"
+        cmd_args = "add #{gems_str} #{options}"
 
         log :bundle, cmd_args
         Bundler.with_unbundled_env do
           run "bundle #{cmd_args}", verbose: false
         end
+      end
+
+      def gem_in_bundle?(name)
+        in_root do
+          return true if File.exist?("Gemfile") && File.read("Gemfile").match?(/gem ['"]#{name}['"]/)
+          return true if File.exist?("Gemfile.lock") && File.read("Gemfile.lock").include?("    #{name} ")
+        end
+        false
       end
 
       def unbundle(*gems)
@@ -457,6 +470,14 @@ module PlutoniumGenerators
           cmd = "required_env_vars += %w[#{vars}]\n"
           insert_into_file "config/initializers/001_ensure_required_env.rb", cmd, after: /# Add additional env vars here.*\n/
         end
+      end
+
+      def file_includes?(path, check)
+        destination = File.expand_path(path, destination_root)
+        return false unless File.exist?(destination)
+
+        content = File.read(destination)
+        check.is_a?(Regexp) ? content.match?(check) : content.include?(check)
       end
 
       private

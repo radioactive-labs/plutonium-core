@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+RailsPulse.configure do |config|
+  # Enable/disable Rails Pulse globally
+  config.enabled = Rails.env.production? || Rails.env.development?
+
+  # Asset tracking (disable to reduce noise)
+  config.track_assets = false
+<%- if options[:database] -%>
+
+  # Use separate database for performance data
+  config.connects_to = {database: {writing: :<%= options[:database] %>}}
+<%- end -%>
+end
