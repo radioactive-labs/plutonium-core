@@ -1,0 +1,58 @@
+# frozen_string_literal: true
+
+require "shrine"
+<%- if options[:s3] -%>
+require "shrine/storage/s3"
+<%- else -%>
+require "shrine/storage/file_system"
+<%- end -%>
+
+Shrine.logger = Rails.logger
+
+<%- if options[:s3] -%>
+s3_options = {
+  bucket: ENV.fetch("S3_BUCKET"),
+  region: ENV.fetch("AWS_REGION", "us-east-1"),
+  access_key_id: ENV.fetch("AWS_ACCESS_KEY_ID"),
+  secret_access_key: ENV.fetch("AWS_SECRET_ACCESS_KEY")
+}
+
+Shrine.storages = {
+  cache: Shrine::Storage::S3.new(prefix: "cache", **s3_options),
+  store: Shrine::Storage::S3.new(**s3_options)
+}
+<%- else -%>
+Shrine.storages = {
+  cache: Shrine::Storage::FileSystem.new("public", prefix: "uploads/cache"), # temporary
+  store: Shrine::Storage::FileSystem.new("public", prefix: "uploads") # permanent
+}
+<%- end -%>
+
+Shrine.plugin :activerecord
+Shrine.plugin :determine_mime_type, analyzer: lambda { |io, analyzers|
+  mime_type = analyzers[:marcel].call(io)
+  mime_type = analyzers[:file].call(io) if mime_type == "application/octet-stream" || mime_type.nil?
+  mime_type = analyzers[:mime_types].call(io) if mime_type == "text/plain"
+  mime_type
+}
+Shrine.plugin :instrumentation
+Shrine.plugin :infer_extension, force: true
+<%- if options[:store_dimensions] -%>
+Shrine.plugin :store_dimensions
+<%- end -%>
+Shrine.plugin :pretty_location
+Shrine.plugin :refresh_metadata
+Shrine.plugin :remove_invalid
+
+Shrine.plugin :backgrounding
+
+Shrine::Attacher.promote_block do
+  PromoteShrineAttachmentJob.perform_later(self.class.name, record.class.name, record.id, record.record_type, name.to_s, file_data)
+end
+
+Shrine::Attacher.destroy_block do
+  DestroyShrineAttachmentJob.perform_later(self.class.name, record.record_type, data)
+end
+
+Shrine.plugin :upload_endpoint, url: true
+Shrine.plugin :derivatives, create_on_promote: true

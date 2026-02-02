@@ -1,7 +1,6 @@
 require "rails/generators/base"
 require "rails/generators/active_record/migration"
 require "securerandom"
-require "plutonium/auth/sequel_adapter"
 
 module Pu
   module Rodauth
@@ -54,13 +53,7 @@ module Pu
 
       private
 
-      # Delegates to the SequelAdapter module to avoid code duplication.
-      def sequel_adapter
-        Plutonium::Auth::SequelAdapter.sequel_adapter
-      end
-
-      # Delegates to the SequelAdapter module's internal ActiveRecord adapter detection.
-      # We still provide this method for use in create_install_migration.
+      # Detects the ActiveRecord adapter for migration generation.
       def activerecord_adapter
         if ActiveRecord::Base.respond_to?(:connection_db_config)
           ActiveRecord::Base.connection_db_config&.adapter
