@@ -1,5 +1,8 @@
 return if ENV["SECRET_KEY_BASE_DUMMY"].present?
 
+# In development/test, only check if dotenv is loaded (process may not have reloaded yet)
+return if Rails.env.local? && !defined?(Dotenv)
+
 # Add required env vars to this list
 required_env_vars = %w[
   RAILS_DEFAULT_URL

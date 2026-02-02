@@ -3,7 +3,12 @@
 # NOTE: to have a dev-mode tool do its thing in production.
 return unless Rails.env.development?
 
-require "annotated"
+begin
+  require "annotated"
+rescue LoadError
+  return
+end
+
 task :set_annotation_options do
   # You can override any of these by setting an environment variable of the
   # same name.
