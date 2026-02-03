@@ -1,4 +1,5 @@
 module <%= package_name %>
+  # Base controller for non-resource pages (dashboard, settings, etc.).
   class PlutoniumController < ::PlutoniumController
     include <%= package_name %>::Concerns::Controller
   end

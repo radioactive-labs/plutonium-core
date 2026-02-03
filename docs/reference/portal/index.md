@@ -178,26 +178,33 @@ end
 
 ## Controllers
 
-### Resource Controllers
-
-Portal-specific controllers inherit from the feature package's controller and include the portal's controller concern:
+### Base Controller
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
-class AdminPortal::PostsController < ::PostsController
-  include AdminPortal::Concerns::Controller
-
-  private
-
-  def build_resource
-    super.tap do |post|
-      post.user = current_user
-    end
+# packages/admin_portal/app/controllers/admin_portal/resource_controller.rb
+module AdminPortal
+  class ResourceController < ::ResourceController
+    include AdminPortal::Concerns::Controller
   end
 end
 ```
 
-Controllers are auto-created if not defined. When accessing `AdminPortal::PostsController`, Plutonium will dynamically create it by inheriting from `::PostsController` and including `AdminPortal::Concerns::Controller`.
+### Resource Controllers
+
+```ruby
+# packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
+module AdminPortal
+  class PostsController < ResourceController
+    private
+
+    def build_resource
+      super.tap do |post|
+        post.user = current_user
+      end
+    end
+  end
+end
+```
 
 ## Portal-Specific Overrides
 
