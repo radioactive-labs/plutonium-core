@@ -248,21 +248,31 @@ end
 
 ## Controller Hierarchy
 
-### Resource Controllers
+Portal controllers inherit from the feature package's controller if one exists (and include the portal's `Concerns::Controller`). If no feature package controller exists, they inherit from the portal's `ResourceController`.
 
-Portal resource controllers inherit from the feature package's controller:
+```ruby
+# With feature package controller:
+class DashboardPortal::PostsController < ::PostsController
+  include DashboardPortal::Concerns::Controller
+end
 
+# Without feature package controller:
+class DashboardPortal::PostsController < DashboardPortal::ResourceController
+end
 ```
-::PostsController (feature package controller)
-    ↓
-DashboardPortal::PostsController (portal-specific)
+
+### Portal ResourceController
+
+The portal's `ResourceController` serves as the base class for resource controllers when no feature package controller exists. It includes the portal's `Concerns::Controller` so individual resource controllers don't need to.
+
+```ruby
+# packages/dashboard_portal/app/controllers/dashboard_portal/resource_controller.rb
+module DashboardPortal
+  class ResourceController < ::ResourceController
+    include DashboardPortal::Concerns::Controller
+  end
+end
 ```
-
-Controllers are auto-created if not defined. When accessing `DashboardPortal::PostsController`:
-
-1. If file exists, use it
-2. Otherwise, dynamically create inheriting from `::PostsController`
-3. Include `DashboardPortal::Concerns::Controller`
 
 ### Non-Resource Controllers
 
@@ -313,13 +323,13 @@ end
 
 ```ruby
 # packages/dashboard_portal/app/controllers/dashboard_portal/posts_controller.rb
-class DashboardPortal::PostsController < ::PostsController
-  include DashboardPortal::Concerns::Controller
+module DashboardPortal
+  class PostsController < ResourceController
+    private
 
-  private
-
-  def preferred_action_after_submit
-    "index"
+    def preferred_action_after_submit
+      "index"
+    end
   end
 end
 ```

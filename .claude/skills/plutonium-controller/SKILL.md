@@ -305,22 +305,18 @@ end
 
 ## Portal-Specific Controllers
 
-Each portal can have its own controller override. Portal controllers inherit from the feature package's controller:
+Portal controllers inherit from the feature package's controller if one exists (and include the portal's `Concerns::Controller`). If no feature package controller exists, they inherit from the portal's `ResourceController`.
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
+# With feature package controller:
 class AdminPortal::PostsController < ::PostsController
   include AdminPortal::Concerns::Controller
+end
 
-  private
-
-  def preferred_action_after_submit
-    "index"  # Admin prefers list view
-  end
+# Without feature package controller:
+class AdminPortal::PostsController < AdminPortal::ResourceController
 end
 ```
-
-Controllers are auto-created if not defined. When accessing a portal resource, Plutonium dynamically creates the controller by inheriting from the feature package's controller.
 
 For non-resource portal pages (dashboard, settings), inherit from `PlutoniumController`:
 

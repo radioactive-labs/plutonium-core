@@ -1,5 +1,7 @@
 module <%= package_name %>
   module Concerns
+    # Portal-wide controller customizations go here.
+    # Included by both ResourceController and PlutoniumController.
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller

@@ -74,7 +74,8 @@ packages/admin_portal/
 │   ├── controllers/admin_portal/
 │   │   ├── concerns/controller.rb
 │   │   ├── dashboard_controller.rb
-│   │   └── plutonium_controller.rb
+│   │   ├── plutonium_controller.rb
+│   │   └── resource_controller.rb
 │   ├── definitions/admin_portal/     # Portal-specific overrides
 │   ├── policies/admin_portal/        # Portal-specific overrides
 │   └── views/
