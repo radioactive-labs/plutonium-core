@@ -1,0 +1,19 @@
+Description:
+    Generate a SaaS entity model (organization/tenant).
+    Creates an entity with a unique name field for multi-tenant applications.
+
+Example:
+    rails g pu:saas:entity Organization
+    rails g pu:saas:entity Organization --dest=main_app
+    rails g pu:saas:entity Company --extra-attributes=slug:string,domain:string
+
+    This creates:
+        app/models/organization.rb
+        app/controllers/organizations_controller.rb
+        app/policies/organization_policy.rb
+        app/definitions/organization_definition.rb
+        db/migrate/XXX_create_organizations.rb (with unique index on name)
+
+Options:
+    --extra-attributes      Additional model attributes (name:string is always included)
+    --dest                  Destination package (default: main_app)

@@ -1,0 +1,25 @@
+Description:
+    Generate a SaaS membership model linking users to entities.
+    Creates a join table with role enum and bidirectional associations.
+
+    Requires both user and entity models to exist first.
+
+Example:
+    rails g pu:saas:membership --user Customer --entity Organization
+    rails g pu:saas:membership --user Customer --entity Organization --roles=member,admin,owner
+    rails g pu:saas:membership --user Customer --entity Organization --extra-attributes=joined_at:datetime
+
+    This creates:
+        app/models/organization_customer.rb (with role enum and uniqueness validation)
+        db/migrate/XXX_create_organization_customers.rb (with unique index)
+
+    And adds to existing models:
+        Customer: has_many :organization_customers, has_many :organizations
+        Organization: has_many :organization_customers, has_many :customers
+
+Options:
+    --user                  User model name (required)
+    --entity                Entity model name (required)
+    --roles                 Comma-separated roles (default: member,owner)
+    --extra-attributes      Additional model attributes
+    --dest                  Destination package (default: main_app)

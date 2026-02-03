@@ -34,12 +34,13 @@ module Pu
         invoke "pu:rodauth:account", [name],
           defaults: false,
           **admin_features,
-          extra_attributes: ["role:integer"] + Array(options[:extra_attributes]),
+          extra_attributes: options[:extra_attributes],
           force: options[:force],
           skip: options[:skip]
       end
 
       def configure_admin_account
+        add_role_column_to_migration
         # Prevent account creation from web
         insert_into_file "app/rodauth/#{normalized_name}_rodauth_plugin.rb", indent(<<~EOT, 4), after: /# ==> Hooks\n/
 
@@ -78,10 +79,19 @@ module Pu
         create_invite_interaction
       end
 
+      def add_role_column_to_migration
+        migration_file = Dir[File.join(destination_root, "db/migrate/*_create_rodauth_#{normalized_name}_*.rb")].first
+        return unless migration_file
+
+        inject_into_file migration_file,
+          "      t.integer :role, null: false, default: 0\n",
+          after: /t\.string :password_hash\n/
+      end
+
       def add_role_enum
         inject_into_file "app/models/#{normalized_name}.rb",
           "enum :role, #{roles_enum}\n  ",
-          after: "# add misc attribute macros above.\n"
+          before: "# add enums above.\n"
       end
 
       def create_invite_interaction

@@ -93,6 +93,20 @@ module Pu
           migration_name: options[:migration_name],
           force: options[:force],
           skip: options[:skip]
+
+        add_extra_columns_to_migration
+      end
+
+      def add_extra_columns_to_migration
+        return if options[:extra_attributes].blank?
+
+        migration_file = Dir[File.join(destination_root, "db/migrate/*_create_rodauth_#{table_prefix}_*.rb")].first
+        return unless migration_file
+
+        attributes = options[:extra_attributes].map { |attr| PlutoniumGenerators::ModelGeneratorBase::GeneratedAttribute.parse(table, attr) }
+        columns = attributes.map { |a| "      t.#{a.type} :#{a.name}#{a.inject_options}" }.join("\n")
+
+        inject_into_file migration_file, "#{columns}\n", after: /t\.string :password_hash\n/
       end
 
       def create_account_model

@@ -1,0 +1,27 @@
+Description:
+    Generate a complete SaaS setup with user account, entity, and membership.
+    This is the recommended way to set up multi-tenant authentication.
+
+Example:
+    rails g pu:saas:setup --user Customer --entity Organization
+    rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
+    rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
+    rails g pu:saas:setup --user Customer --entity Organization --user-attributes=name:string
+    rails g pu:saas:setup --user Customer --entity Organization --skip-entity
+
+    This creates:
+        1. User account (Customer) with Rodauth authentication
+        2. Entity model (Organization) with unique name
+        3. Membership model (OrganizationCustomer) with role enum
+
+Options:
+    --user                      User model name (required)
+    --entity                    Entity model name (required)
+    --allow-signup              Allow public registration (default: true)
+    --roles                     Comma-separated membership roles (default: member,owner)
+    --skip-entity               Skip entity model generation
+    --skip-membership           Skip membership model generation
+    --user-attributes           Additional user model attributes
+    --entity-attributes         Additional entity model attributes
+    --membership-attributes     Additional membership model attributes
+    --dest                      Destination package (default: main_app)

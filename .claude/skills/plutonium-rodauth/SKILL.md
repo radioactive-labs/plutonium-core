@@ -35,8 +35,8 @@ rails generate pu:rodauth:account user
 # Admin with 2FA and security features
 rails generate pu:rodauth:admin admin
 
-# Customer with entity association
-rails generate pu:rodauth:customer customer
+# SaaS user with entity/organization (multi-tenant)
+rails generate pu:saas:setup --user Customer --entity Organization
 ```
 
 ## Account Generators
@@ -136,30 +136,51 @@ end
 rails rodauth_admin:create[admin@example.com,password123]
 ```
 
-### Customer Account (`pu:rodauth:customer`)
+### SaaS Setup (`pu:saas:setup`)
 
-Creates a customer account with an associated entity (organization/company) for multi-tenant applications:
+Creates a complete multi-tenant SaaS setup with user account, entity, and membership:
 
 ```bash
-rails generate pu:rodauth:customer customer
-rails generate pu:rodauth:customer customer --entity=Organization
-rails generate pu:rodauth:customer customer --extra-attributes=name:string,phone:string
-rails generate pu:rodauth:customer customer --no-allow_signup
+rails generate pu:saas:setup --user Customer --entity Organization
+rails generate pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
+rails generate pu:saas:setup --user Customer --entity Organization --no-allow-signup
+rails generate pu:saas:setup --user Customer --entity Organization --user-attributes=name:string --entity-attributes=slug:string
 ```
 
 **Options:**
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--entity=NAME` | Entity | Entity model name (Organization, Company, Team) |
-| `--extra_attributes` | | Additional account attributes (e.g., name:string) |
-| `--no-allow_signup` | | Disable public registration |
+| `--user=NAME` | (required) | User account model name (e.g., Customer) |
+| `--entity=NAME` | (required) | Entity model name (e.g., Organization) |
+| `--allow-signup` | true | Allow public registration |
+| `--roles` | member,owner | Comma-separated membership roles |
+| `--skip-entity` | false | Skip entity model generation |
+| `--skip-membership` | false | Skip membership model generation |
+| `--user-attributes` | | Additional user model attributes |
+| `--entity-attributes` | | Additional entity model attributes (name is always included) |
+| `--membership-attributes` | | Additional membership model attributes |
+
+**Individual Generators:**
+
+You can also run each component separately:
+
+```bash
+# Just the user account
+rails g pu:saas:user Customer
+
+# Just the entity model
+rails g pu:saas:entity Organization
+
+# Just the membership (requires user and entity to exist)
+rails g pu:saas:membership --user Customer --entity Organization
+```
 
 **Generated Models:**
 
-1. **Customer account** - The user model with Rodauth authentication
-2. **Entity model** - The organization/company (e.g., `Organization`)
-3. **Membership model** - Join table linking customers to entities (e.g., `OrganizationCustomer`)
+1. **User account** - The user model with Rodauth authentication
+2. **Entity model** - The organization/company with unique name
+3. **Membership model** - Join table `{entity}_{user}` (e.g., `OrganizationCustomer`)
 
 ```ruby
 # app/models/customer.rb
@@ -185,7 +206,7 @@ class OrganizationCustomer < ApplicationRecord
 
   validates :customer, uniqueness: {
     scope: :organization_id,
-    message: "is already a member of this entity"
+    message: "is already a member of this organization"
   }
 end
 ```
