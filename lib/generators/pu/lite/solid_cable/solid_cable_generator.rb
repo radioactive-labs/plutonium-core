@@ -21,8 +21,8 @@ module Pu
         bundle "solid_cable"
         add_sqlite_database(@db_name)
         run_solid_cable_install
-        prepare_database(@db_name)
         configure_cable_yml
+        prepare_database(@db_name)
       rescue => e
         exception "#{self.class} failed:", e
       end
