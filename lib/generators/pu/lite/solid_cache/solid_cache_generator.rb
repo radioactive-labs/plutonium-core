@@ -23,9 +23,9 @@ module Pu
         bundle "solid_cache"
         add_sqlite_database(@db_name)
         run_solid_cache_install
-        prepare_database(@db_name)
         configure_cache_yml
         configure_application
+        prepare_database(@db_name)
         enable_dev_cache if options[:dev_cache]
       rescue => e
         exception "#{self.class} failed:", e

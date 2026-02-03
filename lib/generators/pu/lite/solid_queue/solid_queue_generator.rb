@@ -24,8 +24,8 @@ module Pu
         bundle "solid_queue"
         add_sqlite_database(@db_name)
         run_solid_queue_install
-        prepare_database(@db_name)
         configure_application
+        prepare_database(@db_name)
         create_jobs_script
         configure_procfile
         configure_kamal

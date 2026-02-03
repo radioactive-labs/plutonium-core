@@ -22,8 +22,8 @@ module Pu
         bundle "solid_errors"
         add_sqlite_database(@db_name)
         run_solid_errors_install
-        prepare_database(@db_name)
         configure_application
+        prepare_database(@db_name)
         mount_solid_errors_engine
       rescue => e
         exception "#{self.class} failed:", e
@@ -44,9 +44,11 @@ module Pu
 
           Rails.application.configure do
             config.solid_errors.connects_to = {database: {writing: :#{@db_name}}}
-            config.solid_errors.send_emails = ENV["SOLID_ERRORS_SEND_EMAILS"]
+            config.solid_errors.send_emails = ENV["SOLID_ERRORS_SEND_EMAILS"].present?
             config.solid_errors.email_from = ENV["SOLID_ERRORS_EMAIL_FROM"]
             config.solid_errors.email_to = ENV["SOLID_ERRORS_EMAIL_TO"]
+            config.solid_errors.username = ENV.fetch("SOLID_ERRORS_USERNAME", nil)
+            config.solid_errors.password = ENV.fetch("SOLID_ERRORS_PASSWORD", nil)
           end
         RUBY
       end
