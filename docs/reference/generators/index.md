@@ -323,20 +323,65 @@ Creates a rake task for account creation:
 rails rodauth_admin:create[admin@example.com,password123]
 ```
 
-### pu:rodauth:customer
+## SaaS Generators
 
-Generate a customer account with entity (organization) association.
+### pu:saas:setup
+
+Generate a complete multi-tenant SaaS setup with user, entity, and membership.
 
 ```bash
-rails generate pu:rodauth:customer customer
-rails generate pu:rodauth:customer customer --entity=Organization
+rails generate pu:saas:setup --user Customer --entity Organization
+rails generate pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
+rails generate pu:saas:setup --user Customer --entity Organization --no-allow-signup
 ```
 
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--user NAME` | User account model name (required) |
+| `--entity NAME` | Entity model name (required) |
+| `--allow-signup` | Allow public registration (default: true) |
+| `--roles` | Comma-separated membership roles (default: member,owner) |
+| `--skip-entity` | Skip entity model generation |
+| `--skip-membership` | Skip membership model generation |
+| `--user-attributes` | Additional user model attributes |
+| `--entity-attributes` | Additional entity model attributes |
+| `--membership-attributes` | Additional membership model attributes |
+
 Creates:
-- Customer account model
-- Entity model (default: "Entity")
-- Membership join model
-- Has-many-through associations
+- User account model with Rodauth authentication
+- Entity model with unique name
+- Membership join model with role enum
+- Has-many-through associations with `dependent: :destroy`
+
+### pu:saas:user
+
+Generate just a SaaS user account.
+
+```bash
+rails generate pu:saas:user Customer
+rails generate pu:saas:user Customer --no-allow-signup
+rails generate pu:saas:user Customer --extra-attributes=name:string
+```
+
+### pu:saas:entity
+
+Generate just an entity model.
+
+```bash
+rails generate pu:saas:entity Organization
+rails generate pu:saas:entity Organization --extra-attributes=slug:string
+```
+
+### pu:saas:membership
+
+Generate just a membership model (requires user and entity to exist).
+
+```bash
+rails generate pu:saas:membership --user Customer --entity Organization
+rails generate pu:saas:membership --user Customer --entity Organization --roles=member,admin,owner
+```
 
 ## Core Generators
 
@@ -437,8 +482,8 @@ rails db:migrate
 ### Adding a New Portal
 
 ```bash
-# Create customer account type
-rails generate pu:rodauth:customer customer
+# Create SaaS setup (user + entity + membership)
+rails generate pu:saas:setup --user Customer --entity Organization
 
 # Create portal
 rails generate pu:pkg:portal customer

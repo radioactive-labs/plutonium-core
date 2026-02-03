@@ -1,0 +1,21 @@
+Description:
+    Generate a SaaS user account with Rodauth authentication.
+    Creates a user model with login, signup, password reset, and other auth features.
+
+Example:
+    rails g pu:saas:user Customer
+    rails g pu:saas:user Customer --no-allow-signup
+    rails g pu:saas:user Customer --extra-attributes=name:string,phone:string
+
+    This creates:
+        app/models/customer.rb
+        app/rodauth/customer_rodauth_plugin.rb
+        app/controllers/rodauth/customer_controller.rb
+        app/controllers/customers_controller.rb
+        app/policies/customer_policy.rb
+        app/definitions/customer_definition.rb
+        db/migrate/XXX_create_rodauth_customer_*.rb
+
+Options:
+    --allow-signup          Allow public registration (default: true)
+    --extra-attributes      Additional model attributes (e.g., name:string)

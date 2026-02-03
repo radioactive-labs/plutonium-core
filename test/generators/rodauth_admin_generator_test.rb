@@ -120,6 +120,16 @@ class RodauthAdminGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "adds role column to migration with proper options" do
+    run_generator ["TestAdmin"]
+
+    migration_files = Dir[destination_root.join("db/migrate/*_test_admin*.rb")]
+    assert migration_files.any?, "Migration file should exist"
+
+    migration_content = File.read(migration_files.first)
+    assert_match(/t\.integer :role, null: false, default: 0/, migration_content)
+  end
+
   private
 
   def cleanup_generated_files(name)

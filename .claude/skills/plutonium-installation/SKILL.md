@@ -124,10 +124,10 @@ rails generate pu:rodauth:install
 rails generate pu:rodauth:account user
 
 # Admin with 2FA, lockout, audit logging
-rails generate pu:rodauth:admin
+rails generate pu:rodauth:admin admin
 
-# Customer with entity association
-rails generate pu:rodauth:customer customer
+# SaaS user with entity/organization (multi-tenant)
+rails generate pu:saas:setup --user Customer --entity Organization
 ```
 
 ### Account Options
@@ -136,8 +136,7 @@ rails generate pu:rodauth:customer customer
 |--------|-------------|
 | `--defaults` | Enable common features (login, logout, remember, reset_password) |
 | `--kitchen_sink` | Enable all available features |
-| `--no-allow_signup` | Disable public signup |
-| `--entity=Organization` | Create associated entity model |
+| `--no-allow-signup` | Disable public signup |
 
 ### Connect Auth to Controllers
 
@@ -279,8 +278,11 @@ For models that already exist in your app:
 | `pu:core:install` | Initial Plutonium setup |
 | `pu:rodauth:install` | Setup Rodauth authentication |
 | `pu:rodauth:account NAME` | Create user account type |
-| `pu:rodauth:admin` | Create admin account with 2FA |
-| `pu:rodauth:customer NAME` | Create customer with entity |
+| `pu:rodauth:admin NAME` | Create admin account with 2FA |
+| `pu:saas:setup` | Create SaaS user + entity + membership |
+| `pu:saas:user NAME` | Create SaaS user account |
+| `pu:saas:entity NAME` | Create entity model |
+| `pu:saas:membership` | Create membership join table |
 | `pu:pkg:package NAME` | Create feature package |
 | `pu:pkg:portal NAME` | Create portal package |
 | `pu:res:scaffold NAME` | Create resource (model, policy, definition, controller) |

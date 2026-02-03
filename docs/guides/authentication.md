@@ -70,19 +70,26 @@ Includes all base features plus:
 - Audit logging
 - **No public signup** - accounts created via rake task
 
-### Customer Account
+### SaaS Account (Multi-tenant)
 
 ```bash
-rails g pu:rodauth:customer customer
-rails g pu:rodauth:customer customer --entity=Organization
-rails g pu:rodauth:customer customer --no-allow_signup
+rails g pu:saas:setup --user Customer --entity Organization
+rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
+rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
 rails db:migrate
 ```
 
-Creates a customer account with an associated entity model (for multi-tenancy):
-- Customer account model
-- Entity model (Organization, Company, etc.)
-- Membership join model with has-many-through associations
+Creates a complete multi-tenant setup:
+- Customer account model with Rodauth authentication
+- Organization entity model with unique name
+- OrganizationCustomer membership join model with role enum
+
+You can also run individual generators:
+```bash
+rails g pu:saas:user Customer          # Just the user account
+rails g pu:saas:entity Organization    # Just the entity model
+rails g pu:saas:membership --user Customer --entity Organization  # Just the membership
+```
 
 ## Generator Options
 

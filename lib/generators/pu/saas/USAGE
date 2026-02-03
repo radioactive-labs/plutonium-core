@@ -1,0 +1,22 @@
+Description:
+    SaaS generators for multi-tenant applications with user accounts, entities, and memberships.
+
+Generators:
+    pu:saas:setup       Complete SaaS setup (user + entity + membership)
+    pu:saas:user        SaaS user account with Rodauth
+    pu:saas:entity      Entity/organization model
+    pu:saas:membership  Membership join table linking users to entities
+
+Example:
+    rails g pu:saas:setup --user Customer --entity Organization
+
+    This creates:
+        - Customer user account with Rodauth authentication
+        - Organization entity model with unique name
+        - OrganizationCustomer membership model with role enum
+
+See individual generator help for more options:
+    rails g pu:saas:setup --help
+    rails g pu:saas:user --help
+    rails g pu:saas:entity --help
+    rails g pu:saas:membership --help

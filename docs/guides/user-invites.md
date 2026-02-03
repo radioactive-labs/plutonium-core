@@ -15,13 +15,14 @@ The invitation system handles:
 
 Before installing invites, ensure you have:
 
-1. **User Authentication**: A Rodauth user account configured
-   ```bash
-   rails g pu:rodauth:customer User --entity=Organization
-   ```
-
+1. **User Authentication**: A Rodauth user account
 2. **Entity Model**: An organization/company/team model
 3. **Membership Model**: A join model linking users to entities
+
+The easiest way to set this up is with the SaaS generator:
+```bash
+rails g pu:saas:setup --user User --entity Organization
+```
 
 ## Installation
 

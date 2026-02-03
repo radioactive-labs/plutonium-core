@@ -17,9 +17,15 @@ Plutonium provides a complete user invitation system for multi-tenant applicatio
 ### Prerequisites
 
 Before installing invites, ensure you have:
-1. A user model with Rodauth authentication (`rails g pu:rodauth:customer`)
+1. A user model with Rodauth authentication
 2. An entity model (Organization, Company, Team, etc.)
 3. A membership model linking users to entities
+
+Use `pu:saas:setup` to generate all three:
+
+```bash
+rails g pu:saas:setup --user Customer --entity Organization
+```
 
 ### Install the Invites Package
 

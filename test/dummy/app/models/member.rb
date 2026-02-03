@@ -1,15 +1,10 @@
-class <%= account_path.classify %> < ResourceRecord
-  include Rodauth::Rails.model<%= "(:#{table_prefix})" unless primary? %>
+class Member < ::ResourceRecord
   # add concerns above.
 
   # add constants above.
 
-  enum :status, unverified: 1, verified: 2, closed: 3
   # add enums above.
 
-  <%- if account_path.include?("/") -%>
-  self.table_name = :<%= table_prefix.pluralize %>
-  <%- end -%>
   # add model configurations above.
 
   # add belongs_to associations above.
@@ -22,7 +17,6 @@ class <%= account_path.classify %> < ResourceRecord
 
   # add scopes above.
 
-  validates :email, presence: true
   # add validations above.
 
   # add callbacks above.
