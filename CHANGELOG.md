@@ -1,3 +1,46 @@
+## [0.40.0] - 2026-02-04
+
+### 🚀 Features
+
+- *(invites)* Add user invitation system for multi-tenant apps
+- *(generators)* Add roles and extra_attributes options to rodauth generators
+- *(generator)* Add --scope flag to portal generator for entity scoping
+- *(generator)* Add --singular flag to pu:res:conn for singular resources
+- *(generators)* Add pu:lite namespace for SQLite-based services
+- *(generators)* Add pu:saas namespace for multi-tenant SaaS setup
+- *(definition)* Add default_scope method for setting default query scope
+
+### 🐛 Bug Fixes
+
+- *(rodauth)* Scope load_memory to account-specific paths
+- *(generators)* Resolve Thor invoke caching in entity generator
+- *(test)* Use dynamic migration versioning for Rails compatibility
+- *(config)* Wrap SQLite alias in defined? check for compatibility
+- *(test)* Add variants to product policy permitted attributes
+- *(test)* Improve has_one url assertion in resource_url_for test
+- *(generators)* Normalize CamelCase package names and validate resource records
+- *(generators)* Dedupe namespace and read model attrs with --no-model
+- *(templates)* Use local gem path when LOCAL=1
+- *(generators)* Guard against envs gems during template execution
+- *(generators)* Run db:prepare after config in lite generators
+- *(generators)* Restore ResourceController to portal generator
+
+### 🚜 Refactor
+
+- *(generators)* Comment out default policy methods
+
+### 📚 Documentation
+
+- *(skills)* Add invites skill and update rodauth skill
+- *(guides)* Add user invites guide
+
+### 🧪 Testing
+
+- *(generators)* Add tests for rodauth and invites generators
+
+### ⚙️ Miscellaneous Tasks
+
+- Remove old assets
 ## [0.39.2] - 2026-01-27
 
 ### 🐛 Bug Fixes
