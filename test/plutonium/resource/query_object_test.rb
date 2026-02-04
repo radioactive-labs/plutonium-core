@@ -127,22 +127,14 @@ module Plutonium
         assert_kind_of Plutonium::Query::AdhocBlock, query_object.scope_definitions[:recent]
       end
 
-      def test_define_scope_with_default_option
+      def test_default_scope_name_accessor
         query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
           qo.define_scope :draft
+          qo.default_scope_name = :published
         end
 
-        assert_equal "published", query_object.default_scope_name
-      end
-
-      def test_define_scope_last_default_wins
-        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
-          qo.define_scope :published, default: true
-          qo.define_scope :draft, default: true
-        end
-
-        assert_equal "draft", query_object.default_scope_name
+        assert_equal :published, query_object.default_scope_name
       end
 
       def test_define_scope_raises_for_missing_model_scope
@@ -159,18 +151,20 @@ module Plutonium
 
       def test_selected_scope_uses_default_when_no_params
         query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
           qo.define_scope :draft
+          qo.default_scope_name = :published
         end
 
-        assert_equal "published", query_object.selected_scope
+        assert_equal :published, query_object.selected_scope
         refute query_object.all_scope_selected?
       end
 
       def test_selected_scope_uses_explicit_param_over_default
         query_object = QueryObject.new(MockResource, {scope: "draft"}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
           qo.define_scope :draft
+          qo.default_scope_name = :published
         end
 
         assert_equal "draft", query_object.selected_scope
@@ -179,8 +173,9 @@ module Plutonium
 
       def test_all_scope_selected_when_empty_scope_param
         query_object = QueryObject.new(MockResource, {scope: ""}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
           qo.define_scope :draft
+          qo.default_scope_name = :published
         end
 
         assert_nil query_object.selected_scope
@@ -289,7 +284,8 @@ module Plutonium
 
       def test_apply_with_default_scope
         query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
+          qo.default_scope_name = :published
         end
         scope = MockScope.new
 
@@ -300,7 +296,8 @@ module Plutonium
 
       def test_apply_without_scope_when_all_selected
         query_object = QueryObject.new(MockResource, {scope: ""}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
+          qo.default_scope_name = :published
         end
         scope = MockScope.new
 
@@ -424,7 +421,8 @@ module Plutonium
 
       def test_build_url_with_all_scope_option
         query_object = QueryObject.new(MockResource, {scope: "published"}, @request_path) do |qo|
-          qo.define_scope :published, default: true
+          qo.define_scope :published
+          qo.default_scope_name = :published
         end
 
         url = query_object.build_url(scope: nil)

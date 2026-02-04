@@ -7,7 +7,9 @@ class DemoFeatures::ReviewDefinition < DemoFeatures::ResourceDefinition
   # Scopes
   scope :verified
   scope :approved
-  scope :pending, default: true
+  scope :pending
+
+  default_scope :pending
 
   # Filters
   filter :rating, with: :select, choices: (1..5).to_a

@@ -254,9 +254,11 @@ Set a scope as default:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  scope :published, default: true  # Applied by default
+  scope :published
   scope :draft
   scope :archived
+
+  default_scope :published
 end
 ```
 
@@ -327,14 +329,17 @@ class ProductDefinition < ResourceDefinition
   filter :category, with: :association
 
   # Quick scopes (reference model scopes)
-  scope :active, default: true
+  scope :active
   scope :featured
   scope(:recent) { |scope| scope.where("created_at > ?", 1.week.ago) }
+
+  # Default scope
+  default_scope :active
 
   # Sortable columns
   sorts :name, :price, :created_at
 
-  # Default: newest first
+  # Default sort: newest first
   default_sort :created_at, :desc
 end
 ```

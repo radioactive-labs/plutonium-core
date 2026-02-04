@@ -27,6 +27,9 @@ class PostDefinition < ResourceDefinition
   scope :published
   scope :draft
 
+  # Default scope
+  default_scope :published
+
   # Sorting - sortable columns
   sort :title
   sort :created_at
@@ -246,9 +249,11 @@ Set a scope as default to apply it when no scope is explicitly selected:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  scope :published, default: true  # Applied by default
+  scope :published
   scope :draft
   scope :archived
+
+  default_scope :published  # Applied by default
 end
 ```
 
@@ -329,9 +334,12 @@ class ProductDefinition < ResourceDefinition
   filter :category, with: :association
 
   # Quick scopes
-  scope :active, default: true
+  scope :active
   scope :featured
   scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }
+
+  # Default scope
+  default_scope :active
 
   # Sortable columns
   sorts :name, :price, :created_at

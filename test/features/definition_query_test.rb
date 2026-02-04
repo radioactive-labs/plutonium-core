@@ -57,12 +57,15 @@ class DefinitionQueryTest < Minitest::Test
   def test_scope_with_options
     definition_class = Class.new(Plutonium::Resource::Definition) do
       scope :recent
-      scope :featured, default: true
+      scope :featured
+
+      default_scope :featured
     end
 
     # Scopes should be stored
     assert definition_class.defined_scopes.key?(:recent)
     assert definition_class.defined_scopes.key?(:featured)
+    assert_equal :featured, definition_class.default_scope
   end
 
   def test_sort_declaration

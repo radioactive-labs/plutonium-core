@@ -72,14 +72,17 @@ search do |scope, query|
 end
 
 # Predefined scopes (reference model scopes)
-scope :published, default: true  # Applied by default, uses Post.published
-scope :drafts                    # Uses Post.drafts
+scope :published  # Uses Post.published
+scope :drafts     # Uses Post.drafts
 
 # Inline scope with block
 scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }
 
 # Inline scope with controller context
 scope(:mine) { |scope| scope.where(user: current_user) }
+
+# Default scope
+default_scope :published
 
 # Filters
 filter :title, with: Plutonium::Query::Filters::Text, predicate: :contains
