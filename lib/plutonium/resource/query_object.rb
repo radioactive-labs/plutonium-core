@@ -1,8 +1,8 @@
 module Plutonium
   module Resource
     class QueryObject
-      attr_reader :search_filter, :search_query, :default_scope_name
-      attr_accessor :default_sort_config
+      attr_reader :search_filter, :search_query
+      attr_accessor :default_sort_config, :default_scope_name
 
       # Initializes a QueryObject with the given resource_class and parameters.
       #
@@ -31,11 +31,9 @@ module Plutonium
       #
       # @param name [Symbol] The name of the scope.
       # @param body [Proc, nil] The body of the scope.
-      # @param default [Boolean] Whether this scope is the default.
-      def define_scope(name, body = nil, default: false, **)
+      def define_scope(name, body = nil, **)
         body ||= name
         scope_definitions[name] = build_query(body)
-        @default_scope_name = name.to_s if default
       end
 
       # Defines a sort with the given name and body.

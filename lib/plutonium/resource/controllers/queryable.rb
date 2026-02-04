@@ -29,6 +29,10 @@ module Plutonium
                 query_object.default_sort_config = current_definition.default_sort
               end
 
+              if current_definition.respond_to?(:default_scope) && current_definition.default_scope
+                query_object.default_scope_name = current_definition.default_scope
+              end
+
               current_definition.defined_filters.each do |key, value|
                 with = value[:options][:with]
                 if with

@@ -18,6 +18,9 @@ class PostDefinition < Plutonium::Resource::Definition
   scope :published
   scope :draft
 
+  # Default scope
+  default_scope :published
+
   # Sorting - sortable columns
   sort :title
   sort :created_at
@@ -149,12 +152,15 @@ end
 
 ### Default Scope
 
-Mark a scope as the default selection:
+Set a scope as the default selection:
 
 ```ruby
-scope :active, default: true
+scope :active
 scope :archived
+
+default_scope :active
 ```
+
 
 ### Inline Scope (Block Syntax)
 
@@ -319,10 +325,13 @@ class PostDefinition < Plutonium::Resource::Definition
   scope :featured
   scope(:recent) { |scope| scope.where('created_at > ?', 1.week.ago) }
 
+  # Default scope
+  default_scope :published
+
   # Sortable columns
   sorts :title, :created_at, :view_count, :published_at
 
-  # Default: newest first
+  # Default sort: newest first
   default_sort :created_at, :desc
 end
 ```

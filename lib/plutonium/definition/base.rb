@@ -13,7 +13,8 @@ module Plutonium
     #     field :name, as: :string
     #     input :email, as: :email
     #     filter :status, type: :select, collection: %w[active inactive]
-    #     scope :active, default: true
+    #     scope :active
+    #     default_scope :active
     #     sorter :created_at
     #
     #     def customize_fields
@@ -29,6 +30,7 @@ module Plutonium
       include InheritableConfigAttr
       include Actions
       include Sorting
+      include Scoping
       include Search
       include NestedInputs
 

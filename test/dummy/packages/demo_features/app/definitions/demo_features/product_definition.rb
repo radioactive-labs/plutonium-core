@@ -15,9 +15,11 @@ class DemoFeatures::ProductDefinition < DemoFeatures::ResourceDefinition
   # ===========================================
   # Scopes
   # ===========================================
-  scope :published, default: true
+  scope :published
   scope :in_stock
   scope :featured
+
+  default_scope :published
 
   # ===========================================
   # Filters - demonstrating all filter types
