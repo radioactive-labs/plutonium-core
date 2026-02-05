@@ -71,7 +71,20 @@ module PlutoniumGenerators
     class GeneratedAttribute < Rails::Generators::GeneratedAttribute
       class << self
         def parse(model_name, column_definition)
+          # Protect content inside {} from being split on colons
+          # e.g., "status:string{default:draft}" -> split correctly
+          options_content = nil
+          if column_definition.include?("{")
+            column_definition = column_definition.gsub(/\{([^}]*)\}/) do |match|
+              options_content = $1
+              "{OPTIONS}"
+            end
+          end
+
           name, type, index_type = column_definition.split(":")
+
+          # Restore options content
+          type = type&.sub("{OPTIONS}", "{#{options_content}}") if options_content
 
           # if user provided "name:index" instead of "name:string:index"
           # type should be set blank so GeneratedAttribute's constructor
@@ -114,18 +127,49 @@ module PlutoniumGenerators
 
         private
 
+        # Extends Rails' parse_type_and_options to support:
+        # - nullable types with ? suffix: 'string?' -> null: true
+        # - default values: 'string{default:value}' -> default: "value"
         def parse_type_and_options(type)
           nullable = type&.include?("?")
           type = type&.sub("?", "") if nullable
 
+          # Extract default value before calling super
+          # Syntax: type{default:value} or type{limit,default:value}
+          default_value = nil
+          if type && (match = type.match(/\{([^}]*default:([^,}]+)[^}]*)\}/))
+            default_value = match[2]
+            # Remove default:value from the options string but keep other options
+            cleaned_options = match[1]
+              .gsub(/,?\s*default:#{Regexp.escape(default_value)}/, "")
+              .gsub(/#{Regexp.escape("default:#{default_value}")},?\s*/, "")
+            type = if cleaned_options.empty?
+              type.sub(/\{[^}]*\}/, "")
+            else
+              type.sub(/\{[^}]*\}/, "{#{cleaned_options}}")
+            end
+          end
+
           parsed_type, parsed_options = super
 
           parsed_options[:null] = nullable ? true : false
+          parsed_options[:default] = coerce_default_value(default_value, parsed_type) if default_value
 
           [parsed_type, parsed_options]
         end
 
-        private
+        def coerce_default_value(value, type)
+          case type&.to_s
+          when "integer"
+            value.to_i
+          when "float", "decimal"
+            value.to_f
+          when "boolean"
+            %w[true 1 yes].include?(value.downcase)
+          else
+            value
+          end
+        end
 
         def find_shared_namespace(model1, model2, separator: "::")
           parts1 = model1.underscore.split(separator)

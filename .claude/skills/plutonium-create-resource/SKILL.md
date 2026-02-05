@@ -83,18 +83,43 @@ Format: `name:type:index_type`
 | `'ends_at:datetime?'` | Nullable datetime |
 | `alarm_time:time` | Required time |
 | `'reminder_time:time?'` | Nullable time |
+| `metadata:json` | JSON field |
+| `settings:jsonb` | JSONB (PostgreSQL) |
+| `external_id:uuid` | UUID field |
 
-### Decimal with Precision
+### PostgreSQL-Specific Types
 
-The `{precision,scale}` syntax **only works for decimal types**:
+These types work in both PostgreSQL and SQLite (automatically mapped):
+
+| Type | PostgreSQL | SQLite |
+|------|------------|--------|
+| `jsonb` | `jsonb` | `json` |
+| `hstore` | `hstore` | `json` |
+| `uuid` | `uuid` | `string` |
+| `inet` | `inet` | `string` |
+| `cidr` | `cidr` | `string` |
+| `macaddr` | `macaddr` | `string` |
+| `ltree` | `ltree` | `string` |
+
+### Default Values
+
+Use `{default:value}` syntax for default values:
 
 ```bash
-'latitude:decimal{11,8}'           # precision: 11, scale: 8
-'amount:decimal{10,2}'             # precision: 10, scale: 2
-'latitude:decimal?{11,8}'          # nullable with precision
+'status:string{default:draft}'           # String default
+'active:boolean{default:true}'           # Boolean default (true/false/yes/1)
+'priority:integer{default:0}'            # Integer default
+'rating:float{default:4.5}'              # Float default
+'status:string?{default:pending}'        # Nullable with default
 ```
 
-**Note**: For default values on other types (boolean, integer, etc.), edit the migration manually.
+### Decimal with Precision and Default
+
+```bash
+'amount:decimal{10,2}'                   # precision: 10, scale: 2
+'price:decimal{10,2,default:0}'          # with default value
+'balance:decimal?{15,2,default:0}'       # nullable with precision and default
+```
 
 ### References/Associations
 
@@ -179,10 +204,12 @@ t.belongs_to :parent, null: false, foreign_key: {on_delete: :cascade}
 
 ### Default Values
 
+Default values can be set directly in the generator using `{default:value}` syntax (see Field Type Syntax above). For more complex defaults or expressions, edit the migration:
+
 ```ruby
 t.boolean :is_active, default: true
 t.integer :status, default: 0
-t.integer :count, null: true, default: 0
+t.datetime :published_at, default: -> { "CURRENT_TIMESTAMP" }
 ```
 
 ## Examples

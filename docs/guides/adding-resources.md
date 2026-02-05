@@ -44,6 +44,8 @@ Format: `name:type:index_type`
 | `datetime` | `published_at:datetime` | Date and time |
 | `time` | `starts_at:time` | Time only |
 | `json` | `metadata:json` | JSON data |
+| `jsonb` | `settings:jsonb` | JSONB (PostgreSQL) |
+| `uuid` | `external_id:uuid` | UUID field |
 
 ### Nullable Fields
 
@@ -63,6 +65,18 @@ Use `{precision,scale}` syntax for decimal fields:
 'price:decimal{10,2}'      # precision: 10, scale: 2
 'latitude:decimal{11,8}'   # precision: 11, scale: 8
 'amount:decimal?{15,2}'    # nullable with precision
+```
+
+### Default Values
+
+Use `{default:value}` syntax to set default values:
+
+```bash
+'status:string{default:draft}'         # String default
+'active:boolean{default:true}'         # Boolean default
+'priority:integer{default:0}'          # Integer default
+'price:decimal{10,2,default:0}'        # Decimal with precision and default
+'category:string?{default:general}'    # Nullable with default
 ```
 
 ### Associations
@@ -359,9 +373,11 @@ t.belongs_to :user, null: false, foreign_key: {on_delete: :cascade}
 
 ### Default Values
 
+Default values can be set directly in the generator using `{default:value}` syntax. For expressions or complex defaults, edit the migration:
+
 ```ruby
 t.boolean :is_active, default: true
-t.integer :status, default: 0
+t.datetime :published_at, default: -> { "CURRENT_TIMESTAMP" }
 ```
 
 ## Removing Resources
