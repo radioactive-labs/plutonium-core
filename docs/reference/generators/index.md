@@ -57,17 +57,58 @@ rails generate pu:res:scaffold Post title:string --no-model
 | `datetime` | `published_at:datetime` | `datetime` |
 | `time` | `starts_at:time` | `time` |
 | `json` | `metadata:json` | `json` |
+| `jsonb` | `settings:jsonb` | `jsonb` (PostgreSQL) / `json` (SQLite) |
+| `uuid` | `external_id:uuid` | `uuid` (PostgreSQL) / `string` (SQLite) |
 | `belongs_to` | `user:belongs_to` | `references` |
 | `references` | `user:references` | `references` |
 | `rich_text` | `content:rich_text` | Action Text |
+
+#### PostgreSQL-Specific Types
+
+These types work in both PostgreSQL and SQLite (mapped to compatible types):
+
+| Type | PostgreSQL | SQLite Equivalent |
+|------|------------|-------------------|
+| `jsonb` | `jsonb` | `json` |
+| `hstore` | `hstore` | `json` |
+| `uuid` | `uuid` | `string` |
+| `inet` | `inet` | `string` |
+| `cidr` | `cidr` | `string` |
+| `macaddr` | `macaddr` | `string` |
+| `ltree` | `ltree` | `string` |
 
 #### Nullable Fields
 
 Append `?` to make a field nullable:
 
 ```bash
-rails generate pu:res:scaffold Post title:string description:text?
+rails generate pu:res:scaffold Post title:string 'description:text?'
 ```
+
+#### Default Values
+
+Use `{default:value}` syntax to set default values:
+
+```bash
+# String with default
+rails generate pu:res:scaffold Post 'status:string{default:draft}'
+
+# Boolean with default
+rails generate pu:res:scaffold Post 'active:boolean{default:true}'
+
+# Integer with default
+rails generate pu:res:scaffold Post 'priority:integer{default:0}'
+
+# Decimal with precision and default
+rails generate pu:res:scaffold Product 'price:decimal{10,2,default:0}'
+
+# Nullable with default
+rails generate pu:res:scaffold Post 'category:string?{default:general}'
+```
+
+::: tip Shell Quoting
+Always quote fields containing `?` or `{}` to prevent shell expansion.
+:::
 
 #### Money Fields (has_cents)
 
