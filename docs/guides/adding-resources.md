@@ -89,6 +89,10 @@ company:references  # Same as belongs_to
 # Nullable belongs_to
 'parent:belongs_to?'  # Creates: null: true, optional: true
 
+# Custom class_name (column author_id -> User model)
+'author:belongs_to{class_name:User}'
+'reviewer:belongs_to?{class_name:User}'  # Nullable
+
 # Cross-package reference
 blogging/post:belongs_to
 ```

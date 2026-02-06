@@ -39,6 +39,9 @@ rails generate pu:res:scaffold Post
 # With associations
 rails generate pu:res:scaffold Comment body:text user:belongs_to post:belongs_to
 
+# With custom class_name (author -> User)
+rails generate pu:res:scaffold Post 'author:belongs_to{class_name:User}'
+
 # Skip model generation for existing models
 rails generate pu:res:scaffold Post title:string --no-model
 ```
@@ -109,6 +112,25 @@ rails generate pu:res:scaffold Post 'category:string?{default:general}'
 ::: tip Shell Quoting
 Always quote fields containing `?` or `{}` to prevent shell expansion.
 :::
+
+#### Associations
+
+```bash
+# Required belongs_to
+rails generate pu:res:scaffold Comment user:belongs_to post:belongs_to
+
+# Nullable belongs_to
+rails generate pu:res:scaffold Post 'parent:belongs_to?'
+
+# Custom class_name (author_id column -> User model)
+rails generate pu:res:scaffold Post 'author:belongs_to{class_name:User}'
+
+# Nullable with custom class_name
+rails generate pu:res:scaffold Post 'reviewer:belongs_to?{class_name:User}'
+
+# Cross-package reference
+rails generate pu:res:scaffold Comment blogging/post:belongs_to
+```
 
 #### Money Fields (has_cents)
 

@@ -128,6 +128,8 @@ company:belongs_to                 # Required foreign key
 'parent:belongs_to?'               # Nullable (null: true + optional: true)
 user:references                    # Same as belongs_to
 blogging/post:belongs_to           # Cross-package reference
+'author:belongs_to{class_name:User}'     # Custom class_name (author_id -> User)
+'reviewer:belongs_to?{class_name:User}'  # Nullable with class_name
 ```
 
 Nullable references generate:
