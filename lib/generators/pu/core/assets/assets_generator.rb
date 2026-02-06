@@ -58,9 +58,14 @@ module Pu
       end
 
       def replace_build_script
-        gsub_file "package.json",
-          /"build:css":.*/,
-          '"build:css": "postcss ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css"'
+        package_json = File.read("package.json")
+        package = JSON.parse(package_json)
+
+        package["scripts"] ||= {}
+        package["scripts"]["build"] = "esbuild app/javascript/*.* --bundle --sourcemap --format=esm --outdir=app/assets/builds --public-path=/assets"
+        package["scripts"]["build:css"] = "postcss ./app/assets/stylesheets/application.tailwind.css -o ./app/assets/builds/application.css"
+
+        File.write("package.json", JSON.pretty_generate(package) + "\n")
       end
 
       def import_styles
