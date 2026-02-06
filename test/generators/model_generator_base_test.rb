@@ -188,6 +188,45 @@ class ModelGeneratorBaseTest < ActiveSupport::TestCase
     assert_equal :belongs_to, attr.type
   end
 
+  # class_name option tests
+
+  test "parses belongs_to with class_name option" do
+    attr = GeneratedAttribute.parse("Post", "author:belongs_to{class_name:User}")
+
+    assert_equal "author", attr.name
+    assert_equal :belongs_to, attr.type
+    assert_equal "User", attr.attr_options[:class_name]
+    assert_equal :users, attr.attr_options[:to_table]
+  end
+
+  test "parses nullable belongs_to with class_name option" do
+    attr = GeneratedAttribute.parse("Post", "reviewer:belongs_to?{class_name:User}")
+
+    assert_equal "reviewer", attr.name
+    assert_equal :belongs_to, attr.type
+    assert_equal "User", attr.attr_options[:class_name]
+    assert_equal :users, attr.attr_options[:to_table]
+    assert_equal true, attr.attr_options[:null]
+  end
+
+  test "parses belongs_to with namespaced class_name" do
+    attr = GeneratedAttribute.parse("Post", "author:belongs_to{class_name:Admin::User}")
+
+    assert_equal "author", attr.name
+    assert_equal :belongs_to, attr.type
+    assert_equal "Admin::User", attr.attr_options[:class_name]
+    assert_equal :admin_users, attr.attr_options[:to_table]
+  end
+
+  test "options_for_migration includes foreign_key with to_table for class_name" do
+    attr = GeneratedAttribute.parse("Post", "author:belongs_to{class_name:User}")
+
+    migration_options = attr.options_for_migration
+    assert_equal({to_table: :users}, migration_options[:foreign_key])
+    refute migration_options.key?(:class_name)
+    refute migration_options.key?(:to_table)
+  end
+
   # Index type tests
 
   test "parses field with index" do

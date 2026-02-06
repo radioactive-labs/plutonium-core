@@ -130,23 +130,27 @@ module PlutoniumGenerators
         # Extends Rails' parse_type_and_options to support:
         # - nullable types with ? suffix: 'string?' -> null: true
         # - default values: 'string{default:value}' -> default: "value"
+        # - class_name for references: 'belongs_to{class_name:User}' -> class_name: "User"
         def parse_type_and_options(type)
           nullable = type&.include?("?")
           type = type&.sub("?", "") if nullable
 
-          # Extract default value before calling super
-          # Syntax: type{default:value} or type{limit,default:value}
+          # Extract custom options before calling super
+          # Syntax: type{option:value} or type{limit,option:value}
           default_value = nil
-          if type && (match = type.match(/\{([^}]*default:([^,}]+)[^}]*)\}/))
-            default_value = match[2]
-            # Remove default:value from the options string but keep other options
-            cleaned_options = match[1]
-              .gsub(/,?\s*default:#{Regexp.escape(default_value)}/, "")
-              .gsub(/#{Regexp.escape("default:#{default_value}")},?\s*/, "")
-            type = if cleaned_options.empty?
-              type.sub(/\{[^}]*\}/, "")
-            else
-              type.sub(/\{[^}]*\}/, "{#{cleaned_options}}")
+          class_name_value = nil
+
+          if type&.include?("{")
+            # Extract default:value
+            if (match = type.match(/\{([^}]*default:([^,}]+)[^}]*)\}/))
+              default_value = match[2]
+              type = remove_option_from_type(type, "default", default_value)
+            end
+
+            # Extract class_name:Value
+            if (match = type.match(/\{([^}]*class_name:([^,}]+)[^}]*)\}/))
+              class_name_value = match[2]
+              type = remove_option_from_type(type, "class_name", class_name_value)
             end
           end
 
@@ -154,8 +158,23 @@ module PlutoniumGenerators
 
           parsed_options[:null] = nullable ? true : false
           parsed_options[:default] = coerce_default_value(default_value, parsed_type) if default_value
+          if class_name_value
+            parsed_options[:class_name] = class_name_value
+            parsed_options[:to_table] = class_name_value.underscore.tr("/", "_").pluralize.to_sym
+          end
 
           [parsed_type, parsed_options]
+        end
+
+        def remove_option_from_type(type, option_name, option_value)
+          escaped_value = Regexp.escape(option_value)
+          type.gsub(/\{[^}]*\}/) do |match|
+            content = match[1..-2] # Remove { and }
+            cleaned = content
+              .gsub(/,?\s*#{option_name}:#{escaped_value}/, "")
+              .gsub(/#{option_name}:#{escaped_value},?\s*/, "")
+            cleaned.empty? ? "" : "{#{cleaned}}"
+          end
         end
 
         def coerce_default_value(value, type)
