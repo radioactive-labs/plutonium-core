@@ -76,4 +76,29 @@ class ConnGeneratorTest < Rails::Generators::TestCase
       run_generator ["SolidQueue::Pause", "--dest=test_portal"]
     end
   end
+
+  test "creates controller by default" do
+    run_generator ["Post", "--dest=test_portal"]
+
+    assert_file "packages/test_portal/app/controllers/test_portal/posts_controller.rb" do |content|
+      assert_match(/class TestPortal::PostsController/, content)
+    end
+  end
+
+  test "singular option adds singular: true to register_resource" do
+    run_generator ["Post", "--dest=test_portal", "--singular"]
+
+    assert_file "packages/test_portal/config/routes.rb" do |content|
+      assert_match(/register_resource ::Post, singular: true/, content)
+    end
+  end
+
+  # Policy and definition flag tests - verify the generator options exist
+  test "policy flag is defined" do
+    assert_includes Pu::Res::ConnGenerator.class_options.keys, :policy
+  end
+
+  test "definition flag is defined" do
+    assert_includes Pu::Res::ConnGenerator.class_options.keys, :definition
+  end
 end
