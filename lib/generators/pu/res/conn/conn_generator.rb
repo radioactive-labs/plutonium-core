@@ -12,12 +12,19 @@ module Pu
 
       desc(
         "Create a connection between a resource and a portal\n\n" \
-        "e.g. rails g pu:res:conn todo --dest=dashboard_portal\n" \
-        "     rails g pu:res:conn profile --dest=customer_portal --singular"
+        "e.g. rails g pu:res:conn Todo --dest=dashboard_portal\n" \
+        "     rails g pu:res:conn Profile --dest=customer_portal --singular\n" \
+        "     rails g pu:res:conn Post --dest=admin_portal --policy --definition"
       )
 
       class_option :singular, type: :boolean, default: false,
         desc: "Register the resource as a singular resource (e.g., profile)"
+
+      class_option :policy, type: :boolean, default: false,
+        desc: "Create portal-specific policy even if base policy exists"
+
+      class_option :definition, type: :boolean, default: false,
+        desc: "Create portal-specific definition even if base definition exists"
 
       def start
         selected_resources = resources_selection
@@ -33,12 +40,12 @@ module Pu
               indent("register_resource ::#{resource}#{singular_option}\n", 2),
               after: /.*Rails\.application\.routes\.draw do.*\n/
           else
-            unless expected_parent_policy
+            if options[:policy] || !expected_parent_policy
               template "app/policies/resource_policy.rb",
                 "packages/#{package_namespace}/app/policies/#{package_namespace}/#{resource.underscore}_policy.rb"
             end
 
-            unless expected_parent_definition
+            if options[:definition] || !expected_parent_definition
               template "app/definitions/resource_definition.rb",
                 "packages/#{package_namespace}/app/definitions/#{package_namespace}/#{resource.underscore}_definition.rb"
             end
