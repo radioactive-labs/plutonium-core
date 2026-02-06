@@ -33,7 +33,7 @@ module Plutonium
             @add_url ||= begin
               return unless @skip_authorization || allowed_to?(:create?, association_reflection.klass)
 
-              url = @add_action || resource_url_for(association_reflection.klass, action: :new, parent: nil)
+              url = @add_action || (registered_resources.include?(association_reflection.klass) && resource_url_for(association_reflection.klass, action: :new, parent: nil))
               return unless url
 
               uri = URI(url)
