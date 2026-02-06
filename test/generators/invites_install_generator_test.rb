@@ -141,6 +141,18 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "generates user invitations controller with named rodauth config" do
+    run_generator default_args
+
+    assert_file "packages/invites/app/controllers/invites/user_invitations_controller.rb" do |content|
+      # Should use named config syntax, not parameterized rodauth call
+      assert_match(/def rodauth/, content)
+      assert_match(/request\.env\["rodauth\.user"\]/, content)
+      # Should not have parameterized rodauth calls
+      assert_no_match(/rodauth\(:user\)/, content)
+    end
+  end
+
   test "generates welcome controller" do
     run_generator default_args
 
@@ -149,6 +161,18 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/include Plutonium::Invites::PendingInviteCheck/, content)
       assert_match(/def index/, content)
       assert_match(/pending_invite/, content)
+    end
+  end
+
+  test "generates welcome controller with named rodauth config" do
+    run_generator default_args
+
+    assert_file "packages/invites/app/controllers/invites/welcome_controller.rb" do |content|
+      # Should use named config syntax
+      assert_match(/def rodauth/, content)
+      assert_match(/request\.env\["rodauth\.user"\]/, content)
+      # Should not have parameterized rodauth calls
+      assert_no_match(/rodauth\(:user\)/, content)
     end
   end
 
