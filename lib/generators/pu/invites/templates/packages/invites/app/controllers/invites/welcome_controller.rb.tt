@@ -43,15 +43,15 @@ module Invites
     end
 
     def current_user
-      rodauth(:<%= rodauth_config %>).rails_account if rodauth(:<%= rodauth_config %>).logged_in?
+      rodauth.rails_account if rodauth.logged_in?
     end
 
     def login_path
-      rodauth(:<%= rodauth_config %>).login_path
+      rodauth.login_path
     end
 
-    def rodauth(name = :<%= rodauth_config %>)
-      request.env["rodauth.#{name}"]
+    def rodauth
+      request.env["rodauth.<%= rodauth_config %>"]
     end
 <% else -%>
     def require_authentication

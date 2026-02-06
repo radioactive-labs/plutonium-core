@@ -5,8 +5,6 @@ module Pu
         def self.included(base)
           base.send :include, Configuration
 
-          base.send :class_option, :primary, type: :boolean,
-            desc: "[CONFIG] generated account is primary"
           base.send :class_option, :argon2, type: :boolean, default: false,
             desc: "[CONFIG] use Argon2 for password hashing"
           base.send :class_option, :mails, type: :boolean, default: true, desc: "[CONFIG] setup mails"
@@ -69,7 +67,7 @@ module Pu
         # Creates a hash of options to pass down options to an invoked sub generator
         def invoke_options
           # These are custom options we want to track.
-          extra_options = %i[primary argon2 mails kitchen_sink defaults]
+          extra_options = %i[argon2 mails kitchen_sink defaults]
           # Append them to all the available options from our configuration
           valid_options = configuration.keys.map(&:to_sym).concat extra_options
           # Index map the list with the selection value
@@ -101,7 +99,7 @@ module Pu
         end
 
         def primary?
-          options[:primary]
+          false # Primary (unnamed) accounts are not supported - all accounts must be named
         end
 
         def argon2?
