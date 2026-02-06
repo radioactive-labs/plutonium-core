@@ -108,7 +108,7 @@ module Pu
           has_many :#{membership_table_name}, dependent: :destroy
           has_many :#{normalized_user_name.pluralize}, through: :#{membership_table_name}
         RUBY
-        insert_into_file entity_model_path, indent(associations, 2), before: /# add has_many associations above\.\n/
+        inject_into_file entity_model_path, associations, before: /^\s*# add has_many associations above\.\n/
       end
 
       def add_association_to_user_model
@@ -120,7 +120,7 @@ module Pu
           has_many :#{membership_table_name}, dependent: :destroy
           has_many :#{normalized_entity_name.pluralize}, through: :#{membership_table_name}
         RUBY
-        insert_into_file user_model_path, indent(associations, 2), before: /# add has_many associations above\.\n/
+        inject_into_file user_model_path, associations, before: /^\s*# add has_many associations above\.\n/
       end
 
       def find_migration_file

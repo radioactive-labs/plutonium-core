@@ -127,8 +127,8 @@ module Pu
 
       def add_entity_association
         inject_into_file entity_model_path,
-          "has_many :user_invites, class_name: \"Invites::UserInvite\", dependent: :destroy\n  ",
-          before: "# add has_many associations above."
+          "  has_many :user_invites, class_name: \"Invites::UserInvite\", dependent: :destroy\n",
+          before: /^\s*# add has_many associations above\.\n/
       end
 
       def create_entity_interaction
