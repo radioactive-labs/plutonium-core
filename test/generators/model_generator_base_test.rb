@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "generators/pu/lib/plutonium_generators"
 
@@ -17,6 +15,77 @@ class ModelGeneratorBaseTest < ActiveSupport::TestCase
     assert_equal :string, attr.type
     assert_equal "draft", attr.attr_options[:default]
     assert_equal false, attr.attr_options[:null]
+  end
+
+  # JSON default value tests (nested braces)
+
+  test "parses empty hash default for jsonb type" do
+    attr = GeneratedAttribute.parse("Post", "metadata:jsonb{default:{}}")
+
+    assert_equal "metadata", attr.name
+    assert_equal :jsonb, attr.type
+    assert_equal({}, attr.attr_options[:default])
+  end
+
+  test "parses empty array default for jsonb type" do
+    attr = GeneratedAttribute.parse("Post", "tags:jsonb{default:[]}")
+
+    assert_equal "tags", attr.name
+    assert_equal :jsonb, attr.type
+    assert_equal [], attr.attr_options[:default]
+  end
+
+  test "parses nested hash default for jsonb type" do
+    attr = GeneratedAttribute.parse("Post", 'settings:jsonb{default:{"theme":"dark"}}')
+
+    assert_equal "settings", attr.name
+    assert_equal :jsonb, attr.type
+    assert_equal({"theme" => "dark"}, attr.attr_options[:default])
+  end
+
+  test "parses nullable jsonb with empty hash default" do
+    attr = GeneratedAttribute.parse("Post", "data:jsonb?{default:{}}")
+
+    assert_equal "data", attr.name
+    assert_equal :jsonb, attr.type
+    assert_equal({}, attr.attr_options[:default])
+    assert_equal true, attr.attr_options[:null]
+  end
+
+  test "parses number via JSON coercion" do
+    attr = GeneratedAttribute.parse("Post", "count:integer{default:42}")
+
+    assert_equal 42, attr.attr_options[:default]
+  end
+
+  test "parses boolean true via JSON coercion" do
+    attr = GeneratedAttribute.parse("Post", "active:boolean{default:true}")
+
+    assert_equal true, attr.attr_options[:default]
+  end
+
+  test "parses boolean false via JSON coercion" do
+    attr = GeneratedAttribute.parse("Post", "archived:boolean{default:false}")
+
+    assert_equal false, attr.attr_options[:default]
+  end
+
+  test "falls back to string for non-JSON values" do
+    attr = GeneratedAttribute.parse("Post", "status:string{default:pending}")
+
+    assert_equal "pending", attr.attr_options[:default]
+  end
+
+  test "coerces yes to true for boolean type" do
+    attr = GeneratedAttribute.parse("Post", "published:boolean{default:yes}")
+
+    assert_equal true, attr.attr_options[:default]
+  end
+
+  test "coerces 1 to true for boolean type" do
+    attr = GeneratedAttribute.parse("Post", "featured:boolean{default:1}")
+
+    assert_equal true, attr.attr_options[:default]
   end
 
   test "parses default value for integer type with coercion" do
@@ -41,34 +110,6 @@ class ModelGeneratorBaseTest < ActiveSupport::TestCase
     assert_equal "price", attr.name
     assert_equal :decimal, attr.type
     assert_equal 9.99, attr.attr_options[:default]
-  end
-
-  test "parses default value true for boolean type" do
-    attr = GeneratedAttribute.parse("Post", "active:boolean{default:true}")
-
-    assert_equal "active", attr.name
-    assert_equal :boolean, attr.type
-    assert_equal true, attr.attr_options[:default]
-  end
-
-  test "parses default value false for boolean type" do
-    attr = GeneratedAttribute.parse("Post", "archived:boolean{default:false}")
-
-    assert_equal "archived", attr.name
-    assert_equal :boolean, attr.type
-    assert_equal false, attr.attr_options[:default]
-  end
-
-  test "parses default value yes for boolean type" do
-    attr = GeneratedAttribute.parse("Post", "published:boolean{default:yes}")
-
-    assert_equal true, attr.attr_options[:default]
-  end
-
-  test "parses default value 1 for boolean type" do
-    attr = GeneratedAttribute.parse("Post", "featured:boolean{default:1}")
-
-    assert_equal true, attr.attr_options[:default]
   end
 
   test "parses default value with nullable type" do
