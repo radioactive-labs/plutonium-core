@@ -26,12 +26,23 @@ ActiveSupport.on_load(:active_record) do
     end
   end
 
-  # Override valid_type? to accept PostgreSQL types
+  # Override valid_type? to accept PostgreSQL types (instance method)
   ActiveRecord::ConnectionAdapters::SQLite3Adapter.class_eval do
     alias_method :original_valid_type?, :valid_type?
 
     def valid_type?(type)
       PLUTONIUM_SQLITE_TYPE_ALIASES.key?(type&.to_sym) || original_valid_type?(type)
+    end
+  end
+
+  # Override valid_type? class method for Rails generators (Rails 8.1+)
+  if ActiveRecord::ConnectionAdapters::SQLite3Adapter.respond_to?(:valid_type?)
+    ActiveRecord::ConnectionAdapters::SQLite3Adapter.singleton_class.class_eval do
+      alias_method :original_valid_type?, :valid_type?
+
+      def valid_type?(type)
+        PLUTONIUM_SQLITE_TYPE_ALIASES.key?(type&.to_sym) || original_valid_type?(type)
+      end
     end
   end
 

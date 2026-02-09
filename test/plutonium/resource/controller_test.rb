@@ -113,7 +113,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
 
     # Track the form_action argument passed to build_form
     form_action_received = :not_called
-    original_build_form = controller.method(:build_form)
+    controller.method(:build_form)
 
     controller.define_singleton_method(:build_form) do |record = nil, action: nil, form_action: nil, **|
       form_action_received = form_action

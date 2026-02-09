@@ -39,7 +39,7 @@ class ScaffoldGeneratorSetupTest < ActiveSupport::TestCase
     attributes_provided = ["title:string"]
 
     # With --model (default), should warn
-    should_warn_with_model = true && attributes_provided.any?
+    should_warn_with_model = attributes_provided.any?
     assert should_warn_with_model, "Should warn when overwriting with --model"
 
     # With --no-model, should not warn

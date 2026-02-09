@@ -1,0 +1,2 @@
+class NetworkDeviceDefinition < ::ResourceDefinition
+end

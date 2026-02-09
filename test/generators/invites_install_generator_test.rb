@@ -357,7 +357,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
 
     # Replace single-line with multi-line block
     content = File.read(rodauth_file)
-    content.gsub!(/after_login \{ remember_login \}/, <<~RUBY.strip)
+    content.gsub!("after_login { remember_login }", <<~RUBY.strip)
       after_login do
           remember_login
           log_login_event
