@@ -113,6 +113,19 @@ Use `{default:value}` syntax for default values:
 'status:string?{default:pending}'        # Nullable with default
 ```
 
+### JSON/JSONB Default Values
+
+Supports nested braces for structured defaults:
+
+```bash
+'metadata:jsonb{default:{}}'             # Empty hash
+'tags:jsonb{default:[]}'                 # Empty array
+'settings:jsonb{default:{"theme":"dark"}}' # Object with values
+'config:jsonb?{default:{}}'              # Nullable with empty hash default
+```
+
+Default values are parsed as JSON first. If JSON parsing fails, the value is treated as a string (or coerced based on column type for integers, floats, and booleans).
+
 ### Decimal with Precision and Default
 
 ```bash

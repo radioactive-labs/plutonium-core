@@ -96,7 +96,7 @@ Use `{default:value}` syntax to set default values:
 # String with default
 rails generate pu:res:scaffold Post 'status:string{default:draft}'
 
-# Boolean with default
+# Boolean with default (supports true/false/yes/1)
 rails generate pu:res:scaffold Post 'active:boolean{default:true}'
 
 # Integer with default
@@ -107,10 +107,23 @@ rails generate pu:res:scaffold Product 'price:decimal{10,2,default:0}'
 
 # Nullable with default
 rails generate pu:res:scaffold Post 'category:string?{default:general}'
+
+# JSONB with empty hash default
+rails generate pu:res:scaffold Post 'metadata:jsonb{default:{}}'
+
+# JSONB with empty array default
+rails generate pu:res:scaffold Post 'tags:jsonb{default:[]}'
+
+# JSONB with object default
+rails generate pu:res:scaffold Post 'settings:jsonb{default:{"theme":"dark"}}'
 ```
 
 ::: tip Shell Quoting
 Always quote fields containing `?` or `{}` to prevent shell expansion.
+:::
+
+::: tip JSON Default Values
+Default values are parsed as JSON first. This allows structured defaults like `{}` and `[]` for JSONB fields. If JSON parsing fails, the value is treated as a string (or coerced based on the column type for integers, floats, and booleans).
 :::
 
 #### Associations

@@ -73,11 +73,14 @@ module PlutoniumGenerators
         def parse(model_name, column_definition)
           # Protect content inside {} from being split on colons
           # e.g., "status:string{default:draft}" -> split correctly
+          # Handles nested braces like "data:jsonb{default:{}}"
           options_content = nil
           if column_definition.include?("{")
-            column_definition = column_definition.gsub(/\{([^}]*)\}/) do |match|
-              options_content = $1
-              "{OPTIONS}"
+            options_content = extract_braced_content(column_definition)
+            if options_content
+              start_idx = column_definition.index("{")
+              end_idx = start_idx + options_content.length + 2 # +2 for { and }
+              column_definition = column_definition[0...start_idx] + "{OPTIONS}" + column_definition[end_idx..]
             end
           end
 
@@ -141,15 +144,17 @@ module PlutoniumGenerators
           class_name_value = nil
 
           if type&.include?("{")
-            # Extract default:value
-            if (match = type.match(/\{([^}]*default:([^,}]+)[^}]*)\}/))
-              default_value = match[2]
+            options_content = extract_braced_content(type)
+
+            # Extract default:value (supports nested braces like {})
+            if options_content&.include?("default:")
+              default_value = extract_option_value(options_content, "default")
               type = remove_option_from_type(type, "default", default_value)
             end
 
             # Extract class_name:Value
-            if (match = type.match(/\{([^}]*class_name:([^,}]+)[^}]*)\}/))
-              class_name_value = match[2]
+            if options_content&.include?("class_name:")
+              class_name_value = extract_option_value(options_content, "class_name")
               type = remove_option_from_type(type, "class_name", class_name_value)
             end
           end
@@ -166,18 +171,82 @@ module PlutoniumGenerators
           [parsed_type, parsed_options]
         end
 
-        def remove_option_from_type(type, option_name, option_value)
-          escaped_value = Regexp.escape(option_value)
-          type.gsub(/\{[^}]*\}/) do |match|
-            content = match[1..-2] # Remove { and }
-            cleaned = content
-              .gsub(/,?\s*#{option_name}:#{escaped_value}/, "")
-              .gsub(/#{option_name}:#{escaped_value},?\s*/, "")
-            cleaned.empty? ? "" : "{#{cleaned}}"
+        # Extracts content inside outermost braces, respecting nested braces
+        # e.g., "jsonb{default:{}}" -> "default:{}"
+        def extract_braced_content(str)
+          start_idx = str.index("{")
+          return nil unless start_idx
+
+          depth = 0
+          (start_idx...str.length).each do |i|
+            case str[i]
+            when "{"
+              depth += 1
+            when "}"
+              depth -= 1
+              return str[(start_idx + 1)...i] if depth == 0
+            end
+          end
+          nil
+        end
+
+        # Extracts option value, handling nested braces
+        # e.g., from "default:{},other:val" extracts "{}" for "default"
+        def extract_option_value(content, option_name)
+          prefix = "#{option_name}:"
+          start_idx = content.index(prefix)
+          return nil unless start_idx
+
+          value_start = start_idx + prefix.length
+          return nil if value_start >= content.length
+
+          # Check if value starts with a brace (nested structure)
+          if content[value_start] == "{"
+            depth = 0
+            (value_start...content.length).each do |i|
+              case content[i]
+              when "{"
+                depth += 1
+              when "}"
+                depth -= 1
+                return content[value_start..i] if depth == 0
+              end
+            end
+            content[value_start..]
+          else
+            # Simple value - read until comma or end
+            end_idx = content.index(",", value_start) || content.length
+            content[value_start...end_idx]
           end
         end
 
+        def remove_option_from_type(type, option_name, option_value)
+          escaped_value = Regexp.escape(option_value)
+          options_content = extract_braced_content(type)
+          return type unless options_content
+
+          cleaned = options_content
+            .gsub(/,?\s*#{option_name}:#{escaped_value}/, "")
+            .gsub(/#{option_name}:#{escaped_value},?\s*/, "")
+
+          prefix = type[0...type.index("{")]
+          cleaned.empty? ? prefix : "#{prefix}{#{cleaned}}"
+        end
+
+        # Coerces default value using JSON parsing for structured types,
+        # with type-based fallback for primitives
         def coerce_default_value(value, type)
+          # Try JSON for structured types (hashes, arrays)
+          parsed = JSON.parse(value)
+          return parsed if parsed.is_a?(Hash) || parsed.is_a?(Array)
+
+          # For primitives, use type-based coercion
+          coerce_primitive_value(value, type)
+        rescue JSON::ParserError
+          coerce_primitive_value(value, type)
+        end
+
+        def coerce_primitive_value(value, type)
           case type&.to_s
           when "integer"
             value.to_i
