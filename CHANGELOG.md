@@ -1,3 +1,27 @@
+## [0.41.0] - 2026-02-09
+
+### 🚀 Features
+
+- *(generators)* Add default value support and improve SQLite compatibility
+- *(generators)* Add class_name option for belongs_to fields
+- *(generators)* Add --policy and --definition flags to conn generator
+
+### 🐛 Bug Fixes
+
+- *(generators)* Fix has_many association injection pattern
+- *(generators)* Add missing scripts to package.json in assets generator
+- *(generators)* Remove primary account support for rodauth
+- *(generators)* Use top-level Gem::Version to avoid namespace collision
+- *(ui)* Check resource registration before generating association add URL
+
+### 📚 Documentation
+
+- Add class_name option and associations section to generator docs
+
+### 🧪 Testing
+
+- *(generators)* Add tests for named rodauth account configuration
+- *(sqlite)* Move type alias tests to core and test actual migrations
 ## [0.40.0] - 2026-02-04
 
 ### 🚀 Features
