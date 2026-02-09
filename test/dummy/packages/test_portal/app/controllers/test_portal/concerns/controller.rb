@@ -3,6 +3,7 @@ module TestPortal
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
+
       # add concerns above.
 
       included do

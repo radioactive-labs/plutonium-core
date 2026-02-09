@@ -154,10 +154,10 @@ module Plutonium
             end
           end
         rescue ActiveRecord::RecordInvalid => e
-          if e.record.is_a?(invite_class)
-            flash.now[:alert] = e.record.errors.full_messages.join(", ")
+          flash.now[:alert] = if e.record.is_a?(invite_class)
+            e.record.errors.full_messages.join(", ")
           else
-            flash.now[:alert] = "Failed to create account: #{e.record.errors.full_messages.join(", ")}"
+            "Failed to create account: #{e.record.errors.full_messages.join(", ")}"
           end
           render :signup
         rescue => e

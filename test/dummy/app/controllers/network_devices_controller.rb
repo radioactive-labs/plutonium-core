@@ -1,0 +1,2 @@
+class NetworkDevicesController < ::ResourceController
+end
