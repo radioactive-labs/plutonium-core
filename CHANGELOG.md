@@ -1,3 +1,8 @@
+## [0.41.1] - 2026-02-09
+
+### 🚀 Features
+
+- *(generators)* Support JSON default values for jsonb fields
 ## [0.41.0] - 2026-02-09
 
 ### 🚀 Features
