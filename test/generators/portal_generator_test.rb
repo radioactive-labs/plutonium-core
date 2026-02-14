@@ -7,11 +7,13 @@ require "rails/generators/test_case"
 require "generators/pu/pkg/portal/portal_generator"
 
 class PortalGeneratorTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Pkg::PortalGenerator
   destination Rails.root
 
-  def teardown
-    cleanup_generated_files("test")
+  def setup
+    git_ensure_clean_dummy_app
   end
 
   test "generates portal with public access" do
@@ -71,11 +73,5 @@ class PortalGeneratorTest < Rails::Generators::TestCase
     assert_file "packages/test_portal/lib/engine.rb" do |content|
       assert_match(/scope_to_entity UserOrganization, strategy: :path/, content)
     end
-  end
-
-  private
-
-  def cleanup_generated_files(name)
-    FileUtils.rm_rf(destination_root.join("packages/#{name}_portal"))
   end
 end

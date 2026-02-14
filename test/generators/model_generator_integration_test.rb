@@ -5,11 +5,13 @@ require "rails/generators/test_case"
 require "generators/pu/res/model/model_generator"
 
 class ModelGeneratorIntegrationTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Res::ModelGenerator
   destination Rails.root
 
-  def teardown
-    cleanup_generated_files("test_model")
+  def setup
+    git_ensure_clean_dummy_app
   end
 
   # Note: --migration flag is needed for Rails::Generators::TestCase
@@ -100,19 +102,5 @@ class ModelGeneratorIntegrationTest < Rails::Generators::TestCase
 
   def find_migration(name)
     Dir.glob(destination_root.join("db/migrate/*_#{name}.rb")).first
-  end
-
-  def cleanup_generated_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(destination_root.join(f)) }
-
-    # Clean up migrations
-    Dir.glob(destination_root.join("db/migrate/*_create_#{normalized.pluralize}.rb")).each do |f|
-      FileUtils.rm(f)
-    end
   end
 end

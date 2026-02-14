@@ -2,31 +2,22 @@
 
 return unless ENV["GENERATOR_TESTS"]
 
-# Clean up any leftover migrations BEFORE loading test_helper
-require "fileutils"
-rails_root = File.expand_path("../dummy", __dir__)
-
-Dir.glob(File.join(rails_root, "db/migrate/*_saas_member*.rb")).each { |f| FileUtils.rm(f) }
-Dir.glob(File.join(rails_root, "db/migrate/*_saas_org*.rb")).each { |f| FileUtils.rm(f) }
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/saas/membership_generator"
 
 class SaasMembershipGeneratorTest < ActiveSupport::TestCase
+  include GeneratorTestHelper
+
   def setup
     @rails_root = Rails.root
 
+    # Ensure clean state before each test
+    git_ensure_clean_dummy_app
+
     # Create minimal user and entity models for the membership generator to find
-    # Use unique names that don't conflict with existing test/dummy models
     create_minimal_model("saas_member")
     create_minimal_model("saas_org")
-  end
-
-  def teardown
-    cleanup_generated_files("saas_org_saas_member")
-    cleanup_generated_files("saas_member")
-    cleanup_generated_files("saas_org")
   end
 
   test "generates membership model with references" do
@@ -119,21 +110,5 @@ class SaasMembershipGeneratorTest < ActiveSupport::TestCase
     RUBY
 
     File.write(@rails_root.join("app/models/#{name}.rb"), model_content)
-  end
-
-  def cleanup_generated_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(@rails_root.join(f)) }
-
-    Dir.glob(@rails_root.join("db/migrate/*#{normalized}*.rb")).each do |f|
-      FileUtils.rm(f)
-    end
   end
 end

@@ -3,6 +3,7 @@
 return unless ENV["GENERATOR_TESTS"]
 
 require "test_helper"
+require "rails/generators/test_case"
 require "generators/pu/lib/plutonium_generators"
 
 class PackageSelectorTest < ActiveSupport::TestCase

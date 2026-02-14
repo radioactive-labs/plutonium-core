@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f].define(version: 2026_01_28_220555) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_09_044032) do
   create_table "admin_active_session_keys", primary_key: ["admin_id", "session_id"], force: :cascade do |t|
     t.integer "admin_id"
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -199,6 +199,18 @@ ActiveRecord::Schema[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to
     t.integer "stock_count", null: false
     t.datetime "updated_at", null: false
     t.index ["product_id"], name: "index_demo_features_variants_on_product_id"
+  end
+
+  create_table "network_devices", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "external_id", null: false
+    t.string "ip_address"
+    t.string "location_path"
+    t.string "mac_address"
+    t.json "metadata", null: false
+    t.string "name", null: false
+    t.string "network_range"
+    t.datetime "updated_at", null: false
   end
 
   create_table "organization_users", force: :cascade do |t|
