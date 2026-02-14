@@ -2,20 +2,24 @@ require "rails/generators/base"
 require "rails/generators/active_record/migration"
 require "securerandom"
 
+require "#{__dir__}/concerns/gem_helpers"
+
 module Pu
   module Rodauth
     class InstallGenerator < ::Rails::Generators::Base
       include ::ActiveRecord::Generators::Migration
+      include Concerns::GemHelpers
 
       source_root "#{__dir__}/templates"
 
       desc "Install rodauth-rails"
 
       def add_rodauth
+        gems = %w[bcrypt sequel-activerecord_connection tilt rodauth-rails].reject { |g| gem_in_bundle?(g) }
+        return if gems.empty?
+
         Bundler.with_unbundled_env do
-          %w[bcrypt sequel-activerecord_connection tilt rodauth-rails].each do |gem|
-            run "bundle add #{gem}"
-          end
+          gems.each { |gem| run "bundle add #{gem}" }
         end
       end
 

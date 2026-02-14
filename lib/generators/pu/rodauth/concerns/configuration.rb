@@ -184,6 +184,7 @@ module Pu
           },
           jwt: {},
           json: {},
+          http_basic_auth: {},
           case_insensitive_login: {default: true},
           internal_request: {default: true}
         }.freeze

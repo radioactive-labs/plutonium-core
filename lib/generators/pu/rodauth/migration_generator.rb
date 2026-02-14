@@ -27,6 +27,9 @@ module Pu
       class_option :features, required: true, type: :array,
         desc: "Rodauth features to create tables for (otp, sms_codes, single_session, account_expiration etc.)"
 
+      class_option :login_column, type: :string, default: "email",
+        desc: "Name of the login column (default: email)"
+
       def validate_selected_features
         if selected_features.empty?
           say "No migration features specified!", :yellow
@@ -117,6 +120,10 @@ module Pu
 
       def separate_passwords?
         selected_features.include? :separate_passwords
+      end
+
+      def login_column
+        options[:login_column] || "email"
       end
 
       def migration_chunk(feature)
