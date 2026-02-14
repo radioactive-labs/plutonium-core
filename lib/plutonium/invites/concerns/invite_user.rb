@@ -24,7 +24,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          presents label: "Invite User", icon: Phlex::TablerIcons::Mail
+          include Plutonium::Interaction::Concerns::Scoping
 
           attribute :resource
           attribute :email

@@ -3,13 +3,15 @@
 class <%= user_model %>::InviteUserInteraction < Plutonium::Resource::Interaction
   include Plutonium::Invites::Concerns::InviteUser
 
+  presents label: "Invite <%= user_model.underscore.humanize.titleize %>", icon: Phlex::TablerIcons::Mail
+
   attribute :role
   input :role, as: :select, choices: Invites::UserInvite.roles.keys
 
   private
 
   def entity
-    current_entity
+    current_scoped_entity
   end
 <% if membership_model != "EntityUser" -%>
 
