@@ -7,34 +7,15 @@ require "rails/generators/test_case"
 require "generators/pu/invites/invitable_generator"
 
 class InvitesInvitableGeneratorTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Invites::InvitableGenerator
   # Use Rails.root as destination since generator validates files there
   destination Rails.root
   # Don't use prepare_destination - it clears Rails.root!
 
   def setup
-    @modified_files = {}
-
-    # Backup files that will be modified
-    backup_file("app/models/organization_user.rb")
-    backup_file("app/definitions/organization_user_definition.rb")
-    backup_file("app/policies/organization_user_policy.rb")
-  end
-
-  def teardown
-    # Restore modified files
-    @modified_files.each do |path, content|
-      if content
-        File.write(destination_root.join(path), content)
-      end
-    end
-
-    # Clean up generated interaction
-    FileUtils.rm_rf(destination_root.join("app/interactions/organization_user"))
-
-    # Clean up generated email templates
-    FileUtils.rm_f(destination_root.join("packages/invites/app/views/invites/user_invite_mailer/invitation_organization_user.html.erb"))
-    FileUtils.rm_f(destination_root.join("packages/invites/app/views/invites/user_invite_mailer/invitation_organization_user.text.erb"))
+    git_ensure_clean_dummy_app
   end
 
   test "generates invite user interaction" do
@@ -96,12 +77,5 @@ class InvitesInvitableGeneratorTest < Rails::Generators::TestCase
 
     assert_no_file "packages/invites/app/views/invites/user_invite_mailer/invitation_organization_user.html.erb"
     assert_no_file "packages/invites/app/views/invites/user_invite_mailer/invitation_organization_user.text.erb"
-  end
-
-  private
-
-  def backup_file(path)
-    full_path = destination_root.join(path)
-    @modified_files[path] = File.exist?(full_path) ? File.read(full_path) : nil
   end
 end

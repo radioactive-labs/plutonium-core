@@ -7,26 +7,13 @@ require "rails/generators/test_case"
 require "generators/pu/saas/user_generator"
 
 class SaasUserGeneratorTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Saas::UserGenerator
   destination Rails.root
 
   def setup
-    # Backup rodauth_app.rb
-    @rodauth_app_backup = File.read(destination_root.join("app/rodauth/rodauth_app.rb"))
-
-    # Backup root Gemfile
-    @root_gemfile_path = File.expand_path("../../Gemfile", __dir__)
-    @gemfile_backup = File.read(@root_gemfile_path)
-  end
-
-  def teardown
-    cleanup_generated_files("test_user")
-
-    # Restore rodauth_app.rb
-    File.write(destination_root.join("app/rodauth/rodauth_app.rb"), @rodauth_app_backup)
-
-    # Restore root Gemfile
-    File.write(@root_gemfile_path, @gemfile_backup)
+    git_ensure_clean_dummy_app
   end
 
   test "generates user account with rodauth plugin" do
@@ -70,28 +57,5 @@ class SaasUserGeneratorTest < Rails::Generators::TestCase
     migration_content = File.read(migration_files.first)
     assert_match(/t\.string :name/, migration_content, "Migration should include name column")
     assert_match(/t\.string :phone/, migration_content, "Migration should include phone column")
-  end
-
-  private
-
-  def cleanup_generated_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/rodauth/#{normalized}_rodauth_plugin.rb",
-      "app/views/rodauth/#{normalized}",
-      "app/views/rodauth/#{normalized}_mailer",
-      "app/mailers/rodauth/#{normalized}_mailer.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb",
-      "app/controllers/rodauth/#{normalized}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(destination_root.join(f)) }
-
-    Dir.glob(destination_root.join("db/migrate/*_#{normalized}*.rb")).each do |f|
-      FileUtils.rm(f)
-    end
   end
 end

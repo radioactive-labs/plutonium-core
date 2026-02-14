@@ -7,11 +7,13 @@ require "rails/generators/test_case"
 require "generators/pu/saas/entity_generator"
 
 class SaasEntityGeneratorTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Saas::EntityGenerator
   destination Rails.root
 
-  def teardown
-    cleanup_generated_files("test_org")
+  def setup
+    git_ensure_clean_dummy_app
   end
 
   test "generates entity model with name attribute" do
@@ -36,23 +38,5 @@ class SaasEntityGeneratorTest < Rails::Generators::TestCase
     end
 
     assert_file "app/models/test_org.rb"
-  end
-
-  private
-
-  def cleanup_generated_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(destination_root.join(f)) }
-
-    Dir.glob(destination_root.join("db/migrate/*#{normalized}*.rb")).each do |f|
-      FileUtils.rm(f)
-    end
   end
 end

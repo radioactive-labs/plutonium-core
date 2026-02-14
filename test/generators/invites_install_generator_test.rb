@@ -7,49 +7,15 @@ require "rails/generators/test_case"
 require "generators/pu/invites/install_generator"
 
 class InvitesInstallGeneratorTest < Rails::Generators::TestCase
+  include GeneratorTestHelper
+
   tests Pu::Invites::InstallGenerator
   # Use Rails.root as destination since generator validates files there
   destination Rails.root
   # Don't use prepare_destination - it clears Rails.root!
 
-  # Track files created by generator for cleanup
   def setup
-    @created_files = []
-    @modified_files = {}
-
-    # Backup files that will be modified
-    backup_file("app/models/organization.rb")
-    backup_file("app/definitions/organization_definition.rb")
-    backup_file("app/policies/organization_policy.rb")
-    backup_file("app/definitions/user_definition.rb")
-    backup_file("app/policies/user_policy.rb")
-    backup_file("app/policies/resource_policy.rb")
-    backup_file("app/rodauth/user_rodauth_plugin.rb")
-    backup_file("config/routes.rb")
-  end
-
-  def teardown
-    # Clean up created files
-    @created_files.each { |f| FileUtils.rm_rf(destination_root.join(f)) }
-
-    # Restore modified files
-    @modified_files.each do |path, content|
-      if content
-        File.write(destination_root.join(path), content)
-      end
-    end
-
-    # Clean up packages/invites if created
-    FileUtils.rm_rf(destination_root.join("packages/invites"))
-
-    # Clean up migration
-    Dir.glob(destination_root.join("db/migrate/*_create_user_invites.rb")).each do |f|
-      FileUtils.rm(f)
-    end
-
-    # Clean up generated interactions
-    FileUtils.rm_rf(destination_root.join("app/interactions/organization"))
-    FileUtils.rm_rf(destination_root.join("app/interactions/user"))
+    git_ensure_clean_dummy_app
   end
 
   # Default args for all tests
@@ -231,7 +197,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/class User::InviteUserInteraction/, content)
       assert_match(/include Plutonium::Invites::Concerns::InviteUser/, content)
       assert_match(/def entity/, content)
-      assert_match(/current_entity/, content)
+      assert_match(/current_scoped_entity/, content)
     end
   end
 
@@ -311,10 +277,6 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
       assert_match(/belongs_to :account, optional: true/, content)
     end
-  ensure
-    FileUtils.rm_f(destination_root.join("app/definitions/account_definition.rb"))
-    FileUtils.rm_f(destination_root.join("app/policies/account_policy.rb"))
-    FileUtils.rm_rf(destination_root.join("app/interactions/account"))
   end
 
   test "generates with custom membership model" do
@@ -398,12 +360,5 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       # Should update login_redirect to /welcome
       assert_match(/login_redirect "\/welcome"/, content)
     end
-  end
-
-  private
-
-  def backup_file(path)
-    full_path = destination_root.join(path)
-    @modified_files[path] = File.exist?(full_path) ? File.read(full_path) : nil
   end
 end
