@@ -39,10 +39,17 @@ module Pu
       class_option :membership_attributes, type: :array, default: [],
         desc: "Additional attributes for the membership model"
 
+      class_option :api_client, type: :string, default: nil,
+        desc: "Generate an API client model (e.g., ApiClient)"
+
+      class_option :api_client_roles, type: :array, default: %w[read_only write admin],
+        desc: "Available roles for API client memberships"
+
       def start
         generate_user
         generate_entity unless options[:skip_entity]
         generate_membership unless options[:skip_membership]
+        generate_api_client if options[:api_client].present?
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -92,6 +99,22 @@ module Pu
             skip: options[:skip]
           }
         ).invoke_all
+      end
+
+      def generate_api_client
+        # Use class-based invocation to avoid Thor's invoke caching
+        klass = Rails::Generators.find_by_namespace("pu:saas:api_client")
+        api_client_options = {
+          roles: options[:api_client_roles],
+          dest: options[:dest],
+          force: options[:force],
+          skip: options[:skip]
+        }
+
+        # Scope to entity if entity is being generated
+        api_client_options[:entity] = options[:entity] unless options[:skip_entity]
+
+        klass.new([options[:api_client]], api_client_options).invoke_all
       end
     end
   end

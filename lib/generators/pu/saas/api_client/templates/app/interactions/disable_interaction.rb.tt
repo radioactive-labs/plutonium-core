@@ -1,0 +1,15 @@
+# frozen_string_literal: true
+
+class <%= name.classify %>::DisableInteraction < Plutonium::Resource::Interaction
+  include Plutonium::ApiClient::Concerns::DisableApiClient
+
+  private
+
+  def rodauth_name
+    :<%= normalized_name %>
+  end
+
+  def success_message(login)
+    "<%= display_name.titleize %> '#{login}' has been disabled"
+  end
+end
