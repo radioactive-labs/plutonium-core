@@ -410,6 +410,7 @@ Generate a complete multi-tenant SaaS setup with user, entity, and membership.
 rails generate pu:saas:setup --user Customer --entity Organization
 rails generate pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
 rails generate pu:saas:setup --user Customer --entity Organization --no-allow-signup
+rails generate pu:saas:setup --user Customer --entity Organization --api_client ApiClient
 ```
 
 #### Options
@@ -425,12 +426,15 @@ rails generate pu:saas:setup --user Customer --entity Organization --no-allow-si
 | `--user-attributes` | Additional user model attributes |
 | `--entity-attributes` | Additional entity model attributes |
 | `--membership-attributes` | Additional membership model attributes |
+| `--api_client NAME` | Generate an API client model for M2M auth |
+| `--api_client_roles` | Roles for API client (default: read_only,write,admin) |
 
 Creates:
 - User account model with Rodauth authentication
 - Entity model with unique name
 - Membership join model with role enum
 - Has-many-through associations with `dependent: :destroy`
+- (Optional) API client with HTTP Basic Auth, scoped to entity
 
 ### pu:saas:user
 
@@ -459,6 +463,45 @@ Generate just a membership model (requires user and entity to exist).
 rails generate pu:saas:membership --user Customer --entity Organization
 rails generate pu:saas:membership --user Customer --entity Organization --roles=member,admin,owner
 ```
+
+### pu:saas:api_client
+
+Generate an API client account for machine-to-machine authentication.
+
+```bash
+rails generate pu:saas:api_client ApiClient
+rails generate pu:saas:api_client ApiClient --entity=Organization
+rails generate pu:saas:api_client ApiClient --entity=Organization --roles=read_only,write,admin
+```
+
+#### Options
+
+| Option | Description |
+|--------|-------------|
+| `--entity NAME` | Entity model to scope API clients to |
+| `--roles` | Available roles (default: read_only,write,admin) |
+| `--extra_attributes` | Additional model attributes |
+| `--dest` | Destination package |
+
+Creates:
+- Rodauth account with HTTP Basic Auth (login + auto-generated password)
+- Create and Disable interactions
+- Rake task for CLI creation (`rake api_clients:create`)
+- (If entity) Membership model with roles
+
+#### Usage
+
+```bash
+# Create via rake task
+rake api_clients:create LOGIN=my-service
+
+# With entity scoping
+rake api_clients:create LOGIN=my-service ORGANIZATION=acme ROLE=write
+```
+
+::: tip Credentials
+Credentials are displayed once on creation and cannot be retrieved later. The password is auto-generated using `SecureRandom.base64(32)`.
+:::
 
 ## Core Generators
 

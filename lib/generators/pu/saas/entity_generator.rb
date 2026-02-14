@@ -32,11 +32,13 @@ module Pu
 
       def add_unique_index_to_migration
         migration_dir = File.join("db", "migrate")
-        migration_file = Dir[File.join(migration_dir, "*_create_#{normalized_name.pluralize}.rb")].first
+        migration_file = Dir[Rails.root.join(migration_dir, "*_create_#{normalized_name.pluralize}.rb")].first
 
-        return unless migration_file && File.exist?(migration_file)
+        return unless migration_file
 
-        insert_into_file migration_file,
+        # Convert to relative path for insert_into_file
+        relative_path = migration_file.sub("#{Rails.root}/", "")
+        insert_into_file relative_path,
           indent("add_index :#{normalized_name.pluralize}, :name, unique: true\n", 4),
           before: /^  end\s*$/
       end

@@ -359,7 +359,7 @@ In your admin portal:
 ```ruby
 # Invites are scoped to the current entity
 # Admins see all pending invites for their organization
-Invites::UserInvite.pending.where(entity: current_entity)
+Invites::UserInvite.pending.where(entity: current_scoped_entity)
 ```
 
 ## Security Considerations
