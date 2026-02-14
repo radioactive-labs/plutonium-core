@@ -3,8 +3,13 @@ import { Controller } from "@hotwired/stimulus";
 // Connects to data-controller="remote-modal"
 export default class extends Controller {
   connect() {
-    // Store original scroll position
+    // Store original scroll position and body overflow
     this.originalScrollPosition = window.scrollY;
+    this.originalOverflow = document.body.style.overflow;
+    this.bodyStateRestored = false;
+
+    // Lock body scroll
+    document.body.style.overflow = "hidden";
 
     // Show the modal
     this.element.showModal();
@@ -15,17 +20,26 @@ export default class extends Controller {
   close() {
     // Close the modal
     this.element.close();
-    // Restore the original scroll position
-    window.scrollTo(0, this.originalScrollPosition);
+    this.restoreBodyState();
   }
 
   disconnect() {
     // Clean up event listener when controller is disconnected
     this.element.removeEventListener("close", this.handleClose);
+    this.restoreBodyState();
   }
 
   handleClose() {
-    // Restore the original scroll position after dialog closes
+    this.restoreBodyState();
+  }
+
+  restoreBodyState() {
+    if (this.bodyStateRestored) return;
+    this.bodyStateRestored = true;
+
+    // Restore body overflow
+    document.body.style.overflow = this.originalOverflow || "";
+    // Restore the original scroll position
     window.scrollTo(0, this.originalScrollPosition);
   }
 }
