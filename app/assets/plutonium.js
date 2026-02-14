@@ -27685,6 +27685,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     connect() {
       this.originalScrollPosition = window.scrollY;
       this.originalOverflow = document.body.style.overflow;
+      this.bodyStateRestored = false;
       document.body.style.overflow = "hidden";
       this.element.showModal();
       this.element.addEventListener("close", this.handleClose.bind(this));
@@ -27701,6 +27702,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.restoreBodyState();
     }
     restoreBodyState() {
+      if (this.bodyStateRestored)
+        return;
+      this.bodyStateRestored = true;
       document.body.style.overflow = this.originalOverflow || "";
       window.scrollTo(0, this.originalScrollPosition);
     }

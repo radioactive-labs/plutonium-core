@@ -1,3 +1,28 @@
+## [0.42.0] - 2026-02-14
+
+### 🚀 Features
+
+- *(ui)* Add clipboard controller and fix modal scroll lock
+- *(interaction)* Add turbo stream support to render response
+- *(interaction)* Add scoping concern for entity/parent access
+- *(generators)* Enhance rodauth generators
+- *(generators)* Add API client generator for SaaS apps
+
+### 🚜 Refactor
+
+- *(tests)* Consolidate generator test cleanup with git restore
+
+### 📚 Documentation
+
+- Update generator documentation and improve saas generators
+
+### 🧪 Testing
+
+- Add unit tests for api client and response concerns
+
+### ⚙️ Miscellaneous Tasks
+
+- Update gemfile locks
 ## [0.41.1] - 2026-02-09
 
 ### 🚀 Features
