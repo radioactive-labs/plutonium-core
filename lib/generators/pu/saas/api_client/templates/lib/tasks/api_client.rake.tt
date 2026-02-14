@@ -1,0 +1,48 @@
+# frozen_string_literal: true
+
+namespace :<%= normalized_name.pluralize %> do
+  desc "Create a new <%= display_name %>"
+  task create: :environment do
+    require "tty-prompt"
+
+    prompt = TTY::Prompt.new
+
+    login = ENV["LOGIN"] || prompt.ask("Application name:", required: true)
+<% if entity? -%>
+    <%= normalized_entity_name %>_name = ENV["<%= normalized_entity_name.upcase %>"] || prompt.ask("<%= normalized_entity_name.titleize %> name:", required: true)
+    role = ENV["ROLE"] || prompt.select("Role:", %w[<%= roles.join(" ") %>])
+
+    <%= normalized_entity_name %> = <%= normalized_entity_name.classify %>.find_by!(name: <%= normalized_entity_name %>_name)
+<% end -%>
+
+    password = SecureRandom.base64(32)
+
+    RodauthApp.rodauth(:<%= normalized_name %>).create_account(
+      login: login,
+      password: password
+    )
+<% if entity? -%>
+
+    <%= normalized_name %> = <%= name.classify %>.find_by!(login: login)
+
+    <%= membership_model_name.classify %>.create!(
+      <%= normalized_entity_name %>: <%= normalized_entity_name %>,
+      <%= normalized_name %>: <%= normalized_name %>,
+      role: role
+    )
+<% end -%>
+
+    puts
+    puts "=== <%= display_name.titleize %> Created ==="
+    puts
+    puts "Login:    #{login}"
+    puts "Password: #{password}"
+<% if entity? -%>
+    puts "<%= normalized_entity_name.titleize %>: #{<%= normalized_entity_name %>.name}"
+    puts "Role:     #{role}"
+<% end -%>
+    puts
+    puts "IMPORTANT: Save these credentials now. The password cannot be retrieved later."
+    puts
+  end
+end

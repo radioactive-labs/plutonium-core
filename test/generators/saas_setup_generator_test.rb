@@ -2,40 +2,18 @@
 
 return unless ENV["GENERATOR_TESTS"]
 
-# Clean up any leftover migrations BEFORE loading test_helper
-require "fileutils"
-rails_root = File.expand_path("../dummy", __dir__)
-
-Dir.glob(File.join(rails_root, "db/migrate/*_test_customer*.rb")).each { |f| FileUtils.rm(f) }
-Dir.glob(File.join(rails_root, "db/migrate/*_test_company*.rb")).each { |f| FileUtils.rm(f) }
-FileUtils.rm_f(File.join(rails_root, "storage/test.sqlite3"))
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/saas/setup_generator"
 
 class SaasSetupGeneratorTest < ActiveSupport::TestCase
+  include GeneratorTestHelper
+
   def setup
     @rails_root = Rails.root
 
-    cleanup_all_files
-
-    # Backup rodauth_app.rb
-    @rodauth_app_backup = File.read(@rails_root.join("app/rodauth/rodauth_app.rb"))
-
-    # Backup root Gemfile
-    @root_gemfile_path = File.expand_path("../../Gemfile", __dir__)
-    @gemfile_backup = File.read(@root_gemfile_path)
-  end
-
-  def teardown
-    cleanup_all_files
-
-    # Restore rodauth_app.rb
-    File.write(@rails_root.join("app/rodauth/rodauth_app.rb"), @rodauth_app_backup)
-
-    # Restore root Gemfile
-    File.write(@root_gemfile_path, @gemfile_backup)
+    # Ensure clean state before each test
+    git_ensure_clean_dummy_app
   end
 
   test "generates complete saas setup" do
@@ -82,70 +60,44 @@ class SaasSetupGeneratorTest < ActiveSupport::TestCase
     assert_match(/has_many :test_company_test_customers, dependent: :destroy/, company_model)
   end
 
+  test "generates api_client when flag provided" do
+    run_setup_generator ["--user=TestCustomer", "--entity=TestCompany", "--api_client=TestApiClient", "--dest=main_app"]
+
+    # API client model should exist
+    assert File.exist?(@rails_root.join("app/models/test_api_client.rb")), "test_api_client.rb should exist"
+
+    # API client membership should exist (scoped to entity)
+    assert File.exist?(@rails_root.join("app/models/test_company_test_api_client.rb")), "test_company_test_api_client.rb should exist"
+    api_membership = File.read(@rails_root.join("app/models/test_company_test_api_client.rb"))
+    assert_match(/belongs_to :test_company/, api_membership)
+    assert_match(/belongs_to :test_api_client/, api_membership)
+
+    # Create interaction should exist
+    assert File.exist?(@rails_root.join("app/interactions/test_api_client/create_interaction.rb")), "create_interaction.rb should exist"
+
+    # Rake task should exist
+    assert File.exist?(@rails_root.join("lib/tasks/test_api_client.rake")), "rake task should exist"
+  end
+
+  test "api_client not scoped to entity when skip_entity" do
+    run_setup_generator ["--user=TestCustomer", "--entity=TestCompany", "--skip-entity", "--skip-membership", "--api_client=TestApiClient", "--dest=main_app"]
+
+    # API client should exist
+    assert File.exist?(@rails_root.join("app/models/test_api_client.rb")), "test_api_client.rb should exist"
+
+    # No entity membership should exist
+    refute File.exist?(@rails_root.join("app/models/test_company_test_api_client.rb")), "test_company_test_api_client.rb should not exist"
+
+    # Create interaction should not have entity references
+    create_interaction = File.read(@rails_root.join("app/interactions/test_api_client/create_interaction.rb"))
+    refute_match(/test_company_id/, create_interaction)
+  end
+
   private
 
   def run_setup_generator(args)
     Dir.chdir(@rails_root) do
       Pu::Saas::SetupGenerator.start(args, destination_root: @rails_root)
-    end
-  end
-
-  def cleanup_all_files
-    cleanup_user_files("test_customer")
-    cleanup_entity_files("test_company")
-    cleanup_membership_files("test_company_test_customer")
-  end
-
-  def cleanup_user_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/rodauth/#{normalized}_rodauth_plugin.rb",
-      "app/views/rodauth/#{normalized}",
-      "app/views/rodauth/#{normalized}_mailer",
-      "app/mailers/rodauth/#{normalized}_mailer.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb",
-      "app/controllers/rodauth/#{normalized}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(@rails_root.join(f)) }
-
-    Dir.glob(@rails_root.join("db/migrate/*rodauth*#{normalized}*.rb")).each do |f|
-      FileUtils.rm(f)
-    end
-  end
-
-  def cleanup_entity_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(@rails_root.join(f)) }
-
-    Dir.glob(@rails_root.join("db/migrate/*_create_#{normalized.pluralize}.rb")).each do |f|
-      FileUtils.rm(f)
-    end
-  end
-
-  def cleanup_membership_files(name)
-    normalized = name.underscore
-    files = [
-      "app/models/#{normalized}.rb",
-      "app/definitions/#{normalized}_definition.rb",
-      "app/policies/#{normalized}_policy.rb",
-      "app/controllers/#{normalized.pluralize}_controller.rb"
-    ]
-
-    files.each { |f| FileUtils.rm_rf(@rails_root.join(f)) }
-
-    Dir.glob(@rails_root.join("db/migrate/*_create_#{normalized.pluralize}.rb")).each do |f|
-      FileUtils.rm(f)
     end
   end
 end

@@ -1,0 +1,32 @@
+Description:
+    Generate an API client account for machine-to-machine authentication.
+
+    API clients use HTTP Basic Auth with application name (login) and
+    auto-generated password. Credentials are displayed once on creation
+    and cannot be reset - only disabled or deleted.
+
+Example:
+    # Basic API client (platform-level)
+    rails generate pu:saas:api_client ApiClient
+
+    # API client scoped to an organization with roles
+    rails generate pu:saas:api_client ApiClient --entity=Organization
+
+    # Custom roles
+    rails generate pu:saas:api_client ApiClient --entity=Organization --roles=read_only,write,admin
+
+    # With extra attributes
+    rails generate pu:saas:api_client ApiClient --extra_attributes=description:string,rate_limit:integer
+
+This will create:
+    - Rodauth account with HTTP Basic Auth
+    - Create and Disable interactions
+    - Rake task for CLI creation
+    - If --entity: membership model with roles
+
+Usage:
+    # Create via rake task
+    rake api_clients:create LOGIN=my-service
+
+    # Or with entity
+    rake api_clients:create LOGIN=my-service ORGANIZATION=acme ROLE=write

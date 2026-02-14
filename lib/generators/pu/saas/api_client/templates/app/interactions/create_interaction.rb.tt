@@ -1,0 +1,80 @@
+# frozen_string_literal: true
+
+class <%= name.classify %>::CreateInteraction < Plutonium::Resource::Interaction
+  include Plutonium::ApiClient::Concerns::CreateApiClient
+
+<% if entity? -%>
+  attribute :<%= normalized_entity_name %>_id, :integer
+  attribute :role, :string, default: "<%= default_role %>"
+
+  validates :<%= normalized_entity_name %>_id, presence: true
+  validates :role, presence: true, inclusion: {in: <%= membership_model_name.classify %>.roles.keys}
+
+  # Only show entity picker if not in a scoped context
+  input :<%= normalized_entity_name %>_id, if: -> { scoped_entity.nil? } do |f|
+    choices = <%= normalized_entity_name.classify %>.pluck(:name, :id)
+    f.select_tag choices: choices
+  end
+  input :role, as: :select, choices: <%= membership_model_name.classify %>.roles.keys
+
+  def initialize(**)
+    super
+    self.<%= normalized_entity_name %>_id ||= scoped_entity&.id
+  end
+
+<% end -%>
+  private
+
+  def rodauth_name
+    :<%= normalized_name %>
+  end
+
+  def api_client_class
+    <%= name.classify %>
+  end
+<% if entity? -%>
+
+  def entity_class
+    <%= normalized_entity_name.classify %>
+  end
+
+  def membership_class
+    <%= membership_model_name.classify %>
+  end
+
+  def scoped_entity_id
+    <%= normalized_entity_name %>_id
+  end
+
+  # Custom credentials page with proper resource URL
+  class CredentialsPage < Plutonium::ApiClient::Concerns::CreateApiClient::CredentialsPage
+    def success_title
+      "<%= display_name.titleize %> Created Successfully"
+    end
+
+    def done_url
+      helpers.resource_url_for(<%= name.classify %>, parent: @parent)
+    end
+  end
+
+  def credentials_page_class
+    CredentialsPage
+  end
+<% else -%>
+
+  # Custom credentials page with proper resource URL
+  class CredentialsPage < Plutonium::ApiClient::Concerns::CreateApiClient::CredentialsPage
+    def success_title
+      "<%= display_name.titleize %> Created Successfully"
+    end
+
+    def done_url
+      helpers.resource_url_for(<%= name.classify %>)
+    end
+  end
+
+  def credentials_page_class
+    CredentialsPage
+  end
+<% end -%>
+end
