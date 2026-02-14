@@ -6,12 +6,14 @@ require "securerandom"
 require "#{__dir__}/concerns/configuration"
 require "#{__dir__}/concerns/account_selector"
 require "#{__dir__}/concerns/feature_selector"
+require "#{__dir__}/concerns/gem_helpers"
 
 module Pu
   module Rodauth
     class AccountGenerator < ::Rails::Generators::Base
       include Concerns::AccountSelector
       include Concerns::FeatureSelector
+      include Concerns::GemHelpers
 
       source_root "#{__dir__}/templates"
 
@@ -21,12 +23,20 @@ module Pu
       class_option :extra_attributes, type: :array, default: [],
         desc: "Additional attributes to add to the account model (e.g., role:integer)"
 
+      class_option :login_column, type: :string, default: "email",
+        desc: "Name of the login column (default: email)"
+
       def install_dependencies
+        gems = []
+        gems << "jwt" if jwt? || jwt_refresh?
+        gems << "rotp" if otp?
+        gems << "rqrcode" if otp?
+        gems << "webauthn" if webauthn? || webauthn_autofill?
+        gems = gems.reject { |g| gem_in_bundle?(g) }
+        return if gems.empty?
+
         Bundler.with_unbundled_env do
-          run "bundle add jwt" if jwt? || jwt_refresh?
-          run "bundle add rotp" if otp?
-          run "bundle add rqrcode" if otp?
-          run "bundle add webauthn" if webauthn? || webauthn_autofill?
+          gems.each { |gem| run "bundle add #{gem}" }
         end
       end
 
@@ -91,6 +101,7 @@ module Pu
         invoke "pu:rodauth:migration", [table], features: selected_migration_features,
           name: kitchen_sink? ? "rodauth_kitchen_sink" : nil,
           migration_name: options[:migration_name],
+          login_column: login_column,
           force: options[:force],
           skip: options[:skip]
 
@@ -113,7 +124,7 @@ module Pu
         return unless base?
 
         template "app/models/account.rb", "app/models/#{account_path}.rb"
-        scaffold_attrs = ["email:string", "status:integer"] + Array(options[:extra_attributes])
+        scaffold_attrs = ["#{login_column}:string", "status:integer"] + Array(options[:extra_attributes])
         invoke "pu:res:scaffold", [table, *scaffold_attrs], dest: "main_app",
           model: false,
           force: true,
@@ -132,6 +143,10 @@ module Pu
 
       def only_json?
         ::Rails.application.config.api_only || !::Rails.application.config.session_store || options[:api_only]
+      end
+
+      def login_column
+        options[:login_column] || "email"
       end
     end
   end

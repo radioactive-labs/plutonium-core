@@ -22,7 +22,7 @@ class <%= account_path.classify %> < ResourceRecord
 
   # add scopes above.
 
-  validates :email, presence: true
+  validates :<%= login_column %>, presence: true
   # add validations above.
 
   # add callbacks above.

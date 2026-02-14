@@ -119,7 +119,7 @@ module Pu
         ].map { |feature| [feature, true] }.to_h
       end
 
-      def display_name = name.humanize.downcase
+      def display_name = name.underscore.humanize.downcase
 
       def normalized_name = name.underscore
 
