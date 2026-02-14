@@ -3,12 +3,14 @@
 class <%= model_class %>::InviteUserInteraction < Plutonium::Resource::Interaction
   include Plutonium::Invites::Concerns::InviteUser
 
+  presents label: "Invite <%= user_model.underscore.humanize.titleize %>", icon: Phlex::TablerIcons::Mail
+
   input :email
 
   private
 
   def entity
-    current_entity
+    current_scoped_entity
   end
 
   def invitable
