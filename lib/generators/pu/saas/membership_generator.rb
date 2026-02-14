@@ -30,6 +30,7 @@ module Pu
         add_role_enum_to_model
         add_unique_validation_to_model
         add_associations_to_models
+        add_associated_with_scope_to_entity
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -40,11 +41,11 @@ module Pu
         user_model_path = File.join("app", "models", "#{normalized_user_name}.rb")
         entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
 
-        unless File.exist?(user_model_path)
+        unless File.exist?(Rails.root.join(user_model_path))
           raise "User model '#{normalized_user_name}' does not exist at #{user_model_path}. Please create it first with: rails g pu:saas:user #{options[:user]}"
         end
 
-        unless File.exist?(entity_model_path)
+        unless File.exist?(Rails.root.join(entity_model_path))
           raise "Entity model '#{normalized_entity_name}' does not exist at #{entity_model_path}. Please create it first with: rails g pu:saas:entity #{options[:entity]}"
         end
       end
@@ -79,7 +80,7 @@ module Pu
       def add_role_enum_to_model
         model_file = File.join("app", "models", "#{membership_model_name}.rb")
 
-        return unless File.exist?(model_file)
+        return unless File.exist?(Rails.root.join(model_file))
 
         enum_definition = "enum :role, #{roles_enum}\n"
         insert_into_file model_file, indent(enum_definition, 2), before: /^\s*# add enums above\./
@@ -88,7 +89,7 @@ module Pu
       def add_unique_validation_to_model
         model_file = File.join("app", "models", "#{membership_model_name}.rb")
 
-        return unless File.exist?(model_file)
+        return unless File.exist?(Rails.root.join(model_file))
 
         validation = "validates :#{normalized_user_name}, uniqueness: {scope: :#{normalized_entity_name}_id, message: \"is already a member of this #{normalized_entity_name.humanize.downcase}\"}\n"
         insert_into_file model_file, indent(validation, 2), before: /^\s*# add validations above\./
@@ -102,30 +103,41 @@ module Pu
       def add_association_to_entity_model
         entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
 
-        return unless File.exist?(entity_model_path)
+        return unless File.exist?(Rails.root.join(entity_model_path))
 
         associations = <<~RUBY
           has_many :#{membership_table_name}, dependent: :destroy
           has_many :#{normalized_user_name.pluralize}, through: :#{membership_table_name}
         RUBY
-        inject_into_file entity_model_path, associations, before: /^\s*# add has_many associations above\.\n/
+        inject_into_file entity_model_path, indent(associations, 2), before: /^\s*# add has_many associations above\.\n/
       end
 
       def add_association_to_user_model
         user_model_path = File.join("app", "models", "#{normalized_user_name}.rb")
 
-        return unless File.exist?(user_model_path)
+        return unless File.exist?(Rails.root.join(user_model_path))
 
         associations = <<~RUBY
           has_many :#{membership_table_name}, dependent: :destroy
           has_many :#{normalized_entity_name.pluralize}, through: :#{membership_table_name}
         RUBY
-        inject_into_file user_model_path, associations, before: /^\s*# add has_many associations above\.\n/
+        inject_into_file user_model_path, indent(associations, 2), before: /^\s*# add has_many associations above\.\n/
+      end
+
+      def add_associated_with_scope_to_entity
+        entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
+
+        return unless File.exist?(Rails.root.join(entity_model_path))
+
+        scope_code = <<~RUBY
+          scope :associated_with_#{normalized_user_name}, ->(#{normalized_user_name}) { joins(:#{membership_table_name}).where(#{membership_table_name}: {#{normalized_user_name}_id: #{normalized_user_name}.id}) }
+        RUBY
+        inject_into_file entity_model_path, indent(scope_code, 2), before: /^\s*# add scopes above\./
       end
 
       def find_migration_file
         migration_dir = File.join("db", "migrate")
-        Dir[File.join(migration_dir, "*_create_#{membership_table_name}.rb")].first
+        Dir[Rails.root.join(migration_dir, "*_create_#{membership_table_name}.rb")].first
       end
 
       def membership_model_name

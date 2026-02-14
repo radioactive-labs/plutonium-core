@@ -2,10 +2,11 @@ Description:
     SaaS generators for multi-tenant applications with user accounts, entities, and memberships.
 
 Generators:
-    pu:saas:setup       Complete SaaS setup (user + entity + membership)
+    pu:saas:setup       Complete SaaS setup (user + entity + membership + optional api_client)
     pu:saas:user        SaaS user account with Rodauth
     pu:saas:entity      Entity/organization model
     pu:saas:membership  Membership join table linking users to entities
+    pu:saas:api_client  API client account for machine-to-machine auth
 
 Example:
     rails g pu:saas:setup --user Customer --entity Organization
@@ -15,8 +16,16 @@ Example:
         - Organization entity model with unique name
         - OrganizationCustomer membership model with role enum
 
+    With API client:
+    rails g pu:saas:setup --user Customer --entity Organization --api_client ApiClient
+
+    This also creates:
+        - ApiClient account with HTTP Basic Auth
+        - OrganizationApiClient membership model with roles
+
 See individual generator help for more options:
     rails g pu:saas:setup --help
     rails g pu:saas:user --help
     rails g pu:saas:entity --help
     rails g pu:saas:membership --help
+    rails g pu:saas:api_client --help

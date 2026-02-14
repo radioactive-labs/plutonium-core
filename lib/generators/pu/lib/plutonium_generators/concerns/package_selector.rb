@@ -22,7 +22,7 @@ module PlutoniumGenerators
 
       def available_packages
         @available_packages ||= begin
-          packages = Dir["packages/*"].map { |dir| dir.gsub "packages/", "" }
+          packages = Dir[Rails.root.join("packages", "*")].map { |dir| File.basename(dir) }
           packages - reserved_packages
         end
       end
