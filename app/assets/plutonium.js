@@ -27683,17 +27683,24 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var remote_modal_controller_default = class extends Controller {
     connect() {
       this.originalScrollPosition = window.scrollY;
+      this.originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
       this.element.showModal();
       this.element.addEventListener("close", this.handleClose.bind(this));
     }
     close() {
       this.element.close();
-      window.scrollTo(0, this.originalScrollPosition);
+      this.restoreBodyState();
     }
     disconnect() {
       this.element.removeEventListener("close", this.handleClose);
+      this.restoreBodyState();
     }
     handleClose() {
+      this.restoreBodyState();
+    }
+    restoreBodyState() {
+      document.body.style.overflow = this.originalOverflow || "";
       window.scrollTo(0, this.originalScrollPosition);
     }
   };
@@ -27941,6 +27948,39 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/clipboard_controller.js
+  var clipboard_controller_default = class extends Controller {
+    static targets = ["source"];
+    copy(event) {
+      const text2 = this.sourceTarget.value || this.sourceTarget.textContent;
+      const button = event.currentTarget;
+      const originalText = button.textContent;
+      navigator.clipboard.writeText(text2).then(() => {
+        button.textContent = "Copied!";
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2e3);
+      }).catch((err) => {
+        console.warn("Clipboard API failed, using fallback:", err);
+        this.fallbackCopy(text2);
+        button.textContent = "Copied!";
+        setTimeout(() => {
+          button.textContent = originalText;
+        }, 2e3);
+      });
+    }
+    fallbackCopy(text2) {
+      const textarea = document.createElement("textarea");
+      textarea.value = text2;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -27967,6 +28007,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("bulk-actions", bulk_actions_controller_default);
     application2.register("filter-panel", filter_panel_controller_default);
     application2.register("textarea-autogrow", textarea_autogrow_controller_default);
+    application2.register("clipboard", clipboard_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
