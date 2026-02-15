@@ -1,0 +1,202 @@
+<%-
+# Helper methods for template
+def optional_marker(column)
+  column[:null] ? '?' : ''
+end
+
+resource = @current_resource
+model_name = resource[:typespec_name]
+columns = resource[:columns].reject { |c| %w[id created_at updated_at].include?(c[:name]) }
+associations = resource[:associations]
+enums = resource[:enums] || {}
+definition = resource[:definition]
+inputs = definition ? definition[:inputs] : []
+
+# Separate association columns (foreign keys) from regular columns
+belongs_to_assocs = associations.select { |a| a[:macro] == 'belongs_to' }
+has_many_assocs = associations.select { |a| a[:macro] == 'has_many' }
+has_one_assocs = associations.select { |a| a[:macro] == 'has_one' }
+
+# Foreign key columns to exclude from regular attributes
+fk_columns = belongs_to_assocs.map { |a| a[:foreign_key] }.compact
+regular_columns = columns.reject { |c| fk_columns.include?(c[:name]) }
+
+# Check if we have definition-based inputs
+has_definition_inputs = inputs.any?
+-%>
+/**
+ * <%= model_name %> resource
+ * Table: <%= resource[:table_name] %>
+ * Route: <%= resource[:route_path] %>
+ */
+
+<%- if @single_portal -%>
+import "../common.tsp";
+<%- else -%>
+import "../../common.tsp";
+<%- end -%>
+
+using TypeSpec.Http;
+
+<%- enums.each do |enum_name, values| -%>
+/** <%= enum_name.humanize %> options */
+enum <%= model_name %><%= enum_name.camelize %> {
+<%- values.each do |value| -%>
+  <%= value %>,
+<%- end -%>
+}
+
+<%- end -%>
+/**
+ * <%= model_name %> response model
+ */
+model <%= model_name %> extends ResourceBase {
+<%- regular_columns.each do |column| -%>
+<%- if enums.key?(column[:name]) -%>
+  <%= column[:name] %><%= optional_marker(column) %>: <%= model_name %><%= column[:name].camelize %>;
+<%- else -%>
+  <%= column[:name] %><%= optional_marker(column) %>: <%= column[:typespec_type] %>;
+<%- end -%>
+<%- end -%>
+
+<%- belongs_to_assocs.each do |assoc| -%>
+<%- if assoc[:polymorphic] -%>
+  /** Polymorphic association type */
+  <%= assoc[:name] %>_type?: string;
+  /** Polymorphic association ID */
+  <%= assoc[:name] %>_id?: <%= assoc[:foreign_key_type] %>;
+  /** Polymorphic association SGID */
+  <%= assoc[:name] %>_sgid?: SignedGlobalId;
+<%- else -%>
+  /** <%= assoc[:name].humanize %> ID */
+  <%= assoc[:foreign_key] || "#{assoc[:name]}_id" %>?: <%= assoc[:foreign_key_type] %>;
+  /** <%= assoc[:name].humanize %> SGID */
+  <%= assoc[:name] %>_sgid?: SignedGlobalId;
+<%- end -%>
+<%- end -%>
+
+<%- has_many_assocs.each do |assoc| -%>
+  /** <%= assoc[:name].to_s.singularize.humanize %> IDs */
+  <%= assoc[:name].to_s.singularize %>_ids?: <%= assoc[:foreign_key_type] %>[];
+  /** <%= assoc[:name].to_s.singularize.humanize %> SGIDs */
+  <%= assoc[:name].to_s.singularize %>_sgids?: SignedGlobalId[];
+<%- end -%>
+<%- has_one_assocs.each do |assoc| -%>
+  /** <%= assoc[:name].humanize %> ID */
+  <%= assoc[:name] %>_id?: <%= assoc[:foreign_key_type] %>;
+  /** <%= assoc[:name].humanize %> SGID */
+  <%= assoc[:name] %>_sgid?: SignedGlobalId;
+<%- end -%>
+}
+
+/**
+ * <%= model_name %> input model for create/update operations
+<%- if has_definition_inputs -%>
+ * Based on definition: <%= definition[:class_name] %>
+<%- end -%>
+ */
+model <%= model_name %>Input {
+<%- if has_definition_inputs -%>
+<%# Use definition inputs -%>
+<%- inputs.each do |input| -%>
+<%- next if input[:nested] # Skip nested inputs for now -%>
+<%- if input[:is_association] -%>
+<%- if input[:is_polymorphic] -%>
+  /** Polymorphic <%= input[:name] %> (SGID) */
+  <%= input[:name] %>_sgid<%= input[:required] ? '' : '?' %>: SignedGlobalId;
+<%- elsif input[:association_macro] == 'has_many' || input[:association_macro] == 'has_and_belongs_to_many' -%>
+  /** <%= input[:name].singularize.humanize %> SGIDs */
+  <%= input[:name].singularize %>_sgids<%= input[:required] ? '' : '?' %>: SignedGlobalId[];
+<%- else -%>
+  /** <%= input[:name].humanize %> (SGID) */
+  <%= input[:name] %>_sgid<%= input[:required] ? '' : '?' %>: SignedGlobalId;
+<%- end -%>
+<%- else -%>
+  <%= input[:name] %><%= input[:required] ? '' : '?' %>: <%= input[:typespec_type] %>;
+<%- end -%>
+<%- end -%>
+<%- else -%>
+<%# Fallback to column-based inputs -%>
+<%- regular_columns.each do |column| -%>
+<%- next if column[:name].end_with?('_count') # skip counter caches -%>
+<%- if enums.key?(column[:name]) -%>
+  <%= column[:name] %><%= optional_marker(column) %>: <%= model_name %><%= column[:name].camelize %>;
+<%- else -%>
+  <%= column[:name] %><%= optional_marker(column) %>: <%= column[:typespec_type] %>;
+<%- end -%>
+<%- end -%>
+
+<%- belongs_to_assocs.each do |assoc| -%>
+<%- if assoc[:polymorphic] -%>
+  /** Polymorphic <%= assoc[:name] %> (SGID) */
+  <%= assoc[:name] %>_sgid?: SignedGlobalId;
+<%- else -%>
+  /** <%= assoc[:name].humanize %> (SGID) */
+  <%= assoc[:name] %>_sgid?: SignedGlobalId;
+<%- end -%>
+<%- end -%>
+
+<%- has_many_assocs.each do |assoc| -%>
+  /** <%= assoc[:name].to_s.singularize.humanize %> SGIDs */
+  <%= assoc[:name].to_s.singularize %>_sgids?: SignedGlobalId[];
+<%- end -%>
+<%- end -%>
+}
+
+/**
+ * <%= model_name %> list response
+ */
+model <%= model_name %>ListResponse {
+  <%= model_name.underscore.pluralize %>: <%= model_name %>[];
+}
+
+/**
+ * <%= model_name %> CRUD operations
+ */
+@route("<%= resource[:route_path] %>")
+@tag("<%= model_name.pluralize %>")
+interface <%= model_name %>Operations {
+  /**
+   * List all <%= model_name.underscore.humanize.pluralize.downcase %>
+   */
+  @get
+  list(...ListQueryParams): <%= model_name %>ListResponse;
+
+  /**
+   * Get a single <%= model_name.underscore.humanize.downcase %>
+   */
+  @route("{id}")
+  @get
+  show(@path id: <%= resource[:primary_key_type] %>): <%= model_name %>;
+
+  /**
+   * Create a new <%= model_name.underscore.humanize.downcase %>
+   */
+  @post
+  create(@body input: <%= model_name %>Input): {
+    @statusCode statusCode: 201;
+    @body body: <%= model_name %>;
+  } | {
+    @statusCode statusCode: 422;
+    @body body: ErrorResponse;
+  };
+
+  /**
+   * Update a <%= model_name.underscore.humanize.downcase %>
+   */
+  @route("{id}")
+  @patch
+  update(@path id: <%= resource[:primary_key_type] %>, @body input: <%= model_name %>Input): <%= model_name %> | {
+    @statusCode statusCode: 422;
+    @body body: ErrorResponse;
+  };
+
+  /**
+   * Delete a <%= model_name.underscore.humanize.downcase %>
+   */
+  @route("{id}")
+  @delete
+  destroy(@path id: <%= resource[:primary_key_type] %>): {
+    @statusCode statusCode: 204;
+  };
+}
