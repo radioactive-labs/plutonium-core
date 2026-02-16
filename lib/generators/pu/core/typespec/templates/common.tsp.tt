@@ -20,20 +20,11 @@ scalar SignedGlobalId extends string;
  */
 @doc("Common fields present in all API resource responses")
 model ResourceBase {
-  @doc("Unique identifier")
-  id: int64;
-
   @doc("Signed Global ID for secure references")
   sgid: SignedGlobalId;
 
   @doc("API URL for this resource")
   url: url;
-
-  @doc("Creation timestamp")
-  created_at: utcDateTime;
-
-  @doc("Last update timestamp")
-  updated_at: utcDateTime;
 }
 
 /**

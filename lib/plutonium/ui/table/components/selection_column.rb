@@ -12,7 +12,7 @@ module Plutonium
 
           def data_cell(wrapped_object)
             allowed_actions = compute_allowed_actions(wrapped_object.unwrapped)
-            SelectionDataCell.new(wrapped_object.field(key).dom.value, allowed_actions)
+            SelectionDataCell.new(wrapped_object.field(value_key).dom.value, allowed_actions)
           end
 
           # Add hidden class and Stimulus target to header cell
@@ -34,6 +34,10 @@ module Plutonium
 
           private
 
+          def value_key
+            options[:value_key] || sample.class.primary_key.to_sym
+          end
+
           def bulk_actions
             options[:bulk_actions] || []
           end
@@ -43,7 +47,7 @@ module Plutonium
           end
 
           def compute_allowed_actions(record)
-            return bulk_action_names unless policy_resolver
+            return bulk_actions.map { |a| a.name.to_s } unless policy_resolver
 
             policy = policy_resolver.call(record)
             bulk_actions.select { |action|

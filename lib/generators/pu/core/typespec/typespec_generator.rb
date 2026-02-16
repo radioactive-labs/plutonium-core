@@ -155,7 +155,7 @@ module Pu
             class_name: safe_association_attr(assoc, :klass)&.name,
             foreign_key: safe_association_attr(assoc, :foreign_key),
             foreign_key_type: fk_type,
-            polymorphic: assoc.polymorphic?
+            polymorphic: !!assoc.polymorphic?
           }
         end
       end
