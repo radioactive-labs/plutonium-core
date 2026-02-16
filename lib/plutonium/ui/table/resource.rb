@@ -49,8 +49,9 @@ module Plutonium
 
             render Plutonium::UI::Table::Base.new(collection) do |table|
               # Selection column for bulk actions (hidden by default, Stimulus shows it)
-              # Pass bulk actions and policy resolver for per-record authorization
-              table.selection_column :id,
+              # Use :_selection as column key to avoid conflicts with field columns
+              # value_key defaults to model's primary_key
+              table.selection_column :_selection,
                 bulk_actions:,
                 policy_resolver: ->(record) { policy_for(record:) }
 

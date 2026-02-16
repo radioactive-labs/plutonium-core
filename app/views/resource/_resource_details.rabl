@@ -1,5 +1,6 @@
-attributes :id
-attributes :created_at, :updated_at
+attributes resource_class.primary_key.to_sym
+attributes :created_at if resource_class.column_names.include?("created_at")
+attributes :updated_at if resource_class.column_names.include?("updated_at")
 
 node(:sgid) { |resource| resource.to_signed_global_id.to_s }
 

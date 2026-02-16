@@ -6,7 +6,16 @@ end
 
 resource = @current_resource
 model_name = resource[:typespec_name]
-columns = resource[:columns].reject { |c| %w[id created_at updated_at].include?(c[:name]) }
+all_columns = resource[:columns]
+all_column_names = all_columns.map { |c| c[:name] }
+
+# Extract special columns if they exist
+primary_key_column = all_columns.find { |c| c[:name] == resource[:primary_key] }
+created_at_column = all_columns.find { |c| c[:name] == 'created_at' }
+updated_at_column = all_columns.find { |c| c[:name] == 'updated_at' }
+
+# Regular columns exclude primary key and timestamps
+columns = all_columns.reject { |c| [resource[:primary_key], 'created_at', 'updated_at'].include?(c[:name]) }
 associations = resource[:associations]
 enums = resource[:enums] || {}
 definition = resource[:definition]
@@ -51,6 +60,21 @@ enum <%= model_name %><%= enum_name.camelize %> {
  * <%= model_name %> response model
  */
 model <%= model_name %> extends ResourceBase {
+<%- if primary_key_column -%>
+  @doc("Unique identifier")
+  <%= resource[:primary_key] %>: <%= resource[:primary_key_type] %>;
+<%- end -%>
+<%- if created_at_column -%>
+  @doc("Creation timestamp")
+  created_at: utcDateTime;
+<%- end -%>
+<%- if updated_at_column -%>
+  @doc("Last update timestamp")
+  updated_at: utcDateTime;
+<%- end -%>
+<%- if (primary_key_column || created_at_column || updated_at_column) && regular_columns.any? -%>
+
+<%- end -%>
 <%- regular_columns.each do |column| -%>
 <%- if enums.key?(column[:name]) -%>
   <%= column[:name] %><%= optional_marker(column) %>: <%= model_name %><%= column[:name].camelize %>;
