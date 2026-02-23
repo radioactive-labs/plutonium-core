@@ -30,7 +30,11 @@ module Plutonium
         end
 
         def entity_scope_for_authorize
-          current_scoped_entity if scoped_to_entity?
+          # Use the instance variable directly to avoid circular dependency.
+          # When authorizing the scoped entity itself (in fetch_current_scoped_entity),
+          # @current_scoped_entity is not yet set, so this returns nil, which is correct
+          # since we can't use the entity as its own authorization scope.
+          @current_scoped_entity if scoped_to_entity?
         end
 
         def verify_authorized

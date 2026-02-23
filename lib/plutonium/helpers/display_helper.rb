@@ -14,6 +14,12 @@ module Plutonium
         resource_name resource_class, 2
       end
 
+      # Returns the appropriate label for a resource (singular for singular resources, plural otherwise)
+      def resource_label(resource_class)
+        is_singular = current_engine.routes.singular_resource_route?(resource_class.model_name.plural)
+        resource_name(resource_class, is_singular ? 1 : 2)
+      end
+
       # Returns a human-readable name for a nested collection using the association name.
       # Falls back to resource_name_plural if not in a nested context.
       # Uses I18n via human_attribute_name for proper localization.

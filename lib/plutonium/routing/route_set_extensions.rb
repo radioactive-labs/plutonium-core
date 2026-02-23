@@ -34,16 +34,29 @@ module Plutonium
       # @yield Executes the given block in the context of route drawing.
       def draw(&block)
         if self.class.supported_engine?(engine)
+          scope_params = entity_scope_params_for_path_strategy
           ActiveSupport::Notifications.instrument("plutonium.resource_routes.draw", app: engine.to_s) do
             super do
               setup_shared_resource_concerns
-              instance_exec(&block)
-              materialize_resource_routes
+              draw_routes_with_entity_scope(scope_params, &block)
             end
           end
         else
           super
         end
+      end
+
+      # Determines entity scope parameters for path-based scoping.
+      #
+      # @return [Hash, nil] Scope params if path-based scoping is enabled, nil otherwise
+      def entity_scope_params_for_path_strategy
+        return nil unless engine.scoped_entity_strategy == :path
+
+        param_key = engine.scoped_entity_param_key
+        {
+          name: ":#{param_key}",
+          options: {as: param_key}
+        }
       end
 
       # Registers a resource for routing.
@@ -73,6 +86,14 @@ module Plutonium
       def resource_route_config_for(*routes)
         routes = Array(routes)
         resource_route_config_lookup.slice(*routes).values
+      end
+
+      # Checks if a resource is registered as a singular route.
+      #
+      # @param route_key [String] The route key (e.g., "users" or "users/profiles")
+      # @return [Boolean] true if the resource is a singular route, false otherwise
+      def singular_resource_route?(route_key)
+        resource_route_config_for(route_key)[0]&.[](:route_type) == :resource
       end
 
       # Returns the current engine for the routes.

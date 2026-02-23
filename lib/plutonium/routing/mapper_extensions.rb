@@ -44,16 +44,28 @@ module Plutonium
         end
       end
 
+      # Draws routes wrapped in entity scope when using path-based entity scoping.
+      #
+      # @param scope_params [Hash, nil] Scope params from RouteSetExtensions, or nil if no scoping
+      # @param block [Proc] The block containing route definitions.
+      # @return [void]
+      def draw_routes_with_entity_scope(scope_params, &block)
+        if scope_params
+          scope scope_params[:name], **scope_params[:options] do
+            instance_exec(&block)
+            materialize_resource_routes
+          end
+        else
+          instance_exec(&block)
+          materialize_resource_routes
+        end
+      end
+
       # Materializes all registered resource routes.
       #
       # @return [void]
       def materialize_resource_routes
-        engine = route_set.engine
-        scope_params = determine_scope_params(engine)
-
-        scope scope_params[:name], scope_params[:options] do
-          concerns resource_route_concern_names.sort
-        end
+        concerns resource_route_concern_names.sort
       end
 
       # @return [ActionDispatch::Routing::RouteSet] The current route set.
@@ -148,18 +160,6 @@ module Plutonium
           post "resource_actions/:interactive_action", action: :commit_interactive_resource_action,
             as: :commit_interactive_resource_action
         end
-      end
-
-      # Determines the scope parameters based on the engine configuration.
-      #
-      # @param engine [Class] The current engine.
-      # @return [Hash] Scope name and options.
-      def determine_scope_params(engine)
-        scoped_entity_param_key = engine.scoped_entity_param_key if engine.scoped_entity_strategy == :path
-        {
-          name: scoped_entity_param_key.present? ? ":#{scoped_entity_param_key}" : "",
-          options: scoped_entity_param_key.present? ? {as: scoped_entity_param_key} : {}
-        }
       end
     end
   end
