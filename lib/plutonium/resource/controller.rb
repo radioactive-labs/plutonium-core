@@ -104,6 +104,13 @@ module Plutonium
         end
       end
 
+      # Returns true if current resource is registered as a singular route
+      # (e.g., `resource :profile` vs `resources :users`)
+      # @return [Boolean]
+      def singular_resource_context?
+        current_resource_route_config&.[](:route_type) == :resource
+      end
+
       # Extracts the association name from the current nested route
       # e.g., for route /posts/:post_id/nested_comments, returns :comments
       # @return [Symbol, nil] The association name

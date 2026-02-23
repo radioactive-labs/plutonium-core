@@ -75,6 +75,13 @@ module Plutonium
       # global default
       breadcrumbs true
 
+      # forms
+      # Controls the "Save and add another" / "Update and continue editing" buttons
+      # nil = auto-detect (hidden for singular resources, shown for plural)
+      # true = always show
+      # false = always hide
+      inheritable_config_attr :submit_and_continue
+
       def initialize
         super
       end
