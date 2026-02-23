@@ -88,7 +88,11 @@ module Pu
       def bring_your_own_auth? = @bring_your_own_auth
 
       def configure_entity_scoping
-        @scoped_entity_class = options[:scope].camelize if options[:scope].present?
+        return unless options[:scope].present?
+
+        scope = options[:scope].camelize
+        # Prepend :: to ensure absolute constant reference (avoids NameError in engine.rb)
+        @scoped_entity_class = scope.start_with?("::") ? scope : "::#{scope}"
       end
 
       def scoped_to_entity? = scoped_entity_class.present?

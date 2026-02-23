@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless defined?(Rodauth::Rails)
-
 require "rails/generators/base"
 require_relative "../lib/plutonium_generators"
 
@@ -46,6 +44,7 @@ module Pu
         desc: "Available roles for API client memberships"
 
       def start
+        ensure_rodauth_installed
         generate_user
         generate_entity unless options[:skip_entity]
         generate_membership unless options[:skip_membership]
@@ -55,6 +54,12 @@ module Pu
       end
 
       private
+
+      def ensure_rodauth_installed
+        return if File.exist?(Rails.root.join("app/rodauth/rodauth_app.rb"))
+
+        invoke "pu:rodauth:install"
+      end
 
       def generate_user
         # Use class-based invocation to avoid Thor's invoke caching

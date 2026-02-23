@@ -2,13 +2,13 @@ require "rails/generators/base"
 require "rails/generators/active_record/migration"
 require "securerandom"
 
-require "#{__dir__}/concerns/gem_helpers"
+require "#{__dir__}/../lib/plutonium_generators/concerns/actions"
 
 module Pu
   module Rodauth
     class InstallGenerator < ::Rails::Generators::Base
       include ::ActiveRecord::Generators::Migration
-      include Concerns::GemHelpers
+      include PlutoniumGenerators::Concerns::Actions
 
       source_root "#{__dir__}/templates"
 

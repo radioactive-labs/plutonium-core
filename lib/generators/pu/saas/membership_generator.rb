@@ -39,14 +39,14 @@ module Pu
 
       def validate_models_exist!
         user_model_path = File.join("app", "models", "#{normalized_user_name}.rb")
-        entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
+        entity_model_path = File.join(dest_root, "app", "models", "#{full_entity_path}.rb")
 
         unless File.exist?(Rails.root.join(user_model_path))
           raise "User model '#{normalized_user_name}' does not exist at #{user_model_path}. Please create it first with: rails g pu:saas:user #{options[:user]}"
         end
 
-        unless File.exist?(Rails.root.join(entity_model_path))
-          raise "Entity model '#{normalized_entity_name}' does not exist at #{entity_model_path}. Please create it first with: rails g pu:saas:entity #{options[:entity]}"
+        unless File.exist?(entity_model_path)
+          raise "Entity model '#{full_entity_path}' does not exist at #{entity_model_path}. Please create it first with: rails g pu:saas:entity #{options[:entity]}"
         end
       end
 
@@ -63,7 +63,7 @@ module Pu
         return unless migration_file
 
         insert_into_file migration_file,
-          indent("add_index :#{membership_table_name}, [:#{normalized_entity_name}_id, :#{normalized_user_name}_id], unique: true\n", 4),
+          indent("add_index :#{full_membership_table_name}, [:#{normalized_entity_name}_id, :#{normalized_user_name}_id], unique: true\n", 4),
           before: /^  end\s*$/
       end
 
@@ -78,18 +78,18 @@ module Pu
       end
 
       def add_role_enum_to_model
-        model_file = File.join("app", "models", "#{membership_model_name}.rb")
+        model_file = File.join(dest_root, "app", "models", "#{full_membership_path}.rb")
 
-        return unless File.exist?(Rails.root.join(model_file))
+        return unless File.exist?(model_file)
 
         enum_definition = "enum :role, #{roles_enum}\n"
         insert_into_file model_file, indent(enum_definition, 2), before: /^\s*# add enums above\./
       end
 
       def add_unique_validation_to_model
-        model_file = File.join("app", "models", "#{membership_model_name}.rb")
+        model_file = File.join(dest_root, "app", "models", "#{full_membership_path}.rb")
 
-        return unless File.exist?(Rails.root.join(model_file))
+        return unless File.exist?(model_file)
 
         validation = "validates :#{normalized_user_name}, uniqueness: {scope: :#{normalized_entity_name}_id, message: \"is already a member of this #{normalized_entity_name.humanize.downcase}\"}\n"
         insert_into_file model_file, indent(validation, 2), before: /^\s*# add validations above\./
@@ -101,9 +101,9 @@ module Pu
       end
 
       def add_association_to_entity_model
-        entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
+        entity_model_path = File.join(dest_root, "app", "models", "#{full_entity_path}.rb")
 
-        return unless File.exist?(Rails.root.join(entity_model_path))
+        return unless File.exist?(entity_model_path)
 
         associations = <<~RUBY
           has_many :#{membership_table_name}, dependent: :destroy
@@ -117,17 +117,24 @@ module Pu
 
         return unless File.exist?(Rails.root.join(user_model_path))
 
-        associations = <<~RUBY
-          has_many :#{membership_table_name}, dependent: :destroy
-          has_many :#{normalized_entity_name.pluralize}, through: :#{membership_table_name}
-        RUBY
+        associations = if dest_namespace
+          <<~RUBY
+            has_many :#{membership_table_name}, class_name: "#{full_membership_class_name}", dependent: :destroy
+            has_many :#{normalized_entity_name.pluralize}, through: :#{membership_table_name}, source: :#{normalized_entity_name}
+          RUBY
+        else
+          <<~RUBY
+            has_many :#{membership_table_name}, dependent: :destroy
+            has_many :#{normalized_entity_name.pluralize}, through: :#{membership_table_name}
+          RUBY
+        end
         inject_into_file user_model_path, indent(associations, 2), before: /^\s*# add has_many associations above\.\n/
       end
 
       def add_associated_with_scope_to_entity
-        entity_model_path = File.join("app", "models", "#{normalized_entity_name}.rb")
+        entity_model_path = File.join(dest_root, "app", "models", "#{full_entity_path}.rb")
 
-        return unless File.exist?(Rails.root.join(entity_model_path))
+        return unless File.exist?(entity_model_path)
 
         scope_code = <<~RUBY
           scope :associated_with_#{normalized_user_name}, ->(#{normalized_user_name}) { joins(:#{membership_table_name}).where(#{membership_table_name}: {#{normalized_user_name}_id: #{normalized_user_name}.id}) }
@@ -136,8 +143,8 @@ module Pu
       end
 
       def find_migration_file
-        migration_dir = File.join("db", "migrate")
-        Dir[Rails.root.join(migration_dir, "*_create_#{membership_table_name}.rb")].first
+        migration_dir = File.join(dest_root, "db", "migrate")
+        Dir[File.join(migration_dir, "*_create_#{full_membership_table_name}.rb")].first
       end
 
       def membership_model_name
@@ -150,7 +157,7 @@ module Pu
 
       def membership_attributes
         [
-          "#{normalized_entity_name}:references",
+          "#{full_entity_name}:references",
           "#{normalized_user_name}:references",
           "role:integer",
           *Array(options[:extra_attributes])
@@ -160,6 +167,48 @@ module Pu
       def normalized_user_name = options[:user].underscore
 
       def normalized_entity_name = options[:entity].underscore
+
+      def dest_namespace
+        return nil if main_app?
+
+        selected_destination_feature.underscore
+      end
+
+      def main_app?
+        selected_destination_feature == "main_app"
+      end
+
+      def dest_root
+        if main_app?
+          Rails.root
+        else
+          Rails.root.join("packages", dest_namespace)
+        end
+      end
+
+      def full_entity_path
+        [dest_namespace, normalized_entity_name].compact.join("/")
+      end
+
+      def full_membership_path
+        [dest_namespace, membership_model_name].compact.join("/")
+      end
+
+      def full_entity_name
+        full_entity_path
+      end
+
+      def full_membership_table_name
+        full_membership_path.tr("/", "_").pluralize
+      end
+
+      def full_membership_class_name
+        full_membership_path.camelize
+      end
+
+      def full_entity_class_name
+        full_entity_path.camelize
+      end
 
       def roles
         Array(options[:roles]).flat_map { |r| r.split(",") }.map(&:strip)
