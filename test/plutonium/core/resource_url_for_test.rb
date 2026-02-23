@@ -295,4 +295,54 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, action: :commit_interactive_resource_action, interactive_action: :import)
     assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
   end
+
+  # Singular resource default actions
+
+  test "top-level: class for plural resources defaults to :index action" do
+    get "/demo/blogging/posts"
+    # Verify route config is :resources
+    config = DemoPortal::Engine.routes.resource_route_config_for("blogging_posts")[0]
+    assert_equal :resources, config[:route_type]
+
+    url = controller.send(:resource_url_for, Blogging::Post)
+    # Should generate index URL (no /show suffix, just the collection)
+    assert_match %r{/demo/blogging/posts$}, url
+  end
+
+  # Note: singular_resource_route? logic for defaulting to :show is tested in nested_routes_test.rb
+  # Testing top-level singular resources here would require actual route setup
+
+  # to_param encoding
+
+  test "instance with custom to_param is properly encoded in URL" do
+    get "/demo/blogging/posts"
+
+    # Override to_param on the instance
+    @post.define_singleton_method(:to_param) { "#{id}-#{title.parameterize}" }
+
+    url = controller.send(:resource_url_for, @post)
+    assert_match %r{/demo/blogging/posts/#{@post.id}-test-post$}, url
+  end
+
+  test "nested instance with custom to_param is properly encoded" do
+    get "/demo/blogging/posts/#{@post.id}"
+
+    @comment.define_singleton_method(:to_param) { "comment-#{id}" }
+
+    url = controller.send(:resource_url_for, @comment, parent: @post)
+    assert_match %r{/demo/blogging/posts/#{@post.id}/nested_comments/comment-#{@comment.id}$}, url
+  end
+
+  test "parent with custom to_param is properly encoded in nested URL" do
+    get "/demo/blogging/posts/#{@post.id}"
+
+    @post.define_singleton_method(:to_param) { "#{id}-#{title.parameterize}" }
+
+    url = controller.send(:resource_url_for, @comment, parent: @post)
+    assert_match %r{/demo/blogging/posts/#{@post.id}-test-post/nested_comments/#{@comment.id}$}, url
+  end
+
+  # Note: scoped entity to_param encoding is tested via the parent to_param test above.
+  # The implementation (url_args[scoped_entity_param_key] = current_scoped_entity.to_param)
+  # uses the same to_param pattern that is tested for parents and instances.
 end
