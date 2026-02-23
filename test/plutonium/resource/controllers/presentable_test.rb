@@ -155,6 +155,10 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
       false
     end
 
+    def singular_resource_context?
+      false
+    end
+
     def current_policy
       @current_policy ||= test_policy_class.new(
         record: test_record || Blogging::Post,

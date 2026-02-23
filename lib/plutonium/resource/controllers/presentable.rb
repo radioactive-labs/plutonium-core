@@ -47,7 +47,12 @@ module Plutonium
         end
 
         def build_form(record = resource_record!, action: action_name, form_action: nil, **)
-          form_options = {resource_fields: submittable_attributes_for(action), resource_definition: current_definition, **}
+          form_options = {
+            resource_fields: submittable_attributes_for(action),
+            resource_definition: current_definition,
+            singular_resource: singular_resource_context?,
+            **
+          }
           form_options[:action] = form_action unless form_action.nil?
           current_definition.form_class.new(record, **form_options)
         end
