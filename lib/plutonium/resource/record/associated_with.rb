@@ -9,7 +9,8 @@ module Plutonium
         included do
           scope :associated_with, ->(record) do
             # If scoping to same class, just match by ID (e.g., Team scoped to Team)
-            if klass == record.class
+            # Compare by name to handle Rails class reloading (different object_id after reload)
+            if klass.name == record.class.name
               pk = klass.primary_key
               return where(pk => record.public_send(pk))
             end
