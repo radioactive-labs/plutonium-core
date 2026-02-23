@@ -4,7 +4,7 @@ class CreateUserInvites < ActiveRecord::Migration[<%= ActiveRecord::Migration.cu
   def change
     create_table :user_invites do |t|
       # Entity association
-      t.belongs_to :<%= entity_table %>, null: false, foreign_key: true
+      t.belongs_to :<%= entity_association_name %>, null: false, foreign_key: true
 
       # Invitation details
       t.string :email, null: false
@@ -34,7 +34,7 @@ class CreateUserInvites < ActiveRecord::Migration[<%= ActiveRecord::Migration.cu
       t.index :token, unique: true
 
       # Only one pending invite per email per entity
-      t.index [:<%= entity_table %>_id, :email], unique: true, where: "state = 0",
+      t.index [:<%= entity_association_name %>_id, :email], unique: true, where: "state = 0",
         name: "index_user_invites_on_entity_email_pending"
 
       # Only one pending invite per invitable (when invitable is present)

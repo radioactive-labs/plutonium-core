@@ -15,13 +15,13 @@
     <label for="email" class="pu-label">Email</label>
     <%% if @invite.enforce_email? %>
       <input type="email" name="email" value="<%%= @invite.email %>" disabled
-             class="pu-input cursor-not-allowed opacity-60">
+             autocomplete="email" class="pu-input cursor-not-allowed opacity-60">
       <input type="hidden" name="email" value="<%%= @invite.email %>">
       <p class="pu-hint">This email is required for your invitation</p>
     <%% else %>
       <%%= form.email_field :email, value: @invite.email, required: true,
           placeholder: "you@example.com",
-          class: "pu-input" %>
+          autocomplete: "email", class: "pu-input" %>
       <%% if (domain = @invite.enforce_domain) %>
         <p class="pu-hint">Must be from <%%= domain %> domain</p>
       <%% else %>
@@ -32,12 +32,12 @@
 
   <div>
     <label for="password" class="pu-label">Password</label>
-    <%%= form.password_field :password, required: true, class: "pu-input" %>
+    <%%= form.password_field :password, required: true, autocomplete: "new-password", class: "pu-input" %>
   </div>
 
   <div>
     <label for="password_confirmation" class="pu-label">Confirm Password</label>
-    <%%= form.password_field :password_confirmation, required: true, class: "pu-input" %>
+    <%%= form.password_field :password_confirmation, required: true, autocomplete: "new-password", class: "pu-input" %>
   </div>
 
   <div class="space-y-3 pt-4">

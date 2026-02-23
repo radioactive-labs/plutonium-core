@@ -56,14 +56,6 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
-  test "generates model with custom roles" do
-    run_generator default_args + ["--roles=member,admin,owner"]
-
-    assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
-      assert_match(/enum :role, member: 0, admin: 1, owner: 2/, content)
-    end
-  end
-
   test "generates model with enforce_domain when option passed" do
     run_generator default_args + ["--enforce-domain"]
 
@@ -80,6 +72,16 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/def enforce_domain/, content)
       assert_match(/nil/, content)
       assert_no_match(/raise NotImplementedError.*enforce_domain/, content)
+    end
+  end
+
+  test "generates model with roles from membership model" do
+    # OrganizationUser in dummy app has: enum :role, member: 0, owner: 1
+    run_generator default_args
+
+    assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
+      # Should reference membership model's roles directly
+      assert_match(/enum :role, OrganizationUser\.roles/, content)
     end
   end
 
@@ -360,5 +362,239 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       # Should update login_redirect to /welcome
       assert_match(/login_redirect "\/welcome"/, content)
     end
+  end
+
+  # --dest option tests
+
+  test "generates entity files in package when dest option provided" do
+    # Create entity model, definition, and policy in blogging package with proper markers
+    create_package_entity_fixtures("blogging", "Blogging::Post")
+
+    run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
+
+    # Entity interaction should be in the package (uses full entity_table path)
+    assert_file "packages/blogging/app/interactions/blogging/post/invite_user_interaction.rb" do |content|
+      assert_match(/class Blogging::Post::InviteUserInteraction/, content)
+      assert_match(/include Plutonium::Invites::Concerns::InviteUser/, content)
+    end
+
+    # Invites package files should still be in packages/invites
+    assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
+      assert_match(/belongs_to :blogging_post/, content)
+      assert_match(/alias_method :entity, :blogging_post/, content)
+    end
+  end
+
+  test "injects association into packaged entity model" do
+    create_package_entity_fixtures("blogging", "Blogging::Post")
+
+    run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
+
+    assert_file "packages/blogging/app/models/blogging/post.rb" do |content|
+      assert_match(/has_many :user_invites, class_name: "Invites::UserInvite"/, content)
+    end
+  end
+
+  test "injects action into packaged entity definition" do
+    create_package_entity_fixtures("blogging", "Blogging::Post")
+
+    run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
+
+    assert_file "packages/blogging/app/definitions/blogging/post_definition.rb" do |content|
+      assert_match(/action :invite_user/, content)
+      assert_match(/Blogging::Post::InviteUserInteraction/, content)
+    end
+  end
+
+  test "injects policy method into packaged entity policy" do
+    create_package_entity_fixtures("blogging", "Blogging::Post")
+
+    run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
+
+    assert_file "packages/blogging/app/policies/blogging/post_policy.rb" do |content|
+      assert_match(/def invite_user\?/, content)
+    end
+  end
+
+  test "generates migration with packaged entity reference" do
+    create_package_entity_fixtures("blogging", "Blogging::Post")
+
+    run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
+
+    assert_migration "db/migrate/create_user_invites.rb" do |content|
+      assert_match(/t\.belongs_to :blogging_post/, content)
+    end
+  end
+
+  test "strips shared namespace from entity association name" do
+    # When Competition::TeamUser references Competition::Team,
+    # the association should be :team, not :competition_team
+    create_package_entity_fixtures("competition", "Competition::Team", membership_model: "Competition::TeamUser")
+
+    run_generator ["--entity-model=Competition::Team", "--membership-model=Competition::TeamUser", "--dest=competition"]
+
+    # Migration should use :team (stripped namespace)
+    assert_migration "db/migrate/create_user_invites.rb" do |content|
+      assert_match(/t\.belongs_to :team/, content)
+    end
+
+    # Model should use :team for belongs_to
+    assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
+      assert_match(/belongs_to :team/, content)
+      assert_match(/alias_method :entity, :team/, content)
+    end
+  end
+
+  # Validation tests
+
+  test "fails when entity model file is missing" do
+    # Thor errors are captured by Rails generator test case, so we use assert_raises
+    # with the generator instance directly
+    generator = Pu::Invites::InstallGenerator.new(
+      ["--entity-model=NonExistent::Model", "--dest=fake_package"],
+      {},
+      destination_root: destination_root
+    )
+
+    error = assert_raises(Thor::Error) do
+      generator.invoke_all
+    end
+
+    assert_match(/Required files missing/, error.message)
+    assert_match(/Entity model not found/, error.message)
+  end
+
+  test "fails when entity definition file is missing" do
+    # Create only the model, not the definition
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/models/test_pkg"))
+    File.write(destination_root.join("packages/test_pkg/app/models/test_pkg/entity.rb"), <<~RUBY)
+      class TestPkg::Entity < ApplicationRecord
+        # add has_many associations above.
+      end
+    RUBY
+
+    generator = Pu::Invites::InstallGenerator.new(
+      ["--entity-model=TestPkg::Entity", "--dest=test_pkg"],
+      {},
+      destination_root: destination_root
+    )
+
+    error = assert_raises(Thor::Error) do
+      generator.invoke_all
+    end
+
+    assert_match(/Required files missing/, error.message)
+    assert_match(/Entity definition not found/, error.message)
+  end
+
+  test "fails when entity policy file is missing" do
+    # Create model and definition, but not policy
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/models/test_pkg"))
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/definitions/test_pkg"))
+
+    File.write(destination_root.join("packages/test_pkg/app/models/test_pkg/entity.rb"), <<~RUBY)
+      class TestPkg::Entity < ApplicationRecord
+        # add has_many associations above.
+      end
+    RUBY
+    File.write(destination_root.join("packages/test_pkg/app/definitions/test_pkg/entity_definition.rb"), <<~RUBY)
+      class TestPkg::EntityDefinition < Plutonium::Resource::Definition
+      end
+    RUBY
+
+    generator = Pu::Invites::InstallGenerator.new(
+      ["--entity-model=TestPkg::Entity", "--dest=test_pkg"],
+      {},
+      destination_root: destination_root
+    )
+
+    error = assert_raises(Thor::Error) do
+      generator.invoke_all
+    end
+
+    assert_match(/Required files missing/, error.message)
+    assert_match(/Entity policy not found/, error.message)
+  end
+
+  test "fails when membership model file is missing" do
+    # Create entity model, definition, and policy but no membership model
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/models/test_pkg"))
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/definitions/test_pkg"))
+    FileUtils.mkdir_p(destination_root.join("packages/test_pkg/app/policies/test_pkg"))
+
+    File.write(destination_root.join("packages/test_pkg/app/models/test_pkg/entity.rb"), <<~RUBY)
+      class TestPkg::Entity < ApplicationRecord
+        # add has_many associations above.
+      end
+    RUBY
+    File.write(destination_root.join("packages/test_pkg/app/definitions/test_pkg/entity_definition.rb"), <<~RUBY)
+      class TestPkg::EntityDefinition < Plutonium::Resource::Definition
+      end
+    RUBY
+    File.write(destination_root.join("packages/test_pkg/app/policies/test_pkg/entity_policy.rb"), <<~RUBY)
+      class TestPkg::EntityPolicy < Plutonium::Resource::Policy
+        # Core attributes
+      end
+    RUBY
+
+    generator = Pu::Invites::InstallGenerator.new(
+      ["--entity-model=TestPkg::Entity", "--dest=test_pkg"],
+      {},
+      destination_root: destination_root
+    )
+
+    error = assert_raises(Thor::Error) do
+      generator.invoke_all
+    end
+
+    assert_match(/Required files missing/, error.message)
+    assert_match(/Membership model not found/, error.message)
+  end
+
+  private
+
+  def create_package_entity_fixtures(package_name, model_name, membership_model: nil)
+    # Parse model name: "Blogging::Post" -> table: "blogging/post"
+    table_name = model_name.underscore
+    membership_model ||= "#{model_name}User"
+    membership_table_name = membership_model.underscore
+
+    # Create directories
+    model_dir = File.dirname("packages/#{package_name}/app/models/#{table_name}.rb")
+    definition_dir = File.dirname("packages/#{package_name}/app/definitions/#{table_name}_definition.rb")
+    policy_dir = File.dirname("packages/#{package_name}/app/policies/#{table_name}_policy.rb")
+    membership_model_dir = File.dirname("packages/#{package_name}/app/models/#{membership_table_name}.rb")
+
+    FileUtils.mkdir_p(destination_root.join(model_dir))
+    FileUtils.mkdir_p(destination_root.join(definition_dir))
+    FileUtils.mkdir_p(destination_root.join(policy_dir))
+    FileUtils.mkdir_p(destination_root.join(membership_model_dir))
+
+    # Create model with proper markers
+    File.write(destination_root.join("packages/#{package_name}/app/models/#{table_name}.rb"), <<~RUBY)
+      class #{model_name} < ApplicationRecord
+        # add has_many associations above.
+      end
+    RUBY
+
+    # Create definition
+    File.write(destination_root.join("packages/#{package_name}/app/definitions/#{table_name}_definition.rb"), <<~RUBY)
+      class #{model_name}Definition < Plutonium::Resource::Definition
+      end
+    RUBY
+
+    # Create policy with proper markers
+    File.write(destination_root.join("packages/#{package_name}/app/policies/#{table_name}_policy.rb"), <<~RUBY)
+      class #{model_name}Policy < Plutonium::Resource::Policy
+        # Core attributes
+      end
+    RUBY
+
+    # Create membership model with role enum
+    File.write(destination_root.join("packages/#{package_name}/app/models/#{membership_table_name}.rb"), <<~RUBY)
+      class #{membership_model} < ApplicationRecord
+        enum :role, member: 0, admin: 1
+      end
+    RUBY
   end
 end

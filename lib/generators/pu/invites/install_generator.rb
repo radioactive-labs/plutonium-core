@@ -23,14 +23,14 @@ module Pu
       class_option :membership_model, type: :string,
         desc: "The membership model name (defaults to <Entity>User)"
 
-      class_option :roles, type: :array, default: %w[member admin],
-        desc: "Available roles for invitations"
-
       class_option :rodauth, type: :string, default: "user",
         desc: "Rodauth configuration name for signup integration"
 
       class_option :enforce_domain, type: :boolean, default: false,
         desc: "Require invited user email to match entity domain"
+
+      class_option :dest, type: :string, default: "main_app",
+        desc: "Package where entity model is located (default: main_app)"
 
       def validate_requirements
         errors = []
@@ -55,9 +55,13 @@ module Pu
           errors << "User policy not found: #{user_policy_path}"
         end
 
+        unless File.exist?(membership_model_file)
+          errors << "Membership model not found: #{membership_model_file.relative_path_from(Rails.root)}"
+        end
+
         if errors.any?
           errors.each { |e| say_status :error, e, :red }
-          raise Thor::Error, "Required files missing. Ensure #{entity_model} and #{user_model} resources exist."
+          raise Thor::Error, "Required files missing:\n  - #{errors.join("\n  - ")}"
         end
       end
 
@@ -132,8 +136,13 @@ module Pu
       end
 
       def create_entity_interaction
-        template "app/interactions/invite_user_interaction.rb",
+        dest_path = if entity_in_package?
+          "packages/#{entity_package}/app/interactions/#{entity_table}/invite_user_interaction.rb"
+        else
           "app/interactions/#{entity_table}/invite_user_interaction.rb"
+        end
+
+        template "app/interactions/invite_user_interaction.rb", dest_path
       end
 
       def add_entity_action
@@ -144,7 +153,7 @@ module Pu
 
       def add_entity_policy
         inject_into_file entity_policy_path,
-          "def invite_user?\n    user.is_a?(Admin) || current_membership&.admin?\n  end\n\n  ",
+          "def invite_user?\n    false # TODO: e.g., current_membership&.admin? or user.is_a?(Admin)\n  end\n\n  ",
           before: "# Core attributes"
       end
 
@@ -161,7 +170,7 @@ module Pu
 
       def add_user_policy
         inject_into_file user_policy_path,
-          "def invite_user?\n    user.is_a?(Admin) || current_membership&.admin?\n  end\n\n  ",
+          "def invite_user?\n    false # TODO: e.g., current_membership&.admin? or user.is_a?(Admin)\n  end\n\n  ",
           before: "# Core attributes"
       end
 
@@ -176,7 +185,7 @@ module Pu
   def current_membership
     return unless entity_scope && user
 
-    cache(entity_scope, user, :current_membership) { #{membership_model}.find_by(#{entity_table}: entity_scope, user: user) }
+    @current_membership ||= #{membership_model}.find_by(#{entity_association_name}: entity_scope, user: user)
   end
         RUBY
 
@@ -308,16 +317,43 @@ module Pu
         options[:entity_model].underscore
       end
 
+      # Returns the association name for entity on the membership model.
+      # Strips shared namespace between membership and entity models.
+      # e.g., Competition::TeamUser -> Competition::Team uses :team (not :competition_team)
+      def entity_association_name
+        PlutoniumGenerators::Generator.derive_association_name(membership_model, entity_model)
+      end
+
+      def entity_in_package?
+        options[:dest] != "main_app"
+      end
+
+      def entity_package
+        options[:dest]
+      end
+
       def entity_model_path
-        "app/models/#{entity_table}.rb"
+        if entity_in_package?
+          "packages/#{entity_package}/app/models/#{entity_table}.rb"
+        else
+          "app/models/#{entity_table}.rb"
+        end
       end
 
       def entity_definition_path
-        "app/definitions/#{entity_table}_definition.rb"
+        if entity_in_package?
+          "packages/#{entity_package}/app/definitions/#{entity_table}_definition.rb"
+        else
+          "app/definitions/#{entity_table}_definition.rb"
+        end
       end
 
       def entity_policy_path
-        "app/policies/#{entity_table}_policy.rb"
+        if entity_in_package?
+          "packages/#{entity_package}/app/policies/#{entity_table}_policy.rb"
+        else
+          "app/policies/#{entity_table}_policy.rb"
+        end
       end
 
       def user_model
@@ -340,12 +376,23 @@ module Pu
         options[:membership_model] || "#{entity_model}User"
       end
 
-      def roles
-        Array(options[:roles]).flat_map { |r| r.split(",") }.map(&:strip)
+      def membership_model_file
+        model_path = "#{membership_model.underscore}.rb"
+        if entity_in_package?
+          Rails.root.join("packages", options[:dest], "app/models", model_path)
+        else
+          Rails.root.join("app/models", model_path)
+        end
       end
 
-      def roles_enum
-        roles.each_with_index.map { |r, i| "#{r}: #{i}" }.join(", ")
+      # Read roles from the membership model's enum definition
+      def roles
+        content = File.read(membership_model_file)
+        if (match = content.match(/enum\s+:role,\s*(.+?)(?:\n|$)/))
+          match[1].scan(/(\w+):/).flatten
+        else
+          raise Thor::Error, "Could not find 'enum :role' in #{membership_model_file.relative_path_from(Rails.root)}"
+        end
       end
 
       def rodauth_config
