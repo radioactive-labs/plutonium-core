@@ -18,7 +18,6 @@ Options:
     --entity-model=NAME       Entity model name for scoping (default: Entity)
     --user-model=NAME         User model name (default: User)
     --membership-model=NAME   Membership model name (default: <Entity>User)
-    --roles=ROLES             Comma-separated roles (default: member,admin)
     --rodauth=NAME            Rodauth configuration for signup (default: user)
     --enforce-domain          Require user email domain to match entity domain
 

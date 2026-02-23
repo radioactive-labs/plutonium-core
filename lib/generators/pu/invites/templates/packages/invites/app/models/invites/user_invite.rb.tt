@@ -4,11 +4,11 @@ module Invites
   class UserInvite < Invites::ResourceRecord
     include Plutonium::Invites::Concerns::InviteToken
 
-    enum :role, <%= roles_enum %>
+    enum :role, <%= membership_model %>.roles
 
     encrypts :token, deterministic: true
 
-    belongs_to :<%= entity_table %>
+    belongs_to :<%= entity_association_name %>
     belongs_to :invited_by, polymorphic: true
     belongs_to :<%= user_table %>, optional: true
     belongs_to :invitable, polymorphic: true, optional: true
@@ -30,12 +30,12 @@ module Invites
     end
 
     def create_membership_for(user)
-      <%= membership_model %>.create!(<%= entity_table %>: <%= entity_table %>, user: user, role: role)
+      <%= membership_model %>.create!(<%= entity_association_name %>: <%= entity_association_name %>, user: user, role: role)
     end
-<% if entity_table != "entity" -%>
+<% if entity_association_name != "entity" -%>
 
     # Alias for InviteToken concern compatibility
-    alias_method :entity, :<%= entity_table %>
+    alias_method :entity, :<%= entity_association_name %>
 <% end -%>
   end
 end

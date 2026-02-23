@@ -117,11 +117,7 @@ module PlutoniumGenerators
             if name.include? "/"
               attr_options[:to_table] = name.underscore.tr("/", "_").pluralize.to_sym
               attr_options[:class_name] = name.classify
-              name = name.underscore
-              if (shared_namespace = find_shared_namespace(model_name, name, separator: "/"))
-                name = name.sub("#{shared_namespace}/", "")
-              end
-              name = name.tr("/", "_")
+              name = PlutoniumGenerators::Generator.derive_association_name(model_name, name)
             end
           end
 
@@ -259,21 +255,6 @@ module PlutoniumGenerators
           end
         end
 
-        def find_shared_namespace(model1, model2, separator: "::")
-          parts1 = model1.underscore.split(separator)
-          parts2 = model2.underscore.split(separator)
-
-          shared_namespace = []
-          [parts1.length, parts2.length].min.times do |i|
-            if parts1[i] == parts2[i]
-              shared_namespace << parts1[i]
-            else
-              break
-            end
-          end
-
-          shared_namespace.empty? ? nil : shared_namespace.join(separator)
-        end
       end
 
       def required?

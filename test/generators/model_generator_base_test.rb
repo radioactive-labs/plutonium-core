@@ -6,6 +6,72 @@ require "generators/pu/lib/plutonium_generators"
 class ModelGeneratorBaseTest < ActiveSupport::TestCase
   GeneratedAttribute = PlutoniumGenerators::ModelGeneratorBase::GeneratedAttribute
 
+  # Namespace utility tests
+
+  test "find_shared_namespace returns shared namespace" do
+    shared = PlutoniumGenerators::Generator.find_shared_namespace(
+      "Competition::TeamUser",
+      "Competition::Team"
+    )
+    assert_equal "competition", shared
+  end
+
+  test "find_shared_namespace returns nil when no shared namespace" do
+    shared = PlutoniumGenerators::Generator.find_shared_namespace(
+      "Organization",
+      "User"
+    )
+    assert_nil shared
+  end
+
+  test "find_shared_namespace handles deeply nested namespaces" do
+    shared = PlutoniumGenerators::Generator.find_shared_namespace(
+      "Admin::Portal::UserRole",
+      "Admin::Portal::User"
+    )
+    assert_equal "admin/portal", shared
+  end
+
+  test "find_shared_namespace handles partial namespace overlap" do
+    shared = PlutoniumGenerators::Generator.find_shared_namespace(
+      "Admin::Portal::User",
+      "Admin::Dashboard::Report"
+    )
+    assert_equal "admin", shared
+  end
+
+  test "derive_association_name strips shared namespace" do
+    name = PlutoniumGenerators::Generator.derive_association_name(
+      "Competition::TeamUser",
+      "Competition::Team"
+    )
+    assert_equal "team", name
+  end
+
+  test "derive_association_name keeps full name when no shared namespace" do
+    name = PlutoniumGenerators::Generator.derive_association_name(
+      "OrganizationUser",
+      "Blogging::Post"
+    )
+    assert_equal "blogging_post", name
+  end
+
+  test "derive_association_name handles simple models" do
+    name = PlutoniumGenerators::Generator.derive_association_name(
+      "OrganizationUser",
+      "Organization"
+    )
+    assert_equal "organization", name
+  end
+
+  test "derive_association_name handles deeply nested namespaces" do
+    name = PlutoniumGenerators::Generator.derive_association_name(
+      "Admin::Portal::UserRole",
+      "Admin::Portal::User"
+    )
+    assert_equal "user", name
+  end
+
   # Default value parsing tests
 
   test "parses default value for string type" do
