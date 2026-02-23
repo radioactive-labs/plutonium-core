@@ -62,7 +62,7 @@ module Pu
         end
 
         if @portals.empty?
-          say_status :warning, "No portals found#{options[:portal] ? " matching '#{options[:portal]}'" : ""}", :yellow
+          say_status :warning, "No portals found#{" matching '#{options[:portal]}'" if options[:portal]}", :yellow
         else
           @portals.each do |portal|
             say_status :found, "#{portal[:name]} (#{portal[:resources].size} resources)", :green

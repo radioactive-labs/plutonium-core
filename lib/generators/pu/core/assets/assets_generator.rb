@@ -17,6 +17,7 @@ module Pu
         configure_application
         replace_build_script
         import_styles
+        fix_layout_stylesheet_tag
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -71,6 +72,17 @@ module Pu
       def import_styles
         prepend_to_file "app/assets/stylesheets/application.tailwind.css",
           "@import \"gem:plutonium/src/css/plutonium.css\";\n\n"
+      end
+
+      # Rails 8 generates layouts with `stylesheet_link_tag :app` which includes all
+      # stylesheets in the asset paths. With cssbundling-rails, this causes both the
+      # built CSS and the source CSS to be served, leading to errors when the browser
+      # tries to load the unprocessed source file containing PostCSS directives.
+      def fix_layout_stylesheet_tag
+        layout_file = "app/views/layouts/application.html.erb"
+        return unless File.exist?(layout_file)
+
+        gsub_file layout_file, /stylesheet_link_tag\s+:app\b/, 'stylesheet_link_tag "application"'
       end
     end
   end

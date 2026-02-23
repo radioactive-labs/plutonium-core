@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless defined?(Rodauth::Rails)
-
 require "rails/generators/named_base"
 require_relative "../lib/plutonium_generators"
 

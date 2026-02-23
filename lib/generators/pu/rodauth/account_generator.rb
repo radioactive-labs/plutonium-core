@@ -1,19 +1,17 @@
-return unless defined?(Rodauth::Rails)
-
 require "rails/generators/base"
 require "securerandom"
 
 require "#{__dir__}/concerns/configuration"
 require "#{__dir__}/concerns/account_selector"
 require "#{__dir__}/concerns/feature_selector"
-require "#{__dir__}/concerns/gem_helpers"
+require "#{__dir__}/../lib/plutonium_generators/concerns/actions"
 
 module Pu
   module Rodauth
     class AccountGenerator < ::Rails::Generators::Base
       include Concerns::AccountSelector
       include Concerns::FeatureSelector
-      include Concerns::GemHelpers
+      include PlutoniumGenerators::Concerns::Actions
 
       source_root "#{__dir__}/templates"
 
