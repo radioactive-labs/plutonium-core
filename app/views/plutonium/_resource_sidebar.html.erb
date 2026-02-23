@@ -8,8 +8,7 @@
 
         m.item "Resources", icon: Phlex::TablerIcons::GridDots do |n|
           registered_resources.each do |resource|
-            n.item resource.model_name.human.pluralize,
-              url: resource_url_for(resource, parent: nil)
+            n.item resource_label(resource), url: resource_url_for(resource, parent: nil)
           end
         end
       end

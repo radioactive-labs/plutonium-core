@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# lib/plutonium/resource/associations.rb
 module Plutonium
   module Resource
     module Record
@@ -9,6 +8,12 @@ module Plutonium
 
         included do
           scope :associated_with, ->(record) do
+            # If scoping to same class, just match by ID (e.g., Team scoped to Team)
+            if klass == record.class
+              pk = klass.primary_key
+              return where(pk => record.public_send(pk))
+            end
+
             named_scope = :"associated_with_#{record.model_name.singular}"
             return send(named_scope, record) if respond_to?(named_scope)
 

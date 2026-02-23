@@ -207,7 +207,11 @@ module Plutonium
             url_args[:action] ||= :index if index == args.length - 1
           elsif element.is_a?(Class)
             controller_chain << element.to_s.pluralize
-            url_args[:action] ||= :index if index == args.length - 1 && parent.present?
+            if index == args.length - 1
+              # Singular resources have no index, default to show
+              is_singular = current_engine.routes.singular_resource_route?(element.model_name.plural)
+              url_args[:action] ||= is_singular ? :show : :index
+            end
           else
             model_class = element.class
             if model_class.respond_to?(:base_class) && model_class != model_class.base_class
@@ -223,8 +227,7 @@ module Plutonium
               else
                 model_class.model_name.plural
               end
-              resource_route_config = current_engine.routes.resource_route_config_for(route_key)[0]
-              is_singular = resource_route_config&.dig(:route_type) == :resource
+              is_singular = current_engine.routes.singular_resource_route?(route_key)
               url_args[:id] = element.to_param unless is_singular
               url_args[:action] ||= :show
             else
@@ -236,7 +239,7 @@ module Plutonium
 
         url_args[:"#{parent.model_name.singular}_id"] = parent.to_param if parent.present?
         if scoped_to_entity? && scoped_entity_strategy == :path
-          url_args[scoped_entity_param_key] = current_scoped_entity
+          url_args[scoped_entity_param_key] = current_scoped_entity.to_param
         end
 
         if !url_args.key?(:format) && request.present? && request.format.present? && !request.format.symbol.in?([:html, :turbo_stream])
