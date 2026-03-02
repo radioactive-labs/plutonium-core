@@ -20,4 +20,15 @@ class ResourceController < PlutoniumController
 
   helper_method :logout_url
   <%- end -%>
+  <%- if !ApplicationController.new.respond_to?(:profile_url, true) -%>
+
+  private def profile_url
+    # return a profile url to render a profile link in the user menu
+    # e.g. rodauth.change_password_path or your custom profile_path
+  end
+  helper_method :profile_url
+  <%- elsif !ApplicationController._helper_methods.include?(:profile_url) -%>
+
+  helper_method :profile_url
+  <%- end -%>
 end

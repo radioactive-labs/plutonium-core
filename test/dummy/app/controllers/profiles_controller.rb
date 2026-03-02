@@ -1,0 +1,2 @@
+class ProfilesController < ::ResourceController
+end

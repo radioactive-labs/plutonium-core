@@ -10,4 +10,9 @@ class ResourceController < PlutoniumController
     # return a logout url to render a logout link
   end
   helper_method :logout_url
+
+  private def profile_url
+    # return a profile url to render a profile link in the user menu
+  end
+  helper_method :profile_url
 end
