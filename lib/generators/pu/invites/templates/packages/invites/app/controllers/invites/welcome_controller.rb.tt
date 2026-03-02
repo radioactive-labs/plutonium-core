@@ -4,6 +4,7 @@ module Invites
   class WelcomeController < ApplicationController
     include Plutonium::Invites::PendingInviteCheck
 
+    prepend_view_path Invites::Engine.root.join("app/views")
     layout "invites/invitation"
 
 <% if rodauth? -%>

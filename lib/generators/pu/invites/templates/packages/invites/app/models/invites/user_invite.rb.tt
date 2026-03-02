@@ -8,7 +8,7 @@ module Invites
 
     encrypts :token, deterministic: true
 
-    belongs_to :<%= entity_association_name %>
+    belongs_to :<%= entity_association_name %>, class_name: "<%= entity_model %>"
     belongs_to :invited_by, polymorphic: true
     belongs_to :<%= user_table %>, optional: true
     belongs_to :invitable, polymorphic: true, optional: true

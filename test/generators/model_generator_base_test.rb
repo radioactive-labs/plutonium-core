@@ -240,13 +240,27 @@ class ModelGeneratorBaseTest < ActiveSupport::TestCase
     refute attr.required?
   end
 
-  test "required? returns false for non-nullable fields without default required behavior" do
-    # Note: required? in Rails GeneratedAttribute checks for specific conditions
-    # Our override only considers null: true as not required
+  test "required? returns true for non-nullable string fields" do
     attr = GeneratedAttribute.parse("Post", "title:string")
 
-    # The base Rails implementation determines required? based on type
-    # String fields are not required by default in the generator
+    assert attr.required?, "Non-nullable string fields should be required"
+  end
+
+  test "required? returns true for non-nullable date fields" do
+    attr = GeneratedAttribute.parse("Post", "published_at:date")
+
+    assert attr.required?, "Non-nullable date fields should be required"
+  end
+
+  test "required? returns true for non-nullable text fields" do
+    attr = GeneratedAttribute.parse("Post", "body:text")
+
+    assert attr.required?, "Non-nullable text fields should be required"
+  end
+
+  test "required? returns false for nullable date fields" do
+    attr = GeneratedAttribute.parse("Post", "archived_at:date?")
+
     refute attr.required?
   end
 
