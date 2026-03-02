@@ -195,6 +195,9 @@ class AdminRodauthPlugin < RodauthPlugin
     # Redirect to wherever login redirects to after account verification.
     verify_account_redirect { login_redirect }
 
+    # Redirect to login page after requesting password reset.
+    reset_password_email_sent_redirect { login_path }
+
     # Redirect to login page after password reset.
     reset_password_redirect { login_path }
 

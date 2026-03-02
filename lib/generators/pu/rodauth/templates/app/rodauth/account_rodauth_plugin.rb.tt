@@ -290,6 +290,9 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
 <% end -%>
 <% if reset_password? -%>
 
+    # Redirect to login page after requesting password reset.
+    reset_password_email_sent_redirect { login_path }
+
     # Redirect to login page after password reset.
     reset_password_redirect { login_path }
 <% end -%>
