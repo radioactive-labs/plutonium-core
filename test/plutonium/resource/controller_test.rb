@@ -168,6 +168,81 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     User.delete_all
   end
 
+  # Test override_entity_scoping_params uses detected association
+
+  def test_override_entity_scoping_params_uses_detected_association
+    # When param_key differs from association name, should use the detected association
+    user = User.create!(email: "entity_scoping_test@example.com", status: :verified)
+
+    controller = build_entity_scoping_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User,
+      scoped_entity_param_key: :author, # Different from association :user
+      current_scoped_entity: user
+    )
+
+    input_params = {}
+    controller.send(:override_entity_scoping_params, input_params)
+
+    # Should inject using detected association name (:user), not param_key (:author)
+    assert_equal user, input_params[:user]
+    # param_key should NOT be set (we use detected association)
+    refute input_params.key?(:author)
+  ensure
+    User.delete_all
+  end
+
+  def test_override_entity_scoping_params_sets_id_when_key_exists
+    # When the _id key already exists in params, it should be set
+    user = User.create!(email: "entity_scoping_test2@example.com", status: :verified)
+
+    controller = build_entity_scoping_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User,
+      scoped_entity_param_key: :author,
+      current_scoped_entity: user
+    )
+
+    # Pre-populate with user_id key (simulating form submission)
+    input_params = {user_id: nil}
+    controller.send(:override_entity_scoping_params, input_params)
+
+    # Should set both association and _id
+    assert_equal user, input_params[:user]
+    assert_equal user.id, input_params[:user_id]
+  ensure
+    User.delete_all
+  end
+
+  def test_override_entity_scoping_params_falls_back_to_param_key_when_no_association
+    # When no matching association exists, should fall back to param_key
+    org = Organization.create!(name: "Test Org")
+
+    controller = build_entity_scoping_controller(
+      resource_class: Blogging::Comment, # Comment has no belongs_to Organization
+      scoped_entity_class: Organization,
+      scoped_entity_param_key: :org,
+      current_scoped_entity: org
+    )
+
+    # Since there's no org= method on Comment and key doesn't exist,
+    # nothing should be set (this is expected - the model doesn't support this entity)
+    input_params = {}
+    controller.send(:override_entity_scoping_params, input_params)
+
+    refute input_params.key?(:org)
+    refute input_params.key?(:org_id)
+
+    # But if we pre-populate with the key, it gets set
+    input_params = {org: nil, org_id: nil}
+    controller.send(:override_entity_scoping_params, input_params)
+
+    assert_equal org, input_params[:org]
+    assert_equal org.id, input_params[:org_id]
+  ensure
+    Organization.delete_all
+  end
+
   private
 
   def build_controller_stub(path, parent_param)
@@ -181,6 +256,15 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     controller = SubmittedParamsTestController.new
     controller.test_record = record
     controller.test_user = user
+    controller
+  end
+
+  def build_entity_scoping_controller(resource_class:, scoped_entity_class:, scoped_entity_param_key:, current_scoped_entity:)
+    controller = EntityScopingTestController.new
+    controller.test_resource_class = resource_class
+    controller.test_scoped_entity_class = scoped_entity_class
+    controller.test_scoped_entity_param_key = scoped_entity_param_key
+    controller.test_current_scoped_entity = current_scoped_entity
     controller
   end
 
@@ -262,6 +346,42 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
 
     def current_definition
       @current_definition ||= Blogging::CommentDefinition.new
+    end
+  end
+
+  # Controller for testing override_entity_scoping_params
+  class EntityScopingTestController < ActionController::Base
+    include Plutonium::Resource::Controller
+
+    attr_accessor :test_resource_class, :test_scoped_entity_class,
+      :test_scoped_entity_param_key, :test_current_scoped_entity
+
+    def resource_class
+      test_resource_class
+    end
+
+    def scoped_to_entity?
+      true
+    end
+
+    def scoped_entity_class
+      test_scoped_entity_class
+    end
+
+    def scoped_entity_param_key
+      test_scoped_entity_param_key
+    end
+
+    def current_scoped_entity
+      test_current_scoped_entity
+    end
+
+    def current_parent
+      nil
+    end
+
+    def current_engine
+      nil
     end
   end
 end

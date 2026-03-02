@@ -89,6 +89,132 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
     assert_kind_of Plutonium::UI::Form::Resource, form
   end
 
+  # Test scoped_entity_association detection
+
+  def test_scoped_entity_association_finds_association_by_class
+    # Use Comment which has only one belongs_to :user
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User
+    )
+
+    assoc_name = controller.send(:scoped_entity_association)
+
+    assert_equal :user, assoc_name
+  end
+
+  def test_scoped_entity_association_returns_nil_when_no_matching_association
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: Organization # Comment doesn't belong_to Organization
+    )
+
+    assoc = controller.send(:scoped_entity_association)
+
+    assert_nil assoc
+  end
+
+  def test_scoped_entity_association_raises_when_multiple_associations_exist
+    # Post has multiple User associations: user, author, editor
+    controller = build_scoped_controller(
+      resource_class: Blogging::Post,
+      scoped_entity_class: User
+    )
+
+    error = assert_raises(RuntimeError) do
+      controller.send(:scoped_entity_association)
+    end
+
+    assert_includes error.message, "multiple associations"
+    assert_includes error.message, "Override `scoped_entity_association`"
+  end
+
+  def test_scoped_entity_field_names_includes_association_and_param_key
+    # Use Comment with a different param_key than the association name
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User,
+      scoped_entity_param_key: :author # Different from association name :user
+    )
+
+    field_names = controller.send(:scoped_entity_field_names)
+
+    # Should include both param_key and association name
+    assert_includes field_names, :author
+    assert_includes field_names, :author_id
+    assert_includes field_names, :user
+    assert_includes field_names, :user_id
+  end
+
+  def test_scoped_entity_field_names_only_includes_param_key_when_no_association
+    # Use Comment scoped to Organization (no matching belongs_to)
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: Organization,
+      scoped_entity_param_key: :org
+    )
+
+    field_names = controller.send(:scoped_entity_field_names)
+
+    # Should only include param_key since no association was found
+    assert_includes field_names, :org
+    assert_includes field_names, :org_id
+    assert_equal 2, field_names.size
+  end
+
+  def test_presentable_attributes_excludes_scoped_entity_by_association
+    # Use Comment with a different param_key than association
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User,
+      scoped_entity_param_key: :author, # Different from association :user
+      action_name: "index"
+    )
+
+    attrs = controller.send(:presentable_attributes)
+
+    # Should exclude both the param_key and the actual association
+    refute_includes attrs, :author
+    refute_includes attrs, :author_id
+    refute_includes attrs, :user
+    refute_includes attrs, :user_id
+  end
+
+  def test_submittable_attributes_excludes_scoped_entity_by_association
+    # Use Comment with a different param_key than association
+    controller = build_scoped_controller(
+      resource_class: Blogging::Comment,
+      scoped_entity_class: User,
+      scoped_entity_param_key: :author, # Different from association :user
+      action_name: "create"
+    )
+
+    attrs = controller.send(:submittable_attributes)
+
+    # Should exclude both the param_key and the actual association
+    refute_includes attrs, :author
+    refute_includes attrs, :author_id
+    refute_includes attrs, :user
+    refute_includes attrs, :user_id
+  end
+
+  def test_scoped_entity_association_can_be_overridden
+    # Test that controller can override to resolve ambiguity
+    controller = build_scoped_controller(
+      resource_class: Blogging::Post,
+      scoped_entity_class: User
+    )
+
+    # Override the method to specify which association to use
+    controller.define_singleton_method(:scoped_entity_association) do
+      :author
+    end
+
+    assoc_name = controller.send(:scoped_entity_association)
+
+    assert_equal :author, assoc_name
+  end
+
   # Test with policy that has different attributes for new vs create
 
   def test_build_form_respects_different_new_vs_create_attributes
@@ -125,6 +251,18 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
     controller.test_record = record
     controller.test_user = @user
     controller.test_policy_class = policy_class
+    controller
+  end
+
+  def build_scoped_controller(resource_class:, scoped_entity_class:, scoped_entity_param_key: nil, action_name: "index")
+    scoped_entity_param_key ||= scoped_entity_class.model_name.singular_route_key.to_sym
+
+    controller = ScopedTestableController.new
+    controller.test_action_name = action_name
+    controller.test_user = @user
+    controller.test_resource_class = resource_class
+    controller.test_scoped_entity_class = scoped_entity_class
+    controller.test_scoped_entity_param_key = scoped_entity_param_key
     controller
   end
 
@@ -169,6 +307,61 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
 
     def current_definition
       @current_definition ||= Blogging::PostDefinition.new
+    end
+  end
+
+  # Controller for testing entity scoping
+  class ScopedTestableController < ActionController::Base
+    include Plutonium::Resource::Controllers::Authorizable
+    include Plutonium::Resource::Controllers::Presentable
+
+    attr_accessor :test_action_name, :test_user, :test_resource_class,
+      :test_scoped_entity_class, :test_scoped_entity_param_key
+
+    def action_name
+      test_action_name
+    end
+
+    def resource_class
+      test_resource_class
+    end
+
+    def resource_record!
+      test_resource_class.new
+    end
+
+    def current_parent
+      nil
+    end
+
+    def scoped_to_entity?
+      true
+    end
+
+    def scoped_entity_class
+      test_scoped_entity_class
+    end
+
+    def scoped_entity_param_key
+      test_scoped_entity_param_key
+    end
+
+    def singular_resource_context?
+      false
+    end
+
+    def current_policy
+      policy_class = "#{test_resource_class.name}Policy".constantize
+      @current_policy ||= policy_class.new(
+        record: test_resource_class,
+        user: test_user,
+        entity_scope: nil
+      )
+    end
+
+    def current_definition
+      definition_class = "#{test_resource_class.name}Definition".constantize
+      @current_definition ||= definition_class.new
     end
   end
 end

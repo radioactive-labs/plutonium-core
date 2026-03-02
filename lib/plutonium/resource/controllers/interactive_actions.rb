@@ -29,12 +29,7 @@ module Plutonium
         # GET /resources/1/record_actions/:interactive_action
         def interactive_record_action
           build_interactive_record_action_interaction
-
-          if helpers.current_turbo_frame == "remote_modal"
-            render layout: false, formats: [:html]
-          else
-            render :interactive_record_action, formats: [:html]
-          end
+          render :interactive_record_action, layout: modal_layout, formats: [:html]
         end
 
         # POST /resources/1/record_actions/:interactive_action
@@ -67,7 +62,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_record_action, formats: [:html], status: :unprocessable_content
+                  render :interactive_record_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -82,16 +77,7 @@ module Plutonium
         def interactive_resource_action
           skip_verify_current_authorized_scope!
           build_interactive_resource_action_interaction
-
-          respond_to do |format|
-            format.any(:html, :turbo_stream) do
-              if helpers.current_turbo_frame == "remote_modal"
-                render layout: false, formats: [:html]
-              else
-                render :interactive_resource_action, formats: [:html]
-              end
-            end
-          end
+          render :interactive_resource_action, layout: modal_layout, formats: [:html]
         end
 
         # POST /resources/resource_actions/:interactive_action
@@ -125,7 +111,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_resource_action, formats: [:html], status: :unprocessable_content
+                  render :interactive_resource_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -139,12 +125,7 @@ module Plutonium
         # GET /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
         def interactive_bulk_action
           build_interactive_bulk_action_interaction
-
-          if helpers.current_turbo_frame == "remote_modal"
-            render layout: false, formats: [:html]
-          else
-            render :interactive_bulk_action, formats: [:html]
-          end
+          render :interactive_bulk_action, layout: modal_layout, formats: [:html]
         end
 
         # POST /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
@@ -177,7 +158,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_bulk_action, formats: [:html], status: :unprocessable_content
+                  render :interactive_bulk_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -189,6 +170,11 @@ module Plutonium
         end
 
         private
+
+        # Returns false for modal requests (skip layout), nil otherwise (use default layout)
+        def modal_layout
+          helpers.current_turbo_frame.present? ? false : nil
+        end
 
         def current_interactive_action
           @current_interactive_action = interactive_resource_actions[params[:interactive_action].to_sym]

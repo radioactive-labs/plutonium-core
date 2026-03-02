@@ -249,14 +249,17 @@ module Plutonium
       # Overrides entity scoping parameters
       # @param [Hash] input_params The input parameters
       def override_entity_scoping_params(input_params)
-        if scoped_to_entity?
-          if input_params.key?(scoped_entity_param_key) || resource_class.method_defined?(:"#{scoped_entity_param_key}=")
-            input_params[scoped_entity_param_key] = current_scoped_entity
-          end
+        return unless scoped_to_entity?
 
-          if input_params.key?(:"#{scoped_entity_param_key}_id") || resource_class.method_defined?(:"#{scoped_entity_param_key}_id=")
-            input_params[:"#{scoped_entity_param_key}_id"] = current_scoped_entity.id
-          end
+        # Use the detected association if available, otherwise fall back to param_key
+        assoc_name = scoped_entity_association || scoped_entity_param_key
+
+        if input_params.key?(assoc_name) || resource_class.method_defined?(:"#{assoc_name}=")
+          input_params[assoc_name] = current_scoped_entity
+        end
+
+        if input_params.key?(:"#{assoc_name}_id") || resource_class.method_defined?(:"#{assoc_name}_id=")
+          input_params[:"#{assoc_name}_id"] = current_scoped_entity.id
         end
       end
 
