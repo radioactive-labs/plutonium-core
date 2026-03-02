@@ -17,7 +17,7 @@ module Plutonium
               presentable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
             end
             if scoped_to_entity? && !present_scoped_entity?
-              presentable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
+              presentable_attributes -= scoped_entity_field_names
             end
             presentable_attributes
           end
@@ -33,9 +33,47 @@ module Plutonium
             submittable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
           end
           if scoped_to_entity? && !submit_scoped_entity?
-            submittable_attributes -= [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
+            submittable_attributes -= scoped_entity_field_names
           end
           submittable_attributes
+        end
+
+        # Returns all field names related to the scoped entity.
+        # Finds associations by class to handle cases where param_key differs from association name.
+        def scoped_entity_field_names
+          field_names = [scoped_entity_param_key, :"#{scoped_entity_param_key}_id"]
+
+          assoc_name = scoped_entity_association
+          if assoc_name
+            field_names << assoc_name
+            field_names << :"#{assoc_name}_id"
+          end
+
+          field_names.uniq
+        end
+
+        # Returns the name of the belongs_to association pointing to the scoped entity class.
+        # Raises if multiple associations exist (ambiguous - user must configure manually).
+        # @return [Symbol, nil] the association name or nil if not found
+        def scoped_entity_association
+          return @scoped_entity_association if defined?(@scoped_entity_association)
+
+          matching_assocs = resource_class.reflect_on_all_associations(:belongs_to).select do |assoc|
+            assoc.klass.name == scoped_entity_class.name
+          rescue NameError
+            false
+          end
+
+          if matching_assocs.size > 1
+            assoc_names = matching_assocs.map(&:name).join(", ")
+            raise <<~MSG.squish
+              #{resource_class} has multiple associations to #{scoped_entity_class}: #{assoc_names}.
+              Plutonium cannot auto-detect which one to use for entity scoping.
+              Override `scoped_entity_association` in your controller to specify the association.
+            MSG
+          end
+
+          @scoped_entity_association = matching_assocs.first&.name
         end
 
         def build_collection
