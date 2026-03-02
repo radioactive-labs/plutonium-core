@@ -153,6 +153,22 @@ class PostDefinition < Plutonium::Resource::Definition
 end
 ```
 
+## Form Configuration
+
+Control form behavior:
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  # Controls "Save and add another" / "Update and continue editing" buttons
+  # nil (default) = auto-detect (hidden for singular resources, shown for plural)
+  # true = always show
+  # false = always hide
+  submit_and_continue false
+end
+```
+
+Singular resources (e.g., `resource :profile` routes or `has_one` nested) auto-hide the secondary submit button since creating "another" doesn't make sense.
+
 ## Custom Page Classes
 
 Override default page components:

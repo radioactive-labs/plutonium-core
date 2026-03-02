@@ -303,8 +303,45 @@ end
 
 Controllers automatically:
 - Scope all queries to the entity
-- Exclude entity field from forms
+- Exclude entity field from forms (detected by association class)
+- Inject entity value on create/update
 - Provide `current_scoped_entity` method
+
+### Association Detection
+
+Plutonium auto-detects which `belongs_to` association points to the scoped entity class. This works even when `param_key` differs from the association name:
+
+```ruby
+# Portal config
+scope_to_entity Competition::Team, param_key: :team
+
+# Model (association name differs from param_key)
+class Match < ApplicationRecord
+  belongs_to :competition_team  # Plutonium finds this by class
+end
+```
+
+### Multiple Associations to Same Class
+
+If a model has multiple associations to the scoped entity class, Plutonium raises an error:
+
+```
+Match has multiple associations to Competition::Team: home_team, away_team.
+Plutonium cannot auto-detect which one to use for entity scoping.
+Override `scoped_entity_association` in your controller to specify the association.
+```
+
+Resolve by overriding `scoped_entity_association`:
+
+```ruby
+class MatchesController < ::ResourceController
+  private
+
+  def scoped_entity_association
+    :home_team  # Return the association name as a symbol
+  end
+end
+```
 
 ## Specifying Resource Class
 

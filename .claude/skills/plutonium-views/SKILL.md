@@ -346,11 +346,33 @@ Available kit methods:
 - `TabList(items:)`
 - `EmptyCard(message)`
 - `ActionButton(action, url:)`
-- `DynaFrameHost()` / `DynaFrameContent()`
+- `DynaFrameHost(src:, loading:)` - Lazy-loading turbo frame
+- `DynaFrameContent(content) { |frame| ... }` - Frame-aware content wrapper
 - `TableSearchBar()`
 - `TableScopesBar()`
 - `TableInfo(pagy)`
 - `TablePagination(pagy)`
+
+## DynaFrameContent Pattern
+
+`DynaFrameContent` enables frame-aware rendering. For turbo-frame requests, only the content is rendered inside the frame. For regular requests, the full page renders with header/footer.
+
+```ruby
+# How Page::Base uses DynaFrameContent
+def view_template(&block)
+  DynaFrameContent(page_content(block)) do |frame|
+    render_header        # Skipped for frame requests
+    frame.render_content # Always rendered (in turbo-frame for frame requests)
+    render_footer        # Skipped for frame requests
+  end
+end
+```
+
+This pattern means:
+- **Regular page load**: Full page with header, content, footer
+- **Turbo-frame request**: Only `<turbo-frame id="...">` with content inside
+
+All pages automatically inherit this behavior. No special handling needed for modals or frame navigation.
 
 ## Custom Components
 

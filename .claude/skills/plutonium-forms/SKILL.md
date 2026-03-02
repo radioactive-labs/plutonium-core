@@ -327,12 +327,27 @@ end
 
 ## Form Actions
 
+### Submit and Continue Button
+
+Forms include a secondary button ("Create and add another" for new records, "Update and continue editing" for existing). Control this in your definition:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  # nil (default) = auto-detect (hidden for singular resources, shown for plural)
+  # true = always show
+  # false = always hide
+  submit_and_continue false
+end
+```
+
+Singular resources (e.g., `resource :profile` routes or `has_one` nested) auto-hide this button.
+
 ### Default Actions
 
 ```ruby
 def render_actions
   actions_wrapper {
-    # "Create and add another" / "Update and continue editing" button
+    # "Create and add another" / "Update and continue editing" button (if enabled)
     # Primary submit button
     render submit_button
   }
