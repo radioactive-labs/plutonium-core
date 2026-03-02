@@ -1,0 +1,42 @@
+Description:
+    Generate a complete Profile setup: creates the resource and connects it to a portal.
+    This combines pu:profile:install and pu:profile:conn into a single command.
+
+Usage:
+    rails g pu:profile:setup [NAME] [field:type ...] --dest=PACKAGE --portal=PORTAL
+
+Arguments:
+    NAME                 Profile resource name (default: Profile)
+    field:type           Additional fields for the profile
+
+Options:
+    --dest=PACKAGE       Package where Profile resource is created
+    --portal=PORTAL      Portal to connect the Profile to
+    --user-model=NAME    Rodauth user model (default: User)
+
+Examples:
+    # Complete setup in one command
+    rails g pu:profile:setup date_of_birth:date bio:text \
+        --dest=competition \
+        --portal=competition_portal
+
+    # With custom name
+    rails g pu:profile:setup AccountSettings bio:text avatar:attachment \
+        --dest=main_app \
+        --portal=customer_portal
+
+    # Main app profile connected to admin portal
+    rails g pu:profile:setup --dest=main_app --portal=admin_portal
+
+What This Does:
+    1. Creates Profile resource (model, migration, controller, policy, definition)
+    2. Adds has_one :profile to User model
+    3. Adds unique index on user_id
+    4. Customizes policy for owner-only access
+    5. Adds SecuritySection to show page
+    6. Connects to portal as singular resource
+    7. Adds profile_url helper to portal
+
+Equivalent to running:
+    rails g pu:profile:install [NAME] [fields] --dest=PACKAGE
+    rails g pu:profile:conn [RESOURCE] --dest=PORTAL

@@ -1,0 +1,33 @@
+Description:
+    Connect a Profile resource to a portal with the profile_url helper configured.
+    This enables the "Profile" link in the user menu.
+
+Usage:
+    rails g pu:profile:conn [RESOURCE] --dest=PORTAL
+
+Arguments:
+    RESOURCE             Profile resource class (default: Profile)
+                         Use namespaced class for package resources (e.g., Competition::Profile)
+
+Options:
+    --dest=PORTAL        Target portal (required to avoid interactive prompts)
+
+Examples:
+    # Connect namespaced Profile to portal
+    rails g pu:profile:conn Competition::Profile --dest=competition_portal
+
+    # Connect main_app Profile to portal
+    rails g pu:profile:conn Profile --dest=customer_portal
+
+    # Connect custom-named profile
+    rails g pu:profile:conn Competition::AccountSettings --dest=competition_portal
+
+What Gets Created:
+    Controller: packages/[portal]/app/controllers/[portal]/profiles_controller.rb
+
+What Gets Modified:
+    Routes:     packages/[portal]/config/routes.rb (registers as singular resource)
+    Controller: packages/[portal]/app/controllers/[portal]/resource_controller.rb
+                (adds profile_url helper method)
+
+The profile_url helper enables the "Profile" link in the user navigation menu.
