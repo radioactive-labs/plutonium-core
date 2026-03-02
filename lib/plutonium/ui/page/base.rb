@@ -10,18 +10,20 @@ module Plutonium
           @page_actions = page_actions
         end
 
-        def view_template(&)
-          render_before_header
-          render_header
-          render_after_header
+        def view_template(&block)
+          DynaFrameContent(page_content(block)) do |frame|
+            render_before_header
+            render_header
+            render_after_header
 
-          render_before_content
-          render_content(&)
-          render_after_content
+            render_before_content
+            frame.render_content
+            render_after_content
 
-          render_before_footer
-          render_footer
-          render_after_footer
+            render_before_footer
+            render_footer
+            render_after_footer
+          end
         end
 
         private
@@ -64,10 +66,8 @@ module Plutonium
           # Implement toolbar content
         end
 
-        def render_content(&block)
-          block ||= proc { render_default_content }
-
-          DynaFrameContent(&block)
+        def page_content(block)
+          block || proc { render_default_content }
         end
 
         def render_default_content
