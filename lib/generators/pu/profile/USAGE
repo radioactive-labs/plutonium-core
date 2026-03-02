@@ -1,0 +1,59 @@
+Description:
+    Generate a Profile resource for managing Rodauth account settings.
+    Creates a resource linked to the User model with a customized ShowPage
+    that displays security settings links (change password, 2FA, etc.).
+
+Usage:
+    rails g pu:profile:install [NAME] [field:type field:type] --dest=DESTINATION
+
+Arguments:
+    NAME                 Profile resource name (default: Profile)
+    field:type           Additional fields to add to the profile
+
+Options:
+    --dest=DESTINATION   Target destination (required to avoid interactive prompts)
+                         Use 'main_app' for main application
+                         Use 'package_name' for feature package
+    --user-model=NAME    Rodauth user model (default: User)
+
+Examples:
+    # Basic profile in main_app
+    rails g pu:profile:install --dest=main_app
+
+    # Profile with custom fields
+    rails g pu:profile:install bio:text avatar:attachment --dest=main_app
+
+    # Custom name with fields in a package
+    rails g pu:profile:install AccountSettings \
+        bio:text \
+        'timezone:string?' \
+        'notifications_enabled:boolean' \
+        --dest=customer
+
+    # With custom user model
+    rails g pu:profile:install --dest=main_app --user-model=Account
+
+Generated Files:
+    Model:      app/models/[package/]profile.rb
+    Migration:  db/migrate/xxx_create_[package_]profiles.rb
+    Controller: [packages/package/]app/controllers/[package/]profiles_controller.rb
+    Policy:     [packages/package/]app/policies/[package/]profile_policy.rb
+    Definition: [packages/package/]app/definitions/[package/]profile_definition.rb
+
+What Gets Modified:
+    User Model: Adds `has_one :profile, dependent: :destroy`
+    Definition: Injects ShowPage with SecuritySection for Rodauth links
+
+The SecuritySection automatically displays links for enabled Rodauth features:
+    - Change Password (change_password)
+    - Change Email (change_login)
+    - Two-Factor Authentication (otp)
+    - Recovery Codes (recovery_codes)
+    - Security Keys (webauthn)
+    - Active Sessions (active_sessions)
+    - Close Account (close_account)
+
+After Generation:
+    1. Run migrations: rails db:migrate
+    2. Connect to portal: rails g pu:profile:conn --dest=my_portal
+    3. Customize the profile definition as needed
