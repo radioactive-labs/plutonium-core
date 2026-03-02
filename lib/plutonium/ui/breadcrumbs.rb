@@ -12,145 +12,125 @@ module Plutonium
           ol(
             class: "inline-flex items-center gap-1 md:gap-2"
           ) do
-            # Dashboard
-            li(class: "inline-flex items-center") do
-              a(
-                href: root_path,
-                class: "inline-flex items-center text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 transition-colors"
-              ) do
-                svg(
-                  class: "w-3 h-3 me-2.5",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "currentColor",
-                  viewbox: "0 0 20 20"
-                ) do |s|
-                  s.path(
-                    d:
-                      "m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"
-                  )
-                end
-                plain " Dashboard "
-              end
+            render_dashboard_link
+            render_parent_breadcrumbs if current_parent.present?
+            render_resource_breadcrumbs if resource_record?
+            render_trailing_separator
+          end
+        end
+      end
+
+      private
+
+      def render_dashboard_link
+        li(class: "inline-flex items-center") do
+          a(
+            href: root_path,
+            class: "inline-flex items-center text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 transition-colors"
+          ) do
+            svg(
+              class: "w-3 h-3 me-2.5",
+              aria_hidden: "true",
+              xmlns: "http://www.w3.org/2000/svg",
+              fill: "currentColor",
+              viewbox: "0 0 20 20"
+            ) do |s|
+              s.path(
+                d:
+                  "m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"
+              )
             end
+            plain " Dashboard "
+          end
+        end
+      end
 
-            # Parent
-            if current_parent.present?
-              # Parent Resource
-              li(class: "flex items-center") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
-                end
-                link_to resource_name_plural(current_parent.class),
-                  resource_url_for(current_parent.class, parent: nil),
-                  class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
-              end
+      def render_parent_breadcrumbs
+        # Parent Resource
+        render_breadcrumb_item do
+          link_to resource_name_plural(current_parent.class),
+            resource_url_for(current_parent.class, parent: nil),
+            class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
+        end
 
-              # Parent Itself
-              li(class: "flex items-center") do
-                svg(
-                  class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
-                  aria_hidden: "true",
-                  xmlns: "http://www.w3.org/2000/svg",
-                  fill: "none",
-                  viewbox: "0 0 6 10"
-                ) do |s|
-                  s.path(
-                    stroke: "currentColor",
-                    stroke_linecap: "round",
-                    stroke_linejoin: "round",
-                    stroke_width: "2",
-                    d: "m1 9 4-4-4-4"
-                  )
-                end
-                link_to display_name_of(current_parent),
-                  resource_url_for(current_parent, parent: nil),
-                  class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
-              end
-            end
+        # Parent Itself
+        render_breadcrumb_item do
+          link_to display_name_of(current_parent),
+            resource_url_for(current_parent, parent: nil),
+            class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
+        end
+      end
 
-            # Record
-            if resource_record?
-              unless current_engine.routes.resource_route_config_lookup[resource_class.model_name.plural][:route_type] == :resource
-                # Record Resource
-                li(class: "flex items-center") do
-                  svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
-                    aria_hidden: "true",
-                    xmlns: "http://www.w3.org/2000/svg",
-                    fill: "none",
-                    viewbox: "0 0 6 10"
-                  ) do |s|
-                    s.path(
-                      stroke: "currentColor",
-                      stroke_linecap: "round",
-                      stroke_linejoin: "round",
-                      stroke_width: "2",
-                      d: "m1 9 4-4-4-4"
-                    )
-                  end
-                  link_to nestable_resource_name_plural(resource_class),
-                    resource_url_for(resource_class),
-                    class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
-                end
-              end
+      def render_resource_breadcrumbs
+        is_singular_route = current_engine.routes.resource_route_config_lookup[resource_class.model_name.plural][:route_type] == :resource
 
-              # Record Itself
-              if resource_record!.persisted? && action_name != "show"
-                li(class: "flex items-center") do
-                  svg(
-                    class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
-                    aria_hidden: "true",
-                    xmlns: "http://www.w3.org/2000/svg",
-                    fill: "none",
-                    viewbox: "0 0 6 10"
-                  ) do |s|
-                    s.path(
-                      stroke: "currentColor",
-                      stroke_linecap: "round",
-                      stroke_linejoin: "round",
-                      stroke_width: "2",
-                      d: "m1 9 4-4-4-4"
-                    )
-                  end
-                  link_to display_name_of(resource_record!),
-                    resource_url_for(resource_record!),
-                    class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
-                end
-              end
-            end
+        if is_singular_route
+          render_singular_resource_breadcrumb
+        else
+          render_plural_resource_breadcrumbs
+        end
+      end
 
-            # Trailing Caret
-            li(class: "flex items-center") do
-              svg(
-                class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
-                aria_hidden: "true",
-                xmlns: "http://www.w3.org/2000/svg",
-                fill: "none",
-                viewbox: "0 0 6 10"
-              ) do |s|
-                s.path(
-                  stroke: "currentColor",
-                  stroke_linecap: "round",
-                  stroke_linejoin: "round",
-                  stroke_width: "2",
-                  d: "m1 9 4-4-4-4"
-                )
-              end
+      def render_singular_resource_breadcrumb
+        render_breadcrumb_item do
+          if resource_record!.persisted? && action_name != "show"
+            link_to resource_name(resource_class),
+              resource_url_for(resource_record!),
+              class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
+          else
+            span(class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] md:ms-2") do
+              plain resource_name(resource_class)
             end
           end
+        end
+      end
+
+      def render_plural_resource_breadcrumbs
+        # Resource index link
+        render_breadcrumb_item do
+          link_to nestable_resource_name_plural(resource_class),
+            resource_url_for(resource_class),
+            class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
+        end
+
+        # Record itself (for non-singular routes only)
+        return unless resource_record!.persisted? && action_name != "show"
+
+        render_breadcrumb_item do
+          link_to display_name_of(resource_record!),
+            resource_url_for(resource_record!),
+            class: "ms-1 text-sm font-medium text-[var(--pu-text-muted)] hover:text-primary-600 md:ms-2 transition-colors"
+        end
+      end
+
+      def render_trailing_separator
+        li(class: "flex items-center") do
+          render_chevron_separator
+        end
+      end
+
+      def render_breadcrumb_item(&)
+        li(class: "flex items-center") do
+          render_chevron_separator
+          yield
+        end
+      end
+
+      def render_chevron_separator
+        svg(
+          class: "rtl:rotate-180 block w-3 h-3 mx-1 text-[var(--pu-text-subtle)]",
+          aria_hidden: "true",
+          xmlns: "http://www.w3.org/2000/svg",
+          fill: "none",
+          viewbox: "0 0 6 10"
+        ) do |s|
+          s.path(
+            stroke: "currentColor",
+            stroke_linecap: "round",
+            stroke_linejoin: "round",
+            stroke_width: "2",
+            d: "m1 9 4-4-4-4"
+          )
         end
       end
     end
