@@ -258,9 +258,11 @@ module PlutoniumGenerators
       end
 
       def required?
-        return false if attr_options[:null] == true
-
-        super
+        if attr_options.key?(:null)
+          !attr_options[:null]
+        else
+          super
+        end
       end
 
       def cents?
