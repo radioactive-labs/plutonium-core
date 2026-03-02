@@ -170,6 +170,20 @@ end
 | `input` blocks | Yes | Yes | Yes |
 | Page title procs | Yes | Yes (current_record!) | Yes |
 
+## Form Configuration
+
+```ruby
+class PostDefinition < ResourceDefinition
+  # Controls "Save and add another" / "Update and continue editing" buttons
+  # nil (default) = auto-detect (hidden for singular resources, shown for plural)
+  # true = always show
+  # false = always hide
+  submit_and_continue false
+end
+```
+
+Singular resources (e.g., `resource :profile` routes or `has_one` nested) auto-hide this button since creating "another" doesn't make sense.
+
 ## Page Customization
 
 ```ruby
