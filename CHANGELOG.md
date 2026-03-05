@@ -1,3 +1,39 @@
+## [0.43.0] - 2026-03-05
+
+### 🚀 Features
+
+- *(generators)* Add TypeSpec API specification generator
+- *(forms)* Make submit_and_continue button configurable
+- *(generators)* Add package destination and namespace handling to invites
+- *(controller)* Auto-detect entity association by class
+- *(generators)* Add profile generators for user settings pages
+- *(auth)* Add profile_url helper method to rodauth module
+
+### 🐛 Bug Fixes
+
+- *(ui)* Support custom primary keys and optional timestamps
+- *(routing)* Handle singular resources and entity scoping correctly
+- *(generators)* Improve robustness and package support
+- *(resource)* Handle class reloading in associated_with scope
+- *(ui)* Show profile link in user menu only when profile_url defined
+- *(generators)* Fix invites templates and null attribute handling
+
+### 🚜 Refactor
+
+- *(ui)* Extract breadcrumb rendering methods and add tests
+
+### 📚 Documentation
+
+- Add profile guide and update skill documentation
+
+### 🧪 Testing
+
+- Add OrgPortal fixture for entity scoping tests
+- Add tests for routing, authorization, and display helpers
+
+### ⚙️ Miscellaneous Tasks
+
+- Add profile_url stub to controller template and test fixtures
 ## [0.42.0] - 2026-02-14
 
 ### 🚀 Features
