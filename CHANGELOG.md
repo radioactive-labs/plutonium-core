@@ -1,3 +1,9 @@
+## [0.43.1] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- *(ui)* Fix scope comparison and clean up scopes bar component
+- *(release)* Auto-run npm login instead of aborting on missing auth
 ## [0.43.0] - 2026-03-05
 
 ### 🚀 Features
