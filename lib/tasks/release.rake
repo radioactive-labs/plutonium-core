@@ -131,10 +131,10 @@ namespace :release do
   task :publish_npm do
     puts "Publishing npm package..."
 
-    # Check if user is logged in to npm
+    # Check if user is logged in to npm, login if needed
     unless system("npm whoami > /dev/null 2>&1")
-      puts "⚠ You are not logged in to npm. Please run: npm login"
-      abort("npm authentication required")
+      puts "Not logged in to npm. Opening login..."
+      system("npm login") || abort("npm login failed")
     end
 
     # Publish to npm
@@ -162,10 +162,10 @@ namespace :release do
 
     puts "Starting release workflow for v#{version}..."
 
-    # Check npm authentication early
+    # Check npm authentication early, login if needed
     unless system("npm whoami > /dev/null 2>&1")
-      puts "Error: You are not logged in to npm. Please run: npm login"
-      exit 1
+      puts "Not logged in to npm. Opening login..."
+      system("npm login") || abort("npm login failed")
     end
     puts "✓ npm authenticated as: #{`npm whoami`.strip}"
 
