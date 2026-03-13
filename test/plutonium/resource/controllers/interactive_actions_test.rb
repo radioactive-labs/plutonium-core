@@ -51,10 +51,7 @@ class Plutonium::Resource::Controllers::InteractiveActionsTest < Minitest::Test
     attr_accessor :test_turbo_frame
 
     def helpers
-      @helpers ||= begin
-        helper_context = self
-        Struct.new(:current_turbo_frame).new(test_turbo_frame)
-      end
+      @helpers ||= Struct.new(:current_turbo_frame).new(test_turbo_frame)
     end
 
     # Stub required methods

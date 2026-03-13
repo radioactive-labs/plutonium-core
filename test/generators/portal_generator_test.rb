@@ -51,7 +51,7 @@ class PortalGeneratorTest < Rails::Generators::TestCase
     run_generator ["test", "--public", "--scope=Organization"]
 
     assert_file "packages/test_portal/lib/engine.rb" do |content|
-      assert_match(/scope_to_entity Organization, strategy: :path/, content)
+      assert_match(/scope_to_entity ::Organization, strategy: :path/, content)
     end
   end
 
@@ -59,7 +59,7 @@ class PortalGeneratorTest < Rails::Generators::TestCase
     run_generator ["test", "--auth=admin", "--scope=Account"]
 
     assert_file "packages/test_portal/lib/engine.rb" do |content|
-      assert_match(/scope_to_entity Account, strategy: :path/, content)
+      assert_match(/scope_to_entity ::Account, strategy: :path/, content)
     end
 
     assert_file "packages/test_portal/app/controllers/test_portal/concerns/controller.rb" do |content|
@@ -71,7 +71,7 @@ class PortalGeneratorTest < Rails::Generators::TestCase
     run_generator ["test", "--public", "--scope=user_organization"]
 
     assert_file "packages/test_portal/lib/engine.rb" do |content|
-      assert_match(/scope_to_entity UserOrganization, strategy: :path/, content)
+      assert_match(/scope_to_entity ::UserOrganization, strategy: :path/, content)
     end
   end
 end

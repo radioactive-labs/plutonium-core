@@ -82,11 +82,7 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
   end
 
   test "table_name for package includes prefix" do
-    generator = Pu::Profile::InstallGenerator.new(
-      [],
-      {dest: "customer"},
-      destination_root: Rails.root
-    )
+    generator = build_generator_with_dest("customer")
     generator.normalize_arguments
 
     assert_equal "customer_profiles", generator.send(:table_name)
@@ -104,11 +100,7 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
   end
 
   test "namespaced_class_name for package" do
-    generator = Pu::Profile::InstallGenerator.new(
-      [],
-      {dest: "customer"},
-      destination_root: Rails.root
-    )
+    generator = build_generator_with_dest("customer")
     generator.normalize_arguments
 
     assert_equal "Customer::Profile", generator.send(:namespaced_class_name)
@@ -125,11 +117,7 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
   end
 
   test "migration_dir for package" do
-    generator = Pu::Profile::InstallGenerator.new(
-      [],
-      {dest: "customer"},
-      destination_root: Rails.root
-    )
+    generator = build_generator_with_dest("customer")
 
     assert_equal "packages/customer/db/migrate", generator.send(:migration_dir)
   end
@@ -152,5 +140,19 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
     )
 
     assert_equal "app/models/admin_user.rb", generator.send(:user_model_path)
+  end
+
+  private
+
+  # Build a generator with a non-existent package destination.
+  # Pre-sets the feature_option cache to bypass interactive prompt validation.
+  def build_generator_with_dest(dest)
+    generator = Pu::Profile::InstallGenerator.new(
+      [],
+      {dest: dest},
+      destination_root: Rails.root
+    )
+    generator.instance_variable_set(:@dest_feature_option, dest)
+    generator
   end
 end

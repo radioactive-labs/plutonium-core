@@ -76,7 +76,6 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
 
   def render_component(component, &block)
     # Create a minimal rendering context
-    output = StringIO.new
     component.instance_variable_set(:@_view_context, ActionView::Base.empty)
 
     # Capture the output by calling the block in the component's context

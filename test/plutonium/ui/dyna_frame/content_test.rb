@@ -24,7 +24,10 @@ class Plutonium::UI::DynaFrame::ContentTest < ActiveSupport::TestCase
 
   test "render_content calls the content proc" do
     called = false
-    content = proc { called = true; "result" }
+    content = proc {
+      called = true
+      "result"
+    }
     component = Plutonium::UI::DynaFrame::Content.new(content)
 
     component.render_content
@@ -68,7 +71,7 @@ class Plutonium::UI::DynaFrame::ContentTest < ActiveSupport::TestCase
     content = proc { content_called = true }
     component = build_component_with_turbo_frame("modal_frame", content)
 
-    component.view_template { }
+    component.view_template {}
 
     assert content_called, "Content should be called inside turbo frame"
   end
