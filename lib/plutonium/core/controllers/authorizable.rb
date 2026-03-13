@@ -24,9 +24,20 @@ module Plutonium
           end
 
           options[:with] ||= ::ActionPolicy.lookup(resource, namespace: authorization_namespace)
+          options[:context] = (options[:context] || {}).deep_merge(current_policy_context)
           relation ||= resource.all
 
           authorized_scope(relation, **options)
+        end
+
+        # Returns the base policy context available to all controllers.
+        # Resource controllers extend this with parent/association context.
+        #
+        # @return [Hash] context containing entity_scope
+        def current_policy_context
+          {
+            entity_scope: entity_scope_for_authorize
+          }
         end
 
         def entity_scope_for_authorize

@@ -71,4 +71,78 @@ class Plutonium::Core::Controllers::AuthorizableTest < ActiveSupport::TestCase
 
     assert_equal entity, result
   end
+
+  test "current_policy_context includes entity_scope" do
+    entity = Object.new
+    @controller.scoped_to_entity_value = true
+    @controller.set_scoped_entity(entity)
+
+    context = @controller.send(:current_policy_context)
+
+    assert_equal({entity_scope: entity}, context)
+  end
+
+  test "current_policy_context returns nil entity_scope when not scoped" do
+    @controller.scoped_to_entity_value = false
+
+    context = @controller.send(:current_policy_context)
+
+    assert_equal({entity_scope: nil}, context)
+  end
+
+  test "authorized_resource_scope merges current_policy_context into options" do
+    entity = Object.new
+    @controller.scoped_to_entity_value = true
+    @controller.set_scoped_entity(entity)
+
+    # Track what authorized_scope receives
+    captured_options = nil
+    @controller.define_singleton_method(:authorized_scope) do |relation, **options|
+      captured_options = options
+      relation
+    end
+
+    @controller.define_singleton_method(:authorization_namespace) { nil }
+
+    @controller.send(:authorized_resource_scope, User, relation: User.all)
+
+    assert_equal entity, captured_options[:context][:entity_scope]
+  end
+
+  test "authorized_resource_scope passes policy context when no explicit context given" do
+    entity = Object.new
+    @controller.scoped_to_entity_value = true
+    @controller.set_scoped_entity(entity)
+
+    captured_options = nil
+    @controller.define_singleton_method(:authorized_scope) do |relation, **options|
+      captured_options = options
+      relation
+    end
+
+    @controller.define_singleton_method(:authorization_namespace) { nil }
+
+    @controller.send(:authorized_resource_scope, User, relation: User.all)
+
+    assert_equal({entity_scope: entity}, captured_options[:context])
+  end
+
+  test "authorized_resource_scope deep merges caller context with policy context" do
+    entity = Object.new
+    @controller.scoped_to_entity_value = true
+    @controller.set_scoped_entity(entity)
+
+    captured_options = nil
+    @controller.define_singleton_method(:authorized_scope) do |relation, **options|
+      captured_options = options
+      relation
+    end
+
+    @controller.define_singleton_method(:authorization_namespace) { nil }
+
+    @controller.send(:authorized_resource_scope, User, relation: User.all, context: {custom_key: "value"})
+
+    assert_equal entity, captured_options[:context][:entity_scope]
+    assert_equal "value", captured_options[:context][:custom_key]
+  end
 end

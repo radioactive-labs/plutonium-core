@@ -109,15 +109,14 @@ module Plutonium
         end
 
         # Returns the policy context for the current resource
-        # Separates parent scoping (nested routes) from entity scoping (multi-tenancy)
+        # Extends the base context with parent scoping from nested routes
         #
         # @return [Hash] context containing parent, parent_association, and entity_scope
         def current_policy_context
-          {
+          super.merge(
             parent: current_parent,
-            parent_association: current_nested_association,
-            entity_scope: entity_scope_for_authorize
-          }
+            parent_association: current_nested_association
+          )
         end
 
         # Authorizes the current action for the given record of the current resource
