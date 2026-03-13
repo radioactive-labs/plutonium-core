@@ -2,6 +2,9 @@
 
 module Invites
   class UserInvitationsController < ApplicationController
+<% if rodauth? -%>
+    include Plutonium::Auth::Rodauth(:<%= rodauth_config %>)
+<% end -%>
     include Plutonium::Invites::Controller
 
     prepend_view_path Invites::Engine.root.join("app/views")
@@ -30,6 +33,8 @@ module Invites
 <% end -%>
     end
 
+    # Override: this controller is accessed by unauthenticated users,
+    # and the default current_user raises when not logged in.
     def current_user
 <% if rodauth? -%>
       rodauth.rails_account if rodauth.logged_in?
@@ -51,8 +56,8 @@ module Invites
           status: :verified
         )
       else
-        # Different email - normal flow with verification email
-        rodauth.create_account(login: email, password: password)
+        # Different email - use Internal Request API for account creation with verification
+        RodauthApp.rodauth(:<%= rodauth_config %>).create_account(login: email, password: password)
         <%= user_model %>.find_by(email: email)
       end
     end
@@ -60,10 +65,6 @@ module Invites
     def sign_in_user(user)
       rodauth.account_from_login(user.email)
       rodauth.login("signup")
-    end
-
-    def rodauth
-      request.env["rodauth.<%= rodauth_config %>"]
     end
 <% else -%>
     def create_user_for_signup(email, password)

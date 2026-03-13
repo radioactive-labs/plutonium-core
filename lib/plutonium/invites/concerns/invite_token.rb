@@ -151,14 +151,6 @@ module Plutonium
           raise NotImplementedError, "#{self.class}#create_membership_for must be implemented to create the membership record"
         end
 
-        # Alias method for the entity association.
-        # Override if your entity association has a different name.
-        #
-        # @return [Object] the entity record
-        def entity
-          raise NotImplementedError, "#{self.class}#entity must be implemented or an entity association must exist"
-        end
-
         private
 
         def extract_domain(email)

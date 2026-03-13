@@ -20,7 +20,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
 
   # Default args for all tests
   def default_args
-    ["--entity-model=Organization"]
+    ["--entity-model=Organization", "--dest=main_app"]
   end
 
   test "generates migration" do
@@ -109,15 +109,14 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
-  test "generates user invitations controller with named rodauth config" do
+  test "generates user invitations controller with rodauth module include" do
     run_generator default_args
 
     assert_file "packages/invites/app/controllers/invites/user_invitations_controller.rb" do |content|
-      # Should use named config syntax, not parameterized rodauth call
-      assert_match(/def rodauth/, content)
-      assert_match(/request\.env\["rodauth\.user"\]/, content)
-      # Should not have parameterized rodauth calls
-      assert_no_match(/rodauth\(:user\)/, content)
+      # Should include the Rodauth module instead of a custom rodauth method
+      assert_match(/include Plutonium::Auth::Rodauth\(:user\)/, content)
+      assert_no_match(/def rodauth/, content)
+      assert_no_match(/request\.env\["rodauth\.user"\]/, content)
     end
   end
 
@@ -132,15 +131,26 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
-  test "generates welcome controller with named rodauth config" do
+  test "generates welcome controller with rodauth module include" do
     run_generator default_args
 
     assert_file "packages/invites/app/controllers/invites/welcome_controller.rb" do |content|
-      # Should use named config syntax
-      assert_match(/def rodauth/, content)
-      assert_match(/request\.env\["rodauth\.user"\]/, content)
-      # Should not have parameterized rodauth calls
-      assert_no_match(/rodauth\(:user\)/, content)
+      # Should include the Rodauth module instead of a custom rodauth method
+      assert_match(/include Plutonium::Auth::Rodauth\(:user\)/, content)
+      assert_no_match(/def rodauth/, content)
+      assert_no_match(/request\.env\["rodauth\.user"\]/, content)
+    end
+  end
+
+  test "generates controllers without rodauth include when rodauth is blank" do
+    run_generator ["--entity-model=Organization", "--dest=main_app", "--rodauth="]
+
+    assert_file "packages/invites/app/controllers/invites/user_invitations_controller.rb" do |content|
+      assert_no_match(/include Plutonium::Auth::Rodauth/, content)
+    end
+
+    assert_file "packages/invites/app/controllers/invites/welcome_controller.rb" do |content|
+      assert_no_match(/include Plutonium::Auth::Rodauth/, content)
     end
   end
 
@@ -270,7 +280,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       end
     RUBY
 
-    run_generator ["--entity-model=Organization", "--user-model=Account"]
+    run_generator ["--entity-model=Organization", "--user-model=Account", "--dest=main_app"]
 
     assert_migration "db/migrate/create_user_invites.rb" do |content|
       assert_match(/t\.belongs_to :account/, content)
@@ -282,7 +292,15 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test "generates with custom membership model" do
-    run_generator ["--entity-model=Organization", "--membership-model=TeamMembership"]
+    # Create the TeamMembership model file so validation passes
+    FileUtils.mkdir_p(destination_root.join("app/models"))
+    File.write(destination_root.join("app/models/team_membership.rb"), <<~RUBY)
+      class TeamMembership < ApplicationRecord
+        enum :role, member: 0, admin: 1
+      end
+    RUBY
+
+    run_generator ["--entity-model=Organization", "--membership-model=TeamMembership", "--dest=main_app"]
 
     assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
       assert_match(/TeamMembership\.create!/, content)
@@ -379,9 +397,10 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
 
     # Invites package files should still be in packages/invites
+    # Association name strips shared namespace: Blogging::PostUser + Blogging::Post => :post
     assert_file "packages/invites/app/models/invites/user_invite.rb" do |content|
-      assert_match(/belongs_to :blogging_post/, content)
-      assert_match(/alias_method :entity, :blogging_post/, content)
+      assert_match(/belongs_to :post/, content)
+      assert_match(/alias_method :entity, :post/, content)
     end
   end
 
@@ -421,8 +440,9 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
 
     run_generator ["--entity-model=Blogging::Post", "--dest=blogging"]
 
+    # Association name strips shared namespace: Blogging::PostUser + Blogging::Post => :post
     assert_migration "db/migrate/create_user_invites.rb" do |content|
-      assert_match(/t\.belongs_to :blogging_post/, content)
+      assert_match(/t\.belongs_to :post/, content)
     end
   end
 

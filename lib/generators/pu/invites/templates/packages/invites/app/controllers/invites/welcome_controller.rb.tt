@@ -2,6 +2,9 @@
 
 module Invites
   class WelcomeController < ApplicationController
+<% if rodauth? -%>
+    include Plutonium::Auth::Rodauth(:<%= rodauth_config %>)
+<% end -%>
     include Plutonium::Invites::PendingInviteCheck
 
     prepend_view_path Invites::Engine.root.join("app/views")
@@ -43,16 +46,14 @@ module Invites
       redirect_to login_path unless current_user
     end
 
+    # Override: the default current_user raises when not logged in,
+    # but this controller needs a nil return for the authentication check.
     def current_user
       rodauth.rails_account if rodauth.logged_in?
     end
 
     def login_path
       rodauth.login_path
-    end
-
-    def rodauth
-      request.env["rodauth.<%= rodauth_config %>"]
     end
 <% else -%>
     def require_authentication
