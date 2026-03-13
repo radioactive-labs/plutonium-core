@@ -2,6 +2,7 @@
 
 source "https://rubygems.org"
 
+gem "rotp"
 gem "rails", "~> 7.2"
 gem "sqlite3"
 gem "puma", ">= 5.0"
@@ -13,7 +14,6 @@ gem "rodauth-rails"
 gem "sequel-activerecord_connection"
 gem "tilt"
 gem "bcrypt"
-gem "rotp"
 gem "rqrcode"
 gem "tzinfo-data", platforms: [:windows, :jruby]
 
