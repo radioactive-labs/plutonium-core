@@ -48,7 +48,7 @@ module Invites
         <%= user_model %>.create!(
           email: email,
           password_hash: password_hash,
-          status: 2 # verified
+          status: :verified
         )
       else
         # Different email - normal flow with verification email
