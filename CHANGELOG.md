@@ -1,3 +1,19 @@
+## [0.43.2] - 2026-03-13
+
+### 🐛 Bug Fixes
+
+- *(invites)* Use enum name for status and correct interaction base class
+
+### 🚜 Refactor
+
+- *(auth)* Extract current_policy_context to base authorizable
+- *(invites)* Use Rodauth module include and remove dead code
+
+### ⚙️ Miscellaneous Tasks
+
+- *(tests)* Fix generator assertions and remove dead code
+- Remove trailing blank line in model_generator_base
+- Update Ruby to 3.4 and refresh dependencies
 ## [0.43.1] - 2026-03-09
 
 ### 🐛 Bug Fixes
