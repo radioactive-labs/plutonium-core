@@ -254,7 +254,6 @@ module PlutoniumGenerators
             value
           end
         end
-
       end
 
       def required?
