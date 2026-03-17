@@ -5,8 +5,6 @@ module Plutonium
     module Table
       module Components
         class PagyInfo < Plutonium::UI::Component::Base
-          include Pagy::Frontend
-
           def initialize(pagy, per_page_options: [5, 10, 20, 50, 100])
             @pagy = pagy
             @per_page_options = (per_page_options + [@pagy.limit]).uniq.sort
@@ -57,11 +55,7 @@ module Plutonium
           end
 
           def page_url(limit)
-            original_limit = @pagy.vars[:limit]
-            @pagy.vars[:limit] = limit
-            pagy_url_for(@pagy, @pagy.page)
-          ensure
-            @pagy.vars[:limit] = original_limit
+            @pagy.page_url(@pagy.page, limit: limit, client_max_limit: limit)
           end
         end
       end

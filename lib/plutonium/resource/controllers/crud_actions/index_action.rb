@@ -8,7 +8,7 @@ module Plutonium
           private
 
           def setup_index_action!
-            @pagy, @resource_records = pagy filtered_resource_collection
+            @pagy, @resource_records = pagy(:offset, filtered_resource_collection)
           end
 
           def filtered_resource_collection

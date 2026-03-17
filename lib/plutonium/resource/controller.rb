@@ -7,7 +7,7 @@ module Plutonium
     # Controller module to handle resource actions and concerns
     module Controller
       extend ActiveSupport::Concern
-      include Pagy::Backend
+      include Pagy::Method
       include Plutonium::Core::Controller
       include Plutonium::Resource::Controllers::Defineable
       include Plutonium::Resource::Controllers::Authorizable
@@ -17,8 +17,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::InteractiveActions
 
       included do
-        # https://github.com/ddnexus/pagy/blob/master/docs/extras/headers.md#headers
-        after_action { pagy_headers_merge(@pagy) if @pagy }
+        after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }
 
         helper_method :current_parent, :current_nested_association, :resource_record!, :resource_record?, :resource_param_key, :resource_class
 

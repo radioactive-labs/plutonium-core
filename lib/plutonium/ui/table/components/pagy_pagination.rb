@@ -5,8 +5,6 @@ module Plutonium
     module Table
       module Components
         class PagyPagination < Plutonium::UI::Component::Base
-          include Pagy::Frontend
-
           def initialize(pagy)
             @pagy = pagy
           end
@@ -25,8 +23,8 @@ module Plutonium
 
           def prev_link
             li do
-              if @pagy.prev
-                a(href: page_url(@pagy.prev), class: link_classes(true)) {
+              if @pagy.previous
+                a(href: page_url(@pagy.previous), class: link_classes(true)) {
                   render Phlex::TablerIcons::ChevronLeft.new
                 }
               else
@@ -52,7 +50,7 @@ module Plutonium
           end
 
           def page_links
-            @pagy.series.each do |item|
+            @pagy.send(:series).each do |item|
               li do
                 case item
                 when Integer
@@ -101,7 +99,7 @@ module Plutonium
           end
 
           def page_url(page)
-            pagy_url_for(@pagy, page)
+            @pagy.page_url(page)
           end
         end
       end

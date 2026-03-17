@@ -1,10 +1,10 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.43.1)
+    plutonium (0.43.2)
       action_policy (~> 0.7.0)
       listen (~> 3.8)
-      pagy (~> 9.0)
+      pagy (~> 43.0)
       phlex (~> 2.0)
       phlex-rails
       phlex-slotable (>= 1.0.0)
@@ -185,7 +185,10 @@ GEM
     nio4r (2.7.5)
     nokogiri (1.19.1-arm64-darwin)
       racc (~> 1.4)
-    pagy (9.4.0)
+    pagy (43.3.3)
+      json
+      uri
+      yaml
     parallel (1.27.0)
     parser (3.3.10.2)
       ast (~> 2.4.1)
@@ -389,6 +392,7 @@ GEM
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
     wisper (2.0.1)
+    yaml (0.4.0)
     zeitwerk (2.7.5)
 
 PLATFORMS
