@@ -31,5 +31,9 @@ class <%= account_path.classify %> < ResourceRecord
 
   # add misc attribute macros above.
 
+  def to_label
+    <%= login_column %>
+  end
+
   # add methods above. add private methods below.
 end

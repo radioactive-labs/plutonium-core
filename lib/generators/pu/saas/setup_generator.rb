@@ -19,8 +19,8 @@ module Pu
       class_option :allow_signup, type: :boolean, default: true,
         desc: "Whether to allow users to sign up to the platform"
 
-      class_option :roles, type: :array, default: %w[member owner],
-        desc: "Available roles for memberships"
+      class_option :roles, type: :array, default: %w[admin member],
+        desc: "Additional roles for memberships (owner is always included as the first role)"
 
       class_option :skip_entity, type: :boolean, default: false,
         desc: "Skip entity model generation"

@@ -33,14 +33,21 @@ class SaasMembershipGeneratorTest < ActiveSupport::TestCase
     run_membership_generator ["--user=SaasMember", "--entity=SaasOrg", "--dest=main_app"]
 
     content = File.read(@rails_root.join("app/models/saas_org_saas_member.rb"))
-    assert_match(/enum :role, member: 0, owner: 1/, content)
+    assert_match(/enum :role, owner: 0, admin: 1, member: 2/, content)
+  end
+
+  test "always includes owner as first role even when passed in roles" do
+    run_membership_generator ["--user=SaasMember", "--entity=SaasOrg", "--roles=member,owner,admin", "--dest=main_app"]
+
+    content = File.read(@rails_root.join("app/models/saas_org_saas_member.rb"))
+    assert_match(/enum :role, owner: 0, member: 1, admin: 2/, content)
   end
 
   test "generates membership with custom roles" do
     run_membership_generator ["--user=SaasMember", "--entity=SaasOrg", "--roles=viewer,editor,admin", "--dest=main_app"]
 
     content = File.read(@rails_root.join("app/models/saas_org_saas_member.rb"))
-    assert_match(/enum :role, viewer: 0, editor: 1, admin: 2/, content)
+    assert_match(/enum :role, owner: 0, viewer: 1, editor: 2, admin: 3/, content)
   end
 
   test "adds uniqueness validation to model" do

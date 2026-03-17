@@ -16,6 +16,7 @@ module Pu
       def start
         generate_entity_resource
         add_unique_index_to_migration
+        add_dynamic_path_parameter
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -41,6 +42,21 @@ module Pu
         insert_into_file relative_path,
           indent("add_index :#{normalized_name.pluralize}, :name, unique: true\n", 4),
           before: /^  end\s*$/
+      end
+
+      def add_dynamic_path_parameter
+        dest = selected_destination_feature
+        model_path = if dest == "main_app"
+          "app/models/#{normalized_name}.rb"
+        else
+          "packages/#{dest}/app/models/#{normalized_name}.rb"
+        end
+
+        return unless File.exist?(Rails.root.join(model_path))
+
+        inject_into_file model_path,
+          "  dynamic_path_parameter :name\n",
+          before: /^\s*# add model configurations above\./
       end
 
       def entity_attributes

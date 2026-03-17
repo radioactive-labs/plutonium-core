@@ -34,6 +34,15 @@ class RodauthAccountGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "generates model with to_label method" do
+    run_generator ["TestAccount"]
+
+    assert_file "app/models/test_account.rb" do |content|
+      assert_match(/def to_label/, content)
+      assert_match(/email/, content)
+    end
+  end
+
   test "generates plugin with prefix for named account" do
     run_generator ["TestAccount"]
 

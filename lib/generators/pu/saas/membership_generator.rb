@@ -16,8 +16,8 @@ module Pu
       class_option :entity, type: :string, required: true,
         desc: "The entity model name (e.g., Organization)"
 
-      class_option :roles, type: :array, default: %w[member owner],
-        desc: "Available roles for memberships"
+      class_option :roles, type: :array, default: %w[admin member],
+        desc: "Additional roles for memberships (owner is always included as the first role)"
 
       class_option :extra_attributes, type: :array, default: [],
         desc: "Additional attributes for the membership model"
@@ -211,7 +211,8 @@ module Pu
       end
 
       def roles
-        Array(options[:roles]).flat_map { |r| r.split(",") }.map(&:strip)
+        additional = Array(options[:roles]).flat_map { |r| r.split(",") }.map(&:strip)
+        ["owner", *additional.excluding("owner")]
       end
 
       def roles_enum

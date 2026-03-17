@@ -24,6 +24,14 @@ class SaasEntityGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "adds dynamic_path_parameter to entity model" do
+    run_generator ["TestOrg", "--dest=main_app"]
+
+    assert_file "app/models/test_org.rb" do |content|
+      assert_match(/dynamic_path_parameter :name/, content)
+    end
+  end
+
   test "generates controller, policy, and definition" do
     run_generator ["TestOrg", "--dest=main_app"]
 
