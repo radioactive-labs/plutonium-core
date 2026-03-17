@@ -1,0 +1,15 @@
+Description:
+  Generates a SaaS portal with entity scoping, entity self-management,
+  and navigation helpers.
+
+  Wraps pu:pkg:portal and adds:
+  - Entity registered as a singular resource
+  - Portal-scoped EntityPolicy (update=owner, no destroy)
+  - entity_url and user_entities helpers in portal concerns
+  - Entity controller for the portal
+
+Example:
+  rails g pu:saas:portal --entity-model=Organization --portal-name=Dashboard
+
+  This generates a DashboardPortal scoped to Organization, with
+  entity management and navigation helpers built in.

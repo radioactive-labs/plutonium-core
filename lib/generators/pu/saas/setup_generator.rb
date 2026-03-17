@@ -8,10 +8,10 @@ module Pu
     class SetupGenerator < ::Rails::Generators::Base
       include PlutoniumGenerators::Generator
 
-      desc "Generate a complete SaaS setup with user, entity, and membership"
+      desc "Generate a complete SaaS setup with user, entity, membership, portal, and welcome flow"
 
       class_option :user, type: :string, required: true,
-        desc: "The user model name (e.g., Customer)"
+        desc: "The user model name (e.g., User)"
 
       class_option :entity, type: :string, required: true,
         desc: "The entity model name (e.g., Organization)"
@@ -37,6 +37,21 @@ module Pu
       class_option :membership_attributes, type: :array, default: [],
         desc: "Additional attributes for the membership model"
 
+      class_option :portal, type: :boolean, default: true,
+        desc: "Generate a portal with entity scoping"
+
+      class_option :portal_name, type: :string, default: "Dashboard",
+        desc: "Portal name (e.g., Dashboard generates DashboardPortal)"
+
+      class_option :welcome, type: :boolean, default: true,
+        desc: "Generate the welcome/onboarding flow"
+
+      class_option :invites, type: :boolean, default: true,
+        desc: "Generate the user invites package"
+
+      class_option :profile, type: :boolean, default: true,
+        desc: "Generate user profile resource"
+
       class_option :api_client, type: :string, default: nil,
         desc: "Generate an API client model (e.g., ApiClient)"
 
@@ -48,6 +63,10 @@ module Pu
         generate_user
         generate_entity unless options[:skip_entity]
         generate_membership unless options[:skip_membership]
+        generate_portal if options[:portal] && !options[:skip_entity]
+        generate_profile if options[:profile]
+        generate_welcome if options[:welcome] && !options[:skip_entity] && options[:portal]
+        generate_invites if options[:invites] && !options[:skip_entity] && !options[:skip_membership]
         generate_api_client if options[:api_client].present?
       rescue => e
         exception "#{self.class} failed:", e
@@ -62,7 +81,6 @@ module Pu
       end
 
       def generate_user
-        # Use class-based invocation to avoid Thor's invoke caching
         klass = Rails::Generators.find_by_namespace("pu:saas:user")
         klass.new(
           [options[:user]],
@@ -76,7 +94,6 @@ module Pu
       end
 
       def generate_entity
-        # Use class-based invocation to avoid Thor's invoke caching
         klass = Rails::Generators.find_by_namespace("pu:saas:entity")
         klass.new(
           [options[:entity]],
@@ -90,7 +107,6 @@ module Pu
       end
 
       def generate_membership
-        # Use class-based invocation to avoid Thor's invoke caching
         klass = Rails::Generators.find_by_namespace("pu:saas:membership")
         klass.new(
           [],
@@ -106,8 +122,34 @@ module Pu
         ).invoke_all
       end
 
+      def generate_portal
+        generate "pu:saas:portal",
+          "--entity-model=#{options[:entity]} --user-model=#{options[:user]}" \
+          " --portal-name=#{options[:portal_name]}" \
+          " --rodauth=#{rodauth_config}"
+      end
+
+      def generate_profile
+        generate "pu:profile:setup",
+          "--user-model=#{options[:user]} --dest=main_app" \
+          "#{" --portal=#{portal_package}" if options[:portal]}"
+      end
+
+      def generate_welcome
+        generate "pu:saas:welcome",
+          "--user-model=#{options[:user]} --entity-model=#{options[:entity]}" \
+          " --portal=#{portal_engine}" \
+          " --rodauth=#{rodauth_config}" \
+          "#{" --profile" if options[:profile]}"
+      end
+
+      def generate_invites
+        generate "pu:invites:install",
+          "--entity-model=#{options[:entity]} --user-model=#{options[:user]} --dest=main_app" \
+          " --rodauth=#{rodauth_config}"
+      end
+
       def generate_api_client
-        # Use class-based invocation to avoid Thor's invoke caching
         klass = Rails::Generators.find_by_namespace("pu:saas:api_client")
         api_client_options = {
           roles: options[:api_client_roles],
@@ -116,10 +158,21 @@ module Pu
           skip: options[:skip]
         }
 
-        # Scope to entity if entity is being generated
         api_client_options[:entity] = options[:entity] unless options[:skip_entity]
 
         klass.new([options[:api_client]], api_client_options).invoke_all
+      end
+
+      def rodauth_config
+        options[:user].underscore
+      end
+
+      def portal_package
+        "#{options[:portal_name].underscore}_portal"
+      end
+
+      def portal_engine
+        "#{options[:portal_name].camelize}Portal"
       end
     end
   end

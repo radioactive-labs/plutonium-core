@@ -1,27 +1,22 @@
 Description:
-    Generate a complete SaaS setup with user account, entity, and membership.
-    This is the recommended way to set up multi-tenant authentication.
+    Generate a complete SaaS setup with user account, entity, membership,
+    portal, welcome flow, invites, and profile.
+
+    This is the recommended way to bootstrap a multi-tenant SaaS app.
 
 Example:
-    rails g pu:saas:setup --user Customer --entity Organization
-    rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
-    rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
-    rails g pu:saas:setup --user Customer --entity Organization --user-attributes=name:string
-    rails g pu:saas:setup --user Customer --entity Organization --skip-entity
+    rails g pu:saas:setup --user=User --entity=Organization
 
-    This creates:
-        1. User account (Customer) with Rodauth authentication
-        2. Entity model (Organization) with unique name
-        3. Membership model (OrganizationCustomer) with role enum
+    Full setup with all defaults:
+      - User model with Rodauth authentication
+      - Entity model with unique name and dynamic path parameter
+      - Membership model with owner/admin/member roles
+      - DashboardPortal with entity scoping
+      - Welcome/onboarding flow
+      - User invites package
+      - User profile resource
 
-Options:
-    --user                      User model name (required)
-    --entity                    Entity model name (required)
-    --allow-signup              Allow public registration (default: true)
-    --roles                     Comma-separated membership roles (default: member,owner)
-    --skip-entity               Skip entity model generation
-    --skip-membership           Skip membership model generation
-    --user-attributes           Additional user model attributes
-    --entity-attributes         Additional entity model attributes
-    --membership-attributes     Additional membership model attributes
-    --dest                      Destination package (default: main_app)
+    Customize:
+    rails g pu:saas:setup --user=User --entity=Organization --portal-name=Customer
+    rails g pu:saas:setup --user=User --entity=Organization --no-invites --no-profile
+    rails g pu:saas:setup --user=User --entity=Organization --no-portal
