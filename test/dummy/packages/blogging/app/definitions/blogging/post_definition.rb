@@ -9,11 +9,6 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Column customizations
   column :user, label: "Author"
 
-  # Computed column
-  column :comment_count do |post|
-    post.comments.count
-  end
-
   # Search configuration
   search do |scope, query|
     scope.where("title LIKE ? OR body LIKE ?", "%#{query}%", "%#{query}%")
@@ -22,21 +17,22 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Scopes
   scope :published
   scope :drafts
+  scope :archived
 
-  # Filters - using symbol syntax
+  # Filters
   filter :title, with: :text, predicate: :contains
-  filter :published, with: :boolean
-  filter :user, with: :association, scope: ->(scope) { scope.verified }
+  filter :status, with: :select, choices: Blogging::Post.statuses.keys
+  filter :user, with: :association
 
   # Sorting
   sort :title
   sort :created_at
-  sort :published
+  sort :status
 
   # Default sort
   default_sort :created_at, :desc
 
-  # Register the publish action
+  # Actions
   action :publish, interaction: Blogging::PublishPost
-  action :schedule, interaction: Blogging::SchedulePost
+  action :archive, interaction: Blogging::ArchivePost
 end

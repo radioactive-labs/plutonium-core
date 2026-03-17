@@ -17,6 +17,9 @@ class NetworkDevice < ::ResourceRecord
 
   # add scopes above.
 
+  validates :name, presence: true
+  validates :external_id, presence: true
+  validates :metadata, presence: true
   # add validations above.
 
   # add callbacks above.

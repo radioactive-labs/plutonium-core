@@ -6,73 +6,40 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   end
 
   def read?
-    return true unless record_instance?
-
-    record.published? || owner?
+    true
   end
 
   def update?
-    owner?
+    true
   end
 
   def destroy?
-    owner?
+    true
   end
 
   # Custom actions
+
   def publish?
-    owner? && !record.published?
+    record.is_a?(Blogging::Post) && record.draft?
+  end
+
+  def archive?
+    record.is_a?(Blogging::Post) && record.published?
   end
 
   # Core attributes
 
   def permitted_attributes_for_create
-    [:title, :body, :user_id, :author, :editor]
+    [:title, :body, :user, :author, :editor, :organization, :status]
   end
 
-  def permitted_attributes_for_update
-    if owner?
-      [:title, :body, :published]
-    else
-      []
-    end
-  end
-
-  def permitted_attributes_for_index
-    [:title, :body, :published, :created_at, :user]
-  end
-
-  def permitted_attributes_for_show
-    if owner? || record.published?
-      [:title, :body, :published, :created_at, :user, :post_metadata]
-    else
-      [:title]
-    end
-  end
-
-  # Scope - which records appear in listings
-  def relation_scope(relation)
-    if user.is_a?(Admin)
-      relation # Admins see everything
-    else
-      relation.where(published: true).or(relation.where(user_id: user.id))
-    end
+  def permitted_attributes_for_read
+    [:title, :body, :user, :author, :editor, :organization, :status, :created_at]
   end
 
   # Associations
 
   def permitted_associations
-    %i[user comments post_metadata]
-  end
-
-  private
-
-  def record_instance?
-    record.is_a?(Blogging::Post)
-  end
-
-  def owner?
-    return true if user == "Guest"
-    record_instance? && record.user_id == user.id
+    %i[comments post_detail post_tags tags]
   end
 end

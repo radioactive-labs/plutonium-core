@@ -22,6 +22,6 @@ class OrganizationPolicy < ::ResourcePolicy
   # Associations
 
   def permitted_associations
-    %i[]
+    %i[organization_users users]
   end
 end

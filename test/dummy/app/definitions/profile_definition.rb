@@ -1,2 +1,0 @@
-class ProfileDefinition < ::ResourceDefinition
-end

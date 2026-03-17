@@ -3,9 +3,9 @@ class OrganizationUser < ::ResourceRecord
 
   # add constants above.
 
+  enum :role, member: 0, admin: 1, owner: 2
   # add enums above.
 
-  enum :role, member: 0, owner: 1
   # add model configurations above.
 
   belongs_to :organization
@@ -19,8 +19,8 @@ class OrganizationUser < ::ResourceRecord
   # add attachments above.
 
   # add scopes above.
-  validates :user, uniqueness: {scope: :organization_id, message: "is already a member of this entity"}
 
+  validates :user, uniqueness: {scope: :organization_id, message: "is already a member of this entity"}
   # add validations above.
 
   # add callbacks above.

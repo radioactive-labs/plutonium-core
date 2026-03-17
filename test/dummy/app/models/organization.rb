@@ -11,12 +11,15 @@ class Organization < ::ResourceRecord
 
   # add has_one associations above.
 
+  has_many :organization_users, dependent: :destroy
+  has_many :users, through: :organization_users
   # add has_many associations above.
 
   # add attachments above.
 
   # add scopes above.
 
+  validates :name, presence: true, uniqueness: true
   # add validations above.
 
   # add callbacks above.

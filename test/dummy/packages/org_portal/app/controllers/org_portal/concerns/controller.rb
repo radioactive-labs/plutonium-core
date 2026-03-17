@@ -1,20 +1,12 @@
-# frozen_string_literal: true
-
 module OrgPortal
   module Concerns
+    # Portal-wide controller customizations go here.
+    # Included by both ResourceController and PlutoniumController.
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
-      include Plutonium::Auth::Public
-
-      private
-
-      # Override to skip associated_with scoping since Public auth returns "Guest" (not a model)
-      def fetch_entity_from_path
-        scoped_entity_class
-          .from_path_param(request.path_parameters[scoped_entity_param_key])
-          .first!
-      end
+      include Plutonium::Auth::Rodauth(:user)
+      # add concerns above.
     end
   end
 end

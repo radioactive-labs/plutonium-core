@@ -1,0 +1,2 @@
+class CommentDefinition < ::ResourceDefinition
+end

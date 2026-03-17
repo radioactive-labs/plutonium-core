@@ -1,0 +1,2 @@
+class UserProfileDefinition < ::ResourceDefinition
+end

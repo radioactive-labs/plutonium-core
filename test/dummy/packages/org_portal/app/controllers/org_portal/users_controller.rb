@@ -1,6 +1,3 @@
-# frozen_string_literal: true
-
-module OrgPortal
-  class UsersController < ResourceController
-  end
+class OrgPortal::UsersController < ::OrgPortal::ResourceController
+  include OrgPortal::Concerns::Controller
 end

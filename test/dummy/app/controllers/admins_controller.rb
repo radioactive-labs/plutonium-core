@@ -1,2 +1,0 @@
-class AdminsController < ::ResourceController
-end
