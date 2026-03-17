@@ -145,7 +145,10 @@ module Plutonium
         end
 
         # Build the named helper: e.g., "blogging_post_nested_post_metadata_path"
-        parent_singular = parent.model_name.singular
+        # For plural parent resources (resources :posts), nested routes use the singular member name (post_nested_...)
+        # For singular parent resources (resource :entities), nested routes use the route name as-is (entities_nested_...)
+        parent_is_singular_route = current_engine.routes.singular_resource_route?(parent.model_name.plural)
+        parent_prefix = parent_is_singular_route ? parent.model_name.plural : parent.model_name.singular
         nested_resource_name = "#{prefix}#{association_name}"
 
         # Determine if this is a collection action (no specific record)
@@ -158,12 +161,10 @@ module Plutonium
         #   - :new action uses singular (new_blogging_post_nested_comment)
         #   - member actions (show/edit/update/destroy) use singular (blogging_post_nested_comment)
         is_collection_action = action == :index || action == :create || (no_record && action != :new)
-        helper_base = if is_singular
-          "#{parent_singular}_#{nested_resource_name}"
-        elsif is_collection_action
-          "#{parent_singular}_#{nested_resource_name}"
+        helper_base = if is_singular || is_collection_action
+          "#{parent_prefix}_#{nested_resource_name}"
         else
-          "#{parent_singular}_#{nested_resource_name.to_s.singularize}"
+          "#{parent_prefix}_#{nested_resource_name.to_s.singularize}"
         end
 
         # Only add helper prefix for actions that have named route helpers (new, edit)
@@ -173,10 +174,19 @@ module Plutonium
         else "#{action}_"
         end
 
-        helper_name = :"#{helper_suffix}#{helper_base}_path"
+        # Add entity scope prefix for path-based entity scoping
+        entity_prefix = if scoped_to_entity? && scoped_entity_strategy == :path
+          "#{scoped_entity_param_key}_"
+        end
+
+        helper_name = :"#{helper_suffix}#{entity_prefix}#{helper_base}_path"
 
         # Build the arguments for the helper
-        helper_args = [parent.to_param]
+        helper_args = []
+        # Add entity scope param for path-based entity scoping
+        helper_args << current_scoped_entity.to_param if entity_prefix
+        # Singular parent resources (resource :entity) have no :id param in the route
+        helper_args << parent.to_param unless parent_is_singular_route
         # Include element ID for plural routes (has_many) when we have a record instance
         # Skip ID for collection actions (:index, :create) which don't need a member ID
         unless is_singular || no_record || is_collection_action

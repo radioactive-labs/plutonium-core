@@ -198,6 +198,29 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
     refute_includes attrs, :user_id
   end
 
+  def test_scoped_entity_association_skips_polymorphic_belongs_to
+    # PolymorphicComment has a polymorphic belongs_to alongside a real entity association
+    controller = build_scoped_controller(
+      resource_class: PolymorphicComment,
+      scoped_entity_class: User
+    )
+
+    # Should find :user and skip :commentable (polymorphic) without raising
+    assoc_name = controller.send(:scoped_entity_association)
+    assert_equal :user, assoc_name
+  end
+
+  def test_scoped_entity_association_returns_nil_with_only_polymorphic_belongs_to
+    controller = build_scoped_controller(
+      resource_class: PolymorphicOnlyComment,
+      scoped_entity_class: User
+    )
+
+    # Should return nil, not raise from calling .klass on polymorphic
+    assoc = controller.send(:scoped_entity_association)
+    assert_nil assoc
+  end
+
   def test_scoped_entity_association_can_be_overridden
     # Test that controller can override to resolve ambiguity
     controller = build_scoped_controller(
@@ -308,6 +331,20 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
     def current_definition
       @current_definition ||= Blogging::PostDefinition.new
     end
+  end
+
+  # Test models for polymorphic association tests
+  class PolymorphicComment < ActiveRecord::Base
+    self.table_name = "blogging_comments"
+
+    belongs_to :commentable, polymorphic: true
+    belongs_to :user
+  end
+
+  class PolymorphicOnlyComment < ActiveRecord::Base
+    self.table_name = "blogging_comments"
+
+    belongs_to :commentable, polymorphic: true
   end
 
   # Controller for testing entity scoping

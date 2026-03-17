@@ -1,7 +1,7 @@
 DemoPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
-  register_resource ::DemoFeatures::Category
+  register_resource ::DemoFeatures::Category, singular: true
   register_resource ::DemoFeatures::MorphDemo
   register_resource ::DemoFeatures::Tag
   register_resource ::DemoFeatures::Product

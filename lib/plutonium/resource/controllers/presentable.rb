@@ -59,6 +59,8 @@ module Plutonium
           return @scoped_entity_association if defined?(@scoped_entity_association)
 
           matching_assocs = resource_class.reflect_on_all_associations(:belongs_to).select do |assoc|
+            next false if assoc.polymorphic?
+
             assoc.klass.name == scoped_entity_class.name
           rescue NameError
             false

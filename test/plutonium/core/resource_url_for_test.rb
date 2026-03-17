@@ -8,9 +8,15 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     @post = Blogging::Post.create!(user: @user, title: "Test Post", body: "Body content")
     @comment = Blogging::Comment.create!(user: @user, post: @post, body: "Test comment")
     @post_metadata = Blogging::PostMetadata.create!(post: @post, seo_title: "SEO Title")
+    @category = DemoFeatures::Category.create!(name: "Test Category")
+    @organization = Organization.create!(name: "Test Org")
   end
 
   teardown do
+    DemoFeatures::MorphDemo.delete_all
+    DemoFeatures::Product.delete_all
+    DemoFeatures::Category.delete_all
+    Organization.delete_all
     Blogging::PostMetadata.delete_all
     Blogging::Comment.delete_all
     Blogging::Post.delete_all
@@ -345,4 +351,277 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
   # Note: scoped entity to_param encoding is tested via the parent to_param test above.
   # The implementation (url_args[scoped_entity_param_key] = current_scoped_entity.to_param)
   # uses the same to_param pattern that is tested for parents and instances.
+
+  # Singular parent resource nested routes
+  # DemoPortal registers Category as singular: true, and Category has_many :products
+
+  test "singular parent: has_many class + parent" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products)
+    assert_match %r{/demo/demo_features_category/nested_products$}, url
+    refute_match %r{/demo_features_category/\d+/}, url
+  end
+
+  test "singular parent: has_many instance + parent" do
+    @product = create_product!(sku: "WDG-001", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}$}, url
+    refute_match %r{/demo_features_category/\d+/nested}, url
+  end
+
+  test "singular parent: has_many instance + parent (no association)" do
+    @product = create_product!(sku: "WDG-001B", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}$}, url
+  end
+
+  test "singular parent: has_many instance + parent + action :edit" do
+    @product = create_product!(sku: "WDG-002", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products, action: :edit)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}/edit$}, url
+  end
+
+  test "singular parent: has_many class + parent + action :new" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :new)
+    assert_match %r{/demo/demo_features_category/nested_products/new$}, url
+  end
+
+  test "singular parent: has_many class + parent + action :create" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :create)
+    assert_match %r{/demo/demo_features_category/nested_products$}, url
+  end
+
+  test "singular parent: has_many instance + parent + action :update" do
+    @product = create_product!(sku: "WDG-003", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products, action: :update)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}$}, url
+  end
+
+  test "singular parent: has_many new instance + parent + action :create" do
+    get "/demo/blogging/posts"
+    new_product = DemoFeatures::Product.new(category: @category)
+    url = controller.send(:resource_url_for, new_product, parent: @category, association: :products, action: :create)
+    assert_match %r{/demo/demo_features_category/nested_products$}, url
+  end
+
+  test "singular parent: has_many symbol + parent" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, :products, parent: @category)
+    assert_match %r{/demo/demo_features_category/nested_products$}, url
+  end
+
+  test "singular parent: has_many instance + action :interactive_record_action" do
+    @product = create_product!(sku: "WDG-004", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products, action: :interactive_record_action, interactive_action: :archive)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}/record_actions/archive$}, url
+  end
+
+  test "singular parent: has_many class + action :interactive_bulk_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :interactive_bulk_action, interactive_action: :bulk_delete)
+    assert_match %r{/demo/demo_features_category/nested_products/bulk_actions/bulk_delete$}, url
+  end
+
+  test "singular parent: has_many class + action :interactive_resource_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :interactive_resource_action, interactive_action: :import)
+    assert_match %r{/demo/demo_features_category/nested_products/resource_actions/import$}, url
+  end
+
+  # Commit actions on singular parent
+
+  test "singular parent: has_many instance + action :commit_interactive_record_action" do
+    @product = create_product!(sku: "WDG-005", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products, action: :commit_interactive_record_action, interactive_action: :archive)
+    assert_match %r{/demo/demo_features_category/nested_products/#{@product.id}/record_actions/archive$}, url
+  end
+
+  test "singular parent: has_many class + action :commit_interactive_bulk_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :commit_interactive_bulk_action, interactive_action: :bulk_delete)
+    assert_match %r{/demo/demo_features_category/nested_products/bulk_actions/bulk_delete$}, url
+  end
+
+  test "singular parent: has_many class + action :commit_interactive_resource_action" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, action: :commit_interactive_resource_action, interactive_action: :import)
+    assert_match %r{/demo/demo_features_category/nested_products/resource_actions/import$}, url
+  end
+
+  # Singular parent + has_one nested routes
+  # DemoPortal registers Category as singular: true, and Category has_one :morph_demo
+
+  test "singular parent + has_one: class + parent defaults to :new" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::MorphDemo, parent: @category, association: :morph_demo)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo/new$}, url
+    refute_match %r{/demo_features_category/\d+/}, url
+  end
+
+  test "singular parent + has_one: instance + parent" do
+    @morph = DemoFeatures::MorphDemo.create!(category: @category, name: "Test", record_type: :simple, status: "active")
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @morph, parent: @category, association: :morph_demo)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo$}, url
+    refute_match %r{/nested_morph_demo/\d+}, url
+  end
+
+  test "singular parent + has_one: instance + parent + action :edit" do
+    @morph = DemoFeatures::MorphDemo.create!(category: @category, name: "Test", record_type: :simple, status: "active")
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @morph, parent: @category, association: :morph_demo, action: :edit)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo/edit$}, url
+    refute_match %r{/nested_morph_demo/\d+}, url
+  end
+
+  test "singular parent + has_one: class + parent + action :show" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::MorphDemo, parent: @category, association: :morph_demo, action: :show)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo$}, url
+    refute_match %r{/new}, url
+  end
+
+  test "singular parent + has_one: nil + parent + association" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, nil, parent: @category, association: :morph_demo)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo/new$}, url
+    refute_match %r{/demo_features_category/\d+/}, url
+  end
+
+  test "singular parent + has_one: symbol + parent" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, :morph_demo, parent: @category)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo/new$}, url
+    refute_match %r{/demo_features_category/\d+/}, url
+  end
+
+  test "singular parent + has_one: symbol + parent + action :show" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, :morph_demo, parent: @category, action: :show)
+    assert_match %r{/demo/demo_features_category/nested_morph_demo$}, url
+    refute_match %r{/new}, url
+  end
+
+  # Entity-scoped (path strategy) + singular parent resource
+  # OrgPortal scopes to Organization with :path strategy and registers User as singular
+
+  test "entity-scoped + singular parent: has_many class + parent" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many instance + parent" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, @post, parent: @user, association: :authored_posts)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/#{@post.id}$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many instance + parent + action :edit" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, @post, parent: @user, association: :authored_posts, action: :edit)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/#{@post.id}/edit$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many class + parent + action :new" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, action: :new)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/new$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many class + parent + action :create" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, action: :create)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many instance + parent + action :update" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, @post, parent: @user, association: :authored_posts, action: :update)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/#{@post.id}$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many instance + action :interactive_record_action" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, @post, parent: @user, association: :authored_posts, action: :interactive_record_action, interactive_action: :archive)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/#{@post.id}/record_actions/archive$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many class + action :interactive_bulk_action" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, action: :interactive_bulk_action, interactive_action: :bulk_delete)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/bulk_actions/bulk_delete$}, url
+  end
+
+  test "entity-scoped + singular parent: has_many class + action :interactive_resource_action" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, action: :interactive_resource_action, interactive_action: :import)
+    assert_match %r{/org/#{@organization.to_param}/user/nested_authored_posts/resource_actions/import$}, url
+  end
+
+  test "entity-scoped + plural parent: has_many instance + parent" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, @comment, parent: @post, association: :comments)
+    assert_match %r{/org/#{@organization.to_param}/blogging/posts/#{@post.to_param}/nested_comments/#{@comment.id}$}, url
+  end
+
+  test "entity-scoped + plural parent: has_many class + parent + action :new" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, association: :comments, action: :new)
+    assert_match %r{/org/#{@organization.to_param}/blogging/posts/#{@post.to_param}/nested_comments/new$}, url
+  end
+
+  test "entity-scoped + plural parent: has_many class + parent + action :create" do
+    get "/org/#{@organization.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Comment, parent: @post, association: :comments, action: :create)
+    assert_match %r{/org/#{@organization.to_param}/blogging/posts/#{@post.to_param}/nested_comments$}, url
+  end
+
+  # Package option with singular parent
+
+  test "package: singular parent nested resource with different package" do
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, DemoFeatures::Product, parent: @category, association: :products, package: AdminPortal)
+    assert_match %r{/admin/demo_features_category/nested_products$}, url
+    refute_match %r{/demo/}, url
+  end
+
+  test "package: singular parent nested instance with different package" do
+    @product = create_product!(sku: "WDG-PKG-001", category: @category)
+    get "/demo/blogging/posts"
+    url = controller.send(:resource_url_for, @product, parent: @category, association: :products, package: AdminPortal)
+    assert_match %r{/admin/demo_features_category/nested_products/#{@product.id}$}, url
+    refute_match %r{/demo/}, url
+  end
+
+  test "singular parent: route config" do
+    config = DemoPortal::Engine.routes.resource_route_config_for("demo_features_categories")[0]
+    assert_equal :resource, config[:route_type]
+
+    nested_config = DemoPortal::Engine.routes.resource_route_config_for("demo_features_categories/products")[0]
+    assert_equal :resources, nested_config[:route_type]
+    assert_equal :products, nested_config[:association_name]
+  end
+
+  private
+
+  def create_product!(sku:, category:)
+    DemoFeatures::Product.create!(
+      name: "Widget", sku: sku, category: category, stock_count: 10,
+      price: 9.99, compare_at_price: 0, weight: 1.0, description: "Test",
+      notes: "", slug: sku.parameterize, specifications: {}, metadata: {},
+      release_date: Date.today, discontinue_date: Date.today + 1.year,
+      available_from_time: "09:00", available_until_time: "17:00",
+      published_at: Time.current, last_restocked_at: Time.current,
+      active: true, featured: false, taxable: false
+    )
+  end
 end

@@ -3,7 +3,9 @@
 OrgPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
-  register_resource ::User
+  register_resource ::User, singular: true
+  register_resource ::Blogging::Post
+  register_resource ::Blogging::Comment
 end
 
 Rails.application.routes.draw do
