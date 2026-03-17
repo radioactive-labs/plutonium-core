@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/res/conn/conn_generator"
@@ -13,7 +11,7 @@ class ConnGeneratorTest < Rails::Generators::TestCase
   destination Rails.root
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
     # Create a minimal portal structure for testing
     @portal_dir = destination_root.join("packages/test_portal")
     FileUtils.mkdir_p(@portal_dir.join("config"))
@@ -67,10 +65,10 @@ class ConnGeneratorTest < Rails::Generators::TestCase
   end
 
   test "accepts namespaced resource with CamelCase notation" do
-    run_generator ["Blogging::Comment", "--dest=TestPortal"]
+    run_generator ["Blogging::Tag", "--dest=TestPortal"]
 
     assert_file "packages/test_portal/config/routes.rb" do |content|
-      assert_match(/register_resource ::Blogging::Comment/, content)
+      assert_match(/register_resource ::Blogging::Tag/, content)
     end
   end
 

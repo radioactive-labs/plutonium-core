@@ -52,7 +52,11 @@ module PlutoniumGenerators
     # ####################
 
     def prompt
-      @prompt ||= TTY::Prompt.new
+      @prompt ||= if options[:interactive] == false || Rails.env.test?
+        NonInteractivePrompt.new
+      else
+        TTY::Prompt.new
+      end
     end
 
     # def appname

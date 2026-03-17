@@ -5,11 +5,13 @@ require "test_helper"
 class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def setup
     @user = User.create!(email: "presentable_test@example.com", status: :verified)
-    @post = Blogging::Post.create!(user: @user, title: "Test Post", body: "Body content")
+    @org = Organization.create!(name: "Presentable Test Org")
+    @post = Blogging::Post.create!(user: @user, organization: @org, title: "Test Post", body: "Body content")
   end
 
   def teardown
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
@@ -94,7 +96,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def test_scoped_entity_association_finds_association_by_class
     # Use Comment which has only one belongs_to :user
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User
     )
 
@@ -105,7 +107,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
 
   def test_scoped_entity_association_returns_nil_when_no_matching_association
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: Organization # Comment doesn't belong_to Organization
     )
 
@@ -132,7 +134,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def test_scoped_entity_field_names_includes_association_and_param_key
     # Use Comment with a different param_key than the association name
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User,
       scoped_entity_param_key: :author # Different from association name :user
     )
@@ -149,7 +151,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def test_scoped_entity_field_names_only_includes_param_key_when_no_association
     # Use Comment scoped to Organization (no matching belongs_to)
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: Organization,
       scoped_entity_param_key: :org
     )
@@ -165,7 +167,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def test_presentable_attributes_excludes_scoped_entity_by_association
     # Use Comment with a different param_key than association
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User,
       scoped_entity_param_key: :author, # Different from association :user
       action_name: "index"
@@ -183,7 +185,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   def test_submittable_attributes_excludes_scoped_entity_by_association
     # Use Comment with a different param_key than association
     controller = build_scoped_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User,
       scoped_entity_param_key: :author, # Different from association :user
       action_name: "create"
@@ -335,14 +337,14 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
 
   # Test models for polymorphic association tests
   class PolymorphicComment < ActiveRecord::Base
-    self.table_name = "blogging_comments"
+    self.table_name = "comments"
 
     belongs_to :commentable, polymorphic: true
     belongs_to :user
   end
 
   class PolymorphicOnlyComment < ActiveRecord::Base
-    self.table_name = "blogging_comments"
+    self.table_name = "comments"
 
     belongs_to :commentable, polymorphic: true
   end

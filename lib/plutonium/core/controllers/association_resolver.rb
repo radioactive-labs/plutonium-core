@@ -61,21 +61,34 @@ module Plutonium
         #
         # For Blogging::Comment, returns [:blogging_comments, :comments]
         # For Comment, returns [:comments]
+        # For Blogging::PostDetail, returns [:blogging_post_details, :post_details, :blogging_post_detail, :post_detail]
+        #
+        # Tries both plural (has_many) and singular (has_one) forms.
         #
         # @param klass [Class] The target class
         # @return [Array<Symbol>] Candidate association names in priority order
         def association_candidates_for(klass)
           candidates = []
 
-          # Full namespaced name: Blogging::Comment => :blogging_comments
-          full_name = klass.model_name.plural.to_sym
-          candidates << full_name
+          # Full namespaced name (plural): Blogging::Comment => :blogging_comments
+          full_plural = klass.model_name.plural.to_sym
+          candidates << full_plural
 
-          # Demodulized name: Blogging::Comment => :comments
+          # Demodulized name (plural): Blogging::Comment => :comments
           demodulized = klass.name.demodulize
           if demodulized != klass.name
-            short_name = demodulized.underscore.pluralize.to_sym
-            candidates << short_name unless candidates.include?(short_name)
+            short_plural = demodulized.underscore.pluralize.to_sym
+            candidates << short_plural unless candidates.include?(short_plural)
+          end
+
+          # Full namespaced name (singular): Blogging::PostDetail => :blogging_post_detail
+          full_singular = klass.model_name.singular.to_sym
+          candidates << full_singular unless candidates.include?(full_singular)
+
+          # Demodulized name (singular): Blogging::PostDetail => :post_detail
+          if demodulized != klass.name
+            short_singular = demodulized.underscore.to_sym
+            candidates << short_singular unless candidates.include?(short_singular)
           end
 
           candidates

@@ -4,11 +4,13 @@ require "test_helper"
 
 class Plutonium::Resource::Record::AssociatedWithTest < ActiveSupport::TestCase
   setup do
-    @user = User.create!(email: "associated_with_test@example.com", status: :verified)
+    @org = Organization.create!(name: "AssocWith Test #{SecureRandom.hex(4)}")
+    @user = User.create!(email: "associated_with_test_#{SecureRandom.hex(4)}@example.com", status: :verified)
   end
 
   teardown do
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
@@ -52,7 +54,7 @@ class Plutonium::Resource::Record::AssociatedWithTest < ActiveSupport::TestCase
   end
 
   test "associated_with different class still uses association lookup" do
-    post = Blogging::Post.create!(user: @user, title: "Test", body: "Content")
+    post = Blogging::Post.create!(user: @user, organization: @org, title: "Test", body: "Content")
 
     # This should use the normal association lookup, not the same-class shortcut
     result = Blogging::Post.associated_with(@user)

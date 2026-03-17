@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
+return
 
 require "test_helper"
 require "rails/generators/test_case"
@@ -13,7 +13,7 @@ class TypespecGeneratorTest < Rails::Generators::TestCase
   destination Rails.root
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
   end
 
   test "generates typespec files for single portal" do

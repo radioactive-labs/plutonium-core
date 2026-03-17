@@ -1,2 +1,9 @@
+#!/usr/bin/env bash
+
 # bundle exec appraisal install
+
+# Unit + integration tests
 bundle exec appraisal rake test
+
+# Generator tests modify test/dummy via git and must run in a separate process
+bundle exec appraisal rake test_generators

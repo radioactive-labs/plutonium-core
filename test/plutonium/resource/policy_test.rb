@@ -4,57 +4,59 @@ require "test_helper"
 
 class Plutonium::Resource::PolicyTest < Minitest::Test
   def setup
-    @user = User.create!(email: "policy_test@example.com", status: :verified)
-    @other_user = User.create!(email: "other@example.com", status: :verified)
-    @post = Blogging::Post.create!(user: @user, title: "Test Post", body: "Body content")
-    @other_post = Blogging::Post.create!(user: @other_user, title: "Other Post", body: "Other body")
-    @comment = Blogging::Comment.create!(user: @user, post: @post, body: "Test comment")
-    @other_comment = Blogging::Comment.create!(user: @other_user, post: @other_post, body: "Other comment")
-    @post_metadata = Blogging::PostMetadata.create!(post: @post, seo_title: "SEO Title")
+    @org = Organization.create!(name: "Policy Test Org #{SecureRandom.hex(4)}")
+    @user = User.create!(email: "policy_test_#{SecureRandom.hex(4)}@example.com", status: :verified)
+    @other_user = User.create!(email: "other_#{SecureRandom.hex(4)}@example.com", status: :verified)
+    @post = Blogging::Post.create!(user: @user, organization: @org, title: "Test Post", body: "Body content")
+    @other_post = Blogging::Post.create!(user: @other_user, organization: @org, title: "Other Post", body: "Other body")
+    @comment = Comment.create!(user: @user, commentable: @post, body: "Test comment")
+    @other_comment = Comment.create!(user: @other_user, commentable: @other_post, body: "Other comment")
+    @post_detail = Blogging::PostDetail.create!(post: @post, seo_title: "SEO Title")
   end
 
   def teardown
-    Blogging::PostMetadata.delete_all
-    Blogging::Comment.delete_all
+    Blogging::PostDetail.delete_all
+    Comment.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
   # Parent scoping tests (nested routes)
 
   def test_relation_scope_with_has_many_parent_scopes_to_parent_association
-    policy = Blogging::CommentPolicy.new(
-      record: Blogging::Comment,
+    policy = CommentPolicy.new(
+      record: Comment,
       user: @user,
       parent: @post,
       parent_association: :comments,
       entity_scope: nil
     )
 
-    scoped = policy.apply_scope(Blogging::Comment.all, type: :active_record_relation)
+    scoped = policy.apply_scope(Comment.all, type: :active_record_relation)
 
     assert_includes scoped.to_a, @comment
     refute_includes scoped.to_a, @other_comment
   end
 
   def test_relation_scope_with_has_one_parent_scopes_by_foreign_key
-    policy = Blogging::PostMetadataPolicy.new(
-      record: Blogging::PostMetadata,
+    policy = Blogging::PostDetailPolicy.new(
+      record: Blogging::PostDetail,
       user: @user,
       parent: @post,
-      parent_association: :post_metadata,
+      parent_association: :post_detail,
       entity_scope: nil
     )
 
-    scoped = policy.apply_scope(Blogging::PostMetadata.all, type: :active_record_relation)
+    scoped = policy.apply_scope(Blogging::PostDetail.all, type: :active_record_relation)
 
-    assert_includes scoped.to_a, @post_metadata
+    assert_includes scoped.to_a, @post_detail
     assert_equal 1, scoped.count
   end
 
   def test_relation_scope_requires_both_parent_and_parent_association
-    policy = Blogging::CommentPolicy.new(
-      record: Blogging::Comment,
+    policy = CommentPolicy.new(
+      record: Comment,
       user: @user,
       parent: @post,
       parent_association: nil,
@@ -62,7 +64,7 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     )
 
     assert_raises(ArgumentError) do
-      policy.apply_scope(Blogging::Comment.all, type: :active_record_relation)
+      policy.apply_scope(Comment.all, type: :active_record_relation)
     end
   end
 
@@ -97,15 +99,15 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
   def test_parent_scoping_takes_precedence_over_entity_scope
     # When parent is provided, entity_scope should not apply
     # (parent was already entity-scoped during its own authorization)
-    policy = Blogging::CommentPolicy.new(
-      record: Blogging::Comment,
+    policy = CommentPolicy.new(
+      record: Comment,
       user: @user,
       parent: @post,
       parent_association: :comments,
       entity_scope: @other_user # This should be ignored
     )
 
-    scoped = policy.apply_scope(Blogging::Comment.all, type: :active_record_relation)
+    scoped = policy.apply_scope(Comment.all, type: :active_record_relation)
 
     # Should scope to parent's comments, not entity's
     assert_includes scoped.to_a, @comment
@@ -115,8 +117,8 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
   # Direct default_relation_scope tests
 
   def test_default_relation_scope_can_be_called_directly
-    policy = Blogging::CommentPolicy.new(
-      record: Blogging::Comment,
+    policy = CommentPolicy.new(
+      record: Comment,
       user: @user,
       parent: @post,
       parent_association: :comments,
@@ -124,7 +126,7 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     )
 
     # Call the method directly instead of through apply_scope
-    scoped = policy.default_relation_scope(Blogging::Comment.all)
+    scoped = policy.default_relation_scope(Comment.all)
 
     assert_includes scoped.to_a, @comment
     refute_includes scoped.to_a, @other_comment
@@ -170,8 +172,8 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
 
   def test_no_error_when_default_relation_scope_called_via_super
     # Policies that call super should pass verification
-    policy = Blogging::CommentPolicy.new(
-      record: Blogging::Comment,
+    policy = CommentPolicy.new(
+      record: Comment,
       user: @user,
       parent: @post,
       parent_association: :comments,
@@ -179,7 +181,7 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     )
 
     # Should not raise - the base class calls default_relation_scope
-    scoped = policy.apply_scope(Blogging::Comment.all, type: :active_record_relation)
+    scoped = policy.apply_scope(Comment.all, type: :active_record_relation)
     assert_includes scoped.to_a, @comment
   end
 

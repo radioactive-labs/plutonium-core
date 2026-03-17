@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
 
 require "test_helper"
 require "rails/generators/test_case"
@@ -35,8 +34,8 @@ class PackageSelectorTest < ActiveSupport::TestCase
   end
 
   test "select_portal normalizes CamelCase destination" do
-    result = @generator.send(:select_portal, "CustomerPortal")
-    assert_equal "customer_portal", result
+    result = @generator.send(:select_portal, "AdminPortal")
+    assert_equal "admin_portal", result
   end
 
   test "select_feature normalizes CamelCase source" do

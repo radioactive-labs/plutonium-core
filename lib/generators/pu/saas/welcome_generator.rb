@@ -31,6 +31,20 @@ module Pu
       class_option :profile, type: :boolean, default: false,
         desc: "Include profile setup in onboarding"
 
+      def start
+        validate_requirements
+        create_authenticated_controller
+        create_welcome_controller
+        create_views
+        add_routes
+        configure_rodauth
+        show_instructions
+      rescue => e
+        exception "#{self.class} failed:", e
+      end
+
+      private
+
       def validate_requirements
         errors = []
 
@@ -134,8 +148,6 @@ module Pu
         say "=" * 79
         say "\n"
       end
-
-      private
 
       def user_model
         options[:user_model].camelize

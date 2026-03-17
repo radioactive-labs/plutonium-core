@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/saas/welcome_generator"
@@ -13,7 +11,7 @@ class SaasWelcomeGeneratorTest < Rails::Generators::TestCase
   destination Rails.root
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
     inject_user_entity_association
   end
 

@@ -128,14 +128,15 @@ class DefinitionQueryTest < Minitest::Test
     # Scopes
     assert Blogging::PostDefinition.defined_scopes.key?(:published)
     assert Blogging::PostDefinition.defined_scopes.key?(:drafts)
+    assert Blogging::PostDefinition.defined_scopes.key?(:archived)
 
     # Filters - includes symbol syntax filters
     assert Blogging::PostDefinition.defined_filters.key?(:title)
     assert_equal :contains, Blogging::PostDefinition.defined_filters[:title][:options][:predicate]
     assert_equal :text, Blogging::PostDefinition.defined_filters[:title][:options][:with]
 
-    assert Blogging::PostDefinition.defined_filters.key?(:published)
-    assert_equal :boolean, Blogging::PostDefinition.defined_filters[:published][:options][:with]
+    assert Blogging::PostDefinition.defined_filters.key?(:status)
+    assert_equal :select, Blogging::PostDefinition.defined_filters[:status][:options][:with]
 
     assert Blogging::PostDefinition.defined_filters.key?(:user)
     assert_equal :association, Blogging::PostDefinition.defined_filters[:user][:options][:with]
@@ -143,7 +144,7 @@ class DefinitionQueryTest < Minitest::Test
     # Sorts
     assert Blogging::PostDefinition.defined_sorts.key?(:title)
     assert Blogging::PostDefinition.defined_sorts.key?(:created_at)
-    assert Blogging::PostDefinition.defined_sorts.key?(:published)
+    assert Blogging::PostDefinition.defined_sorts.key?(:status)
 
     # Default sort
     assert_equal [:created_at, :desc], instance.default_sort
@@ -228,31 +229,31 @@ class DefinitionQueryTest < Minitest::Test
   # ============================================
 
   def test_boolean_filter_defaults
-    filter = Plutonium::Query::Filters::Boolean.new(key: :published)
-    scope = Blogging::Post.all
+    filter = Plutonium::Query::Filters::Boolean.new(key: :active)
+    scope = User.all
 
     result = filter.apply(scope, value: "true")
-    assert_match(/"blogging_posts"\."published" = (1|TRUE)/i, result.to_sql)
+    assert_match(/"users"\."active" = (1|TRUE)/i, result.to_sql)
 
     result = filter.apply(scope, value: "false")
-    assert_match(/"blogging_posts"\."published" = (0|FALSE)/i, result.to_sql)
+    assert_match(/"users"\."active" = (0|FALSE)/i, result.to_sql)
   end
 
   def test_boolean_filter_blank_value_returns_unmodified_scope
-    filter = Plutonium::Query::Filters::Boolean.new(key: :published)
-    scope = Blogging::Post.all
+    filter = Plutonium::Query::Filters::Boolean.new(key: :active)
+    scope = User.all
 
     result = filter.apply(scope, value: "")
     assert_equal scope.to_sql, result.to_sql
   end
 
   def test_boolean_filter_custom_labels
-    filter = Plutonium::Query::Filters::Boolean.new(key: :published, true_label: "Published", false_label: "Draft")
+    filter = Plutonium::Query::Filters::Boolean.new(key: :active, true_label: "Active", false_label: "Inactive")
 
     # Test that it still applies correctly
-    scope = Blogging::Post.all
+    scope = User.all
     result = filter.apply(scope, value: "true")
-    assert_match(/"blogging_posts"\."published" = (1|TRUE)/i, result.to_sql)
+    assert_match(/"users"\."active" = (1|TRUE)/i, result.to_sql)
   end
 
   # ============================================
@@ -439,10 +440,11 @@ class DefinitionQueryTest < Minitest::Test
     end
 
     # Create test data
-    user = User.create!(email: "test@example.com", password: "password123", status: "verified")
-    post1 = Blogging::Post.create!(title: "Hello World", body: "Content", user: user)
-    post2 = Blogging::Post.create!(title: "Goodbye World", body: "Content", user: user)
-    post3 = Blogging::Post.create!(title: "Something Else", body: "Content", user: user)
+    user = User.create!(email: "search-test-#{SecureRandom.hex(4)}@example.com", password: "password123", status: "verified")
+    org = Organization.create!(name: "Search Test Org #{SecureRandom.hex(4)}")
+    post1 = Blogging::Post.create!(title: "Hello World", body: "Content", user: user, organization: org)
+    post2 = Blogging::Post.create!(title: "Goodbye World", body: "Content", user: user, organization: org)
+    post3 = Blogging::Post.create!(title: "Something Else", body: "Content", user: user, organization: org)
 
     definition = definition_class.new
     scope = Blogging::Post.all
@@ -454,7 +456,8 @@ class DefinitionQueryTest < Minitest::Test
     refute_includes result, post2
     refute_includes result, post3
   ensure
-    Blogging::Post.delete_all
-    User.delete_all
+    Blogging::Post.where(user: user).delete_all if user
+    org&.delete
+    user&.delete
   end
 end

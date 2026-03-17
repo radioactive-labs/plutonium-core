@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/saas/membership_generator"
@@ -13,7 +11,7 @@ class SaasMembershipGeneratorTest < ActiveSupport::TestCase
     @rails_root = Rails.root
 
     # Ensure clean state before each test
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
 
     # Create minimal user and entity models for the membership generator to find
     create_minimal_model("saas_member")

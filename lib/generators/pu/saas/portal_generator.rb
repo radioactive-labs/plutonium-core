@@ -22,17 +22,24 @@ module Pu
       class_option :rodauth, type: :string, default: "user",
         desc: "Rodauth configuration name"
 
+      def start
+        create_portal
+        connect_entity_to_portal
+        customize_entity_policy
+        add_entity_url_helper
+      rescue => e
+        exception "#{self.class} failed:", e
+      end
+
+      private
+
       def create_portal
         generate "pu:pkg:portal", "#{options[:portal_name]} --auth=#{rodauth_config} --scope=#{entity_model}"
       end
 
       def connect_entity_to_portal
-        invoke "pu:res:conn", [entity_model],
-          dest: portal_package,
-          singular: true,
-          policy: true,
-          force: options[:force],
-          skip: options[:skip]
+        # Shell out so the subprocess can load the newly created entity model
+        generate "pu:res:conn", "#{entity_model} --dest=#{portal_package} --singular --policy"
       end
 
       def customize_entity_policy
@@ -82,8 +89,6 @@ module Pu
         RUBY
         inject_into_file concerns_controller_path, content, after: /# add concerns above\.\n/
       end
-
-      private
 
       def entity_model
         options[:entity_model].camelize

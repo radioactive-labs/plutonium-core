@@ -6,28 +6,30 @@ class NestedResourcesTest < Minitest::Test
   # Test nested resources behavior as documented
 
   def setup
-    @user = User.create!(email: "test@example.com", password: "password123", status: "verified")
-    @post = Blogging::Post.create!(title: "Test Post", body: "Content", user: @user)
+    @user = User.create!(email: "test#{SecureRandom.hex(4)}@example.com", password: "password123", status: "verified")
+    @org = Organization.create!(name: "Test Org")
+    @post = Blogging::Post.create!(title: "Test Post", body: "Content", user: @user, organization: @org)
   end
 
   def teardown
-    Blogging::PostMetadata.delete_all
-    Blogging::Comment.delete_all
+    Blogging::PostDetail.delete_all
+    Comment.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
   # Test associated_with scope - the core of nested resource scoping
 
   def test_associated_with_scope_via_belongs_to
-    # Comment belongs_to :post, so associated_with(post) should work
-    comment1 = Blogging::Comment.create!(body: "Comment 1", post: @post, user: @user)
-    comment2 = Blogging::Comment.create!(body: "Comment 2", post: @post, user: @user)
+    # Comment belongs_to :commentable (polymorphic), so associated_with(post) should work
+    comment1 = Comment.create!(body: "Comment 1", commentable: @post, user: @user)
+    comment2 = Comment.create!(body: "Comment 2", commentable: @post, user: @user)
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user)
-    comment3 = Blogging::Comment.create!(body: "Comment 3", post: other_post, user: @user)
+    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
+    comment3 = Comment.create!(body: "Comment 3", commentable: other_post, user: @user)
 
-    scoped = Blogging::Comment.associated_with(@post)
+    scoped = Comment.associated_with(@post)
 
     assert_includes scoped, comment1
     assert_includes scoped, comment2
@@ -37,9 +39,9 @@ class NestedResourcesTest < Minitest::Test
   def test_associated_with_scope_via_has_many
     # Post has_many :comments, so associated_with(comment) should work
     # This tests the reverse association lookup
-    comment = Blogging::Comment.create!(body: "Test", post: @post, user: @user)
+    comment = Comment.create!(body: "Test", commentable: @post, user: @user)
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user)
+    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
 
     # Posts associated with the comment (should find the parent post)
     scoped = Blogging::Post.associated_with(comment)
@@ -60,24 +62,24 @@ class NestedResourcesTest < Minitest::Test
 
   def test_has_many_association_routes
     # Test that model correctly identifies routable has_many associations
-    # Returns pluralized model names (e.g., "blogging_comments")
+    # Returns pluralized model names (e.g., "comments")
     routes = Blogging::Post.has_many_association_routes
 
-    assert_includes routes, "blogging_comments"
+    assert_includes routes, "comments"
   end
 
   def test_nested_resource_query_scoping
     # Simulate what happens in a nested resource context
     # When accessing /posts/1/comments, comments should be scoped to post
 
-    comment1 = Blogging::Comment.create!(body: "On target post", post: @post, user: @user)
+    comment1 = Comment.create!(body: "On target post", commentable: @post, user: @user)
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user)
-    comment2 = Blogging::Comment.create!(body: "On other post", post: other_post, user: @user)
+    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
+    comment2 = Comment.create!(body: "On other post", commentable: other_post, user: @user)
 
     # This is what the controller does internally
     parent = @post
-    scoped_comments = Blogging::Comment.associated_with(parent)
+    scoped_comments = Comment.associated_with(parent)
 
     assert_equal 1, scoped_comments.count
     assert_includes scoped_comments, comment1
@@ -88,13 +90,13 @@ class NestedResourcesTest < Minitest::Test
     # When creating a nested resource, parent should be automatically assigned
     # This tests the model behavior, not controller
 
-    new_comment = Blogging::Comment.new(body: "New comment", user: @user)
-    new_comment.post = @post  # This is what the controller does
+    new_comment = Comment.new(body: "New comment", user: @user)
+    new_comment.commentable = @post  # This is what the controller does
 
     assert new_comment.valid?
     new_comment.save!
 
-    assert_equal @post, new_comment.post
+    assert_equal @post, new_comment.commentable
     assert_includes @post.comments.reload, new_comment
   end
 
@@ -103,12 +105,12 @@ class NestedResourcesTest < Minitest::Test
     # Not built into Plutonium but a common use case
 
     # Create a model that has scoped uniqueness
-    post1 = Blogging::Post.create!(title: "Post 1", body: "Content", user: @user)
-    post2 = Blogging::Post.create!(title: "Post 2", body: "Content", user: @user)
+    post1 = Blogging::Post.create!(title: "Post 1", body: "Content", user: @user, organization: @org)
+    post2 = Blogging::Post.create!(title: "Post 2", body: "Content", user: @user, organization: @org)
 
     # Same body should be allowed on different posts (if we had such validation)
-    comment1 = Blogging::Comment.create!(body: "Same body", post: post1, user: @user)
-    comment2 = Blogging::Comment.new(body: "Same body", post: post2, user: @user)
+    comment1 = Comment.create!(body: "Same body", commentable: post1, user: @user)
+    comment2 = Comment.new(body: "Same body", commentable: post2, user: @user)
 
     # Both should be valid (different parents)
     assert comment1.valid?
@@ -117,41 +119,41 @@ class NestedResourcesTest < Minitest::Test
 
   def test_destroy_cascades_to_nested_resources
     # Test that destroying parent cascades to children (via dependent: :destroy)
-    comment1 = Blogging::Comment.create!(body: "Comment 1", post: @post, user: @user)
-    comment2 = Blogging::Comment.create!(body: "Comment 2", post: @post, user: @user)
+    comment1 = Comment.create!(body: "Comment 1", commentable: @post, user: @user)
+    comment2 = Comment.create!(body: "Comment 2", commentable: @post, user: @user)
 
     comment_ids = [comment1.id, comment2.id]
 
     @post.destroy!
 
     # Comments should be deleted
-    assert_empty Blogging::Comment.where(id: comment_ids)
+    assert_empty Comment.where(id: comment_ids)
   end
 
   def test_belongs_to_association_exists
-    # Verify the belongs_to association is set up correctly
-    comment = Blogging::Comment.new(body: "Test", post: @post, user: @user)
+    # Verify the belongs_to association is set up correctly (polymorphic)
+    comment = Comment.new(body: "Test", commentable: @post, user: @user)
 
-    assert_respond_to comment, :post
-    assert_respond_to comment, :post=
-    assert_equal @post, comment.post
+    assert_respond_to comment, :commentable
+    assert_respond_to comment, :commentable=
+    assert_equal @post, comment.commentable
 
     # The association reflection should exist
-    assoc = Blogging::Comment.reflect_on_association(:post)
+    assoc = Comment.reflect_on_association(:commentable)
     assert assoc
     assert_equal :belongs_to, assoc.macro
   end
 
   def test_multiple_levels_of_association_lookup
     # Test that associated_with can traverse associations
-    comment = Blogging::Comment.create!(body: "Test", post: @post, user: @user)
+    comment = Comment.create!(body: "Test", commentable: @post, user: @user)
 
     # User -> Post (via user association on Post)
     user_posts = Blogging::Post.associated_with(@user)
     assert_includes user_posts, @post
 
-    # Post -> Comments (via post association on Comment)
-    post_comments = Blogging::Comment.associated_with(@post)
+    # Post -> Comments (via comments association on Post)
+    post_comments = Comment.associated_with(@post)
     assert_includes post_comments, comment
   end
 
@@ -161,28 +163,27 @@ class NestedResourcesTest < Minitest::Test
     # Test that model correctly identifies routable has_one associations
     routes = Blogging::Post.has_one_association_routes
 
-    # "metadata" is uncountable so plural is still "metadata"
-    assert_includes routes, "blogging_post_metadata"
+    assert_includes routes, "blogging_post_details"
   end
 
   def test_has_one_associated_with_scope
-    # PostMetadata belongs_to :post, so associated_with(post) should work
-    metadata = Blogging::PostMetadata.create!(
+    # PostDetail belongs_to :post, so associated_with(post) should work
+    detail = Blogging::PostDetail.create!(
       post: @post,
       seo_title: "Test SEO Title",
       seo_description: "Test description"
     )
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user)
-    other_metadata = Blogging::PostMetadata.create!(
+    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
+    other_detail = Blogging::PostDetail.create!(
       post: other_post,
       seo_title: "Other SEO Title"
     )
 
-    scoped = Blogging::PostMetadata.associated_with(@post)
+    scoped = Blogging::PostDetail.associated_with(@post)
 
-    assert_includes scoped, metadata
-    refute_includes scoped, other_metadata
+    assert_includes scoped, detail
+    refute_includes scoped, other_detail
   end
 
   def test_has_one_route_config_registered_with_composite_key
@@ -190,13 +191,13 @@ class NestedResourcesTest < Minitest::Test
     # Force routes to load
     AdminPortal::Engine.routes.routes
 
-    # Key uses association name (:post_metadata), not class plural (blogging_post_metadata)
-    route_key = "blogging_posts/post_metadata"
+    # Key uses association name (:post_detail), not class plural (blogging_post_details)
+    route_key = "blogging_posts/post_detail"
     config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
 
     assert config, "Expected nested route config for #{route_key}"
     assert_equal :resource, config[:route_type], "has_one nested route should have :resource type"
-    assert_equal :post_metadata, config[:association_name], "Config should store association name"
+    assert_equal :post_detail, config[:association_name], "Config should store association name"
   end
 
   def test_has_many_route_config_registered_with_composite_key
@@ -204,7 +205,7 @@ class NestedResourcesTest < Minitest::Test
     # Force routes to load
     AdminPortal::Engine.routes.routes
 
-    # Key uses association name (:comments), not class plural (blogging_comments)
+    # Key uses association name (:comments), not class plural (comments)
     route_key = "blogging_posts/comments"
     config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
 
@@ -214,11 +215,11 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def test_top_level_route_config_has_resources_type
-    # Top-level PostMetadata should have :resources type
+    # Top-level PostDetail should have :resources type
     # Force routes to load
     AdminPortal::Engine.routes.routes
 
-    route_key = "blogging_post_metadata"
+    route_key = "blogging_post_details"
     config = AdminPortal::Engine.routes.resource_route_config_for(route_key)[0]
 
     assert config, "Expected top-level route config for #{route_key}"
@@ -226,16 +227,16 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def test_has_one_destroy_cascades
-    # Test that destroying post cascades to metadata (via dependent: :destroy)
-    metadata = Blogging::PostMetadata.create!(
+    # Test that destroying post cascades to detail (via dependent: :destroy)
+    detail = Blogging::PostDetail.create!(
       post: @post,
       seo_title: "Test SEO Title"
     )
-    metadata_id = metadata.id
+    detail_id = detail.id
 
     @post.destroy!
 
-    assert_nil Blogging::PostMetadata.find_by(id: metadata_id)
+    assert_nil Blogging::PostDetail.find_by(id: detail_id)
   end
 
   # Multiple associations to same class tests
@@ -248,6 +249,15 @@ class NestedResourcesTest < Minitest::Test
     # Both point to Blogging::Post
     assert_equal Blogging::Post, User.reflect_on_association(:authored_posts).klass
     assert_equal Blogging::Post, User.reflect_on_association(:edited_posts).klass
+  end
+
+  def test_inverse_of_properly_configured
+    # Verify inverse_of is set up correctly for association resolution
+    authored_assoc = User.reflect_on_association(:authored_posts)
+    edited_assoc = User.reflect_on_association(:edited_posts)
+
+    assert_equal :author, authored_assoc.inverse_of&.name
+    assert_equal :editor, edited_assoc.inverse_of&.name
   end
 
   def test_post_has_multiple_belongs_to_user
@@ -323,15 +333,6 @@ class NestedResourcesTest < Minitest::Test
     assert_match(/Multiple associations/, error.message)
   end
 
-  def test_inverse_of_properly_configured
-    # Verify inverse_of is set up correctly for resolution
-    authored_assoc = User.reflect_on_association(:authored_posts)
-    edited_assoc = User.reflect_on_association(:edited_posts)
-
-    assert_equal :author, authored_assoc.inverse_of&.name
-    assert_equal :editor, edited_assoc.inverse_of&.name
-  end
-
   # Regression test for nested resource update form building
   # See: https://github.com/radioactivetoy/plutonium-core/issues/XXX
   #
@@ -342,7 +343,7 @@ class NestedResourcesTest < Minitest::Test
 
   def test_form_extraction_with_cloned_nested_record_does_not_raise
     # Create a nested resource (comment under post)
-    comment = Blogging::Comment.create!(body: "Test comment", post: @post, user: @user)
+    comment = Comment.create!(body: "Test comment", commentable: @post, user: @user)
 
     # Simulate what submitted_resource_params does:
     # 1. Clone the existing record (this sets id to nil)
@@ -351,13 +352,13 @@ class NestedResourcesTest < Minitest::Test
     assert cloned_record.new_record?, "Cloned record should be a new record"
 
     # 2. Build form with form_action: false to prevent URL generation
-    definition = Blogging::CommentDefinition.new
+    definition = CommentDefinition.new
     form_class = definition.form_class
 
     # This should NOT raise ActionController::UrlGenerationError
     form = form_class.new(
       cloned_record,
-      resource_fields: [:body, :post, :user],
+      resource_fields: [:body, :commentable, :user],
       resource_definition: definition,
       action: false  # This prevents URL generation
     )
@@ -369,9 +370,9 @@ class NestedResourcesTest < Minitest::Test
   def test_form_for_nested_update_without_form_action_false_would_need_valid_id
     # This test documents the expected behavior when form_action is NOT disabled
     # The form needs a valid record to generate its action URL
-    comment = Blogging::Comment.create!(body: "Test comment", post: @post, user: @user)
+    comment = Comment.create!(body: "Test comment", commentable: @post, user: @user)
 
-    definition = Blogging::CommentDefinition.new
+    definition = CommentDefinition.new
     form_class = definition.form_class
 
     # With the actual persisted record (not cloned), form can generate URL

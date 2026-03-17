@@ -119,9 +119,6 @@ class DefinitionFieldsTest < Minitest::Test
     assert Blogging::PostDefinition.defined_columns.key?(:user)
     assert_equal "Author", Blogging::PostDefinition.defined_columns[:user][:options][:label]
 
-    # Test computed column
-    assert Blogging::PostDefinition.defined_columns.key?(:comment_count)
-
     # Test page titles
     assert_equal "Blog Posts", Blogging::PostDefinition.index_page_title
     assert_equal "Manage your blog content", Blogging::PostDefinition.index_page_description

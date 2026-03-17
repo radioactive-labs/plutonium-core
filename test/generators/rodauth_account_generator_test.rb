@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/rodauth/account_generator"
@@ -13,7 +11,7 @@ class RodauthAccountGeneratorTest < Rails::Generators::TestCase
   destination Rails.root
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
   end
 
   test "generates named account configuration" do

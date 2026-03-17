@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/invites/invitable_generator"
@@ -15,7 +13,7 @@ class InvitesInvitableGeneratorTest < Rails::Generators::TestCase
   # Don't use prepare_destination - it clears Rails.root!
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
   end
 
   test "generates invite user interaction" do

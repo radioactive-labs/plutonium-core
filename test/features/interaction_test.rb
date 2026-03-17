@@ -6,12 +6,16 @@ class InteractionTest < Minitest::Test
   # Test interaction features as documented
 
   def setup
-    @user = User.create!(email: "test@example.com", password: "password123", status: "verified")
+    @user = User.create!(email: "test#{SecureRandom.hex(4)}@example.com", password: "password123", status: "verified")
+    @org = Organization.create!(name: "Test Org")
   end
 
   def teardown
-    Blogging::Comment.delete_all
+    Comment.delete_all
+    Catalog::Product.delete_all
+    Catalog::Category.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
@@ -222,7 +226,7 @@ class InteractionTest < Minitest::Test
   end
 
   def test_publish_post_interaction_success
-    post = Blogging::Post.create!(title: "Draft", body: "Content", user: @user, published: false)
+    post = Blogging::Post.create!(title: "Draft", body: "Content", user: @user, organization: @org, status: :draft)
 
     result = Blogging::PublishPost.call(view_context: nil, resource: post)
 
@@ -232,27 +236,75 @@ class InteractionTest < Minitest::Test
   end
 
   def test_publish_post_interaction_validation_failure
-    post = Blogging::Post.create!(title: "Published", body: "Content", user: @user, published: true)
+    post = Blogging::Post.create!(title: "Published", body: "Content", user: @user, organization: @org, status: :published)
 
     result = Blogging::PublishPost.call(view_context: nil, resource: post)
 
     assert result.failure?
   end
 
-  def test_schedule_post_interaction_success
-    post = Blogging::Post.create!(title: "To Schedule", body: "Content", user: @user, published: false)
-    future_time = 1.day.from_now
+  def test_archive_post_interaction_success
+    post = Blogging::Post.create!(title: "To Archive", body: "Content", user: @user, organization: @org, status: :published)
 
-    result = Blogging::SchedulePost.call(view_context: nil, resource: post, scheduled_at: future_time)
+    result = Blogging::ArchivePost.call(view_context: nil, resource: post)
 
     assert result.success?
+    post.reload
+    assert post.archived?
   end
 
-  def test_schedule_post_interaction_validation_failure_past_date
-    post = Blogging::Post.create!(title: "To Schedule", body: "Content", user: @user, published: false)
-    past_time = 1.day.ago
+  def test_archive_post_interaction_validation_failure_not_published
+    post = Blogging::Post.create!(title: "Draft Post", body: "Content", user: @user, organization: @org, status: :draft)
 
-    result = Blogging::SchedulePost.call(view_context: nil, resource: post, scheduled_at: past_time)
+    result = Blogging::ArchivePost.call(view_context: nil, resource: post)
+
+    assert result.failure?
+  end
+
+  def test_publish_product_interaction_success
+    product = Catalog::Product.create!(
+      name: "Draft Product", category: Catalog::Category.create!(name: "Cat"),
+      user: @user, organization: @org, price_cents: 999, status: :draft
+    )
+
+    result = Catalog::PublishProduct.call(view_context: nil, resource: product)
+
+    assert result.success?
+    product.reload
+    assert product.active?
+  end
+
+  def test_publish_product_interaction_validation_failure
+    product = Catalog::Product.create!(
+      name: "Active Product", category: Catalog::Category.create!(name: "Cat"),
+      user: @user, organization: @org, price_cents: 999, status: :active
+    )
+
+    result = Catalog::PublishProduct.call(view_context: nil, resource: product)
+
+    assert result.failure?
+  end
+
+  def test_discontinue_product_interaction_success
+    product = Catalog::Product.create!(
+      name: "Active Product", category: Catalog::Category.create!(name: "Cat"),
+      user: @user, organization: @org, price_cents: 999, status: :active
+    )
+
+    result = Catalog::DiscontinueProduct.call(view_context: nil, resource: product)
+
+    assert result.success?
+    product.reload
+    assert product.discontinued?
+  end
+
+  def test_discontinue_product_interaction_validation_failure_not_active
+    product = Catalog::Product.create!(
+      name: "Draft Product", category: Catalog::Category.create!(name: "Cat"),
+      user: @user, organization: @org, price_cents: 999, status: :draft
+    )
+
+    result = Catalog::DiscontinueProduct.call(view_context: nil, resource: product)
 
     assert result.failure?
   end

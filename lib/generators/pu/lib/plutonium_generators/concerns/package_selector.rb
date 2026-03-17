@@ -21,18 +21,16 @@ module PlutoniumGenerators
       end
 
       def available_packages
-        @available_packages ||= begin
-          packages = Dir[Rails.root.join("packages", "*")].map { |dir| File.basename(dir) }
-          packages - reserved_packages
-        end
+        packages = Dir[Rails.root.join("packages", "*")].map { |dir| File.basename(dir) }
+        packages - reserved_packages
       end
 
       def available_portals
-        @available_portals ||= ["main_app"] + available_packages.select { |pkg| pkg.ends_with?("_app") || pkg.ends_with?("_portal") }.sort
+        ["main_app"] + available_packages.select { |pkg| pkg.ends_with?("_app") || pkg.ends_with?("_portal") }.sort
       end
 
       def available_features
-        @available_features ||= ["main_app"] + available_packages.select { |pkg| !(pkg.ends_with?("_app") || pkg.ends_with?("_portal")) }.sort
+        ["main_app"] + available_packages.select { |pkg| !(pkg.ends_with?("_app") || pkg.ends_with?("_portal")) }.sort
       end
 
       def select_package(selected_package = nil, msg: "Select package", pkgs: nil)

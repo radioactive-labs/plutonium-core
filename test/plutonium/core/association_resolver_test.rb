@@ -5,12 +5,15 @@ require "test_helper"
 class Plutonium::Core::AssociationResolverTest < Minitest::Test
   def setup
     @resolver = Object.new.extend(Plutonium::Core::Controllers::AssociationResolver)
-    @user = User.create!(email: "resolver_test@example.com", status: :verified)
-    @post = Blogging::Post.create!(user: @user, title: "Test Post", body: "Body content")
+    @org = Organization.create!(name: "Resolver Test #{SecureRandom.hex(4)}")
+    @user = User.create!(email: "resolver_test_#{SecureRandom.hex(4)}@example.com", status: :verified)
+    @post = Blogging::Post.create!(user: @user, organization: @org, title: "Test Post", body: "Body content")
   end
 
   def teardown
+    Comment.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
@@ -29,24 +32,24 @@ class Plutonium::Core::AssociationResolverTest < Minitest::Test
   # Class-based resolution
 
   def test_resolve_association_finds_association_by_class
-    result = @resolver.resolve_association(Blogging::Comment, @post)
+    result = @resolver.resolve_association(Comment, @post)
     assert_equal :comments, result
   end
 
   def test_resolve_association_finds_namespaced_association
-    # Blogging::Post has comments association that points to Blogging::Comment
-    result = @resolver.resolve_association(Blogging::Comment, @post)
+    # Blogging::Post has comments association that points to Comment
+    result = @resolver.resolve_association(Comment, @post)
     assert_equal :comments, result
   end
 
   # Instance-based resolution
 
   def test_resolve_association_works_with_instance
-    comment = Blogging::Comment.create!(user: @user, post: @post, body: "Test")
+    comment = Comment.create!(user: @user, commentable: @post, body: "Test")
     result = @resolver.resolve_association(comment, @post)
     assert_equal :comments, result
   ensure
-    Blogging::Comment.delete_all
+    Comment.delete_all
   end
 
   # Error cases
@@ -72,18 +75,19 @@ class Plutonium::Core::AssociationResolverTest < Minitest::Test
   # Candidate generation
 
   def test_association_candidates_for_namespaced_class
-    candidates = @resolver.send(:association_candidates_for, Blogging::Comment)
+    candidates = @resolver.send(:association_candidates_for, Blogging::PostDetail)
 
     # Should try both namespaced and demodulized versions
-    assert_includes candidates, :blogging_comments
-    assert_includes candidates, :comments
+    assert_includes candidates, :blogging_post_details
+    assert_includes candidates, :post_details
   end
 
   def test_association_candidates_for_non_namespaced_class
     candidates = @resolver.send(:association_candidates_for, User)
 
     assert_includes candidates, :users
-    assert_equal 1, candidates.size # Only one candidate for non-namespaced
+    assert_includes candidates, :user
+    assert_equal 2, candidates.size # Plural (has_many) + singular (has_one)
   end
 
   def test_association_candidates_returns_unique_values

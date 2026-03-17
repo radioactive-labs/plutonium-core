@@ -53,9 +53,9 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
   end
 
   def test_current_nested_association_handles_singular_routes
-    controller = build_controller_stub("/posts/123/nested_post_metadata", :blogging_post_id)
+    controller = build_controller_stub("/posts/123/nested_post_detail", :blogging_post_id)
 
-    assert_equal :post_metadata, controller.send(:current_nested_association)
+    assert_equal :post_detail, controller.send(:current_nested_association)
   end
 
   def test_current_nested_association_returns_nil_without_parent_route_param
@@ -102,9 +102,10 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
   # This test verifies that build_form is called with form_action: false
 
   def test_submitted_resource_params_builds_form_with_form_action_false
-    user = User.create!(email: "controller_test@example.com", status: :verified)
-    post = Blogging::Post.create!(title: "Test", body: "Content", user: user)
-    comment = Blogging::Comment.create!(body: "Test comment", post: post, user: user)
+    org = Organization.create!(name: "CtrlTest #{SecureRandom.hex(4)}")
+    user = User.create!(email: "controller_test_#{SecureRandom.hex(4)}@example.com", status: :verified)
+    post = Blogging::Post.create!(title: "Test", body: "Content", user: user, organization: org)
+    comment = Comment.create!(body: "Test comment", commentable: post, user: user)
 
     controller = build_submitted_params_controller(comment, user)
     controller.test_params = ActionController::Parameters.new({
@@ -130,15 +131,17 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     # Verify build_form was called with form_action: false
     assert_equal false, form_action_received, "build_form should be called with form_action: false"
   ensure
-    Blogging::Comment.delete_all
+    Comment.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
   def test_submitted_resource_params_clones_record_for_extraction
-    user = User.create!(email: "controller_test2@example.com", status: :verified)
-    post = Blogging::Post.create!(title: "Test", body: "Content", user: user)
-    comment = Blogging::Comment.create!(body: "Original", post: post, user: user)
+    org = Organization.create!(name: "CtrlTest2 #{SecureRandom.hex(4)}")
+    user = User.create!(email: "controller_test2_#{SecureRandom.hex(4)}@example.com", status: :verified)
+    post = Blogging::Post.create!(title: "Test", body: "Content", user: user, organization: org)
+    comment = Comment.create!(body: "Original", commentable: post, user: user)
 
     controller = build_submitted_params_controller(comment, user)
     controller.test_params = ActionController::Parameters.new({
@@ -163,8 +166,9 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     # Original record should be unchanged
     assert_equal comment.id, comment.reload.id, "Original record id should be unchanged"
   ensure
-    Blogging::Comment.delete_all
+    Comment.delete_all
     Blogging::Post.delete_all
+    Organization.delete_all
     User.delete_all
   end
 
@@ -175,7 +179,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     user = User.create!(email: "entity_scoping_test@example.com", status: :verified)
 
     controller = build_entity_scoping_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User,
       scoped_entity_param_key: :author, # Different from association :user
       current_scoped_entity: user
@@ -197,7 +201,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     user = User.create!(email: "entity_scoping_test2@example.com", status: :verified)
 
     controller = build_entity_scoping_controller(
-      resource_class: Blogging::Comment,
+      resource_class: Comment,
       scoped_entity_class: User,
       scoped_entity_param_key: :author,
       current_scoped_entity: user
@@ -219,7 +223,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     org = Organization.create!(name: "Test Org")
 
     controller = build_entity_scoping_controller(
-      resource_class: Blogging::Comment, # Comment has no belongs_to Organization
+      resource_class: Comment, # Comment has no belongs_to Organization
       scoped_entity_class: Organization,
       scoped_entity_param_key: :org,
       current_scoped_entity: org
@@ -300,7 +304,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     attr_accessor :test_record, :test_user, :test_params
 
     def resource_class
-      Blogging::Comment
+      Comment
     end
 
     def resource_record?
@@ -337,7 +341,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     end
 
     def current_policy
-      @current_policy ||= Blogging::CommentPolicy.new(
+      @current_policy ||= CommentPolicy.new(
         record: test_record,
         user: test_user,
         entity_scope: nil
@@ -345,7 +349,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     end
 
     def current_definition
-      @current_definition ||= Blogging::CommentDefinition.new
+      @current_definition ||= CommentDefinition.new
     end
   end
 

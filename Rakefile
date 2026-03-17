@@ -14,17 +14,34 @@ end
 # https://stackoverflow.com/questions/15707940/rake-before-task-hook
 Rake::Task["build"].enhance ["assets"]
 
-# https://juincc.medium.com/how-to-setup-minitest-for-your-gems-development-f29c4bee13c2
-Rake::TestTask.new do |t|
+# Unit + integration tests (safe to run together)
+Rake::TestTask.new(:test) do |t|
   t.libs << "test"
-  t.test_files = FileList["test/**/*_test.rb"]
+  t.test_files = FileList["test/**/*_test.rb"].exclude("test/generators/**/*_test.rb")
   t.verbose = true
 end
 
-# Warn users to run tests through Appraisal
-Rake::Task["test"].enhance do
-  # This runs after test completes successfully - no action needed
+# Generator tests — each file runs in its own process because git checkout
+# in teardown corrupts the loaded Rails environment for other test classes.
+task :test_generators do
+  failures = []
+
+  FileList["test/generators/**/*_test.rb"].sort.each do |test_file|
+    puts "\n=== #{test_file} ==="
+    unless system(Gem.ruby, "-w", "-Ilib:test", test_file)
+      failures << test_file
+    end
+  end
+
+  if failures.any?
+    abort "\nGenerator test failures:\n  #{failures.join("\n  ")}"
+  else
+    puts "\nAll generator test files passed."
+  end
 end
+
+# Run both sequentially
+task test_all: [:test, :test_generators]
 
 task :check_appraisal do
   unless ENV["BUNDLE_GEMFILE"]&.include?("gemfiles/")
@@ -35,3 +52,4 @@ task :check_appraisal do
 end
 
 Rake::Task["test"].enhance [:check_appraisal]
+Rake::Task["test_generators"].enhance [:check_appraisal]

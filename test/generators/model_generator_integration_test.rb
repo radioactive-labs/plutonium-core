@@ -11,7 +11,7 @@ class ModelGeneratorIntegrationTest < Rails::Generators::TestCase
   destination Rails.root
 
   def setup
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
   end
 
   # Note: --migration flag is needed for Rails::Generators::TestCase

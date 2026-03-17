@@ -10,15 +10,14 @@ module Plutonium
         # Blogging::Post has_many :comments
         routes = Blogging::Post.has_many_association_routes
 
-        # The plural name includes the namespace
-        assert_includes routes, "blogging_comments"
+        assert_includes routes, "comments"
       end
 
       def test_has_one_association_routes_on_real_model
-        # Blogging::Post has_one :post_metadata
+        # Blogging::Post has_one :post_detail
         routes = Blogging::Post.has_one_association_routes
 
-        assert_includes routes, "blogging_post_metadata"
+        assert_includes routes, "blogging_post_details"
       end
     end
 
@@ -178,8 +177,8 @@ module Plutonium
       # entity_scope_params_for_path_strategy tests using real engines
 
       def test_entity_scope_params_for_path_strategy_returns_nil_when_not_path_scoped
-        # DemoPortal has no entity scoping
-        result = DemoPortal::Engine.routes.entity_scope_params_for_path_strategy
+        # AdminPortal has no entity scoping
+        result = AdminPortal::Engine.routes.entity_scope_params_for_path_strategy
 
         assert_nil result
       end
@@ -195,35 +194,35 @@ module Plutonium
       # singular_resource_route? tests using real engine routes
 
       def test_singular_resource_route_returns_true_for_nested_has_one
-        # Blogging::Post has_one :post_metadata, registered as singular nested route
-        assert DemoPortal::Engine.routes.singular_resource_route?("blogging_posts/post_metadata")
+        # Blogging::Post has_one :post_detail, registered as singular nested route
+        assert AdminPortal::Engine.routes.singular_resource_route?("blogging_posts/post_detail")
       end
 
       def test_singular_resource_route_returns_false_for_nested_has_many
         # Blogging::Post has_many :comments, registered as plural nested route
-        refute DemoPortal::Engine.routes.singular_resource_route?("blogging_posts/comments")
+        refute AdminPortal::Engine.routes.singular_resource_route?("blogging_posts/comments")
       end
 
       def test_singular_resource_route_returns_false_for_top_level_plural_resources
         # Blogging::Post is registered as :resources (plural)
-        refute DemoPortal::Engine.routes.singular_resource_route?("blogging_posts")
+        refute AdminPortal::Engine.routes.singular_resource_route?("blogging_posts")
       end
 
       def test_singular_resource_route_returns_false_for_unregistered_resources
-        refute DemoPortal::Engine.routes.singular_resource_route?("unknown_resources")
+        refute AdminPortal::Engine.routes.singular_resource_route?("unknown_resources")
       end
 
       # Verify route type in config
 
       def test_has_one_nested_route_config_has_resource_type
-        config = DemoPortal::Engine.routes.resource_route_config_for("blogging_posts/post_metadata")[0]
+        config = AdminPortal::Engine.routes.resource_route_config_for("blogging_posts/post_detail")[0]
 
         assert_equal :resource, config[:route_type]
-        assert_equal :post_metadata, config[:association_name]
+        assert_equal :post_detail, config[:association_name]
       end
 
       def test_has_many_nested_route_config_has_resources_type
-        config = DemoPortal::Engine.routes.resource_route_config_for("blogging_posts/comments")[0]
+        config = AdminPortal::Engine.routes.resource_route_config_for("blogging_posts/comments")[0]
 
         assert_equal :resources, config[:route_type]
         assert_equal :comments, config[:association_name]

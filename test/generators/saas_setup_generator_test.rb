@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/saas/setup_generator"
@@ -13,7 +11,7 @@ class SaasSetupGeneratorTest < ActiveSupport::TestCase
     @rails_root = Rails.root
 
     # Ensure clean state before each test
-    git_ensure_clean_dummy_app
+    git_restore_dummy_app
   end
 
   test "generates complete saas setup" do
@@ -39,7 +37,7 @@ class SaasSetupGeneratorTest < ActiveSupport::TestCase
     run_setup_generator ["--user=TestCustomer", "--entity=TestCompany", "--roles=member,admin,owner", "--dest=main_app"]
 
     membership_model = File.read(@rails_root.join("app/models/test_company_test_customer.rb"))
-    assert_match(/enum :role, member: 0, admin: 1, owner: 2/, membership_model)
+    assert_match(/enum :role, owner: 0, member: 1, admin: 2/, membership_model)
   end
 
   test "skip_entity option skips entity generation" do
@@ -95,7 +93,10 @@ class SaasSetupGeneratorTest < ActiveSupport::TestCase
 
   private
 
+  # Tests that only care about model generation opt out of portal/welcome/invites/profile
+  # which require shell-outs and complex multi-step flows
   def run_setup_generator(args)
+    args += ["--no-portal", "--no-welcome", "--no-invites", "--no-profile"] unless args.any? { |a| a.start_with?("--portal", "--no-portal", "--welcome", "--no-welcome") }
     Dir.chdir(@rails_root) do
       Pu::Saas::SetupGenerator.start(args, destination_root: @rails_root)
     end

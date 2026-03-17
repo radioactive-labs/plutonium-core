@@ -25,6 +25,8 @@ module PlutoniumGenerators
       end
 
       def exception(msg, err)
+        raise err if Rails.env.test?
+
         error "#{msg}\n\n#{err.class}: #{err}\n#{err.backtrace.join("\n")}"
       end
 

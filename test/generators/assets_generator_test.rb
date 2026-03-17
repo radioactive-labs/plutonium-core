@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-return unless ENV["GENERATOR_TESTS"]
 
 require "test_helper"
 require "json"

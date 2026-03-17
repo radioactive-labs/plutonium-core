@@ -176,7 +176,7 @@ class DefinitionActionsTest < Minitest::Test
 
     # Custom actions
     assert actions.key?(:publish), "Expected :publish action"
-    assert actions.key?(:schedule), "Expected :schedule action"
+    assert actions.key?(:archive), "Expected :archive action"
 
     # Default CRUD actions
     assert actions.key?(:new)
@@ -186,7 +186,7 @@ class DefinitionActionsTest < Minitest::Test
 
     # Verify interactions are linked
     assert actions[:publish].is_a?(Plutonium::Action::Interactive)
-    assert actions[:schedule].is_a?(Plutonium::Action::Interactive)
+    assert actions[:archive].is_a?(Plutonium::Action::Interactive)
   end
 
   def test_instance_level_action_customization
