@@ -1,0 +1,18 @@
+# frozen_string_literal: true
+
+class AuthenticatedController < ApplicationController
+<% if rodauth? -%>
+  include Plutonium::Auth::Rodauth(:<%= rodauth_config %>)
+
+  before_action { rodauth.require_authentication }
+<% else -%>
+  before_action :require_authenticated
+
+  private
+
+  def require_authenticated
+    # TODO: Implement based on your authentication system
+    redirect_to "/login" unless current_user
+  end
+<% end -%>
+end

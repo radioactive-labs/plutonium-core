@@ -1,0 +1,27 @@
+Description:
+  Generates a post-login welcome flow with onboarding and entity selection.
+
+  This creates the controllers, views, and routes needed to bridge
+  authentication and the main portal:
+
+  - AuthenticatedController: base controller requiring login
+  - WelcomeController: routing hub (invite check -> onboarding -> entity selection -> portal)
+  - Onboarding view: create first entity (and optional profile)
+  - Entity selection view: choose from multiple entities
+
+Example:
+  rails g pu:saas:welcome --user-model=User --entity-model=Organization --portal=CustomerPortal
+
+  This generates:
+    app/controllers/authenticated_controller.rb
+    app/controllers/welcome_controller.rb
+    app/views/welcome/onboarding.html.erb
+    app/views/welcome/select_entity.html.erb
+
+  And adds routes:
+    GET  /welcome         -> welcome#index
+    GET  /welcome/onboard -> welcome#new_entity
+    POST /welcome/onboard -> welcome#onboard
+
+Options:
+  --profile  Include profile setup in onboarding form

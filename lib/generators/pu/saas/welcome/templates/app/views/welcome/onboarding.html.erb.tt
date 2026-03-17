@@ -1,0 +1,51 @@
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl text-center">
+  Welcome! Let's get you set up.
+</h1>
+
+<%%= form_with(url: welcome_onboard_path, method: :post, class: "space-y-4 md:space-y-6") do |f| %>
+<% if profile? -%>
+  <%% if @<%= entity_table %>.errors.any? || @profile.errors.any? %>
+<% else -%>
+  <%% if @<%= entity_table %>.errors.any? %>
+<% end -%>
+    <div class="p-4 rounded-[var(--pu-radius-lg)] bg-[color:var(--color-danger-50)] text-[color:var(--color-danger-600)]">
+      <ul class="list-disc list-inside text-sm">
+        <%% @<%= entity_table %>.errors.full_messages.each do |message| %>
+          <li><%%= message %></li>
+        <%% end %>
+<% if profile? -%>
+        <%% @profile.errors.full_messages.each do |message| %>
+          <li><%%= message %></li>
+        <%% end %>
+<% end -%>
+      </ul>
+    </div>
+  <%% end %>
+<% if profile? -%>
+
+  <%%= f.fields_for :profile, @profile do |pf| %>
+    <div>
+      <%%= pf.label :name, "Your Name", class: "block mb-2 text-sm font-medium text-[var(--pu-text)]" %>
+      <%%= pf.text_field :name,
+          class: "pu-input w-full",
+          placeholder: "e.g. Jane Smith",
+          autofocus: true %>
+    </div>
+  <%% end %>
+<% end -%>
+
+  <%%= f.fields_for :<%= entity_table %>, @<%= entity_table %> do |ef| %>
+    <div>
+      <%%= ef.label :name, "Workspace Name", class: "block mb-2 text-sm font-medium text-[var(--pu-text)]" %>
+      <%%= ef.text_field :name,
+          class: "pu-input w-full",
+          placeholder: "e.g. Acme Corp",
+<% unless profile? -%>
+          autofocus: true,
+<% end -%>
+          required: true %>
+    </div>
+  <%% end %>
+
+  <%%= f.submit "Get Started", class: "w-full pu-btn pu-btn-md pu-btn-primary" %>
+<%% end %>

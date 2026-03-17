@@ -1,0 +1,22 @@
+<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl text-center">
+  Select a Workspace
+</h1>
+
+<div class="space-y-2">
+  <%% @entities.each do |<%= entity_table %>| %>
+    <a href="<%%= portal_root_path(<%= entity_table %>) %>"
+       class="flex items-center gap-3 w-full p-4 text-left bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)] hover:border-[var(--color-primary-500)] hover:bg-[var(--pu-surface)] transition-colors">
+      <div class="flex-1">
+        <p class="font-medium text-[var(--pu-text)]"><%%= <%= entity_table %>.name %></p>
+      </div>
+      <%%= render Phlex::TablerIcons::ChevronRight.new(class: "w-5 h-5 text-[var(--pu-text-muted)]") %>
+    </a>
+  <%% end %>
+</div>
+
+<div class="pt-2">
+  <a href="<%%= welcome_onboard_path %>"
+     class="w-full block pu-btn pu-btn-md pu-btn-outline text-center">
+    Create New Workspace
+  </a>
+</div>

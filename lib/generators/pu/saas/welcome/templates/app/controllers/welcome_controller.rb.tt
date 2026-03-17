@@ -1,0 +1,69 @@
+# frozen_string_literal: true
+
+class WelcomeController < AuthenticatedController
+  layout "welcome"
+
+  def index
+    entities = current_user.<%= entity_table.pluralize %>.to_a
+    if entities.none?
+      @<%= entity_table %> = <%= entity_model %>.new
+<% if profile? -%>
+      @profile = current_user.profile || current_user.build_profile
+<% end -%>
+      render :onboarding
+    elsif entities.one?
+      redirect_to portal_root_path(entities.first)
+    else
+      @entities = entities
+      render :select_entity
+    end
+  end
+
+  def new_entity
+    @<%= entity_table %> = <%= entity_model %>.new
+<% if profile? -%>
+    @profile = current_user.profile || current_user.build_profile
+<% end -%>
+    render :onboarding
+  end
+
+  def onboard
+    @<%= entity_table %> = <%= entity_model %>.new(<%= entity_table %>_params)
+<% if profile? -%>
+    @profile = current_user.profile || current_user.build_profile
+    @profile.assign_attributes(profile_params)
+
+    if @<%= entity_table %>.valid? && @profile.valid?
+<% else -%>
+    if @<%= entity_table %>.valid?
+<% end -%>
+      ActiveRecord::Base.transaction do
+        @<%= entity_table %>.save!
+        <%= membership_model %>.create!(<%= entity_table %>: @<%= entity_table %>, <%= user_table %>: current_user, role: :owner)
+<% if profile? -%>
+        @profile.save!
+<% end -%>
+      end
+      redirect_to portal_root_path(@<%= entity_table %>), notice: "Welcome! Your workspace is ready."
+    else
+      render :onboarding, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def <%= entity_table %>_params
+    params.require(:<%= entity_table %>).permit(:name)
+  end
+<% if profile? -%>
+
+  def profile_params
+    params.require(:profile).permit(:name)
+  end
+<% end -%>
+
+  def portal_root_path(<%= entity_table %>)
+    <%= portal_engine %>::Engine.routes.url_helpers.<%= entity_table %>_root_path(<%= entity_table %>: <%= entity_table %>)
+  end
+  helper_method :portal_root_path
+end
