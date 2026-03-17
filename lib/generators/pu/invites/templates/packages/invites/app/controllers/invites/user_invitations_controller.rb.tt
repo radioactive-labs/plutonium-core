@@ -14,7 +14,7 @@ module Invites
     private
 
     def invite_class
-      Invites::UserInvite
+      ::Invites::UserInvite
     end
 
     def user_class
@@ -22,7 +22,11 @@ module Invites
     end
 
     def after_accept_path
+<% if rodauth? -%>
+      rodauth.login_redirect
+<% else -%>
       "/"
+<% end -%>
     end
 
     def login_path

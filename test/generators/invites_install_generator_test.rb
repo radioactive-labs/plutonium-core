@@ -90,6 +90,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
 
     assert_file "packages/invites/app/mailers/invites/user_invite_mailer.rb" do |content|
       assert_match(/class UserInviteMailer < ApplicationMailer/, content)
+      assert_match(/prepend_view_path Invites::Engine\.root\.join\("app\/views"\)/, content)
       assert_match(/def invitation\(user_invite\)/, content)
       assert_match(/invitation_template_name/, content)
     end
@@ -258,7 +259,8 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     run_generator default_args
 
     assert_file "config/routes.rb" do |content|
-      assert_match(/get "welcome"/, content)
+      assert_match(/get "invitations\/welcome"/, content)
+      assert_match(/delete "invitations\/welcome"/, content)
       assert_match(/get "invitations\/:token"/, content)
       assert_match(/post "invitations\/:token\/accept"/, content)
       assert_match(/get "invitations\/:token\/signup"/, content)
@@ -270,6 +272,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     # Create Account definition and policy for validation
     FileUtils.mkdir_p(destination_root.join("app/definitions"))
     FileUtils.mkdir_p(destination_root.join("app/policies"))
+    FileUtils.mkdir_p(destination_root.join("app/models"))
     File.write(destination_root.join("app/definitions/account_definition.rb"), <<~RUBY)
       class AccountDefinition < ::ResourceDefinition
       end
@@ -277,6 +280,12 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     File.write(destination_root.join("app/policies/account_policy.rb"), <<~RUBY)
       class AccountPolicy < ::ResourcePolicy
         # Core attributes
+      end
+    RUBY
+    # Membership model defaults to OrganizationAccount with custom user model
+    File.write(destination_root.join("app/models/organization_account.rb"), <<~RUBY)
+      class OrganizationAccount < ApplicationRecord
+        enum :role, member: 0, owner: 1
       end
     RUBY
 
@@ -307,6 +316,114 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "generates welcome controller with skip action" do
+    run_generator default_args
+
+    assert_file "packages/invites/app/controllers/invites/welcome_controller.rb" do |content|
+      assert_match(/def skip/, content)
+      assert_match(/cookies\.delete\(:pending_invitation\)/, content)
+    end
+  end
+
+  test "generates views with button_to for skip" do
+    run_generator default_args
+
+    assert_file "packages/invites/app/views/invites/welcome/pending_invitation.html.erb" do |content|
+      assert_match(/button_to "Skip for Now"/, content)
+      assert_match(/invites_welcome_skip_path/, content)
+      assert_match(/method: :delete/, content)
+    end
+
+    assert_file "packages/invites/app/views/invites/user_invitations/show.html.erb" do |content|
+      assert_match(/button_to "Skip for Now"/, content)
+      assert_match(/invites_welcome_skip_path/, content)
+    end
+  end
+
+  test "adds standalone welcome route when no WelcomeController exists" do
+    run_generator default_args
+
+    assert_file "config/routes.rb" do |content|
+      assert_match(/get "welcome", to: "invites\/welcome#index"/, content)
+    end
+  end
+
+  test "skips standalone welcome route when WelcomeController exists" do
+    # Create a WelcomeController before running the generator
+    FileUtils.mkdir_p(destination_root.join("app/controllers"))
+    File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
+      class WelcomeController < AuthenticatedController
+        def index
+        end
+      end
+    RUBY
+
+    run_generator default_args
+
+    assert_file "config/routes.rb" do |content|
+      assert_no_match(/get "welcome", to: "invites\/welcome#index"/, content)
+    end
+  end
+
+  test "integrates invite check into existing WelcomeController" do
+    # Create a WelcomeController before running the generator
+    FileUtils.mkdir_p(destination_root.join("app/controllers"))
+    File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
+      class WelcomeController < AuthenticatedController
+        def index
+        end
+      end
+    RUBY
+
+    run_generator default_args
+
+    assert_file "app/controllers/welcome_controller.rb" do |content|
+      assert_match(/include Plutonium::Invites::PendingInviteCheck/, content)
+      assert_match(/invites_welcome_check_path/, content)
+      assert_match(/pending_invite/, content)
+      assert_match(/def invite_class/, content)
+      assert_match(/::Invites::UserInvite/, content)
+    end
+  end
+
+  test "skips WelcomeController integration when PendingInviteCheck already present" do
+    FileUtils.mkdir_p(destination_root.join("app/controllers"))
+    File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
+      class WelcomeController < AuthenticatedController
+        include Plutonium::Invites::PendingInviteCheck
+
+        def index
+        end
+      end
+    RUBY
+
+    run_generator default_args
+
+    assert_file "app/controllers/welcome_controller.rb" do |content|
+      # Should not duplicate the include
+      matches = content.scan("PendingInviteCheck")
+      assert_equal 1, matches.length
+    end
+  end
+
+  test "updates Invites::WelcomeController default_redirect_path when WelcomeController exists" do
+    # Create a main WelcomeController
+    FileUtils.mkdir_p(destination_root.join("app/controllers"))
+    File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
+      class WelcomeController < AuthenticatedController
+        def index
+        end
+      end
+    RUBY
+
+    run_generator default_args
+
+    assert_file "packages/invites/app/controllers/invites/welcome_controller.rb" do |content|
+      assert_match(/def default_redirect_path/, content)
+      assert_match(/"\/welcome"/, content)
+    end
+  end
+
   test "configures rodauth with session redirect in existing after_login" do
     run_generator default_args
 
@@ -316,6 +433,8 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/session\[:after_welcome_redirect\] = session\.delete\(:login_redirect\)/, content)
       # Should update login_redirect to /welcome
       assert_match(/login_redirect "\/welcome"/, content)
+      # Should add create_account_redirect
+      assert_match(/create_account_redirect "\/welcome"/, content)
     end
   end
 
@@ -534,6 +653,26 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
 
     assert_match(/Required files missing/, error.message)
     assert_match(/Entity policy not found/, error.message)
+  end
+
+  test "adds current_membership helper to resource policy" do
+    run_generator default_args
+
+    assert_file "app/policies/resource_policy.rb" do |content|
+      assert_match(/def current_membership/, content)
+      assert_match(/OrganizationUser\.find_by/, content)
+      assert_match(/private/, content)
+    end
+  end
+
+  test "does not duplicate routes on second run" do
+    run_generator default_args
+    run_generator default_args
+
+    assert_file "config/routes.rb" do |content|
+      matches = content.scan('get "invitations/welcome"')
+      assert_equal 1, matches.length, "Expected exactly 1 invitations/welcome route, found #{matches.length}"
+    end
   end
 
   test "fails when membership model file is missing" do

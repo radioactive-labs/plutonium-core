@@ -18,6 +18,7 @@
   <%%= link_to "View Invitation", invitation_path(token: @invite.token),
       class: "w-full block pu-btn pu-btn-md pu-btn-primary text-center" %>
 
-  <%%= link_to "Skip for Now", "/",
-      class: "w-full block pu-btn pu-btn-md pu-btn-outline text-center" %>
+  <%%= button_to "Skip for Now", invites_welcome_skip_path,
+      method: :delete,
+      class: "w-full pu-btn pu-btn-md pu-btn-outline text-center" %>
 </div>

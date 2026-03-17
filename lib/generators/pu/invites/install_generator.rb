@@ -9,6 +9,7 @@ module Pu
     class InstallGenerator < ::Rails::Generators::Base
       include ::ActiveRecord::Generators::Migration
       include PlutoniumGenerators::Generator
+      include PlutoniumGenerators::Concerns::RodauthRedirects
 
       source_root File.expand_path("templates", __dir__)
 
@@ -21,7 +22,7 @@ module Pu
         desc: "The user model name"
 
       class_option :membership_model, type: :string,
-        desc: "The membership model name (defaults to <Entity>User)"
+        desc: "The membership model name (defaults to <Entity><User>)"
 
       class_option :rodauth, type: :string, default: "user",
         desc: "Rodauth configuration name for signup integration"
@@ -153,7 +154,7 @@ module Pu
 
       def add_entity_policy
         inject_into_file entity_policy_path,
-          "def invite_user?\n    false # TODO: e.g., current_membership&.admin? or user.is_a?(Admin)\n  end\n\n  ",
+          "def invite_user?\n    current_membership&.owner?\n  end\n\n  ",
           before: "# Core attributes"
       end
 
@@ -170,7 +171,7 @@ module Pu
 
       def add_user_policy
         inject_into_file user_policy_path,
-          "def invite_user?\n    false # TODO: e.g., current_membership&.admin? or user.is_a?(Admin)\n  end\n\n  ",
+          "def invite_user?\n    current_membership&.owner?\n  end\n\n  ",
           before: "# Core attributes"
       end
 
@@ -201,11 +202,18 @@ module Pu
       end
 
       def add_routes
+        routes_content = File.read(Rails.root.join("config/routes.rb"))
+        if routes_content.include?("# User invitation routes")
+          say_status :skip, "Invitation routes already present", :yellow
+          return
+        end
+
         route_code = <<-RUBY
 
-  # User invitation routes (public, unauthenticated)
+  # User invitation routes
   scope module: :invites do
-    get "welcome", to: "welcome#index", as: :invites_welcome
+    get "invitations/welcome", to: "welcome#index", as: :invites_welcome_check
+    delete "invitations/welcome", to: "welcome#skip", as: :invites_welcome_skip
     get "invitations/:token", to: "user_invitations#show", as: :invitation
     post "invitations/:token/accept", to: "user_invitations#accept", as: :accept_invitation
     get "invitations/:token/signup", to: "user_invitations#signup", as: :invitation_signup
@@ -216,6 +224,20 @@ module Pu
         inject_into_file "config/routes.rb",
           route_code,
           before: /^end\s*\z/
+
+        # If no main WelcomeController exists, add /welcome route pointing to
+        # Invites::WelcomeController so Rodauth's login_redirect "/welcome" works.
+        unless File.exist?(Rails.root.join("app/controllers/welcome_controller.rb"))
+          welcome_route = <<-RUBY
+
+  # Welcome route (handled by invites package — replace with pu:saas:welcome for full onboarding)
+  get "welcome", to: "invites/welcome#index"
+          RUBY
+
+          inject_into_file "config/routes.rb",
+            welcome_route,
+            before: /^\s*# User invitation routes/
+        end
       end
 
       def configure_rodauth
@@ -297,10 +319,46 @@ module Pu
             after: /login_redirect.*\n/
         end
 
-        # Update login_redirect to /welcome
-        gsub_file rodauth_file,
-          /login_redirect\s+["']\/["']/,
-          'login_redirect "/welcome"'
+        # Update login_redirect and create_account_redirect to /welcome
+        update_rodauth_redirects(rodauth_file)
+      end
+
+      def integrate_with_welcome_controller
+        welcome_controller_path = Rails.root.join("app/controllers/welcome_controller.rb")
+        return unless File.exist?(welcome_controller_path)
+
+        file_content = File.read(welcome_controller_path)
+        return if file_content.include?("PendingInviteCheck")
+
+        relative_path = "app/controllers/welcome_controller.rb"
+
+        # Add PendingInviteCheck concern
+        inject_into_file relative_path,
+          "  include Plutonium::Invites::PendingInviteCheck\n",
+          after: /class WelcomeController.*\n/
+
+        # Add invite check as first step in index
+        inject_into_file relative_path,
+          "    return redirect_to(invites_welcome_check_path) if pending_invite\n\n",
+          after: /def index\n/
+
+        # Add invite_class method if not present
+        unless file_content.include?("def invite_class")
+          inject_into_file relative_path,
+            "\n  def invite_class\n    ::Invites::UserInvite\n  end\n",
+            before: /^end\s*\z/
+        end
+
+        # Update Invites::WelcomeController to redirect to /welcome (the main hub)
+        # instead of / (the app root)
+        invites_welcome_path = "packages/invites/app/controllers/invites/welcome_controller.rb"
+        if File.exist?(Rails.root.join(invites_welcome_path))
+          gsub_file invites_welcome_path,
+            /def default_redirect_path\n\s*"\/"\n\s*end/,
+            "def default_redirect_path\n      \"/welcome\"\n    end"
+        end
+
+        say_status :info, "Integrated invite check into WelcomeController", :green
       end
 
       def show_instructions
@@ -373,13 +431,13 @@ module Pu
       end
 
       def membership_model
-        options[:membership_model] || "#{entity_model}User"
+        options[:membership_model] || "#{entity_model}#{user_model}"
       end
 
       def membership_model_file
         model_path = "#{membership_model.underscore}.rb"
         if entity_in_package?
-          Rails.root.join("packages", options[:dest], "app/models", model_path)
+          Rails.root.join("packages", entity_package, "app/models", model_path)
         else
           Rails.root.join("app/models", model_path)
         end

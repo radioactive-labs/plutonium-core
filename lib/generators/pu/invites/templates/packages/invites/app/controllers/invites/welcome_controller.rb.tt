@@ -4,15 +4,16 @@ module Invites
   class WelcomeController < ApplicationController
 <% if rodauth? -%>
     include Plutonium::Auth::Rodauth(:<%= rodauth_config %>)
+
+    before_action { rodauth.require_authentication }
+<% else -%>
+    before_action :require_authentication
+
 <% end -%>
     include Plutonium::Invites::PendingInviteCheck
 
     prepend_view_path Invites::Engine.root.join("app/views")
     layout "invites/invitation"
-
-<% if rodauth? -%>
-    before_action :require_authentication
-<% end -%>
 
     def index
       @invite = pending_invite
@@ -24,10 +25,15 @@ module Invites
       end
     end
 
+    def skip
+      cookies.delete(:pending_invitation)
+      redirect_to after_welcome_path, allow_other_host: false
+    end
+
     private
 
     def invite_class
-      Invites::UserInvite
+      ::Invites::UserInvite
     end
 
     # Returns the path to redirect to after the welcome flow completes.
@@ -40,30 +46,14 @@ module Invites
     def default_redirect_path
       "/"
     end
+<% unless rodauth? -%>
 
-<% if rodauth? -%>
     def require_authentication
-      redirect_to login_path unless current_user
-    end
-
-    # Override: the default current_user raises when not logged in,
-    # but this controller needs a nil return for the authentication check.
-    def current_user
-      rodauth.rails_account if rodauth.logged_in?
-    end
-
-    def login_path
-      rodauth.login_path
-    end
-<% else -%>
-    def require_authentication
-      # TODO: Implement based on your authentication system
-      redirect_to "/login" unless current_user
+      raise NotImplementedError, "#{self.class}#require_authentication must be implemented for your authentication system"
     end
 
     def current_user
-      # TODO: Implement based on your authentication system
-      nil
+      raise NotImplementedError, "#{self.class}#current_user must be implemented for your authentication system"
     end
 <% end -%>
   end

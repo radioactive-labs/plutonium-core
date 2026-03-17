@@ -32,8 +32,9 @@
     <div class="space-y-3 pt-4">
       <%%= form.submit "Accept Invitation",
           class: "w-full pu-btn pu-btn-md pu-btn-primary cursor-pointer" %>
-      <%%= link_to "Cancel", "/",
-          class: "w-full block pu-btn pu-btn-md pu-btn-outline text-center" %>
+      <%%= button_to "Skip for Now", invites_welcome_skip_path,
+          method: :delete,
+          class: "w-full pu-btn pu-btn-md pu-btn-outline text-center" %>
     </div>
   <%% end %>
 </div>

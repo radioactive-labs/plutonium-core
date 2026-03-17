@@ -12,7 +12,10 @@ Next steps:
    # packages/<portal>/config/routes.rb
    register_resource ::Invites::UserInvite
 
-3. (Optional) Connect invitable models that trigger invites:
+3. (Optional) Set up the welcome/onboarding flow if you haven't already:
+   rails g pu:saas:welcome --user-model=User --entity-model=Organization --portal=CustomerPortal
+
+4. (Optional) Connect invitable models that trigger invites:
    rails g pu:invites:invitable Tenant
    rails g pu:invites:invitable TeamMember --role=member
 

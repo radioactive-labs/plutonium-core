@@ -17,7 +17,9 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          presents label: "Cancel Invitation", icon: "outline/x-circle"
+          presents label: "Cancel Invitation", icon: Phlex::TablerIcons::CircleX
+
+          attribute :resource
         end
 
         def execute

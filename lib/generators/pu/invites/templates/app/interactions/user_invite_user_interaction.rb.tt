@@ -6,7 +6,7 @@ class <%= user_model %>::InviteUserInteraction < Plutonium::Resource::Interactio
   presents label: "Invite <%= user_model.underscore.humanize.titleize %>", icon: Phlex::TablerIcons::Mail
 
   attribute :role
-  input :role, as: :select, choices: Invites::UserInvite.roles.keys
+  input :role, as: :select, choices: Invites::UserInvite.roles.keys.excluding("owner")
 
   private
 

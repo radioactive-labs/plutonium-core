@@ -2,6 +2,8 @@
 
 module Invites
   class UserInviteMailer < ApplicationMailer
+    prepend_view_path Invites::Engine.root.join("app/views")
+
     def invitation(user_invite)
       @user_invite = user_invite
       @invitation_url = invitation_url(token: user_invite.token)

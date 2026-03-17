@@ -57,7 +57,7 @@ module Plutonium
         # Override to specify the invite model class
         # @return [Class]
         def invite_class
-          Invites::UserInvite
+          ::Invites::UserInvite
         end
 
         # Override to specify the membership model class
