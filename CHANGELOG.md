@@ -1,3 +1,13 @@
+## [0.44.1] - 2026-03-30
+
+### 🐛 Bug Fixes
+
+- *(railtie)* Register rescue responses before action_dispatch.configure
+- *(test)* Pass association SGIDs in create params to match form submission
+
+### 🚜 Refactor
+
+- *(form)* Use upstream @raw_choices from phlexi-form 0.14.2
 ## [0.44.0] - 2026-03-30
 
 ### 🚀 Features
