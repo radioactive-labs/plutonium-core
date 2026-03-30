@@ -1,3 +1,22 @@
+## [0.44.0] - 2026-03-30
+
+### 🚀 Features
+
+- Support singular parent resources and entity scoping in nested URL generation
+- *(generators)* Add pu:saas:welcome generator for post-login onboarding
+- *(generators)* Extend pu:saas:setup with portal, welcome, invites, and profile
+
+### 🐛 Bug Fixes
+
+- *(auth)* Lazy-load sequel to avoid requiring it when Rodauth is unused
+
+### 🚜 Refactor
+
+- Upgrade pagy from v9 to v43
+- *(generators)* Improve SaaS generators and shared concerns
+- *(invites)* Improve welcome flow, idempotent routes, and skip action
+- *(generators)* Add non-interactive prompt, improve build tooling and association resolver
+- *(test)* Restructure dummy app with catalog, multi-portal architecture
 ## [0.43.2] - 2026-03-13
 
 ### 🐛 Bug Fixes
