@@ -48,14 +48,39 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     assert_includes url, "return_to="
   end
 
+  def test_choices_uses_raw_choices_when_provided
+    user_choices = [["Alice", "1"], ["Bob", "2"]]
+    component = build_component(
+      skip_authorization: true,
+      raw_choices: user_choices
+    )
+
+    mapper = component.send(:choices)
+
+    assert_equal user_choices, mapper.instance_variable_get(:@collection)
+  end
+
+  def test_choices_falls_back_to_association_scope_when_no_raw_choices
+    relation = Object.new
+    component = build_component(
+      skip_authorization: true,
+      association_scope: relation
+    )
+
+    mapper = component.send(:choices)
+
+    assert_equal relation, mapper.instance_variable_get(:@collection)
+  end
+
   private
 
-  def build_component(registered_resources: [], skip_authorization: false, allowed: true, resource_url: nil, add_action: nil)
+  def build_component(registered_resources: [], skip_authorization: false, allowed: true, resource_url: nil, add_action: nil, raw_choices: nil, association_scope: nil)
     component = Plutonium::UI::Form::Components::SecureAssociation.allocate
 
     # Set instance variables that would normally be set by build_attributes
     component.instance_variable_set(:@skip_authorization, skip_authorization)
     component.instance_variable_set(:@add_action, add_action)
+    component.instance_variable_set(:@raw_choices, raw_choices)
 
     # Stub the dependencies
     reflection = Struct.new(:klass, :macro, :name).new(DummyUser, :belongs_to, :user)
@@ -68,6 +93,10 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
 
     if resource_url
       component.define_singleton_method(:resource_url_for) { |*_args, **_kwargs| resource_url }
+    end
+
+    if association_scope
+      component.define_singleton_method(:choices_from_association) { |_klass| association_scope }
     end
 
     component.define_singleton_method(:allowed_to?) { |*_args, **_kwargs| allowed }

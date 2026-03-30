@@ -14,17 +14,12 @@ module Plutonium
 
           def choices
             @choices ||= begin
-              Plutonium.eager_load_rails!
-              collection = if (user_choices = attributes.delete(:choices))
-                user_choices
-              else
-                associated_classes.map { |klass|
-                  [
-                    klass.model_name.human.pluralize,
-                    @skip_authorization ? choices_from_association(klass) : authorized_resource_scope(klass, relation: choices_from_association(klass))
-                  ]
-                }.to_h
-              end
+              collection = @raw_choices || associated_classes.map { |klass|
+                [
+                  klass.model_name.human.pluralize,
+                  @skip_authorization ? choices_from_association(klass) : authorized_resource_scope(klass, relation: choices_from_association(klass))
+                ]
+              }.to_h
               build_choice_mapper(collection)
             end
           end

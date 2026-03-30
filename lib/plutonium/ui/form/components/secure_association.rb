@@ -44,8 +44,8 @@ module Plutonium
 
           def choices
             @choices ||= begin
-              collection = if (user_choices = attributes.delete(:choices))
-                user_choices
+              collection = if @raw_choices
+                @raw_choices
               elsif @skip_authorization
                 choices_from_association(association_reflection.klass)
               else

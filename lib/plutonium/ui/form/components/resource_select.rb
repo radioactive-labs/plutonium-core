@@ -10,7 +10,7 @@ module Plutonium
 
           def choices
             @choices ||= begin
-              collection = attributes.delete(:choices) || @association_class&.all || []
+              collection = @raw_choices || @association_class&.all || []
               build_choice_mapper(collection)
             end
           end
