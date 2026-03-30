@@ -43,14 +43,14 @@ class StorefrontPortal::PublicAccessTest < ActionDispatch::IntegrationTest
 
   test "public: new post form is denied" do
     get "/storefront/blogging/posts/new"
-    assert_response :unauthorized
+    assert_response :forbidden
   end
 
   test "public: creating a post is denied" do
     assert_no_difference -> { Blogging::Post.count } do
       post "/storefront/blogging/posts", params: {blogging_post: {title: "Hack", body: "Nope"}}
     end
-    assert_response :unauthorized
+    assert_response :forbidden
   end
 
   test "public: destroying a post is denied" do
@@ -58,6 +58,6 @@ class StorefrontPortal::PublicAccessTest < ActionDispatch::IntegrationTest
     assert_no_difference -> { Blogging::Post.count } do
       delete "/storefront/blogging/posts/#{post_record.id}"
     end
-    assert_response :unauthorized
+    assert_response :forbidden
   end
 end

@@ -23,7 +23,7 @@ module Plutonium
       Rails.application.class.include Plutonium::Engine
     end
 
-    initializer "plutonium.rescue_responses" do |app|
+    initializer "plutonium.rescue_responses", before: "action_dispatch.configure" do |app|
       app.config.action_dispatch.rescue_responses["ActionPolicy::Unauthorized"] = :forbidden
     end
 
