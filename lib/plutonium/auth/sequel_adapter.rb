@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "sequel/core"
-
 module Plutonium
   module Auth
     # Provides runtime detection of the database adapter for Sequel configuration.
@@ -26,6 +24,7 @@ module Plutonium
         # @return [Sequel::Database] configured Sequel database connection
         # @raise [RuntimeError] if the Sequel adapter initialization fails
         def db
+          require "sequel/core"
           adapter = sequel_adapter
           begin
             if RUBY_ENGINE == "jruby"
