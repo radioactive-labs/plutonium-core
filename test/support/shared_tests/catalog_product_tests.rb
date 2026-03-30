@@ -29,9 +29,11 @@ module SharedTests
       # Create
       test "creates a product" do
         category = create_category!
+        # Create a product to link the category to the org (needed for associated_with_organization scope)
+        create_product!(category: category)
         assert_difference -> { Catalog::Product.count }, 1 do
           post "#{path_prefix}/catalog/products", params: {
-            catalog_product: {name: "New Product", category_id: category.id, price_cents: 1999}
+            catalog_product: {name: "New Product", category: category.to_sgid.to_s, user: @user.to_sgid.to_s, organization: @org.to_sgid.to_s, price_cents: 1999}
           }
         end
         assert_response :redirect

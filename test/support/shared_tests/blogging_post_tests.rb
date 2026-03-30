@@ -30,7 +30,7 @@ module SharedTests
         create_organization! unless @org
         assert_difference -> { Blogging::Post.count }, 1 do
           post "#{path_prefix}/blogging/posts", params: {
-            blogging_post: {title: "New Post", body: "New body", status: :draft}
+            blogging_post: {title: "New Post", body: "New body", status: :draft, user: @user.to_sgid.to_s, organization: @org.to_sgid.to_s}
           }
         end
         assert_response :redirect
