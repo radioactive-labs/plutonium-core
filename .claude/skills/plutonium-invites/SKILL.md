@@ -1,6 +1,6 @@
 ---
 name: plutonium-invites
-description: Plutonium user invites - invitation system for multi-tenant apps with entity memberships
+description: Use when setting up user invitations with entity membership in a multi-tenant Plutonium app
 ---
 
 # Plutonium User Invites

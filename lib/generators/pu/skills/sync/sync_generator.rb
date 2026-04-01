@@ -31,6 +31,9 @@ module Pu
 
         say_status("info", "Syncing #{skill_dirs.size} skills from Plutonium...", :blue)
 
+        # Remove skills that no longer exist in source
+        remove_stale_skills(source_dir, destination_dir, skill_dirs)
+
         skill_dirs.each do |skill_name|
           sync_skill(source_dir, destination_dir, skill_name)
         end
@@ -41,6 +44,24 @@ module Pu
       end
 
       private
+
+      def remove_stale_skills(source_dir, destination_dir, current_skill_names)
+        return unless File.directory?(destination_dir)
+
+        Dir.children(destination_dir).each do |existing_name|
+          dest_path = destination_dir.join(existing_name)
+          next unless File.directory?(dest_path)
+          next if current_skill_names.include?(existing_name)
+
+          # Only remove if it was originally synced from Plutonium (has a SKILL.md with plutonium in the name)
+          skill_file = dest_path.join("SKILL.md")
+          next unless File.exist?(skill_file)
+          next unless File.read(skill_file, 200).match?(/^name:\s*plutonium/m)
+
+          FileUtils.rm_rf(dest_path)
+          say_status("removed", existing_name, :yellow)
+        end
+      end
 
       def sync_skill(source_dir, destination_dir, skill_name)
         source_skill_dir = source_dir.join(skill_name)

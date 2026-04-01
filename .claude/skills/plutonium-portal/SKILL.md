@@ -1,6 +1,6 @@
 ---
 name: plutonium-portal
-description: Plutonium portals - web interfaces with authentication, entity scoping, and routes
+description: Use when creating portals, connecting resources to portals, configuring authentication, entity scoping, or portal routes
 ---
 
 # Plutonium Portals
@@ -32,10 +32,7 @@ rails g pu:pkg:portal custom --byo
 rails g pu:pkg:portal admin --auth=admin --scope=Organization
 ```
 
-Without flags, the generator prompts interactively:
-- **Rodauth account** - Use existing Rodauth authentication
-- **Public access** - No authentication required
-- **Bring your own** - Implement custom `current_user`
+Without flags, the generator prompts interactively.
 
 ## Portal Engine
 
@@ -52,6 +49,86 @@ module DashboardPortal
   end
 end
 ```
+
+## Connecting Resources to Portals
+
+Resources must be connected to a portal to be accessible via its web interface.
+
+### Command Syntax
+
+```bash
+rails g pu:res:conn RESOURCE [RESOURCE...] --dest=PORTAL_NAME [--singular]
+```
+
+**Always specify resources directly** - this avoids interactive prompts.
+
+### Usage Patterns
+
+```bash
+# Main app resources
+rails g pu:res:conn Post Comment Tag --dest=dashboard_portal
+
+# Namespaced resources (from a feature package)
+rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
+
+# Singular resources (profile, dashboard, settings)
+rails g pu:res:conn Profile --dest=customer_portal --singular
+```
+
+### What Gets Generated
+
+For a resource `Post` connected to `admin_portal`:
+
+```
+packages/admin_portal/app/
+├── controllers/admin_portal/posts_controller.rb   # Portal controller
+├── policies/admin_portal/post_policy.rb           # Portal policy
+└── definitions/admin_portal/post_definition.rb    # Portal definition
+```
+
+Plus route registration in `packages/admin_portal/config/routes.rb`.
+
+### Generated Controller
+
+```ruby
+class AdminPortal::PostsController < ::PostsController
+  include AdminPortal::Concerns::Controller
+end
+```
+
+### Generated Policy
+
+```ruby
+class AdminPortal::PostPolicy < ::PostPolicy
+  include AdminPortal::ResourcePolicy
+
+  def permitted_attributes_for_create
+    [:title, :content, :user_id]
+  end
+
+  def permitted_attributes_for_read
+    [:title, :content, :user_id, :created_at, :updated_at]
+  end
+
+  def permitted_associations
+    %i[]
+  end
+end
+```
+
+### Route Registration
+
+```ruby
+# In packages/admin_portal/config/routes.rb
+register_resource ::Post
+register_resource ::Profile, singular: true  # With --singular
+```
+
+### Important Notes
+
+1. **Always specify resources directly** - avoids prompts, no `--src` needed
+2. **Always use the generator** - never manually connect resources
+3. **Run after migrations** - the generator reads model columns for policy attributes
 
 ## Authentication
 
@@ -224,13 +301,6 @@ register_resource ::Post do
 end
 ```
 
-This generates:
-- `GET /posts/:id/preview`
-- `GET /posts/:id/analytics`
-- `POST /posts/:id/publish`
-- `GET /posts/archived`
-- `POST /posts/bulk_publish`
-
 ### Mounting in Main App
 
 ```ruby
@@ -263,8 +333,6 @@ end
 
 ### Portal ResourceController
 
-The portal's `ResourceController` serves as the base class for resource controllers when no feature package controller exists. It includes the portal's `Concerns::Controller` so individual resource controllers don't need to.
-
 ```ruby
 # packages/dashboard_portal/app/controllers/dashboard_portal/resource_controller.rb
 module DashboardPortal
@@ -279,7 +347,6 @@ end
 For portal pages not tied to a resource (dashboard, settings, etc.), inherit from `PlutoniumController`:
 
 ```ruby
-# packages/dashboard_portal/app/controllers/dashboard_portal/dashboard_controller.rb
 module DashboardPortal
   class DashboardController < PlutoniumController
     def index
@@ -294,10 +361,7 @@ end
 ### Override Definition
 
 ```ruby
-# packages/dashboard_portal/app/definitions/dashboard_portal/post_definition.rb
 class DashboardPortal::PostDefinition < ::PostDefinition
-  # Hide certain actions from this portal
-  # Add portal-specific scopes
   scope :my_posts, -> { where(user: current_user) }
 end
 ```
@@ -305,7 +369,6 @@ end
 ### Override Policy
 
 ```ruby
-# packages/dashboard_portal/app/policies/dashboard_portal/post_policy.rb
 class DashboardPortal::PostPolicy < ::PostPolicy
   include DashboardPortal::ResourcePolicy
 
@@ -322,46 +385,12 @@ end
 ### Override Controller
 
 ```ruby
-# packages/dashboard_portal/app/controllers/dashboard_portal/posts_controller.rb
 module DashboardPortal
   class PostsController < ResourceController
     private
 
     def preferred_action_after_submit
       "index"
-    end
-  end
-end
-```
-
-## Layout and Views
-
-### Portal Layout
-
-```erb
-<!-- packages/dashboard_portal/app/views/layouts/dashboard_portal.html.erb -->
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Dashboard</title>
-  <%= csrf_meta_tags %>
-  <%= stylesheet_link_tag "application" %>
-</head>
-<body>
-  <nav><!-- Portal navigation --></nav>
-  <main><%= yield %></main>
-</body>
-</html>
-```
-
-### Dashboard Controller
-
-```ruby
-# packages/dashboard_portal/app/controllers/dashboard_portal/dashboard_controller.rb
-module DashboardPortal
-  class DashboardController < PlutoniumController
-    def index
-      # Dashboard home page
     end
   end
 end
@@ -400,17 +429,26 @@ module PublicPortal
 end
 ```
 
-Each portal can:
-- Have different authentication
-- Show different fields
-- Allow different actions
-- Use different layouts
+## Typical Workflow
+
+```bash
+# 1. Create portal
+rails g pu:pkg:portal admin --auth=admin --scope=Organization
+
+# 2. Create resources
+rails g pu:res:scaffold Post user:belongs_to title:string 'content:text?' --dest=main_app
+rails db:migrate
+
+# 3. Connect resources to portal
+rails g pu:res:conn Post --dest=admin_portal
+
+# 4. Customize portal-specific definitions/policies as needed
+```
 
 ## Related Skills
 
 - `plutonium-package` - Package overview (features vs portals)
 - `plutonium-rodauth` - Authentication setup and configuration
-- `plutonium-connect-resource` - Connecting resources to portals
 - `plutonium-policy` - Portal-specific policies
 - `plutonium-definition` - Portal-specific definitions
 - `plutonium-controller` - Portal-specific controllers

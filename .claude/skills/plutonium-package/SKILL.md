@@ -1,6 +1,6 @@
 ---
 name: plutonium-package
-description: Plutonium packages - modular Rails engines for organizing features and portals
+description: Use when creating feature packages or portal packages to organize a Plutonium app into modular engines
 ---
 
 # Plutonium Packages
@@ -186,6 +186,6 @@ rails db:migrate  # Runs migrations from all packages
 ## Related Skills
 
 - `plutonium-portal` - Portal-specific features (auth, entity scoping, routes)
-- `plutonium-resource` - Resource architecture overview
-- `plutonium-connect-resource` - Connecting resources to portals
+- `plutonium` - Resource architecture overview
+- `plutonium-portal` - Connecting resources to portals
 - `plutonium-create-resource` - Creating resources

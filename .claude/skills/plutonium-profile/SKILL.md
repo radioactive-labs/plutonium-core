@@ -1,6 +1,6 @@
 ---
 name: plutonium-profile
-description: Plutonium user profile - account settings page with Rodauth security links
+description: Use when adding a user profile or account settings page with Rodauth security features
 ---
 
 # Plutonium User Profile
@@ -273,4 +273,4 @@ current_user.profile || current_user.create_profile
 - `plutonium-rodauth` - Authentication configuration
 - `plutonium-definition` - Customizing the profile definition
 - `plutonium-views` - Custom pages and components
-- `plutonium-connect-resource` - Connecting resources to portals
+- `plutonium-portal` - Connecting resources to portals

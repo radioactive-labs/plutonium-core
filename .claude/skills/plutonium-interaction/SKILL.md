@@ -1,6 +1,6 @@
 ---
 name: plutonium-interaction
-description: Plutonium interactions - encapsulated business logic for custom actions
+description: Use when writing interaction classes for custom business logic, multi-step operations, or actions beyond basic CRUD
 ---
 
 # Plutonium Interactions
@@ -68,7 +68,7 @@ input :content, as: :text
 input :date, as: :date
 ```
 
-See `plutonium-definition-fields` skill for all input types and options.
+See `plutonium-definition` skill for all input types and options.
 
 ## Presentation
 
@@ -380,4 +380,4 @@ end
 - `plutonium-definition-actions` - Declaring actions in definitions
 - `plutonium-forms` - Custom interaction form templates
 - `plutonium-policy` - Controlling access to actions
-- `plutonium-resource` - How interactions fit in the architecture
+- `plutonium` - How interactions fit in the architecture

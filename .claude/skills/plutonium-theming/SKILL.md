@@ -1,6 +1,6 @@
 ---
 name: plutonium-theming
-description: Plutonium design token system - CSS custom properties, component classes, and consistent styling patterns
+description: Use when customizing colors, typography, spacing, or component appearance via Plutonium design tokens
 ---
 
 # Plutonium Design Token System

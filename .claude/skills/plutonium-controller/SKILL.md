@@ -1,9 +1,13 @@
 ---
 name: plutonium-controller
-description: Plutonium resource controllers - CRUD actions, customization, and integration
+description: Use when customizing controller behavior, overriding CRUD actions, adding hooks, or changing redirect logic in Plutonium
 ---
 
 # Plutonium Controllers
+
+**Controllers are generated automatically** - never create them manually:
+- `rails g pu:res:scaffold` creates the base controller
+- `rails g pu:res:conn` creates portal-specific controllers
 
 Controllers in Plutonium provide full CRUD functionality out of the box. You rarely need to customize them - definitions handle most UI configuration and policies handle authorization.
 
@@ -377,7 +381,7 @@ end
 
 ## Related Skills
 
-- `plutonium-resource` - How controllers fit in the resource architecture
+- `plutonium` - How controllers fit in the resource architecture
 - `plutonium-policy` - Authorization (used by controllers)
 - `plutonium-definition-actions` - Interactive actions (preferred over custom controller actions)
 - `plutonium-views` - Custom page, form, display, and table classes

@@ -1,9 +1,13 @@
 ---
 name: plutonium-policy
-description: Plutonium resource policies - authorization, attribute permissions, and scoping
+description: Use when configuring authorization - action permissions, attribute visibility, relation scoping, or per-portal policies
 ---
 
 # Plutonium Policies
+
+**Policies are generated automatically** - never create them manually:
+- `rails g pu:res:scaffold` creates the base policy
+- `rails g pu:res:conn` creates portal-specific policies with attribute permissions
 
 Policies control WHO can do WHAT with resources. Built on [ActionPolicy](https://actionpolicy.evilmartians.io/).
 
@@ -456,6 +460,6 @@ end
 
 ## Related Skills
 
-- `plutonium-resource` - How policies fit in the resource architecture
+- `plutonium` - How policies fit in the resource architecture
 - `plutonium-definition-actions` - Actions that need policy methods
 - `plutonium-controller` - How controllers use policies

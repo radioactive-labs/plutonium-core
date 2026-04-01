@@ -1,6 +1,6 @@
 ---
 name: plutonium-rodauth
-description: Plutonium Rodauth integration - authentication setup, account types, and configuration
+description: Use when setting up authentication - Rodauth configuration, account types, login flows, or multi-account support
 ---
 
 # Plutonium Rodauth Authentication

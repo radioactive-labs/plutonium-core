@@ -1,6 +1,6 @@
 ---
 name: plutonium-definition-actions
-description: Add custom actions and interactions to Plutonium resources
+description: Use when adding custom actions, bulk operations, or wiring interactions into Plutonium resource definitions
 ---
 
 # Definition Actions
@@ -418,7 +418,7 @@ end
 ## Related Skills
 
 - `plutonium-definition` - Overview and structure
-- `plutonium-definition-fields` - Fields, inputs, displays
+- `plutonium-definition` - Fields, inputs, displays
 - `plutonium-definition-query` - Search, filters, scopes
 - `plutonium-interaction` - Writing interaction classes
 - `plutonium-policy` - Controlling action access

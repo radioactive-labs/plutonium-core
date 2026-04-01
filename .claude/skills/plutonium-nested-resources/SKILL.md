@@ -1,9 +1,16 @@
 ---
 name: plutonium-nested-resources
-description: Plutonium nested resources - parent/child routes, scoping, and URL generation
+description: Use when configuring parent/child resource relationships, nested routes, or scoped URL generation in Plutonium
 ---
 
 # Nested Resources
+
+**Always use generators** to create both parent and child resources, then connect them to portals:
+```bash
+rails g pu:res:scaffold Company name:string --dest=main_app
+rails g pu:res:scaffold Property company:belongs_to name:string --dest=main_app
+rails g pu:res:conn Company Property --dest=admin_portal
+```
 
 Plutonium automatically creates nested routes for `has_many` and `has_one` associations, scopes queries to the parent, and handles URL generation.
 
@@ -333,4 +340,4 @@ Generates nested routes:
 - `plutonium-portal` - Route registration
 - `plutonium-policy` - Authorization and scoping
 - `plutonium-controller` - Presentation hooks
-- `plutonium-model-features` - associated_with scope
+- `plutonium-model` - associated_with scope

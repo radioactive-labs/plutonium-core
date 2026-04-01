@@ -1,9 +1,13 @@
 ---
 name: plutonium-forms
-description: Plutonium forms - custom templates, Phlex form components, field builders, and theming
+description: Use when building custom form templates, overriding field builders, or theming form components in Plutonium
 ---
 
 # Plutonium Forms
+
+**Use generators for custom field types:**
+- `rails g pu:field:input NAME` creates a custom form input component
+- `rails g pu:field:renderer NAME` creates a custom display renderer
 
 Plutonium forms are built on [Phlexi::Form](https://github.com/radioactive-labs/phlexi-form), providing a Ruby-first approach to form building with Phlex components.
 
@@ -447,7 +451,7 @@ end
 
 ## Related Skills
 
-- `plutonium-definition-fields` - Input configuration (as:, hint:, condition:)
+- `plutonium-definition` - Input configuration (as:, hint:, condition:)
 - `plutonium-views` - Custom page classes
 - `plutonium-assets` - TailwindCSS and component theming
 - `plutonium-interaction` - Interactive action forms

@@ -1,6 +1,6 @@
 ---
 name: plutonium-installation
-description: Installing Plutonium in a Rails application - setup, generators, and configuration
+description: Use when installing Plutonium in a new or existing Rails app - generators, configuration, and initial setup
 ---
 
 # Plutonium Installation
@@ -292,11 +292,11 @@ For models that already exist in your app:
 
 ## Related Skills
 
-- `plutonium-resource` - Resource architecture overview
+- `plutonium` - Resource architecture overview
 - `plutonium-rodauth` - Authentication setup and configuration
 - `plutonium-package` - Feature and portal packages
 - `plutonium-portal` - Portal configuration
 - `plutonium-views` - Custom pages, layouts, and Phlex components
 - `plutonium-assets` - TailwindCSS and custom styling
 - `plutonium-create-resource` - Resource scaffold options
-- `plutonium-connect-resource` - Portal connection
+- `plutonium-portal` - Portal connection

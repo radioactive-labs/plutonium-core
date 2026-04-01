@@ -1,6 +1,6 @@
 ---
 name: plutonium-assets
-description: Plutonium asset setup - TailwindCSS configuration, Stimulus controllers, and Phlexi component themes
+description: Use when setting up TailwindCSS, registering Stimulus controllers, or theming Phlexi components in a Plutonium app
 ---
 
 # Plutonium Assets & Setup

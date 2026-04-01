@@ -1,6 +1,6 @@
 ---
 name: plutonium-definition-query
-description: Configure search, filters, scopes, and sorting for Plutonium resources
+description: Use when adding search, filters, named scopes, or sorting to a Plutonium resource definition
 ---
 
 # Definition Query
@@ -360,5 +360,5 @@ end
 ## Related Skills
 
 - `plutonium-definition` - Overview and structure
-- `plutonium-definition-fields` - Fields, inputs, displays
+- `plutonium-definition` - Fields, inputs, displays
 - `plutonium-definition-actions` - Actions and interactions

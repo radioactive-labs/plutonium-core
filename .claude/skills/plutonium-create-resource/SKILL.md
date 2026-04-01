@@ -1,6 +1,6 @@
 ---
 name: plutonium-create-resource
-description: Generate Plutonium resources with models, migrations, controllers, policies, and definitions
+description: Use when creating a new Plutonium resource - covers the pu:res:scaffold generator, field type syntax, and generator options
 ---
 
 # Create Resource Skill

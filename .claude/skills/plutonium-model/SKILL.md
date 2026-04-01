@@ -1,9 +1,15 @@
 ---
 name: plutonium-model
-description: Overview of Plutonium resource models - structure, setup, and best practices
+description: Use when working with Plutonium resource models - setup, structure, has_cents, associations, SGID support, entity scoping, and routing
 ---
 
 # Plutonium Resource Models
+
+**Always use generators to create models** - never create model files manually:
+```bash
+rails g pu:res:scaffold Post title:string content:text --dest=main_app
+```
+See `plutonium-create-resource` for full field type syntax and generator options.
 
 A model becomes a Plutonium resource by including `Plutonium::Resource::Record`. This provides enhanced ActiveRecord functionality for routing, labeling, field introspection, associations, and monetary handling.
 
@@ -122,88 +128,220 @@ end
 13. **Misc attribute macros** - `has_rich_text`, `has_secure_token`, `has_secure_password`
 14. **Methods** - Public methods above, private methods below
 
-## Common Patterns
+## Monetary Handling (has_cents)
 
-### Archiving (State-Based)
+Store monetary values as integers (cents) while exposing decimal interfaces.
 
-```ruby
-class Property < ResourceRecord
-  enum :state, archived: 0, active: 1
-
-  scope :active, -> { where(state: :active) }
-  scope :archived, -> { where(state: :archived) }
-
-  def archive!
-    update!(state: :archived)
-  end
-
-  def restore!
-    update!(state: :active)
-  end
-end
-```
-
-### Multi-Tenant Scoping
+### Basic Usage
 
 ```ruby
-class Property < ResourceRecord
-  belongs_to :company
-
-  # Compound uniqueness for multi-tenant
-  validates :property_code, uniqueness: {scope: :company_id}
-
-  # Custom scope for entity scoping
-  scope :associated_with_company, ->(company) { where(company: company) }
+class Product < ResourceRecord
+  has_cents :price_cents                    # Creates price getter/setter
+  has_cents :cost_cents, name: :wholesale   # Custom accessor name
+  has_cents :tax_cents, rate: 1000          # 3 decimal places
+  has_cents :quantity_cents, rate: 1        # Whole numbers only
 end
+
+product = Product.new
+product.price = 19.99
+product.price_cents  # => 1999
+product.price        # => 19.99
+
+# Truncates (doesn't round)
+product.price = 10.999
+product.price_cents  # => 1099
 ```
 
-### Custom Validation
+### Options
 
 ```ruby
-class Contact < ResourceRecord
-  validates :contact_type, presence: true
-
-  validate :ensure_contact_provided
-
-  private
-
-  def ensure_contact_provided
-    return unless [email, phone, website].all?(&:blank?)
-    errors.add(:base, "Please provide at least one contact method")
-  end
-end
+has_cents :field_cents,
+  name: :custom_name,    # Accessor name (default: field without _cents)
+  rate: 100,             # Conversion rate (default: 100)
+  suffix: "amount"       # Suffix for generated name (default: "amount")
 ```
 
-### One-to-One Relationships
+### Validation
 
 ```ruby
-# Parent side
-class Tenant < ResourceRecord
-  has_one :residential_profile, class_name: "ResidentialTenantProfile"
-  has_one :commercial_profile, class_name: "CommercialTenantProfile"
+class Product < ResourceRecord
+  has_cents :price_cents
+
+  # Validate the cents field
+  validates :price_cents, numericality: {greater_than: 0}
 end
 
-# Child side (unique index on foreign key)
-class ResidentialTenantProfile < ResourceRecord
-  belongs_to :tenant
-  # Migration: t.index :tenant_id, unique: true
-end
+product = Product.new(price: -10)
+product.valid?  # => false
+product.errors[:price_cents]  # => ["must be greater than 0"]
+product.errors[:price]        # => ["is invalid"] (propagated)
 ```
 
-### Polymorphic Associations
+### Introspection
+
+```ruby
+Product.has_cents_attributes
+# => {price_cents: {name: :price, rate: 100}, ...}
+
+Product.has_cents_attribute?(:price_cents)  # => true
+```
+
+## Association SGID Support
+
+All associations get Signed Global ID (SGID) methods for secure serialization.
+
+### Singular Associations (belongs_to, has_one)
+
+```ruby
+class Post < ResourceRecord
+  belongs_to :user
+  has_one :featured_image
+end
+
+post = Post.first
+
+# Get SGID
+post.user_sgid           # => "BAh7CEkiCG..."
+post.featured_image_sgid # => "BAh7CEkiCG..."
+
+# Set by SGID (finds and assigns)
+post.user_sgid = "BAh7CEkiCG..."
+post.featured_image_sgid = "BAh7CEkiCG..."
+```
+
+### Collection Associations (has_many, has_and_belongs_to_many)
+
+```ruby
+class User < ResourceRecord
+  has_many :posts
+  has_and_belongs_to_many :roles
+end
+
+user = User.first
+
+# Get SGIDs
+user.post_sgids  # => ["BAh7CEkiCG...", "BAh7CEkiCG..."]
+user.role_sgids  # => ["BAh7CEkiCG...", "BAh7CEkiCG..."]
+
+# Bulk assignment
+user.post_sgids = ["BAh7CEkiCG...", ...]
+
+# Individual manipulation
+user.add_post_sgid("BAh7CEkiCG...")     # Add to collection
+user.remove_post_sgid("BAh7CEkiCG...")  # Remove from collection
+```
+
+## Entity Scoping (associated_with)
+
+Query records associated with another record. Essential for multi-tenant apps.
+
+### Basic Usage
 
 ```ruby
 class Comment < ResourceRecord
-  belongs_to :commentable, polymorphic: true
+  belongs_to :post
 end
 
-class Post < ResourceRecord
-  has_many :comments, as: :commentable
+# Find comments for a post
+Comment.associated_with(post)
+# => Comment.where(post: post)
+```
+
+### Association Detection
+
+Works with:
+- `belongs_to` - Uses WHERE clause (most efficient)
+- `has_one` - Uses JOIN + WHERE
+- `has_many` - Uses JOIN + WHERE
+
+```ruby
+# Direct association (preferred)
+Comment.associated_with(post)  # WHERE post_id = ?
+
+# Reverse association (less efficient, logs warning)
+Post.associated_with(comment)  # JOIN comments WHERE comments.id = ?
+```
+
+### Custom Scopes
+
+For optimal performance, define custom scopes:
+
+```ruby
+class Comment < ResourceRecord
+  # Custom scope naming: associated_with_{model_name}
+  scope :associated_with_user, ->(user) do
+    joins(:post).where(posts: {user_id: user.id})
+  end
 end
 
-class Photo < ResourceRecord
-  has_many :comments, as: :commentable
+# Automatically uses custom scope
+Comment.associated_with(user)
+```
+
+### Error Handling
+
+```ruby
+# When no association exists
+UnrelatedModel.associated_with(user)
+# Raises: Could not resolve the association between 'UnrelatedModel' and 'User'
+#
+# Define:
+#  1. the associations between the models
+#  2. a named scope on UnrelatedModel e.g.
+#
+# scope :associated_with_user, ->(user) { do_something_here }
+```
+
+## URL Routing
+
+### Default Behavior
+
+```ruby
+user = User.find(1)
+user.to_param  # => "1"
+```
+
+### Custom Path Parameters
+
+Use a stable, unique field instead of ID:
+
+```ruby
+class User < ResourceRecord
+  private
+
+  def path_parameter(param_name)
+    :username  # Must be unique
+  end
 end
+
+user = User.create(username: "john_doe")
+user.to_param  # => "john_doe"
+# URLs: /users/john_doe
+```
+
+### Dynamic Path Parameters (SEO-friendly)
+
+Include ID prefix for uniqueness with human-readable suffix:
+
+```ruby
+class Article < ResourceRecord
+  private
+
+  def dynamic_path_parameter(param_name)
+    :title
+  end
+end
+
+article = Article.create(id: 1, title: "My Great Article")
+article.to_param  # => "1-my-great-article"
+# URLs: /articles/1-my-great-article
+```
+
+### Path Parameter Lookup
+
+```ruby
+User.from_path_param("john_doe")
+Article.from_path_param("1-my-great-article")  # Extracts ID
 ```
 
 ## Labeling
@@ -244,6 +382,49 @@ User.has_one_attached_field_names         # Active Storage single
 User.has_many_attached_field_names        # Active Storage multiple
 ```
 
+## Common Patterns
+
+### Archiving (State-Based)
+
+```ruby
+class Property < ResourceRecord
+  enum :state, archived: 0, active: 1
+
+  scope :active, -> { where(state: :active) }
+  scope :archived, -> { where(state: :archived) }
+end
+```
+
+### Multi-Tenant Scoping
+
+```ruby
+class Property < ResourceRecord
+  belongs_to :company
+
+  # Compound uniqueness for multi-tenant
+  validates :property_code, uniqueness: {scope: :company_id}
+
+  # Custom scope for entity scoping
+  scope :associated_with_company, ->(company) { where(company: company) }
+end
+```
+
+## Performance Tips
+
+```ruby
+# Efficient: Direct belongs_to
+Comment.associated_with(post)  # Simple WHERE
+
+# Less efficient: Reverse has_many (logs warning)
+Post.associated_with(comment)  # JOIN required
+
+# Optimal: Custom scope when direct isn't possible
+scope :associated_with_user, ->(user) { where(user_id: user.id) }
+
+# SGID: Batch assignment over individual adds
+user.post_sgids = sgid_array  # Single operation
+```
+
 ## Best Practices
 
 1. **Use enums for state** - `enum :state, archived: 0, active: 1` instead of soft-delete
@@ -253,15 +434,7 @@ User.has_many_attached_field_names        # Active Storage multiple
 5. **Validate at boundaries** - Validate user input, trust internal code
 6. **Use scopes** - Define commonly used queries as scopes
 
-## Integration
-
-Models integrate with:
-- **Policies** - `resource_field_names` for auto-detection
-- **Definitions** - Field introspection for forms/displays
-- **Controllers** - `from_path_param` for lookups
-- **Query Objects** - Association detection for sorting
-
 ## Related Skills
 
-- `plutonium-model-features` - has_cents, associations, scopes, routes
 - `plutonium-create-resource` - Scaffold generator for new resources
+- `plutonium-definition` - Definition overview, fields, inputs, displays
