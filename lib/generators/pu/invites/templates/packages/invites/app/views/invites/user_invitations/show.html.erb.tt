@@ -28,13 +28,13 @@
     </div>
   <%% end %>
 
-  <%%= form_with url: accept_invitation_path(token: params[:token]), method: :post, local: true do |form| %>
-    <div class="space-y-3 pt-4">
+  <div class="space-y-3 pt-4">
+    <%%= form_with url: accept_invitation_path(token: params[:token]), method: :post, local: true do |form| %>
       <%%= form.submit "Accept Invitation",
           class: "w-full pu-btn pu-btn-md pu-btn-primary cursor-pointer" %>
-      <%%= button_to "Skip for Now", invites_welcome_skip_path,
-          method: :delete,
-          class: "w-full pu-btn pu-btn-md pu-btn-outline text-center" %>
-    </div>
-  <%% end %>
+    <%% end %>
+    <%%= button_to "Skip for Now", invites_welcome_skip_path,
+        method: :delete,
+        class: "w-full pu-btn pu-btn-md pu-btn-outline text-center" %>
+  </div>
 </div>

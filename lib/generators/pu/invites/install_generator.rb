@@ -332,9 +332,9 @@ module Pu
 
         relative_path = "app/controllers/welcome_controller.rb"
 
-        # Add PendingInviteCheck concern
+        # Add PendingInviteCheck concern and invites view path
         inject_into_file relative_path,
-          "  include Plutonium::Invites::PendingInviteCheck\n",
+          "  include Plutonium::Invites::PendingInviteCheck\n\n  prepend_view_path Invites::Engine.root.join(\"app/views\")\n",
           after: /class WelcomeController.*\n/
 
         # Add invite check as first step in index
