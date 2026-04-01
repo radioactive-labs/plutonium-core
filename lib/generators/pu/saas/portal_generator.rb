@@ -27,6 +27,7 @@ module Pu
         connect_entity_to_portal
         customize_entity_policy
         add_entity_url_helper
+        add_entity_link_to_header
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -90,6 +91,18 @@ module Pu
         inject_into_file concerns_controller_path, content, after: /# add concerns above\.\n/
       end
 
+      def add_entity_link_to_header
+        header_path = resource_header_path
+        return unless File.exist?(Rails.root.join(header_path))
+
+        file_content = File.read(Rails.root.join(header_path))
+        return if file_content.include?("entity_url")
+
+        inject_into_file header_path,
+          "          section.with_link(label: current_scoped_entity.name, href: entity_url)\n",
+          before: /\s*section\.with_link\(label: "Profile"/
+      end
+
       def entity_model
         options[:entity_model].camelize
       end
@@ -116,6 +129,10 @@ module Pu
 
       def entity_policy_path
         "packages/#{portal_package}/app/policies/#{portal_package}/#{entity_table}_policy.rb"
+      end
+
+      def resource_header_path
+        "packages/#{portal_package}/app/views/plutonium/_resource_header.html.erb"
       end
     end
   end
