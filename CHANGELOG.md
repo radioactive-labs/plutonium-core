@@ -1,3 +1,18 @@
+## [0.45.0] - 2026-04-01
+
+### 🚀 Features
+
+- *(generator)* Add entity link to portal resource header
+- *(tokens)* Add --pu-text-danger CSS token
+
+### 🐛 Bug Fixes
+
+- *(engine)* Suffix scoped_entity_param_key to prevent route param collision
+- *(invites)* Add view path and fix nested form in invitation template
+
+### 🚜 Refactor
+
+- *(skills)* Consolidate skills and improve discoverability
 ## [0.44.1] - 2026-03-30
 
 ### 🐛 Bug Fixes
