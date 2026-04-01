@@ -187,8 +187,8 @@ module Plutonium
         # OrgPortal has path-based entity scoping with Organization
         result = OrgPortal::Engine.routes.entity_scope_params_for_path_strategy
 
-        assert_equal ":organization", result[:name]
-        assert_equal({as: :organization}, result[:options])
+        assert_equal ":organization_scope", result[:name]
+        assert_equal({as: :organization_scope}, result[:options])
       end
 
       # singular_resource_route? tests using real engine routes
