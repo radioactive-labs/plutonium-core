@@ -12,6 +12,7 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def teardown
+    Widget.delete_all
     Blogging::PostDetail.delete_all
     Comment.delete_all
     Blogging::Post.delete_all

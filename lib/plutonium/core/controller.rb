@@ -88,14 +88,16 @@ module Plutonium
       # @return [Hash] args to pass to `url_for`
       #
       def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, **kwargs)
-        target_package = package || current_package
+        element = args.first
+
+        raise ArgumentError, "parent is required when using symbol association name" if element.is_a?(Symbol) && parent.nil?
 
         # For nested resources, use named route helpers to avoid Rails param recall ambiguity
         if parent.present?
-          assoc_name = if args.first.is_a?(Symbol)
-            args.first
+          assoc_name = if element.is_a?(Symbol)
+            element
           else
-            association || resolve_association(args.first, parent)
+            association || resolve_association(element, parent)
           end
 
           nested_route_key = "#{parent.class.model_name.plural}/#{assoc_name}"
@@ -103,7 +105,7 @@ module Plutonium
 
           if route_config
             return build_nested_resource_url_args(
-              args.first,
+              element,
               parent: parent,
               association_name: assoc_name,
               route_config: route_config,
@@ -113,8 +115,8 @@ module Plutonium
           end
         end
 
-        # Top-level resource: build controller/action hash for url_for
-        build_top_level_resource_url_args(*args, action: action, parent: parent, association: association, package: target_package, **kwargs)
+        # Top-level resource: use named route helpers
+        build_top_level_resource_url_args(element, action: action, **kwargs)
       end
 
       def resource_url_for(*args, package: nil, **kwargs)
@@ -202,61 +204,73 @@ module Plutonium
         {_named_route: helper_name, _args: helper_args, _options: url_options}
       end
 
-      def build_top_level_resource_url_args(*args, action: nil, parent: nil, association: nil, package: nil, **kwargs)
-        url_args = {**kwargs, action: action}.compact
-
-        controller_chain = [package&.to_s].compact
-        [*args].compact.each_with_index do |element, index|
-          if element.is_a?(Symbol)
-            raise ArgumentError, "parent is required when using symbol association name" unless parent
-
-            assoc = parent.class.reflect_on_association(element)
-            raise ArgumentError, "Unknown association :#{element} on #{parent.class}" unless assoc
-
-            controller_chain << assoc.klass.to_s.pluralize
-            url_args[:action] ||= :index if index == args.length - 1
-          elsif element.is_a?(Class)
-            controller_chain << element.to_s.pluralize
-            if index == args.length - 1
-              # Singular resources have no index, default to show
-              is_singular = current_engine.routes.singular_resource_route?(element.model_name.plural)
-              url_args[:action] ||= is_singular ? :show : :index
-            end
-          else
-            model_class = element.class
-            if model_class.respond_to?(:base_class) && model_class != model_class.base_class
-              route_configs = current_engine.routes.resource_route_config_for(model_class.model_name.plural)
-              model_class = model_class.base_class if route_configs.empty?
-            end
-
-            controller_chain << model_class.to_s.pluralize
-            if index == args.length - 1
-              route_key = if parent.present?
-                assoc_name = association || resolve_association(element, parent)
-                "#{parent.class.model_name.plural}/#{assoc_name}"
-              else
-                model_class.model_name.plural
-              end
-              is_singular = current_engine.routes.singular_resource_route?(route_key)
-              url_args[:id] = element.to_param unless is_singular
-              url_args[:action] ||= :show
-            else
-              url_args[model_class.to_s.underscore.singularize.to_sym] = element.to_param
-            end
+      # Build URL args for top-level resources using named route helpers.
+      # This avoids Rails url_for ambiguity when multiple routes map to the same controller
+      # (e.g., both /widgets/:id and /organization/nested_widgets/:id resolve to widgets#show).
+      def build_top_level_resource_url_args(element, action: nil, **kwargs)
+        # Resolve the model class for the target resource
+        if element.is_a?(Class)
+          model_class = element
+        elsif element
+          model_class = element.class
+          if model_class.respond_to?(:base_class) && model_class != model_class.base_class
+            route_configs = current_engine.routes.resource_route_config_for(model_class.model_name.plural)
+            model_class = model_class.base_class if route_configs.empty?
           end
         end
-        url_args[:controller] = "/#{controller_chain.join("::").underscore}"
 
-        url_args[:"#{parent.model_name.singular}_id"] = parent.to_param if parent.present?
-        if scoped_to_entity? && scoped_entity_strategy == :path
-          url_args[scoped_entity_param_key] = current_scoped_entity.to_param
+        route_key = model_class.model_name.plural
+        is_singular = current_engine.routes.singular_resource_route?(route_key)
+        no_record = element.is_a?(Class) || element.nil?
+
+        # Default action based on context
+        action ||= if no_record
+          is_singular ? :show : :index
+        else
+          :show
         end
 
-        if !url_args.key?(:format) && request.present? && request.format.present? && !request.format.symbol.in?([:html, :turbo_stream])
-          url_args[:format] = request.format.symbol
+        # Build named route helper, mirroring the pattern used by build_nested_resource_url_args.
+        # e.g., "organization_scope_widgets" (collection), "organization_scope_widget" (member),
+        #        "edit_organization_scope_widget" (edit action)
+        is_collection_action = action == :index || action == :create || (no_record && action != :new)
+        helper_base = if is_singular || is_collection_action
+          model_class.model_name.plural
+        else
+          model_class.model_name.singular
         end
 
-        url_args
+        # For uncountable model names (plural == singular), Rails adds _index suffix
+        # to collection route names to disambiguate from member routes.
+        uncountable_index_suffix = if is_collection_action && !is_singular && model_class.model_name.plural == model_class.model_name.singular
+          "_index"
+        end
+
+        helper_suffix = case action
+        when :show, :index, :create, :update then ""
+        else "#{action}_"
+        end
+
+        entity_prefix = if scoped_to_entity? && scoped_entity_strategy == :path
+          "#{scoped_entity_param_key}_"
+        end
+
+        helper_name = :"#{helper_suffix}#{entity_prefix}#{helper_base}#{uncountable_index_suffix}_path"
+
+        # Build the positional arguments for the helper
+        helper_args = []
+        helper_args << current_scoped_entity.to_param if entity_prefix
+        unless is_singular || no_record || is_collection_action
+          helper_args << element.to_param
+        end
+
+        # Build URL options
+        url_options = kwargs.dup
+        if !url_options.key?(:format) && request.present? && request.format.present? && !request.format.symbol.in?([:html, :turbo_stream])
+          url_options[:format] = request.format.symbol
+        end
+
+        {_named_route: helper_name, _args: helper_args, _options: url_options}
       end
 
       def root_path(*)

@@ -1,0 +1,2 @@
+class WidgetDefinition < ::ResourceDefinition
+end

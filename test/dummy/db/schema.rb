@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_17_111903) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_02_000000) do
   create_table "admin_active_session_keys", primary_key: ["admin_id", "session_id"], force: :cascade do |t|
     t.integer "admin_id"
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
@@ -285,6 +285,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_111903) do
     t.index ["email"], name: "index_users_on_email", unique: true, where: "status IN (1, 2)"
   end
 
+  create_table "widgets", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "organization_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id"], name: "index_widgets_on_organization_id"
+  end
+
   add_foreign_key "admin_active_session_keys", "admins"
   add_foreign_key "admin_authentication_audit_logs", "admins"
   add_foreign_key "admin_lockouts", "admins", column: "id"
@@ -319,4 +327,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_17_111903) do
   add_foreign_key "user_profiles", "users"
   add_foreign_key "user_remember_keys", "users", column: "id"
   add_foreign_key "user_verification_keys", "users", column: "id"
+  add_foreign_key "widgets", "organizations", on_delete: :cascade
 end

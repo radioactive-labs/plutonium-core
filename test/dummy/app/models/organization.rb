@@ -13,6 +13,7 @@ class Organization < ::ResourceRecord
 
   has_many :organization_users, dependent: :destroy
   has_many :users, through: :organization_users
+  has_many :widgets, dependent: :destroy
   # add has_many associations above.
 
   # add attachments above.

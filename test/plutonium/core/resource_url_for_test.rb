@@ -23,6 +23,7 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
       organization: @org, price_cents: 999
     )
     @product_metadata = Catalog::ProductMetadata.create!(product: @product, meta_title: "SEO Title")
+    @widget = Widget.create!(name: "Test Widget", organization: @org)
   end
 
   # Top-level resources
@@ -553,6 +554,77 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     get "/admin/blogging/posts/#{@post.id}"
     url = controller.send(:resource_url_for, Comment, parent: @post, action: :commit_interactive_resource_action, interactive_action: :import)
     assert_match %r{/admin/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
+  end
+
+  # Top-level URL when entity-scoped singular resource creates ambiguous routes
+  # When Organization is registered as singular: true and has_many :widgets,
+  # both /:org_scope/widgets/:id and /:org_scope/organization/nested_widgets/:id exist.
+  # resource_url_for must use the top-level route, not the nested one.
+
+  test "entity-scoped: top-level instance resolves to top-level route, not nested under singular entity resource" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, @widget)
+    assert_match %r{/org/#{@org.to_param}/widgets/#{@widget.id}$}, url
+    refute_match %r{/organization/nested_widgets}, url
+  end
+
+  test "entity-scoped: top-level class resolves to top-level route, not nested under singular entity resource" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, Widget)
+    assert_match %r{/org/#{@org.to_param}/widgets$}, url
+    refute_match %r{/organization/nested_widgets}, url
+  end
+
+  test "entity-scoped: top-level instance + action :edit resolves to top-level route" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, @widget, action: :edit)
+    assert_match %r{/org/#{@org.to_param}/widgets/#{@widget.id}/edit$}, url
+    refute_match %r{/organization/nested_widgets}, url
+  end
+
+  test "entity-scoped: top-level class + action :new resolves to top-level route" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, Widget, action: :new)
+    assert_match %r{/org/#{@org.to_param}/widgets/new$}, url
+    refute_match %r{/organization/nested_widgets}, url
+  end
+
+  # Nested under singular entity resource (explicit parent)
+  # When parent IS the Organization, the nested route should be used.
+
+  test "entity-scoped: nested instance under singular Organization parent" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, @widget, parent: @org)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_widgets/#{@widget.id}$}, url
+  end
+
+  test "entity-scoped: nested class under singular Organization parent" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, Widget, parent: @org)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_widgets$}, url
+  end
+
+  # Top-level uncountable model names (plural == singular)
+  # Rails adds _index suffix to collection routes for uncountable nouns.
+
+  test "top-level: uncountable class generates correct index URL with _index suffix" do
+    login_as_admin
+    get "/admin/catalog/products"
+    url = controller.send(:resource_url_for, Catalog::ProductMetadata)
+    assert_match %r{/admin/catalog/product_metadata$}, url
+  end
+
+  test "top-level: uncountable instance generates correct show URL" do
+    login_as_admin
+    get "/admin/catalog/products"
+    url = controller.send(:resource_url_for, @product_metadata)
+    assert_match %r{/admin/catalog/product_metadata/#{@product_metadata.id}$}, url
   end
 
   # Singular resource default actions
