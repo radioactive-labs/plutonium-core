@@ -1,3 +1,8 @@
+## [0.45.1] - 2026-04-02
+
+### 🐛 Bug Fixes
+
+- *(routing)* Use named route helpers for top-level resource URLs
 ## [0.45.0] - 2026-04-01
 
 ### 🚀 Features
