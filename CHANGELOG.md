@@ -1,3 +1,8 @@
+## [0.45.3] - 2026-04-07
+
+### 🐛 Bug Fixes
+
+- *(pagy)* Use Pagy::OPTIONS instead of frozen DEFAULT
 ## [0.45.2] - 2026-04-07
 
 ### 🐛 Bug Fixes
