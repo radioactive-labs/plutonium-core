@@ -1,3 +1,8 @@
+## [0.45.2] - 2026-04-07
+
+### 🐛 Bug Fixes
+
+- *(pagy)* Honor limit param by setting client_max_limit
 ## [0.45.1] - 2026-04-02
 
 ### 🐛 Bug Fixes
