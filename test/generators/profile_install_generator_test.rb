@@ -20,16 +20,27 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
     assert_nil opt.default
   end
 
-  test "normalize_arguments treats colon-containing name as attribute" do
+  test "normalize_arguments treats colon-containing name as attribute and defaults to {UserModel}Profile" do
     generator = Pu::Profile::InstallGenerator.new(
       ["bio:text", "avatar:attachment"],
-      {dest: "main_app"},
+      {dest: "main_app", user_model: "User"},
       destination_root: Rails.root
     )
     generator.normalize_arguments
 
-    assert_equal "Profile", generator.instance_variable_get(:@profile_name)
+    assert_equal "UserProfile", generator.instance_variable_get(:@profile_name)
     assert_equal ["bio:text", "avatar:attachment"], generator.instance_variable_get(:@profile_attributes)
+  end
+
+  test "normalize_arguments with no name and custom user_model yields {UserModel}Profile" do
+    generator = Pu::Profile::InstallGenerator.new(
+      [],
+      {dest: "main_app", user_model: "StaffUser"},
+      destination_root: Rails.root
+    )
+    generator.normalize_arguments
+
+    assert_equal "StaffUserProfile", generator.instance_variable_get(:@profile_name)
   end
 
   test "normalize_arguments uses explicit name when provided" do
@@ -69,40 +80,40 @@ class ProfileInstallGeneratorTest < ActiveSupport::TestCase
     assert_includes attributes, "account:belongs_to"
   end
 
-  test "table_name for main_app" do
+  test "table_name for main_app defaults to user_profiles" do
     generator = Pu::Profile::InstallGenerator.new(
       [],
-      {dest: "main_app"},
+      {dest: "main_app", user_model: "User"},
       destination_root: Rails.root
     )
     generator.normalize_arguments
 
-    assert_equal "profiles", generator.send(:table_name)
+    assert_equal "user_profiles", generator.send(:table_name)
   end
 
   test "table_name for package includes prefix" do
     generator = build_generator_with_dest("customer")
     generator.normalize_arguments
 
-    assert_equal "customer_profiles", generator.send(:table_name)
+    assert_equal "customer_user_profiles", generator.send(:table_name)
   end
 
-  test "namespaced_class_name for main_app" do
+  test "namespaced_class_name for main_app defaults to UserProfile" do
     generator = Pu::Profile::InstallGenerator.new(
       [],
-      {dest: "main_app"},
+      {dest: "main_app", user_model: "User"},
       destination_root: Rails.root
     )
     generator.normalize_arguments
 
-    assert_equal "Profile", generator.send(:namespaced_class_name)
+    assert_equal "UserProfile", generator.send(:namespaced_class_name)
   end
 
   test "namespaced_class_name for package" do
     generator = build_generator_with_dest("customer")
     generator.normalize_arguments
 
-    assert_equal "Customer::Profile", generator.send(:namespaced_class_name)
+    assert_equal "Customer::UserProfile", generator.send(:namespaced_class_name)
   end
 
   test "migration_dir for main_app" do

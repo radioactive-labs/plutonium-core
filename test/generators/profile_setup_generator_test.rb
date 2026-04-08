@@ -25,11 +25,11 @@ class ProfileSetupGeneratorTest < ActiveSupport::TestCase
     assert opt
   end
 
-  test "normalize_arguments treats colon-containing name as attribute" do
+  test "normalize_arguments treats colon-containing name as attribute and defaults to {UserModel}Profile" do
     generator = build_generator(["bio:text", "avatar:attachment"])
     generator.normalize_arguments
 
-    assert_equal "Profile", generator.instance_variable_get(:@profile_name)
+    assert_equal "UserProfile", generator.instance_variable_get(:@profile_name)
     assert_equal ["bio:text", "avatar:attachment"], generator.instance_variable_get(:@profile_attributes)
   end
 
@@ -41,20 +41,20 @@ class ProfileSetupGeneratorTest < ActiveSupport::TestCase
     assert_equal ["bio:text"], generator.instance_variable_get(:@profile_attributes)
   end
 
-  test "resource_class_name for main_app" do
+  test "resource_class_name for main_app defaults to UserProfile" do
     generator = build_generator([], dest: "main_app")
     generator.normalize_arguments
     generator.define_singleton_method(:selected_destination_feature) { "main_app" }
 
-    assert_equal "Profile", generator.send(:resource_class_name)
+    assert_equal "UserProfile", generator.send(:resource_class_name)
   end
 
-  test "resource_class_name for package" do
+  test "resource_class_name for package defaults to {Package}::UserProfile" do
     generator = build_generator([], dest: "customer")
     generator.normalize_arguments
     generator.define_singleton_method(:selected_destination_feature) { "customer" }
 
-    assert_equal "Customer::Profile", generator.send(:resource_class_name)
+    assert_equal "Customer::UserProfile", generator.send(:resource_class_name)
   end
 
   test "resource_class_name with custom name for package" do

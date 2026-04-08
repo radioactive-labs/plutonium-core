@@ -37,10 +37,13 @@ module Pu
       end
 
       def add_user_association
+        # Always expose the association as `:profile` on the user model so that
+        # `current_user.profile` works regardless of the underlying class name
+        # (e.g. UserProfile, StaffUserProfile, AccountSettings).
         association = if dest_package?
-          "  has_one :#{file_name}, class_name: \"#{namespaced_class_name}\", dependent: :destroy\n"
+          "  has_one :profile, class_name: \"#{namespaced_class_name}\", dependent: :destroy\n"
         else
-          "  has_one :#{file_name}, dependent: :destroy\n"
+          "  has_one :profile, class_name: \"#{class_name}\", dependent: :destroy\n"
         end
         inject_into_file user_model_path, association,
           before: /^\s*# add has_one associations above\.\n/

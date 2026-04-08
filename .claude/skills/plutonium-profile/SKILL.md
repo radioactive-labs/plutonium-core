@@ -55,18 +55,19 @@ rails g pu:profile:install AccountSettings \
 
 ## What Gets Created
 
-The generator creates a standard Plutonium resource:
+The generator creates a standard Plutonium resource. **By default the model is named `{UserModel}Profile`** (e.g. `UserProfile`, `StaffUserProfile`) — derived from `--user-model`. Pass an explicit name as the first positional argument to override (e.g. `AccountSettings`).
 
 ```
-app/models/[package/]profile.rb              # Profile model
-db/migrate/xxx_create_profiles.rb            # Migration
-app/controllers/[package/]profiles_controller.rb
-app/policies/[package/]profile_policy.rb
-app/definitions/[package/]profile_definition.rb
+app/models/[package/]user_profile.rb              # {UserModel}Profile model
+db/migrate/xxx_create_user_profiles.rb            # Migration (table named after the model)
+app/controllers/[package/]user_profiles_controller.rb
+app/policies/[package/]user_profile_policy.rb
+app/definitions/[package/]user_profile_definition.rb
 ```
 
 And modifies:
-- **User model**: Adds `has_one :profile, dependent: :destroy`
+- **User model**: Adds `has_one :profile, class_name: "{UserModel}Profile", dependent: :destroy`
+  > The association is **always named `:profile`** regardless of the underlying class, so `current_user.profile` / `build_profile` / `params.require(:profile)` work uniformly across the welcome flow, controllers, and views.
 - **Definition**: Injects custom ShowPage with SecuritySection
 
 ## The SecuritySection Component
@@ -256,10 +257,10 @@ ls packages/
 
 ### Profile Not Loading
 
-Ensure the Profile is connected to your portal:
+Ensure the Profile is connected to your portal (use the actual class name, e.g. `UserProfile`):
 
 ```bash
-rails g pu:res:conn Profile --dest=my_portal --singular
+rails g pu:res:conn UserProfile --dest=my_portal --singular
 ```
 
 And the user has a profile:

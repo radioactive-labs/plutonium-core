@@ -23,7 +23,7 @@
   <%% end %>
 <% if profile? -%>
 
-  <%%= f.fields_for :profile, @profile do |pf| %>
+  <%%= fields_for :profile, @profile do |pf| %>
     <div>
       <%%= pf.label :name, "Your Name", class: "block mb-2 text-sm font-medium text-[var(--pu-text)]" %>
       <%%= pf.text_field :name,
@@ -34,7 +34,7 @@
   <%% end %>
 <% end -%>
 
-  <%%= f.fields_for :<%= entity_table %>, @<%= entity_table %> do |ef| %>
+  <%%= fields_for :<%= entity_table %>, @<%= entity_table %> do |ef| %>
     <div>
       <%%= ef.label :name, "Workspace Name", class: "block mb-2 text-sm font-medium text-[var(--pu-text)]" %>
       <%%= ef.text_field :name,

@@ -10,7 +10,7 @@ module Pu
 
       desc "Connect a Profile resource to a portal and configure the profile_url helper"
 
-      argument :name, type: :string, default: "Profile", required: false, banner: "RESOURCE"
+      argument :name, type: :string, required: false, banner: "RESOURCE"
 
       class_option :dest, type: :string,
         desc: "Destination portal"
@@ -128,11 +128,13 @@ module Pu
       end
 
       def profile_association
-        resource_class_name.demodulize.underscore
+        # The install generator always exposes the profile as `:profile` on the
+        # user model (via class_name:), regardless of the underlying class name.
+        "profile"
       end
 
       def resource_class_name
-        name.camelize
+        (name.presence || "#{options[:user_model]}Profile").camelize
       end
 
       def user_table

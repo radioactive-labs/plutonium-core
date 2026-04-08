@@ -38,15 +38,17 @@ class ProfileConnGeneratorTest < ActiveSupport::TestCase
     assert_equal "AccountSettings", generator.send(:resource_class_name)
   end
 
-  test "profile_association demodulizes and underscores" do
-    generator = build_generator("Profile")
-    assert_equal "profile", generator.send(:profile_association)
+  test "profile_association is always :profile regardless of class name" do
+    # The install generator exposes the association as `:profile` via class_name:,
+    # so conn_generator always references `current_user.profile`.
+    assert_equal "profile", build_generator("Profile").send(:profile_association)
+    assert_equal "profile", build_generator("Competition::UserProfile").send(:profile_association)
+    assert_equal "profile", build_generator("AccountSettings").send(:profile_association)
+  end
 
-    generator = build_generator("Competition::Profile")
-    assert_equal "profile", generator.send(:profile_association)
-
-    generator = build_generator("AccountSettings")
-    assert_equal "account_settings", generator.send(:profile_association)
+  test "resource_class_name defaults to {UserModel}Profile when name omitted" do
+    generator = Pu::Profile::ConnGenerator.new([], {user_model: "StaffUser"}, destination_root: Rails.root)
+    assert_equal "StaffUserProfile", generator.send(:resource_class_name)
   end
 
   test "validate_portal_destination! raises for main_app" do
