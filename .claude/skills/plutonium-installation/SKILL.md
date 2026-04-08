@@ -18,6 +18,8 @@ This sets up Rails with Propshaft, esbuild, TailwindCSS, and Plutonium in one co
 
 ## Existing Rails App
 
+> **⚠️ Use `base.rb`, not `plutonium.rb`.** The `plutonium.rb` template is for `rails new` only — it re-runs the full app bootstrap (dotenv, annotate, solid_*, assets) and creates generic "initial commit" commits that clobber history. For any pre-existing app, always use `base.rb`.
+
 ### Option 1: Rails Template
 
 ```bash

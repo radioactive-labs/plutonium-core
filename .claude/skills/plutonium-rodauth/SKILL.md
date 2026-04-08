@@ -111,6 +111,8 @@ rails generate pu:rodauth:admin admin --extra-attributes=name:string,department:
 | `--roles` | super_admin,admin | Comma-separated roles for admin accounts |
 | `--extra_attributes` | | Additional model attributes (e.g., name:string) |
 
+**Role ordering convention:** Roles are stored as a positional enum — **index 0 is the most privileged** (`super_admin`, `owner`, etc.). The generated invite interaction defaults new invitees to `roles[1]` (the second-most-privileged role), so the order in `--roles=` matters.
+
 **Generated role enum:**
 ```ruby
 # app/models/admin.rb
@@ -138,6 +140,14 @@ rails rodauth_admin:create[admin@example.com,password123]
 
 ### SaaS Setup (`pu:saas:setup`)
 
+> **This is a meta-generator.** In addition to creating the user + entity + membership, `pu:saas:setup` also runs:
+> - `pu:saas:portal` → a full `{Entity}Portal` scoped to the entity (you do **not** need to run `pu:pkg:portal` separately for it)
+> - `pu:profile:setup` → a `Profile` model and association on the user
+> - `pu:saas:welcome` → the onboarding / select-entity flow after login
+> - `pu:invites:install` → the entire invites package
+>
+> Plan your portal layout with this in mind — running `pu:saas:setup` and then generating another entity portal usually means duplicate work. Pass `--force` if re-running on an app that already has any of these outputs.
+
 Creates a complete multi-tenant SaaS setup with user account, entity, and membership:
 
 ```bash
@@ -154,7 +164,7 @@ rails generate pu:saas:setup --user Customer --entity Organization --user-attrib
 | `--user=NAME` | (required) | User account model name (e.g., Customer) |
 | `--entity=NAME` | (required) | Entity model name (e.g., Organization) |
 | `--allow-signup` | true | Allow public registration |
-| `--roles` | member,owner | Comma-separated membership roles |
+| `--roles` | admin,member | Additional membership roles. **`owner` is always prepended as index 0** — don't include it (it's filtered out if you do). `--roles=admin,staff` produces the enum `owner, admin, staff`. |
 | `--skip-entity` | false | Skip entity model generation |
 | `--skip-membership` | false | Skip membership model generation |
 | `--user-attributes` | | Additional user model attributes |

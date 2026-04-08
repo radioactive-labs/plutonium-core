@@ -25,6 +25,20 @@ rails g pu:pkg:portal admin                                  # Create portal
 
 Always specify `--dest` to avoid interactive prompts.
 
+## Unattended Execution
+
+Plutonium generators are interactive by default. When running them from scripts, agents, or CI, pass these flags to prevent blocking prompts:
+
+| Flag | Generators | Purpose |
+|------|-----------|---------|
+| `--dest=main_app` or `--dest=package_name` | `pu:res:scaffold`, `pu:res:conn`, and other resource/package-targeted generators | Skips the "Select destination feature" prompt |
+| `--force` | any generator | Overwrites conflicting files without the `[Ynaqdhm]` prompt (needed when re-running `pu:saas:setup` or regenerating existing files) |
+| `--auth=<account>` / `--public` / `--byo` | `pu:pkg:portal` | Skips the authentication-type prompt |
+| `--skip-bundle` | generators that install gems | Avoids a mid-run `bundle install` |
+| `--quiet` | most generators | Reduces output noise |
+
+If a generator chains to others (e.g. `pu:saas:setup`), these flags propagate to the subgenerators — always pass `--force` when re-running a meta-generator on an app that already has some of its outputs.
+
 ## Resource Architecture
 
 A **resource** is four layers working together for full CRUD with minimal code:
