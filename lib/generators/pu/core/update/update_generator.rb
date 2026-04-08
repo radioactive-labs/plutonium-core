@@ -12,11 +12,19 @@ module Pu
       def start
         update_gem
         update_npm_package
+        sync_skills_if_present
       rescue => e
         exception "#{self.class} failed:", e
       end
 
       private
+
+      def sync_skills_if_present
+        return unless File.file?(Rails.root.join(".claude", "skills", "plutonium", "SKILL.md"))
+
+        say_status :update, "Syncing Plutonium Claude skills...", :green
+        Rails::Generators.invoke("pu:skills:sync", [], destination_root: Rails.root)
+      end
 
       def update_gem
         say_status :update, "Updating plutonium gem...", :green
