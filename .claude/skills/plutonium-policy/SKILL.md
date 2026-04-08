@@ -1,9 +1,30 @@
 ---
 name: plutonium-policy
-description: Use when configuring authorization - action permissions, attribute visibility, relation scoping, or per-portal policies
+description: Use BEFORE writing relation_scope, permitted_attributes, permitted_associations, or any policy override. For tenant-scoped relation_scope, also load plutonium-entity-scoping.
 ---
 
 # Plutonium Policies
+
+## 🚨 Critical (read first)
+- **Use generators.** `pu:res:scaffold` and `pu:res:conn` create policies — never hand-write policy files.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with a raw `where(organization: …)` or manual joins skips entity scoping and triggers `verify_default_relation_scope_applied!` at runtime. Compose like this: `relation_scope { |r| default_relation_scope(r).where(archived: false) }`. Call `default_relation_scope(r)` **explicitly** — `super` is unreliable inside the DSL block. Full rules in `plutonium-entity-scoping`.
+- **Derived actions inherit.** `update?` falls back to `create?`, `show?` falls back to `read?` — don't duplicate unless the rules genuinely differ. Override `create?` and `read?` explicitly; they default to `false`.
+- **Define `permitted_attributes_for_*` explicitly.** Auto-detection works in development but raises in production.
+- **For `has_cents` fields, list the virtual name (`:price`), not the column (`:price_cents`).** Generators occasionally emit the wrong one — fix it (and verify the model has `has_cents`). See `plutonium-model` › Monetary Handling.
+- **Related skills:** `plutonium-entity-scoping` (tenant-scoped overrides — required for `relation_scope`), `plutonium-model` (`associated_with`), `plutonium-definition` (`permitted_attributes` usage), `plutonium-controller` (how controllers use policies).
+
+## Quick checklist
+
+Writing / editing a policy:
+
+1. Confirm the policy was created by `pu:res:scaffold` or `pu:res:conn`.
+2. Override `create?` and `read?` explicitly — they default to `false`.
+3. Define `permitted_attributes_for_read` and `permitted_attributes_for_create` (derived methods inherit).
+4. For custom actions, add `def <action>?` matching the definition's `action :<action>`.
+5. If you need `relation_scope`, compose with `default_relation_scope(relation).where(...)` — never bypass it.
+6. For tenant scoping, load `plutonium-entity-scoping` and fix the **model**, not the policy.
+7. Per-portal overrides go in the portal's policy file (created by `pu:res:conn`).
+8. Test: log in as a user who should NOT see a record, verify it's filtered out.
 
 **Policies are generated automatically** - never create them manually:
 - `rails g pu:res:scaffold` creates the base policy
@@ -172,100 +193,20 @@ Used for:
 - Related data displays
 - Association fields in tables
 
-## Collection Scoping
+## Collection Scoping (relation_scope)
 
 Filter which records users can see:
 
 ```ruby
 relation_scope do |relation|
-  if user.admin?
-    relation
-  else
-    relation.where(author: user)
-  end
+  relation = default_relation_scope(relation)
+  user.admin? ? relation : relation.where(author: user)
 end
 ```
 
-### With Parent Scoping (Nested Resources)
+**Always compose with `default_relation_scope(relation)` explicitly** — not `super`. Plutonium enforces this via `verify_default_relation_scope_applied!`. Anything else (a raw `where(organization: ...)`, manual joins) bypasses Plutonium's tenancy handling and will raise.
 
-For nested resources, call `super` to apply automatic parent scoping:
-
-```ruby
-relation_scope do |relation|
-  relation = super(relation)  # Applies parent scoping automatically
-
-  if user.admin?
-    relation
-  else
-    relation.where(published: true)
-  end
-end
-```
-
-**Parent scoping takes precedence over entity scoping.** When a parent is present:
-- For `has_many`: scopes via `parent.association_name`
-- For `has_one`: scopes via `where(foreign_key: parent.id)`
-
-### With Entity Scoping (Multi-tenancy)
-
-When no parent is present, `super` applies entity scoping:
-
-```ruby
-relation_scope do |relation|
-  relation = super(relation)  # Apply entity scope if no parent
-
-  if user.admin?
-    relation
-  else
-    relation.where(published: true)
-  end
-end
-```
-
-### default_relation_scope is Required
-
-Plutonium verifies that `default_relation_scope` is called in every `relation_scope`. This prevents accidental multi-tenancy leaks when overriding scopes.
-
-```ruby
-# ❌ This will raise an error
-relation_scope do |relation|
-  relation.where(published: true)  # Missing default_relation_scope!
-end
-
-# ✅ Correct - call default_relation_scope
-relation_scope do |relation|
-  default_relation_scope(relation).where(published: true)
-end
-
-# ✅ Also correct - super calls default_relation_scope
-relation_scope do |relation|
-  super(relation).where(published: true)
-end
-```
-
-When overriding an inherited scope:
-
-```ruby
-class AdminPostPolicy < PostPolicy
-  relation_scope do |relation|
-    # Replace inherited scope but keep Plutonium's parent/entity scoping
-    default_relation_scope(relation)
-  end
-end
-```
-
-### Skipping Default Scoping (Rare)
-
-If you intentionally need to skip scoping, call `skip_default_relation_scope!`:
-
-```ruby
-relation_scope do |relation|
-  skip_default_relation_scope!
-  relation  # No parent/entity scoping applied
-end
-```
-
-Consider using a separate portal instead of skipping scoping.
+> **For the full rules — why `default_relation_scope` is required, how parent vs entity scoping interact, safe override patterns, `skip_default_relation_scope!`, and how `associated_with` resolution works — see the [plutonium-entity-scoping](../plutonium-entity-scoping/SKILL.md) skill. It is the single source of truth for Plutonium tenant scoping.**
 
 ## Portal-Specific Policies
 
@@ -453,7 +394,7 @@ end
 
 1. **Always override `create?` and `read?`** - They default to `false`
 2. **Define attributes explicitly** - Auto-detection only works in development
-3. **Call `super` in `relation_scope`** - Preserves entity scoping
+3. **Call `default_relation_scope(relation)` in `relation_scope`** - Preserves parent/entity scoping (do not rely on `super` from inside the block)
 4. **Use derived methods** - Let `update?` inherit from `create?` when appropriate
 5. **Keep policies focused** - Authorization logic only, no business logic
 6. **Test edge cases** - Archived records, nil associations, role combinations
@@ -461,5 +402,5 @@ end
 ## Related Skills
 
 - `plutonium` - How policies fit in the resource architecture
-- `plutonium-definition-actions` - Actions that need policy methods
+- `plutonium-definition` - Actions that need policy methods
 - `plutonium-controller` - How controllers use policies

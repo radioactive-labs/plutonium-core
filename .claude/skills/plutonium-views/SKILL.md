@@ -1,9 +1,16 @@
 ---
 name: plutonium-views
-description: Use when building custom pages, display panels, tables, or layouts using Phlex components in Plutonium
+description: Use BEFORE building a custom page, panel, table, layout, or Phlex component in Plutonium. Also when overriding IndexPage/ShowPage/Form classes in a definition.
 ---
 
 # Plutonium Views
+
+## 🚨 Critical (read first)
+- **Override via nested classes in the definition.** `class ShowPage < ShowPage; end`, `class Form < Form; end` — don't replace the entire view layer.
+- **Use the render hooks.** `render_before_content`, `render_after_content`, `render_before_toolbar`, etc. — they exist so you don't have to override `view_template` and re-implement everything.
+- **All pages inherit `DynaFrameContent`** so turbo-frame requests render only the content. Don't fight it — modals and frame nav "just work".
+- **For custom components, use `Plutonium::UI::Component::Base`** so you inherit the component kit (`PageHeader`, `Panel`, `Block`, etc.) and access to resource helpers.
+- **Related skills:** `plutonium-forms` (form customization), `plutonium-assets` (theming + component classes), `plutonium-definition` (field-level rendering), `plutonium-controller` (presentation hooks like `present_parent?`).
 
 Plutonium uses [Phlex](https://www.phlex.fun/) for all view components. This provides a Ruby-first approach to building HTML with full IDE support and type safety.
 
@@ -580,6 +587,6 @@ end
 - `plutonium-forms` - Custom form templates and field builders
 - `plutonium-assets` - TailwindCSS and component theming
 - `plutonium-definition` - Field/input/display configuration
-- `plutonium-definition-actions` - Action buttons and interactions
+- `plutonium-definition` - Action buttons and interactions
 - `plutonium-controller` - Presentation hooks (`present_parent?`, etc.)
 - `plutonium-portal` - Portal-specific customization

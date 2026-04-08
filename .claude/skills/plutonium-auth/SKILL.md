@@ -1,13 +1,31 @@
 ---
-name: plutonium-rodauth
-description: Use when setting up authentication - Rodauth configuration, account types, login flows, or multi-account support
+name: plutonium-auth
+description: Use BEFORE configuring Rodauth, account types, login flows, or building a profile / account settings page. Also when including Plutonium::Auth::Rodauth in a controller. Covers authentication and user profile pages.
 ---
 
-# Plutonium Rodauth Authentication
+# Plutonium Authentication (Rodauth + Profile)
 
-Plutonium integrates with [Rodauth](http://rodauth.jeremyevans.net/) via [rodauth-rails](https://github.com/janko/rodauth-rails) for authentication. This provides a full-featured, secure authentication system.
+## 🚨 Critical (read first)
+- **Use the generators.** `pu:rodauth:install`, `pu:rodauth:account`, `pu:rodauth:admin`, `pu:saas:setup`, `pu:profile:install`, `pu:profile:conn` — never hand-write Rodauth plugin files, account models, or profile resources.
+- **Role index 0 is the most privileged** (`owner`, `super_admin`). Invite interactions default new invitees to index 1. `pu:saas:setup` always prepends `owner` — don't include it in `--roles`.
+- **`pu:saas:setup` is a meta-generator** that also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't re-run them manually.
+- **Profile association is always `:profile`** regardless of the model class — `current_user.profile`, `build_profile`, etc.
+- **Related skills:** `plutonium-installation` (initial setup), `plutonium-portal` (portal auth), `plutonium-invites` (multi-tenant invitations), `plutonium-entity-scoping` (tenant scoping).
 
-## Installation
+Plutonium integrates with [Rodauth](http://rodauth.jeremyevans.net/) via [rodauth-rails](https://github.com/janko/rodauth-rails) for authentication. This skill covers the full auth surface: installing Rodauth, configuring account types, building login/password flows, and adding a user profile / account settings page.
+
+## Contents
+- [Rodauth setup](#rodauth-setup)
+- [Account types](#account-types)
+- [Connecting auth to controllers](#connecting-auth-to-controllers)
+- [Customization](#customization)
+- [Email configuration](#email-configuration)
+- [Portal integration](#portal-integration)
+- [API authentication](#api-authentication)
+- [Profile page](#profile-page)
+- [Gotchas](#gotchas)
+
+## Rodauth setup
 
 ### Step 1: Install Rodauth Base
 
@@ -26,8 +44,6 @@ This installs:
 
 ### Step 2: Create Account Type
 
-Choose the appropriate generator for your use case:
-
 ```bash
 # Basic user account
 rails generate pu:rodauth:account user
@@ -39,11 +55,9 @@ rails generate pu:rodauth:admin admin
 rails generate pu:saas:setup --user Customer --entity Organization
 ```
 
-## Account Generators
+## Account types
 
 ### Basic Account (`pu:rodauth:account`)
-
-Creates a standard user account with configurable features:
 
 ```bash
 rails generate pu:rodauth:account user [options]
@@ -87,16 +101,7 @@ rails generate pu:rodauth:account user [options]
 
 ### Admin Account (`pu:rodauth:admin`)
 
-Creates a secure admin account with:
-- Multi-phase login (email first, then password)
-- TOTP two-factor authentication (required)
-- Recovery codes
-- Account lockout
-- Active sessions tracking
-- Audit logging
-- Role-based access control
-- Invite interaction for adding new admins
-- No public signup (accounts created via rake task or invite)
+Creates a secure admin account with multi-phase login, TOTP 2FA (required), recovery codes, account lockout, active session tracking, audit logging, role-based access control, invite interaction, and no public signup.
 
 ```bash
 rails generate pu:rodauth:admin admin
@@ -111,44 +116,36 @@ rails generate pu:rodauth:admin admin --extra-attributes=name:string,department:
 | `--roles` | super_admin,admin | Comma-separated roles for admin accounts |
 | `--extra_attributes` | | Additional model attributes (e.g., name:string) |
 
-**Role ordering convention:** Roles are stored as a positional enum — **index 0 is the most privileged** (`super_admin`, `owner`, etc.). The generated invite interaction defaults new invitees to `roles[1]` (the second-most-privileged role), so the order in `--roles=` matters.
+**Role ordering convention:** Roles are stored as a positional enum — **index 0 is the most privileged** (`super_admin`, `owner`, etc.). The generated invite interaction defaults new invitees to `roles[1]`, so the order in `--roles=` matters.
 
-**Generated role enum:**
 ```ruby
 # app/models/admin.rb
 enum :role, super_admin: 0, admin: 1
 ```
 
-**Generated invite interaction:**
 ```ruby
 # app/interactions/admin/invite_interaction.rb
 class Admin::InviteInteraction < Plutonium::Interaction::Base
   attribute :email, :string
-  attribute :role, default: :admin  # Second role is default
-
-  def execute
-    # Creates admin via internal request and sends invite email
-  end
+  attribute :role, default: :admin
+  # ...
 end
 ```
 
-**Creates rake task:**
+Rake task for direct creation:
 ```bash
-# Create admin account directly
 rails rodauth_admin:create[admin@example.com,password123]
 ```
 
 ### SaaS Setup (`pu:saas:setup`)
 
 > **This is a meta-generator.** In addition to creating the user + entity + membership, `pu:saas:setup` also runs:
-> - `pu:saas:portal` → a full `{Entity}Portal` scoped to the entity (you do **not** need to run `pu:pkg:portal` separately for it)
+> - `pu:saas:portal` → a full `{Entity}Portal` scoped to the entity
 > - `pu:profile:setup` → a `Profile` model and association on the user
-> - `pu:saas:welcome` → the onboarding / select-entity flow after login
+> - `pu:saas:welcome` → the onboarding / select-entity flow
 > - `pu:invites:install` → the entire invites package
 >
-> Plan your portal layout with this in mind — running `pu:saas:setup` and then generating another entity portal usually means duplicate work. Pass `--force` if re-running on an app that already has any of these outputs.
-
-Creates a complete multi-tenant SaaS setup with user account, entity, and membership:
+> Don't generate another entity portal after running this. Pass `--force` if re-running.
 
 ```bash
 rails generate pu:saas:setup --user Customer --entity Organization
@@ -161,57 +158,30 @@ rails generate pu:saas:setup --user Customer --entity Organization --user-attrib
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--user=NAME` | (required) | User account model name (e.g., Customer) |
-| `--entity=NAME` | (required) | Entity model name (e.g., Organization) |
+| `--user=NAME` | (required) | User account model name |
+| `--entity=NAME` | (required) | Entity model name |
 | `--allow-signup` | true | Allow public registration |
-| `--roles` | admin,member | Additional membership roles. **`owner` is always prepended as index 0** — don't include it (it's filtered out if you do). `--roles=admin,staff` produces the enum `owner, admin, staff`. |
+| `--roles` | admin,member | Additional membership roles. **`owner` is always prepended as index 0** — don't include it. |
 | `--skip-entity` | false | Skip entity model generation |
 | `--skip-membership` | false | Skip membership model generation |
 | `--user-attributes` | | Additional user model attributes |
-| `--entity-attributes` | | Additional entity model attributes (name is always included) |
+| `--entity-attributes` | | Additional entity model attributes |
 | `--membership-attributes` | | Additional membership model attributes |
 
-**Individual Generators:**
-
-You can also run each component separately:
-
-```bash
-# Just the user account
-rails g pu:saas:user Customer
-
-# Just the entity model
-rails g pu:saas:entity Organization
-
-# Just the membership (requires user and entity to exist)
-rails g pu:saas:membership --user Customer --entity Organization
-```
-
-**Generated Models:**
-
-1. **User account** - The user model with Rodauth authentication
-2. **Entity model** - The organization/company with unique name
-3. **Membership model** - Join table `{entity}_{user}` (e.g., `OrganizationCustomer`)
+Individual generators: `pu:saas:user`, `pu:saas:entity`, `pu:saas:membership`.
 
 ```ruby
 # app/models/customer.rb
 class Customer < ApplicationRecord
   include Rodauth::Rails.model(:customer)
-
   has_many :organization_customers, dependent: :destroy
   has_many :organizations, through: :organization_customers
-end
-
-# app/models/organization.rb
-class Organization < ApplicationRecord
-  has_many :organization_customers, dependent: :destroy
-  has_many :customers, through: :organization_customers
 end
 
 # app/models/organization_customer.rb
 class OrganizationCustomer < ApplicationRecord
   belongs_to :organization
   belongs_to :customer
-
   enum :role, member: 0, owner: 1
 
   validates :customer, uniqueness: {
@@ -221,128 +191,33 @@ class OrganizationCustomer < ApplicationRecord
 end
 ```
 
-**Membership Roles:**
-
-The membership model includes a role enum for access control within the entity:
-
-```ruby
-membership = OrganizationCustomer.find_by(organization: org, customer: current_user)
-membership.member?  # Default role
-membership.owner?   # Admin role for the entity
-```
-
-## Connecting Auth to Controllers
-
-### Include in Resource Controller
+## Connecting auth to controllers
 
 ```ruby
 # app/controllers/resource_controller.rb
 class ResourceController < PlutoniumController
   include Plutonium::Resource::Controller
-  include Plutonium::Auth::Rodauth(:user)  # Use :user account
+  include Plutonium::Auth::Rodauth(:user)
 end
 ```
 
-### Multiple Account Types
+Multiple account types:
 
 ```ruby
-# app/controllers/admin_controller.rb
 class AdminController < PlutoniumController
   include Plutonium::Resource::Controller
   include Plutonium::Auth::Rodauth(:admin)
 end
-
-# app/controllers/customer_controller.rb
-class CustomerController < PlutoniumController
-  include Plutonium::Resource::Controller
-  include Plutonium::Auth::Rodauth(:customer)
-end
 ```
 
-### What It Provides
-
-Including `Plutonium::Auth::Rodauth(:name)` adds:
-
-| Method | Description |
-|--------|-------------|
-| `current_user` | The authenticated account |
-| `logout_url` | URL to logout |
-| `plutonium-rodauth` | Access to Rodauth instance |
-
-## Generated Files
-
-### Account Structure
-
-```
-app/
-├── controllers/
-│   └── rodauth/
-│       └── user_controller.rb      # Account-specific controller
-├── mailers/
-│   └── rodauth/
-│       └── user_mailer.rb          # Account-specific mailer
-├── models/
-│   └── user.rb                     # Account model
-├── rodauth/
-│   ├── rodauth_app.rb              # Main Roda app
-│   ├── rodauth_plugin.rb           # Base plugin
-│   └── user_rodauth_plugin.rb      # Account-specific config
-├── policies/
-│   └── user_policy.rb              # Account policy
-├── definitions/
-│   └── user_definition.rb          # Account definition
-└── views/
-    ├── layouts/
-    │   └── rodauth.html.erb        # Auth layout
-    └── rodauth/
-        └── user_mailer/            # Email templates
-            ├── reset_password.text.erb
-            ├── verify_account.text.erb
-            └── ...
-```
-
-### Plugin Configuration
-
-```ruby
-# app/rodauth/user_rodauth_plugin.rb
-class UserRodauthPlugin < RodauthPlugin
-  configure do
-    # Features enabled for this account
-    enable :login, :logout, :remember, :create_account, ...
-
-    # URL prefix (non-primary accounts)
-    prefix "/users"
-
-    # Password storage
-    account_password_hash_column :password_hash
-
-    # Controller for views
-    rails_controller { Rodauth::UserController }
-
-    # Model
-    rails_account_model { User }
-
-    # Redirects
-    login_redirect "/"
-    logout_redirect "/"
-
-    # Session configuration
-    session_key "_user_session"
-    remember_cookie_key "_user_remember"
-  end
-end
-```
+Including `Plutonium::Auth::Rodauth(:name)` adds `current_user`, `logout_url`, and `rodauth`.
 
 ## Customization
 
 ### Custom Login Redirect
 
 ```ruby
-# app/rodauth/user_rodauth_plugin.rb
 configure do
-  login_redirect { "/dashboard" }
-
-  # Or dynamically based on user
   login_redirect do
     if rails_account.admin?
       "/admin"
@@ -357,12 +232,10 @@ end
 
 ```ruby
 configure do
-  # Add custom field validation
   before_create_account do
     throw_error_status(422, "name", "must be present") if param("name").empty?
   end
 
-  # After account creation
   after_create_account do
     Profile.create!(account_id: account_id, name: param("name"))
   end
@@ -373,10 +246,8 @@ end
 
 ```ruby
 configure do
-  # Minimum length
   password_minimum_length 12
 
-  # Custom complexity
   password_meets_requirements? do |password|
     super(password) && password.match?(/\d/) && password.match?(/[^a-zA-Z\d]/)
   end
@@ -387,7 +258,6 @@ end
 
 ```ruby
 configure do
-  # Ask for email first, then password
   use_multi_phase_login? true
 end
 ```
@@ -402,9 +272,7 @@ configure do
 end
 ```
 
-## Email Configuration
-
-Emails are sent via Action Mailer. Configure delivery in your environment:
+## Email configuration
 
 ```ruby
 # config/environments/production.rb
@@ -417,47 +285,26 @@ config.action_mailer.smtp_settings = {
 }
 ```
 
-### Custom Email Templates
+Override templates in `app/views/rodauth/user_mailer/`.
 
-Override templates in `app/views/rodauth/user_mailer/`:
-
-```erb
-<%# app/views/rodauth/user_mailer/reset_password.text.erb %>
-Hi <%= @account.email %>,
-
-Someone requested a password reset for your account.
-
-Reset your password: <%= @reset_password_url %>
-
-If you didn't request this, ignore this email.
-```
-
-## Portal Integration
-
-### Selecting Auth for Portal
-
-When generating a portal, select the Rodauth account:
+## Portal integration
 
 ```bash
 rails generate pu:pkg:portal admin
-# Select "Rodauth account" when prompted
-# Choose "admin" account
+# Select "Rodauth account" → "admin"
 ```
 
-### Manual Portal Auth Setup
+Manual:
 
 ```ruby
-# packages/admin_portal/lib/engine.rb
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
 
-    # Require authentication
     config.before_initialize do
       config.to_prepare do
         AdminPortal::ResourceController.class_eval do
           include Plutonium::Auth::Rodauth(:admin)
-
           before_action :require_authenticated
 
           private
@@ -472,56 +319,165 @@ module AdminPortal
 end
 ```
 
-## API Authentication
-
-For JSON API authentication:
+## API authentication
 
 ```bash
 rails generate pu:rodauth:account api_user --api_only --jwt --jwt_refresh
 ```
 
-This enables:
-- JWT token authentication
-- Refresh tokens
-- No session/cookie handling
-
-### Using JWT
-
-```ruby
-# Login
+```
 POST /api_users/login
-Content-Type: application/json
-
 {"login": "user@example.com", "password": "secret"}
+# → {"access_token": "...", "refresh_token": "..."}
 
-# Response includes JWT
-{"access_token": "...", "refresh_token": "..."}
-
-# Authenticated requests
 GET /api/posts
 Authorization: Bearer <access_token>
 ```
 
-## Internal Requests
+## Profile page
 
-Create accounts programmatically:
+Plutonium provides a Profile resource generator for managing Rodauth account settings. Users can view/edit their profile, access Rodauth security features (change password, 2FA, etc.), and manage account settings in one place.
 
-```ruby
-# Using internal request
-Rodauth::Rails.app(:user).rodauth(:user).create_account(
-  login: "user@example.com",
-  password: "secure_password"
-)
+### Quick setup
 
-# Or via model (if allowed)
-User.create!(
-  email: "user@example.com",
-  password_hash: BCrypt::Password.create("secure_password"),
-  status: 2  # verified
-)
+```bash
+rails g pu:profile:setup date_of_birth:date bio:text \
+    --dest=competition \
+    --portal=competition_portal
 ```
 
-## Feature Reference
+### Step-by-step install
+
+```bash
+rails generate pu:profile:install --dest=main_app
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--dest=DESTINATION` | (prompts) | Target package or main_app |
+| `--user-model=NAME` | User | Rodauth user model name |
+
+With fields:
+
+```bash
+rails g pu:profile:install \
+    bio:text \
+    avatar:attachment \
+    'timezone:string?' \
+    --dest=customer
+```
+
+Custom name:
+
+```bash
+rails g pu:profile:install AccountSettings bio:text --dest=main_app
+```
+
+### What gets created
+
+The generator creates a standard Plutonium resource. **By default the model is named `{UserModel}Profile`** (e.g. `UserProfile`, `StaffUserProfile`) — derived from `--user-model`. Pass an explicit name as the first positional argument to override.
+
+```
+app/models/[package/]user_profile.rb              # {UserModel}Profile model
+db/migrate/xxx_create_user_profiles.rb            # Migration
+app/controllers/[package/]user_profiles_controller.rb
+app/policies/[package/]user_profile_policy.rb
+app/definitions/[package/]user_profile_definition.rb
+```
+
+And modifies:
+- **User model**: Adds `has_one :profile, class_name: "{UserModel}Profile", dependent: :destroy`
+  > The association is **always named `:profile`** regardless of the class, so `current_user.profile` / `build_profile` / `params.require(:profile)` work uniformly.
+- **Definition**: Injects custom ShowPage with SecuritySection
+
+### The SecuritySection component
+
+```ruby
+class ProfileDefinition < Plutonium::Resource::Definition
+  class ShowPage < ShowPage
+    private
+
+    def render_after_content
+      render Plutonium::Profile::SecuritySection.new
+    end
+  end
+end
+```
+
+Dynamically checks enabled Rodauth features and displays links for:
+
+| Feature | Label |
+|---------|-------|
+| `change_password` | Change Password |
+| `change_login` | Change Email |
+| `otp` | Two-Factor Authentication |
+| `recovery_codes` | Recovery Codes |
+| `webauthn` | Security Keys |
+| `active_sessions` | Active Sessions |
+| `close_account` | Close Account |
+
+### After generation
+
+1. `rails db:migrate`
+2. Connect to portal: `rails g pu:profile:conn --dest=customer_portal` — registers as singular resource (`/profile`) and enables `profile_url` helper.
+3. Ensure users have a profile row:
+
+```ruby
+class User < ApplicationRecord
+  after_create :create_profile!
+
+  private
+
+  def create_profile!
+    create_profile
+  end
+end
+```
+
+### Customizing the profile definition
+
+```ruby
+class ProfileDefinition < Plutonium::Resource::Definition
+  form do |f|
+    f.field :bio
+    f.field :avatar
+    f.field :website
+  end
+
+  display do |d|
+    d.field :bio
+    d.field :avatar
+    d.field :website
+  end
+
+  class ShowPage < ShowPage
+    private
+
+    def render_after_content
+      render Plutonium::Profile::SecuritySection.new
+    end
+  end
+end
+```
+
+### Profile link in header
+
+```ruby
+if respond_to?(:profile_url)
+  link_to "Profile", profile_url
+end
+```
+
+## Gotchas
+
+- **Role index 0 is the most privileged.** For admin/saas roles, index 0 is owner/super_admin. Invite interactions default new invitees to index 1.
+- **`owner` is always prepended** in `pu:saas:setup --roles`. Don't include it manually.
+- **Profile association is always `:profile`**, even if the model class is `StaffUserProfile`.
+- **`pu:saas:setup` is a meta-generator** — it also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't rerun them separately.
+- **Profile requires a connected portal** — without `pu:profile:conn`, `profile_url` is missing and the user menu link won't render.
+- **Users need a profile row.** Add an `after_create` callback or use `find_or_create`.
+
+## Feature reference
 
 | Feature | Description |
 |---------|-------------|
@@ -544,12 +500,12 @@ User.create!(
 | `jwt` | JWT token authentication |
 | `jwt_refresh` | JWT refresh tokens |
 | `close_account` | Allow account deletion |
-| `password_expiration` | Force password changes |
-| `disallow_password_reuse` | Prevent password reuse |
 
-## Related Skills
+## Related skills
 
 - `plutonium-installation` - Initial Plutonium setup
 - `plutonium-portal` - Portal configuration
 - `plutonium-policy` - Authorization after authentication
 - `plutonium-invites` - User invitation system for multi-tenant apps
+- `plutonium-definition` - Customizing the profile definition
+- `plutonium-views` - Custom pages and components

@@ -1,9 +1,16 @@
 ---
 name: plutonium-forms
-description: Use when building custom form templates, overriding field builders, or theming form components in Plutonium
+description: Use BEFORE customizing a form template, field builder, or input component in Plutonium. Also when overriding Form in a definition.
 ---
 
 # Plutonium Forms
+
+## 🚨 Critical (read first)
+- **Use `pu:field:input NAME` for custom input components.** Don't hand-write Phlexi field classes — the generator registers them correctly.
+- **Configure inputs in the definition, render them in the form.** `input :foo, as: :markdown` in the definition; `render_resource_field :foo` in the custom form template.
+- **Override via `class Form < Form` in the definition.** Don't replace the form root class.
+- **`render_actions` renders the submit buttons.** Always call it at the end of a custom `form_template` or the form won't submit.
+- **Related skills:** `plutonium-definition` (input configuration), `plutonium-views` (custom page classes), `plutonium-assets` (theming), `plutonium-interaction` (interaction forms).
 
 **Use generators for custom field types:**
 - `rails g pu:field:input NAME` creates a custom form input component

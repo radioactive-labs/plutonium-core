@@ -1,9 +1,16 @@
 ---
 name: plutonium-controller
-description: Use when customizing controller behavior, overriding CRUD actions, adding hooks, or changing redirect logic in Plutonium
+description: Use BEFORE overriding a controller action, adding a hook, or changing redirect logic in a Plutonium controller. Also when customizing resource_params or presentation hooks.
 ---
 
 # Plutonium Controllers
+
+## 🚨 Critical (read first)
+- **Use generators.** `pu:res:scaffold` and `pu:res:conn` create controllers — never hand-write them.
+- **Don't override CRUD actions.** Customize via hooks (`resource_params`, `redirect_url_after_submit`, `preferred_action_after_submit`, presentation hooks). Overriding `create`/`update` usually breaks authorization, params filtering, or both.
+- **Prefer definitions and interactions.** UI config belongs in definitions; business logic belongs in interactions. The controller is thin by design.
+- **Named custom routes.** When adding custom member/collection routes, always use `as:` so `resource_url_for` can build URLs — especially for nested resources.
+- **Related skills:** `plutonium-definition` (interactive actions instead of controller actions), `plutonium-policy` (authorization), `plutonium-nested-resources` (parent/child routing), `plutonium-views` (custom page classes).
 
 **Controllers are generated automatically** - never create them manually:
 - `rails g pu:res:scaffold` creates the base controller
@@ -383,7 +390,7 @@ end
 
 - `plutonium` - How controllers fit in the resource architecture
 - `plutonium-policy` - Authorization (used by controllers)
-- `plutonium-definition-actions` - Interactive actions (preferred over custom controller actions)
+- `plutonium-definition` - Interactive actions (preferred over custom controller actions)
 - `plutonium-views` - Custom page, form, display, and table classes
 - `plutonium-nested-resources` - Parent/child routes and scoping
 - `plutonium-model` - Resource models

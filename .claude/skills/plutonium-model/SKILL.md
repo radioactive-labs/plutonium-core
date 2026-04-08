@@ -1,9 +1,29 @@
 ---
 name: plutonium-model
-description: Use when working with Plutonium resource models - setup, structure, has_cents, associations, SGID support, entity scoping, and routing
+description: Use BEFORE editing a Plutonium resource model, adding associations, has_cents, SGID, or routing helpers. For tenancy / associated_with / relation_scope, also load plutonium-entity-scoping.
 ---
 
 # Plutonium Resource Models
+
+## 🚨 Critical (read first)
+- **Use `pu:res:scaffold`.** Never hand-write resource model files — the scaffold sets up `Plutonium::Resource::Record`, associations, and the expected section layout.
+- **Declare associations for the entity.** For multi-tenant apps, add `belongs_to`, `has_one :through`, or an `associated_with_<entity>` scope so `associated_with` can resolve. Fix the model, not the policy.
+- **Compound uniqueness** — in multi-tenant models, scope unique constraints to the tenant FK (`uniqueness: {scope: :organization_id}`), or you leak across tenants.
+- **Keep business logic out of the model.** Use interactions for multi-step ops, policies for authorization.
+- **Related skills:** `plutonium-entity-scoping` (tenancy mechanics), `plutonium-create-resource` (scaffold), `plutonium-definition` (UI), `plutonium-policy` (authorization).
+
+## Quick checklist
+
+Adding/editing a Plutonium model:
+
+1. Use `pu:res:scaffold` for new models; include `Plutonium::Resource::Record` on existing ones.
+2. Place associations/enums/validations in the right section (enums → belongs_to → has_one → has_many → scopes → validations → callbacks).
+3. For monetary fields, use `has_cents :field_cents`.
+4. For multi-tenancy, declare an association path to the entity (`belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope).
+5. Add compound uniqueness scoped to the tenant FK.
+6. For SEO URLs, override `path_parameter` or `dynamic_path_parameter`.
+7. Override `to_label` if `:name`/`:title` isn't meaningful.
+8. Verify with `rails runner "puts Model.first.associated_with(entity).count"`.
 
 **Always use generators to create models** - never create model files manually:
 ```bash
@@ -161,6 +181,31 @@ has_cents :field_cents,
   suffix: "amount"       # Suffix for generated name (default: "amount")
 ```
 
+### Using `has_cents` fields in policies and definitions
+
+**Always reference the virtual accessor (`:price`), never the underlying column (`:price_cents`).**
+
+```ruby
+# Model
+class Product < ResourceRecord
+  has_cents :price_cents   # exposes virtual :price
+end
+
+# ✅ Policy — use the virtual name
+class ProductPolicy < ResourcePolicy
+  def permitted_attributes_for_create
+    %i[name price]   # NOT :price_cents
+  end
+end
+
+# ✅ Definition — use the virtual name
+class ProductDefinition < ResourceDefinition
+  field :price, as: :decimal
+end
+```
+
+The virtual accessor handles form input, validation, and display as a decimal. Using `:price_cents` directly in a policy or definition forces users to enter integer cents and bypasses the conversion. Generators sometimes emit the `_cents` name in the policy — fix it by hand if you see it (and add `has_cents` if it's missing from the model).
+
 ### Validation
 
 ```ruby
@@ -233,64 +278,19 @@ user.remove_post_sgid("BAh7CEkiCG...")  # Remove from collection
 
 ## Entity Scoping (associated_with)
 
-Query records associated with another record. Essential for multi-tenant apps.
+`Plutonium::Resource::Record` provides `Model.associated_with(entity)` for multi-tenant queries. It resolves via a custom `associated_with_<entity>` scope, a direct `belongs_to`, or an auto-detected `has_one :through` chain.
 
-### Basic Usage
+Quick example:
 
 ```ruby
 class Comment < ResourceRecord
   belongs_to :post
 end
 
-# Find comments for a post
-Comment.associated_with(post)
-# => Comment.where(post: post)
+Comment.associated_with(post)  # => Comment.where(post: post)
 ```
 
-### Association Detection
-
-Works with:
-- `belongs_to` - Uses WHERE clause (most efficient)
-- `has_one` - Uses JOIN + WHERE
-- `has_many` - Uses JOIN + WHERE
-
-```ruby
-# Direct association (preferred)
-Comment.associated_with(post)  # WHERE post_id = ?
-
-# Reverse association (less efficient, logs warning)
-Post.associated_with(comment)  # JOIN comments WHERE comments.id = ?
-```
-
-### Custom Scopes
-
-For optimal performance, define custom scopes:
-
-```ruby
-class Comment < ResourceRecord
-  # Custom scope naming: associated_with_{model_name}
-  scope :associated_with_user, ->(user) do
-    joins(:post).where(posts: {user_id: user.id})
-  end
-end
-
-# Automatically uses custom scope
-Comment.associated_with(user)
-```
-
-### Error Handling
-
-```ruby
-# When no association exists
-UnrelatedModel.associated_with(user)
-# Raises: Could not resolve the association between 'UnrelatedModel' and 'User'
-#
-# Define:
-#  1. the associations between the models
-#  2. a named scope on UnrelatedModel e.g.
-#
-# scope :associated_with_user, ->(user) { do_something_here }
-```
+> **For entity scoping details — the three model shapes (direct child, join table, grandchild), `has_one :through` patterns, custom scopes, `default_relation_scope`, and how it fits with policies and portals — see the [plutonium-entity-scoping](../plutonium-entity-scoping/SKILL.md) skill. It is the single source of truth.**
 
 ## URL Routing
 

@@ -1,9 +1,16 @@
 ---
 name: plutonium-package
-description: Use when creating feature packages or portal packages to organize a Plutonium app into modular engines
+description: Use BEFORE creating a feature package or portal package via pu:pkg:package / pu:pkg:portal, or organizing a Plutonium app into modular engines.
 ---
 
 # Plutonium Packages
+
+## 🚨 Critical (read first)
+- **Use the generators.** `pu:pkg:package` for feature packages, `pu:pkg:portal` for portal packages — never hand-write engine files or directory structures.
+- **Feature vs portal is a hard split.** Feature packages hold models/policies/definitions/interactions; portal packages hold controllers/views/routes/auth. Don't mix.
+- **Package classes are auto-namespaced** (`packages/blogging/app/models/blogging/post.rb` → `Blogging::Post`). Don't fight the namespacing.
+- **Cross-package resource references** use the full namespace: `rails g pu:res:conn Blogging::Post --dest=admin_portal`.
+- **Related skills:** `plutonium-portal` (portal-specific features), `plutonium-create-resource` (creating resources in packages), `plutonium-installation` (package loading).
 
 Packages are specialized Rails engines for organizing code. There are two types:
 

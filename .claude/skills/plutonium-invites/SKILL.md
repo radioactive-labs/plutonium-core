@@ -1,9 +1,16 @@
 ---
 name: plutonium-invites
-description: Use when setting up user invitations with entity membership in a multi-tenant Plutonium app
+description: Use BEFORE setting up user invitations, pu:invites:install, or entity membership in a multi-tenant Plutonium app. Also load plutonium-entity-scoping.
 ---
 
 # Plutonium User Invites
+
+## 🚨 Critical (read first)
+- **Use the generators.** `pu:invites:install` and `pu:invites:invitable` — never hand-write invite models, mailers, or controllers. Prerequisites: user model, entity model, membership model (`pu:saas:setup` creates all three).
+- **Invite email must match the accepting user's email.** This is a security feature. Don't disable `enforce_email?` unless you fully understand the implications.
+- **Entity scoping applies to invites** — invites are automatically filtered by the current entity. See `plutonium-entity-scoping`.
+- **Implement `on_invite_accepted` on invitable models.** Plutonium calls it when the invite is accepted; without it, the invitable never learns about the new user.
+- **Related skills:** `plutonium-entity-scoping` (tenant scoping for invites), `plutonium-auth` (Rodauth signup flow), `plutonium-portal` (portal connection), `plutonium-interaction` (custom invite logic).
 
 Plutonium provides a complete user invitation system for multi-tenant applications. The system handles:
 - Sending email invitations to new users
@@ -307,12 +314,9 @@ end
 
 ### Entity-Scoped Invite Management
 
-The `Invites::UserInvite` definition automatically scopes to the current entity:
+Invites are automatically filtered by the current entity — admins only see invites for their organization. This works because `Invites::UserInvite` has `belongs_to :entity`, which `associated_with` picks up.
 
-```ruby
-# In your portal, invites are automatically filtered by entity_scope
-# Admins only see invites for their organization
-```
+> **For how entity scoping works end-to-end (model shapes, `default_relation_scope`, portal strategies), see the [plutonium-entity-scoping](../plutonium-entity-scoping/SKILL.md) skill. It is the single source of truth.**
 
 ## Troubleshooting
 
@@ -357,7 +361,7 @@ end
 
 ## Related Skills
 
-- `plutonium-rodauth` - Authentication setup
+- `plutonium-auth` - Authentication setup
 - `plutonium-interaction` - Custom business logic
 - `plutonium-portal` - Portal configuration
 - `plutonium-policy` - Authorization for invite actions

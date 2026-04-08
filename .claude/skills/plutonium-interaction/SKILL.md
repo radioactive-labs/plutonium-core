@@ -1,9 +1,16 @@
 ---
 name: plutonium-interaction
-description: Use when writing interaction classes for custom business logic, multi-step operations, or actions beyond basic CRUD
+description: Use BEFORE writing an interaction class, encapsulating business logic, or building multi-step operations beyond basic CRUD. Covers Plutonium::Resource::Interaction.
 ---
 
 # Plutonium Interactions
+
+## 🚨 Critical (read first)
+- **`ActiveRecord::RecordInvalid` is NOT rescued automatically.** Always rescue it when using `create!`/`update!`/`save!` and return `failed(e.record.errors)`.
+- **Return `succeed(...)` or `failed(...)`** from `execute` — the controller won't know what happened otherwise.
+- **Redirect is automatic on success.** Only call `with_redirect_response` for a *different* destination.
+- **Bulk actions use `resources` (plural).** Policy methods are checked per record; if any fails, the whole request fails.
+- **Related skills:** `plutonium-definition` (registering actions), `plutonium-policy` (authorizing actions), `plutonium-forms` (interaction form templates).
 
 Interactions encapsulate business logic into reusable, testable units. They handle input validation, execution, and outcomes.
 
@@ -377,7 +384,7 @@ end
 
 ## Related Skills
 
-- `plutonium-definition-actions` - Declaring actions in definitions
+- `plutonium-definition` - Declaring actions in definitions
 - `plutonium-forms` - Custom interaction form templates
 - `plutonium-policy` - Controlling access to actions
 - `plutonium` - How interactions fit in the architecture

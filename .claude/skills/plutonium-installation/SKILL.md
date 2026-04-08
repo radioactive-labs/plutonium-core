@@ -1,9 +1,30 @@
 ---
 name: plutonium-installation
-description: Use when installing Plutonium in a new or existing Rails app - generators, configuration, and initial setup
+description: Use BEFORE installing Plutonium in a Rails app, running pu:core:install, or configuring initial Plutonium setup. Covers generators, gemfile, and initial config.
 ---
 
 # Plutonium Installation
+
+## 🚨 Critical (read first)
+- **Use the generators.** `pu:core:install`, `pu:rodauth:install`, `pu:pkg:portal`, `pu:res:scaffold`, `pu:res:conn` — never hand-write base controllers, policies, or layouts.
+- **Use `base.rb`, not `plutonium.rb`, for existing apps.** The `plutonium.rb` template reruns the full bootstrap (dotenv, annotate, solid_*, assets) and clobbers git history. For any pre-existing app, use `base.rb`.
+- **Pass `--dest`, `--force`, `--auth`, `--skip-bundle` for unattended runs** so generators don't block on prompts. See `plutonium` index for the full flag matrix.
+- **Related skills:** `plutonium` (architecture overview), `plutonium-auth` (Rodauth setup), `plutonium-portal` (portal config), `plutonium-create-resource` (scaffolding resources).
+
+## Quick checklist
+
+Fresh install in a new Rails app:
+
+1. Generate the Rails app with `rails new myapp -a propshaft -j esbuild -c tailwind -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb` (greenfield) OR `bin/rails app:template LOCATION=.../base.rb` (existing app).
+2. Run `bundle install` if you added the gem manually.
+3. Run `rails generate pu:core:install` to create base controllers, policies, definitions, and config.
+4. Run `rails generate pu:rodauth:install` + `rails generate pu:rodauth:account user` for auth.
+5. Run `rails generate pu:pkg:portal admin --auth=user` to create a portal.
+6. Run `rails generate pu:res:scaffold Post title:string 'content:text?' --dest=main_app` for a first resource.
+7. Run `rails db:migrate`.
+8. Run `rails generate pu:res:conn Post --dest=admin_portal` to connect the resource.
+9. Mount the portal in `config/routes.rb`: `mount AdminPortal::Engine, at: "/admin"`.
+10. Start the server and visit `/admin`.
 
 ## New Rails App (Recommended)
 
@@ -295,7 +316,7 @@ For models that already exist in your app:
 ## Related Skills
 
 - `plutonium` - Resource architecture overview
-- `plutonium-rodauth` - Authentication setup and configuration
+- `plutonium-auth` - Authentication setup and configuration
 - `plutonium-package` - Feature and portal packages
 - `plutonium-portal` - Portal configuration
 - `plutonium-views` - Custom pages, layouts, and Phlex components

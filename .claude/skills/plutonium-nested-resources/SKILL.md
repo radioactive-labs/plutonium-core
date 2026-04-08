@@ -1,9 +1,16 @@
 ---
 name: plutonium-nested-resources
-description: Use when configuring parent/child resource relationships, nested routes, or scoped URL generation in Plutonium
+description: Use BEFORE configuring parent/child resource relationships, nested routes, or scoped URL generation with resource_url_for(parent:).
 ---
 
 # Nested Resources
+
+## 🚨 Critical (read first)
+- **Use `pu:res:scaffold` + `pu:res:conn`** for both parent and child. Nested routes are generated from the `belongs_to` + association on the parent — no manual route wiring.
+- **Parent scoping beats entity scoping.** When a parent is present, `default_relation_scope` scopes via the parent, not via `entity_scope`. Don't double-scope in the policy.
+- **Plutonium supports one level of nesting.** Grandparent → parent → child nested routes are NOT supported. Use top-level routes for deeper relationships.
+- **Named custom routes only.** When adding member/collection routes on a nested resource, always pass `as:` — otherwise `resource_url_for` will fail.
+- **Related skills:** `plutonium-entity-scoping` (how parent scoping interacts with entity scoping), `plutonium-policy` (parent scoping in `relation_scope`), `plutonium-controller` (presentation hooks), `plutonium-portal` (route registration).
 
 **Always use generators** to create both parent and child resources, then connect them to portals:
 ```bash

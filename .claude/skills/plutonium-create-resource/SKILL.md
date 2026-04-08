@@ -1,11 +1,32 @@
 ---
 name: plutonium-create-resource
-description: Use when creating a new Plutonium resource - covers the pu:res:scaffold generator, field type syntax, and generator options
+description: Use BEFORE running pu:res:scaffold or creating any new resource. Also when picking field types or generator options. Covers field syntax and scaffold options.
 ---
 
 # Create Resource Skill
 
+## 🚨 Critical (read first)
+- **Always use `pu:res:scaffold`.** Never hand-write models, migrations, policies, definitions, or controllers. Plutonium's conventions rely on files it generated.
+- **Always pass `--dest`** (`--dest=main_app` or `--dest=package_name`) to skip the interactive destination prompt.
+- **Quote fields with `?` or `{}`** to prevent shell expansion: `'field:type?'`, `'field:decimal{10,2}'`, `'field:decimal?{10,2}'`.
+- **Run `pu:res:conn` next** to connect the resource to a portal — without it, the resource is invisible.
+- **Related skills:** `plutonium-model` (model structure), `plutonium-definition` (UI config), `plutonium-policy` (authorization), `plutonium-portal` (connecting to portals).
+
 Use the `pu:res:scaffold` generator to create complete resources in Plutonium applications.
+
+## Quick checklist
+
+Creating a new resource:
+
+1. Pick a destination: `--dest=main_app` or `--dest=package_name`.
+2. Identify field types (see field type syntax below). Quote fields with `?` or `{}`.
+3. Run `rails g pu:res:scaffold ResourceName field:type ... --dest=<dest>`.
+4. Review the generated migration — add cascade deletes, composite indexes, defaults.
+5. Run `rails db:migrate`.
+6. Run `rails g pu:res:conn ResourceName --dest=<portal_name>` to connect to a portal.
+7. Verify routes: `bin/rails routes | grep resource_name`.
+8. Customize the policy (`permitted_attributes_for_read`, `permitted_attributes_for_create`) as needed.
+9. Open the portal route in the browser.
 
 ## Command Syntax
 

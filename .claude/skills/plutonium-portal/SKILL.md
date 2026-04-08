@@ -1,11 +1,31 @@
 ---
 name: plutonium-portal
-description: Use when creating portals, connecting resources to portals, configuring authentication, entity scoping, or portal routes
+description: Use BEFORE creating a portal, mounting a portal engine, running pu:pkg:portal, configuring entity strategies, or routing portal-specific resources. For tenancy mechanics, also load plutonium-entity-scoping.
 ---
 
 # Plutonium Portals
 
+## 🚨 Critical (read first)
+- **Use `pu:pkg:portal`.** Never hand-craft a portal engine — the generator wires up the controller concerns, routes, and layout.
+- **Always use `pu:res:conn` to connect resources to portals** — resources are invisible until connected. Pass resources directly (not via `--src`) to skip prompts.
+- **Entity scoping is portal-level.** `scope_to_entity Entity, strategy: :path` in the portal engine; then every resource in that portal is scoped automatically. For mechanics, see `plutonium-entity-scoping`.
+- **Pass `--auth=<account>` / `--public` / `--byo`** to `pu:pkg:portal` for unattended runs.
+- **Related skills:** `plutonium-entity-scoping` (tenancy mechanics), `plutonium-auth` (Rodauth integration), `plutonium-package` (portal vs feature packages), `plutonium-policy` (portal-specific policies).
+
 Portals are Rails engines that provide web interfaces for specific user types.
+
+## Quick checklist
+
+Creating a portal and connecting resources:
+
+1. Run `rails g pu:pkg:portal <name> --auth=<account>` (or `--public` / `--byo`). Add `--scope=Entity` for multi-tenancy.
+2. Mount the engine in `config/routes.rb`: `mount <Name>Portal::Engine, at: "/<name>"`.
+3. For each resource, run `rails g pu:res:conn ResourceName --dest=<name>_portal`.
+4. For singular resources (profile, settings), pass `--singular`.
+5. Customize the portal's `Concerns::Controller` for auth / before_action hooks.
+6. Override portal-specific policies/definitions as needed.
+7. Verify: `bin/rails routes | grep <name>_portal`.
+8. For multi-tenancy specifics, load `plutonium-entity-scoping`.
 
 ## Creating a Portal
 
@@ -181,11 +201,7 @@ end
 
 ## Entity Scoping (Multi-tenancy)
 
-Automatically scope all data to a parent entity.
-
-### Path Strategy
-
-Entity ID in URL path:
+Portals can scope all data to a parent entity via `scope_to_entity`:
 
 ```ruby
 module AdminPortal
@@ -199,71 +215,11 @@ module AdminPortal
 end
 ```
 
-Routes become: `/organizations/:organization_id/posts`
+Strategies: `:path` (entity id in URL) or a custom method name on the portal controller concern.
 
-### Custom Strategy
+Access in controllers/views: `current_scoped_entity`, `scoped_to_entity?`. In policies: `entity_scope`.
 
-Implement your own lookup method:
-
-```ruby
-module AdminPortal
-  class Engine < Rails::Engine
-    include Plutonium::Portal::Engine
-
-    config.after_initialize do
-      scope_to_entity Organization, strategy: :current_organization
-    end
-  end
-end
-
-# In controller concern
-module AdminPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-
-      private
-
-      # Method name must match strategy
-      def current_organization
-        @current_organization ||= Organization.find_by!(subdomain: request.subdomain)
-      end
-    end
-  end
-end
-```
-
-### Accessing the Scoped Entity
-
-```ruby
-current_scoped_entity  # The current Organization/Account/etc.
-scoped_to_entity?      # true if scoping is active
-```
-
-### Model Requirements
-
-Models must have an association path to the scoped entity:
-
-```ruby
-# Direct association (preferred)
-class Post < ResourceRecord
-  belongs_to :organization
-end
-
-# Through association
-class Comment < ResourceRecord
-  belongs_to :post
-  has_one :organization, through: :post
-end
-
-# Complex (define custom scope)
-class AuditLog < ResourceRecord
-  scope :associated_with_organization, ->(org) {
-    joins(:user).where(users: { organization_id: org.id })
-  }
-end
-```
+> **For the full entity scoping picture — the three model shapes, `associated_with` resolution, `default_relation_scope` rules, safe `relation_scope` overrides, and how parent scoping takes precedence — see the [plutonium-entity-scoping](../plutonium-entity-scoping/SKILL.md) skill. It is the single source of truth.**
 
 ## Routes
 
@@ -448,7 +404,7 @@ rails g pu:res:conn Post --dest=admin_portal
 ## Related Skills
 
 - `plutonium-package` - Package overview (features vs portals)
-- `plutonium-rodauth` - Authentication setup and configuration
+- `plutonium-auth` - Authentication setup and configuration
 - `plutonium-policy` - Portal-specific policies
 - `plutonium-definition` - Portal-specific definitions
 - `plutonium-controller` - Portal-specific controllers
