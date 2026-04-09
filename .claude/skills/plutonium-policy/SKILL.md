@@ -174,6 +174,56 @@ def permitted_attributes_for_read
 end
 ```
 
+**Key insight:** `permitted_attributes_for_*` controls *which fields appear* on each view (form, show, index). The `column`/`field`/`input`/`display` declarations in the **definition** only control *how those fields render* — they do NOT add or remove fields from the page. If your index page is showing fields you didn't want, override `permitted_attributes_for_index` (it does NOT inherit from `_for_read` automatically when you want a different shape). The same applies to forms: a `field :name` in the definition won't be rendered unless `:name` is in `permitted_attributes_for_create`/`_update`.
+
+### Anti-pattern: nested_attributes hashes in permitted_attributes
+
+```ruby
+# ❌ DO NOT DO THIS
+def permitted_attributes_for_create
+  [
+    :name,
+    {variants_attributes: [:id, :name, :_destroy]},
+    {comments_attributes: [:id, :body, :_destroy]}
+  ]
+end
+```
+
+Plutonium's form pipeline extracts nested params via the **form definition** (`build_form(...).extract_input(...)`), not the policy. Hash entries in `permitted_attributes_for_*` get iterated as field names by the form renderer and end up as literal text inputs with names like `model[{:variants_attributes=>[...]}]`.
+
+The correct pattern:
+
+```ruby
+# ✅ Policy permits just the association name
+def permitted_attributes_for_create
+  [:name, :variants, :comments]
+end
+```
+
+```ruby
+# ✅ Definition declares the nested input (this drives both rendering AND param extraction)
+class PostDefinition < ResourceDefinition
+  nested_input :variants do |n|
+    n.input :name
+    n.input :is_default, as: :boolean
+  end
+end
+```
+
+```ruby
+# ✅ Model declares accepts_nested_attributes_for + inverse_of on the back-reference
+class Post < ApplicationRecord
+  has_many :variants, inverse_of: :post, dependent: :destroy
+  accepts_nested_attributes_for :variants, allow_destroy: true, reject_if: :all_blank
+end
+
+class Variant < ApplicationRecord
+  belongs_to :post, inverse_of: :variants  # ← required for nested validation
+end
+```
+
+See `plutonium-definition` for the full `nested_input` API.
+
 ### Auto-Detection (Development Only)
 
 In development, undefined attribute methods auto-detect from the model. This raises errors in production - always define explicitly.

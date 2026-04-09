@@ -526,10 +526,12 @@ end
 
 ### Gotchas
 
-- Model must have `accepts_nested_attributes_for`
-- For custom class names, use `class_name:` in both model and `using:` in definition
-- `update_only: true` hides the Add button
-- Limit is enforced in UI (Add button hidden when reached)
+- Model must have `accepts_nested_attributes_for`.
+- The `belongs_to` on the child model **must** declare `inverse_of: :parent_assoc`. Without it, in-memory validation of nested children fails with "Parent must exist" because the parent isn't yet saved.
+- **Don't put `*_attributes` hashes in the policy's `permitted_attributes_for_*`.** Plutonium extracts nested params via the form definition (`build_form(...).extract_input(...)`), not the policy. Hash entries like `{variants_attributes: [:id, :name, :_destroy]}` get rendered as literal text inputs. The policy should permit just the association name (e.g. `:variants`); the `nested_input :variants` declaration in the definition handles the rest.
+- For custom class names, use `class_name:` in both model and `using:` in definition.
+- `update_only: true` hides the Add button.
+- Limit is enforced in UI (Add button hidden when reached).
 
 ## File Uploads
 
