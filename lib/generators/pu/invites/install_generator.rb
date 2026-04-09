@@ -186,7 +186,7 @@ module Pu
   def current_membership
     return unless entity_scope && user
 
-    @current_membership ||= #{membership_model}.find_by(#{entity_association_name}: entity_scope, user: user)
+    @current_membership ||= #{membership_model}.find_by(#{entity_association_name}: entity_scope, #{user_association_name}: user)
   end
         RUBY
 
@@ -380,6 +380,13 @@ module Pu
       # e.g., Competition::TeamUser -> Competition::Team uses :team (not :competition_team)
       def entity_association_name
         PlutoniumGenerators::Generator.derive_association_name(membership_model, entity_model)
+      end
+
+      # Returns the association name for user on the membership model.
+      # Same logic as entity_association_name but for the user side.
+      # e.g., RestaurantStaffUser -> StaffUser uses :staff_user (not :user)
+      def user_association_name
+        PlutoniumGenerators::Generator.derive_association_name(membership_model, user_model)
       end
 
       def entity_in_package?
