@@ -1,6 +1,3 @@
-<h1 class="text-lg font-bold leading-tight tracking-tight text-[var(--pu-text)] md:text-xl">
-  Create an account
-</h1>
 <%= form_with url: rodauth.create_account_path, method: :post, data: { turbo: false, controller: "password-visibility" }, class: "space-y-4" do |form| %>
   <div>
     <%= form.label "login", rodauth.login_label, class: "pu-label" %>

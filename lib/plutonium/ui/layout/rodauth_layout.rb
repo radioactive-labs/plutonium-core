@@ -19,7 +19,12 @@ module Plutonium
           render_logo
 
           div(class: "w-full bg-[var(--pu-surface)] rounded-[var(--pu-radius-lg)] border border-[var(--pu-border)] md:mt-0 sm:max-w-md xl:p-0", style: "box-shadow: var(--pu-shadow-md)") {
-            div(class: "p-6 space-y-4 md:space-y-6 sm:p-8", &)
+            div(class: "p-6 space-y-4 md:space-y-6 sm:p-8") {
+              if page_title.present?
+                h1(class: "text-xl font-semibold leading-tight tracking-tight text-[var(--pu-text)] md:text-2xl") { page_title }
+              end
+              yield
+            }
           }
 
           render_links
