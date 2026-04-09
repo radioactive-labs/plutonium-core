@@ -70,14 +70,7 @@ module Pu
       end
 
       def add_entity_url_helper
-        content = <<-RUBY
-
-      included do
-        helper_method :entity_url, :user_entities
-      end
-
-      private
-
+        methods = <<-RUBY
       # Returns the URL to the current entity's show page.
       def entity_url
         resource_url_for(current_scoped_entity)
@@ -88,7 +81,9 @@ module Pu
         @user_entities ||= current_user.#{entity_table.pluralize}
       end
         RUBY
-        inject_into_file concerns_controller_path, content, after: /# add concerns above\.\n/
+        inject_into_concerns_controller concerns_controller_path,
+          helper_methods: [:entity_url, :user_entities],
+          methods: methods
       end
 
       def add_entity_link_to_header

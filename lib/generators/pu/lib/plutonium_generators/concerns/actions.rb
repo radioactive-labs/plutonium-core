@@ -472,6 +472,49 @@ module PlutoniumGenerators
         end
       end
 
+      #
+      # Injects helper methods into a Plutonium Concerns::Controller file,
+      # merging with any existing `included do` and `private` sections.
+      #
+      # ActiveSupport::Concern only permits ONE `included do` block per concern,
+      # so we cannot naively append a new block when multiple generators need to
+      # register helper_methods in the same file.
+      #
+      # @param file [String] path to the concerns/controller.rb file
+      # @param helper_methods [Array<Symbol>] names to expose via `helper_method`
+      # @param methods [String] method definitions (already indented to 6 spaces)
+      #
+      def inject_into_concerns_controller(file, helper_methods:, methods:)
+        helper_list = Array(helper_methods).map { |m| ":#{m}" }.join(", ")
+
+        in_root do
+          # 1. helper_method declaration: merge into existing `included do` block,
+          #    otherwise create a new block right after the `# add concerns above.` marker.
+          content = File.read(file)
+          if (match = content.match(/^(?<indent>[ \t]*)included do\n/))
+            indent = match[:indent]
+            inject_into_file file,
+              "#{indent}  helper_method #{helper_list}\n",
+              after: /^[ \t]*included do\n/
+          else
+            block = "\n      included do\n        helper_method #{helper_list}\n      end\n"
+            inject_into_file file, block, after: /# add concerns above\.\n/
+          end
+
+          # 2. Method definitions: append into the existing `private` section if any,
+          #    otherwise create one just before the closing `    end`s of the concern.
+          content = File.read(file)
+          trimmed_methods = methods.sub(/\A\n+/, "").chomp
+          if content.match?(/^[ \t]*private\n/)
+            inject_into_file file, "\n#{trimmed_methods}\n", after: /^[ \t]*private\n/
+          else
+            inject_into_file file,
+              "\n      private\n\n#{trimmed_methods}\n",
+              before: /^    end\n  end\nend\s*\z/
+          end
+        end
+      end
+
       def file_includes?(path, check)
         destination = File.expand_path(path, destination_root)
         return false unless File.exist?(destination)

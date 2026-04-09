@@ -106,14 +106,7 @@ module Pu
       end
 
       def add_profile_url_helper
-        content = <<-RUBY.chomp
-
-      included do
-        helper_method :profile_url
-      end
-
-      private
-
+        methods = <<-RUBY
       # Returns the URL to the user's profile page.
       def profile_url
         profile = current_user.#{profile_association}
@@ -124,7 +117,9 @@ module Pu
         end
       end
         RUBY
-        inject_into_file concerns_controller_path, content, after: /# add concerns above\.\n/
+        inject_into_concerns_controller concerns_controller_path,
+          helper_methods: [:profile_url],
+          methods: methods
       end
 
       def profile_association
