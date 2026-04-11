@@ -1,3 +1,31 @@
+## [0.46.0] - 2026-04-11
+
+### 🚀 Features
+
+- *(profile)* Default profile model to {UserModel}Profile
+- *(generators)* Sync skills during pu:core:update if plutonium skill is installed
+- *(generators/active_shrine)* Disable Active Storage railtie and include ActiveShrine::Model
+
+### 🐛 Bug Fixes
+
+- *(engine)* Resolve scoped entity class lazily to survive autoreload
+- *(rodauth)* Render page title in layout, drop per-view h1s
+- *(generators/invites)* Use derived user association in current_membership
+- *(generators/rodauth)* Redirect to login after verification email sent
+
+### 🚜 Refactor
+
+- *(generators)* Add inject_into_concerns_controller to merge included blocks
+
+### 📚 Documentation
+
+- *(skills)* Clarify generator gotchas for installation, rodauth, and unattended runs
+- *(skills)* Comprehensive Plutonium skills overhaul
+- *(skills)* Document nested_attributes gotchas in policy and definition
+
+### ⚙️ Miscellaneous Tasks
+
+- Update test lockfiles
 ## [0.45.3] - 2026-04-07
 
 ### 🐛 Bug Fixes
