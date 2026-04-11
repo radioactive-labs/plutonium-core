@@ -180,6 +180,9 @@ class UserRodauthPlugin < RodauthPlugin
     # Redirect to home page after logout.
     logout_redirect "/"
 
+    # Redirect to login page after requesting account verification email.
+    verify_account_email_sent_redirect { login_path }
+
     # Redirect to wherever login redirects to after account verification.
     verify_account_redirect { login_redirect }
 

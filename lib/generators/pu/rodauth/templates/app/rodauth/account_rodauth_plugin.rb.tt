@@ -285,6 +285,9 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
 <% end -%>
 <% if verify_account? -%>
 
+    # Redirect to login page after requesting account verification email.
+    verify_account_email_sent_redirect { login_path }
+
     # Redirect to wherever login redirects to after account verification.
     verify_account_redirect { login_redirect }
 <% end -%>
