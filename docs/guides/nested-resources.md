@@ -151,6 +151,16 @@ resource_url_for(@post_metadata, parent: @post)
 
 resource_url_for(PostMetadata, action: :new, parent: @post)
 # => /posts/123/nested_post_metadata/new
+
+# Interactions
+resource_url_for(@comment, parent: @post, interaction: :archive)
+# => /posts/123/nested_comments/456/record_actions/archive
+
+resource_url_for(Comment, parent: @post, interaction: :import)
+# => /posts/123/nested_comments/resource_actions/import
+
+resource_url_for(Comment, parent: @post, interaction: :bulk_delete, ids: [1, 2])
+# => /posts/123/nested_comments/bulk_actions/bulk_delete?ids[]=1&ids[]=2
 ```
 
 Within a nested context, `parent:` defaults to `current_parent`:

@@ -93,10 +93,15 @@ build_collection        # Build table component
 ### URL Generation
 
 ```ruby
-resource_url_for(@post)                    # URL for record
-resource_url_for(@post, action: :edit)     # Edit URL
-resource_url_for(Post)                     # Index URL
-resource_url_for(Post, parent: @user)      # Nested index URL
+resource_url_for(@post)                                # URL for record
+resource_url_for(@post, action: :edit)                 # Edit URL
+resource_url_for(Post)                                 # Index URL
+resource_url_for(Post, parent: @user)                  # Nested index URL
+
+# Interactions (sugar over `action: :interactive_*_action, interactive_action: ...`)
+resource_url_for(@post, interaction: :publish)         # Record action
+resource_url_for(Post, interaction: :import)           # Resource (class-level) action
+resource_url_for(Post, interaction: :archive, ids: [1, 2])  # Bulk action
 ```
 
 ## Customization Hooks

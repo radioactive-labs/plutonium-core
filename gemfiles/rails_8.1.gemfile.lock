@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.45.3)
+    plutonium (0.46.0)
       action_policy (~> 0.7.0)
       listen (~> 3.8)
       pagy (~> 43.0)

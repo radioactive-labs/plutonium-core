@@ -178,6 +178,16 @@ resource_url_for(company_profile, parent: company)
 
 resource_url_for(CompanyProfile, action: :new, parent: company)
 # => /companies/123/nested_company_profile/new
+
+# Interactions (composes with parent — see plutonium-interaction skill)
+resource_url_for(property, parent: company, interaction: :archive)
+# => /companies/123/nested_properties/456/record_actions/archive
+
+resource_url_for(Property, parent: company, interaction: :import)
+# => /companies/123/nested_properties/resource_actions/import
+
+resource_url_for(Property, parent: company, interaction: :bulk_delete, ids: [1, 2])
+# => /companies/123/nested_properties/bulk_actions/bulk_delete?ids[]=1&ids[]=2
 ```
 
 ### Cross-Package URL Generation

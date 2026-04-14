@@ -87,10 +87,16 @@ module Plutonium
       #
       # @return [Hash] args to pass to `url_for`
       #
-      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, **kwargs)
+      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, interaction: nil, **kwargs)
         element = args.first
 
         raise ArgumentError, "parent is required when using symbol association name" if element.is_a?(Symbol) && parent.nil?
+
+        if interaction
+          raise ArgumentError, "cannot pass both `interaction:` and `action:`" if action
+          action = interactive_action_type_for(element, ids: kwargs[:ids])
+          kwargs[:interactive_action] = interaction
+        end
 
         # For nested resources, use named route helpers to avoid Rails param recall ambiguity
         if parent.present?
@@ -136,6 +142,17 @@ module Plutonium
       end
 
       private
+
+      # Determine the interactive action type for the given element.
+      # Records → :interactive_record_action, classes/symbols with :ids → :interactive_bulk_action,
+      # otherwise :interactive_resource_action.
+      def interactive_action_type_for(element, ids: nil)
+        if element.is_a?(Class) || element.is_a?(Symbol) || element.nil?
+          ids.present? ? :interactive_bulk_action : :interactive_resource_action
+        else
+          :interactive_record_action
+        end
+      end
 
       def build_nested_resource_url_args(element, parent:, association_name:, route_config:, action: nil, **kwargs)
         prefix = Plutonium::Routing::NESTED_ROUTE_PREFIX

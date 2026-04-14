@@ -373,6 +373,29 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
 end
 ```
 
+## Generating Interaction URLs
+
+Use the `interaction:` kwarg on `resource_url_for`. The action type (record/bulk/resource) is inferred from the element and presence of `ids:`:
+
+```ruby
+# Record action — instance argument
+resource_url_for(@post, interaction: :publish)
+# => /posts/:id/record_actions/publish
+
+# Resource (class-level) action — class with no ids
+resource_url_for(Post, interaction: :import)
+# => /posts/resource_actions/import
+
+# Bulk action — class + ids
+resource_url_for(Post, interaction: :archive, ids: [1, 2, 3])
+# => /posts/bulk_actions/archive?ids[]=1&ids[]=2&ids[]=3
+
+# Composes with parent / entity scoping
+resource_url_for(@post, parent: @user, interaction: :publish)
+```
+
+The same URL serves both GET (form/confirmation) and POST (commit) — the verb determines which controller action runs. Passing both `interaction:` and `action:` raises `ArgumentError`.
+
 ## Best Practices
 
 1. **Keep interactions focused** - One action per interaction

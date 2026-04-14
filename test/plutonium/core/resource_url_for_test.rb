@@ -556,6 +556,97 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     assert_match %r{/admin/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
   end
 
+  # `interaction:` convenience kwarg (sugar over `action:` + `interactive_action:`)
+
+  test "interaction: top-level record (instance) generates record_actions URL" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, @post, interaction: :publish)
+    assert_match %r{/admin/blogging/posts/#{@post.id}/record_actions/publish$}, url
+  end
+
+  test "interaction: top-level resource (class, no ids) generates resource_actions URL" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, Blogging::Post, interaction: :export)
+    assert_match %r{/admin/blogging/posts/resource_actions/export$}, url
+  end
+
+  test "interaction: top-level bulk (class + ids) generates bulk_actions URL with ids in query" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, Blogging::Post, interaction: :bulk_publish, ids: [1, 2, 3])
+    assert_match %r{/admin/blogging/posts/bulk_actions/bulk_publish\?}, url
+    assert_match %r{ids%5B%5D=1&ids%5B%5D=2&ids%5B%5D=3}, url
+  end
+
+  test "interaction: nested has_many record (instance + parent)" do
+    login_as_admin
+    get "/admin/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @comment, parent: @post, interaction: :archive)
+    assert_match %r{/admin/blogging/posts/#{@post.id}/nested_comments/#{@comment.id}/record_actions/archive$}, url
+  end
+
+  test "interaction: nested has_many resource (class + parent, no ids)" do
+    login_as_admin
+    get "/admin/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Comment, parent: @post, interaction: :import)
+    assert_match %r{/admin/blogging/posts/#{@post.id}/nested_comments/resource_actions/import$}, url
+  end
+
+  test "interaction: nested has_many bulk (class + parent + ids)" do
+    login_as_admin
+    get "/admin/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, Comment, parent: @post, interaction: :bulk_delete, ids: [1, 2])
+    assert_match %r{/admin/blogging/posts/#{@post.id}/nested_comments/bulk_actions/bulk_delete\?}, url
+    assert_match %r{ids%5B%5D=1&ids%5B%5D=2}, url
+  end
+
+  test "interaction: nested has_one record (instance + parent)" do
+    login_as_admin
+    get "/admin/blogging/posts/#{@post.id}"
+    url = controller.send(:resource_url_for, @post_detail, parent: @post, interaction: :refresh)
+    assert_match %r{/admin/blogging/posts/#{@post.id}/nested_post_detail/record_actions/refresh$}, url
+    refute_match %r{/nested_post_detail/\d+/}, url
+  end
+
+  test "interaction: entity-scoped top-level record" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, @widget, interaction: :archive)
+    assert_match %r{/org/#{@org.to_param}/widgets/#{@widget.id}/record_actions/archive$}, url
+  end
+
+  test "interaction: entity-scoped + singular parent record" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, @post, parent: @user, association: :authored_posts, interaction: :archive)
+    assert_match %r{/org/#{@org.to_param}/user/nested_authored_posts/#{@post.id}/record_actions/archive$}, url
+  end
+
+  test "interaction: entity-scoped + singular parent bulk" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, interaction: :bulk_delete, ids: [@post.id])
+    assert_match %r{/org/#{@org.to_param}/user/nested_authored_posts/bulk_actions/bulk_delete\?}, url
+    assert_match %r{ids%5B%5D=#{@post.id}}, url
+  end
+
+  test "interaction: entity-scoped + singular parent resource" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, Blogging::Post, parent: @user, association: :authored_posts, interaction: :import)
+    assert_match %r{/org/#{@org.to_param}/user/nested_authored_posts/resource_actions/import$}, url
+  end
+
+  test "interaction: passing both interaction: and action: raises ArgumentError" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    assert_raises(ArgumentError) do
+      controller.send(:resource_url_for, @post, interaction: :publish, action: :edit)
+    end
+  end
+
   # Top-level URL when entity-scoped singular resource creates ambiguous routes
   # When Organization is registered as singular: true and has_many :widgets,
   # both /:org_scope/widgets/:id and /:org_scope/organization/nested_widgets/:id exist.
