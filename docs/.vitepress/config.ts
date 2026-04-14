@@ -95,6 +95,12 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Theming", link: "/guides/theming" },
           ]
+        },
+        {
+          text: "Quality",
+          items: [
+            { text: "Testing", link: "/guides/testing" },
+          ]
         }
       ],
       '/reference/': [

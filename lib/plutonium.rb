@@ -27,6 +27,8 @@ module Plutonium
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|
     loader.ignore("#{__dir__}/generators")
     loader.ignore("#{__dir__}/plutonium/railtie.rb")
+    loader.ignore("#{__dir__}/plutonium/testing.rb")
+    loader.ignore("#{__dir__}/plutonium/testing")
     loader.ignore("#{__dir__}/rodauth")
     loader.inflector.inflect("ui" => "UI")
     loader.inflector.inflect("workflow_dsl" => "WorkflowDSL")

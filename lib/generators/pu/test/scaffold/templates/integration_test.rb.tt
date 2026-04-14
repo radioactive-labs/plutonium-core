@@ -1,0 +1,65 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+class <%= @class_name %> < ActionDispatch::IntegrationTest
+<% @concerns.each do |c| -%>
+  include Plutonium::Testing::<%= concern_module_name(c) %>
+<% end -%>
+
+  resource_tests_for <%= @resource_class %>,
+    portal: :<%= @portal %><% if @parent %>,
+    parent: :<%= @parent %><% end %>
+
+  setup do
+    # TODO: replace with your factories.
+    @account = nil
+    login_as(@account)
+  end
+
+<% if @concerns.include?("crud") -%>
+  def create_resource!
+    <%= @resource_class %>.create!(
+      # TODO: fill in valid attributes
+    )
+  end
+
+  def valid_create_params
+    {} # TODO
+  end
+
+  def valid_update_params
+    {} # TODO
+  end
+<% end -%>
+<% if @concerns.include?("policy") -%>
+
+  def policy_roles
+    {<%= @portal %>: -> { @account }}
+  end
+
+  def policy_record
+    create_resource!
+  end
+
+  def policy_matrix
+    {
+      index: %i[<%= @portal %>],
+      show: %i[<%= @portal %>],
+      create: %i[<%= @portal %>],
+      update: %i[<%= @portal %>],
+      destroy: %i[<%= @portal %>]
+    }
+  end
+<% end -%>
+<% if @concerns.include?("nested") && @parent -%>
+
+  def parent_record!
+    # TODO: return the current tenant for this test
+  end
+
+  def other_parent_record!
+    # TODO: return a sibling tenant
+  end
+<% end -%>
+end

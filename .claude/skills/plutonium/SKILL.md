@@ -61,6 +61,7 @@ Optional additions when relevant:
 | Create a portal or feature package | `plutonium-portal` / `plutonium-package` |
 | Mount a portal, configure entity strategies, route portal resources | `plutonium-portal` (+ `plutonium-entity-scoping` for tenancy) |
 | Install Plutonium in a Rails app | `plutonium-installation` |
+| Write tests for a resource, run `pu:test:scaffold`, or include `Plutonium::Testing::*` concerns | `plutonium-testing` |
 
 ## Generator catalog
 
@@ -87,6 +88,8 @@ Every Plutonium generator is discoverable via `rails g pu:<tab>`. Always pass `-
 | `pu:field:renderer NAME` | Custom display renderer | `plutonium-definition` |
 | `pu:eject:layout` | Eject the base layout for customization | `plutonium-views` |
 | `pu:skills:sync` | Sync Plutonium Claude skills into the project | `plutonium` |
+| `pu:test:install` | Install Plutonium::Testing scaffolding | `plutonium-testing` |
+| `pu:test:scaffold NAME --portals=...` | Scaffold integration tests per (resource × portal) | `plutonium-testing` |
 
 ## Resource architecture at a glance
 
@@ -144,3 +147,4 @@ Meta-generators (`pu:saas:setup`) propagate these flags to the generators they c
 - `plutonium-installation` · `plutonium-create-resource` · `plutonium-model` · `plutonium-policy` · `plutonium-entity-scoping` · `plutonium-portal` · `plutonium-definition`
 - `plutonium-controller` · `plutonium-interaction` · `plutonium-views` · `plutonium-forms` · `plutonium-assets`
 - `plutonium-auth` · `plutonium-invites` · `plutonium-package` · `plutonium-nested-resources`
+- `plutonium-testing` — default test concerns and scaffolding

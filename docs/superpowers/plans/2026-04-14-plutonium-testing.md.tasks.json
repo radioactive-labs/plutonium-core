@@ -1,0 +1,21 @@
+{
+  "planPath": "docs/superpowers/plans/2026-04-14-plutonium-testing.md",
+  "tasks": [
+    {"id": 1, "subject": "Create Plutonium::Testing module skeleton and autoload entry", "status": "pending", "planTaskNumber": 1},
+    {"id": 2, "subject": "Implement shared DSL and portal resolution", "status": "pending", "blockedBy": [1], "planTaskNumber": 2},
+    {"id": 10, "subject": "Implement portal-scoped AuthHelpers", "status": "pending", "blockedBy": [2], "planTaskNumber": 3},
+    {"id": 3, "subject": "Implement ResourceCrud concern", "status": "pending", "blockedBy": [2, 10], "planTaskNumber": 4},
+    {"id": 4, "subject": "Implement ResourcePolicy concern", "status": "pending", "blockedBy": [2], "planTaskNumber": 5},
+    {"id": 5, "subject": "Implement ResourceDefinition concern", "status": "pending", "blockedBy": [2, 3], "planTaskNumber": 6},
+    {"id": 6, "subject": "Implement ResourceInteraction concern", "status": "pending", "blockedBy": [1], "planTaskNumber": 7},
+    {"id": 7, "subject": "Implement ResourceModel concern", "status": "pending", "blockedBy": [2], "planTaskNumber": 8},
+    {"id": 8, "subject": "Implement NestedResource concern", "status": "pending", "blockedBy": [2, 10], "planTaskNumber": 9},
+    {"id": 9, "subject": "Implement PortalAccess concern", "status": "pending", "blockedBy": [10], "planTaskNumber": 10},
+    {"id": 11, "subject": "Implement pu:test:install generator", "status": "pending", "blockedBy": [1], "planTaskNumber": 11},
+    {"id": 12, "subject": "Implement pu:test:scaffold generator", "status": "pending", "blockedBy": [1], "planTaskNumber": 12},
+    {"id": 14, "subject": "Write plutonium-testing skill documentation", "status": "pending", "blockedBy": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "planTaskNumber": 13},
+    {"id": 15, "subject": "Add VitePress docs guide for testing", "status": "pending", "blockedBy": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "planTaskNumber": 14},
+    {"id": 13, "subject": "Migrate in-repo shared_tests to use Plutonium::Testing concerns", "status": "pending", "blockedBy": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], "planTaskNumber": 15}
+  ],
+  "lastUpdated": "2026-04-14T00:00:00Z"
+}
