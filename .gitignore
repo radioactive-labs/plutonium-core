@@ -27,3 +27,5 @@ log/
 test/dummy/log/*.log
 test/dummy/storage/*.sqlite*
 test/dummy/tmp
+
+.yarn
