@@ -71,6 +71,16 @@ module Plutonium
         assert_nil non_immediate_action.confirmation
       end
 
+      def test_confirmation_explicitly_disabled
+        action = Interactive::Factory.create(:no_confirm, interaction: RecordInteraction, immediate: true, confirmation: false)
+        assert_equal false, action.confirmation
+      end
+
+      def test_confirmation_custom_message
+        action = Interactive::Factory.create(:custom_confirm, interaction: RecordInteraction, immediate: true, confirmation: "Really?")
+        assert_equal "Really?", action.confirmation
+      end
+
       def test_route_options
         assert_instance_of RouteOptions, @action.route_options
         assert_equal :post, @action.route_options.method

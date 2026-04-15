@@ -31,7 +31,8 @@ module Plutonium
       #
       # @return [String, nil] The confirmation message or nil if not applicable
       def confirmation
-        super || (@immediate ? "#{label}?" : nil)
+        return @confirmation unless @confirmation.nil?
+        @immediate ? "#{label}?" : nil
       end
 
       # Factory for creating Interactive actions

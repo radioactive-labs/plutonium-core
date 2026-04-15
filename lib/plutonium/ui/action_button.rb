@@ -64,7 +64,7 @@ module Plutonium
           form: {
             data: {
               turbo: @action.turbo,
-              turbo_confirm: @action.confirmation,
+              turbo_confirm: @action.confirmation.presence,
               turbo_frame: @action.turbo_frame
             }
           }
