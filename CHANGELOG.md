@@ -1,3 +1,13 @@
+## [0.47.0] - 2026-04-15
+
+### 🚀 Features
+
+- *(core)* Add `interaction:` kwarg to resource_url_for
+- *(testing)* Add Plutonium::Testing module, generators, skill, docs, and migrate in-repo tests
+
+### ⚙️ Miscellaneous Tasks
+
+- Update yarn
 ## [0.46.0] - 2026-04-11
 
 ### 🚀 Features
