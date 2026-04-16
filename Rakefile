@@ -17,7 +17,16 @@ Rake::Task["build"].enhance ["assets"]
 # Unit + integration tests (safe to run together)
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
-  t.test_files = FileList["test/**/*_test.rb"].exclude("test/generators/**/*_test.rb")
+  t.test_files = FileList["test/**/*_test.rb"]
+    .exclude("test/generators/**/*_test.rb")
+    .exclude("test/system/**/*_test.rb")
+  t.verbose = true
+end
+
+# System tests — require a browser (headless Chrome) and run real Turbo/JS.
+Rake::TestTask.new("test:system") do |t|
+  t.libs << "test"
+  t.test_files = FileList["test/system/**/*_test.rb"]
   t.verbose = true
 end
 

@@ -35,4 +35,5 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Actions
   action :publish, interaction: Blogging::PublishPost
   action :archive, interaction: Blogging::ArchivePost
+  action :touch, interaction: Blogging::TouchPost, category: :primary, confirmation: false
 end

@@ -27,6 +27,10 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
     record.is_a?(Blogging::Post) && record.published?
   end
 
+  def touch?
+    true
+  end
+
   # Core attributes
 
   def permitted_attributes_for_create
