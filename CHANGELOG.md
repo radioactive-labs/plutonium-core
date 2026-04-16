@@ -1,3 +1,16 @@
+## [0.48.0] - 2026-04-16
+
+### 🚀 Features
+
+- *(turbo)* Preserve scroll by emitting refresh when redirect target matches referer
+
+### 🐛 Bug Fixes
+
+- *(action)* Respect `confirmation: false` on interactive actions
+
+### 🧪 Testing
+
+- *(system)* Browser coverage for Turbo refresh + scroll preservation
 ## [0.47.0] - 2026-04-15
 
 ### 🚀 Features
