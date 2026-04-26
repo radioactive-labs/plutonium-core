@@ -60,4 +60,18 @@ class StorefrontPortal::PublicAccessTest < ActionDispatch::IntegrationTest
     end
     assert_response :forbidden
   end
+
+  # Regression: when authorization fails on a collection action (no record
+  # loaded), the policy's record is the resource Class. The unauthorized
+  # rescue handler must accept a Class without exploding into a 500.
+  test "public: denied JSON create returns 403 with errors body, not a 500" do
+    assert_no_difference -> { Blogging::Post.count } do
+      post "/storefront/blogging/posts.json",
+        params: {blogging_post: {title: "Hack", body: "Nope"}}
+    end
+    assert_response :forbidden
+    body = JSON.parse(response.body)
+    assert_kind_of Array, body["errors"]
+    assert body["errors"].any? { |e| e["attribute"] == "base" }
+  end
 end

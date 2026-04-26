@@ -18,7 +18,14 @@ module Plutonium
               raise exception
             end
             format.any do
-              @errors = ActiveModel::Errors.new(exception.policy.record)
+              # ActionPolicy stores the policy *class* on the exception
+              # (see ActionPolicy::Unauthorized#initialize), so reach for the
+              # live policy instance instead. Its record may itself be a Class
+              # for collection actions where no record is loaded — instantiate
+              # so ActiveModel::Errors has a real model instance to work with.
+              record = current_policy.record
+              record = record.new if record.is_a?(Class)
+              @errors = ActiveModel::Errors.new(record)
               @errors.add(:base, :unauthorized, message: exception.result.message)
               render "errors", status: :forbidden
             end
