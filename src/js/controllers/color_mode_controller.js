@@ -1,66 +1,73 @@
 import { Controller } from "@hotwired/stimulus";
 
 // Connects to data-controller="color-mode"
+//
+// Shared theme state across the app. localStorage key 'theme' holds one of:
+//   'auto'  — follow prefers-color-scheme (default when unset)
+//   'light' — force light
+//   'dark'  — force dark
+const ORDER = ['auto', 'light', 'dark'];
+
 export default class extends Controller {
   static values = { current: String };
 
   connect() {
-    // Set initial mode from localStorage or default
-    const mode = localStorage.getItem('theme') || "light";
-    this.setMode(mode);
+    this.applyMode(this.readMode());
 
-    // Listen for cross-tab theme changes
     this.handleStorageChange = (e) => {
-      console.log('Storage event received in color-mode controller:', e.key, e.newValue, e.oldValue)
-      if (e.key === 'theme' && e.newValue) {
-        console.log('Updating color-mode theme to:', e.newValue)
-        this.setMode(e.newValue);
-      }
+      if (e.key === 'theme') this.applyMode(this.readMode());
     };
     window.addEventListener('storage', this.handleStorageChange);
+
+    this.mq = window.matchMedia('(prefers-color-scheme: dark)');
+    this.handleMqChange = () => {
+      if (this.readMode() === 'auto') this.applyMode('auto');
+    };
+    this.mq.addEventListener('change', this.handleMqChange);
   }
 
   disconnect() {
-    // Clean up event listener
     window.removeEventListener('storage', this.handleStorageChange);
+    if (this.mq) this.mq.removeEventListener('change', this.handleMqChange);
   }
 
   toggleMode() {
-    const current = this.currentValue || "light";
-    const next = current === "light" ? "dark" : "light";
+    const current = this.readMode();
+    const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
     this.setMode(next);
   }
 
   setMode(mode) {
-    // Update html class
-    if (mode === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-
-    // Update button state
-    this.currentValue = mode;
-
-    // Show/hide icons
-    this.toggleIcons(mode);
-
-    // Store in localStorage to trigger storage events in other tabs
     localStorage.setItem('theme', mode);
+    this.applyMode(mode);
+  }
+
+  applyMode(mode) {
+    const effective = this.effectiveMode(mode);
+    document.documentElement.classList.toggle('dark', effective === 'dark');
+    this.currentValue = mode;
+    this.toggleIcons(mode);
+  }
+
+  readMode() {
+    const saved = localStorage.getItem('theme');
+    return ORDER.includes(saved) ? saved : 'auto';
+  }
+
+  effectiveMode(mode) {
+    if (mode === 'light' || mode === 'dark') return mode;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   toggleIcons(mode) {
-    const sun = this.element.querySelector(".color-mode-icon-light");
-    const moon = this.element.querySelector(".color-mode-icon-dark");
-
-    if (sun && moon) {
-      if (mode === "light") {
-        sun.classList.remove("hidden");
-        moon.classList.add("hidden");
-      } else {
-        sun.classList.add("hidden");
-        moon.classList.remove("hidden");
-      }
+    const icons = {
+      auto: this.element.querySelector(".color-mode-icon-auto"),
+      light: this.element.querySelector(".color-mode-icon-light"),
+      dark: this.element.querySelector(".color-mode-icon-dark"),
+    };
+    for (const [key, el] of Object.entries(icons)) {
+      if (!el) continue;
+      el.classList.toggle("hidden", key !== mode);
     }
   }
 }

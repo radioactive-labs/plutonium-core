@@ -6,32 +6,21 @@ module Plutonium
     # @example Basic usage
     #   render ColorModeSelector.new
     class ColorModeSelector < Plutonium::UI::Component::Base
-      # Common CSS classes used across the component
-      COMMON_CLASSES = {
-        button: "inline-flex justify-center items-center p-2 text-[var(--pu-text-muted)] rounded-[var(--pu-radius-md)] cursor-pointer hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors duration-200",
-        icon: "w-5 h-5"
-      }.freeze
+      BUTTON_CLASSES = "inline-flex justify-center items-center p-2 text-[var(--pu-text-muted)] rounded-[var(--pu-radius-md)] cursor-pointer hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors duration-200"
+      ICON_SIZE = 18
+      ICON_STROKE = 1.5
 
-      # Available color modes with their associated icons and actions
-      COLOR_MODES = [
-        {mode: "light", icon: Phlex::TablerIcons::Sun, action: "setLightColorMode"},
-        {mode: "dark", icon: Phlex::TablerIcons::Moon, action: "setDarkColorMode"}
-      ].freeze
-
-      # Renders the color mode selector
-      # @return [void]
       def view_template
         button(
           type: "button",
-          class: COMMON_CLASSES[:button],
+          class: BUTTON_CLASSES,
           data_controller: "color-mode",
           data_action: "click->color-mode#toggleMode",
-          data_color_mode_current_value: "light", # Default to light mode
           title: "Toggle color mode"
         ) do
-          # Both icons rendered, only one visible at a time
-          render Phlex::TablerIcons::Sun.new(class: "#{COMMON_CLASSES[:icon]} color-mode-icon-light", data: {color_mode_icon: "light"})
-          render Phlex::TablerIcons::Moon.new(class: "#{COMMON_CLASSES[:icon]} color-mode-icon-dark", data: {color_mode_icon: "dark"})
+          render Phlex::TablerIcons::DeviceDesktop.new(size: ICON_SIZE, stroke: ICON_STROKE, class: "color-mode-icon-auto")
+          render Phlex::TablerIcons::Sun.new(size: ICON_SIZE, stroke: ICON_STROKE, class: "color-mode-icon-light hidden")
+          render Phlex::TablerIcons::Moon.new(size: ICON_SIZE, stroke: ICON_STROKE, class: "color-mode-icon-dark hidden")
         end
       end
     end
