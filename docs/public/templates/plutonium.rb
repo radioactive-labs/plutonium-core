@@ -23,6 +23,9 @@ after_bundle do
   generate "pu:gem:letter_opener"
   git(add: ".") && git(commit: %( -m 'add letter_opener' ))
 
+  generate "pu:gem:actual_db_schema"
+  git(add: ".") && git(commit: %( -m 'add actual_db_schema' ))
+
   generate "pu:core:assets"
   git(add: ".") && git(commit: %( -m 'integrate assets' ))
 end
