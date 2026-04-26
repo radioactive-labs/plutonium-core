@@ -19,7 +19,7 @@ module Plutonium
         # time — they're stable strings and don't depend on the live class
         # identity, so caching them is safe.
         resolved = @scoped_entity_class_name.constantize
-        @scoped_entity_param_key = param_key || :"#{resolved.model_name.singular_route_key}_scope"
+        @scoped_entity_param_key = param_key || :"#{resolved.model_name.singular_route_key}_scoped"
         @scoped_entity_route_key = route_key || resolved.model_name.singular.to_sym
       end
 

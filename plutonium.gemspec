@@ -16,6 +16,22 @@ Gem::Specification.new do |spec|
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
+  spec.post_install_message = <<~MSG
+    ⚠️  Plutonium #{Plutonium::VERSION} — breaking change
+
+    Entity-scoped URL helpers and path params have been renamed from
+    `<entity>_scope_*` to `<entity>_scoped_*`.
+
+    Examples:
+      organization_scope_widgets_path  →  organization_scoped_widgets_path
+      params[:organization_scope]      →  params[:organization_scoped]
+
+    If you reference these helpers or params directly (e.g. in tests, custom
+    redirects, or hand-written links), update them to the new names.
+
+    Apps that only use `resource_url_for` are unaffected.
+  MSG
+
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/radioactive-labs/plutonium-core"
   # spec.metadata["changelog_uri"] = "https://google.com"

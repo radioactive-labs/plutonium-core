@@ -15,8 +15,8 @@ class Plutonium::EngineTest < Minitest::Test
     engine_mod = build_engine_module
     engine_mod.scope_to_entity(Organization, strategy: :path)
 
-    assert_equal :organization_scope, engine_mod.scoped_entity_param_key,
-      "scoped_entity_param_key should be suffixed with _scope to avoid collision with resource param keys"
+    assert_equal :organization_scoped, engine_mod.scoped_entity_param_key,
+      "scoped_entity_param_key should be suffixed with _scoped to avoid collision with resource param keys"
   end
 
   def test_scoped_entity_param_key_respects_custom_param_key
@@ -42,17 +42,17 @@ class Plutonium::EngineTest < Minitest::Test
 
   def test_existing_org_portal_has_suffixed_param_key
     # Verify the real OrgPortal engine gets the suffix
-    assert_equal :organization_scope, OrgPortal::Engine.scoped_entity_param_key
+    assert_equal :organization_scoped, OrgPortal::Engine.scoped_entity_param_key
   end
 
-  # scoped_entity_route_key is unaffected by the _scope suffix
+  # scoped_entity_route_key is unaffected by the _scoped suffix
 
   def test_scoped_entity_route_key_is_not_suffixed
     engine_mod = build_engine_module
     engine_mod.scope_to_entity(Organization, strategy: :path)
 
     assert_equal :organization, engine_mod.scoped_entity_route_key,
-      "scoped_entity_route_key should remain unsuffixed (only param_key gets _scope)"
+      "scoped_entity_route_key should remain unsuffixed (only param_key gets _scoped)"
   end
 
   def test_scoped_entity_route_key_respects_custom_route_key
@@ -69,7 +69,7 @@ class Plutonium::EngineTest < Minitest::Test
     engine_mod = build_engine_module
     engine_mod.scope_to_entity(Organization, strategy: :current_tenant)
 
-    assert_equal :organization_scope, engine_mod.scoped_entity_param_key
+    assert_equal :organization_scoped, engine_mod.scoped_entity_param_key
   end
 
   private

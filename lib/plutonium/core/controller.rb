@@ -248,8 +248,8 @@ module Plutonium
         end
 
         # Build named route helper, mirroring the pattern used by build_nested_resource_url_args.
-        # e.g., "organization_scope_widgets" (collection), "organization_scope_widget" (member),
-        #        "edit_organization_scope_widget" (edit action)
+        # e.g., "organization_scoped_widgets" (collection), "organization_scoped_widget" (member),
+        #        "edit_organization_scoped_widget" (edit action)
         is_collection_action = action == :index || action == :create || (no_record && action != :new)
         helper_base = if is_singular || is_collection_action
           model_class.model_name.plural
