@@ -15,6 +15,12 @@ module Plutonium
           class: "flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0"
         })
 
+        def render_before_main
+          div(class: "absolute top-4 right-4") {
+            render Plutonium::UI::ColorModeSelector.new
+          }
+        end
+
         def render_content(&)
           render_logo
 
