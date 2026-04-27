@@ -55,7 +55,7 @@ module PlutoniumGenerators
           end.compact!
         end
 
-        def new_database(name, migrations_paths: nil)
+        def new_database(name, migrations_paths: nil, schema_dump: nil)
           migrations_paths ||= "db/#{name}_migrate"
           db = Psych::Nodes::Mapping.new(name)
           db.children.concat [
@@ -66,6 +66,12 @@ module PlutoniumGenerators
             Psych::Nodes::Scalar.new("database"),
             Psych::Nodes::Scalar.new("storage/<%= Rails.env %>-#{name}.sqlite3")
           ]
+          unless schema_dump.nil?
+            db.children.concat [
+              Psych::Nodes::Scalar.new("schema_dump"),
+              Psych::Nodes::Scalar.new(schema_dump.to_s)
+            ]
+          end
           "\n" + emit_pair(Psych::Nodes::Scalar.new(name), db)
         end
 
@@ -91,10 +97,10 @@ module PlutoniumGenerators
         @database_yaml ||= DatabaseYAML.new(path: File.expand_path("config/database.yml", destination_root))
       end
 
-      def add_sqlite_database(name, migrations_paths: nil)
+      def add_sqlite_database(name, migrations_paths: nil, schema_dump: nil)
         # Define the new database configuration
         insert_into_file "config/database.yml",
-          database_yaml.new_database(name, migrations_paths: migrations_paths) + "\n",
+          database_yaml.new_database(name, migrations_paths: migrations_paths, schema_dump: schema_dump) + "\n",
           after: database_yaml.database_def_regex("default"),
           verbose: false,
           force: false

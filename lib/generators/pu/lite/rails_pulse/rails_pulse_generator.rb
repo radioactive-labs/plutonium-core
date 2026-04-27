@@ -51,10 +51,13 @@ module Pu
         end
 
         # Then add database config
-        add_sqlite_database(@db_name, migrations_paths: "db/rails_pulse_migrate")
+        add_sqlite_database(@db_name, migrations_paths: "db/rails_pulse_migrate", schema_dump: false)
 
-        # Finally prepare the database (runs migration that loads schema)
-        prepare_database(@db_name)
+        # rails_pulse ships a callable schema lambda; load it idempotently
+        # against the rails_pulse connection.
+        Bundler.with_unbundled_env do
+          run "bin/rails db:schema:load_rails_pulse"
+        end
       end
 
       def mount_rails_pulse_engine
