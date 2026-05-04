@@ -67,16 +67,31 @@ module Plutonium
             raise ArgumentError, "parent and parent_association must both be provided together"
           end
 
-          # Parent association scoping (nested routes)
-          # The parent was already entity-scoped during authorization, so children
-          # accessed through the parent don't need additional entity scoping
+          # Parent association scoping (nested routes).
+          #
+          # The parent context is set on the policy for the whole request, so it
+          # leaks into sibling lookups too — e.g. a SecureAssociation field on
+          # the child's form authorizes an unrelated resource scope while
+          # parent/parent_association are still set. Only apply parent scoping
+          # when the relation actually corresponds to the parent's named
+          # association; otherwise fall through to entity scoping so we don't
+          # produce an incoherent (and silently empty) result.
           assoc_reflection = parent.class.reflect_on_association(parent_association)
-          if assoc_reflection.collection?
-            # has_many: merge with the association's scope
-            parent.public_send(parent_association).merge(relation)
+          if assoc_reflection && relation.klass <= assoc_reflection.klass
+            # The parent was already entity-scoped during authorization, so
+            # children accessed through the parent don't need additional
+            # entity scoping.
+            if assoc_reflection.collection?
+              # has_many: merge with the association's scope
+              parent.public_send(parent_association).merge(relation)
+            else
+              # has_one: scope by foreign key
+              relation.where(assoc_reflection.foreign_key => parent.id)
+            end
+          elsif entity_scope
+            relation.associated_with(entity_scope)
           else
-            # has_one: scope by foreign key
-            relation.where(assoc_reflection.foreign_key => parent.id)
+            relation
           end
         elsif entity_scope
           # Entity scoping (multi-tenancy)

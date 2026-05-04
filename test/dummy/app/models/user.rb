@@ -13,6 +13,7 @@ class User < ResourceRecord
   has_many :organization_users, dependent: :destroy
   has_many :organizations, through: :organization_users
   has_many :authored_posts, class_name: "Blogging::Post", foreign_key: :author_id, inverse_of: :author, dependent: :nullify
+  has_many :authored_articles, class_name: "Blogging::Article", foreign_key: :author_id, inverse_of: :author, dependent: :nullify
   has_many :edited_posts, class_name: "Blogging::Post", foreign_key: :editor_id, inverse_of: :editor, dependent: :nullify
   has_many :comments, dependent: :destroy
   # add has_many associations above.

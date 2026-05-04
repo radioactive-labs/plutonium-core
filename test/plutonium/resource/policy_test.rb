@@ -132,6 +132,104 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     refute_includes scoped.to_a, @other_comment
   end
 
+  def test_sti_subclass_relation_still_uses_parent_scoping
+    # Parent association is :authored_posts (klass = Blogging::Post). The
+    # relation is Blogging::Article (an STI subclass of Post). The relation's
+    # class is more specific than the association's class, so parent scoping
+    # should still apply — narrowing to "this user's articles".
+    @user.authored_posts << @post
+    @article = Blogging::Article.create!(
+      user: @user, author: @user, organization: @org,
+      title: "User's article", body: "..."
+    )
+    Blogging::Article.create!(
+      user: @other_user, author: @other_user, organization: @org,
+      title: "Other user's article", body: "..."
+    )
+
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Article,
+      user: @user,
+      parent: @user,
+      parent_association: :authored_posts,
+      entity_scope: nil
+    )
+
+    scoped = policy.default_relation_scope(Blogging::Article.all)
+
+    assert_includes scoped.to_a, @article
+    assert_equal 1, scoped.count
+  end
+
+  def test_sti_superclass_relation_falls_back_to_entity_scope
+    # Parent association is :authored_articles (klass = Blogging::Article, an
+    # STI subclass). The relation is Blogging::Post (the STI parent). The
+    # relation is broader than the association produces, so we treat this as
+    # a sibling-style lookup and fall back to entity scoping. This matches
+    # the SecureAssociation use case: a form on a nested-articles route with
+    # a `belongs_to :related_post` field wants all org posts, not the narrow
+    # set of articles owned by the parent user.
+    Blogging::Article.create!(
+      user: @user, author: @user, organization: @org,
+      title: "User's article", body: "..."
+    )
+
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Post,
+      user: @user,
+      parent: @user,
+      parent_association: :authored_articles,
+      entity_scope: @org
+    )
+
+    scoped = policy.default_relation_scope(Blogging::Post.all)
+
+    # Entity-scoped to the org — includes both posts plus the article.
+    assert_includes scoped.to_a, @post
+    assert_includes scoped.to_a, @other_post
+  end
+
+  def test_sibling_lookup_on_nested_route_falls_back_to_entity_scope
+    # Reproduces the SecureAssociation sibling-lookup bug: a request running
+    # under a nested route (parent=@post, parent_association=:comments) sets
+    # the parent context on the policy. When a form on that page builds a
+    # SecureAssociation against an unrelated sibling resource, the same policy
+    # context is reused — but the parent's named association doesn't apply to
+    # the sibling's relation. We must skip parent scoping (which would produce
+    # an incoherent empty merge) and fall back to entity scoping.
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Post,
+      user: @user,
+      parent: @post,
+      parent_association: :comments,
+      entity_scope: @org
+    )
+
+    scoped = policy.default_relation_scope(Blogging::Post.all)
+
+    # Entity-scoped (org), not parent-scoped (which would be empty/incoherent).
+    assert_includes scoped.to_a, @post
+    assert_includes scoped.to_a, @other_post
+  end
+
+  def test_sibling_lookup_on_nested_route_without_entity_scope_returns_relation
+    # Same sibling-lookup case as above but without an entity scope.
+    # The parent association doesn't apply, so we fall through to the
+    # unscoped relation rather than producing the incoherent merge.
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Post,
+      user: @user,
+      parent: @post,
+      parent_association: :comments,
+      entity_scope: nil
+    )
+
+    scoped = policy.default_relation_scope(Blogging::Post.all)
+
+    assert_includes scoped.to_a, @post
+    assert_includes scoped.to_a, @other_post
+  end
+
   def test_default_relation_scope_returns_unmodified_relation_when_no_context
     policy = Blogging::PostPolicy.new(
       record: Blogging::Post,
