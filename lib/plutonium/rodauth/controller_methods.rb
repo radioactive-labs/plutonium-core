@@ -15,7 +15,11 @@ module Plutonium
       private
 
       def root_path
-        rodauth.login_redirect
+        if main_app.routes.url_helpers.respond_to?(:root_path)
+          main_app.root_path
+        else
+          rodauth.login_redirect
+        end
       end
     end
   end
