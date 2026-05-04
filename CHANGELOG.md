@@ -1,3 +1,26 @@
+## [0.49.0] - 2026-05-04
+
+### 🚀 Features
+
+- *(generators)* Add `pu:gem:actual_db_schema` and wire into app template
+- *(ui)* Add auto mode to color mode selector
+- *(ui)* Render color mode selector on rodauth layout
+- *(generators)* Flesh out rails_pulse initializer template
+
+### 🐛 Bug Fixes
+
+- *(controller)* Return clean 403 from non-HTML unauthorized handler
+- *(generators)* Align pu:lite:rails_pulse with v0.3 schema flow
+- *(rodauth)* Prefer main_app.root_path over login_redirect
+
+### 🚜 Refactor
+
+- *(routing)* Rename entity scope prefix from `_scope` to `_scoped`
+
+### ⚙️ Miscellaneous Tasks
+
+- *(pagy)* Rename :client_max_limit to :max_limit
+- Run appraisals
 ## [0.48.0] - 2026-04-16
 
 ### 🚀 Features

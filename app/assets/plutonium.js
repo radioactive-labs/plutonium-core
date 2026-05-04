@@ -13383,49 +13383,62 @@
   };
 
   // src/js/controllers/color_mode_controller.js
+  var ORDER = ["auto", "light", "dark"];
   var color_mode_controller_default = class extends Controller {
     static values = { current: String };
     connect() {
-      const mode = localStorage.getItem("theme") || "light";
-      this.setMode(mode);
+      this.applyMode(this.readMode());
       this.handleStorageChange = (e4) => {
-        console.log("Storage event received in color-mode controller:", e4.key, e4.newValue, e4.oldValue);
-        if (e4.key === "theme" && e4.newValue) {
-          console.log("Updating color-mode theme to:", e4.newValue);
-          this.setMode(e4.newValue);
-        }
+        if (e4.key === "theme")
+          this.applyMode(this.readMode());
       };
       window.addEventListener("storage", this.handleStorageChange);
+      this.mq = window.matchMedia("(prefers-color-scheme: dark)");
+      this.handleMqChange = () => {
+        if (this.readMode() === "auto")
+          this.applyMode("auto");
+      };
+      this.mq.addEventListener("change", this.handleMqChange);
     }
     disconnect() {
       window.removeEventListener("storage", this.handleStorageChange);
+      if (this.mq)
+        this.mq.removeEventListener("change", this.handleMqChange);
     }
     toggleMode() {
-      const current = this.currentValue || "light";
-      const next = current === "light" ? "dark" : "light";
+      const current = this.readMode();
+      const next = ORDER[(ORDER.indexOf(current) + 1) % ORDER.length];
       this.setMode(next);
     }
     setMode(mode) {
-      if (mode === "dark") {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      localStorage.setItem("theme", mode);
+      this.applyMode(mode);
+    }
+    applyMode(mode) {
+      const effective = this.effectiveMode(mode);
+      document.documentElement.classList.toggle("dark", effective === "dark");
       this.currentValue = mode;
       this.toggleIcons(mode);
-      localStorage.setItem("theme", mode);
+    }
+    readMode() {
+      const saved = localStorage.getItem("theme");
+      return ORDER.includes(saved) ? saved : "auto";
+    }
+    effectiveMode(mode) {
+      if (mode === "light" || mode === "dark")
+        return mode;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
     toggleIcons(mode) {
-      const sun = this.element.querySelector(".color-mode-icon-light");
-      const moon = this.element.querySelector(".color-mode-icon-dark");
-      if (sun && moon) {
-        if (mode === "light") {
-          sun.classList.remove("hidden");
-          moon.classList.add("hidden");
-        } else {
-          sun.classList.add("hidden");
-          moon.classList.remove("hidden");
-        }
+      const icons = {
+        auto: this.element.querySelector(".color-mode-icon-auto"),
+        light: this.element.querySelector(".color-mode-icon-light"),
+        dark: this.element.querySelector(".color-mode-icon-dark")
+      };
+      for (const [key, el] of Object.entries(icons)) {
+        if (!el)
+          continue;
+        el.classList.toggle("hidden", key !== mode);
       }
     }
   };
