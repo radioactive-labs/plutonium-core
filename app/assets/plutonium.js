@@ -16884,6 +16884,21 @@ ${text2}</tr>
       }
       if (this.modal) {
         options2.appendTo = this.modal;
+        options2.position = (instance) => {
+          const input = instance.altInput || instance.input;
+          const inputRect = input.getBoundingClientRect();
+          const modalRect = this.modal.getBoundingClientRect();
+          const cal = instance.calendarContainer;
+          const calHeight = cal.offsetHeight;
+          const spaceBelow = window.innerHeight - inputRect.bottom;
+          const showAbove = spaceBelow < calHeight && inputRect.top > calHeight;
+          const top2 = showAbove ? inputRect.top - modalRect.top - calHeight - 2 : inputRect.bottom - modalRect.top + 2;
+          cal.style.top = `${top2}px`;
+          cal.style.left = `${inputRect.left - modalRect.left}px`;
+          cal.style.right = "auto";
+          cal.classList.toggle("arrowTop", !showAbove);
+          cal.classList.toggle("arrowBottom", showAbove);
+        };
       }
       return options2;
     }
@@ -27674,7 +27689,27 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
 
   // src/js/controllers/sidebar_controller.js
+  var savedScrollTop = 0;
   var sidebar_controller_default = class extends Controller {
+    static targets = ["scroll"];
+    connect() {
+      this.beforeRender = this.beforeRender.bind(this);
+      this.afterRender = this.afterRender.bind(this);
+      document.addEventListener("turbo:before-render", this.beforeRender);
+      document.addEventListener("turbo:render", this.afterRender);
+    }
+    disconnect() {
+      document.removeEventListener("turbo:before-render", this.beforeRender);
+      document.removeEventListener("turbo:render", this.afterRender);
+    }
+    beforeRender() {
+      if (this.hasScrollTarget)
+        savedScrollTop = this.scrollTarget.scrollTop;
+    }
+    afterRender() {
+      if (this.hasScrollTarget)
+        this.scrollTarget.scrollTop = savedScrollTop;
+    }
   };
 
   // src/js/controllers/password_visibility_controller.js

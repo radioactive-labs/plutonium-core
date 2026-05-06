@@ -1,3 +1,18 @@
+## [0.49.1] - 2026-05-06
+
+### 🚀 Features
+
+- *(invites)* Support multiple invite models per app
+
+### 🐛 Bug Fixes
+
+- *(policy)* Scope parent association only to matching relations
+- *(ui)* Preserve sidebar scroll across Turbo navigations
+- *(invites)* Add invite_entity_attribute hook for non-:entity invite models
+- *(interactive_actions)* Restore default layout on direct loads
+- *(invites)* Unblock acceptance + non-importmap apps
+- *(interactive_actions)* Force text/html on failure response
+- *(flatpickr)* Position calendar correctly inside modal dialogs
 ## [0.49.0] - 2026-05-04
 
 ### 🚀 Features
