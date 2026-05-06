@@ -54,7 +54,30 @@ export default class extends Controller {
     }
 
     if (this.modal) {
+      // Inside a <dialog> opened via showModal(), the dialog establishes its
+      // own containing block in the top layer. flatpickr's default positioning
+      // computes document coordinates but the calendar (appended to the
+      // dialog) interprets them relative to the dialog's box, placing the
+      // calendar far from the input. Append to the modal and reposition
+      // manually relative to the modal's bounding rect.
       options.appendTo = this.modal;
+      options.position = (instance) => {
+        const input = instance.altInput || instance.input;
+        const inputRect = input.getBoundingClientRect();
+        const modalRect = this.modal.getBoundingClientRect();
+        const cal = instance.calendarContainer;
+        const calHeight = cal.offsetHeight;
+        const spaceBelow = window.innerHeight - inputRect.bottom;
+        const showAbove = spaceBelow < calHeight && inputRect.top > calHeight;
+        const top = showAbove
+          ? inputRect.top - modalRect.top - calHeight - 2
+          : inputRect.bottom - modalRect.top + 2;
+        cal.style.top = `${top}px`;
+        cal.style.left = `${inputRect.left - modalRect.left}px`;
+        cal.style.right = "auto";
+        cal.classList.toggle("arrowTop", !showAbove);
+        cal.classList.toggle("arrowBottom", showAbove);
+      };
     }
 
     return options;
