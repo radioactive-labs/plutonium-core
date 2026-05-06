@@ -29,7 +29,7 @@ module Plutonium
         # GET /resources/1/record_actions/:interactive_action
         def interactive_record_action
           build_interactive_record_action_interaction
-          render :interactive_record_action, layout: modal_layout, formats: [:html]
+          render :interactive_record_action, formats: [:html], **modal_render_options
         end
 
         # POST /resources/1/record_actions/:interactive_action
@@ -62,7 +62,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_record_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
+                  render :interactive_record_action, formats: [:html], **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -77,7 +77,7 @@ module Plutonium
         def interactive_resource_action
           skip_verify_current_authorized_scope!
           build_interactive_resource_action_interaction
-          render :interactive_resource_action, layout: modal_layout, formats: [:html]
+          render :interactive_resource_action, formats: [:html], **modal_render_options
         end
 
         # POST /resources/resource_actions/:interactive_action
@@ -111,7 +111,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_resource_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
+                  render :interactive_resource_action, formats: [:html], **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -125,7 +125,7 @@ module Plutonium
         # GET /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
         def interactive_bulk_action
           build_interactive_bulk_action_interaction
-          render :interactive_bulk_action, layout: modal_layout, formats: [:html]
+          render :interactive_bulk_action, formats: [:html], **modal_render_options
         end
 
         # POST /resources/bulk_actions/:interactive_action?ids[]=1&ids[]=2
@@ -158,7 +158,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_bulk_action, layout: modal_layout, formats: [:html], status: :unprocessable_content
+                  render :interactive_bulk_action, formats: [:html], **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -171,9 +171,13 @@ module Plutonium
 
         private
 
-        # Returns false for modal requests (skip layout), nil otherwise (use default layout)
-        def modal_layout
-          helpers.current_turbo_frame.present? ? false : nil
+        # Render options for modal-aware actions. Returns `{ layout: false }` for
+        # turbo-frame requests so the bare frame is rendered, and an empty hash
+        # for top-level requests so the controller's default layout proc applies.
+        # (Passing `layout: nil` explicitly is treated as "no layout" by Rails,
+        # which is why we omit the key entirely on the default path.)
+        def modal_render_options
+          helpers.current_turbo_frame.present? ? {layout: false} : {}
         end
 
         def current_interactive_action

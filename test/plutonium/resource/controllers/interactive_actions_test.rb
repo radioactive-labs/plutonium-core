@@ -3,38 +3,38 @@
 require "test_helper"
 
 class Plutonium::Resource::Controllers::InteractiveActionsTest < Minitest::Test
-  # Test the modal_layout helper
+  # Test the modal_render_options helper
 
-  def test_modal_layout_returns_false_when_turbo_frame_present
+  def test_modal_render_options_returns_layout_false_when_turbo_frame_present
     controller = build_controller_with_turbo_frame("remote_modal")
 
-    result = controller.send(:modal_layout)
+    result = controller.send(:modal_render_options)
 
-    assert_equal false, result
+    assert_equal({layout: false}, result)
   end
 
-  def test_modal_layout_returns_nil_when_no_turbo_frame
+  def test_modal_render_options_returns_empty_when_no_turbo_frame
     controller = build_controller_with_turbo_frame(nil)
 
-    result = controller.send(:modal_layout)
+    result = controller.send(:modal_render_options)
 
-    assert_nil result
+    assert_equal({}, result)
   end
 
-  def test_modal_layout_returns_nil_for_empty_string_turbo_frame
+  def test_modal_render_options_returns_empty_for_empty_string_turbo_frame
     controller = build_controller_with_turbo_frame("")
 
-    result = controller.send(:modal_layout)
+    result = controller.send(:modal_render_options)
 
-    assert_nil result
+    assert_equal({}, result)
   end
 
-  def test_modal_layout_returns_false_for_any_turbo_frame_id
+  def test_modal_render_options_returns_layout_false_for_any_turbo_frame_id
     controller = build_controller_with_turbo_frame("custom_frame")
 
-    result = controller.send(:modal_layout)
+    result = controller.send(:modal_render_options)
 
-    assert_equal false, result
+    assert_equal({layout: false}, result)
   end
 
   private
