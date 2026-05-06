@@ -35,7 +35,7 @@ module Plutonium
         def render_content(&)
           div(
             id: "sidebar-navigation-content",
-            data: {turbo_permanent: true},
+            data: {turbo_permanent: true, sidebar_target: "scroll"},
             class: "overflow-y-auto py-5 px-3 h-full bg-[var(--pu-surface)] border-r border-[var(--pu-border)]",
             &
           )
