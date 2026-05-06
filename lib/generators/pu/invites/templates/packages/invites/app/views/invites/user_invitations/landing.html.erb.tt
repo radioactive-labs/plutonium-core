@@ -22,7 +22,7 @@
     <p class="text-[var(--pu-text-muted)] mb-4">To accept this invitation, please:</p>
   </div>
 
-  <%%= link_to "Create Account", invitation_signup_path(token: params[:token]),
+  <%%= link_to "Create Account", <%= invite_route_prefix %>_invitation_signup_path(token: params[:token]),
       class: "w-full block pu-btn pu-btn-md pu-btn-primary text-center" %>
 
   <div class="text-center">

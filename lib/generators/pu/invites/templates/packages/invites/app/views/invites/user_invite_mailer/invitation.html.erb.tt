@@ -22,11 +22,11 @@
   </head>
   <body>
     <div class="email-container">
-      <h2>You've been invited to <%%= @user_invite.entity.to_label %></h2>
+      <h2>You've been invited to <%%= @invite.entity.to_label %></h2>
 
       <p>Hi there,</p>
 
-      <p><%%= @user_invite.invited_by.email %> has invited you to join <%%= @user_invite.entity.to_label %> as a <%%= @user_invite.role %>.</p>
+      <p><%%= @invite.invited_by.email %> has invited you to join <%%= @invite.entity.to_label %> as a <%%= @invite.role %>.</p>
 
       <p>Click the link below to accept your invitation:</p>
 
@@ -35,8 +35,8 @@
       <p>Or copy and paste this URL into your browser:</p>
       <p><%%= @invitation_url %></p>
 
-      <%% if @user_invite.expires_at.present? %>
-        <p><small>This invitation will expire on <%%= @user_invite.expires_at.strftime("%B %d, %Y at %l:%M %p") %></small></p>
+      <%% if @invite.expires_at.present? %>
+        <p><small>This invitation will expire on <%%= @invite.expires_at.strftime("%B %d, %Y at %l:%M %p") %></small></p>
       <%% end %>
 
       <p>If you didn't expect this invitation, you can safely ignore this email.</p>

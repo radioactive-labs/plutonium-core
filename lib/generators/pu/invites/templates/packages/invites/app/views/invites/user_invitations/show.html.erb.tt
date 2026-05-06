@@ -29,7 +29,7 @@
   <%% end %>
 
   <div class="space-y-3 pt-4">
-    <%%= form_with url: accept_invitation_path(token: params[:token]), method: :post, local: true do |form| %>
+    <%%= form_with url: accept_<%= invite_route_prefix %>_invitation_path(token: params[:token]), method: :post, local: true do |form| %>
       <%%= form.submit "Accept Invitation",
           class: "w-full pu-btn pu-btn-md pu-btn-primary cursor-pointer" %>
     <%% end %>

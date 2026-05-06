@@ -32,8 +32,8 @@ module Invites
 
     private
 
-    def invite_class
-      ::Invites::UserInvite
+    def invite_classes
+      [::Invites::<%= invite_model %>]
     end
 
     # Returns the path to redirect to after the welcome flow completes.

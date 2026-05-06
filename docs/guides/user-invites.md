@@ -48,6 +48,7 @@ rails g pu:invites:install \
 |--------|---------|-------------|
 | `--entity-model` | Entity | Entity model for scoping invites |
 | `--user-model` | User | User account model |
+| `--invite-model` | `<EntityModel><UserModel>Invite` | Invite class name. Omit for single-flow apps; set per-invocation to run the generator more than once for distinct flows. |
 | `--membership-model` | EntityUser | Join model for memberships |
 | `--roles` | member,admin | Available invitation roles |
 | `--rodauth` | user | Rodauth configuration name |
@@ -488,6 +489,69 @@ invite.accepted?
 invite.expired?
 invite.cancelled?
 ```
+
+## Multiple invite flows in one app
+
+Some apps invite users to several distinct kinds of entity — for example, customers joining organizations and funders joining projects. Run `pu:invites:install` once per flow; each invocation produces independent migrations, models, policies, definitions, mailers, controllers, view templates, and route helpers.
+
+### Default-derivation rule
+
+When you omit `--invite-model`, the generator derives the class name as `<EntityModel><UserModel>Invite`. With the defaults (`--entity-model=Organization --user-model=User`) the generated class is `Invites::OrganizationUserInvite` — there is no literal `UserInvite` default. Single-flow apps never need to pass `--invite-model`.
+
+Multi-flow apps either:
+
+- Run the generator more than once with the **same** entity/user but different `--invite-model` values (rare), or
+- Run with **different** `--entity-model` / `--user-model` pairs (common). Different derivations make `--invite-model` unnecessary; pass it only when you want a custom class name.
+
+```bash
+rails g pu:invites:install \
+  --entity-model=FunderOrganization \
+  --user-model=SpenderAccount \
+  --invite-model=FunderInvite
+
+rails g pu:invites:install \
+  --entity-model=Project \
+  --user-model=Member \
+  --invite-model=ProjectInvite
+```
+
+After the second invocation you'll have, for example, `Invites::FunderInvite` on table `funder_invites` with controller `Invites::FunderInvitationsController` mounted at `/funder_invitations/:token`, alongside `Invites::ProjectInvite` on `project_invites` mounted at `/project_invitations/:token`. Route helpers are prefixed (`funder_invitation_path`, `project_invitation_path`).
+
+### How the welcome flow finds pending invites
+
+The shared `Invites::WelcomeController` keeps a running list of invite classes. Each install run injects its class into the array, preserving order:
+
+```ruby
+# packages/invites/app/controllers/invites/welcome_controller.rb
+def invite_classes
+  [::Invites::FunderInvite, ::Invites::ProjectInvite]
+end
+```
+
+After login, `Plutonium::Invites::PendingInviteCheck#pending_invite` iterates `invite_classes` and returns the first valid pending invite for the cookie-stored token (first-match wins). Plug a third-party invite class in by overriding `invite_classes` directly:
+
+```ruby
+class WelcomeController < ApplicationController
+  include Plutonium::Invites::PendingInviteCheck
+
+  def invite_classes
+    [::Invites::FunderInvite, ::Invites::ProjectInvite, ::Foreign::ApiInvite]
+  end
+end
+```
+
+### Per-flow controller overrides
+
+The install generator emits an `invitation_path_for` override on each invitations controller so post-login redirects target the correct prefixed route:
+
+```ruby
+# packages/invites/app/controllers/invites/funder_invitations_controller.rb
+def invitation_path_for(token)
+  funder_invitation_path(token: token)
+end
+```
+
+You won't normally edit this — but it's worth knowing the hook exists, because that's how multi-flow controllers stay independent from the shared `Plutonium::Invites::Controller` concern.
 
 ## Next Steps
 

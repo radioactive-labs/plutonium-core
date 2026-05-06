@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
 module Invites
-  class UserInviteMailer < ApplicationMailer
+  class <%= invite_model %>Mailer < ApplicationMailer
     prepend_view_path Invites::Engine.root.join("app/views")
 
-    def invitation(user_invite)
-      @user_invite = user_invite
-      @invitation_url = invitation_url(token: user_invite.token)
+    def invitation(invite)
+      @invite = invite
+      @invitation_url = <%= invite_route_prefix %>_invitation_url(token: invite.token)
 
       mail(
-        to: user_invite.email,
+        to: invite.email,
         subject: invitation_subject,
         template_name: invitation_template_name
       )
@@ -18,14 +18,14 @@ module Invites
     private
 
     def invitation_subject
-      "You've been invited to join #{@user_invite.entity.to_label}"
+      "You've been invited to join #{@invite.entity.to_label}"
     end
 
     def invitation_template_name
-      return "invitation" unless @user_invite.invitable_type.present?
+      return "invitation" unless @invite.invitable_type.present?
 
       # e.g., "TenantProfile" -> "invitation_tenant_profile"
-      template = "invitation_#{@user_invite.invitable_type.underscore}"
+      template = "invitation_#{@invite.invitable_type.underscore}"
       template_exists?(template) ? template : "invitation"
     end
 

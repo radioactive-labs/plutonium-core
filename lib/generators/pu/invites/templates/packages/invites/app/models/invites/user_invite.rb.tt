@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Invites
-  class UserInvite < Invites::ResourceRecord
+  class <%= invite_model %> < Invites::ResourceRecord
     include Plutonium::Invites::Concerns::InviteToken
 
     enum :role, <%= membership_model %>.roles
@@ -18,7 +18,7 @@ module Invites
     # Implement required methods from InviteToken concern
 
     def invitation_mailer
-      Invites::UserInviteMailer
+      Invites::<%= invite_model %>Mailer
     end
 
     def enforce_domain

@@ -35,6 +35,7 @@ module Plutonium
       extend ActiveSupport::Concern
 
       included do
+        append_view_path File.expand_path("app/views", Plutonium.root)
         helper_method :current_user if respond_to?(:helper_method)
       end
 
@@ -72,7 +73,7 @@ module Plutonium
         return unless (@invite = load_and_validate_invite(params[:token]))
 
         unless current_user
-          redirect_to invitation_path(token: params[:token]),
+          redirect_to invitation_path_for(params[:token]),
             alert: "Please sign in to accept this invitation"
           return
         end
@@ -172,6 +173,18 @@ module Plutonium
       # @raise [NotImplementedError] if not overridden
       def invite_class
         raise NotImplementedError, "#{self.class}#invite_class must return the invite model class"
+      end
+
+      # Override to customize the invitation URL helper.
+      # Default uses Rails' `invitation_path(token:)` helper, which is what
+      # `pu:invites:install` generates for single-flow apps. Multi-flow apps
+      # whose generator scoped the route as `<prefix>_invitation_path` should
+      # override this.
+      #
+      # @param token [String] the invitation token
+      # @return [String] the URL path
+      def invitation_path_for(token)
+        invitation_path(token: token)
       end
 
       # Override to specify the user model class.

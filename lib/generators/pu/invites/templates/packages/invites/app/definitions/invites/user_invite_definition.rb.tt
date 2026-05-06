@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Invites
-  class UserInviteDefinition < Invites::ResourceDefinition
+  class <%= invite_model %>Definition < Invites::ResourceDefinition
     action :resend, interaction: Invites::ResendInviteInteraction, collection_record_action: false
     action :cancel, interaction: Invites::CancelInviteInteraction, collection_record_action: false
 

@@ -21,6 +21,9 @@ module Pu
       class_option :user_model, type: :string, default: "User",
         desc: "The user model name"
 
+      class_option :invite_model, type: :string, default: nil,
+        desc: "The invite model class name. Defaults to <EntityModel><UserModel>Invite (e.g., OrganizationUserInvite). Override for separate flows in multi-entity apps."
+
       class_option :membership_model, type: :string,
         desc: "The membership model name (defaults to <Entity><User>)"
 
@@ -72,44 +75,80 @@ module Pu
 
       def create_user_invites_migration
         migration_template "db/migrate/create_user_invites.rb",
-          "db/migrate/create_user_invites.rb"
+          "db/migrate/create_#{invite_table}.rb"
       end
 
       def create_model
         template "packages/invites/app/models/invites/user_invite.rb",
-          "packages/invites/app/models/invites/user_invite.rb"
+          "packages/invites/app/models/invites/#{invite_underscore}.rb"
       end
 
       def create_mailer
         template "packages/invites/app/mailers/invites/user_invite_mailer.rb",
-          "packages/invites/app/mailers/invites/user_invite_mailer.rb"
+          "packages/invites/app/mailers/invites/#{invite_underscore}_mailer.rb"
 
         template "packages/invites/app/views/invites/user_invite_mailer/invitation.html.erb",
-          "packages/invites/app/views/invites/user_invite_mailer/invitation.html.erb"
+          "packages/invites/app/views/invites/#{invite_underscore}_mailer/invitation.html.erb"
 
         template "packages/invites/app/views/invites/user_invite_mailer/invitation.text.erb",
-          "packages/invites/app/views/invites/user_invite_mailer/invitation.text.erb"
+          "packages/invites/app/views/invites/#{invite_underscore}_mailer/invitation.text.erb"
       end
 
       def create_controllers
         template "packages/invites/app/controllers/invites/user_invitations_controller.rb",
-          "packages/invites/app/controllers/invites/user_invitations_controller.rb"
+          "packages/invites/app/controllers/invites/#{invitations_path}_controller.rb"
 
-        template "packages/invites/app/controllers/invites/welcome_controller.rb",
-          "packages/invites/app/controllers/invites/welcome_controller.rb"
+        # Welcome controller is a one-shot — only generate if it doesn't exist yet.
+        welcome_path = "packages/invites/app/controllers/invites/welcome_controller.rb"
+        unless File.exist?(Rails.root.join(welcome_path))
+          template "packages/invites/app/controllers/invites/welcome_controller.rb",
+            welcome_path
+        end
+      end
+
+      def add_welcome_invite_class
+        welcome_path = "packages/invites/app/controllers/invites/welcome_controller.rb"
+        return unless File.exist?(Rails.root.join(welcome_path))
+
+        content = File.read(Rails.root.join(welcome_path))
+        new_class = "::Invites::#{invite_model}"
+
+        # Already present? bail. Use a non-word lookahead so we don't match
+        # `::Invites::FunderInvite` when looking for `::Invites::Funder`.
+        return if content =~ /#{Regexp.escape(new_class)}(?!\w)/
+
+        # Find `def invite_classes` block; inject before the closing `]`.
+        injection = content.sub(/(\bdef invite_classes\b.*?\[)([^\]]*)(\])/m) do
+          before, list, after = Regexp.last_match[1], Regexp.last_match[2], Regexp.last_match[3]
+          existing = list.strip
+          new_list = existing.empty? ? new_class : "#{existing.chomp(",").strip}, #{new_class}"
+          "#{before}#{new_list}#{after}"
+        end
+
+        if injection != content
+          File.write(Rails.root.join(welcome_path), injection)
+          say_status :inject, "Added #{new_class} to welcome controller's invite_classes", :green
+        end
       end
 
       def create_views
         %w[landing show signup error].each do |view|
           template "packages/invites/app/views/invites/user_invitations/#{view}.html.erb",
-            "packages/invites/app/views/invites/user_invitations/#{view}.html.erb"
+            "packages/invites/app/views/invites/#{invitations_path}/#{view}.html.erb"
         end
 
-        template "packages/invites/app/views/invites/welcome/pending_invitation.html.erb",
-          "packages/invites/app/views/invites/welcome/pending_invitation.html.erb"
+        # Welcome view is a one-shot too.
+        pending_path = "packages/invites/app/views/invites/welcome/pending_invitation.html.erb"
+        unless File.exist?(Rails.root.join(pending_path))
+          template "packages/invites/app/views/invites/welcome/pending_invitation.html.erb",
+            pending_path
+        end
 
-        template "packages/invites/app/views/layouts/invites/invitation.html.erb",
-          "packages/invites/app/views/layouts/invites/invitation.html.erb"
+        layout_path = "packages/invites/app/views/layouts/invites/invitation.html.erb"
+        unless File.exist?(Rails.root.join(layout_path))
+          template "packages/invites/app/views/layouts/invites/invitation.html.erb",
+            layout_path
+        end
       end
 
       def create_interactions
@@ -122,17 +161,17 @@ module Pu
 
       def create_definition
         template "packages/invites/app/definitions/invites/user_invite_definition.rb",
-          "packages/invites/app/definitions/invites/user_invite_definition.rb"
+          "packages/invites/app/definitions/invites/#{invite_underscore}_definition.rb"
       end
 
       def create_policy
         template "packages/invites/app/policies/invites/user_invite_policy.rb",
-          "packages/invites/app/policies/invites/user_invite_policy.rb"
+          "packages/invites/app/policies/invites/#{invite_underscore}_policy.rb"
       end
 
       def add_entity_association
         inject_into_file entity_model_path,
-          "  has_many :user_invites, class_name: \"Invites::UserInvite\", dependent: :destroy\n",
+          "  has_many :#{invite_table}, class_name: \"Invites::#{invite_model}\", dependent: :destroy\n",
           before: /^\s*# add has_many associations above\.\n/
       end
 
@@ -203,31 +242,47 @@ module Pu
 
       def add_routes
         routes_content = File.read(Rails.root.join("config/routes.rb"))
-        if routes_content.include?("# User invitation routes")
-          say_status :skip, "Invitation routes already present", :yellow
-          return
-        end
+        flow_marker = "# Invitation routes for #{invite_model}"
 
-        route_code = <<-RUBY
+        if routes_content.include?(flow_marker)
+          say_status :skip, "Invitation routes for #{invite_model} already present", :yellow
+        else
+          welcome_present = routes_content.include?("# Invitation welcome routes")
 
-  # User invitation routes
+          welcome_block = if welcome_present
+            ""
+          else
+            <<-RUBY
+
+  # Invitation welcome routes (shared across all invite flows)
   scope module: :invites do
     get "invitations/welcome", to: "welcome#index", as: :invites_welcome_check
     delete "invitations/welcome", to: "welcome#skip", as: :invites_welcome_skip
-    get "invitations/:token", to: "user_invitations#show", as: :invitation
-    post "invitations/:token/accept", to: "user_invitations#accept", as: :accept_invitation
-    get "invitations/:token/signup", to: "user_invitations#signup", as: :invitation_signup
-    post "invitations/:token/signup", to: "user_invitations#signup"
   end
-        RUBY
+            RUBY
+          end
 
-        inject_into_file "config/routes.rb",
-          route_code,
-          before: /^end\s*\z/
+          flow_block = <<-RUBY
+
+  #{flow_marker}
+  scope module: :invites do
+    get "#{invitations_path}/:token", to: "#{invitations_path}#show", as: :#{invite_route_prefix}_invitation
+    post "#{invitations_path}/:token/accept", to: "#{invitations_path}#accept", as: :accept_#{invite_route_prefix}_invitation
+    get "#{invitations_path}/:token/signup", to: "#{invitations_path}#signup", as: :#{invite_route_prefix}_invitation_signup
+    post "#{invitations_path}/:token/signup", to: "#{invitations_path}#signup"
+  end
+          RUBY
+
+          inject_into_file "config/routes.rb",
+            welcome_block + flow_block,
+            before: /^end\s*\z/
+        end
 
         # If no main WelcomeController exists, add /welcome route pointing to
         # Invites::WelcomeController so Rodauth's login_redirect "/welcome" works.
-        unless File.exist?(Rails.root.join("app/controllers/welcome_controller.rb"))
+        routes_content = File.read(Rails.root.join("config/routes.rb"))
+        unless File.exist?(Rails.root.join("app/controllers/welcome_controller.rb")) ||
+            routes_content.include?(%(get "welcome", to: "invites/welcome#index"))
           welcome_route = <<-RUBY
 
   # Welcome route (handled by invites package — replace with pu:saas:welcome for full onboarding)
@@ -236,7 +291,7 @@ module Pu
 
           inject_into_file "config/routes.rb",
             welcome_route,
-            before: /^\s*# User invitation routes/
+            before: /^\s*# Invitation welcome routes/
         end
       end
 
@@ -342,11 +397,23 @@ module Pu
           "    return redirect_to(invites_welcome_check_path) if pending_invite\n\n",
           after: /def index\n/
 
-        # Add invite_class method if not present
-        unless file_content.include?("def invite_class")
+        # Add invite_classes method if neither it nor invite_class is present
+        if file_content !~ /def invite_classes\b/ && file_content !~ /def invite_class\b/
           inject_into_file relative_path,
-            "\n  def invite_class\n    ::Invites::UserInvite\n  end\n",
+            "\n  def invite_classes\n    [::Invites::#{invite_model}]\n  end\n",
             before: /^end\s*\z/
+        else
+          # Inject this invite_model into the existing invite_classes array if missing.
+          host_content = File.read(Rails.root.join(relative_path))
+          if host_content =~ /def invite_classes\b/ && host_content !~ /::Invites::#{invite_model}\b/
+            updated = host_content.sub(/(\bdef invite_classes\b.*?\[)([^\]]*)(\])/m) do
+              before, list, after = Regexp.last_match[1], Regexp.last_match[2], Regexp.last_match[3]
+              existing = list.strip
+              new_list = existing.empty? ? "::Invites::#{invite_model}" : "#{existing.chomp(",").strip}, ::Invites::#{invite_model}"
+              "#{before}#{new_list}#{after}"
+            end
+            File.write(Rails.root.join(relative_path), updated)
+          end
         end
 
         # Update Invites::WelcomeController to redirect to /welcome (the main hub)
@@ -435,6 +502,40 @@ module Pu
 
       def user_policy_path
         "app/policies/#{user_table}_policy.rb"
+      end
+
+      def invite_model
+        return options[:invite_model].camelize if options[:invite_model].present?
+
+        # Flatten "::" so namespaced entities like Blogging::Post produce a
+        # valid (single-segment) class name: BloggingPostUserInvite.
+        entity_part = entity_model.delete(":")
+        user_part = user_model.delete(":")
+        "#{entity_part}#{user_part}Invite"
+      end
+
+      def invite_underscore
+        invite_model.underscore
+      end
+
+      def invite_table
+        invite_model.tableize
+      end
+
+      # e.g. UserInvite -> UserInvitationsController, FunderInvite -> FunderInvitationsController.
+      # If the input ends in "Invite", swap to "Invitations"; else append "Invitations".
+      def invitations_controller_class
+        base = invite_model.sub(/Invite\z/, "")
+        "#{base}InvitationsController"
+      end
+
+      def invitations_path
+        invitations_controller_class.sub(/Controller\z/, "").underscore
+      end
+
+      # Route helper prefix: "user" for UserInvite, "funder" for FunderInvite.
+      def invite_route_prefix
+        invite_model.sub(/Invite\z/, "").underscore.presence || "invite"
       end
 
       def membership_model

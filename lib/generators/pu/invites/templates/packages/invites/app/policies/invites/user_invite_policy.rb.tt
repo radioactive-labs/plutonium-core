@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Invites
-  class UserInvitePolicy < Invites::ResourcePolicy
+  class <%= invite_model %>Policy < Invites::ResourcePolicy
     def create?
       false # Created via InviteUserInteraction
     end

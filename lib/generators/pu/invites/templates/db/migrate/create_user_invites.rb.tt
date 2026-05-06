@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-class CreateUserInvites < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
+class Create<%= invite_table.camelize %> < ActiveRecord::Migration[<%= ActiveRecord::Migration.current_version %>]
   def change
-    create_table :user_invites do |t|
+    create_table :<%= invite_table %> do |t|
       # Entity association
       t.belongs_to :<%= entity_association_name %>, null: false, foreign_key: true
 
@@ -35,13 +35,13 @@ class CreateUserInvites < ActiveRecord::Migration[<%= ActiveRecord::Migration.cu
 
       # Only one pending invite per email per entity
       t.index [:<%= entity_association_name %>_id, :email], unique: true, where: "state = 0",
-        name: "index_user_invites_on_entity_email_pending"
+        name: "index_<%= invite_table %>_on_entity_email_pending"
 
       # Only one pending invite per invitable (when invitable is present)
       t.index [:invitable_type, :invitable_id],
         unique: true,
         where: "state = 0 AND invitable_id IS NOT NULL",
-        name: "index_user_invites_on_invitable_pending"
+        name: "index_<%= invite_table %>_on_invitable_pending"
     end
   end
 end

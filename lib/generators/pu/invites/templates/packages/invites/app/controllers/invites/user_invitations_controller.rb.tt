@@ -1,20 +1,23 @@
 # frozen_string_literal: true
 
 module Invites
-  class UserInvitationsController < ApplicationController
+  class <%= invitations_controller_class %> < ApplicationController
 <% if rodauth? -%>
     include Plutonium::Auth::Rodauth(:<%= rodauth_config %>)
 <% end -%>
     include Plutonium::Invites::Controller
 
-    prepend_view_path Invites::Engine.root.join("app/views")
     layout "invites/invitation"
     helper_method :login_path
 
     private
 
     def invite_class
-      ::Invites::UserInvite
+      ::Invites::<%= invite_model %>
+    end
+
+    def invitation_path_for(token)
+      <%= invite_route_prefix %>_invitation_path(token: token)
     end
 
     def user_class
@@ -68,7 +71,9 @@ module Invites
 
     def sign_in_user(user)
       rodauth.account_from_login(user.email)
-      rodauth.login("signup")
+      # login_session just persists the session; `login` would redirect to
+      # rodauth.login_redirect and short-circuit our post-accept redirect.
+      rodauth.login_session("signup")
     end
 <% else -%>
     def create_user_for_signup(email, password)
