@@ -37,12 +37,12 @@ module Plutonium
 
         def execute
           attrs = {
-            entity: entity,
             email: email,
             role: role,
             invited_by: current_user,
             **additional_invite_attributes
           }
+          attrs[invite_entity_attribute] = entity
           attrs[:invitable] = invitable if invitable.present?
 
           invite_class.create!(attrs)
@@ -109,6 +109,15 @@ module Plutonium
           entity.class.name.underscore.to_sym
         end
 
+        # Override to specify the entity association name on the invite model.
+        # Defaults to :entity, matching the convention documented on InviteToken.
+        # When the invite model uses a concrete `belongs_to :<entity_name>`
+        # instead, override this to return that association name.
+        # @return [Symbol]
+        def invite_entity_attribute
+          :entity
+        end
+
         def role_is_present
           errors.add(:role, :blank) if role.blank?
         end
@@ -130,9 +139,9 @@ module Plutonium
           return unless email.present? && entity.present?
 
           pending = invite_class.find_by(
-            entity: entity,
-            email: email,
-            state: :pending
+            invite_entity_attribute => entity,
+            :email => email,
+            :state => :pending
           )
           errors.add(:email, "already has a pending invitation") if pending
         end

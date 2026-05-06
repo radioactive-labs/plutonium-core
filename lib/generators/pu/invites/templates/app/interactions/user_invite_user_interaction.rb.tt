@@ -13,6 +13,12 @@ class <%= user_model %>::InviteUserInteraction < Plutonium::Resource::Interactio
   def entity
     current_scoped_entity
   end
+<% if entity_association_name != "entity" -%>
+
+  def invite_entity_attribute
+    :<%= entity_association_name %>
+  end
+<% end -%>
 <% if membership_model != "EntityUser" -%>
 
   def membership_class

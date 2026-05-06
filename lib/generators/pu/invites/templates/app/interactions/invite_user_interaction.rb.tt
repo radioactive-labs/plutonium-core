@@ -7,9 +7,15 @@ class <%= entity_model %>::InviteUserInteraction < Plutonium::Resource::Interact
 
   attribute :role
   input :role, as: :select, choices: Invites::UserInvite.roles.keys.excluding("owner")
-<% if membership_model != "EntityUser" || user_model != "User" -%>
+<% if membership_model != "EntityUser" || user_model != "User" || entity_association_name != "entity" -%>
 
   private
+<% end -%>
+<% if entity_association_name != "entity" -%>
+
+  def invite_entity_attribute
+    :<%= entity_association_name %>
+  end
 <% end -%>
 <% if membership_model != "EntityUser" -%>
 
