@@ -62,7 +62,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_record_action, formats: [:html], **modal_render_options, status: :unprocessable_content
+                  render :interactive_record_action, formats: [:html], content_type: "text/html", **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -111,7 +111,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_resource_action, formats: [:html], **modal_render_options, status: :unprocessable_content
+                  render :interactive_resource_action, formats: [:html], content_type: "text/html", **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
@@ -158,7 +158,7 @@ module Plutonium
                 end
               else
                 format.any(:html, :turbo_stream) do
-                  render :interactive_bulk_action, formats: [:html], **modal_render_options, status: :unprocessable_content
+                  render :interactive_bulk_action, formats: [:html], content_type: "text/html", **modal_render_options, status: :unprocessable_content
                 end
                 format.any do
                   @errors = @interaction.errors
