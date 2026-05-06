@@ -125,14 +125,22 @@ module Plutonium
 
           transaction do
             update!(
-              state: :accepted,
-              accepted_at: Time.current,
-              user: user
+              :state => :accepted,
+              :accepted_at => Time.current,
+              user_attribute => user
             )
 
             create_membership_for(user)
             notify_invitable(user)
           end
+        end
+
+        # Override to specify the user association name on the invite model.
+        # Defaults to :user. Override when the invite model's `belongs_to`
+        # uses a different name (e.g., :spender_account, :staff_user).
+        # @return [Symbol]
+        def user_attribute
+          :user
         end
 
         # Override this method to specify the mailer class.

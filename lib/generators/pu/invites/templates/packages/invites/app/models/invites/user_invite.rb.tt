@@ -30,11 +30,20 @@ module Invites
     end
 
     def create_membership_for(user)
-      <%= membership_model %>.create!(<%= entity_association_name %>: <%= entity_association_name %>, user: user, role: role)
+      <%= membership_model %>.create!(<%= entity_association_name %>: <%= entity_association_name %>, <%= user_association_name %>: user, role: role)
     end
+<% if user_table != "user" -%>
+
+    # InviteToken concern updates `user_attribute => user` when accepting.
+    # Our invite model uses `belongs_to :<%= user_table %>` instead.
+    def user_attribute
+      :<%= user_table %>
+    end
+<% end -%>
 <% if entity_association_name != "entity" -%>
 
-    # Alias for InviteToken concern compatibility
+    # Alias for InviteToken concern compatibility (used by views/mailers
+    # that read `@invite.entity.to_label`).
     alias_method :entity, :<%= entity_association_name %>
 <% end -%>
   end

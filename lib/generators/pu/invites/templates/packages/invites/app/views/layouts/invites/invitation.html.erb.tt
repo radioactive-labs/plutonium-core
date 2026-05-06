@@ -7,7 +7,11 @@
   <meta name="csrf-param" content="authenticity_token" />
   <meta name="csrf-token" content="<%%= form_authenticity_token %>" />
   <%%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  <%%= javascript_importmap_tags %>
+  <%% if defined?(Importmap) %>
+    <%%= javascript_importmap_tags %>
+  <%% else %>
+    <%%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+  <%% end %>
 </head>
 <body class="antialiased min-h-screen bg-[var(--pu-body)]">
   <main class="p-4 min-h-screen flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0">

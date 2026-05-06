@@ -19,11 +19,11 @@ module Invites
     end
 
     def permitted_attributes_for_create
-      [:entity, :email, :role, :invited_by, :expires_at]
+      [:<%= entity_association_name %>, :email, :role, :invited_by, :expires_at]
     end
 
     def permitted_attributes_for_read
-      [:entity, :email, :role, :state, :invited_by, :expires_at, :accepted_at, :<%= user_table %>]
+      [:<%= entity_association_name %>, :email, :role, :state, :invited_by, :expires_at, :accepted_at, :<%= user_table %>]
     end
 
     def permitted_associations
