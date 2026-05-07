@@ -14,15 +14,15 @@
 }
 
 .pu-btn-md {
-  @apply px-5 py-2.5 text-sm;
+  @apply px-3 h-8 text-sm;
 }
 
 .pu-btn-sm {
-  @apply px-4 py-2 text-sm;
+  @apply px-2.5 h-7 text-[13px];
 }
 
 .pu-btn-xs {
-  @apply px-3 py-1.5 text-xs;
+  @apply px-2 h-6 text-xs;
 }
 
 /* Primary - Solid with subtle gradient */
@@ -190,7 +190,7 @@
 }
 
 .pu-card-body {
-  padding: var(--pu-space-lg);
+  padding: 16px;
 }
 
 /* ===================
@@ -203,7 +203,11 @@
   border-radius: var(--pu-radius-md);
   color: var(--pu-text);
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  @apply w-full px-4 py-3 text-base focus:outline-none;
+  @apply w-full px-3 h-9 text-sm focus:outline-none;
+}
+
+.pu-input-toolbar {
+  @apply h-8 text-sm;
 }
 
 .pu-input-icon-left {
