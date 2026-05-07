@@ -8,30 +8,25 @@ module Plutonium
       end
 
       def view_template
-        div(class: "sm:flex sm:space-y-0 sm:gap-6 sm:flex-row items-center justify-between space-y-4 mb-8") {
-          div {
-            phlexi_render(@title) {
-              render_title @title
-            }
-
-            phlexi_render(@description) {
-              render_description @description
-            }
-          }
+        div(class: "flex items-start justify-between gap-4 mb-4") do
+          div(class: "min-w-0 flex-1") do
+            phlexi_render(@title) { render_title @title } if @title
+            phlexi_render(@description) { render_description @description } if @description.present?
+          end
           render_actions if @actions.any?
-        }
+        end
       end
 
       private
 
       def render_title(title)
-        h2(class: "mb-2 text-3xl font-bold leading-none tracking-tight text-[var(--pu-text)] md:text-4xl") {
+        h1(class: "text-xl font-semibold leading-tight text-[var(--pu-text)] truncate") {
           title
         }
       end
 
       def render_description(description)
-        p(class: "text-lg text-[var(--pu-text-muted)]") {
+        p(class: "mt-1 text-sm text-[var(--pu-text-muted)]") {
           description
         }
       end
