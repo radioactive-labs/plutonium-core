@@ -75,10 +75,11 @@ class Plutonium::UI::Layout::SidebarTest < ActiveSupport::TestCase
     end
   end
 
-  test "modern shell aside is w-14 (56px icon rail width)" do
+  test "modern shell aside has overflow-x-hidden (width is CSS-controlled, not Tailwind utility)" do
     with_modern_shell do
       html = render_html(build_component)
-      assert_includes html, "w-14"
+      assert_includes html, "overflow-x-hidden"
+      refute_includes html, "w-14"
     end
   end
 

@@ -161,27 +161,20 @@ module Plutonium
           class: "icon-rail-leaf #{modern_leaf_classes(item, depth)}"
         ) do
           render_modern_item_icon(item)
-          span(class: "icon-rail-label hidden") { item.label }
+          span(class: "icon-rail-label") { item.label }
         end
       end
 
       def render_modern_parent_item(item, depth)
-        div(
-          class: "icon-rail-parent relative w-full flex flex-col items-center",
-          data: {controller: "resource-collapse"}
-        ) do
-          button(
-            type: "button",
+        div(class: "icon-rail-parent relative w-full flex flex-col items-center") do
+          a(
+            href: item.url || "#",
             title: item.label,
-            aria: {label: item.label, expanded: "false"},
-            data: {"resource-collapse-target": "trigger", action: "resource-collapse#toggle"},
+            aria: {label: item.label},
             class: "icon-rail-parent-trigger #{modern_parent_trigger_classes(item, depth)}"
           ) do
             render_modern_item_icon(item)
-            span(class: "icon-rail-label hidden") { item.label }
-            span(class: "icon-rail-chevron hidden") do
-              render Phlex::TablerIcons::ChevronDown.new(class: "w-4 h-4 ml-auto")
-            end
+            span(class: "icon-rail-label") { item.label }
           end
 
           div(class: "icon-rail-flyout") do
@@ -189,22 +182,6 @@ module Plutonium
               div(class: "icon-rail-flyout-label") { item.label }
               item.items.each do |child|
                 a(href: child.url, class: "icon-rail-flyout-item") { child.label }
-              end
-            end
-          end
-
-          div(
-            class: "icon-rail-children hidden w-full",
-            data: {"resource-collapse-target": "menu"}
-          ) do
-            item.items.each do |child|
-              a(
-                href: child.url,
-                title: child.label,
-                aria: {label: child.label},
-                class: "icon-rail-child #{modern_child_classes(child)}"
-              ) do
-                span(class: "icon-rail-label") { child.label }
               end
             end
           end
@@ -232,15 +209,6 @@ module Plutonium
         base = "flex items-center justify-center w-10 h-10 rounded-md transition-colors"
         if item && modern_active?(item)
           "#{base} bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
-        else
-          "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
-        end
-      end
-
-      def modern_child_classes(item)
-        base = "flex items-center px-3 py-1.5 text-sm rounded-md transition-colors"
-        if modern_active?(item)
-          "#{base} text-primary-700 dark:text-primary-300 font-medium"
         else
           "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
         end

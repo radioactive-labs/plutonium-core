@@ -33,9 +33,9 @@ module Plutonium
             id: "sidebar-navigation",
             data: {controller: "sidebar icon-rail"},
             aria: {label: "Sidebar Navigation"},
-            class: "fixed top-0 left-0 z-40 h-screen w-14 " \
+            class: "fixed top-0 left-0 z-40 h-screen " \
                    "bg-[var(--pu-surface)] border-r border-[var(--pu-border)] " \
-                   "flex flex-col transition-all duration-300 " \
+                   "flex flex-col transition-[width] duration-200 overflow-x-hidden " \
                    "-translate-x-full lg:translate-x-0"
           ) do
             div(

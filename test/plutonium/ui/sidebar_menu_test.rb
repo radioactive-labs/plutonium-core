@@ -101,12 +101,13 @@ class Plutonium::UI::SidebarMenuTest < ActiveSupport::TestCase
     end
   end
 
-  test "modern shell leaf item has hidden label span" do
+  test "modern shell leaf item has label span" do
     with_modern_shell do
       menu = StubMenu.new([StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [])])
       html = render_html(build_component(menu))
       assert_includes html, "icon-rail-label"
-      assert_includes html, "hidden"
+      # label span is NOT marked hidden in markup — visibility is CSS-controlled
+      refute_includes html, 'class="icon-rail-label hidden"'
     end
   end
 
@@ -124,37 +125,49 @@ class Plutonium::UI::SidebarMenuTest < ActiveSupport::TestCase
     end
   end
 
-  test "modern shell parent item renders inline children for pinned mode" do
+  test "modern shell parent item has no inline children or resource-collapse wiring" do
     with_modern_shell do
       child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
       parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
       menu = StubMenu.new([parent])
       html = render_html(build_component(menu))
 
-      assert_includes html, "icon-rail-children"
-      assert_includes html, "resource-collapse-target"
+      refute_includes html, "icon-rail-children"
+      refute_includes html, "resource-collapse"
     end
   end
 
-  test "modern shell parent item has chevron span" do
+  test "modern shell parent item has no chevron span" do
     with_modern_shell do
       child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
       parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
       menu = StubMenu.new([parent])
       html = render_html(build_component(menu))
 
-      assert_includes html, "icon-rail-chevron"
+      refute_includes html, "icon-rail-chevron"
     end
   end
 
-  test "modern shell parent trigger uses resource-collapse#toggle" do
+  test "modern shell parent trigger is an anchor tag" do
+    with_modern_shell do
+      child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+      parent = StubItem.new(label: "Parent", url: "/parent", icon: nil, items: [child])
+      menu = StubMenu.new([parent])
+      html = render_html(build_component(menu))
+
+      assert_includes html, 'href="/parent"'
+      assert_includes html, "icon-rail-parent-trigger"
+    end
+  end
+
+  test "modern shell parent trigger falls back to # when no url" do
     with_modern_shell do
       child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
       parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
       menu = StubMenu.new([parent])
       html = render_html(build_component(menu))
 
-      assert_includes html, "resource-collapse#toggle"
+      assert_includes html, 'href="#"'
     end
   end
 
@@ -204,14 +217,14 @@ class Plutonium::UI::SidebarMenuTest < ActiveSupport::TestCase
     end
   end
 
-  test "modern shell child link appears in both flyout and inline tree" do
+  test "modern shell child link appears exactly once (only in flyout)" do
     with_modern_shell do
       child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
       parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
       menu = StubMenu.new([parent])
       html = render_html(build_component(menu))
 
-      assert html.scan('href="/child"').length >= 2, "child href should appear at least twice"
+      assert_equal 1, html.scan('href="/child"').length, "child href should appear exactly once (flyout only)"
     end
   end
 end

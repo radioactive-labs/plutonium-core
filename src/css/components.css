@@ -490,10 +490,61 @@
 }
 
 /* ===================
-   ICON RAIL
+   ICON RAIL — modern shell
    =================== */
 
-/* Flyout: hidden by default, shown on parent hover in collapsed mode */
+/* Hide labels by default; revealed only when rail is pinned */
+.icon-rail-label {
+  display: none;
+}
+
+/* Modern rail width (controlled by CSS, not Tailwind utility) */
+aside[data-controller~="icon-rail"] {
+  width: 3.5rem;            /* 56px collapsed */
+  overflow-x: hidden;
+}
+
+/* Pinned mode: rail expands, labels appear */
+body.pu-rail-pinned aside[data-controller~="icon-rail"] {
+  width: 14rem !important;  /* 224px */
+}
+
+body.pu-rail-pinned .icon-rail-label {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-leaf,
+body.pu-rail-pinned .icon-rail-parent-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+/* When pinned, center the nav items column so labels read left-to-right */
+body.pu-rail-pinned #sidebar-navigation-content {
+  align-items: stretch;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* Pin button icon swap */
+body.pu-rail-pinned .icon-rail-pin-collapse {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-pin-expand {
+  display: none !important;
+}
+
+/* Main content padding when pinned */
+@media (min-width: 1024px) {
+  body.pu-rail-pinned main {
+    padding-left: 14rem !important;
+  }
+}
+
+/* Flyout: hidden by default; shown on parent hover (in BOTH collapsed and pinned modes) */
 .icon-rail-parent {
   position: relative;
 }
@@ -534,55 +585,9 @@
   font-size: 13px;
   color: var(--pu-text);
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .icon-rail-flyout-item:hover {
   background: var(--pu-surface-alt);
-}
-
-/* Pinned mode: rail expands to 14rem, labels + children appear inline */
-body.pu-rail-pinned #sidebar-navigation {
-  width: 14rem;
-}
-
-body.pu-rail-pinned .icon-rail-flyout {
-  display: none !important;
-}
-
-body.pu-rail-pinned .icon-rail-label,
-body.pu-rail-pinned .icon-rail-chevron {
-  display: inline-flex !important;
-}
-
-body.pu-rail-pinned .icon-rail-children {
-  display: block;
-}
-
-body.pu-rail-pinned .icon-rail-leaf,
-body.pu-rail-pinned .icon-rail-parent-trigger {
-  width: 100%;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 6px 10px;
-}
-
-/* Pin button icon toggle */
-body.pu-rail-pinned .icon-rail-pin-collapse {
-  display: inline-flex !important;
-}
-
-body.pu-rail-pinned .icon-rail-pin-expand {
-  display: none !important;
-}
-
-/* Nav section: center items when collapsed, align left when pinned */
-body.pu-rail-pinned #sidebar-navigation-content {
-  align-items: flex-start;
-}
-
-/* Main content padding when pinned */
-@media (min-width: 1024px) {
-  body.pu-rail-pinned main {
-    padding-left: 14rem;
-  }
 }
