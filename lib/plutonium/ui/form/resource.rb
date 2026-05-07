@@ -116,7 +116,8 @@ module Plutonium
             end
           end
 
-          field_options = field_options.except(:as, :condition)
+          # Keep `:as` so the Builder can detect hidden fields via `options[:as]`.
+          field_options = field_options.except(:condition)
 
           condition = input_options[:condition] || field_options[:condition]
           conditionally_hidden = condition && !instance_exec(&condition)

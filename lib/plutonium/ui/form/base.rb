@@ -10,6 +10,28 @@ module Plutonium
           include Phlexi::Field::Common::Tokens
           include Plutonium::UI::Form::Options::InferredTypes
 
+          # Consume `:as` here so it doesn't land in Phlexi's `@options` —
+          # `:as` is a Plutonium-internal concept (it picks the tag method),
+          # not a Phlexi field option.
+          def initialize(*args, as: nil, **kwargs, &block)
+            @as = as
+            super(*args, **kwargs, &block)
+          end
+
+          attr_reader :as
+
+          def hidden?
+            as.to_s == "hidden"
+          end
+
+          # Hidden fields (`form.field(name, as: :hidden)`) skip the label /
+          # hint / error chrome and render inside a `<div hidden>` so they're
+          # also excluded from CSS Grid / Flex layout.
+          def wrapped(**, &)
+            return Plutonium::UI::Form::Components::HiddenWrapper.new(self, &) if hidden?
+            super
+          end
+
           def textarea_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "textarea-autogrow")
             super
