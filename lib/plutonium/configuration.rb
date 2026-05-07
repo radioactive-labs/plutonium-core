@@ -27,6 +27,9 @@ module Plutonium
     # @return [Float] the current defaults version
     attr_reader :defaults_version
 
+    # @return [Symbol] :classic (legacy Header/Sidebar) or :modern (Topbar/IconRail)
+    attr_accessor :shell
+
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
       1.0 => proc do |config|
@@ -48,6 +51,7 @@ module Plutonium
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?
       @enable_hotreload = Rails.env.development?
+      @shell = :classic
     end
 
     # Load default configuration for a specific version

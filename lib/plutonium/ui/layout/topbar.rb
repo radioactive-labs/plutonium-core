@@ -10,6 +10,7 @@ module Plutonium
       #
       # @example With all slots
       #   render Topbar.new do |bar|
+      #     bar.with_brand      { image_tag("logo.svg", class: "h-8 w-8 rounded-md") }
       #     bar.with_breadcrumbs { render BreadcrumbComponent.new }
       #     bar.with_search     { render SearchComponent.new }
       #     bar.with_action     { render UserMenuComponent.new }
@@ -17,6 +18,10 @@ module Plutonium
       class Topbar < Plutonium::UI::Component::Base
         include Phlex::Slotable
         include Phlex::Rails::Helpers::Routes
+
+        # @!method brand
+        #   Slot for the brand mark rendered at the top-left (occupies the 56px area above the icon rail).
+        slot :brand
 
         # @!method breadcrumbs
         #   Slot for breadcrumb navigation rendered on the left.
@@ -40,6 +45,7 @@ module Plutonium
               resource_header_sidebar_outlet: "#sidebar-navigation"
             }
           ) do
+            render_brand_section
             render_hamburger
             render_breadcrumbs_section
             render_search_section
@@ -48,6 +54,13 @@ module Plutonium
         end
 
         private
+
+        def render_brand_section
+          return unless brand_slot?
+          div(class: "hidden lg:flex items-center justify-center w-14 -ml-4 shrink-0 border-r border-[var(--pu-border)] h-full") do
+            render brand_slot
+          end
+        end
 
         def render_hamburger
           button(
