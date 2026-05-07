@@ -28033,6 +28033,23 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/icon_rail_controller.js
+  var icon_rail_controller_default = class extends Controller {
+    static values = {
+      storageKey: { type: String, default: "pu_rail_pinned" }
+    };
+    connect() {
+      const pinned = localStorage.getItem(this.storageKeyValue) === "true";
+      if (pinned) {
+        document.body.classList.add("pu-rail-pinned");
+      }
+    }
+    togglePin() {
+      const pinned = document.body.classList.toggle("pu-rail-pinned");
+      localStorage.setItem(this.storageKeyValue, pinned);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28060,6 +28077,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("filter-panel", filter_panel_controller_default);
     application2.register("textarea-autogrow", textarea_autogrow_controller_default);
     application2.register("clipboard", clipboard_controller_default);
+    application2.register("icon-rail", icon_rail_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

@@ -69,9 +69,10 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "h-screen"
   end
 
-  test "aside has sidebar data-controller" do
+  test "aside has sidebar and icon-rail data-controllers" do
     html = render_html(build_component)
-    assert_includes html, 'data-controller="sidebar"'
+    assert_includes html, "sidebar"
+    assert_includes html, "icon-rail"
   end
 
   test "mobile-hidden class present (-translate-x-full)" do
@@ -107,10 +108,36 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
-  # Menu item rendering
+  # Pin button
   # ---------------------------------------------------------------------------
 
-  test "renders anchor tags for menu items" do
+  test "pin button is rendered in footer" do
+    html = render_html(build_component)
+    assert_includes html, 'data-action="icon-rail#togglePin"'
+  end
+
+  test "pin button has correct type" do
+    html = render_html(build_component)
+    # The button with togglePin action should be type=button
+    assert_includes html, 'type="button"'
+    assert_includes html, "icon-rail#togglePin"
+  end
+
+  test "pin button contains collapse icon span" do
+    html = render_html(build_component)
+    assert_includes html, "icon-rail-pin-collapse"
+  end
+
+  test "pin button contains expand icon span" do
+    html = render_html(build_component)
+    assert_includes html, "icon-rail-pin-expand"
+  end
+
+  # ---------------------------------------------------------------------------
+  # Menu item rendering — leaf items
+  # ---------------------------------------------------------------------------
+
+  test "renders anchor tags for leaf menu items" do
     items = [
       StubItem.new(label: "Dashboard", url: "/dashboard", icon: nil, items: []),
       StubItem.new(label: "Customers", url: "/customers", icon: nil, items: [])
@@ -122,24 +149,120 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, 'href="/customers"'
   end
 
-  test "renders correct number of anchor elements for two items" do
-    items = [
-      StubItem.new(label: "Alpha", url: "/alpha", icon: nil, items: []),
-      StubItem.new(label: "Beta", url: "/beta", icon: nil, items: [])
-    ]
-    menu = StubMenu.new(items)
-    html = render_html(build_component(menu: menu))
-
-    assert_equal 2, html.scan("<a ").length
-  end
-
-  test "anchor title and aria-label match item label" do
+  test "leaf item anchor has title and aria-label matching item label" do
     items = [StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [])]
     menu = StubMenu.new(items)
     html = render_html(build_component(menu: menu))
 
     assert_includes html, 'title="Reports"'
     assert_includes html, 'aria-label="Reports"'
+  end
+
+  test "leaf item has icon-rail-leaf class" do
+    items = [StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [])]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-leaf"
+  end
+
+  test "leaf item does not produce flyout markup" do
+    items = [StubItem.new(label: "Leaf", url: "/leaf", icon: nil, items: [])]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    refute_includes html, "icon-rail-flyout"
+    refute_includes html, "icon-rail-children"
+  end
+
+  test "leaf item contains hidden label span for pinned mode" do
+    items = [StubItem.new(label: "Reports", url: "/reports", icon: nil, items: [])]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-label"
+    assert_includes html, "Reports"
+  end
+
+  # ---------------------------------------------------------------------------
+  # Menu item rendering — parent items with children
+  # ---------------------------------------------------------------------------
+
+  test "parent item produces flyout markup" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-flyout"
+    assert_includes html, "icon-rail-flyout-inner"
+    assert_includes html, "icon-rail-flyout-label"
+    assert_includes html, "icon-rail-flyout-item"
+  end
+
+  test "flyout lists child item labels and hrefs" do
+    child = StubItem.new(label: "Child Page", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "Child Page"
+    assert_includes html, 'href="/child"'
+  end
+
+  test "parent item renders inline children container for pinned mode" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-children"
+  end
+
+  test "inline children container uses resource-collapse-target=menu" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "resource-collapse-target"
+    assert_includes html, "menu"
+  end
+
+  test "parent item uses resource-collapse controller" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "resource-collapse"
+  end
+
+  test "parent trigger has resource-collapse#toggle action" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "resource-collapse#toggle"
+  end
+
+  test "parent trigger has icon-rail-parent-trigger class" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-parent-trigger"
+  end
+
+  test "parent trigger has chevron span for pinned mode" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-chevron"
   end
 
   # ---------------------------------------------------------------------------
@@ -180,7 +303,7 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
   # Active / inactive states
   # ---------------------------------------------------------------------------
 
-  test "active item receives bg-primary-100 class" do
+  test "active leaf item receives bg-primary-100 class" do
     items = [ActiveStubItem.new(label: "Active Page", url: "/active", icon: nil, items: [])]
     menu = StubMenu.new(items)
     html = render_html(build_component(menu: menu))
@@ -189,7 +312,7 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "text-primary-700"
   end
 
-  test "inactive item does not receive bg-primary-100" do
+  test "inactive leaf item does not receive bg-primary-100" do
     items = [StubItem.new(label: "Other Page", url: "/other", icon: nil, items: [])]
     menu = StubMenu.new(items)
     html = render_html(build_component(menu: menu))
@@ -223,14 +346,15 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "sidebar-navigation"
   end
 
-  test "nested items are ignored (depth limit respected)" do
+  test "nested child items are rendered in flyout and inline tree" do
     child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: "/parent", icon: nil, items: [child])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
     menu = StubMenu.new([parent])
     html = render_html(build_component(menu: menu))
 
-    # Parent link is rendered, child link is not (depth 1 limit)
-    assert_includes html, 'href="/parent"'
-    refute_includes html, 'href="/child"'
+    # Parent exists as a button/div (not a bare <a>), child links appear in flyout + inline
+    assert_includes html, 'href="/child"'
+    # Child link appears at least twice: once in flyout, once in inline tree
+    assert html.scan('href="/child"').length >= 2
   end
 end

@@ -488,3 +488,101 @@
 .pu-selection-cell {
   @apply w-14 px-6 py-4;
 }
+
+/* ===================
+   ICON RAIL
+   =================== */
+
+/* Flyout: hidden by default, shown on parent hover in collapsed mode */
+.icon-rail-parent {
+  position: relative;
+}
+
+.icon-rail-flyout {
+  position: absolute;
+  left: calc(100% + 4px);
+  top: 0;
+  display: none;
+  z-index: 50;
+  min-width: 180px;
+}
+
+.icon-rail-parent:hover .icon-rail-flyout {
+  display: block;
+}
+
+.icon-rail-flyout-inner {
+  background: var(--pu-surface);
+  border: 1px solid var(--pu-border);
+  border-radius: var(--pu-radius-md);
+  box-shadow: var(--pu-shadow-md);
+  padding: 6px;
+}
+
+.icon-rail-flyout-label {
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--pu-text-muted);
+}
+
+.icon-rail-flyout-item {
+  display: block;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--pu-text);
+  border-radius: 4px;
+}
+
+.icon-rail-flyout-item:hover {
+  background: var(--pu-surface-alt);
+}
+
+/* Pinned mode: rail expands to 14rem, labels + children appear inline */
+body.pu-rail-pinned #sidebar-navigation {
+  width: 14rem;
+}
+
+body.pu-rail-pinned .icon-rail-flyout {
+  display: none !important;
+}
+
+body.pu-rail-pinned .icon-rail-label,
+body.pu-rail-pinned .icon-rail-chevron {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-children {
+  display: block;
+}
+
+body.pu-rail-pinned .icon-rail-leaf,
+body.pu-rail-pinned .icon-rail-parent-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+/* Pin button icon toggle */
+body.pu-rail-pinned .icon-rail-pin-collapse {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-pin-expand {
+  display: none !important;
+}
+
+/* Nav section: center items when collapsed, align left when pinned */
+body.pu-rail-pinned #sidebar-navigation-content {
+  align-items: flex-start;
+}
+
+/* Main content padding when pinned */
+@media (min-width: 1024px) {
+  body.pu-rail-pinned main {
+    padding-left: 14rem;
+  }
+}

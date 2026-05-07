@@ -24,6 +24,7 @@ import BulkActionsController from "./bulk_actions_controller.js"
 import FilterPanelController from "./filter_panel_controller.js"
 import TextareaAutogrowController from "./textarea_autogrow_controller.js"
 import ClipboardController from "./clipboard_controller.js"
+import IconRailController from "./icon_rail_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -52,4 +53,5 @@ export default function (application) {
   application.register("filter-panel", FilterPanelController)
   application.register("textarea-autogrow", TextareaAutogrowController)
   application.register("clipboard", ClipboardController)
+  application.register("icon-rail", IconRailController)
 }

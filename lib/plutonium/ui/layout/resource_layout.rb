@@ -5,7 +5,7 @@ module Plutonium
         private
 
         def main_attributes = mix(super, {
-          class: "pt-12 lg:pl-14"
+          class: "pt-16 pb-6 px-6 lg:pl-20"
         })
 
         def page_title
