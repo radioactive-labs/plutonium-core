@@ -49,7 +49,7 @@ module Plutonium
         end
 
         def in_modal?
-          request.headers["Turbo-Frame"] == "remote_modal"
+          current_turbo_frame == "remote_modal"
         end
 
         def show_submit_and_continue?

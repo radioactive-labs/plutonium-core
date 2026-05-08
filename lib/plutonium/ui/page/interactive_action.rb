@@ -17,7 +17,7 @@ module Plutonium
         end
 
         def render_default_content
-          if current_turbo_frame == "remote_modal"
+          if in_modal?
             modal_class = (current_interactive_action.modal == :slideover) ?
               Plutonium::UI::Modal::Slideover : Plutonium::UI::Modal::Centered
 

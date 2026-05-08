@@ -15,7 +15,19 @@ module Plutonium
         end
 
         def render_default_content
-          div(class: "max-w-[580px] mx-auto pb-20") do
+          if in_modal?
+            render_modal_form
+          else
+            div(class: "max-w-[580px] mx-auto pb-20") do
+              render partial("resource_form")
+            end
+          end
+        end
+
+        def render_modal_form
+          modal_class = (current_definition.modal == :centered) ?
+            Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
+          render modal_class.new(title: page_title, description: page_description) do
             render partial("resource_form")
           end
         end
