@@ -1,10 +1,4 @@
 <%= render Plutonium::UI::Layout::Topbar.new do |bar| %>
-  <% if respond_to?(:resource_logo_tag) %>
-    <% bar.with_brand do %>
-      <%= resource_logo_tag(classname: "h-8 w-8 rounded-md") %>
-    <% end %>
-  <% end %>
-
   <% bar.with_action do %>
     <%= render Plutonium::UI::ColorModeSelector.new %>
   <% end %>

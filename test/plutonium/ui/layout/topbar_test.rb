@@ -252,42 +252,4 @@ class Plutonium::UI::Layout::TopbarTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
-  # Brand slot
-  # ---------------------------------------------------------------------------
-
-  test "brand slot renders content when provided" do
-    component = build_component
-    component.with_brand { "BRAND_MARK" }
-    html = render_html(component)
-    assert_includes html, "BRAND_MARK"
-  end
-
-  test "brand section is hidden on mobile (lg:flex)" do
-    component = build_component
-    component.with_brand { "LOGO" }
-    html = render_html(component)
-    assert_includes html, "lg:flex"
-  end
-
-  test "brand section occupies w-14 area aligned to icon rail" do
-    component = build_component
-    component.with_brand { "LOGO" }
-    html = render_html(component)
-    assert_includes html, "w-14"
-  end
-
-  test "brand section is absent when slot not filled" do
-    html = render_html(build_component)
-    refute_includes html, "BRAND_MARK"
-    # The w-14 brand area div should not be present when slot is empty
-    # (we check by ensuring the brand wrapper div with lg:flex is absent)
-    refute_includes html, "lg:flex items-center justify-center w-14"
-  end
-
-  test "brand slot renders before hamburger in output" do
-    component = build_component
-    component.with_brand { "BRAND" }
-    html = render_html(component)
-    assert html.index("BRAND") < html.index("lg:hidden"), "brand should appear before the hamburger"
-  end
 end

@@ -40,9 +40,6 @@ module Plutonium
 
               # 8. Column config button (disabled placeholder)
               render_column_config_button
-
-              # 9. Overflow button (disabled placeholder)
-              render_overflow_button
             end
           end
 
@@ -104,17 +101,6 @@ module Plutonium
             end
           end
 
-          def render_overflow_button
-            button(
-              type: "button",
-              class: "pu-btn pu-btn-outline pu-btn-sm disabled cursor-not-allowed opacity-60",
-              disabled: true,
-              aria: {label: "More options"},
-              title: "Coming soon"
-            ) do
-              render Phlex::TablerIcons::Dots.new(class: "w-4 h-4 shrink-0")
-            end
-          end
         end
       end
     end
