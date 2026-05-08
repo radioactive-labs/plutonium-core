@@ -487,6 +487,103 @@ module Plutonium
         assert_equal "ASC", result[:direction]
       end
 
+      # ==================== Active Filter Descriptions Tests ====================
+
+      def test_active_filter_descriptions_empty_when_no_filters_set
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        assert_empty query_object.active_filter_descriptions
+      end
+
+      def test_active_filter_descriptions_returns_one_per_active_filter
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        assert_equal 1, query_object.active_filter_descriptions.length
+      end
+
+      def test_active_filter_descriptions_correct_name
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        assert_equal :status, query_object.active_filter_descriptions.first[:name]
+      end
+
+      def test_active_filter_descriptions_correct_label
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        assert_equal "Status", query_object.active_filter_descriptions.first[:label]
+      end
+
+      def test_active_filter_descriptions_correct_value_label_for_hash_params
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        assert_equal "query active", query_object.active_filter_descriptions.first[:value_label]
+      end
+
+      def test_active_filter_descriptions_correct_clear_url
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+        end
+
+        clear_url = query_object.active_filter_descriptions.first[:clear_url]
+        refute_match(/status/, clear_url)
+      end
+
+      def test_active_filter_descriptions_clear_url_preserves_other_filters
+        query_object = QueryObject.new(
+          MockResource,
+          {status: {query: "active"}, title: {query: "hello"}},
+          @request_path
+        ) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+          qo.define_filter(:title, ->(scope, query:) { scope.where(title: query) })
+        end
+
+        status_desc = query_object.active_filter_descriptions.find { |d| d[:name] == :status }
+        title_desc = query_object.active_filter_descriptions.find { |d| d[:name] == :title }
+
+        # Status clear_url should not contain status param but should contain title
+        refute_match(/status/, status_desc[:clear_url])
+        assert_match(/title/, status_desc[:clear_url])
+
+        # Title clear_url should not contain title param but should contain status
+        refute_match(/title/, title_desc[:clear_url])
+        assert_match(/status/, title_desc[:clear_url])
+      end
+
+      def test_active_filter_descriptions_multiple_filters
+        query_object = QueryObject.new(
+          MockResource,
+          {status: {query: "active"}, title: {query: "hello"}},
+          @request_path
+        ) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+          qo.define_filter(:title, ->(scope, query:) { scope.where(title: query) })
+        end
+
+        assert_equal 2, query_object.active_filter_descriptions.length
+      end
+
+      def test_active_filter_descriptions_excludes_inactive_filters
+        query_object = QueryObject.new(MockResource, {status: {query: "active"}}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
+          qo.define_filter(:title, ->(scope, query:) { scope.where(title: query) })
+        end
+
+        names = query_object.active_filter_descriptions.map { |d| d[:name] }
+        assert_includes names, :status
+        refute_includes names, :title
+      end
+
       # ==================== Edge Cases ====================
 
       def test_scope_definitions_with_indifferent_access

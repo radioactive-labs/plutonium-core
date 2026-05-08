@@ -90,6 +90,8 @@ module Plutonium
 
         def BuildTableToolbar(...) = Plutonium::UI::Table::Components::Toolbar.new(...)
 
+        def BuildTableFilterPills(...) = Plutonium::UI::Table::Components::FilterPills.new(...)
+
         def BuildTableViewSwitcher(...) = Plutonium::UI::Table::Components::ViewSwitcher.new(...)
 
         def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)

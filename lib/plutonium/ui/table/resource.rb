@@ -15,6 +15,7 @@ module Plutonium
         def view_template
           render_scopes_pills
           render_toolbar
+          render_filter_pills
 
           collection.empty? ? render_empty_card : render_table
 
@@ -33,6 +34,10 @@ module Plutonium
             search_url: current_search_url,
             search_value: params.dig(:q, :search) || params[:search]
           )
+        end
+
+        def render_filter_pills
+          TableFilterPills(query: current_query_object, total_count: pagy_instance&.count)
         end
 
         def current_search_url

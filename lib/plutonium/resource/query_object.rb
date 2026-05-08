@@ -78,7 +78,10 @@ module Plutonium
         q[:sort_fields] = selected_sort_fields.dup
         handle_sort_options!(q, options)
 
-        q.merge! params.slice(*filter_definitions.keys)
+        filter_keys = filter_definitions.keys.map(&:to_sym)
+        filter_overrides = options.slice(*filter_keys).stringify_keys
+        q.merge! params.with_indifferent_access.slice(*filter_definitions.keys)
+        q.merge!(filter_overrides)
         compacted = deep_compact({q: q})
 
         # Preserve explicit "All" selection (scope: nil in options means show all)
@@ -118,6 +121,32 @@ module Plutonium
       def filter_definitions = @filter_definitions ||= {}.with_indifferent_access
 
       def sort_definitions = @sort_definitions ||= {}.with_indifferent_access
+
+      # Returns an array of hashes describing each currently active filter.
+      # Each hash has: name, label, value_label, clear_url
+      def active_filter_descriptions
+        filter_definitions.filter_map do |name, _filter|
+          name = name.to_sym
+          filter_params = params[name]
+          next unless filter_params.present?
+
+          value_label = case filter_params
+          when Hash
+            filter_params.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+          when Array
+            filter_params.join(", ")
+          else
+            filter_params.to_s
+          end
+
+          {
+            name: name,
+            label: name.to_s.humanize,
+            value_label: value_label,
+            clear_url: build_url(name => nil)
+          }
+        end
+      end
 
       # Provides sorting parameters for the given field name.
       #
