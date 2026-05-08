@@ -69,7 +69,7 @@ module Plutonium
         end
 
         def render_footer_section
-          div(class: "py-3 flex flex-col items-center gap-1 border-t border-[var(--pu-border)] shrink-0") do
+          div(class: "h-14 flex items-center justify-center border-t border-[var(--pu-border)] shrink-0") do
             render_pin_button
           end
         end
@@ -146,6 +146,9 @@ module Plutonium
             ) do
               render_item_icon(item)
               span(class: "icon-rail-label") { item.label }
+              span(class: "icon-rail-chevron", aria_hidden: "true") do
+                render Phlex::TablerIcons::ChevronRight.new(class: "w-full h-full")
+              end
             end
 
             div(
@@ -181,12 +184,18 @@ module Plutonium
         end
 
         def parent_trigger_classes(item = nil, depth = 0)
-          base = "flex items-center justify-center w-10 h-10 rounded-md transition-colors"
-          if item && active?(item)
+          base = "relative flex items-center justify-center w-10 h-10 rounded-md transition-colors"
+          if item && parent_active?(item)
             "#{base} bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
           else
             "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
           end
+        end
+
+        # A parent item is "active" if itself or any descendant is active —
+        # so the highlight follows the user into nested children.
+        def parent_active?(item)
+          active?(item) || item.items.any? { |child| active?(child) }
         end
 
         # Returns the first 2 letters of the label (letters only, capitalised).

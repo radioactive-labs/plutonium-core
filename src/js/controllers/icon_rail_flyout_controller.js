@@ -6,6 +6,14 @@ import { Controller } from "@hotwired/stimulus"
 // - Mouse leave (with delay) or blur → close
 // - Esc → close immediately
 // - Click trigger → toggle (touch-friendly)
+//
+// On open, the panel is portaled to <body> so it escapes any ancestor
+// transform / overflow:hidden (the rail aside has both). On close,
+// the panel returns to its original parent.
+//
+// IMPORTANT: once portaled, the panel is OUTSIDE the controller's
+// element scope, so this.panelTarget stops resolving. We capture the
+// node into _panel before moving it.
 export default class extends Controller {
   static targets = ["trigger", "panel"]
   static values = {
@@ -15,6 +23,19 @@ export default class extends Controller {
   connect() {
     this._closeTimer = null
     this._open = false
+    this._panel = null
+    this._panelHome = null
+    this._onPanelEnter = () => {
+      if (this._closeTimer) {
+        clearTimeout(this._closeTimer)
+        this._closeTimer = null
+      }
+    }
+    this._onPanelLeave = () => this.scheduleClose()
+  }
+
+  disconnect() {
+    this._returnPanel()
   }
 
   open() {
@@ -23,8 +44,10 @@ export default class extends Controller {
       this._closeTimer = null
     }
     if (this._open) return
+    if (!this._panel && !this.hasPanelTarget) return
     this._open = true
     this.element.dataset.flyoutOpen = "true"
+    this._portalPanel()
     this._position()
   }
 
@@ -34,8 +57,10 @@ export default class extends Controller {
   }
 
   close() {
+    if (!this._open) return
     this._open = false
     delete this.element.dataset.flyoutOpen
+    this._returnPanel()
   }
 
   toggle(event) {
@@ -47,15 +72,43 @@ export default class extends Controller {
     if (event.key === "Escape") this.close()
   }
 
-  _position() {
-    if (!this.hasPanelTarget || !this.hasTriggerTarget) return
-    const triggerRect = this.triggerTarget.getBoundingClientRect()
+  _portalPanel() {
+    if (this._panel) return
+    // Capture the panel BEFORE moving it — once it leaves the
+    // controller element, this.panelTarget no longer resolves.
     const panel = this.panelTarget
+    if (!panel) return
+    this._panel = panel
+    this._panelHome = panel.parentElement
+    panel.addEventListener("mouseenter", this._onPanelEnter)
+    panel.addEventListener("mouseleave", this._onPanelLeave)
+    document.body.appendChild(panel)
+    panel.style.display = "block"
+  }
+
+  _returnPanel() {
+    if (!this._panel) return
+    const panel = this._panel
+    panel.removeEventListener("mouseenter", this._onPanelEnter)
+    panel.removeEventListener("mouseleave", this._onPanelLeave)
+    panel.style.position = ""
+    panel.style.left = ""
+    panel.style.top = ""
+    panel.style.display = ""
+    if (this._panelHome) this._panelHome.appendChild(panel)
+    this._panel = null
+    this._panelHome = null
+  }
+
+  _position() {
+    if (!this._panel || !this.hasTriggerTarget) return
+    const panel = this._panel
+    const triggerRect = this.triggerTarget.getBoundingClientRect()
     panel.style.position = "fixed"
     panel.style.left = `${triggerRect.right + 4}px`
     panel.style.top = `${triggerRect.top}px`
 
-    // After the panel is laid out, check viewport overflow and shift if needed.
+    // Shift up if the panel would overflow the viewport bottom.
     requestAnimationFrame(() => {
       const panelRect = panel.getBoundingClientRect()
       const viewportH = window.innerHeight
