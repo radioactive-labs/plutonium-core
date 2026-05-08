@@ -17,39 +17,35 @@ module Plutonium
 
           def view_template
             div(class: "flex items-center gap-2 px-4 py-2 border-b border-[var(--pu-border)] bg-[var(--pu-surface-alt)]") do
-              # 1. View switcher
               render ViewSwitcher.new
-
-              # 2. Vertical divider
               render_divider
-
-              # 3. Filter button
               render_filter_button
-
-              # 4. Group button (disabled placeholder)
               render_group_button
-
-              # 5. Spacer
               div(class: "flex-1")
-
-              # 6. Search input
               render_search
-
-              # 7. Vertical divider
               render_divider
-
-              # 8. Column config button (disabled placeholder)
               render_column_config_button
             end
           end
 
           private
 
+          def has_filters?
+            @query.filter_definitions.present?
+          end
+
+          def active_filter_count
+            @query.active_filter_descriptions.size
+          end
+
           def render_divider
             div(class: "w-px h-5 bg-[var(--pu-border)]")
           end
 
           def render_filter_button
+            return unless has_filters?
+
+            count = active_filter_count
             button(
               type: "button",
               class: "pu-btn pu-btn-outline pu-btn-sm",
@@ -57,6 +53,12 @@ module Plutonium
             ) do
               render Phlex::TablerIcons::AdjustmentsHorizontal.new(class: "w-4 h-4 shrink-0")
               span { "Filter" }
+              if count > 0
+                span(class: "ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 " \
+                            "rounded-full bg-primary-600 text-white text-[10px] font-semibold leading-none") do
+                  plain count.to_s
+                end
+              end
             end
           end
 

@@ -13,13 +13,21 @@ module Plutonium
         end
 
         def view_template
-          render_scopes_pills
-          render_toolbar
+          # filter-panel controller wraps everything so the toolbar's
+          # filter button AND the FilterPills "+ Filter" pill (a sibling
+          # below the toolbar) share the same controller scope and can
+          # toggle the slideover rendered alongside them.
+          div(data: filter_panel_controller_data) do
+            render_scopes_pills
+            render_toolbar
 
-          div(data: bulk_actions_controller_data) do
-            render_filter_pills
-            render_bulk_actions_toolbar
-            collection.empty? ? render_empty_card : render_table
+            div(data: bulk_actions_controller_data) do
+              render_filter_pills
+              render_bulk_actions_toolbar
+              collection.empty? ? render_empty_card : render_table
+            end
+
+            render_filter_slideover if current_query_object.filter_definitions.present?
           end
 
           render_footer
@@ -145,6 +153,52 @@ module Plutonium
           @bulk_actions ||= resource_definition.defined_actions
             .select { |k, a| a.bulk_action? }
             .values
+        end
+
+        def filter_panel_controller_data
+          {controller: "filter-panel"}
+        end
+
+        # Hash of the current `q` params reduced to filter values only —
+        # used as the FilterForm's record so Phlexi prefills inputs from
+        # the URL (it reads values via `object[key]` for Hashes).
+        def filter_form_values
+          raw = params[:q]
+          return {} unless raw
+
+          hash = raw.respond_to?(:to_unsafe_h) ? raw.to_unsafe_h : raw.to_h
+          hash = hash.deep_symbolize_keys
+          hash.except(:search, :scope, :sort_fields, :sort_directions)
+        end
+
+        def render_filter_slideover
+          # Backdrop — click-to-close; transparent until panel opens.
+          div(
+            class: "fixed inset-0 z-40 bg-black/40 opacity-0 pointer-events-none " \
+                   "transition-opacity duration-200 " \
+                   "data-[open]:opacity-100 data-[open]:pointer-events-auto",
+            data: {filter_panel_target: "backdrop", action: "click->filter-panel#close"}
+          )
+
+          # Panel — fixed slideover from the right; the form inside owns
+          # its scroll region and pinned action strip.
+          aside(
+            class: "fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] max-w-full " \
+                   "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] " \
+                   "translate-x-full transition-transform duration-300 ease-out " \
+                   "data-[open]:translate-x-0 " \
+                   "flex flex-col",
+            role: "dialog",
+            aria: {label: "Filters", hidden: "true", modal: "true"},
+            data: {filter_panel_target: "panel"}
+          ) do
+            render Plutonium::UI::Table::Components::FilterForm.new(
+              filter_form_values,
+              query_object: current_query_object,
+              search_url: current_search_url,
+              search_value: params.dig(:q, :search) || params[:search]
+            )
+          end
         end
 
         def bulk_actions_controller_data
