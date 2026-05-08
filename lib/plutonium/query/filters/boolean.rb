@@ -16,6 +16,11 @@ module Plutonium
           @false_label = false_label
         end
 
+        def humanize_value(value)
+          return "" if value.blank?
+          ActiveModel::Type::Boolean.new.cast(value) ? @true_label : @false_label
+        end
+
         def apply(scope, value:)
           return scope if value.blank?
 

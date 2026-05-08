@@ -21,6 +21,14 @@ module Plutonium
         super()
         @key = key
       end
+
+      # Human-readable rendering of a single filter value for the active
+      # filter pills. Default falls through to `value.to_s`. Subclasses
+      # override to translate raw param values (e.g. an association id or
+      # a boolean string) into something the user can recognise.
+      def humanize_value(value)
+        value.to_s
+      end
     end
   end
 end

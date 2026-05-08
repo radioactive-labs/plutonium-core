@@ -131,18 +131,37 @@ module Plutonium
       # Returns an array of hashes describing each currently active filter.
       # Each hash has: name, label, value_label, clear_url
       def active_filter_descriptions
-        filter_definitions.filter_map do |name, _filter|
+        filter_definitions.filter_map do |name, filter|
           name = name.to_sym
           filter_params = params[name]
           next unless filter_params.present?
 
           value_label = case filter_params
-          when Hash
-            filter_params.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+          when Hash, ActionController::Parameters
+            entries = filter_params.to_h.reject { |_, v| v.blank? }
+            next if entries.empty?
+            # Single-input filters defer to the filter's `humanize_value`
+            # (e.g. Association resolves ids to labels, Boolean translates
+            # "true" -> "Yes"). Multi-input filters keep input-name
+            # qualifiers (e.g. "from 2024, to 2025").
+            if entries.size == 1
+              humanized = filter.humanize_value(entries.values.first)
+              next if humanized.blank?
+              humanized
+            else
+              entries.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+            end
           when Array
-            filter_params.join(", ")
+            entries = filter_params.reject(&:blank?)
+            next if entries.empty?
+            humanized = filter.humanize_value(entries)
+            next if humanized.blank?
+            humanized
           else
-            filter_params.to_s
+            next if filter_params.to_s.blank?
+            humanized = filter.humanize_value(filter_params)
+            next if humanized.blank?
+            humanized
           end
 
           {
