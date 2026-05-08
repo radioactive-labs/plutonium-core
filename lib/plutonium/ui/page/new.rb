@@ -18,9 +18,7 @@ module Plutonium
           if in_modal?
             render_modal_form
           else
-            div(class: "max-w-[580px] mx-auto pb-20") do
-              render partial("resource_form")
-            end
+            div(class: "pb-20") { render partial("resource_form") }
           end
         end
 

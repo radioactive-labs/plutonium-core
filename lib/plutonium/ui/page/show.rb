@@ -25,9 +25,7 @@ module Plutonium
               aside(class: "hidden lg:block") { render_aside }
             end
           else
-            div(class: "max-w-[960px] mx-auto") do
-              render partial("resource_details")
-            end
+            render partial("resource_details")
           end
         end
 

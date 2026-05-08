@@ -11,13 +11,15 @@ module Plutonium
         end
 
         def view_template(&block)
-          DynaFrameContent(page_content(block)) do |frame|
+          body = block || proc { render_default_content }
+
+          DynaFrameContent() do
             render_before_header
             render_header
             render_after_header
 
             render_before_content
-            frame.render_content
+            body.call
             render_after_content
 
             render_before_footer
@@ -51,6 +53,11 @@ module Plutonium
         end
 
         def render_breadcrumbs?
+          # Hide breadcrumbs when rendered inside a turbo frame — the host
+          # page already provides the navigation context (e.g., association
+          # tabs on a parent show page).
+          return false if in_frame?
+
           # Check specific page setting first, fall back to global setting
           page_specific_setting = current_definition.send(:"#{page_type}_breadcrumbs")
           page_specific_setting.nil? ? current_definition.breadcrumbs : page_specific_setting
@@ -64,10 +71,6 @@ module Plutonium
 
         def render_toolbar
           # Implement toolbar content
-        end
-
-        def page_content(block)
-          block || proc { render_default_content }
         end
 
         def render_default_content
