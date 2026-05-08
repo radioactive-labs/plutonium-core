@@ -78,6 +78,15 @@ module Plutonium
           # Implement footer content
         end
 
+        # Renders the optional aside (right-side panel) on show pages.
+        # No-op by default; future metadata DSL will populate this slot.
+        def render_aside
+        end
+
+        # True when the show layout should reserve space for the aside.
+        # Returns false by default; pages opt-in by overriding.
+        def aside_present? = false
+
         # Customization hooks
         def render_before_header
         end

@@ -32,13 +32,13 @@ module Plutonium
       private
 
       def wrapped(&)
-        div(class: "mt-8", &)
+        div(class: "pu-card mb-4", &)
       end
 
       def render_toolbar
-        div(class: "flex justify-between items-center mb-6") do
+        div(class: "flex justify-between items-center px-4 pt-4 pb-2") do
           if @title
-            h5(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") do
+            span(class: "text-[9px] font-semibold uppercase tracking-wider text-[var(--pu-text-muted)]") do
               @title
             end
           end
