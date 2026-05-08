@@ -29,3 +29,5 @@ test/dummy/storage/*.sqlite*
 test/dummy/tmp
 
 .yarn
+
+.superpowers
