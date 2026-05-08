@@ -23,9 +23,9 @@ module Plutonium
 
             a(
               href: add_url,
-              class: "bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] px-4 py-3 focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
+              class: "inline-flex items-center justify-center w-9 h-9 shrink-0 bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
             ) do
-              render Phlex::TablerIcons::Plus.new(class: "w-6 h-6")
+              render Phlex::TablerIcons::Plus.new(class: "w-4 h-4")
             end
           end
 
