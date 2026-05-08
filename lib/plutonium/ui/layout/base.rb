@@ -36,7 +36,43 @@ module Plutonium
             render_title
             render_metatags
             render_assets
+            render_pre_paint_scripts
           }
+        end
+
+        # Inline scripts that run before paint to prevent FOUC on user
+        # preferences read from localStorage:
+        # - Color mode: applies `dark` class on <html> so dark theme renders
+        #   from the first frame instead of flashing light.
+        # - Rail-pin: applies `pu-rail-pinned` on <body> (when present) and
+        #   on every incoming body via turbo:before-render, so a
+        #   Turbo.visit (e.g. the redirect after a form submit) doesn't
+        #   flash the rail into its collapsed state before the
+        #   icon-rail Stimulus controller can restore it.
+        def render_pre_paint_scripts
+          script do
+            raw(safe(<<~JS))
+              (function () {
+                try {
+                  var theme = localStorage.getItem("theme");
+                  var dark = theme === "dark" ||
+                    ((theme !== "light") &&
+                     window.matchMedia("(prefers-color-scheme: dark)").matches);
+                  document.documentElement.classList.toggle("dark", dark);
+                } catch (e) {}
+
+                try {
+                  if (localStorage.getItem("pu_rail_pinned") !== "true") return;
+                  if (document.body) document.body.classList.add("pu-rail-pinned");
+                  document.addEventListener("turbo:before-render", function (event) {
+                    if (localStorage.getItem("pu_rail_pinned") === "true") {
+                      event.detail.newBody.classList.add("pu-rail-pinned");
+                    }
+                  });
+                } catch (e) {}
+              })();
+            JS
+          end
         end
 
         def render_body(&)
