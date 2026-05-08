@@ -14,11 +14,18 @@ module Plutonium
         end
 
         def display_template
-          render_fields
-          render_associations if present_associations?
+          if associations_present?
+            render_tablist_with_details
+          else
+            render_fields
+          end
         end
 
         private
+
+        def associations_present?
+          present_associations? && resource_associations.present?
+        end
 
         def render_fields
           Block do
@@ -30,45 +37,88 @@ module Plutonium
           end
         end
 
-        def render_associations
-          return unless resource_associations.present?
-
+        def render_tablist_with_details
           tablist = BuildTabList()
+
+          # Build an inner display component for the Details tab.
+          # It must be a standalone Phlex component so that TabList can call
+          # `render(details_display)` from within its own context. Phlex propagates
+          # @_state through render calls, so the inner component writes to the same
+          # buffer as the outer Resource display even though self changes.
+          details_display = build_details_display
+
+          tablist.with_tab(
+            identifier: "details",
+            title: -> { plain "Details" }
+          ) do
+            render details_display
+          end
 
           resource_associations.each do |name|
             reflection = object.class.reflect_on_association name
-
-            if !reflection
-              raise ArgumentError,
-                "unknown association #{object.class}##{name} defined in #permitted_associations"
-            elsif !registered_resources.include?(reflection.klass)
-              raise ArgumentError,
-                "#{object.class}##{name} defined in #permitted_associations, but #{reflection.klass} is not a registered resource"
-            end
+            raise_unknown_association(name) unless reflection
+            raise_unregistered_association(name, reflection) unless registered_resources.include?(reflection.klass)
 
             title = object.class.human_attribute_name(name)
-            src = case reflection.macro
-            when :belongs_to
-              associated = object.public_send name
-              resource_url_for(associated, parent: nil) if associated
-            when :has_one
-              associated = object.public_send name
-              resource_url_for(associated, parent: object, association: name)
-            when :has_many
-              resource_url_for(reflection.klass, parent: object, association: name)
-            end
-
+            src = association_src(name, reflection)
             next unless src
 
             tablist.with_tab(
               identifier: title.parameterize,
-              title: -> { h5(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") { title } }
+              title: -> { plain title }
             ) do
               FrameNavigatorPanel(title: "", src:, panel_id: "association-panel-#{title.parameterize}")
             end
           end
 
           render tablist
+        end
+
+        # Builds a standalone Phlex component whose sole job is to render the
+        # resource fields. Having a distinct component lets TabList call
+        # `render(details_display)` so that Phlex propagates its @_state correctly,
+        # while avoiding the `instance_exec` context-switch problem that would
+        # occur if we put `render_fields` directly inside the `with_tab` block.
+        #
+        # The anonymous subclass overrides `view_template` to skip the outer
+        # `display_wrapper` div (which would duplicate the dom id already emitted
+        # by the parent Resource display) and renders just the fields content.
+        def build_details_display
+          resource = self
+
+          klass = Class.new(self.class) do
+            define_method(:view_template) do
+              resource.send(:render_fields)
+            end
+          end
+
+          klass.new(
+            object,
+            resource_fields: resource_fields,
+            resource_associations: [],
+            resource_definition: resource_definition
+          )
+        end
+
+        def association_src(name, reflection)
+          case reflection.macro
+          when :belongs_to
+            associated = object.public_send name
+            resource_url_for(associated, parent: nil) if associated
+          when :has_one
+            associated = object.public_send name
+            resource_url_for(associated, parent: object, association: name)
+          when :has_many
+            resource_url_for(reflection.klass, parent: object, association: name)
+          end
+        end
+
+        def raise_unknown_association(name)
+          raise ArgumentError, "unknown association #{object.class}##{name} defined in #permitted_associations"
+        end
+
+        def raise_unregistered_association(name, reflection)
+          raise ArgumentError, "#{object.class}##{name} defined in #permitted_associations, but #{reflection.klass} is not a registered resource"
         end
 
         def render_resource_field(name)
