@@ -35,11 +35,21 @@ module Plutonium
         def render_actions
           input name: "return_to", value: request.params[:return_to], type: :hidden, hidden: true
 
-          actions_wrapper {
-            render_submit_and_continue_button if show_submit_and_continue?
+          if in_modal?
+            actions_wrapper {
+              render_submit_and_continue_button if show_submit_and_continue?
+              render submit_button
+            }
+          else
+            render Plutonium::UI::Form::Components::StickyFooter.new do
+              render_submit_and_continue_button if show_submit_and_continue?
+              render submit_button
+            end
+          end
+        end
 
-            render submit_button
-          }
+        def in_modal?
+          request.headers["Turbo-Frame"] == "remote_modal"
         end
 
         def show_submit_and_continue?

@@ -15,7 +15,9 @@ module Plutonium
         end
 
         def render_default_content
-          render partial("resource_form")
+          div(class: "max-w-[580px] mx-auto pb-20") do
+            render partial("resource_form")
+          end
         end
 
         def page_type = :edit_page

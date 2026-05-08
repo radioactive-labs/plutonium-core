@@ -59,7 +59,9 @@ module Plutonium
               render partial("interactive_action_form")
             end
           else
-            render partial("interactive_action_form")
+            div(class: "max-w-[580px] mx-auto pb-20") do
+              render partial("interactive_action_form")
+            end
           end
         end
 
