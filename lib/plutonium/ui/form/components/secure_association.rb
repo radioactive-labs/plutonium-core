@@ -7,6 +7,8 @@ module Plutonium
         class SecureAssociation < Phlexi::Form::Components::AssociationBase
           include Plutonium::UI::Component::Methods
 
+          DEFAULT_CHOICE_LIMIT = Plutonium::UI::Form::Components::ResourceSelect::DEFAULT_CHOICE_LIMIT
+
           def view_template
             div(class: "flex items-center space-x-1") do
               super
@@ -51,6 +53,7 @@ module Plutonium
               else
                 authorized_resource_scope(association_reflection.klass, relation: choices_from_association(association_reflection.klass))
               end
+              collection = collection.limit(@choice_limit) if @choice_limit && collection.respond_to?(:limit)
               build_choice_mapper(collection)
             end
           end
@@ -63,6 +66,8 @@ module Plutonium
           def build_association_attributes
             @skip_authorization = attributes.delete(:skip_authorization)
             @add_action = attributes.delete(:add_action)
+            @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
+            attributes.delete(:choice_limit)
 
             attributes.fetch(:value_method) { attributes[:value_method] = :to_signed_global_id }
 
