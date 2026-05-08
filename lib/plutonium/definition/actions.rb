@@ -34,7 +34,8 @@ module Plutonium
 
         action(:new, route_options: {action: :new},
           resource_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Plus, position: 10)
+          icon: Phlex::TablerIcons::Plus, position: 10,
+          turbo_frame: "remote_modal")
 
         action(:show, route_options: {action: :show},
           collection_record_action: true, category: :primary,
@@ -42,7 +43,8 @@ module Plutonium
 
         action(:edit, route_options: {action: :edit},
           record_action: true, collection_record_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Edit, position: 20)
+          icon: Phlex::TablerIcons::Edit, position: 20,
+          turbo_frame: "remote_modal")
 
         action(:destroy, route_options: {method: :delete},
           record_action: true, collection_record_action: true, category: :danger,

@@ -72,7 +72,11 @@ module Plutonium
         end
 
         def render_body(&block)
-          div(class: "flex-1 min-h-0 overflow-y-auto px-6 py-5", &block)
+          # Body is a flex column with no padding/scroll; content owns its
+          # own padding and scroll regions. This lets form-shaped content
+          # split itself into a scrollable fields region and a pinned
+          # action strip flush with the modal's bottom edge.
+          div(class: "flex-1 min-h-0 flex flex-col overflow-hidden", &block)
         end
 
         def render_footer
