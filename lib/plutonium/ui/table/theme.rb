@@ -25,10 +25,11 @@ module Plutonium
             # Header
             header: "pu-table-header",
             header_grouping_cell: "pu-table-header-cell text-center text-sm border-b border-t border-r last:border-r-0 border-[var(--pu-table-border)]",
-            header_cell: "pu-table-header-cell",
+            header_cell: "pu-table-header-cell group",
             header_cell_content_wrapper: "inline-flex items-center",
-            header_cell_sort_wrapper: "flex items-center",
+            header_cell_sort_wrapper: "flex items-center justify-between gap-1",
             header_cell_sort_indicator: "ml-1.5",
+            header_cell_link: "flex items-center gap-1 cursor-pointer hover:text-[var(--pu-text)]",
 
             # Body
             body_row: "pu-table-body-row",
@@ -36,11 +37,19 @@ module Plutonium
 
             # Sorting
             sort_icon: "w-3 h-3",
-            sort_icon_active: "text-primary-600 dark:text-primary-400",
-            sort_icon_inactive: "text-[var(--pu-text-subtle)]",
+            sort_icon_active: "ml-1 inline-flex text-primary-600 dark:text-primary-400",
+            sort_icon_inactive: "ml-1 inline-flex text-[var(--pu-text-subtle)] opacity-0 group-hover:opacity-100 transition-opacity",
+            sort_priority_badge: "ml-1 inline-flex items-center justify-center w-4 h-4 text-[10px] font-semibold rounded bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300",
             sort_index_clear_link: "ml-2",
             sort_index_clear_link_text: "text-xs font-bold text-[var(--pu-text-subtle)]",
-            sort_index_clear_link_icon: "ml-1 text-danger-600 dark:text-danger-400"
+            sort_index_clear_link_icon: "ml-1 text-danger-600 dark:text-danger-400",
+
+            # Column menu
+            column_menu_trigger: "p-1 rounded text-[var(--pu-text-subtle)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] opacity-0 group-hover:opacity-100 transition-opacity",
+            column_menu_panel: "hidden absolute right-0 top-full mt-1 z-50 min-w-[180px] bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-md shadow-lg p-1",
+            column_menu_item: "flex items-center gap-2 px-2 py-1.5 text-sm text-[var(--pu-text)] rounded hover:bg-[var(--pu-surface-alt)] w-full",
+            column_menu_item_disabled: "flex items-center gap-2 px-2 py-1.5 text-sm text-[var(--pu-text-subtle)] opacity-60 cursor-not-allowed",
+            column_menu_separator: "my-1 border-t border-[var(--pu-border)]"
           })
         end
       end

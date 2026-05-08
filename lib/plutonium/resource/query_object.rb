@@ -63,6 +63,7 @@ module Plutonium
       # Builds a URL with the given options for search and sorting.
       #
       # @param options [Hash] The options for building the URL.
+      # @option options [Boolean] :replace When true, clears all existing sorts before applying the new one
       # @return [String] The constructed URL with query parameters.
       def build_url(**options)
         q = {}
@@ -74,8 +75,13 @@ module Plutonium
           selected_scope_filter
         end
 
-        q[:sort_directions] = selected_sort_directions.dup
-        q[:sort_fields] = selected_sort_fields.dup
+        if options.delete(:replace)
+          q[:sort_directions] = {}
+          q[:sort_fields] = []
+        else
+          q[:sort_directions] = selected_sort_directions.dup
+          q[:sort_fields] = selected_sort_fields.dup
+        end
         handle_sort_options!(q, options)
 
         filter_keys = filter_definitions.keys.map(&:to_sym)
@@ -151,15 +157,19 @@ module Plutonium
       # Provides sorting parameters for the given field name.
       #
       # @param name [Symbol, String] The name of the field to sort.
-      # @return [Hash, nil] The sorting parameters including URL and direction.
+      # @return [Hash, nil] The sorting parameters including URL, multi_url, direction, position and multi flag.
       def sort_params_for(name)
         return unless sort_definitions[name]
 
+        multi = selected_sort_fields.size > 1 && selected_sort_fields.include?(name.to_s)
+
         {
-          url: build_url(sort: name),
+          url: build_url(sort: name, replace: true),
+          multi_url: build_url(sort: name),
           reset_url: build_url(sort: name, reset: true),
           position: selected_sort_fields.index(name.to_s),
-          direction: selected_sort_directions[name]
+          direction: selected_sort_directions[name],
+          multi: multi
         }
       end
 

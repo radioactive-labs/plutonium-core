@@ -26,6 +26,8 @@ import TextareaAutogrowController from "./textarea_autogrow_controller.js"
 import ClipboardController from "./clipboard_controller.js"
 import IconRailController from "./icon_rail_controller.js"
 import IconRailFlyoutController from "./icon_rail_flyout_controller.js"
+import TableHeaderController from "./table_header_controller.js"
+import TableColumnMenuController from "./table_column_menu_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -56,4 +58,6 @@ export default function (application) {
   application.register("clipboard", ClipboardController)
   application.register("icon-rail", IconRailController)
   application.register("icon-rail-flyout", IconRailFlyoutController)
+  application.register("table-header", TableHeaderController)
+  application.register("table-column-menu", TableColumnMenuController)
 }

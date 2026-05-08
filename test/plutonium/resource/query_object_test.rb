@@ -487,6 +487,144 @@ module Plutonium
         assert_equal "ASC", result[:direction]
       end
 
+      def test_sort_params_for_includes_multi_url
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_sorter :title
+        end
+
+        result = query_object.sort_params_for(:title)
+
+        assert result.key?(:url)
+        assert result.key?(:multi_url)
+        assert result.key?(:reset_url)
+        assert result.key?(:position)
+        assert result.key?(:direction)
+        assert result.key?(:multi)
+      end
+
+      def test_sort_params_for_multi_false_when_single_sort
+        query_object = QueryObject.new(MockResource, {sort_fields: ["title"], sort_directions: {title: "ASC"}}, @request_path) do |qo|
+          qo.define_sorter :title
+        end
+
+        result = query_object.sort_params_for(:title)
+
+        refute result[:multi]
+      end
+
+      def test_sort_params_for_multi_true_when_multiple_sorts
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title", "created_at"], sort_directions: {title: "ASC", created_at: "DESC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        title_result = query_object.sort_params_for(:title)
+        created_at_result = query_object.sort_params_for(:created_at)
+
+        assert title_result[:multi]
+        assert created_at_result[:multi]
+      end
+
+      def test_sort_params_for_priority_position_in_multi_sort
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title", "created_at"], sort_directions: {title: "ASC", created_at: "DESC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        assert_equal 0, query_object.sort_params_for(:title)[:position]
+        assert_equal 1, query_object.sort_params_for(:created_at)[:position]
+      end
+
+      def test_build_url_with_replace_clears_other_sorts
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title", "created_at"], sort_directions: {title: "ASC", created_at: "DESC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        # Replace with only :title — created_at should be wiped
+        url = query_object.build_url(sort: :title, replace: true)
+
+        # title should appear (the new sole sort)
+        assert_includes url, "title"
+        # created_at should not appear in sort_fields (may appear in sort_directions key but not as a field)
+        refute_match(/sort_fields.*created_at/, url)
+      end
+
+      def test_build_url_replace_false_preserves_existing_sorts
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title"], sort_directions: {title: "ASC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        url = query_object.build_url(sort: :created_at)
+
+        assert_includes url, "title"
+        assert_includes url, "created_at"
+      end
+
+      def test_sort_params_url_uses_replace
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title", "created_at"], sort_directions: {title: "ASC", created_at: "DESC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        # url should replace (only title, no created_at)
+        url = query_object.sort_params_for(:title)[:url]
+        refute_match(/created_at/, url)
+      end
+
+      def test_sort_params_multi_url_appends
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title"], sort_directions: {title: "ASC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+          qo.define_sorter :created_at
+        end
+
+        # multi_url for created_at should preserve title in the sort stack
+        multi_url = query_object.sort_params_for(:created_at)[:multi_url]
+        assert_includes multi_url, "title"
+        assert_includes multi_url, "created_at"
+      end
+
+      def test_sort_params_url_toggles_direction_on_replace
+        # When the current sort is ASC and we click the same column with replace:
+        # it should toggle to DESC (ivar still reflects the existing direction)
+        query_object = QueryObject.new(
+          MockResource,
+          {sort_fields: ["title"], sort_directions: {title: "ASC"}},
+          @request_path
+        ) do |qo|
+          qo.define_sorter :title
+        end
+
+        url = query_object.sort_params_for(:title)[:url]
+        assert_includes url, "DESC"
+        refute_includes url, "ASC"
+      end
+
       # ==================== Active Filter Descriptions Tests ====================
 
       def test_active_filter_descriptions_empty_when_no_filters_set

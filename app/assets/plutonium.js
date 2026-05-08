@@ -28107,6 +28107,61 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/table_header_controller.js
+  var table_header_controller_default = class extends Controller {
+    headerClick(event) {
+      if (!event.shiftKey)
+        return;
+      const link2 = event.currentTarget;
+      const multiHref = link2.dataset.tableHeaderMultiHref;
+      if (!multiHref)
+        return;
+      event.preventDefault();
+      Turbo.visit(multiHref);
+    }
+  };
+
+  // src/js/controllers/table_column_menu_controller.js
+  var table_column_menu_controller_default = class extends Controller {
+    static targets = ["panel"];
+    connect() {
+      this._onDocClick = this._onDocClick.bind(this);
+    }
+    toggle(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (this.hasPanelTarget) {
+        const isNowVisible = !this.panelTarget.classList.toggle("hidden");
+        if (isNowVisible) {
+          document.addEventListener("click", this._onDocClick);
+          this._onKey = (e4) => {
+            if (e4.key === "Escape")
+              this._close();
+          };
+          document.addEventListener("keydown", this._onKey);
+        } else {
+          this._unbind();
+        }
+      }
+    }
+    _close() {
+      if (this.hasPanelTarget)
+        this.panelTarget.classList.add("hidden");
+      this._unbind();
+    }
+    _unbind() {
+      document.removeEventListener("click", this._onDocClick);
+      if (this._onKey) {
+        document.removeEventListener("keydown", this._onKey);
+        this._onKey = null;
+      }
+    }
+    _onDocClick(event) {
+      if (!this.element.contains(event.target))
+        this._close();
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28136,6 +28191,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("clipboard", clipboard_controller_default);
     application2.register("icon-rail", icon_rail_controller_default);
     application2.register("icon-rail-flyout", icon_rail_flyout_controller_default);
+    application2.register("table-header", table_header_controller_default);
+    application2.register("table-column-menu", table_column_menu_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
