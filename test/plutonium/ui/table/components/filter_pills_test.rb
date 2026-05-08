@@ -103,6 +103,18 @@ class Plutonium::UI::Table::Components::FilterPillsTest < Minitest::Test
     refute_includes html, "filter-panel#toggle"
   end
 
+  # ==================== Bulk actions target marker ====================
+
+  def test_outer_wrapper_has_bulk_actions_target
+    html = build_component(params: {}, filters: [:status], total_count: 5).call
+    assert_match(/data-bulk-actions-target="filterPills"/, html)
+  end
+
+  def test_outer_wrapper_has_bulk_actions_target_when_filters_active
+    html = build_component(params: {status: {query: "active"}}, filters: [:status], total_count: nil).call
+    assert_match(/data-bulk-actions-target="filterPills"/, html)
+  end
+
   private
 
   def build_component(params:, filters:, total_count:)

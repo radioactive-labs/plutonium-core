@@ -13,7 +13,10 @@ module Plutonium
           def view_template
             return if @query.active_filter_descriptions.empty? && @total_count.to_i.zero?
 
-            div(class: "flex items-center gap-1.5 px-4 py-2 border-b border-[var(--pu-border)] flex-wrap") do
+            div(
+              class: "flex items-center gap-1.5 px-4 py-2 border-b border-[var(--pu-border)] flex-wrap",
+              data: {bulk_actions_target: "filterPills"}
+            ) do
               @query.active_filter_descriptions.each { |f| render_pill(f) }
               render_add_filter_pill if @query.active_filter_descriptions.any?
               render_result_count if @total_count

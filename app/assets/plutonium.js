@@ -27854,7 +27854,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/bulk_actions_controller.js
   var bulk_actions_controller_default = class extends Controller {
-    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell"];
+    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"];
     static values = {
       hasActions: { type: Boolean, default: false }
     };
@@ -27883,6 +27883,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       }
       if (this.hasToolbarTarget) {
         this.toolbarTarget.classList.toggle("hidden", checked.length === 0);
+      }
+      if (this.hasFilterPillsTarget) {
+        this.filterPillsTarget.classList.toggle("hidden", checked.length > 0);
       }
       if (this.hasSelectedCountTarget) {
         this.selectedCountTarget.textContent = checked.length;
@@ -27918,6 +27921,14 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     getAllowedActionsForCheckbox(checkbox) {
       const allowedActions = checkbox.dataset.allowedActions;
       return allowedActions ? allowedActions.split(",").filter((a4) => a4) : [];
+    }
+    clearSelection() {
+      this.checkboxTargets.forEach((cb) => cb.checked = false);
+      if (this.hasCheckboxAllTarget) {
+        this.checkboxAllTarget.checked = false;
+        this.checkboxAllTarget.indeterminate = false;
+      }
+      this.updateUI();
     }
     get checked() {
       return this.checkboxTargets.filter((cb) => cb.checked);

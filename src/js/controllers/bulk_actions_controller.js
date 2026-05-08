@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="bulk-actions"
 // Manages bulk action selection in resource tables
 export default class extends Controller {
-  static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell"]
+  static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"]
   static values = {
     hasActions: { type: Boolean, default: false }
   }
@@ -43,6 +43,11 @@ export default class extends Controller {
     // Show toolbar only when items are selected
     if (this.hasToolbarTarget) {
       this.toolbarTarget.classList.toggle("hidden", checked.length === 0)
+    }
+
+    // FilterPills strip is mutually exclusive with the toolbar
+    if (this.hasFilterPillsTarget) {
+      this.filterPillsTarget.classList.toggle("hidden", checked.length > 0)
     }
 
     // Update selected count display
@@ -97,6 +102,15 @@ export default class extends Controller {
   getAllowedActionsForCheckbox(checkbox) {
     const allowedActions = checkbox.dataset.allowedActions
     return allowedActions ? allowedActions.split(",").filter(a => a) : []
+  }
+
+  clearSelection() {
+    this.checkboxTargets.forEach(cb => cb.checked = false)
+    if (this.hasCheckboxAllTarget) {
+      this.checkboxAllTarget.checked = false
+      this.checkboxAllTarget.indeterminate = false
+    }
+    this.updateUI()
   }
 
   get checked() {

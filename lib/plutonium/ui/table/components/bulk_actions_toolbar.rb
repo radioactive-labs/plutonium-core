@@ -23,31 +23,39 @@ module Plutonium
           end
 
           def view_template
-            # Always render toolbar - hidden by default, Stimulus shows it when items are selected
             div(
-              class: "hidden flex pu-toolbar",
+              class: "hidden flex items-center gap-3 px-4 py-2 border-b border-[var(--pu-border)] bg-primary-50 dark:bg-primary-950/30",
               data: {bulk_actions_target: "toolbar"}
             ) do
               render_selected_count
               render_action_buttons
+              render_clear_selection
             end
           end
 
           private
 
           def render_selected_count
-            span(class: "pu-toolbar-text") do
+            div(class: "text-sm font-medium text-primary-700 dark:text-primary-300") do
               span(data: {bulk_actions_target: "selectedCount"}) { "0" }
               plain " selected"
             end
           end
 
           def render_action_buttons
-            div(class: "pu-toolbar-actions") do
+            div(class: "flex items-center gap-1.5") do
               @bulk_actions.each do |action|
                 render_action_button(action)
               end
             end
+          end
+
+          def render_clear_selection
+            button(
+              type: "button",
+              data: {action: "click->bulk-actions#clearSelection"},
+              class: "ml-auto text-xs text-primary-700 dark:text-primary-300 hover:underline"
+            ) { "Clear selection" }
           end
 
           def render_action_button(action)
