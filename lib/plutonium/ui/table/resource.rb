@@ -13,12 +13,8 @@ module Plutonium
         end
 
         def view_template
-          if Plutonium.configuration.shell == :modern
-            render_modern_toolbar
-          else
-            render_search_bar
-            render_scopes_bar
-          end
+          render_scopes_pills
+          render_toolbar
 
           collection.empty? ? render_empty_card : render_table
 
@@ -27,7 +23,11 @@ module Plutonium
 
         private
 
-        def render_modern_toolbar
+        def render_scopes_pills
+          TableScopesPills() if current_query_object.scope_definitions.any?
+        end
+
+        def render_toolbar
           TableToolbar(
             query: current_query_object,
             search_url: current_search_url,
@@ -37,14 +37,6 @@ module Plutonium
 
         def current_search_url
           request.path
-        end
-
-        def render_search_bar
-          TableSearchBar()
-        end
-
-        def render_scopes_bar
-          TableScopesBar()
         end
 
         def render_empty_card

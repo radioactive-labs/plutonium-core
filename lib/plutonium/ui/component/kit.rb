@@ -78,6 +78,8 @@ module Plutonium
 
         def BuildTableScopesBar(...) = Plutonium::UI::Table::Components::ScopesBar.new(...)
 
+        def BuildTableScopesPills(...) = Plutonium::UI::Table::Components::ScopesPills.new(...)
+
         def BuildTableInfo(...) = Plutonium::UI::Table::Components::PagyInfo.new(...)
 
         def BuildTablePagination(...) = Plutonium::UI::Table::Components::PagyPagination.new(...)
