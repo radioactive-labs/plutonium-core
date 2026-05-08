@@ -56,9 +56,10 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "<aside"
   end
 
-  test "aside has w-14 width class (56px)" do
+  test "aside has overflow-x-hidden (width is CSS-controlled, not Tailwind utility)" do
     html = render_html(build_component)
-    assert_includes html, "w-14"
+    assert_includes html, "overflow-x-hidden"
+    refute_includes html, "w-14"
   end
 
   test "aside is fixed top-0 left-0 full-height" do
@@ -85,9 +86,9 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "lg:translate-x-0"
   end
 
-  test "nav section has turbo-permanent data attribute" do
+  test "nav section does NOT have turbo-permanent (active state must update on navigation)" do
     html = render_html(build_component)
-    assert_includes html, "data-turbo-permanent"
+    refute_includes html, "data-turbo-permanent"
   end
 
   # ---------------------------------------------------------------------------
@@ -200,6 +201,44 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "icon-rail-flyout-item"
   end
 
+  test "parent item wrapper has icon-rail-flyout data-controller" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'data-controller="icon-rail-flyout"'
+  end
+
+  test "parent wrapper data-action includes mouseenter open and keydown esc" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "mouseenter->icon-rail-flyout#open"
+    assert_includes html, "keydown.esc@window->icon-rail-flyout#closeOnEsc"
+  end
+
+  test "parent trigger has icon-rail-flyout-target trigger and click toggle action" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'data-icon-rail-flyout-target="trigger"'
+    assert_includes html, "click->icon-rail-flyout#toggle"
+  end
+
+  test "flyout panel has icon-rail-flyout-target panel" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'data-icon-rail-flyout-target="panel"'
+  end
+
   test "flyout lists child item labels and hrefs" do
     child = StubItem.new(label: "Child Page", url: "/child", icon: nil, items: [])
     parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
@@ -210,59 +249,51 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, 'href="/child"'
   end
 
-  test "parent item renders inline children container for pinned mode" do
+  test "parent trigger is an anchor tag with icon-rail-parent-trigger class" do
     child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    parent = StubItem.new(label: "Parent", url: "/parent", icon: nil, items: [child])
     menu = StubMenu.new([parent])
     html = render_html(build_component(menu: menu))
 
-    assert_includes html, "icon-rail-children"
-  end
-
-  test "inline children container uses resource-collapse-target=menu" do
-    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
-    menu = StubMenu.new([parent])
-    html = render_html(build_component(menu: menu))
-
-    assert_includes html, "resource-collapse-target"
-    assert_includes html, "menu"
-  end
-
-  test "parent item uses resource-collapse controller" do
-    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
-    menu = StubMenu.new([parent])
-    html = render_html(build_component(menu: menu))
-
-    assert_includes html, "resource-collapse"
-  end
-
-  test "parent trigger has resource-collapse#toggle action" do
-    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
-    menu = StubMenu.new([parent])
-    html = render_html(build_component(menu: menu))
-
-    assert_includes html, "resource-collapse#toggle"
-  end
-
-  test "parent trigger has icon-rail-parent-trigger class" do
-    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
-    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
-    menu = StubMenu.new([parent])
-    html = render_html(build_component(menu: menu))
-
+    assert_includes html, 'href="/parent"'
     assert_includes html, "icon-rail-parent-trigger"
   end
 
-  test "parent trigger has chevron span for pinned mode" do
+  test "parent trigger falls back to # when no url" do
     child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
     parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
     menu = StubMenu.new([parent])
     html = render_html(build_component(menu: menu))
 
-    assert_includes html, "icon-rail-chevron"
+    assert_includes html, 'href="#"'
+  end
+
+  test "parent item has no inline children container or resource-collapse wiring" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    refute_includes html, "icon-rail-children"
+    refute_includes html, "resource-collapse"
+  end
+
+  test "parent item has no chevron span" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    refute_includes html, "icon-rail-chevron"
+  end
+
+  test "child link appears exactly once (only in flyout)" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_equal 1, html.scan('href="/child"').length, "child href should appear exactly once (flyout only)"
   end
 
   # ---------------------------------------------------------------------------
@@ -346,15 +377,14 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "sidebar-navigation"
   end
 
-  test "nested child items are rendered in flyout and inline tree" do
+  test "nested child items are rendered in flyout only" do
     child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
     parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
     menu = StubMenu.new([parent])
     html = render_html(build_component(menu: menu))
 
-    # Parent exists as a button/div (not a bare <a>), child links appear in flyout + inline
     assert_includes html, 'href="/child"'
-    # Child link appears at least twice: once in flyout, once in inline tree
-    assert html.scan('href="/child"').length >= 2
+    # Child link appears exactly once: only in flyout (no inline tree)
+    assert_equal 1, html.scan('href="/child"').length
   end
 end

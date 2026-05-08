@@ -39,9 +39,9 @@ module Plutonium
             id: "sidebar-navigation",
             data: {controller: "sidebar icon-rail"},
             aria: {label: "Sidebar Navigation"},
-            class: "fixed top-0 left-0 z-40 h-screen w-14 " \
+            class: "fixed top-0 left-0 z-40 h-screen " \
                    "bg-[var(--pu-surface)] border-r border-[var(--pu-border)] " \
-                   "flex flex-col transition-all duration-300 " \
+                   "flex flex-col transition-[width] duration-200 overflow-x-hidden " \
                    "-translate-x-full lg:translate-x-0"
           ) do
             render_brand_section
@@ -61,7 +61,7 @@ module Plutonium
         def render_nav_section
           div(
             id: "sidebar-navigation-content",
-            data: {turbo_permanent: true, sidebar_target: "scroll"},
+            data: {sidebar_target: "scroll"},
             class: "flex-1 overflow-y-auto py-3 flex flex-col items-center gap-1"
           ) do
             render_items(@menu.items, 0) if @menu&.items
@@ -124,46 +124,39 @@ module Plutonium
         def render_parent_item(item, depth)
           div(
             class: "icon-rail-parent relative w-full flex flex-col items-center",
-            data: {controller: "resource-collapse"}
+            data: {
+              controller: "icon-rail-flyout",
+              action:
+                "mouseenter->icon-rail-flyout#open " \
+                "mouseleave->icon-rail-flyout#scheduleClose " \
+                "focusin->icon-rail-flyout#open " \
+                "focusout->icon-rail-flyout#scheduleClose " \
+                "keydown.esc@window->icon-rail-flyout#closeOnEsc"
+            }
           ) do
-            # Trigger button — acts as parent toggle in pinned mode; flyout trigger in collapsed
-            button(
-              type: "button",
+            a(
+              href: item.url || "#",
               title: item.label,
-              aria: {label: item.label, expanded: "false"},
-              data: {"resource-collapse-target": "trigger", action: "resource-collapse#toggle"},
+              aria: {label: item.label, haspopup: "menu", expanded: "false"},
+              data: {
+                "icon-rail-flyout-target": "trigger",
+                action: "click->icon-rail-flyout#toggle"
+              },
               class: "icon-rail-parent-trigger #{parent_trigger_classes(item, depth)}"
             ) do
               render_item_icon(item)
-              span(class: "icon-rail-label hidden") { item.label }
-              span(class: "icon-rail-chevron hidden") do
-                render Phlex::TablerIcons::ChevronDown.new(class: "w-4 h-4 ml-auto")
-              end
+              span(class: "icon-rail-label") { item.label }
             end
 
-            # Flyout panel — visible on hover in collapsed mode (CSS-only)
-            div(class: "icon-rail-flyout") do
+            div(
+              class: "icon-rail-flyout",
+              role: "menu",
+              data: {"icon-rail-flyout-target": "panel"}
+            ) do
               div(class: "icon-rail-flyout-inner") do
                 div(class: "icon-rail-flyout-label") { item.label }
                 item.items.each do |child|
-                  a(href: child.url, class: "icon-rail-flyout-item") { child.label }
-                end
-              end
-            end
-
-            # Inline children — shown in pinned mode by resource-collapse controller
-            div(
-              class: "icon-rail-children hidden w-full",
-              data: {"resource-collapse-target": "menu"}
-            ) do
-              item.items.each do |child|
-                a(
-                  href: child.url,
-                  title: child.label,
-                  aria: {label: child.label},
-                  class: "icon-rail-child #{child_classes(child)}"
-                ) do
-                  span(class: "icon-rail-label") { child.label }
+                  a(href: child.url, class: "icon-rail-flyout-item", role: "menuitem") { child.label }
                 end
               end
             end
@@ -191,15 +184,6 @@ module Plutonium
           base = "flex items-center justify-center w-10 h-10 rounded-md transition-colors"
           if item && active?(item)
             "#{base} bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
-          else
-            "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
-          end
-        end
-
-        def child_classes(item)
-          base = "flex items-center px-3 py-1.5 text-sm rounded-md transition-colors"
-          if active?(item)
-            "#{base} text-primary-700 dark:text-primary-300 font-medium"
           else
             "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
           end

@@ -4,10 +4,6 @@ module Plutonium
   module UI
     # A sidebar navigation component that renders a max depth of 2 levels.
     # Provides collapsible menu sections and is compatible with turbo-permanent.
-    #
-    # Branches on Plutonium.configuration.shell:
-    #   :classic → labelled collapsible list
-    #   :modern  → icon-only items with flyout for parents and inline children when pinned
     class SidebarMenu < Phlexi::Menu::Component
       include Plutonium::UI::Component::Behaviour
 
@@ -49,15 +45,6 @@ module Plutonium
             # Due to how we use turbo frames, we can't set active states
             active: nil
           })
-        end
-      end
-
-      # Entry point — branches on shell config before delegating to Phlexi parent
-      def view_template
-        if Plutonium.configuration.shell == :modern
-          render_modern_items(@menu.items, 0)
-        else
-          super
         end
       end
 
@@ -135,92 +122,6 @@ module Plutonium
         end
       end
 
-      # -------------------------------------------------------------------------
-      # Modern (icon rail) rendering — mirrors IconRail's item logic
-      # -------------------------------------------------------------------------
-
-      def render_modern_items(items, depth = 0)
-        return if items.nil? || items.empty? || depth >= @max_depth
-
-        items.each { |item| render_modern_item_link(item, depth) }
-      end
-
-      def render_modern_item_link(item, depth)
-        if item.items.any?
-          render_modern_parent_item(item, depth)
-        else
-          render_modern_leaf_item(item, depth)
-        end
-      end
-
-      def render_modern_leaf_item(item, depth)
-        a(
-          href: item.url,
-          title: item.label,
-          aria: {label: item.label},
-          class: "icon-rail-leaf #{modern_leaf_classes(item, depth)}"
-        ) do
-          render_modern_item_icon(item)
-          span(class: "icon-rail-label") { item.label }
-        end
-      end
-
-      def render_modern_parent_item(item, depth)
-        div(class: "icon-rail-parent relative w-full flex flex-col items-center") do
-          a(
-            href: item.url || "#",
-            title: item.label,
-            aria: {label: item.label},
-            class: "icon-rail-parent-trigger #{modern_parent_trigger_classes(item, depth)}"
-          ) do
-            render_modern_item_icon(item)
-            span(class: "icon-rail-label") { item.label }
-          end
-
-          div(class: "icon-rail-flyout") do
-            div(class: "icon-rail-flyout-inner") do
-              div(class: "icon-rail-flyout-label") { item.label }
-              item.items.each do |child|
-                a(href: child.url, class: "icon-rail-flyout-item") { child.label }
-              end
-            end
-          end
-        end
-      end
-
-      def render_modern_item_icon(item)
-        if item.icon
-          render item.icon.new(class: "w-5 h-5 shrink-0")
-        else
-          span(class: "text-xs font-semibold leading-none shrink-0") { modern_abbreviate(item.label) }
-        end
-      end
-
-      def modern_leaf_classes(item, depth = 0)
-        base = "flex items-center justify-center w-10 h-10 rounded-md transition-colors"
-        if modern_active?(item)
-          "#{base} bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
-        else
-          "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
-        end
-      end
-
-      def modern_parent_trigger_classes(item = nil, depth = 0)
-        base = "flex items-center justify-center w-10 h-10 rounded-md transition-colors"
-        if item && modern_active?(item)
-          "#{base} bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-300"
-        else
-          "#{base} text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
-        end
-      end
-
-      def modern_abbreviate(label)
-        label.to_s.gsub(/[^a-zA-Z]/, "").first(2).capitalize
-      end
-
-      def modern_active?(item)
-        item.active?(self)
-      end
     end
   end
 end

@@ -36,33 +36,9 @@ module Plutonium
         #   @yield The block containing each action's content
         slot :action, collection: true
 
-        # Renders the header component with all its configured elements.
-        # Branches on Plutonium.configuration.shell:
-        #   :classic → full Header with hamburger, brand, and actions
-        #   :modern  → delegates to Topbar, passing slots through
+        # Renders the classic full-width header.
         # @return [void]
         def view_template
-          if Plutonium.configuration.shell == :modern
-            render_modern
-          else
-            render_classic
-          end
-        end
-
-        private
-
-        # Renders via Topbar for the modern shell
-        # @private
-        def render_modern
-          render Plutonium::UI::Layout::Topbar.new do |bar|
-            bar.with_brand { render brand_logo_slot } if brand_logo_slot?
-            action_slots.each { |action| bar.with_action { render action } } if action_slots?
-          end
-        end
-
-        # Renders the classic full-width header
-        # @private
-        def render_classic
           nav(
             class: "bg-[var(--pu-surface)] border-b border-[var(--pu-border)] px-4 py-2.5 fixed left-0 right-0 top-0 z-50",
             data: {
@@ -76,6 +52,8 @@ module Plutonium
             end
           end
         end
+
+        private
 
         # Renders the color mode toggle controls
         # @private

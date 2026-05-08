@@ -544,21 +544,19 @@ body.pu-rail-pinned .icon-rail-pin-expand {
   }
 }
 
-/* Flyout: hidden by default; shown on parent hover (in BOTH collapsed and pinned modes) */
+/* Flyout: visibility controlled by Stimulus (data-flyout-open) via position:fixed */
 .icon-rail-parent {
   position: relative;
 }
 
 .icon-rail-flyout {
-  position: absolute;
-  left: calc(100% + 4px);
-  top: 0;
   display: none;
   z-index: 50;
   min-width: 180px;
+  /* position is set inline by the Stimulus controller */
 }
 
-.icon-rail-parent:hover .icon-rail-flyout {
+.icon-rail-parent[data-flyout-open="true"] .icon-rail-flyout {
   display: block;
 }
 

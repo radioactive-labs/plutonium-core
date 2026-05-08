@@ -1,9 +1,15 @@
-<%= render Plutonium::UI::Layout::Header.new do |header| %>
-  <% header.with_brand_logo do %>
-    <%= resource_logo_tag(classname: "h-10 rounded-md") %>
+<%= render Plutonium::UI::Layout::Topbar.new do |bar| %>
+  <% if respond_to?(:resource_logo_tag) %>
+    <% bar.with_brand do %>
+      <%= resource_logo_tag(classname: "h-8 w-8 rounded-md") %>
+    <% end %>
   <% end %>
 
-  <% header.with_action do %>
+  <% bar.with_action do %>
+    <%= render Plutonium::UI::ColorModeSelector.new %>
+  <% end %>
+
+  <% bar.with_action do %>
     <%=
       render Plutonium::UI::NavUser.new(
         name: nil,

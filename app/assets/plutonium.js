@@ -28050,6 +28050,63 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/icon_rail_flyout_controller.js
+  var icon_rail_flyout_controller_default = class extends Controller {
+    static targets = ["trigger", "panel"];
+    static values = {
+      closeDelay: { type: Number, default: 150 }
+    };
+    connect() {
+      this._closeTimer = null;
+      this._open = false;
+    }
+    open() {
+      if (this._closeTimer) {
+        clearTimeout(this._closeTimer);
+        this._closeTimer = null;
+      }
+      if (this._open)
+        return;
+      this._open = true;
+      this.element.dataset.flyoutOpen = "true";
+      this._position();
+    }
+    scheduleClose() {
+      if (this._closeTimer)
+        clearTimeout(this._closeTimer);
+      this._closeTimer = setTimeout(() => this.close(), this.closeDelayValue);
+    }
+    close() {
+      this._open = false;
+      delete this.element.dataset.flyoutOpen;
+    }
+    toggle(event) {
+      event.preventDefault();
+      this._open ? this.close() : this.open();
+    }
+    closeOnEsc(event) {
+      if (event.key === "Escape")
+        this.close();
+    }
+    _position() {
+      if (!this.hasPanelTarget || !this.hasTriggerTarget)
+        return;
+      const triggerRect = this.triggerTarget.getBoundingClientRect();
+      const panel = this.panelTarget;
+      panel.style.position = "fixed";
+      panel.style.left = `${triggerRect.right + 4}px`;
+      panel.style.top = `${triggerRect.top}px`;
+      requestAnimationFrame(() => {
+        const panelRect = panel.getBoundingClientRect();
+        const viewportH = window.innerHeight;
+        if (panelRect.bottom > viewportH - 8) {
+          const overflow = panelRect.bottom - (viewportH - 8);
+          panel.style.top = `${parseFloat(panel.style.top) - overflow}px`;
+        }
+      });
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28078,6 +28135,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("textarea-autogrow", textarea_autogrow_controller_default);
     application2.register("clipboard", clipboard_controller_default);
     application2.register("icon-rail", icon_rail_controller_default);
+    application2.register("icon-rail-flyout", icon_rail_flyout_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
