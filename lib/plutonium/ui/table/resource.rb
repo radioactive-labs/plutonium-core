@@ -13,8 +13,12 @@ module Plutonium
         end
 
         def view_template
-          render_search_bar
-          render_scopes_bar
+          if Plutonium.configuration.shell == :modern
+            render_modern_toolbar
+          else
+            render_search_bar
+            render_scopes_bar
+          end
 
           collection.empty? ? render_empty_card : render_table
 
@@ -22,6 +26,18 @@ module Plutonium
         end
 
         private
+
+        def render_modern_toolbar
+          TableToolbar(
+            query: current_query_object,
+            search_url: current_search_url,
+            search_value: params.dig(:q, :search) || params[:search]
+          )
+        end
+
+        def current_search_url
+          request.path
+        end
 
         def render_search_bar
           TableSearchBar()

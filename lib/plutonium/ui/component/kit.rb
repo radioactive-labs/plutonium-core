@@ -86,6 +86,10 @@ module Plutonium
 
         def BuildBulkActionsToolbar(...) = Plutonium::UI::Table::Components::BulkActionsToolbar.new(...)
 
+        def BuildTableToolbar(...) = Plutonium::UI::Table::Components::Toolbar.new(...)
+
+        def BuildTableViewSwitcher(...) = Plutonium::UI::Table::Components::ViewSwitcher.new(...)
+
         def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)
       end
     end
