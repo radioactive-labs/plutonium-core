@@ -16,7 +16,7 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to, :modal
 
       # Initialize a new action.
       #
@@ -57,6 +57,8 @@ module Plutonium
         @resource_action = options[:resource_action] || false
         @category = ActiveSupport::StringInquirer.new((options[:category] || :secondary).to_s)
         @position = options[:position] || 50
+        @modal = options[:modal] || :centered
+        validate_modal!
 
         freeze
       end
@@ -86,6 +88,11 @@ module Plutonium
       end
 
       private
+
+      def validate_modal!
+        return if [:centered, :slideover].include?(@modal)
+        raise ArgumentError, "modal must be :centered or :slideover, got #{@modal.inspect}"
+      end
 
       # Build RouteOptions from the provided options
       #

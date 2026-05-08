@@ -95,6 +95,10 @@ module Plutonium
         def BuildTableViewSwitcher(...) = Plutonium::UI::Table::Components::ViewSwitcher.new(...)
 
         def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)
+
+        def BuildModalCentered(...) = Plutonium::UI::Modal::Centered.new(...)
+
+        def BuildModalSlideover(...) = Plutonium::UI::Modal::Slideover.new(...)
       end
     end
   end
