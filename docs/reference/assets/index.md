@@ -41,6 +41,8 @@ Plutonium.configure do |config|
 end
 ```
 
+> **PLUTONIUM_DEV interaction:** Setting `config.assets.stylesheet` or `config.assets.script` opts out of the dev-mode asset URL override that `PLUTONIUM_DEV=1` applies. Your bundled `application.css` / `application.js` ships in all modes; the gem's source is still hot-reloaded through your build pipeline because `application.tailwind.css` already imports `gem:plutonium/src/css/plutonium.css`.
+
 ## TailwindCSS Configuration
 
 ### Generated Config

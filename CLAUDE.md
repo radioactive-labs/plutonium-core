@@ -67,7 +67,7 @@ export PLUTONIUM_DEV=1
 ```
 
 This enables development mode which:
-- Uses local assets instead of packaged ones
+- Uses local assets from `src/build/` instead of packaged ones — but only for assets the consumer has not customized via `config.assets.stylesheet` / `.script`. Once you run `pu:core:assets` (or set those values yourself), your bundled `application.css` / `application.js` ships in all modes.
 - Enables hot reloading of components
 - Shows more detailed error messages
 
