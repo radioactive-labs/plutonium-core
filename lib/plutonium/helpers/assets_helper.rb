@@ -67,11 +67,20 @@ module Plutonium
 
       # Generate the appropriate asset URL based on the environment
       #
+      # In development mode, framework assets are normally served from the
+      # /build mount so source edits in the gem hot-reload. That override is
+      # skipped when the consumer has customized the asset config — otherwise
+      # the consumer's bundled application stylesheet/script (which already
+      # imports plutonium at source) would be replaced by the raw framework
+      # asset, dropping all of their tokens, theme, and JS controllers.
+      #
       # @param type [Symbol] asset type (:css or :js)
       # @param fallback [String] fallback asset path
       # @return [String] asset URL
       def resource_asset_url_for(type, fallback)
-        if Plutonium.configuration.development?
+        attr = (type == :css) ? :stylesheet : :script
+        if Plutonium.configuration.development? &&
+            !Plutonium.configuration.assets.customized?(attr)
           resource_development_asset_url(type)
         else
           fallback
