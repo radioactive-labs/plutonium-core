@@ -63,6 +63,18 @@ module Plutonium
             end
           end
 
+          # AcceptsChoices.normalize_simple_input rejects any submitted
+          # value that doesn't string-match an option's value. With SGIDs
+          # the URL value (signed/timestamped at submit time) never
+          # string-equals a freshly generated option SGID for the same
+          # record, so the value gets silently dropped — no WHERE clause
+          # is built and the filter behaves as if it weren't applied.
+          # Match by decoded model id so the input survives.
+          def normalize_simple_input(input_value)
+            return nil if input_value.blank?
+            choices.values.find { |opt| same_record?(input_value, opt) } && input_value
+          end
+
           def same_record?(a, b)
             return false if a.blank? || b.blank?
             (decode_id(a) || a.to_s) == (decode_id(b) || b.to_s)
