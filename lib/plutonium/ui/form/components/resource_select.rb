@@ -7,6 +7,8 @@ module Plutonium
         # Select for choosing a resource record
         class ResourceSelect < Phlexi::Form::Components::Select
           include Plutonium::UI::Component::Methods
+          include Plutonium::UI::Form::Components::Searchable
+          typeahead_input_name :resource_select
 
           # Cap on the number of records the dropdown materialises. Keeps
           # very large association tables from rendering thousands of
@@ -119,6 +121,86 @@ module Plutonium
           # Use include_blank string as blank option text (Phlexi default uses placeholder)
           def blank_option_text
             @include_blank.is_a?(String) ? @include_blank : super
+          end
+
+          # ---- Searchable hooks ----------------------------------------
+
+          def apply_typeahead_options(options)
+            @raw_choices = options[:choices]
+            @association_class = options[:association_class]
+            @skip_authorization = options[:skip_authorization]
+            @choice_limit = options.fetch(:choice_limit, DEFAULT_CHOICE_LIMIT)
+            @typeahead_search_columns = options[:typeahead_search_columns]
+          end
+
+          def collect_typeahead_candidates(query, controller:)
+            if @raw_choices
+              filter_static_choices(@raw_choices, query)
+            elsif @association_class
+              filter_association(query, controller: controller)
+            else
+              []
+            end
+          end
+
+          def serialize_typeahead_row(row)
+            if row.is_a?(Array)
+              # raw_choices format: [[label, value], ...]
+              {value: row[1].to_s, label: row[0].to_s}
+            else
+              {value: row.to_signed_global_id.to_s, label: row.to_label}
+            end
+          end
+
+          def filter_static_choices(choices, query)
+            return choices if query.blank?
+            q = query.downcase
+            choices.select { |label, _| label.to_s.downcase.include?(q) }
+          end
+
+          # Routes through the associated resource's policy scope so typeahead
+          # can never surface records the current user can't read. Then applies
+          # the associated definition's search block when present, else a LIKE
+          # over a single label column.
+          def filter_association(query, controller:)
+            relation = if @skip_authorization
+              @association_class.all
+            else
+              controller.send(:authorized_resource_scope, @association_class)
+            end
+            relation = apply_association_search(relation, query) if query.present?
+            relation.limit(@choice_limit + 1).to_a
+          end
+
+          def apply_association_search(relation, query)
+            search_block = associated_definition_search_block(relation.klass)
+            return search_block.call(relation, query) if search_block
+
+            column = label_column_for(relation.klass)
+            return relation unless column
+
+            relation.where(
+              "#{relation.klass.connection.quote_column_name(column)} LIKE ?",
+              "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
+            )
+          end
+
+          def associated_definition_search_block(klass)
+            registry = Plutonium::Resource::Register
+            return nil unless registry.respond_to?(:definition_for)
+            defn_class = registry.definition_for(klass)
+            defn_class&._search_definition if defn_class.respond_to?(:_search_definition)
+          rescue StandardError
+            nil
+          end
+
+          # Picks the first column ResourceRecord#to_label would inspect (name,
+          # title) that exists on the model. Returns nil → caller skips
+          # filtering and returns the unfiltered relation.
+          def label_column_for(klass)
+            cols = (@typeahead_search_columns || %i[name title]).map(&:to_s)
+            available = klass.column_names
+            cols.find { |c| available.include?(c) }
           end
         end
       end
