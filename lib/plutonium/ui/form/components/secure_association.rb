@@ -129,15 +129,31 @@ module Plutonium
           end
 
           # Default-on typeahead for association inputs. Set
-          # `typeahead: false` to opt out (keeps slim-select's
-          # client-side filter over the eager list). The URL is
-          # always /<resource>/typeahead/input/:name — derived from
-          # the current resource controller and the field name.
+          # `typeahead: false` to opt out.
+          #
+          # Auto opt-out: if the associated resource's definition has no
+          # `search` block, we fall back to slim-select's eager list +
+          # client-side filter — the backend would just return unfiltered
+          # records and the typeahead UX would be a regression.
           def configure_typeahead_attributes!(typeahead_option)
             return if typeahead_option == false
+            return unless typeahead_searchable?
             url = typeahead_url_for(typeahead_option)
             return unless url
             attributes[:data_slim_select_typeahead_url_value] = url
+          end
+
+          def typeahead_searchable?
+            klass = association_reflection&.klass
+            return false unless klass
+
+            registry = Plutonium::Resource::Register
+            return false unless registry.respond_to?(:definition_for)
+            defn_class = registry.definition_for(klass)
+            return false unless defn_class.respond_to?(:_search_definition)
+            defn_class._search_definition.present?
+          rescue
+            false
           end
 
           def typeahead_url_for(typeahead_option)

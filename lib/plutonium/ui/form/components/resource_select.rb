@@ -138,13 +138,30 @@ module Plutonium
           # controller delegates to the backend via events.search.
           # Default-on (opt out with `typeahead: false`). Pass a Hash to
           # override kind/name (e.g. `typeahead: {kind: :filter, name: :status}`).
-          # Silently no-ops when the URL can't be resolved (e.g. rendered
-          # outside a resource controller).
+          #
+          # Auto opt-out: if the associated resource's definition has no
+          # `search` block, we fall back to slim-select's eager list +
+          # client-side filter — the backend would just return unfiltered
+          # records and the typeahead UX would be a regression.
           def configure_typeahead_attributes!(typeahead_option)
             return if typeahead_option == false
+            return unless typeahead_searchable?
             url = typeahead_url_for(typeahead_option)
             return unless url
             attributes[:data_slim_select_typeahead_url_value] = url
+          end
+
+          def typeahead_searchable?
+            klass = @association_class
+            return false unless klass
+
+            registry = Plutonium::Resource::Register
+            return false unless registry.respond_to?(:definition_for)
+            defn_class = registry.definition_for(klass)
+            return false unless defn_class.respond_to?(:_search_definition)
+            defn_class._search_definition.present?
+          rescue
+            false
           end
 
           def typeahead_url_for(typeahead_option)
