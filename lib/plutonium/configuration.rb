@@ -88,24 +88,43 @@ module Plutonium
 
     # Asset configuration for Plutonium
     class AssetConfiguration
+      DEFAULTS = {
+        logo: "plutonium.png",
+        favicon: "plutonium.ico",
+        stylesheet: "plutonium.css",
+        script: "plutonium.min.js"
+      }.freeze
+
       # @return [String] path to logo file
-      attr_accessor :logo
-
       # @return [String] path to favicon file
-      attr_accessor :favicon
-
       # @return [String] path to stylesheet file
-      attr_accessor :stylesheet
-
       # @return [String] path to JavaScript file
-      attr_accessor :script
 
-      # Initialize a new AssetConfiguration instance with default values
       def initialize
-        @logo = "plutonium.png"
-        @favicon = "plutonium.ico"
-        @stylesheet = "plutonium.css"
-        @script = "plutonium.min.js"
+        @customized = {}
+        DEFAULTS.each { |key, value| instance_variable_set(:"@#{key}", value) }
+      end
+
+      DEFAULTS.each_key do |attr|
+        attr_reader attr
+
+        define_method(:"#{attr}=") do |value|
+          @customized[attr] = true
+          instance_variable_set(:"@#{attr}", value)
+        end
+      end
+
+      # Whether the given asset attribute was set explicitly by user code.
+      #
+      # An asset is considered customized once any value is assigned to it,
+      # even if that value happens to equal the default. The dev-mode asset
+      # URL override (see Plutonium::Helpers::AssetsHelper#resource_asset_url_for)
+      # only applies to attributes that have NOT been customized.
+      #
+      # @param attr [Symbol] one of :logo, :favicon, :stylesheet, :script
+      # @return [Boolean]
+      def customized?(attr)
+        @customized.fetch(attr, false)
       end
     end
   end
