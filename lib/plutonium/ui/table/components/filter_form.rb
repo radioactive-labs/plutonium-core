@@ -96,6 +96,11 @@ module Plutonium
               if search_value.present?
                 input(name: "#{search_param}[search]", value: search_value, type: :hidden, hidden: true)
               end
+              # Preserve the current view selection across filter applies
+              # and clears so the user stays where they were.
+              if helpers.params[:view].present?
+                input(name: "view", value: helpers.params[:view], type: :hidden, hidden: true)
+              end
               render_sort_fields
               render_scope_fields
             end

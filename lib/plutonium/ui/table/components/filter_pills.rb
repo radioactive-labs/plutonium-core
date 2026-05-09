@@ -18,7 +18,10 @@ module Plutonium
               data: {bulk_actions_target: "filterPills"}
             ) do
               @query.active_filter_descriptions.each { |f| render_pill(f) }
-              render_add_filter_pill if @query.active_filter_descriptions.any?
+              if @query.active_filter_descriptions.any?
+                render_add_filter_pill
+                render_clear_all_pill
+              end
               render_result_count if @total_count
             end
           end
@@ -43,6 +46,31 @@ module Plutonium
               render Phlex::TablerIcons::Plus.new(class: "w-3 h-3")
               plain "Filter"
             end
+          end
+
+          def render_clear_all_pill
+            a(href: clear_all_url,
+              class: "inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] underline-offset-2 hover:underline") do
+              plain "Clear all"
+            end
+          end
+
+          # Strip every active filter param while preserving search, scope,
+          # sort, view, and pagination state.
+          def clear_all_url
+            keep = request.query_parameters.dup
+            q = keep[:q] || keep["q"]
+            if q.is_a?(Hash) || q.is_a?(ActionController::Parameters)
+              filter_keys = @query.filter_definitions.keys.map(&:to_s)
+              cleaned = q.to_h.reject { |k, _| filter_keys.include?(k.to_s) }
+              if cleaned.empty?
+                keep.delete(:q)
+                keep.delete("q")
+              else
+                keep["q"] = cleaned
+              end
+            end
+            "#{request.path}?#{keep.to_query}"
           end
 
           def render_result_count
