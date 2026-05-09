@@ -76,12 +76,15 @@ module Plutonium
 
         def render_table
           render Plutonium::UI::Table::Base.new(collection) do |table|
-            # Selection column for bulk actions (hidden by default, Stimulus shows it)
-            # Use :_selection as column key to avoid conflicts with field columns
-            # value_key defaults to model's primary_key
-            table.selection_column :_selection,
-              bulk_actions:,
-              policy_resolver: ->(record) { policy_for(record:) }
+            # Selection column only renders when bulk actions exist —
+            # the server already knows, so no JS toggle is needed.
+            # Use :_selection as column key to avoid conflicts with field columns;
+            # value_key defaults to model's primary_key.
+            if bulk_actions.any?
+              table.selection_column :_selection,
+                bulk_actions:,
+                policy_resolver: ->(record) { policy_for(record:) }
+            end
 
             @resource_fields.each do |name|
               field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
@@ -209,10 +212,7 @@ module Plutonium
         end
 
         def bulk_actions_controller_data
-          {
-            controller: "bulk-actions",
-            bulk_actions_has_actions_value: bulk_actions.any?
-          }
+          {controller: "bulk-actions"}
         end
 
         def render_footer

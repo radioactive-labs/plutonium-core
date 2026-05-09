@@ -97,10 +97,7 @@ module Plutonium
         end
 
         def bulk_actions_controller_data
-          {
-            controller: "bulk-actions",
-            bulk_actions_has_actions_value: bulk_actions.any?
-          }
+          {controller: "bulk-actions"}
         end
 
         def filter_panel_controller_data

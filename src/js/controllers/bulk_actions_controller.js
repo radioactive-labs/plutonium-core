@@ -3,22 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="bulk-actions"
 // Manages bulk action selection in resource tables
 export default class extends Controller {
-  static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"]
-  static values = {
-    hasActions: { type: Boolean, default: false }
-  }
-
-  connect() {
-    // Show selection column only if bulk actions exist
-    if (this.hasActionsValue) {
-      this.enableSelection()
-    }
-  }
-
-  enableSelection() {
-    // Show all selection cells (header + body cells)
-    this.selectionCellTargets.forEach(el => el.classList.remove("hidden"))
-  }
+  static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "filterPills"]
 
   toggle() {
     this.updateUI()

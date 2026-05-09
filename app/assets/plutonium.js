@@ -27904,18 +27904,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/bulk_actions_controller.js
   var bulk_actions_controller_default = class extends Controller {
-    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"];
-    static values = {
-      hasActions: { type: Boolean, default: false }
-    };
-    connect() {
-      if (this.hasActionsValue) {
-        this.enableSelection();
-      }
-    }
-    enableSelection() {
-      this.selectionCellTargets.forEach((el) => el.classList.remove("hidden"));
-    }
+    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "filterPills"];
     toggle() {
       this.updateUI();
     }

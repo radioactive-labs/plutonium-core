@@ -15,21 +15,12 @@ module Plutonium
             SelectionDataCell.new(wrapped_object.field(value_key).dom.value, allowed_actions)
           end
 
-          # Add hidden class and Stimulus target to header cell
           def header_cell_attributes
-            {
-              class: "hidden w-12",
-              data: {bulk_actions_target: "selectionCell"}
-            }
+            {class: "w-12"}
           end
 
-          # Add hidden class and Stimulus target to data cell
           def data_cell_attributes(wrapped_object)
-            {
-              scope: :row,
-              class: "hidden",
-              data: {bulk_actions_target: "selectionCell"}
-            }
+            {scope: :row}
           end
 
           private
