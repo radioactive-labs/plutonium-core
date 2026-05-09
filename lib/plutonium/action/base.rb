@@ -87,6 +87,37 @@ module Plutonium
         policy.allowed_to?(:"#{name}?")
       end
 
+      # Returns a new Action with the given options merged over this one.
+      # Used by the resource definition to derive variants (e.g. dropping
+      # `turbo_frame` when `modal false` is configured) without mutating
+      # the frozen original.
+      def with(**overrides)
+        self.class.new(name, **to_options.merge(overrides))
+      end
+
+      protected
+
+      def to_options
+        {
+          label: @label,
+          description: @description,
+          icon: @icon,
+          color: @color,
+          confirmation: @confirmation,
+          route_options: @route_options,
+          turbo: @turbo,
+          turbo_frame: @turbo_frame,
+          return_to: @return_to,
+          bulk_action: @bulk_action,
+          collection_record_action: @collection_record_action,
+          record_action: @record_action,
+          resource_action: @resource_action,
+          category: @category.to_sym,
+          position: @position,
+          modal: @modal
+        }
+      end
+
       private
 
       def validate_modal!
