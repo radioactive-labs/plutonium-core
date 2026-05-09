@@ -152,6 +152,8 @@ module Plutonium
             end
           end
 
+          private
+
           def filter_static_choices(choices, query)
             return choices if query.blank?
             q = query.downcase
