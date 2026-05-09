@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# standard:disable Lint/UnreachableCode
 return
 
 require "test_helper"
@@ -430,3 +431,4 @@ class TypespecGeneratorUnitTest < ActiveSupport::TestCase
     assert_equal "string", result
   end
 end
+# standard:enable Lint/UnreachableCode
