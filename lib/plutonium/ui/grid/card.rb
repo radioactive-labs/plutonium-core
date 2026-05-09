@@ -45,7 +45,7 @@ module Plutonium
               render_subheader_slot if slots[:subheader]
               render_body_slot if slots[:body]
               render_meta_slot if slots[:meta]
-              render_footer_slot if slots[:footer]
+              render_footer_slot if footer_field
             end
           end
         end
@@ -57,8 +57,15 @@ module Plutonium
             render_subheader_slot if slots[:subheader]
             render_body_slot if slots[:body]
             render_meta_slot if slots[:meta]
-            render_footer_slot if slots[:footer]
+            render_footer_slot if footer_field
           end
+        end
+
+        # Footer falls back to `:created_at` when the slot is unset and
+        # the record has a created_at column. Gives cards a sensible
+        # second line without forcing every grid_fields call to repeat it.
+        def footer_field
+          slots[:footer] || (record.respond_to?(:created_at) ? :created_at : nil)
         end
 
         # ---------------------------------------------------------------
@@ -93,35 +100,42 @@ module Plutonium
         def render_subheader_slot
           value = field_value(slots[:subheader])
           return if value.blank?
-          p(class: "text-xs text-[var(--pu-text-muted)] truncate") { plain value.to_s }
+          p(class: "text-xs text-[var(--pu-text-muted)] truncate") { plain helpers.display_name_of(value) }
         end
 
         def render_body_slot
           value = field_value(slots[:body])
           return if value.blank?
-          p(class: "text-sm text-[var(--pu-text)] line-clamp-3") { plain value.to_s }
+          p(class: "text-sm text-[var(--pu-text)] line-clamp-3") { plain helpers.display_name_of(value) }
         end
 
         def render_meta_slot
           fields = Array(slots[:meta])
-          values = fields.map { |f| [f, field_value(f)] }.reject { |_, v| v.blank? }
+          values = fields.map { |f| field_value(f) }.reject(&:blank?)
           return if values.empty?
 
           div(class: "flex flex-wrap items-center gap-1.5 mt-1") do
-            values.each do |_, v|
+            values.each do |v|
               span(class: "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium " \
                           "bg-[var(--pu-surface-alt)] text-[var(--pu-text-muted)]") do
-                plain v.to_s
+                plain helpers.display_name_of(v)
               end
             end
           end
         end
 
         def render_footer_slot
-          value = field_value(slots[:footer])
+          value = field_value(footer_field)
           return if value.blank?
-          formatted = value.respond_to?(:strftime) ? helpers.l(value, format: :short) : value.to_s
-          p(class: "text-xs text-[var(--pu-text-subtle)] mt-1") { plain formatted }
+          p(class: "text-xs text-[var(--pu-text-subtle)] mt-1") do
+            if value.respond_to?(:strftime)
+              # display_datetime_value returns HTML-safe <time> markup
+              # rendered by the timeago Stimulus controller.
+              raw safe(helpers.display_datetime_value(value))
+            else
+              plain helpers.display_name_of(value)
+            end
+          end
         end
 
         # ---------------------------------------------------------------
@@ -160,25 +174,18 @@ module Plutonium
         # ---------------------------------------------------------------
 
         def header_text
-          @header_text ||= begin
-            v = slots[:header] ? field_value(slots[:header]) : nil
-            v.presence || (record.respond_to?(:to_label) ? record.to_label : record.to_s)
-          end
+          @header_text ||= helpers.display_name_of(field_value(slots[:header]) || record)
         end
 
         def field_value(name)
           return nil unless name
-          return nil unless record.respond_to?(name)
-          value = record.public_send(name)
-          # Associations (and any AR-like object) inspect-format poorly;
-          # prefer their human label.
-          if value.respond_to?(:to_label)
-            value.to_label
-          elsif value.is_a?(ActiveRecord::Base)
-            value.to_s
-          else
-            value
+          unless record.respond_to?(name)
+            raise ArgumentError,
+              "grid_fields slot points at `:#{name}` but " \
+              "#{record.class.name} doesn't respond to it. " \
+              "Define the method on the model or remove the slot."
           end
+          record.public_send(name)
         end
 
         # Resolves a slot value to an image URL. Supports:
@@ -194,7 +201,7 @@ module Plutonium
           elsif value.is_a?(String) && value.start_with?("http", "/")
             value
           end
-        rescue
+        rescue StandardError
           nil
         end
 

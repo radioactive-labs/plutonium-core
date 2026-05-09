@@ -62,7 +62,11 @@ module Plutonium
             q = keep[:q] || keep["q"]
             if q.is_a?(Hash) || q.is_a?(ActionController::Parameters)
               filter_keys = @query.filter_definitions.keys.map(&:to_s)
-              cleaned = q.to_h.reject { |k, _| filter_keys.include?(k.to_s) }
+              # to_unsafe_h on Parameters; to_h on Hash both yield a
+              # plain Hash. Using to_h on Parameters would raise
+              # UnfilteredParameters in newer Rails versions.
+              raw = q.respond_to?(:to_unsafe_h) ? q.to_unsafe_h : q.to_h
+              cleaned = raw.reject { |k, _| filter_keys.include?(k.to_s) }
               if cleaned.empty?
                 keep.delete(:q)
                 keep.delete("q")

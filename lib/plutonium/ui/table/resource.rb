@@ -46,7 +46,7 @@ module Plutonium
             search_value: params.dig(:q, :search) || params[:search],
             views: resource_definition.defined_views,
             current_view: :table,
-            view_cookie_name: "pu_view:#{resource_class.name}"
+            view_cookie_name: Plutonium::UI::Page::Index.view_cookie_name(resource_class)
           )
         end
 
@@ -215,7 +215,7 @@ module Plutonium
         end
 
         def render_footer
-          div(class: "lg:sticky lg:dyna:static bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-[var(--pu-body)]") {
+          div(class: "lg:sticky bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-[var(--pu-body)]") {
             TableInfo(pagy_instance)
             TablePagination(pagy_instance)
           }

@@ -97,6 +97,11 @@ module Plutonium
 
       protected
 
+      # Canonical representation for reconstruction via `with`. Every
+      # attribute set in `initialize` MUST appear here; otherwise
+      # `with(**overrides)` would silently drop it on round-trip.
+      # `category` is exposed as a Symbol since `initialize` re-wraps
+      # it in StringInquirer.
       def to_options
         {
           label: @label,

@@ -18,9 +18,11 @@ module Plutonium
       end
 
       # Re-derives the default :new / :edit actions so their turbo_frame
-      # matches the current `modal_mode`. Called when `.modal` is set;
-      # also runs on inherit so subclasses pick up changes their parent
-      # made before child action declarations.
+      # matches the current `modal_mode`. Called when `.modal` is set
+      # and once at Resource::Definition load (so the default
+      # :slideover state propagates to the action records). Subclasses
+      # inherit those records via DefineableProps#inherited (deep_dup);
+      # calling `.modal` on a subclass re-runs this method locally.
       def self.configure_crud_modal_targets!
         target = (modal_mode == false) ? nil : "remote_modal"
         [:new, :edit].each do |name|

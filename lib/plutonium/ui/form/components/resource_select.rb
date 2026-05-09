@@ -75,13 +75,25 @@ module Plutonium
             choices.values.find { |opt| same_record?(input_value, opt) } && input_value
           end
 
+          # Two values point at the same record when both decode to the
+          # same SGID (class + id). For explicit non-SGID `@raw_choices`,
+          # both sides are plain strings and string-equality is the only
+          # sensible answer. Mixed-format (one SGID, one raw) returns
+          # false — no cross-format guessing.
           def same_record?(a, b)
             return false if a.blank? || b.blank?
-            (decode_id(a) || a.to_s) == (decode_id(b) || b.to_s)
+
+            a_pair = decode_class_and_id(a)
+            b_pair = decode_class_and_id(b)
+            return a_pair == b_pair if a_pair && b_pair
+            return false if a_pair || b_pair
+
+            a.to_s == b.to_s
           end
 
-          def decode_id(value)
-            SignedGlobalID.parse(value)&.model_id
+          def decode_class_and_id(value)
+            gid = SignedGlobalID.parse(value)
+            gid && [gid.model_class.name, gid.model_id]
           rescue
             nil
           end

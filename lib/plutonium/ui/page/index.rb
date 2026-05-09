@@ -18,6 +18,16 @@ module Plutonium
           super || current_definition.defined_actions.values.select { |a| a.resource_action? && a.permitted_by?(current_policy) }
         end
 
+        # Cookie name carrying a per-resource view preference. Single
+        # source of truth — Table::Resource, Grid::Resource, and the
+        # Stimulus view-switcher controller all read from here. Underscored
+        # token-only characters keep this RFC 6265-compliant (the `:` form
+        # this replaces is technically forbidden, even if browsers
+        # accept it in practice).
+        def self.view_cookie_name(resource_class)
+          "pu_view_#{resource_class.name.gsub("::", "_").underscore}"
+        end
+
         def render_default_content
           case selected_view
           when :grid then render partial("resource_grid")
@@ -37,18 +47,10 @@ module Plutonium
           requested = params[:view]&.to_sym
           return requested if requested && enabled.include?(requested)
 
-          stored = view_cookie_value&.to_sym
+          stored = helpers.cookies[self.class.view_cookie_name(resource_class)]&.to_sym
           return stored if stored && enabled.include?(stored)
 
           definition.default_view
-        end
-
-        def view_cookie_value
-          helpers.cookies[view_cookie_name]
-        end
-
-        def view_cookie_name
-          "pu_view:#{resource_class.name}"
         end
 
         def page_type = :index_page
