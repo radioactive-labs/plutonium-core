@@ -117,6 +117,12 @@ class Plutonium::UI::Table::Components::FilterPillsTest < Minitest::Test
 
   private
 
+  StubRequest = Struct.new(:query_parameters, :path) do
+    def initialize(params: {}, path: "/posts")
+      super(params, path)
+    end
+  end
+
   def build_component(params:, filters:, total_count:)
     query_object = Plutonium::Resource::QueryObject.new(MockResource, params, "/posts") do |qo|
       filters.each do |f|
@@ -129,6 +135,17 @@ class Plutonium::UI::Table::Components::FilterPillsTest < Minitest::Test
     component.instance_variable_set(:@query, query_object)
     component.instance_variable_set(:@total_count, total_count)
 
+    # Stub request so clear_all_url / pill clear_url helpers don't reach
+    # for the missing controller/view_context outside a render cycle.
+    stub_request = StubRequest.new(params: stringify(params), path: "/posts")
+    component.define_singleton_method(:request) { stub_request }
+
     component
+  end
+
+  def stringify(hash)
+    hash.each_with_object({}) do |(k, v), h|
+      h[k.to_s] = v.is_a?(Hash) ? stringify(v) : v
+    end
   end
 end

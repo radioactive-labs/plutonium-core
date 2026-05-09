@@ -278,13 +278,13 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     refute_includes html, "resource-collapse"
   end
 
-  test "parent item has no chevron span" do
+  test "parent item renders chevron span indicating a flyout" do
     child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
     parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
     menu = StubMenu.new([parent])
     html = render_html(build_component(menu: menu))
 
-    refute_includes html, "icon-rail-chevron"
+    assert_includes html, "icon-rail-chevron"
   end
 
   test "child link appears exactly once (only in flyout)" do

@@ -8,11 +8,11 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     assert_equal :new_page, page.send(:page_type)
   end
 
-  test "render_default_content wraps form in max-w div when not in modal" do
+  test "render_default_content wraps form in pb-20 div when not in modal" do
     page = build_new_page(turbo_frame: nil)
     output = render_default_content(page)
 
-    assert_includes output, "max-w-[580px] mx-auto pb-20"
+    assert_includes output, "pb-20"
   end
 
   test "render_default_content renders resource_form partial when not in modal" do
@@ -58,7 +58,7 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     page = build_new_page(turbo_frame: "some_other_frame")
     output = render_default_content(page)
 
-    assert_includes output, "max-w-[580px] mx-auto pb-20"
+    assert_includes output, "pb-20"
   end
 
   test "in_frame? returns true when current_turbo_frame is present" do

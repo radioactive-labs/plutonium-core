@@ -664,7 +664,10 @@ module Plutonium
           qo.define_filter(:status, ->(scope, query:) { scope.where(status: query) })
         end
 
-        assert_equal "query active", query_object.active_filter_descriptions.first[:value_label]
+        # Single-entry hash params now defer to the filter's humanize_value
+        # (Base#humanize_value returns the value as-is) so Association /
+        # Boolean filters can render labels instead of raw ids.
+        assert_equal "active", query_object.active_filter_descriptions.first[:value_label]
       end
 
       def test_active_filter_descriptions_correct_clear_url

@@ -212,8 +212,7 @@ module Plutonium
         end
 
         def can_show?
-          show = resource_definition.defined_actions[:show]
-          show && show.permitted_by?(record_policy)
+          resource_definition.defined_actions[:show]&.permitted_by?(record_policy)
         end
 
         def record_policy

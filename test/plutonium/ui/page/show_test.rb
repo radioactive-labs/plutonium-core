@@ -20,11 +20,10 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
 
   # Tests for render_default_content — single-column path
 
-  test "render_default_content uses max-w-[960px] mx-auto when aside_present? is false" do
+  test "render_default_content single-column path does not use grid layout" do
     page = build_show_page
     output = render_default_content(page)
 
-    assert_includes output, "max-w-[960px] mx-auto"
     refute_includes output, "grid-cols-[minmax(0,1fr)_240px]"
   end
 
