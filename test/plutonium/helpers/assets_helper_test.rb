@@ -37,10 +37,13 @@ class Plutonium::Helpers::AssetsHelperTest < Minitest::Test
   def test_dev_mode_with_default_stylesheet_uses_build_url
     Plutonium.configuration.development = true
 
+    @host.define_singleton_method(:resource_development_asset_url) { |*| "/build/fake-asset" }
     url = @host.send(:resource_asset_url_for, :css, "plutonium.css")
 
     assert_match %r{\A/build/}, url,
       "Expected dev override to substitute a /build/* URL when stylesheet is at default; got #{url.inspect}"
+  ensure
+    @host.singleton_class.send(:undef_method, :resource_development_asset_url)
   end
 
   def test_dev_mode_with_customized_stylesheet_returns_fallback
@@ -56,9 +59,12 @@ class Plutonium::Helpers::AssetsHelperTest < Minitest::Test
   def test_dev_mode_with_default_script_uses_build_url
     Plutonium.configuration.development = true
 
+    @host.define_singleton_method(:resource_development_asset_url) { |*| "/build/fake-asset" }
     url = @host.send(:resource_asset_url_for, :js, "plutonium.min.js")
 
     assert_match %r{\A/build/}, url
+  ensure
+    @host.singleton_class.send(:undef_method, :resource_development_asset_url)
   end
 
   def test_dev_mode_with_customized_script_returns_fallback
@@ -74,9 +80,12 @@ class Plutonium::Helpers::AssetsHelperTest < Minitest::Test
     Plutonium.configuration.development = true
     Plutonium.configuration.assets.stylesheet = "application"
 
+    @host.define_singleton_method(:resource_development_asset_url) { |*| "/build/fake-asset" }
     js_url = @host.send(:resource_asset_url_for, :js, "plutonium.min.js")
 
     assert_match %r{\A/build/}, js_url,
       "Customizing stylesheet only must not silence the dev override on script"
+  ensure
+    @host.singleton_class.send(:undef_method, :resource_development_asset_url)
   end
 end
