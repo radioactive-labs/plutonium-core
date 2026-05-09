@@ -60,7 +60,6 @@ class Plutonium::UI::Form::Components::SearchableTest < Minitest::Test
 
   def test_host_class_must_implement_apply_typeahead_options
     bare = Class.new { include Plutonium::UI::Form::Components::Searchable }
-    error = assert_raises(NotImplementedError) { bare.build_for_typeahead({}) }
-    assert_match(/apply_typeahead_options/, error.message)
+    assert_raises(NoMethodError) { bare.build_for_typeahead({}) }
   end
 end

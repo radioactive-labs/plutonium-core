@@ -31,10 +31,6 @@ module Plutonium
             # ivars #typeahead needs.
             def build_for_typeahead(options)
               instance = allocate
-              unless instance.respond_to?(:apply_typeahead_options, true)
-                raise NotImplementedError,
-                  "#{self} must define #apply_typeahead_options to be Searchable"
-              end
               instance.send(:apply_typeahead_options, options || {})
               instance
             end
