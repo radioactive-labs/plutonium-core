@@ -104,7 +104,13 @@ class Plutonium::UI::Form::Components::ResourceSelectTypeaheadTest < Minitest::T
     rel.define_singleton_method(:where) { |*| self }
     rel.define_singleton_method(:limit) { |*| self }
     rel.define_singleton_method(:to_a) { [] }
-    rel.define_singleton_method(:klass) { Class.new { def self.column_names; ["name"]; end } }
+    rel.define_singleton_method(:klass) {
+      Class.new {
+        def self.column_names
+          ["name"]
+        end
+      }
+    }
     rel
   end
 

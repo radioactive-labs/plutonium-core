@@ -8,6 +8,7 @@ module Plutonium
         class ResourceSelect < Phlexi::Form::Components::Select
           include Plutonium::UI::Component::Methods
           include Plutonium::UI::Form::Components::Searchable
+
           typeahead_input_name :resource_select
 
           # Cap on the number of records the dropdown materialises. Keeps
@@ -182,7 +183,7 @@ module Plutonium
             return nil unless helpers.respond_to?(helper)
 
             helpers.public_send(helper, name: name)
-          rescue StandardError
+          rescue
             nil
           end
 
@@ -234,7 +235,7 @@ module Plutonium
             return nil unless registry.respond_to?(:definition_for)
             defn_class = registry.definition_for(klass)
             defn_class&._search_definition if defn_class.respond_to?(:_search_definition)
-          rescue StandardError
+          rescue
             nil
           end
 

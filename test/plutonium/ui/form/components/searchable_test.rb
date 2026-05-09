@@ -6,6 +6,7 @@ require "plutonium/ui/form/components/searchable"
 class Plutonium::UI::Form::Components::SearchableTest < Minitest::Test
   class TestWidget
     include Plutonium::UI::Form::Components::Searchable
+
     typeahead_input_name :test_widget
 
     attr_reader :options

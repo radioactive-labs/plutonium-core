@@ -4,7 +4,6 @@ require "test_helper"
 require "ostruct"
 
 # Ensure ResourceSelect is loaded so it registers itself in Searchable.registry
-Plutonium::UI::Form::Components::ResourceSelect
 
 class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
   # Build a tiny class that includes only what `render_typeahead_response`
@@ -21,16 +20,17 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
       def self.skip_verify_current_authorized_scope(*) = nil
 
       include Plutonium::Resource::Controllers::Typeahead
+
       # Stub Rails plumbing.
       def render(opts) = (@rendered = opts)
       def head(status) = (@head_status = status)
       def params = @params ||= {}
       attr_writer :params
 
-      def current_definition = @current_definition
+      attr_reader :current_definition
       attr_writer :current_definition
 
-      def current_query_object = @current_query_object
+      attr_reader :current_query_object
       attr_writer :current_query_object
 
       # called from the Searchable widget via send(:authorized_resource_scope, ...)
