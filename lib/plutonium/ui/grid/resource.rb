@@ -73,7 +73,7 @@ module Plutonium
         def render_grid
           div(class: grid_class) do
             collection.each do |record|
-              render Plutonium::UI::Grid::Card.new(record, resource_definition:)
+              render Plutonium::UI::Grid::Card.new(record, resource_definition:, resource_fields:)
             end
           end
         end

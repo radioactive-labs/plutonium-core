@@ -10,12 +10,10 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     refute page.send(:aside_present?), "aside_present? should return false by default"
   end
 
-  # Tests for render_aside default
-
   test "render_aside is a no-op by default" do
     page = build_show_page
     result = page.send(:render_aside)
-    assert_nil result, "render_aside should return nil (no-op) by default"
+    assert_nil result
   end
 
   # Tests for render_default_content — single-column path

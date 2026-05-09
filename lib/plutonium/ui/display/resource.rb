@@ -13,6 +13,14 @@ module Plutonium
           @resource_definition = resource_definition
         end
 
+        # Metadata fields the user is permitted to see — intersection of
+        # the definition's declared metadata with the policy-filtered
+        # `resource_fields`. Computed lazily so we don't run the
+        # intersection when the resource doesn't declare any metadata.
+        def metadata_fields
+          @metadata_fields ||= resource_definition.defined_metadata_fields & resource_fields
+        end
+
         def display_template
           if associations_present?
             render_tablist_with_details
@@ -28,11 +36,37 @@ module Plutonium
         end
 
         def render_fields
+          if metadata_fields.any?
+            div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start") do
+              div { render_main_field_card }
+              aside { render_metadata_panel }
+            end
+          else
+            render_main_field_card
+          end
+        end
+
+        def render_main_field_card
           Block do
             fields_wrapper do
-              resource_fields.each do |name|
+              # Skip fields claimed by the metadata panel — rendering
+              # them in both places duplicates information.
+              (resource_fields - metadata_fields).each do |name|
                 render_resource_field name
               end
+            end
+          end
+        end
+
+        # Renders the declared metadata fields as a vertical stack beside
+        # the main field card. Reuses render_resource_field (same path
+        # the main details use) so labels/values match in style; the
+        # only difference from the main card is the wrapper — a single
+        # column of fields instead of the form's multi-column grid.
+        def render_metadata_panel
+          Block do
+            div(class: "pu-card-body flex flex-col gap-6") do
+              metadata_fields.each { |name| render_resource_field(name) }
             end
           end
         end

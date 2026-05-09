@@ -34,6 +34,7 @@ module Plutonium
       include Search
       include NestedInputs
       include Views
+      include Metadata
 
       class IndexPage < Plutonium::UI::Page::Index; end
 

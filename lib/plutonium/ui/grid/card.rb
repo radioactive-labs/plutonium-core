@@ -8,11 +8,12 @@ module Plutonium
       # `grid_fields` on the resource definition. Each slot is optional;
       # `header` falls back to `record.to_label` when undeclared.
       class Card < Plutonium::UI::Component::Base
-        attr_reader :record, :resource_definition
+        attr_reader :record, :resource_definition, :resource_fields
 
-        def initialize(record, resource_definition:)
+        def initialize(record, resource_definition:, resource_fields: nil)
           @record = record
           @resource_definition = resource_definition
+          @resource_fields = resource_fields
         end
 
         def view_template
@@ -179,6 +180,9 @@ module Plutonium
 
         def field_value(name)
           return nil unless name
+          # Skip fields the user's policy doesn't permit. nil collapses
+          # the slot in render_*_slot guards above.
+          return nil if resource_fields && !resource_fields.include?(name.to_sym)
           unless record.respond_to?(name)
             raise ArgumentError,
               "grid_fields slot points at `:#{name}` but " \
