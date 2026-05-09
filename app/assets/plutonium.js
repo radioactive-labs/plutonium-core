@@ -27662,7 +27662,18 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/bulk_actions_controller.js
   var bulk_actions_controller_default = class extends Controller {
-    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "filterPills"];
+    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"];
+    static values = {
+      hasActions: { type: Boolean, default: false }
+    };
+    connect() {
+      if (this.hasActionsValue) {
+        this.enableSelection();
+      }
+    }
+    enableSelection() {
+      this.selectionCellTargets.forEach((el) => el.classList.remove("hidden"));
+    }
     toggle() {
       this.updateUI();
     }
@@ -28102,6 +28113,88 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/resource_select_controller.js
+  var resource_select_controller_default = class extends Controller {
+    static values = {
+      url: String,
+      debounceMs: { type: Number, default: 250 },
+      minChars: { type: Number, default: 0 }
+    };
+    connect() {
+      this._timer = null;
+      this._abort = null;
+      this._lastQuery = null;
+      this._onInput = this._onInput.bind(this);
+      this.element.addEventListener("input", this._onInput);
+      this._fetch("");
+    }
+    disconnect() {
+      this.element.removeEventListener("input", this._onInput);
+      if (this._timer)
+        clearTimeout(this._timer);
+      if (this._abort)
+        this._abort.abort();
+    }
+    _onInput(event) {
+      const query = (event.target.value || "").toString();
+      if (query === this._lastQuery)
+        return;
+      if (query.length < this.minCharsValue)
+        return;
+      if (this._timer)
+        clearTimeout(this._timer);
+      this._timer = setTimeout(() => this._fetch(query), this.debounceMsValue);
+    }
+    async _fetch(query) {
+      if (!this.urlValue)
+        return;
+      if (this._abort)
+        this._abort.abort();
+      this._abort = new AbortController();
+      this._lastQuery = query;
+      const url = new URL(this.urlValue, window.location.origin);
+      url.searchParams.set("q", query);
+      try {
+        const res = await fetch(url.toString(), {
+          headers: { "Accept": "application/json" },
+          signal: this._abort.signal
+        });
+        if (!res.ok)
+          throw new Error(`typeahead fetch failed: ${res.status}`);
+        const json = await res.json();
+        this._populate(json.results || [], !!json.has_more);
+      } catch (e4) {
+        if (e4.name === "AbortError")
+          return;
+        console.warn("[resource-select] typeahead error", e4);
+      }
+    }
+    _populate(results, hasMore) {
+      const select = this.element.tagName === "SELECT" ? this.element : this.element.querySelector("select");
+      if (!select)
+        return;
+      const selectedValues = new Set(Array.from(select.selectedOptions).map((o4) => o4.value));
+      const selectedFragments = Array.from(select.selectedOptions).map((o4) => o4.cloneNode(true));
+      select.innerHTML = "";
+      selectedFragments.forEach((o4) => select.appendChild(o4));
+      for (const row of results) {
+        if (selectedValues.has(row.value))
+          continue;
+        const opt = document.createElement("option");
+        opt.value = row.value;
+        opt.textContent = row.label;
+        select.appendChild(opt);
+      }
+      if (hasMore) {
+        const hint = document.createElement("option");
+        hint.disabled = true;
+        hint.textContent = "More results \u2014 keep typing to refine";
+        select.appendChild(hint);
+      }
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28137,6 +28230,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("row-click", row_click_controller_default);
     application2.register("view-switcher", view_switcher_controller_default);
     application2.register("autosubmit", autosubmit_controller_default);
+    application2.register("resource-select", resource_select_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
