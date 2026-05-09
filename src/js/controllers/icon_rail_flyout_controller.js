@@ -95,7 +95,14 @@ export default class extends Controller {
     panel.style.left = ""
     panel.style.top = ""
     panel.style.display = ""
-    if (this._panelHome) this._panelHome.appendChild(panel)
+    // If the original parent has been morphed away, the panel would
+    // orphan in <body>. Drop it instead of re-attaching to a detached
+    // home node.
+    if (this._panelHome && document.contains(this._panelHome)) {
+      this._panelHome.appendChild(panel)
+    } else {
+      panel.remove()
+    }
     this._panel = null
     this._panelHome = null
   }

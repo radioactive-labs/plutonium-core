@@ -17,10 +17,11 @@ module Plutonium
             grid: {label: "Grid", icon: Phlex::TablerIcons::LayoutGrid}
           }.freeze
 
-          def initialize(views:, current:, cookie_name:)
+          def initialize(views:, current:, cookie_name:, cookie_path: "/")
             @views = views
             @current = current
             @cookie_name = cookie_name
+            @cookie_path = cookie_path
           end
 
           def render?
@@ -34,7 +35,8 @@ module Plutonium
               class: "inline-flex h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden",
               data: {
                 controller: "view-switcher",
-                view_switcher_cookie_name_value: @cookie_name
+                view_switcher_cookie_name_value: @cookie_name,
+                view_switcher_cookie_path_value: @cookie_path
               }
             ) do
               @views.each_with_index do |key, i|

@@ -50,7 +50,7 @@ module Plutonium
           # window.location.href on connect, so URL fragments (#tab-id)
           # survive the redirect after submit (the server never sees them).
           input name: "return_to",
-            value: request.params[:return_to] || request.original_url,
+            value: safe_return_to,
             type: :hidden,
             hidden: true,
             data: {controller: "capture-url"}
@@ -71,7 +71,14 @@ module Plutonium
         end
 
         def in_modal?
-          current_turbo_frame == "remote_modal"
+          current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
+        end
+
+        # Use Rails' built-in same-origin guard (the same one redirect_to
+        # uses to prevent open-redirects). Returns nil for cross-origin
+        # or unsafe schemes; we fall back to the current URL in that case.
+        def safe_return_to
+          helpers.url_from(request.params[:return_to]) || request.original_url
         end
 
         def show_submit_and_continue?

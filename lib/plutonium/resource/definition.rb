@@ -24,7 +24,7 @@ module Plutonium
       # inherit those records via DefineableProps#inherited (deep_dup);
       # calling `.modal` on a subclass re-runs this method locally.
       def self.configure_crud_modal_targets!
-        target = (modal_mode == false) ? nil : "remote_modal"
+        target = (modal_mode == false) ? nil : Plutonium::REMOTE_MODAL_FRAME
         [:new, :edit].each do |name|
           action = defined_actions[name]
           next unless action

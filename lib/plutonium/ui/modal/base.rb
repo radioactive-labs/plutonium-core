@@ -26,12 +26,31 @@ module Plutonium
 
         protected
 
+        # Native <dialog>+showModal() handles the focus trap, Esc-to-close,
+        # and focus restoration on close. We just need to label the dialog
+        # so screen readers announce it on open.
         def dialog_attributes
-          {
+          attrs = {
             closedby: "any",
             class: dialog_classes,
-            data: {controller: "remote-modal"}
+            data: {controller: "remote-modal"},
+            "aria-modal": "true"
           }
+          if @title
+            attrs[:"aria-labelledby"] = title_id
+          else
+            attrs[:"aria-label"] = "Dialog"
+          end
+          attrs[:"aria-describedby"] = description_id if @description.present?
+          attrs
+        end
+
+        def title_id
+          @title_id ||= "pu-modal-title-#{SecureRandom.hex(4)}"
+        end
+
+        def description_id
+          @description_id ||= "pu-modal-desc-#{SecureRandom.hex(4)}"
         end
 
         def dialog_classes
@@ -46,10 +65,10 @@ module Plutonium
           div(class: "flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-[var(--pu-border)]") do
             div(class: "min-w-0 flex-1") do
               if @title
-                h2(class: "text-lg font-semibold text-[var(--pu-text)] truncate") { @title }
+                h2(id: title_id, class: "text-lg font-semibold text-[var(--pu-text)] truncate") { @title }
               end
               if @description.present?
-                p(class: "mt-1 text-sm text-[var(--pu-text-muted)]") { @description }
+                p(id: description_id, class: "mt-1 text-sm text-[var(--pu-text-muted)]") { @description }
               end
             end
             render_close_button

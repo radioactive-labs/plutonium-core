@@ -95,7 +95,7 @@ module Plutonium
 
         # True when the page is rendered inside the remote_modal turbo frame.
         # Used by form pages to suppress the sticky footer (modal owns its own footer).
-        def in_modal? = current_turbo_frame == "remote_modal"
+        def in_modal? = current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
 
         # Customization hooks
         def render_before_header

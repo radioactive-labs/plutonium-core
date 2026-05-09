@@ -24,6 +24,14 @@ module Plutonium
       def apply(scope, **params)
         raise NotImplementedError, "#{self.class}#apply(scope, **params)"
       end
+
+      # Human-readable rendering of a single filter value for the active
+      # filter pill row. Defaults to `value.to_s`. Subclasses
+      # (Filters::Association, Filters::Boolean) override to translate
+      # raw param values (SGIDs, "true"/"false") into recognisable text.
+      def humanize_value(value)
+        value.to_s
+      end
     end
   end
 end

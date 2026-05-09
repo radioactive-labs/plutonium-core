@@ -201,7 +201,7 @@ module Plutonium
           elsif value.is_a?(String) && value.start_with?("http", "/")
             value
           end
-        rescue StandardError
+        rescue ArgumentError, URI::InvalidURIError
           nil
         end
 

@@ -8,7 +8,7 @@ module Plutonium
         # inline search, and column config / overflow icon buttons into a single
         # tight strip rendered above the table when shell == :modern.
         class Toolbar < Plutonium::UI::Component::Base
-          def initialize(query:, search_url:, search_param: :q, search_value: nil, views: [:table], current_view: :table, view_cookie_name: nil)
+          def initialize(query:, search_url:, search_param: :q, search_value: nil, views: [:table], current_view: :table, view_cookie_name: nil, view_cookie_path: "/")
             @query = query
             @search_url = search_url
             @search_param = search_param
@@ -16,6 +16,7 @@ module Plutonium
             @views = views
             @current_view = current_view
             @view_cookie_name = view_cookie_name
+            @view_cookie_path = view_cookie_path
           end
 
           def render?
@@ -24,7 +25,7 @@ module Plutonium
 
           def view_template
             div(class: "flex items-center gap-2 px-4 py-2 border-b border-[var(--pu-border)] bg-[var(--pu-surface-alt)]") do
-              switcher = ViewSwitcher.new(views: @views, current: @current_view, cookie_name: @view_cookie_name)
+              switcher = ViewSwitcher.new(views: @views, current: @current_view, cookie_name: @view_cookie_name, cookie_path: @view_cookie_path)
               render switcher
               render_divider if switcher.render?
               render_filter_button
@@ -36,15 +37,15 @@ module Plutonium
           private
 
           def has_filters?
-            @query.filter_definitions.present?
+            @query && @query.filter_definitions.present?
           end
 
           def has_search?
-            @query.search_filter.present?
+            @query && @query.search_filter.present?
           end
 
           def active_filter_count
-            @query.active_filter_descriptions.size
+            @query ? @query.active_filter_descriptions.size : 0
           end
 
           def render_divider
