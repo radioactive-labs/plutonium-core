@@ -24,10 +24,11 @@ module Plutonium
 
       DROPDOWN_DEFAULT_COLOR = "text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
 
-      def initialize(action, url:, variant: :default)
+      def initialize(action, url:, variant: :default, data: {})
         @action = action
         @url = url
         @variant = variant
+        @extra_data = data
       end
 
       def view_template
@@ -49,7 +50,7 @@ module Plutonium
         link_to(
           url_with_return_to,
           class: button_classes,
-          data: {turbo_frame: @action.turbo_frame}
+          data: {turbo_frame: @action.turbo_frame}.merge(@extra_data)
         ) do
           render_button_content
         end
@@ -61,6 +62,7 @@ module Plutonium
           method: @action.route_options.method,
           name: :return_to, value: return_to_url,
           class: "inline-block",
+          data: @extra_data,
           form: {
             data: {
               turbo: @action.turbo,

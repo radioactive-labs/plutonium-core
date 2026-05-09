@@ -4,54 +4,72 @@ module Plutonium
   module UI
     module Table
       module Components
+        # Segmented control for switching between index views (Table /
+        # Grid). Renders nothing unless at least two views are enabled.
+        # Selection is persisted in a per-resource cookie that the
+        # server reads on the next request — no `?view=` URL pollution
+        # so filters / search / clear-x links don't have to thread it
+        # through. The Stimulus controller sets the cookie on click,
+        # then reloads.
         class ViewSwitcher < Plutonium::UI::Component::Base
-          SEGMENTS = [
-            {key: :grid, label: "Grid", icon: Phlex::TablerIcons::LayoutGrid, enabled: true},
-            {key: :cards, label: "Cards", icon: Phlex::TablerIcons::LayoutCards, enabled: false},
-            {key: :kanban, label: "Kanban", icon: Phlex::TablerIcons::LayoutKanban, enabled: false}
-          ].freeze
+          SEGMENT_LABELS = {
+            table: {label: "Table", icon: Phlex::TablerIcons::Table},
+            grid: {label: "Grid", icon: Phlex::TablerIcons::LayoutGrid}
+          }.freeze
 
-          def initialize(active: :grid)
-            @active = active
+          def initialize(views:, current:, cookie_name:)
+            @views = views
+            @current = current
+            @cookie_name = cookie_name
+          end
+
+          def render?
+            @views.size > 1
           end
 
           def view_template
             div(
               role: "tablist",
               aria: {label: "View"},
-              class: "inline-flex h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden"
+              class: "inline-flex h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden",
+              data: {
+                controller: "view-switcher",
+                view_switcher_cookie_name_value: @cookie_name
+              }
             ) do
-              SEGMENTS.each_with_index do |segment, i|
-                render_segment(segment, last: i == SEGMENTS.length - 1)
+              @views.each_with_index do |key, i|
+                render_segment(key, last: i == @views.length - 1)
               end
             end
           end
 
           private
 
-          def render_segment(segment, last:)
+          def render_segment(key, last:)
+            meta = SEGMENT_LABELS.fetch(key) { {label: key.to_s.titleize, icon: Phlex::TablerIcons::LayoutGrid} }
+            active = key == @current
+
             classes = ["px-2.5 inline-flex items-center gap-1.5 text-sm transition-colors"]
             classes << "border-r border-[var(--pu-border)]" unless last
-            classes << if segment[:enabled] && segment[:key] == @active
+            classes << if active
               "bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300"
-            elsif segment[:enabled]
-              "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
             else
-              "text-[var(--pu-text-muted)] opacity-60 cursor-not-allowed"
+              "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"
             end
 
-            button_args = {
+            button(
               type: "button",
               role: "tab",
               class: classes.join(" "),
-              title: segment[:enabled] ? segment[:label] : "#{segment[:label]} — Coming soon",
-              aria: {selected: segment[:enabled] && segment[:key] == @active}
-            }
-            button_args[:disabled] = true unless segment[:enabled]
-
-            button(**button_args) do
-              render segment[:icon].new(class: "w-4 h-4 shrink-0")
-              span { segment[:label] }
+              title: meta[:label],
+              aria: {selected: active.to_s},
+              data: {
+                action: "click->view-switcher#select",
+                view_switcher_view_param: key.to_s
+              }
+            ) do
+              render meta[:icon].new(class: "w-4 h-4 shrink-0")
+              span { meta[:label] }
             end
           end
         end

@@ -8,23 +8,28 @@ module Plutonium
         # inline search, and column config / overflow icon buttons into a single
         # tight strip rendered above the table when shell == :modern.
         class Toolbar < Plutonium::UI::Component::Base
-          def initialize(query:, search_url:, search_param: :q, search_value: nil)
+          def initialize(query:, search_url:, search_param: :q, search_value: nil, views: [:table], current_view: :table, view_cookie_name: nil)
             @query = query
             @search_url = search_url
             @search_param = search_param
             @search_value = search_value
+            @views = views
+            @current_view = current_view
+            @view_cookie_name = view_cookie_name
+          end
+
+          def render?
+            @views.size > 1 || has_filters? || has_search?
           end
 
           def view_template
             div(class: "flex items-center gap-2 px-4 py-2 border-b border-[var(--pu-border)] bg-[var(--pu-surface-alt)]") do
-              render ViewSwitcher.new
-              render_divider
+              switcher = ViewSwitcher.new(views: @views, current: @current_view, cookie_name: @view_cookie_name)
+              render switcher
+              render_divider if switcher.render?
               render_filter_button
-              render_group_button
               div(class: "flex-1")
-              render_search
-              render_divider
-              render_column_config_button
+              render_search if has_search?
             end
           end
 
@@ -32,6 +37,10 @@ module Plutonium
 
           def has_filters?
             @query.filter_definitions.present?
+          end
+
+          def has_search?
+            @query.search_filter.present?
           end
 
           def active_filter_count
@@ -62,18 +71,6 @@ module Plutonium
             end
           end
 
-          def render_group_button
-            button(
-              type: "button",
-              class: "pu-btn pu-btn-outline pu-btn-sm disabled cursor-not-allowed opacity-60",
-              disabled: true,
-              title: "Coming soon"
-            ) do
-              render Phlex::TablerIcons::Stack2.new(class: "w-4 h-4 shrink-0")
-              span { "Group" }
-            end
-          end
-
           def render_search
             form(method: :get, action: @search_url) do
               div(class: "relative") do
@@ -81,25 +78,22 @@ module Plutonium
                   render Phlex::TablerIcons::Search.new(class: "w-4 h-4 text-[var(--pu-text-muted)]")
                 end
                 input(
+                  id: "pu-toolbar-search",
                   type: "search",
                   name: "#{@search_param}[search]",
                   value: @search_value,
                   placeholder: "Search...",
-                  class: "pu-input pu-input-toolbar pu-input-icon-left w-[220px]"
+                  class: "pu-input pu-input-toolbar pu-input-icon-left w-[220px]",
+                  # turbo-permanent + a stable id keep the DOM node
+                  # across Turbo morphs so focus / caret / IME state
+                  # survive the search-as-you-type submit cycle.
+                  data: {
+                    controller: "autosubmit",
+                    action: "input->autosubmit#submit search->autosubmit#submit",
+                    turbo_permanent: true
+                  }
                 )
               end
-            end
-          end
-
-          def render_column_config_button
-            button(
-              type: "button",
-              class: "pu-btn pu-btn-outline pu-btn-sm disabled cursor-not-allowed opacity-60",
-              disabled: true,
-              aria: {label: "Configure columns"},
-              title: "Coming soon"
-            ) do
-              render Phlex::TablerIcons::Columns3.new(class: "w-4 h-4 shrink-0")
             end
           end
 

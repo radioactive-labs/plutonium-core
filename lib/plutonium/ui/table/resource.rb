@@ -43,7 +43,10 @@ module Plutonium
           TableToolbar(
             query: current_query_object,
             search_url: current_search_url,
-            search_value: params.dig(:q, :search) || params[:search]
+            search_value: params.dig(:q, :search) || params[:search],
+            views: resource_definition.defined_views,
+            current_view: :table,
+            view_cookie_name: "pu_view:#{resource_class.name}"
           )
         end
 
@@ -134,10 +137,13 @@ module Plutonium
               dropdown_actions = actions.reject { |a| a.category.primary? }.sort_by(&:position)
 
               div(class: "flex items-center gap-1") do
-                # Primary actions as buttons
+                # Primary actions as buttons. The :show action is also
+                # tagged so the `row-click` controller on the <tr> can
+                # delegate row-body clicks to it.
                 primary_actions.each do |action|
                   url = route_options_to_url(action.route_options, record)
-                  ActionButton(action, url:, variant: :table)
+                  data = (action.name == :show) ? {row_click_target: "show"} : {}
+                  ActionButton(action, url:, variant: :table, data: data)
                 end
 
                 # Secondary/danger actions in dropdown

@@ -29,6 +29,9 @@ import IconRailFlyoutController from "./icon_rail_flyout_controller.js"
 import TableHeaderController from "./table_header_controller.js"
 import TableColumnMenuController from "./table_column_menu_controller.js"
 import CaptureUrlController from "./capture_url_controller.js"
+import RowClickController from "./row_click_controller.js"
+import ViewSwitcherController from "./view_switcher_controller.js"
+import AutosubmitController from "./autosubmit_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -62,4 +65,7 @@ export default function (application) {
   application.register("table-header", TableHeaderController)
   application.register("table-column-menu", TableColumnMenuController)
   application.register("capture-url", CaptureUrlController)
+  application.register("row-click", RowClickController)
+  application.register("view-switcher", ViewSwitcherController)
+  application.register("autosubmit", AutosubmitController)
 }

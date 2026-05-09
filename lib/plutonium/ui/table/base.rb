@@ -6,6 +6,15 @@ module Plutonium
       class Base < Phlexi::Table::Base
         include Plutonium::UI::Component::Behaviour
 
+        # Make every body row a row-click candidate. The controller
+        # delegates to whatever element inside the row is tagged
+        # `data-row-click-target="show"` (typically the show action
+        # button). Rows without such a target become a no-op — no
+        # special-casing needed in this layer.
+        def table_body_row_attributes(wrapped_object)
+          super.merge(data: {controller: "row-click", action: "click->row-click#click"})
+        end
+
         # Use custom SelectionColumn with Stimulus data attributes
         class SelectionColumn < Plutonium::UI::Table::Components::SelectionColumn; end
 
@@ -104,23 +113,12 @@ module Plutonium
                 data: {"table-column-menu-target": "panel"}
               ) do
                 render_menu_item("Clear sort", sort_params[:reset_url], icon: Phlex::TablerIcons::X)
-                div(class: themed(:column_menu_separator))
-                render_menu_item_disabled("Group by…", icon: Phlex::TablerIcons::Stack2)
-                render_menu_item_disabled("Filter by…", icon: Phlex::TablerIcons::AdjustmentsHorizontal)
-                render_menu_item_disabled("Hide column", icon: Phlex::TablerIcons::Eye)
               end
             end
           end
 
           def render_menu_item(label, href, icon: nil)
             a(href: href, class: themed(:column_menu_item)) do
-              render icon.new(class: "w-4 h-4 shrink-0") if icon
-              span { plain label }
-            end
-          end
-
-          def render_menu_item_disabled(label, icon: nil)
-            div(class: themed(:column_menu_item_disabled), aria: {disabled: "true"}) do
               render icon.new(class: "w-4 h-4 shrink-0") if icon
               span { plain label }
             end
