@@ -98,7 +98,20 @@ action :name,
   confirmation: "Are you sure?",   # Confirmation dialog
   turbo_frame: "_top",             # Turbo frame target
   return_to: "/custom/path",       # Override return URL
-  route_options: {action: :foo}    # Route configuration
+  route_options: {action: :foo},   # Route configuration
+
+  # Dialog chrome (for interactive actions with a form)
+  modal: :slideover                # :centered (default) or :slideover
+```
+
+### `Action#with(...)`
+
+Action records are frozen value objects. To derive a variant — typically inside `customize_actions` — call `existing.with(...)` for a new copy with overrides applied:
+
+```ruby
+def customize_actions
+  defined_actions[:edit] = defined_actions[:edit].with(turbo_frame: "_top")
+end
 ```
 
 ## Route Options

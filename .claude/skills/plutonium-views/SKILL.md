@@ -425,6 +425,65 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+## Page Chrome (Shell)
+
+`Plutonium.configuration.shell` controls the layout shipped above the
+resource pages. Default is **`:modern`** (topbar + icon rail) — only
+override to **`:classic`** (legacy header + sidebar) if you're upgrading
+from a pre-`:modern` version and want to preserve the old chrome:
+
+```ruby
+Plutonium.configure do |config|
+  config.shell = :classic
+end
+```
+
+To customize the shipped chrome per-portal, eject the templates:
+
+```bash
+rails generate pu:eject:shell --dest=admin_portal
+```
+
+This copies `_resource_header.html.erb` and `_resource_sidebar.html.erb`
+into the portal's `app/views/plutonium/`. The eject is independent of
+`shell` — you can run it on either.
+
+## Modal & Slideover Forms
+
+The framework's `:new` / `:edit` actions render inline inside a modal.
+Choose the chrome per-resource via the `modal` DSL on the definition:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  modal :slideover    # default — slide-in panel from the right
+  # modal :centered   # centered dialog
+  # modal false       # full standalone page (no modal)
+end
+```
+
+Custom interactive actions render in their own dialog with their own
+`modal:` option (`:centered` default, or `:slideover`).
+
+### Detecting render context in components
+
+Custom pages / forms can branch on render context:
+
+| Helper | True when |
+|--------|-----------|
+| `in_frame?` | Request is targeting a turbo-frame |
+| `in_modal?` | Request is rendering inside a modal/slideover |
+
+Use them to pin action strips, omit nav chrome, or swap layouts.
+
+## Tabs & URL Hash
+
+Show pages with associations render the **Details** tab first followed
+by one tab per permitted association. The active tab is reflected in
+the URL hash (`#products`, `#refund-requests`) so the page deep-links and
+the active state survives reloads / back navigation.
+
+Tab rows scroll horizontally on narrow viewports — they don't wrap.
+
 ## Layout Customization
 
 ### Eject Layout
