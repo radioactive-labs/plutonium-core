@@ -13326,6 +13326,12 @@
       this.frameTarget.removeEventListener("turbo:fetch-request-error", this.frameFailed);
     }
     frameLoading(event) {
+      if (event) {
+        const trigger = event.target.closest("a, form");
+        const requested = trigger?.dataset?.turboFrame;
+        if (requested && requested !== this.frameTarget.id)
+          return;
+      }
       this.#loadingStarted();
     }
     frameFailed(event) {
@@ -13347,17 +13353,26 @@
     }
     homeButtonClicked(event) {
       this.frameLoading(null);
+      this.srcHistory = [this.originalFrameSrc];
+      this.#updateNavigationButtonsDisplay();
+      this._homeRequested = true;
       this.frameTarget.src = this.originalFrameSrc;
+      this.frameTarget.reload();
     }
     get currentSrc() {
       return this.srcHistory[this.srcHistory.length - 1];
     }
     #notifySrcChanged(src) {
-      if (src == this.currentSrc) {
-      } else if (src == this.originalFrameSrc)
+      if (this._homeRequested) {
+        this._homeRequested = false;
         this.srcHistory = [src];
-      else
+        this.originalFrameSrc = src;
+      } else if (src == this.currentSrc) {
+      } else if (src == this.originalFrameSrc) {
+        this.srcHistory = [src];
+      } else {
         this.srcHistory.push(src);
+      }
       this.#updateNavigationButtonsDisplay();
       if (this.hasMaximizeLinkTarget)
         this.maximizeLinkTarget.href = src;
@@ -16974,12 +16989,28 @@ ${text2}</tr>
     connect() {
       this.activeClasses = this.hasActiveClassesValue ? this.activeClassesValue.split(" ") : [];
       this.inActiveClasses = this.hasInActiveClassesValue ? this.inActiveClassesValue.split(" ") : [];
-      this.#selectInternal(this.defaultTabValue || this.btnTargets[0].id);
+      const fromHash = this.#buttonIdFromHash();
+      const initialId = fromHash || this.defaultTabValue || this.btnTargets[0]?.id;
+      this.#selectInternal(initialId, { skipFocus: true, skipHashUpdate: true });
+      this._syncFromHash = this._syncFromHash.bind(this);
+      window.addEventListener("hashchange", this._syncFromHash);
+      document.addEventListener("turbo:load", this._syncFromHash);
+    }
+    disconnect() {
+      if (this._syncFromHash) {
+        window.removeEventListener("hashchange", this._syncFromHash);
+        document.removeEventListener("turbo:load", this._syncFromHash);
+      }
+    }
+    _syncFromHash() {
+      const id2 = this.#buttonIdFromHash();
+      if (id2)
+        this.#selectInternal(id2, { skipFocus: true, skipHashUpdate: true });
     }
     select(event) {
       this.#selectInternal(event.currentTarget.id);
     }
-    #selectInternal(id2) {
+    #selectInternal(id2, options2 = {}) {
       const selectedBtn = this.btnTargets.find((element) => element.id === id2);
       if (!selectedBtn) {
         console.error(`Tab Button with id "${id2}" not found`);
@@ -17006,8 +17037,27 @@ ${text2}</tr>
       selectedBtn.classList.add(...this.activeClasses);
       selectedTab.hidden = false;
       selectedTab.setAttribute("aria-hidden", "false");
-      if (selectedBtn !== document.activeElement) {
+      if (!options2.skipHashUpdate)
+        this.#updateHash(id2);
+      if (!options2.skipFocus && selectedBtn !== document.activeElement) {
         selectedBtn.focus();
+      }
+    }
+    // Button ids follow `${identifier}-tab`. The URL hash carries just
+    // the identifier (e.g., #details, #orders).
+    #buttonIdFromHash() {
+      const hash3 = window.location.hash.replace(/^#/, "");
+      if (!hash3)
+        return null;
+      const candidateId = `${hash3}-tab`;
+      const exists = this.btnTargets.some((btn) => btn.id === candidateId);
+      return exists ? candidateId : null;
+    }
+    #updateHash(buttonId) {
+      const identifier = buttonId.replace(/-tab$/, "");
+      const newHash = `#${identifier}`;
+      if (window.location.hash !== newHash) {
+        history.replaceState(null, "", newHash);
       }
     }
   };
@@ -27940,6 +27990,56 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/filter_panel_controller.js
   var filter_panel_controller_default = class extends Controller {
+    static targets = ["panel", "backdrop"];
+    connect() {
+      this._onKeydown = this._onKeydown.bind(this);
+    }
+    disconnect() {
+      if (this.isOpen) {
+        document.removeEventListener("keydown", this._onKeydown);
+        this._unlockBodyScroll();
+      }
+    }
+    toggle() {
+      this.isOpen ? this.close() : this.open();
+    }
+    open() {
+      if (this.hasPanelTarget) {
+        this.panelTarget.setAttribute("data-open", "");
+        this.panelTarget.setAttribute("aria-hidden", "false");
+      }
+      if (this.hasBackdropTarget)
+        this.backdropTarget.setAttribute("data-open", "");
+      this._lockBodyScroll();
+      document.addEventListener("keydown", this._onKeydown);
+    }
+    close() {
+      if (this.hasPanelTarget) {
+        this.panelTarget.removeAttribute("data-open");
+        this.panelTarget.setAttribute("aria-hidden", "true");
+      }
+      if (this.hasBackdropTarget)
+        this.backdropTarget.removeAttribute("data-open");
+      this._unlockBodyScroll();
+      document.removeEventListener("keydown", this._onKeydown);
+    }
+    // Mirrors remote-modal's approach: stash the body's current overflow
+    // and restore it on close. Avoids stomping a value another component
+    // (e.g. an open dialog) may have set.
+    _lockBodyScroll() {
+      if (this._previousBodyOverflow != null)
+        return;
+      this._previousBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+    }
+    _unlockBodyScroll() {
+      if (this._previousBodyOverflow == null)
+        return;
+      document.body.style.overflow = this._previousBodyOverflow;
+      this._previousBodyOverflow = null;
+    }
+    // Reset every input under this controller's scope, then submit so the
+    // table reflects the cleared filters immediately.
     clear() {
       this.element.querySelectorAll("input, select, textarea").forEach((input) => {
         if (input.type === "checkbox" || input.type === "radio") {
@@ -27947,23 +28047,27 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         } else if (input.tagName === "SELECT") {
           input.selectedIndex = 0;
         } else if (input.type === "hidden") {
-          if (input.dataset.controller === "flatpickr") {
+          if (input.dataset.controller === "flatpickr")
             input.value = "";
-          }
         } else {
           input.value = "";
         }
       });
       this.element.querySelectorAll('[data-controller="flatpickr"]').forEach((input) => {
         const controller = this.application.getControllerForElementAndIdentifier(input, "flatpickr");
-        if (controller?.picker) {
+        if (controller?.picker)
           controller.picker.clear();
-        }
       });
-      const form = this.element.closest("form");
-      if (form) {
+      const form = this.element.querySelector("form");
+      if (form)
         form.requestSubmit();
-      }
+    }
+    get isOpen() {
+      return this.hasPanelTarget && this.panelTarget.hasAttribute("data-open");
+    }
+    _onKeydown(event) {
+      if (event.key === "Escape")
+        this.close();
     }
   };
 
@@ -28070,6 +28174,18 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     connect() {
       this._closeTimer = null;
       this._open = false;
+      this._panel = null;
+      this._panelHome = null;
+      this._onPanelEnter = () => {
+        if (this._closeTimer) {
+          clearTimeout(this._closeTimer);
+          this._closeTimer = null;
+        }
+      };
+      this._onPanelLeave = () => this.scheduleClose();
+    }
+    disconnect() {
+      this._returnPanel();
     }
     open() {
       if (this._closeTimer) {
@@ -28078,8 +28194,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       }
       if (this._open)
         return;
+      if (!this._panel && !this.hasPanelTarget)
+        return;
       this._open = true;
       this.element.dataset.flyoutOpen = "true";
+      this._portalPanel();
       this._position();
     }
     scheduleClose() {
@@ -28088,8 +28207,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this._closeTimer = setTimeout(() => this.close(), this.closeDelayValue);
     }
     close() {
+      if (!this._open)
+        return;
       this._open = false;
       delete this.element.dataset.flyoutOpen;
+      this._returnPanel();
     }
     toggle(event) {
       event.preventDefault();
@@ -28099,11 +28221,42 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (event.key === "Escape")
         this.close();
     }
-    _position() {
-      if (!this.hasPanelTarget || !this.hasTriggerTarget)
+    _portalPanel() {
+      if (this._panel)
         return;
-      const triggerRect = this.triggerTarget.getBoundingClientRect();
       const panel = this.panelTarget;
+      if (!panel)
+        return;
+      this._panel = panel;
+      this._panelHome = panel.parentElement;
+      panel.addEventListener("mouseenter", this._onPanelEnter);
+      panel.addEventListener("mouseleave", this._onPanelLeave);
+      document.body.appendChild(panel);
+      panel.style.display = "block";
+    }
+    _returnPanel() {
+      if (!this._panel)
+        return;
+      const panel = this._panel;
+      panel.removeEventListener("mouseenter", this._onPanelEnter);
+      panel.removeEventListener("mouseleave", this._onPanelLeave);
+      panel.style.position = "";
+      panel.style.left = "";
+      panel.style.top = "";
+      panel.style.display = "";
+      if (this._panelHome && document.contains(this._panelHome)) {
+        this._panelHome.appendChild(panel);
+      } else {
+        panel.remove();
+      }
+      this._panel = null;
+      this._panelHome = null;
+    }
+    _position() {
+      if (!this._panel || !this.hasTriggerTarget)
+        return;
+      const panel = this._panel;
+      const triggerRect = this.triggerTarget.getBoundingClientRect();
       panel.style.position = "fixed";
       panel.style.left = `${triggerRect.right + 4}px`;
       panel.style.top = `${triggerRect.top}px`;
@@ -28173,6 +28326,60 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/capture_url_controller.js
+  var capture_url_controller_default = class extends Controller {
+    connect() {
+      if ("value" in this.element) {
+        this.element.value = window.location.href;
+      }
+    }
+  };
+
+  // src/js/controllers/row_click_controller.js
+  var row_click_controller_default = class extends Controller {
+    click(event) {
+      if (event.target.closest("a, button, input, label, select, textarea, [data-row-click-ignore]")) {
+        return;
+      }
+      this.element.querySelector('[data-row-click-target="show"]')?.click();
+    }
+  };
+
+  // src/js/controllers/view_switcher_controller.js
+  var view_switcher_controller_default = class extends Controller {
+    static values = { cookieName: String, cookiePath: { type: String, default: "/" } };
+    select(event) {
+      const view = event.params.view;
+      if (!view || !this.cookieNameValue)
+        return;
+      const maxAge = 60 * 60 * 24 * 365;
+      const path = this.cookiePathValue || "/";
+      document.cookie = `${this.cookieNameValue}=${encodeURIComponent(view)}; Path=${path}; Max-Age=${maxAge}; SameSite=Lax`;
+      const url = new URL(window.location.href);
+      url.searchParams.delete("view");
+      window.location.href = url.toString();
+    }
+  };
+
+  // src/js/controllers/autosubmit_controller.js
+  var autosubmit_controller_default = class extends Controller {
+    static values = { delay: { type: Number, default: 300 } };
+    connect() {
+      this._timer = null;
+    }
+    disconnect() {
+      if (this._timer)
+        clearTimeout(this._timer);
+    }
+    submit() {
+      if (this._timer)
+        clearTimeout(this._timer);
+      this._timer = setTimeout(() => {
+        this.element.closest("form")?.requestSubmit();
+      }, this.delayValue);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28204,6 +28411,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("icon-rail-flyout", icon_rail_flyout_controller_default);
     application2.register("table-header", table_header_controller_default);
     application2.register("table-column-menu", table_column_menu_controller_default);
+    application2.register("capture-url", capture_url_controller_default);
+    application2.register("row-click", row_click_controller_default);
+    application2.register("view-switcher", view_switcher_controller_default);
+    application2.register("autosubmit", autosubmit_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
