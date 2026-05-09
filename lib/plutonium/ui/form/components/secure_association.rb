@@ -102,6 +102,14 @@ module Plutonium
           def build_attributes
             build_association_attributes
             super
+            # Stash; the URL helper needs view_context which only exists
+            # once we're rendering.
+            @typeahead_option = attributes.delete(:typeahead)
+          end
+
+          def before_template
+            super
+            configure_typeahead_attributes!(@typeahead_option)
           end
 
           def build_association_attributes
@@ -119,6 +127,35 @@ module Plutonium
               build_collection_association_attributes
             end
           end
+
+          # Default-on typeahead for association inputs. Set
+          # `typeahead: false` to opt out (keeps slim-select's
+          # client-side filter over the eager list). The URL is
+          # always /<resource>/typeahead/input/:name — derived from
+          # the current resource controller and the field name.
+          def configure_typeahead_attributes!(typeahead_option)
+            return if typeahead_option == false
+            url = typeahead_url_for(typeahead_option)
+            return unless url
+            attributes[:data_slim_select_typeahead_url_value] = url
+          end
+
+          def typeahead_url_for(typeahead_option)
+            kind = typeahead_option.is_a?(Hash) ? (typeahead_option[:kind] || :input) : :input
+            name = typeahead_option.is_a?(Hash) ? typeahead_option[:name] : association_reflection.name
+            return nil unless name
+
+            route_key = resource_class.model_name.route_key
+            helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
+
+            url_helpers = current_engine.routes.url_helpers
+            return nil unless url_helpers.respond_to?(helper)
+            url_helpers.public_send(helper, name: name)
+          rescue
+            nil
+          end
+
+          private
 
           def build_singluar_association_attributes
             attributes.fetch(:input_param) { attributes[:input_param] = :"#{association_reflection.name}_sgid" }

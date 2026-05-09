@@ -7,9 +7,6 @@ module Plutonium
         # Select for choosing a resource record
         class ResourceSelect < Phlexi::Form::Components::Select
           include Plutonium::UI::Component::Methods
-          include Plutonium::UI::Form::Components::Searchable
-
-          typeahead_input_name :resource_select
 
           # Cap on the number of records the dropdown materialises. Keeps
           # very large association tables from rendering thousands of
@@ -56,8 +53,17 @@ module Plutonium
             @skip_authorization = attributes.delete(:skip_authorization)
             @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
             attributes.delete(:choice_limit)
+            # Stash the typeahead option; the URL helper needs view_context
+            # which only exists once we're rendering.
+            @typeahead_option = attributes.delete(:typeahead)
+          end
 
-            configure_typeahead_attributes!(attributes.delete(:typeahead))
+          # Phlex hook fires right before view_template runs and view_context
+          # is available, so this is where we can resolve the typeahead URL
+          # and inject the data attr.
+          def before_template
+            super
+            configure_typeahead_attributes!(@typeahead_option)
           end
 
           # SGIDs include a timestamp + signature, so the SGID in the URL
@@ -126,126 +132,54 @@ module Plutonium
             @include_blank.is_a?(String) ? @include_blank : super
           end
 
-          # ---- Searchable hooks ----------------------------------------
-
-          def apply_typeahead_options(options)
-            @raw_choices = options[:choices]
-            @association_class = options[:association_class]
-            @skip_authorization = options[:skip_authorization]
-            @choice_limit = options.fetch(:choice_limit, DEFAULT_CHOICE_LIMIT)
-            @typeahead_search_columns = options[:typeahead_search_columns]
-          end
-
-          def collect_typeahead_candidates(query, controller:)
-            if @raw_choices
-              filter_static_choices(@raw_choices, query)
-            elsif @association_class
-              filter_association(query, controller: controller)
-            else
-              []
-            end
-          end
-
-          def serialize_typeahead_row(row)
-            if row.is_a?(Array)
-              # raw_choices format: [[label, value], ...]
-              {value: row[1].to_s, label: row[0].to_s}
-            else
-              {value: row.to_signed_global_id.to_s, label: row.to_label}
-            end
-          end
-
           private
 
-          # When typeahead opts in, attach the resource-select Stimulus
-          # controller and its URL value. The rendered <select> becomes a
-          # backend-driven autocomplete; existing eager-list behavior is
-          # preserved when typeahead is unset.
+          # Adds the typeahead URL data attr so the slim-select Stimulus
+          # controller delegates to the backend via events.search.
+          # Default-on (opt out with `typeahead: false`). Pass a Hash to
+          # override kind/name (e.g. `typeahead: {kind: :filter, name: :status}`).
+          # Silently no-ops when the URL can't be resolved (e.g. rendered
+          # outside a resource controller).
           def configure_typeahead_attributes!(typeahead_option)
-            return unless typeahead_option
+            return if typeahead_option == false
             url = typeahead_url_for(typeahead_option)
             return unless url
-
-            attributes[:data_controller] = tokens(attributes[:data_controller], "resource-select")
-            attributes[:data_resource_select_url_value] = url
+            attributes[:data_slim_select_typeahead_url_value] = url
           end
 
           def typeahead_url_for(typeahead_option)
-            controller = helpers.controller
-            return nil unless controller.respond_to?(:resource_class)
-
-            resource = controller.resource_class
-            kind, name = typeahead_kind_and_name(typeahead_option)
+            kind, name = if typeahead_option.is_a?(Hash)
+              [typeahead_option[:kind] || :input, typeahead_option[:name]]
+            else
+              detect_typeahead_kind_and_name
+            end
             return nil unless name
 
-            route_key = resource.model_name.route_key
+            route_key = resource_class.model_name.route_key
             helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
-            return nil unless helpers.respond_to?(helper)
 
-            helpers.public_send(helper, name: name)
+            # Engine route helpers are the source of truth for routes
+            # mounted under a Plutonium portal — phlex-rails' `helpers`
+            # proxy is deprecated and not the right entry point here.
+            url_helpers = current_engine.routes.url_helpers
+            return nil unless url_helpers.respond_to?(helper)
+            url_helpers.public_send(helper, name: name)
           rescue
             nil
           end
 
-          def typeahead_kind_and_name(option)
-            if option.is_a?(Hash)
-              [option[:kind] || :input, option[:name]]
+          # Plutonium::UI::Form::Query roots its form with `as: :q`, so
+          # any field whose ancestry includes a node keyed :q is a filter
+          # input. The filter name is the immediate child of that root.
+          # Form inputs (new/edit) fall through to :input + the field key.
+          def detect_typeahead_kind_and_name
+            lineage = field.dom.lineage
+            q_index = lineage.find_index { |node| node.key == :q }
+            if q_index && (filter_node = lineage[q_index + 1])
+              [:filter, filter_node.key]
             else
-              # `typeahead: true` — infer name from the field's dom name (the
-              # field key the form is rendering).
-              [:input, field.dom.name]
+              [:input, field.key]
             end
-          end
-
-          def filter_static_choices(choices, query)
-            return choices if query.blank?
-            q = query.downcase
-            choices.select { |label, _| label.to_s.downcase.include?(q) }
-          end
-
-          # Routes through the associated resource's policy scope so typeahead
-          # can never surface records the current user can't read. Then applies
-          # the associated definition's search block when present, else a LIKE
-          # over a single label column.
-          def filter_association(query, controller:)
-            relation = if @skip_authorization
-              @association_class.all
-            else
-              controller.send(:authorized_resource_scope, @association_class)
-            end
-            relation = apply_association_search(relation, query) if query.present?
-            relation.limit(@choice_limit + 1).to_a
-          end
-
-          def apply_association_search(relation, query)
-            search_block = associated_definition_search_block(relation.klass)
-            return search_block.call(relation, query) if search_block
-
-            column = label_column_for(relation.klass)
-            return relation unless column
-
-            relation.where(
-              "#{relation.klass.connection.quote_column_name(column)} LIKE ?",
-              "%#{ActiveRecord::Base.sanitize_sql_like(query)}%"
-            )
-          end
-
-          def associated_definition_search_block(klass)
-            registry = Plutonium::Resource::Register
-            return nil unless registry.respond_to?(:definition_for)
-            defn_class = registry.definition_for(klass)
-            defn_class&._search_definition if defn_class.respond_to?(:_search_definition)
-          rescue
-            nil
-          end
-
-          # Picks the first column ResourceRecord#to_label would inspect (name,
-          # title) that exists on the model. Returns nil → caller skips
-          # filtering and returns the unfiltered relation.
-          def label_column_for(klass)
-            cols = (@typeahead_search_columns || %i[name title]).map(&:to_s)
-            available = klass.column_names
-            cols.find { |c| available.include?(c) }
           end
         end
       end

@@ -16645,6 +16645,10 @@ ${text2}</tr>
 
   // src/js/controllers/slim_select_controller.js
   var slim_select_controller_default = class extends Controller {
+    static values = {
+      typeaheadUrl: String,
+      typeaheadDebounceMs: { type: Number, default: 200 }
+    };
     connect() {
       if (this.slimSelect) return;
       this.#setupSlimSelect();
@@ -16678,9 +16682,14 @@ ${text2}</tr>
         settings.contentPosition = "absolute";
         settings.openPosition = "auto";
       }
+      const events = {};
+      if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {
+        events.search = (search, currentData) => this.#typeaheadFetch(search, currentData);
+      }
       this.slimSelect = new SlimSelect({
         select: this.element,
-        settings
+        settings,
+        events
       });
       this.handleDropdownPosition();
       this.boundHandleDropdownOpen = this.handleDropdownOpen.bind(this);
@@ -16767,6 +16776,46 @@ ${text2}</tr>
     }
     disconnect() {
       this.#cleanupSlimSelect();
+    }
+    // Server-driven search. SlimSelect calls events.search on each
+    // keystroke; we debounce so that rapid typing produces a single
+    // request, and abort any in-flight fetch when a newer one starts.
+    // Returns a Promise resolving to either a DataArray (rendered as
+    // options) or a string (rendered as the no-results label).
+    #typeaheadFetch(search, _currentData) {
+      if (this._typeaheadDebounce)
+        clearTimeout(this._typeaheadDebounce);
+      if (this._typeaheadAbort)
+        this._typeaheadAbort.abort();
+      return new Promise((resolve) => {
+        this._typeaheadDebounce = setTimeout(() => {
+          this._typeaheadAbort = new AbortController();
+          this.#performTypeaheadFetch(search, this._typeaheadAbort.signal).then(resolve);
+        }, this.typeaheadDebounceMsValue);
+      });
+    }
+    async #performTypeaheadFetch(search, signal) {
+      const url = new URL(this.typeaheadUrlValue, window.location.origin);
+      url.searchParams.set("q", search || "");
+      try {
+        const res = await fetch(url.toString(), {
+          headers: { Accept: "application/json" },
+          signal
+        });
+        if (!res.ok)
+          return "Search failed";
+        const json = await res.json();
+        const results = Array.isArray(json.results) ? json.results : [];
+        return results.map((row) => ({
+          value: String(row.value ?? ""),
+          text: String(row.label ?? "")
+        }));
+      } catch (e4) {
+        if (e4.name === "AbortError")
+          return [];
+        console.warn("[slim-select] typeahead error", e4);
+        return "Search failed";
+      }
     }
     #handleMorph() {
       if (!this.element.isConnected) return;
@@ -28113,88 +28162,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // src/js/controllers/resource_select_controller.js
-  var resource_select_controller_default = class extends Controller {
-    static values = {
-      url: String,
-      debounceMs: { type: Number, default: 250 },
-      minChars: { type: Number, default: 0 }
-    };
-    connect() {
-      this._timer = null;
-      this._abort = null;
-      this._lastQuery = null;
-      this._onInput = this._onInput.bind(this);
-      this.element.addEventListener("input", this._onInput);
-      this._fetch("");
-    }
-    disconnect() {
-      this.element.removeEventListener("input", this._onInput);
-      if (this._timer)
-        clearTimeout(this._timer);
-      if (this._abort)
-        this._abort.abort();
-    }
-    _onInput(event) {
-      const query = (event.target.value || "").toString();
-      if (query === this._lastQuery)
-        return;
-      if (query.length < this.minCharsValue)
-        return;
-      if (this._timer)
-        clearTimeout(this._timer);
-      this._timer = setTimeout(() => this._fetch(query), this.debounceMsValue);
-    }
-    async _fetch(query) {
-      if (!this.urlValue)
-        return;
-      if (this._abort)
-        this._abort.abort();
-      this._abort = new AbortController();
-      this._lastQuery = query;
-      const url = new URL(this.urlValue, window.location.origin);
-      url.searchParams.set("q", query);
-      try {
-        const res = await fetch(url.toString(), {
-          headers: { "Accept": "application/json" },
-          signal: this._abort.signal
-        });
-        if (!res.ok)
-          throw new Error(`typeahead fetch failed: ${res.status}`);
-        const json = await res.json();
-        this._populate(json.results || [], !!json.has_more);
-      } catch (e4) {
-        if (e4.name === "AbortError")
-          return;
-        console.warn("[resource-select] typeahead error", e4);
-      }
-    }
-    _populate(results, hasMore) {
-      const select = this.element.tagName === "SELECT" ? this.element : this.element.querySelector("select");
-      if (!select)
-        return;
-      const selectedValues = new Set(Array.from(select.selectedOptions).map((o4) => o4.value));
-      const selectedFragments = Array.from(select.selectedOptions).map((o4) => o4.cloneNode(true));
-      select.innerHTML = "";
-      selectedFragments.forEach((o4) => select.appendChild(o4));
-      for (const row of results) {
-        if (selectedValues.has(row.value))
-          continue;
-        const opt = document.createElement("option");
-        opt.value = row.value;
-        opt.textContent = row.label;
-        select.appendChild(opt);
-      }
-      if (hasMore) {
-        const hint = document.createElement("option");
-        hint.disabled = true;
-        hint.textContent = "More results \u2014 keep typing to refine";
-        select.appendChild(hint);
-      }
-      select.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  };
-
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28230,7 +28197,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("row-click", row_click_controller_default);
     application2.register("view-switcher", view_switcher_controller_default);
     application2.register("autosubmit", autosubmit_controller_default);
-    application2.register("resource-select", resource_select_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
