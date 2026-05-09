@@ -30,9 +30,10 @@ module Plutonium
           data_resource_tab_list_active_classes_value: ACTIVE_CLASSES,
           data_resource_tab_list_in_active_classes_value: INACTIVE_CLASSES
         ) do
-          div(class: "mb-6 border-b border-[var(--pu-border)]") do
+          div(class: "relative mb-6 border-b border-[var(--pu-border)]") do
             ul(
-              class: "flex flex-wrap -mb-px text-base font-semibold text-center gap-1",
+              class: "flex flex-nowrap overflow-x-auto whitespace-nowrap -mb-px text-base font-semibold gap-1 " \
+                     "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
               role: "tablist"
             ) do
               @tabs.each do |tab|
@@ -57,6 +58,11 @@ module Plutonium
                 end
               end
             end
+            div(
+              class: "pointer-events-none absolute right-0 top-0 bottom-0 w-8 " \
+                     "bg-gradient-to-l from-[var(--pu-body)] to-transparent",
+              aria_hidden: "true"
+            )
           end
 
           div do
