@@ -72,5 +72,4 @@ module DataHelpers
     user ||= @user || create_user!
     Catalog::Review.create!(product: product, user: user, title: title, body: body, rating: rating, verified: verified)
   end
-
 end

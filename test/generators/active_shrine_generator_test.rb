@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/gem/active_shrine/active_shrine_generator"

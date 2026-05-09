@@ -38,7 +38,7 @@ module Plutonium
           return scope if value.blank?
           ids = decode_ids(value)
           return scope if ids.empty?
-          scope.where(:"#{key}_id" => ids)
+          scope.where("#{key}_id": ids)
         end
 
         def customize_inputs

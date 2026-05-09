@@ -22,7 +22,7 @@ class Plutonium::UI::Table::Components::ScopesPillsTest < Minitest::Test
 
   def test_renders_all_pill_plus_one_per_scope
     html = build_component(params: {}, default_scope: nil, scopes: [:published, :draft]).call
-    assert_equal 3, html.scan(/<a/).length
+    assert_equal 3, html.scan("<a").length
     assert_includes html, ">All<"
     assert_includes html, "Published"
     assert_includes html, "Draft"
@@ -68,14 +68,14 @@ class Plutonium::UI::Table::Components::ScopesPillsTest < Minitest::Test
 
   def test_each_pill_has_tab_role
     html = build_component(params: {}, default_scope: nil, scopes: [:published, :draft]).call
-    assert_equal 3, html.scan(/role="tab"/).length
+    assert_equal 3, html.scan('role="tab"').length
   end
 
   def test_active_pill_has_aria_selected
     html = build_component(params: {scope: "draft"}, default_scope: nil, scopes: [:published, :draft]).call
     # Only one pill should be aria-selected (the active one)
     # Phlex renders aria-selected as a boolean attribute when true
-    selected = html.scan(/aria-selected/).length
+    selected = html.scan("aria-selected").length
     assert_equal 1, selected
   end
 

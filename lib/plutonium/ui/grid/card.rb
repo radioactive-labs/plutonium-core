@@ -23,8 +23,8 @@ module Plutonium
             render_show_link if can_show?
             render_actions_dropdown
             case resource_definition.defined_grid_layout
-            when :media   then render_media_layout
-            else                render_compact_layout
+            when :media then render_media_layout
+            else render_compact_layout
             end
           end
         end

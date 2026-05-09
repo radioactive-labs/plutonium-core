@@ -10,7 +10,7 @@ class Plutonium::Testing::LoadableTest < ActiveSupport::TestCase
 
   test "all submodules are defined" do
     %w[DSL AuthHelpers ResourceCrud ResourcePolicy ResourceDefinition
-       ResourceInteraction ResourceModel NestedResource PortalAccess].each do |name|
+      ResourceInteraction ResourceModel NestedResource PortalAccess].each do |name|
       assert Plutonium::Testing.const_defined?(name), "#{name} not defined"
     end
   end

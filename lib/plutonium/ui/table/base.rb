@@ -52,9 +52,7 @@ module Plutonium
 
           private
 
-          def sort_params
-            @sort_params
-          end
+          attr_reader :sort_params
 
           def label_text
             @value.to_s

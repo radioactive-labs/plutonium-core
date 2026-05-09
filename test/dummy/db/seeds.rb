@@ -6,7 +6,7 @@ puts "Seeding database..."
 
 # Admin
 puts "Creating admin..."
-admin = Admin.find_or_create_by!(email: "admin@plutonium.dev") do |a|
+Admin.find_or_create_by!(email: "admin@plutonium.dev") do |a|
   a.password_hash = BCrypt::Password.create("password123")
   a.status = 2 # verified
 end
@@ -130,9 +130,18 @@ end
 # Catalog: Categories (self-referential)
 puts "Creating categories..."
 electronics = Catalog::Category.find_or_create_by!(name: "Electronics") { |c| c.description = "Gadgets, devices, and accessories" }
-phones = Catalog::Category.find_or_create_by!(name: "Phones") { |c| c.description = "Smartphones and mobile devices"; c.parent = electronics }
-laptops = Catalog::Category.find_or_create_by!(name: "Laptops") { |c| c.description = "Portable computers"; c.parent = electronics }
-accessories = Catalog::Category.find_or_create_by!(name: "Accessories") { |c| c.description = "Cases, chargers, and more"; c.parent = electronics }
+phones = Catalog::Category.find_or_create_by!(name: "Phones") { |c|
+  c.description = "Smartphones and mobile devices"
+  c.parent = electronics
+}
+laptops = Catalog::Category.find_or_create_by!(name: "Laptops") { |c|
+  c.description = "Portable computers"
+  c.parent = electronics
+}
+accessories = Catalog::Category.find_or_create_by!(name: "Accessories") { |c|
+  c.description = "Cases, chargers, and more"
+  c.parent = electronics
+}
 clothing = Catalog::Category.find_or_create_by!(name: "Clothing") { |c| c.description = "Apparel and fashion" }
 books = Catalog::Category.find_or_create_by!(name: "Books") { |c| c.description = "Physical and digital books" }
 

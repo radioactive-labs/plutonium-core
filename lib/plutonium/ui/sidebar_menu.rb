@@ -121,7 +121,6 @@ module Plutonium
           )
         end
       end
-
     end
   end
 end

@@ -11,7 +11,7 @@ require "plutonium/ui/table/components/toolbar"
 class Plutonium::UI::Table::Components::ViewSwitcherTest < Minitest::Test
   def test_renders_three_segments
     html = build_view_switcher.call
-    assert_equal 3, html.scan(/<button/).length
+    assert_equal 3, html.scan("<button").length
   end
 
   def test_grid_segment_is_active_by_default
@@ -55,7 +55,7 @@ class Plutonium::UI::Table::Components::ViewSwitcherTest < Minitest::Test
     html = build_view_switcher.call
     # Only the active (Grid) button has aria-selected; disabled segments omit it
     # Phlex renders boolean false by omitting the attribute entirely
-    selected_count = html.scan(/aria-selected/).length
+    selected_count = html.scan("aria-selected").length
     assert_equal 1, selected_count, "Only 1 segment (Grid) should have aria-selected"
   end
 
@@ -66,7 +66,7 @@ class Plutonium::UI::Table::Components::ViewSwitcherTest < Minitest::Test
 
   def test_renders_tab_role_on_each_segment
     html = build_view_switcher.call
-    assert_equal 3, html.scan(/role="tab"/).length
+    assert_equal 3, html.scan('role="tab"').length
   end
 
   private
@@ -176,7 +176,7 @@ class Plutonium::UI::Table::Components::ToolbarTest < Minitest::Test
   def test_renders_two_vertical_dividers
     html = render_toolbar
     # The divider is a w-px div
-    assert_operator html.scan(/w-px/).length, :>=, 2
+    assert_operator html.scan("w-px").length, :>=, 2
   end
 
   private

@@ -18,8 +18,13 @@ class Plutonium::Testing::NestedResourceTest < ActionDispatch::IntegrationTest
     login_as(@user, portal: :user)
   end
 
-  def parent_record!; @org_a; end
-  def other_parent_record!; @org_b; end
+  def parent_record!
+    @org_a
+  end
+
+  def other_parent_record!
+    @org_b
+  end
 
   def create_resource!(parent:)
     create_post!(user: @user, organization: parent)
