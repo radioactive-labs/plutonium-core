@@ -51,7 +51,7 @@ module Plutonium
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?
       @enable_hotreload = Rails.env.development?
-      @shell = :classic
+      @shell = :modern
     end
 
     # Load default configuration for a specific version
