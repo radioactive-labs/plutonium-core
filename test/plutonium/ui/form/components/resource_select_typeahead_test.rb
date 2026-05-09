@@ -64,6 +64,35 @@ class Plutonium::UI::Form::Components::ResourceSelectTypeaheadTest < Minitest::T
     assert_equal [], results
   end
 
+  def test_typeahead_attributes_unset_when_option_missing
+    widget = build_widget
+    attrs = {}
+    widget.define_singleton_method(:attributes) { attrs }
+    widget.send(:configure_typeahead_attributes!, nil)
+    assert_empty attrs
+  end
+
+  def test_typeahead_attributes_skipped_when_url_resolution_fails
+    widget = build_widget
+    # Force typeahead_url_for to return nil
+    widget.define_singleton_method(:typeahead_url_for) { |_| nil }
+    attrs = {}
+    widget.define_singleton_method(:attributes) { attrs }
+    widget.send(:configure_typeahead_attributes!, true)
+    assert_empty attrs
+  end
+
+  def test_typeahead_attributes_added_when_url_resolves
+    widget = build_widget
+    widget.define_singleton_method(:typeahead_url_for) { |_| "/admin/users/typeahead/input/manager" }
+    widget.define_singleton_method(:tokens) { |*args| args.compact.join(" ") }
+    attrs = {data_controller: "slim-select"}
+    widget.define_singleton_method(:attributes) { attrs }
+    widget.send(:configure_typeahead_attributes!, true)
+    assert_match(/resource-select/, attrs[:data_controller])
+    assert_equal "/admin/users/typeahead/input/manager", attrs[:data_resource_select_url_value]
+  end
+
   private
 
   def build_widget(**options)

@@ -55,6 +55,8 @@ module Plutonium
             @skip_authorization = attributes.delete(:skip_authorization)
             @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
             attributes.delete(:choice_limit)
+
+            configure_typeahead_attributes!(attributes.delete(:typeahead))
           end
 
           # SGIDs include a timestamp + signature, so the SGID in the URL
@@ -153,6 +155,46 @@ module Plutonium
           end
 
           private
+
+          # When typeahead opts in, attach the resource-select Stimulus
+          # controller and its URL value. The rendered <select> becomes a
+          # backend-driven autocomplete; existing eager-list behavior is
+          # preserved when typeahead is unset.
+          def configure_typeahead_attributes!(typeahead_option)
+            return unless typeahead_option
+            url = typeahead_url_for(typeahead_option)
+            return unless url
+
+            attributes[:data_controller] = tokens(attributes[:data_controller], "resource-select")
+            attributes[:data_resource_select_url_value] = url
+          end
+
+          def typeahead_url_for(typeahead_option)
+            controller = helpers.controller
+            return nil unless controller.respond_to?(:resource_class)
+
+            resource = controller.resource_class
+            kind, name = typeahead_kind_and_name(typeahead_option)
+            return nil unless name
+
+            route_key = resource.model_name.route_key
+            helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
+            return nil unless helpers.respond_to?(helper)
+
+            helpers.public_send(helper, name: name)
+          rescue StandardError
+            nil
+          end
+
+          def typeahead_kind_and_name(option)
+            if option.is_a?(Hash)
+              [option[:kind] || :input, option[:name]]
+            else
+              # `typeahead: true` — infer name from the field's dom name (the
+              # field key the form is rendering).
+              [:input, field.dom.name]
+            end
+          end
 
           def filter_static_choices(choices, query)
             return choices if query.blank?
