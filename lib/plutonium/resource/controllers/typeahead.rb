@@ -14,6 +14,10 @@ module Plutonium
 
         included do
           before_action :authorize_typeahead!, only: %i[typeahead_input typeahead_filter]
+          # Typeahead is read-only and JSON-only; the policy.relation_scope
+          # gate inside the Searchable widget already enforces row-level
+          # auth, so the after_action verifier is redundant here.
+          skip_verify_current_authorized_scope only: %i[typeahead_input typeahead_filter]
         end
 
         # GET /<resource>/typeahead/input/:name?q=...
@@ -59,7 +63,7 @@ module Plutonium
         end
 
         def authorize_typeahead!
-          authorize! resource_class, to: :typeahead?
+          authorize_current! resource_class, to: :typeahead?
         end
       end
     end

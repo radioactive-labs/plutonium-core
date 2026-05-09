@@ -14,9 +14,11 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     controller = Class.new do
       attr_accessor :rendered, :head_status
 
-      # Stub before_action so the concern's `included` block doesn't blow up
-      # when included into a plain Ruby class outside of Rails.
+      # Stub Rails class-level callbacks so the concern's `included` block
+      # doesn't blow up when included into a plain Ruby class outside of
+      # Rails (no AbstractController inheritance, no Authorizable mixin).
       def self.before_action(*) = nil
+      def self.skip_verify_current_authorized_scope(*) = nil
 
       include Plutonium::Resource::Controllers::Typeahead
       # Stub Rails plumbing.
