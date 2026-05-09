@@ -95,17 +95,13 @@ module Plutonium
         script: "plutonium.min.js"
       }.freeze
 
-      # @return [String] path to logo file
-      # @return [String] path to favicon file
-      # @return [String] path to stylesheet file
-      # @return [String] path to JavaScript file
-
       def initialize
         @customized = {}
         DEFAULTS.each { |key, value| instance_variable_set(:"@#{key}", value) }
       end
 
       DEFAULTS.each_key do |attr|
+        # @return [String]
         attr_reader attr
 
         define_method(:"#{attr}=") do |value|
