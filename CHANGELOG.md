@@ -1,3 +1,15 @@
+## [0.50.0] - 2026-05-11
+
+### 🚀 Features
+
+- *(ui)* UI layout overhaul: modern shell, slideovers, filters, Grid view (#52)
+- *(css)* Style WebKit autofill on .pu-input variants
+
+### 🐛 Bug Fixes
+
+- *(ui/form)* Suppress label and chrome for hidden fields
+- *(generators/rails_pulse)* Inject recurring tasks under env blocks
+- *(bulk_actions)* Selection cells survive table re-renders
 ## [0.49.1] - 2026-05-06
 
 ### 🚀 Features
