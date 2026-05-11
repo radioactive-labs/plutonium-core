@@ -49,6 +49,16 @@ export default class extends Controller {
   }
 
   frameLoading(event) {
+    // turbo:click / turbo:submit-start bubble from links and forms inside
+    // the frame, even when those links target a different frame
+    // (e.g. data-turbo-frame="remote_modal"). Without this filter, the
+    // pulse animation is triggered for navigations that never resolve
+    // against this frame, leaving it stuck in a loading state.
+    if (event) {
+      const trigger = event.target.closest("a, form")
+      const requested = trigger?.dataset?.turboFrame
+      if (requested && requested !== this.frameTarget.id) return
+    }
     this.#loadingStarted()
   }
 
@@ -79,20 +89,38 @@ export default class extends Controller {
   homeButtonClicked(event) {
     this.frameLoading(null)
 
+    // Clear history immediately so Back/Home vanish during the load.
+    this.srcHistory = [this.originalFrameSrc]
+    this.#updateNavigationButtonsDisplay()
+
+    // Mark the next frame load as "home" so notifySrcChanged doesn't
+    // push the loaded URL onto a fresh stack (the loaded URL may differ
+    // from originalFrameSrc due to redirects / trailing slashes).
+    this._homeRequested = true
+
+    // Force a reload even if frame.src already matches the original
+    // (a same-value assignment wouldn't fire turbo:frame-load).
     this.frameTarget.src = this.originalFrameSrc
+    this.frameTarget.reload()
   }
 
   get currentSrc() { return this.srcHistory[this.srcHistory.length - 1] }
 
   #notifySrcChanged(src) {
-    if (src == this.currentSrc) {
-      // this must be a refresh
-      // do nothing
-    }
-    else if (src == this.originalFrameSrc)
+    if (this._homeRequested) {
+      // Home click: capture the actually-loaded URL as the new singleton
+      // history root (handles redirect/trailing-slash differences from
+      // originalFrameSrc).
+      this._homeRequested = false
       this.srcHistory = [src]
-    else
+      this.originalFrameSrc = src
+    } else if (src == this.currentSrc) {
+      // refresh — do nothing
+    } else if (src == this.originalFrameSrc) {
+      this.srcHistory = [src]
+    } else {
       this.srcHistory.push(src)
+    }
 
     this.#updateNavigationButtonsDisplay()
     if (this.hasMaximizeLinkTarget) this.maximizeLinkTarget.href = src

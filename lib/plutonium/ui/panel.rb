@@ -1,5 +1,8 @@
 module Plutonium
   module UI
+    # A lightweight panel: optional title + action items rendered as a small
+    # floating cluster in the top-right of the panel; content fills the panel
+    # body. No outer card chrome — the panel sits flush in its host.
     class Panel < Plutonium::UI::Component::Base
       def initialize
         @items = []
@@ -23,30 +26,18 @@ module Plutonium
       end
 
       def view_template
-        wrapped do
-          render_toolbar if render_toolbar?
-          render_content if render_content?
-        end
+        render_toolbar if render_toolbar?
+        render_content if render_content?
       end
 
       private
 
-      def wrapped(&)
-        div(class: "mt-8", &)
-      end
-
       def render_toolbar
-        div(class: "flex justify-between items-center mb-6") do
-          if @title
-            h5(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") do
-              @title
-            end
+        div(class: "flex items-center justify-end gap-0.5 mb-2") do
+          if @title.present?
+            span(class: "mr-auto text-[10px] font-semibold uppercase tracking-wider text-[var(--pu-text-muted)]") { @title }
           end
-          div(class: "flex gap-3") do
-            @items.each do |item|
-              render item
-            end
-          end
+          @items.each { |item| render item }
         end
       end
 
@@ -55,7 +46,7 @@ module Plutonium
       end
 
       def render_toolbar?
-        @title || @items
+        @title.present? || @items.any?
       end
 
       def render_content?

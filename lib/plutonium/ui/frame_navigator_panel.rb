@@ -10,12 +10,14 @@ module Plutonium
 
         def view_template
           button(
+            type: "button",
             title: @label,
+            aria: {label: @label},
             style: "display: none",
-            class: "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
+            class: "inline-flex items-center justify-center w-7 h-7 rounded text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors",
             **@attributes
           ) {
-            render @icon.new(class: "w-6 h-6")
+            render @icon.new(class: "w-4 h-4")
           }
         end
       end
@@ -31,11 +33,12 @@ module Plutonium
         def view_template
           a(
             title: @label,
-            class: "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
+            aria: {label: @label},
             href: @href,
+            class: "inline-flex items-center justify-center w-7 h-7 rounded text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors",
             **@attributes
           ) {
-            render @icon.new(class: "w-6 h-6")
+            render @icon.new(class: "w-4 h-4")
           }
         end
       end

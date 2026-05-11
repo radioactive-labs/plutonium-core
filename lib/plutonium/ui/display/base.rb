@@ -46,7 +46,9 @@ module Plutonium
 
         def fields_wrapper(&)
           div(class: themed(:fields_wrapper)) {
-            yield
+            div(class: themed(:fields_inner)) {
+              yield
+            }
           }
         end
       end

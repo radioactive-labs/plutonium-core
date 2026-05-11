@@ -35,6 +35,10 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     component = Plutonium::UI::Form::Components::ResourceSelect.allocate
     component.instance_variable_set(:@raw_choices, raw_choices)
     component.instance_variable_set(:@association_class, association_class)
+    # Skip the authorized_resource_scope path — it calls view_context,
+    # which is unavailable outside a render cycle.
+    component.instance_variable_set(:@skip_authorization, true)
+    component.instance_variable_set(:@choice_limit, nil)
     component
   end
 

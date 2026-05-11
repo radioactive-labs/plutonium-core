@@ -19,7 +19,14 @@ module Plutonium
         end
 
         def render_default_content
-          render partial("resource_details")
+          if aside_present?
+            div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-6") do
+              div { render partial("resource_details") }
+              aside(class: "hidden lg:block") { render_aside }
+            end
+          else
+            render partial("resource_details")
+          end
         end
 
         def page_type = :show_page

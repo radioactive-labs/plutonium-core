@@ -8,7 +8,8 @@ module Plutonium
           super.merge({
             base: "",
             value_wrapper: "max-h-[300px] overflow-y-auto",
-            fields_wrapper: "p-8 grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-x-8 gap-y-8 grid-flow-row-dense",
+            fields_wrapper: "pu-card",
+            fields_inner: "pu-card-body grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-x-8 gap-y-6 grid-flow-row-dense",
 
             # Labels and descriptions
             label: "text-sm font-semibold uppercase tracking-wide text-[var(--pu-text-muted)] mb-2",

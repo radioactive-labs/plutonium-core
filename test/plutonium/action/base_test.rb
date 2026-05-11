@@ -105,6 +105,27 @@ module Plutonium
           Base.new(:invalid_route, route_options: "invalid")
         end
       end
+
+      def test_modal_defaults_to_centered
+        action = Base.new(:default_action)
+        assert_equal :centered, action.modal
+      end
+
+      def test_modal_accepts_centered
+        action = Base.new(:modal_action, modal: :centered)
+        assert_equal :centered, action.modal
+      end
+
+      def test_modal_accepts_slideover
+        action = Base.new(:modal_action, modal: :slideover)
+        assert_equal :slideover, action.modal
+      end
+
+      def test_modal_raises_on_invalid_value
+        assert_raises(ArgumentError) do
+          Base.new(:modal_action, modal: :fullscreen)
+        end
+      end
     end
   end
 end

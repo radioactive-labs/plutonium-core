@@ -8,7 +8,7 @@ module Plutonium
       end
 
       def view_template
-        div(class: "pu-card") do
+        div(class: "pu-card mt-4") do
           div(class: "pu-empty-state") do
             p(class: "pu-empty-state-description") { message }
             yield if block_given?

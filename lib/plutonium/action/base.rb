@@ -16,7 +16,7 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to, :modal
 
       # Initialize a new action.
       #
@@ -57,6 +57,8 @@ module Plutonium
         @resource_action = options[:resource_action] || false
         @category = ActiveSupport::StringInquirer.new((options[:category] || :secondary).to_s)
         @position = options[:position] || 50
+        @modal = options[:modal] || :centered
+        validate_modal!
 
         freeze
       end
@@ -85,7 +87,48 @@ module Plutonium
         policy.allowed_to?(:"#{name}?")
       end
 
+      # Returns a new Action with the given options merged over this one.
+      # Used by the resource definition to derive variants (e.g. dropping
+      # `turbo_frame` when `modal false` is configured) without mutating
+      # the frozen original.
+      def with(**overrides)
+        self.class.new(name, **to_options.merge(overrides))
+      end
+
+      protected
+
+      # Canonical representation for reconstruction via `with`. Every
+      # attribute set in `initialize` MUST appear here; otherwise
+      # `with(**overrides)` would silently drop it on round-trip.
+      # `category` is exposed as a Symbol since `initialize` re-wraps
+      # it in StringInquirer.
+      def to_options
+        {
+          label: @label,
+          description: @description,
+          icon: @icon,
+          color: @color,
+          confirmation: @confirmation,
+          route_options: @route_options,
+          turbo: @turbo,
+          turbo_frame: @turbo_frame,
+          return_to: @return_to,
+          bulk_action: @bulk_action,
+          collection_record_action: @collection_record_action,
+          record_action: @record_action,
+          resource_action: @resource_action,
+          category: @category.to_sym,
+          position: @position,
+          modal: @modal
+        }
+      end
+
       private
+
+      def validate_modal!
+        return if [:centered, :slideover].include?(@modal)
+        raise ArgumentError, "modal must be :centered or :slideover, got #{@modal.inspect}"
+      end
 
       # Build RouteOptions from the provided options
       #

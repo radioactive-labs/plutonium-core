@@ -2,8 +2,8 @@ require "phlexi-menu"
 
 module Plutonium
   module UI
-    # A sidebar navigation component that renders a max depth of 2 levels
-    # Provides collapsible menu sections and is compatible with turbo-permanent
+    # A sidebar navigation component that renders a max depth of 2 levels.
+    # Provides collapsible menu sections and is compatible with turbo-permanent.
     class SidebarMenu < Phlexi::Menu::Component
       include Plutonium::UI::Component::Behaviour
 
@@ -63,29 +63,6 @@ module Plutonium
           end
         end
       end
-
-      # def render_items(items, depth = 0)
-      #   return if depth >= @max_depth
-
-      #   if depth.zero?
-      #     ul(class: themed(:items_container, depth)) do
-      #       items.each do |item|
-      #         render_item_wrapper(item, depth)
-      #       end
-      #     end
-      #   else
-      #     # Use collapsible rendering for nested levels
-      #     ul(
-      #       id: generate_menu_id(:root),
-      #       class: themed(:sub_items_container, depth),
-      #       data: {"resource-collapse-target": "menu"}
-      #     ) do
-      #       items.each do |item|
-      #         render_item_wrapper(item, depth)
-      #       end
-      #     end
-      #   end
-      # end
 
       def render_item_wrapper(item, depth)
         wrapper_attrs = {

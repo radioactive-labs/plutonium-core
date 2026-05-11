@@ -1,0 +1,103 @@
+{
+  "planPath": "docs/superpowers/plans/2026-05-07-ui-layout-overhaul.md",
+  "tasks": [
+    {
+      "id": 7,
+      "subject": "Task 0: Density tokens",
+      "status": "pending",
+      "description": "**Goal:** Codify balanced density scale.\n\n```json:metadata\n{\"files\":[\"src/css/tokens.css\",\"src/css/components.css\",\"lib/plutonium/ui/component/tokens.rb\"],\"verifyCommand\":\"yarn build && bundle exec appraisal rails-8.1 rake test\",\"acceptanceCriteria\":[\"density vars defined\",\"button/input sizes updated\",\"card padding 16px\",\"tests pass\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 1: PageHeader redesign (Stripe-style)",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Tighter Stripe-style PageHeader.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/page_header.rb\",\"lib/plutonium/ui/page/base.rb\",\"test/plutonium/ui/page_header_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/page_header_test.rb -v\",\"acceptanceCriteria\":[\"title 18-20px\",\"description muted\",\"actions right-aligned\",\"tabs flush\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 2: IconRail component",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** 56px icon-only nav.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/layout/icon_rail.rb\",\"test/plutonium/ui/layout/icon_rail_test.rb\",\"src/css/components.css\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/layout/icon_rail_test.rb -v\",\"acceptanceCriteria\":[\"aside 56px\",\"slots present\",\"active styling\",\"mobile-hidden\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 3: Topbar component",
+      "status": "pending",
+      "blockedBy": [7],
+      "description": "**Goal:** Sticky 48px topbar.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/layout/topbar.rb\",\"lib/plutonium/ui/breadcrumbs.rb\",\"test/plutonium/ui/layout/topbar_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/layout/topbar_test.rb -v\",\"acceptanceCriteria\":[\"48px height\",\"breadcrumbs/search/actions slots\",\"hamburger wired\",\"empty-breadcrumbs handled\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 4: Wire ResourceLayout to new shell",
+      "status": "pending",
+      "blockedBy": [9, 10],
+      "description": "**Goal:** Replace partials with IconRail+Topbar; drop legacy.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/layout/resource_layout.rb\",\"lib/plutonium/ui/layout/base.rb\",\"lib/plutonium/ui/layout/header.rb\",\"lib/plutonium/ui/layout/sidebar.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 rake test\",\"acceptanceCriteria\":[\"new shell wired\",\"old partials removed\",\"tests pass\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 5: Index toolbar",
+      "status": "pending",
+      "blockedBy": [7, 8],
+      "description": "**Goal:** New Toolbar component (view switcher, filter, group, search, column-config, overflow).\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/table/components/toolbar.rb\",\"lib/plutonium/ui/table/components/view_switcher.rb\",\"lib/plutonium/ui/table/resource.rb\",\"test/plutonium/ui/table/components/toolbar_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/table/components/toolbar_test.rb -v\",\"acceptanceCriteria\":[\"toolbar order\",\"search wired\",\"filter popover\",\"disabled segments\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 6: Active filter pills + result count",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Removable filter pills + result count strip.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/table/components/filter_pills.rb\",\"lib/plutonium/ui/table/resource.rb\",\"lib/plutonium/resource/query_object.rb\",\"test/plutonium/ui/table/components/filter_pills_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/table/components/filter_pills_test.rb -v\",\"acceptanceCriteria\":[\"pill per filter\",\"add-filter pill\",\"clear URL\",\"result count\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 14,
+      "subject": "Task 7: Column-header sort with multi-sort + ⋯ menu",
+      "status": "pending",
+      "blockedBy": [12],
+      "description": "**Goal:** Sort in column headers, shift-click multi-sort, per-column ⋯ menu.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/resource/query_object.rb\",\"lib/plutonium/ui/table/resource.rb\",\"lib/plutonium/ui/table/theme.rb\",\"src/js/controllers/table_controller.js\",\"test/plutonium/resource/query_object_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/resource/query_object_test.rb -v\",\"acceptanceCriteria\":[\"sort_params_for has multi_url\",\"click vs shift-click\",\"priority badges\",\"column menu\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 15,
+      "subject": "Task 8: Floating bulk action bar",
+      "status": "pending",
+      "blockedBy": [13],
+      "description": "**Goal:** Bulk action bar replaces pills strip when rows selected.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/table/components/bulk_action_bar.rb\",\"lib/plutonium/ui/table/resource.rb\",\"src/js/controllers/bulk_actions_controller.js\",\"test/plutonium/ui/table/components/bulk_action_bar_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/table/components/bulk_action_bar_test.rb -v\",\"acceptanceCriteria\":[\"bar/pills mutual exclusion\",\"selection count\",\"danger tone\",\"clear deselect\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 16,
+      "subject": "Task 9: Show page redesign",
+      "status": "pending",
+      "blockedBy": [8],
+      "description": "**Goal:** Single-column show + reserved aside slot.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/page/show.rb\",\"lib/plutonium/ui/page/base.rb\",\"lib/plutonium/ui/display/resource.rb\",\"lib/plutonium/ui/panel.rb\",\"test/plutonium/ui/page/show_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/page/show_test.rb -v\",\"acceptanceCriteria\":[\"max-width 960\",\"card panels\",\"aside slot reserved\",\"tabs flush\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 17,
+      "subject": "Task 10: Form page redesign + sticky footer",
+      "status": "pending",
+      "blockedBy": [8],
+      "description": "**Goal:** Centered narrow form column + sticky footer + inline validation.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/ui/page/new.rb\",\"lib/plutonium/ui/page/edit.rb\",\"lib/plutonium/ui/page/interactive_action.rb\",\"lib/plutonium/ui/form/resource.rb\",\"lib/plutonium/ui/form/interaction.rb\",\"lib/plutonium/ui/form/theme.rb\",\"lib/plutonium/ui/form/components/sticky_footer.rb\",\"test/plutonium/ui/form/sticky_footer_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/form -v\",\"acceptanceCriteria\":[\"580px centered\",\"sticky footer\",\"inline validation\",\"modal mode skips footer\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 18,
+      "subject": "Task 11: Slideover modal mode + per-interaction option",
+      "status": "pending",
+      "blockedBy": [17],
+      "description": "**Goal:** Add slideover mode; opt-in via interactive_action :name, modal: :slideover.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/resource/interaction.rb\",\"lib/plutonium/interaction/base.rb\",\"src/js/controllers/remote_modal_controller.js\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction -v\",\"acceptanceCriteria\":[\"modal: kwarg accepted\",\"two outer containers\",\"slideover transition\",\"mobile full-screen\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 19,
+      "subject": "Task 12: Per-resource modal declaration",
+      "status": "pending",
+      "blockedBy": [18],
+      "description": "**Goal:** modal :slideover on resource definition for new/edit modal mode.\n\n```json:metadata\n{\"files\":[\"lib/plutonium/resource/definition.rb\",\"test/plutonium/resource/definition_test.rb\"],\"verifyCommand\":\"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/resource/definition_test.rb -v\",\"acceptanceCriteria\":[\"modal DSL on definition\",\"invalid raises\",\"modal frame uses declared mode\",\"page URLs unchanged\"],\"requiresUserVerification\":false}\n```"
+    },
+    {
+      "id": 20,
+      "subject": "Task 13: Documentation + changelog",
+      "status": "pending",
+      "blockedBy": [16, 19],
+      "description": "**Goal:** Document overhaul; update skills.\n\n```json:metadata\n{\"files\":[\"docs/guides/ui-overhaul-2026.md\",\"CHANGELOG.md\",\".claude/skills/plutonium-views.md\"],\"verifyCommand\":\"yarn docs:build\",\"acceptanceCriteria\":[\"upgrade guide written\",\"skills updated\",\"changelog entry\",\"docs build passes\"],\"requiresUserVerification\":false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-05-07"
+}

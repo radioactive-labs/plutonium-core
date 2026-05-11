@@ -211,6 +211,10 @@ rails generate pu:res:conn Post --dest=admin_portal
 Plutonium.configure do |config|
   config.load_defaults 1.0
 
+  # Page chrome. Default :modern (topbar + icon rail). Set :classic
+  # only when upgrading and you want to keep the legacy header + sidebar.
+  # config.shell = :classic
+
   # Custom assets (optional)
   # config.assets.stylesheet = "custom_stylesheet"
   # config.assets.script = "custom_script"
@@ -311,6 +315,8 @@ For models that already exist in your app:
 | `pu:res:scaffold NAME` | Create resource (model, policy, definition, controller) |
 | `pu:res:conn NAME` | Connect resource to portal |
 | `pu:eject:layout` | Eject layout files for customization |
+| `pu:eject:shell` | Eject the topbar/sidebar partials so you can customize chrome per-portal |
+| `pu:core:update` | Update the plutonium gem + npm package |
 | `pu:skills:sync` | Sync Claude Code skills to project |
 
 ## Related Skills

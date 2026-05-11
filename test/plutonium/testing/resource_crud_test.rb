@@ -59,9 +59,17 @@ class Plutonium::Testing::ResourceCrudSkipTest < ActionDispatch::IntegrationTest
     login_as(@admin)
   end
 
-  def create_resource!; create_post!; end
-  def valid_create_params; {}; end
-  def valid_update_params; {}; end
+  def create_resource!
+    create_post!
+  end
+
+  def valid_create_params
+    {}
+  end
+
+  def valid_update_params
+    {}
+  end
 
   test "only generates index test (show is skipped)" do
     methods = self.class.runnable_methods.select { |m| m.start_with?("test_crud") }

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/profile/concerns/profile_arguments"
@@ -9,6 +8,7 @@ class ProfileArgumentsConcernTest < ActiveSupport::TestCase
   # Create a test generator class that includes the concern
   class TestGenerator < ::Rails::Generators::Base
     include Pu::Profile::Concerns::ProfileArguments
+
     class_option :user_model, type: :string, default: "User"
   end
 

@@ -32,6 +32,9 @@ module Plutonium
 
         # standard CRUD actions
 
+        # turbo_frame for :new and :edit is set by
+        # Resource::Definition.configure_crud_modal_targets! based on the
+        # `modal` config. Don't hard-code it here.
         action(:new, route_options: {action: :new},
           resource_action: true, category: :primary,
           icon: Phlex::TablerIcons::Plus, position: 10)

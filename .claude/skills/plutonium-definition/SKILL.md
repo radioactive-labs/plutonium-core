@@ -1,6 +1,6 @@
 ---
 name: plutonium-definition
-description: Use BEFORE editing a resource definition — adding fields, inputs, displays, columns, search, filters, scopes, custom actions, or bulk actions.
+description: Use BEFORE editing a resource definition — adding fields, inputs, displays, columns, metadata, index views (table/grid), search, filters, scopes, custom actions, modal/slideover behavior, or bulk actions.
 ---
 
 # Plutonium Resource Definitions
@@ -582,8 +582,18 @@ class PostDefinition < ResourceDefinition
   # true = always show
   # false = always hide
   submit_and_continue false
+
+  # How `:new` / `:edit` render. Default is :slideover.
+  #   :slideover — slide-in panel from the right (default)
+  #   :centered  — centered dialog
+  #   false      — full standalone pages (no modal)
+  modal :centered
 end
 ```
+
+The `modal` setting only affects the framework-provided `:new` / `:edit`
+actions. Custom actions render in their own dialog, controlled by the
+per-action `modal:` option (`:centered` default, or `:slideover`).
 
 ## Page Customization
 
@@ -616,6 +626,74 @@ class PostDefinition < ResourceDefinition
   end
 end
 ```
+
+## Metadata Panel (Show Page)
+
+The `metadata` DSL declares a list of fields rendered in the show page's
+right-side aside as label/value rows. The main details card and the
+metadata aside share the same field-rendering machinery, so labels and
+formatting come from your existing `field` / `display` declarations.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  metadata :author, :state, :created_at, :updated_at
+end
+```
+
+Behavior:
+
+- **Opt-in.** No `metadata` call → the show page renders full-width with
+  no aside.
+- **Policy-aware.** Metadata fields are intersected with the policy's
+  permitted attributes. Fields the user can't see disappear from the
+  panel; the panel auto-hides when nothing is permitted.
+- **Deduplicated.** Fields listed in `metadata` are removed from the main
+  details card so the same value never appears twice.
+- **Responsive.** Side-by-side at `lg+`, stacked single-column below.
+
+Use it for chrome that's not the focus of the record — timestamps,
+ownership, system flags — keeping the main card focused on the record's
+substance.
+
+## Index Views (Table & Grid)
+
+Resources can opt into a card-based **Grid** view alongside the default
+**Table** view. Users can switch between the two and the choice is
+persisted per-resource via cookie.
+
+```ruby
+class UserDefinition < ResourceDefinition
+  views :table, :grid       # enable both; user can switch
+  default_view :grid        # initial view if no cookie
+
+  grid_fields(
+    image:     :avatar,     # ActiveStorage attachment, Shrine, or URL
+    header:    :name,       # falls back to record.to_label
+    subheader: :email,
+    body:      :bio,
+    meta:      [:role, :status],   # rendered as small pills
+    footer:    :last_seen_at       # falls back to :created_at
+  )
+
+  grid_layout :media        # :compact (default) or :media
+  grid_columns 3            # pin to 3 cols on lg+; default is 1/2/3/4 responsive
+end
+```
+
+DSL surface:
+
+| Method | Purpose |
+|--------|---------|
+| `views :table, :grid` | Which views are available. Default `[:table]`. |
+| `default_view :grid` | Initial view when no cookie. Falls back to first view in `views`. |
+| `grid_fields(...)` | Maps card slots to fields. **Implicitly enables `:grid`** if not already in `views`. |
+| `grid_layout :media` | `:compact` (image left of content) or `:media` (full-width image on top). |
+| `grid_columns 3` | Override responsive column count on lg+. |
+
+Grid slots are all optional — `:image`, `:header`, `:subheader`, `:body`,
+`:meta`, `:footer`. `:meta` accepts an array; the rest are single
+fields. Slots that point at fields not permitted by the user's policy
+collapse silently.
 
 ## Context in Blocks
 
@@ -941,8 +1019,15 @@ action :name,
   # Behavior
   confirmation: "Are you sure?",
   turbo_frame: "_top",
-  route_options: {action: :foo}
+  route_options: {action: :foo},
+  modal: :slideover                # :centered (default) or :slideover —
+                                    # how the action's interaction form renders
 ```
+
+**`Action#with(...)`** — actions are frozen value objects. To derive a
+variant (typically inside `customize_actions`) call
+`existing_action.with(turbo_frame: nil)` for a new copy with the
+overrides applied.
 
 ### Creating an Interaction
 

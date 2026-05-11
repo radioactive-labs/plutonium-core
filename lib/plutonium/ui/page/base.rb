@@ -11,13 +11,15 @@ module Plutonium
         end
 
         def view_template(&block)
-          DynaFrameContent(page_content(block)) do |frame|
+          body = block || proc { render_default_content }
+
+          DynaFrameContent() do
             render_before_header
             render_header
             render_after_header
 
             render_before_content
-            frame.render_content
+            body.call
             render_after_content
 
             render_before_footer
@@ -51,6 +53,11 @@ module Plutonium
         end
 
         def render_breadcrumbs?
+          # Hide breadcrumbs when rendered inside a turbo frame — the host
+          # page already provides the navigation context (e.g., association
+          # tabs on a parent show page).
+          return false if in_frame?
+
           # Check specific page setting first, fall back to global setting
           page_specific_setting = current_definition.send(:"#{page_type}_breadcrumbs")
           page_specific_setting.nil? ? current_definition.breadcrumbs : page_specific_setting
@@ -66,10 +73,6 @@ module Plutonium
           # Implement toolbar content
         end
 
-        def page_content(block)
-          block || proc { render_default_content }
-        end
-
         def render_default_content
           raise NotImplementedError, "#{self.class}#render_default_content"
         end
@@ -77,6 +80,22 @@ module Plutonium
         def render_footer
           # Implement footer content
         end
+
+        # Renders the optional aside (right-side panel) on show pages.
+        # No-op by default; future metadata DSL will populate this slot.
+        def render_aside
+        end
+
+        # True when the show layout should reserve space for the aside.
+        # Returns false by default; pages opt-in by overriding.
+        def aside_present? = false
+
+        # True when the page is rendered inside any turbo frame.
+        def in_frame? = current_turbo_frame.present?
+
+        # True when the page is rendered inside the remote_modal turbo frame.
+        # Used by form pages to suppress the sticky footer (modal owns its own footer).
+        def in_modal? = current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
 
         # Customization hooks
         def render_before_header

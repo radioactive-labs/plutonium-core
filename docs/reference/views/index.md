@@ -338,6 +338,49 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+## Page Chrome (Shell)
+
+`Plutonium.configuration.shell` controls the layout shipped above the resource pages. The default is **`:modern`** (topbar + icon rail) — leave it alone unless you're upgrading from a pre-`:modern` version and want to keep the legacy header + sidebar:
+
+```ruby
+Plutonium.configure do |config|
+  config.shell = :classic
+end
+```
+
+To customize the shipped chrome per-portal, eject the templates:
+
+```bash
+rails generate pu:eject:shell --dest=admin_portal
+```
+
+This copies `_resource_header.html.erb` and `_resource_sidebar.html.erb` into the portal's `app/views/plutonium/`.
+
+## Modal & Slideover Forms
+
+Framework-provided `:new` / `:edit` actions render inline inside a modal. Choose the chrome per-resource via [`modal`](/reference/definition/#form-configuration) on the definition (`:slideover` default, `:centered`, or `false`).
+
+Custom interactive actions render in their own dialog. Each action carries its own [`modal:` option](/reference/definition/actions#action-options) (`:centered` default, or `:slideover`).
+
+### Detecting Render Context
+
+In custom Page / Form components:
+
+| Helper | True when |
+|--------|-----------|
+| `in_frame?` | Request is targeting a turbo-frame |
+| `in_modal?` | Request is rendering inside a modal/slideover |
+
+Use them to pin action strips, omit nav chrome, or swap layouts.
+
+## Tabs & URL Hash
+
+Show pages with associations render the **Details** tab first followed by one tab per permitted association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reloads / back navigation. Tab rows scroll horizontally on narrow viewports rather than wrapping.
+
+## Show Page Metadata Panel
+
+The [`metadata` DSL](/reference/definition/#show-page-metadata-panel) on the definition opts a resource into a right-side aside that renders selected fields as label/value rows alongside the main details. The aside collapses to a single-column stack below the `lg` breakpoint and disappears entirely when no listed field is permitted by policy.
+
 ## Layout Customization
 
 ### Custom Layout Class

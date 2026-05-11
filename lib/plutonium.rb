@@ -22,6 +22,12 @@ module Plutonium
   # Custom error class for Plutonium-specific exceptions
   class Error < StandardError; end
 
+  # Turbo frame id used by the modal/slideover renderer. The layout wraps
+  # itself in this frame, in_modal? checks against it, and Action and
+  # Definition default to targeting it. Kept as a single constant so the
+  # frame name lives in one place.
+  REMOTE_MODAL_FRAME = "remote_modal"
+
   # Set up Zeitwerk loader for the Plutonium gem
   # @return [Zeitwerk::Loader] configured Zeitwerk loader instance
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|

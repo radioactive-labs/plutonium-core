@@ -74,11 +74,17 @@ class Plutonium::UI::Form::SubmitAndContinueTest < ActiveSupport::TestCase
   private
 
   def build_form(object, definition:, singular:)
-    Plutonium::UI::Form::Resource.new(
+    form = Plutonium::UI::Form::Resource.new(
       object,
       resource_fields: [:email],
       resource_definition: definition,
       singular_resource: singular
     )
+    # show_submit_and_continue? short-circuits when rendered inside a
+    # turbo frame; stub the helper out so the unit-level config logic
+    # runs in isolation (helpers.view_context is unavailable outside
+    # a render cycle).
+    form.define_singleton_method(:current_turbo_frame) { nil }
+    form
   end
 end

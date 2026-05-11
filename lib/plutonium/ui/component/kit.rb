@@ -78,6 +78,8 @@ module Plutonium
 
         def BuildTableScopesBar(...) = Plutonium::UI::Table::Components::ScopesBar.new(...)
 
+        def BuildTableScopesPills(...) = Plutonium::UI::Table::Components::ScopesPills.new(...)
+
         def BuildTableInfo(...) = Plutonium::UI::Table::Components::PagyInfo.new(...)
 
         def BuildTablePagination(...) = Plutonium::UI::Table::Components::PagyPagination.new(...)
@@ -86,7 +88,17 @@ module Plutonium
 
         def BuildBulkActionsToolbar(...) = Plutonium::UI::Table::Components::BulkActionsToolbar.new(...)
 
+        def BuildTableToolbar(...) = Plutonium::UI::Table::Components::Toolbar.new(...)
+
+        def BuildTableFilterPills(...) = Plutonium::UI::Table::Components::FilterPills.new(...)
+
+        def BuildTableViewSwitcher(...) = Plutonium::UI::Table::Components::ViewSwitcher.new(...)
+
         def BuildColorModeSelector(...) = Plutonium::UI::ColorModeSelector.new(...)
+
+        def BuildModalCentered(...) = Plutonium::UI::Modal::Centered.new(...)
+
+        def BuildModalSlideover(...) = Plutonium::UI::Modal::Slideover.new(...)
       end
     end
   end

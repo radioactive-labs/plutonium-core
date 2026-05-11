@@ -7,6 +7,8 @@ module Plutonium
         class SecureAssociation < Phlexi::Form::Components::AssociationBase
           include Plutonium::UI::Component::Methods
 
+          DEFAULT_CHOICE_LIMIT = Plutonium::UI::Form::Components::ResourceSelect::DEFAULT_CHOICE_LIMIT
+
           def view_template
             div(class: "flex items-center space-x-1") do
               super
@@ -23,9 +25,9 @@ module Plutonium
 
             a(
               href: add_url,
-              class: "bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] px-4 py-3 focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
+              class: "inline-flex items-center justify-center w-9 h-9 shrink-0 bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
             ) do
-              render Phlex::TablerIcons::Plus.new(class: "w-6 h-6")
+              render Phlex::TablerIcons::Plus.new(class: "w-4 h-4")
             end
           end
 
@@ -51,6 +53,7 @@ module Plutonium
               else
                 authorized_resource_scope(association_reflection.klass, relation: choices_from_association(association_reflection.klass))
               end
+              collection = collection.limit(@choice_limit) if @choice_limit && collection.respond_to?(:limit)
               build_choice_mapper(collection)
             end
           end
@@ -63,6 +66,8 @@ module Plutonium
           def build_association_attributes
             @skip_authorization = attributes.delete(:skip_authorization)
             @add_action = attributes.delete(:add_action)
+            @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
+            attributes.delete(:choice_limit)
 
             attributes.fetch(:value_method) { attributes[:value_method] = :to_signed_global_id }
 

@@ -49,7 +49,7 @@ module Plutonium
             hint: "pu-hint whitespace-pre",
 
             # Error themes
-            error: "pu-error",
+            error: "text-xs text-danger-600 mt-1",
 
             # Button themes
             button: "pu-btn pu-btn-md pu-btn-primary",

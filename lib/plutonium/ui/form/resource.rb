@@ -18,8 +18,21 @@ module Plutonium
         end
 
         def form_template
-          render_fields
+          if in_modal?
+            # In modal: form is the flex container that fills the modal
+            # body. Fields region scrolls; action strip sits flush at the
+            # bottom edge of the modal.
+            div(class: "flex-1 min-h-0 overflow-y-auto px-6 py-5") do
+              render_fields
+            end
+          else
+            render_fields
+          end
           render_actions
+        end
+
+        def form_class
+          in_modal? ? "flex-1 flex flex-col min-h-0" : super
         end
 
         private
@@ -33,17 +46,42 @@ module Plutonium
         end
 
         def render_actions
-          input name: "return_to", value: request.params[:return_to], type: :hidden, hidden: true
+          # capture-url controller sets this element's value to
+          # window.location.href on connect, so URL fragments (#tab-id)
+          # survive the redirect after submit (the server never sees them).
+          input name: "return_to",
+            value: request.params[:return_to] || request.original_url,
+            type: :hidden,
+            hidden: true,
+            data: {controller: "capture-url"}
 
-          actions_wrapper {
-            render_submit_and_continue_button if show_submit_and_continue?
+          if in_modal?
+            div(class: "shrink-0 px-6 py-3 " \
+                       "bg-[var(--pu-surface)] border-t border-[var(--pu-border)] " \
+                       "flex items-center justify-end gap-2") do
+              render_submit_and_continue_button if show_submit_and_continue?
+              render submit_button
+            end
+          else
+            render Plutonium::UI::Form::Components::StickyFooter.new do
+              render_submit_and_continue_button if show_submit_and_continue?
+              render submit_button
+            end
+          end
+        end
 
-            render submit_button
-          }
+        def in_modal?
+          current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
         end
 
         def show_submit_and_continue?
           return false unless object.respond_to?(:new_record?)
+
+          # Continue / add-another lands on the form's standalone URL —
+          # which breaks the experience when the form is inside a frame
+          # (modal or association tab) since the redirect can't keep the
+          # user in that frame context.
+          return false if current_turbo_frame.present?
 
           # Check explicit configuration first
           configured = resource_definition.submit_and_continue
@@ -60,7 +98,7 @@ module Plutonium
             type: :submit,
             name: "return_to",
             value: request.url,
-            class: "px-4 py-2 bg-secondary-600 text-white rounded-md hover:bg-secondary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500"
+            class: "pu-btn pu-btn-md pu-btn-outline"
           ) { label }
         end
 

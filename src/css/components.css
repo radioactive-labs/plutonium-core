@@ -14,15 +14,15 @@
 }
 
 .pu-btn-md {
-  @apply px-5 py-2.5 text-sm;
+  @apply px-3 h-8 text-sm;
 }
 
 .pu-btn-sm {
-  @apply px-4 py-2 text-sm;
+  @apply px-2.5 h-7 text-[13px];
 }
 
 .pu-btn-xs {
-  @apply px-3 py-1.5 text-xs;
+  @apply px-2 h-6 text-xs;
 }
 
 /* Primary - Solid with subtle gradient */
@@ -190,7 +190,7 @@
 }
 
 .pu-card-body {
-  padding: var(--pu-space-lg);
+  padding: 16px;
 }
 
 /* ===================
@@ -203,7 +203,11 @@
   border-radius: var(--pu-radius-md);
   color: var(--pu-text);
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  @apply w-full px-4 py-3 text-base focus:outline-none;
+  @apply w-full px-3 h-9 text-sm focus:outline-none;
+}
+
+.pu-input-toolbar {
+  @apply h-8 text-sm;
 }
 
 .pu-input-icon-left {
@@ -352,9 +356,6 @@
 
 .pu-table-wrapper {
   background-color: var(--pu-card-bg);
-  border: 1px solid var(--pu-card-border);
-  border-radius: var(--pu-radius-lg);
-  box-shadow: var(--pu-shadow-sm);
   @apply overflow-x-auto;
 }
 
@@ -483,4 +484,161 @@
 
 .pu-selection-cell {
   @apply w-14 px-6 py-4;
+}
+
+/* ===================
+   ICON RAIL — modern shell
+   =================== */
+
+/* Hide labels by default; revealed only when rail is pinned */
+.icon-rail-label {
+  display: none;
+}
+
+/* Caret indicator on parents with children. Default (collapsed):
+   a tiny badge in the bottom-right corner of the trigger button. */
+.icon-rail-chevron {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 12px;
+  height: 12px;
+  padding: 1px;
+  border-radius: 9999px;
+  background: var(--pu-surface);
+  color: var(--pu-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px var(--pu-border);
+}
+
+/* Modern rail width (controlled by CSS, not Tailwind utility) */
+aside[data-controller~="icon-rail"] {
+  width: 3.5rem;            /* 56px collapsed */
+  overflow-x: hidden;
+}
+
+/* Pinned mode: rail expands, labels appear */
+body.pu-rail-pinned aside[data-controller~="icon-rail"] {
+  width: 14rem !important;  /* 224px */
+}
+
+body.pu-rail-pinned .icon-rail-label {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-leaf,
+body.pu-rail-pinned .icon-rail-parent-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+/* When pinned, chevron flows inline after the label (right-aligned)
+   and rotates to point down — mirrors a typical disclosure caret. */
+body.pu-rail-pinned .icon-rail-chevron {
+  position: static;
+  background: transparent;
+  box-shadow: none;
+  margin-left: auto;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* When pinned, items stretch full width so labels read left-to-right */
+body.pu-rail-pinned #sidebar-navigation-content {
+  align-items: stretch;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+/* When pinned, brand area aligns to the start so it reads as part of the
+   left-aligned column instead of staying centered while items go left. */
+body.pu-rail-pinned aside[data-controller~="icon-rail"] > div:first-child {
+  justify-content: flex-start;
+  padding-left: 14px;
+}
+
+/* When pinned, pin button right-aligns to anchor the collapse affordance
+   to the rail edge it'll snap toward. */
+body.pu-rail-pinned aside[data-controller~="icon-rail"] > div:last-child {
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+/* Pin button icon swap */
+body.pu-rail-pinned .icon-rail-pin-collapse {
+  display: inline-flex !important;
+}
+
+body.pu-rail-pinned .icon-rail-pin-expand {
+  display: none !important;
+}
+
+/* Main content padding when pinned: rail width + 1.5rem breathing room
+   (matches the collapsed-state lg:pl-20 = rail 3.5rem + 1.5rem gap). */
+@media (min-width: 1024px) {
+  body.pu-rail-pinned main {
+    padding-left: 15.5rem !important;
+  }
+}
+
+/* Flyout: visibility controlled by Stimulus (data-flyout-open) via position:fixed */
+.icon-rail-parent {
+  position: relative;
+}
+
+.icon-rail-flyout {
+  display: none;
+  z-index: 50;
+  min-width: 200px;
+  /* position is set inline by the Stimulus controller */
+}
+
+.icon-rail-parent[data-flyout-open="true"] .icon-rail-flyout {
+  display: block;
+}
+
+.icon-rail-flyout-inner {
+  background: var(--pu-surface);
+  border: 1px solid var(--pu-border);
+  border-radius: var(--pu-radius-lg);
+  box-shadow: var(--pu-shadow-lg);
+  padding: 6px;
+  animation: pu-rail-flyout-in 120ms ease-out;
+}
+
+@keyframes pu-rail-flyout-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.icon-rail-flyout-label {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--pu-text-muted);
+}
+
+.icon-rail-flyout-item {
+  display: block;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--pu-text);
+  border-radius: var(--pu-radius-md);
+  white-space: nowrap;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.icon-rail-flyout-item:hover {
+  background: var(--pu-surface-alt);
+  color: var(--pu-text);
 }

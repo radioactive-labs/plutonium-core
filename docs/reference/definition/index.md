@@ -164,10 +164,68 @@ class PostDefinition < Plutonium::Resource::Definition
   # true = always show
   # false = always hide
   submit_and_continue false
+
+  # How `:new` / `:edit` render. Default is :slideover.
+  #   :slideover — slide-in panel from the right (default)
+  #   :centered  — centered modal dialog
+  #   false      — full standalone pages (no modal)
+  modal :centered
 end
 ```
 
 Singular resources (e.g., `resource :profile` routes or `has_one` nested) auto-hide the secondary submit button since creating "another" doesn't make sense.
+
+The `modal` setting only retargets the framework-provided `:new` / `:edit` actions. Custom interactive actions render in their own dialog whose chrome is set on the action via the per-action `modal:` option (`:centered` default, or `:slideover`) — see [Actions](./actions#action-options).
+
+## Show Page Metadata Panel
+
+The `metadata` DSL declares a list of fields that render in a right-side aside on the show page as label/value rows, leaving the main card focused on the record's substance.
+
+```ruby
+class PostDefinition < Plutonium::Resource::Definition
+  metadata :author, :state, :created_at, :updated_at
+end
+```
+
+- **Opt-in.** Without a `metadata` call, the show page renders full-width with no aside.
+- **Policy-aware.** Fields are intersected with the policy's permitted attributes. The panel auto-hides when nothing is permitted.
+- **Deduplicated.** Fields listed in `metadata` are removed from the main card so values aren't shown twice.
+- **Responsive.** Side-by-side at `lg+`, stacked single-column below.
+
+Field formatting (label, `as:`, blocks) is shared with the main card — declare once via `field` / `display` and the metadata panel inherits it.
+
+## Index Views (Table & Grid)
+
+Resources can opt into a card-based **Grid** view alongside the default **Table** view. The user can switch between them via the toolbar; the choice is persisted per-resource via cookie.
+
+```ruby
+class UserDefinition < Plutonium::Resource::Definition
+  views :table, :grid       # enable both
+  default_view :grid        # initial view if no cookie
+
+  grid_fields(
+    image:     :avatar,     # ActiveStorage attachment, Shrine, or URL string
+    header:    :name,       # falls back to record.to_label
+    subheader: :email,
+    body:      :bio,
+    meta:      [:role, :status],   # rendered as small pills
+    footer:    :last_seen_at       # falls back to :created_at
+  )
+
+  grid_layout :media        # :compact (default) or :media
+  grid_columns 3            # pin to 3 cols on lg+; default is 1/2/3/4 responsive
+end
+```
+
+| Method | Purpose |
+|--------|---------|
+| `views :table, :grid` | Which views are available. Default `[:table]`. |
+| `default_view :grid` | Initial view when no cookie. Falls back to first declared view. |
+| `grid_fields(...)` | Maps card slots to fields. **Implicitly enables `:grid`** if not already declared. |
+| `grid_layout :media` | `:compact` (image left of content) or `:media` (full-width image on top). |
+| `grid_columns 3` | Override responsive column count on `lg+`. Default is 1 / 2 / 3 / 4 at sm/md/lg/xl. |
+
+Grid slots — `:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer` — are all optional. `:meta` accepts an array; the rest are single fields. Slots that point at fields not permitted by the user's policy collapse silently.
 
 ## Custom Page Classes
 

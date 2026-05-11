@@ -33,6 +33,8 @@ module Plutonium
       include Scoping
       include Search
       include NestedInputs
+      include Views
+      include Metadata
 
       class IndexPage < Plutonium::UI::Page::Index; end
 
@@ -47,6 +49,8 @@ module Plutonium
       class Form < Plutonium::UI::Form::Resource; end
 
       class Table < Plutonium::UI::Table::Resource; end
+
+      class Grid < Plutonium::UI::Grid::Resource; end
 
       class Display < Plutonium::UI::Display::Resource; end
 
@@ -112,6 +116,10 @@ module Plutonium
 
       def collection_class
         self.class::Table
+      end
+
+      def grid_class
+        self.class::Grid
       end
 
       def detail_class

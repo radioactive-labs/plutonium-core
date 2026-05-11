@@ -67,7 +67,13 @@ module Plutonium
           end
 
           def resource_select_tag(**attributes, &)
-            create_component(Components::ResourceSelect, :select, **attributes, &)
+            attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
+            # class!: "" clears the underlying <select>'s themed classes
+            # (pu-input etc.) — the visible element is slim-select's
+            # generated .ss-main, so leaving Tailwind input chrome on the
+            # native select can leak into chip layout (e.g. forcing
+            # flex-direction: column or w-full on multi-mode chips).
+            create_component(Components::ResourceSelect, :select, class!: "", **attributes, &)
           end
 
           def secure_association_tag(**attributes, &)

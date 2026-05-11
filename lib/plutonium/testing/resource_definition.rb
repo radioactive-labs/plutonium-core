@@ -33,8 +33,8 @@ module Plutonium
             klass.defined_fields.each_key do |field_name|
               next if field_name == :id
               assert resource_class.column_names.include?(field_name.to_s) ||
-                     resource_class.method_defined?(field_name) ||
-                     resource_class.reflect_on_association(field_name),
+                resource_class.method_defined?(field_name) ||
+                resource_class.reflect_on_association(field_name),
                 "Field :#{field_name} declared in #{klass} but not defined on #{resource_class}"
             end
           end

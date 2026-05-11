@@ -1,28 +1,22 @@
 module Plutonium
   module UI
     module DynaFrame
+      # Conditionally wraps its content in a turbo-frame matching the inbound
+      # request's `Turbo-Frame` header. In frame mode adds the flash partial
+      # so toast/alert messages still surface inside frames; in non-frame
+      # mode renders the block as-is.
       class Content < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::TurboFrameTag
 
-        def initialize(content = nil)
-          @content = content
-        end
-
-        def view_template
+        def view_template(&block)
           if current_turbo_frame.present?
-            # Frame request: render only the turbo-frame with content
             turbo_frame_tag(current_turbo_frame) do
               render partial("flash")
-              @content&.call
+              yield if block_given?
             end
-          else
-            # Regular request: yield self so caller can call frame.render_content
-            yield(self)
+          elsif block_given?
+            yield
           end
-        end
-
-        def render_content
-          @content&.call
         end
       end
     end

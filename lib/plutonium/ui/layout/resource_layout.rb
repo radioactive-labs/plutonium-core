@@ -4,9 +4,16 @@ module Plutonium
       class ResourceLayout < Base
         private
 
-        def main_attributes = mix(super, {
-          class: "pt-20 lg:ml-64"
-        })
+        def main_attributes
+          classes = case Plutonium.configuration.shell
+          when :modern
+            "pt-16 pb-6 px-6 lg:pl-20"
+          else
+            "pt-20 lg:ml-64"
+          end
+
+          mix(super, {class: classes})
+        end
 
         def page_title
           make_page_title(

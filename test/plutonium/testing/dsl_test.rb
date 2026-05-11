@@ -6,6 +6,7 @@ require "plutonium/testing"
 class Plutonium::Testing::DSLTest < ActiveSupport::TestCase
   class FakeAdminTest < ActiveSupport::TestCase
     include Plutonium::Testing::DSL
+
     resource_tests_for Blogging::Post,
       portal: :admin,
       parent: :organization,
@@ -35,6 +36,7 @@ class Plutonium::Testing::DSLTest < ActiveSupport::TestCase
   test "explicit path_prefix overrides portal resolution" do
     klass = Class.new(ActiveSupport::TestCase) do
       include Plutonium::Testing::DSL
+
       resource_tests_for Blogging::Post, portal: :admin, path_prefix: "/custom"
     end
     assert_equal "/custom", klass.resource_tests_config.fetch(:path_prefix)
@@ -44,6 +46,7 @@ class Plutonium::Testing::DSLTest < ActiveSupport::TestCase
     err = assert_raises(Plutonium::Testing::DSL::PortalNotFound) do
       Class.new(ActiveSupport::TestCase) do
         include Plutonium::Testing::DSL
+
         resource_tests_for Blogging::Post, portal: :nonexistent
       end
     end

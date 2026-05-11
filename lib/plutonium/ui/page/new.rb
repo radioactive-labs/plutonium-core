@@ -15,7 +15,19 @@ module Plutonium
         end
 
         def render_default_content
-          render partial("resource_form")
+          if in_modal?
+            render_modal_form
+          else
+            div(class: "pb-20") { render partial("resource_form") }
+          end
+        end
+
+        def render_modal_form
+          modal_class = (current_definition.modal == :centered) ?
+            Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
+          render modal_class.new(title: page_title, description: page_description) do
+            render partial("resource_form")
+          end
         end
 
         def page_type = :new_page

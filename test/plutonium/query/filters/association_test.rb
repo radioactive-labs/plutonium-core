@@ -48,7 +48,7 @@ module Plutonium
 
           filter.apply(scope, value: "1")
 
-          assert_equal [[:where, [], {category_id: "1"}]], scope.calls
+          assert_equal [[:where, [], {category_id: ["1"]}]], scope.calls
         end
 
         def test_apply_with_integer_value
@@ -57,7 +57,7 @@ module Plutonium
 
           filter.apply(scope, value: 42)
 
-          assert_equal [[:where, [], {category_id: 42}]], scope.calls
+          assert_equal [[:where, [], {category_id: [42]}]], scope.calls
         end
 
         def test_apply_with_blank_value_returns_scope
@@ -110,15 +110,16 @@ module Plutonium
           assert_empty scope.calls
         end
 
-        def test_apply_with_all_blank_array_filters_to_empty
+        def test_apply_with_all_blank_array_returns_scope
           filter = Association.new(key: :category, class_name: MockCategory, multiple: true)
           scope = MockScope.new
 
-          filter.apply(scope, value: ["", ""])
+          result = filter.apply(scope, value: ["", ""])
 
-          # Note: Currently the filter doesn't check if filtered array is empty
-          # This could be considered a bug - WHERE column IN () is invalid SQL
-          assert_equal [[:where, [], {category_id: []}]], scope.calls
+          # All-blank array filters down to empty ids — skip the where
+          # rather than emit `WHERE column IN ()` (invalid SQL).
+          assert_equal scope, result
+          assert_empty scope.calls
         end
 
         # ==================== Foreign Key Tests ====================
@@ -129,7 +130,7 @@ module Plutonium
 
           filter.apply(scope, value: "5")
 
-          assert_equal [[:where, [], {author_id: "5"}]], scope.calls
+          assert_equal [[:where, [], {author_id: ["5"]}]], scope.calls
         end
 
         # ==================== Input Definition Tests ====================
@@ -162,7 +163,7 @@ module Plutonium
         end
 
         def test_customize_inputs_sets_include_blank_for_single_select
-          filter = Association.new(key: :category, class_name: MockCategory)
+          filter = Association.new(key: :category, class_name: MockCategory, multiple: false)
           input_options = filter.defined_inputs[:value][:options]
 
           assert_equal "All", input_options[:include_blank]

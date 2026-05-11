@@ -5,7 +5,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          helper_method :build_form, :build_detail, :build_collection
+          helper_method :build_form, :build_detail, :build_collection, :build_grid_collection
         end
 
         private
@@ -82,8 +82,17 @@ module Plutonium
           current_definition.collection_class.new(@resource_records, resource_fields: presentable_attributes, resource_definition: current_definition)
         end
 
+        def build_grid_collection
+          current_definition.grid_class.new(@resource_records, resource_fields: presentable_attributes, resource_definition: current_definition)
+        end
+
         def build_detail
-          current_definition.detail_class.new(resource_record!, resource_fields: presentable_attributes, resource_associations: permitted_associations, resource_definition: current_definition)
+          current_definition.detail_class.new(
+            resource_record!,
+            resource_fields: presentable_attributes,
+            resource_associations: permitted_associations,
+            resource_definition: current_definition
+          )
         end
 
         def build_form(record = resource_record!, action: action_name, form_action: nil, **)

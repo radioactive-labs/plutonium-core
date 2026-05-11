@@ -16,7 +16,7 @@ module Plutonium
       #   filter :user, with: :association, class_name: User, scope: ->(s) { s.active }
       #
       class Association < Filter
-        def initialize(class_name: nil, resource_class: nil, scope: nil, multiple: false, **)
+        def initialize(class_name: nil, resource_class: nil, scope: nil, multiple: true, **)
           super(**)
           @class_name = class_name
           @resource_class = resource_class
@@ -24,15 +24,21 @@ module Plutonium
           @multiple = multiple
         end
 
+        def humanize_value(value)
+          return "" if value.blank?
+          ids = decode_ids(value)
+          return "" if ids.empty?
+          records = association_class.where(id: ids)
+          records.map { |r| r.respond_to?(:to_label) ? r.to_label : r.to_s }.join(", ")
+        rescue
+          Array(value).reject(&:blank?).join(", ")
+        end
+
         def apply(scope, value:)
           return scope if value.blank?
-
-          foreign_key = :"#{key}_id"
-          if @multiple && value.is_a?(Array)
-            scope.where(foreign_key => value.reject(&:blank?))
-          else
-            scope.where(foreign_key => value)
-          end
+          ids = decode_ids(value)
+          return scope if ids.empty?
+          scope.where("#{key}_id": ids)
         end
 
         def customize_inputs
@@ -41,6 +47,22 @@ module Plutonium
             association_class: association_class,
             multiple: @multiple,
             include_blank: @multiple ? false : "All"
+        end
+
+        private
+
+        # Accepts either an SGID (the new default sent by ResourceSelect)
+        # or a raw id (legacy URLs). Returns the underlying record ids.
+        def decode_ids(value)
+          Array(value).reject(&:blank?).filter_map { |v| decode_id(v) }
+        end
+
+        def decode_id(value)
+          gid = SignedGlobalID.parse(value)
+          return gid.model_id if gid
+          value
+        rescue
+          value
         end
 
         private

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-
 require "test_helper"
 require "rails/generators"
 require "generators/pu/lib/plutonium_generators"

@@ -21,6 +21,7 @@ Capybara.default_max_wait_time = 5
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   include ActiveRecord::TestFixtures
+
   # Disable transactional tests so the browser-driven Puma thread sees the
   # same rows the test process created. cleanup_test_data handles cleanup.
   self.use_transactional_tests = false

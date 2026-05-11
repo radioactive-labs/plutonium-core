@@ -38,31 +38,32 @@ module Plutonium
               style: "box-shadow: var(--pu-shadow-lg)",
               data: {resource_drop_down_target: "menu"}
             ) do
-              render_secondary_actions if secondary_actions.any?
-              render_danger_divider if secondary_actions.any? && danger_actions.any?
-              render_danger_actions if danger_actions.any?
+              render_group(primary_actions)
+              render_divider if primary_actions.any? && (secondary_actions.any? || danger_actions.any?)
+              render_group(secondary_actions)
+              render_divider if secondary_actions.any? && danger_actions.any?
+              render_group(danger_actions)
             end
           end
 
-          def render_secondary_actions
+          def render_group(actions)
+            return if actions.empty?
             div(class: "py-1") do
-              secondary_actions.each { |action| render_action_item(action) }
+              actions.each { |action| render_action_item(action) }
             end
           end
 
-          def render_danger_divider
+          def render_divider
             div(class: "border-t border-[var(--pu-border-muted)]")
-          end
-
-          def render_danger_actions
-            div(class: "py-1") do
-              danger_actions.each { |action| render_action_item(action) }
-            end
           end
 
           def render_action_item(action)
             url = route_options_to_url(action.route_options, @record)
             render Plutonium::UI::ActionButton.new(action, url: url, variant: :row_dropdown)
+          end
+
+          def primary_actions
+            @primary_actions ||= @actions.select { |a| a.category.primary? }.sort_by(&:position)
           end
 
           def secondary_actions

@@ -36,8 +36,7 @@ module Plutonium
         #   @yield The block containing each action's content
         slot :action, collection: true
 
-        # Renders the header component with all its configured elements
-        # @note The header is fixed positioned and includes responsive design considerations
+        # Renders the classic full-width header.
         # @return [void]
         def view_template
           nav(

@@ -63,6 +63,7 @@ module Plutonium
       # Builds a URL with the given options for search and sorting.
       #
       # @param options [Hash] The options for building the URL.
+      # @option options [Boolean] :replace When true, clears all existing sorts before applying the new one
       # @return [String] The constructed URL with query parameters.
       def build_url(**options)
         q = {}
@@ -74,11 +75,19 @@ module Plutonium
           selected_scope_filter
         end
 
-        q[:sort_directions] = selected_sort_directions.dup
-        q[:sort_fields] = selected_sort_fields.dup
+        if options.delete(:replace)
+          q[:sort_directions] = {}
+          q[:sort_fields] = []
+        else
+          q[:sort_directions] = selected_sort_directions.dup
+          q[:sort_fields] = selected_sort_fields.dup
+        end
         handle_sort_options!(q, options)
 
-        q.merge! params.slice(*filter_definitions.keys)
+        filter_keys = filter_definitions.keys.map(&:to_sym)
+        filter_overrides = options.slice(*filter_keys).stringify_keys
+        q.merge! params.with_indifferent_access.slice(*filter_definitions.keys)
+        q.merge!(filter_overrides)
         compacted = deep_compact({q: q})
 
         # Preserve explicit "All" selection (scope: nil in options means show all)
@@ -119,18 +128,67 @@ module Plutonium
 
       def sort_definitions = @sort_definitions ||= {}.with_indifferent_access
 
+      # Returns an array of hashes describing each currently active filter.
+      # Each hash has: name, label, value_label, clear_url
+      def active_filter_descriptions
+        filter_definitions.filter_map do |name, filter|
+          name = name.to_sym
+          filter_params = params[name]
+          next unless filter_params.present?
+
+          value_label = case filter_params
+          when Hash, ActionController::Parameters
+            entries = filter_params.to_h.reject { |_, v| v.blank? }
+            next if entries.empty?
+            # Single-input filters defer to the filter's `humanize_value`
+            # (e.g. Association resolves ids to labels, Boolean translates
+            # "true" -> "Yes"). Multi-input filters keep input-name
+            # qualifiers (e.g. "from 2024, to 2025").
+            if entries.size == 1
+              humanized = filter.humanize_value(entries.values.first)
+              next if humanized.blank?
+              humanized
+            else
+              entries.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+            end
+          when Array
+            entries = filter_params.reject(&:blank?)
+            next if entries.empty?
+            humanized = filter.humanize_value(entries)
+            next if humanized.blank?
+            humanized
+          else
+            next if filter_params.to_s.blank?
+            humanized = filter.humanize_value(filter_params)
+            next if humanized.blank?
+            humanized
+          end
+
+          {
+            name: name,
+            label: name.to_s.humanize,
+            value_label: value_label,
+            clear_url: build_url(name => nil)
+          }
+        end
+      end
+
       # Provides sorting parameters for the given field name.
       #
       # @param name [Symbol, String] The name of the field to sort.
-      # @return [Hash, nil] The sorting parameters including URL and direction.
+      # @return [Hash, nil] The sorting parameters including URL, multi_url, direction, position and multi flag.
       def sort_params_for(name)
         return unless sort_definitions[name]
 
+        multi = selected_sort_fields.size > 1 && selected_sort_fields.include?(name.to_s)
+
         {
-          url: build_url(sort: name),
+          url: build_url(sort: name, replace: true),
+          multi_url: build_url(sort: name),
           reset_url: build_url(sort: name, reset: true),
           position: selected_sort_fields.index(name.to_s),
-          direction: selected_sort_directions[name]
+          direction: selected_sort_directions[name],
+          multi: multi
         }
       end
 

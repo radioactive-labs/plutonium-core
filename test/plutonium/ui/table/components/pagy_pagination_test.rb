@@ -81,7 +81,7 @@ class Plutonium::UI::Table::Components::PagyPaginationTest < Minitest::Test
     pagy = build_pagy(count: 5, page: 1, limit: 10)
     html = render_component(pagy)
 
-    disabled_count = html.scan(/aria-disabled="true"/).length
+    disabled_count = html.scan('aria-disabled="true"').length
     assert_equal 2, disabled_count, "Expected both prev and next to be disabled"
   end
 

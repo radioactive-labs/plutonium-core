@@ -29,7 +29,7 @@ module Plutonium
 
             respond_to do |format|
               format.turbo_stream do
-                if helpers.current_turbo_frame == "remote_modal"
+                if helpers.current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
                   render turbo_stream: [
                     helpers.turbo_stream_redirect(url)
                   ]

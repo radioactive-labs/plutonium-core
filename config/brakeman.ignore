@@ -120,13 +120,13 @@
     {
       "warning_type": "Dangerous Eval",
       "warning_code": 13,
-      "fingerprint": "a14cf69ee743ba0aa405725f018c186d6fdfa3f3f57a381613de1b2048621170",
+      "fingerprint": "e5f68f8342a094ffd2124c1650428135e0549da39950158725414bfca0bb8f1e",
       "check_name": "Evaluation",
       "message": "Dynamic string evaluated as code",
       "file": "lib/plutonium/auth/rodauth.rb",
       "line": 6,
       "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
-      "code": "Module.new.module_eval(\"          extend ActiveSupport::Concern\\n\\n          included do\\n            helper_method :current_user\\n            helper_method :logout_url\\n          end\\n\\n          private\\n\\n          def rodauth(name = :#{name})\\n            instance = super(name)\\n            instance.url_options = default_url_options.presence\\n            instance\\n          end\\n\\n          def current_user\\n            rodauth.rails_account\\n          end\\n\\n          def logout_url\\n            rodauth.logout_path\\n          end\\n\\n          define_singleton_method(:to_s) { \\\"Plutonium::Auth::Rodauth(:#{name})\\\" }\\n          define_singleton_method(:inspect) { \\\"Plutonium::Auth::Rodauth(:#{name})\\\" }\\n\", \"lib/plutonium/auth/rodauth.rb\", 7)",
+      "code": "Module.new.module_eval(\"...\", \"lib/plutonium/auth/rodauth.rb\", 7)",
       "render_path": null,
       "location": {
         "type": "method",
@@ -233,6 +233,29 @@
         89
       ],
       "note": "False positive: 'key' is the filter attribute name from definition code, not user input. User input (query) is parameterized."
+    },
+    {
+      "warning_type": "Redirect",
+      "warning_code": 18,
+      "fingerprint": "ce92f474802c81eb79c01577415a82ef604bddcb8072b68c5508260b2b0b7469",
+      "check_name": "Redirect",
+      "message": "Possible unprotected redirect",
+      "file": "lib/plutonium/invites/controller.rb",
+      "line": 76,
+      "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
+      "code": "redirect_to(invitation_path_for(params[:token]), :alert => \"Please sign in to accept this invitation\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "Plutonium::Invites::Controller",
+        "method": "accept"
+      },
+      "user_input": "params[:token]",
+      "confidence": "Weak",
+      "cwe_id": [
+        601
+      ],
+      "note": "False positive: params[:token] is interpolated into a route helper as a single path segment, not used as the redirect URL itself. The destination is a server-controlled named route."
     }
   ],
   "brakeman_version": "7.1.1"
