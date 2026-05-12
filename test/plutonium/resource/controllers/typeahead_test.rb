@@ -87,6 +87,117 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     assert body[:has_more]
   end
 
+  def test_searchable_column_for_picks_label_method_when_it_is_a_column
+    klass = Class.new { def self.column_names = %w[id email name] }
+    col = Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass, label_method: :email)
+    assert_equal "email", col
+  end
+
+  def test_searchable_column_for_falls_through_to_priority_list_when_label_method_is_not_a_column
+    klass = Class.new { def self.column_names = %w[id name created_at] }
+    col = Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass, label_method: :to_label)
+    assert_equal "name", col
+  end
+
+  def test_searchable_column_for_returns_nil_when_no_column_matches
+    klass = Class.new { def self.column_names = %w[id created_at updated_at] }
+    assert_nil Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass)
+  end
+
+  def test_searchable_column_for_respects_priority_order
+    klass = Class.new { def self.column_names = %w[id slug title name] }
+    # name beats title beats slug
+    assert_equal "name", Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass)
+  end
+
+  def test_escape_like_escapes_wildcards_and_escape_char
+    escaped = Plutonium::Resource::Controllers::Typeahead.escape_like("100%_!foo")
+    assert_equal "100!%!_!!foo", escaped
+  end
+
+  def test_filter_association_uses_fallback_column_when_no_search_block
+    associated = Class.new {
+      def self.column_names = ["name"]
+      def self.connection = Class.new { def quote_column_name(c) = "\"#{c}\"" }.new
+    }
+    captured_where_args = nil
+    fake_relation = Object.new
+    fake_relation.define_singleton_method(:where) do |*args|
+      captured_where_args = args
+      self
+    end
+    fake_relation.define_singleton_method(:limit) { |*| self }
+    fake_relation.define_singleton_method(:to_a) { [] }
+
+    parent = Class.new
+    reflection = OpenStruct.new(klass: associated)
+    parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
+
+    controller = build_controller(input_def: {name: :author, value: {options: {}}}, resource_class: parent)
+    controller.define_singleton_method(:authorized_resource_scope) { |_klass, **| fake_relation }
+    controller.params = {name: "author", q: "Ali%"}
+    controller.typeahead_input
+
+    sql, binding_value = captured_where_args
+    assert_match(/LOWER\("name"\) LIKE \? ESCAPE '!'/, sql)
+    # `%` in the query is escaped as `!%` so it's a literal, not a wildcard
+    assert_equal "%ali!%%", binding_value
+  end
+
+  def test_filter_association_respects_label_method_override
+    associated = Class.new {
+      def self.column_names = %w[id name email]
+      def self.connection = Class.new { def quote_column_name(c) = "\"#{c}\"" }.new
+    }
+    captured_sql = nil
+    fake_relation = Object.new
+    fake_relation.define_singleton_method(:where) do |sql, _|
+      captured_sql = sql
+      self
+    end
+    fake_relation.define_singleton_method(:limit) { |*| self }
+    fake_relation.define_singleton_method(:to_a) { [] }
+
+    parent = Class.new
+    reflection = OpenStruct.new(klass: associated)
+    parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
+
+    controller = build_controller(
+      input_def: {name: :author, value: {options: {label_method: :email}}},
+      resource_class: parent
+    )
+    controller.define_singleton_method(:authorized_resource_scope) { |_klass, **| fake_relation }
+    controller.params = {name: "author", q: "a"}
+    controller.typeahead_input
+
+    assert_match(/LOWER\("email"\) LIKE/, captured_sql)
+  end
+
+  def test_filter_association_returns_unfiltered_when_no_search_and_no_fallback_column
+    associated = Class.new {
+      def self.column_names = %w[id created_at updated_at]
+    }
+    where_called = false
+    fake_relation = Object.new
+    fake_relation.define_singleton_method(:where) do |*|
+      where_called = true
+      self
+    end
+    fake_relation.define_singleton_method(:limit) { |*| self }
+    fake_relation.define_singleton_method(:to_a) { [] }
+
+    parent = Class.new
+    reflection = OpenStruct.new(klass: associated)
+    parent.define_singleton_method(:reflect_on_association) { |name| (name == :author) ? reflection : nil }
+
+    controller = build_controller(input_def: {name: :author, value: {options: {}}}, resource_class: parent)
+    controller.define_singleton_method(:authorized_resource_scope) { |_klass, **| fake_relation }
+    controller.params = {name: "author", q: "anything"}
+    controller.typeahead_input
+
+    refute where_called, "should not build a WHERE clause when there is no fallback column"
+  end
+
   def test_typeahead_input_resolves_association_via_reflection
     associated = Class.new {
       def self.column_names = ["name"]

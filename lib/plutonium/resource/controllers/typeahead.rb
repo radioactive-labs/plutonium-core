@@ -23,6 +23,45 @@ module Plutonium
 
         TYPEAHEAD_LIMIT = 50
 
+        # Priority list tried when the input doesn't tell us which
+        # column carries its label. Aligns with what `to_label` usually
+        # wraps. Used only as a last resort.
+        FALLBACK_SEARCH_COLUMNS = %w[name title label slug display_name email].freeze
+
+        # Returns the column to LIKE against when no `search` block is
+        # defined. Used by both the server (to build the WHERE clause)
+        # and the input component (to decide whether to attach the
+        # typeahead URL).
+        #
+        # Resolution order:
+        # 1. The input's `label_method` if it names a real column (so
+        #    `input :user, label_method: :email` just works).
+        # 2. The first match from FALLBACK_SEARCH_COLUMNS.
+        # 3. nil — no usable column, server returns unfiltered.
+        #
+        # The fallback is fine for moderate tables but uses a leading-
+        # wildcard LIKE which can't be served by a b-tree index. For
+        # large tables, declare a `search` block that uses a trigram or
+        # full-text index instead.
+        def self.searchable_column_for(klass, label_method: nil)
+          return nil unless klass.respond_to?(:column_names)
+          cols = klass.column_names
+          if label_method && cols.include?(label_method.to_s)
+            return label_method.to_s
+          end
+          FALLBACK_SEARCH_COLUMNS.find { |c| cols.include?(c) }
+        end
+
+        # Escapes the SQL LIKE wildcards `%` and `_` (plus the escape
+        # char itself) so a user searching for "100%" doesn't match
+        # everything. The literal `!` is used as the ESCAPE character —
+        # unambiguous across sqlite/postgres/mysql, no backslash-quoting
+        # surprises.
+        LIKE_ESCAPE_CHAR = "!"
+        def self.escape_like(value)
+          value.to_s.gsub(/[!%_]/) { |c| "#{LIKE_ESCAPE_CHAR}#{c}" }
+        end
+
         included do
           before_action :authorize_typeahead!, only: %i[typeahead_input typeahead_filter]
           # Read-only JSON; row-level auth is enforced inline through
@@ -96,13 +135,22 @@ module Plutonium
         # Routes through the associated resource's policy.relation_scope
         # so typeahead never surfaces records the user can't read, then
         # narrows via the associated resource definition's `search` block
-        # when present. Without a search block the relation is returned
-        # unfiltered (capped) — define `search do |scope, q| ... end`
-        # on the associated resource's definition to get real filtering.
+        # when present. Without a search block, fall back to a case-
+        # insensitive LIKE on the first column in FALLBACK_SEARCH_COLUMNS
+        # that exists on the model (so a resource with a `name` column
+        # gets useful typeahead without declaring `search`). If neither
+        # search block nor fallback column is available, the relation is
+        # returned unfiltered (capped).
         def filter_association(klass, query, options)
           relation = options[:skip_authorization] ? klass.all : authorized_resource_scope(klass)
-          if query.present? && (search_block = associated_definition_search_block(klass))
-            relation = search_block.call(relation, query)
+          if query.present?
+            if (search_block = associated_definition_search_block(klass))
+              relation = search_block.call(relation, query)
+            elsif (col = Typeahead.searchable_column_for(klass, label_method: options[:label_method]))
+              quoted = klass.connection.quote_column_name(col)
+              pattern = "%#{Typeahead.escape_like(query.downcase)}%"
+              relation = relation.where("LOWER(#{quoted}) LIKE ? ESCAPE '#{Typeahead::LIKE_ESCAPE_CHAR}'", pattern)
+            end
           end
           relation.limit(Typeahead::TYPEAHEAD_LIMIT + 1).to_a
         end

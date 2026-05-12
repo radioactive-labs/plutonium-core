@@ -131,10 +131,10 @@ module Plutonium
           # Default-on typeahead for association inputs. Set
           # `typeahead: false` to opt out.
           #
-          # Auto opt-out: if the associated resource's definition has no
-          # `search` block, we fall back to slim-select's eager list +
-          # client-side filter — the backend would just return unfiltered
-          # records and the typeahead UX would be a regression.
+          # Auto opt-out: if the associated resource has neither a
+          # `search` block nor a fallback search column on the model,
+          # fall back to slim-select's eager list + client-side filter —
+          # the backend would just return unfiltered records.
           def configure_typeahead_attributes!(typeahead_option)
             return if typeahead_option == false
             return unless typeahead_searchable?
@@ -144,16 +144,20 @@ module Plutonium
           end
 
           def typeahead_searchable?
-            klass = association_reflection&.klass
-            return false unless klass
+            return false unless association_reflection
+            # Polymorphic reflections raise NameError on #klass — they
+            # have no single target class to search.
+            return false if association_reflection.respond_to?(:polymorphic?) && association_reflection.polymorphic?
 
+            klass = association_reflection.klass
             registry = Plutonium::Resource::Register
-            return false unless registry.respond_to?(:definition_for)
-            defn_class = registry.definition_for(klass)
-            return false unless defn_class.respond_to?(:_search_definition)
-            defn_class._search_definition.present?
-          rescue
-            false
+            if registry.respond_to?(:definition_for)
+              defn_class = registry.definition_for(klass)
+              if defn_class.respond_to?(:_search_definition) && defn_class._search_definition.present?
+                return true
+              end
+            end
+            Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass, label_method: @label_method).present?
           end
 
           def typeahead_url_for(typeahead_option)
