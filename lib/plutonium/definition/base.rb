@@ -33,7 +33,7 @@ module Plutonium
       include Scoping
       include Search
       include NestedInputs
-      include Views
+      include IndexViews
       include Metadata
 
       class IndexPage < Plutonium::UI::Page::Index; end

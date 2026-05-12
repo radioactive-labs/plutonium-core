@@ -46,11 +46,11 @@ module Plutonium
         # Resolution order:
         # 1. `?view=` URL param (so a shared link can pin a view)
         # 2. The view-preference cookie (sticky per-resource selection)
-        # 3. The resource's `default_view` (which itself defaults to
-        #    `views.first`)
+        # 3. The resource's `default_index_view` (which itself defaults to
+        #    `index_views.first`)
         def selected_view
           definition = current_definition
-          enabled = definition.defined_views
+          enabled = definition.defined_index_views
 
           requested = params[:view]&.to_sym
           return requested if requested && enabled.include?(requested)
@@ -58,7 +58,7 @@ module Plutonium
           stored = helpers.cookies[self.class.view_cookie_name(resource_class)]&.to_sym
           return stored if stored && enabled.include?(stored)
 
-          definition.default_view
+          definition.default_index_view
         end
 
         def page_type = :index_page

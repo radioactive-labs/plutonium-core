@@ -7,17 +7,15 @@ module Plutonium
     #
     # @example Enable both views, default to Grid
     #   class UserDefinition < Plutonium::Resource::Definition
-    #     views :table, :grid
-    #     default_view :grid
-    #
     #     grid_fields(
     #       image:     :avatar,
     #       header:    :name,
     #       subheader: :email,
     #       meta:      [:role, :status]
     #     )
+    #     default_index_view :grid
     #   end
-    module Views
+    module IndexViews
       extend ActiveSupport::Concern
 
       KNOWN_VIEWS = %i[table grid].freeze
@@ -25,8 +23,8 @@ module Plutonium
       GRID_LAYOUTS = %i[compact media].freeze
 
       included do
-        class_attribute :defined_views, default: [:table], instance_accessor: false
-        class_attribute :defined_default_view, default: nil, instance_accessor: false
+        class_attribute :defined_index_views, default: [:table], instance_accessor: false
+        class_attribute :defined_default_index_view, default: nil, instance_accessor: false
         class_attribute :defined_grid_fields, default: {}, instance_accessor: false
         class_attribute :defined_grid_layout, default: :compact, instance_accessor: false
         class_attribute :defined_grid_columns, default: nil, instance_accessor: false
@@ -34,37 +32,40 @@ module Plutonium
 
       class_methods do
         # Declares the index views this resource supports.
+        # Usually unnecessary — declaring `grid_fields` auto-enables :grid
+        # alongside the default :table. Use `index_views` only to disable
+        # one (e.g. `index_views :grid` to drop the table view).
         # @param list [Array<Symbol>] one or more of {KNOWN_VIEWS}
-        def views(*list)
+        def index_views(*list)
           list = list.flatten.map(&:to_sym)
           invalid = list - KNOWN_VIEWS
-          raise ArgumentError, "Unknown views: #{invalid.inspect}. Valid: #{KNOWN_VIEWS}" if invalid.any?
-          self.defined_views = list.empty? ? [:table] : list
+          raise ArgumentError, "Unknown index_views: #{invalid.inspect}. Valid: #{KNOWN_VIEWS}" if invalid.any?
+          self.defined_index_views = list.empty? ? [:table] : list
         end
 
-        # Declares the default index view. Must be one of {.views}.
+        # Declares the default index view. Must be one of {.index_views}.
         # Falls back to the first declared view if unset.
-        def default_view(name = nil)
+        def default_index_view(name = nil)
           if name.nil?
-            defined_default_view || defined_views.first
+            defined_default_index_view || defined_index_views.first
           else
             name = name.to_sym
-            unless defined_views.include?(name)
-              raise ArgumentError, "default_view #{name.inspect} not in views #{defined_views.inspect}"
+            unless defined_index_views.include?(name)
+              raise ArgumentError, "default_index_view #{name.inspect} not in index_views #{defined_index_views.inspect}"
             end
-            self.defined_default_view = name
+            self.defined_default_index_view = name
           end
         end
 
         # Maps grid slots to fields. Each slot is optional. Implicitly
-        # adds `:grid` to {.views} so a resource can opt into the Grid
-        # view simply by declaring its slots.
+        # adds `:grid` to {.index_views} so a resource can opt into the
+        # Grid view simply by declaring its slots.
         # @param slots [Hash{Symbol => Symbol, Array<Symbol>}]
         def grid_fields(**slots)
           invalid = slots.keys - GRID_SLOTS
           raise ArgumentError, "Unknown grid slots: #{invalid.inspect}. Valid: #{GRID_SLOTS}" if invalid.any?
           self.defined_grid_fields = slots
-          self.defined_views = defined_views + [:grid] unless defined_views.include?(:grid)
+          self.defined_index_views = defined_index_views + [:grid] unless defined_index_views.include?(:grid)
         end
 
         # Layout shape for grid cards. :compact (default) places the image
@@ -84,8 +85,8 @@ module Plutonium
         end
       end
 
-      def defined_views = self.class.defined_views
-      def default_view = self.class.default_view
+      def defined_index_views = self.class.defined_index_views
+      def default_index_view = self.class.default_index_view
       def defined_grid_fields = self.class.defined_grid_fields
       def defined_grid_layout = self.class.defined_grid_layout
       def defined_grid_columns = self.class.defined_grid_columns

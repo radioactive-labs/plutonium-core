@@ -44,7 +44,7 @@ module Plutonium
             query: current_query_object,
             search_url: current_search_url,
             search_value: params.dig(:q, :search) || params[:search],
-            views: resource_definition.defined_views,
+            views: resource_definition.defined_index_views,
             current_view: :table,
             view_cookie_name: Plutonium::UI::Page::Index.view_cookie_name(resource_class),
             view_cookie_path: Plutonium::UI::Page::Index.view_cookie_path(request)
