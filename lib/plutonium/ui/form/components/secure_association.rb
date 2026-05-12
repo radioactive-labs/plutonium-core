@@ -6,6 +6,7 @@ module Plutonium
       module Components
         class SecureAssociation < Phlexi::Form::Components::AssociationBase
           include Plutonium::UI::Component::Methods
+          include Plutonium::UI::Form::Concerns::TypeaheadAttributes
 
           DEFAULT_CHOICE_LIMIT = Plutonium::UI::Form::Components::ResourceSelect::DEFAULT_CHOICE_LIMIT
 
@@ -128,54 +129,19 @@ module Plutonium
             end
           end
 
-          # Default-on typeahead for association inputs. Set
-          # `typeahead: false` to opt out.
-          #
-          # Auto opt-out: if the associated resource has neither a
-          # `search` block nor a fallback search column on the model,
-          # fall back to slim-select's eager list + client-side filter —
-          # the backend would just return unfiltered records.
-          def configure_typeahead_attributes!(typeahead_option)
-            return if typeahead_option == false
-            return unless typeahead_searchable?
-            url = typeahead_url_for(typeahead_option)
-            return unless url
-            attributes[:data_slim_select_typeahead_url_value] = url
-          end
-
-          def typeahead_searchable?
-            return false unless association_reflection
-            # Polymorphic reflections raise NameError on #klass — they
-            # have no single target class to search.
-            return false if association_reflection.respond_to?(:polymorphic?) && association_reflection.polymorphic?
-
-            klass = association_reflection.klass
-            registry = Plutonium::Resource::Register
-            if registry.respond_to?(:definition_for)
-              defn_class = registry.definition_for(klass)
-              if defn_class.respond_to?(:_search_definition) && defn_class._search_definition.present?
-                return true
-              end
-            end
-            Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass, label_method: @label_method).present?
-          end
-
-          def typeahead_url_for(typeahead_option)
-            kind = typeahead_option.is_a?(Hash) ? (typeahead_option[:kind] || :input) : :input
-            name = typeahead_option.is_a?(Hash) ? typeahead_option[:name] : association_reflection.name
-            return nil unless name
-
-            route_key = resource_class.model_name.route_key
-            helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
-
-            url_helpers = current_engine.routes.url_helpers
-            return nil unless url_helpers.respond_to?(helper)
-            url_helpers.public_send(helper, name: name)
-          rescue
-            nil
-          end
-
           private
+
+          # Polymorphic reflections raise NameError on #klass — they
+          # have no single target class to search, so opt out.
+          def typeahead_target_class
+            return nil unless association_reflection
+            return nil if association_reflection.respond_to?(:polymorphic?) && association_reflection.polymorphic?
+            association_reflection.klass
+          end
+
+          def typeahead_kind_and_name(_typeahead_option)
+            [:input, association_reflection.name]
+          end
 
           def build_singluar_association_attributes
             attributes.fetch(:input_param) { attributes[:input_param] = :"#{association_reflection.name}_sgid" }

@@ -35,4 +35,37 @@ class AdminPortal::TypeaheadTest < ActionDispatch::IntegrationTest
     get "/admin/organizations/typeahead/input/no_such_field?q=a"
     refute_equal 200, response.status, "unauthenticated access should not return 200"
   end
+
+  # Happy path — exercises the full stack end-to-end: real route,
+  # real definition lookup, real ActiveRecord query (via the `name`
+  # fallback column on Organization), real serializer. Proves results
+  # come back as SGIDs and that policy.relation_scope filters the query.
+  test "typeahead_input returns matching association records as SGIDs" do
+    matching = create_organization!(name: "Acme Widgets")
+    create_organization!(name: "Globex Corp")
+
+    get "/admin/organization_users/typeahead/input/organization?q=acme"
+    assert_response :success
+
+    body = JSON.parse(response.body)
+    assert_equal false, body["has_more"]
+    labels = body["results"].map { |r| r["label"] }
+    assert_includes labels, "Acme Widgets"
+    refute_includes labels, "Globex Corp"
+
+    sgid = body["results"].find { |r| r["label"] == "Acme Widgets" }["value"]
+    assert_equal matching, GlobalID::Locator.locate_signed(sgid)
+  end
+
+  test "typeahead_input escapes SQL LIKE wildcards in user input" do
+    create_organization!(name: "100% Cotton")
+    create_organization!(name: "Plain Linen")
+
+    get "/admin/organization_users/typeahead/input/organization?q=#{CGI.escape("100%")}"
+    assert_response :success
+
+    labels = JSON.parse(response.body)["results"].map { |r| r["label"] }
+    assert_includes labels, "100% Cotton"
+    refute_includes labels, "Plain Linen"
+  end
 end

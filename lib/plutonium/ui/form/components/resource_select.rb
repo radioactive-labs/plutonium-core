@@ -7,6 +7,7 @@ module Plutonium
         # Select for choosing a resource record
         class ResourceSelect < Phlexi::Form::Components::Select
           include Plutonium::UI::Component::Methods
+          include Plutonium::UI::Form::Concerns::TypeaheadAttributes
 
           # Cap on the number of records the dropdown materialises. Keeps
           # very large association tables from rendering thousands of
@@ -134,56 +135,12 @@ module Plutonium
 
           private
 
-          # Adds the typeahead URL data attr so the slim-select Stimulus
-          # controller delegates to the backend via events.search.
-          # Default-on (opt out with `typeahead: false`). Pass a Hash to
-          # override kind/name (e.g. `typeahead: {kind: :filter, name: :status}`).
-          #
-          # Auto opt-out: if the associated resource has neither a
-          # `search` block nor a fallback search column on the model,
-          # fall back to slim-select's eager list + client-side filter —
-          # the backend would just return unfiltered records.
-          def configure_typeahead_attributes!(typeahead_option)
-            return if typeahead_option == false
-            return unless typeahead_searchable?
-            url = typeahead_url_for(typeahead_option)
-            return unless url
-            attributes[:data_slim_select_typeahead_url_value] = url
+          def typeahead_target_class
+            @association_class
           end
 
-          def typeahead_searchable?
-            klass = @association_class
-            return false unless klass
-
-            registry = Plutonium::Resource::Register
-            if registry.respond_to?(:definition_for)
-              defn_class = registry.definition_for(klass)
-              if defn_class.respond_to?(:_search_definition) && defn_class._search_definition.present?
-                return true
-              end
-            end
-            Plutonium::Resource::Controllers::Typeahead.searchable_column_for(klass, label_method: @label_method).present?
-          end
-
-          def typeahead_url_for(typeahead_option)
-            kind, name = if typeahead_option.is_a?(Hash)
-              [typeahead_option[:kind] || :input, typeahead_option[:name]]
-            else
-              detect_typeahead_kind_and_name
-            end
-            return nil unless name
-
-            route_key = resource_class.model_name.route_key
-            helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
-
-            # Engine route helpers are the source of truth for routes
-            # mounted under a Plutonium portal — phlex-rails' `helpers`
-            # proxy is deprecated and not the right entry point here.
-            url_helpers = current_engine.routes.url_helpers
-            return nil unless url_helpers.respond_to?(helper)
-            url_helpers.public_send(helper, name: name)
-          rescue
-            nil
+          def typeahead_kind_and_name(_typeahead_option)
+            detect_typeahead_kind_and_name
           end
 
           # Plutonium::UI::Form::Query roots its form with `as: :q`, so
