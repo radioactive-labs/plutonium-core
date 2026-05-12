@@ -9,7 +9,7 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
       skip_authorization: true
     )
 
-    assert_nil component.send(:add_url)
+    assert_nil component.send(:add_url_and_frame)
   end
 
   def test_add_url_generates_url_when_association_class_is_registered
@@ -19,10 +19,11 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
       resource_url: "/users/new"
     )
 
-    url = component.send(:add_url)
+    url, frame = component.send(:add_url_and_frame)
 
     assert_includes url, "/users/new"
     assert_includes url, "return_to="
+    assert_equal "remote_modal", frame
   end
 
   def test_add_url_returns_nil_when_not_authorized
@@ -32,7 +33,7 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
       allowed: false
     )
 
-    assert_nil component.send(:add_url)
+    assert_nil component.send(:add_url_and_frame)
   end
 
   def test_add_url_uses_custom_add_action_regardless_of_registration
@@ -42,10 +43,11 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
       add_action: "/custom/create"
     )
 
-    url = component.send(:add_url)
+    url, frame = component.send(:add_url_and_frame)
 
     assert_includes url, "/custom/create"
     assert_includes url, "return_to="
+    assert_nil frame
   end
 
   def test_choices_uses_raw_choices_when_provided
@@ -91,15 +93,24 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     component.define_singleton_method(:registered_resources) { registered_resources }
     component.define_singleton_method(:request) { request_stub }
 
-    if resource_url
-      component.define_singleton_method(:resource_url_for) { |*_args, **_kwargs| resource_url }
-    end
+    action = Struct.new(:route_options, :turbo_frame, :name) do
+      def permitted_by?(policy)
+        policy.allowed_to?(:"#{name}?")
+      end
+    end.new(:new_route, "remote_modal", :new)
+    definition = Struct.new(:defined_actions).new({new: action})
+    component.define_singleton_method(:resource_definition) { |_klass| definition }
+    component.define_singleton_method(:route_options_to_url) { |_ro, _subject| resource_url || "/users/new" }
 
     if association_scope
       component.define_singleton_method(:choices_from_association) { |_klass| association_scope }
     end
 
     component.define_singleton_method(:allowed_to?) { |*_args, **_kwargs| allowed }
+    component.define_singleton_method(:in_modal?) { false }
+    policy_stub = Object.new
+    policy_stub.define_singleton_method(:allowed_to?) { |*_args| allowed }
+    component.define_singleton_method(:policy_for) { |**_kwargs| policy_stub }
 
     component
   end

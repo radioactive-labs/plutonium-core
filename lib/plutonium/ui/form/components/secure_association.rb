@@ -21,27 +21,63 @@ module Plutonium
           delegate :association_reflection, to: :field
 
           def render_add_button
-            return if @add_action == false || add_url.nil?
+            return if @add_action == false
 
-            a(
-              href: add_url,
+            url, turbo_frame = add_url_and_frame
+            return unless url
+
+            # When the parent form is already inside a modal, route the
+            # "+" to the secondary frame so the stacked dialog opens on
+            # top of the original form rather than replacing it. The
+            # crud controller mirrors this on success — closing the
+            # secondary modal and reloading the primary so the
+            # association select picks up the new record.
+            if turbo_frame == Plutonium::REMOTE_MODAL_FRAME && in_modal?
+              turbo_frame = Plutonium::REMOTE_MODAL_SECONDARY_FRAME
+            end
+
+            attrs = {
+              href: url,
               class: "inline-flex items-center justify-center w-9 h-9 shrink-0 bg-[var(--pu-surface-alt)] hover:bg-[var(--pu-border)] border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] focus:ring-2 focus:ring-[var(--pu-border)] focus:outline-none text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors"
-            ) do
+            }
+            attrs[:data] = {turbo_frame: turbo_frame} if turbo_frame
+
+            a(**attrs) do
               render Phlex::TablerIcons::Plus.new(class: "w-4 h-4")
             end
           end
 
-          def add_url
-            @add_url ||= begin
-              return unless @skip_authorization || allowed_to?(:create?, association_reflection.klass)
+          # Resolves the destination for the inline "+" button alongside
+          # the association select. We go through the target resource's
+          # `:new` action (rather than building a URL by hand) so the
+          # button inherits whatever modal/slideover frame the target
+          # resource is configured for — same path table/grid use for
+          # their own "New" button. A custom string `add_action:` skips
+          # the frame lookup since we can't infer the target's modal
+          # mode from an arbitrary URL.
+          def add_url_and_frame
+            klass = association_reflection.klass
 
-              url = @add_action || (registered_resources.include?(association_reflection.klass) && resource_url_for(association_reflection.klass, action: :new, parent: nil))
-              return unless url
-
-              uri = URI(url)
-              uri.query = URI.encode_www_form({return_to: request.original_url})
-              uri.to_s
+            if @add_action.is_a?(String)
+              return [with_return_to(@add_action), nil] if @skip_authorization || allowed_to?(:create?, klass)
+              return
             end
+
+            return unless registered_resources.include?(klass)
+            action = resource_definition(klass).defined_actions[:new]
+            return unless action
+            return unless @skip_authorization || action.permitted_by?(policy_for(record: klass))
+
+            url = route_options_to_url(action.route_options, klass)
+            [with_return_to(url), action.turbo_frame]
+          end
+
+          def with_return_to(url)
+            uri = URI(url)
+            params = Rack::Utils.parse_nested_query(uri.query)
+            params["return_to"] = request.original_url
+            uri.query = params.to_query
+            uri.to_s
           end
 
           def choices

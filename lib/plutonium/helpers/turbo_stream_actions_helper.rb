@@ -9,6 +9,20 @@ module Plutonium
         end
       end
 
+      # Closes the <dialog> inside the targeted frame and empties the
+      # frame. Used to dismiss a stacked modal without affecting the
+      # rest of the page.
+      def turbo_stream_close_frame(frame_id)
+        turbo_stream_action_tag :close_frame, target: frame_id
+      end
+
+      # Reloads the targeted frame from its current src. Used to refresh
+      # the primary modal after a secondary-modal action mutates data
+      # the primary depends on.
+      def turbo_stream_reload_frame(frame_id)
+        turbo_stream_action_tag :reload_frame, target: frame_id
+      end
+
       private
 
       def turbo_stream_redirect_same_page?(url)

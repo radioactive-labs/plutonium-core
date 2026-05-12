@@ -105,6 +105,7 @@ module Plutonium
 
         def render_after_main
           turbo_frame_tag(Plutonium::REMOTE_MODAL_FRAME)
+          turbo_frame_tag(Plutonium::REMOTE_MODAL_SECONDARY_FRAME)
         end
 
         def render_content(&)

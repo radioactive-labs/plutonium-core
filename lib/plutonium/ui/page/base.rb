@@ -90,13 +90,6 @@ module Plutonium
         # Returns false by default; pages opt-in by overriding.
         def aside_present? = false
 
-        # True when the page is rendered inside any turbo frame.
-        def in_frame? = current_turbo_frame.present?
-
-        # True when the page is rendered inside the remote_modal turbo frame.
-        # Used by form pages to suppress the sticky footer (modal owns its own footer).
-        def in_modal? = current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
-
         # Customization hooks
         def render_before_header
         end

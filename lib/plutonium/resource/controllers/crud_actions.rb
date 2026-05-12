@@ -58,7 +58,7 @@ module Plutonium
             elsif resource_record!.save
               format.turbo_stream do
                 flash.notice = "#{resource_class.model_name.human} was successfully created."
-                render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_submit)
+                render turbo_stream: stacked_modal_create_streams
               end
               format.html do
                 redirect_to redirect_url_after_submit,
@@ -163,6 +163,24 @@ module Plutonium
         end
 
         private
+
+        # When the create came in through the secondary (stacked) modal
+        # frame — i.e. the user clicked "+" next to an association field
+        # while the parent form was already in a modal — we don't want to
+        # navigate anywhere. Close the secondary dialog and reload the
+        # primary modal frame so the just-created record appears in the
+        # association select. Outside that case fall back to the normal
+        # post-submit redirect.
+        def stacked_modal_create_streams
+          if helpers.in_secondary_modal?
+            [
+              helpers.turbo_stream_close_frame(Plutonium::REMOTE_MODAL_SECONDARY_FRAME),
+              helpers.turbo_stream_reload_frame(Plutonium::REMOTE_MODAL_FRAME)
+            ]
+          else
+            helpers.turbo_stream_redirect(redirect_url_after_submit)
+          end
+        end
 
         def redirect_url_after_submit
           if (return_to = url_from(params[:return_to]))

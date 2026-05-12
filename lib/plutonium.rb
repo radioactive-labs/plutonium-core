@@ -28,6 +28,14 @@ module Plutonium
   # frame name lives in one place.
   REMOTE_MODAL_FRAME = "remote_modal"
 
+  # Secondary modal frame, used to stack a modal on top of the primary one
+  # (e.g. clicking the inline "+" next to an association field while the
+  # parent form is itself rendered in the primary modal). The layout
+  # renders a second frame, and `in_modal?` recognises both.
+  REMOTE_MODAL_SECONDARY_FRAME = "remote_modal_secondary"
+
+  MODAL_FRAMES = [REMOTE_MODAL_FRAME, REMOTE_MODAL_SECONDARY_FRAME].freeze
+
   # Set up Zeitwerk loader for the Plutonium gem
   # @return [Zeitwerk::Loader] configured Zeitwerk loader instance
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|

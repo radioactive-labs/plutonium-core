@@ -70,10 +70,6 @@ module Plutonium
           end
         end
 
-        def in_modal?
-          current_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
-        end
-
         def show_submit_and_continue?
           return false unless object.respond_to?(:new_record?)
 

@@ -92,6 +92,8 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     page = Plutonium::UI::Page::New.new
 
     page.define_singleton_method(:current_turbo_frame) { turbo_frame }
+    page.define_singleton_method(:in_frame?) { !turbo_frame.nil? }
+    page.define_singleton_method(:in_modal?) { turbo_frame == Plutonium::REMOTE_MODAL_FRAME }
     page.define_singleton_method(:partial) { |_name| :resource_form_partial }
     page.define_singleton_method(:render) { |_partial| nil }
 
