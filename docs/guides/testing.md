@@ -147,8 +147,9 @@ Output: `test/integration/<portal>_portal/<resource>_test.rb`.
 - **Nested resources need `parent:` in the DSL AND a parent record** from `parent_record!`. Both are required for path interpolation.
 - **`PortalAccess` uses `portal_access_for`**, not `resource_tests_for`. Don't mix them on the same class.
 
-## See also
+## Related
 
-- [Authorization](/guides/authorization) — write the policy this concern verifies
-- [Multi-tenancy](/guides/multi-tenancy) — entity scoping that drives nested-resource tests
-- [Authentication](/guides/authentication) — Rodauth setup behind the default login flow
+- [Reference › Testing](/reference/testing/) — full DSL reference, all concern stubs, override hooks
+- [Authorization](./authorization) — write the policy this concern verifies
+- [Multi-tenancy](./multi-tenancy) — entity scoping that drives nested-resource tests
+- [Authentication](./authentication) — Rodauth setup behind the default login flow

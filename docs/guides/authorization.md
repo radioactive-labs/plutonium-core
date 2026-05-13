@@ -1,129 +1,77 @@
 # Authorization
 
-This guide covers implementing authorization policies to control access.
+Control what users can do once authenticated. Plutonium uses ActionPolicy with extensions for attribute permissions and tenant scoping.
 
-## Overview
+## Goal
 
-Plutonium authorization is built on [ActionPolicy](https://actionpolicy.evilmartians.io/) and works at three levels:
+For each resource, decide who can create / read / update / destroy / run custom actions, and which fields they can see and edit.
 
-1. **Action Permissions** - Can the user perform this action?
-2. **Attribute Permissions** - Which fields can the user see/modify?
-3. **Scope Permissions** - Which records can the user access?
+## The three layers
 
-## Policy Structure
+Every policy controls three things:
 
-Policies inherit from a base `ResourcePolicy` class:
+1. **Action permissions** — `create?`, `read?`, `update?`, `destroy?`, plus your custom action methods.
+2. **Attribute permissions** — `permitted_attributes_for_create`, `_for_read`, etc.
+3. **Collection scope** — `relation_scope` (which records show up in lists).
+
+## 🚨 Critical
+
+- **`create?` and `read?` default to `false`.** Always override them explicitly. Derived methods (`update?`, `show?`, `index?`) inherit automatically.
+- **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detects; production raises.
+- **`relation_scope` must call `default_relation_scope(relation)` explicitly** — never `super`. See [Reference › Behavior › Policies](/reference/behavior/policies).
+- **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy. Undefined methods return `false` → action silently disappears.
+
+## Steps
+
+### 1. Open the generated policy
+
+After `pu:res:scaffold` + `pu:res:conn`, you have:
+
+- `app/policies/post_policy.rb` (base policy)
+- `packages/admin_portal/app/policies/admin_portal/post_policy.rb` (per-portal override, seeded by `pu:res:conn`)
+
+### 2. Override `create?` and `read?` explicitly
 
 ```ruby
-# app/policies/resource_policy.rb (generated during install)
-class ResourcePolicy < Plutonium::Resource::Policy
-  def create?
-    true
-  end
-
-  def read?
-    true
-  end
-end
-
-# app/policies/post_policy.rb (per resource)
 class PostPolicy < ResourcePolicy
-  def create?
-    user.present?
-  end
-
-  def read?
-    true
-  end
-
-  def update?
-    owner?
-  end
-
-  def destroy?
-    owner? || user.admin?
-  end
-
-  def permitted_attributes_for_create
-    %i[title content]
-  end
-
-  def permitted_attributes_for_read
-    %i[title content author_id created_at updated_at]
-  end
-
-  def permitted_associations
-    %i[comments tags]
-  end
-
-  private
-
-  def owner?
-    record.user_id == user.id
-  end
+  def create? = user.present?
+  def read?   = true
 end
 ```
 
-## Policy Context
+These default to `false` — without an explicit override, nobody can create or read records.
 
-Inside a policy, you have access to:
+### 3. Override derived methods only when rules differ
 
-| Variable | Description |
-|----------|-------------|
-| `user` | Current authenticated user (required) |
-| `record` | The resource being authorized |
-| `entity_scope` | Current scoped entity (for multi-tenancy) |
+`update?` inherits from `create?`. `index?`/`show?` inherit from `read?`. Only override when the rule is genuinely different:
 
 ```ruby
 def update?
-  user          # => Current user
-  record        # => The specific Post instance
-  entity_scope  # => Current parent/tenant entity
+  user.admin? || record.author == user
+end
+
+def destroy?
+  user.admin?
 end
 ```
 
-## Action Permissions
-
-### Core Actions (Must Override)
-
-The base `Plutonium::Resource::Policy` defaults `create?` and `read?` to `false`. You must override these:
+### 4. Declare attribute permissions
 
 ```ruby
-def create?  # Default: false
-  user.present?
+def permitted_attributes_for_create
+  %i[title content category]
 end
 
-def read?    # Default: false
-  true
-end
-```
-
-### Derived Actions
-
-Other actions inherit from core actions by default:
-
-| Method | Inherits From | Override When |
-|--------|---------------|---------------|
-| `update?` | `create?` | Different update rules |
-| `destroy?` | `create?` | Different delete rules |
-| `index?` | `read?` | Custom listing rules |
-| `show?` | `read?` | Record-specific read rules |
-| `new?` | `create?` | Rarely needed |
-| `edit?` | `update?` | Rarely needed |
-| `search?` | `index?` | Search-specific rules |
-
-```ruby
-class PostPolicy < ResourcePolicy
-  # Only need to override when rules differ
-  def destroy?
-    owner? || user.admin?  # Different from create?
-  end
+def permitted_attributes_for_read
+  %i[title content category author published_at created_at]
 end
 ```
 
-### Custom Actions
+::: warning Index has no `record`
+`permitted_attributes_for_index` runs at collection level — `record` is `nil`. If you write a `record`-dependent `_for_read`, you MUST also declare an explicit `_for_index`. See [Reference › Behavior › Policies › Index has no record](/reference/behavior/policies#index-has-no-record).
+:::
 
-Define methods matching your action names:
+### 5. Custom action methods
 
 ```ruby
 def publish?
@@ -131,70 +79,104 @@ def publish?
 end
 
 def archive?
-  update? && !record.archived?
+  user.admin?
 end
 ```
 
-Actions are secure by default - undefined methods return `false`.
+The method name matches the action name plus `?`. Undefined methods return `false`.
 
-## Attribute Permissions
-
-### Core Methods (Must Override for Production)
+### 6. Optionally filter the collection — `relation_scope`
 
 ```ruby
-# What users can see (index, show)
-def permitted_attributes_for_read
-  %i[title content author_id published_at created_at]
-end
-
-# What users can set (create, update)
-def permitted_attributes_for_create
-  %i[title content]
+relation_scope do |relation|
+  default_relation_scope(relation).where(published: true)
 end
 ```
 
-### Derived Methods
+🚨 Always call `default_relation_scope(relation)` explicitly — not `super`. Bypassing it triggers `verify_default_relation_scope_applied!` at runtime.
 
-| Method | Inherits From |
-|--------|---------------|
-| `permitted_attributes_for_update` | `permitted_attributes_for_create` |
-| `permitted_attributes_for_index` | `permitted_attributes_for_read` |
-| `permitted_attributes_for_show` | `permitted_attributes_for_read` |
-| `permitted_attributes_for_new` | `permitted_attributes_for_create` |
-| `permitted_attributes_for_edit` | `permitted_attributes_for_update` |
+## Common patterns
 
-### Per-Action Attributes
-
-Show different fields for different views:
+### Owner-based
 
 ```ruby
-def permitted_attributes_for_index
-  %i[title author_id created_at]  # Minimal for list
-end
+def update?  = record.author == user || user.admin?
+def destroy? = update?
+```
 
-def permitted_attributes_for_read
-  %i[title content author_id tags created_at updated_at]  # Full for detail
+### Role-based
+
+```ruby
+def create? = user.admin? || user.editor?
+
+def update?
+  return true if user.admin?
+  user.editor? && record.author == user
 end
 ```
 
-### Conditional Attributes
+### Block archived records
+
+```ruby
+def update?  = !record.try(:archived?) && super
+def destroy? = !record.try(:archived?) && super
+```
+
+### Conditional attribute access
 
 ```ruby
 def permitted_attributes_for_create
   attrs = %i[title content]
-  attrs << :featured if user.admin?
-  attrs << :author_id if user.admin?  # Only admins can set author
+  attrs += %i[featured author_id] if user.admin?
   attrs
 end
 ```
 
-### Auto-Detection Warning
+### Time-based
 
-In development, undefined attribute methods auto-detect from the model. **This raises errors in production** - always define explicitly.
+```ruby
+def update?
+  return false if record.created_at < 24.hours.ago
+  owner?
+end
+```
 
-## Association Permissions
+## Bulk action authorization — per record
 
-Control which associations can be rendered:
+```ruby
+def bulk_archive?
+  create? && !record.locked?   # checked PER record in the selection
+end
+```
+
+- **Backend:** if any selected record fails, the entire request is rejected.
+- **UI:** only actions ALL selected records support are shown (intersection).
+
+Records come from `current_authorized_scope` — users can only select records they can access.
+
+## Portal-specific policies
+
+```ruby
+class PostPolicy < ResourcePolicy
+  def create? = user.present?
+end
+
+# Admin — more permissive
+class AdminPortal::PostPolicy < ::PostPolicy
+  include AdminPortal::ResourcePolicy
+
+  def destroy? = true
+  def permitted_attributes_for_create = %i[title content featured internal_notes]
+end
+
+# Public — read-only
+class PublicPortal::PostPolicy < ::PostPolicy
+  include PublicPortal::ResourcePolicy
+  def create? = false
+end
+```
+
+## Show-page association tabs
 
 ```ruby
 def permitted_associations
@@ -202,300 +184,72 @@ def permitted_associations
 end
 ```
 
-Used for nested forms, related data displays, and association fields in tables.
+Drives the show-page tablist. Each named association must exist on the model AND be a registered Plutonium resource. See [Reference › Behavior › Policies › Association permissions](/reference/behavior/policies#association-permissions).
 
-## Scope Permissions
+::: warning Not for nested forms
+`permitted_associations` is for show-page navigation tabs, NOT nested forms. Nested forms come from `nested_input :variants` in the definition. See [Reference › Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs).
+:::
 
-Control which records appear in lists using ActionPolicy's `relation_scope`:
+## Multi-tenant scoping
 
-```ruby
-class PostPolicy < ResourcePolicy
-  relation_scope do |relation|
-    if user.admin?
-      relation
-    else
-      relation.where(published: true).or(
-        relation.where(user_id: user.id)
-      )
-    end
-  end
-end
-```
-
-### With Entity Scoping
-
-Call `super` to preserve automatic entity scoping for multi-tenancy:
+When the portal sets `scope_to_entity Organization`, the inherited `relation_scope` automatically filters everything to the current org — no work in the policy. To add filters on top:
 
 ```ruby
 relation_scope do |relation|
-  relation = super(relation)  # Apply entity scope first
-
-  if user.admin?
-    relation
-  else
-    relation.where(published: true)
-  end
+  default_relation_scope(relation).where(archived: false)
 end
 ```
 
-## Controller & View Helpers
+See [Multi-tenancy](./multi-tenancy) and [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping).
 
-These helpers are available in controllers and views for authorization checks.
-
-### authorized_resource_scope
-
-Get an authorized scope for a resource other than the current controller's resource. Useful in dashboards and custom views:
+## Anti-pattern: nested-attributes hashes in policies
 
 ```ruby
-# In a view or controller
-authorized_resource_scope(Post)                    # => Post.where(...)
-authorized_resource_scope(Post).count              # => 42
-authorized_resource_scope(Comment, relation: post.comments)
-```
-
-### policy_for
-
-Get the policy instance for any record:
-
-```ruby
-policy_for(@post)                    # => PostPolicy instance
-policy_for(@post).update?            # => true/false
-```
-
-### allowed_to?
-
-Check if an action is permitted:
-
-```ruby
-allowed_to?(:edit?, @post)           # => true/false
-allowed_to?(:create?, Post)          # => true/false
-```
-
-## Portal-Specific Policies
-
-Override policies for specific portals:
-
-```ruby
-# packages/admin_portal/app/policies/admin_portal/post_policy.rb
-class AdminPortal::PostPolicy < ::PostPolicy
-  include AdminPortal::ResourcePolicy
-
-  # Admins can do everything
-  def destroy?
-    true
-  end
-
-  def permitted_attributes_for_create
-    %i[title content featured internal_notes]  # More fields
-  end
-
-  relation_scope do |relation|
-    relation  # No restrictions
-  end
+# ❌ NEVER
+def permitted_attributes_for_create
+  [:name, {variants_attributes: [:id, :name, :_destroy]}]
 end
 ```
 
-For restricted portals:
+Nested params are extracted by the form definition, not the policy. The hash entry renders as a literal text input. Use just the association name:
 
 ```ruby
-# packages/public_portal/app/policies/public_portal/post_policy.rb
-class PublicPortal::PostPolicy < ::PostPolicy
-  include PublicPortal::ResourcePolicy
-
-  def create?
-    false  # No public creation
-  end
-
-  relation_scope do |relation|
-    relation.where(published: true)  # Only published
-  end
+# ✅ Policy permits just the association name
+def permitted_attributes_for_create
+  [:name, :variants]
 end
 ```
 
-Plutonium automatically uses portal-specific policies when available.
+`nested_input :variants` in the definition handles the rest. See [Reference › Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs).
 
-## Policy Helpers
-
-Extract common logic into concerns:
+## Custom authorization context
 
 ```ruby
-# app/policies/concerns/ownership.rb
-module Ownership
-  extend ActiveSupport::Concern
-
-  def owner?
-    return false unless record.respond_to?(:user_id)
-    record.user_id == user.id
-  end
-end
-
-# Use in policies
+# Policy
 class PostPolicy < ResourcePolicy
-  include Ownership
-
-  def update?
-    owner? || user.admin?
-  end
-end
-```
-
-## Testing Policies
-
-### Manual Testing
-
-```bash
-rails runner "
-  user = User.first
-  post = Post.first
-  policy = PostPolicy.new(user: user, record: post)
-
-  puts 'Can read: ' + policy.read?.to_s
-  puts 'Can update: ' + policy.update?.to_s
-"
-```
-
-### RSpec with ActionPolicy
-
-```ruby
-# spec/policies/post_policy_spec.rb
-RSpec.describe PostPolicy, type: :policy do
-  let(:user) { create(:user) }
-  let(:other_user) { create(:user) }
-
-  describe '#update?' do
-    context 'when user owns the post' do
-      let(:record) { create(:post, user: user) }
-
-      it { is_expected.to be_allowed_to(:update?) }
-    end
-
-    context 'when user does not own the post' do
-      let(:record) { create(:post, user: other_user) }
-
-      it { is_expected.not_to be_allowed_to(:update?) }
-    end
-  end
-end
-```
-
-## Common Patterns
-
-### Role-Based Access
-
-```ruby
-class PostPolicy < ResourcePolicy
-  def destroy?
-    case user.role
-    when 'admin'
-      true
-    when 'editor'
-      record.draft?
-    when 'author'
-      owner? && record.draft?
-    else
-      false
-    end
-  end
-end
-```
-
-### Time-Based Permissions
-
-```ruby
-def update?
-  owner? && record.created_at > 24.hours.ago
-end
-```
-
-### Status-Based Permissions
-
-```ruby
-def update?
-  return false if record.archived?
-  return true if user.admin?
-  owner? && record.draft?
-end
-```
-
-### Check Model Capabilities
-
-```ruby
-def archive?
-  return false unless record.respond_to?(:archived!)
-  return false if record.archived?
-  update?
-end
-```
-
-### Prevent Actions on Archived Records
-
-```ruby
-def update?
-  return false if record.try(:archived?)
-  super
+  authorize :department, allow_nil: true
+  def create? = department&.allows_posting?
 end
 
-def destroy?
-  return false if record.try(:archived?)
-  super
-end
-```
-
-## Handling Unauthorized Access
-
-When authorization fails, ActionPolicy raises `ActionPolicy::Unauthorized`.
-
-### Custom Error Handling
-
-```ruby
-# app/controllers/application_controller.rb
-class ApplicationController < ActionController::Base
-  rescue_from ActionPolicy::Unauthorized do |exception|
-    respond_to do |format|
-      format.html { redirect_to root_path, alert: "You are not authorized." }
-      format.json { render json: { error: "Unauthorized" }, status: :forbidden }
-    end
-  end
-end
-```
-
-### Skip Verification (Custom Actions)
-
-Built-in CRUD actions automatically verify authorization. For custom actions:
-
-```ruby
+# Controller
 class PostsController < ResourceController
-  skip_verify_authorize_current only: [:custom_action]
-
-  def custom_action
-    # Handle authorization manually or skip entirely
-  end
+  authorize :department, through: :current_department
+  private
+  def current_department = current_user.department
 end
 ```
 
-## Debugging Authorization
+## Common issues
 
-### Check Why Access Denied
-
-Add logging to your policy:
-
-```ruby
-def update?
-  result = owner?
-  Rails.logger.debug { "PostPolicy#update? for user #{user.id} on post #{record.id}: #{result}" }
-  result
-end
-```
-
-### Policy Inspection
-
-```ruby
-policy = PostPolicy.new(user: current_user, record: @post)
-puts policy.permitted_attributes_for_update.inspect
-```
+- **Undefined custom action policy method** — the button silently disappears (undefined returns `false`). Add `def my_action?` to the policy.
+- **`record.X` crashes during index** — `record` is `nil` on index. Add an explicit `permitted_attributes_for_index` that doesn't depend on `record`.
+- **`verify_default_relation_scope_applied!` raises** — your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
+- **`super` in `relation_scope` doesn't behave as expected** — use `default_relation_scope(relation)` explicitly; `super`'s semantics depend on how ActionPolicy registered the scope.
 
 ## Related
 
-- [Authentication](./authentication)
-- [Multi-tenancy](./multi-tenancy)
-- [Custom Actions](./custom-actions)
+- [Reference › Behavior › Policies](/reference/behavior/policies) — full policy surface
+- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — `default_relation_scope`, multi-tenant patterns
+- [Authentication](./authentication) — who's the user in the first place
+- [Multi-tenancy](./multi-tenancy) — entity scoping setup
+- [Custom actions](./custom-actions) — defining the actions that need policy methods

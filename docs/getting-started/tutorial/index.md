@@ -55,13 +55,12 @@ Create a second portal with different access levels for content authors.
 ### [8. Customizing the UI](./08-customizing-ui)
 Customize forms, tables, and views to match your requirements.
 
-## Getting Help
+## Getting help
 
 If you get stuck:
-- Check the [Guides](/guides/) for detailed explanations
-- Browse the [Reference Documentation](/reference/) for API details
-- Visit our [GitHub Issues](https://github.com/radioactive-labs/plutonium-core/issues)
 
-Let's get started!
+- Check the [Guides](/guides/) for task-oriented walkthroughs.
+- Browse the [Reference](/reference/) for full API surface — [App](/reference/app/), [Resource](/reference/resource/), [Behavior](/reference/behavior/), [UI](/reference/ui/), [Auth](/reference/auth/), [Tenancy](/reference/tenancy/), [Testing](/reference/testing/).
+- Visit [GitHub Issues](https://github.com/radioactive-labs/plutonium-core/issues).
 
 [Begin Chapter 1: Project Setup →](./01-setup)

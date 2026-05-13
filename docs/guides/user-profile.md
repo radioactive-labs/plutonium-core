@@ -1,178 +1,118 @@
 # User Profile
 
-Plutonium provides a Profile resource generator for user account settings. The Profile page allows users to manage their personal information and access Rodauth security features like password changes, two-factor authentication, and session management.
+Add a profile / account-settings page where users edit personal fields and access Rodauth security features (change password, 2FA, etc.) in one place.
 
-## Overview
+## Goal
 
-The profile system provides:
-- **Profile Resource**: A standard Plutonium resource linked to the User model
-- **Security Section**: Automatic display of enabled Rodauth security features
-- **Customizable Fields**: Add any fields you need (bio, avatar, preferences, etc.)
+A `/profile` URL that shows the user's personal fields plus a "Security" section linking to Rodauth-managed features.
 
-## Prerequisites
+## 🚨 Critical
 
-Before installing the profile, ensure you have:
+- **Profile association is always `:profile`** regardless of the model class — `current_user.profile`, `build_profile`, `params.require(:profile)` always work.
+- **Profile needs `pu:profile:conn` to be visible** — without it, no `/profile` route, no `profile_url` helper.
+- **Every user needs a profile row.** Add an `after_create :create_profile!` callback to the user model. Without it, `current_user.profile` is nil.
 
-1. **User Authentication**: A Rodauth user account set up
-2. **Model Markers**: The User model with marker comments
-
-The easiest way to set this up is with the SaaS generator:
+## Quick path
 
 ```bash
-rails g pu:saas:user User
+rails g pu:profile:setup date_of_birth:date bio:text \
+  --dest=competition \
+  --portal=competition_portal
 ```
 
-## Installation
+`pu:profile:setup` is a meta-generator — runs `pu:profile:install` + `pu:profile:conn` in one shot.
 
-### Step 1: Install the Profile Resource
+## Step-by-step
+
+### 1. Install
 
 ```bash
-rails generate pu:profile:install --dest=main_app
+rails generate pu:profile:install bio:text avatar:attachment 'timezone:string?' \
+  --dest=customer
 ```
-
-With custom fields:
-
-```bash
-rails g pu:profile:install \
-    bio:text \
-    avatar:attachment \
-    'timezone:string?' \
-    notifications_enabled:boolean \
-    --dest=main_app
-```
-
-### Options
 
 | Option | Default | Description |
-|--------|---------|-------------|
-| `--dest` | (prompts) | Target destination package or main_app |
-| `--user-model` | User | Rodauth user model name |
+|---|---|---|
+| `--dest=DEST` | (prompts) | Target package or `main_app` |
+| `--user-model=NAME` | `User` | Rodauth user model |
 
-### Step 2: Run Migrations
+Custom resource name (first positional argument):
+
+```bash
+rails g pu:profile:install AccountSettings bio:text --dest=main_app
+```
+
+By default the model is `{UserModel}Profile` (`UserProfile`, `StaffUserProfile`, etc.).
+
+### 2. Migrate
 
 ```bash
 rails db:migrate
 ```
 
-### Step 3: Connect to Portal
-
-Connect the Profile to your portal using the profile connect generator:
+### 3. Connect to a portal
 
 ```bash
 rails g pu:profile:conn --dest=customer_portal
 ```
 
-This:
-- Registers the Profile as a singular resource (`/profile` instead of `/profiles/:id`)
-- Configures the `profile_url` helper to enable the "Profile" link in the user menu
+This registers the profile as a **singular** resource — exposes `/profile` (no `:id`) and the `profile_url` helper.
 
-## Generated Files
-
-The generator creates a standard Plutonium resource:
-
-```
-app/models/profile.rb
-db/migrate/xxx_create_profiles.rb
-app/controllers/profiles_controller.rb
-app/policies/profile_policy.rb
-app/definitions/profile_definition.rb
-```
-
-And modifies:
-- **User model**: Adds `has_one :profile, dependent: :destroy`
-- **Definition**: Injects custom ShowPage with security links
-
-## Security Section
-
-The ShowPage automatically displays links to enabled Rodauth security features.
-
-Available features (only shown if enabled in Rodauth):
-
-| Feature | Link Label | Description |
-|---------|------------|-------------|
-| `change_password` | Change Password | Update account password |
-| `change_login` | Change Email | Update email address |
-| `otp` | Two-Factor Authentication | Set up TOTP authenticator |
-| `recovery_codes` | Recovery Codes | View or regenerate backup codes |
-| `webauthn` | Security Keys | Manage passkeys and hardware keys |
-| `active_sessions` | Active Sessions | View and revoke sessions |
-| `close_account` | Close Account | Permanently delete account |
-
-## Creating Profiles for Users
-
-Users need a profile created before they can access it. Choose one approach:
-
-### Option A: Automatic Creation on User Signup
+### 4. Add the auto-create callback
 
 ```ruby
-# app/models/user.rb
+# app/models/user.rb (modified by pu:profile:install)
 class User < ApplicationRecord
-  has_one :profile, dependent: :destroy
+  has_one :profile, class_name: "UserProfile", dependent: :destroy
 
   after_create :create_profile!
 
   private
-
-  def create_profile!
-    create_profile
-  end
-
-  # add has_one associations above.
+  def create_profile! = create_profile
 end
 ```
 
-### Option B: Create on First Access
+For existing users at migration time:
 
-In your portal's application controller:
-
-```ruby
-class ApplicationController < PlutoniumController
-  before_action :ensure_profile
-
-  private
-
-  def ensure_profile
-    return unless current_user
-    current_user.profile || current_user.create_profile
-  end
-end
+```bash
+rails runner "User.find_each(&:create_profile)"
 ```
 
-### Option C: Find or Create in Profile Controller
+## What you get
+
+The generated definition injects a custom `ShowPage` that renders `SecuritySection` — dynamically lists Rodauth security links based on which features are enabled:
+
+| Feature enabled | Link rendered |
+|---|---|
+| `change_password` | Change Password |
+| `change_login` | Change Email |
+| `otp` | Two-Factor Authentication |
+| `recovery_codes` | Recovery Codes |
+| `webauthn` | Security Keys |
+| `active_sessions` | Active Sessions |
+| `close_account` | Close Account |
+
+If a feature isn't enabled, its link doesn't render — no configuration needed.
+
+## Linking to the profile
 
 ```ruby
-# app/controllers/profiles_controller.rb
-class ProfilesController < ResourceController
-  private
-
-  def current_resource
-    @current_resource ||= current_user.profile || current_user.create_profile
-  end
-end
+link_to("Profile", profile_url) if respond_to?(:profile_url)
 ```
 
-## Customization
+The `respond_to?` guard is defensive — only portals that ran `pu:profile:conn` have the helper.
 
-### Adding Custom Fields
+## Customizing the definition
 
-Edit the generated definition to configure how fields appear:
+The generated profile is a normal Plutonium definition. Customize like any other:
 
 ```ruby
-# app/definitions/profile_definition.rb
-class ProfileDefinition < Plutonium::Resource::Definition
-  form do |f|
-    f.field :bio, as: :text
-    f.field :avatar, as: :attachment
-    f.field :timezone, collection: ActiveSupport::TimeZone.all.map(&:name)
-    f.field :notifications_enabled
-  end
+class UserProfileDefinition < Plutonium::Resource::Definition
+  field :bio, as: :markdown
+  input :avatar, as: :uppy
+  field :timezone, as: :select, choices: ActiveSupport::TimeZone.all.map(&:name)
 
-  display do |d|
-    d.field :bio
-    d.field :avatar
-    d.field :timezone
-    d.field :notifications_enabled
-  end
+  metadata :created_at, :updated_at
 
   class ShowPage < ShowPage
     private
@@ -184,139 +124,32 @@ class ProfileDefinition < Plutonium::Resource::Definition
 end
 ```
 
-### Custom Security Section
+See [Reference › Resource › Definition](/reference/resource/definition) for the full definition surface.
 
-Create your own security section component:
+## Multiple account types
 
-```ruby
-# app/components/custom_security_section.rb
-class CustomSecuritySection < Plutonium::UI::Component::Base
-  def view_template
-    div(class: "mt-8") do
-      h2(class: "text-lg font-semibold") { "Account Security" }
-
-      if rodauth.features.include?(:change_password)
-        a(href: rodauth.change_password_path) { "Change Password" }
-      end
-
-      # Add your custom links
-      a(href: "/settings/notifications") { "Notification Preferences" }
-    end
-  end
-end
-```
-
-Use it in your definition:
-
-```ruby
-class ProfileDefinition < Plutonium::Resource::Definition
-  class ShowPage < ShowPage
-    private
-
-    def render_after_content
-      render CustomSecuritySection.new
-    end
-  end
-end
-```
-
-### Adding Profile Actions
-
-Add custom actions to the profile:
-
-```ruby
-class ProfileDefinition < Plutonium::Resource::Definition
-  action :export_data,
-    interaction: Profile::ExportDataInteraction,
-    icon: Phlex::TablerIcons::Download
-
-  action :verify_email,
-    interaction: Profile::VerifyEmailInteraction,
-    category: :secondary
-end
-```
-
-### Profile Link in Navigation
-
-Add a profile link to your application layout or header:
-
-```ruby
-# In your header component
-if current_user && respond_to?(:profile_path)
-  a(href: profile_path) { "My Profile" }
-end
-```
-
-## Policy Configuration
-
-The generated policy controls access:
-
-```ruby
-# app/policies/profile_policy.rb
-class ProfilePolicy < Plutonium::Resource::Policy
-  # Users can only access their own profile
-  def read?
-    resource.user == user
-  end
-
-  def update?
-    resource.user == user
-  end
-
-  def destroy?
-    false # Disable deletion through the UI
-  end
-
-  # Only allow editing these attributes
-  def permitted_attributes_for_update
-    [:bio, :avatar, :timezone, :notifications_enabled]
-  end
-end
-```
-
-## Troubleshooting
-
-### "Profile not found" Error
-
-Ensure the user has a profile created. Use one of the creation strategies above.
-
-### Security Links Not Showing
-
-Security links only appear for features enabled in your Rodauth configuration:
-
-```ruby
-# app/rodauth/user_rodauth_plugin.rb
-class UserRodauthPlugin < Plutonium::Auth::RodauthPlugin
-  configure do
-    enable :change_password, :change_login, :otp, :active_sessions
-    # Only these features will show in the security section
-  end
-end
-```
-
-### Profile Routes Conflicting
-
-Ensure you use `--singular` when connecting:
+If your app has both `User` and `StaffUser` accounts, run `pu:profile:install` once per:
 
 ```bash
-rails g pu:res:conn Profile --dest=my_portal --singular
+rails g pu:profile:install --user-model=User --dest=main_app
+rails g pu:profile:install --user-model=StaffUser --dest=main_app
 ```
 
-This creates `/profile` (singular) instead of `/profiles/:id`.
+Each gets its own `*Profile` model with `:profile` association on the respective user. Connect each to the appropriate portal:
 
-### Changes Not Saving
-
-Check your policy's `permitted_attributes_for_update`:
-
-```ruby
-def permitted_attributes_for_update
-  [:bio, :avatar, :timezone, :notifications_enabled]
-end
+```bash
+rails g pu:profile:conn UserProfile      --dest=customer_portal
+rails g pu:profile:conn StaffUserProfile --dest=admin_portal
 ```
 
-## Next Steps
+## Common issues
 
-- [Authentication](/guides/authentication) - Set up Rodauth features
-- [Custom Actions](/guides/custom-actions) - Add profile actions
-- [Views](/guides/views) - Customize the profile page
-- [Authorization](/guides/authorization) - Configure profile policies
+- **`current_user.profile` is nil** — every user needs a profile row. Add `after_create :create_profile!` to the user model.
+- **`profile_url` is undefined** — the profile isn't connected to this portal. Run `pu:profile:conn --dest=<portal>`.
+- **`SecuritySection` shows nothing** — none of the relevant Rodauth features are enabled. Enable `change_password`, `otp`, etc. on the Rodauth plugin.
+
+## Related
+
+- [Reference › Auth › Profile](/reference/auth/profile) — full surface
+- [Reference › Auth › Accounts](/reference/auth/accounts) — Rodauth feature flags that gate SecuritySection
+- [Authentication](./authentication) — the underlying auth setup

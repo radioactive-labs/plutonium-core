@@ -111,65 +111,74 @@ export default defineConfig(withMermaid({
           ]
         },
         {
-          text: "Model",
+          text: "App",
           collapsed: false,
           items: [
-            { text: "Model", link: "/reference/model/" },
-            { text: "Features", link: "/reference/model/features" },
+            { text: "Overview", link: "/reference/app/" },
+            { text: "Packages", link: "/reference/app/packages" },
+            { text: "Portals", link: "/reference/app/portals" },
+            { text: "Generators", link: "/reference/app/generators" },
           ]
         },
         {
-          text: "Definition",
+          text: "Resource",
           collapsed: false,
           items: [
-            { text: "Definition", link: "/reference/definition/" },
-            { text: "Fields", link: "/reference/definition/fields" },
-            { text: "Actions", link: "/reference/definition/actions" },
-            { text: "Query", link: "/reference/definition/query" },
+            { text: "Overview", link: "/reference/resource/" },
+            { text: "Model", link: "/reference/resource/model" },
+            { text: "Definition", link: "/reference/resource/definition" },
+            { text: "Query", link: "/reference/resource/query" },
+            { text: "Actions", link: "/reference/resource/actions" },
           ]
         },
         {
-          text: "Policy",
+          text: "Behavior",
           collapsed: false,
           items: [
-            { text: "Policy", link: "/reference/policy/" },
+            { text: "Overview", link: "/reference/behavior/" },
+            { text: "Controllers", link: "/reference/behavior/controllers" },
+            { text: "Policies", link: "/reference/behavior/policies" },
+            { text: "Interactions", link: "/reference/behavior/interactions" },
           ]
         },
         {
-          text: "Controller",
+          text: "UI",
           collapsed: false,
           items: [
-            { text: "Controller", link: "/reference/controller/" },
+            { text: "Overview", link: "/reference/ui/" },
+            { text: "Pages", link: "/reference/ui/pages" },
+            { text: "Forms", link: "/reference/ui/forms" },
+            { text: "Displays", link: "/reference/ui/displays" },
+            { text: "Tables", link: "/reference/ui/tables" },
+            { text: "Components", link: "/reference/ui/components" },
+            { text: "Layouts", link: "/reference/ui/layouts" },
+            { text: "Assets", link: "/reference/ui/assets" },
           ]
         },
         {
-          text: "Interaction",
+          text: "Auth",
           collapsed: false,
           items: [
-            { text: "Interaction", link: "/reference/interaction/" },
+            { text: "Overview", link: "/reference/auth/" },
+            { text: "Accounts", link: "/reference/auth/accounts" },
+            { text: "Profile", link: "/reference/auth/profile" },
           ]
         },
         {
-          text: "Views",
+          text: "Tenancy",
           collapsed: false,
           items: [
-            { text: "Views", link: "/reference/views/" },
-            { text: "Forms", link: "/reference/views/forms" },
+            { text: "Overview", link: "/reference/tenancy/" },
+            { text: "Entity scoping", link: "/reference/tenancy/entity-scoping" },
+            { text: "Nested resources", link: "/reference/tenancy/nested-resources" },
+            { text: "Invites", link: "/reference/tenancy/invites" },
           ]
         },
         {
-          text: "Assets",
+          text: "Testing",
           collapsed: false,
           items: [
-            { text: "Assets", link: "/reference/assets/" },
-          ]
-        },
-        {
-          text: "Infrastructure",
-          collapsed: false,
-          items: [
-            { text: "Generators", link: "/reference/generators/" },
-            { text: "Portal", link: "/reference/portal/" },
+            { text: "Overview", link: "/reference/testing/" },
           ]
         }
       ],

@@ -1,41 +1,72 @@
 # Search and Filtering
 
-This guide covers implementing search, filters, scopes, and sorting.
+Add a search box, sidebar filters, quick-scope buttons, and sortable columns to a resource's index page. All in the definition.
 
-## Overview
+## Goal
 
-Plutonium provides built-in support for:
-- **Search** - Full-text search across fields
-- **Filters** - Input filters for specific fields (dropdown panel)
-- **Scopes** - Predefined query shortcuts (quick filter buttons)
-- **Sorting** - Column-based ordering
+Users can:
 
-## Search
+- Type into a search box to narrow the index list.
+- Click sidebar filters to narrow by status / category / date / etc.
+- Click scope buttons (top-of-list quick filters) for common queries like "Published" or "My posts".
+- Click column headers to sort.
 
-Define global search in the definition:
+## The four pieces
+
+| DSL | Purpose |
+|---|---|
+| `search` | The top-level search box. ONE block, queries you define. |
+| `filter` | Sidebar filter inputs. One per filterable attribute. |
+| `scope` | Quick-filter buttons across the top. References model scopes (or inline blocks). |
+| `sort` / `default_sort` | Sortable columns. |
+
+All declared in the definition.
+
+## Quick recipe
 
 ```ruby
 class PostDefinition < ResourceDefinition
+  # Search box — searches title and body
   search do |scope, query|
-    scope.where("title ILIKE ?", "%#{query}%")
+    scope.where("title ILIKE :q OR body ILIKE :q", q: "%#{query}%")
   end
+
+  # Sidebar filters
+  filter :status,     with: :select, choices: %w[draft published archived]
+  filter :title,      with: :text,   predicate: :contains
+  filter :created_at, with: :date_range
+
+  # Quick-filter buttons
+  scope :published   # uses Post.published
+  scope :draft
+
+  # Default scope (the "Published" button is highlighted on initial load)
+  default_scope :published
+
+  # Sortable columns
+  sort :title
+  sort :created_at
+  default_sort :created_at, :desc
 end
 ```
 
-### Multi-Field Search
+## Search
 
 ```ruby
+# Single field
+search do |scope, query|
+  scope.where("title ILIKE ?", "%#{query}%")
+end
+
+# Multiple fields
 search do |scope, query|
   scope.where(
     "title ILIKE :q OR content ILIKE :q OR author_name ILIKE :q",
     q: "%#{query}%"
   )
 end
-```
 
-### Search with Associations
-
-```ruby
+# Across associations
 search do |scope, query|
   scope.joins(:author).where(
     "posts.title ILIKE :q OR users.name ILIKE :q",
@@ -44,155 +75,54 @@ search do |scope, query|
 end
 ```
 
-### Split Search Terms
+### The `search` block also powers typeahead
 
-```ruby
-search do |scope, query|
-  terms = query.split(/\s+/)
-  terms.reduce(scope) do |current_scope, term|
-    current_scope.where("title ILIKE ?", "%#{term}%")
-  end
-end
-```
+When an association input targets this resource, the dropdown's autocomplete calls the resource's `search` block. Same code, two surfaces.
 
-### Full-Text Search (PostgreSQL)
+### Without a `search` block — typeahead fallback
 
-```ruby
-search do |scope, query|
-  scope.where(
-    "to_tsvector('english', title || ' ' || body) @@ plainto_tsquery('english', ?)",
-    query
-  )
-end
-```
+The framework falls back to a case-insensitive `LIKE` on the first column it finds, in priority order:
+
+1. The input's `label_method:` option, if it's a real column.
+2. Otherwise the first match from `[name, title, label, slug, display_name, email]`.
+3. Otherwise the relation is returned unfiltered (capped).
+
+For large tables, write an explicit `search` block — the leading-wildcard `LIKE` can't use a b-tree index. See [Reference › Resource › Query › Search](/reference/resource/query#search).
 
 ## Filters
 
-Plutonium provides **6 built-in filter types**. Use shorthand symbols or full class names.
+Six built-in types. Use shorthand symbols:
 
-### Text Filter
-
-String/text filtering with pattern matching:
-
-```ruby
-class PostDefinition < ResourceDefinition
-  # Shorthand (recommended)
-  filter :title, with: :text, predicate: :contains
-  filter :status, with: :text, predicate: :eq
-
-  # Full class name also works
-  filter :slug, with: Plutonium::Query::Filters::Text, predicate: :starts_with
-end
-```
-
-#### Available Predicates
-
-| Predicate | SQL | Description |
-|-----------|-----|-------------|
-| `:eq` | `= value` | Exact match (default) |
-| `:not_eq` | `!= value` | Not equal |
-| `:contains` | `LIKE %value%` | Contains text |
-| `:not_contains` | `NOT LIKE %value%` | Does not contain |
-| `:starts_with` | `LIKE value%` | Starts with |
-| `:ends_with` | `LIKE %value` | Ends with |
-| `:matches` | `LIKE value` | Pattern match (`*` becomes `%`) |
-| `:not_matches` | `NOT LIKE value` | Does not match pattern |
-
-### Boolean Filter
-
-True/false filtering for boolean columns:
-
-```ruby
-# Basic
-filter :active, with: :boolean
-
-# Custom labels
-filter :published, with: :boolean, true_label: "Published", false_label: "Draft"
-```
-
-Renders a select dropdown with "All", true label ("Yes"), and false label ("No").
-
-### Date Filter
-
-Single date filtering with comparison predicates:
-
-```ruby
-filter :created_at, with: :date, predicate: :gteq  # On or after
-filter :due_date, with: :date, predicate: :lt      # Before
-filter :published_at, with: :date, predicate: :eq  # On exact date
-```
-
-#### Available Predicates
-
-| Predicate | Description |
-|-----------|-------------|
-| `:eq` | On this date (default) |
-| `:not_eq` | Not on this date |
-| `:lt` | Before date |
-| `:lteq` | On or before date |
-| `:gt` | After date |
-| `:gteq` | On or after date |
-
-### Date Range Filter
-
-Filter between two dates (from/to):
-
-```ruby
-# Basic
-filter :created_at, with: :date_range
-
-# Custom labels
-filter :published_at, with: :date_range,
-  from_label: "Published from",
-  to_label: "Published to"
-```
-
-Renders two date pickers. Both are optional - users can filter with just "from" or just "to".
-
-### Select Filter
-
-Filter from predefined choices:
-
-```ruby
-# Static choices (array)
-filter :status, with: :select, choices: %w[draft published archived]
-
-# Dynamic choices (proc)
-filter :category, with: :select, choices: -> { Category.pluck(:name) }
-
-# Multiple selection
-filter :tags, with: :select, choices: %w[ruby rails js], multiple: true
-```
-
-### Association Filter
-
-Filter by associated record:
-
-```ruby
-# Basic - infers Category class from :category key
-filter :category, with: :association
-
-# Explicit class
-filter :author, with: :association, class_name: User
-
-# Multiple selection
-filter :tags, with: :association, class_name: Tag, multiple: true
-```
-
-Renders a resource select dropdown. Converts filter key to foreign key (`:category` -> `:category_id`).
-
-### Filter Summary Table
-
-| Type | Symbol | Input Params | Options |
-|------|--------|--------------|---------|
+| Type | Symbol | URL params | Options |
+|---|---|---|---|
 | Text | `:text` | `query` | `predicate:` |
 | Boolean | `:boolean` | `value` | `true_label:`, `false_label:` |
 | Date | `:date` | `value` | `predicate:` |
-| Date Range | `:date_range` | `from`, `to` | `from_label:`, `to_label:` |
+| Date range | `:date_range` | `from`, `to` | `from_label:`, `to_label:` |
 | Select | `:select` | `value` | `choices:`, `multiple:` |
 | Association | `:association` | `value` | `class_name:`, `multiple:` |
 
-### Custom Filter Class
+```ruby
+filter :title,        with: :text,        predicate: :contains
+filter :active,       with: :boolean
+filter :due_date,     with: :date,        predicate: :lt
+filter :created_at,   with: :date_range
+filter :status,       with: :select,      choices: %w[draft published]
+filter :category,     with: :select,      choices: -> { Category.pluck(:name) }
+filter :author,       with: :association, class_name: User
+```
+
+### Custom filter (lambda)
+
+```ruby
+filter :published, with: ->(scope, value) {
+  value == "true" ? scope.where.not(published_at: nil) : scope.where(published_at: nil)
+}
+```
+
+### Custom filter class
+
+For reusable filters with multiple inputs:
 
 ```ruby
 class PriceRangeFilter < Plutonium::Query::Filter
@@ -205,99 +135,58 @@ class PriceRangeFilter < Plutonium::Query::Filter
   def customize_inputs
     input :min, as: :number
     input :max, as: :number
-    field :min, placeholder: "Min price..."
-    field :max, placeholder: "Max price..."
   end
 end
 
-# Use in definition
 filter :price, with: PriceRangeFilter
 ```
 
-## Scopes
-
-Scopes appear as quick filter buttons. They reference model scopes or use inline blocks.
-
-### Basic Scopes
-
-Reference existing model scopes:
+## Scopes (quick-filter buttons)
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  scope :published    # Uses Post.published
-  scope :draft        # Uses Post.draft
-  scope :featured     # Uses Post.featured
+  scope :published    # uses Post.published
+  scope :draft        # uses Post.draft
+
+  # Inline scope — block runs with scope as argument
+  scope(:recent) { |s| s.where('created_at > ?', 1.week.ago) }
+
+  # Scope with controller context
+  scope(:mine) { |s| s.where(author: current_user) }
 end
 ```
 
-### Inline Scopes
+Named scopes reference a model scope. Inline scopes have access to `current_user`, `current_parent`, `current_scoped_entity`.
 
-Use block syntax with the scope passed as an argument:
-
-```ruby
-scope(:recent) { |scope| scope.where("created_at > ?", 1.week.ago) }
-scope(:this_month) { |scope| scope.where(created_at: Time.current.all_month) }
-```
-
-### With Controller Context
-
-Inline scopes have access to controller context like `current_user`:
+### Default scope
 
 ```ruby
-scope(:mine) { |scope| scope.where(author: current_user) }
-scope(:my_team) { |scope| scope.where(team: current_user.team) }
+default_scope :published
 ```
 
-### Default Scope
-
-Set a scope as default:
-
-```ruby
-class PostDefinition < ResourceDefinition
-  scope :published
-  scope :draft
-  scope :archived
-
-  default_scope :published
-end
-```
-
-When a default scope is set:
-- The default scope is applied on initial page load
-- The default scope button is highlighted (not "All")
-- Clicking "All" shows all records without any scope filter
+- Applied on initial page load.
+- The default scope button is highlighted (not "All").
+- Clicking "All" shows the unscoped collection.
 
 ## Sorting
 
-### Define Sortable Fields
-
 ```ruby
-class PostDefinition < ResourceDefinition
-  sort :title
-  sort :created_at
-  sort :view_count
+sort :title
+sort :created_at
 
-  # Multiple at once
-  sorts :title, :created_at, :view_count
-end
-```
+sorts :title, :created_at, :view_count    # shorthand
 
-### Default Sort Order
-
-```ruby
-# Field and direction
 default_sort :created_at, :desc
-default_sort :title, :asc
 
-# Complex sorting with block
+# Complex with a block
 default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }
 ```
 
-**Note:** Default sort only applies when no sort params are provided. The system default is `:id, :desc`.
+Framework default (nothing declared, no user sort): `id DESC`.
 
-## URL Parameters
+## URL parameters
 
-Query parameters are structured under `q`:
+Query params are namespaced under `q`:
 
 ```
 /posts?q[search]=rails
@@ -308,43 +197,37 @@ Query parameters are structured under `q`:
 /posts?q[sort_fields][]=created_at&q[sort_directions][created_at]=desc
 ```
 
-## Complete Example
+## Performance tips
+
+- **Add indexes** for filtered and sorted columns.
+- **Use `.distinct`** when joining associations in search — duplicate rows otherwise.
+- **Prefer scopes over filters** for queries used often (no input parsing).
+- **`LIKE '%q%'` can't use a b-tree index** — for large tables, use `pg_search` or a trigram/GIN/full-text index.
+
+## Full-text search with `pg_search`
 
 ```ruby
-class ProductDefinition < ResourceDefinition
-  # Full-text search
-  search do |scope, query|
-    scope.where(
-      "name ILIKE :q OR description ILIKE :q",
-      q: "%#{query}%"
-    )
-  end
+# Model
+class Post < ResourceRecord
+  include PgSearch::Model
+  pg_search_scope :search_content, against: %i[title content]
+end
 
-  # Filters
-  filter :name, with: :text, predicate: :contains
-  filter :status, with: :select, choices: %w[draft active discontinued]
-  filter :featured, with: :boolean
-  filter :created_at, with: :date_range
-  filter :price, with: :date, predicate: :gteq
-  filter :category, with: :association
-
-  # Quick scopes (reference model scopes)
-  scope :active
-  scope :featured
-  scope(:recent) { |scope| scope.where("created_at > ?", 1.week.ago) }
-
-  # Default scope
-  default_scope :active
-
-  # Sortable columns
-  sorts :name, :price, :created_at
-
-  # Default sort: newest first
-  default_sort :created_at, :desc
+# Definition
+search do |scope, query|
+  scope.search_content(query)
 end
 ```
 
+## Common issues
+
+- **Filter not showing up** — make sure the attribute is in `permitted_attributes_for_index` on the policy.
+- **Slow search on large tables** — `LIKE '%q%'` can't be indexed by a b-tree. Switch to FTS or trigram.
+- **Duplicate rows in results** — add `.distinct` when joining associations.
+- **Typeahead works on small dev tables but slows in production** — same b-tree issue. Write an explicit `search` block backed by a proper index.
+
 ## Related
 
-- [Custom Actions](./custom-actions)
-- [Authorization](./authorization)
+- [Reference › Resource › Query](/reference/resource/query) — full surface
+- [Adding resources](./adding-resources) — basic resource setup
+- [Authorization](./authorization) — `permitted_attributes_for_index` gates which fields can be filtered

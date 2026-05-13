@@ -77,6 +77,8 @@ If you encounter an issue not covered here, please [open an issue](https://githu
 
 ## Related
 
-- [Nested Resources Guide](./nested-resources)
-- [Adding Resources Guide](./adding-resources)
-- [Rails Inflections Documentation](https://api.rubyonrails.org/classes/ActiveSupport/Inflector/Inflections.html)
+- [Nested resources](./nested-resources)
+- [Adding resources](./adding-resources)
+- [Reference › Behavior › Controllers](/reference/behavior/controllers) — `controller_for`, `resource_url_for`, `current_parent`
+- [Reference › Tenancy › Nested resources](/reference/tenancy/nested-resources) — nested URL generation
+- [Rails Inflections](https://api.rubyonrails.org/classes/ActiveSupport/Inflector/Inflections.html)

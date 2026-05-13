@@ -1,559 +1,190 @@
 # Authentication
 
-This guide covers setting up user authentication with Rodauth.
+Add Rodauth-based authentication to your Plutonium app.
 
-## Overview
+## Goal
 
-Plutonium uses [Rodauth](http://rodauth.jeremyevans.net/) via [rodauth-rails](https://github.com/janko/rodauth-rails) for authentication, providing:
-- User registration and login
-- Password reset
-- Email verification
-- Multi-factor authentication (OTP, WebAuthn, SMS)
-- Session management
-- Account lockout
+Authenticated users can sign up, log in, change passwords, and reset forgotten passwords. Pages in protected portals are gated.
 
-## Installation
-
-### New Applications
-
-The Plutonium template installs Rodauth automatically:
+## Quick path — basic user auth
 
 ```bash
-rails new myapp -a propshaft -j esbuild -c tailwind \
-  -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
-```
+# 1. Install Rodauth
+rails generate pu:rodauth:install
 
-### Existing Applications
+# 2. Create a user account type
+rails generate pu:rodauth:account user
 
-```bash
-rails g pu:rodauth:install
+# 3. Run migrations
 rails db:migrate
+
+# 4. Wire auth into a portal
+#    (when you run `pu:pkg:portal admin --auth=user`, this happens automatically)
 ```
 
-This installs:
-- Required gems (`rodauth-rails`, `bcrypt`, `sequel-activerecord_connection`)
-- `app/rodauth/rodauth_app.rb` - Main Roda app
-- `app/rodauth/rodauth_plugin.rb` - Base plugin
-- `app/controllers/rodauth_controller.rb` - Base controller
-- `config/initializers/rodauth.rb` - Configuration
-
-## Creating Account Types
-
-### Basic User Account
-
-```bash
-rails g pu:rodauth:account user
-rails db:migrate
-```
-
-**Default features** (enabled with `--defaults`, which is on by default):
-- `login`, `logout`, `remember`
-- `create_account`, `verify_account`, `verify_account_grace_period`
-- `reset_password`, `reset_password_notify`
-- `change_login`, `verify_login_change`
-- `change_password`, `change_password_notify`
-- `case_insensitive_login`, `internal_request`
-
-### Admin Account
-
-```bash
-rails g pu:rodauth:admin admin
-rails db:migrate
-```
-
-Includes all base features plus:
-- Multi-phase login (email first, then password)
-- TOTP two-factor authentication (required)
-- Recovery codes
-- Account lockout
-- Active sessions tracking
-- Audit logging
-- **No public signup** - accounts created via rake task
-
-### SaaS Account (Multi-tenant)
-
-```bash
-rails g pu:saas:setup --user Customer --entity Organization
-rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin,owner
-rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
-rails db:migrate
-```
-
-Creates a complete multi-tenant setup:
-- Customer account model with Rodauth authentication
-- Organization entity model with unique name
-- OrganizationCustomer membership join model with role enum
-
-You can also run individual generators:
-```bash
-rails g pu:saas:user Customer          # Just the user account
-rails g pu:saas:entity Organization    # Just the entity model
-rails g pu:saas:membership --user Customer --entity Organization  # Just the membership
-```
-
-## Generator Options
-
-### Feature Options
-
-```bash
-# Enable all supported features
-rails g pu:rodauth:account user --kitchen_sink
-
-# Disable default features (explicit selection only)
-rails g pu:rodauth:account user --no-defaults
-
-# Enable specific features
-rails g pu:rodauth:account user --otp --recovery_codes --lockout
-
-# Skip email setup
-rails g pu:rodauth:account user --no-mails
-
-# API-only mode (JWT, no sessions)
-rails g pu:rodauth:account user --api_only --jwt --jwt_refresh
-
-# Use Argon2 instead of bcrypt
-rails g pu:rodauth:account user --argon2
-
-# Mark as primary account (no URL prefix)
-rails g pu:rodauth:account user --primary
-```
-
-### Available Features
-
-| Feature | Description |
-|---------|-------------|
-| `login` | Basic login/logout |
-| `create_account` | User registration |
-| `verify_account` | Email verification |
-| `reset_password` | Password reset via email |
-| `change_password` | Change password when logged in |
-| `change_login` | Change email address |
-| `verify_login_change` | Verify email change |
-| `remember` | "Remember me" functionality |
-| `otp` | TOTP two-factor authentication |
-| `sms_codes` | SMS-based 2FA |
-| `recovery_codes` | Backup codes for 2FA |
-| `webauthn` | WebAuthn/passkey authentication |
-| `lockout` | Lock account after failed attempts |
-| `active_sessions` | Track/manage active sessions |
-| `audit_logging` | Log authentication events |
-| `email_auth` | Passwordless email login |
-| `jwt` | JWT token authentication |
-| `jwt_refresh` | JWT refresh tokens |
-| `close_account` | Allow account deletion |
-
-## Generated Files
-
-```
-app/
-├── controllers/rodauth/
-│   └── user_controller.rb          # Account-specific controller
-├── mailers/rodauth/
-│   └── user_mailer.rb              # Account-specific mailer
-├── models/
-│   └── user.rb                     # Account model
-├── rodauth/
-│   ├── rodauth_app.rb              # Main Roda app
-│   ├── rodauth_plugin.rb           # Base plugin
-│   └── user_rodauth_plugin.rb      # Account-specific config
-├── policies/
-│   └── user_policy.rb              # Account policy
-├── definitions/
-│   └── user_definition.rb          # Account definition
-└── views/rodauth/
-    └── user_mailer/                # Email templates
-db/migrate/
-└── xxx_create_users.rb             # Account table migration
-```
-
-## Connecting Auth to Controllers
-
-Include the auth module in your controller to require authentication:
+Then mount your portal with the auth constraint:
 
 ```ruby
-# app/controllers/resource_controller.rb
-class ResourceController < PlutoniumController
-  include Plutonium::Resource::Controller
+# config/routes.rb
+Rails.application.routes.draw do
+  constraints Rodauth::Rails.authenticate(:user) do
+    mount AdminPortal::Engine, at: "/admin"
+  end
+end
+```
+
+For accounts with more features, options, and admin patterns: see [Reference › Auth › Accounts](/reference/auth/accounts).
+
+## Common variations
+
+### Multi-factor auth (TOTP)
+
+```bash
+rails generate pu:rodauth:account user --otp --recovery_codes
+```
+
+Then enable in the user-facing security section (see [User profile](./user-profile)).
+
+### Hardened admin account
+
+For an admin role with 2FA required, lockout, audit logging, and no public signup:
+
+```bash
+rails generate pu:rodauth:admin admin
+```
+
+Create the first admin with the rake task:
+
+```bash
+rails rodauth_admin:create[admin@example.com,password123]
+```
+
+### Multi-tenant SaaS — user + entity + membership in one shot
+
+```bash
+rails generate pu:saas:setup --user Customer --entity Organization
+```
+
+⚠️ This is a **meta-generator** — it also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't re-run those manually. See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup-pu-saas-setup).
+
+### API-only (JWT)
+
+```bash
+rails generate pu:rodauth:account api_user --api_only --jwt --jwt_refresh
+```
+
+```
+POST /api_users/login
+{"login": "user@example.com", "password": "secret"}
+# → {"access_token": "...", "refresh_token": "..."}
+```
+
+## Connecting a portal to an account type
+
+If you create the portal with `--auth=`, it's wired automatically:
+
+```bash
+rails generate pu:pkg:portal customer --auth=user
+```
+
+Manually, edit the portal's controller concern:
+
+```ruby
+# packages/customer_portal/app/controllers/customer_portal/concerns/controller.rb
+module CustomerPortal::Concerns::Controller
+  extend ActiveSupport::Concern
+  include Plutonium::Portal::Controller
   include Plutonium::Auth::Rodauth(:user)
 end
 ```
 
-This provides:
-
-| Method | Description |
-|--------|-------------|
-| `current_user` | The authenticated account |
-| `logout_url` | URL to logout |
-| `rodauth` | Access to Rodauth instance |
-
-### Portal Configuration
-
-For portals, include the auth module in the controller concern:
+Multiple account types — different portals use different Rodauth instances:
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
-module AdminPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:admin)
-    end
-  end
+# Admin portal
+include Plutonium::Auth::Rodauth(:admin)
+
+# Customer portal
+include Plutonium::Auth::Rodauth(:user)
+```
+
+See [Reference › App › Portals](/reference/app/portals#controller-concern-auth).
+
+## Customizing the auth flow
+
+All inside `app/rodauth/<name>_rodauth_plugin.rb`, in the `configure do` block:
+
+### Custom login redirect
+
+```ruby
+login_redirect do
+  rails_account.admin? ? "/admin" : "/dashboard"
 end
 ```
 
-## Accessing the Current User
+### After-create hook (e.g. create a profile)
 
 ```ruby
-# In controllers
-def index
-  @user_posts = current_user.posts
-end
-
-# In views (helper method)
-<% if current_user.present? %>
-  Welcome, <%= current_user.email %>
-<% end %>
-```
-
-## Rodauth Plugin Configuration
-
-The generated plugin file contains configuration options:
-
-```ruby
-# app/rodauth/user_rodauth_plugin.rb
-class UserRodauthPlugin < RodauthPlugin
-  configure do
-    # Features enabled for this account
-    enable :login, :logout, :remember, :create_account, ...
-
-    # URL prefix (non-primary accounts)
-    prefix "/users"
-
-    # Store password in column (not separate table)
-    account_password_hash_column :password_hash
-
-    # Controller for views
-    rails_controller { Rodauth::UserController }
-
-    # Model
-    rails_account_model { User }
-
-    # Redirects
-    login_redirect "/"
-    logout_redirect "/"
-
-    # Session configuration
-    session_key "_user_session"
-    remember_cookie_key "_user_remember"
-  end
+after_create_account do
+  Profile.create!(account_id: account_id, name: param("name"))
 end
 ```
 
-### Custom Login Redirect
+### Password requirements
 
 ```ruby
-configure do
-  login_redirect { "/dashboard" }
+password_minimum_length 12
 
-  # Or dynamically
-  login_redirect do
-    if rails_account.admin?
-      "/admin"
-    else
-      "/dashboard"
-    end
-  end
+password_meets_requirements? do |password|
+  super(password) && password.match?(/\d/) && password.match?(/[^a-zA-Z\d]/)
 end
 ```
 
-### Password Requirements
+### Prevent public signup
 
 ```ruby
-configure do
-  # Minimum length (default: 8)
-  password_minimum_length 12
-
-  # Custom complexity
-  password_meets_requirements? do |password|
-    super(password) && password.match?(/\d/) && password.match?(/[^a-zA-Z\d]/)
-  end
+before_create_account_route do
+  request.halt unless internal_request?
 end
 ```
 
-### Multi-Phase Login
+Full customization surface: [Reference › Auth › Accounts › Common customizations](/reference/auth/accounts#common-customizations).
 
-```ruby
-configure do
-  # Ask for email first, then password
-  use_multi_phase_login? true
-end
-```
-
-### Prevent Public Signup
-
-```ruby
-configure do
-  before_create_account_route do
-    request.halt unless internal_request?
-  end
-end
-```
-
-## Email Configuration
-
-Emails are sent via Action Mailer.
-
-### Development
-
-```ruby
-# Gemfile
-gem "letter_opener", group: :development
-
-# config/environments/development.rb
-config.action_mailer.delivery_method = :letter_opener
-config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
-```
-
-### Production
+## Email setup (production)
 
 ```ruby
 # config/environments/production.rb
 config.action_mailer.delivery_method = :smtp
 config.action_mailer.smtp_settings = {
-  address: ENV['SMTP_HOST'],
-  port: ENV['SMTP_PORT'],
-  user_name: ENV['SMTP_USER'],
-  password: ENV['SMTP_PASSWORD']
+  address: "smtp.example.com",
+  port: 587,
+  user_name: ENV["SMTP_USER"],
+  password: ENV["SMTP_PASSWORD"]
 }
 ```
 
-### Custom Email Templates
+Override mailer templates in `app/views/rodauth/<account>_mailer/`.
 
-Override templates in `app/views/rodauth/user_mailer/`:
-
-```erb
-<%# app/views/rodauth/user_mailer/reset_password.text.erb %>
-Hi <%= @account.email %>,
-
-Someone requested a password reset for your account.
-
-Reset your password: <%= @reset_password_url %>
-
-If you didn't request this, ignore this email.
-```
-
-## Customizing Views
-
-Generate views to customize:
-
-```bash
-# Generate views for specific features
-rails g pu:rodauth:views user --features login create_account reset_password
-
-# Generate all views
-rails g pu:rodauth:views user --all
-```
-
-Views are copied to `app/views/rodauth/user/` and can be customized as standard ERB templates.
-
-## Multiple Account Types
-
-### Different Portals, Different Accounts
+## Accessing the current user
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
-module AdminPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:admin)
-    end
-  end
-end
+# Controllers / views
+current_user
 
-# packages/customer_portal/app/controllers/customer_portal/concerns/controller.rb
-module CustomerPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:customer)
-    end
-  end
-end
+# Policies
+user
 ```
 
-### Shared Account Type
+## Common issues
 
-Multiple portals can share an account type:
-
-```ruby
-# Both portals include the same auth module
-include Plutonium::Auth::Rodauth(:user)
-```
-
-## Public Portals
-
-For portals that don't require authentication, use `Plutonium::Auth::Public`:
-
-```ruby
-# packages/public_portal/app/controllers/public_portal/concerns/controller.rb
-module PublicPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Public
-    end
-  end
-end
-```
-
-This provides a `current_user` method that returns `"Guest"`.
-
-## Two-Factor Authentication
-
-### Enable During Generation
-
-```bash
-rails g pu:rodauth:account user --otp --recovery_codes
-```
-
-### Add to Existing Account
-
-```ruby
-# app/rodauth/user_rodauth_plugin.rb
-configure do
-  enable :otp, :recovery_codes
-
-  # Require 2FA
-  two_factor_auth_required? true
-end
-```
-
-Note: The `pu:rodauth:admin` generator automatically enables OTP and recovery codes.
-
-## Creating Accounts
-
-### Admin Accounts
-
-Admin accounts are created via rake task (web registration is disabled):
-
-```bash
-# Interactive prompt for email
-rails rodauth:admin
-
-# With EMAIL environment variable
-EMAIL=admin@example.com rails rodauth:admin
-```
-
-The task name matches the account name (e.g., `rails rodauth:admin` for an account named `admin`).
-
-### Programmatic Account Creation
-
-For accounts with self-registration enabled, use internal requests:
-
-```ruby
-# Create account via internal request
-RodauthApp.rodauth(:user).create_account(
-  login: "user@example.com",
-  password: "secure_password"
-)
-```
-
-In seeds:
-
-```ruby
-# db/seeds.rb
-RodauthApp.rodauth(:user).create_account(
-  login: "user@example.com",
-  password: "password123"
-)
-```
-
-## API Authentication
-
-For JSON API authentication:
-
-```bash
-rails g pu:rodauth:account api_user --api_only --jwt --jwt_refresh
-```
-
-This enables:
-- JWT token authentication
-- Refresh tokens
-- No session/cookie handling
-
-### Using JWT
-
-```bash
-# Login
-curl -X POST http://localhost:3000/api_users/login \
-  -H "Content-Type: application/json" \
-  -d '{"login": "user@example.com", "password": "secret"}'
-
-# Response includes tokens
-{"access_token": "...", "refresh_token": "..."}
-
-# Authenticated requests
-curl http://localhost:3000/api/posts \
-  -H "Authorization: Bearer <access_token>"
-```
-
-## Troubleshooting
-
-### Routes Not Working
-
-Restart the server after installing Rodauth:
-
-```bash
-bin/rails restart
-```
-
-### Emails Not Sending
-
-Check Action Mailer configuration:
-
-```ruby
-# Verify mailer config
-Rails.application.config.action_mailer.delivery_method
-Rails.application.config.action_mailer.default_url_options
-```
-
-Use letter_opener in development to view emails in browser.
-
-### Session Issues
-
-Clear session cookies in the browser, or for active_sessions feature:
-
-```ruby
-# In rails runner
-User.find_by(email: "user@example.com").active_session_keys.delete_all
-```
-
-### Migration Issues
-
-Ensure all migrations have run:
-
-```bash
-rails db:migrate:status
-rails db:migrate
-```
-
-### Account Not Verified
-
-For development, you can manually verify accounts:
-
-```ruby
-# In rails runner
-user = User.find_by(email: "user@example.com")
-user.update!(status: 2)  # 2 = verified
-```
+- **"You need to set up Rodauth"** — run `pu:rodauth:install` first.
+- **Portal redirects to login even though you're authenticated** — the portal mount constraint references a different Rodauth account than the portal's controller concern uses. Match them up.
+- **Email confirmation never arrives in development** — Plutonium sets ActionMailer to `:test` by default. Check `tmp/letter_opener/` or your mail interceptor. In production, configure SMTP (see above).
 
 ## Related
 
-- [Authorization](./authorization)
-- [Multi-tenancy](./multi-tenancy)
+- [Reference › Auth](/reference/auth/) — full auth surface
+- [Authorization](./authorization) — controlling who can do what AFTER login
+- [Multi-tenancy](./multi-tenancy) — entity scoping for SaaS apps
+- [User invites](./user-invites) — invitation-based onboarding
+- [User profile](./user-profile) — account-settings page

@@ -1,48 +1,43 @@
 # Multi-tenancy
 
-This guide covers isolating data by organization, account, or other entity.
+Isolate data by organization, account, or any other "entity". Plutonium handles the URL strategy, query scoping, form injection, and `belongs_to` auto-detection automatically.
 
-## Overview
+## Goal
 
-Multi-tenancy means each tenant (organization, company, account) sees only their own data. Plutonium supports this through:
+Each tenant sees only their own records. Queries are filtered, forms inject the tenant on create, URLs include the tenant id, and policies receive the tenant for authorization.
 
-- **Entity Scoping** - Automatic query filtering via portal configuration
-- **Path or Custom Strategies** - Flexible entity resolution
-- **Policy Integration** - Authorization automatically respects tenancy
+## 🚨 Critical
 
-## Setting Up Multi-tenancy
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Always call `default_relation_scope(relation)` explicitly — not `super`.
+- **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
+- **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}` — without this, uniqueness leaks across tenants.
 
-### 1. Create the Entity Model
+## Quickest path: `pu:saas:setup`
 
-```ruby
-# app/models/organization.rb
-class Organization < ApplicationRecord
-  include Plutonium::Resource::Record
-
-  has_many :users
-  has_many :posts
-end
+```bash
+rails g pu:saas:setup --user Customer --entity Organization
 ```
 
-### 2. Add Entity Reference to Resources
+This **meta-generator** creates the user + entity + membership trio AND runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install` in one shot. The portal is fully wired for entity scoping.
 
-Resources must have an association path to the entity:
+See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup-pu-saas-setup).
 
-```ruby
-# Direct association (preferred)
-class Post < ResourceRecord
-  belongs_to :organization
-  belongs_to :user
-end
+## Manual setup
 
-# Through association
-class Comment < ResourceRecord
-  belongs_to :post
-  has_one :organization, through: :post
-end
+### 1. Create the entity model
+
+```bash
+rails g pu:res:scaffold Organization name:string:uniq slug:string:uniq --dest=main_app
 ```
 
-### 3. Configure the Portal Engine
+### 2. Add the FK to each tenant-scoped resource
+
+```bash
+rails g pu:res:scaffold Post organization:belongs_to title:string content:text --dest=main_app
+rails db:migrate
+```
+
+### 3. Scope the portal to the entity
 
 ```ruby
 # packages/customer_portal/lib/engine.rb
@@ -51,252 +46,186 @@ module CustomerPortal
     include Plutonium::Portal::Engine
 
     config.after_initialize do
-      # Path strategy - entity ID in URL
       scope_to_entity Organization, strategy: :path
     end
   end
 end
 ```
 
-Routes become: `/organizations/:organization_id/posts`
+Or pass `--scope=Organization` to `pu:pkg:portal` and the engine wires this automatically.
 
-## Scoping Strategies
-
-### Path Strategy (Default)
-
-Entity ID is included in the URL path:
+### 4. Mount the portal
 
 ```ruby
-config.after_initialize do
-  scope_to_entity Organization, strategy: :path
+# config/routes.rb
+mount CustomerPortal::Engine, at: "/customer"
+```
+
+URLs now include the entity id: `/customer/organizations/42/posts`.
+
+### 5. Compound uniqueness
+
+```ruby
+class Post < ResourceRecord
+  belongs_to :organization
+  validates :slug, uniqueness: {scope: :organization_id}
 end
 ```
 
-The user must have access to the organization (via `associated_with` scope).
+🚨 Without the `scope:`, the same slug in different orgs would collide.
 
-### Custom Strategy
+## Strategies
 
-Define a method that returns the current entity:
+### Path strategy (default)
 
 ```ruby
-# packages/customer_portal/lib/engine.rb
-config.after_initialize do
-  scope_to_entity Organization, strategy: :current_organization
-end
+scope_to_entity Organization, strategy: :path
+# → /organizations/:organization_id/posts
 ```
 
+### Custom param key
+
 ```ruby
-# packages/customer_portal/app/controllers/customer_portal/concerns/controller.rb
-module CustomerPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:user)
+scope_to_entity Organization, strategy: :path, param_key: :org_id
+# → /orgs/:org_id/posts
+```
 
-      private
+### Subdomain / session / custom
 
-      # Method name must match strategy
-      def current_organization
-        @current_organization ||= current_user.organization
-      end
-    end
+```ruby
+scope_to_entity Organization, strategy: :current_organization
+```
+
+Then implement the method on the portal's controller concern:
+
+```ruby
+module CustomerPortal::Concerns::Controller
+  extend ActiveSupport::Concern
+  include Plutonium::Portal::Controller
+
+  private
+
+  def current_organization
+    @current_organization ||= Organization.find_by!(subdomain: request.subdomain)
   end
 end
 ```
 
-## How Entity Scoping Works
+## Three model shapes
 
-### Automatic Query Filtering
+How tenant scoping resolves depends on how the model relates to the entity. Three shapes, pick the lightest:
 
-All resource queries are automatically scoped via `associated_with`:
+### 1. Direct `belongs_to`
 
 ```ruby
-# In a scoped portal
-Post.all  # Returns only current entity's posts
+class Post < ResourceRecord
+  belongs_to :organization
+end
+# Post.associated_with(org) → Post.where(organization: org)
 ```
 
-### Helper Methods
+Auto-detected. Use when the model naturally has a direct FK to the entity.
 
-Inside controllers:
+### 2. Join table (`belongs_to` AND `belongs_to`)
 
 ```ruby
-current_scoped_entity  # The current Organization/Account/etc.
-scoped_to_entity?      # true if scoping is active
-scoped_entity_class    # Organization (the entity class)
+class Membership < ResourceRecord
+  belongs_to :user
+  belongs_to :organization   # auto-detected
+end
 ```
 
-### Model Requirements
-
-Models must have an association path to the scoped entity. Plutonium automatically resolves:
-
-1. **Direct belongs_to** - `Post belongs_to :organization`
-2. **Through association** - `Comment has_one :organization, through: :post`
-3. **Custom scope** - For complex cases, define a named scope:
+### 3. Grandchild — `has_one :through`
 
 ```ruby
-class AuditLog < ResourceRecord
-  # When automatic resolution fails, define this scope
+class Post < ResourceRecord
+  belongs_to :user
+  has_one :organization, through: :user   # ← critical
+end
+```
+
+Auto-detected via `reflect_on_all_associations`. Declaring `has_one :through` is the lightest fix when the path is two hops.
+
+Full mechanics: [Reference › Tenancy › Entity scoping › Three model shapes](/reference/tenancy/entity-scoping#three-model-shapes).
+
+## Custom scope (when the path is polymorphic or needs SQL control)
+
+```ruby
+class Comment < ResourceRecord
   scope :associated_with_organization, ->(org) {
-    joins(:user).where(users: { organization_id: org.id })
+    joins(task: :project).where(projects: {organization_id: org.id})
   }
 end
 ```
 
-## User Membership Patterns
+Plutonium picks this up **before** trying association detection.
 
-### Single Organization per User
-
-```ruby
-class User < ApplicationRecord
-  belongs_to :organization
-end
-
-# Custom strategy
-def current_organization
-  current_user.organization
-end
-```
-
-### Multiple Organizations per User
+## Accessing the scoped entity
 
 ```ruby
-class User < ApplicationRecord
-  has_many :memberships
-  has_many :organizations, through: :memberships
-end
+# Controller / views
+current_scoped_entity
+scoped_to_entity?
 
-# Custom strategy with session storage
-def current_organization
-  @current_organization ||=
-    current_user.organizations.find_by(id: session[:organization_id]) ||
-    current_user.organizations.first
-end
+# Policy
+entity_scope
 ```
 
-### Organization Switcher
-
-```ruby
-class OrganizationSwitchController < ApplicationController
-  def update
-    org = current_user.organizations.find(params[:id])
-    session[:organization_id] = org.id
-    redirect_back(fallback_location: root_path)
-  end
-end
-```
-
-## Policy Integration
-
-Entity scoping is automatic. The base `Plutonium::Resource::Policy` includes:
+## Policy filtering on top of default
 
 ```ruby
 relation_scope do |relation|
-  next relation unless entity_scope
-
-  relation.associated_with(entity_scope)
+  default_relation_scope(relation).where(archived: false)
 end
 ```
 
-The `entity_scope` context is automatically set to `current_scoped_entity`.
+🚨 `default_relation_scope(relation)` must be called explicitly — not `super`. Bypassing it raises at runtime.
 
-### Additional Filtering
+## Cross-tenant operations — super-admin portal
 
-Add role-based filtering on top of entity scoping:
-
-```ruby
-class PostPolicy < ResourcePolicy
-  relation_scope do |relation|
-    relation = super(relation)  # Apply entity scoping first
-
-    if user.role == "viewer"
-      relation.where(published: true)
-    else
-      relation
-    end
-  end
-end
-```
-
-## Subdomain-Based Tenancy
-
-Route to different organizations by subdomain:
-
-### Routes
+Create a separate portal **without** `scope_to_entity`:
 
 ```ruby
-# config/routes.rb
-constraints subdomain: /[a-z]+/ do
-  mount CustomerPortal::Engine, at: "/"
-end
-```
-
-### Custom Strategy
-
-```ruby
-# Engine configuration
-scope_to_entity Organization, strategy: :current_organization
-
-# Controller concern
-def current_organization
-  @current_organization ||=
-    Organization.find_by!(subdomain: request.subdomain)
-end
-```
-
-## Cross-Tenant Operations
-
-Sometimes admins need to see all data:
-
-### Super Admin Portal (No Scoping)
-
-```ruby
-# packages/super_admin_portal/lib/engine.rb
 module SuperAdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    # No scope_to_entity = sees everything
+    # No scope_to_entity — sees all tenants
   end
 end
 ```
 
-### Conditional Scoping
+This portal's policies see everything. Don't enable public signup here.
+
+## Multiple associations to the same entity
+
+If a model has two `belongs_to` to the entity class (e.g. `Match belongs_to :home_team, :away_team`), Plutonium raises:
+
+```
+Match has multiple associations to Competition::Team: home_team, away_team.
+Plutonium cannot auto-detect which one to use for entity scoping.
+```
+
+Override on the controller:
 
 ```ruby
-# Custom strategy that returns nil for super admins
-def current_organization
-  return nil if current_user.super_admin?
-  current_user.organization
+class MatchesController < ::ResourceController
+  private
+  def scoped_entity_association = :home_team
 end
 ```
 
-When `current_scoped_entity` returns `nil`, scoping is bypassed.
+## Common issues
 
-## Data Isolation Patterns
-
-### Shared Database, Scoped Queries (Recommended)
-
-All tenants share tables, queries filter by entity association:
-
-```ruby
-scope_to_entity Organization, strategy: :path
-```
-
-Pros:
-- Simple setup
-- Easy migrations
-- Efficient for many small tenants
-
-Cons:
-- Risk of data leakage if scoping fails
-- Complex queries for cross-tenant reports
-
-### Schema-Based Isolation
-
-Each tenant has separate database schema. This requires additional setup beyond Plutonium's built-in scoping.
+- **`verify_default_relation_scope_applied!` raises** — your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
+- **`Could not resolve the association between 'Model' and 'Entity'`** — the model has no path to the entity. Fix on the **model** (declare `has_one :through` or a custom `associated_with_<entity>` scope). Never paper over with `where` in the policy.
+- **Records leak across tenants** — likely a missing compound-uniqueness scope on the model. Add `validates :code, uniqueness: {scope: :organization_id}`.
+- **Forms show the entity field anyway** — check `present_scoped_entity?` / `submit_scoped_entity?` on the controller (defaults are `false`).
+- **Want to bypass scoping in one place** — use `skip_default_relation_scope!` explicitly, NOT a silent `where` bypass.
 
 ## Related
 
-- [Authorization](./authorization)
-- [Creating Packages](./creating-packages)
-- [Authentication](./authentication)
+- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — full surface
+- [Reference › Behavior › Policies](/reference/behavior/policies) — `relation_scope` syntax
+- [Reference › App › Portals](/reference/app/portals) — `scope_to_entity` engine config
+- [Nested resources](./nested-resources) — parent scoping (takes precedence over entity scoping)
+- [User invites](./user-invites) — invitation-based membership onboarding

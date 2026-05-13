@@ -1,108 +1,47 @@
 # Custom Actions
 
-This guide covers adding custom actions beyond standard CRUD operations.
+Add buttons beyond CRUD — Publish, Archive, Import, Send invitation, Bulk-update, etc.
 
-## Overview
+## Goal
 
-Custom actions let you add buttons like "Publish", "Archive", or "Send Invoice" to your resources. Actions can be:
+A button appears in the right place (show page / table row / index header / bulk-actions toolbar), the user clicks it, optional form collects input, business logic runs, a success/failure message appears.
 
-- **Simple** - Navigation to another page
-- **Interactive** - Execute business logic with optional user input
+## Two flavors
 
-## Action Types
+| Flavor | Use for |
+|---|---|
+| **Simple action** — navigate to a URL | Linking to external docs, jumping to a custom page that does its own thing |
+| **Interactive action** — run an interaction class | Anything with business logic (the common case) |
 
-| Type | Shows In | Use Case |
-|------|----------|----------|
-| `resource_action` | Index page | Import, Export, Create new |
-| `record_action` | Show page | Edit, Delete, Archive |
-| `collection_record_action` | Table rows | Quick actions per row |
-| `bulk_action` | Selected records | Bulk operations |
+Prefer interactive actions. They handle authorization, form rendering, modal chrome, success/failure messaging, and automatic redirects — all for free.
 
-## Simple Actions (Navigation)
+## Quick recipe — interactive action
 
-For actions that just navigate somewhere (the target route must already exist):
+### 1. Write the interaction
 
 ```ruby
-class PostDefinition < ResourceDefinition
-  # Link to external URL
-  action :documentation,
-    label: "Documentation",
-    route_options: {url: "https://docs.example.com"},
-    icon: Phlex::TablerIcons::Book,
-    resource_action: true
-
-  # Link to custom controller action
-  action :reports,
-    route_options: {action: :reports},
-    icon: Phlex::TablerIcons::ChartBar,
-    resource_action: true
-end
-```
-
-::: warning Always Name Custom Routes
-When adding custom routes for actions, always use the `as:` option:
-
-```ruby
-resources :posts do
-  collection do
-    get :reports, as: :reports  # Named route required!
-  end
-end
-```
-
-This ensures `resource_url_for` can generate correct URLs, especially for nested resources.
-:::
-
-**Note:** For custom operations with business logic, use Interactive Actions with an Interaction class.
-
-## Interactive Actions with Interactions
-
-For actions that execute business logic, use Interactions.
-
-### Creating an Interaction
-
-```ruby
-# app/interactions/resource_interaction.rb (generated during install)
-class ResourceInteraction < Plutonium::Resource::Interaction
-end
-
 # app/interactions/publish_post_interaction.rb
 class PublishPostInteraction < ResourceInteraction
-  # UI configuration
-  presents label: "Publish Post",
-           icon: Phlex::TablerIcons::Send,
+  presents label: "Publish",
+           icon:  Phlex::TablerIcons::Send,
            description: "Make this post public"
 
-  # The record being acted on
   attribute :resource
 
-  # Validation
-  validate :not_already_published
-
-  private
-
-  # Main logic
   def execute
-    resource.update!(
-      published: true,
-      published_at: Time.current
-    )
-
-    succeed(resource)
-      .with_message("Post published successfully!")
+    resource.update!(published: true, published_at: Time.current)
+    succeed(resource).with_message("Post published!")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end
-
-  def not_already_published
-    if resource.published?
-      errors.add(:base, "Post is already published")
-    end
-  end
 end
 ```
 
-### Registering the Action
+::: warning Rescue `ActiveRecord::RecordInvalid`
+Plutonium doesn't rescue it automatically. Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
+:::
+
+### 2. Register it in the definition
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -110,464 +49,205 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-### Authorizing the Action
+Action visibility (record / bulk / resource) is **inferred** from the interaction's attributes — no need to declare `record_action: true`. See [Inferred visibility](#inferred-visibility) below.
+
+### 3. Add a policy method
 
 ```ruby
 class PostPolicy < ResourcePolicy
-  def publish?
-    update? && !record.published?
-  end
+  def publish? = update? && record.draft?
 end
 ```
 
-## Actions with User Input
+🚨 Without this, the button silently disappears (undefined methods return `false`).
 
-Interactions can accept user input via attributes:
+### 4. Visit the show page
+
+The "Publish" button appears in the toolbar. Clicking it shows a "Publish?" confirmation, then runs.
+
+## Inferred visibility
+
+For `interaction:`-based actions, visibility flags are inferred from the interaction:
+
+| Interaction declares | Inferred flag → button shows up |
+|---|---|
+| `attribute :resource` | `record_action: true` + `collection_record_action: true` → show page + per-row |
+| `attribute :resources` (plural) | `bulk_action: true` → bulk toolbar |
+| neither | `resource_action: true` → index page header |
+
+User-supplied flags can only **opt OUT** of inferred ones. Don't try to "broaden" — the interaction's attribute shape is semantic:
 
 ```ruby
-class SchedulePostInteraction < ResourceInteraction
-  presents label: "Schedule Publication",
-           icon: Phlex::TablerIcons::Calendar
+# Hide from per-row menu, keep on show page
+action :archive, interaction: ArchiveInteraction, collection_record_action: false
 
-  # The record
-  attribute :resource
+# Hide from show page, keep per-row only
+action :preview, interaction: PreviewInteraction, record_action: false
+```
 
-  # User inputs
-  attribute :publish_at, :datetime
-  attribute :notify_subscribers, :boolean, default: true
+For simple navigation actions (no `interaction:`), declare flags manually.
 
-  # Configure form inputs
-  input :publish_at, as: :datetime
-  input :notify_subscribers, as: :boolean
+## With form inputs
 
-  # Validations
-  validates :publish_at, presence: true
-  validate :publish_at_in_future
+If the interaction declares extra `attribute`/`input`, a modal form is rendered first:
 
-  private
+```ruby
+class Company::InviteUserInteraction < ResourceInteraction
+  presents label: "Invite User", icon: Phlex::TablerIcons::Mail
+
+  attribute :resource   # the company
+  attribute :email
+  attribute :role
+
+  input :email, as: :email
+  input :role,  as: :select, choices: %w[admin member]
+
+  validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
+  validates :role,  presence: true
 
   def execute
-    resource.update!(
-      scheduled_at: publish_at,
-      notify_on_publish: notify_subscribers
-    )
-
-    SchedulePublicationJob.perform_at(publish_at, resource.id)
-
-    succeed(resource)
-      .with_message("Post scheduled for #{publish_at.strftime('%B %d at %I:%M %p')}")
+    UserInvite.create!(company: resource, email: email, role: role)
+    succeed(resource).with_message("Invitation sent to #{email}.")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end
-
-  def publish_at_in_future
-    if publish_at.present? && publish_at <= Time.current
-      errors.add(:publish_at, "must be in the future")
-    end
-  end
 end
 ```
 
-Register with the definition:
+## Bulk actions
+
+Plural `attribute :resources` automatically becomes a bulk action. The table gets checkboxes and a bulk-actions toolbar.
 
 ```ruby
-action :schedule, interaction: SchedulePostInteraction
-```
+class BulkArchiveInteraction < ResourceInteraction
+  presents label: "Archive Selected", icon: Phlex::TablerIcons::Archive
 
-Now users see a form with date picker and checkbox before execution.
-
-## Immediate vs Form Actions
-
-Plutonium automatically determines if an action needs a form:
-
-- **Has inputs defined** → Shows form first
-- **No inputs** → Executes immediately (with optional confirmation)
-
-```ruby
-# Shows form (has inputs)
-class InviteUserInteraction < ResourceInteraction
-  attribute :resource
-  attribute :email
-  input :email  # This triggers form display
-end
-
-# Immediate execution (no inputs)
-class ArchiveInteraction < ResourceInteraction
-  attribute :resource
-  # No inputs = immediate with confirmation
-end
-```
-
-## Action Visibility
-
-Control where actions appear:
-
-```ruby
-action :publish,
-  interaction: PublishPostInteraction,
-  record_action: true,             # Show on show page
-  collection_record_action: true   # Show in table rows
-```
-
-### Record Actions (Single Records)
-
-```ruby
-action :publish, interaction: PublishPostInteraction
-action :archive, interaction: ArchiveInteraction, record_action: true
-```
-
-### Bulk Actions (Multiple Records)
-
-```ruby
-action :bulk_publish, interaction: BulkPublishInteraction
-action :bulk_archive, interaction: BulkArchiveInteraction
-```
-
-### Resource Actions (No Record)
-
-```ruby
-action :import, interaction: ImportInteraction, resource_action: true
-action :export, interaction: ExportInteraction, resource_action: true
-```
-
-## Bulk Action Interaction
-
-Bulk actions operate on multiple selected records. When a definition has bulk actions, the resource table automatically shows:
-- **Selection checkboxes** in each row
-- **Bulk actions toolbar** that appears when records are selected
-
-```ruby
-class BulkPublishInteraction < ResourceInteraction
-  presents label: "Publish Selected",
-           icon: Phlex::TablerIcons::Send
-
-  # Note: plural 'resources' for bulk actions
   attribute :resources
 
-  private
-
   def execute
-    count = resources.update_all(
-      published: true,
-      published_at: Time.current
-    )
-
-    succeed(resources)
-      .with_message("#{count} posts published")
+    resources.update_all(archived: true)
+    succeed(resources).with_message("Archived #{resources.size} records.")
   end
 end
 ```
 
-Register in your definition:
+Policy — checked **per record** (fails the whole request if any record is unauthorized):
 
 ```ruby
-class PostDefinition < ResourceDefinition
-  action :bulk_publish, interaction: BulkPublishInteraction
-  # bulk_action: true is automatically inferred from `resources` attribute
+def bulk_archive?
+  create? && !record.locked?
 end
 ```
 
-Add the policy method (checked per-record):
+The UI only shows bulk actions ALL selected records support.
 
-```ruby
-class PostPolicy < ResourcePolicy
-  def bulk_publish?
-    # Can use record attributes - checked for each selected record
-    user.admin? || record.author == user
-  end
-end
-```
+## Resource action (no specific record)
 
-::: tip Bulk Action Authorization
-Bulk actions use **per-record authorization**:
-- The policy method (e.g., `bulk_publish?`) is checked for **each selected record** - you can use `record` attributes
-- Backend rejects the entire request if any record fails authorization
-- UI only shows actions that **all** selected records support (buttons hide dynamically as you select)
-- Records are fetched from `current_authorized_scope` - only accessible records can be selected
-:::
-
-## Resource Action (No Record)
+Neither `:resource` nor `:resources` → resource action on the index page:
 
 ```ruby
 class ImportInteraction < ResourceInteraction
-  presents label: "Import CSV",
-           icon: Phlex::TablerIcons::Upload
+  presents label: "Import CSV", icon: Phlex::TablerIcons::Upload
 
-  # No :resource or :resources = resource action
   attribute :file
-
   input :file, as: :file
-
   validates :file, presence: true
 
-  private
-
   def execute
-    # Import logic...
+    # …import logic
     succeed(nil).with_message("Import completed.")
   end
 end
 ```
 
-## Action Options
+## Immediate vs form
+
+- **Immediate** — interaction has only `:resource` / `:resources` (no extra inputs). Browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom message"` or `confirmation: false` on the action.
+- **Form** — interaction has additional `attribute` / `input`. Renders modal form first; no auto-confirmation (the form is the confirmation).
+
+## Action options
 
 ```ruby
 action :name,
-  interaction: MyInteraction,
-
   # Display
-  label: "Custom Label",           # Override interaction label
-  icon: Phlex::TablerIcons::Star,  # Override interaction icon
-  color: :danger,                  # :primary, :secondary, :danger
-
-  # Visibility
-  resource_action: true,           # Show on index page
-  record_action: true,             # Show on show page
-  collection_record_action: true,  # Show in table rows
-  bulk_action: true,               # For selected records
+  label:       "Custom Label",
+  description: "What it does",
+  icon:        Phlex::TablerIcons::Star,
+  color:       :danger,                  # :primary, :secondary, :danger
 
   # Grouping
-  category: :danger,               # :primary, :secondary, :danger
-  position: 50,                    # Order (lower = first)
+  category: :primary,                    # :primary, :secondary, :danger
+  position: 50,
 
   # Behavior
-  confirmation: "Are you sure?",   # Confirmation dialog
-  turbo_frame: "_top"              # Turbo frame target
+  confirmation: "Are you sure?",
+  modal: :slideover                      # :centered (default) or :slideover
 ```
 
-## Confirmation Dialogs
+Full options: [Reference › Resource › Actions › Action options](/reference/resource/actions#action-options).
 
-Require confirmation before executing:
+## Simple actions (navigation only)
+
+When you just want to link somewhere:
 
 ```ruby
-action :delete,
-  interaction: DeleteInteraction,
-  confirmation: "Are you sure you want to delete this post?"
+action :documentation,
+  label: "Docs",
+  route_options: {url: "https://docs.example.com"},
+  icon: Phlex::TablerIcons::Book,
+  resource_action: true
 
-action :bulk_delete,
-  interaction: BulkDeleteInteraction,
-  confirmation: "Delete all selected posts? This cannot be undone."
+action :reports,
+  route_options: {action: :reports},   # links to PostsController#reports
+  resource_action: true
 ```
 
-## Interaction Outcomes
-
-### Success
-
-::: tip Automatic Redirect
-On success, the controller automatically redirects to the resource. You can use `with_redirect_response` if you want a **different** destination.
-:::
+Custom routes MUST be named:
 
 ```ruby
-def execute
-  # ... do work ...
-
-  # Basic success
-  succeed(resource)
-
-  # With message
-  succeed(resource).with_message("Success!")
-
-  # With redirect
-  succeed(resource)
-    .with_redirect_response(posts_path)
-    .with_message("Post created!")
-
-  # With file download
-  succeed(resource)
-    .with_file_response(pdf_path, filename: "invoice.pdf")
+register_resource ::Post do
+  collection { get :reports, as: :reports }   # ← `as:` is required
 end
 ```
 
-### Failure
+Without `as:`, `resource_url_for` can't build the URL.
 
-```ruby
-def execute
-  # From ActiveModel errors
-  failed(resource.errors)
+## Inherited actions
 
-  # With custom message
-  failed("Something went wrong")
-
-  # With specific field
-  failed("is invalid", :email)
-
-  # With hash of errors
-  failed(email: "is invalid", name: "is required")
-end
-```
-
-### Chaining Interactions
-
-```ruby
-def execute
-  CreateUserInteraction.call(view_context:, **user_params)
-    .and_then { |result| SendWelcomeEmail.call(view_context:, user: result.value) }
-    .and_then { |result| LogActivity.call(view_context:, user: result.value) }
-    .with_message("User created and welcomed!")
-end
-```
-
-On failure, the chain short-circuits and returns the failure immediately.
-
-## Accessing Context
-
-Interactions have access to `current_user` and `view_context`:
-
-```ruby
-class PublishPostInteraction < ResourceInteraction
-  attribute :resource
-
-  private
-
-  def execute
-    resource.update!(
-      published: true,
-      published_by: current_user  # Built-in helper
-    )
-
-    succeed(resource)
-  end
-end
-```
-
-For advanced access:
-
-```ruby
-def execute
-  # Access helpers via view_context
-  view_context.controller.helpers.some_helper
-
-  # Access params
-  view_context.params
-
-  succeed(resource)
-end
-```
-
-## Complete Example: Send Invoice
-
-```ruby
-class SendInvoiceInteraction < ResourceInteraction
-  presents label: "Send Invoice",
-           icon: Phlex::TablerIcons::Mail,
-           description: "Email invoice to recipient"
-
-  attribute :resource  # The invoice
-  attribute :recipient_email, :string
-  attribute :message, :text
-  attribute :attach_pdf, :boolean, default: true
-
-  input :recipient_email, as: :email, hint: "Recipient's email address"
-  input :message, as: :text, hint: "Optional message to include"
-  input :attach_pdf, as: :boolean
-
-  validates :recipient_email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-
-  private
-
-  def execute
-    # Generate PDF if requested
-    pdf = attach_pdf ? generate_pdf : nil
-
-    # Send email
-    InvoiceMailer.send_invoice(
-      invoice: resource,
-      to: recipient_email,
-      message: message,
-      attachment: pdf
-    ).deliver_later
-
-    # Update invoice status
-    resource.update!(
-      sent_at: Time.current,
-      sent_to: recipient_email
-    )
-
-    succeed(resource)
-      .with_message("Invoice sent to #{recipient_email}")
-  rescue ActiveRecord::RecordInvalid => e
-    failed(e.record.errors)
-  end
-
-  def generate_pdf
-    InvoicePdfGenerator.new(resource).generate
-  end
-end
-```
-
-## Inherited Actions
-
-Define common actions in your base definition:
+Actions defined on the base `ResourceDefinition` propagate to every resource:
 
 ```ruby
 # app/definitions/resource_definition.rb
 class ResourceDefinition < Plutonium::Resource::Definition
-  action :archive,
-    interaction: ArchiveInteraction,
-    color: :danger,
-    position: 1000
-end
-
-# All definitions inherit the archive action
-class PostDefinition < ResourceDefinition
-  # Already has :archive action
+  action :archive, interaction: ArchiveInteraction, color: :danger, position: 1000
 end
 ```
 
-## Portal-Specific Actions
+Every resource gets `:archive` automatically.
 
-Override or add actions for specific portals:
+## Chaining interactions
 
 ```ruby
-# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
-class AdminPortal::PostDefinition < ::PostDefinition
-  # Add admin-only actions
-  action :feature, interaction: FeaturePostInteraction
-  action :bulk_publish, interaction: BulkPublishInteraction
+def execute
+  CreateUserInteraction.call(view_context:, **user_params)
+    .and_then { |r| SendWelcomeEmail.call(view_context:, user: r.value) }
+    .and_then { |r| LogActivity.call(view_context:, user: r.value) }
+    .with_message("User created and welcomed!")
 end
 ```
 
-## Testing Interactions
+The chain short-circuits on the first failure.
 
-```ruby
-RSpec.describe PublishPostInteraction do
-  let(:user) { create(:user) }
-  let(:post) { create(:post, user: user, published: false) }
-  let(:view_context) { double(controller: double(helpers: double(current_user: user))) }
+## Common issues
 
-  subject { described_class.new(view_context: view_context, resource: post) }
-
-  describe '#call' do
-    it 'publishes the post' do
-      result = subject.call
-
-      expect(result).to be_success
-      expect(post.reload.published?).to be true
-    end
-
-    context 'when already published' do
-      before { post.update!(published: true) }
-
-      it 'fails with error' do
-        result = subject.call
-
-        expect(result).to be_failure
-        expect(subject.errors[:base]).to include("Post is already published")
-      end
-    end
-  end
-end
-```
-
-## Best Practices
-
-1. **Keep interactions focused** - One action per interaction
-2. **Use validations** - Validate all inputs before execution
-3. **Handle errors gracefully** - Rescue exceptions and return `failed()`
-4. **Return meaningful messages** - Help users understand what happened
-5. **Use `and_then` for chains** - Compose complex workflows from simple interactions
+- **Action button missing** — check the policy method (`def my_action?`). Undefined returns `false`.
+- **`ActiveRecord::RecordInvalid` crashes the action** — not rescued automatically. Wrap with `rescue`, return `failed(e.record.errors)`.
+- **Bulk action fails on some records** — that's by design. Bulk policy is checked per-record; if any fails, the whole request is rejected. Either fix authorization or pre-filter the selection.
+- **Confirmation prompt shows when you don't want one** — pass `confirmation: false` on the action.
 
 ## Related
 
-- [Authorization](./authorization)
-- [Adding Resources](./adding-resources)
+- [Reference › Resource › Actions](/reference/resource/actions) — full action options and bulk patterns
+- [Reference › Behavior › Interactions](/reference/behavior/interactions) — interaction class anatomy
+- [Reference › Behavior › Policies](/reference/behavior/policies) — `def <action>?` methods
+- [Authorization](./authorization) — policy patterns

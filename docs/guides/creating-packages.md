@@ -1,200 +1,142 @@
 # Creating Packages
 
-This guide covers creating and organizing Feature Packages and Portal Packages.
+Organize your app into feature and portal packages.
 
-## Package Types
+## Goal
 
-| Type | Purpose | Generator |
-|------|---------|-----------|
-| **Feature Package** | Business logic (models, definitions, policies) | `rails g pu:pkg:package NAME` |
-| **Portal Package** | Web interface (routes, auth, UI) | `rails g pu:pkg:portal NAME` |
+Domain code (models, policies, definitions, interactions) lives in **feature packages**. Web interfaces (controllers, views, routes, auth) live in **portal packages**. Both are Rails engines with Plutonium conventions on top.
 
-## Creating a Feature Package
+## Two types
 
-### Using the Generator
+| Type | Purpose | Generator | Examples |
+|---|---|---|---|
+| **Feature** | Business logic | `pu:pkg:package NAME` | `blogging`, `billing`, `inventory` |
+| **Portal** | Web interface | `pu:pkg:portal NAME` | `admin_portal`, `customer_portal`, `public_portal` |
+
+🚨 Don't mix the two. Feature packages have NO routes, views, or controllers. Portal packages have NO models or interactions.
+
+## Feature package
+
+### 1. Generate
 
 ```bash
 rails g pu:pkg:package blogging
 ```
 
-### Generated Structure
+### 2. Structure
 
 ```
 packages/blogging/
 ├── app/
-│   ├── controllers/blogging/
-│   │   └── resource_controller.rb
-│   ├── definitions/blogging/
-│   │   └── resource_definition.rb
-│   ├── interactions/blogging/
-│   │   └── resource_interaction.rb
-│   ├── models/blogging/
-│   │   └── resource_record.rb
-│   ├── policies/blogging/
-│   │   └── resource_policy.rb
-│   └── views/blogging/
-└── lib/
-    └── engine.rb
+│   ├── models/blogging/             # Blogging::Post
+│   ├── definitions/blogging/        # Blogging::PostDefinition
+│   ├── policies/blogging/           # Blogging::PostPolicy
+│   └── interactions/blogging/       # Blogging::PublishPostInteraction
+├── db/migrate/
+└── lib/engine.rb
 ```
 
-### Engine Configuration
-
-```ruby
-# packages/blogging/lib/engine.rb
-module Blogging
-  class Engine < Rails::Engine
-    include Plutonium::Package::Engine
-  end
-end
-```
-
-### Namespacing
-
-All classes are auto-namespaced:
-- `app/models/blogging/post.rb` → `Blogging::Post`
-- `app/policies/blogging/post_policy.rb` → `Blogging::PostPolicy`
-
-## Creating a Portal Package
-
-### Using the Generator
+### 3. Create resources inside it
 
 ```bash
-rails g pu:pkg:portal admin
+rails g pu:res:scaffold Blogging::Post title:string --dest=blogging
+rails db:migrate
 ```
 
-### Generator Options
-
-| Option | Description |
-|--------|-------------|
-| `--auth=NAME` | Rodauth account to authenticate with |
-| `--public` | Grant public access (no authentication) |
-| `--byo` | Bring your own authentication |
+### 4. Expose it via a portal
 
 ```bash
-# Non-interactive examples
-rails g pu:pkg:portal admin --auth=admin
-rails g pu:pkg:portal api --public
-rails g pu:pkg:portal custom --byo
+rails g pu:res:conn Blogging::Post --dest=admin_portal
 ```
 
-Without flags, the generator prompts interactively.
+## Portal package
 
-### Generated Structure
+### 1. Generate
 
-```
-packages/admin_portal/
-├── app/
-│   ├── controllers/admin_portal/
-│   │   ├── concerns/controller.rb
-│   │   ├── dashboard_controller.rb
-│   │   ├── plutonium_controller.rb
-│   │   └── resource_controller.rb
-│   ├── definitions/admin_portal/
-│   │   └── resource_definition.rb
-│   ├── policies/admin_portal/
-│   │   └── resource_policy.rb
-│   └── views/admin_portal/
-│       └── dashboard/index.html.erb
-├── config/
-│   └── routes.rb
-└── lib/
-    └── engine.rb
+```bash
+rails g pu:pkg:portal admin --auth=user
 ```
 
-### Portal Engine
+Options:
+
+- `--auth=NAME` — Rodauth account to authenticate with.
+- `--public` — public access, no auth.
+- `--byo` — bring your own auth.
+- `--scope=CLASS` — entity class for multi-tenancy.
+
+### 2. Mount it
 
 ```ruby
-# packages/admin_portal/lib/engine.rb
-module AdminPortal
-  class Engine < Rails::Engine
-    include Plutonium::Portal::Engine
-
-    config.after_initialize do
-      # Multi-tenancy (optional)
-      scope_to_entity Organization, strategy: :path
-    end
-  end
-end
-```
-
-### Portal Authentication
-
-Authentication is configured in the controller concern based on generator options:
-
-```ruby
-# packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
-module AdminPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:admin)
-    end
-  end
-end
-```
-
-For public access:
-
-```ruby
-include Plutonium::Auth::Public
-```
-
-For custom authentication:
-
-```ruby
-included do
-  helper_method :current_user
-end
-
-def current_user
-  # Your authentication logic
-  @current_user ||= User.find_by(api_key: request.headers["X-API-Key"])
-end
-```
-
-## Portal Routes
-
-The portal generator creates routes and auto-mounts to the main app:
-
-```ruby
-# packages/admin_portal/config/routes.rb
-AdminPortal::Engine.routes.draw do
-  root to: "dashboard#index"
-
-  # Register resources here
-  register_resource ::Post
-  register_resource Blogging::Comment
-end
-
-# Also adds to main app routes:
-# config/routes.rb (auto-generated)
+# config/routes.rb
 Rails.application.routes.draw do
-  constraints Rodauth::Rails.authenticate(:admin) do
+  constraints Rodauth::Rails.authenticate(:user) do
     mount AdminPortal::Engine, at: "/admin"
   end
 end
 ```
 
-### Custom Routes on Resources
+### 3. Connect resources
 
-Add member or collection routes with a block:
-
-```ruby
-register_resource ::Post do
-  member do
-    get :preview
-    post :publish
-  end
-  collection do
-    get :archived
-  end
-end
+```bash
+rails g pu:res:conn Post Blogging::Post --dest=admin_portal
 ```
 
-## Package Loading
+See [Reference › App › Portals](/reference/app/portals) for the full portal surface.
 
-Packages are loaded via `config/packages.rb` (generated during install):
+## Auto-namespacing
+
+Every file under `app/<kind>/blogging/` resolves to `Blogging::*`:
+
+- `app/models/blogging/post.rb` → `Blogging::Post`
+- `app/policies/blogging/post_policy.rb` → `Blogging::PostPolicy`
+
+Each feature package gets base classes — `Blogging::ApplicationRecord`, `Blogging::ResourceRecord`, `Blogging::ResourcePolicy`, `Blogging::ResourceDefinition`, `Blogging::ResourceInteraction` — that inherit from the main app's.
+
+## Cross-package references
+
+```bash
+rails g pu:res:scaffold Comment user:belongs_to blogging/post:belongs_to body:text --dest=comments
+```
+
+The `blogging/post` syntax expands to `Blogging::Post`.
+
+## When to use which
+
+### Feature package
+
+When the code:
+
+- Could be reused across multiple portals (admin and customer both edit `Blogging::Post`).
+- Has no inherent UI / auth.
+- You want isolated from other domains (`billing` shouldn't depend on `blogging`).
+
+### Portal package
+
+When the code:
+
+- Has a specific auth flow (admin vs customer vs public).
+- Renders different views of the same underlying resources.
+- Needs different policies / definitions per audience.
+
+### When NOT to make a package
+
+For an app that doesn't need cross-portal sharing, just put resources in `--dest=main_app`. Packages add organization, not power.
+
+## Typical architecture
+
+```
+packages/
+├── blogging/                # Feature: blog functionality
+├── billing/                 # Feature: payments/invoicing
+├── admin_portal/            # Portal: admin interface
+└── customer_portal/         # Portal: customer dashboard
+```
+
+The portals expose the features. A single feature can be exposed by multiple portals — usually with different policies and definitions per portal.
+
+## Package loading
+
+Generated by `pu:core:install`:
 
 ```ruby
 # config/packages.rb
@@ -203,179 +145,35 @@ Dir.glob(File.expand_path("../packages/**/lib/engine.rb", __dir__)) do |package|
 end
 ```
 
-This is automatically required in `config/application.rb`.
+Loaded from `config/application.rb`. Migrations from all packages are picked up by `rails db:migrate` automatically.
 
-## Adding Resources to Packages
-
-```bash
-# Add to main app
-rails g pu:res:scaffold Post title:string --dest=main_app
-
-# Add to a feature package
-rails g pu:res:scaffold Post title:string --dest=blogging
-```
-
-Resources are namespaced:
+## Per-portal overrides
 
 ```ruby
-# packages/blogging/app/models/blogging/post.rb
-module Blogging
-  class Post < Blogging::ResourceRecord
-    # Model code
-  end
-end
-```
-
-## Connecting Resources to Portals
-
-Resources must be connected to portals to be accessible:
-
-```bash
-# Connect main app resource
-rails g pu:res:conn Post --dest=admin_portal
-
-# Connect namespaced resource
-rails g pu:res:conn Blogging::Post --dest=admin_portal
-```
-
-## Entity Scoping (Multi-tenancy)
-
-Automatically scope all data to a parent entity:
-
-### Path Strategy
-
-Entity ID in URL path:
-
-```ruby
-# packages/admin_portal/lib/engine.rb
-config.after_initialize do
-  scope_to_entity Organization, strategy: :path
-end
-```
-
-Routes become: `/organizations/:organization_id/posts`
-
-### Custom Strategy
-
-Implement your own lookup method:
-
-```ruby
-config.after_initialize do
-  scope_to_entity Organization, strategy: :current_organization
-end
-
-# In controller concern
-def current_organization
-  @current_organization ||= Organization.find_by!(subdomain: request.subdomain)
-end
-```
-
-## Package Best Practices
-
-### 1. Single Responsibility
-Each feature package should handle one domain:
-- `blogging` - Posts, comments, categories
-- `inventory` - Products, stock, warehouses
-- `billing` - Invoices, payments, subscriptions
-
-### 2. Clear Naming
-- Feature packages: domain nouns (`blogging`, `billing`)
-- Portal packages: role + portal (`admin_portal`, `api_portal`)
-
-### 3. Minimal Cross-Dependencies
-Limit dependencies between feature packages. If two packages are tightly coupled, consider merging them.
-
-### 4. Portal Customization
-Put UI customizations in portal packages, not feature packages:
-
-```ruby
-# Good: Portal-specific definition
-# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
-
-# Bad: Feature package with portal-specific code
-# packages/blogging/app/definitions/blogging/admin_post_definition.rb
-```
-
-## Multiple Portals Pattern
-
-Common pattern for different user types:
-
-```
-packages/
-├── blogging/           # Feature: blog functionality
-├── billing/            # Feature: payment/invoicing
-├── admin_portal/       # Portal: admin interface
-├── dashboard_portal/   # Portal: user dashboard
-└── public_portal/      # Portal: public read-only
-```
-
-Each portal can:
-- Have different authentication
-- Show different fields
-- Allow different actions
-- Use different layouts
-
-## Portal-Specific Overrides
-
-### Override Definition
-
-```ruby
-# packages/admin_portal/app/definitions/admin_portal/post_definition.rb
+# Definition — different fields per portal
 class AdminPortal::PostDefinition < ::PostDefinition
-  # Add portal-specific scopes
-  scope :my_posts, -> { where(user: current_user) }
+  input :internal_notes, as: :text     # admins see this; customers don't
+  scope :pending_review
 end
-```
 
-### Override Policy
-
-```ruby
-# packages/admin_portal/app/policies/admin_portal/post_policy.rb
+# Policy — different rules per portal
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
 
-  def destroy?
-    true  # Admins can delete
-  end
-
-  def permitted_attributes_for_create
-    %i[title content featured internal_notes]  # More fields
-  end
+  def destroy? = true
+  def permitted_attributes_for_create = %i[title content featured internal_notes]
 end
 ```
 
-### Override Controller
+## Common issues
 
-```ruby
-# packages/admin_portal/app/controllers/admin_portal/posts_controller.rb
-class AdminPortal::PostsController < ::PostsController
-  include AdminPortal::Concerns::Controller
-
-  private
-
-  def preferred_action_after_submit
-    "index"
-  end
-end
-```
-
-## Controller Hierarchy
-
-Portal controllers inherit from the feature package's controller if one exists (and include the portal's `Concerns::Controller`). If no feature package controller exists, they inherit from the portal's `ResourceController`.
-
-```ruby
-# With feature package controller:
-class AdminPortal::PostsController < ::PostsController
-  include AdminPortal::Concerns::Controller
-end
-
-# Without feature package controller:
-class AdminPortal::PostsController < AdminPortal::ResourceController
-end
-```
+- **Class not loading** — namespace must match the directory: `app/models/blogging/post.rb` MUST be `Blogging::Post`.
+- **Migration not running** — package migrations are auto-included. If they aren't running, check `config/packages.rb` is loaded from `application.rb`.
+- **Cross-package association fails** — use `blogging/post:belongs_to` in `pu:res:scaffold`, OR manually set `class_name: "Blogging::Post"` on the `belongs_to`.
 
 ## Related
 
-- [Adding Resources](./adding-resources)
-- [Authentication](./authentication)
-- [Multi-tenancy](./multi-tenancy)
+- [Reference › App › Packages](/reference/app/packages) — full package surface
+- [Reference › App › Portals](/reference/app/portals) — portal-specific configuration
+- [Adding resources](./adding-resources) — `pu:res:scaffold` and `pu:res:conn`
+- [Authentication](./authentication) — portal auth setup

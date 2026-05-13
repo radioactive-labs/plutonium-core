@@ -68,7 +68,7 @@ rails g pu:res:conn Post \
     <div class="ai-feature">
       <div class="ai-icon">🧠</div>
       <h3>Claude Code Skills</h3>
-      <p>20+ built-in skills teach AI assistants your app's patterns. Resources, policies, definitions, interactions - Claude understands them all.</p>
+      <p>Built-in skills teach AI assistants your app's patterns. Resources, policies, definitions, interactions — Claude understands them all.</p>
     </div>
     <div class="ai-feature">
       <div class="ai-icon">⚡</div>

@@ -1,57 +1,50 @@
 # Getting Started
 
-Welcome to Plutonium! This guide will help you get up and running quickly.
-
-## What You'll Learn
-
-- How to install Plutonium in a new or existing Rails application
-- The basic concepts behind Plutonium's architecture
-- How to create your first resource and connect it to a portal
+Welcome to Plutonium.
 
 ## Prerequisites
 
-Before you begin, make sure you have:
-
-- **Ruby 3.2+** installed
+- **Ruby 3.2+**
 - **Rails 7.2+** (Rails 8 recommended)
 - **Node.js 18+** (for asset compilation)
 - Basic familiarity with Ruby on Rails
 
-## Choose Your Path
+## Pick your starting point
 
-### New Application
+### New Rails app
 
-If you're starting fresh, use our application template:
+The fastest way — use the application template:
 
 ```bash
 rails new myapp -a propshaft -j esbuild -c tailwind \
   -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
-This creates a fully configured Plutonium application with authentication ready to go.
+This sets up Rails + Propshaft + esbuild + TailwindCSS + Plutonium in one shot, with Rodauth ready to go.
 
-[Continue to Installation →](./installation)
+[→ Installation](./installation)
 
-### Existing Application
+### Existing Rails app
 
-Adding Plutonium to an existing Rails app requires a few more steps but is fully supported.
+For pre-existing apps, use `base.rb` (not `plutonium.rb` — that one runs full app bootstrap and clobbers history):
 
-[Continue to Installation →](./installation#existing-application)
+```bash
+bin/rails app:template \
+  LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
+```
+
+[→ Installation › Existing app](./installation#existing-application)
 
 ### Tutorial
 
-Want to learn by building? Follow our step-by-step tutorial to create a complete blog application.
+Want to learn by building? The [8-step tutorial](./tutorial/) walks through a complete blog app — auth, authorization, custom actions, nested resources, multi-portal.
 
-[Start the Tutorial →](./tutorial/)
+[→ Tutorial](./tutorial/)
 
-## Next Steps
+## After installation
 
-After installation, you'll typically:
+1. **Create resources** with `pu:res:scaffold` (see [Adding resources](/guides/adding-resources))
+2. **Connect them to a portal** with `pu:res:conn`
+3. **Customize** the definition, policy, controller as needed
 
-1. **Create a Feature Package** - Organize your business logic
-2. **Generate Resources** - Create your models and scaffolds
-3. **Create a Portal** - Set up the web interface
-4. **Connect Resources** - Make resources accessible through the portal
-5. **Customize** - Override defaults as needed
-
-Each of these steps is covered in detail in the [Tutorial](./tutorial/).
+Reference for each layer: [App](/reference/app/), [Resource](/reference/resource/), [Behavior](/reference/behavior/), [UI](/reference/ui/), [Auth](/reference/auth/), [Tenancy](/reference/tenancy/), [Testing](/reference/testing/).

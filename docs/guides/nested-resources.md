@@ -1,528 +1,200 @@
 # Nested Resources
 
-This guide covers setting up parent/child resource relationships.
+Set up parent/child relationships so `/companies/:id/nested_properties` works automatically.
 
-## Overview
+## Goal
 
-Nested resources create URLs like `/posts/1/nested_comments` where comments belong to a specific post. Plutonium automatically handles:
+`Company has_many :properties`, and you want:
 
-- Scoping queries to the parent
-- Assigning parent to new records
-- Hiding parent field in forms
-- URL generation with parent context
-- Breadcrumb navigation
+- A "Properties" tab on the Company show page.
+- A nested URL `/companies/123/nested_properties` for the company's properties.
+- Forms that auto-fill the parent (no manual hidden field).
+- Queries scoped to the parent (sibling companies' properties invisible).
 
-Plutonium supports both `has_many` (plural routes) and `has_one` (singular routes) associations.
+All of this happens with no manual route wiring — Plutonium generates it from the association.
 
-## Setting Up Nested Resources
+## Steps
 
-### 1. Define the Association
+### 1. Scaffold parent and child
 
-```ruby
-# Parent model
-class Post < ResourceRecord
-  has_many :comments, dependent: :destroy
-  has_one :post_metadata, dependent: :destroy
-end
-
-# Child models
-class Comment < ResourceRecord
-  belongs_to :post
-end
-
-class PostMetadata < ResourceRecord
-  belongs_to :post
-end
+```bash
+rails g pu:res:scaffold Company name:string --dest=main_app
+rails g pu:res:scaffold Property company:belongs_to name:string --dest=main_app
+rails db:migrate
 ```
 
-### 2. Register Both Resources
+### 2. Connect both to the portal
 
-```ruby
-# packages/admin_portal/config/routes.rb
-AdminPortal::Engine.routes.draw do
-  register_resource ::Post
-  register_resource ::Comment
-  register_resource ::PostMetadata
-end
+```bash
+rails g pu:res:conn Company Property --dest=admin_portal
 ```
 
-Plutonium automatically creates nested routes with a `nested_` prefix based on the `belongs_to` association:
+Plutonium reads the `has_many :properties` association on `Company` and registers nested routes for `Property` automatically.
 
-**has_many routes (plural):**
-- `GET /posts/:post_id/nested_comments`
-- `GET /posts/:post_id/nested_comments/new`
-- `GET /posts/:post_id/nested_comments/:id`
-- etc.
-
-**has_one routes (singular):**
-- `GET /posts/:post_id/nested_post_metadata`
-- `GET /posts/:post_id/nested_post_metadata/new`
-- `GET /posts/:post_id/nested_post_metadata/edit`
-
-The `nested_` prefix prevents route conflicts when the same resource is registered both as a top-level and nested resource.
-
-### 3. Enable Association Panel
-
-Show comments on the post detail page:
+### 3. (Optional) Expose the relationship on the Company show page
 
 ```ruby
-class PostPolicy < ResourcePolicy
+class CompanyPolicy < ResourcePolicy
   def permitted_associations
-    %i[comments]
+    %i[properties]
   end
 end
 ```
 
-## How It Works
+This adds a "Properties" tab on the Company show page that loads the nested collection. See [Reference › Behavior › Policies › Association permissions](/reference/behavior/policies#association-permissions).
 
-### Automatic Scoping
+### 4. Visit the URL
 
-When accessing `/posts/1/comments`, queries are scoped to the parent:
-
-```ruby
-# Internally uses: Comment.associated_with(post)
-# Which resolves to: Comment.where(post: post)
+```
+/admin/companies/1/nested_properties
 ```
 
-### Automatic Parent Assignment
+Properties index, scoped to Company #1. Forms hide the company field (already determined by URL).
 
-When creating a comment under a post, the parent is injected into params:
+## Generated routes
 
-```ruby
-# POST /posts/1/comments
-# resource_params automatically includes { post: <Post:1>, post_id: 1 }
-```
+Plutonium prefixes nested routes with `nested_` so they don't conflict with top-level:
 
-### Automatic Field Hiding
+| Route | Purpose |
+|---|---|
+| `/companies/:company_id/nested_properties` | `has_many` index |
+| `/companies/:company_id/nested_properties/new` | new |
+| `/companies/:company_id/nested_properties/:id` | show |
+| `/companies/:company_id/nested_company_profile` | `has_one` show (no `:id`) |
+| `/companies/:company_id/nested_company_profile/new` | `has_one` new |
 
-The parent field (`post`) is automatically hidden in forms since it's determined by the URL.
+`has_one` associations get singular routes — index redirects to show (or new if no record exists).
 
-## Controller Helpers
+## What Plutonium does automatically
 
-### current_parent
+1. **Resolves the parent** via `current_parent`, authorized for `:read?`.
+2. **Scopes queries** via the parent association (`company.properties` for `has_many`; `where(company_id: ...)` for `has_one`).
+3. **Assigns the parent** on create (injected into `resource_params`).
+4. **Hides the parent field** in forms and displays.
 
-Returns the parent record resolved from the URL:
+No hidden fields. No manual scoping.
 
-```ruby
-# URL: /posts/123/comments
-current_parent  # => Post.find(123)
-```
-
-### parent_route_param
-
-The URL parameter containing the parent ID:
-
-```ruby
-parent_route_param  # => :post_id
-```
-
-### parent_input_param
-
-The association name on the child model:
-
-```ruby
-parent_input_param  # => :post
-```
-
-## URL Generation
+## URL generation
 
 Use `resource_url_for` with the `parent:` option:
 
 ```ruby
-# Child collection (has_many)
-resource_url_for(Comment, parent: @post)
-# => /posts/123/nested_comments
+resource_url_for(Property, parent: company)
+# => /admin/companies/123/nested_properties
 
-# Child record
-resource_url_for(@comment, parent: @post)
-# => /posts/123/nested_comments/456
+resource_url_for(property, parent: company)
+# => /admin/companies/123/nested_properties/456
 
-# New child form
-resource_url_for(Comment, action: :new, parent: @post)
-# => /posts/123/nested_comments/new
+resource_url_for(Property, action: :new, parent: company)
+resource_url_for(property, action: :edit, parent: company)
 
-# Edit child
-resource_url_for(@comment, action: :edit, parent: @post)
-# => /posts/123/nested_comments/456/edit
-
-# Singular resource (has_one)
-resource_url_for(@post_metadata, parent: @post)
-# => /posts/123/nested_post_metadata
-
-resource_url_for(PostMetadata, action: :new, parent: @post)
-# => /posts/123/nested_post_metadata/new
-
-# Interactions
-resource_url_for(@comment, parent: @post, interaction: :archive)
-# => /posts/123/nested_comments/456/record_actions/archive
-
-resource_url_for(Comment, parent: @post, interaction: :import)
-# => /posts/123/nested_comments/resource_actions/import
-
-resource_url_for(Comment, parent: @post, interaction: :bulk_delete, ids: [1, 2])
-# => /posts/123/nested_comments/bulk_actions/bulk_delete?ids[]=1&ids[]=2
+# Interactions compose with parent
+resource_url_for(property, parent: company, interaction: :archive)
+resource_url_for(Property, parent: company, interaction: :bulk_delete, ids: [1, 2])
 ```
 
-Within a nested context, `parent:` defaults to `current_parent`:
+## Common patterns
+
+### Show parent on standalone listings
+
+By default, the parent field is hidden in forms/displays (it's in the URL). To show it on the standalone (non-nested) listing:
 
 ```ruby
-# In CommentsController under /posts/:post_id/nested_comments
-resource_url_for(@comment)  # parent: current_parent is automatic
-```
-
-### Cross-Package URL Generation
-
-Generate URLs for resources in a different package:
-
-```ruby
-# From AdminPortal, generate URL to CustomerPortal resource
-resource_url_for(@comment, parent: @post, package: CustomerPortal)
-```
-
-## Presentation Hooks
-
-Control whether the parent field appears:
-
-```ruby
-class CommentsController < ResourceController
+class PropertiesController < ::ResourceController
   private
-
-  # Show parent in displays (default: false when nested)
-  def present_parent?
-    current_parent.nil?  # Only show when accessed standalone
-  end
-
-  # Allow changing parent in forms (default: same as present_parent?)
-  def submit_parent?
-    false
-  end
+  def present_parent? = current_parent.nil?
 end
 ```
 
-## Policy Integration
-
-### Parent Authorization
-
-The parent is authorized for `:read?` before being returned:
+### Custom parent resolution (e.g. by slug)
 
 ```ruby
-# Inside current_parent
-authorize! parent, to: :read?
-```
-
-### Parent Scoping Context
-
-For nested resources, policies receive `parent` and `parent_association` context. This is used for automatic query scoping:
-
-```ruby
-class CommentPolicy < ResourcePolicy
-  # Available context:
-  # - parent: the parent record (e.g., Post instance)
-  # - parent_association: the association name (e.g., :comments)
-  # - entity_scope: the scoped entity (for multi-tenancy)
-
-  relation_scope do |relation|
-    relation = super(relation)  # Applies parent scoping automatically
-    relation
-  end
+def current_parent
+  @current_parent ||= Company.friendly.find(params[:company_id])
 end
 ```
 
-**Parent scoping takes precedence over entity scoping** - when a parent is present, the policy scopes via the parent association rather than the entity scope. This prevents double-scoping since the parent was already authorized and entity-scoped.
-
-### has_many vs has_one Scoping
-
-For **has_many** associations, scoping uses the association directly:
-```ruby
-parent.send(parent_association)  # e.g., post.comments
-```
-
-For **has_one** associations, scoping uses a where clause:
-```ruby
-relation.where(foreign_key => parent.id)  # e.g., where(post_id: post.id)
-```
-
-### Entity Scope Fallback
-
-When no parent is present (top-level resource access), entity_scope is used:
+### Compound uniqueness within parent
 
 ```ruby
-class CommentPolicy < ResourcePolicy
-  def create?
-    # entity_scope is available for multi-tenancy
-    entity_scope.present? && user.can_comment_on?(entity_scope)
-  end
+class Property < ResourceRecord
+  belongs_to :company
+  validates :code, uniqueness: {scope: :company_id}
 end
 ```
 
-### Additional Scoping
+Without the scope, the same code in different companies would collide.
 
-Add role-based filtering on top of parent scoping:
-
-```ruby
-class CommentPolicy < ResourcePolicy
-  relation_scope do |relation|
-    relation = super(relation)  # Applies parent scoping first
-
-    if user.moderator?
-      relation
-    else
-      relation.where(approved: true).or(relation.where(user: user))
-    end
-  end
-end
-```
-
-### default_relation_scope is Required
-
-Plutonium verifies that `default_relation_scope` is called in every `relation_scope` to prevent multi-tenancy leaks:
+### Custom routes on nested resources
 
 ```ruby
-# ❌ This will raise an error
-relation_scope do |relation|
-  relation.where(approved: true)  # Missing default_relation_scope!
-end
-
-# ✅ Correct
-relation_scope do |relation|
-  default_relation_scope(relation).where(approved: true)
-end
-```
-
-When overriding an inherited scope but still wanting parent scoping:
-
-```ruby
-class AdminCommentPolicy < CommentPolicy
-  relation_scope do |relation|
-    # Replace inherited scope but keep parent scoping
-    default_relation_scope(relation)
-  end
-end
-```
-
-## Association Panels
-
-Associations listed in `permitted_associations` appear on the parent's show page:
-
-```ruby
-class PostPolicy < ResourcePolicy
-  def permitted_associations
-    %i[comments tags]  # Shows panels for these
-  end
-end
-```
-
-Each panel displays:
-- List of child records
-- "Add" button linking to nested new action
-- Edit/Delete actions per record
-
-## Nested Forms
-
-Edit child records inline within the parent form:
-
-### 1. Enable Nested Attributes
-
-```ruby
-class Post < ResourceRecord
-  has_many :comments
-
-  accepts_nested_attributes_for :comments,
-                                allow_destroy: true,
-                                reject_if: :all_blank
-end
-```
-
-### 2. Configure as Nested Input
-
-```ruby
-class PostDefinition < ResourceDefinition
-  input :comments, as: :nested
-end
-```
-
-### 3. Permit in Policy
-
-```ruby
-class PostPolicy < ResourcePolicy
-  def permitted_attributes_for_create
-    [:title, :content, comments_attributes: [:id, :body, :_destroy]]
-  end
-end
-```
-
-## has_one Associations
-
-Plutonium supports `has_one` associations with singular routes:
-
-```ruby
-class Post < ResourceRecord
-  has_one :post_metadata, dependent: :destroy
-end
-```
-
-Routes generated:
-- `GET /posts/:post_id/nested_post_metadata` - Show metadata
-- `GET /posts/:post_id/nested_post_metadata/new` - New metadata form
-- `GET /posts/:post_id/nested_post_metadata/edit` - Edit metadata form
-- `PATCH /posts/:post_id/nested_post_metadata` - Update metadata
-- `DELETE /posts/:post_id/nested_post_metadata` - Delete metadata
-
-Note: No `:id` parameter in singular routes - only one record can exist per parent.
-
-## Nesting Depth
-
-Plutonium supports **one level of nesting**:
-
-- `/posts/:post_id/nested_comments` (parent → child)
-- `/comments/:comment_id/nested_replies` (parent → child)
-
-Not supported:
-- `/posts/:post_id/nested_comments/:comment_id/nested_replies` (grandparent → parent → child)
-
-### Working with Deep Hierarchies
-
-Use through associations for data access:
-
-```ruby
-class Post < ResourceRecord
-  has_many :comments
-  has_many :replies, through: :comments
-end
-```
-
-## Custom Routes on Nested Resources
-
-Add member/collection routes:
-
-```ruby
-register_resource ::Comment do
+register_resource ::Property do
   member do
-    post :approve, as: :approve
-    post :flag, as: :flag
-  end
-  collection do
-    get :pending, as: :pending
+    get  :analytics, as: :analytics    # `as:` is REQUIRED
+    post :archive,   as: :archive
   end
 end
 ```
 
-::: warning Always Name Custom Routes
-Always use the `as:` option when defining custom routes. This ensures `resource_url_for` can generate correct URLs. Without named routes, URL generation will fail for nested resources.
+::: warning Always pass `as:`
+Without `as:`, `resource_url_for(property, parent: company, action: :analytics)` fails — no named route to look up.
 :::
 
-Generates nested routes:
-- `POST /posts/:post_id/nested_comments/:id/approve`
-- `POST /posts/:post_id/nested_comments/:id/flag`
-- `GET /posts/:post_id/nested_comments/pending`
+## Policy authorization context
 
-## Breadcrumbs
-
-Nested resources automatically include parent in breadcrumbs:
-
-```
-Dashboard > Posts > My First Post > Comments > Comment #1
-```
-
-## Scoped Uniqueness
-
-Validate uniqueness within parent:
+The child policy automatically receives the parent:
 
 ```ruby
-class Comment < ResourceRecord
-  belongs_to :post
-  validates :position, uniqueness: { scope: :post_id }
-end
-```
+class PropertyPolicy < ResourcePolicy
+  # parent              => the Company instance
+  # parent_association  => :properties
 
-## Example: Blog with Comments
-
-### Models
-
-```ruby
-class Post < ResourceRecord
-  belongs_to :user
-  has_many :comments, dependent: :destroy
-
-  validates :title, :body, presence: true
-end
-
-class Comment < ResourceRecord
-  belongs_to :post
-  belongs_to :user
-
-  validates :body, presence: true
-end
-```
-
-### Policies
-
-```ruby
-class PostPolicy < ResourcePolicy
   def create?
-    user.present?
-  end
-
-  def read?
-    true
-  end
-
-  def permitted_attributes_for_create
-    %i[title body]
-  end
-
-  def permitted_attributes_for_read
-    %i[title body user created_at]
-  end
-
-  def permitted_associations
-    %i[comments]
-  end
-end
-
-class CommentPolicy < ResourcePolicy
-  def create?
-    user.present? && entity_scope.present?
-  end
-
-  def read?
-    true
-  end
-
-  def update?
-    record.user_id == user.id
-  end
-
-  def destroy?
-    record.user_id == user.id || entity_scope&.user_id == user.id
-  end
-
-  def permitted_attributes_for_create
-    %i[body]
-  end
-
-  def permitted_attributes_for_read
-    %i[body user created_at]
+    parent.present? && user.member_of?(parent)
   end
 end
 ```
 
-### Controller (if customization needed)
+The parent is authorized for `:read?` before `current_parent` returns — children inherit the parent's access requirements.
+
+## Parent scoping vs entity scoping
+
+When a parent is present, **parent scoping wins**: `default_relation_scope` scopes via the parent association, NOT `entity_scope`. The parent was already entity-scoped during its own authorization — double-scoping isn't needed.
+
+In the child policy, just call `default_relation_scope` — it handles both cases:
 
 ```ruby
-class CommentsController < ResourceController
-  private
-
-  def build_resource
-    super.tap do |comment|
-      comment.user = current_user
-    end
-  end
+relation_scope do |relation|
+  default_relation_scope(relation)    # parent when present, entity_scope otherwise
 end
 ```
+
+See [Reference › Tenancy › Nested resources › Parent vs entity scoping](/reference/tenancy/nested-resources#parent-vs-entity-scoping).
+
+## Nesting limitations
+
+Plutonium supports **one level of nesting only**:
+
+- ✅ `/companies/:company_id/nested_properties` (parent → child)
+- ❌ `/companies/:company_id/nested_properties/:property_id/nested_units` (grandparent → parent → child)
+
+For deeper hierarchies, use top-level routes plus association tabs on the show page (`permitted_associations`).
+
+## Inline `+` add on the parent form
+
+When a form has an association select (e.g. picking the company on a Property form), the inline `+` button next to the select opens the parent's `:new` action. If the parent form is already in a modal, the `+` opens a **stacked secondary modal** so the in-progress form isn't lost. See [Reference › UI › Forms › Association inputs](/reference/ui/forms#association-inputs).
+
+## Common issues
+
+- **Nested route doesn't exist** — both parent AND child must be registered in the same portal (`pu:res:conn`).
+- **Parent shows up in the form anyway** — check `present_parent?` / `submit_parent?` on the controller. Default is to hide on nested routes.
+- **Multiple `belongs_to` to the same parent class** (e.g. `Match belongs_to :home_team, :away_team`) — Plutonium raises. Override `scoped_entity_association` to specify. See [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping#multiple-associations-to-the-same-entity-class).
+- **`resource_url_for` returns wrong URL for a nested resource** — check that custom routes use `as:`.
 
 ## Related
 
-- [Adding Resources](./adding-resources)
-- [Authorization](./authorization)
-- [Creating Packages](./creating-packages)
+- [Reference › Tenancy › Nested resources](/reference/tenancy/nested-resources) — full surface
+- [Reference › Behavior › Controllers](/reference/behavior/controllers) — `current_parent`, presentation hooks
+- [Reference › Behavior › Policies](/reference/behavior/policies#association-permissions) — `permitted_associations`
+- [Multi-tenancy](./multi-tenancy) — how entity scoping interacts with parent scoping
+- [Adding resources](./adding-resources) — basic resource setup

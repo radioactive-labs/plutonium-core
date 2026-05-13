@@ -1,440 +1,184 @@
 # Theming
 
-This guide covers customizing colors, styles, and branding.
+Customize colors, styles, dark mode, and branding.
 
-## Overview
+## Goal
 
-Plutonium uses TailwindCSS 4 with a design token system for consistent styling. Customization happens through:
+Adapt Plutonium's defaults to match your brand: primary color, fonts, logo, dark mode behavior, optionally per-component theming.
 
-- **Design Tokens** - CSS custom properties for colors, spacing, shadows
-- **Component Classes** - Pre-built `.pu-*` classes for buttons, inputs, tables
-- **Tailwind Configuration** - Extend colors and design tokens
-- **Component Themes** - Override form, table, and display styling
+## How theming layers stack
 
-## Design Token System
+| Layer | What to edit | When to use |
+|---|---|---|
+| **Asset config** | `Plutonium.configure` | Logo / favicon / asset file paths |
+| **CSS tokens** | `--pu-*` variables in your CSS | Colors that should auto-switch with dark mode |
+| **Tailwind theme** | `tailwind.config.js` | Brand color palettes, custom fonts |
+| **`.pu-*` classes** | Use in markup | Pre-styled buttons / inputs / cards |
+| **Phlexi component themes** | Per-resource `Theme` class | Override Form/Display/Table per resource |
 
-Plutonium uses CSS custom properties (design tokens) for theming. These tokens automatically adapt to light and dark modes.
+## 🚨 Critical
 
-### Available Tokens
+- **Always register Stimulus controllers** — `registerControllers(application)`. Without it, the entire interactive layer is dead.
+- **Use `plutoniumTailwindConfig.merge`** when overriding Tailwind theme — plain object spread drops Plutonium's defaults.
+- **Tokens are CSS variables, not Tailwind keys** — `bg-[var(--pu-surface)]`, NOT `bg-pu-surface`.
+- **Dark mode is `selector`, not `class`** — toggle by adding/removing `dark` on `<html>`.
+- **Prefer `.pu-*` classes and `var(--pu-*)` tokens** over hardcoded `gray-X/dark:gray-Y` pairs — they switch with dark mode automatically.
 
-#### Surface Colors
-
-```css
---pu-body            /* Page background */
---pu-surface         /* Card/panel backgrounds */
---pu-surface-alt     /* Alternate surface (headers, sidebars) */
---pu-surface-raised  /* Elevated surfaces */
---pu-surface-overlay /* Modal/dropdown overlays */
-```
-
-#### Border Colors
-
-```css
---pu-border        /* Default borders */
---pu-border-muted  /* Subtle borders */
---pu-border-strong /* Emphasized borders */
-```
-
-#### Text Colors
-
-```css
---pu-text        /* Primary text */
---pu-text-muted  /* Secondary text */
---pu-text-subtle /* Tertiary/placeholder text */
-```
-
-#### Table Tokens
-
-```css
---pu-table-header-bg    /* Header background */
---pu-table-header-text  /* Header text color */
---pu-table-row-bg       /* Row background */
---pu-table-row-hover    /* Row hover state */
---pu-table-row-selected /* Selected row */
---pu-table-border       /* Row borders */
-```
-
-#### Form Tokens
-
-```css
---pu-input-bg          /* Input background */
---pu-input-border      /* Input border */
---pu-input-focus-ring  /* Focus ring color */
---pu-input-placeholder /* Placeholder text */
-```
-
-#### Card Tokens
-
-```css
---pu-card-bg     /* Card background */
---pu-card-border /* Card border */
-```
-
-#### Shadow System
-
-```css
---pu-shadow-sm  /* Subtle shadow */
---pu-shadow-md  /* Medium shadow */
---pu-shadow-lg  /* Large shadow */
-```
-
-#### Spacing Scale
-
-```css
---pu-space-xs  /* 0.25rem */
---pu-space-sm  /* 0.5rem */
---pu-space-md  /* 1rem */
---pu-space-lg  /* 1.5rem */
---pu-space-xl  /* 2rem */
-```
-
-#### Border Radius
-
-```css
---pu-radius-sm   /* 0.375rem */
---pu-radius-md   /* 0.5rem */
---pu-radius-lg   /* 0.75rem */
---pu-radius-xl   /* 1rem */
---pu-radius-full /* 9999px */
-```
-
-#### Transitions
-
-```css
---pu-transition-fast   /* 150ms */
---pu-transition-normal /* 200ms */
---pu-transition-slow   /* 300ms */
-```
-
-### Overriding Tokens
-
-Override tokens in your CSS to customize the theme:
-
-```css
-/* app/assets/stylesheets/application.css */
-@import "tailwindcss";
-@import "gem:plutonium/src/css/plutonium.css";
-
-/* Light mode overrides */
-:root {
-  --pu-surface: #fafafa;
-  --pu-border: #d4d4d4;
-  --pu-input-focus-ring: #6366f1;
-}
-
-/* Dark mode overrides */
-.dark {
-  --pu-surface: #18181b;
-  --pu-border: #3f3f46;
-}
-```
-
-## Component Classes
-
-Plutonium provides pre-built component classes for common UI elements.
-
-### Buttons
-
-```html
-<!-- Sizes -->
-<button class="pu-btn pu-btn-md pu-btn-primary">Medium</button>
-<button class="pu-btn pu-btn-sm pu-btn-primary">Small</button>
-<button class="pu-btn pu-btn-xs pu-btn-primary">Extra Small</button>
-
-<!-- Solid variants -->
-<button class="pu-btn pu-btn-md pu-btn-primary">Primary</button>
-<button class="pu-btn pu-btn-md pu-btn-secondary">Secondary</button>
-<button class="pu-btn pu-btn-md pu-btn-success">Success</button>
-<button class="pu-btn pu-btn-md pu-btn-danger">Danger</button>
-<button class="pu-btn pu-btn-md pu-btn-warning">Warning</button>
-<button class="pu-btn pu-btn-md pu-btn-info">Info</button>
-<button class="pu-btn pu-btn-md pu-btn-accent">Accent</button>
-
-<!-- Soft variants (tinted backgrounds) -->
-<button class="pu-btn pu-btn-md pu-btn-soft-primary">Soft Primary</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-secondary">Soft Secondary</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-success">Soft Success</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-danger">Soft Danger</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-warning">Soft Warning</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-info">Soft Info</button>
-<button class="pu-btn pu-btn-md pu-btn-soft-accent">Soft Accent</button>
-
-<!-- Other styles -->
-<button class="pu-btn pu-btn-md pu-btn-ghost">Ghost</button>
-<button class="pu-btn pu-btn-md pu-btn-outline">Outline</button>
-```
-
-### Form Inputs
-
-```html
-<label class="pu-label">Email</label>
-<input type="email" class="pu-input" placeholder="you@example.com">
-<p class="pu-hint">We'll never share your email.</p>
-
-<!-- Validation states -->
-<input type="text" class="pu-input pu-input-invalid">
-<p class="pu-error">This field is required.</p>
-
-<input type="text" class="pu-input pu-input-valid">
-```
-
-### Checkboxes
-
-```html
-<input type="checkbox" class="pu-checkbox">
-```
-
-### Cards
-
-```html
-<div class="pu-card">
-  <div class="pu-card-body">
-    Card content here
-  </div>
-</div>
-```
-
-### Tables
-
-```html
-<div class="pu-table-wrapper">
-  <table class="pu-table">
-    <thead class="pu-table-header">
-      <tr>
-        <th class="pu-table-header-cell">Name</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr class="pu-table-body-row">
-        <td class="pu-table-body-cell">John</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-```
-
-### Empty States
-
-```html
-<div class="pu-empty-state">
-  <svg class="pu-empty-state-icon">...</svg>
-  <h3 class="pu-empty-state-title">No items found</h3>
-  <p class="pu-empty-state-description">Get started by creating a new item.</p>
-</div>
-```
-
-## Setup Custom Assets
-
-Run the assets generator to set up your own TailwindCSS build:
+## Step 1: Run the assets generator
 
 ```bash
 rails generate pu:core:assets
 ```
 
-This:
-1. Installs required npm packages (`@radioactive-labs/plutonium`, TailwindCSS plugins)
-2. Creates `tailwind.config.js` that extends Plutonium's config
-3. Imports Plutonium CSS into your `application.tailwind.css`
-4. Registers Plutonium's Stimulus controllers
-5. Updates Plutonium config to use your assets
+This installs npm packages, creates `tailwind.config.js`, imports Plutonium CSS, registers Stimulus controllers, and points `Plutonium.configure` at your asset files. Run once per app.
 
-## Asset Configuration
-
-Configure assets in the initializer:
+## Step 2: Asset configuration
 
 ```ruby
 # config/initializers/plutonium.rb
 Plutonium.configure do |config|
   config.load_defaults 1.0
 
-  config.assets.stylesheet = "application"  # Your CSS file
-  config.assets.script = "application"      # Your JS file
-  config.assets.logo = "my_logo.png"        # Logo image
-  config.assets.favicon = "my_favicon.ico"  # Favicon
+  config.assets.stylesheet = "application"
+  config.assets.script     = "application"
+  config.assets.logo       = "my_logo.png"
+  config.assets.favicon    = "my_favicon.ico"
 end
 ```
 
-## TailwindCSS Configuration
+Logo / favicon resolved from `app/assets/images/`.
 
-### Generated Config
-
-```javascript
-// tailwind.config.js
-const { execSync } = require('child_process');
-const plutoniumGemPath = execSync("bundle show plutonium").toString().trim();
-const plutoniumTailwindConfig = require(`${plutoniumGemPath}/tailwind.options.js`)
-
-module.exports = {
-  darkMode: plutoniumTailwindConfig.darkMode,
-  plugins: [
-    // Add your plugins here
-  ].concat(plutoniumTailwindConfig.plugins),
-  theme: plutoniumTailwindConfig.merge(
-    plutoniumTailwindConfig.theme,
-    {
-      // Your custom theme overrides
-    },
-  ),
-  content: [
-    `${__dirname}/app/**/*.{erb,haml,html,slim,rb}`,
-    `${__dirname}/app/javascript/**/*.js`,
-    `${__dirname}/packages/**/app/**/*.{erb,haml,html,slim,rb}`,
-  ].concat(plutoniumTailwindConfig.content),
-}
-```
-
-### Customizing Colors
-
-Override Plutonium's color palette:
+## Step 3: Customize colors via Tailwind
 
 ```javascript
 // tailwind.config.js
-theme: plutoniumTailwindConfig.merge(
-  plutoniumTailwindConfig.theme,
-  {
-    extend: {
-      colors: {
-        primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',  // Your brand color
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
-        },
-      },
+theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
+  extend: {
+    colors: {
+      primary:   { 50: '#eff6ff', 500: '#3b82f6', 900: '#1e3a8a' },
+      secondary: { 50: '#f3f4f6', 500: '#6b7280', 900: '#111827' },
     },
   },
-),
+})
 ```
 
-### Semantic Colors
+### Default palette
 
-Plutonium includes these semantic colors:
-
-| Color | Usage |
-|-------|-------|
-| `primary` | Primary brand color |
-| `secondary` | Secondary color |
+| Color | Use |
+|---|---|
+| `primary` | Brand primary (turquoise default) |
+| `secondary` | Brand secondary (navy default) |
 | `success` | Success states (green) |
-| `info` | Informational states (blue) |
-| `warning` | Warning states (amber) |
-| `danger` | Error/danger states (red) |
-| `accent` | Accent highlights |
+| `info` | Informational (blue) |
+| `warning` | Warning (amber) |
+| `danger` | Error (red) |
+| `accent` | Highlight (coral pink) |
 
-## CSS Imports
-
-### Application Stylesheet
+## Step 4: Customize design tokens (dark-mode-aware)
 
 ```css
 /* app/assets/stylesheets/application.tailwind.css */
 @import "gem:plutonium/src/css/plutonium.css";
-
 @import "tailwindcss";
-@config '../../../tailwind.config.js';
 
-/* Your custom styles and token overrides */
+:root {
+  --pu-surface: #fafafa;
+  --pu-border:  #d1d5db;
+}
+
+.dark {
+  --pu-surface: #111827;
+  --pu-border:  #374151;
+}
 ```
 
-## Component Themes
+Tokens auto-switch when the user toggles dark mode. See [Reference › UI › Assets › Design tokens](/reference/ui/assets#design-tokens) for the full token catalog.
 
-Plutonium components use a theme system. Override themes by defining nested Theme classes in your definitions.
+## Using tokens in your code
 
-### Form Theme
+```erb
+<h1 class="text-[var(--pu-text)]">Title</h1>
+<p class="text-[var(--pu-text-muted)]">Description</p>
+
+<div class="bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]">
+  Content
+</div>
+```
+
+```ruby
+class MyComponent < Plutonium::UI::Component::Base
+  def view_template
+    div(
+      class: "bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)]",
+      style: "box-shadow: var(--pu-shadow-md)"
+    ) do
+      h2(class: "text-lg font-semibold text-[var(--pu-text)]") { "Title" }
+      p(class: "text-[var(--pu-text-muted)]") { "Description" }
+    end
+  end
+end
+```
+
+## Use `.pu-*` component classes
+
+Pre-styled ready-to-use components:
+
+```erb
+<%= form.submit "Save", class: "pu-btn pu-btn-md pu-btn-primary" %>
+```
+
+| Family | Classes |
+|---|---|
+| Buttons | `.pu-btn`, `.pu-btn-md/-sm/-xs`, `.pu-btn-primary/-secondary/-danger/-success/-warning/-info/-accent`, `.pu-btn-ghost/-outline`, `.pu-btn-soft-*` |
+| Inputs | `.pu-input/-invalid/-valid`, `.pu-label/-required`, `.pu-hint`, `.pu-error`, `.pu-checkbox` |
+| Cards | `.pu-card`, `.pu-card-body`, `.pu-panel-header`, `.pu-panel-title`, `.pu-panel-description` |
+| Tables | `.pu-table-wrapper`, `.pu-table`, `-header`, `-header-cell`, `-body-row`, `-body-row-selected`, `-body-cell`, `.pu-selection-cell` |
+| Toolbars / empty states | `.pu-toolbar`, `-text`, `-actions`; `.pu-empty-state`, `-icon`, `-title`, `-description` |
+
+Full catalog: [Reference › UI › Assets › Component classes](/reference/ui/assets#component-classes-pu-).
+
+## Migrating from hardcoded classes
+
+| Old | New |
+|---|---|
+| `text-gray-900 dark:text-white` | `text-[var(--pu-text)]` |
+| `text-gray-500 dark:text-gray-400` | `text-[var(--pu-text-muted)]` |
+| `bg-gray-50 dark:bg-gray-700` | `bg-[var(--pu-surface)]` |
+| `border-gray-300 dark:border-gray-600` | `border-[var(--pu-border)]` |
+| Long input class chain | `pu-input` |
+| Long button class chain | `pu-btn pu-btn-md pu-btn-primary` |
+
+## Per-resource theming (Phlexi themes)
+
+Override Form/Display/Table appearance per resource via a nested `Theme` class:
 
 ```ruby
 class PostDefinition < ResourceDefinition
   class Form < Form
     class Theme < Plutonium::UI::Form::Theme
       def self.theme
-        super.merge({
-          base: "pu-card my-4 p-8 space-y-8",
-          fields_wrapper: "grid grid-cols-2 gap-6",
+        super.merge(
+          base:            "bg-[var(--pu-card-bg)] shadow-md rounded-lg p-6",
+          fields_wrapper:  "grid grid-cols-2 gap-6",
           actions_wrapper: "flex justify-end mt-6 space-x-2",
-          label: "pu-label",
-          input: "pu-input",
-          hint: "pu-hint",
-          error: "pu-error",
-          button: "pu-btn pu-btn-md pu-btn-primary",
-        })
+          input:           "pu-input",
+          button:          "pu-btn pu-btn-md pu-btn-primary"
+        )
       end
     end
   end
 end
 ```
 
-### Display Theme
+::: warning Always `super.merge(...)`
+Don't replace the theme wholesale — Plutonium's defaults handle invalid states, focus rings, and dark mode. `super.merge` keeps them.
+:::
 
-```ruby
-class PostDefinition < ResourceDefinition
-  class Display < Display
-    class Theme < Plutonium::UI::Display::Theme
-      def self.theme
-        super.merge({
-          fields_wrapper: "grid grid-cols-3 gap-8",
-          label: "text-sm font-bold text-[var(--pu-text-muted)] mb-1",
-          string: "text-lg text-[var(--pu-text)]",
-          link: "text-primary-600 hover:underline",
-        })
-      end
-    end
-  end
-end
-```
+Full theme key catalog: [Reference › UI › Assets › Phlexi component themes](/reference/ui/assets#phlexi-component-themes).
 
-### Table Theme
+## Typography
 
-```ruby
-class PostDefinition < ResourceDefinition
-  class Table < Table
-    class Theme < Plutonium::UI::Table::Theme
-      def self.theme
-        super.merge({
-          wrapper: "pu-table-wrapper",
-          base: "pu-table",
-          header: "pu-table-header",
-          header_cell: "pu-table-header-cell",
-          body_row: "pu-table-body-row",
-          body_cell: "pu-table-body-cell",
-        })
-      end
-    end
-  end
-end
-```
-
-## Branding
-
-### Application Name
-
-```ruby
-# config/initializers/plutonium.rb
-Plutonium.application_name = "My Application"
-```
-
-### Custom Logo
-
-Override the logo in your layout:
-
-```ruby
-# packages/admin_portal/app/views/layouts/admin_portal/application.rb
-module AdminPortal
-  class ApplicationLayout < Plutonium::UI::Layout::Application
-    def render_logo
-      img(src: helpers.asset_path("logo.svg"), alt: "My App", class: "h-8")
-    end
-  end
-end
-```
-
-### Custom Fonts
-
-Override in your layout:
+Default font: Lato. Override via the layout:
 
 ```ruby
 class MyLayout < Plutonium::UI::Layout::ResourceLayout
@@ -445,73 +189,79 @@ class MyLayout < Plutonium::UI::Layout::ResourceLayout
 end
 ```
 
-Update Tailwind config:
+Then configure Tailwind to use it:
 
 ```javascript
-theme: {
+theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
   fontFamily: {
-    'body': ['Inter', 'sans-serif'],
-    'sans': ['Inter', 'sans-serif'],
+    body: ['Inter', 'sans-serif'],
+    sans: ['Inter', 'sans-serif']
   }
-}
+})
 ```
 
-## Dark Mode
+## Dark mode
 
-Plutonium uses `selector` strategy for dark mode. Toggle by adding/removing the `dark` class on `<html>`:
+`selector` strategy. The bundled `color-mode` Stimulus controller handles toggling; Plutonium ships a switcher in the topbar.
+
+Manual toggle:
 
 ```javascript
-document.documentElement.classList.toggle('dark');
+document.documentElement.classList.toggle('dark')
 ```
 
-Plutonium includes a color mode selector component that handles this automatically.
+If you've overridden tokens via `:root` and `.dark`, both modes Just Work.
 
-Design tokens automatically adapt to dark mode - override the `.dark` selector in your CSS to customize dark mode colors.
+## Per-portal chrome — eject the shell
 
-## Stimulus Controllers
+For per-portal headers/sidebars:
 
-Register Plutonium's Stimulus controllers in your application:
+```bash
+rails generate pu:eject:shell --dest=admin_portal
+```
+
+Copies `_resource_header.html.erb` and `_resource_sidebar.html.erb` into the portal's `app/views/plutonium/`. Edit directly.
+
+```bash
+rails generate pu:eject:layout
+```
+
+Copies `layouts/resource.html.erb` for layout-level edits.
+
+## Shell config
+
+```ruby
+Plutonium.configure do |config|
+  config.shell = :modern     # default — topbar + icon rail
+  # config.shell = :classic  # legacy header + sidebar (only when upgrading)
+end
+```
+
+## Stimulus
 
 ```javascript
 // app/javascript/controllers/index.js
 import { application } from "./application"
-
 import { registerControllers } from "@radioactive-labs/plutonium"
-registerControllers(application)
+
+registerControllers(application)        // ← mandatory
 
 // Your custom controllers...
-```
-
-### Available Controllers
-
-- `color-mode` - Dark/light mode toggle
-- `form` - Form handling
-- `nested-resource-form-fields` - Nested form management
-- `slim-select` - Enhanced select boxes
-- `flatpickr` - Date/time pickers
-- `easymde` - Markdown editor
-
-### Custom Controllers
-
-```javascript
-// app/javascript/controllers/custom_controller.js
-import { Controller } from "@hotwired/stimulus"
-
-export default class extends Controller {
-  connect() {
-    console.log("Connected")
-  }
-}
-```
-
-Register in your index:
-
-```javascript
 import CustomController from "./custom_controller"
 application.register("custom", CustomController)
 ```
 
+Bundled controllers: `color-mode`, `form` (pre-submit), `nested-resource-form-fields`, `slim-select`, `flatpickr`, `easymde`.
+
+## Common issues
+
+- **Stimulus controllers silently fail** — if `registerControllers(application)` isn't called, the entire UI's interactive layer is dead (color-mode toggle, slim-select, flatpickr, easymde, pre-submit). No error — just no behavior.
+- **`plutoniumTailwindConfig.merge` is mandatory** — plain spread drops defaults silently.
+- **Tokens not switching in dark mode** — you used `bg-pu-surface` instead of `bg-[var(--pu-surface)]`. Tokens are CSS variables, not Tailwind keys.
+- **`.pu-btn` styles not applying** — check that Plutonium CSS is imported BEFORE Tailwind: `@import "gem:plutonium/src/css/plutonium.css";` then `@import "tailwindcss";`.
+
 ## Related
 
-- [Custom Actions](./custom-actions)
-- [Creating Packages](./creating-packages)
+- [Reference › UI › Assets](/reference/ui/assets) — full Tailwind / Stimulus / design tokens / component classes surface
+- [Reference › UI › Layouts](/reference/ui/layouts) — shell, eject, ResourceLayout
+- [Reference › UI › Forms › Theming](/reference/ui/forms#theming) — Form theme keys

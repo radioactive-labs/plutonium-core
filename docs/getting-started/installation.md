@@ -1,22 +1,15 @@
 # Installation
 
-This guide covers installing Plutonium in both new and existing Rails applications.
+For full installation reference (configuration options, base classes, what `pu:core:install` creates), see [Reference › App](/reference/app/). This page covers the quickest path.
 
-## New Application
-
-The fastest way to get started is with our application template:
+## New application
 
 ```bash
 rails new myapp -a propshaft -j esbuild -c tailwind \
   -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
-This template:
-- Adds the Plutonium gem
-- Configures TailwindCSS 4 with Plutonium's theme
-- Sets up Rodauth for authentication
-- Creates initial migrations
-- Configures the asset pipeline
+This sets up Rails with Propshaft, esbuild, TailwindCSS, and Plutonium — plus Rodauth auth, asset pipeline, and initial migrations.
 
 After the template completes:
 
@@ -26,122 +19,86 @@ rails db:migrate
 bin/dev
 ```
 
-Visit `http://localhost:3000` to see your new application.
+Visit `http://localhost:3000`.
 
-## Existing Application
+## Existing application
 
-### Step 1: Add the Gem
+::: danger Use `base.rb`, not `plutonium.rb`
+The `plutonium.rb` template re-runs full app bootstrap (dotenv, annotate, solid_*, asset config) and creates generic "initial commit" commits that clobber history. For any pre-existing app, always use `base.rb`.
+:::
 
-Add Plutonium to your Gemfile:
+### Option 1: Template
+
+```bash
+bin/rails app:template \
+  LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
+```
+
+### Option 2: Manual
 
 ```ruby
+# Gemfile
 gem "plutonium"
 ```
 
-Then install:
-
 ```bash
 bundle install
-```
-
-### Step 2: Run the Installer
-
-```bash
 rails generate pu:core:install
 ```
 
-This generator:
-- Creates the Plutonium initializer
-- Adds required configurations
-- Sets up the asset pipeline integration
-
-### Step 3: Install Rodauth (Optional)
-
-If you want Plutonium's built-in authentication:
+## Optional: authentication
 
 ```bash
 rails generate pu:rodauth:install
-```
-
-This creates:
-- Rodauth configuration files
-- Account model and migrations
-- Email templates for authentication flows
-
-### Step 4: Run Migrations
-
-```bash
+rails generate pu:rodauth:account user
 rails db:migrate
 ```
 
-### Step 5: Configure Assets
+For account options and customization, see [Reference › Auth](/reference/auth/) and [Guides › Authentication](/guides/authentication).
 
-Run the assets generator to set up TailwindCSS and Plutonium styles:
+## Optional: assets toolchain
 
 ```bash
 rails generate pu:core:assets
 ```
 
-This configures PostCSS, TailwindCSS, and imports Plutonium's styles into your application.
+Installs npm packages, creates `tailwind.config.js` extending Plutonium's config, imports Plutonium CSS, registers Stimulus controllers. Required if you want to customize the theme — see [Reference › UI › Assets](/reference/ui/assets) and [Guides › Theming](/guides/theming).
 
-## Verifying Installation
-
-After installation, verify everything is working:
+## Verify
 
 ```bash
 rails runner "puts Plutonium::VERSION"
 ```
 
-You should see the installed version number.
-
 ## Configuration
 
-Plutonium is configured in `config/initializers/plutonium.rb`:
-
 ```ruby
+# config/initializers/plutonium.rb
 Plutonium.configure do |config|
-  # Load default settings for version 1.0
   config.load_defaults 1.0
 
-  # Development mode (auto-detected from PLUTONIUM_DEV env var)
-  # config.development = true
+  # config.shell = :classic            # legacy chrome (only for upgrades)
 
-  # Cache discovery (defaults to true in production, false in development)
-  # config.cache_discovery = false
-
-  # Hot reloading (defaults to true in development)
-  # config.enable_hotreload = true
-
-  # Asset configuration
-  # config.assets.logo = "custom_logo.png"
-  # config.assets.favicon = "custom_favicon.ico"
-  # config.assets.stylesheet = "plutonium.css"
-  # config.assets.script = "plutonium.min.js"
+  # Custom assets (after running pu:core:assets)
+  # config.assets.stylesheet = "application"
+  # config.assets.script     = "application"
+  # config.assets.logo       = "custom_logo.png"
+  # config.assets.favicon    = "custom_favicon.ico"
 end
 ```
 
-## Development Setup
+Full configuration options: [Reference › App](/reference/app/#configuration).
 
-For the best development experience:
+## `bin/dev` for development
 
-### 1. Use bin/dev
-
-Plutonium includes a Procfile for `foreman`:
+Plutonium ships a Procfile that runs Rails and the CSS watcher together:
 
 ```bash
 bin/dev
 ```
 
-This starts Rails and the CSS watcher together.
+## Next steps
 
-### 2. Enable Reloading
-
-In development, Plutonium automatically reloads definitions and policies when files change. This is controlled by `config.enable_hotreload` (enabled by default in development).
-
-## Next Steps
-
-Now that Plutonium is installed:
-
-- [Create your first Feature Package](/guides/creating-packages)
-- [Generate a Resource](/guides/adding-resources)
-- [Follow the Tutorial](/getting-started/tutorial/)
+- [Tutorial](./tutorial/) — build a complete blog application step-by-step
+- [Adding resources](/guides/adding-resources) — create your first resource
+- [Creating packages](/guides/creating-packages) — organize code into feature and portal packages
