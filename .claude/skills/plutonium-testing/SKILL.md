@@ -260,9 +260,10 @@ Output path: `test/integration/<portal>_portal/<resource_underscored>_test.rb`.
 - **Nested resources need `parent: :foo`** in the DSL AND a real parent record from `parent_record!`. Without both, path interpolation fails.
 - **`PortalAccess` doesn't use `resource_tests_for`** — use `portal_access_for` instead. Mixing them on the same class is undefined behavior.
 
-## See also
+## Related skills
 
-- `plutonium-policy` — write the policy this concern verifies
-- `plutonium-definition` — definition props the smoke test introspects
-- `plutonium-portal` — portal mounting and entity strategies that drive auth/scoping
-- `plutonium-auth` — Rodauth setup behind the default login flow
+- [[plutonium-behavior]] — policies (verified by `ResourcePolicy`), interactions (asserted by `ResourceInteraction`)
+- [[plutonium-resource]] — definition props the smoke test introspects (`field`, `input`, `display`, `column`, `scope`, `filter`, `sort`, `action`)
+- [[plutonium-tenancy]] — `relation_scope`, parent scoping, nested resources (matched by `NestedResource`)
+- [[plutonium-app]] — portal mounting and entity strategies that drive auth/scoping
+- [[plutonium-auth]] — Rodauth setup behind the default login flow

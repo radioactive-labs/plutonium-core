@@ -1,137 +1,127 @@
 ---
 name: plutonium
-description: Use BEFORE starting any Plutonium work — new app, new feature, or first edit in an unfamiliar area. Routes you to the right skills and bootstraps greenfield work.
+description: Use BEFORE starting any Plutonium work — new app, new feature, or first edit in an unfamiliar area. Routes you to the right skill and bootstraps greenfield work.
 ---
 
 # Plutonium — Router & Bootstrapper
 
-This skill is the entry point for all Plutonium work. It does three things:
+Entry point for all Plutonium work. Does three things:
 
 1. Surfaces the **most expensive mistakes** up front (🚨 below).
-2. Tells you which foundational skills to load for **greenfield** work.
-3. Maps specific "about to…" actions to the right **targeted skill** (router table).
-
-Read this first. Then follow the pointers.
+2. Tells you which skills to load for **greenfield** work.
+3. Maps specific "about to…" actions to the right targeted skill (router table).
 
 ## 🚨 Critical (read first)
 
-- **Plutonium is generator-driven.** Almost every file you'd hand-write has a `pu:*` generator. Use it. Hand-written files drift from conventions and break future generator runs.
+- **Plutonium is generator-driven.** Almost every file you'd hand-write has a `pu:*` generator. Hand-written files drift from conventions and break future generator runs.
 - **For greenfield** (new app, substantial new feature, first resource in a new domain) — load the **bootstrap bundle** below before writing code.
-- **For targeted edits** — use the **router table** to jump straight to the right skill.
-- **For anything touching tenant scoping** — load `plutonium-entity-scoping`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
-- **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, and `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
+- **For targeted edits** — use the **router table** to jump to the right skill.
+- **For anything touching tenant scoping** — load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
+- **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
+
+## The 8 skills
+
+| Skill | Covers |
+|---|---|
+| **[[plutonium-app]]** | Installation, packages (feature + portal), portal engines, mounting, `register_resource` (including singular and custom routes), `pu:res:conn` |
+| **[[plutonium-resource]]** | The resource itself — `pu:res:scaffold`, field types, model layer (`Plutonium::Resource::Record`, `has_cents`, SGID, routing), definition layer (fields/inputs/displays/columns, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization) |
+| **[[plutonium-behavior]]** | Controllers (hooks, key methods, presentation), policies (action methods, `permitted_attributes_for_*`, `permitted_associations`), interactions (structure, outcomes, chaining, URL generation) |
+| **[[plutonium-ui]]** | Page classes, forms, displays, tables, custom Phlex components, layouts, modals & tabs, Tailwind config, Stimulus, design tokens, `.pu-*` classes, Phlexi themes |
+| **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
+| **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
+| **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
 
 ## Greenfield bootstrap bundle
 
 Triggers: installing Plutonium, building a new app, adding the first resource in a new domain, setting up a new portal or package, "build me a Y app", "set up X from scratch".
 
-**Load ALL of these before writing code:**
+**Load these before writing code:**
 
-1. **`plutonium-installation`** — `pu:core:install`, Rails template vs existing app, base classes.
-2. **`plutonium-create-resource`** — `pu:res:scaffold` syntax, field types, destinations.
-3. **`plutonium-model`** — model structure, associations, `has_cents`, labeling, routing.
-4. **`plutonium-policy`** — authorization actions, `permitted_attributes_for_*`, derived methods.
-5. **`plutonium-entity-scoping`** — `associated_with`, `default_relation_scope`, model shapes for multi-tenancy.
-6. **`plutonium-portal`** — `pu:pkg:portal`, mounting, resource connection, entity strategies.
-7. **`plutonium-definition`** — fields, inputs, displays, search, filters, scopes, actions.
+1. **`plutonium-app`** — install, portals, packages, routes.
+2. **`plutonium-resource`** — scaffold, model, definition (the bulk of the work).
+3. **`plutonium-behavior`** — controllers, policies, interactions.
+4. **`plutonium-tenancy`** — only if multi-tenant; load before declaring entity scoping.
 
-Optional additions when relevant:
+Add when relevant:
 - **`plutonium-auth`** for login / accounts / profile.
-- **`plutonium-invites`** for membership-based onboarding.
-- **`plutonium-package`** when splitting logic across feature packages.
-- **`plutonium-assets`** when customizing Tailwind / Stimulus / tokens.
+- **`plutonium-ui`** for custom pages, forms, components, or theming.
+- **`plutonium-testing`** when scaffolding tests.
 
 ## Router table
 
 | About to… | Load |
 |---|---|
-| Write/edit a model, add associations, use `has_cents` | `plutonium-model` |
-| Scope a model to a tenant, write `associated_with`, deal with multi-tenancy | **`plutonium-entity-scoping`** |
-| Write `relation_scope`, `permitted_attributes`, override a policy | `plutonium-policy` (+ `plutonium-entity-scoping` if scoping) |
-| Create a new resource via `pu:res:scaffold` | `plutonium-create-resource` |
-| Add fields, inputs, displays, search, filters, scopes, custom actions, or bulk actions | `plutonium-definition` |
-| Write an interaction class for business logic | `plutonium-interaction` |
-| Customize a controller action, hook, redirect, or param | `plutonium-controller` |
-| Build a custom page, panel, table, layout, Phlex component | `plutonium-views` |
-| Customize forms, field builders, inputs, submit buttons | `plutonium-forms` |
-| Configure Tailwind, register a Stimulus controller, edit design tokens | `plutonium-assets` |
-| Set up Rodauth, accounts, login flows, or profile / settings page | `plutonium-auth` |
-| Set up user invitations or entity membership | `plutonium-invites` (+ `plutonium-entity-scoping`) |
-| Configure parent/child resources, nested routes | `plutonium-nested-resources` |
-| Create a portal or feature package | `plutonium-portal` / `plutonium-package` |
-| Mount a portal, configure entity strategies, route portal resources | `plutonium-portal` (+ `plutonium-entity-scoping` for tenancy) |
-| Install Plutonium in a Rails app | `plutonium-installation` |
-| Write tests for a resource, run `pu:test:scaffold`, or include `Plutonium::Testing::*` concerns | `plutonium-testing` |
+| Install Plutonium, create a portal or package, mount engines, register routes (incl. singular / custom routes) | **[[plutonium-app]]** |
+| Run `pu:res:scaffold`, pick field types, set scaffold options | **[[plutonium-resource]]** |
+| Edit a model, add associations, use `has_cents`, override `to_param` / `to_label` | **[[plutonium-resource]]** |
+| Edit a definition — fields, inputs, displays, columns, search, filters, scopes, custom actions, bulk actions, index views, modal/slideover, page titles | **[[plutonium-resource]]** |
+| Override a controller action, hook, redirect, or `resource_params` | **[[plutonium-behavior]]** |
+| Write `relation_scope`, `permitted_attributes_for_*`, `permitted_associations`, action methods, or any policy override | **[[plutonium-behavior]]** (+ **[[plutonium-tenancy]]** if scoping) |
+| Write an interaction class for business logic | **[[plutonium-behavior]]** |
+| Scope a model to a tenant, write `associated_with`, set portal entity strategy | **[[plutonium-tenancy]]** |
+| Configure parent/child nested routes, custom parent resolution | **[[plutonium-tenancy]]** |
+| Set up user invitations or entity membership | **[[plutonium-tenancy]]** |
+| Build a custom page (override `ShowPage`/`IndexPage`/`NewPage`/`EditPage`), custom form, custom display, custom table, custom Phlex component | **[[plutonium-ui]]** |
+| Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
+| Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
+| Write tests for a resource, run `pu:test:scaffold`, include `Plutonium::Testing::*` concerns | **[[plutonium-testing]]** |
+
+## Resource architecture at a glance
+
+A **resource** is four cooperating layers — Plutonium auto-fills defaults from the model, so you only declare overrides:
+
+| Layer | File | Purpose |
+|---|---|---|
+| **Model** | `app/models/post.rb` | Data, validations, associations |
+| **Definition** | `app/definitions/post_definition.rb` | UI — fields, filters, actions |
+| **Policy** | `app/policies/post_policy.rb` | Authorization — who, what |
+| **Controller** | `app/controllers/posts_controller.rb` | Request handling (rarely edited — use hooks) |
+
+Plus one optional fifth layer:
+
+| Layer | File | Purpose |
+|---|---|---|
+| **Interaction** | `app/interactions/publish_post_interaction.rb` | Business logic for custom actions |
 
 ## Generator catalog
 
 Every Plutonium generator is discoverable via `rails g pu:<tab>`. Always pass `--dest=` to skip prompts.
 
-| Generator | Purpose | Covered by |
+| Generator | Purpose | Skill |
 |---|---|---|
-| `pu:core:install` | Initial Plutonium setup (base controller/policy/definition/layout) | `plutonium-installation` |
-| `pu:core:assets` | Install custom Tailwind + Stimulus toolchain | `plutonium-assets` |
-| `pu:res:scaffold NAME field:type ...` | Create a new resource (model, migration, controller, policy, definition) | `plutonium-create-resource` |
-| `pu:res:conn RESOURCE --dest=PORTAL` | Connect a resource to a portal | `plutonium-portal` |
-| `pu:pkg:package NAME` | Create a feature package | `plutonium-package` |
-| `pu:pkg:portal NAME --auth=... --scope=...` | Create a portal package | `plutonium-portal` |
+| `pu:core:install` | Initial Plutonium setup | `plutonium-app` |
+| `pu:core:assets` | Custom Tailwind + Stimulus toolchain | `plutonium-ui` |
+| `pu:res:scaffold NAME field:type ...` | New resource (model, migration, controller, policy, definition) | `plutonium-resource` |
+| `pu:res:conn RESOURCE --dest=PORTAL` | Connect resource to a portal | `plutonium-app` |
+| `pu:pkg:package NAME` | Feature package | `plutonium-app` |
+| `pu:pkg:portal NAME --auth=... --scope=...` | Portal package | `plutonium-app` |
 | `pu:rodauth:install` | Install Rodauth base | `plutonium-auth` |
-| `pu:rodauth:account NAME` | Create a basic Rodauth account | `plutonium-auth` |
-| `pu:rodauth:admin NAME` | Create a hardened admin account (2FA, lockout, audit) | `plutonium-auth` |
-| `pu:saas:setup --user ... --entity ...` | Meta-generator: user + entity + membership + portal + profile + welcome + invites | `plutonium-auth` + `plutonium-invites` |
-| `pu:saas:user / :entity / :membership` | Individual SaaS pieces | `plutonium-auth` |
-| `pu:saas:portal / :welcome` | SaaS portal & onboarding | `plutonium-auth` + `plutonium-portal` |
-| `pu:profile:install / :setup / :conn` | User profile resource + security section | `plutonium-auth` |
-| `pu:invites:install` | User invitations package | `plutonium-invites` |
-| `pu:invites:invitable NAME` | Mark a model as invitable | `plutonium-invites` |
-| `pu:field:input NAME` | Custom form input component | `plutonium-forms` |
-| `pu:field:renderer NAME` | Custom display renderer | `plutonium-definition` |
-| `pu:eject:layout` | Eject the base layout for customization | `plutonium-views` |
-| `pu:skills:sync` | Sync Plutonium Claude skills into the project | `plutonium` |
-| `pu:test:install` | Install Plutonium::Testing scaffolding | `plutonium-testing` |
-| `pu:test:scaffold NAME --portals=...` | Scaffold integration tests per (resource × portal) | `plutonium-testing` |
-
-## Resource architecture at a glance
-
-A **resource** is four cooperating layers:
-
-| Layer | File | Purpose | Edit when… |
-|---|---|---|---|
-| **Model** | `app/models/post.rb` | Data, validations, associations | Adding domain data/logic |
-| **Definition** | `app/definitions/post_definition.rb` | UI — fields, filters, actions | Changing how it looks/behaves |
-| **Policy** | `app/policies/post_policy.rb` | Authorization — who, what | Restricting access |
-| **Controller** | `app/controllers/posts_controller.rb` | Request handling | Rarely — use hooks |
-
-```
-┌───────────────────────────────────────────────────────────────┐
-│                          Resource                             │
-├───────────────────────────────────────────────────────────────┤
-│  Model          │  Definition     │  Policy       │ Controller │
-│  (WHAT)         │  (HOW it looks) │  (WHO)        │  (HOW it   │
-│                 │                 │               │   responds)│
-├───────────────────────────────────────────────────────────────┤
-│  - attributes   │  - field types  │  - actions    │ - CRUD     │
-│  - associations │  - inputs/forms │  - attributes │ - hooks    │
-│  - validations  │  - displays     │  - scoping    │ - redirects│
-│  - scopes       │  - filters      │               │ - params   │
-└───────────────────────────────────────────────────────────────┘
-```
-
-Auto-detection fills most of these in from your model — you only declare when **overriding defaults**.
+| `pu:rodauth:account NAME` | Basic Rodauth account | `plutonium-auth` |
+| `pu:rodauth:admin NAME` | Hardened admin account (2FA, lockout, audit) | `plutonium-auth` |
+| `pu:saas:setup --user ... --entity ...` | Meta: user + entity + membership + portal + profile + welcome + invites | `plutonium-auth` + `plutonium-tenancy` |
+| `pu:saas:user / :entity / :membership / :portal / :welcome` | Individual SaaS pieces | `plutonium-auth` + `plutonium-app` |
+| `pu:profile:install / :setup / :conn` | Profile resource + security section | `plutonium-auth` |
+| `pu:invites:install` | User invitations package | `plutonium-tenancy` |
+| `pu:invites:invitable NAME` | Mark a model as invitable | `plutonium-tenancy` |
+| `pu:eject:layout` | Eject base layout for customization | `plutonium-ui` |
+| `pu:eject:shell` | Eject topbar/sidebar partials | `plutonium-ui` |
+| `pu:test:install` | Install `Plutonium::Testing` scaffolding | `plutonium-testing` |
+| `pu:test:scaffold NAME --portals=...` | Scaffold integration tests | `plutonium-testing` |
+| `pu:skills:sync` | Sync Plutonium Claude skills into the project | (this skill) |
 
 ## Unattended execution
 
-Plutonium generators are interactive by default. For scripts, agents, or CI, pass these flags:
+Plutonium generators are interactive by default. For scripts, agents, or CI:
 
 | Flag | Generators | Purpose |
 |---|---|---|
-| `--dest=main_app` / `--dest=package_name` | `pu:res:scaffold`, `pu:res:conn`, package-targeted generators | Skips "Select destination feature" prompt |
-| `--force` | any | Overwrites conflicting files (needed when re-running `pu:saas:setup` or meta-generators) |
-| `--auth=<account>` / `--public` / `--byo` | `pu:pkg:portal` | Skips auth-type prompt |
-| `--skip-bundle` | gem-installing generators | Avoids mid-run `bundle install` |
-| `--quiet` | most | Reduces output noise |
+| `--dest=main_app` / `--dest=<package>` | `pu:res:scaffold`, `pu:res:conn`, package-targeted generators | Skip "select destination" prompt |
+| `--force` | any | Overwrite conflicting files (required when re-running `pu:saas:setup` or meta-generators) |
+| `--auth=<account>` / `--public` / `--byo` | `pu:pkg:portal` | Skip auth-type prompt |
+| `--skip-bundle` | gem-installing generators | Avoid mid-run `bundle install` |
+| `--quiet` | most | Reduce output noise |
 
-Meta-generators (`pu:saas:setup`) propagate these flags to the generators they chain. Always pass `--force` when re-running a meta-generator on an app that already has some of its outputs.
+Meta-generators (`pu:saas:setup`) propagate flags to the generators they chain. Always pass `--force` when re-running a meta-generator on an app that already has some of its outputs.
 
 ## Workflow summary
 
@@ -141,10 +131,3 @@ Meta-generators (`pu:saas:setup`) propagate these flags to the generators they c
 4. **Connect** — `rails g pu:res:conn Model --dest=portal_name`.
 5. **Customize** — edit definition / policy as needed.
 6. **Verify** — hit the route in the browser.
-
-## See also
-
-- `plutonium-installation` · `plutonium-create-resource` · `plutonium-model` · `plutonium-policy` · `plutonium-entity-scoping` · `plutonium-portal` · `plutonium-definition`
-- `plutonium-controller` · `plutonium-interaction` · `plutonium-views` · `plutonium-forms` · `plutonium-assets`
-- `plutonium-auth` · `plutonium-invites` · `plutonium-package` · `plutonium-nested-resources`
-- `plutonium-testing` — default test concerns and scaffolding

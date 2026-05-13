@@ -200,9 +200,6 @@ Resources can opt into a card-based **Grid** view alongside the default **Table*
 
 ```ruby
 class UserDefinition < Plutonium::Resource::Definition
-  views :table, :grid       # enable both
-  default_view :grid        # initial view if no cookie
-
   grid_fields(
     image:     :avatar,     # ActiveStorage attachment, Shrine, or URL string
     header:    :name,       # falls back to record.to_label
@@ -212,15 +209,18 @@ class UserDefinition < Plutonium::Resource::Definition
     footer:    :last_seen_at       # falls back to :created_at
   )
 
+  default_index_view :grid  # optional — initial view if no cookie
   grid_layout :media        # :compact (default) or :media
   grid_columns 3            # pin to 3 cols on lg+; default is 1/2/3/4 responsive
 end
 ```
 
+Declaring `grid_fields` auto-enables the `:grid` view alongside the default `:table`. Only call `index_views` explicitly to **disable** one (e.g. `index_views :grid` to drop the table view).
+
 | Method | Purpose |
 |--------|---------|
-| `views :table, :grid` | Which views are available. Default `[:table]`. |
-| `default_view :grid` | Initial view when no cookie. Falls back to first declared view. |
+| `index_views :table, :grid` | Which views are available. Default `[:table]`. Usually unnecessary. |
+| `default_index_view :grid` | Initial view when no cookie. Falls back to first declared view. |
 | `grid_fields(...)` | Maps card slots to fields. **Implicitly enables `:grid`** if not already declared. |
 | `grid_layout :media` | `:compact` (image left of content) or `:media` (full-width image on top). |
 | `grid_columns 3` | Override responsive column count on `lg+`. Default is 1 / 2 / 3 / 4 at sm/md/lg/xl. |
