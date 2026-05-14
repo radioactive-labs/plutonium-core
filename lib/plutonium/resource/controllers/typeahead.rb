@@ -44,7 +44,6 @@ module Plutonium
         # large tables, declare a `search` block that uses a trigram or
         # full-text index instead.
         def self.searchable_column_for(klass, label_method: nil)
-          return nil unless klass.respond_to?(:column_names)
           cols = klass.column_names
           if label_method && cols.include?(label_method.to_s)
             return label_method.to_s
@@ -155,12 +154,12 @@ module Plutonium
           relation.limit(Typeahead::TYPEAHEAD_LIMIT + 1).to_a
         end
 
+        # Resolves the associated resource's `search` block, if declared.
+        # Goes through `resource_definition` so portal/package namespacing
+        # is honored (same fallback chain as the rest of the controller).
         def associated_definition_search_block(klass)
-          registry = Plutonium::Resource::Register
-          return nil unless registry.respond_to?(:definition_for)
-          defn_class = registry.definition_for(klass)
-          defn_class&._search_definition if defn_class.respond_to?(:_search_definition)
-        rescue
+          resource_definition(klass).class._search_definition
+        rescue NameError
           nil
         end
 

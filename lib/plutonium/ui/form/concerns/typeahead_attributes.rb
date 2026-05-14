@@ -44,15 +44,15 @@ module Plutonium
             klass = typeahead_target_class
             return false unless klass
 
-            registry = Plutonium::Resource::Register
-            if registry.respond_to?(:definition_for)
-              defn_class = registry.definition_for(klass)
-              if defn_class.respond_to?(:_search_definition) && defn_class._search_definition.present?
-                return true
-              end
-            end
+            # Go through `resource_definition` so portal/package namespacing
+            # is honored — a portal can ship its own definition with a
+            # different `search` block than the base.
+            return true if resource_definition(klass).class._search_definition.present?
+
             Plutonium::Resource::Controllers::Typeahead
               .searchable_column_for(klass, label_method: @label_method).present?
+          rescue NameError
+            false
           end
 
           def typeahead_url_for(typeahead_option)
@@ -69,11 +69,12 @@ module Plutonium
             # Engine route helpers are the source of truth for routes
             # mounted under a Plutonium portal — phlex-rails' `helpers`
             # proxy is deprecated and not the right entry point here.
+            # Helper may be absent if a consumer removed the typeahead
+            # route from the resource — fall back to no URL, slim-select
+            # uses its eager list.
             url_helpers = current_engine.routes.url_helpers
             return nil unless url_helpers.respond_to?(helper)
             url_helpers.public_send(helper, name: name)
-          rescue
-            nil
           end
         end
       end

@@ -30,10 +30,23 @@ class AdminPortal::TypeaheadTest < ActionDispatch::IntegrationTest
   # is wired. Without an admin session, Rodauth's authentication
   # constraint blocks before we reach the action.
 
-  test "typeahead_input is gated by admin authentication" do
+  test "typeahead_input redirects unauthenticated requests to login" do
     logout_admin
     get "/admin/organizations/typeahead/input/no_such_field?q=a"
-    refute_equal 200, response.status, "unauthenticated access should not return 200"
+    assert_response :redirect
+  end
+
+  # Authorization — proves authorize_current! actually invokes
+  # `typeahead?` on the policy. Without this, a misnamed action symbol
+  # would silently authorize everything for an authenticated user.
+  test "typeahead_input is denied when policy.typeahead? returns false" do
+    OrganizationPolicy.class_eval { def typeahead? = false }
+    begin
+      get "/admin/organizations/typeahead/input/name?q=a"
+      assert_response :forbidden
+    ensure
+      OrganizationPolicy.remove_method(:typeahead?)
+    end
   end
 
   # Happy path — exercises the full stack end-to-end: real route,

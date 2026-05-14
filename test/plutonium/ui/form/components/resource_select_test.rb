@@ -132,6 +132,11 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     # which is unavailable outside a render cycle.
     component.instance_variable_set(:@skip_authorization, true)
     component.instance_variable_set(:@choice_limit, nil)
+    # Stub resource_definition for the typeahead_searchable? path; in a
+    # real render this resolves through view_context.controller.
+    component.define_singleton_method(:resource_definition) do |klass|
+      "#{klass.name}Definition".constantize.new
+    end
     component
   end
 
