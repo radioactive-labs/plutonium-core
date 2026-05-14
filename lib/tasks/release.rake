@@ -102,7 +102,11 @@ namespace :release do
   desc "Build front-end assets"
   task :build_frontend do
     puts "Building front-end assets..."
-    system("yarn build") || abort("Front-end build failed")
+    # in: File::NULL — yarn 4 puts the terminal in raw mode for its
+    # progress UI and doesn't always restore it on exit. Without this,
+    # subsequent `$stdin.gets` prompts read one keystroke at a time and
+    # never see a newline, so Enter never terminates the line.
+    system("yarn build", in: File::NULL) || abort("Front-end build failed")
     puts "✓ Built front-end assets"
   end
 
@@ -160,6 +164,14 @@ namespace :release do
       exit 1
     end
 
+    # Snapshot the terminal mode up front. yarn 4 and git-cliff both put
+    # the TTY in raw mode for progress UIs and don't always restore it,
+    # which breaks every subsequent `$stdin.gets` (Enter arrives as a
+    # bare \r and gets() never returns). Restore the snapshot before each
+    # prompt so the user can actually answer.
+    tty_state = `stty -g 2>/dev/null`.strip
+    restore_tty = -> { system("stty #{tty_state} 2>/dev/null") if tty_state != "" }
+
     puts "Starting release workflow for v#{version}..."
 
     # Check npm authentication early, login if needed
@@ -179,6 +191,7 @@ namespace :release do
     current_branch = `git branch --show-current`.strip
     unless current_branch == "main" || current_branch == "master"
       puts "Warning: You're not on main/master branch (current: #{current_branch})"
+      restore_tty.call
       print "Continue anyway? [y/N] "
       exit 1 unless $stdin.gets.strip.downcase == "y"
     end
@@ -187,6 +200,7 @@ namespace :release do
     Rake::Task["release:prepare"].invoke(version)
 
     # Confirm before proceeding
+    restore_tty.call
     puts "\nReady to commit, tag, and publish?"
     print "Continue? [y/N] "
     exit 0 unless $stdin.gets.strip.downcase == "y"
