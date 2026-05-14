@@ -9,14 +9,10 @@ module Pu
 
       desc "Update Plutonium gem and npm package to the latest version"
 
-      SHELL_PIN_THRESHOLD = "0.49.1"
-
       def start
-        @previous_gem_version = installed_gem_version
         update_gem
         update_npm_package
         sync_skills_if_present
-        pin_shell_to_classic
       rescue => e
         exception "#{self.class} failed:", e
       end
@@ -28,22 +24,6 @@ module Pu
 
         say_status :update, "Syncing Plutonium Claude skills...", :green
         Rails::Generators.invoke("pu:skills:sync", [], destination_root: Rails.root)
-      end
-
-      # Pin the shell config to :classic on apps upgrading from a version
-      # that predates the shell change so the upgrade is invisible. Newer
-      # apps installed after the shell change get :modern from the install
-      # template and shouldn't be flipped.
-      def pin_shell_to_classic
-        return unless @previous_gem_version
-        return unless SemanticRange.satisfies?(@previous_gem_version, "<=#{SHELL_PIN_THRESHOLD}")
-
-        initializer = Rails.root.join("config", "initializers", "plutonium.rb")
-        return unless File.file?(initializer)
-        return if File.read(initializer).match?(/^\s*config\.shell\s*=/)
-
-        say_status :update, "Pinning Plutonium shell to :classic...", :green
-        configure_plutonium "config.shell = :classic"
       end
 
       def update_gem
