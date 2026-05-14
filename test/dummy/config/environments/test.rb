@@ -50,4 +50,10 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Don't regenerate db/schema.rb after migrate — the dummy app runs under
+  # multiple Rails appraisals, and each rewrite pins schema.rb to whichever
+  # version ran last, breaking the next appraisal that doesn't recognize it.
+  # test_helper builds the schema from migrations on every boot anyway.
+  config.active_record.dump_schema_after_migration = false
 end
