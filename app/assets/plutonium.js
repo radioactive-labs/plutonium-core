@@ -16783,10 +16783,8 @@ ${text2}</tr>
     // Returns a Promise resolving to either a DataArray (rendered as
     // options) or a string (rendered as the no-results label).
     #typeaheadFetch(search, _currentData) {
-      if (this._typeaheadDebounce)
-        clearTimeout(this._typeaheadDebounce);
-      if (this._typeaheadAbort)
-        this._typeaheadAbort.abort();
+      if (this._typeaheadDebounce) clearTimeout(this._typeaheadDebounce);
+      if (this._typeaheadAbort) this._typeaheadAbort.abort();
       return new Promise((resolve) => {
         this._typeaheadDebounce = setTimeout(() => {
           this._typeaheadAbort = new AbortController();
@@ -16802,8 +16800,7 @@ ${text2}</tr>
           headers: { Accept: "application/json" },
           signal
         });
-        if (!res.ok)
-          return "Search failed";
+        if (!res.ok) return "Search failed";
         const json = await res.json();
         const results = Array.isArray(json.results) ? json.results : [];
         return results.map((row) => ({
@@ -16811,8 +16808,7 @@ ${text2}</tr>
           text: String(row.label ?? "")
         }));
       } catch (e4) {
-        if (e4.name === "AbortError")
-          return [];
+        if (e4.name === "AbortError") return [];
         console.warn("[slim-select] typeahead error", e4);
         return "Search failed";
       }
@@ -27711,18 +27707,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/bulk_actions_controller.js
   var bulk_actions_controller_default = class extends Controller {
-    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "selectionCell", "filterPills"];
-    static values = {
-      hasActions: { type: Boolean, default: false }
-    };
-    connect() {
-      if (this.hasActionsValue) {
-        this.enableSelection();
-      }
-    }
-    enableSelection() {
-      this.selectionCellTargets.forEach((el) => el.classList.remove("hidden"));
-    }
+    static targets = ["checkbox", "checkboxAll", "toolbar", "selectedCount", "actionButton", "filterPills"];
     toggle() {
       this.updateUI();
     }
