@@ -21,6 +21,7 @@ export default defineConfig(withMermaid({
     ["meta", { name: "twitter:image", content: "https://radioactive-labs.github.io/plutonium-core/og-image.png" }],
   ],
   ignoreDeadLinks: 'localhostLinks',
+  srcExclude: ['superpowers/**'],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: "/plutonium.png",
