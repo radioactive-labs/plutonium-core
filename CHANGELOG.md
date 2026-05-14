@@ -1,15 +1,40 @@
+## [0.51.0] - 2026-05-14
+
+### 🚀 Features
+
+- *(form)* Stack secondary modal for inline "+" on associations
+- *(form)* Json/jsonb input component with raw-value support
+- Typeahead endpoint for resource form inputs and filters (#55)
+
+### 🐛 Bug Fixes
+
+- *(test)* Stabilize generator test suite against hangs
+- *(form)* Validate association SGIDs against full authz scope
+- *(release)* Keep yarn out of the parent TTY
+
+### 🚜 Refactor
+
+- *(definition)* Rename views DSL to index_views
+- *(skills)* Compact and merge 19 skills into 8
+
+### 📚 Documentation
+
+- Restructure into 7 functional areas + rewrite guides as task recipes
+
+### ⚙️ Miscellaneous Tasks
+
+- Bump appraisal lockfiles to 0.50.0
+- *(generators/update)* Drop dead pin_shell_to_classic hook
 ## [0.50.0] - 2026-05-11
 
 ### 🚀 Features
 
-- *(ui)* UI layout overhaul: modern shell, slideovers, filters, Grid view (#52)
 - *(css)* Style WebKit autofill on .pu-input variants
 
 ### 🐛 Bug Fixes
 
 - *(ui/form)* Suppress label and chrome for hidden fields
 - *(generators/rails_pulse)* Inject recurring tasks under env blocks
-- *(bulk_actions)* Selection cells survive table re-renders
 ## [0.49.1] - 2026-05-06
 
 ### 🚀 Features
