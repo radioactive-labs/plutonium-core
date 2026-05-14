@@ -74,7 +74,69 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     assert_equal relation, mapper.instance_variable_get(:@collection)
   end
 
+  def test_normalize_simple_input_accepts_sgid_in_relation_even_when_outside_rendered_choices
+    in_scope = User.create!(email: "in-scope-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    # `choices` is capped at choice_limit; this validates against the full
+    # scoped relation, which is the typeahead-correct behavior.
+    relation = User.where(id: in_scope.id)
+    component = build_normalize_component(klass: User, relation: relation)
+
+    sgid_str = in_scope.to_signed_global_id.to_s
+    result = component.send(:normalize_simple_input, sgid_str)
+    assert_equal SignedGlobalID.parse(sgid_str), result
+  end
+
+  def test_normalize_simple_input_rejects_sgid_not_in_relation
+    in_scope = User.create!(email: "in-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    out_of_scope = User.create!(email: "out-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    relation = User.where(id: in_scope.id)
+    component = build_normalize_component(klass: User, relation: relation)
+
+    assert_nil component.send(:normalize_simple_input, out_of_scope.to_signed_global_id.to_s)
+  end
+
+  def test_normalize_simple_input_rejects_sgid_for_wrong_class
+    org = Organization.create!(name: "org-#{SecureRandom.hex(4)}")
+    component = build_normalize_component(klass: User, relation: User.all)
+
+    assert_nil component.send(:normalize_simple_input, org.to_signed_global_id.to_s)
+  end
+
+  def test_normalize_simple_input_rejects_non_sgid_input
+    component = build_normalize_component(klass: User, relation: User.all)
+
+    assert_nil component.send(:normalize_simple_input, "not-an-sgid")
+    assert_nil component.send(:normalize_simple_input, "")
+    assert_nil component.send(:normalize_simple_input, nil)
+  end
+
+  def test_normalize_simple_input_validates_against_rendered_list_when_raw_choices_provided
+    permitted = User.create!(email: "perm-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    rejected = User.create!(email: "rej-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    permitted_sgid = permitted.to_signed_global_id.to_s
+
+    component = build_normalize_component(klass: User, relation: nil, raw_choices: [permitted_sgid])
+    component.define_singleton_method(:choices) { Struct.new(:values).new([permitted_sgid]) }
+
+    assert_equal SignedGlobalID.parse(permitted_sgid), component.send(:normalize_simple_input, permitted_sgid)
+    assert_nil component.send(:normalize_simple_input, rejected.to_signed_global_id.to_s)
+  end
+
   private
+
+  # Lightweight build for normalize_simple_input tests — only what that
+  # method touches (reflection.klass, choices_from_association, raw_choices).
+  def build_normalize_component(klass:, relation:, raw_choices: nil)
+    component = Plutonium::UI::Form::Components::SecureAssociation.allocate
+    component.instance_variable_set(:@skip_authorization, true)
+    component.instance_variable_set(:@raw_choices, raw_choices)
+
+    reflection = Struct.new(:klass, :macro, :name).new(klass, :belongs_to, :user)
+    field_stub = Struct.new(:association_reflection).new(reflection)
+    component.define_singleton_method(:field) { field_stub }
+    component.define_singleton_method(:choices_from_association) { |_| relation } if relation
+    component
+  end
 
   def build_component(registered_resources: [], skip_authorization: false, allowed: true, resource_url: nil, add_action: nil, raw_choices: nil, association_scope: nil)
     component = Plutonium::UI::Form::Components::SecureAssociation.allocate

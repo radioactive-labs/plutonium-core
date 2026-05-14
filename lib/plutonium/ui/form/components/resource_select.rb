@@ -23,16 +23,21 @@ module Plutonium
               elsif @association_class.nil?
                 []
               else
-                relation = @association_class.all
-                relation = relation.limit(@choice_limit) if relation.respond_to?(:limit) && @choice_limit
-                if @skip_authorization
-                  relation
-                else
-                  authorized_resource_scope(@association_class, relation: relation)
-                end
+                authorized_relation(limit: @choice_limit)
               end
               build_choice_mapper(collection)
             end
+          end
+
+          # Builds the authorized relation for the association class, optionally
+          # capped at `limit`. Shared by `choices` (with the limit) and
+          # `normalize_simple_input` (without — so typeahead picks beyond the
+          # rendered subset still validate).
+          def authorized_relation(limit: nil)
+            relation = @association_class.all
+            relation = relation.limit(limit) if limit && relation.respond_to?(:limit)
+            return relation if @skip_authorization
+            authorized_resource_scope(@association_class, relation: relation)
           end
 
           def build_attributes
@@ -69,9 +74,22 @@ module Plutonium
           # string-equals a freshly generated option SGID for the same
           # record, so the value gets silently dropped — no WHERE clause
           # is built and the filter behaves as if it weren't applied.
-          # Match by decoded model id so the input survives.
+          #
+          # For SGID values backed by an association class, validate against
+          # the unbounded authorized relation rather than the rendered
+          # `choices` (which is capped at `choice_limit` and may not include
+          # records reachable via typeahead). For raw values / explicit
+          # `@raw_choices`, fall back to record-equality against the rendered
+          # options.
           def normalize_simple_input(input_value)
             return nil if input_value.blank?
+
+            sgid = SignedGlobalID.parse(input_value)
+            if sgid && @association_class && !@raw_choices
+              return nil unless sgid.model_class <= @association_class
+              return authorized_relation.exists?(id: sgid.model_id) ? input_value : nil
+            end
+
             choices.values.find { |opt| same_record?(input_value, opt) } && input_value
           end
 

@@ -29,6 +29,42 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     assert_equal [], mapper.instance_variable_get(:@collection)
   end
 
+  def test_normalize_simple_input_accepts_sgid_in_unbounded_relation
+    in_scope = User.create!(email: "rs-in-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    component = build_component(association_class: User)
+    sgid = in_scope.to_signed_global_id.to_s
+
+    # `choices` is capped at choice_limit but normalize_simple_input now
+    # consults the unbounded User.all relation.
+    assert_equal sgid, component.send(:normalize_simple_input, sgid)
+  end
+
+  def test_normalize_simple_input_rejects_sgid_for_wrong_class
+    org = Organization.create!(name: "rs-org-#{SecureRandom.hex(4)}")
+    component = build_component(association_class: User)
+
+    assert_nil component.send(:normalize_simple_input, org.to_signed_global_id.to_s)
+  end
+
+  def test_normalize_simple_input_returns_nil_for_blank_or_garbage
+    component = build_component(association_class: User)
+
+    assert_nil component.send(:normalize_simple_input, nil)
+    assert_nil component.send(:normalize_simple_input, "")
+    assert_nil component.send(:normalize_simple_input, "garbage")
+  end
+
+  def test_normalize_simple_input_falls_back_to_choices_when_raw_choices_provided
+    permitted_user = User.create!(email: "rs-perm-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    rejected_user = User.create!(email: "rs-rej-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    permitted_sgid = permitted_user.to_signed_global_id.to_s
+
+    component = build_component(raw_choices: [permitted_sgid], association_class: User)
+
+    assert_equal permitted_sgid, component.send(:normalize_simple_input, permitted_sgid)
+    assert_nil component.send(:normalize_simple_input, rejected_user.to_signed_global_id.to_s)
+  end
+
   private
 
   def build_component(raw_choices: nil, association_class: nil)

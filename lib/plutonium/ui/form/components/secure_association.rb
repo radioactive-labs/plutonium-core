@@ -82,16 +82,21 @@ module Plutonium
 
           def choices
             @choices ||= begin
-              collection = if @raw_choices
-                @raw_choices
-              elsif @skip_authorization
-                choices_from_association(association_reflection.klass)
-              else
-                authorized_resource_scope(association_reflection.klass, relation: choices_from_association(association_reflection.klass))
-              end
+              collection = @raw_choices || authorized_relation
               collection = collection.limit(@choice_limit) if @choice_limit && collection.respond_to?(:limit)
               build_choice_mapper(collection)
             end
+          end
+
+          # Builds the authorized association relation. Shared by `choices`
+          # (which then applies `choice_limit`) and `normalize_simple_input`
+          # (which validates against the full set so typeahead picks beyond
+          # the rendered subset still survive submit).
+          def authorized_relation
+            klass = association_reflection.klass
+            relation = choices_from_association(klass)
+            return relation if @skip_authorization
+            authorized_resource_scope(klass, relation: relation)
           end
 
           def build_attributes
@@ -124,9 +129,21 @@ module Plutonium
             attributes[:multiple] = true
           end
 
+          # Validates a submitted SGID against the authorized association scope
+          # (not against `choices`, which is capped at `choice_limit` and may
+          # not include records reachable via typeahead). For explicit
+          # `@raw_choices`, fall back to membership in the rendered list.
           def normalize_simple_input(input_value)
-            @signed_global_ids ||= choices.values.map { |choice| SignedGlobalID.parse(choice) }
-            ([SignedGlobalID.parse(input_value.presence)].compact & @signed_global_ids)[0]
+            sgid = SignedGlobalID.parse(input_value.presence)
+            return nil unless sgid
+
+            if @raw_choices
+              @signed_global_ids ||= choices.values.map { |choice| SignedGlobalID.parse(choice) }
+              return @signed_global_ids.include?(sgid) ? sgid : nil
+            end
+
+            return nil unless sgid.model_class <= association_reflection.klass
+            authorized_relation.exists?(id: sgid.model_id) ? sgid : nil
           end
 
           def selected?(option)
