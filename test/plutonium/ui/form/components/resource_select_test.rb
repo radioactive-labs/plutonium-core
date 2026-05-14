@@ -65,7 +65,64 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     assert_nil component.send(:normalize_simple_input, rejected_user.to_signed_global_id.to_s)
   end
 
+  # typeahead_searchable? — proves the auto opt-out hook reaches into
+  # FALLBACK_SEARCH_COLUMNS, so a model with a `name` column is
+  # auto-eligible without anyone declaring `search`.
+
+  def test_typeahead_searchable_false_when_no_association_class
+    component = build_component
+    refute component.send(:typeahead_searchable?)
+  end
+
+  def test_typeahead_searchable_true_when_model_has_fallback_column
+    component = build_component(association_class: Organization)
+    assert component.send(:typeahead_searchable?)
+  end
+
+  def test_typeahead_searchable_false_when_model_has_no_fallback_column
+    # OrganizationUser has no name/title/label/etc. column.
+    component = build_component(association_class: OrganizationUser)
+    refute component.send(:typeahead_searchable?)
+  end
+
+  # detect_typeahead_kind_and_name — proves the filter-vs-input
+  # detection via :q lineage. This is non-obvious behavior that would
+  # silently regress if Phlexi's DOM internals shift.
+
+  def test_detect_kind_and_name_returns_input_when_no_q_ancestor
+    field = stub_field([stub_node(:user_form), stub_node(:organization)])
+    component = build_component
+    component.instance_variable_set(:@field, field)
+
+    assert_equal [:input, :organization], component.send(:detect_typeahead_kind_and_name)
+  end
+
+  def test_detect_kind_and_name_returns_filter_when_q_ancestor_present
+    # Lineage shape that Plutonium::UI::Form::Query produces:
+    # form root -> :q -> filter name -> :value
+    field = stub_field([stub_node(:filter_form), stub_node(:q), stub_node(:status), stub_node(:value)])
+    component = build_component
+    component.instance_variable_set(:@field, field)
+
+    assert_equal [:filter, :status], component.send(:detect_typeahead_kind_and_name)
+  end
+
   private
+
+  def stub_node(key)
+    node = Object.new
+    node.define_singleton_method(:key) { key }
+    node
+  end
+
+  def stub_field(lineage)
+    dom = Object.new
+    dom.define_singleton_method(:lineage) { lineage }
+    field = Object.new
+    field.define_singleton_method(:dom) { dom }
+    field.define_singleton_method(:key) { lineage.last.key }
+    field
+  end
 
   def build_component(raw_choices: nil, association_class: nil)
     component = Plutonium::UI::Form::Components::ResourceSelect.allocate
@@ -75,6 +132,11 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     # which is unavailable outside a render cycle.
     component.instance_variable_set(:@skip_authorization, true)
     component.instance_variable_set(:@choice_limit, nil)
+    # Stub resource_definition for the typeahead_searchable? path; in a
+    # real render this resolves through view_context.controller.
+    component.define_singleton_method(:resource_definition) do |klass|
+      "#{klass.name}Definition".constantize.new
+    end
     component
   end
 

@@ -1,7 +1,19 @@
 import { Controller } from "@hotwired/stimulus";
 
 // Connects to data-controller="slim-select"
+//
+// Optional values (used by the typeahead-capable ResourceSelect):
+//   typeahead-url   — backend endpoint that returns
+//                     {results: [{value, label}, ...], has_more: bool}.
+//                     When present, SlimSelect's built-in client-side
+//                     filter is replaced by a debounced fetch through
+//                     this URL.
 export default class extends Controller {
+  static values = {
+    typeaheadUrl: String,
+    typeaheadDebounceMs: { type: Number, default: 200 }
+  }
+
   connect() {
     if (this.slimSelect) return;
 
@@ -47,9 +59,18 @@ export default class extends Controller {
       settings.openPosition = "auto";
     }
 
+    const events = {};
+
+    if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {
+      // Replace SlimSelect's client-side filter with a server fetch.
+      // Returns the SlimSelect data array shape: {value, text}.
+      events.search = (search, currentData) => this.#typeaheadFetch(search, currentData);
+    }
+
     this.slimSelect = new SlimSelect({
       select: this.element,
       settings: settings,
+      events: events,
     });
 
     // Add event listeners for better positioning
@@ -175,6 +196,46 @@ export default class extends Controller {
 
   disconnect() {
     this.#cleanupSlimSelect();
+  }
+
+  // Server-driven search. SlimSelect calls events.search on each
+  // keystroke; we debounce so that rapid typing produces a single
+  // request, and abort any in-flight fetch when a newer one starts.
+  // Returns a Promise resolving to either a DataArray (rendered as
+  // options) or a string (rendered as the no-results label).
+  #typeaheadFetch(search, _currentData) {
+    if (this._typeaheadDebounce) clearTimeout(this._typeaheadDebounce);
+    if (this._typeaheadAbort) this._typeaheadAbort.abort();
+
+    return new Promise((resolve) => {
+      this._typeaheadDebounce = setTimeout(() => {
+        this._typeaheadAbort = new AbortController();
+        this.#performTypeaheadFetch(search, this._typeaheadAbort.signal).then(resolve);
+      }, this.typeaheadDebounceMsValue);
+    });
+  }
+
+  async #performTypeaheadFetch(search, signal) {
+    const url = new URL(this.typeaheadUrlValue, window.location.origin);
+    url.searchParams.set("q", search || "");
+
+    try {
+      const res = await fetch(url.toString(), {
+        headers: { Accept: "application/json" },
+        signal: signal,
+      });
+      if (!res.ok) return "Search failed";
+      const json = await res.json();
+      const results = Array.isArray(json.results) ? json.results : [];
+      return results.map((row) => ({
+        value: String(row.value ?? ""),
+        text: String(row.label ?? ""),
+      }));
+    } catch (e) {
+      if (e.name === "AbortError") return [];
+      console.warn("[slim-select] typeahead error", e);
+      return "Search failed";
+    }
   }
 
   #handleMorph() {

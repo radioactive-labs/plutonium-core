@@ -15,6 +15,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::Queryable
       include Plutonium::Resource::Controllers::CrudActions
       include Plutonium::Resource::Controllers::InteractiveActions
+      include Plutonium::Resource::Controllers::Typeahead
 
       included do
         after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }

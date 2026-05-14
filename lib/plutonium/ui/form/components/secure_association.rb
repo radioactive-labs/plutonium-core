@@ -6,6 +6,7 @@ module Plutonium
       module Components
         class SecureAssociation < Phlexi::Form::Components::AssociationBase
           include Plutonium::UI::Component::Methods
+          include Plutonium::UI::Form::Concerns::TypeaheadAttributes
 
           DEFAULT_CHOICE_LIMIT = Plutonium::UI::Form::Components::ResourceSelect::DEFAULT_CHOICE_LIMIT
 
@@ -102,6 +103,14 @@ module Plutonium
           def build_attributes
             build_association_attributes
             super
+            # Stash; the URL helper needs view_context which only exists
+            # once we're rendering.
+            @typeahead_option = attributes.delete(:typeahead)
+          end
+
+          def before_template
+            super
+            configure_typeahead_attributes!(@typeahead_option)
           end
 
           def build_association_attributes
@@ -118,6 +127,20 @@ module Plutonium
             when :has_many, :has_and_belongs_to_many
               build_collection_association_attributes
             end
+          end
+
+          private
+
+          # Polymorphic reflections raise NameError on #klass — they
+          # have no single target class to search, so opt out.
+          def typeahead_target_class
+            return nil unless association_reflection
+            return nil if association_reflection.respond_to?(:polymorphic?) && association_reflection.polymorphic?
+            association_reflection.klass
+          end
+
+          def typeahead_kind_and_name(_typeahead_option)
+            [:input, association_reflection.name]
           end
 
           def build_singluar_association_attributes

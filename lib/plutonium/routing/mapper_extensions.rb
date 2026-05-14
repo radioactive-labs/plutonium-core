@@ -41,6 +41,7 @@ module Plutonium
         concern :interactive_resource_actions do
           define_member_interactive_actions
           define_collection_interactive_actions
+          define_collection_typeahead_actions
         end
       end
 
@@ -159,6 +160,20 @@ module Plutonium
             as: :interactive_resource_action
           post "resource_actions/:interactive_action", action: :commit_interactive_resource_action,
             as: :commit_interactive_resource_action
+        end
+      end
+
+      # Defines collection-level typeahead actions for resource form inputs
+      # and index filter inputs. Auto-mounted alongside record_actions and
+      # bulk_actions on every Plutonium resource.
+      #
+      # @return [void]
+      def define_collection_typeahead_actions
+        collection do
+          get "typeahead/input/:name", action: :typeahead_input,
+            as: :typeahead_input
+          get "typeahead/filter/:name", action: :typeahead_filter,
+            as: :typeahead_filter
         end
       end
     end

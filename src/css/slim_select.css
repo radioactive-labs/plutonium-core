@@ -151,6 +151,10 @@
   @apply absolute flex h-auto flex-col w-auto max-h-72 border transition-all duration-200 opacity-0 z-[10000] overflow-hidden;
   background-color: var(--pu-surface);
   border-color: var(--pu-border);
+  /* Default text color for everything inside the panel — covers the
+     "No Results" text and any other slim-select chrome that doesn't
+     declare its own color rule. Specific rules below still win. */
+  color: var(--pu-text);
   box-shadow: var(--pu-shadow-md);
   transform: scaleY(0);
   transform-origin: top;

@@ -305,4 +305,26 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     assert_includes scoped.to_a, @post
     assert_includes scoped.to_a, @other_post
   end
+
+  # Typeahead permission tests
+
+  def test_typeahead_defaults_to_index
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Post,
+      user: @user,
+      entity_scope: nil
+    )
+    policy.define_singleton_method(:index?) { true }
+    assert policy.typeahead?
+  end
+
+  def test_typeahead_follows_index_false
+    policy = Blogging::PostPolicy.new(
+      record: Blogging::Post,
+      user: @user,
+      entity_scope: nil
+    )
+    policy.define_singleton_method(:index?) { false }
+    refute policy.typeahead?
+  end
 end

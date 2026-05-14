@@ -179,6 +179,13 @@ module Plutonium
         index?
       end
 
+      # Checks if typeahead/autocomplete queries are permitted.
+      #
+      # @return [Boolean] Delegates to index?.
+      def typeahead?
+        index?
+      end
+
       # Core attributes
 
       # Returns the permitted attributes for the create action.

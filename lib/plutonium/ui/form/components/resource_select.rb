@@ -7,6 +7,7 @@ module Plutonium
         # Select for choosing a resource record
         class ResourceSelect < Phlexi::Form::Components::Select
           include Plutonium::UI::Component::Methods
+          include Plutonium::UI::Form::Concerns::TypeaheadAttributes
 
           # Cap on the number of records the dropdown materialises. Keeps
           # very large association tables from rendering thousands of
@@ -53,6 +54,17 @@ module Plutonium
             @skip_authorization = attributes.delete(:skip_authorization)
             @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
             attributes.delete(:choice_limit)
+            # Stash the typeahead option; the URL helper needs view_context
+            # which only exists once we're rendering.
+            @typeahead_option = attributes.delete(:typeahead)
+          end
+
+          # Phlex hook fires right before view_template runs and view_context
+          # is available, so this is where we can resolve the typeahead URL
+          # and inject the data attr.
+          def before_template
+            super
+            configure_typeahead_attributes!(@typeahead_option)
           end
 
           # SGIDs include a timestamp + signature, so the SGID in the URL
@@ -119,6 +131,30 @@ module Plutonium
           # Use include_blank string as blank option text (Phlexi default uses placeholder)
           def blank_option_text
             @include_blank.is_a?(String) ? @include_blank : super
+          end
+
+          private
+
+          def typeahead_target_class
+            @association_class
+          end
+
+          def typeahead_kind_and_name(_typeahead_option)
+            detect_typeahead_kind_and_name
+          end
+
+          # Plutonium::UI::Form::Query roots its form with `as: :q`, so
+          # any field whose ancestry includes a node keyed :q is a filter
+          # input. The filter name is the immediate child of that root.
+          # Form inputs (new/edit) fall through to :input + the field key.
+          def detect_typeahead_kind_and_name
+            lineage = field.dom.lineage
+            q_index = lineage.find_index { |node| node.key == :q }
+            if q_index && (filter_node = lineage[q_index + 1])
+              [:filter, filter_node.key]
+            else
+              [:input, field.key]
+            end
           end
         end
       end
