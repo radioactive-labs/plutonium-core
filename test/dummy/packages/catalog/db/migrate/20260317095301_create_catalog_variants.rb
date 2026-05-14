@@ -1,4 +1,4 @@
-class CreateCatalogVariants < ActiveRecord::Migration[8.1]
+class CreateCatalogVariants < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :catalog_variants do |t|
       t.string :name, null: false

@@ -9,6 +9,8 @@ require_relative "dummy/config/environment"
 # Ensure database exists and run migrations
 # Ensure migration paths include the absolute paths from Rails config
 ActiveRecord::Migrator.migrations_paths = Rails.application.config.paths["db/migrate"].to_a
+# Drop any stale DB from a previously-killed run so leftover tables don't collide with migrations.
+ActiveRecord::Tasks::DatabaseTasks.drop_current
 ActiveRecord::Tasks::DatabaseTasks.create_current
 ActiveRecord::Tasks::DatabaseTasks.migrate
 

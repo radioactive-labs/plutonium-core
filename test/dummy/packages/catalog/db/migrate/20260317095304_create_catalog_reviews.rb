@@ -1,4 +1,4 @@
-class CreateCatalogReviews < ActiveRecord::Migration[8.1]
+class CreateCatalogReviews < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :catalog_reviews do |t|
       t.string :title, null: false

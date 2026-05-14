@@ -1,4 +1,4 @@
-class CreateBloggingTags < ActiveRecord::Migration[8.1]
+class CreateBloggingTags < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :blogging_tags do |t|
       t.string :name, null: false, index: {unique: true}

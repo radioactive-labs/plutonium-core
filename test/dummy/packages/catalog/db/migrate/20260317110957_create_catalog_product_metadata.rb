@@ -1,4 +1,4 @@
-class CreateCatalogProductMetadata < ActiveRecord::Migration[8.1]
+class CreateCatalogProductMetadata < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :catalog_product_metadata do |t|
       t.string :meta_title, null: true

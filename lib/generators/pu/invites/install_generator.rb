@@ -70,6 +70,7 @@ module Pu
       end
 
       def create_package
+        return if File.exist?(File.join(destination_root, "packages/invites"))
         generate "pu:pkg:package", "invites"
       end
 

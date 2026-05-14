@@ -1,4 +1,4 @@
-class CreateUserProfiles < ActiveRecord::Migration[8.1]
+class CreateUserProfiles < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :user_profiles do |t|
       t.string :display_name, null: true

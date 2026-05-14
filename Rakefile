@@ -37,7 +37,8 @@ task :test_generators do
 
   FileList["test/generators/**/*_test.rb"].sort.each do |test_file|
     puts "\n=== #{test_file} ==="
-    unless system(Gem.ruby, "-w", "-Ilib:test", test_file)
+    # in: File::NULL — prevents a stray sub-generator prompt from hanging on the inherited TTY.
+    unless system(Gem.ruby, "-w", "-Ilib:test", test_file, in: File::NULL)
       failures << test_file
     end
   end

@@ -1,4 +1,4 @@
-class CreateBloggingPostDetails < ActiveRecord::Migration[8.1]
+class CreateBloggingPostDetails < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :blogging_post_details do |t|
       t.string :seo_title, null: true

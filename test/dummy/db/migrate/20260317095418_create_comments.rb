@@ -1,4 +1,4 @@
-class CreateComments < ActiveRecord::Migration[8.1]
+class CreateComments < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :comments do |t|
       t.text :body, null: false

@@ -1,4 +1,4 @@
-class CreateCatalogProductDetails < ActiveRecord::Migration[8.1]
+class CreateCatalogProductDetails < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :catalog_product_details do |t|
       t.text :specifications, null: true

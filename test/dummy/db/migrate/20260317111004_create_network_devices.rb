@@ -1,4 +1,4 @@
-class CreateNetworkDevices < ActiveRecord::Migration[8.1]
+class CreateNetworkDevices < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :network_devices do |t|
       t.string :name, null: false
