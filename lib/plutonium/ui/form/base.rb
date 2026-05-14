@@ -66,6 +66,10 @@ module Plutonium
             create_component(Components::KeyValueStore, :key_value_store, **, &)
           end
 
+          def json_input_tag(**, &)
+            create_component(Components::Json, :json, **, &)
+          end
+
           def resource_select_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
             # class!: "" clears the underlying <select>'s themed classes
@@ -107,8 +111,8 @@ module Plutonium
           alias_method :date_tag, :flatpickr_tag
           alias_method :time_tag, :flatpickr_tag
           alias_method :rich_text_tag, :markdown_tag
-          alias_method :json_tag, :textarea_tag
-          alias_method :jsonb_tag, :textarea_tag
+          alias_method :json_tag, :json_input_tag
+          alias_method :jsonb_tag, :json_input_tag
           alias_method :hstore_tag, :key_value_store_tag
           alias_method :key_value_tag, :key_value_store_tag
           alias_method :association_tag, :secure_association_tag
