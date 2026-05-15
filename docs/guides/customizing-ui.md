@@ -19,7 +19,7 @@ end
 
 Each nested class inherits from Plutonium's defaults and lets you override only the methods you care about. Don't reimplement the whole layer — use the render hooks below.
 
-→ See [Reference › UI › Pages](/plutonium-core/reference/ui/pages) for the full hook list.
+→ See [Reference › UI › Pages](/reference/ui/pages) for the full hook list.
 
 ## Adding chrome to a page
 
@@ -39,7 +39,7 @@ end
 
 Hooks exist around the header, breadcrumbs, page header, toolbar, content, and footer — pick the one closest to where you want the thing to appear.
 
-→ See [Reference › UI › Pages](/plutonium-core/reference/ui/pages) › Page hooks.
+→ See [Reference › UI › Pages](/reference/ui/pages) › Page hooks.
 
 ## Customizing a form layout
 
@@ -70,7 +70,7 @@ class Form < Form
 end
 ```
 
-→ See [Reference › UI › Forms](/plutonium-core/reference/ui/forms) for `render_resource_field`, field tags (`flatpickr_tag`, `easymde_tag`, `uppy_tag`, etc.), and Phlexi themes.
+→ See [Reference › UI › Forms](/reference/ui/forms) for `render_resource_field`, field tags (`flatpickr_tag`, `easymde_tag`, `uppy_tag`, etc.), and Phlexi themes.
 
 ## Customizing a display
 
@@ -89,7 +89,7 @@ class Display < Display
 end
 ```
 
-→ See [Reference › UI › Displays](/plutonium-core/reference/ui/displays).
+→ See [Reference › UI › Displays](/reference/ui/displays).
 
 ## Replacing a table with a grid
 
@@ -112,7 +112,7 @@ class Table < Table
 end
 ```
 
-→ See [Reference › UI › Tables](/plutonium-core/reference/ui/tables).
+→ See [Reference › UI › Tables](/reference/ui/tables).
 
 ## Writing a custom Phlex component
 
@@ -138,7 +138,7 @@ Use it directly in a page, or wire it as a field in the definition:
 display :card, as: PostCardComponent
 ```
 
-→ See [Reference › UI › Components](/plutonium-core/reference/ui/components).
+→ See [Reference › UI › Components](/reference/ui/components).
 
 ## Phlexi themes (recolor without rewriting)
 
@@ -158,7 +158,7 @@ class Form < Form
 end
 ```
 
-→ See [Reference › UI › Forms](/plutonium-core/reference/ui/forms) › Theme keys, [Reference › UI › Displays](/plutonium-core/reference/ui/displays) › Theme, [Reference › UI › Tables](/plutonium-core/reference/ui/tables) › Theme.
+→ See [Reference › UI › Forms](/reference/ui/forms) › Theme keys, [Reference › UI › Displays](/reference/ui/displays) › Theme, [Reference › UI › Tables](/reference/ui/tables) › Theme.
 
 ## Modals and slideovers
 
@@ -172,7 +172,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-→ See [Reference › Resource › Actions](/plutonium-core/reference/resource/actions) for per-action `modal:` options on interactive actions.
+→ See [Reference › Resource › Actions](/reference/resource/actions) for per-action `modal:` options on interactive actions.
 
 ## Layouts and the shell
 
@@ -187,7 +187,7 @@ rails generate pu:eject:layout
 
 For programmatic overrides, subclass `Plutonium::UI::Layout::ResourceLayout` and use its render hooks (`render_before_main`, `render_body_scripts`, etc.).
 
-→ See [Reference › UI › Layouts](/plutonium-core/reference/ui/layouts) and [Theming](/plutonium-core/guides/theming) for design tokens.
+→ See [Reference › UI › Layouts](/reference/ui/layouts) and [Theming](/guides/theming) for design tokens.
 
 ## Tailwind, Stimulus, and assets
 
@@ -204,7 +204,7 @@ This installs the npm packages, creates a `tailwind.config.js` that extends Plut
 - Reference design tokens directly: `bg-[var(--pu-surface)]`, `text-[var(--pu-text-muted)]`, `border-[var(--pu-border)]`. These auto-switch with dark mode.
 - Register your own Stimulus controllers alongside Plutonium's — `registerControllers(application)` is mandatory or the entire interactive layer is dead.
 
-→ See [Reference › UI › Assets](/plutonium-core/reference/ui/assets) for the full toolchain, the `.pu-*` class catalog, and design-token reference.
+→ See [Reference › UI › Assets](/reference/ui/assets) for the full toolchain, the `.pu-*` class catalog, and design-token reference.
 
 ## When to reach for what
 
@@ -216,7 +216,7 @@ This installs the npm packages, creates a `tailwind.config.js` that extends Plut
 | Reuse a UI block across pages | Custom Phlex component |
 | Recolor without changing structure | Phlexi `Theme` class |
 | Swap the topbar or sidebar | `pu:eject:shell` or custom layout class |
-| Change brand color or radius | Design tokens — see [Theming](/plutonium-core/guides/theming) |
+| Change brand color or radius | Design tokens — see [Theming](/guides/theming) |
 | Add a custom JS interaction | Stimulus controller registered alongside Plutonium's |
 
 ## Gotchas
@@ -229,6 +229,6 @@ This installs the npm packages, creates a `tailwind.config.js` that extends Plut
 
 ## Related
 
-- [Theming](/plutonium-core/guides/theming) — design tokens, brand colors.
-- [Reference › UI](/plutonium-core/reference/ui/) — the full surface area for every override above.
+- [Theming](/guides/theming) — design tokens, brand colors.
+- [Reference › UI](/reference/ui/) — the full surface area for every override above.
 - [plutonium-ui skill](/plutonium-core/superpowers/) — the AI-readable version of this material, if you're pairing with Claude.
