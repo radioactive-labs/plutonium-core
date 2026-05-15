@@ -23,7 +23,8 @@ module Plutonium
 
             render modal_class.new(
               title: page_title,
-              description: page_description
+              description: page_description,
+              size: current_interactive_action.modal_size
             ) do
               render partial("interactive_action_form")
             end
