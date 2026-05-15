@@ -20,7 +20,12 @@
         </button>
       </div>
 
-      <pre class="pu-term hc-term"><span class="prompt">$</span> rails new my_app -m {{ activeUrl }}<span class="pu-term-cursor"></span></pre>
+      <div class="hc-term-wrap">
+        <pre class="pu-term hc-term"><span class="prompt">$</span> rails new my_app -m {{ activeUrl }}<span class="pu-term-cursor"></span></pre>
+        <button class="hc-copy" :class="{ 'hc-copy--ok': copied }" @click="copy" :title="copied ? 'Copied' : 'Copy command'" :aria-label="copied ? 'Copied' : 'Copy command'">
+          <component :is="copied ? IconCheck : IconCopy" :size="16" :stroke-width="2" />
+        </button>
+      </div>
 
       <div class="hc-ctas">
         <a class="pu-btn pu-btn-primary" href="/plutonium-core/getting-started/">Get started <IconArrowRight :size="16" :stroke-width="2.25" /></a>
@@ -34,7 +39,7 @@
 
 <script setup>
 import { ref, computed } from "vue"
-import { IconArrowRight, IconBrandGithub } from "@tabler/icons-vue"
+import { IconArrowRight, IconBrandGithub, IconCopy, IconCheck } from "@tabler/icons-vue"
 
 const options = [
   { id: "plutonium", name: "plutonium", sub: "core + portals",
@@ -44,6 +49,18 @@ const options = [
 ]
 const selected = ref("plutonium")
 const activeUrl = computed(() => options.find(o => o.id === selected.value).url)
+const activeCommand = computed(() => `rails new my_app -m ${activeUrl.value}`)
+const copied = ref(false)
+
+async function copy() {
+  try {
+    await navigator.clipboard.writeText(activeCommand.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 1600)
+  } catch (e) {
+    // clipboard API unavailable; do nothing
+  }
+}
 </script>
 
 <style scoped>
@@ -73,7 +90,18 @@ const activeUrl = computed(() => options.find(o => o.id === selected.value).url)
   background: var(--pu-bg-light); color: var(--pu-text); font-weight: 600;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.hc-term { max-width: 640px; margin: 0 auto 24px; text-align: left; white-space: pre-wrap; word-break: break-all; }
+.hc-term-wrap { position: relative; max-width: 640px; margin: 0 auto 24px; }
+.hc-term { margin: 0; text-align: left; white-space: pre-wrap; word-break: break-all; padding-right: 48px; }
+.hc-copy {
+  position: absolute; top: 8px; right: 8px;
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  color: var(--pu-term-text); border-radius: 6px;
+  width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+  padding: 0;
+}
+.hc-copy:hover { background: rgba(255,255,255,0.16); }
+.hc-copy--ok { background: var(--pu-success-bg); color: var(--pu-success-fg); border-color: transparent; }
 .hc-ctas { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .hc-ctas .pu-btn { display: inline-flex; align-items: center; gap: 6px; }
 @media (max-width: 600px) { .hc-quote { font-size: 22px; } }
