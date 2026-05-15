@@ -11,3 +11,7 @@ aside: false
 <HomePillars />
 
 <HomeWalkthrough />
+
+<HomeAudienceSplit />
+
+<HomeInTheBox />
