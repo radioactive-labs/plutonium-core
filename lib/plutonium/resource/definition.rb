@@ -2,6 +2,7 @@ module Plutonium
   module Resource
     class Definition < Plutonium::Definition::Base
       class_attribute :modal_mode, default: :slideover, instance_accessor: false
+      class_attribute :modal_size_mode, default: :md, instance_accessor: false
 
       VALID_MODAL_MODES = [:centered, :slideover, false].freeze
 
@@ -9,11 +10,21 @@ module Plutonium
       # - :slideover (default) — slide-in panel from the right
       # - :centered — centered dialog
       # - false — no modal; new/edit are full standalone pages
-      def self.modal(mode)
+      #
+      # The optional `size:` controls the width of the rendered modal.
+      # See Plutonium::UI::Modal::Base::VALID_SIZES. Pass `size: :auto`
+      # to let the modal hug its form's natural width — useful for
+      # resources whose form is too wide for the default `:md`.
+      def self.modal(mode, size: :md)
         unless VALID_MODAL_MODES.include?(mode)
           raise ArgumentError, "modal must be one of #{VALID_MODAL_MODES.inspect}, got #{mode.inspect}"
         end
+        unless Plutonium::UI::Modal::Base::VALID_SIZES.include?(size)
+          raise ArgumentError,
+            "modal size must be one of #{Plutonium::UI::Modal::Base::VALID_SIZES.inspect}, got #{size.inspect}"
+        end
         self.modal_mode = mode
+        self.modal_size_mode = size
         configure_crud_modal_targets!
       end
 
@@ -35,6 +46,10 @@ module Plutonium
 
       def modal
         self.class.modal_mode
+      end
+
+      def modal_size
+        self.class.modal_size_mode
       end
 
       # Apply the default modal target ("remote_modal") to :new / :edit
