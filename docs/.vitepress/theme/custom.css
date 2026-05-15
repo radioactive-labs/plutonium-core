@@ -473,6 +473,10 @@ Brand Colors:
   transition: opacity 0.15s ease;
 }
 .pu-btn:hover { opacity: 0.85; }
+.pu-btn:focus-visible {
+  outline: 2px solid var(--pu-accent);
+  outline-offset: 2px;
+}
 .pu-btn-primary { background: var(--pu-accent); color: #ffffff; }
 .pu-btn-ghost {
   border: 1px solid currentColor;
@@ -504,6 +508,9 @@ Brand Colors:
   animation: pu-blink 1s steps(2) infinite;
 }
 @keyframes pu-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .pu-term-cursor { animation: none; }
+}
 
 /* Section frames */
 .pu-section {
