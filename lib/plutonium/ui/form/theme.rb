@@ -46,7 +46,7 @@ module Plutonium
             file: "pu-input py-2 [&::file-selector-button]:mr-4 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-[var(--pu-surface-alt)] [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-semibold [&::file-selector-button]:text-[var(--pu-text-muted)] [&::file-selector-button]:hover:bg-[var(--pu-border)] [&::file-selector-button]:cursor-pointer [&::file-selector-button]:transition-colors",
 
             # Hint themes
-            hint: "pu-hint whitespace-pre",
+            hint: "pu-hint whitespace-pre-wrap",
 
             # Error themes
             error: "text-xs text-danger-600 mt-1",
