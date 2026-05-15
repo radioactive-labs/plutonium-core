@@ -7,3 +7,5 @@ aside: false
 <HomeHero />
 
 <HomeStopWriting />
+
+<HomePillars />
