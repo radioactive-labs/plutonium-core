@@ -27,13 +27,8 @@ aside: false
       { name: 'Search & filtering', link: '/plutonium-core/guides/search-filtering' },
     ]},
     { group: 'Customization', items: [
-      { name: 'Theming', desc: 'Colors, branding, and design-token overrides.', link: '/plutonium-core/guides/theming' },
-      { name: 'Pages', desc: 'Override page classes, add hooks, swap chrome.', link: '/plutonium-core/reference/ui/pages' },
-      { name: 'Forms', desc: 'Custom layouts, sections, field tags, themes.', link: '/plutonium-core/reference/ui/forms' },
-      { name: 'Displays & tables', desc: 'Custom show-page displays and index tables.', link: '/plutonium-core/reference/ui/displays' },
-      { name: 'Components', desc: 'Built-in Phlex kit and writing your own.', link: '/plutonium-core/reference/ui/components' },
-      { name: 'Layouts & shell', desc: 'Eject and override the chrome per portal.', link: '/plutonium-core/reference/ui/layouts' },
-      { name: 'Assets, Tailwind, Stimulus', desc: 'plutoniumTailwindConfig, .pu-* classes, controllers.', link: '/plutonium-core/reference/ui/assets' },
+      { name: 'Customizing the UI', desc: 'A map of the override surface — pages, forms, displays, tables, components, layouts.', link: '/plutonium-core/guides/customizing-ui' },
+      { name: 'Theming', desc: 'Design tokens and brand colors.', link: '/plutonium-core/guides/theming' },
     ]},
     { group: 'Quality', items: [
       { name: 'Testing', link: '/plutonium-core/guides/testing' },
