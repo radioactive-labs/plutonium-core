@@ -5,3 +5,5 @@ aside: false
 ---
 
 <HomeHero />
+
+<HomeStopWriting />
