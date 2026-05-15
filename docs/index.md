@@ -9,3 +9,5 @@ aside: false
 <HomeStopWriting />
 
 <HomePillars />
+
+<HomeWalkthrough />
