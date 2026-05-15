@@ -41,6 +41,31 @@ Hooks exist around the header, breadcrumbs, page header, toolbar, content, and f
 
 → See [Reference › UI › Pages](/reference/ui/pages) › Page hooks.
 
+## ERB views (escape hatch)
+
+When the Phlex page class is the wrong tool — you want to keep an existing ERB layout, you're integrating with a designer's HTML, or you just want to surround the generated page with custom markup — drop an ERB view at the controller path:
+
+```
+app/views/posts/show.html.erb
+packages/admin_portal/app/views/admin_portal/posts/show.html.erb
+```
+
+The default page renders the Phlex page class in one line:
+
+```erb
+<%= render current_definition.show_page_class.new %>
+```
+
+Keep that line and wrap it to add chrome without giving up the generated page:
+
+```erb
+<div class="announcement-banner">Special announcement</div>
+<%= render current_definition.show_page_class.new %>
+<%= render partial: "related" %>
+```
+
+Or replace the line entirely for full control. ERB views always win over the Phlex page class when both exist for the same action.
+
 ## Customizing a form layout
 
 The default form renders every permitted field in a single grid. To group fields into sections or columns, override `form_template`:
