@@ -231,4 +231,3 @@ This installs the npm packages, creates a `tailwind.config.js` that extends Plut
 
 - [Theming](/guides/theming) — design tokens, brand colors.
 - [Reference › UI](/reference/ui/) — the full surface area for every override above.
-- [plutonium-ui skill](/plutonium-core/superpowers/) — the AI-readable version of this material, if you're pairing with Claude.

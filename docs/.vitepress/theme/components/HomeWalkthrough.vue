@@ -1,7 +1,6 @@
 <template>
   <section class="pu-section">
     <div class="pu-section-inner">
-      <div class="pu-eyebrow">A real example</div>
       <h2 class="pu-section-title">Two commands. A whole portal.</h2>
 
       <div class="hw-hero-shot">

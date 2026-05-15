@@ -1,7 +1,6 @@
 <template>
   <section class="pu-section pu-section--band">
     <div class="pu-section-inner">
-      <div class="pu-eyebrow pu-eyebrow--muted">Four pillars</div>
       <h2 class="pu-section-title">Built on Rails. Wired for shipping.</h2>
       <div class="hp-grid">
         <div class="hp-card" v-for="p in pillars" :key="p.name">

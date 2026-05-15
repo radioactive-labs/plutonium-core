@@ -1,7 +1,6 @@
 <template>
   <section class="pu-section">
     <div class="pu-section-inner">
-      <div class="pu-eyebrow pu-eyebrow--muted">What's in the box</div>
       <h2 class="pu-section-title">Organized the way you'll use it.</h2>
       <div v-for="cat in cats" :key="cat.name" class="hb-cat">
         <div class="hb-cat-name">{{ cat.name }}</div>

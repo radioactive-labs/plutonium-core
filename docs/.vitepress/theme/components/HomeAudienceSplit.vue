@@ -1,7 +1,6 @@
 <template>
   <section class="pu-section pu-section--band">
     <div class="pu-section-inner">
-      <div class="pu-eyebrow pu-eyebrow--muted">For two audiences</div>
       <h2 class="pu-section-title">Plutonium fits two kinds of teams.</h2>
       <div class="ha-grid">
         <div class="ha-col">
