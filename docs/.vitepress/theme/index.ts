@@ -8,6 +8,7 @@ import HomeWalkthrough from "./components/HomeWalkthrough.vue"
 import HomeAudienceSplit from "./components/HomeAudienceSplit.vue"
 import HomeInTheBox from "./components/HomeInTheBox.vue"
 import HomeCta from "./components/HomeCta.vue"
+import SectionLanding from "./components/SectionLanding.vue"
 
 export default {
   extends: DefaultTheme,
@@ -19,5 +20,6 @@ export default {
     app.component("HomeAudienceSplit", HomeAudienceSplit)
     app.component("HomeInTheBox", HomeInTheBox)
     app.component("HomeCta", HomeCta)
+    app.component("SectionLanding", SectionLanding)
   }
 }

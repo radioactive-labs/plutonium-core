@@ -1,56 +1,68 @@
-# Reference
+---
+layout: page
+sidebar: false
+aside: false
+---
 
-Concept-by-concept API documentation. For task-oriented walkthroughs, see [Guides](/guides/).
-
-## The seven areas
-
-### [App](/reference/app/)
-Installation, packages (feature + portal), portal engines, mounting, route registration (including singular and custom routes), connecting resources via `pu:res:conn`, full generator catalog.
-
-### [Resource](/reference/resource/)
-The four-layer resource — model, definition, query, actions. `pu:res:scaffold` field-type syntax, `has_cents`, SGID, URL routing, definition DSL (fields, inputs, displays, columns), page chrome, metadata panel, index views (table & grid), search, filters, scopes, sorting, custom + bulk actions.
-
-### [Behavior](/reference/behavior/)
-Controllers, policies, interactions. Controller hooks (redirect, params, presentation), policy action methods and `permitted_attributes_for_*`, `permitted_associations`, `relation_scope`, interaction structure, outcomes, chaining, URL generation.
-
-### [UI](/reference/ui/)
-Pages, forms, displays, tables, components, layouts, assets. Custom page classes, form field builders, association inputs (typeahead + inline `+`), built-in component kit, custom Phlex components, the shell, design tokens, `.pu-*` component classes, Phlexi themes.
-
-### [Auth](/reference/auth/)
-Rodauth installation, account types (basic / admin / SaaS), profile resource with the SecuritySection component.
-
-### [Tenancy](/reference/tenancy/)
-Multi-tenant entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources (parent/child routes, scoping), user invitations.
-
-### [Testing](/reference/testing/)
-The `Plutonium::Testing::*` concerns — CRUD, policy matrix, definition smoke tests, model concerns, nested resources, portal access, interaction outcomes.
-
-## Quick reference
-
-| I need to… | See |
-|---|---|
-| Install Plutonium | [App › Index](/reference/app/) |
-| Run a generator | [App › Generators](/reference/app/generators) |
-| Create a portal | [App › Portals](/reference/app/portals) |
-| Scaffold a resource | [App › Generators › `pu:res:scaffold`](/reference/app/generators#pu-res-scaffold) |
-| Configure form fields | [Resource › Definition](/reference/resource/definition) |
-| Add search / filters | [Resource › Query](/reference/resource/query) |
-| Add custom buttons / bulk actions | [Resource › Actions](/reference/resource/actions) |
-| Override CRUD redirects / params | [Behavior › Controllers](/reference/behavior/controllers) |
-| Control who can see what | [Behavior › Policies](/reference/behavior/policies) |
-| Write business logic | [Behavior › Interactions](/reference/behavior/interactions) |
-| Customize a page | [UI › Pages](/reference/ui/pages) |
-| Customize a form | [UI › Forms](/reference/ui/forms) |
-| Style the UI | [UI › Assets](/reference/ui/assets) |
-| Set up Rodauth | [Auth › Accounts](/reference/auth/accounts) |
-| Add a profile page | [Auth › Profile](/reference/auth/profile) |
-| Scope to a tenant | [Tenancy › Entity scoping](/reference/tenancy/entity-scoping) |
-| Wire user invitations | [Tenancy › Invites](/reference/tenancy/invites) |
-| Test a resource | [Testing](/reference/testing/) |
-
-## Reading this reference
-
-- **🚨 Critical blocks** at the top of each page surface the "you'll regret this" rules. Skim them even if you're skimming the rest.
-- **Option / DSL tables** are designed for scanning — find your option name without reading prose.
-- **Cross-references** use VitePress relative paths. If a link points somewhere that doesn't exist yet, it's a known gap.
-- **Concrete decision rules** ("use X when…, Y when…") sit alongside the option references. Reach for them when in doubt.
+<SectionLanding
+  eyebrow="Reference"
+  title="Every API, in one place."
+  lede="The full surface area of Plutonium — controllers, policies, definitions, fields, interactions, generators."
+  mode="categorized"
+  :rail="[
+    { group: 'App', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/app/' },
+      { name: 'Packages', link: '/plutonium-core/reference/app/packages' },
+      { name: 'Portals', link: '/plutonium-core/reference/app/portals' },
+      { name: 'Generators', link: '/plutonium-core/reference/app/generators' },
+    ]},
+    { group: 'Resource', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/resource/' },
+      { name: 'Model', link: '/plutonium-core/reference/resource/model' },
+      { name: 'Definition', link: '/plutonium-core/reference/resource/definition' },
+      { name: 'Query', link: '/plutonium-core/reference/resource/query' },
+      { name: 'Actions', link: '/plutonium-core/reference/resource/actions' },
+    ]},
+    { group: 'Behavior', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/behavior/' },
+      { name: 'Controllers', link: '/plutonium-core/reference/behavior/controllers' },
+      { name: 'Policies', link: '/plutonium-core/reference/behavior/policies' },
+      { name: 'Interactions', link: '/plutonium-core/reference/behavior/interactions' },
+    ]},
+    { group: 'UI', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/ui/' },
+      { name: 'Pages', link: '/plutonium-core/reference/ui/pages' },
+      { name: 'Forms', link: '/plutonium-core/reference/ui/forms' },
+      { name: 'Displays', link: '/plutonium-core/reference/ui/displays' },
+      { name: 'Tables', link: '/plutonium-core/reference/ui/tables' },
+      { name: 'Components', link: '/plutonium-core/reference/ui/components' },
+      { name: 'Layouts', link: '/plutonium-core/reference/ui/layouts' },
+      { name: 'Assets', link: '/plutonium-core/reference/ui/assets' },
+    ]},
+    { group: 'Auth', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/auth/' },
+      { name: 'Accounts', link: '/plutonium-core/reference/auth/accounts' },
+      { name: 'Profile', link: '/plutonium-core/reference/auth/profile' },
+    ]},
+    { group: 'Tenancy', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/tenancy/' },
+      { name: 'Entity scoping', link: '/plutonium-core/reference/tenancy/entity-scoping' },
+      { name: 'Nested resources', link: '/plutonium-core/reference/tenancy/nested-resources' },
+      { name: 'Invites', link: '/plutonium-core/reference/tenancy/invites' },
+    ]},
+    { group: 'Testing', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/testing/' },
+    ]},
+  ]"
+  :sidebar="[
+    { heading: 'Learning?', items: [
+      { label: 'Tutorial', href: '/plutonium-core/getting-started/tutorial/' },
+    ]},
+    { heading: 'Solving a problem?', items: [
+      { label: 'Guides', href: '/plutonium-core/guides/' },
+    ]},
+    { heading: 'Need help?', items: [
+      { label: 'GitHub Discussions', href: 'https://github.com/radioactive-labs/plutonium-core/discussions' },
+    ]},
+  ]"
+/>
