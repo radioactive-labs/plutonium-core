@@ -18,7 +18,7 @@ Every policy controls three things:
 
 - **`create?` and `read?` default to `false`.** Always override them explicitly. Derived methods (`update?`, `show?`, `index?`) inherit automatically.
 - **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detects; production raises.
-- **`relation_scope` must call `default_relation_scope(relation)` explicitly** — never `super`. See [Reference › Behavior › Policies](/reference/behavior/policies).
+- **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly in your override. `super` is fine when extending a parent policy (e.g., a package-level base) that itself calls `default_relation_scope`. See [Reference › Behavior › Policies](/reference/behavior/policies).
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy. Undefined methods return `false` → action silently disappears.
 
 ## Steps
@@ -93,7 +93,7 @@ relation_scope do |relation|
 end
 ```
 
-🚨 Always call `default_relation_scope(relation)` explicitly — not `super`. Bypassing it triggers `verify_default_relation_scope_applied!` at runtime.
+🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise `verify_default_relation_scope_applied!` raises at runtime. Calling it explicitly here is safest. `super` works only when the parent policy also calls it.
 
 ## Common patterns
 
@@ -244,7 +244,7 @@ end
 - **Undefined custom action policy method** — the button silently disappears (undefined returns `false`). Add `def my_action?` to the policy.
 - **`record.X` crashes during index** — `record` is `nil` on index. Add an explicit `permitted_attributes_for_index` that doesn't depend on `record`.
 - **`verify_default_relation_scope_applied!` raises** — your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
-- **`super` in `relation_scope` doesn't behave as expected** — use `default_relation_scope(relation)` explicitly; `super`'s semantics depend on how ActionPolicy registered the scope.
+- **`super` in `relation_scope`** — works when you're extending a parent policy that itself calls `default_relation_scope`. If you're not sure (or you're inheriting from `Plutonium::Resource::Policy` directly), call `default_relation_scope(relation)` explicitly. The runtime check verifies `default_relation_scope` was hit somewhere — not that you wrote it in this class.
 
 ## Related
 
