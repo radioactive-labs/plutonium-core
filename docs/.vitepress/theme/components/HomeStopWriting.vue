@@ -6,13 +6,8 @@
 
       <div class="hsw-grid">
         <div>
-          <span class="hsw-label hsw-label--bad">Hand-rolled</span>
-          <div class="hsw-filetree">
-            app/controllers/posts_controller.rb<br>
-            app/views/posts/*.html.erb<br>
-            app/policies/post_policy.rb<br>
-            <span class="dim">…before search, filters, bulk actions, auth…</span>
-          </div>
+          <span class="hsw-label hsw-label--bad">Rails scaffold</span>
+          <pre class="pu-term pu-term--inline hsw-term"><span class="prompt">$</span> rails g scaffold Post title:string body:text</pre>
           <div class="hsw-stats">
             <span>Just <b>CRUD</b></span>
             <span>No <b>auth</b></span>
@@ -47,13 +42,6 @@
 }
 .hsw-label--bad { background: #fff0f0; color: var(--pu-accent); }
 .hsw-label--good { background: var(--pu-success-bg); color: var(--pu-success-fg); }
-.hsw-filetree {
-  margin-top: 10px;
-  background: var(--pu-bg-band); border: 1px solid var(--pu-border-soft);
-  border-radius: 8px; padding: 14px;
-  font-family: ui-monospace, monospace; font-size: 12px; line-height: 1.75; color: var(--pu-text-muted);
-}
-.hsw-filetree .dim { color: var(--pu-text-faint); }
 .hsw-term { margin-top: 10px; }
 .hsw-stats {
   padding-top: 14px; display: flex; gap: 14px; flex-wrap: wrap;
