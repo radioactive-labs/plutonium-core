@@ -34,9 +34,10 @@
   @apply !hidden;
 }
 
-/* Main container - Updated to match form input theme */
+/* Sized to match `.pu-input` so selects line up with text/date/email
+   inputs in the same row. */
 .ss-main {
-  @apply flex flex-row items-center relative select-none w-full px-4 py-3 cursor-pointer border font-medium text-base leading-normal outline-none transition-colors duration-200 overflow-hidden focus:ring-2;
+  @apply flex flex-row items-center relative select-none w-full px-3 h-9 cursor-pointer border text-sm outline-none transition-colors duration-200 overflow-hidden focus:ring-2;
   background-color: var(--pu-input-bg);
   border-color: var(--pu-input-border);
   border-radius: var(--pu-radius-md);
