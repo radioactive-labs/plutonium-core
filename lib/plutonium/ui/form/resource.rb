@@ -31,11 +31,67 @@ module Plutonium
           render_actions
         end
 
+        # Wraps Phlexi's view_template so the guard dialog renders inside
+        # the <form> tag even when a definition overrides `form_template`
+        # — otherwise the JS controller falls back to window.confirm.
+        def view_template(&block)
+          captured_body = capture { form_template(&block) }
+          captured_guard = capture { render_dirty_form_guard_dialog if in_modal? }
+          form_tag do
+            form_errors
+            raw(safe(captured_body))
+            raw(safe(captured_guard))
+          end
+        end
+
         def form_class
           in_modal? ? "flex-1 flex flex-col min-h-0" : super
         end
 
         private
+
+        # Nested inside the form so showModal() stacks it in the browser's
+        # top layer above the surrounding slideover/centered modal — no
+        # z-index juggling required.
+        def render_dirty_form_guard_dialog
+          dialog(
+            class:
+              "rounded-[var(--pu-radius-lg)] " \
+              "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
+              "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
+              "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
+              "w-full max-w-md p-0 " \
+              "hidden open:flex flex-col " \
+              "opacity-0 open:opacity-100 transition-opacity duration-200 ease-in-out",
+            data: {"dirty-form-guard-target": "confirmDialog"},
+            # Modern Chrome refuses user-agent close requests (Esc, backdrop);
+            # older browsers fall back to the JS controller's interception.
+            closedby: "none",
+            "aria-labelledby": "pu-dirty-guard-title",
+            "aria-describedby": "pu-dirty-guard-desc"
+          ) do
+            div(class: "px-6 pt-5 pb-4 border-b border-[var(--pu-border)]") do
+              h2(id: "pu-dirty-guard-title", class: "text-lg font-semibold text-[var(--pu-text)]") do
+                "Discard changes?"
+              end
+              p(id: "pu-dirty-guard-desc", class: "mt-1 text-sm text-[var(--pu-text-muted)]") do
+                "You have unsaved changes. Closing this form now will lose them."
+              end
+            end
+            div(class: "flex items-center justify-end gap-2 px-6 py-4") do
+              button(
+                type: "button",
+                class: "pu-btn pu-btn-md pu-btn-outline",
+                data: {action: "dirty-form-guard#keepEditing"}
+              ) { "Keep editing" }
+              button(
+                type: "button",
+                class: "pu-btn pu-btn-md pu-btn-danger",
+                data: {action: "dirty-form-guard#discard"}
+              ) { "Discard changes" }
+            end
+          end
+        end
 
         def render_fields
           fields_wrapper {

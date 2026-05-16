@@ -150,7 +150,14 @@ module Plutonium
           super
 
           attributes[:id] ||= "resource-form"
-          attributes["data-controller"] = "form"
+          attributes["data-controller"] = form_data_controller
+        end
+
+        # `dirty-form-guard` is attached unconditionally — it self-disables
+        # outside a <dialog>. Branching on `in_modal?` here would fail:
+        # Phlex forbids view-context access before rendering begins.
+        def form_data_controller
+          "form dirty-form-guard"
         end
 
         # Scope the form id to the current turbo frame at render time (we
