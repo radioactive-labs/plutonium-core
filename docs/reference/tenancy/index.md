@@ -20,7 +20,7 @@ Configure the portal once. The policy and model conventions then carry tenancy a
 
 ## 🚨 Critical (applies to all three sub-pages)
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!`. Always call `default_relation_scope(relation)` explicitly — not `super`.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!`. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super` to a parent policy (e.g., a package base) that calls it.
 - **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
 - **Parent scoping beats entity scoping.** When a parent is present (nested resource), `default_relation_scope` scopes via the parent, not via `entity_scope`. Don't double-scope.
 - **One level of nesting only.** Grandparent → parent → child nested routes are NOT supported. Use top-level routes for deeper relationships.

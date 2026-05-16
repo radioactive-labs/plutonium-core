@@ -18,7 +18,7 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 - **`ActiveRecord::RecordInvalid` is NOT rescued automatically in interactions.** Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
 - **Return `succeed(...)` or `failed(...)`** from `execute` — the controller can't tell what happened otherwise.
 - **Redirect is automatic on success** — only use `with_redirect_response` for a *different* destination.
-- **`relation_scope` must compose with `default_relation_scope(relation)` explicitly** — not `super`. See [[plutonium-tenancy]].
+- **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly. `super` works when extending a parent policy (e.g., a package base) that itself calls it. See [[plutonium-tenancy]].
 - **For `has_cents` fields, use the virtual name (`:price`), not `:price_cents`** in `permitted_attributes_for_*`.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy (undefined methods return `false`).
 - **Named custom routes.** When adding custom routes, always pass `as:` so `resource_url_for` can build URLs.

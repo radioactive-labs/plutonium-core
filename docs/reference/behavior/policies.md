@@ -11,7 +11,7 @@ Authorization for resources. Built on [ActionPolicy](https://actionpolicy.evilma
 
 - **`create?` and `read?` default to `false`.** You MUST override them explicitly. Everything else (`update?`, `destroy?`, `index?`, `show?`, …) derives from one of those.
 - **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detects; production raises.
-- **`relation_scope` must call `default_relation_scope(relation)` explicitly** — never `super`. Bypassing it triggers `verify_default_relation_scope_applied!`.
+- **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly in your override. `super` is fine when extending a parent policy (e.g., a package base) that itself calls it. The runtime check verifies it was hit somewhere — not in this specific class.
 - **For `has_cents` fields, use the virtual name** (`:price`), NEVER `:price_cents`.
 - **Don't put `*_attributes` hashes in `permitted_attributes_for_*`.** Nested forms are extracted from the form definition, not the policy. List the association name (`:variants`) and the `nested_input` in the definition handles the rest.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?`. Undefined methods return `false` → action silently disappears.
