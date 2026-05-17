@@ -145,7 +145,14 @@ module Plutonium
         def initialize_attributes
           super
 
-          attributes[:id] ||= :resource_form
+          # Only fall back to :resource_form when the caller didn't already
+          # name the form. Phlexi moves an explicit `attributes[:id]` onto
+          # `@dom_id` before this runs, so a blind `||=` here would clobber
+          # things like the filter slideover's `id: "filter-form"` —
+          # producing two `<form id="resource-form">` on the page and
+          # silently breaking the modal pre_submit re-render (Turbo's
+          # `getElementById` finds the filter form first).
+          attributes[:id] ||= :resource_form if @dom_id.nil?
           attributes["data-controller"] = form_data_controller
         end
 
