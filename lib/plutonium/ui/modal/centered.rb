@@ -19,14 +19,21 @@ module Plutonium
 
         protected
 
+        # Animation is driven by `data-open`, toggled by the remote-modal
+        # controller on the frame after showModal(). Avoids the
+        # @starting-style / allow-discrete approach, which is unreliable
+        # across browsers; mirrors the filter slideover's pattern.
         def base_dialog_classes
           "rounded-[var(--pu-radius-lg)] " \
             "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
-            "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
+            "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
+            "data-[open]:backdrop:backdrop-blur-sm " \
+            "backdrop:transition-[background-color] backdrop:duration-200 backdrop:ease-out " \
             "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
             "max-h-[80vh] " \
-            "hidden open:flex flex-col p-0 " \
-            "opacity-0 open:opacity-100 transition-opacity duration-200 ease-in-out"
+            "open:flex flex-col p-0 " \
+            "opacity-0 scale-95 data-[open]:opacity-100 data-[open]:scale-100 " \
+            "transition-[opacity,transform] duration-200 ease-out"
         end
       end
     end

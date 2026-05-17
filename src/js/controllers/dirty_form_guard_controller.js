@@ -31,7 +31,9 @@ export default class extends Controller {
     this.onKeydown = this.#onKeydown.bind(this);
 
     document.addEventListener("keydown", this.onKeydown, true);
-    this.dialog.addEventListener("cancel", this.onCancel);
+    // Capture phase so this runs before remote-modal's cancel handler
+    // — that way `defaultPrevented` is visible there if we intervene.
+    this.dialog.addEventListener("cancel", this.onCancel, true);
 
     this.element.addEventListener("submit", this.onSubmit);
     this.#closeButtons().forEach((btn) =>
@@ -46,7 +48,7 @@ export default class extends Controller {
   disconnect() {
     if (!this.dialog) return;
     document.removeEventListener("keydown", this.onKeydown, true);
-    this.dialog.removeEventListener("cancel", this.onCancel);
+    this.dialog.removeEventListener("cancel", this.onCancel, true);
     this.element.removeEventListener("submit", this.onSubmit);
     this.#closeButtons().forEach((btn) =>
       btn.removeEventListener("click", this.onCloseButtonClick, true),
@@ -56,14 +58,16 @@ export default class extends Controller {
     }
   }
 
-  discard() {
+  async discard() {
     this.forceClose = true;
-    if (this.hasConfirmDialogTarget) this.confirmDialogTarget.close();
-    this.dialog.close();
+    await this.#closeConfirm();
+    // Hand off to remote-modal so the parent modal animates out
+    // instead of snapping shut.
+    this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
   }
 
   keepEditing() {
-    if (this.hasConfirmDialogTarget) this.confirmDialogTarget.close();
+    this.#closeConfirm();
   }
 
   #closeButtons() {
@@ -134,10 +138,24 @@ export default class extends Controller {
 
   #promptDiscard() {
     if (this.hasConfirmDialogTarget) {
-      this.confirmDialogTarget.showModal();
+      const d = this.confirmDialogTarget;
+      d.showModal();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => d.setAttribute("data-open", ""));
+      });
     } else if (window.confirm("Discard your changes?")) {
       this.forceClose = true;
-      this.dialog.close();
+      this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
     }
+  }
+
+  async #closeConfirm() {
+    if (!this.hasConfirmDialogTarget) return;
+    const d = this.confirmDialogTarget;
+    if (!d.open) return;
+    d.removeAttribute("data-open");
+    const animations = d.getAnimations({ subtree: true });
+    await Promise.allSettled(animations.map((a) => a.finished));
+    d.close();
   }
 }
