@@ -21,19 +21,19 @@ module Plutonium
 
         protected
 
+        # Animation is driven by `data-open`, toggled by the remote-modal
+        # controller on the frame after showModal(). Mirrors the filter
+        # slideover's pattern — see Centered for the same rationale.
         def base_dialog_classes
           "fixed top-0 right-0 bottom-0 left-auto m-0 h-screen max-w-full max-h-screen " \
             "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] " \
-            "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
+            "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
+            "data-[open]:backdrop:backdrop-blur-sm " \
+            "backdrop:transition-[background-color] backdrop:duration-300 backdrop:ease-out " \
             "rounded-none p-0 " \
-            "hidden open:flex flex-col " \
-            "translate-x-full open:translate-x-0 " \
-            "transition-[transform,display,overlay] duration-300 ease-out " \
-            "[transition-behavior:allow-discrete] " \
-            "starting:open:translate-x-full " \
-            "backdrop:transition-[display,overlay,background-color] backdrop:duration-300 " \
-            "backdrop:[transition-behavior:allow-discrete] " \
-            "starting:open:backdrop:bg-transparent"
+            "open:flex flex-col " \
+            "translate-x-full data-[open]:translate-x-0 " \
+            "transition-transform duration-300 ease-out"
         end
       end
     end

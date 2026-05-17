@@ -156,7 +156,7 @@ module Plutonium
           # producing two `<form id="resource-form">` on the page and
           # silently breaking the modal pre_submit re-render (Turbo's
           # `getElementById` finds the filter form first).
-          attributes[:id] ||= :resource_form if @dom_id.nil?
+          attributes[:id] ||= "resource-form" if @dom_id.nil?
           attributes["data-controller"] = form_data_controller
         end
 

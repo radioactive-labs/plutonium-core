@@ -58,11 +58,14 @@ module Plutonium
             class:
               "rounded-[var(--pu-radius-lg)] " \
               "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
-              "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
+              "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
+              "data-[open]:backdrop:backdrop-blur-sm " \
+              "backdrop:transition-[background-color] backdrop:duration-200 backdrop:ease-out " \
               "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
               "w-full max-w-md p-0 " \
-              "hidden open:flex flex-col " \
-              "opacity-0 open:opacity-100 transition-opacity duration-200 ease-in-out",
+              "open:flex flex-col " \
+              "opacity-0 scale-95 data-[open]:opacity-100 data-[open]:scale-100 " \
+              "transition-[opacity,transform] duration-200 ease-out",
             data: {"dirty-form-guard-target": "confirmDialog"},
             # Modern Chrome refuses user-agent close requests (Esc, backdrop);
             # older browsers fall back to the JS controller's interception.
