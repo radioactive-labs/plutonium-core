@@ -98,6 +98,18 @@ class ModelGeneratorIntegrationTest < Rails::Generators::TestCase
     assert_match(/t\.decimal :price.*precision: 10.*scale: 2.*default: 0/, content)
   end
 
+  test "generates inclusion validation for required boolean (not presence)" do
+    run_generator ["TestModel", "active:boolean{default:false}", "name:string", "--dest=main_app", "--migration"]
+
+    model_file = destination_root.join("app/models/test_model.rb")
+    assert File.exist?(model_file), "Model file should exist"
+
+    content = File.read(model_file)
+    assert_match(/validates :active, inclusion: \{in: \[true, false\]\}/, content)
+    refute_match(/validates :active, presence: true/, content)
+    assert_match(/validates :name, presence: true/, content)
+  end
+
   private
 
   def find_migration(name)

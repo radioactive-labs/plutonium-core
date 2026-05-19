@@ -36,7 +36,11 @@ class <%= class_name %> < <%= [feature_package_name, "ResourceRecord"].join "::"
 
 <% attributes.select(&:required?).each do |attribute| -%>
   <%- next if attribute.reference? || attribute.rich_text? || attribute.token? || attribute.password_digest? -%>
+  <%- if attribute.type == :boolean -%>
+  validates :<%= attribute.attribute_name %>, inclusion: {in: [true, false]}
+  <%- else -%>
   validates :<%= attribute.attribute_name %>, presence: true
+  <%- end -%>
 <% end -%>
   # add validations above.
 
