@@ -8,7 +8,7 @@ Each tenant sees only their own records. Queries are filtered, forms inject the 
 
 ## 🚨 Critical
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Always call `default_relation_scope(relation)` explicitly — not `super`.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super` to a parent policy (e.g., a package base) that calls it.
 - **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
 - **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}` — without this, uniqueness leaks across tenants.
 
@@ -179,7 +179,7 @@ relation_scope do |relation|
 end
 ```
 
-🚨 `default_relation_scope(relation)` must be called explicitly — not `super`. Bypassing it raises at runtime.
+🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise the runtime verification raises. Calling it explicitly here is safest; `super` works only if the parent policy also calls it.
 
 ## Cross-tenant operations — super-admin portal
 

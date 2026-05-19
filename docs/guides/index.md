@@ -1,32 +1,49 @@
-# Guides
+---
+layout: page
+sidebar: false
+aside: false
+---
 
-Task-oriented walkthroughs. Each guide shows you how to accomplish a specific task, step-by-step, with links to [Reference](/reference/) for the concepts.
-
-## I want to…
-
-| Task | Guide |
-|---|---|
-| Add a new model to my app | [Adding resources](./adding-resources) |
-| Organize code across multiple teams | [Creating packages](./creating-packages) |
-| Protect pages with login | [Authentication](./authentication) |
-| Control who can edit what | [Authorization](./authorization) |
-| Add a "Publish" button | [Custom actions](./custom-actions) |
-| Show comments under posts | [Nested resources](./nested-resources) |
-| Separate data by company | [Multi-tenancy](./multi-tenancy) |
-| Add search to a list | [Search and filtering](./search-filtering) |
-| Invite users to an organization | [User invites](./user-invites) |
-| Add a profile / account-settings page | [User profile](./user-profile) |
-| Customize colors, branding, styles | [Theming](./theming) |
-| Write tests for resources | [Testing](./testing) |
-| Fix a confusing error | [Troubleshooting](./troubleshooting) |
-
-## Guides vs Reference
-
-- **Guides** = "how do I do X?" — step-by-step, opinionated, narrative.
-- **[Reference](/reference/)** = "what does X do?" — exhaustive option lookup, concept catalog.
-
-When a guide says "see Reference › Foo", it's pointing to the catalog page for the full option/method/DSL list.
-
-## New to Plutonium?
-
-Start with the [Tutorial](/getting-started/tutorial/) — an 8-step walkthrough that builds a blog with auth, authorization, custom actions, nested resources, and a customer portal.
+<SectionLanding
+  eyebrow="Guides"
+  title="How to do the things Plutonium apps do."
+  lede="Task-oriented walkthroughs for the parts of the framework you reach for most."
+  mode="categorized"
+  :rail="[
+    { group: 'Setup & Resources', items: [
+      { name: 'Adding resources', link: '/plutonium-core/guides/adding-resources' },
+      { name: 'Creating packages', link: '/plutonium-core/guides/creating-packages' },
+    ]},
+    { group: 'Auth', items: [
+      { name: 'Authentication', link: '/plutonium-core/guides/authentication' },
+      { name: 'Authorization', link: '/plutonium-core/guides/authorization' },
+      { name: 'User profile', link: '/plutonium-core/guides/user-profile' },
+      { name: 'User invites', link: '/plutonium-core/guides/user-invites' },
+    ]},
+    { group: 'Features', items: [
+      { name: 'Custom actions', link: '/plutonium-core/guides/custom-actions' },
+      { name: 'Nested resources', link: '/plutonium-core/guides/nested-resources' },
+      { name: 'Multi-tenancy', link: '/plutonium-core/guides/multi-tenancy' },
+      { name: 'Search & filtering', link: '/plutonium-core/guides/search-filtering' },
+    ]},
+    { group: 'Customization', items: [
+      { name: 'Customizing the UI', desc: 'A map of the override surface — pages, forms, displays, tables, components, layouts.', link: '/plutonium-core/guides/customizing-ui' },
+      { name: 'Theming', desc: 'Design tokens and brand colors.', link: '/plutonium-core/guides/theming' },
+    ]},
+    { group: 'Quality', items: [
+      { name: 'Testing', link: '/plutonium-core/guides/testing' },
+      { name: 'Troubleshooting', link: '/plutonium-core/guides/troubleshooting' },
+    ]},
+  ]"
+  :sidebar="[
+    { heading: 'New to Plutonium?', items: [
+      { label: 'Start with the tutorial', href: '/plutonium-core/getting-started/tutorial/' },
+    ]},
+    { heading: 'Looking for APIs?', items: [
+      { label: 'Browse the reference', href: '/plutonium-core/reference/' },
+    ]},
+    { heading: 'Need help?', items: [
+      { label: 'GitHub Discussions', href: 'https://github.com/radioactive-labs/plutonium-core/discussions' },
+    ]},
+  ]"
+/>

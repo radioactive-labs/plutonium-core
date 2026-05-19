@@ -876,6 +876,7 @@ __metadata:
     "@hotwired/stimulus": "npm:^3.2.2"
     "@hotwired/turbo": "npm:^8.0.4"
     "@popperjs/core": "npm:^2.11.8"
+    "@tabler/icons-vue": "npm:^3.44.0"
     "@tailwindcss/forms": "npm:^0.5.10"
     "@tailwindcss/postcss": "npm:^4.3.0"
     "@tailwindcss/typography": "npm:^0.5.16"
@@ -883,6 +884,7 @@ __metadata:
     "@uppy/dashboard": "npm:^4.1.3"
     "@uppy/image-editor": "npm:^3.2.1"
     "@uppy/xhr-upload": "npm:^4.2.3"
+    asciinema-player: "npm:^3.15.1"
     chokidar-cli: "npm:^3.0.0"
     concurrently: "npm:^8.2.2"
     cssnano: "npm:^7.0.2"
@@ -1155,6 +1157,53 @@ __metadata:
   version: 10.0.2
   resolution: "@shikijs/vscode-textmate@npm:10.0.2"
   checksum: 10c0/36b682d691088ec244de292dc8f91b808f95c89466af421cf84cbab92230f03c8348649c14b3251991b10ce632b0c715e416e992dd5f28ff3221dc2693fd9462
+  languageName: node
+  linkType: hard
+
+"@solid-primitives/refs@npm:^1.0.5":
+  version: 1.1.3
+  resolution: "@solid-primitives/refs@npm:1.1.3"
+  dependencies:
+    "@solid-primitives/utils": "npm:^6.4.0"
+  peerDependencies:
+    solid-js: ^1.6.12
+  checksum: 10c0/af1e27b5b38f639e5a3125a982ff8f9c58fe2aea4609718c9383d88d1fc5a13e490fb40c262eb183c695b3efacd89b5328876a615814c0edb54981b58b3804fa
+  languageName: node
+  linkType: hard
+
+"@solid-primitives/transition-group@npm:^1.0.2":
+  version: 1.1.2
+  resolution: "@solid-primitives/transition-group@npm:1.1.2"
+  peerDependencies:
+    solid-js: ^1.6.12
+  checksum: 10c0/f676cefc38bab6aad7c1214ef2ea145d598ec2e873eca663a79a3a8e46b9ee8f6ea57f3e11c0acf5156ffa63ba727e9676c46c6fd0cf9130e034da79ead12402
+  languageName: node
+  linkType: hard
+
+"@solid-primitives/utils@npm:^6.4.0":
+  version: 6.4.0
+  resolution: "@solid-primitives/utils@npm:6.4.0"
+  peerDependencies:
+    solid-js: ^1.6.12
+  checksum: 10c0/fdac336c74be180251ac40df280571534d427c773b207e19a51aa01f013e16864f15c5c829f53a8e7d0033543bef07a6410c2dbaf364410dc29783966e14fcac
+  languageName: node
+  linkType: hard
+
+"@tabler/icons-vue@npm:^3.44.0":
+  version: 3.44.0
+  resolution: "@tabler/icons-vue@npm:3.44.0"
+  dependencies:
+    "@tabler/icons": "npm:3.44.0"
+  peerDependencies:
+    vue: ">=3.0.1"
+  checksum: 10c0/7730f3cd00056584ad322ab9d7b740d0f62632e5480a89dfd458f916af278010a940bfb62bcd1067b32177bf8ff5c101534aa898666501e47dc0ddaf3f0f9c9f
+  languageName: node
+  linkType: hard
+
+"@tabler/icons@npm:3.44.0":
+  version: 3.44.0
+  resolution: "@tabler/icons@npm:3.44.0"
+  checksum: 10c0/0d5c1f9d6e68aa04c4a661e96035190e0884e0bc0022d31922efad3cfba210a25b2f013c0b6c0ab6aeb3d5a402a9b85a168966bd11a30ba6087f614f8521ccf3
   languageName: node
   linkType: hard
 
@@ -2184,6 +2233,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"asciinema-player@npm:^3.15.1":
+  version: 3.15.1
+  resolution: "asciinema-player@npm:3.15.1"
+  dependencies:
+    "@babel/runtime": "npm:^7.21.0"
+    solid-js: "npm:^1.3.0"
+    solid-transition-group: "npm:^0.2.3"
+  checksum: 10c0/36638e9804a94866d6c6ae25cdbf867313873e68838b2630eed73229819170bc67667098865fe38b061012c3fa78e8235322725c5e1bda258ec82787d470f8a4
+  languageName: node
+  linkType: hard
+
 "balanced-match@npm:^4.0.2":
   version: 4.0.4
   resolution: "balanced-match@npm:4.0.4"
@@ -2647,7 +2707,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.2.3":
+"csstype@npm:^3.1.0, csstype@npm:^3.2.3":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10c0/cd29c51e70fa822f1cecd8641a1445bed7063697469d35633b516e60fe8c1bde04b08f6c5b6022136bb669b64c63d4173af54864510fbb4ee23281801841a3ce
@@ -5355,6 +5415,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"seroval-plugins@npm:~1.5.0":
+  version: 1.5.4
+  resolution: "seroval-plugins@npm:1.5.4"
+  peerDependencies:
+    seroval: ^1.0
+  checksum: 10c0/f8843ff12c2fcbf0d1124d02addcffc1a727f55b500ac24218a528e95e540c42052e2e6f6b3dfaad2aa8105fd0985dff722c3ae774723b9899e0fafe7d4698be
+  languageName: node
+  linkType: hard
+
+"seroval@npm:~1.5.0":
+  version: 1.5.4
+  resolution: "seroval@npm:1.5.4"
+  checksum: 10c0/6191e27f21000f7693ab923fde69c47a3ce5fbb86e585e5a8fc072d70db52ebc3c4dab83c3b2ab67311ec646b2064df089a3a155c49b21846438aaf510d4b964
+  languageName: node
+  linkType: hard
+
 "set-blocking@npm:^2.0.0":
   version: 2.0.0
   resolution: "set-blocking@npm:2.0.0"
@@ -5431,6 +5507,29 @@ __metadata:
     ip-address: "npm:^10.0.1"
     smart-buffer: "npm:^4.2.0"
   checksum: 10c0/2805a43a1c4bcf9ebf6e018268d87b32b32b06fbbc1f9282573583acc155860dc361500f89c73bfbb157caa1b4ac78059eac0ef15d1811eb0ca75e0bdadbc9d2
+  languageName: node
+  linkType: hard
+
+"solid-js@npm:^1.3.0":
+  version: 1.9.13
+  resolution: "solid-js@npm:1.9.13"
+  dependencies:
+    csstype: "npm:^3.1.0"
+    seroval: "npm:~1.5.0"
+    seroval-plugins: "npm:~1.5.0"
+  checksum: 10c0/1c407da820435771ec6fd65e605fd804fc1faf74ee84af2d3dce2bc5c223563017a9e15746eb86d27237e6d0d6ac8660685c560eb1f1decdc6f3c7b913927928
+  languageName: node
+  linkType: hard
+
+"solid-transition-group@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "solid-transition-group@npm:0.2.3"
+  dependencies:
+    "@solid-primitives/refs": "npm:^1.0.5"
+    "@solid-primitives/transition-group": "npm:^1.0.2"
+  peerDependencies:
+    solid-js: ^1.6.12
+  checksum: 10c0/584656bedefb03fd91801d858c9abf0de5afc175e9a7bea2023000faa5ed3af4c6e4b8b99dd7ed1069595d362b002d4ae8ca08d030e422b65dc23742fb2ac681
   languageName: node
   linkType: hard
 
