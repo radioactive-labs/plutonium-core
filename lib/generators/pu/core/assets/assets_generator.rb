@@ -30,6 +30,8 @@ module Pu
       end
 
       def install_dependencies
+        failed = []
+
         [
           "@radioactive-labs/plutonium",
           "postcss", "postcss-cli", "postcss-import",
@@ -38,9 +40,17 @@ module Pu
           "flowbite-typography"
         ].each do |package|
           run "yarn add #{package}"
+          failed << "yarn add #{package}" unless $?.success?
         end
 
         run "yarn upgrade tailwindcss --latest"
+        failed << "yarn upgrade tailwindcss --latest" unless $?.success?
+
+        return if failed.empty?
+
+        say_status :warn,
+          "the following commands failed — your app may not boot until you resolve them:\n  #{failed.join("\n  ")}",
+          :yellow
       end
 
       def configure_application
