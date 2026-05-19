@@ -6,7 +6,7 @@ aside: false
 
 <SectionLanding
   eyebrow="Getting Started"
-  title="Get a working Plutonium app in 15 minutes."
+  title="Learn Plutonium by building."
   lede="Walk the path top to bottom, or skip to the part you need."
   mode="numbered"
   :rail="[

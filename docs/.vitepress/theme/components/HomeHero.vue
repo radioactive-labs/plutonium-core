@@ -16,7 +16,7 @@
         </p>
         <div class="home-hero-ctas">
           <a class="pu-btn pu-btn-primary" href="/plutonium-core/getting-started/">Get started →</a>
-          <a class="pu-btn pu-btn-ghost on-dark" href="/plutonium-core/getting-started/tutorial/">15-min tutorial</a>
+          <a class="pu-btn pu-btn-ghost on-dark" href="/plutonium-core/getting-started/tutorial/">Tutorial</a>
         </div>
       </div>
       <pre class="pu-term home-hero-term"><span class="prompt">$</span> rails g pu:pkg:portal admin
