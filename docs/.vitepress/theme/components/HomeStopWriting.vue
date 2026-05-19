@@ -30,7 +30,7 @@
 <style scoped>
 .hsw-sub { color: var(--pu-text-muted); font-size: 15px; margin: -16px 0 32px; }
 .hsw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; }
-.hsw-grid > div { display: flex; flex-direction: column; }
+.hsw-grid > div { display: flex; flex-direction: column; min-width: 0; }
 .hsw-stats { margin-top: auto; }
 .hsw-label {
   display: inline-block; font-size: 11px; padding: 3px 8px; border-radius: 4px;
