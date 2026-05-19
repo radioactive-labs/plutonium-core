@@ -19,12 +19,12 @@
           <a class="pu-btn pu-btn-ghost on-dark" href="/plutonium-core/getting-started/tutorial/">15-min tutorial</a>
         </div>
       </div>
-      <pre class="pu-term home-hero-term"><span class="prompt">$</span> rails g pu:res:scaffold Post title:string body:text
+      <pre class="pu-term home-hero-term"><span class="prompt">$</span> rails g pu:pkg:portal admin
+<span class="dim">      create  packages/admin_portal/...</span>
+<span class="prompt">$</span> rails g pu:res:scaffold Post title:string body:text published_at:datetime --dest=main_app
 <span class="dim">      create  app/models/post.rb</span>
 <span class="dim">      create  app/resource_registries/post_definition.rb</span>
-<span class="dim">      create  db/migrate/...create_posts.rb</span>
 <span class="prompt">$</span> rails g pu:res:conn Post --dest=admin_portal
-<span class="dim">      route   resource :posts</span>
 <span class="dim">      ✓ Connected Post to AdminPortal</span>
 <span class="prompt">$</span> <span class="pu-term-cursor"></span></pre>
     </div>

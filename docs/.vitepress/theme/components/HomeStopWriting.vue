@@ -2,27 +2,21 @@
   <section class="pu-section home-stop-writing">
     <div class="pu-section-inner">
       <h2 class="pu-section-title">What you stop writing.</h2>
-      <p class="hsw-sub">Same blog domain. Two starting points. Very different surface area.</p>
+      <p class="hsw-sub">Same scaffold command. Two starting points. Very different surface area.</p>
 
       <div class="hsw-grid">
         <div>
           <span class="hsw-label hsw-label--bad">Rails scaffold</span>
-          <pre class="pu-term pu-term--inline hsw-term"><span class="prompt">$</span> rails g scaffold Post title:string body:text
-<span class="prompt">$</span> rails g scaffold Comment post:references body:text</pre>
+          <pre class="pu-term pu-term--inline hsw-term"><span class="prompt">$</span> rails g scaffold Post title:string body:text published_at:datetime</pre>
           <div class="hsw-stats">
-            <span>No <b>auth</b></span>
-            <span>No <b>search</b></span>
             <span>Just <b>CRUD</b></span>
           </div>
         </div>
         <div>
           <span class="hsw-label hsw-label--good">Plutonium</span>
-          <pre class="pu-term pu-term--inline hsw-term"><span class="prompt">$</span> rails g pu:res:scaffold Post title:string body:text
-<span class="prompt">$</span> rails g pu:res:scaffold Comment post:references body:text
-<span class="prompt">$</span> rails g pu:res:conn Post Comment --dest=admin_portal</pre>
+          <pre class="pu-term pu-term--inline hsw-term"><span class="prompt">$</span> rails g pu:res:scaffold Post title:string body:text published_at:datetime --dest=main_app</pre>
           <div class="hsw-stats hsw-stats--win">
             <span><b>Full CRUD</b></span>
-            <span><b>+ Auth</b></span>
             <span><b>+ Search</b></span>
             <span><b>+ Filters</b></span>
             <span><b>+ Bulk actions</b></span>

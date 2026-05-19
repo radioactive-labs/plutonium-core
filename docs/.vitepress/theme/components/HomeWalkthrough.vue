@@ -1,7 +1,7 @@
 <template>
   <section class="pu-section">
     <div class="pu-section-inner">
-      <h2 class="pu-section-title">Two commands. A whole portal.</h2>
+      <h2 class="pu-section-title">Scaffold a portal in minutes.</h2>
 
       <div class="hw-cast">
         <div class="hw-browser-bar hw-browser-bar--term">
@@ -43,8 +43,8 @@ import { IconArrowsMaximize, IconX } from "@tabler/icons-vue"
 
 const shots = [
   { label: "Index", url: "/admin/posts",     src: withBase("/images/home-index.png"), alt: "Posts index" },
-  { label: "Show",  url: "/admin/posts/1",   src: withBase("/images/home-show.png"),  alt: "Post show page" },
   { label: "New",   url: "/admin/posts/new", src: withBase("/images/home-new.png"),   alt: "New post form" },
+  { label: "Show",  url: "/admin/posts/1",   src: withBase("/images/home-show.png"),  alt: "Post show page" },
 ]
 const castUrl = withBase("/asciinema/home-scaffold.cast")
 
