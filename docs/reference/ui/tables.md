@@ -8,8 +8,9 @@ The index page's table rendering. Override the `Table` nested class in your defi
 class PostDefinition < ResourceDefinition
   class Table < Table
     def view_template
-      render_search_bar
-      render_scopes_bar
+      render_toolbar         # search + view toggle + filter buttons
+      render_scopes_pills    # scope chips (if any scopes defined)
+      render_filter_pills    # active-filter chips
 
       if collection.empty?
         render_empty_card
@@ -20,6 +21,7 @@ class PostDefinition < ResourceDefinition
         end
       end
 
+      render_bulk_actions_toolbar
       render_footer
     end
   end
@@ -30,8 +32,10 @@ end
 
 | Method | Purpose |
 |---|---|
-| `render_search_bar` | Toolbar search input |
-| `render_scopes_bar` | Quick-filter scope buttons |
+| `render_toolbar` | Search input + view toggle + filter button |
+| `render_scopes_pills` | Quick-filter scope chips (only renders if scopes defined) |
+| `render_filter_pills` | Active-filter chips |
+| `render_bulk_actions_toolbar` | Bulk action bar (only renders when rows selected) |
 | `render_table` | Default table rendering |
 | `render_empty_card` | Empty state |
 | `render_footer` | Pagination |

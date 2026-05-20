@@ -51,7 +51,7 @@ module Pu
       end
 
       def customize_policy
-        content = <<-RUBY.chomp
+        content = <<-RUBY
 
   # Profile is scoped to current user, not entity.
   # Note: `user` here is the policy's user method (current authenticated user),
@@ -94,7 +94,7 @@ module Pu
 
       def customize_controller
         # Set user automatically when creating profile
-        content = <<-RUBY.chomp
+        content = <<-RUBY
 
   private
 

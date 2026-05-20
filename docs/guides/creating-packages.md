@@ -13,7 +13,7 @@ Domain code (models, policies, definitions, interactions) lives in **feature pac
 | **Feature** | Business logic | `pu:pkg:package NAME` | `blogging`, `billing`, `inventory` |
 | **Portal** | Web interface | `pu:pkg:portal NAME` | `admin_portal`, `customer_portal`, `public_portal` |
 
-🚨 Don't mix the two. Feature packages have NO routes, views, or controllers. Portal packages have NO models or interactions.
+🚨 Don't mix the two. Feature packages own the **domain code** — models, interactions, policies/definitions for resources owned by that feature. Portal packages own the **web surface** — controllers, routes, auth, and portal-specific policy/definition *overrides* for resources they expose.
 
 ## Feature package
 
@@ -64,21 +64,18 @@ Options:
 - `--byo` — bring your own auth.
 - `--scope=CLASS` — entity class for multi-tenancy.
 
-### 2. Mount it
+The generator mounts the engine for you — at `/admin` in this case, wrapped in `constraints Rodauth::Rails.authenticate(:user)` because you passed `--auth=user`. Open `packages/admin_portal/config/routes.rb` to see the generated mount.
 
-```ruby
-# config/routes.rb
-Rails.application.routes.draw do
-  constraints Rodauth::Rails.authenticate(:user) do
-    mount AdminPortal::Engine, at: "/admin"
-  end
-end
-```
-
-### 3. Connect resources
+### 2. Connect resources
 
 ```bash
-rails g pu:res:conn Post Blogging::Post --dest=admin_portal
+rails g pu:res:conn Blogging::Post --dest=admin_portal
+```
+
+You can connect multiple resources in one command:
+
+```bash
+rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
 ```
 
 See [Reference › App › Portals](/reference/app/portals) for the full portal surface.

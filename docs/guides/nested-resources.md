@@ -43,6 +43,8 @@ end
 
 This adds a "Properties" tab on the Company show page that loads the nested collection. See [Reference › Behavior › Policies › Association permissions](/reference/behavior/policies#association-permissions).
 
+![Parent show page with nested-association tab](/images/guides/nested-resources-tab.png)
+
 ### 4. Visit the URL
 
 ```
@@ -179,6 +181,73 @@ Plutonium supports **one level of nesting only**:
 - ❌ `/companies/:company_id/nested_properties/:property_id/nested_units` (grandparent → parent → child)
 
 For deeper hierarchies, use top-level routes plus association tabs on the show page (`permitted_associations`).
+
+## Nested inputs (sub-records inside a parent form)
+
+A different feature with a confusingly similar name. **Nested *resources*** (above) give you separate URLs for the child collection. **Nested *inputs*** let you edit child records inline inside the parent's form — a single submit creates/updates/deletes them in one go, backed by Rails' `accepts_nested_attributes_for`.
+
+Use nested inputs when the children are conceptually part of the parent (line items on an order, variants on a product, contact methods on a person) and don't deserve their own page.
+
+### Setup
+
+```ruby
+# Model
+class Post < ResourceRecord
+  has_many :comments
+  accepts_nested_attributes_for :comments, allow_destroy: true, reject_if: :all_blank
+end
+
+# Definition
+class PostDefinition < ResourceDefinition
+  nested_input :comments do |definition|
+    definition.input :body, as: :text
+  end
+end
+
+# Policy — list the association name (NOT `comments_attributes`)
+class PostPolicy < ResourcePolicy
+  def permitted_attributes_for_create
+    [:title, :body, :comments]
+  end
+end
+```
+
+::: warning Permit the association, not the strong-params shape
+List `:comments` in `permitted_attributes_for_*` — Plutonium translates it to `comments_attributes: [...]` for you. If you write the raw hash, the form renders the field name as a literal label instead of the nested editor.
+:::
+
+### Result
+
+![Inline nested-input editor with Add Comment button](/images/guides/nested-inputs.png)
+
+Each existing child renders as its own sub-form. A `Delete` checkbox appears when `allow_destroy: true`; the `+ Add` button appends a blank row.
+
+### Sourcing fields from an existing definition
+
+If the child already has its own `Definition` and you want to reuse its inputs:
+
+```ruby
+nested_input :comments, using: CommentDefinition, fields: %i[author body]
+```
+
+### Limits
+
+```ruby
+nested_input :variants, limit: 5      # cap the number of children
+nested_input :profile,  macro: :has_one   # singular sub-form, no Add button
+```
+
+### Nested *inputs* vs nested *resources*
+
+| | Nested inputs (`nested_input :comments`) | Nested resources (this guide's main topic) |
+|---|---|---|
+| URL | None — inline in parent form | `/posts/:id/nested_comments` |
+| Submit | One — saves parent + children together | Independent CRUD per child |
+| Discoverability | Always visible in parent form | Tab on parent show page (with `permitted_associations`) |
+| Best for | Tightly-owned children (line items, variants) | Children users browse on their own (orders, posts) |
+| Backing | `accepts_nested_attributes_for` | Plutonium's nested controller routing |
+
+You can use both on the same association — they're not mutually exclusive.
 
 ## Inline `+` add on the parent form
 

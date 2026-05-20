@@ -235,6 +235,7 @@ entity_scope
 
 - **Multiple associations to the same entity class.** E.g. `Match belongs_to :home_team, :away_team` both pointing at `Team`. Plutonium raises — override `scoped_entity_association` on the controller to pick one (`def scoped_entity_association = :home_team`).
 - **`param_key` differs from association name.** Fine — Plutonium matches by **class**, not param key. `scope_to_entity Competition::Team, param_key: :team` works with `belongs_to :competition_team`.
+- **Default `param_key` includes `_scoped` suffix.** `scope_to_entity Organization` produces routes like `/organization_scoped/:organization_scoped_id/posts` to avoid colliding with a `belongs_to :organization` on child models. Pass `param_key:` (and optionally `route_key:`) to override for cleaner URLs.
 - **Forgetting compound uniqueness.** `validates :code, uniqueness: true` leaks across tenants. Use `uniqueness: {scope: :organization_id}`.
 - **"Temporary" `where` bypass for debugging.** Use `skip_default_relation_scope!` explicitly. Never leave a `where` bypass in code.
 
@@ -421,10 +422,18 @@ rails generate pu:invites:install
 | `--entity-model=NAME` | `Entity` | Entity model name |
 | `--user-model=NAME` | `User` | User model name |
 | `--invite-model=NAME` | `<EntityModel><UserModel>Invite` | Invite class name (omit for single-flow apps) |
-| `--membership-model=NAME` | `EntityUser` | Membership join model |
-| `--roles=ROLES` | `member,admin` | Comma-separated |
+| `--membership-model=NAME` | `EntityUser` | Membership join model (must already exist; roles are read from its `enum :role`) |
 | `--rodauth=NAME` | `user` | Rodauth configuration for signup |
 | `--enforce-domain` | `false` | Require invited email domain to match entity |
+| `--dest=PACKAGE` | `main_app` | Package where the entity model lives (controls where `invite_user_interaction.rb` is generated) |
+
+::: 🚨 No `--roles` flag here
+Role list is derived from the membership model's `enum :role`. Set roles via `pu:saas:membership --roles=...` (or edit the enum directly). **Index 0 is the most privileged** — typically `owner`, which the invite UI excludes from selectable choices; new invitees default to the second role (`roles[1]`).
+:::
+
+::: 🚨 ActiveRecord encryption keys required
+The invite model uses `encrypts :token, deterministic: true`. Without configured AR encryption keys, creating or accepting an invite raises `ActiveRecord::Encryption::Errors::Configuration`. The generator detects this and warns at install time — generate keys with `bin/rails db:encryption:init`, then paste the printed `active_record_encryption:` block into `config/credentials.yml.enc` (or set the equivalent `ACTIVE_RECORD_ENCRYPTION_*` ENV vars in production).
+:::
 
 ### What gets created
 
@@ -619,12 +628,22 @@ class Invites::UserInvite < Invites::ResourceRecord
 end
 ```
 
-### Domain enforcement / custom roles
+### Domain enforcement
 
 ```bash
 rails g pu:invites:install --enforce-domain
-rails g pu:invites:install --roles=viewer,editor,admin,owner
 ```
+
+### Custom roles
+
+Set roles when generating the membership model (ordering: index 0 = most privileged):
+
+```bash
+rails g pu:saas:membership --user Customer --entity Organization --roles=admin,editor,viewer
+# → enum :role, { owner: 0, admin: 1, editor: 2, viewer: 3 }   (owner auto-prepended)
+```
+
+Or edit `enum :role` on the existing membership model directly. Then run `pu:invites:install`.
 
 ## Portal connection
 

@@ -168,6 +168,14 @@ Now you have two portals:
 | Admin | `/admin` | Admin | All posts |
 | Author | `/author` | User | Own posts only |
 
+Log in at `/users/login` with the user account and you land on the Author Portal dashboard — the same chrome as the Admin Portal but mounted at `/author`, gated by `Rodauth::Rails.authenticate(:user)`:
+
+![Author Portal dashboard](/images/tutorial/07-author-dashboard.png)
+
+The posts list lives at `/author/blogging/posts` — same `Blogging::Post` resource, different portal context (and once you add the scoping policy below, scoped to the logged-in author):
+
+![Author Portal posts index](/images/tutorial/07-author-portal.png)
+
 ### Test the difference:
 
 1. **Create an Admin account** at `/admin/register`

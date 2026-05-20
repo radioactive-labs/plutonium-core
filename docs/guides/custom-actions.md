@@ -139,7 +139,12 @@ def bulk_archive?
 end
 ```
 
-The UI only shows bulk actions ALL selected records support.
+Two related behaviors:
+
+- A row gets a `✕` instead of a checkbox when **no** bulk action applies to it (no `*_bulk?` policy method on that record returns true).
+- A bulk action only appears in the toolbar when **every selected row** supports it. Mixing one unsupported row hides the action until you deselect.
+
+![Bulk action toolbar with selected drafts](/images/guides/custom-actions-bulk.png)
 
 ## Resource action (no specific record)
 

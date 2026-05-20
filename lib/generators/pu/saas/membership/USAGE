@@ -6,8 +6,11 @@ Description:
 
 Example:
     rails g pu:saas:membership --user Customer --entity Organization
-    rails g pu:saas:membership --user Customer --entity Organization --roles=member,admin,owner
+    rails g pu:saas:membership --user Customer --entity Organization --roles=admin,member
     rails g pu:saas:membership --user Customer --entity Organization --extra-attributes=joined_at:datetime
+
+    Role ordering: `owner` is auto-prepended as index 0 (most privileged) — do not include it
+    in --roles. Subsequent roles run from most-privileged to least.
 
     This creates:
         app/models/organization_customer.rb (with role enum and uniqueness validation)

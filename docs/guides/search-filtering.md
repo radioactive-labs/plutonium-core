@@ -11,6 +11,8 @@ Users can:
 - Click scope buttons (top-of-list quick filters) for common queries like "Published" or "My posts".
 - Click column headers to sort.
 
+![Search box, scope tabs, filter button, sortable columns](/images/guides/search-filtering-index.png)
+
 ## The four pieces
 
 | DSL | Purpose |
@@ -140,6 +142,10 @@ end
 
 filter :price, with: PriceRangeFilter
 ```
+
+Clicking **Filter** opens a slideover with one input per declared filter:
+
+![Filter slideover](/images/guides/search-filtering-panel.png)
 
 ## Scopes (quick-filter buttons)
 

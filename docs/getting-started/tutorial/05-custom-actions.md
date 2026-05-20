@@ -79,10 +79,15 @@ end
 
 ## Testing the Action
 
-1. Create an unpublished post
-2. View the post details
-3. Click the "Publish" action button
-4. The post is now published
+Open any unpublished post and click **Actions** in the top-right — the "Publish Post" item appears with its Tabler icon:
+
+![Publish action in the show page menu](/images/tutorial/05-actions-menu.png)
+
+It also shows on each table row's `⋮` menu — same action, available wherever the record is rendered:
+
+![Publish action in the row menu](/images/tutorial/05-row-actions.png)
+
+Click "Publish Post" and the post is updated; the flash banner confirms success.
 
 ## Actions with User Input
 

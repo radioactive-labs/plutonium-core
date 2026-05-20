@@ -207,7 +207,9 @@ current_account(portal: :admin)
 with_portal(:org) { ... }                  # scoped portal switch
 ```
 
-**Override hook for non-Rodauth apps:** define `sign_in_for_tests(account, portal:)` in your test class (or in `test/support/plutonium_testing.rb` for project-wide use). `AuthHelpers` will defer to it.
+**Default Rodauth login expects `password: "password123"`** — `login_as` POSTs to `/<account_table>/login` with that hardcoded password. Either seed test accounts with it (fixtures/factories) or override via `sign_in_for_tests` below.
+
+**Override hook for non-Rodauth apps (or to bypass Rodauth in tests):** define `sign_in_for_tests(account, portal:)` in your test class (or in `test/support/plutonium_testing.rb` for project-wide use). `AuthHelpers` will defer to it.
 
 ```ruby
 def sign_in_for_tests(account, portal:)

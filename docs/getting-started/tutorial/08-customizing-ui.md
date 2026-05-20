@@ -117,6 +117,10 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
 end
 ```
 
+The default "Posts" heading becomes your branded title and description:
+
+![Customized index page title](/images/tutorial/08-customized-index.png)
+
 For more advanced customization, you can create custom page classes that inherit from Plutonium's page components:
 
 ```ruby

@@ -63,7 +63,7 @@ class WelcomeController < AuthenticatedController
 <% end -%>
 
   def portal_root_path(<%= entity_table %>)
-    <%= portal_engine %>::Engine.routes.url_helpers.<%= entity_table %>_root_path(<%= entity_table %>: <%= entity_table %>)
+    <%= portal_engine %>::Engine.routes.url_helpers.<%= entity_table %>_scoped_root_path(<%= entity_table %>_scoped: <%= entity_table %>)
   end
   helper_method :portal_root_path
 end
