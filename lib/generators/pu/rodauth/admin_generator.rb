@@ -1,5 +1,3 @@
-return unless defined?(Rodauth::Rails)
-
 require "rails/generators/base"
 
 require_relative "../lib/plutonium_generators"

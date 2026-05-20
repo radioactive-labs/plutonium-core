@@ -4,6 +4,7 @@ require "securerandom"
 require "#{__dir__}/concerns/configuration"
 require "#{__dir__}/concerns/account_selector"
 require "#{__dir__}/concerns/feature_selector"
+require "#{__dir__}/migration_generator"
 require "#{__dir__}/../lib/plutonium_generators/concerns/actions"
 
 module Pu
@@ -96,7 +97,7 @@ module Pu
       def generate_rodauth_migration
         return if selected_migration_features.empty?
 
-        invoke "pu:rodauth:migration", [table], features: selected_migration_features,
+        invoke Pu::Rodauth::MigrationGenerator, [table], features: selected_migration_features,
           name: kitchen_sink? ? "rodauth_kitchen_sink" : nil,
           migration_name: options[:migration_name],
           login_column: login_column,

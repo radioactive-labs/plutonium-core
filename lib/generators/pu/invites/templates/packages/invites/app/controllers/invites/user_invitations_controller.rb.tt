@@ -7,6 +7,7 @@ module Invites
 <% end -%>
     include Plutonium::Invites::Controller
 
+    prepend_view_path Invites::Engine.root.join("app/views")
     layout "invites/invitation"
     helper_method :login_path
 

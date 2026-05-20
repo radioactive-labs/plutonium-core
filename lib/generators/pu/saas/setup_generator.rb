@@ -16,6 +16,9 @@ module Pu
       class_option :entity, type: :string, required: true,
         desc: "The entity model name (e.g., Organization)"
 
+      class_option :dest, type: :string, default: "main_app",
+        desc: "Destination feature/package for entity, membership, and api_client (default: main_app)"
+
       class_option :allow_signup, type: :boolean, default: true,
         desc: "Whether to allow users to sign up to the platform"
 
@@ -51,6 +54,9 @@ module Pu
 
       class_option :profile, type: :boolean, default: true,
         desc: "Generate user profile resource"
+
+      class_option :profile_attributes, type: :array, default: %w[name:string],
+        desc: "Additional attributes for the user profile model (default: name:string)"
 
       class_option :api_client, type: :string, default: nil,
         desc: "Generate an API client model (e.g., ApiClient)"
@@ -130,9 +136,15 @@ module Pu
       end
 
       def generate_profile
-        generate "pu:profile:setup",
-          "--user-model=#{options[:user]} --dest=main_app" \
-          "#{" --portal=#{portal_package}" if options[:portal]}"
+        klass = Rails::Generators.find_by_namespace("pu:profile:setup")
+        profile_options = {
+          user_model: options[:user],
+          dest: options[:dest],
+          force: options[:force],
+          skip: options[:skip]
+        }
+        profile_options[:portal] = portal_package if options[:portal]
+        klass.new([nil, *options[:profile_attributes]], profile_options).invoke_all
       end
 
       def generate_welcome
@@ -145,7 +157,7 @@ module Pu
 
       def generate_invites
         generate "pu:invites:install",
-          "--entity-model=#{options[:entity]} --user-model=#{options[:user]} --dest=main_app" \
+          "--entity-model=#{options[:entity]} --user-model=#{options[:user]} --dest=#{options[:dest]}" \
           " --rodauth=#{rodauth_config}"
       end
 
