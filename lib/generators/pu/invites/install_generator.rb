@@ -471,7 +471,11 @@ module Pu
         creds_path = Rails.root.join("config/credentials.yml.enc")
         return false unless creds_path.exist?
 
-        decrypted = Rails.application.credentials.config rescue nil
+        decrypted = begin
+          Rails.application.credentials.config
+        rescue
+          nil
+        end
         decrypted&.dig(:active_record_encryption, :primary_key).to_s.length > 0
       end
 
