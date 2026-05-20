@@ -1,4 +1,7 @@
 import DefaultTheme from "vitepress/theme"
+import { onMounted, watch, nextTick } from "vue"
+import { useRoute } from "vitepress"
+import mediumZoom from "medium-zoom"
 import "./custom.css"
 
 import HomeHero from "./components/HomeHero.vue"
@@ -21,5 +24,38 @@ export default {
     app.component("HomeInTheBox", HomeInTheBox)
     app.component("HomeCta", HomeCta)
     app.component("SectionLanding", SectionLanding)
+  },
+  setup() {
+    const route = useRoute()
+
+    let closeBtn: HTMLButtonElement | null = null
+
+    const attachCloseButton = (z: ReturnType<typeof mediumZoom>) => {
+      z.on("opened", () => {
+        const overlay = document.querySelector<HTMLElement>(".medium-zoom-overlay")
+        if (!overlay) return
+        closeBtn = document.createElement("button")
+        closeBtn.type = "button"
+        closeBtn.setAttribute("aria-label", "Close")
+        closeBtn.className = "pu-zoom-close"
+        closeBtn.innerHTML = "&times;"
+        closeBtn.addEventListener("click", () => z.close())
+        document.body.appendChild(closeBtn)
+      })
+      z.on("close", () => {
+        closeBtn?.remove()
+        closeBtn = null
+      })
+    }
+
+    const zoom = () => {
+      const z = mediumZoom(".vp-doc img:not(a img), img.pu-zoomable", {
+        background: "var(--vp-c-bg)",
+        margin: 16,
+      })
+      attachCloseButton(z)
+    }
+    onMounted(() => nextTick(zoom))
+    watch(() => route.path, () => nextTick(zoom))
   }
 }

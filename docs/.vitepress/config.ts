@@ -32,8 +32,7 @@ export default defineConfig(withMermaid({
       { text: "Home", link: "/" },
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Guides", link: "/guides/" },
-      { text: "Reference", link: "/reference/" },
-      { text: "Demo", link: "https://github.com/radioactive-labs/plutonium-core/tree/master/test/dummy" }
+      { text: "Reference", link: "/reference/" }
     ],
     sidebar: {
       '/getting-started/': [
