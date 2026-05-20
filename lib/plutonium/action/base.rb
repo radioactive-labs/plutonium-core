@@ -16,7 +16,7 @@ module Plutonium
     # @attr_reader [Symbol, nil] category The category of the action.
     # @attr_reader [Integer] position The position of the action within its category.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to, :modal, :modal_size
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :turbo_frame, :color, :category, :position, :return_to, :modal, :size
 
       # Initialize a new action.
       #
@@ -58,9 +58,9 @@ module Plutonium
         @category = ActiveSupport::StringInquirer.new((options[:category] || :secondary).to_s)
         @position = options[:position] || 50
         @modal = options[:modal] || :centered
-        @modal_size = options[:modal_size] || :md
+        @size = options[:size] || :md
         validate_modal!
-        validate_modal_size!
+        validate_size!
 
         freeze
       end
@@ -122,7 +122,7 @@ module Plutonium
           category: @category.to_sym,
           position: @position,
           modal: @modal,
-          modal_size: @modal_size
+          size: @size
         }
       end
 
@@ -133,11 +133,11 @@ module Plutonium
         raise ArgumentError, "modal must be :centered or :slideover, got #{@modal.inspect}"
       end
 
-      def validate_modal_size!
-        return if Plutonium::UI::Modal::Base::VALID_SIZES.include?(@modal_size)
+      def validate_size!
+        return if Plutonium::UI::Modal::Base::VALID_SIZES.include?(@size)
         raise ArgumentError,
-          "modal_size must be one of #{Plutonium::UI::Modal::Base::VALID_SIZES.inspect}, " \
-            "got #{@modal_size.inspect}"
+          "size must be one of #{Plutonium::UI::Modal::Base::VALID_SIZES.inspect}, " \
+            "got #{@size.inspect}"
       end
 
       # Build RouteOptions from the provided options

@@ -428,10 +428,18 @@
    =================== */
 
 .pu-checkbox {
-  @apply size-5 rounded-md bg-white border-2 border-slate-300 accent-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0 cursor-pointer transition-all duration-150 checked:bg-primary-600 checked:border-primary-600 indeterminate:bg-primary-600 indeterminate:border-primary-600 hover:border-primary-400;
+  @apply size-5 rounded-md bg-white border-2 border-slate-300 text-primary-600 accent-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0 cursor-pointer transition-all duration-150 checked:bg-primary-600 checked:border-primary-600 indeterminate:bg-primary-600 indeterminate:border-primary-600 hover:border-primary-400;
 }
 
 .dark .pu-checkbox {
+  @apply bg-slate-700 border-slate-500 hover:border-primary-400;
+}
+
+.pu-radio {
+  @apply size-5 rounded-full bg-white border-2 border-slate-300 text-primary-600 accent-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:ring-offset-0 cursor-pointer transition-all duration-150 checked:bg-primary-600 checked:border-primary-600 hover:border-primary-400;
+}
+
+.dark .pu-radio {
   @apply bg-slate-700 border-slate-500 hover:border-primary-400;
 }
 

@@ -30,11 +30,15 @@ module Plutonium
             valid_input: "pu-input pu-input-valid",
             neutral_input: "",
 
-            # Checkbox
+            # Checkbox / Boolean
             checkbox: "pu-checkbox",
+            boolean: "pu-checkbox",
+            valid_boolean: "pu-checkbox",
+            invalid_boolean: "pu-checkbox pu-input-invalid",
 
             # Radio buttons
-            radio_button: "pu-checkbox",
+            radio_button: "pu-radio",
+            collection_radio_buttons: "flex flex-col gap-2",
 
             # Color
             color: "pu-color-input appearance-none bg-transparent border-none cursor-pointer w-12 h-12 rounded-lg",

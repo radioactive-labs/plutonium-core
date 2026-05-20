@@ -6,7 +6,12 @@ module Plutonium
 
       VALID_MODAL_MODES = [:centered, :slideover, false].freeze
 
-      # Sets how :new / :edit actions render.
+      # Sets how :new / :edit actions render. Also becomes the default
+      # for interactive actions registered on this definition; per-action
+      # `modal:` / `size:` overrides still win. Call this BEFORE
+      # `action :foo, interaction: ...` — actions defined earlier are
+      # not retroactively re-derived.
+      #
       # - :slideover (default) — slide-in panel from the right
       # - :centered — centered dialog
       # - false — no modal; new/edit are full standalone pages
