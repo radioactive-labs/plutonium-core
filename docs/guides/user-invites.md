@@ -30,8 +30,7 @@ Or with custom models:
 rails g pu:invites:install \
   --entity-model=Organization \
   --user-model=Customer \
-  --membership-model=OrganizationCustomer \
-  --roles=member,manager,admin
+  --membership-model=OrganizationCustomer
 ```
 
 | Option | Default | Description |
@@ -39,10 +38,13 @@ rails g pu:invites:install \
 | `--entity-model=NAME` | `Entity` | Entity model |
 | `--user-model=NAME` | `User` | User model |
 | `--invite-model=NAME` | `<EntityModel><UserModel>Invite` | Invite class name |
-| `--membership-model=NAME` | `EntityUser` | Membership join model |
-| `--roles` | `member,admin` | Comma-separated roles |
+| `--membership-model=NAME` | `EntityUser` | Membership join model (must already exist) |
 | `--rodauth=NAME` | `user` | Rodauth configuration for signup |
 | `--enforce-domain` | `false` | Require email domain to match entity |
+
+::: info Roles come from the membership model
+`pu:invites:install` reads the role list from the membership model's `enum :role` — it does not accept a `--roles=` flag. Define roles when you generate the membership model (`pu:saas:membership --roles=...`), or edit the enum directly. **Index 0 is the most privileged** (typically `owner`); the invite interaction excludes `owner` from selectable choices and defaults new invitees to the second role.
+:::
 
 ### 2. Migrate
 
@@ -93,6 +95,10 @@ Or via the auto-generated "Invite User" action on the entity's show page.
 Token-based URL: `https://app.example.com/invitations/abc123...`
 
 ### 3. User accepts
+
+Clicking the link lands on the invitation page:
+
+![Invitation landing page](/images/guides/user-invites-landing.png)
 
 **Existing user:** clicks link → logs in (or already logged in) → email validated → membership created.
 

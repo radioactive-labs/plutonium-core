@@ -98,8 +98,8 @@ By default the index page renders a `Table`. To use cards instead, override `vie
 ```ruby
 class Table < Table
   def view_template
-    render_search_bar
-    render_scopes_bar
+    render_toolbar
+    render_scopes_pills
     if collection.empty?
       render_empty_card
     else

@@ -118,13 +118,13 @@ rails db:migrate
 
 ## Creating a Portal
 
-Resources need a portal to be accessible via the web. Let's create an admin portal:
+Resources need a portal to be accessible via the web. Let's create a public admin portal so we can explore the UI right away — we'll add authentication in [Chapter 3](./03-authentication).
 
 ```bash
-rails generate pu:pkg:portal admin
+rails generate pu:pkg:portal admin --public
 ```
 
-This creates the AdminPortal package with authentication configured.
+This creates the `AdminPortal` package mounted at `/admin`. The `--public` flag wires the portal's controller with `Plutonium::Auth::Public`, so any visitor can access it. (Other options: `--auth=ACCOUNT` to gate via a Rodauth account, or `--byo` for your own auth.)
 
 ## Connecting the Resource
 
@@ -145,12 +145,21 @@ This:
 bin/dev
 ```
 
-Visit `http://localhost:3000/admin/blogging/posts`. You should see:
-- An empty posts table
-- A "New Post" button
-- Search and filter options
+Visit `http://localhost:3000/admin/blogging/posts`. You should see an empty posts table with a "New Post" button:
 
-Try creating a post. The form is automatically generated from your model's attributes.
+![Empty posts index](/images/tutorial/02-empty-index.png)
+
+Click "New" — the form is automatically generated from your model's attributes. By default Plutonium opens it as a slideover (right) so you keep the index visible; visiting `/admin/blogging/posts/new` directly renders the same form as a standalone page (left):
+
+| Default — slideover from index | Standalone page (direct URL) |
+|:--:|:--:|
+| ![Slideover new form](/images/tutorial/02-new-form-modal.png) | ![Standalone new form](/images/tutorial/02-new-form.png) |
+
+To always render full-page instead, set `modal false` in the definition. To pick a different style, use `modal :centered`. See [Reference › Resource › Definition › Modal](/reference/resource/definition).
+
+Create a few posts and the table fills in:
+
+![Posts index with rows](/images/tutorial/02-index-with-posts.png)
 
 ## Understanding Auto-Detection
 

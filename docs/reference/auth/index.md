@@ -43,7 +43,7 @@ class AdminController < PlutoniumController
 end
 ```
 
-`Plutonium::Auth::Rodauth(:name)` exposes `current_user`, `logout_url`, and `rodauth` in the controller.
+`Plutonium::Auth::Rodauth(:name)` exposes `current_user`, `logout_url`, `profile_url`, and `rodauth` in the controller (all available as helper methods in views too).
 
 For portal wiring (`AdminPortal::Concerns::Controller`), see [App › Portals](/reference/app/portals#controller-concern-auth).
 

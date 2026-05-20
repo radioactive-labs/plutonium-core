@@ -69,7 +69,13 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 end
 ```
 
-The panel links to the nested comments route and shows "Add Comment" if the user has permission.
+The post show page now has tabs — **Details** and **Comments** — driven by the associations you permit:
+
+![Post show page with Details and Comments tabs](/images/tutorial/06-post-with-comments.png)
+
+Clicking **Comments** opens the nested index for that post — a complete sub-resource view with its own paginated table, "New" button, and row actions:
+
+![Nested comments index](/images/tutorial/06-comments-tab.png)
 
 ## Comment Policy
 
