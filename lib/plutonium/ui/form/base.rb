@@ -149,8 +149,24 @@ module Plutonium
         def initialize_attributes
           super
 
-          attributes[:id] ||= :resource_form
+          attributes[:id] ||= "resource-form"
           attributes["data-controller"] = "form"
+        end
+
+        # Scope the form id to the current turbo frame at render time (we
+        # can't do this in `initialize_attributes` — Phlex hasn't started
+        # rendering yet, so `view_context` and the request headers aren't
+        # accessible). Primary and secondary modals can each host a form
+        # without colliding on document-level turbo-stream `replace target=`
+        # lookups. See Helpers::TurboHelper#turbo_scoped_dom_id.
+        #
+        # Also force-replace the id (Phlexi's `mix` would otherwise prepend
+        # `@namespace.dom_id`, producing space-separated ids like
+        # "q filter-form" which break document.getElementById lookups).
+        def form_attributes
+          attrs = super
+          attrs[:id] = turbo_scoped_dom_id(attributes[:id]) if attributes[:id]
+          attrs
         end
       end
     end

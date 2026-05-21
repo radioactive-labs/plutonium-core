@@ -47,7 +47,7 @@ module Plutonium
 
         def initialize_attributes
           super
-          attributes[:id] = :interaction_form
+          attributes[:id] = "interaction-form"
           attributes.fetch(:data_turbo) { attributes[:data_turbo] = object.turbo.to_s }
         end
 

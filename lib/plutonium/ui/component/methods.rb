@@ -48,6 +48,7 @@ module Plutonium
           :in_frame?,
           :in_modal?,
           :in_secondary_modal?,
+          :turbo_scoped_dom_id,
           :current_interactive_action,
           :current_engine,
           :policy_for,

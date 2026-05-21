@@ -38,7 +38,7 @@ module Plutonium
 
           if params[:pre_submit]
             respond_to do |format|
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("interaction-form"), view_context.render(@interaction.build_form)) }
               format.html { render :interactive_record_action, formats: [:html], status: :unprocessable_content }
             end
             return
@@ -87,7 +87,7 @@ module Plutonium
 
           if params[:pre_submit]
             respond_to do |format|
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("interaction-form"), view_context.render(@interaction.build_form)) }
               format.html { render :interactive_resource_action, status: :unprocessable_content }
             end
             return
@@ -134,7 +134,7 @@ module Plutonium
 
           if params[:pre_submit]
             respond_to do |format|
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("interaction-form", view_context.render(@interaction.build_form)) }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("interaction-form"), view_context.render(@interaction.build_form)) }
               format.html { render :interactive_bulk_action, formats: [:html], status: :unprocessable_content }
             end
             return

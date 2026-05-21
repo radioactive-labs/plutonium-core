@@ -14,15 +14,23 @@ module Plutonium
           def initialize(*, query_object:, search_url:, search_param: :q, search_value: nil, attributes: {}, **opts, &)
             opts[:as] = :q
             opts[:method] = :get
-            attributes = attributes.deep_merge(
-              id: "filter-form",
-              data: {turbo_frame: nil}
-            )
+            attributes = attributes.deep_merge(data: {turbo_frame: nil})
             super(*, attributes:, **opts, &)
             @query_object = query_object
             @search_url = search_url
             @search_param = search_param
             @search_value = search_value
+          end
+
+          # The Filters slideover renders on every index page (off-screen
+          # until opened) — same DOM as any CRUD modal that might appear.
+          # Base defaults the form id to "resource-form"; without this
+          # override, document-level `turbo_stream.replace("resource-form", …)`
+          # from a CRUD submit would clobber the wrong form. Pick a distinct
+          # id so the two never collide.
+          def initialize_attributes
+            super
+            attributes[:id] = "filter-form"
           end
 
           def form_class

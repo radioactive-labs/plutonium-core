@@ -53,7 +53,7 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form(action: :new))) }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :new))) }
               format.html { render :new, status: :unprocessable_content }
             elsif resource_record!.save
               format.turbo_stream do
@@ -71,7 +71,7 @@ module Plutonium
                   location: redirect_url_after_submit
               end
             else
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form(action: :new))), status: :unprocessable_content }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :new))), status: :unprocessable_content }
               format.html { render :new, status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
@@ -100,7 +100,7 @@ module Plutonium
 
           respond_to do |format|
             if params[:pre_submit]
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form(action: :edit))) }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :edit))) }
               format.html { render :edit, status: :unprocessable_content }
             elsif resource_record!.save
               format.turbo_stream do
@@ -116,7 +116,7 @@ module Plutonium
                 render :show, status: :ok, location: redirect_url_after_submit
               end
             else
-              format.turbo_stream { render turbo_stream: turbo_stream.replace("resource-form", view_context.render(build_form(action: :edit))), status: :unprocessable_content }
+              format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :edit))), status: :unprocessable_content }
               format.html { render :edit, status: :unprocessable_content }
               format.any do
                 @errors = resource_record!.errors
