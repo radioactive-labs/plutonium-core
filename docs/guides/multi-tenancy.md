@@ -69,7 +69,7 @@ Or pass `--scope=Organization` to `pu:pkg:portal` and the engine wires this auto
 mount CustomerPortal::Engine, at: "/customer"
 ```
 
-URLs now include the entity id: `/customer/organizations/42/posts`.
+URLs now include the entity id as the first path segment after the mount: `/customer/42/posts`. The underlying param name is `organization_scoped` (Plutonium suffixes `_scoped` to avoid a name collision with any `belongs_to :organization` on child models — `params[:organization_scoped]` vs `params[:organization]`). Pass `param_key:` to `scope_to_entity` if you want a different param name.
 
 ### 5. Compound uniqueness
 
@@ -88,14 +88,14 @@ end
 
 ```ruby
 scope_to_entity Organization, strategy: :path
-# → /organizations/:organization_id/posts
+# → /<mount>/:organization_scoped/posts   (request URL: /<mount>/42/posts)
 ```
 
 ### Custom param key
 
 ```ruby
 scope_to_entity Organization, strategy: :path, param_key: :org_id
-# → /orgs/:org_id/posts
+# → /<mount>/:org_id/posts   (same URL shape, just renames params[:organization_scoped] → params[:org_id])
 ```
 
 ### Subdomain / session / custom

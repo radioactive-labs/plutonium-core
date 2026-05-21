@@ -214,7 +214,7 @@ module CustomerPortal
 end
 ```
 
-Routes become `/organizations/:organization_id/posts`. The portal extracts `params[:organization_id]` and loads the entity automatically.
+Routes become `/<mount>/:organization_scoped/posts` (resolving to `/<mount>/42/posts` at request time — the entity id is the first path segment after the mount). The portal extracts `params[:organization_scoped]` and loads the entity automatically.
 
 ### Custom strategy (subdomain, session, etc.)
 
@@ -238,18 +238,19 @@ The strategy symbol must match a method name on the controller concern.
 
 ### Custom param key
 
-The default `param_key` derives from the entity class — `<singular_route_key>_scoped` — to avoid collisions with a `belongs_to :organization` on child models. So `scope_to_entity Organization` produces routes like `/organization_scoped/:organization_scoped_id/posts`. Override when you want a cleaner URL:
+The default `param_key` derives from the entity class — `<singular_route_key>_scoped` (e.g. `:organization_scoped`) — to avoid colliding with a `belongs_to :organization` on child models when reading `params[:organization]`. The URL itself just uses the entity id as the first segment after the mount:
+
+```
+mount CustomerPortal::Engine, at: "/customer"
+# → /customer/:organization_scoped/posts   (route definition)
+# → /customer/42/posts                     (request URL)
+```
+
+Override when you want a different param name (e.g. for readability when reading params in custom controllers):
 
 ```ruby
 scope_to_entity Organization, strategy: :path, param_key: :org_id
-# → /org_id/:org_id/posts
-```
-
-Pair with `route_key:` to control the path segment as well:
-
-```ruby
-scope_to_entity Organization, strategy: :path, param_key: :org_id, route_key: :orgs
-# → /orgs/:org_id/posts
+# → params[:org_id] instead of params[:organization_scoped]
 ```
 
 ### Accessing the scoped entity

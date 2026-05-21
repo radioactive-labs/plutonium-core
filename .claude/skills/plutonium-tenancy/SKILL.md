@@ -204,7 +204,7 @@ module AdminPortal
 end
 ```
 
-Routes become `/organizations/:organization_id/posts`. Portal extracts `params[:organization_id]` and loads the entity automatically.
+Routes become `/<mount>/:organization_scoped/posts` (resolving to `/<mount>/42/posts` at request time — the entity id is the first path segment after the mount). Portal extracts `params[:organization_scoped]` and loads the entity automatically. The `_scoped` suffix on the param name avoids colliding with `params[:organization]` from a `belongs_to :organization` on child models.
 
 ### Custom strategy (subdomain, session, etc.)
 
@@ -240,7 +240,7 @@ entity_scope
 
 - **Multiple associations to the same entity class.** E.g. `Match belongs_to :home_team, :away_team` both pointing at `Team`. Plutonium raises — override `scoped_entity_association` on the controller to pick one (`def scoped_entity_association = :home_team`).
 - **`param_key` differs from association name.** Fine — Plutonium matches by **class**, not param key. `scope_to_entity Competition::Team, param_key: :team` works with `belongs_to :competition_team`.
-- **Default `param_key` includes `_scoped` suffix.** `scope_to_entity Organization` produces routes like `/organization_scoped/:organization_scoped_id/posts` to avoid colliding with a `belongs_to :organization` on child models. Pass `param_key:` (and optionally `route_key:`) to override for cleaner URLs.
+- **Default `param_key` includes `_scoped` suffix.** `scope_to_entity Organization` reads `params[:organization_scoped]` (not `params[:organization]`) so it doesn't collide with `params[:organization]` from a `belongs_to :organization` on child models. The URL itself is unchanged — the entity id is just the first path segment after the mount (`/<mount>/42/posts`). Pass `param_key:` only if you want a different param name in your controllers.
 - **Forgetting compound uniqueness.** `validates :code, uniqueness: true` leaks across tenants. Use `uniqueness: {scope: :organization_id}`.
 - **"Temporary" `where` bypass for debugging.** Use `skip_default_relation_scope!` explicitly. Never leave a `where` bypass in code.
 
