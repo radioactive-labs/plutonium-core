@@ -1,5 +1,3 @@
-return unless defined?(Rodauth::Rails)
-
 require "rails/generators/base"
 
 require "#{__dir__}/concerns/configuration"

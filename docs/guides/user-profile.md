@@ -12,6 +12,14 @@ A `/profile` URL that shows the user's personal fields plus a "Security" section
 - **Profile needs `pu:profile:conn` to be visible** — without it, no `/profile` route, no `profile_url` helper.
 - **Every user needs a profile row.** Add an `after_create :create_profile!` callback to the user model. Without it, `current_user.profile` is nil.
 
+The show page renders the user's fields, then the **Security Settings** block with Rodauth-backed actions:
+
+![User profile show page with SecuritySection](/images/guides/user-profile-show.png)
+
+Editing produces a regular Plutonium form — same form generator the rest of your resources use:
+
+![User profile edit form](/images/guides/user-profile-edit.png)
+
 ## Quick path
 
 ```bash

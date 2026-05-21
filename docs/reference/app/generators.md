@@ -185,7 +185,7 @@ rails rodauth_admin:create[admin@example.com,password123]
 
 ```bash
 rails g pu:saas:setup --user Customer --entity Organization
-rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin
+rails g pu:saas:setup --user Customer --entity Organization --roles=admin,member
 rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
 rails g pu:saas:setup --user Customer --entity Organization \
   --user-attributes=name:string --entity-attributes=slug:string
@@ -216,7 +216,7 @@ For when you don't want the full `pu:saas:setup` meta-generator:
 ```bash
 rails g pu:saas:user Customer
 rails g pu:saas:entity Organization --extra-attributes=slug:string
-rails g pu:saas:membership --user Customer --entity Organization --roles=member,admin
+rails g pu:saas:membership --user Customer --entity Organization --roles=admin,member
 rails g pu:saas:portal customer --entity Organization
 rails g pu:saas:welcome --user Customer --entity Organization
 ```
@@ -305,10 +305,10 @@ rails g pu:invites:install --entity-model=Organization --user-model=Customer --i
 | `--entity-model=NAME` | `Entity` | Entity model name |
 | `--user-model=NAME` | `User` | User model name |
 | `--invite-model=NAME` | `<EntityModel><UserModel>Invite` | Invite class name |
-| `--membership-model=NAME` | `EntityUser` | Membership join model |
-| `--roles` | `member,admin` | Comma-separated |
+| `--membership-model=NAME` | `EntityUser` | Membership join model (must already exist; roles read from its `enum :role`) |
 | `--rodauth=NAME` | `user` | Rodauth configuration for signup |
 | `--enforce-domain` | `false` | Require email domain to match entity |
+| `--dest=PACKAGE` | `main_app` | Package where the entity model lives (controls where `invite_user_interaction.rb` is generated) |
 
 Multiple invite flows are supported — run `pu:invites:install` once per flow.
 

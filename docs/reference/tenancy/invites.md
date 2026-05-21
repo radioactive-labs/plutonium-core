@@ -36,10 +36,13 @@ rails generate pu:invites:install
 | `--entity-model=NAME` | `Entity` | Entity model name |
 | `--user-model=NAME` | `User` | User model name |
 | `--invite-model=NAME` | `<EntityModel><UserModel>Invite` | Invite class name (omit for single-flow apps) |
-| `--membership-model=NAME` | `EntityUser` | Membership join model |
-| `--roles` | `member,admin` | Comma-separated roles |
+| `--membership-model=NAME` | `EntityUser` | Membership join model (must already exist) |
 | `--rodauth=NAME` | `user` | Rodauth configuration for signup |
 | `--enforce-domain` | `false` | Require invited email domain to match entity domain |
+
+::: info Roles come from the membership model
+The role list is read from the membership model's `enum :role` — there is no `--roles=` flag on `pu:invites:install`. Set roles when generating the membership model (`pu:saas:membership --roles=...`) or edit its enum directly. **Index 0 is the most privileged** (typically `owner`, which the invite UI excludes from selectable choices); new invitees default to the second role.
+:::
 
 Example with custom models:
 
@@ -47,8 +50,7 @@ Example with custom models:
 rails g pu:invites:install \
   --entity-model=Organization \
   --user-model=Customer \
-  --membership-model=OrganizationMember \
-  --roles=member,manager,admin
+  --membership-model=OrganizationMember
 ```
 
 After install:
@@ -317,9 +319,14 @@ Requires the invited email's domain to match the entity's domain.
 
 ### Custom roles
 
+Roles are defined on the membership model, not on the invites generator. Set them at membership generation time (ordering matters — **index 0 is the most privileged**, typically `owner`):
+
 ```bash
-rails g pu:invites:install --roles=viewer,editor,admin,owner
+rails g pu:saas:membership --user Customer --entity Organization --roles=admin,editor,viewer
+# → enum :role, { owner: 0, admin: 1, editor: 2, viewer: 3 }  (owner is auto-prepended)
 ```
+
+Or edit `enum :role` on the existing membership model directly. Then run `pu:invites:install`.
 
 ### Custom expiration
 

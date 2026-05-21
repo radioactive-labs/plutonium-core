@@ -239,10 +239,17 @@ The strategy symbol must match a method name on the controller concern.
 
 ### Custom param key
 
-When the param name differs from the entity model name:
+The default `param_key` derives from the entity class — `<singular_route_key>_scoped` — to avoid collisions with a `belongs_to :organization` on child models. So `scope_to_entity Organization` produces routes like `/organization_scoped/:organization_scoped_id/posts`. Override when you want a cleaner URL:
 
 ```ruby
 scope_to_entity Organization, strategy: :path, param_key: :org_id
+# → /org_id/:org_id/posts
+```
+
+Pair with `route_key:` to control the path segment as well:
+
+```ruby
+scope_to_entity Organization, strategy: :path, param_key: :org_id, route_key: :orgs
 # → /orgs/:org_id/posts
 ```
 

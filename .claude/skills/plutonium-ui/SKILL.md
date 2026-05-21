@@ -351,8 +351,8 @@ end
 class PostDefinition < ResourceDefinition
   class Table < Table
     def view_template
-      render_search_bar
-      render_scopes_bar
+      render_toolbar
+      render_scopes_pills
 
       if collection.empty?
         render_empty_card
@@ -371,7 +371,7 @@ end
 
 | Method | Purpose |
 |---|---|
-| `render_search_bar`, `render_scopes_bar` | Toolbar pieces |
+| `render_toolbar`, `render_scopes_pills`, `render_filter_pills`, `render_bulk_actions_toolbar` | Toolbar pieces |
 | `render_table` | Default table |
 | `render_empty_card` | Empty state |
 | `render_footer` | Pagination |

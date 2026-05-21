@@ -429,11 +429,55 @@ module Pu
         say_status :info, "Integrated invite check into WelcomeController", :green
       end
 
+      def verify_active_record_encryption
+        return if behavior == :revoke
+        return if active_record_encryption_configured?
+
+        say_status :warning, "ActiveRecord encryption keys are not configured", :yellow
+        say <<~MSG.indent(2)
+
+          Invite tokens use `encrypts :token, deterministic: true`. Without keys,
+          creating or accepting an invite raises
+          ActiveRecord::Encryption::Errors::Configuration.
+
+          Generate keys and add them to credentials with:
+
+              bin/rails db:encryption:init
+
+          Then paste the printed `active_record_encryption:` block into
+          config/credentials.yml.enc (or set the equivalent ENV vars in
+          production).
+
+        MSG
+      end
+
       def show_instructions
         readme "INSTRUCTIONS" if behavior == :invoke
       end
 
       private
+
+      # Detect AR encryption configuration without booting the host app.
+      # Returns true if credentials.yml(.enc) has the keys, or if all three
+      # ENV vars are set. False otherwise — we'd rather over-warn than miss.
+      def active_record_encryption_configured?
+        env_keys = %w[
+          ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY
+          ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY
+          ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT
+        ]
+        return true if env_keys.all? { |k| ENV[k].to_s.length > 0 }
+
+        creds_path = Rails.root.join("config/credentials.yml.enc")
+        return false unless creds_path.exist?
+
+        decrypted = begin
+          Rails.application.credentials.config
+        rescue
+          nil
+        end
+        decrypted&.dig(:active_record_encryption, :primary_key).to_s.length > 0
+      end
 
       def entity_model
         options[:entity_model].camelize

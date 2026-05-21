@@ -12,22 +12,26 @@ Rodauth is a Ruby authentication framework that Plutonium uses for:
 
 Plutonium integrates Rodauth seamlessly with its portal system.
 
-## Setting Up Authentication
+## Installing Rodauth
 
-If you used the Plutonium template, Rodauth is already installed. If not:
+Run the Plutonium Rodauth installer once per app — it creates the Rodauth app, plugin, and initializer:
 
 ```bash
 rails generate pu:rodauth:install
-rails db:migrate
 ```
+
+(No migration is needed yet; the account-type generator below creates its own tables.)
 
 ## Creating an Account Type
 
-Plutonium supports multiple account types. For admin accounts that cannot self-register, use the `admin` generator:
+Plutonium supports multiple account types. For admins, use the dedicated `pu:rodauth:admin` generator — it's a preset on top of `pu:rodauth:account` that enables 2FA, lockout, audit logging, and disables public signup:
 
 ```bash
 rails generate pu:rodauth:admin admin
+rails db:migrate
 ```
+
+For self-service user accounts, the corresponding command is `rails generate pu:rodauth:account user`.
 
 This creates:
 
@@ -57,30 +61,28 @@ end
 
 The generator also creates migrations for the account table and authentication features.
 
-## Configuring the Portal
+## Gating the Portal with Authentication
 
-Authentication is configured in the portal's controller concern. Update it to use Rodauth:
-
-```ruby
-# packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb
-module AdminPortal
-  module Concerns
-    module Controller
-      extend ActiveSupport::Concern
-      include Plutonium::Portal::Controller
-      include Plutonium::Auth::Rodauth(:admin)
-    end
-  end
-end
-```
-
-This provides `current_user` and authentication helpers throughout the portal.
-
-## Running Migrations
+In [Chapter 2](./02-first-resource) you generated the admin portal with `--public`. Now that you have an `admin` Rodauth account, swap the portal over to require login. The fastest way is to re-run the portal generator with `--auth=admin --force`:
 
 ```bash
-rails db:migrate
+rails generate pu:pkg:portal admin --auth=admin --force
 ```
+
+This updates two files:
+
+- `packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb` — swaps `include Plutonium::Auth::Public` for `include Plutonium::Auth::Rodauth(:admin)`, giving you `current_user`, `logout_url`, and `profile_url` helpers throughout the portal.
+- `packages/admin_portal/config/routes.rb` — wraps the engine mount in a routes-level constraint:
+
+  ```ruby
+  constraints Rodauth::Rails.authenticate(:admin) do
+    mount AdminPortal::Engine, at: "/admin"
+  end
+  ```
+
+The routes constraint is what actually gates access — unauthenticated requests to `/admin/*` are redirected to `/admins/login` before they hit any controller or policy.
+
+(If you prefer not to regenerate, you can apply both edits by hand — they're shown above.)
 
 ## Testing Authentication
 
@@ -90,7 +92,13 @@ Restart your server:
 bin/dev
 ```
 
-Visit `http://localhost:3000/admin/blogging/posts`. You'll be redirected to the login page.
+Visit `http://localhost:3000/admin/blogging/posts`. You'll be redirected to the login page:
+
+![Admin login page](/images/tutorial/03-login.png)
+
+The "Create a New Account" link goes to the same Rodauth-rendered account creation form:
+
+![Create account page](/images/tutorial/03-create-account.png)
 
 ### Creating an Admin Account
 

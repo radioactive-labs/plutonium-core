@@ -505,6 +505,8 @@ register_resource ::Post
 register_resource ::Profile, singular: true   # if --singular
 ```
 
+Re-running `pu:res:conn` for the same resource is **idempotent** — already-registered entries report `identical` and are not duplicated. Insertion falls back gracefully when the conventional `# register resources above` marker is missing (uses the `routes.draw do` opening), and warns clearly if it can't find any anchor.
+
 ### Generated controller
 
 ```ruby

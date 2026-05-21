@@ -14,7 +14,6 @@ rails generate pu:rodauth:account user [options]
 |---|---|
 | `--defaults` | Enables login, logout, remember, password reset |
 | `--kitchen_sink` | Enables ALL features |
-| `--primary` | Mark as primary account (no URL prefix) |
 | `--no-mails` | Skip mailer setup |
 | `--argon2` | Use Argon2 instead of bcrypt |
 | `--api_only` | JSON API only (no sessions) |
@@ -50,9 +49,6 @@ rails generate pu:rodauth:account user [options]
 # Basic account
 rails g pu:rodauth:account user
 
-# Primary account (no URL prefix)
-rails g pu:rodauth:account user --primary
-
 # With 2FA
 rails g pu:rodauth:account user --otp --recovery_codes
 
@@ -84,11 +80,14 @@ rails g pu:rodauth:admin admin --extra-attributes=name:string,department:string
 enum :role, super_admin: 0, admin: 1
 ```
 
-Rake task for direct admin creation:
+Rake task for direct admin creation (generated alongside the account — namespace is `rodauth`, task name is the account name):
 
 ```bash
-rails rodauth_admin:create[admin@example.com,password123]
+EMAIL=admin@example.com rails rodauth:admin
+# (run without EMAIL to be prompted)
 ```
+
+The task creates the account and triggers a verification email; the admin sets their own password via that flow. No password is passed on the command line.
 
 ## SaaS setup — `pu:saas:setup` (meta-generator)
 
@@ -105,7 +104,7 @@ After `pu:saas:setup` runs, don't separately run `pu:saas:portal`, `pu:profile:s
 
 ```bash
 rails g pu:saas:setup --user Customer --entity Organization
-rails g pu:saas:setup --user Customer --entity Organization --roles=member,admin
+rails g pu:saas:setup --user Customer --entity Organization --roles=admin,member
 rails g pu:saas:setup --user Customer --entity Organization --no-allow-signup
 rails g pu:saas:setup --user Customer --entity Organization \
   --user-attributes=name:string --entity-attributes=slug:string

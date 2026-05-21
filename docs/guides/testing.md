@@ -101,7 +101,11 @@ current_account                       # uses portal from DSL
 with_portal(:org) { ... }            # scoped portal switch
 ```
 
-### Non-Rodauth auth
+::: info Default Rodauth login expects password `"password123"`
+`login_as` posts to `/<account_table>/login` with `password: "password123"` by default. Either create test accounts with that password (e.g. in fixtures or factories), or override the auth flow via `sign_in_for_tests` below.
+:::
+
+### Non-Rodauth auth (or skipping Rodauth in tests)
 
 Define `sign_in_for_tests(account, portal:)` in your test class (or in `test/support/plutonium_testing.rb` for project-wide use):
 

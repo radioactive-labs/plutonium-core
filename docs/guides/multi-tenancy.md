@@ -12,6 +12,14 @@ Each tenant sees only their own records. Queries are filtered, forms inject the 
 - **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
 - **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}` — without this, uniqueness leaks across tenants.
 
+After login, users with memberships in multiple entities land on a workspace selector:
+
+![Workspace selector after login](/images/guides/multi-tenancy-welcome.png)
+
+Picking one lands them on the entity-scoped dashboard — note the entity slug in the URL:
+
+![Tenant-scoped dashboard](/images/guides/multi-tenancy-dashboard.png)
+
 ## Quickest path: `pu:saas:setup`
 
 ```bash

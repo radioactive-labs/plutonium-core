@@ -22,16 +22,18 @@ rails db:migrate
 #    (when you run `pu:pkg:portal admin --auth=user`, this happens automatically)
 ```
 
-Then mount your portal with the auth constraint:
+If you generated the portal with `--auth=user`, the engine is already mounted with the `Rodauth::Rails.authenticate(:user)` constraint — open `packages/admin_portal/config/routes.rb` to see it. The wiring looks like:
 
 ```ruby
-# config/routes.rb
+# packages/admin_portal/config/routes.rb (generated)
 Rails.application.routes.draw do
   constraints Rodauth::Rails.authenticate(:user) do
     mount AdminPortal::Engine, at: "/admin"
   end
 end
 ```
+
+If you generated the portal as `--public` and need to switch it to authenticated later, re-run with `--auth=user --force` (or edit the constraint into the routes file by hand).
 
 For accounts with more features, options, and admin patterns: see [Reference › Auth › Accounts](/reference/auth/accounts).
 
@@ -47,17 +49,20 @@ Then enable in the user-facing security section (see [User profile](./user-profi
 
 ### Hardened admin account
 
-For an admin role with 2FA required, lockout, audit logging, and no public signup:
+For an admin role with 2FA, lockout, audit logging, and no public signup, use the dedicated `pu:rodauth:admin` generator (a preset of `pu:rodauth:account` with hardened defaults):
 
 ```bash
 rails generate pu:rodauth:admin admin
 ```
 
-Create the first admin with the rake task:
+Create the first admin with the rake task generated alongside the account:
 
 ```bash
-rails rodauth_admin:create[admin@example.com,password123]
+EMAIL=admin@example.com rails rodauth:admin
+# (run without EMAIL to prompt)
 ```
+
+The task creates the account and triggers a verification email; the admin sets their own password through that flow. No password is passed on the command line.
 
 ### Multi-tenant SaaS — user + entity + membership in one shot
 

@@ -48,6 +48,19 @@ end
 
 Logo / favicon resolved from `app/assets/images/`.
 
+Default palette is turquoise on the left; swapping `primary` to indigo gives every `.pu-btn-primary`, focus ring, and selected-row highlight the new colour without touching any markup:
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+  <figure>
+    <img src="/images/guides/theming-before.png" alt="Default turquoise palette" />
+    <figcaption><em>Default (turquoise)</em></figcaption>
+  </figure>
+  <figure>
+    <img src="/images/guides/theming-after.png" alt="Indigo palette via tailwind override" />
+    <figcaption><em>After indigo override</em></figcaption>
+  </figure>
+</div>
+
 ## Step 3: Customize colors via Tailwind
 
 ```javascript
