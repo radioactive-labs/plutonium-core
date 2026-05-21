@@ -6,19 +6,20 @@ export default class extends Controller {
   }
  
   preSubmit() {
-    // Create a hidden input field
+    // Some widgets (e.g. slim-select) dispatch their own change event on top
+    // of the native one, so this can fire twice per user action. Remove any
+    // prior hidden field before appending a fresh one to avoid duplicates.
+    this.element.querySelectorAll('input[name="pre_submit"]').forEach(n => n.remove());
+
     const hiddenField = document.createElement('input');
     hiddenField.type = 'hidden';
     hiddenField.name = 'pre_submit';
     hiddenField.value = 'true';
- 
-    // Append it to the form
     this.element.appendChild(hiddenField);
 
     // Skip validation by setting novalidate attribute
     this.element.setAttribute('novalidate', '');
 
-    // Submit the form
     this.submit();
   }
  

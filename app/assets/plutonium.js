@@ -11515,6 +11515,7 @@
     connect() {
     }
     preSubmit() {
+      this.element.querySelectorAll('input[name="pre_submit"]').forEach((n3) => n3.remove());
       const hiddenField = document.createElement("input");
       hiddenField.type = "hidden";
       hiddenField.name = "pre_submit";
