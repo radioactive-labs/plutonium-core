@@ -1,3 +1,20 @@
+## [0.52.0] - 2026-05-21
+
+### 🐛 Bug Fixes
+
+- *(generators)* Use inclusion validation for required booleans
+- *(generators/assets)* Warn on failed yarn add instead of silently continuing
+- *(docs)* Let StopWriting terminals scroll horizontally instead of overflowing the column
+- *(docs)* Drop misleading 15-min claim — hero CTA → 'Tutorial', getting-started title → 'Learn Plutonium by building'
+- *(generators,docs)* Tutorial walkthrough + reference audit (#57)
+- *(ui/form)* Scope form ids per turbo frame to prevent stream-replace collisions
+- *(ui/form)* Hide secure_association "+" inside secondary modal
+- *(js/form)* Dedupe pre_submit hidden field on repeat change events
+- *(ui)* Form error alert margin + include model name in New/Edit page titles
+
+### ⚙️ Miscellaneous Tasks
+
+- *(appraisal)* Refresh rails-8.1 gemfile.lock for v0.51.0
 ## [0.51.0] - 2026-05-14
 
 ### 🚀 Features
