@@ -148,7 +148,7 @@ Pre-styled ready-to-use components:
 | Tables | `.pu-table-wrapper`, `.pu-table`, `-header`, `-header-cell`, `-body-row`, `-body-row-selected`, `-body-cell`, `.pu-selection-cell` |
 | Toolbars / empty states | `.pu-toolbar`, `-text`, `-actions`; `.pu-empty-state`, `-icon`, `-title`, `-description` |
 
-Full catalog: [Reference › UI › Assets › Component classes](/reference/ui/assets#component-classes-pu-).
+Full catalog: [Reference › UI › Assets › Component classes](/reference/ui/assets#component-classes-pu).
 
 ## Migrating from hardcoded classes
 

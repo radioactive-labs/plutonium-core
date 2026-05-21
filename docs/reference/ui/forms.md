@@ -150,7 +150,7 @@ end
 - Bare tag — just the input element. Use when you're laying out custom wrappers.
 - `wrapped(class: "...")` — pass classes to the wrapper div.
 
-## Association inputs (`secure_association_tag`)
+## Association inputs (`secure_association_tag`) {#association-inputs}
 
 Association inputs render with two affordances out of the box:
 

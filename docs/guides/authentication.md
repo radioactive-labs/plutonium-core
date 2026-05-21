@@ -70,7 +70,7 @@ The task creates the account and triggers a verification email; the admin sets t
 rails generate pu:saas:setup --user Customer --entity Organization
 ```
 
-⚠️ This is a **meta-generator** — it also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't re-run those manually. See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup-pu-saas-setup).
+⚠️ This is a **meta-generator** — it also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't re-run those manually. See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup).
 
 ### API-only (JWT)
 

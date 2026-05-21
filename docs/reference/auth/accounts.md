@@ -89,7 +89,7 @@ EMAIL=admin@example.com rails rodauth:admin
 
 The task creates the account and triggers a verification email; the admin sets their own password via that flow. No password is passed on the command line.
 
-## SaaS setup — `pu:saas:setup` (meta-generator)
+## SaaS setup — `pu:saas:setup` (meta-generator) {#saas-setup}
 
 Creates the User + Entity + Membership trio AND runs:
 

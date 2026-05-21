@@ -8,7 +8,7 @@ Each tenant sees only their own records. Queries are filtered, forms inject the 
 
 ## 🚨 Critical
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super` to a parent policy (e.g., a package base) that calls it.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super(relation)` (the framework's `Plutonium::Resource::Policy` base calls it for you).
 - **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
 - **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}` — without this, uniqueness leaks across tenants.
 
@@ -28,7 +28,7 @@ rails g pu:saas:setup --user Customer --entity Organization
 
 This **meta-generator** creates the user + entity + membership trio AND runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install` in one shot. The portal is fully wired for entity scoping.
 
-See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup-pu-saas-setup).
+See [Reference › Auth › Accounts › SaaS setup](/reference/auth/accounts#saas-setup).
 
 ## Manual setup
 
@@ -187,7 +187,7 @@ relation_scope do |relation|
 end
 ```
 
-🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise the runtime verification raises. Calling it explicitly here is safest; `super` works only if the parent policy also calls it.
+🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise the runtime verification raises. `super(relation)` works when extending `Plutonium::Resource::Policy` directly (its block calls `default_relation_scope`); call `default_relation_scope` by name when you're not chaining via `super`.
 
 ## Cross-tenant operations — super-admin portal
 
