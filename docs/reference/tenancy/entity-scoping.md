@@ -4,8 +4,7 @@ Multi-tenant data isolation. Built on three cooperating pieces — portal, polic
 
 ## 🚨 Critical
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins to the entity triggers `verify_default_relation_scope_applied!`. Always call `default_relation_scope(relation)` explicitly.
-- **Don't rely on `super`** inside `relation_scope` — call `default_relation_scope(relation)` by name.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins to the entity triggers `verify_default_relation_scope_applied!` — make sure the chain ends up calling `default_relation_scope(relation)` somewhere (explicitly, or via `super` to a parent that calls it — `Plutonium::Resource::Policy` does).
 - **Fix the MODEL, not the policy.** If `associated_with` can't resolve, declare an association path (`belongs_to`, `has_one :through`) OR a custom `associated_with_<entity>` scope on the model. Never paper over it with a `where` in the policy.
 - **Compound uniqueness scoped to the tenant FK** — `validates :code, uniqueness: {scope: :organization_id}`.
 - **Multiple associations to the same entity class** require overriding `scoped_entity_association` on the controller.
@@ -180,8 +179,8 @@ relation_scope { |r| r.joins(:project).where(projects: {organization_id: current
 relation_scope { |r| r.where(published: true) }
 ```
 
-::: danger Don't use `super`
-`super` inside `relation_scope` is unreliable — its semantics depend on how ActionPolicy's DSL registered the scope. Call `default_relation_scope(relation)` by name.
+::: tip `super` works too
+`Plutonium::Resource::Policy`'s `relation_scope` block calls `default_relation_scope(relation)`, so `super(relation)` from a subclass picks it up and the runtime check passes. Use whichever reads more clearly — `super(relation).where(archived: false)` and `default_relation_scope(relation).where(archived: false)` are equivalent when extending the framework base. Call `default_relation_scope` explicitly when you're not chaining via `super` (e.g. replacing the scope entirely).
 :::
 
 ### Intentionally skipping the scope
@@ -353,7 +352,6 @@ Without the scope, uniqueness leaks across tenants — Org A and Org B could col
 ## Gotchas
 
 - **Policy tries to filter by entity directly.** Wrong — bypasses `default_relation_scope`. Add the association path to the model instead.
-- **`super` inside `relation_scope`.** Unreliable. Use `default_relation_scope(relation)` explicitly.
 - **Multiple associations to the same entity class.** Override `scoped_entity_association`.
 - **`param_key` differs from association name.** Fine — Plutonium finds the association by class.
 - **Forgetting compound uniqueness.** A unique constraint on `:code` alone leaks across tenants.

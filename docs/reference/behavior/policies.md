@@ -247,7 +247,7 @@ Filter which records the user can see.
 
 ### Always compose with `default_relation_scope`
 
-🚨 `relation_scope` MUST call `default_relation_scope(relation)` explicitly. Never `super` — the semantics depend on how ActionPolicy's DSL registered the scope. Plutonium enforces this at runtime via `verify_default_relation_scope_applied!`.
+🚨 `relation_scope` MUST end up calling `default_relation_scope(relation)` somewhere in the chain. `super` works — `Plutonium::Resource::Policy` defines a default scope block that calls `default_relation_scope`, so a subclass that does `super(relation).where(...)` is fine. Calling `default_relation_scope` explicitly is also fine (and required when you skip the parent chain). Plutonium enforces this at runtime via `verify_default_relation_scope_applied!`.
 
 ```ruby
 # ✅ Best — don't override at all. The inherited scope already calls default_relation_scope.

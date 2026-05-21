@@ -15,7 +15,7 @@ Cross-references back to [[plutonium-resource]] (models, definitions) and [[plut
 
 ## 🚨 Critical (read first)
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins to the entity triggers `verify_default_relation_scope_applied!`. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super` to a parent policy (e.g., a package base) that calls it.
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins to the entity triggers `verify_default_relation_scope_applied!`. Make sure the chain ends up calling `default_relation_scope(relation)` — explicitly, or via `super(relation)` (the framework base calls it).
 - **Always declare an association path from model to entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, Plutonium raises. Fix the **model**, not the policy.
 - **Parent scoping beats entity scoping.** When a parent is present (nested resource), `default_relation_scope` scopes via the parent, NOT via `entity_scope`. Don't double-scope.
 - **One level of nesting only.** Grandparent → parent → child nested routes are NOT supported. Use top-level routes for deeper relationships.
@@ -170,7 +170,12 @@ relation_scope { |r| r.joins(:project).where(projects: {organization_id: current
 relation_scope { |r| r.where(published: true) }
 ```
 
-**Prefer calling `default_relation_scope(relation)` explicitly** instead of relying on `super`. `super` works when you're extending a parent policy (e.g., a package-level base) that itself calls `default_relation_scope` — but it's brittle against `Plutonium::Resource::Policy` directly because `super`'s semantics depend on how ActionPolicy's DSL registered the scope. The runtime verification checks `default_relation_scope` was hit somewhere — not that you wrote it in this class.
+**`default_relation_scope(relation)` must end up being called somewhere in the chain** — runtime verification just checks it was hit, not that you wrote it in this class. Both work:
+
+- `default_relation_scope(relation).where(...)` — explicit, always safe
+- `super(relation).where(...)` — `Plutonium::Resource::Policy`'s `relation_scope` block calls `default_relation_scope`, so chaining through `super` picks it up
+
+Pick the one that reads better for the situation.
 
 ### Intentionally skipping
 
