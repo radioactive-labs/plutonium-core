@@ -24,15 +24,20 @@ module Plutonium
           def render_add_button
             return if @add_action == false
 
+            # Two stacking levels are supported (primary + secondary modal).
+            # Hide the "+" entirely once we're already inside the secondary —
+            # there's no tertiary frame to escalate to.
+            return if in_secondary_modal?
+
             url, turbo_frame = add_url_and_frame
             return unless url
 
-            # When the parent form is already inside a modal, route the
-            # "+" to the secondary frame so the stacked dialog opens on
-            # top of the original form rather than replacing it. The
-            # crud controller mirrors this on success — closing the
-            # secondary modal and reloading the primary so the
-            # association select picks up the new record.
+            # When the parent form is already inside the primary modal,
+            # route the "+" to the secondary frame so the stacked dialog
+            # opens on top of the original form rather than replacing it.
+            # The crud controller mirrors this on success — closing the
+            # secondary modal and reloading the primary so the association
+            # select picks up the new record.
             if turbo_frame == Plutonium::REMOTE_MODAL_FRAME && in_modal?
               turbo_frame = Plutonium::REMOTE_MODAL_SECONDARY_FRAME
             end
