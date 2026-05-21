@@ -14,7 +14,7 @@ module Plutonium
             inner_wrapper: "w-full",
 
             # Form errors
-            form_errors_wrapper: "flex items-start gap-3 p-4 mb-6 text-base text-danger-800 rounded-[var(--pu-radius-lg)] bg-danger-50 border border-danger-200 dark:bg-danger-950/30 dark:border-danger-800 dark:text-danger-300",
+            form_errors_wrapper: "flex items-start gap-3 m-4 p-4 text-base text-danger-800 rounded-[var(--pu-radius-lg)] bg-danger-50 border border-danger-200 dark:bg-danger-950/30 dark:border-danger-800 dark:text-danger-300",
             form_errors_message: "font-semibold",
             form_errors_list: "mt-2 list-disc list-inside text-sm",
 
