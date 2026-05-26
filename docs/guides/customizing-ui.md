@@ -162,17 +162,18 @@ end
 
 ## Modals and slideovers
 
-By default `:new` and `:edit` render in a slideover panel. Switch to a centered modal or a full standalone page from the definition:
+By default `:new`, `:edit`, and every interactive action render in a slideover panel. Switch the chrome and width from the definition:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover    # default — slide-in from the right
-  # modal :centered   # centered dialog
-  # modal false       # full standalone page
+  modal :slideover               # default — slide-in from the right
+  # modal :centered              # centered dialog
+  # modal :centered, size: :lg   # centered, wider container
+  # modal false                  # full standalone page
 end
 ```
 
-→ See [Reference › Resource › Actions](/reference/resource/actions) for per-action `modal:` options on interactive actions.
+`size:` accepts `:sm`, `:md` (default), `:lg`, `:xl`, `:auto` (hugs content), or `:full`. See [Reference › Resource › Actions](/reference/resource/actions) for per-action `modal:` / `size:` overrides on interactive actions.
 
 ## Layouts and the shell
 

@@ -17,6 +17,13 @@ module Plutonium
         # so a definition that says `size: :xl` reads predictably.
         VALID_SIZES = [:sm, :md, :lg, :xl, :auto, :full].freeze
 
+        # Resolves the concrete modal class for a definition's `modal_mode`
+        # symbol. Unknown / `false` modes fall back to `Slideover` so call
+        # sites can stay branchless.
+        def self.class_for_mode(mode)
+          (mode == :centered) ? Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
+        end
+
         def initialize(title: nil, description: nil, size: :md)
           @title = title
           @description = description

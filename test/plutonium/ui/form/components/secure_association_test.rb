@@ -155,12 +155,14 @@ class Plutonium::UI::Form::Components::SecureAssociationTest < Minitest::Test
     component.define_singleton_method(:registered_resources) { registered_resources }
     component.define_singleton_method(:request) { request_stub }
 
-    action = Struct.new(:route_options, :turbo_frame, :name) do
+    action = Struct.new(:route_options, :name) do
       def permitted_by?(policy)
         policy.allowed_to?(:"#{name}?")
       end
-    end.new(:new_route, "remote_modal", :new)
-    definition = Struct.new(:defined_actions).new({new: action})
+
+      def turbo_frame(_definition) = "remote_modal"
+    end.new(:new_route, :new)
+    definition = Struct.new(:defined_actions, :modal_mode).new({new: action}, :slideover)
     component.define_singleton_method(:resource_definition) { |_klass| definition }
     component.define_singleton_method(:route_options_to_url) { |_ro, _subject| resource_url || "/users/new" }
 

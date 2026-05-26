@@ -163,7 +163,7 @@ module Plutonium
           url = route_options_to_url(show.route_options, record)
           a(
             href: url,
-            data: {row_click_target: "show", turbo_frame: show.turbo_frame},
+            data: {row_click_target: "show", turbo_frame: show.turbo_frame(resource_definition)},
             class: "sr-only",
             tabindex: "-1",
             "aria-label": "Open #{header_text}"

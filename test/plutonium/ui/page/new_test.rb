@@ -107,7 +107,7 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
 
   def build_definition(modal_mode)
     definition = Object.new
-    definition.define_singleton_method(:modal) { modal_mode }
+    definition.define_singleton_method(:modal_mode) { modal_mode }
     definition.define_singleton_method(:modal_size) { :md }
     definition.define_singleton_method(:new_page_title) { nil }
     definition.define_singleton_method(:new_page_description) { nil }

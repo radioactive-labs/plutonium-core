@@ -7,7 +7,6 @@ module Plutonium
         defineable_prop :action
 
         def self.action(name, interaction: nil, **opts)
-          opts = inherited_modal_options.merge(opts) if interaction
           defined_actions[name] = if interaction
             Plutonium::Action::Interactive::Factory.create(name, interaction:, **opts)
           else
@@ -16,23 +15,11 @@ module Plutonium
         end
 
         def action(name, interaction: nil, **opts)
-          opts = self.class.send(:inherited_modal_options).merge(opts) if interaction
           instance_defined_actions[name] = if interaction
             Plutonium::Action::Interactive::Factory.create(name, interaction:, **opts)
           else
             Plutonium::Action::Simple.new(name, **opts)
           end
-        end
-
-        # Defaults inherited by interactive actions from the definition's
-        # `modal` config. Per-action `modal:` / `size:` still wins because
-        # the caller's opts merge over these. When `modal false` is set,
-        # we clear `turbo_frame` so the action renders as a full page
-        # instead of inside the remote-modal frame.
-        private_class_method def self.inherited_modal_options
-          return {} unless respond_to?(:modal_mode)
-          return {turbo_frame: nil} if modal_mode == false
-          {modal: modal_mode, size: modal_size_mode}
         end
 
         def defined_actions
@@ -45,12 +32,10 @@ module Plutonium
 
         # standard CRUD actions
 
-        # turbo_frame for :new and :edit is set by
-        # Resource::Definition.configure_crud_modal_targets! based on the
-        # `modal` config. Don't hard-code it here.
         action(:new, route_options: {action: :new},
           resource_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Plus, position: 10)
+          icon: Phlex::TablerIcons::Plus, position: 10,
+          turbo_frame: Plutonium::REMOTE_MODAL_FRAME)
 
         action(:show, route_options: {action: :show},
           collection_record_action: true, category: :primary,
@@ -58,7 +43,8 @@ module Plutonium
 
         action(:edit, route_options: {action: :edit},
           record_action: true, collection_record_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Edit, position: 20)
+          icon: Phlex::TablerIcons::Edit, position: 20,
+          turbo_frame: Plutonium::REMOTE_MODAL_FRAME)
 
         action(:destroy, route_options: {method: :delete},
           record_action: true, collection_record_action: true, category: :danger,

@@ -70,7 +70,8 @@ action :name,
   turbo_frame:  "_top",
   return_to:    "/custom/path",
   route_options: {action: :foo},
-  modal: :slideover                      # :centered (default) or :slideover — chrome for the action's interaction form
+  modal: :slideover,                     # :slideover / :centered — overrides the definition's modal mode
+  size:  :lg                             # :sm / :md / :lg / :xl / :auto / :full — overrides the definition's modal size
 ```
 
 ### Deriving variants — `Action#with(...)`

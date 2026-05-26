@@ -23,8 +23,7 @@ module Plutonium
         end
 
         def render_modal_form
-          modal_class = (current_definition.modal == :centered) ?
-            Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
+          modal_class = Plutonium::UI::Modal::Base.class_for_mode(current_definition.modal_mode)
           render modal_class.new(
             title: page_title,
             description: page_description,

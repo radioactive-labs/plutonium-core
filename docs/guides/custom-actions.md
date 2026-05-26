@@ -186,7 +186,8 @@ action :name,
 
   # Behavior
   confirmation: "Are you sure?",
-  modal: :slideover                      # :centered (default) or :slideover
+  modal: :slideover,                     # :slideover / :centered — overrides definition's modal mode
+  size:  :lg                             # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
 ```
 
 Full options: [Reference › Resource › Actions › Action options](/reference/resource/actions#action-options).

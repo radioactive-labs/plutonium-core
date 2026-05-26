@@ -77,9 +77,13 @@ export default class extends Controller {
 
   #serialize() {
     const data = new FormData(this.element);
+    const enc = encodeURIComponent;
     return [...data.entries()]
       .filter(([key]) => !this.constructor.IGNORED_KEYS.has(key))
-      .map(([key, value]) => `${key}=${value instanceof File ? value.name : value}`)
+      .map(([key, value]) => {
+        const v = value instanceof File ? value.name : value;
+        return `${enc(key)}=${enc(v)}`;
+      })
       .sort()
       .join("&");
   }

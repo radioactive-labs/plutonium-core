@@ -86,6 +86,35 @@ module Plutonium
       # false = always hide
       inheritable_config_attr :submit_and_continue
 
+      # modals — drive how :new / :edit and interactive actions render.
+      # Actions read these lazily at render time, so override order and
+      # subclass inheritance both work naturally.
+      VALID_MODAL_MODES = [:centered, :slideover, false].freeze
+
+      inheritable_config_attr :modal_mode, :modal_size
+      modal_mode :slideover
+      modal_size :md
+
+      # Sets `modal_mode` and `modal_size` together with validation.
+      #
+      # - :slideover (default) — slide-in panel from the right
+      # - :centered — centered dialog
+      # - false — no modal; new/edit are full standalone pages
+      #
+      # `size:` see Plutonium::UI::Modal::Base::VALID_SIZES. `:auto`
+      # hugs the form's natural width.
+      def self.modal(mode, size: :md)
+        unless VALID_MODAL_MODES.include?(mode)
+          raise ArgumentError, "modal must be one of #{VALID_MODAL_MODES.inspect}, got #{mode.inspect}"
+        end
+        unless Plutonium::UI::Modal::Base::VALID_SIZES.include?(size)
+          raise ArgumentError,
+            "modal size must be one of #{Plutonium::UI::Modal::Base::VALID_SIZES.inspect}, got #{size.inspect}"
+        end
+        modal_mode mode
+        modal_size size
+      end
+
       def initialize
         super
       end

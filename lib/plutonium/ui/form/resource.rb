@@ -31,9 +31,12 @@ module Plutonium
           render_actions
         end
 
-        # Wraps Phlexi's view_template so the guard dialog renders inside
-        # the <form> tag even when a definition overrides `form_template`
-        # — otherwise the JS controller falls back to window.confirm.
+        # Mirrors Phlexi::Form::Base#view_template (phlexi-form ~> 0.14)
+        # — keep these in sync if upgrading. We override so the guard
+        # dialog renders inside the <form> tag (where the JS controller
+        # looks for it via `dirty-form-guard-target`) even when a
+        # subclass overrides `form_template`. Without this, the
+        # controller silently falls back to `window.confirm`.
         def view_template(&block)
           captured_body = capture { form_template(&block) }
           captured_guard = capture { render_dirty_form_guard_dialog if in_modal? }

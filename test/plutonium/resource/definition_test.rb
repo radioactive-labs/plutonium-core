@@ -31,14 +31,14 @@ class Plutonium::Resource::DefinitionTest < ActiveSupport::TestCase
     assert_match ":fullscreen", error.message
   end
 
-  test "instance method #modal returns class-level setting" do
+  test "instance method #modal_mode returns class-level setting" do
     klass = Class.new(Plutonium::Resource::Definition) { modal :centered }
-    assert_equal :centered, klass.new.modal
+    assert_equal :centered, klass.new.modal_mode
   end
 
-  test "instance method #modal returns default when not overridden" do
+  test "instance method #modal_mode returns default when not overridden" do
     klass = Class.new(Plutonium::Resource::Definition)
-    assert_equal :slideover, klass.new.modal
+    assert_equal :slideover, klass.new.modal_mode
   end
 
   test "subclass inherits parent modal mode" do
@@ -52,5 +52,23 @@ class Plutonium::Resource::DefinitionTest < ActiveSupport::TestCase
     child = Class.new(parent) { modal :slideover }
     assert_equal :slideover, child.modal_mode
     assert_equal :centered, parent.modal_mode
+  end
+
+  test "default modal_size is :md" do
+    klass = Class.new(Plutonium::Resource::Definition)
+    assert_equal :md, klass.modal_size
+  end
+
+  test "modal size: stores on the class" do
+    klass = Class.new(Plutonium::Resource::Definition) { modal :centered, size: :lg }
+    assert_equal :lg, klass.modal_size
+  end
+
+  test "modal size: :invalid raises ArgumentError" do
+    error = assert_raises(ArgumentError) do
+      Class.new(Plutonium::Resource::Definition) { modal :centered, size: :huge }
+    end
+    assert_match(/modal size must be one of/, error.message)
+    assert_match(":huge", error.message)
   end
 end
