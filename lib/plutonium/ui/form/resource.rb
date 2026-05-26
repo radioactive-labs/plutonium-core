@@ -59,11 +59,7 @@ module Plutonium
         def render_dirty_form_guard_dialog
           dialog(
             class:
-              "rounded-[var(--pu-radius-lg)] " \
-              "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
-              "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
-              "data-[open]:backdrop:backdrop-blur-sm " \
-              "backdrop:transition-[background-color] backdrop:duration-200 backdrop:ease-out " \
+              "pu-dialog " \
               "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
               "w-full max-w-md p-0 " \
               "open:flex flex-col " \

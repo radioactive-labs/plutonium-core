@@ -19,16 +19,14 @@ module Plutonium
 
         protected
 
-        # Animation is driven by `data-open`, toggled by the remote-modal
-        # controller on the frame after showModal(). Avoids the
-        # @starting-style / allow-discrete approach, which is unreliable
-        # across browsers; mirrors the filter slideover's pattern.
+        # Surface (bg, border, radius, backdrop) lives in `.pu-dialog` so
+        # the centered modal, dirty-form-guard prompt, and Turbo confirm
+        # can't drift on design tokens. The remaining utilities are
+        # positioning, sizing, and the open/close transform animation —
+        # driven by [data-open] (set on the frame after showModal() by
+        # remote_modal_controller); avoids the @starting-style spec dance.
         def base_dialog_classes
-          "rounded-[var(--pu-radius-lg)] " \
-            "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
-            "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
-            "data-[open]:backdrop:backdrop-blur-sm " \
-            "backdrop:transition-[background-color] backdrop:duration-200 backdrop:ease-out " \
+          "pu-dialog " \
             "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
             "max-h-[80vh] " \
             "open:flex flex-col p-0 " \

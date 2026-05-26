@@ -495,6 +495,35 @@
 }
 
 /* ===================
+   DIALOG — shared centered <dialog> surface
+   ===================
+   Visual tokens reused by Modal::Centered, the dirty-form-guard
+   confirm dialog, and Turbo's themed confirm. Keeps bg/border/radius
+   and backdrop styling in one place so a design-token change can't
+   silently drift across the three. Animation is driven by toggling
+   the [data-open] attribute one frame after showModal() — see
+   remote_modal_controller for the rationale (the @starting-style /
+   allow-discrete spec dance is unreliable across browsers).
+   Positioning, size, and the dialog's own opacity/scale transition
+   stay on the call site; they vary per dialog. Slideover has its
+   own pinned-right surface and intentionally does not opt in. */
+.pu-dialog {
+  background-color: var(--pu-surface);
+  border: 1px solid var(--pu-border);
+  border-radius: var(--pu-radius-lg);
+}
+
+.pu-dialog::backdrop {
+  background-color: transparent;
+  transition: background-color 200ms ease-out;
+}
+
+.pu-dialog[data-open]::backdrop {
+  background-color: rgb(0 0 0 / 0.6);
+  backdrop-filter: blur(4px);
+}
+
+/* ===================
    ICON RAIL — modern shell
    =================== */
 

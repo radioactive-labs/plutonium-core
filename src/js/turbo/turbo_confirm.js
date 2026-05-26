@@ -7,17 +7,21 @@ let confirmButton;
 let cancelButton;
 
 function ensureDialog() {
-  if (dialog) return;
+  // Turbo Drive replaces document.body on full-page navigation, which
+  // detaches the cached dialog. showModal() then throws InvalidStateError
+  // ("not in a Document"). Re-attach if detached; the node itself plus
+  // its listeners survive, so we don't have to rebuild.
+  if (dialog) {
+    if (!dialog.isConnected) document.body.appendChild(dialog);
+    return;
+  }
 
   dialog = document.createElement("dialog");
+  // Surface (bg, border, radius, backdrop) comes from .pu-dialog; the
+  // remaining utilities are positioning, size, and the opacity/scale
+  // animation hooks driven by [data-open]. Matches Modal::Centered.
   dialog.className = [
-    "pu-confirm-dialog",
-    "rounded-[var(--pu-radius-lg)]",
-    "bg-[var(--pu-surface)]",
-    "border",
-    "border-[var(--pu-border)]",
-    "backdrop:bg-black/60",
-    "backdrop:backdrop-blur-sm",
+    "pu-dialog",
     "top-1/2",
     "-translate-y-1/2",
     "left-1/2",
@@ -25,14 +29,15 @@ function ensureDialog() {
     "w-full",
     "max-w-md",
     "p-0",
-    "hidden",
     "open:flex",
     "flex-col",
     "opacity-0",
-    "open:opacity-100",
-    "transition-opacity",
+    "scale-95",
+    "data-[open]:opacity-100",
+    "data-[open]:scale-100",
+    "transition-[opacity,transform]",
     "duration-200",
-    "ease-in-out",
+    "ease-out",
   ].join(" ");
   dialog.setAttribute("aria-labelledby", "pu-turbo-confirm-message");
 
@@ -65,6 +70,13 @@ function ensureDialog() {
   document.body.appendChild(dialog);
 }
 
+async function animateClose() {
+  dialog.removeAttribute("data-open");
+  const animations = dialog.getAnimations({ subtree: true });
+  await Promise.allSettled(animations.map((a) => a.finished));
+  if (dialog.open) dialog.close();
+}
+
 function themedConfirm(message) {
   ensureDialog();
   messageEl.textContent = message || "Are you sure?";
@@ -75,9 +87,9 @@ function themedConfirm(message) {
     const settle = (value) => {
       if (settled) return;
       settled = true;
-      resolve(value);
       cleanup();
-      if (dialog.open) dialog.close();
+      resolve(value);
+      animateClose();
     };
 
     const onConfirm = () => settle(true);
@@ -96,10 +108,21 @@ function themedConfirm(message) {
     dialog.addEventListener("close", onClose);
 
     dialog.showModal();
+    // Double rAF so the closed-state styles paint before [data-open]
+    // flips — same rationale as remote_modal_controller.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => dialog.setAttribute("data-open", ""));
+    });
     confirmButton.focus();
   });
 }
 
-if (typeof window !== "undefined" && window.Turbo?.setConfirmMethod) {
-  window.Turbo.setConfirmMethod(themedConfirm);
+if (typeof window !== "undefined" && window.Turbo) {
+  // Turbo 8 deprecated setConfirmMethod in favor of config.forms.confirm.
+  // Prefer the new path; fall back for older Turbo versions still in use.
+  if (window.Turbo.config?.forms) {
+    window.Turbo.config.forms.confirm = themedConfirm;
+  } else if (window.Turbo.setConfirmMethod) {
+    window.Turbo.setConfirmMethod(themedConfirm);
+  }
 }
