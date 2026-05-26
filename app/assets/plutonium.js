@@ -28226,7 +28226,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #serialize() {
       const data = new FormData(this.element);
-      return [...data.entries()].filter(([key]) => !this.constructor.IGNORED_KEYS.has(key)).map(([key, value]) => `${key}=${value instanceof File ? value.name : value}`).sort().join("&");
+      const enc = encodeURIComponent;
+      return [...data.entries()].filter(([key]) => !this.constructor.IGNORED_KEYS.has(key)).map(([key, value]) => {
+        const v4 = value instanceof File ? value.name : value;
+        return `${enc(key)}=${enc(v4)}`;
+      }).sort().join("&");
     }
     #isDirty() {
       return this.#serialize() !== this.snapshot;
@@ -28363,13 +28367,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     if (dialog) return;
     dialog = document.createElement("dialog");
     dialog.className = [
-      "pu-confirm-dialog",
-      "rounded-[var(--pu-radius-lg)]",
-      "bg-[var(--pu-surface)]",
-      "border",
-      "border-[var(--pu-border)]",
-      "backdrop:bg-black/60",
-      "backdrop:backdrop-blur-sm",
+      "pu-dialog",
       "top-1/2",
       "-translate-y-1/2",
       "left-1/2",
@@ -28377,14 +28375,15 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       "w-full",
       "max-w-md",
       "p-0",
-      "hidden",
       "open:flex",
       "flex-col",
       "opacity-0",
-      "open:opacity-100",
-      "transition-opacity",
+      "scale-95",
+      "data-[open]:opacity-100",
+      "data-[open]:scale-100",
+      "transition-[opacity,transform]",
       "duration-200",
-      "ease-in-out"
+      "ease-out"
     ].join(" ");
     dialog.setAttribute("aria-labelledby", "pu-turbo-confirm-message");
     const header = document.createElement("div");
@@ -28409,6 +28408,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     dialog.appendChild(footer);
     document.body.appendChild(dialog);
   }
+  async function animateClose() {
+    dialog.removeAttribute("data-open");
+    const animations = dialog.getAnimations({ subtree: true });
+    await Promise.allSettled(animations.map((a4) => a4.finished));
+    if (dialog.open) dialog.close();
+  }
   function themedConfirm(message) {
     ensureDialog();
     messageEl.textContent = message || "Are you sure?";
@@ -28417,9 +28422,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const settle = (value) => {
         if (settled) return;
         settled = true;
-        resolve(value);
         cleanup();
-        if (dialog.open) dialog.close();
+        resolve(value);
+        animateClose();
       };
       const onConfirm = () => settle(true);
       const onCancel = () => settle(false);
@@ -28433,6 +28438,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       cancelButton.addEventListener("click", onCancel);
       dialog.addEventListener("close", onClose);
       dialog.showModal();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => dialog.setAttribute("data-open", ""));
+      });
       confirmButton.focus();
     });
   }
