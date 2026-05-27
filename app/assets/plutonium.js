@@ -27588,22 +27588,47 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.originalScrollPosition = window.scrollY;
       this.originalOverflow = document.body.style.overflow;
       this.bodyStateRestored = false;
+      this._closing = false;
       document.body.style.overflow = "hidden";
       this.element.showModal();
-      this.element.addEventListener("close", this.handleClose.bind(this));
-    }
-    close() {
-      this.element.close();
-      this.restoreBodyState();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          this.element.setAttribute("data-open", "");
+        });
+      });
+      this.onCancel = this.#onCancel.bind(this);
+      this.onClose = this.#onClose.bind(this);
+      this.onRequestClose = () => this.#animateClose();
+      this.element.addEventListener("cancel", this.onCancel);
+      this.element.addEventListener("close", this.onClose);
+      this.element.addEventListener("modal:request-close", this.onRequestClose);
     }
     disconnect() {
-      this.element.removeEventListener("close", this.handleClose);
-      this.restoreBodyState();
+      this.element.removeEventListener("cancel", this.onCancel);
+      this.element.removeEventListener("close", this.onClose);
+      this.element.removeEventListener("modal:request-close", this.onRequestClose);
+      this.#restoreBodyState();
     }
-    handleClose() {
-      this.restoreBodyState();
+    close() {
+      this.#animateClose();
     }
-    restoreBodyState() {
+    #onCancel(event) {
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      this.#animateClose();
+    }
+    #onClose() {
+      this.#restoreBodyState();
+    }
+    async #animateClose() {
+      if (this._closing) return;
+      this._closing = true;
+      this.element.removeAttribute("data-open");
+      const animations = this.element.getAnimations({ subtree: true });
+      await Promise.allSettled(animations.map((a4) => a4.finished));
+      this.element.close();
+    }
+    #restoreBodyState() {
       if (this.bodyStateRestored) return;
       this.bodyStateRestored = true;
       document.body.style.overflow = this.originalOverflow || "";
@@ -28148,6 +28173,129 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/dirty_form_guard_controller.js
+  var dirty_form_guard_controller_default = class extends Controller {
+    static targets = ["confirmDialog"];
+    // Set by controllers, not the user — comparing them would flag
+    // every form as dirty on connect (return_to) or on submit (pre_submit).
+    static IGNORED_KEYS = /* @__PURE__ */ new Set(["authenticity_token", "return_to", "pre_submit"]);
+    connect() {
+      this.dialog = this.element.closest("dialog");
+      if (!this.dialog) return;
+      this.snapshot = this.#serialize();
+      this.forceClose = false;
+      this.submitting = false;
+      this.onCancel = this.#onCancel.bind(this);
+      this.onSubmit = this.#onSubmit.bind(this);
+      this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
+      this.onConfirmCancel = this.#onConfirmCancel.bind(this);
+      this.onKeydown = this.#onKeydown.bind(this);
+      document.addEventListener("keydown", this.onKeydown, true);
+      this.dialog.addEventListener("cancel", this.onCancel, true);
+      this.element.addEventListener("submit", this.onSubmit);
+      this.#closeButtons().forEach(
+        (btn) => btn.addEventListener("click", this.onCloseButtonClick, true)
+      );
+      if (this.hasConfirmDialogTarget) {
+        this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+      }
+    }
+    disconnect() {
+      if (!this.dialog) return;
+      document.removeEventListener("keydown", this.onKeydown, true);
+      this.dialog.removeEventListener("cancel", this.onCancel, true);
+      this.element.removeEventListener("submit", this.onSubmit);
+      this.#closeButtons().forEach(
+        (btn) => btn.removeEventListener("click", this.onCloseButtonClick, true)
+      );
+      if (this.hasConfirmDialogTarget) {
+        this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+      }
+    }
+    async discard() {
+      this.forceClose = true;
+      await this.#closeConfirm();
+      this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
+    }
+    keepEditing() {
+      this.#closeConfirm();
+    }
+    #closeButtons() {
+      if (!this.dialog) return [];
+      return this.dialog.querySelectorAll('[data-action~="remote-modal#close"]');
+    }
+    #serialize() {
+      const data = new FormData(this.element);
+      const enc = encodeURIComponent;
+      return [...data.entries()].filter(([key]) => !this.constructor.IGNORED_KEYS.has(key)).map(([key, value]) => {
+        const v4 = value instanceof File ? value.name : value;
+        return `${enc(key)}=${enc(v4)}`;
+      }).sort().join("&");
+    }
+    #isDirty() {
+      return this.#serialize() !== this.snapshot;
+    }
+    #onSubmit() {
+      this.submitting = true;
+    }
+    #confirmIsOpen() {
+      return this.hasConfirmDialogTarget && this.confirmDialogTarget.open;
+    }
+    #onKeydown(event) {
+      if (event.key !== "Escape") return;
+      if (!this.dialog.open) return;
+      if (this.#confirmIsOpen()) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (this.forceClose || this.submitting) return;
+      if (!this.#isDirty()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      this.#promptDiscard();
+    }
+    #onCancel(event) {
+      if (this.forceClose || this.submitting) return;
+      if (!this.#isDirty()) return;
+      event.preventDefault();
+      this.#promptDiscard();
+    }
+    #onCloseButtonClick(event) {
+      if (this.forceClose || this.submitting) return;
+      if (!this.#isDirty()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.#promptDiscard();
+    }
+    #onConfirmCancel(event) {
+      event.preventDefault();
+    }
+    #promptDiscard() {
+      if (this.hasConfirmDialogTarget) {
+        const d4 = this.confirmDialogTarget;
+        d4.showModal();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => d4.setAttribute("data-open", ""));
+        });
+      } else if (window.confirm("Discard your changes?")) {
+        this.forceClose = true;
+        this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
+      }
+    }
+    async #closeConfirm() {
+      if (!this.hasConfirmDialogTarget) return;
+      const d4 = this.confirmDialogTarget;
+      if (!d4.open) return;
+      d4.removeAttribute("data-open");
+      const animations = d4.getAnimations({ subtree: true });
+      await Promise.allSettled(animations.map((a4) => a4.finished));
+      d4.close();
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28183,6 +28331,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("row-click", row_click_controller_default);
     application2.register("view-switcher", view_switcher_controller_default);
     application2.register("autosubmit", autosubmit_controller_default);
+    application2.register("dirty-form-guard", dirty_form_guard_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
@@ -28196,8 +28345,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     if (!frameId) return;
     const frame = document.getElementById(frameId);
     if (!frame) return;
-    const dialog = frame.querySelector("dialog");
-    if (dialog && typeof dialog.close === "function") dialog.close();
+    const dialog2 = frame.querySelector("dialog");
+    if (dialog2 && typeof dialog2.close === "function") dialog2.close();
     frame.innerHTML = "";
     frame.removeAttribute("src");
   };
@@ -28208,6 +28357,96 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     if (!frame || typeof frame.reload !== "function") return;
     frame.reload();
   };
+
+  // src/js/turbo/turbo_confirm.js
+  var dialog;
+  var messageEl;
+  var confirmButton;
+  var cancelButton;
+  function ensureDialog() {
+    if (dialog) return;
+    dialog = document.createElement("dialog");
+    dialog.className = [
+      "pu-dialog",
+      "top-1/2",
+      "-translate-y-1/2",
+      "left-1/2",
+      "-translate-x-1/2",
+      "w-full",
+      "max-w-md",
+      "p-0",
+      "open:flex",
+      "flex-col",
+      "opacity-0",
+      "scale-95",
+      "data-[open]:opacity-100",
+      "data-[open]:scale-100",
+      "transition-[opacity,transform]",
+      "duration-200",
+      "ease-out"
+    ].join(" ");
+    dialog.setAttribute("aria-labelledby", "pu-turbo-confirm-message");
+    const header = document.createElement("div");
+    header.className = "px-6 pt-5 pb-4 border-b border-[var(--pu-border)]";
+    messageEl = document.createElement("h2");
+    messageEl.id = "pu-turbo-confirm-message";
+    messageEl.className = "text-lg font-semibold text-[var(--pu-text)]";
+    header.appendChild(messageEl);
+    const footer = document.createElement("div");
+    footer.className = "flex items-center justify-end gap-2 px-6 py-4";
+    cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "pu-btn pu-btn-md pu-btn-outline";
+    cancelButton.textContent = "Cancel";
+    confirmButton = document.createElement("button");
+    confirmButton.type = "button";
+    confirmButton.className = "pu-btn pu-btn-md pu-btn-primary";
+    confirmButton.textContent = "Confirm";
+    footer.appendChild(cancelButton);
+    footer.appendChild(confirmButton);
+    dialog.appendChild(header);
+    dialog.appendChild(footer);
+    document.body.appendChild(dialog);
+  }
+  async function animateClose() {
+    dialog.removeAttribute("data-open");
+    const animations = dialog.getAnimations({ subtree: true });
+    await Promise.allSettled(animations.map((a4) => a4.finished));
+    if (dialog.open) dialog.close();
+  }
+  function themedConfirm(message) {
+    ensureDialog();
+    messageEl.textContent = message || "Are you sure?";
+    return new Promise((resolve) => {
+      let settled = false;
+      const settle = (value) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve(value);
+        animateClose();
+      };
+      const onConfirm = () => settle(true);
+      const onCancel = () => settle(false);
+      const onClose = () => settle(false);
+      const cleanup = () => {
+        confirmButton.removeEventListener("click", onConfirm);
+        cancelButton.removeEventListener("click", onCancel);
+        dialog.removeEventListener("close", onClose);
+      };
+      confirmButton.addEventListener("click", onConfirm);
+      cancelButton.addEventListener("click", onCancel);
+      dialog.addEventListener("close", onClose);
+      dialog.showModal();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => dialog.setAttribute("data-open", ""));
+      });
+      confirmButton.focus();
+    });
+  }
+  if (typeof window !== "undefined" && window.Turbo?.setConfirmMethod) {
+    window.Turbo.setConfirmMethod(themedConfirm);
+  }
 
   // src/js/plutonium.js
   var application = Application.start();

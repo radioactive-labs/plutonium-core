@@ -68,7 +68,7 @@ module Plutonium
                 bulk_actions_target: "actionButton",
                 bulk_action_name: action.name,
                 bulk_action_url: url,
-                turbo_frame: action.turbo_frame
+                turbo_frame: action.turbo_frame(current_definition)
               }
             ) do
               if action.icon

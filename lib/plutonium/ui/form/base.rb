@@ -149,8 +149,22 @@ module Plutonium
         def initialize_attributes
           super
 
-          attributes[:id] ||= "resource-form"
-          attributes["data-controller"] = "form"
+          # Only fall back to :resource_form when the caller didn't already
+          # name the form. Phlexi moves an explicit `attributes[:id]` onto
+          # `@dom_id` before this runs, so a blind `||=` here would clobber
+          # things like the filter slideover's `id: "filter-form"` —
+          # producing two `<form id="resource-form">` on the page and
+          # silently breaking the modal pre_submit re-render (Turbo's
+          # `getElementById` finds the filter form first).
+          attributes[:id] ||= "resource-form" if @dom_id.nil?
+          attributes["data-controller"] = form_data_controller
+        end
+
+        # `dirty-form-guard` is attached unconditionally — it self-disables
+        # outside a <dialog>. Branching on `in_modal?` here would fail:
+        # Phlex forbids view-context access before rendering begins.
+        def form_data_controller
+          "form dirty-form-guard"
         end
 
         # Scope the form id to the current turbo frame at render time (we

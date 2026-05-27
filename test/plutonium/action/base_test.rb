@@ -5,6 +5,12 @@ require "test_helper"
 module Plutonium
   module Action
     class BaseTest < Minitest::Test
+      # Minimal stand-in for a Plutonium::Resource::Definition. The lazy
+      # accessors only need `modal_mode` and `modal_size`.
+      def stub_definition(modal_mode: :slideover, modal_size: :md)
+        Struct.new(:modal_mode, :modal_size).new(modal_mode, modal_size)
+      end
+
       def setup
         @action = Base.new(
           :test_action,
@@ -27,7 +33,7 @@ module Plutonium
         assert_equal :blue, @action.color
         assert_equal "Are you sure?", @action.confirmation
         assert_instance_of RouteOptions, @action.route_options
-        assert_equal "test_frame", @action.turbo_frame
+        assert_equal "test_frame", @action.turbo_frame(stub_definition)
         assert_equal "test_category", @action.category
         assert @action.category.test_category?
         assert_equal 10, @action.position
@@ -40,7 +46,7 @@ module Plutonium
         assert_nil action.color
         assert_nil action.confirmation
         assert_instance_of RouteOptions, action.route_options
-        assert_nil action.turbo_frame
+        assert_nil action.turbo_frame(stub_definition)
         assert_equal 50, action.position
       end
 
@@ -106,25 +112,54 @@ module Plutonium
         end
       end
 
-      def test_modal_defaults_to_centered
+      def test_modal_mode_inherits_from_definition_when_unset
         action = Base.new(:default_action)
-        assert_equal :centered, action.modal
+        assert_equal :slideover, action.modal_mode(stub_definition(modal_mode: :slideover))
+        assert_equal :centered, action.modal_mode(stub_definition(modal_mode: :centered))
       end
 
-      def test_modal_accepts_centered
+      def test_modal_mode_accepts_centered
         action = Base.new(:modal_action, modal: :centered)
-        assert_equal :centered, action.modal
+        assert_equal :centered, action.modal_mode(stub_definition(modal_mode: :slideover))
       end
 
-      def test_modal_accepts_slideover
+      def test_modal_mode_accepts_slideover
         action = Base.new(:modal_action, modal: :slideover)
-        assert_equal :slideover, action.modal
+        assert_equal :slideover, action.modal_mode(stub_definition(modal_mode: :centered))
       end
 
       def test_modal_raises_on_invalid_value
         assert_raises(ArgumentError) do
           Base.new(:modal_action, modal: :fullscreen)
         end
+      end
+
+      def test_modal_size_inherits_from_definition_when_unset
+        action = Base.new(:default_action)
+        assert_equal :lg, action.modal_size(stub_definition(modal_size: :lg))
+      end
+
+      def test_modal_size_accepts_explicit_value
+        action = Base.new(:modal_action, size: :xl)
+        assert_equal :xl, action.modal_size(stub_definition(modal_size: :md))
+      end
+
+      def test_size_raises_on_invalid_value
+        assert_raises(ArgumentError) do
+          Base.new(:modal_action, size: :huge)
+        end
+      end
+
+      def test_turbo_frame_downgrades_to_nil_when_modal_false
+        action = Base.new(:a, turbo_frame: Plutonium::REMOTE_MODAL_FRAME)
+        assert_nil action.turbo_frame(stub_definition(modal_mode: false))
+        assert_equal Plutonium::REMOTE_MODAL_FRAME,
+          action.turbo_frame(stub_definition(modal_mode: :slideover))
+      end
+
+      def test_turbo_frame_passes_through_non_modal_frames
+        action = Base.new(:a, turbo_frame: "_top")
+        assert_equal "_top", action.turbo_frame(stub_definition(modal_mode: false))
       end
     end
   end

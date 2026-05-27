@@ -450,17 +450,18 @@ All pages inherit this. Modals and frame navigation work without special handlin
 
 # Part 5 — Modals, Slideovers, Tabs
 
-## Modal/slideover for `:new` / `:edit`
+## Modal/slideover for `:new` / `:edit` + interactive actions
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover    # default — slide-in panel from the right
-  # modal :centered   # centered dialog
-  # modal false       # full standalone page
+  modal :slideover               # default — slide-in panel from the right
+  # modal :centered              # centered dialog
+  # modal :centered, size: :lg   # centered, wider container
+  # modal false                  # full standalone page
 end
 ```
 
-Custom interactive actions render in their own dialog with their own per-action `modal:` option (`:centered` default, or `:slideover`). See [[plutonium-resource]] › Action Options.
+Drives both framework `:new` / `:edit` and every interactive action on the definition. `size:` accepts `:sm`, `:md` (default), `:lg`, `:xl`, `:auto` (hugs content), or `:full`. Per-action `modal:` / `size:` overrides win. See [[plutonium-resource]] › Action Options.
 
 ## Tabs on the show page
 

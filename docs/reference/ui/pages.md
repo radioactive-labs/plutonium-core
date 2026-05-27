@@ -133,17 +133,18 @@ See [Forms › Association inputs](./forms#association-inputs).
 
 ## Modals & slideovers
 
-The framework's `:new` / `:edit` actions render inline inside a modal. Choose the chrome per-resource via the definition:
+The framework's `:new` / `:edit` actions and any interactive action render inline inside a modal. Choose the chrome (and optional width) per-resource via the definition — interactive actions inherit the same default:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover    # default — slide-in panel from the right
-  # modal :centered   # centered dialog
-  # modal false       # full standalone pages (no modal)
+  modal :slideover               # default — slide-in panel from the right
+  # modal :centered              # centered dialog
+  # modal :centered, size: :lg   # centered, wider container
+  # modal false                  # full standalone pages (no modal)
 end
 ```
 
-Custom interactive actions render in their own dialog with their own per-action `modal:` option (`:centered` default, or `:slideover`). See [Resource › Actions](/reference/resource/actions#action-options).
+`size:` accepts `:sm`, `:md` (default), `:lg`, `:xl`, `:auto` (hugs content width), or `:full`. Per-action `modal:` / `size:` on an interactive action overrides the definition's default. See [Resource › Actions](/reference/resource/actions#action-options).
 
 ## Tabs on the show page
 

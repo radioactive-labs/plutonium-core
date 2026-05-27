@@ -6,19 +6,19 @@ module Plutonium
       included do
         defineable_prop :action
 
-        def self.action(name, interaction: nil, **)
+        def self.action(name, interaction: nil, **opts)
           defined_actions[name] = if interaction
-            Plutonium::Action::Interactive::Factory.create(name, interaction:, **)
+            Plutonium::Action::Interactive::Factory.create(name, interaction:, **opts)
           else
-            Plutonium::Action::Simple.new(name, **)
+            Plutonium::Action::Simple.new(name, **opts)
           end
         end
 
-        def action(name, interaction: nil, **)
+        def action(name, interaction: nil, **opts)
           instance_defined_actions[name] = if interaction
-            Plutonium::Action::Interactive::Factory.create(name, interaction:, **)
+            Plutonium::Action::Interactive::Factory.create(name, interaction:, **opts)
           else
-            Plutonium::Action::Simple.new(name, **)
+            Plutonium::Action::Simple.new(name, **opts)
           end
         end
 
@@ -32,12 +32,10 @@ module Plutonium
 
         # standard CRUD actions
 
-        # turbo_frame for :new and :edit is set by
-        # Resource::Definition.configure_crud_modal_targets! based on the
-        # `modal` config. Don't hard-code it here.
         action(:new, route_options: {action: :new},
           resource_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Plus, position: 10)
+          icon: Phlex::TablerIcons::Plus, position: 10,
+          turbo_frame: Plutonium::REMOTE_MODAL_FRAME)
 
         action(:show, route_options: {action: :show},
           collection_record_action: true, category: :primary,
@@ -45,7 +43,8 @@ module Plutonium
 
         action(:edit, route_options: {action: :edit},
           record_action: true, collection_record_action: true, category: :primary,
-          icon: Phlex::TablerIcons::Edit, position: 20)
+          icon: Phlex::TablerIcons::Edit, position: 20,
+          turbo_frame: Plutonium::REMOTE_MODAL_FRAME)
 
         action(:destroy, route_options: {method: :delete},
           record_action: true, collection_record_action: true, category: :danger,

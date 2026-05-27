@@ -50,7 +50,7 @@ module Plutonium
         link_to(
           url_with_return_to,
           class: button_classes,
-          data: {turbo_frame: @action.turbo_frame}.merge(@extra_data)
+          data: {turbo_frame: @action.turbo_frame(current_definition)}.merge(@extra_data)
         ) do
           render_button_content
         end
@@ -67,7 +67,7 @@ module Plutonium
             data: {
               turbo: @action.turbo,
               turbo_confirm: @action.confirmation.presence,
-              turbo_frame: @action.turbo_frame
+              turbo_frame: @action.turbo_frame(current_definition)
             }
           }
         ) do
@@ -84,7 +84,8 @@ module Plutonium
         }
 
         # Add turbo frame if specified
-        link_attrs[:data] = {turbo_frame: @action.turbo_frame} if @action.turbo_frame
+        frame = @action.turbo_frame(current_definition)
+        link_attrs[:data] = {turbo_frame: frame} if frame
 
         # Add confirmation and method for non-GET requests
         if @action.confirmation || @action.route_options.method != :get

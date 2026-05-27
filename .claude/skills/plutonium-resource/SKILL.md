@@ -725,9 +725,10 @@ class PostDefinition < ResourceDefinition
   # nil (default) = auto (hidden for singular, shown for plural)
   submit_and_continue false
 
-  # How :new / :edit render
+  # How :new / :edit + interactive actions render
   #   :slideover (default), :centered, or false (full pages)
-  modal :centered
+  #   size: :sm / :md (default) / :lg / :xl / :auto / :full
+  modal :centered, size: :lg
 
   # Titles
   index_page_title "All Posts"
@@ -757,7 +758,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-`modal:` only affects the framework `:new` / `:edit` actions. Custom actions have their own per-action `modal:` option (default `:centered`).
+`modal:` is the default for framework `:new` / `:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win.
 
 ## Metadata Panel (show page)
 
@@ -983,7 +984,8 @@ action :name,
   confirmation: "Are you sure?",
   turbo_frame: "_top",
   route_options: {action: :foo},
-  modal: :slideover                 # :centered (default) or :slideover
+  modal: :slideover,                # :slideover / :centered — overrides definition's modal mode
+  size:  :lg                        # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
 ```
 
 `Action#with(...)` — actions are frozen value objects; clone with overrides:

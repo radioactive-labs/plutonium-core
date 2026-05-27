@@ -37,7 +37,7 @@ class Plutonium::UI::Modal::SlideoverTest < ActiveSupport::TestCase
   test "dialog has slide-in transition classes" do
     html = render_html(Plutonium::UI::Modal::Slideover.new)
     assert_includes html, "translate-x-full"
-    assert_includes html, "open:translate-x-0"
+    assert_includes html, "data-[open]:translate-x-0"
   end
 
   test "renders title in header when provided" do
@@ -90,5 +90,22 @@ class Plutonium::UI::Modal::SlideoverTest < ActiveSupport::TestCase
     html = render_html(Plutonium::UI::Modal::Slideover.new)
     refute_includes html, "top-1/2"
     refute_includes html, "-translate-y-1/2"
+  end
+
+  test "size defaults to :md" do
+    html = render_html(Plutonium::UI::Modal::Slideover.new)
+    assert_includes html, Plutonium::UI::Modal::Slideover::SIZE_CLASSES.fetch(:md)
+  end
+
+  test "size: dispatches into SIZE_CLASSES" do
+    Plutonium::UI::Modal::Slideover::SIZE_CLASSES.each do |size, classes|
+      html = render_html(Plutonium::UI::Modal::Slideover.new(size: size))
+      assert_includes html, classes, "expected size :#{size} to render #{classes.inspect}"
+    end
+  end
+
+  test "invalid size: raises ArgumentError" do
+    error = assert_raises(ArgumentError) { Plutonium::UI::Modal::Slideover.new(size: :huge) }
+    assert_match(/modal size must be one of/, error.message)
   end
 end

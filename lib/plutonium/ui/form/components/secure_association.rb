@@ -70,12 +70,13 @@ module Plutonium
             end
 
             return unless registered_resources.include?(klass)
-            action = resource_definition(klass).defined_actions[:new]
+            target_definition = resource_definition(klass)
+            action = target_definition.defined_actions[:new]
             return unless action
             return unless @skip_authorization || action.permitted_by?(policy_for(record: klass))
 
             url = route_options_to_url(action.route_options, klass)
-            [with_return_to(url), action.turbo_frame]
+            [with_return_to(url), action.turbo_frame(target_definition)]
           end
 
           def with_return_to(url)

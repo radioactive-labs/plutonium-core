@@ -9,9 +9,26 @@ module Plutonium
         slot :close
         slot :footer
 
-        def initialize(title: nil, description: nil)
+        # Sizes that all modal subclasses must implement entries for in
+        # their SIZE_CLASSES table. `:auto` is content-driven (`w-fit`
+        # with a viewport cap and a sensible floor) and is the only way
+        # to avoid clipping forms whose natural width exceeds the
+        # default. Sizes intentionally mirror Tailwind's max-w-* scale
+        # so a definition that says `size: :xl` reads predictably.
+        VALID_SIZES = [:sm, :md, :lg, :xl, :auto, :full].freeze
+
+        # Resolves the concrete modal class for a definition's `modal_mode`
+        # symbol. Unknown / `false` modes fall back to `Slideover` so call
+        # sites can stay branchless.
+        def self.class_for_mode(mode)
+          (mode == :centered) ? Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
+        end
+
+        def initialize(title: nil, description: nil, size: :md)
           @title = title
           @description = description
+          @size = size
+          validate_size!
         end
 
         def view_template(&block)
@@ -54,7 +71,25 @@ module Plutonium
         end
 
         def dialog_classes
+          "#{base_dialog_classes} #{size_classes}"
+        end
+
+        # Positioning, backdrop, transitions — everything that does
+        # not vary with `size`. Width/height tokens live in
+        # `size_classes` so size keys can fully replace them
+        # (notably `:auto`, which needs `w-fit` instead of `w-full`).
+        def base_dialog_classes
           raise NotImplementedError
+        end
+
+        def size_classes
+          self.class::SIZE_CLASSES.fetch(@size)
+        end
+
+        def validate_size!
+          return if VALID_SIZES.include?(@size)
+          raise ArgumentError,
+            "modal size must be one of #{VALID_SIZES.inspect}, got #{@size.inspect}"
         end
 
         def inner_classes

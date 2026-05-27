@@ -410,15 +410,16 @@ class PostDefinition < ResourceDefinition
   #   false           — always hide
   submit_and_continue false
 
-  # How :new / :edit render
+  # How :new / :edit and interactive actions render
   #   :slideover   (default) — slide-in panel from the right
   #   :centered              — centered dialog
   #   false                  — full standalone pages (no modal)
-  modal :centered
+  # size: optional, one of :sm, :md (default), :lg, :xl, :auto, :full
+  modal :centered, size: :lg
 end
 ```
 
-`modal:` only affects framework `:new`/`:edit` actions. Custom interactive actions have their own per-action `modal:` option — see [Actions](./actions).
+`modal:` is the default for framework `:new`/`:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win — see [Actions](./actions).
 
 ## Metadata panel (show page)
 

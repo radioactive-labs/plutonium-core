@@ -87,4 +87,21 @@ class Plutonium::UI::Modal::CenteredTest < ActiveSupport::TestCase
     html = render_html(Plutonium::UI::Modal::Centered.new)
     assert_includes html, "flex flex-col h-full max-h-[inherit] min-h-0"
   end
+
+  test "size defaults to :md" do
+    html = render_html(Plutonium::UI::Modal::Centered.new)
+    assert_includes html, Plutonium::UI::Modal::Centered::SIZE_CLASSES.fetch(:md)
+  end
+
+  test "size: dispatches into SIZE_CLASSES" do
+    Plutonium::UI::Modal::Centered::SIZE_CLASSES.each do |size, classes|
+      html = render_html(Plutonium::UI::Modal::Centered.new(size: size))
+      assert_includes html, classes, "expected size :#{size} to render #{classes.inspect}"
+    end
+  end
+
+  test "invalid size: raises ArgumentError" do
+    error = assert_raises(ArgumentError) { Plutonium::UI::Modal::Centered.new(size: :huge) }
+    assert_match(/modal size must be one of/, error.message)
+  end
 end
