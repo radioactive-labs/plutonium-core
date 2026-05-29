@@ -16,10 +16,6 @@ module Plutonium
       # modal frame specifically.
       def in_secondary_modal? = current_turbo_frame == Plutonium::REMOTE_MODAL_SECONDARY_FRAME
 
-      def remote_modal_frame_tag(&)
-        turbo_frame_tag(Plutonium::REMOTE_MODAL_FRAME, &)
-      end
-
       # Returns a turbo-frame-scoped element id. Two identically-named forms
       # can be on the page simultaneously (e.g. a primary modal opens a
       # secondary modal, each rendering an `id="resource-form"`). When the

@@ -4,29 +4,6 @@ module Plutonium
   module Helpers
     # Helper module for managing asset-related functionality
     module AssetsHelper
-      # Generate a stylesheet tag for the resource
-      #
-      # @return [ActiveSupport::SafeBuffer] HTML stylesheet link tag
-      def resource_stylesheet_tag
-        url = resource_asset_url_for(:css, resource_stylesheet_asset)
-        stylesheet_link_tag(url, "data-turbo-track": "reload")
-      end
-
-      # Generate a script tag for the resource
-      #
-      # @return [ActiveSupport::SafeBuffer] HTML script tag
-      def resource_script_tag
-        url = resource_asset_url_for(:js, resource_script_asset)
-        javascript_include_tag(url, "data-turbo-track": "reload", type: "module")
-      end
-
-      # Generate a favicon link tag
-      #
-      # @return [ActiveSupport::SafeBuffer] HTML favicon link tag
-      def resource_favicon_tag
-        favicon_link_tag(resource_favicon_asset)
-      end
-
       # Generate an image tag for the logo
       #
       # @param classname [String] CSS class name for the image tag
@@ -54,13 +31,6 @@ module Plutonium
       # @return [String] path to the script asset
       def resource_script_asset
         Plutonium.configuration.assets.script
-      end
-
-      # Get the favicon asset path
-      #
-      # @return [String] path to the favicon asset
-      def resource_favicon_asset
-        Plutonium.configuration.assets.favicon
       end
 
       private
