@@ -50,6 +50,8 @@ module Plutonium
           self.class.method_defined?(build_method) || super
         end
 
+        def BuildAvatar(...) = Plutonium::UI::Avatar.new(...)
+
         def BuildBreadcrumbs(...) = Plutonium::UI::Breadcrumbs.new(...)
 
         def BuildSkeletonTable(...) = Plutonium::UI::SkeletonTable.new(...)

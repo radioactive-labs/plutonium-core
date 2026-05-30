@@ -30,6 +30,12 @@ module Plutonium
     # @return [Symbol] :classic (legacy Header/Sidebar) or :modern (Topbar/IconRail)
     attr_accessor :shell
 
+    # @return [String] host URL of the Navii avatar service (no path), used by
+    #   {Plutonium::UI::Avatar} as the default profile-image fallback. The
+    #   component appends the `/avatar/:seed` route. Repoint this to self-host
+    #   or proxy the service.
+    attr_accessor :navii_host_url
+
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
       1.0 => proc do |config|
@@ -52,6 +58,7 @@ module Plutonium
       @cache_discovery = !Rails.env.development?
       @enable_hotreload = Rails.env.development?
       @shell = :modern
+      @navii_host_url = "https://api.navii.dev"
     end
 
     # Load default configuration for a specific version

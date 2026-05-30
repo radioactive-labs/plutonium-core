@@ -1,13 +1,14 @@
-<%= render Plutonium::UI::Layout::Header.new do |header| %>
-  <% header.with_brand_logo do %>
-    <%= resource_logo_tag(classname: "h-10 rounded-md") %>
+<%= render Plutonium::UI::Layout::Topbar.new do |bar| %>
+  <% bar.with_action do %>
+    <%= render Plutonium::UI::ColorModeSelector.new %>
   <% end %>
 
-  <% header.with_action do %>
+  <% bar.with_action do %>
     <%=
       render Plutonium::UI::NavUser.new(
         name: nil,
-        email: current_user.try(:email) || current_user
+        email: current_user.try(:email) || current_user,
+        record: (current_user if current_user.respond_to?(:id))
       ) do |nav|
         if try(:profile_url)
           nav.with_section do |section|

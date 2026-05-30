@@ -10,6 +10,7 @@ Inside any `Plutonium::UI::Component::Base` subclass (or any page/form/display c
 PageHeader(title: "Dashboard", description: "...", actions: [...])
 Panel(class: "mt-4") { p { "Content" } }
 Block { TabList(items: tabs) }
+Avatar(user)
 EmptyCard("No items found")
 ActionButton(action, url: "/posts/new")
 DynaFrameHost(src: "/some/path", loading: :lazy)
@@ -22,6 +23,58 @@ Breadcrumbs()
 ```
 
 These are shorthand for `render Plutonium::UI::PageHeader.new(...)` etc. — they work because every component class is exposed as a method on `Plutonium::UI::Component::Base`.
+
+## Avatar
+
+`Plutonium::UI::Avatar` renders a profile image for a subject. It resolves an optional image source and falls back to a deterministic avatar from the hosted [Navii](https://navii.dev) service, then to a generic user icon when there's nothing to show.
+
+![Avatar — Navii fallback across sizes, deterministic faces for string subjects, explicit image src, and the icon fallback](/images/components/avatar.png)
+
+```ruby
+Avatar(user)                      # Navii fallback seeded from the record
+Avatar(user, src: :avatar)        # user.avatar if present, else Navii fallback
+Avatar(user, src: user.avatar)    # pass the attachment/uploader/URL directly
+Avatar("acme-team")               # a String subject is a deterministic seed
+Avatar("https://.../p.png")       # a URL-shaped subject is shown as the image
+Avatar(src: "https://.../p.png")  # a bare image, no subject/fallback
+```
+
+| Param     | Default | Notes |
+|-----------|---------|-------|
+| `subject` | `nil`   | **Positional.** The identity the fallback is seeded from: a record (hashed to a PII-free seed) or a String. Also the default `alt`. A **URL-shaped** String (`http(s)://…` or `/…`) is treated as `src` instead, so `Avatar(photo_url)` shows the image. |
+| `src:`    | `nil`   | The image. A **Symbol** names a method on the subject (`:avatar` → `subject.avatar`); otherwise an ActiveStorage attachment, [active_shrine](https://github.com/radioactive-labs/active_shrine)/Shrine uploader, or URL string. |
+| `size:`   | `:md`   | Semantic `:xs 24 / :sm 32 / :md 40 / :lg 48 / :xl 64`, or a raw Integer (px). |
+| `alt:`    | derived | Defaults to the String subject, or the record's display name. |
+| `class:`  | —       | Merged over the default `rounded-full` classes. |
+
+### How the source resolves
+
+`src` is resolved in this order, so the same component works across attachment libraries:
+
+- **ActiveStorage** attachment → `helpers.url_for` (the Rails-routable redirect path)
+- **active_shrine** / Shrine `UploadedFile` / CarrierWave (anything responding to `#url`) → `value.url`
+- **URL string** (`"https://…"` or `"/…"`) → used as-is
+
+When `src` is absent or unattached, a Navii avatar is rendered from the subject; with no subject either, a generic user icon is shown.
+
+::: tip Symbol `src` is a contract
+`Avatar(user, src: :avatar)` calls `user.avatar` — the subject **must** respond to it (a `NoMethodError` is raised otherwise). Use a Symbol `src` only with a record subject, not a value that might be a plain string (e.g. a guest `current_user`).
+:::
+
+### Privacy
+
+The value sent to Navii is **always a hash** of the subject's identity (`Digest::SHA256` of `"Class:id"` for a record, or of the string for a String subject). No model names, IDs, emails, or seed strings ever reach the external service, and the avatar stays deterministic (same subject → same avatar).
+
+### Configuration
+
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure do |config|
+  config.navii_host_url = "https://api.navii.dev"  # default; repoint to self-host/proxy
+end
+```
+
+The component appends Navii's `/avatar/:seed` route to this host.
 
 ## Writing custom Phlex components
 

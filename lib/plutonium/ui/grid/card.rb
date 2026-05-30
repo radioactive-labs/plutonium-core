@@ -75,20 +75,21 @@ module Plutonium
 
         def render_image_slot(size:)
           value = field_value(slots[:image])
-          return unless value
-          src = image_src_for(value)
-          return unless src
 
           if size == :cover
+            # Cover is a full-width banner, not an avatar: only render when an
+            # actual image resolves (no deterministic fallback).
+            src = Plutonium::UI::Avatar.resolve_image_src(value, helpers)
+            return unless src
+
             div(class: "w-full aspect-video bg-[var(--pu-surface-alt)] overflow-hidden") do
               img(src: src, alt: header_text.to_s, class: "w-full h-full object-cover")
             end
           else
-            img(
-              src: src,
-              alt: header_text.to_s,
-              class: "w-12 h-12 rounded-full object-cover bg-[var(--pu-surface-alt)] shrink-0"
-            )
+            # Small avatar slot: render the resolved image, or Avatar's generic
+            # icon fallback. No subject is passed, so image-less cards fall back
+            # to the local icon rather than a per-card request to Navii.
+            Avatar(src: value, size: :lg, alt: header_text.to_s)
           end
         end
 
@@ -190,23 +191,6 @@ module Plutonium
               "Define the method on the model or remove the slot."
           end
           record.public_send(name)
-        end
-
-        # Resolves a slot value to an image URL. Supports:
-        # - ActiveStorage attachments (`record.avatar` -> Attached::One/Many)
-        # - Shrine uploaders (`record.avatar` -> UploadedFile, responds to :url)
-        # - Plain URL strings ("https://..." or "/uploads/...")
-        def image_src_for(value)
-          return nil if value.nil?
-          if value.respond_to?(:attached?)
-            value.attached? ? helpers.url_for(value) : nil
-          elsif value.respond_to?(:url)
-            value.url
-          elsif value.is_a?(String) && value.start_with?("http", "/")
-            value
-          end
-        rescue ArgumentError, URI::InvalidURIError
-          nil
         end
 
         def row_actions
