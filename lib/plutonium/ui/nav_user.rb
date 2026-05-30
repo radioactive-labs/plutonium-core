@@ -52,10 +52,11 @@ module Plutonium
 
       slot :section, Section, collection: true
 
-      def initialize(email:, name: nil, avatar_url: nil)
+      def initialize(email:, name: nil, avatar_url: nil, record: nil)
         @email = email
         @name = name
         @avatar_url = avatar_url
+        @record = record
       end
 
       def view_template
@@ -68,14 +69,6 @@ module Plutonium
       private
 
       def render_trigger_button
-        if @avatar_url.present?
-          render_avatar_button
-        else
-          render_default_button
-        end
-      end
-
-      def render_avatar_button
         button(
           type: "button",
           class: "flex mx-3 text-sm rounded-full md:mr-0 focus:ring-2 focus:ring-[var(--pu-border)] focus:ring-offset-2 transition-shadow",
@@ -84,20 +77,7 @@ module Plutonium
           data: {resource_drop_down_target: "trigger"}
         ) do
           span(class: "sr-only") { "Open user menu" }
-          img(class: "w-8 h-8 rounded-full ring-2 ring-[var(--pu-border)]", src: @avatar_url, alt: "avatar")
-        end
-      end
-
-      def render_default_button
-        button(
-          type: "button",
-          class: "flex mx-3 p-1 text-sm border border-[var(--pu-border)] text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-full md:mr-0 focus:ring-2 focus:ring-[var(--pu-border)] focus:ring-offset-2 transition-colors",
-          aria: {expanded: "false"},
-          id: "user-nav-dropdown-toggle",
-          data: {resource_drop_down_target: "trigger"}
-        ) do
-          span(class: "sr-only") { "Open user menu" }
-          render Phlex::TablerIcons::User.new(class: "w-6 h-6")
+          Avatar(@record, src: @avatar_url, size: :sm, alt: "avatar", class: "ring-2 ring-[var(--pu-border)]")
         end
       end
 

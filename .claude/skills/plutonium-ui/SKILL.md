@@ -390,6 +390,7 @@ Inside any `Plutonium::UI::Component::Base` (or any page/form/display):
 PageHeader(title: "Dashboard", description: "...", actions: [...])
 Panel(class: "mt-4") { p { "Content" } }
 Block { TabList(items: tabs) }
+Avatar(user)                      # profile image: src → Navii fallback → icon
 EmptyCard("No items found")
 ActionButton(action, url: "/posts/new")
 DynaFrameHost(src: "/some/path", loading: :lazy)
@@ -400,6 +401,28 @@ TableInfo(pagy)
 TablePagination(pagy)
 Breadcrumbs()
 ```
+
+## Avatar
+
+`Avatar(subject = nil, src: nil, size: :md, alt: nil, **attrs)` — profile image with a deterministic [Navii](https://navii.dev) fallback. Registered in the kit.
+
+```ruby
+Avatar(user)                      # Navii fallback seeded from the record
+Avatar(user, src: :avatar)        # user.avatar if present, else Navii fallback
+Avatar(user, src: user.avatar)    # pass the attachment/uploader/URL directly
+Avatar("acme-team")               # String subject = deterministic seed
+Avatar("https://.../p.png")       # URL-shaped subject is shown as the image
+Avatar(src: avatar_url)           # bare image, no subject/fallback
+```
+
+- **subject** (positional): record → PII-free hashed seed + default `alt` (display name); String → seed. A URL-shaped String (`http(s)://…` or `/…`) is routed to `src` (shown as the image), not used as a seed.
+- **src**: a Symbol is sent to the subject (`:avatar` → `subject.avatar`, a **contract** — raises if absent); otherwise an ActiveStorage attachment, active_shrine/Shrine uploader, or URL string. ActiveStorage resolves via `helpers.url_for`; everything else via its own `#url`.
+- **size**: `:xs 24 / :sm 32 / :md 40 / :lg 48 / :xl 64`, or a raw Integer.
+- **Privacy**: the value sent to Navii is **always** a SHA256 hash — no ids, emails, or seed strings leave the app. Deterministic per subject.
+- **Resolution order**: resolved `src` → Navii (from subject) → generic user icon.
+- **Config**: `config.navii_host_url` (default `https://api.navii.dev`); the component appends `/avatar/:seed`.
+
+🚨 Ejected shells: `Avatar` only shows a Navii avatar when `NavUser` is passed `record:`. The gem's `_resource_header.html.erb` passes `record: (current_user if current_user.respond_to?(:id))`; portals that **ejected** the header before this must re-eject (`rails g pu:eject:shell --dest=<portal>`) or add the `record:` line, otherwise they keep the icon fallback. Pass a record only — a String `current_user` (e.g. a guest) would otherwise be seeded as a literal identity.
 
 ## Custom Phlex components
 
