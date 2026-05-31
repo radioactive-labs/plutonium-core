@@ -22,8 +22,11 @@ module Plutonium
       #
       # @return [void]
       def clear!
-        resource_route_config_lookup.clear
-        engine.resource_register.clear
+        if engine
+          resource_route_config_lookup.clear
+          engine.resource_register.clear
+        end
+
         super
       end
 
@@ -98,9 +101,14 @@ module Plutonium
 
       # Returns the current engine for the routes.
       #
-      # @return [Class] The engine class (Rails application or custom engine).
+      # Memoizes via defined? so a nil result (non-Plutonium route set) is cached
+      # instead of being recomputed on every call.
+      #
+      # @return [Class, nil] The owning engine, or nil if not a Plutonium engine.
       def engine
-        @engine ||= determine_engine
+        return @engine if defined?(@engine)
+
+        @engine = determine_engine
       end
 
       # @return [Hash] A lookup table for resource route configurations.
@@ -112,12 +120,21 @@ module Plutonium
 
       private
 
-      # Determines the appropriate engine based on the current scope.
+      # Determines the Plutonium engine that owns this route set, if any.
       #
-      # @return [Class] The determined engine class.
+      # Plutonium engines follow the SomeModule::Engine convention. A route set
+      # with no module scope belongs to the application. Anything else (e.g.
+      # graphql-ruby's Graphql::Dashboard, whose engine class is the module
+      # itself with no nested ::Engine) is not a Plutonium engine and has nothing
+      # for us to manage, so we return nil and let #clear!/#draw skip it rather
+      # than raise during route reload.
+      #
+      # @return [Class, nil] The owning engine, or nil if not a Plutonium engine.
       def determine_engine
         engine_module = default_scope&.fetch(:module)
-        engine_module.present? ? "#{engine_module.camelize}::Engine".constantize : Rails.application.class
+        return Rails.application.class if engine_module.blank?
+
+        "#{engine_module.camelize}::Engine".safe_constantize
       end
 
       # Creates a resource configuration hash.
