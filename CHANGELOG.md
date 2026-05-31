@@ -1,3 +1,8 @@
+## [0.53.1] - 2026-05-31
+
+### 🐛 Bug Fixes
+
+- *(routing)* Tolerate non-Plutonium engines during route reload
 ## [0.53.0] - 2026-05-31
 
 ### 🚀 Features
