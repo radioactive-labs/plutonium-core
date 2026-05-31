@@ -1,3 +1,19 @@
+## [0.53.0] - 2026-05-31
+
+### 🚀 Features
+
+- *(ui)* Add Avatar component with Navii fallback (#59)
+
+### 🐛 Bug Fixes
+
+- *(docs)* Correct broken cross-page anchors in guides
+- *(docs)* Retract incorrect "never super" guidance in relation_scope
+- *(docs)* Correct scoped-URL shape in multi-tenancy docs
+- *(rodauth)* Match change_password_notify mailer template name
+
+### 🚜 Refactor
+
+- *(helpers)* Remove dead view helpers superseded by Phlex components
 ## [0.52.0] - 2026-05-21
 
 ### 🐛 Bug Fixes

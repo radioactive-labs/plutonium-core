@@ -28364,7 +28364,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var confirmButton;
   var cancelButton;
   function ensureDialog() {
-    if (dialog) return;
+    if (dialog) {
+      if (!dialog.isConnected) document.body.appendChild(dialog);
+      return;
+    }
     dialog = document.createElement("dialog");
     dialog.className = [
       "pu-dialog",
@@ -28444,8 +28447,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       confirmButton.focus();
     });
   }
-  if (typeof window !== "undefined" && window.Turbo?.setConfirmMethod) {
-    window.Turbo.setConfirmMethod(themedConfirm);
+  if (typeof window !== "undefined" && window.Turbo) {
+    if (window.Turbo.config?.forms) {
+      window.Turbo.config.forms.confirm = themedConfirm;
+    } else if (window.Turbo.setConfirmMethod) {
+      window.Turbo.setConfirmMethod(themedConfirm);
+    }
   }
 
   // src/js/plutonium.js
