@@ -104,11 +104,18 @@ module Plutonium
         end
 
         def render_actions
-          # capture-url controller sets this element's value to
-          # window.location.href on connect, so URL fragments (#tab-id)
-          # survive the redirect after submit (the server never sees them).
+          # Only carry an *explicit* return_to. We deliberately do NOT fall
+          # back to request.original_url: for interactive-action forms that URL
+          # is the action's own (modal-only) path, and submitting it back would
+          # "return" to a bare standalone form — a blank page. When absent, the
+          # controller computes the right destination (redirect_url_after_submit
+          # / redirect_url_after_action_on, both → resource_url_for).
+          #
+          # capture-url grafts the live URL fragment (#tab-id) onto this value
+          # on connect (the server never sees fragments), but only when a base
+          # value is present.
           input name: "return_to",
-            value: request.params[:return_to] || request.original_url,
+            value: request.params[:return_to],
             type: :hidden,
             hidden: true,
             data: {controller: "capture-url"}
