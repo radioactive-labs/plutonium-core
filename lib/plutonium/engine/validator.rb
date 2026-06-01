@@ -13,16 +13,23 @@ module Plutonium
         def validate_engine!(engine)
           return if supported_engine?(engine)
 
-          # TODO: make the error link to documentation on how to ensure that your engine is supported
-          raise ArgumentError, "#{engine} must include Plutonium::Engine to call register resources"
+          raise ArgumentError,
+            "#{engine} must include Plutonium::Engine to register resources. " \
+            "See https://radioactive-labs.github.io/plutonium-core/reference/app/packages " \
+            "for how to make an engine Plutonium-aware."
         end
 
         # Checks if the current engine supports Plutonium features.
         #
         # @return [Boolean] True if the engine includes Plutonium::Engine, false otherwise.
         def supported_engine?(engine)
-          # TODO: fix constant being out of sync after reload during development
-          Plutonium.configuration.development? ? engine.respond_to?(:dom_id) : engine.include?(Plutonium::Engine)
+          # Match by module name rather than object identity. In development the
+          # framework is reloaded, so `Plutonium::Engine` is reassigned to a
+          # fresh module object while already-loaded engines still include the
+          # previous one — making an `include?(Plutonium::Engine)` identity check
+          # spuriously false. A module's name survives the reassignment, so this
+          # stays correct in both development and production without a branch.
+          engine.ancestors.any? { |ancestor| ancestor.name == "Plutonium::Engine" }
         end
       end
     end
