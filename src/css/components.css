@@ -683,3 +683,108 @@ body.pu-rail-pinned .icon-rail-pin-expand {
   background: var(--pu-surface-alt);
   color: var(--pu-text);
 }
+
+/* ===================
+   FLASH — TOASTS & ALERTS
+
+   Self-contained component classes so flash colors render regardless of the
+   host app's Tailwind `content` scan. The partials build their class names
+   dynamically (bg-<color>-50, …), which Tailwind can only emit if it scans the
+   gem's views — it doesn't under v4's @import + @config source detection. By
+   baking the colors into Plutonium's own compiled stylesheet, every flash
+   variant works in any consuming app.
+   =================== */
+
+/* --- Toast (fixed, dismissible banner) --- */
+.pu-toast {
+  @apply fixed z-50 top-16 inset-x-0 mx-auto flex items-center w-full max-w-md p-4 rounded-lg shadow text-gray-500;
+}
+.dark .pu-toast {
+  @apply bg-gray-800 border border-gray-700 shadow-none;
+}
+
+.pu-toast-icon {
+  @apply inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg;
+}
+
+.pu-toast-message {
+  @apply ms-3 text-sm font-normal;
+}
+
+.pu-toast-close {
+  @apply ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8;
+}
+.dark .pu-toast-close {
+  @apply bg-gray-800 hover:bg-gray-700;
+}
+
+/* --- Alert (inline, flow banner) --- */
+.pu-alert {
+  @apply flex items-center p-4 mb-4 rounded-lg;
+}
+.dark .pu-alert {
+  @apply bg-stone-300;
+}
+
+.pu-alert-message {
+  @apply ms-3 text-sm font-normal;
+}
+
+.pu-alert-close {
+  @apply ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8;
+}
+.dark .pu-alert-close {
+  @apply bg-stone-300 hover:bg-gray-700;
+}
+
+/* --- Variants: success / warning / danger / info ---
+   Each colors the container plus its icon and close button via descendants,
+   so the partial only sets one variant class on the wrapper. --- */
+
+/* success */
+.pu-toast-success           { @apply bg-success-50; }
+.dark .pu-toast-success     { @apply text-success-400; }
+.pu-toast-success .pu-toast-icon       { @apply text-success-500 bg-success-100; }
+.dark .pu-toast-success .pu-toast-icon { @apply bg-success-800 text-success-200; }
+.pu-toast-success .pu-toast-close       { @apply bg-success-50 text-success-400 hover:bg-success-200 focus:ring-success-400; }
+.dark .pu-toast-success .pu-toast-close { @apply text-success-400; }
+.pu-alert-success           { @apply bg-success-50 text-success-800; }
+.dark .pu-alert-success     { @apply text-success-400; }
+.pu-alert-success .pu-alert-close       { @apply bg-success-50 text-success-500 hover:bg-success-200 focus:ring-success-400; }
+.dark .pu-alert-success .pu-alert-close { @apply text-success-400; }
+
+/* warning */
+.pu-toast-warning           { @apply bg-warning-50; }
+.dark .pu-toast-warning     { @apply text-warning-400; }
+.pu-toast-warning .pu-toast-icon       { @apply text-warning-500 bg-warning-100; }
+.dark .pu-toast-warning .pu-toast-icon { @apply bg-warning-800 text-warning-200; }
+.pu-toast-warning .pu-toast-close       { @apply bg-warning-50 text-warning-400 hover:bg-warning-200 focus:ring-warning-400; }
+.dark .pu-toast-warning .pu-toast-close { @apply text-warning-400; }
+.pu-alert-warning           { @apply bg-warning-50 text-warning-800; }
+.dark .pu-alert-warning     { @apply text-warning-400; }
+.pu-alert-warning .pu-alert-close       { @apply bg-warning-50 text-warning-500 hover:bg-warning-200 focus:ring-warning-400; }
+.dark .pu-alert-warning .pu-alert-close { @apply text-warning-400; }
+
+/* danger */
+.pu-toast-danger            { @apply bg-danger-50; }
+.dark .pu-toast-danger      { @apply text-danger-400; }
+.pu-toast-danger .pu-toast-icon       { @apply text-danger-500 bg-danger-100; }
+.dark .pu-toast-danger .pu-toast-icon { @apply bg-danger-800 text-danger-200; }
+.pu-toast-danger .pu-toast-close       { @apply bg-danger-50 text-danger-400 hover:bg-danger-200 focus:ring-danger-400; }
+.dark .pu-toast-danger .pu-toast-close { @apply text-danger-400; }
+.pu-alert-danger            { @apply bg-danger-50 text-danger-800; }
+.dark .pu-alert-danger      { @apply text-danger-400; }
+.pu-alert-danger .pu-alert-close       { @apply bg-danger-50 text-danger-500 hover:bg-danger-200 focus:ring-danger-400; }
+.dark .pu-alert-danger .pu-alert-close { @apply text-danger-400; }
+
+/* info (default / :notice) */
+.pu-toast-info              { @apply bg-info-50; }
+.dark .pu-toast-info        { @apply text-info-400; }
+.pu-toast-info .pu-toast-icon       { @apply text-info-500 bg-info-100; }
+.dark .pu-toast-info .pu-toast-icon { @apply bg-info-800 text-info-200; }
+.pu-toast-info .pu-toast-close       { @apply bg-info-50 text-info-400 hover:bg-info-200 focus:ring-info-400; }
+.dark .pu-toast-info .pu-toast-close { @apply text-info-400; }
+.pu-alert-info              { @apply bg-info-50 text-info-800; }
+.dark .pu-alert-info        { @apply text-info-400; }
+.pu-alert-info .pu-alert-close       { @apply bg-info-50 text-info-500 hover:bg-info-200 focus:ring-info-400; }
+.dark .pu-alert-info .pu-alert-close { @apply text-info-400; }

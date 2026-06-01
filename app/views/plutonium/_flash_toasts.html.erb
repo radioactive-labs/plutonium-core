@@ -2,28 +2,19 @@
 <%
   next unless msg.present?
 
-  color = case type.to_sym
-  when :success
-    # text-green-500 bg-green-100 bg-green-800 text-green-200 bg-green-50 text-green-400 ring-green-400
-    "green"
-  when :warning
-    # text-yellow-500 bg-yellow-100 bg-yellow-800 text-yellow-200 bg-yellow-50 text-yellow-400 ring-yellow-400
-    "yellow"
-  when :alert, :danger, :error
-    # text-red-500 bg-red-100 bg-red-800 text-red-200 bg-red-50 text-red-400 ring-red-400
-    "red"
-  else
-    # text-blue-500 bg-blue-100 bg-blue-800 text-blue-200 bg-blue-50 text-blue-400 ring-blue-400
-    "blue"
-  end
+  variant = {
+    success: "success",
+    warning: "warning",
+    alert: "danger", danger: "danger", error: "danger"
+  }.fetch(type.to_sym, "info")
 %>
 
 <div data-controller="resource-dismiss"
     data-resource-dismiss-after-value="6000"
-    class="fixed z-50 top-16 inset-x-0 mx-auto flex items-center w-full max-w-md p-4 text-gray-500 bg-<%= color %>-50 rounded-lg shadow dark:text-<%= color %>-400 dark:bg-gray-800 dark:border dark:border-gray-700 dark:shadow-none"
+    class="pu-toast pu-toast-<%= variant %>"
     role="alert">
 
-  <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-<%= color %>-500 bg-<%= color %>-100 rounded-lg dark:bg-<%= color %>-800 dark:text-<%= color %>-200">
+  <div class="pu-toast-icon">
     <% case type.to_sym %>
     <% when :success %>
       <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
@@ -43,9 +34,9 @@
       </svg>
     <% end %>
   </div>
-  <div class="ms-3 text-sm font-normal"><%= msg %></div>
+  <div class="pu-toast-message"><%= msg %></div>
   <button type="button"
-    class="ms-auto -mx-1.5 -my-1.5 bg-<%= color %>-50 text-<%= color %>-400 rounded-lg focus:ring-2 focus:ring-<%= color %>-400 p-1.5 hover:bg-<%= color %>-200 inline-flex items-center justify-center h-8 w-8 dark:text-<%= color %>-400 dark:bg-gray-800 dark:hover:bg-gray-700"
+    class="pu-toast-close"
     data-action="click->resource-dismiss#dismiss"
     aria-label="Close">
       <span class="sr-only">Close</span>
