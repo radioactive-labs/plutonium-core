@@ -19,7 +19,10 @@ module Plutonium
             form_errors_list: "mt-2 list-disc list-inside text-sm",
 
             # Label themes
-            label: "mt-2 block mb-2 text-base font-semibold",
+            # The required marker is a `<abbr title="required">*</abbr>` which
+            # picks up the browser's default dotted underline — strip it and
+            # color the asterisk as a danger indicator instead.
+            label: "mt-2 block mb-2 text-base font-semibold [&_abbr]:no-underline [&_abbr]:border-0 [&_abbr]:cursor-default [&_abbr]:text-danger-500",
             invalid_label: "text-danger-700 dark:text-danger-400",
             valid_label: "text-success-700 dark:text-success-400",
             neutral_label: "text-[var(--pu-text)]",
@@ -46,8 +49,16 @@ module Plutonium
             valid_color: nil,
             neutral_color: nil,
 
-            # File input
-            file: "pu-input py-2 [&::file-selector-button]:mr-4 [&::file-selector-button]:px-4 [&::file-selector-button]:py-2 [&::file-selector-button]:bg-[var(--pu-surface-alt)] [&::file-selector-button]:border-0 [&::file-selector-button]:rounded-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-semibold [&::file-selector-button]:text-[var(--pu-text-muted)] [&::file-selector-button]:hover:bg-[var(--pu-border)] [&::file-selector-button]:cursor-pointer [&::file-selector-button]:transition-colors",
+            # File input — keep pu-input's h-9 so the field matches the height
+            # of text inputs and slim-selects. The native file-selector-button
+            # fills the *full* height of the control and sits flush against the
+            # left edge (px-0 on the wrapper, no vertical margin), reading as a
+            # segmented button. A right border divides it from the filename text,
+            # and only the left corners are rounded so it nests inside pu-input.
+            # NOTE: pu-input ships its px-3/h-9 padding *unlayered*, so plain
+            # pl-0/py-0 utilities (in @layer utilities) lose to it — the !
+            # important variants are required to flatten the wrapper padding.
+            file: "pu-input pl-0! py-0! [&::file-selector-button]:h-full [&::file-selector-button]:align-middle [&::file-selector-button]:m-0 [&::file-selector-button]:mr-4 [&::file-selector-button]:px-4 [&::file-selector-button]:leading-[1.1] [&::file-selector-button]:bg-[var(--pu-surface-alt)] [&::file-selector-button]:border-0 [&::file-selector-button]:border-r [&::file-selector-button]:border-[var(--pu-input-border)] [&::file-selector-button]:rounded-none [&::file-selector-button]:rounded-l-md [&::file-selector-button]:text-sm [&::file-selector-button]:font-semibold [&::file-selector-button]:text-[var(--pu-text-muted)] [&::file-selector-button]:hover:bg-[var(--pu-border)] [&::file-selector-button]:cursor-pointer [&::file-selector-button]:transition-colors",
 
             # Hint themes
             hint: "pu-hint whitespace-pre-wrap",
