@@ -115,13 +115,16 @@ export default class extends Controller {
     panel.style.left = `${triggerRect.right + 4}px`
     panel.style.top = `${triggerRect.top}px`
 
-    // Shift up if the panel would overflow the viewport bottom.
+    // Shift up if the panel would overflow the viewport bottom, but never
+    // past the top edge — the inner panel scrolls (max-height) when the
+    // menu is taller than the viewport.
     requestAnimationFrame(() => {
       const panelRect = panel.getBoundingClientRect()
       const viewportH = window.innerHeight
       if (panelRect.bottom > viewportH - 8) {
         const overflow = panelRect.bottom - (viewportH - 8)
-        panel.style.top = `${parseFloat(panel.style.top) - overflow}px`
+        const top = Math.max(8, parseFloat(panel.style.top) - overflow)
+        panel.style.top = `${top}px`
       }
     })
   }
