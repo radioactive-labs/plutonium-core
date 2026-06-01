@@ -1,3 +1,27 @@
+## [0.54.0] - 2026-06-01
+
+### 🚀 Features
+
+- *(ui)* Refine file-input height and required-marker theming
+
+### 🐛 Bug Fixes
+
+- *(engine)* Match Plutonium::Engine by name to survive dev reload
+- *(ui)* Carry only an explicit return_to on resource forms
+- *(ui)* Ignore bubbled file-input cancel in modal dialogs
+- *(ui)* Cap icon-rail flyout to the viewport height
+
+### 🚜 Refactor
+
+- *(ui)* Render flash via self-contained component classes
+
+### 🧪 Testing
+
+- *(ui)* Characterize nested resource and interaction form rendering
+
+### ⚙️ Miscellaneous Tasks
+
+- *(assets)* Rebuild bundled assets
 ## [0.53.1] - 2026-05-31
 
 ### 🐛 Bug Fixes
