@@ -27613,6 +27613,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.#animateClose();
     }
     #onCancel(event) {
+      if (event.target !== this.element) return;
       if (event.defaultPrevented) return;
       event.preventDefault();
       this.#animateClose();
@@ -28066,7 +28067,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         const viewportH = window.innerHeight;
         if (panelRect.bottom > viewportH - 8) {
           const overflow = panelRect.bottom - (viewportH - 8);
-          panel.style.top = `${parseFloat(panel.style.top) - overflow}px`;
+          const top2 = Math.max(8, parseFloat(panel.style.top) - overflow);
+          panel.style.top = `${top2}px`;
         }
       });
     }
@@ -28125,9 +28127,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   // src/js/controllers/capture_url_controller.js
   var capture_url_controller_default = class extends Controller {
     connect() {
-      if ("value" in this.element) {
-        this.element.value = window.location.href;
-      }
+      if (!("value" in this.element)) return;
+      const base = this.element.value;
+      if (!base) return;
+      const { hash: hash3 } = window.location;
+      if (!hash3) return;
+      this.element.value = base.split("#")[0] + hash3;
     }
   };
 
@@ -28212,9 +28217,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
       }
     }
-    async discard() {
+    discard() {
       this.forceClose = true;
-      await this.#closeConfirm();
+      this.#snapConfirmClosed();
       this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
     }
     keepEditing() {
@@ -28258,6 +28263,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.#promptDiscard();
     }
     #onCancel(event) {
+      if (event.target !== this.dialog) return;
       if (this.forceClose || this.submitting) return;
       if (!this.#isDirty()) return;
       event.preventDefault();
@@ -28284,6 +28290,16 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         this.forceClose = true;
         this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
       }
+    }
+    // Close the confirm immediately, skipping its exit transition. Used by
+    // discard(), where the parent modal is about to animate away and a
+    // separate confirm fade would only stutter against the modal's live
+    // backdrop blur.
+    #snapConfirmClosed() {
+      if (!this.hasConfirmDialogTarget) return;
+      const d4 = this.confirmDialogTarget;
+      d4.removeAttribute("data-open");
+      if (d4.open) d4.close();
     }
     async #closeConfirm() {
       if (!this.hasConfirmDialogTarget) return;
