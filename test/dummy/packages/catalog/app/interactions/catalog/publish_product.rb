@@ -4,6 +4,12 @@ class Catalog::PublishProduct < Catalog::ResourceInteraction
 
   attribute :resource
 
+  # (file-input height demo): a text input + a file input so the
+  # two heights can be compared side by side in the slideover.
+  attribute :reference
+  attribute :file
+  input :file, as: :file
+
   validate :must_be_draft
 
   private

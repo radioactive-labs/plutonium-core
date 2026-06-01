@@ -47,6 +47,11 @@ export default class extends Controller {
   }
 
   #onCancel(event) {
+    // `cancel` bubbles, so a descendant firing it — most notably an
+    // <input type="file"> whose picker was dismissed — reaches this
+    // listener. That is not a request to close the modal; only the
+    // dialog's own cancel (Escape) targets the dialog element itself.
+    if (event.target !== this.element) return;
     // Another listener (typically dirty-form-guard) already handled
     // this — don't double-process.
     if (event.defaultPrevented) return;

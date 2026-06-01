@@ -58,11 +58,20 @@ export default class extends Controller {
     }
   }
 
-  async discard() {
+  discard() {
     this.forceClose = true;
-    await this.#closeConfirm();
-    // Hand off to remote-modal so the parent modal animates out
-    // instead of snapping shut.
+    // Snap the confirm shut with no exit animation, then hand straight
+    // off to remote-modal so the parent modal animates out as a single,
+    // smooth motion.
+    //
+    // Animating the confirm out *first* (the old behaviour) stuttered:
+    // its fade played on top of the parent modal's still-live backdrop
+    // `backdrop-filter: blur()`, forcing the compositor to re-rasterise
+    // the blurred viewport every frame — and its display:none reflow
+    // landed partway through the modal's own close transition. We're
+    // tearing the whole modal down anyway, so the confirm doesn't need
+    // its own choreography.
+    this.#snapConfirmClosed();
     this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
   }
 
@@ -122,6 +131,10 @@ export default class extends Controller {
   }
 
   #onCancel(event) {
+    // `cancel` bubbles: a descendant's cancel (e.g. an <input type="file">
+    // whose picker was dismissed) reaches this listener. Only the dialog's
+    // own cancel (Escape) — target === the dialog — should prompt.
+    if (event.target !== this.dialog) return;
     if (this.forceClose || this.submitting) return;
     if (!this.#isDirty()) return;
     event.preventDefault();
@@ -151,6 +164,17 @@ export default class extends Controller {
       this.forceClose = true;
       this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
     }
+  }
+
+  // Close the confirm immediately, skipping its exit transition. Used by
+  // discard(), where the parent modal is about to animate away and a
+  // separate confirm fade would only stutter against the modal's live
+  // backdrop blur.
+  #snapConfirmClosed() {
+    if (!this.hasConfirmDialogTarget) return;
+    const d = this.confirmDialogTarget;
+    d.removeAttribute("data-open");
+    if (d.open) d.close();
   }
 
   async #closeConfirm() {
