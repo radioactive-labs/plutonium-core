@@ -1,8 +1,15 @@
 class Catalog::ProductDefinition < Catalog::ResourceDefinition
   field :description, as: :text
 
-  nested_input :variants
-  nested_input :product_detail
+  nested_input :variants do |definition|
+    definition.input :name
+    definition.input :sku
+    definition.input :stock_count
+  end
+  nested_input :product_detail do |definition|
+    definition.input :specifications
+    definition.input :warranty_info
+  end
 
   search do |scope, query|
     scope.where("name LIKE ? OR description LIKE ?", "%#{query}%", "%#{query}%")
