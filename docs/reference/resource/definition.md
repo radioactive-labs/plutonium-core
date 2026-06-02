@@ -339,6 +339,8 @@ Classless inline fieldsets backed by a JSON/jsonb column. No model associations
 required — the whole sub-form is serialised into a single column as a hash
 (single form) or an array of hashes (repeater).
 
+![A single structured input (Payload) and a repeater (Rows)](/images/reference/structured-inputs.png)
+
 ```ruby
 # model
 class Listing < ApplicationRecord
@@ -369,7 +371,16 @@ end
 | `repeat:` | `true` (default cap of 10) or an integer max-rows cap. Omit for a single-hash form. |
 | `using:` | Another Definition class whose `input` declarations are used as the fieldset. |
 | `fields:` | Subset of fields to take from the `using:` definition. |
-| `description` | Help text rendered above the fieldset. |
+
+### Removing rows
+
+Each repeater row has a **Remove** button. Removing a row collapses it to a
+compact _Removed — Restore_ bar and disables its inputs, so the browser omits
+them from the submission. The server simply rebuilds the JSON column from the
+rows it receives — there is no `_destroy` marker. **Restore** brings the row
+back before saving.
+
+![A removed row collapsed to a Restore bar](/images/reference/structured-inputs-removed.png)
 
 ### Policy
 
