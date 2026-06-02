@@ -18,14 +18,14 @@ class Plutonium::StructuredInputs::ParamsConcernTest < Minitest::Test
   def test_cleans_single_and_repeater_keys_only
     params = {
       name: "keep me",
-      address: {"street" => "1 A St", "_destroy" => "1"},
+      address: {"street" => "1 A St"},
       contacts: [{"label" => "a"}, {"label" => ""}]
     }
     out = Host.new.clean_structured_inputs(definition, params)
 
-    assert_equal "keep me", out[:name]
-    assert_equal({street: "1 A St"}, out[:address])
-    assert_equal [{label: "a"}], out[:contacts]
+    assert_equal "keep me", out[:name]                 # untouched
+    assert_equal({street: "1 A St"}, out[:address])    # symbolized
+    assert_equal [{label: "a"}], out[:contacts]        # blank row dropped
   end
 
   def test_tolerates_non_structured_definition

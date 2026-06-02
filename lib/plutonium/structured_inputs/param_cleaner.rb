@@ -2,10 +2,12 @@
 
 module Plutonium
   module StructuredInputs
-    # Turns submitted structured-input params into the stored value.
+    # Normalises an extracted structured-input value before it is stored.
+    #
+    # The form's `extract_input` already yields a `Hash` (single) or an
+    # `Array<Hash>` (repeater), so the only work left is to symbolise keys and,
+    # for repeaters, drop rows the user left entirely blank.
     module ParamCleaner
-      DESTROY_VALUES = [1, "1", true, "true"].freeze
-
       module_function
 
       # @param value [Hash, Array, nil] the extracted param for this input
@@ -16,26 +18,18 @@ module Plutonium
       end
 
       def clean_one(value)
-        return {} unless value.is_a?(Hash)
-        strip(value)
+        value.is_a?(Hash) ? symbolize(value) : {}
       end
 
       def clean_collection(value)
-        rows = value.is_a?(Hash) ? value.values : Array(value)
-        rows
-          .filter_map { |row| row.is_a?(Hash) ? row : nil }
-          .reject { |row| destroy?(row) }
-          .map { |row| strip(row) }
+        Array(value)
+          .select { |row| row.is_a?(Hash) }
+          .map { |row| symbolize(row) }
           .reject { |row| row.values.all? { |v| v.to_s.strip.empty? } }
       end
 
-      def destroy?(row)
-        DESTROY_VALUES.include?(row[:_destroy] || row["_destroy"])
-      end
-
-      # Drop _destroy and symbolize keys.
-      def strip(row)
-        row.to_h.except(:_destroy, "_destroy").transform_keys(&:to_sym)
+      def symbolize(row)
+        row.to_h.transform_keys(&:to_sym)
       end
     end
   end
