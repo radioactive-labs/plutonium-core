@@ -27,6 +27,11 @@ end
 # mount our app
 Rails.application.routes.draw do
   constraints Rodauth::Rails.authenticate(:user) do
+    # Bare `/org` has no route under path scoping (the root is
+    # `/org/:organization_scoped`). Resolve the user's entity and redirect
+    # into the scoped portal. Declared BEFORE the mount so the exact `/org`
+    # match wins; `/org/<id>/...` still falls through to the engine.
+    get "/org", to: "home#index"
     mount OrgPortal::Engine, at: "/org"
   end
 end
