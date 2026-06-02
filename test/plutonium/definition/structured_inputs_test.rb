@@ -51,4 +51,15 @@ class Plutonium::Definition::StructuredInputsTest < Minitest::Test
     child = Class.new(parent)
     assert child.defined_structured_inputs.key?(:a)
   end
+
+  # The form's render path holds a definition INSTANCE; it must be able to read
+  # the registry (the existing defined_nested_inputs exposes an instance method).
+  def test_instance_exposes_registry
+    klass = build_definition do
+      structured_input(:a) { |f| f.input :x }
+    end
+    instance = klass.new
+    assert_respond_to instance, :defined_structured_inputs
+    assert instance.defined_structured_inputs.key?(:a)
+  end
 end

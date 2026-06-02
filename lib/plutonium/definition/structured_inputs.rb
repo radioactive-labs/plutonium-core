@@ -47,6 +47,14 @@ module Plutonium
           )
         end
       end
+
+      # Instance access mirrors the defineable_prop convention (where
+      # `defined_<plural>` is available on instances). The form's render path and
+      # the param cleaner both hold a definition instance, so they read the
+      # registry through here.
+      def defined_structured_inputs
+        self.class.defined_structured_inputs
+      end
     end
   end
 end
