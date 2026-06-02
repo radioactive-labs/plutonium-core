@@ -111,15 +111,20 @@ module Plutonium
             end
           end
 
+          # A plain button — classless rows are removed straight from the DOM
+          # (see the `data-new-record` note above), so there is no `_destroy`
+          # checkbox to toggle.
           def render_structured_delete_button
             div(class: "flex items-center justify-end") do
-              label(class: "inline-flex items-center text-md font-medium text-red-900 cursor-pointer") do
-                plain "Delete"
-                input(
-                  type: :checkbox,
-                  class: "w-4 h-4 ms-2 text-danger-600 bg-danger-100 border-danger-300 rounded cursor-pointer",
-                  data_action: "nested-resource-form-fields#remove"
-                )
+              button(
+                type: :button,
+                class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer " \
+                       "text-danger-700 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-950/30 " \
+                       "focus:outline-none focus:ring-4 focus:ring-danger-200 dark:focus:ring-danger-900",
+                data_action: "nested-resource-form-fields#remove"
+              ) do
+                render Phlex::TablerIcons::Trash.new(class: "w-4 h-4")
+                span { "Remove" }
               end
             end
           end
