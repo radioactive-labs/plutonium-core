@@ -44,9 +44,11 @@ module Plutonium
           # --- single -------------------------------------------------------
 
           def render_structured_single(name, definition, fields)
+            value = indifferent(structured_input_value(name)) || {}
+            value = {} unless value.is_a?(Hash) || value.respond_to?(:[])
             div(class: "col-span-full space-y-2 my-4") do
               h2(class: "text-lg font-semibold text-[var(--pu-text)]") { name.to_s.humanize }
-              nest_one(name, as: name, default: {}) do |nested|
+              nest_one(name, as: name, object: value) do |nested|
                 render_structured_fieldset(nested, definition, fields)
               end
             end
@@ -55,6 +57,8 @@ module Plutonium
           # --- repeater -----------------------------------------------------
 
           def render_structured_repeater(name, definition, fields, limit)
+            rows = Array(structured_input_value(name)).map { |row| indifferent(row) }
+            existing_collection = rows.presence || {NEW_RECORD: {}}
             div(
               class: "col-span-full space-y-2 my-4",
               data: {
@@ -68,7 +72,7 @@ module Plutonium
                   render_structured_fieldset(nested, definition, fields)
                 end
               end
-              nest_many(name, as: name, default: {NEW_RECORD: {}}) do |nested|
+              nest_many(name, as: name, collection: existing_collection) do |nested|
                 if nested.object.blank?
                   vanish { render_structured_fieldset(nested, definition, fields) }
                 else
@@ -78,6 +82,18 @@ module Plutonium
               div(data_nested_resource_form_fields_target: :target, hidden: true)
               render_structured_add_button(name)
             end
+          end
+
+          # --- helpers ------------------------------------------------------
+
+          def structured_input_value(name)
+            obj = object
+            return nil unless obj.respond_to?(name)
+            obj.public_send(name)
+          end
+
+          def indifferent(value)
+            value.respond_to?(:with_indifferent_access) ? value.with_indifferent_access : value
           end
 
           def render_structured_fieldset(nested, definition, fields)
