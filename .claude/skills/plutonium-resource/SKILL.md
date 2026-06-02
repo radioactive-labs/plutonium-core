@@ -733,7 +733,10 @@ blank rows are dropped, `_destroy` stripped).
 - The column must be `json`/`jsonb` (or otherwise hold a hash/array). No model macro is needed — the value assigns directly.
 - **Unlike `nested_input`, you DO permit the column name** in `permitted_attributes_for_*` (it's a regular attribute on a JSON column).
 - `repeat: 1` is "array, max one row" — **not** the single form. Presence of `repeat:` always means an array.
-- Rows are positional plain hashes — **no ids, no per-row class, no type coercion**. Validate the data in the interaction/model yourself.
+- Rows are positional plain hashes — **no ids, no per-row class, no type coercion**.
+- **No automatic validation.** Classless ⇒ nothing to attach `validates` to. `required:` and a select's `choices:` are **client-side only**, not enforced on the server. To enforce, add a model `validate` (resource) or a `validate` on the interaction (ActiveModel, checked before `execute`).
+- **`as: :select` drops unknown values.** If a stored value isn't in `choices:`, the `<select>` renders blank and **saving overwrites it with `nil`** (standard `<select>` behaviour). Keep `choices:` a stable superset or use free text when values can drift.
+- Inside repeater rows, prefer **native** field types (string, number, text, native `select`, checkbox). JS-enhanced inputs (slim-select, flatpickr, easymde, uppy, intl-tel) transform the DOM and may not survive the repeater's clone-by-innerHTML — verify before relying on them.
 - Same DSL works on **interactions** (see [[plutonium-behavior]] › Interactions) — there it backs an ActiveModel attribute reaching `execute`.
 
 ## File Uploads
