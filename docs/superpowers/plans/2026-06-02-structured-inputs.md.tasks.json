@@ -4,54 +4,54 @@
     {
       "id": 0,
       "subject": "Task 0: Shared structured_input DSL + registry",
-      "status": "pending",
+      "status": "completed",
       "description": "Shared concern: structured_input DSL, defined_structured_inputs registry (inherited), FieldsDefinition holder; included in resource Definition::Base.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/definition/structured_inputs.rb\", \"lib/plutonium/definition/base.rb\", \"test/plutonium/definition/structured_inputs_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/definition/structured_inputs_test.rb\", \"acceptanceCriteria\": [\"structured_input registers in defined_structured_inputs with block\", \"fields holder exposes declared inputs\", \"repeat/limit options captured\", \"subclasses inherit registry\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 1,
       "subject": "Task 1: Shared param cleaner",
-      "status": "pending",
+      "status": "completed",
       "description": "Pure ParamCleaner: single hash (strip _destroy) / repeater array (normalize array|index-hash, drop all-blank, strip _destroy).\n\n```json:metadata\n{\"files\": [\"lib/plutonium/structured_inputs/param_cleaner.rb\", \"test/plutonium/structured_inputs/param_cleaner_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/structured_inputs/param_cleaner_test.rb\", \"acceptanceCriteria\": [\"single passes hash through, strips _destroy\", \"repeater normalizes array and index-hash\", \"drops all-blank rows\", \"blank to {} or []\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 2,
       "subject": "Task 2: Interaction host — attribute + remove nested surface",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "On interactions structured_input declares the backing attribute ({} single / [] repeat); remove nested_input + accepts_nested_attributes_for; delete nested_attributes.rb.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/base.rb\", \"lib/plutonium/interaction/nested_attributes.rb\", \"test/plutonium/interaction/structured_inputs_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/structured_inputs_test.rb\", \"acceptanceCriteria\": [\"structured_input declares attribute with {} / [] default\", \"defaults not shared across instances\", \"nested_input/accepts_nested_attributes_for/defined_nested_inputs removed from interactions\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 3,
       "subject": "Task 3: Rendering — RendersStructuredInputs + form branch",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0],
       "description": "RendersStructuredInputs concern: single via nest_one (one fieldset), repeater via nest_many (repeater chrome), classless, as: name. Branch render_resource_field in resource.rb. Full HTML assertions in Task 6.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/form/concerns/renders_structured_inputs.rb\", \"lib/plutonium/ui/form/resource.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/form/hidden_input_test.rb\", \"acceptanceCriteria\": [\"render_resource_field dispatches structured inputs first\", \"single renders one fieldset, no chrome\", \"repeater renders controller container + template + add/delete\", \"no hidden id/_destroy\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 4,
       "subject": "Task 4: Param flow — apply cleaner on both hosts",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0, 1],
       "description": "ParamsConcern#clean_structured_inputs(definition, params) keyed off defined_structured_inputs; applied in submitted_resource_params and submitted_interaction_params.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/structured_inputs/params_concern.rb\", \"lib/plutonium/resource/controller.rb\", \"lib/plutonium/resource/controllers/interactive_actions.rb\", \"test/plutonium/structured_inputs/params_concern_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/structured_inputs/params_concern_test.rb\", \"acceptanceCriteria\": [\"clean_structured_inputs rewrites only structured keys\", \"applied in submitted_resource_params\", \"applied in submitted_interaction_params\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 5,
       "subject": "Task 5: Dummy fixtures (generators)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [0, 2, 3],
       "description": "Via pu:* generators: a catalog resource with json columns + structured_input (single + repeat) + policy permit + admin route; an interaction with single + repeat structured_input wired as an action.\n\n```json:metadata\n{\"files\": [\"test/dummy/packages/catalog/app/definitions/catalog/spec_definition.rb\", \"test/dummy/packages/catalog/app/policies/catalog/spec_policy.rb\", \"test/dummy/packages/catalog/app/interactions/catalog/collect_spec.rb\", \"test/dummy/packages/admin_portal/config/routes.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/resources_test.rb\", \"acceptanceCriteria\": [\"resource with json columns + structured_input\", \"interaction with single + repeat structured_input wired as action\", \"migrations run, app boots\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 6,
       "subject": "Task 6: Integration tests — render + round-trip (both hosts)",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [3, 4, 5],
       "description": "Render + persistence round-trip for single + repeater on resources (JSON column) and interactions (attribute to execute). Contract source of truth for the as: naming.\n\n```json:metadata\n{\"files\": [\"test/integration/admin_portal/structured_input_rendering_test.rb\", \"test/integration/admin_portal/structured_input_roundtrip_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/structured_input_rendering_test.rb\", \"acceptanceCriteria\": [\"single + repeater render with correct nested names, no hidden id/_destroy\", \"create persists hash + cleaned array to json columns\", \"interaction execute receives hash + array\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 7,
       "subject": "Task 7: Full regression + docs",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [6],
       "description": "Full suite + cross-version spot checks; rework interaction README to structured_input; document structured_input; update skill docs referencing interaction nested_input.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/README.md\", \"docs/\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 rake test\", \"acceptanceCriteria\": [\"full suite green\", \"README/docs document structured_input and the interaction removals\"], \"requiresUserVerification\": false}\n```"
     }
