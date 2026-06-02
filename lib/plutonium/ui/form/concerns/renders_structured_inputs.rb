@@ -97,7 +97,12 @@ module Plutonium
           end
 
           def render_structured_fieldset(nested, definition, fields)
+            # `data-new-record` makes the Stimulus controller's remove action
+            # delete the row from the DOM (rather than looking for a `_destroy`
+            # input, which classless structured inputs never render). Every row
+            # is classless/unpersisted, so this is always set.
             fieldset(
+              data_new_record: true,
               class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
             ) do
               div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense") do

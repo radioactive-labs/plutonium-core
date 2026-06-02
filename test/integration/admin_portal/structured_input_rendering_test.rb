@@ -24,5 +24,8 @@ class AdminPortal::StructuredInputRenderingTest < ActionDispatch::IntegrationTes
     assert_includes response.body, %(name="catalog_spec[rows][NEW_RECORD][key]")
     assert_includes response.body, %(data-action="nested-resource-form-fields#add")
     refute_includes response.body, %(catalog_spec[rows][NEW_RECORD][_destroy])
+    # Each row carries data-new-record so the Stimulus remove action deletes it
+    # from the DOM (classless rows have no _destroy input to fall back to).
+    assert_includes response.body, %(data-new-record)
   end
 end
