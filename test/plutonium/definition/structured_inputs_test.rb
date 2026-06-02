@@ -21,6 +21,21 @@ class Plutonium::Definition::StructuredInputsTest < Minitest::Test
     assert_kind_of Proc, entry[:block]
   end
 
+  def test_requires_a_block_or_using_option
+    error = assert_raises(ArgumentError) do
+      build_definition { structured_input :address }
+    end
+    assert_match(/needs a block or `using:`/, error.message)
+  end
+
+  def test_accepts_using_option_without_a_block
+    klass = build_definition do
+      structured_input :address, using: Plutonium::Definition::StructuredInputs::FieldsDefinition
+    end
+    assert_equal Plutonium::Definition::StructuredInputs::FieldsDefinition,
+      klass.defined_structured_inputs[:address][:options][:using]
+  end
+
   def test_captures_repeat_and_limit_options
     klass = build_definition do
       structured_input :contacts, repeat: 10 do |f|

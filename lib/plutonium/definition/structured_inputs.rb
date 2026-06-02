@@ -32,6 +32,13 @@ module Plutonium
         # @option options [Class] :using  a FieldsDefinition-like class instead of a block
         # @option options [Array<Symbol>] :fields  restrict rendered fields
         def structured_input(name, **options, &block)
+          unless block || options[:using]
+            raise ArgumentError,
+              "`structured_input :#{name}` needs a block or `using:` — e.g. " \
+              "`structured_input :#{name} do |f| f.input :field end` or " \
+              "`structured_input :#{name}, using: #{name.to_s.classify}Fields`"
+          end
+
           defined_structured_inputs[name] = {options:, block:}.compact
         end
 

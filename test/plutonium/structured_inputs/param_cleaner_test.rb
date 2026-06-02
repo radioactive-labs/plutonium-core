@@ -25,6 +25,20 @@ class Plutonium::StructuredInputs::ParamCleanerTest < Minitest::Test
     assert_equal [{label: "a"}, {label: "c"}], Cleaner.call(input, repeat: true)
   end
 
+  # An unchecked checkbox submits its unchecked_value ("0" by default; booleans
+  # cast to "false"), so a row whose only content is an unticked checkbox must
+  # still be treated as blank and dropped.
+  def test_repeater_drops_rows_with_only_unchecked_values
+    input = [
+      {"label" => "", "active" => "0"},
+      {"label" => "", "enabled" => "false"},
+      {"label" => "keep", "active" => "0"},
+      {"label" => "", "active" => "1"}
+    ]
+    assert_equal [{label: "keep", active: "0"}, {label: "", active: "1"}],
+      Cleaner.call(input, repeat: true)
+  end
+
   def test_repeater_blank_returns_empty_array
     assert_equal [], Cleaner.call(nil, repeat: true)
   end

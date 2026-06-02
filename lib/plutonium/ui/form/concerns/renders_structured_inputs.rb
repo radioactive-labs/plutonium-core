@@ -11,8 +11,6 @@ module Plutonium
         module RendersStructuredInputs
           extend ActiveSupport::Concern
 
-          DEFAULT_REPEAT_LIMIT = 10
-
           private
 
           def render_structured_input(name)
@@ -38,14 +36,14 @@ module Plutonium
           end
 
           def repeat_limit(repeat)
-            repeat.is_a?(Integer) ? repeat : DEFAULT_REPEAT_LIMIT
+            repeat.is_a?(Integer) ? repeat : RepeaterFieldStyles::DEFAULT_LIMIT
           end
 
           # --- single -------------------------------------------------------
 
           def render_structured_single(name, definition, fields)
-            value = indifferent(structured_input_value(name)) || {}
-            value = {} unless value.is_a?(Hash) || value.respond_to?(:[])
+            raw = structured_input_value(name)
+            value = raw.is_a?(Hash) ? raw.with_indifferent_access : {}
             div(class: "col-span-full space-y-2 my-4") do
               h2(class: "text-lg font-semibold text-[var(--pu-text)]") { name.to_s.humanize }
               nest_one(name, as: name, object: value) do |nested|
@@ -57,7 +55,7 @@ module Plutonium
           # --- repeater -----------------------------------------------------
 
           def render_structured_repeater(name, definition, fields, limit)
-            rows = Array(structured_input_value(name)).map { |row| indifferent(row) }
+            rows = Array(structured_input_value(name)).map { |row| row.is_a?(Hash) ? row.with_indifferent_access : row }
             existing_collection = rows.presence || {NEW_RECORD: {}}
             div(
               class: "col-span-full space-y-2 my-4",
@@ -92,12 +90,9 @@ module Plutonium
             obj.public_send(name)
           end
 
-          def indifferent(value)
-            value.respond_to?(:with_indifferent_access) ? value.with_indifferent_access : value
-          end
-
-          FIELDSET_CLASS = "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
-          FIELD_GRID_CLASS = "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense"
+          # Single source of truth shared with RendersNestedResourceFields.
+          FIELDSET_CLASS = RepeaterFieldStyles::FIELDSET_CLASS
+          FIELD_GRID_CLASS = RepeaterFieldStyles::FIELD_GRID_CLASS
 
           # @param removable [Boolean] repeater rows are removable; a single
           #   structured input is the one-and-only object, so it is not.
