@@ -711,8 +711,8 @@ end
 
 class SpecPolicy < ResourcePolicy
   # NOTE: unlike nested_input, you DO permit the column name here.
+  # (update inherits permitted_attributes_for_create automatically.)
   def permitted_attributes_for_create = [:payload, :rows]
-  alias_method :permitted_attributes_for_update, :permitted_attributes_for_create
 end
 ```
 
