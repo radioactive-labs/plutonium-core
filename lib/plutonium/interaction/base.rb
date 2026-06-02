@@ -25,8 +25,16 @@ module Plutonium
       include Plutonium::Definition::DefineableProps
       include Plutonium::Definition::ConfigAttr
       include Plutonium::Definition::Presentable
-      include Plutonium::Definition::NestedInputs
-      include Plutonium::Interaction::NestedAttributes
+      include Plutonium::Definition::StructuredInputs
+
+      # On interactions, declaring a structured input also declares the backing
+      # ActiveModel attribute so the value survives `attributes=` and appears in
+      # `attribute_names` (which drives the interaction form's field list).
+      def self.structured_input(name, **options, &block)
+        super
+        default = options[:repeat] ? -> { [] } : -> { {} }
+        attribute name, default: default
+      end
 
       # include Plutonium::Interaction::Concerns::WorkflowDSL
 
