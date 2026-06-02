@@ -7,6 +7,10 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
     record.is_a?(Catalog::Product) && record.active?
   end
 
+  def collect_spec?
+    record.is_a?(Catalog::Product)
+  end
+
   def permitted_attributes_for_create
     [:name, :description, :price, :status, :metadata, :category, :user, :organization, :variants, :product_detail]
   end

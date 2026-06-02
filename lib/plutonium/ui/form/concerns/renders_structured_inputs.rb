@@ -68,8 +68,12 @@ module Plutonium
                   render_structured_fieldset(nested, definition, fields)
                 end
               end
-              nest_many(name, as: name, default: []) do |nested|
-                render_structured_fieldset(nested, definition, fields)
+              nest_many(name, as: name, default: {NEW_RECORD: {}}) do |nested|
+                if nested.object.blank?
+                  vanish { render_structured_fieldset(nested, definition, fields) }
+                else
+                  render_structured_fieldset(nested, definition, fields)
+                end
               end
               div(data_nested_resource_form_fields_target: :target, hidden: true)
               render_structured_add_button(name)
