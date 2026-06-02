@@ -31,4 +31,5 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
 
   action :publish, interaction: Catalog::PublishProduct
   action :discontinue, interaction: Catalog::DiscontinueProduct
+  action :collect_spec, interaction: Catalog::CollectSpec
 end
