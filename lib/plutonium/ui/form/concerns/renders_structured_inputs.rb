@@ -49,7 +49,7 @@ module Plutonium
             div(class: "col-span-full space-y-2 my-4") do
               h2(class: "text-lg font-semibold text-[var(--pu-text)]") { name.to_s.humanize }
               nest_one(name, as: name, object: value) do |nested|
-                render_structured_fieldset(nested, definition, fields)
+                render_structured_fieldset(nested, definition, fields, removable: false)
               end
             end
           end
@@ -69,14 +69,14 @@ module Plutonium
               h2(class: "text-lg font-semibold text-[var(--pu-text)]") { name.to_s.humanize }
               template data_nested_resource_form_fields_target: "template" do
                 nest_many(name, as: name, collection: {NEW_RECORD: {}}, default: {NEW_RECORD: {}}, template: true) do |nested|
-                  render_structured_fieldset(nested, definition, fields)
+                  render_structured_fieldset(nested, definition, fields, removable: true)
                 end
               end
               nest_many(name, as: name, collection: existing_collection) do |nested|
                 if nested.object.blank?
-                  vanish { render_structured_fieldset(nested, definition, fields) }
+                  vanish { render_structured_fieldset(nested, definition, fields, removable: true) }
                 else
-                  render_structured_fieldset(nested, definition, fields)
+                  render_structured_fieldset(nested, definition, fields, removable: true)
                 end
               end
               div(data_nested_resource_form_fields_target: :target, hidden: true)
@@ -96,19 +96,18 @@ module Plutonium
             value.respond_to?(:with_indifferent_access) ? value.with_indifferent_access : value
           end
 
-          def render_structured_fieldset(nested, definition, fields)
-            # `data-new-record` makes the Stimulus controller's remove action
-            # delete the row from the DOM (rather than looking for a `_destroy`
-            # input, which classless structured inputs never render). Every row
-            # is classless/unpersisted, so this is always set.
-            fieldset(
-              data_new_record: true,
-              class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
-            ) do
+          # @param removable [Boolean] repeater rows are removable (delete button +
+          #   `data-new-record` so the Stimulus remove action deletes the row from
+          #   the DOM — classless rows have no `_destroy` input to fall back to). A
+          #   single structured input is the one-and-only object, so it gets neither.
+          def render_structured_fieldset(nested, definition, fields, removable:)
+            attrs = {class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"}
+            attrs[:data_new_record] = true if removable
+            fieldset(**attrs) do
               div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense") do
                 fields.each { |input| render_simple_resource_field(input, definition, nested) }
               end
-              render_structured_delete_button
+              render_structured_delete_button if removable
             end
           end
 

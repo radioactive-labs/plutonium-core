@@ -17,6 +17,13 @@ class AdminPortal::StructuredInputRenderingTest < ActionDispatch::IntegrationTes
     assert_includes response.body, %(name="catalog_spec[payload][notes]")
   end
 
+  test "single structured input has no remove control (only the repeater does)" do
+    get "/admin/catalog/specs/new"
+    # On the new form the only rendered remove control belongs to the repeater's
+    # <template> row; the single payload fieldset must not render one.
+    assert_equal 1, response.body.scan("nested-resource-form-fields#remove").size
+  end
+
   test "repeater renders the controller container, template, and nested names" do
     get "/admin/catalog/specs/new"
     assert_match(/data-controller="nested-resource-form-fields"[^>]*data-nested-resource-form-fields-limit-value="5"/, response.body)
