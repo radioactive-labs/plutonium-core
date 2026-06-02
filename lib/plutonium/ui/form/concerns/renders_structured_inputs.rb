@@ -96,35 +96,68 @@ module Plutonium
             value.respond_to?(:with_indifferent_access) ? value.with_indifferent_access : value
           end
 
-          # @param removable [Boolean] repeater rows are removable (delete button +
-          #   `data-new-record` so the Stimulus remove action deletes the row from
-          #   the DOM — classless rows have no `_destroy` input to fall back to). A
-          #   single structured input is the one-and-only object, so it gets neither.
+          FIELDSET_CLASS = "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
+          FIELD_GRID_CLASS = "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense"
+
+          # @param removable [Boolean] repeater rows are removable; a single
+          #   structured input is the one-and-only object, so it is not.
           def render_structured_fieldset(nested, definition, fields, removable:)
-            attrs = {class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"}
-            attrs[:data_new_record] = true if removable
-            fieldset(**attrs) do
-              div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense") do
-                fields.each { |input| render_simple_resource_field(input, definition, nested) }
+            unless removable
+              return fieldset(class: FIELDSET_CLASS) do
+                div(class: FIELD_GRID_CLASS) do
+                  fields.each { |input| render_simple_resource_field(input, definition, nested) }
+                end
               end
-              render_structured_delete_button if removable
+            end
+
+            # Removable rows soft-delete by DISABLING the inner fieldset: a
+            # disabled <fieldset> is omitted from submission, so the server just
+            # receives the payload without this row and rebuilds the JSON column
+            # from what it gets (no _destroy marker). The row stays in the DOM,
+            # collapsed to a "Removed — Restore" bar, so it can be restored.
+            div(data_controller: "structured-input-row", class: FIELDSET_CLASS) do
+              fieldset(data_structured_input_row_target: "content", class: "space-y-4 border-0 p-0 m-0") do
+                div(class: FIELD_GRID_CLASS) do
+                  fields.each { |input| render_simple_resource_field(input, definition, nested) }
+                end
+                render_structured_remove_button
+              end
+              render_structured_removed_bar
             end
           end
 
-          # A plain button — classless rows are removed straight from the DOM
-          # (see the `data-new-record` note above), so there is no `_destroy`
-          # checkbox to toggle.
-          def render_structured_delete_button
+          def render_structured_remove_button
             div(class: "flex items-center justify-end") do
               button(
                 type: :button,
                 class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer " \
                        "text-danger-700 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-950/30 " \
                        "focus:outline-none focus:ring-4 focus:ring-danger-200 dark:focus:ring-danger-900",
-                data_action: "nested-resource-form-fields#remove"
+                data_action: "structured-input-row#remove"
               ) do
                 render Phlex::TablerIcons::Trash.new(class: "w-4 h-4")
                 span { "Remove" }
+              end
+            end
+          end
+
+          # Compact bar shown in place of the row once it's marked for removal.
+          def render_structured_removed_bar
+            div(
+              data_structured_input_row_target: "removed",
+              hidden: true,
+              class: "flex items-center justify-between gap-3 text-sm text-[var(--pu-text-muted)]"
+            ) do
+              span(class: "italic") { "Removed" }
+              button(
+                type: :button,
+                class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer " \
+                       "text-secondary-700 hover:bg-secondary-50 dark:text-secondary-300 dark:hover:bg-secondary-900/30 " \
+                       "focus:outline-none focus:ring-4 focus:ring-secondary-200 dark:focus:ring-secondary-900",
+                data_action: "structured-input-row#restore"
+              ) do
+                render Phlex::TablerIcons::ArrowBackUp.new(class: "w-4 h-4")
+                span { "Restore" }
               end
             end
           end

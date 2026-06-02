@@ -11510,6 +11510,23 @@
     }
   };
 
+  // src/js/controllers/structured_input_row_controller.js
+  var structured_input_row_controller_default = class extends Controller {
+    static targets = ["content", "removed"];
+    remove(e4) {
+      e4.preventDefault();
+      this.contentTarget.disabled = true;
+      this.contentTarget.hidden = true;
+      this.removedTarget.hidden = false;
+    }
+    restore(e4) {
+      e4.preventDefault();
+      this.contentTarget.disabled = false;
+      this.contentTarget.hidden = false;
+      this.removedTarget.hidden = true;
+    }
+  };
+
   // src/js/controllers/form_controller.js
   var form_controller_default = class extends Controller {
     connect() {
@@ -28318,6 +28335,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("sidebar", sidebar_controller_default);
     application2.register("resource-header", resource_header_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);
+    application2.register("structured-input-row", structured_input_row_controller_default);
     application2.register("form", form_controller_default);
     application2.register("resource-drop-down", resource_drop_down_controller_default);
     application2.register("resource-collapse", resource_collapse_controller_default);
