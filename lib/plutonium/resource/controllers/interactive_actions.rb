@@ -3,6 +3,7 @@ module Plutonium
     module Controllers
       module InteractiveActions
         extend ActiveSupport::Concern
+        include Plutonium::StructuredInputs::ParamsConcern
 
         included do
           helper_method :current_interactive_action
@@ -239,13 +240,16 @@ module Plutonium
           @interaction
         end
 
-        # Returns the submitted resource parameters
-        # @return [Hash] The submitted resource parameters
+        # Returns the submitted interaction parameters
+        # @return [Hash] The submitted interaction parameters
         def submitted_interaction_params
-          @submitted_interaction_params ||= current_interactive_action
-            .interaction
-            .build_form(current_interactive_action.interaction.new(view_context:))
-            .extract_input(params, view_context:)[:interaction]
+          @submitted_interaction_params ||= begin
+            interaction = current_interactive_action.interaction
+            extracted = interaction
+              .build_form(interaction.new(view_context:))
+              .extract_input(params, view_context:)[:interaction]
+            clean_structured_inputs(interaction, extracted)
+          end
         end
 
         def redirect_url_after_action_on(resource_record_or_resource_class)

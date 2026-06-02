@@ -16,6 +16,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::CrudActions
       include Plutonium::Resource::Controllers::InteractiveActions
       include Plutonium::Resource::Controllers::Typeahead
+      include Plutonium::StructuredInputs::ParamsConcern
 
       included do
         after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }
@@ -144,7 +145,11 @@ module Plutonium
         # Use existing record (cloned) for context during param extraction, or new instance for create
         # Pass form_action: false to prevent form from trying to generate URL (cloned record has id: nil)
         extraction_record = resource_record?&.dup || resource_class.new
-        @submitted_resource_params ||= build_form(extraction_record, form_action: false).extract_input(params, view_context:)[resource_param_key.to_sym].compact
+        @submitted_resource_params ||= begin
+          extracted = build_form(extraction_record, form_action: false)
+            .extract_input(params, view_context:)[resource_param_key.to_sym].compact
+          clean_structured_inputs(current_definition, extracted)
+        end
       end
 
       # Returns the resource parameters, including scoped and parent parameters
