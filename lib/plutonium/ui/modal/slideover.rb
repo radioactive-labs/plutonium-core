@@ -25,11 +25,17 @@ module Plutonium
         # controller on the frame after showModal(). Mirrors the filter
         # slideover's pattern — see Centered for the same rationale.
         def base_dialog_classes
+          # The backdrop dim+blur is static (no [data-open] gating, no
+          # transition): a ::backdrop that fades its bg-color while carrying
+          # backdrop-filter re-rasterises the blur every frame and stutters
+          # the panel slide. Keeping it static lets only the panel animate
+          # (transform), composited smoothly. The backdrop snaps in at
+          # showModal() and is dropped when the dialog leaves the top layer
+          # on close(), so it still covers the panel's slide-out. Mirrors
+          # the .pu-dialog::backdrop rule in components.css.
           "fixed top-0 right-0 bottom-0 left-auto m-0 h-screen max-w-full max-h-screen " \
             "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] " \
-            "backdrop:bg-transparent data-[open]:backdrop:bg-black/60 " \
-            "data-[open]:backdrop:backdrop-blur-sm " \
-            "backdrop:transition-[background-color] backdrop:duration-300 backdrop:ease-out " \
+            "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
             "rounded-none p-0 " \
             "open:flex flex-col " \
             "translate-x-full data-[open]:translate-x-0 " \
