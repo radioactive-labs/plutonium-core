@@ -333,6 +333,62 @@ end
 - **`update_only: true` hides the Add button** — for `has_one` and "settings"-style associations.
 - **Custom class names** — use `class_name:` in the model AND `using:` in the definition.
 
+## Structured inputs
+
+Classless inline fieldsets backed by a JSON/jsonb column. No model associations
+required — the whole sub-form is serialised into a single column as a hash
+(single form) or an array of hashes (repeater).
+
+```ruby
+# model
+class Listing < ApplicationRecord
+  include Plutonium::Resource::Record
+  # columns: address (json), contacts (json)
+end
+
+# definition
+class ListingDefinition < ResourceDefinition
+  # single → stored as a hash
+  structured_input :address do |f|
+    f.input :street
+    f.input :city
+  end
+
+  # repeater → stored as an array of hashes (max 5 rows)
+  structured_input :contacts, repeat: 5 do |f|
+    f.input :label
+    f.input :phone_number
+  end
+end
+```
+
+### Options
+
+| Option | Description |
+|---|---|
+| `repeat:` | `true` (default cap of 10) or an integer max-rows cap. Omit for a single-hash form. |
+| `using:` | Another Definition class whose `input` declarations are used as the fieldset. |
+| `fields:` | Subset of fields to take from the `using:` definition. |
+| `description` | Help text rendered above the fieldset. |
+
+### Policy
+
+Permit the column name as a plain symbol — Plutonium handles the nested hash
+params automatically:
+
+```ruby
+def permitted_attributes_for_create
+  super + %i[address contacts]
+end
+```
+
+### On interactions
+
+`structured_input` is also available on `Plutonium::Interaction::Base`. The
+attribute is declared automatically; `execute` receives the value as a `Hash`
+(single) or `Array<Hash>` (repeater). `nested_input` and
+`accepts_nested_attributes_for` are **not** available on interactions.
+
 ## File uploads
 
 ```ruby

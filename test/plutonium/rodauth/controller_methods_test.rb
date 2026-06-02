@@ -4,12 +4,11 @@ require "test_helper"
 
 class Plutonium::Rodauth::ControllerMethodsTest < ActiveSupport::TestCase
   test "root_path falls back to login_redirect when main_app has no root route" do
-    refute Rails.application.routes.url_helpers.respond_to?(:root_path),
-      "dummy app must not define a root route for this test"
+    with_no_root_route do
+      controller = build_controller(login_redirect: "/dashboard")
 
-    controller = build_controller(login_redirect: "/dashboard")
-
-    assert_equal "/dashboard", controller.send(:root_path)
+      assert_equal "/dashboard", controller.send(:root_path)
+    end
   end
 
   test "root_path returns main_app.root_path when defined" do
@@ -36,6 +35,15 @@ class Plutonium::Rodauth::ControllerMethodsTest < ActiveSupport::TestCase
   def with_root_route
     Rails.application.routes.draw do
       root to: proc { [200, {}, ["ok"]] }
+    end
+    yield
+  ensure
+    Rails.application.reload_routes!
+  end
+
+  def with_no_root_route
+    Rails.application.routes.draw do
+      # intentionally empty — no root route
     end
     yield
   ensure

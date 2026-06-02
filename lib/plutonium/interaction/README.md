@@ -262,71 +262,21 @@ class MyInteraction < Plutonium::Interaction::Base
 end
 ```
 
-### Interactions with Nested Attributes
+### Interactions with Structured Input
 
-This example demonstrates how to handle nested attributes—specifically,
-a `User` with multiple `Contact` and `UserAddress` records using
-a Plutonium `Interaction`.
+> **Note:** `nested_input` and `accepts_nested_attributes_for` are **not**
+> available on interactions. They are resource-only features that work with
+> model-backed `has_many`/`has_one` associations. For collecting structured or
+> repeating input inside an interaction, use `structured_input` instead.
 
-#### Key Highlights
+`structured_input` declares an attribute on the interaction and renders an
+inline fieldset in the auto-generated form. It comes in two forms:
 
-The model definitions are included here for completeness, but the primary focus
-remains on demonstrating how to build interactions that handle nested
-attributes.
-
-- Core user attributes (`first_name`, `last_name`, `email`) are declared and
-  validated at the top level of the interaction.
-
-- Nested associations (`contacts`, `addresses`) are managed via
-  `accepts_nested_attributes_for`. The optional `reject_if` condition is used
-  to discard entries that lack required fields—helping ensure data integrity at
-  the input level.
-
-- The `nested_input` DSL provides a declarative way to structure nested inputs,
-  specifying accepted fields and mapping them to their respective definition
-  classes (`ContactDefinition` and `UserAddressDefinition`).
-
-- During execution, a `User` instance is initialized with both top-level and
-  nested attributes, then persisted with all applicable validations.
-
-**Note:** The `class_name` option is explicitly defined in the interaction's
-`accepts_nested_attributes_for` macro because the `addresses` association does
-not directly map to its underlying model name. Simply provide the class name,
-for example, `class_name: "UserAddress"`, to ensure the correct model is used.
-
-**This is essential only when the association name differs from the actual
-class name.**
-
-This approach enables seamless handling of complex nested input from forms or
-API requests, while keeping validation logic clean, maintainable, and modular.
+- **Single** — the attribute arrives in `execute` as a plain `Hash`.
+- **Repeat** — the attribute arrives as an `Array` of hashes (capped at the
+  given number of rows; `repeat: true` defaults to 10).
 
 ```ruby
-# app/models/user.rb
-class User < ApplicationRecord
-  include Plutonium::Resource::Record
-
-  has_many :contacts
-  has_many :addresses, class_name: "UserAddress"
-
-  accepts_nested_attributes_for :contacts, :addresses
-end
-
-# app/models/contact.rb
-class Contact < ApplicationRecord
-  include Plutonium::Resource::Record
-
-  belongs_to :user
-  validates :label, :phone_number, presence: true
-end
-
-# app/models/user_address.rb
-class UserAddress < ApplicationRecord
-  include Plutonium::Resource::Record
-
-  belongs_to :user
-  validates :label, :map_url, presence: true
-end
-
 # app/interactions/users/interactions/create_user_interaction.rb
 module Users
   module Interactions
@@ -338,37 +288,33 @@ module Users
       attribute :first_name, :string
       attribute :last_name, :string
       attribute :email, :string
-      attribute :contacts
-      attribute :addresses
 
       validates :first_name, :last_name, presence: true
       validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
 
-      accepts_nested_attributes_for :contacts,
-        reject_if: proc { |attributes| attributes[:label].blank? }
+      # single → a hash
+      structured_input :address do |f|
+        f.input :street
+        f.input :city
+      end
 
-      accepts_nested_attributes_for :addresses, class_name: "UserAddress",
-        reject_if: proc { |attributes| attributes[:label].blank? }
-
-      nested_input :contacts,
-        using: ContactDefinition,
-        fields: %i[label phone_number],
-        description: "Add one or more contacts for this user."
-
-      nested_input :addresses,
-        using: UserAddressDefinition,
-        fields: %i[label map_url],
-        description: "Add one or more addresses for this user."
+      # repeater → an array of hashes (max 5 rows)
+      structured_input :contacts, repeat: 5 do |f|
+        f.input :label
+        f.input :phone_number
+      end
 
       private
 
       def execute
-        user = User.new(self.attributes)
+        # address  => { "street" => "...", "city" => "..." }
+        # contacts => [ { "label" => "...", "phone_number" => "..." }, ... ]
+        user = User.new(first_name: first_name, last_name: last_name, email: email)
 
         if user.save
           success(user).with_message("User created successfully")
         else
-          failed(user.errors)
+          failure(user.errors)
         end
       end
     end
