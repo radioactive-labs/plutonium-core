@@ -302,7 +302,8 @@ end
 These all live in the definition layer:
 
 - **Pre-submit / dynamic forms** — see [[plutonium-resource]] › Dynamic Forms.
-- **Nested inputs** (`nested_input :variants`) — see [[plutonium-resource]] › Nested Inputs.
+- **Nested inputs** (`nested_input :variants`) — association-backed inline forms; see [[plutonium-resource]] › Nested Inputs.
+- **Structured inputs** (`structured_input :payload`, `structured_input :rows, repeat: 5`) — classless hash / array-of-hashes into a JSON column (resources) or an attribute (interactions); reuses the repeater chrome. See [[plutonium-resource]] › Structured Inputs.
 - **Interaction forms** — interactions define their own `attribute` / `input` and inherit `Plutonium::UI::Form::Interaction`; see [[plutonium-behavior]] › Interactions.
 
 ---

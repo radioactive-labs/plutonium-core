@@ -684,6 +684,58 @@ end
 - For custom class names, use `class_name:` in the model and `using:` in the definition.
 - `update_only: true` hides the Add button.
 
+## Structured Inputs
+
+`structured_input` collects a **classless** group of fields — a single hash, or
+(with `repeat:`) an array of hashes. No association or model class is involved.
+On resources the value is stored in a **JSON/jsonb column**; use it when you
+want structured data in a JSON column rather than a real association (which is
+`nested_input`'s job).
+
+```ruby
+class Spec < ResourceRecord
+  # t.json :payload   /   t.json :rows  (jsonb in production)
+end
+
+class SpecDefinition < ResourceDefinition
+  structured_input :payload do |f|       # single → { title:, notes: }
+    f.input :title
+    f.input :notes
+  end
+
+  structured_input :rows, repeat: 5 do |f|  # repeater → [ { key:, value: }, ... ] (max 5)
+    f.input :key
+    f.input :value
+  end
+end
+
+class SpecPolicy < ResourcePolicy
+  # NOTE: unlike nested_input, you DO permit the column name here.
+  def permitted_attributes_for_create = [:payload, :rows]
+  alias_method :permitted_attributes_for_update, :permitted_attributes_for_create
+end
+```
+
+`execute`/the record sees `payload => { "title" => …, "notes" => … }` and
+`rows => [ { "key" => …, "value" => … }, … ]` (string keys from the JSON column;
+blank rows are dropped, `_destroy` stripped).
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `repeat` | Presence ⇒ array (repeater). `Integer` = max rows; `true` = default cap (10); absent = single hash |
+| `using` | A fields definition class instead of a block |
+| `fields` | Subset of fields from the referenced definition |
+
+### Gotchas
+
+- The column must be `json`/`jsonb` (or otherwise hold a hash/array). No model macro is needed — the value assigns directly.
+- **Unlike `nested_input`, you DO permit the column name** in `permitted_attributes_for_*` (it's a regular attribute on a JSON column).
+- `repeat: 1` is "array, max one row" — **not** the single form. Presence of `repeat:` always means an array.
+- Rows are positional plain hashes — **no ids, no per-row class, no type coercion**. Validate the data in the interaction/model yourself.
+- Same DSL works on **interactions** (see [[plutonium-behavior]] › Interactions) — there it backs an ActiveModel attribute reaching `execute`.
+
 ## File Uploads
 
 ```ruby
