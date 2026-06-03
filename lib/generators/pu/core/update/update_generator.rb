@@ -23,7 +23,10 @@ module Pu
         return unless File.file?(Rails.root.join(".claude", "skills", "plutonium", "SKILL.md"))
 
         say_status :update, "Syncing Plutonium Claude skills...", :green
-        Rails::Generators.invoke("pu:skills:sync", [], destination_root: Rails.root)
+        # Shell out to a fresh process so the sync reads the newly-installed
+        # gem's skills. Invoking in-process would reuse the already-loaded
+        # (pre-update) gem, whose Plutonium.root still points at the old skills.
+        run "bin/rails generate pu:skills:sync"
       end
 
       def update_gem
