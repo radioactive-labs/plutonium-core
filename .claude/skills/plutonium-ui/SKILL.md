@@ -252,6 +252,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `input_tag` | text (auto-detected type) |
 | `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `tel_tag`, `hidden_tag` | standard HTML inputs |
 | `checkbox_tag`, `select_tag`, `radio_button_tag` | standard |
+| `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`) — default for boolean columns; `as: :boolean` for a plain checkbox |
 
 ### Plutonium-enhanced tags
 
@@ -733,7 +734,8 @@ Ready-to-use styled components in `src/css/components.css`. **Prefer these over 
 ### Inputs, cards, panels, tables, toolbars, empty states
 
 ```
-.pu-input / -invalid / -valid          .pu-label / -required          .pu-hint / .pu-error          .pu-checkbox
+.pu-input / -invalid / -valid          .pu-label / -required          .pu-hint / .pu-error          .pu-checkbox / .pu-toggle
+.pu-badge / -neutral / -primary / -secondary / -success / -danger / -warning / -info / -accent
 .pu-card / .pu-card-body
 .pu-panel-header / -title / -description
 .pu-table-wrapper / .pu-table / -header / -header-cell / -body-row / -body-row-selected / -body-cell / .pu-selection-cell
@@ -845,7 +847,7 @@ end
 
 ### Display theme keys
 
-`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`.
+`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
 
 ## Table theme
 

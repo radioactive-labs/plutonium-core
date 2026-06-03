@@ -19,6 +19,8 @@ module Plutonium
               :slim_select
             when :date, :time, :datetime
               :flatpickr
+            when :boolean
+              :toggle
             else
               inferred_field_component
             end

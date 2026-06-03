@@ -290,7 +290,21 @@ Ready-to-use styled components in `src/css/components.css`. **Prefer these over 
 .pu-label / -required
 .pu-hint / .pu-error
 .pu-checkbox
+.pu-toggle                         (switch-styled checkbox)
 ```
+
+### Badges (status pills)
+
+```
+.pu-badge                          (base)
+.pu-badge-neutral / -primary / -secondary / -success / -danger / -warning / -info / -accent
+```
+
+```erb
+<span class="pu-badge pu-badge-success">Active</span>
+```
+
+Rendered automatically by the `:badge` display (enums) and `:boolean` display (Yes/No pills). See [Displays](./displays#built-in-display-components).
 
 ### Cards, panels, tables, toolbars, empty states
 

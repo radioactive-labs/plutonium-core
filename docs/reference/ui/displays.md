@@ -67,6 +67,30 @@ end
 
 See [Resource › Definition › Custom rendering](/reference/resource/definition#custom-rendering) for the full per-field rendering surface.
 
+## Built-in display components
+
+Some types render with richer components automatically — you only declare an `as:` to override or pass options.
+
+| `as:` | Renders | Auto-inferred for | Options |
+|-------|---------|-------------------|---------|
+| `:boolean` | green "Yes" / neutral "No" pill | `boolean` columns | `true_label:`, `false_label:` |
+| `:badge` | colored status pill | `enum` columns | `colors:` (per-value override) |
+| `:currency` | delimited, 2-decimal money | `has_cents` decimal accessors | `unit:`, `options:` |
+| `:color` | swatch + value | — | — |
+
+```ruby
+class OrderDefinition < ResourceDefinition
+  display :status,  as: :badge, colors: {refunded: :neutral, vip: :accent}
+  display :total,   as: :currency, unit: "£"
+  display :total,   as: :currency, unit: :currency_symbol   # Symbol → read off each record
+  display :shipped, as: :boolean,  true_label: "Sent", false_label: "Pending"
+end
+```
+
+**Badge colors.** Known statuses (`active`, `pending`, `failed`, …) are auto-colored by meaning. Unknown values get a stable decorative color (same value → same color). Override per-value with `colors:`; valid variants: `:neutral`, `:primary`, `:secondary`, `:success`, `:danger`, `:warning`, `:info`, `:accent`.
+
+**Currency.** No symbol is shown unless you pass `unit:` — a literal string (`"£"`) or a Symbol read off the record for per-row currencies. `has_cents` decimal accessors infer `:currency` automatically (still symbol-less until you set `unit:`).
+
 ## Theming
 
 Override the theme via a nested `Theme` class:
@@ -90,7 +114,9 @@ end
 
 ### Theme keys
 
-`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`.
+`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
+
+(`boolean` and `badge` apply their pill variant in the component, so their theme value stays empty — restyle the pills via the `.pu-badge*` classes instead.)
 
 ## Metadata panel
 

@@ -39,6 +39,11 @@ module Plutonium
             valid_boolean: "pu-checkbox",
             invalid_boolean: "pu-checkbox pu-input-invalid",
 
+            # Toggle switch (opt-in boolean input: `as: :toggle`)
+            toggle: "pu-toggle",
+            valid_toggle: "pu-toggle",
+            invalid_toggle: "pu-toggle pu-input-invalid",
+
             # Radio buttons
             radio_button: "pu-radio",
             collection_radio_buttons: "flex flex-col gap-2",

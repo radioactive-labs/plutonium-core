@@ -50,6 +50,15 @@ module Plutonium
         refute TestModel.has_cents_attribute?(:name)
       end
 
+      def test_has_cents_decimal_attribute
+        # matches the decimal accessor names, not the cents columns
+        assert TestModel.has_cents_decimal_attribute?(:price)
+        assert TestModel.has_cents_decimal_attribute?(:wholesale_price)
+        assert TestModel.has_cents_decimal_attribute?(:suffix_amount)
+        refute TestModel.has_cents_decimal_attribute?(:price_cents)
+        refute TestModel.has_cents_decimal_attribute?(:name)
+      end
+
       def test_getter_methods
         @model.price_cents = 1099
         @model.cost_cents = 5000

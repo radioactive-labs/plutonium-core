@@ -1,5 +1,6 @@
 class Catalog::ProductDefinition < Catalog::ResourceDefinition
   field :description, as: :text
+  # `featured` auto-renders: switch in forms, boolean pill in show/index.
 
   nested_input :variants do |definition|
     definition.input :name

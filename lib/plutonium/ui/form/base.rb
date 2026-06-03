@@ -42,6 +42,11 @@ module Plutonium
           end
           alias_method :markdown_tag, :easymde_tag
 
+          def toggle_tag(**, &)
+            create_component(Plutonium::UI::Form::Components::Toggle, :toggle, **, &)
+          end
+          alias_method :switch_tag, :toggle_tag
+
           def slim_select_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
             select_tag(**attributes, required: false, class!: "", &)

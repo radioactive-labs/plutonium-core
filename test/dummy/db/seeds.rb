@@ -207,6 +207,11 @@ products << Catalog::Product.find_or_create_by!(name: "The Art of Programming") 
   p.description = "Comprehensive guide to software craftsmanship."
 end
 
+# Spread statuses + featured flags so the demo shows every badge / pill variant
+products[0].update!(featured: true)                   # iPhone — active + featured
+products[2].update!(status: :discontinued)            # USB-C Hub — discontinued
+products[3].update!(featured: true)                   # Galaxy — active + featured
+
 # Variants
 puts "Creating variants..."
 products.first(4).each do |product|

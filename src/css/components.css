@@ -179,6 +179,116 @@
 }
 
 /* ===================
+   BADGES - Status pills
+   =================== */
+
+.pu-badge {
+  @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap align-middle;
+}
+
+.pu-badge-neutral {
+  @apply bg-[var(--pu-surface-alt)] text-[var(--pu-text-muted)] border border-[var(--pu-border-muted)];
+}
+
+.pu-badge-primary {
+  @apply bg-primary-50 text-primary-700;
+}
+.dark .pu-badge-primary {
+  @apply bg-primary-950/50 text-primary-300;
+}
+
+.pu-badge-secondary {
+  @apply bg-secondary-50 text-secondary-700;
+}
+.dark .pu-badge-secondary {
+  @apply bg-secondary-950/50 text-secondary-300;
+}
+
+.pu-badge-success {
+  @apply bg-success-50 text-success-700;
+}
+.dark .pu-badge-success {
+  @apply bg-success-950/50 text-success-300;
+}
+
+.pu-badge-danger {
+  @apply bg-danger-50 text-danger-700;
+}
+.dark .pu-badge-danger {
+  @apply bg-danger-950/50 text-danger-300;
+}
+
+.pu-badge-warning {
+  @apply bg-warning-50 text-warning-700;
+}
+.dark .pu-badge-warning {
+  @apply bg-warning-950/50 text-warning-300;
+}
+
+.pu-badge-info {
+  @apply bg-info-50 text-info-700;
+}
+.dark .pu-badge-info {
+  @apply bg-info-950/50 text-info-300;
+}
+
+.pu-badge-accent {
+  @apply bg-accent-50 text-accent-700;
+}
+.dark .pu-badge-accent {
+  @apply bg-accent-950/50 text-accent-300;
+}
+
+/* ===================
+   TOGGLE - Switch-styled checkbox
+   =================== */
+
+.pu-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2.75rem;   /* 44px */
+  height: 1.5rem;   /* 24px */
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: var(--pu-border);
+  background-image: none; /* override @tailwindcss/forms checkmark */
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background-color var(--pu-transition-normal, 0.2s);
+}
+
+.pu-toggle:checked {
+  background-image: none; /* override @tailwindcss/forms checkmark */
+  @apply bg-primary-600;
+}
+
+.pu-toggle::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  background-color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform var(--pu-transition-normal, 0.2s);
+}
+
+.pu-toggle:checked::before {
+  transform: translateX(20px); /* 44 - 18 - 3 - 3 */
+}
+
+.pu-toggle:focus-visible {
+  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+}
+
+/* ===================
    CARDS - Clean, elevated
    =================== */
 

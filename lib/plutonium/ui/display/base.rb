@@ -34,6 +34,15 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::Color, :color, **, &)
           end
 
+          def badge_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Badge, :badge, **, &)
+          end
+          alias_method :enum_tag, :badge_tag
+
+          def currency_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Currency, :currency, **, &)
+          end
+
           # Type aliases for common column types
           alias_method :float_tag, :number_tag
           alias_method :decimal_tag, :number_tag

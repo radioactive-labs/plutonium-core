@@ -12,11 +12,11 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
   end
 
   def permitted_attributes_for_create
-    [:name, :description, :price, :status, :metadata, :category, :user, :organization, :variants, :product_detail]
+    [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail]
   end
 
   def permitted_attributes_for_read
-    [:name, :description, :price, :price_cents, :status, :metadata, :category, :user, :organization, :created_at]
+    [:name, :description, :price, :price_cents, :status, :featured, :metadata, :category, :user, :organization, :created_at]
   end
 
   def permitted_associations

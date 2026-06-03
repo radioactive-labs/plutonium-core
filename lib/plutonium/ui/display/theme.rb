@@ -25,6 +25,11 @@ module Plutonium
             color: "flex items-center text-lg text-[var(--pu-text)] whitespace-pre-line",
             color_indicator: "w-10 h-10 rounded-lg mr-3 shadow-sm border border-[var(--pu-border)]",
 
+            # Boolean / badge pills — variant class is applied by the component.
+            boolean: "",
+            badge: "",
+            currency: "text-lg text-[var(--pu-text)] tabular-nums",
+
             # Contact info
             email: "flex items-center gap-2 text-lg text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors",
             phone: "flex items-center gap-2 text-lg text-primary-600 dark:text-primary-400 hover:text-primary-500 transition-colors",

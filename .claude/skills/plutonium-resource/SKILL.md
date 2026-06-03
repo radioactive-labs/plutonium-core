@@ -484,7 +484,7 @@ end
 | Text | `:string`, `:text`, `:email`, `:url`, `:tel`, `:password` |
 | Rich Text | `:markdown` (EasyMDE) |
 | Numeric | `:number`, `:integer`, `:decimal`, `:range` |
-| Boolean | `:boolean` |
+| Boolean | `:toggle` / `:switch` (switch — **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
 | Selection | `:select`, `:slim_select`, `:radio_buttons`, `:check_boxes` |
 | Files | `:file`, `:uppy`, `:attachment` |
@@ -493,7 +493,26 @@ end
 
 ### Display Types (show / index)
 
-`:string`, `:text`, `:email`, `:url`, `:phone`, `:markdown`, `:number`, `:integer`, `:decimal`, `:boolean`, `:date`, `:time`, `:datetime`, `:association`, `:attachment`
+`:string`, `:text`, `:email`, `:url`, `:phone`, `:markdown`, `:number`, `:integer`, `:decimal`, `:boolean`, `:badge`, `:currency`, `:color`, `:date`, `:time`, `:datetime`, `:association`, `:attachment`
+
+#### Auto-inferred display formatting
+
+These render automatically — declare an `as:` only to override or pass options:
+
+| Column | Renders as | Notes |
+|--------|-----------|-------|
+| `boolean` | Yes/No pill (`:boolean`) | green "Yes" / neutral "No". Override labels: `true_label:`, `false_label:` |
+| `enum` | colored status badge (`:badge`) | known statuses (active, pending, failed…) auto-colored; unknown values get a stable decorative color |
+| `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals, **no symbol** unless you add `unit:` |
+
+```ruby
+display :status, as: :badge, colors: {archived: :neutral, vip: :accent}  # override per-value color
+display :price,  as: :currency, unit: "£"                                # literal symbol
+display :price,  as: :currency, unit: :currency_symbol                   # Symbol → read off the record (per-row)
+display :active, as: :boolean,  true_label: "Live", false_label: "Off"
+```
+
+Badge color keys: `:neutral`, `:primary`, `:secondary`, `:success`, `:danger`, `:warning`, `:info`, `:accent`.
 
 ## Field Options
 

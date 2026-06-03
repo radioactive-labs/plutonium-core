@@ -166,6 +166,16 @@ module Plutonium
         def has_cents_attribute?(attribute)
           has_cents_attributes.key?(attribute.to_sym)
         end
+
+        # Checks if a given attribute is the decimal accessor of a has_cents pair
+        # (e.g. :amount for `has_cents :amount_cents`).
+        #
+        # @param attribute [Symbol] The attribute to check
+        # @return [Boolean]
+        def has_cents_decimal_attribute?(attribute)
+          attribute = attribute.to_sym
+          has_cents_attributes.any? { |_, opts| opts[:name] == attribute }
+        end
       end
     end
   end
