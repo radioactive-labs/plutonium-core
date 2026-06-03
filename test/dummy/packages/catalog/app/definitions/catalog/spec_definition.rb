@@ -1,10 +1,7 @@
 class Catalog::SpecDefinition < Catalog::ResourceDefinition
-  # `payload` exercises the `using:` + `fields:` path (`sku` is declared on the
-  # fields class but restricted away here); `rows` exercises the inline block.
+  # Both versions are sourced from `using:` fields classes:
+  #   payload → single hash, with `fields:` restricting `sku` away
+  #   rows    → repeater (array of hashes)
   structured_input :payload, using: Catalog::SpecPayloadFields, fields: %i[title notes]
-
-  structured_input :rows, repeat: 5 do |f|
-    f.input :key
-    f.input :value
-  end
+  structured_input :rows, repeat: 5, using: Catalog::SpecRowFields
 end
