@@ -1,10 +1,10 @@
 class Catalog::SpecPolicy < Catalog::ResourcePolicy
   def permitted_attributes_for_create
-    [:payload, :rows]
+    [:payload, :rows, :meta, :items]
   end
 
   def permitted_attributes_for_read
-    [:payload, :rows, :created_at]
+    [:payload, :rows, :meta, :items, :created_at]
   end
 
   def permitted_associations

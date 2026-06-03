@@ -28,11 +28,24 @@ class AdminPortal::StructuredInputRenderingTest < ActionDispatch::IntegrationTes
     refute_includes response.body, %(name="catalog_spec[payload][sku]")
   end
 
-  test "single structured input has no per-row controller (only the repeater does)" do
+  # The inline-block path renders identically to `using:`; meta is single, items
+  # is a repeater. This proves block-declared fields reach the form.
+  test "inline-block structured inputs render (single + repeater)" do
     get "/admin/catalog/specs/new"
-    # On the new form the only structured-input-row controller belongs to the
-    # repeater's <template> row; the single payload fieldset must not have one.
-    assert_equal 1, response.body.scan(%(data-controller="structured-input-row")).size
+    assert_response :success
+    # single (block)
+    assert_includes response.body, %(name="catalog_spec[meta][heading]")
+    assert_includes response.body, %(name="catalog_spec[meta][body]")
+    # repeater (block)
+    assert_includes response.body, %(name="catalog_spec[items][NEW_RECORD][label]")
+    assert_includes response.body, %(name="catalog_spec[items][NEW_RECORD][amount]")
+  end
+
+  test "single structured inputs have no per-row controller (only repeaters do)" do
+    get "/admin/catalog/specs/new"
+    # Per-row controllers belong only to repeaters' <template> rows — one each
+    # for `rows` and `items`. The single payload/meta fieldsets must not have one.
+    assert_equal 2, response.body.scan(%(data-controller="structured-input-row")).size
   end
 
   test "repeater renders the controller container, template, and nested names" do

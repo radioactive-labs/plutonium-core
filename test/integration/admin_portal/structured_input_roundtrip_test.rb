@@ -43,4 +43,15 @@ class AdminPortal::StructuredInputRoundtripTest < ActionDispatch::IntegrationTes
     assert_equal({"title" => "T", "notes" => "N"}, spec.payload)
     assert_equal([{"key" => "a", "value" => "1"}], spec.rows)
   end
+
+  test "inline-block structured inputs round-trip the same as using:" do
+    post "/admin/catalog/specs", params: {catalog_spec: {
+      meta: {heading: "H", body: "B"},
+      items: {"0" => {label: "first", amount: "10"}, "1" => {label: "", amount: ""}}
+    }}
+    spec = Catalog::Spec.order(:id).last
+    refute_nil spec, "expected a Catalog::Spec to be created (got redirect #{response.status})"
+    assert_equal({"heading" => "H", "body" => "B"}, spec.meta)
+    assert_equal([{"label" => "first", "amount" => "10"}], spec.items)
+  end
 end
