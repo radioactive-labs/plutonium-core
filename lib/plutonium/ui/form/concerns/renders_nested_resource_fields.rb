@@ -10,7 +10,7 @@ module Plutonium
         module RendersNestedResourceFields
           extend ActiveSupport::Concern
 
-          DEFAULT_NESTED_LIMIT = 10
+          DEFAULT_NESTED_LIMIT = RepeaterFieldStyles::DEFAULT_LIMIT
           NESTED_OPTION_KEYS = [:allow_destroy, :update_only, :macro, :class].freeze
           SINGULAR_MACROS = %i[belongs_to has_one].freeze
 
@@ -193,7 +193,7 @@ module Plutonium
           def render_nested_fields_fieldset(nested, context)
             fieldset(
               data_new_record: !nested.object&.persisted?,
-              class: "nested-resource-form-fields border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] p-4 space-y-4 relative"
+              class: RepeaterFieldStyles::FIELDSET_CLASS
             ) do
               render_nested_fields_fieldset_content(nested, context)
               render_nested_fields_delete_button(nested, context.options)
@@ -201,7 +201,7 @@ module Plutonium
           end
 
           def render_nested_fields_fieldset_content(nested, context)
-            div(class: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 grid-flow-row-dense") do
+            div(class: RepeaterFieldStyles::FIELD_GRID_CLASS) do
               render_nested_fields_hidden_fields(nested, context)
               render_nested_fields_visible_fields(nested, context)
             end

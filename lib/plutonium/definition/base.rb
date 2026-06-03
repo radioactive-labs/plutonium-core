@@ -33,6 +33,7 @@ module Plutonium
       include Scoping
       include Search
       include NestedInputs
+      include StructuredInputs
       include IndexViews
       include Metadata
 

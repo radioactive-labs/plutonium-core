@@ -5,6 +5,7 @@ module Plutonium
     module Form
       class Resource < Base
         include Plutonium::UI::Form::Concerns::RendersNestedResourceFields
+        include Plutonium::UI::Form::Concerns::RendersStructuredInputs
 
         attr_reader :resource_fields, :resource_definition, :singular_resource
 
@@ -171,7 +172,9 @@ module Plutonium
 
         def render_resource_field(name)
           when_permitted(name) do
-            if resource_definition.respond_to?(:defined_nested_inputs) && resource_definition.defined_nested_inputs[name]
+            if resource_definition.respond_to?(:defined_structured_inputs) && resource_definition.defined_structured_inputs[name]
+              render_structured_input(name)
+            elsif resource_definition.respond_to?(:defined_nested_inputs) && resource_definition.defined_nested_inputs[name]
               render_nested_resource_field(name)
             else
               render_simple_resource_field(name, resource_definition, self)

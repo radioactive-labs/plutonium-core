@@ -656,6 +656,28 @@ attribute :date, :datetime
 
 The presence of `:resource` / `:resources` / neither determines the action type — see [[plutonium-resource]] › Action Types.
 
+### Structured / repeating input
+
+To collect a structured object or a repeating list of field-groups, use
+`structured_input` (it declares the backing attribute for you):
+
+```ruby
+structured_input :address do |f|          # single → execute sees { street:, city: }
+  f.input :street
+  f.input :city
+end
+
+structured_input :contacts, repeat: 3 do |f|  # repeater → [ { label:, phone: }, ... ]
+  f.input :label
+  f.input :phone
+end
+```
+
+⚠️ **`nested_input` and `accepts_nested_attributes_for` are NOT available on
+interactions** (they were model-backed). Use `structured_input` instead — it's
+classless and collects plain hashes/arrays. See [[plutonium-resource]] ›
+Structured Inputs for options (`repeat:`, `using:`, `fields:`).
+
 ## Inputs
 
 Same DSL as definition `input` (load [[plutonium-resource]] for the full list of `as:` types, options, dynamic blocks, etc.):

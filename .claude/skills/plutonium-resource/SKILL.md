@@ -684,6 +684,61 @@ end
 - For custom class names, use `class_name:` in the model and `using:` in the definition.
 - `update_only: true` hides the Add button.
 
+## Structured Inputs
+
+`structured_input` collects a **classless** group of fields — a single hash, or
+(with `repeat:`) an array of hashes. No association or model class is involved.
+On resources the value is stored in a **JSON/jsonb column**; use it when you
+want structured data in a JSON column rather than a real association (which is
+`nested_input`'s job).
+
+```ruby
+class Spec < ResourceRecord
+  # t.json :payload   /   t.json :rows  (jsonb in production)
+end
+
+class SpecDefinition < ResourceDefinition
+  structured_input :payload do |f|       # single → { title:, notes: }
+    f.input :title
+    f.input :notes
+  end
+
+  structured_input :rows, repeat: 5 do |f|  # repeater → [ { key:, value: }, ... ] (max 5)
+    f.input :key
+    f.input :value
+  end
+end
+
+class SpecPolicy < ResourcePolicy
+  # NOTE: unlike nested_input, you DO permit the column name here.
+  # (update inherits permitted_attributes_for_create automatically.)
+  def permitted_attributes_for_create = [:payload, :rows]
+end
+```
+
+`execute`/the record sees `payload => { "title" => …, "notes" => … }` and
+`rows => [ { "key" => …, "value" => … }, … ]` (string keys from the JSON column;
+blank rows are dropped, `_destroy` stripped).
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `repeat` | Presence ⇒ array (repeater). `Integer` = max rows; `true` = default cap (10); absent = single hash |
+| `using` | A fields definition class instead of a block |
+| `fields` | Subset of fields from the referenced definition |
+
+### Gotchas
+
+- The column must be `json`/`jsonb` (or otherwise hold a hash/array). No model macro is needed — the value assigns directly.
+- **Unlike `nested_input`, you DO permit the column name** in `permitted_attributes_for_*` (it's a regular attribute on a JSON column).
+- `repeat: 1` is "array, max one row" — **not** the single form. Presence of `repeat:` always means an array.
+- Rows are positional plain hashes — **no ids, no per-row class, no type coercion**.
+- **No automatic validation.** Classless ⇒ nothing to attach `validates` to. `required:` and a select's `choices:` are **client-side only**, not enforced on the server. To enforce, add a model `validate` (resource) or a `validate` on the interaction (ActiveModel, checked before `execute`).
+- **`as: :select` drops unknown values.** If a stored value isn't in `choices:`, the `<select>` renders blank and **saving overwrites it with `nil`** (standard `<select>` behaviour). Keep `choices:` a stable superset or use free text when values can drift.
+- Inside repeater rows, prefer **native** field types (string, number, text, native `select`, checkbox). JS-enhanced inputs (slim-select, flatpickr, easymde, uppy, intl-tel) transform the DOM and may not survive the repeater's clone-by-innerHTML — verify before relying on them.
+- Same DSL works on **interactions** (see [[plutonium-behavior]] › Interactions) — there it backs an ActiveModel attribute reaching `execute`.
+
 ## File Uploads
 
 ```ruby

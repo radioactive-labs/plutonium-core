@@ -333,6 +333,116 @@ end
 - **`update_only: true` hides the Add button** — for `has_one` and "settings"-style associations.
 - **Custom class names** — use `class_name:` in the model AND `using:` in the definition.
 
+## Structured inputs
+
+Classless inline fieldsets backed by a JSON/jsonb column. No model associations
+required — the whole sub-form is serialised into a single column as a hash
+(single form) or an array of hashes (repeater).
+
+![A single structured input (Payload) and a repeater (Rows)](/images/reference/structured-inputs.png)
+
+```ruby
+# model
+class Listing < ApplicationRecord
+  include Plutonium::Resource::Record
+  # columns: address (json), contacts (json)
+end
+
+# definition
+class ListingDefinition < ResourceDefinition
+  # single → stored as a hash
+  structured_input :address do |f|
+    f.input :street
+    f.input :city
+  end
+
+  # repeater → stored as an array of hashes (max 5 rows)
+  structured_input :contacts, repeat: 5 do |f|
+    f.input :label
+    f.input :phone_number
+  end
+end
+```
+
+### Options
+
+| Option | Description |
+|---|---|
+| `repeat:` | `true` (default cap of 10) or an integer max-rows cap. Omit for a single-hash form. |
+| `using:` | Another Definition class whose `input` declarations are used as the fieldset. |
+| `fields:` | Subset of fields to take from the `using:` definition. |
+
+### Removing rows
+
+Each repeater row has a **Remove** button. Removing a row collapses it to a
+compact _Removed — Restore_ bar and disables its inputs, so the browser omits
+them from the submission. The server simply rebuilds the JSON column from the
+rows it receives — there is no `_destroy` marker. **Restore** brings the row
+back before saving.
+
+![A removed row collapsed to a Restore bar](/images/reference/structured-inputs-removed.png)
+
+### Policy
+
+Permit the column name as a plain symbol — Plutonium handles the nested hash
+params automatically:
+
+```ruby
+def permitted_attributes_for_create
+  super + %i[address contacts]
+end
+```
+
+### On interactions
+
+`structured_input` is also available on `Plutonium::Interaction::Base`. The
+attribute is declared automatically; `execute` receives the value as a `Hash`
+(single) or `Array<Hash>` (repeater). `nested_input` and
+`accepts_nested_attributes_for` are **not** available on interactions.
+
+### Validation
+
+::: warning Structured inputs are not validated for you
+The fields are classless render declarations, so there is nothing for Plutonium
+to attach validations to (unlike [`nested_input`](#nested-inputs), whose nested
+records run their own model validations). Whatever the form submits is stored
+as-is, after blank rows are dropped — **no per-field server-side validation**.
+:::
+
+Specifically:
+
+- **HTML constraints are client-side only.** A field's `required:` and a
+  select's `choices:` guide the browser but are **not** enforced on the server —
+  an API call or a crafted request can submit anything.
+- **Selects silently drop unknown values.** If a stored value is not among a
+  `as: :select` field's `choices:`, the `<select>` renders **blank**, and saving
+  the form **overwrites the stored value with `nil`** (the option list is the
+  only thing constraining it). This is standard `<select>` behaviour, but it
+  bites harder here because JSON values aren't constrained by a DB enum and your
+  `choices:` can drift. Keep `choices:` a stable superset, or use a free-text
+  input, when values can change over time.
+
+To enforce anything, add the validation yourself — it runs server-side:
+
+```ruby
+# resource: validate the JSON column on the model
+class Listing < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  validate :contacts_have_labels
+  def contacts_have_labels
+    Array(contacts).each_with_index do |row, i|
+      errors.add(:contacts, "row #{i + 1} needs a label") if row["label"].blank?
+    end
+  end
+end
+
+# interaction: it's an ActiveModel, validated before `execute`
+validate do
+  contacts.each { |c| errors.add(:contacts, "label required") if c[:label].blank? }
+end
+```
+
 ## File uploads
 
 ```ruby

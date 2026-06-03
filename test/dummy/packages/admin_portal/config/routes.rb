@@ -18,6 +18,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::Blogging::Tutorial
   register_resource ::Catalog::ProductMetadata
   register_resource ::Catalog::MorphDemo
+  register_resource ::Catalog::Spec
   register_resource ::NetworkDevice
   register_resource ::UserProfile
   # register resources above.
