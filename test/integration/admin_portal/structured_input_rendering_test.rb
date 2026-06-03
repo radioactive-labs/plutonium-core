@@ -17,6 +17,17 @@ class AdminPortal::StructuredInputRenderingTest < ActionDispatch::IntegrationTes
     assert_includes response.body, %(name="catalog_spec[payload][notes]")
   end
 
+  # payload is sourced from a `using:` fields class restricted via `fields:`.
+  test "using: + fields: renders only the permitted subset" do
+    get "/admin/catalog/specs/new"
+    assert_response :success
+    # title/notes come from the using: class...
+    assert_includes response.body, %(name="catalog_spec[payload][title]")
+    assert_includes response.body, %(name="catalog_spec[payload][notes]")
+    # ...but sku is declared on the class and restricted away by fields:.
+    refute_includes response.body, %(name="catalog_spec[payload][sku]")
+  end
+
   test "single structured input has no per-row controller (only the repeater does)" do
     get "/admin/catalog/specs/new"
     # On the new form the only structured-input-row controller belongs to the
