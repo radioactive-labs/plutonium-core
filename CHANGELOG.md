@@ -1,3 +1,17 @@
+## [0.55.0] - 2026-06-03
+
+### 🚀 Features
+
+- Structured_input — classless structured & repeater inputs (resources + interactions) (#60)
+
+### 🐛 Bug Fixes
+
+- *(ui)* Keep modal backdrop static to smooth dialog dismiss
+
+### 🧪 Testing
+
+- *(dummy)* Land authenticated users on the entity-scoped org portal
+- *(dummy)* Serve the Organization resource in the org portal
 ## [0.54.0] - 2026-06-01
 
 ### 🚀 Features
