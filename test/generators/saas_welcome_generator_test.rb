@@ -47,8 +47,8 @@ class SaasWelcomeGeneratorTest < Rails::Generators::TestCase
     run_generator default_args
 
     assert_file "app/controllers/welcome_controller.rb" do |content|
-      assert_match(/OrgPortal::Engine\.routes\.url_helpers\.organization_root_path/, content)
-      assert_match(/organization: organization/, content)
+      assert_match(/OrgPortal::Engine\.routes\.url_helpers\.organization_scoped_root_path/, content)
+      assert_match(/organization_scoped: organization/, content)
       assert_match(/helper_method :portal_root_path/, content)
     end
   end

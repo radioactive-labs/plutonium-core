@@ -825,7 +825,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/class FunderInvitationsController < ApplicationController/, content)
       assert_match(/::Invites::FunderInvite/, content)
       assert_match(/funder_invitation_path\(token: token\)/, content)
-      assert_no_match(/prepend_view_path Invites::Engine/, content)
+      assert_match(/prepend_view_path Invites::Engine\.root\.join\("app\/views"\)/, content)
       assert_match(/rodauth\.login_session\("signup"\)/, content)
     end
 
