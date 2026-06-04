@@ -244,9 +244,26 @@ module Plutonium
         # @return [Hash] The submitted interaction parameters
         def submitted_interaction_params
           @submitted_interaction_params ||= begin
-            interaction = current_interactive_action.interaction
+            action = current_interactive_action
+            interaction = action.interaction
+            instance = interaction.new(view_context:)
+            # Bind the action's subject before the form is rendered for param
+            # extraction. extract_input renders the form when it hasn't been
+            # rendered yet, which eagerly materializes input choices — any
+            # `choices:` proc (or other render-time config) that reads the
+            # subject would otherwise run against a nil resource/resources and
+            # raise a deep-stack NoMethodError before the interaction ever runs.
+            # This mirrors the subject the real instance is given in
+            # build_interactive_*_action_interaction. interaction_params still
+            # strips :resource/:resources from the extracted params, so
+            # mass-assignment safety is unaffected.
+            if action.record_action? || action.collection_record_action?
+              instance.resource = resource_record!
+            elsif action.bulk_action?
+              instance.resources = interactive_bulk
+            end
             extracted = interaction
-              .build_form(interaction.new(view_context:))
+              .build_form(instance)
               .extract_input(params, view_context:)[:interaction]
             clean_structured_inputs(interaction, extracted)
           end

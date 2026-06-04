@@ -46,4 +46,8 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
   # rows only via `record_action: false`. collection_record_action? stays true,
   # so it still operates on a single row's record.
   action :collect_spec_row, interaction: Catalog::CollectSpec, record_action: false
+  # Record action whose select `choices:` proc dereferences the subject. Guards
+  # the param-extraction path: the extraction instance must be given the record
+  # before its form is rendered.
+  action :assign_reviewer, interaction: Catalog::AssignReviewer
 end

@@ -15,6 +15,10 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
     record.is_a?(Catalog::Product)
   end
 
+  def assign_reviewer?
+    record.is_a?(Catalog::Product)
+  end
+
   def permitted_attributes_for_create
     [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail]
   end
