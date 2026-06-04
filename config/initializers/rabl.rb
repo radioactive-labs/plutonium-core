@@ -2,9 +2,25 @@ require "rabl"
 
 # https://github.com/nesquena/rabl#configuration
 
+# RABL encodes its result hash with stdlib JSON by default, which serializes
+# Time/Date/BigDecimal via #to_s — e.g. a datetime becomes
+# "2026-06-04 13:46:18 UTC" instead of the ISO 8601 "2026-06-04T13:46:18.000Z"
+# that JSON clients expect. Routing values through ActiveSupport's #as_json
+# first yields JSON-optimized values (ISO 8601 datetimes, "YYYY-MM-DD" dates,
+# numeric-safe decimals, true/false booleans), then stdlib JSON.generate
+# encodes the now-primitive hash without escaping HTML entities in strings.
+module Plutonium
+  module RablJsonEngine
+    def self.dump(object)
+      JSON.generate(object.as_json)
+    end
+  end
+end
+
 Rabl.configure do |config|
   config.cache_sources = !Rails.env.development? # Defaults to false
   config.raise_on_missing_attribute = !Rails.env.production? # Defaults to false
+  config.json_engine = Plutonium::RablJsonEngine
 
   # config.cache_all_output = false
   # config.cache_engine = Rabl::CacheEngine.new # Defaults to Rails cache
