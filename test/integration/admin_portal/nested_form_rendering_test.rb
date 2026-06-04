@@ -58,11 +58,19 @@ class AdminPortal::NestedFormRenderingTest < ActionDispatch::IntegrationTest
     )
   end
 
-  test "renders the delete checkbox wired to the remove action" do
+  test "renders the remove button and a restorable removed bar wired to the controller" do
     get "/admin/catalog/products/new"
 
+    # Remove button (replaces the old delete checkbox)
     assert_includes response.body, %(data-action="nested-resource-form-fields#remove")
-    assert_match(/<label[^>]*cursor-pointer">Delete</, response.body)
+    assert_match(/<button[^>]*nested-resource-form-fields#remove[^>]*>.*Remove/m, response.body)
+
+    # Content is wrapped so it can be hidden, with a hidden "Removed — Restore"
+    # bar the controller reveals on remove.
+    assert_includes response.body, %(data-nested-content)
+    assert_includes response.body, %(data-nested-removed)
+    assert_includes response.body, %(data-action="nested-resource-form-fields#restore")
+    assert_match(/nested-resource-form-fields#restore[^>]*>.*Restore/m, response.body)
   end
 
   test "renders the add button wired to the add action with a singularized label" do

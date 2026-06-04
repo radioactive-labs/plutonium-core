@@ -4,6 +4,7 @@ module Plutonium
   module UI
     module Form
       class Resource < Base
+        include Plutonium::UI::Form::Concerns::RendersRepeaterRowControls
         include Plutonium::UI::Form::Concerns::RendersNestedResourceFields
         include Plutonium::UI::Form::Concerns::RendersStructuredInputs
 

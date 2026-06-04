@@ -191,12 +191,24 @@ module Plutonium
           end
 
           def render_nested_fields_fieldset(nested, context)
+            removable = !nested.object&.persisted? || context.options[:allow_destroy]
             fieldset(
               data_new_record: !nested.object&.persisted?,
               class: RepeaterFieldStyles::FIELDSET_CLASS
             ) do
-              render_nested_fields_fieldset_content(nested, context)
-              render_nested_fields_delete_button(nested, context.options)
+              # Content is wrapped so the controller can hide it (and reveal the
+              # removed bar) on remove without disturbing the row itself, leaving
+              # the hidden _destroy field in place to submit the deletion.
+              div(data_nested_content: "") do
+                render_nested_fields_fieldset_content(nested, context)
+                render_repeater_remove_button(action: "nested-resource-form-fields#remove") if removable
+              end
+              if removable
+                render_repeater_removed_bar(
+                  restore_action: "nested-resource-form-fields#restore",
+                  data_nested_removed: ""
+                )
+              end
             end
           end
 
@@ -218,29 +230,6 @@ module Plutonium
             context.permitted_fields.each do |input|
               render_simple_resource_field(input, context.definition, nested)
             end
-          end
-
-          def render_nested_fields_delete_button(nested, options)
-            return unless !nested.object&.persisted? || options[:allow_destroy]
-
-            render_nested_fields_delete_button_content
-          end
-
-          def render_nested_fields_delete_button_content
-            div(class: "flex items-center justify-end") do
-              label(class: "inline-flex items-center text-md font-medium text-red-900 cursor-pointer") do
-                plain "Delete"
-                render_nested_fields_delete_checkbox
-              end
-            end
-          end
-
-          def render_nested_fields_delete_checkbox
-            input(
-              type: :checkbox,
-              class: "w-4 h-4 ms-2 text-danger-600 bg-danger-100 border-danger-300 rounded focus:ring-danger-500 dark:focus:ring-danger-600 focus:ring-2 dark:bg-[var(--pu-surface-alt)] dark:border-[var(--pu-border)] cursor-pointer",
-              data_action: "nested-resource-form-fields#remove"
-            )
           end
 
           def render_nested_fields_add_button(context)

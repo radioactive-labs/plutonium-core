@@ -11479,8 +11479,7 @@
       e4.preventDefault();
       const content = this.templateTarget.innerHTML.replace(/NEW_RECORD/g, (/* @__PURE__ */ new Date()).getTime().toString());
       this.targetTarget.insertAdjacentHTML("beforebegin", content);
-      const event = new CustomEvent("nested-resource-form-fields:add", { bubbles: true });
-      this.element.dispatchEvent(event);
+      this.dispatch("add");
       this.updateState();
     }
     remove(e4) {
@@ -11489,14 +11488,28 @@
       if (wrapper.dataset.newRecord !== void 0) {
         wrapper.remove();
       } else {
-        wrapper.style.display = "none";
-        wrapper.classList.remove(...wrapper.classList);
-        const input = wrapper.querySelector("input[name*='_destroy']");
-        input.value = "1";
+        this.toggleRemoved(wrapper, true);
       }
-      const event = new CustomEvent("nested-resource-form-fields:remove", { bubbles: true });
-      this.element.dispatchEvent(event);
+      this.dispatch("remove");
       this.updateState();
+    }
+    restore(e4) {
+      e4.preventDefault();
+      const wrapper = e4.target.closest(this.wrapperSelectorValue);
+      this.toggleRemoved(wrapper, false);
+      this.dispatch("restore");
+      this.updateState();
+    }
+    // Collapse a persisted row to its "Removed" bar (or expand it back), keeping
+    // the `_destroy` flag and the removed-state marker in sync.
+    toggleRemoved(wrapper, removed) {
+      wrapper.toggleAttribute("data-removed", removed);
+      const content = wrapper.querySelector(":scope > [data-nested-content]");
+      const removedBar = wrapper.querySelector(":scope > [data-nested-removed]");
+      if (content) content.hidden = removed;
+      if (removedBar) removedBar.hidden = !removed;
+      const destroyInput = wrapper.querySelector("input[name*='_destroy']");
+      if (destroyInput) destroyInput.value = removed ? "1" : "0";
     }
     updateState() {
       if (!this.hasAddButtonTarget || this.limitValue == 0) return;
@@ -11505,8 +11518,10 @@
       else
         this.addButtonTarget.style.display = "initial";
     }
+    // Removed rows keep their wrapper (so they can be restored) but are excluded
+    // from the count so the limit reflects rows that will actually be saved.
     get childCount() {
-      return this.element.querySelectorAll(this.wrapperSelectorValue).length;
+      return this.element.querySelectorAll(`${this.wrapperSelectorValue}:not([data-removed])`).length;
     }
   };
 

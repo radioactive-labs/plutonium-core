@@ -115,45 +115,12 @@ module Plutonium
                 div(class: FIELD_GRID_CLASS) do
                   fields.each { |input| render_simple_resource_field(input, definition, nested) }
                 end
-                render_structured_remove_button
+                render_repeater_remove_button(action: "structured-input-row#remove")
               end
-              render_structured_removed_bar
-            end
-          end
-
-          def render_structured_remove_button
-            div(class: "flex items-center justify-end") do
-              button(
-                type: :button,
-                class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer " \
-                       "text-danger-700 hover:bg-danger-50 dark:text-danger-400 dark:hover:bg-danger-950/30 " \
-                       "focus:outline-none focus:ring-4 focus:ring-danger-200 dark:focus:ring-danger-900",
-                data_action: "structured-input-row#remove"
-              ) do
-                render Phlex::TablerIcons::Trash.new(class: "w-4 h-4")
-                span { "Remove" }
-              end
-            end
-          end
-
-          # Compact bar shown in place of the row once it's marked for removal.
-          def render_structured_removed_bar
-            div(
-              data_structured_input_row_target: "removed",
-              hidden: true,
-              class: "flex items-center justify-between gap-3 text-sm text-[var(--pu-text-muted)]"
-            ) do
-              span(class: "italic") { "Removed" }
-              button(
-                type: :button,
-                class: "inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg cursor-pointer " \
-                       "text-secondary-700 hover:bg-secondary-50 dark:text-secondary-300 dark:hover:bg-secondary-900/30 " \
-                       "focus:outline-none focus:ring-4 focus:ring-secondary-200 dark:focus:ring-secondary-900",
-                data_action: "structured-input-row#restore"
-              ) do
-                render Phlex::TablerIcons::ArrowBackUp.new(class: "w-4 h-4")
-                span { "Restore" }
-              end
+              render_repeater_removed_bar(
+                restore_action: "structured-input-row#restore",
+                data_structured_input_row_target: "removed"
+              )
             end
           end
 

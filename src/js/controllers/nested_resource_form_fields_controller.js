@@ -1,7 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="nested-resource-form-fields"
-// Copied from https://github.com/stimulus-components/stimulus-rails-nested-form/blob/master/src/index.ts
+// Adapted from https://github.com/stimulus-components/stimulus-rails-nested-form
+//
+// Persisted rows soft-delete: the row collapses to a "Removed — Restore" bar,
+// its `_destroy` flag flips to "1", and it drops out of the row count so the
+// add button can come back. Restoring reverses all three. Unpersisted rows are
+// removed from the DOM outright — there is nothing to restore server-side.
 export default class extends Controller {
   static targets = ["target", "template", "addButton"]
 
@@ -23,9 +28,7 @@ export default class extends Controller {
     const content = this.templateTarget.innerHTML.replace(/NEW_RECORD/g, new Date().getTime().toString())
     this.targetTarget.insertAdjacentHTML("beforebegin", content)
 
-    const event = new CustomEvent("nested-resource-form-fields:add", { bubbles: true })
-    this.element.dispatchEvent(event)
-
+    this.dispatch("add")
     this.updateState()
   }
 
@@ -36,17 +39,35 @@ export default class extends Controller {
     if (wrapper.dataset.newRecord !== undefined) {
       wrapper.remove()
     } else {
-      wrapper.style.display = "none"
-      wrapper.classList.remove(...wrapper.classList)
-
-      const input = wrapper.querySelector("input[name*='_destroy']")
-      input.value = "1"
+      this.toggleRemoved(wrapper, true)
     }
 
-    const event = new CustomEvent("nested-resource-form-fields:remove", { bubbles: true })
-    this.element.dispatchEvent(event)
-
+    this.dispatch("remove")
     this.updateState()
+  }
+
+  restore(e) {
+    e.preventDefault()
+
+    const wrapper = e.target.closest(this.wrapperSelectorValue)
+    this.toggleRemoved(wrapper, false)
+
+    this.dispatch("restore")
+    this.updateState()
+  }
+
+  // Collapse a persisted row to its "Removed" bar (or expand it back), keeping
+  // the `_destroy` flag and the removed-state marker in sync.
+  toggleRemoved(wrapper, removed) {
+    wrapper.toggleAttribute("data-removed", removed)
+
+    const content = wrapper.querySelector(":scope > [data-nested-content]")
+    const removedBar = wrapper.querySelector(":scope > [data-nested-removed]")
+    if (content) content.hidden = removed
+    if (removedBar) removedBar.hidden = !removed
+
+    const destroyInput = wrapper.querySelector("input[name*='_destroy']")
+    if (destroyInput) destroyInput.value = removed ? "1" : "0"
   }
 
   updateState() {
@@ -58,7 +79,9 @@ export default class extends Controller {
       this.addButtonTarget.style.display = "initial"
   }
 
+  // Removed rows keep their wrapper (so they can be restored) but are excluded
+  // from the count so the limit reflects rows that will actually be saved.
   get childCount() {
-    return this.element.querySelectorAll(this.wrapperSelectorValue).length
+    return this.element.querySelectorAll(`${this.wrapperSelectorValue}:not([data-removed])`).length
   }
 }
