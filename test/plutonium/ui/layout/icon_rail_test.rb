@@ -7,14 +7,15 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
   # Helpers
   # ---------------------------------------------------------------------------
 
-  # Minimal stand-in for a Phlexi::Menu::Item
-  StubItem = Struct.new(:label, :url, :icon, :items, keyword_init: true) do
+  # Minimal stand-in for a Phlexi::Menu::Item. `options` mirrors the real
+  # Item#options hash (extra kwargs like :target / :rel).
+  StubItem = Struct.new(:label, :url, :icon, :items, :options, keyword_init: true) do
     def active?(*)
       false
     end
   end
 
-  ActiveStubItem = Struct.new(:label, :url, :icon, :items, keyword_init: true) do
+  ActiveStubItem = Struct.new(:label, :url, :icon, :items, :options, keyword_init: true) do
     def active?(*)
       true
     end
@@ -294,6 +295,96 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     html = render_html(build_component(menu: menu))
 
     assert_equal 1, html.scan('href="/child"').length, "child href should appear exactly once (flyout only)"
+  end
+
+  # ---------------------------------------------------------------------------
+  # Per-item target / rel options
+  # ---------------------------------------------------------------------------
+
+  test "leaf item honors :target and :rel from item options" do
+    items = [StubItem.new(label: "Inbox", url: "/inbox", icon: nil, items: [], options: {target: "_blank", rel: "noopener"})]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'target="_blank"'
+    assert_includes html, 'rel="noopener"'
+  end
+
+  test "leaf item omits target/rel when not provided" do
+    items = [StubItem.new(label: "Home", url: "/", icon: nil, items: [])]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    refute_includes html, " target="
+    refute_includes html, " rel="
+  end
+
+  test "flyout child honors :target and :rel from child options" do
+    child = StubItem.new(label: "External", url: "/external", icon: nil, items: [], options: {target: "_blank", rel: "noopener"})
+    parent = StubItem.new(label: "Parent", url: nil, icon: nil, items: [child])
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'target="_blank"'
+    assert_includes html, 'rel="noopener"'
+  end
+
+  test "leaf item spreads arbitrary html attributes from options" do
+    items = [StubItem.new(label: "Inbox", url: "/inbox", icon: nil, items: [], options: {data: {turbo_frame: "_top"}})]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, 'data-turbo-frame="_top"'
+  end
+
+  test "leaf item does not leak Phlexi :active option onto the anchor" do
+    items = [StubItem.new(label: "Home", url: "/", icon: nil, items: [], options: {active: ->(_) { true }})]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    refute_includes html, "active="
+  end
+
+  test "leaf item merges a custom :class with the base classes" do
+    items = [StubItem.new(label: "Home", url: "/", icon: nil, items: [], options: {class: "custom-leaf"})]
+    menu = StubMenu.new(items)
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "icon-rail-leaf"
+    assert_includes html, "custom-leaf"
+  end
+
+  test "parent trigger honors options and keeps its flyout wiring" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    parent = StubItem.new(
+      label: "Parent", url: "/parent", icon: nil, items: [child],
+      options: {target: "_blank", rel: "noopener", data: {turbo_frame: "_top"}}
+    )
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    # User-supplied attributes are honored on the trigger anchor...
+    assert_includes html, 'target="_blank"'
+    assert_includes html, 'rel="noopener"'
+    assert_includes html, 'data-turbo-frame="_top"'
+    # ...without clobbering the framework's flyout wiring.
+    assert_includes html, 'data-icon-rail-flyout-target="trigger"'
+    assert_includes html, "click->icon-rail-flyout#toggle"
+    assert_includes html, "icon-rail-parent-trigger"
+  end
+
+  test "parent trigger options cannot override the flyout data wiring" do
+    child = StubItem.new(label: "Child", url: "/child", icon: nil, items: [])
+    # Hostile/clumsy option: try to override the toggle action — framework wins.
+    parent = StubItem.new(
+      label: "Parent", url: nil, icon: nil, items: [child],
+      options: {data: {action: "something#else"}}
+    )
+    menu = StubMenu.new([parent])
+    html = render_html(build_component(menu: menu))
+
+    assert_includes html, "click->icon-rail-flyout#toggle"
+    refute_includes html, "something#else"
   end
 
   # ---------------------------------------------------------------------------

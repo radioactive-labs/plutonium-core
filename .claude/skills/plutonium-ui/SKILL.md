@@ -514,6 +514,16 @@ rails generate pu:eject:layout
 
 These copy `_resource_header.html.erb`, `_resource_sidebar.html.erb`, and `layouts/resource.html.erb` into the portal so you can edit them directly.
 
+## Navigation menu items
+
+The sidebar/icon-rail menu is built with `Phlexi::Menu::Builder` in `_resource_sidebar.html.erb`. Extra options on `item` are spread onto the rendered `<a>`, so an item can opt into `target` / `rel` / `data:` / `aria:`:
+
+```ruby
+m.item "Inbox", url: inbox_path, icon: Icon, target: "_blank", rel: "noopener", data: {turbo_frame: "_top"}
+```
+
+Applies to both shells (icon-rail leaf, parent flyout trigger, and flyout children; classic sidebar). Framework `class`/`data`/`aria` win on conflict — `class:` merges with the base classes, and on a parent trigger `data:`/`aria:` merge with the flyout wiring so options can't break the toggle. Phlexi's reserved `:active` key is never emitted as an attribute.
+
 ## Custom layout class (Phlex)
 
 ```ruby

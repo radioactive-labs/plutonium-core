@@ -89,6 +89,35 @@ module Plutonium
         end
       end
 
+      # Spread any per-item HTML attributes (target:, rel:, data:, …) the item
+      # opts into via its Phlexi::Menu options — e.g. a menu item that opens a
+      # full-screen SPA in its own tab. The base Phlexi implementation
+      # hardcodes the anchor and drops these, so we re-render the leaf.
+      def render_item_link(item, depth)
+        link_class = themed(:item_link, depth)
+        active = active_class(item, depth)
+        classes = active ? "#{link_class} #{active}" : link_class
+
+        a(href: item.url, **item_link_attributes(item, classes)) do
+          render_item_interior(item, depth)
+        end
+      end
+
+      # Anchor attributes opted into via Phlexi::Menu item options (target:,
+      # rel:, data:, aria:, …), minus Phlexi's own :active key (which must not
+      # leak onto the <a>). A user-supplied :class merges with the themed base
+      # classes; base_data / base_aria (none on the plain leaf today) always
+      # win so options extend rather than replace framework wiring.
+      def item_link_attributes(item, base_class, base_data: {}, base_aria: {})
+        opts = (item.options || {}).except(:active)
+        data = (opts[:data] || {}).merge(base_data)
+        aria = (opts[:aria] || {}).merge(base_aria)
+        opts[:class] = [base_class, opts[:class]].compact.join(" ")
+        opts[:data] = data unless data.empty?
+        opts[:aria] = aria unless aria.empty?
+        opts
+      end
+
       def render_collapsible_button(item, depth)
         button(
           type: "button",

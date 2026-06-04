@@ -113,8 +113,7 @@ module Plutonium
           a(
             href: item.url,
             title: item.label,
-            aria: {label: item.label},
-            class: "icon-rail-leaf #{leaf_classes(item, depth)}"
+            **item_link_attributes(item, "icon-rail-leaf #{leaf_classes(item, depth)}", base_aria: {label: item.label})
           ) do
             render_item_icon(item)
             span(class: "icon-rail-label hidden") { item.label }
@@ -137,12 +136,12 @@ module Plutonium
             a(
               href: item.url || "#",
               title: item.label,
-              aria: {label: item.label, haspopup: "menu", expanded: "false"},
-              data: {
-                "icon-rail-flyout-target": "trigger",
-                action: "click->icon-rail-flyout#toggle"
-              },
-              class: "icon-rail-parent-trigger #{parent_trigger_classes(item, depth)}"
+              **item_link_attributes(
+                item,
+                "icon-rail-parent-trigger #{parent_trigger_classes(item, depth)}",
+                base_aria: {label: item.label, haspopup: "menu", expanded: "false"},
+                base_data: {"icon-rail-flyout-target": "trigger", action: "click->icon-rail-flyout#toggle"}
+              )
             ) do
               render_item_icon(item)
               span(class: "icon-rail-label") { item.label }
@@ -159,7 +158,11 @@ module Plutonium
               div(class: "icon-rail-flyout-inner") do
                 div(class: "icon-rail-flyout-label") { item.label }
                 item.items.each do |child|
-                  a(href: child.url, class: "icon-rail-flyout-item", role: "menuitem") { child.label }
+                  a(
+                    href: child.url,
+                    role: "menuitem",
+                    **item_link_attributes(child, "icon-rail-flyout-item")
+                  ) { child.label }
                 end
               end
             end
@@ -205,6 +208,23 @@ module Plutonium
 
         def active?(item)
           item.active?(self)
+        end
+
+        # Anchor attributes a menu item opts into via its Phlexi::Menu options
+        # (target:, rel:, data:, aria:, …), merged with the anchor's own
+        # framework attributes and spread onto the <a>. The framework's
+        # class / data / aria (base styling, flyout wiring, popup semantics)
+        # take precedence so a menu item can *extend* the link without breaking
+        # navigation behavior. Phlexi keeps its own :active key in options,
+        # which must never become an attribute.
+        def item_link_attributes(item, base_class, base_data: {}, base_aria: {})
+          opts = (item.options || {}).except(:active)
+          data = (opts[:data] || {}).merge(base_data)
+          aria = (opts[:aria] || {}).merge(base_aria)
+          opts[:class] = [base_class, opts[:class]].compact.join(" ")
+          opts[:data] = data unless data.empty?
+          opts[:aria] = aria unless aria.empty?
+          opts
         end
       end
     end

@@ -26,6 +26,39 @@ rails generate pu:eject:layout
 
 `pu:eject:layout` copies `layouts/resource.html.erb` for layout-level edits.
 
+## Navigation menu
+
+The sidebar/icon-rail navigation is built with `Phlexi::Menu::Builder` in the ejected `_resource_sidebar.html.erb`. Each `item` takes a `label`, plus `url:`, `icon:`, and optional `leading_badge:` / `trailing_badge:`:
+
+```erb
+<%= render Plutonium::UI::Layout::IconRail.new(
+      menu: Phlexi::Menu::Builder.new do |m|
+        m.item "Dashboard", url: root_path, icon: Phlex::TablerIcons::Home
+
+        m.item "Resources", icon: Phlex::TablerIcons::GridDots do |n|
+          registered_resources.each do |resource|
+            n.item resource_label(resource), url: resource_url_for(resource, parent: nil)
+          end
+        end
+      end
+    ) %>
+```
+
+### Per-item link attributes
+
+Any extra options you pass to `item` are spread straight onto the rendered `<a>` — so a menu entry can opt into `target`, `rel`, `data-*`, `aria-*`, etc. Useful for items that open in their own tab or drive a Stimulus/Turbo behavior:
+
+```ruby
+m.item "Inbox",
+  url: inbox_path,
+  icon: Phlex::TablerIcons::Mail,
+  target: "_blank",
+  rel: "noopener",
+  data: {turbo_frame: "_top"}
+```
+
+This works across both shells — the `:modern` icon-rail (leaf items, parent flyout triggers, and flyout children) and the `:classic` sidebar. Framework attributes always win on conflict: a custom `class:` is **merged** with the component's base classes, and on a parent trigger your `data:` / `aria:` merge with the flyout's own wiring (so you can't accidentally break the toggle). The `:active` key is reserved by Phlexi for [custom active-state logic](https://github.com/radioactive-labs/phlexi-menu) and is never emitted as an attribute.
+
 ## Custom layout class
 
 For full Phlex-level control over the layout:
