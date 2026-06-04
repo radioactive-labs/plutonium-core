@@ -27,6 +27,6 @@ RailsPulse.configure do |config|
 <%- if options[:database] -%>
 
   # Use separate database for performance data
-  config.connects_to = {database: {writing: :<%= options[:database] %>}}
+  config.connects_to = {database: {writing: :<%= options[:database] %>, reading: :<%= options[:database] %>}}
 <%- end -%>
 end
