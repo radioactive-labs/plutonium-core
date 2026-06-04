@@ -27,8 +27,13 @@ module Plutonium
             )
           )
 
-          # Use existing infrastructure to build the URL
-          subject = action.record_action? ? resource_record! : resource_class
+          # Use existing infrastructure to build the URL.
+          # Record-level actions (shown on the show page AND/OR on collection rows)
+          # operate on a single record, so the commit URL must target the record.
+          # `record_action?` alone is wrong: a collection-row action can be
+          # surfaced with `record_action: false` while still being record-scoped.
+          record_scoped = action.record_action? || action.collection_record_action?
+          subject = record_scoped ? resource_record! : resource_class
           route_options_to_url(commit_route_options, subject)
         end
 

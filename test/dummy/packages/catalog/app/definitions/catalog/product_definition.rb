@@ -42,4 +42,8 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
   action :publish, interaction: Catalog::PublishProduct
   action :discontinue, interaction: Catalog::DiscontinueProduct
   action :collect_spec, interaction: Catalog::CollectSpec
+  # Record-typed interaction (has `attribute :resource`) surfaced on collection
+  # rows only via `record_action: false`. collection_record_action? stays true,
+  # so it still operates on a single row's record.
+  action :collect_spec_row, interaction: Catalog::CollectSpec, record_action: false
 end
