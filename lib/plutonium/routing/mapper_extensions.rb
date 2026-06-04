@@ -99,8 +99,13 @@ module Plutonium
           next unless base_config
 
           # Register with association-based key: "parent_plural/association_name"
+          # Force route_type: :resources — has_many associations always nest as a
+          # plural (member-with-id) route, even when the child resource is registered
+          # `singular: true` at the top level (which would otherwise leak :resource
+          # into base_config and make member URL helpers resolve to the wrong name).
           nested_key = "#{resource.model_name.plural}/#{assoc_info[:name]}"
           nested_config = base_config.merge(
+            route_type: :resources,
             association_name: assoc_info[:name],
             resource_class: assoc_info[:klass]
           )

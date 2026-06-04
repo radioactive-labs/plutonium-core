@@ -858,4 +858,38 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     url = controller.send(:resource_url_for, Comment, parent: @post, association: :comments, action: :create)
     assert_match %r{/org/#{@org.to_param}/blogging/posts/#{@post.to_param}/nested_comments$}, url
   end
+
+  # Singular-registered CHILD on a has_many nested route.
+  # OrgPortal registers User as `singular: true`, and Organization has_many :users.
+  # The nested route is plural (`resources :nested_users`, member helper
+  # `..._nested_user`), so member URLs must use the singular member helper even
+  # though the child resource itself is registered singular at the top level.
+  test "singular child: has_many instance + parent" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, @user, parent: @org, association: :users)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_users/#{@user.id}$}, url
+  end
+
+  test "singular child: has_many class + parent" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, User, parent: @org, association: :users)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_users$}, url
+  end
+
+  test "singular child: has_many instance + parent + action :edit" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, @user, parent: @org, association: :users, action: :edit)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_users/#{@user.id}/edit$}, url
+  end
+
+  test "singular child: has_many instance + action :commit_interactive_record_action" do
+    login_as_user
+    get "/org/#{@org.to_param}"
+    url = controller.send(:resource_url_for, @user, parent: @org, association: :users,
+      action: :commit_interactive_record_action, interactive_action: :promote)
+    assert_match %r{/org/#{@org.to_param}/organization/nested_users/#{@user.id}/record_actions/promote$}, url
+  end
 end
