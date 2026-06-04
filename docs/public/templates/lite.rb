@@ -4,6 +4,10 @@ after_bundle do
   git add: "."
   git commit: %( -m 'setup sqlite') if `git status --porcelain`.present?
 
+  generate "pu:lite:tune"
+  git add: "."
+  git commit: %( -m 'tune sqlite pragmas') if `git status --porcelain`.present?
+
   unless ENV["SKIP_SOLID_QUEUE"]
     generate "pu:lite:solid_queue"
     git add: "."
@@ -38,5 +42,11 @@ after_bundle do
     generate "pu:lite:rails_pulse"
     git add: "."
     git commit: %( -m 'add rails_pulse') if `git status --porcelain`.present?
+  end
+
+  unless ENV["SKIP_SQLITE_MAINTENANCE"]
+    generate "pu:lite:maintenance"
+    git add: "."
+    git commit: %( -m 'add sqlite maintenance job') if `git status --porcelain`.present?
   end
 end

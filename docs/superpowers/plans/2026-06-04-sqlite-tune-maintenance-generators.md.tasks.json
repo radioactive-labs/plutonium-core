@@ -1,0 +1,45 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-04-sqlite-tune-maintenance-generators.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Extract ConfiguresRecurring concern + refactor rails_pulse",
+      "status": "completed",
+      "description": "Move env-aware recurring.yml injection into a reusable, unit-testable ConfiguresRecurring concern (pure nested RecurringYAML); rails_pulse keeps identical behavior.\n\n```json:metadata\n{\"files\": [\"lib/generators/pu/lib/plutonium_generators/concerns/configures_recurring.rb\", \"lib/generators/pu/lite/rails_pulse/rails_pulse_generator.rb\", \"test/generators/configures_recurring_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/generators/configures_recurring_test.rb test/generators/lite_generators_test.rb\", \"acceptanceCriteria\": [\"ConfiguresRecurring autoloads and exposes add_recurring_tasks(tasks_yaml, marker:)\", \"RecurringYAML tested for env-scoped and flat layouts\", \"rails_pulse uses concern, old private method removed, tests still pass\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: pu:lite:tune generator (SQLite pragmas)",
+      "status": "completed",
+      "description": "Generator that inserts tuned, version-aware performance pragmas into config/database.yml default block, idempotently.\n\n```json:metadata\n{\"files\": [\"lib/generators/pu/lite/tune/tune_generator.rb\", \"test/generators/lite_generators_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/generators/lite_generators_test.rb\", \"acceptanceCriteria\": [\"TuneGenerator < Rails::Generators::Base, includes Generator\", \"Rails 8.1+ block = four deltas, no baseline, no busy_timeout\", \"Rails <8.1 also includes baseline pragmas\", \"idempotent re-run\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: pu:lite:maintenance generator (job + schedule)",
+      "status": "completed",
+      "blockedBy": [1],
+      "description": "Generator that installs app/jobs/sqlite_maintenance_job.rb and schedules it in config/recurring.yml via ConfiguresRecurring.\n\n```json:metadata\n{\"files\": [\"lib/generators/pu/lite/maintenance/maintenance_generator.rb\", \"lib/generators/pu/lite/maintenance/templates/app/jobs/sqlite_maintenance_job.rb.tt\", \"test/generators/lite_generators_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/generators/lite_generators_test.rb\", \"acceptanceCriteria\": [\"MaintenanceGenerator includes Generator + ConfiguresRecurring\", \"--schedule option defaults to 'every day at 3:30am'\", \"job template defines MaintenanceConnection/OPTIMIZE_DBS/VACUUM_DBS, PRAGMA optimize + VACUUM, Rails.error.report\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Wire generators into lite.rb app template",
+      "status": "completed",
+      "blockedBy": [2, 3],
+      "description": "lite app template runs pu:lite:tune after setup and pu:lite:maintenance after the solid/rails_pulse stack, each with a commit guard. Only edit public source.\n\n```json:metadata\n{\"files\": [\"docs/public/templates/lite.rb\"], \"verifyCommand\": \"ruby -c docs/public/templates/lite.rb\", \"acceptanceCriteria\": [\"tune generated after setup with commit guard\", \"maintenance generated after rails_pulse with commit guard\", \"only public/templates/lite.rb edited\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Docs page + sidebar entry",
+      "status": "completed",
+      "description": "Add docs/reference/generators/lite.md documenting both generators and link it in the VitePress sidebar.\n\n```json:metadata\n{\"files\": [\"docs/reference/generators/lite.md\", \"docs/.vitepress/config.ts\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"lite.md documents both generators with rationale\", \"sidebar links /reference/generators/lite\", \"docs build passes with no broken links\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Full suite + single final commit",
+      "status": "pending",
+      "blockedBy": [1, 2, 3, 4, 5],
+      "description": "Run full generator test suite, then make ONE commit with all changes (per user's 'commit at the end').\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/generators/lite_generators_test.rb test/generators/configures_recurring_test.rb\", \"acceptanceCriteria\": [\"generator tests pass on Rails 8.1\", \"single commit contains all generators, concern, refactor, template, docs\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-04"
+}

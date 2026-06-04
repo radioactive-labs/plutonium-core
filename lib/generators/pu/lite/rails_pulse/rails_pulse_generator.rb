@@ -7,6 +7,7 @@ module Pu
     class RailsPulseGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
       include PlutoniumGenerators::Concerns::ConfiguresSqlite
+      include PlutoniumGenerators::Concerns::ConfiguresRecurring
       include PlutoniumGenerators::Concerns::MountsEngines
 
       source_root File.expand_path("templates", __dir__)
@@ -69,25 +70,11 @@ module Pu
       end
 
       def setup_recurring_tasks
-        recurring_file = "config/recurring.yml"
-        full_path = File.expand_path(recurring_file, destination_root)
-        return unless File.exist?(full_path)
-        return if file_includes?(recurring_file, "rails_pulse")
-
-        content = File.read(full_path)
-        env_keys = %w[production development staging test]
-        env_scoped = content.lines.any? { |l| l.match?(/^(#{env_keys.join("|")}):\s*$/) }
-
-        if env_scoped
-          create_file recurring_file, inject_rails_pulse_under_envs(content, env_keys), force: true
-        else
-          append_to_file recurring_file, "\n" + rails_pulse_tasks_yaml(0)
-        end
+        add_recurring_tasks(rails_pulse_tasks_yaml, marker: "rails_pulse")
       end
 
-      def rails_pulse_tasks_yaml(indent)
-        pad = " " * indent
-        <<~YAML.gsub(/^(?=.)/, pad)
+      def rails_pulse_tasks_yaml
+        <<~YAML
           rails_pulse_summary:
             class: RailsPulse::SummaryJob
             queue: default
@@ -100,40 +87,6 @@ module Pu
             schedule: every day at 1am
             description: "Archive/purge old Rails Pulse data"
         YAML
-      end
-
-      def inject_rails_pulse_under_envs(content, env_keys)
-        lines = content.lines
-        env_re = /^(#{env_keys.join("|")}):\s*$/
-
-        env_starts = lines.each_with_index.select { |l, _| env_re.match?(l) }.map(&:last)
-
-        env_starts.reverse_each do |start|
-          end_idx = lines.length
-          ((start + 1)...lines.length).each do |i|
-            if lines[i].match?(/^[^\s#]/)
-              end_idx = i
-              break
-            end
-          end
-
-          indent = 2
-          ((start + 1)...end_idx).each do |i|
-            if (m = lines[i].match(/^(\s+)\S/))
-              indent = m[1].length
-              break
-            end
-          end
-
-          insert_at = end_idx
-          while insert_at > start + 1 && lines[insert_at - 1].strip.empty?
-            insert_at -= 1
-          end
-
-          lines.insert(insert_at, "\n", rails_pulse_tasks_yaml(indent))
-        end
-
-        lines.join
       end
     end
   end
