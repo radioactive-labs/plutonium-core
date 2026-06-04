@@ -27,9 +27,16 @@ export default class extends Controller {
 
   init() {
     if (this.triggerTarget && this.menuTarget && !this.initialized) {
+      // Capture a direct reference to the menu node. While open we teleport
+      // it to <body> (see show/hide), which moves it out of this controller's
+      // scope — so `this.menuTarget` would throw. Remember its home so we can
+      // put it back on hide/disconnect.
+      this.menu = this.menuTarget
+      this.menuHome = { parent: this.menu.parentNode, next: this.menu.nextSibling }
+
       // Initialize popper instance
       // Use 'fixed' strategy to escape overflow containers (e.g., table rows)
-      this.popperInstance = createPopper(this.triggerTarget, this.menuTarget, {
+      this.popperInstance = createPopper(this.triggerTarget, this.menu, {
         strategy: 'fixed',
         placement: this.options.placement,
         modifiers: [
@@ -72,17 +79,43 @@ export default class extends Controller {
       // Remove hover event listeners
       if (this.options.triggerType === 'hover') {
         this.triggerTarget.removeEventListener('mouseenter', this.hoverShowTriggerHandler)
-        this.menuTarget.removeEventListener('mouseenter', this.hoverShowMenuHandler)
+        this.menu.removeEventListener('mouseenter', this.hoverShowMenuHandler)
         this.triggerTarget.removeEventListener('mouseleave', this.hoverHideHandler)
-        this.menuTarget.removeEventListener('mouseleave', this.hoverHideHandler)
+        this.menu.removeEventListener('mouseleave', this.hoverHideHandler)
       }
 
       // Remove click outside listener
       this.removeClickOutsideListener()
 
+      // Put the menu back where it belongs before we tear down, so a teleported
+      // menu isn't orphaned in <body> after the controller goes away. If its
+      // home is gone (e.g. turbo swapped the surrounding content), drop it.
+      this.restoreMenu()
+      if (this.menu.parentNode === document.body) {
+        this.menu.remove()
+      }
+
       // Destroy popper instance
       this.popperInstance.destroy()
       this.initialized = false
+    }
+  }
+
+  // Move the menu to <body> so no ancestor's overflow + containing-block
+  // (transform/filter/will-change) can clip it. popper's 'fixed' strategy
+  // positions relative to the viewport, but painting is still clipped by a
+  // transformed, overflow-hidden ancestor (e.g. grid cards) — teleporting
+  // sidesteps that entirely.
+  teleportMenu() {
+    if (this.menu.parentNode !== document.body) {
+      document.body.appendChild(this.menu)
+    }
+  }
+
+  restoreMenu() {
+    const home = this.menuHome
+    if (home && home.parent && home.parent.isConnected && this.menu.parentNode !== home.parent) {
+      home.parent.insertBefore(this.menu, home.next)
     }
   }
 
@@ -103,7 +136,7 @@ export default class extends Controller {
     }
     this.hoverHideHandler = () => {
       setTimeout(() => {
-        if (!this.menuTarget.matches(':hover')) {
+        if (!this.menu.matches(':hover')) {
           this.hide()
         }
       }, this.options.delay)
@@ -114,9 +147,9 @@ export default class extends Controller {
       this.triggerTarget.addEventListener('click', this.clickHandler)
     } else if (this.options.triggerType === 'hover') {
       this.triggerTarget.addEventListener('mouseenter', this.hoverShowTriggerHandler)
-      this.menuTarget.addEventListener('mouseenter', this.hoverShowMenuHandler)
+      this.menu.addEventListener('mouseenter', this.hoverShowMenuHandler)
       this.triggerTarget.addEventListener('mouseleave', this.hoverHideHandler)
-      this.menuTarget.addEventListener('mouseleave', this.hoverHideHandler)
+      this.menu.addEventListener('mouseleave', this.hoverHideHandler)
     }
   }
 
@@ -140,8 +173,8 @@ export default class extends Controller {
       const isFloatingUI = clickedEl.closest('.flatpickr-calendar, .ss-main, .ss-content')
 
       if (
-        clickedEl !== this.menuTarget &&
-        !this.menuTarget.contains(clickedEl) &&
+        clickedEl !== this.menu &&
+        !this.menu.contains(clickedEl) &&
         !this.triggerTarget.contains(clickedEl) &&
         !isIgnored &&
         !isFloatingUI &&
@@ -169,9 +202,10 @@ export default class extends Controller {
   }
 
   show() {
-    this.menuTarget.classList.remove('hidden')
-    this.menuTarget.classList.add('block')
-    this.menuTarget.removeAttribute('aria-hidden')
+    this.teleportMenu()
+    this.menu.classList.remove('hidden')
+    this.menu.classList.add('block')
+    this.menu.removeAttribute('aria-hidden')
 
     // Enable popper event listeners
     this.popperInstance.setOptions((options) => ({
@@ -188,9 +222,9 @@ export default class extends Controller {
   }
 
   hide() {
-    this.menuTarget.classList.remove('block')
-    this.menuTarget.classList.add('hidden')
-    this.menuTarget.setAttribute('aria-hidden', 'true')
+    this.menu.classList.remove('block')
+    this.menu.classList.add('hidden')
+    this.menu.setAttribute('aria-hidden', 'true')
 
     // Disable popper event listeners
     this.popperInstance.setOptions((options) => ({
@@ -202,6 +236,7 @@ export default class extends Controller {
     }))
 
     this.removeClickOutsideListener()
+    this.restoreMenu()
     this.visible = false
   }
 }

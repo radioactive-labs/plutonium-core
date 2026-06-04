@@ -926,6 +926,7 @@ end
 - **Dark mode is `selector`, not `class`.** Toggle via `document.documentElement.classList.toggle('dark')`.
 - **Tokens are CSS variables, not Tailwind keys** — `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
 - **`render_actions` is mandatory in custom `form_template`** — otherwise no submit button.
+- **Dropdowns (`resource-drop-down`) teleport their menu to `<body>` while open.** popper's `fixed` strategy alone is still clipped by a transformed + `overflow:hidden` ancestor (e.g. grid cards, app shells), so the controller reparents the open menu to `<body>` and restores it on close. Don't rely on the menu being a DOM child of its trigger while open.
 
 ---
 

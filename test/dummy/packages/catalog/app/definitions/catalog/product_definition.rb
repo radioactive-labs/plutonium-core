@@ -2,6 +2,15 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
   field :description, as: :text
   # `featured` auto-renders: switch in forms, boolean pill in show/index.
 
+  # Opt into the Grid index view alongside the default Table. Keeps :table as
+  # the default (grid_fields only *adds* :grid), so existing table-based tests
+  # are unaffected; reach the grid with `?view=grid`.
+  grid_fields(
+    header: :name,
+    subheader: :description,
+    meta: [:status]
+  )
+
   nested_input :variants do |definition|
     definition.input :name
     definition.input :sku
