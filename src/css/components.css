@@ -316,6 +316,22 @@
   @apply w-full px-3 h-9 text-sm focus:outline-none;
 }
 
+/* Native multi-selects (and sized list boxes) must grow — pu-input's fixed
+   h-9 collapses them to a single clipped row. */
+select.pu-input[multiple],
+select.pu-input[size]:not([size="1"]) {
+  height: auto;
+  min-height: 7.5rem;
+  @apply py-1.5;
+}
+
+select.pu-input[multiple] option {
+  border-radius: var(--pu-radius-md);
+  margin-block: 4px;
+  padding: 0.4rem 0.625rem;
+  line-height: 1.4;
+}
+
 .pu-input-toolbar {
   @apply h-8 text-sm;
 }
