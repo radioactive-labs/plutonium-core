@@ -86,6 +86,13 @@ module Plutonium
             invalid_int_tel_input: :invalid_input,
             neutral_int_tel_input: :neutral_input,
 
+            # JSON / JSONB textarea — without this the component falls back to
+            # the neutral (classless) theme and loses pu-input's dark styling.
+            json: :input,
+            valid_json: :valid_input,
+            invalid_json: :invalid_input,
+            neutral_json: :neutral_input,
+
             # Uppy file upload
             uppy: :file,
             valid_uppy: :valid_file,
