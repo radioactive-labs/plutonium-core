@@ -1,3 +1,9 @@
+## [0.56.2] - 2026-06-05
+
+### 🐛 Bug Fixes
+
+- *(generators/update)* Run skills sync in unbundled env
+- *(ui/pagination)* Prevent large page numbers from overflowing buttons
 ## [0.56.1] - 2026-06-05
 
 ### 🚀 Features
