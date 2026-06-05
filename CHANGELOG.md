@@ -1,3 +1,34 @@
+## [0.56.0] - 2026-06-05
+
+### 🚀 Features
+
+- *(ui)* Auto-rendered components for boolean, enum & money fields
+- *(generators/lite)* Add pu:lite:tune and pu:lite:maintenance for SQLite tuning + maintenance
+- *(ui)* Sidebar menu items accept arbitrary link attributes
+- *(ui)* Restore deleted nested rows + shared, polished removed bar
+- *(ui)* Type-aware grid cards + overhaul KitchenSink dummy resource
+
+### 🐛 Bug Fixes
+
+- *(generators/update)* Sync skills in a fresh process; pin post-install notice to 0.49.0
+- *(ui)* Native multi-selects render at a usable height
+- *(ui)* Dropdown menu teleports to <body> to escape overflow clipping
+- *(routing)* Force :resources route_type for has_many nested routes
+- *(ui)* Record-scoped commit URL for actions with record_action: false
+- *(api)* Serialize JSON values via as_json (ISO 8601 datetimes)
+- *(generators)* Add reading role to Rails Pulse connects_to config
+- *(actions)* Bind subject during interaction param extraction
+- *(ui)* Dirty-form-guard tracks edits via first-interaction baseline
+- *(ui)* Give the JSON form input dark-mode styling
+
+### 🧪 Testing
+
+- Fix stale generator assertions and drop committed dummy schema
+- *(dummy)* Add KitchenSink resource exercising every input/display type
+
+### ⚙️ Miscellaneous Tasks
+
+- Sync appraisal gemfile.lock files to v0.55.0
 ## [0.55.0] - 2026-06-03
 
 ### 🚀 Features
