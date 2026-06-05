@@ -1,0 +1,54 @@
+class KitchenSinkDefinition < ::ResourceDefinition
+  # A deliberate "kitchen sink" exercising every available input and display
+  # type — especially the JS widgets that mutate the DOM after connect
+  # (intl-tel-input, flatpickr, slim-select, easymde, key-value, json), which
+  # is what dirty-form-guard has to cope with.
+  #
+  # `field`  — renders on both the show/index display AND the form.
+  # `input`  — form only (used where there is no display renderer, e.g. the
+  #            plain/slim selects and the hidden field).
+  # `display`— show/index only (badge, currency).
+
+  # Grid index view (?view=grid) — exercises the card slots across types:
+  # enum badges (meta), a datetime footer that may be blank (em-dash), and a
+  # possibly-blank text body.
+  grid_fields(
+    header: :name,
+    subheader: :email_address,
+    body: :description,
+    meta: [:status, :plan, :tier],
+    footer: :meeting_at
+  )
+
+  field :name                                                  # string
+
+  # Basic scalar inputs
+  input :email_address, as: :email
+  input :secret, as: :password
+  input :website, as: :url
+  field :favorite_color, as: :color                            # color input + swatch display
+  field :age, as: :integer
+  input :balance, as: :decimal
+  field :description, as: :text                                # textarea + text display
+
+  # DOM-mutating widgets
+  field :bio, as: :markdown                                    # easymde + rendered markdown
+  field :active, as: :boolean                                  # checkbox + boolean display
+  input :featured, as: :switch                                 # toggle
+  input :plan, as: :slim_select, choices: %w[free pro enterprise]
+  input :tier, as: :select, choices: %w[a b c]                 # plain <select>
+  input :birthday, as: :date                                   # flatpickr
+  input :meeting_at, as: :datetime                             # flatpickr
+  input :alarm_time, as: :time                                 # flatpickr
+  input :phone, as: :phone                                     # intl-tel-input
+  field :config, as: :json                                     # json editor
+  field :prefs, as: :key_value                                 # key-value store
+  field :user                                                  # association (slim-select) + link display
+
+  # Display-only renderers
+  display :status, as: :badge
+  display :balance_cents, as: :currency
+
+  # Hidden
+  input :secret_token, as: :hidden
+end

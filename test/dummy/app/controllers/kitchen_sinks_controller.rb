@@ -1,0 +1,2 @@
+class KitchenSinksController < ::ResourceController
+end

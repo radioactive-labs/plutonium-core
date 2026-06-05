@@ -18,6 +18,7 @@ OrgPortal::Engine.routes.draw do
   register_resource ::Catalog::Variant
   register_resource ::Catalog::ProductDetail
   register_resource ::Widget
+  register_resource ::KitchenSink
   register_resource ::UserProfile, singular: true
   # register resources above.
 
