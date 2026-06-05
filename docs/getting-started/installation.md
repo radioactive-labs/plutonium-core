@@ -15,7 +15,7 @@ After the template completes:
 
 ```bash
 cd myapp
-rails db:migrate
+rails db:prepare
 bin/dev
 ```
 
@@ -51,7 +51,7 @@ rails generate pu:core:install
 ```bash
 rails generate pu:rodauth:install
 rails generate pu:rodauth:account user
-rails db:migrate
+rails db:prepare
 ```
 
 For account options and customization, see [Reference › Auth](/reference/auth/) and [Guides › Authentication](/guides/authentication).

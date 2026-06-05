@@ -195,7 +195,7 @@ rails g pu:res:conn Profile --dest=customer_portal --singular
 ```
 
 ::: tip Run after migrations
-The generator reads model columns to seed the policy's `permitted_attributes_for_*`. Run `rails db:migrate` first.
+The generator reads model columns to seed the policy's `permitted_attributes_for_*`. Run `rails db:prepare` first.
 :::
 
 ### What gets generated

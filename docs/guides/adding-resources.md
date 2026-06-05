@@ -29,7 +29,7 @@ Plutonium generates a basic migration. Before running it, edit `db/migrate/<time
 ### 3. Run the migration
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 ### 4. Connect to a portal

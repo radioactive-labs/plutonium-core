@@ -14,7 +14,7 @@ A **resource** is the unit Plutonium gives you full CRUD for — list, show, cre
 
 ```bash
 rails g pu:res:scaffold Post user:belongs_to title:string 'content:text?' --dest=main_app
-rails db:migrate
+rails db:prepare
 rails g pu:res:conn Post --dest=admin_portal
 ```
 

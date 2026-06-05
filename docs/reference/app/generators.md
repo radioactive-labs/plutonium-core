@@ -455,7 +455,7 @@ rails generate pu:pkg:portal admin --auth=admin
 rails generate pu:res:conn Post Comment --dest=admin_portal
 
 # 6. Migrate
-rails db:migrate
+rails db:prepare
 
 # 7. Create the first admin
 rails rodauth_admin:create[admin@example.com,password123]
@@ -465,7 +465,7 @@ rails rodauth_admin:create[admin@example.com,password123]
 
 ```bash
 rails g pu:res:scaffold Product name:string price_cents:integer --dest=main_app
-rails db:migrate
+rails db:prepare
 rails g pu:res:conn Product --dest=admin_portal
 ```
 
@@ -474,7 +474,7 @@ rails g pu:res:conn Product --dest=admin_portal
 ```bash
 rails g pu:pkg:portal customer --auth=user --scope=Organization
 rails g pu:res:conn Order --dest=customer_portal
-rails db:migrate
+rails db:prepare
 ```
 
 ## Undoing generators

@@ -56,7 +56,7 @@ rails g pu:invites:install \
 After install:
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 ## What gets created

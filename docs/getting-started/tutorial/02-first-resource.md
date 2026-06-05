@@ -113,7 +113,7 @@ end
 ## Running the Migration
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 ## Creating a Portal

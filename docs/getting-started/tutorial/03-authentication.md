@@ -28,7 +28,7 @@ Plutonium supports multiple account types. For admins, use the dedicated `pu:rod
 
 ```bash
 rails generate pu:rodauth:admin admin
-rails db:migrate
+rails db:prepare
 ```
 
 For self-service user accounts, the corresponding command is `rails generate pu:rodauth:account user`.
@@ -151,7 +151,7 @@ Our blog needs users (authors) who can create posts. Let's create a User account
 
 ```bash
 rails generate pu:rodauth:account user
-rails db:migrate
+rails db:prepare
 ```
 
 This creates a `User` model similar to `Admin`, but with public registration enabled.
@@ -177,7 +177,7 @@ end
 Run the migration:
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 Update the Post model to include the association:

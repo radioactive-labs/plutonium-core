@@ -42,7 +42,7 @@ module Pu
           say_status :pending, "#{migration.version} - #{migration.name}", :yellow
         end
         say ""
-        say "Run `bin/rails db:migrate` before generating TypeSpec specifications.", :red
+        say "Run `bin/rails db:prepare` before generating TypeSpec specifications.", :red
         raise Thor::Error, "Cannot generate TypeSpec with pending migrations"
       end
 

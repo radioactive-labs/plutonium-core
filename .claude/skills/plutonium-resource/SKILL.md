@@ -29,7 +29,7 @@ For tenancy / `associated_with` / `relation_scope`, load [[plutonium-tenancy]]. 
 1. Pick destination: `--dest=main_app` or `--dest=package_name`.
 2. Run `rails g pu:res:scaffold ResourceName field:type ... --dest=<dest>`.
 3. Review the generated migration — add cascade deletes, composite indexes, defaults.
-4. `rails db:migrate`.
+4. `rails db:prepare`.
 5. `rails g pu:res:conn ResourceName --dest=<portal_name>`.
 6. Customize the policy's `permitted_attributes_for_*` as needed.
 7. Open the portal route in the browser.
@@ -1049,6 +1049,12 @@ action :name,
   record_action: true,
   collection_record_action: true,
   bulk_action: true,
+
+  # Conditional visibility — display-only proc, like inputs/displays/columns.
+  # Evaluated per render with the contextual record as `object`/`record`
+  # (nil for resource & bulk actions). NOT authorization — keep that in the
+  # policy. A hidden action still has a live route.
+  condition: -> { object.draft? },
 
   # Grouping
   category: :primary,               # :primary, :secondary, :danger

@@ -16,7 +16,7 @@ rails generate pu:rodauth:install
 rails generate pu:rodauth:account user
 
 # 3. Run migrations
-rails db:migrate
+rails db:prepare
 
 # 4. Wire auth into a portal
 #    (when you run `pu:pkg:portal admin --auth=user`, this happens automatically)

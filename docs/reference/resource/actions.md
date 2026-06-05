@@ -61,6 +61,9 @@ action :name,
   collection_record_action: true,
   bulk_action:              true,
 
+  # Conditional visibility — display-only proc (see below)
+  condition: -> { object.draft? },
+
   # Grouping
   category: :primary,                    # :primary, :secondary, :danger
   position: 50,                          # display order (lower = first)
@@ -83,6 +86,33 @@ def customize_actions
   defined_actions[:edit] = defined_actions[:edit].with(turbo_frame: "_top")
 end
 ```
+
+## Conditional visibility — `condition:`
+
+Just like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. Use it for UI state — "show *Publish* only while the record is a draft":
+
+```ruby
+# Per-record actions — the proc sees the row/shown record as `object`/`record`:
+action :publish, interaction: PublishInteraction, condition: -> { object.draft? }
+action :reopen,  interaction: ReopenInteraction,  condition: -> { object.closed? }
+
+# Resource / bulk actions have no single record, so `object` is nil —
+# branch on context instead:
+action :import, interaction: ImportInteraction, condition: -> { current_user.admin? }
+```
+
+The proc is evaluated at every render point (show page, table rows, grid cards, index/bulk toolbars) with the same context as field conditions:
+
+| Available | Notes |
+|---|---|
+| `object` / `record` | The contextual record. **`nil`** for `resource_action` and `bulk_action` (no single record). |
+| `current_user`, `current_parent` | The signed-in user and (nested) parent. |
+| `params`, `request` | Current request. |
+| `allowed_to?`, other helpers | The usual component helpers. |
+
+::: danger `condition:` is display-only — NOT authorization
+A hidden action still has a **live route**. `condition:` decides whether the *button renders*, not whether the *request is allowed*. Keep "who may run this" in the policy method (`def publish?`). The two compose: an action appears only when the policy permits **and** the condition is truthy.
+:::
 
 ## Simple actions (navigation)
 

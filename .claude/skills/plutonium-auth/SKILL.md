@@ -279,7 +279,7 @@ rails g pu:profile:setup date_of_birth:date bio:text \
 rails generate pu:profile:install bio:text avatar:attachment 'timezone:string?' \
   --dest=customer
 
-rails db:migrate
+rails db:prepare
 
 rails generate pu:profile:conn --dest=customer_portal
 ```

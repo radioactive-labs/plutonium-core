@@ -153,7 +153,7 @@ Use the dummy app:
 ```bash
 cd test/dummy
 rails g pu:res:scaffold TestModel name:string --dest=main_app
-rails db:migrate
+rails db:prepare
 bin/dev
 ```
 

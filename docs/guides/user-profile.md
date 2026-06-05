@@ -55,7 +55,7 @@ By default the model is `{UserModel}Profile` (`UserProfile`, `StaffUserProfile`,
 ### 2. Migrate
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 ### 3. Connect to a portal

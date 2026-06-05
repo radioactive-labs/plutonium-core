@@ -24,7 +24,7 @@ Meta-generator: runs `pu:profile:install` + `pu:profile:conn` in one shot.
 rails generate pu:profile:install bio:text avatar:attachment 'timezone:string?' \
   --dest=customer
 
-rails db:migrate
+rails db:prepare
 
 rails generate pu:profile:conn --dest=customer_portal
 ```

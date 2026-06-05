@@ -40,7 +40,7 @@ packages/blogging/
 
 ```bash
 rails g pu:res:scaffold Blogging::Post title:string --dest=blogging
-rails db:migrate
+rails db:prepare
 ```
 
 ### 4. Expose it via a portal

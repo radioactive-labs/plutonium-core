@@ -127,7 +127,7 @@ Meta-generators (`pu:saas:setup`) propagate flags to the generators they chain. 
 
 1. **Load the bootstrap bundle** (or the targeted skill from the router table).
 2. **Generate** — `rails g pu:res:scaffold Model field:type ... --dest=main_app`.
-3. **Migrate** — `rails db:migrate`.
+3. **Migrate** — `rails db:prepare`.
 4. **Connect** — `rails g pu:res:conn Model --dest=portal_name`.
 5. **Customize** — edit definition / policy as needed.
 6. **Verify** — hit the route in the browser.

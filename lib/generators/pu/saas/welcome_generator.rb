@@ -135,7 +135,7 @@ module Pu
         say "Next steps:"
         say "\n"
         say "1. Run migrations (if you haven't already):"
-        say "   rails db:migrate"
+        say "   rails db:prepare"
         say "\n"
         say "2. Customize the onboarding view to match your app:"
         say "   app/views/welcome/onboarding.html.erb"

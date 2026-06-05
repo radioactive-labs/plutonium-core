@@ -50,7 +50,7 @@ rails generate pu:pkg:portal admin --auth=user
 
 # 4. First resource
 rails generate pu:res:scaffold Post user:belongs_to title:string 'content:text?' --dest=main_app
-rails db:migrate
+rails db:prepare
 
 # 5. Connect resource to portal
 rails generate pu:res:conn Post --dest=admin_portal

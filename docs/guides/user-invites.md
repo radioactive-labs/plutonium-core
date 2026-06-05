@@ -49,7 +49,7 @@ rails g pu:invites:install \
 ### 2. Migrate
 
 ```bash
-rails db:migrate
+rails db:prepare
 ```
 
 ### 3. Connect to your portal

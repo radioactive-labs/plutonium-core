@@ -2,8 +2,11 @@
 
 [![Gem Version](https://badge.fury.io/rb/plutonium.svg)](https://badge.fury.io/rb/plutonium)
 [![Ruby](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml/badge.svg)](https://github.com/radioactive-labs/plutonium-core/actions/workflows/main.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
-Build production-ready Rails apps in minutes, not days. Convention-driven, fully customizable, and AI-ready. Plutonium picks up where Rails left off, adding application-level concepts that make building complex apps faster.
+**The Rails framework for things you should never write again.**
+
+Convention over configuration, extended to everything you keep rebuilding: **CRUD. Auth. Authorization. Multi-tenancy. Admin portals. Search, filters, bulk actions.** All generated. All customizable. All Rails.
 
 ## Quick Start
 
@@ -12,20 +15,36 @@ rails new myapp -a propshaft -j esbuild -c tailwind \
   -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
-Then create your first resource:
+Then scaffold a resource, create a portal, and connect them:
 
 ```bash
 cd myapp
-rails g pu:res:scaffold Post title:string body:text --dest=main_app
-rails db:migrate
+
+# Scaffold a resource — model, migration, definition, policy
+rails g pu:res:scaffold Post title:string body:text published_at:datetime --dest=main_app
+rails db:prepare
+
+# Create a portal (web interface) and connect the resource to it
+rails g pu:pkg:portal app --public
+rails g pu:res:conn Post --dest=app_portal
+
 bin/dev
 ```
 
-Visit `http://localhost:3000` - you have a complete CRUD interface.
+Visit `http://localhost:3000/app/posts` — you have a complete CRUD interface.
 
-## What You Get
+## What You Stop Writing
 
-**Resource-oriented architecture** - Models, policies, definitions, and controllers that work together:
+Same scaffold command you already know. A very different surface area.
+
+```bash
+rails g scaffold Post ...              # Rails:     just CRUD
+rails g pu:res:scaffold Post ...       # Plutonium: full CRUD + search + filters + bulk actions
+```
+
+And it doesn't stop at scaffolds:
+
+**Resource-oriented architecture** — models, policies, definitions, and controllers that work together:
 
 ```ruby
 # Policy controls WHO can do WHAT
@@ -47,7 +66,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-**Packages for organization** - Split your app into feature packages and portals:
+**Packages and portals** — split your app into feature engines and themed web interfaces:
 
 ```bash
 rails g pu:pkg:package blogging      # Business logic
@@ -65,7 +84,7 @@ rails g pu:rodauth:account user
 **Multi-tenancy** with entity scoping:
 
 ```ruby
-# In portal engine
+# In a portal engine
 scope_to_entity Organization, strategy: :path
 # Routes become /organizations/:organization_id/posts
 ```
@@ -86,6 +105,13 @@ class PublishInteraction < ResourceInteraction
 end
 ```
 
+## Why Plutonium
+
+- **Convention over configuration** — extended to resources, policies, portals, and tenancy, not just routes and views.
+- **It's just Rails** — generated code lives in your repo. Edit it, override it, delete it. The "magic" is regular Ruby mixins you can read.
+- **Multi-tenant ready** — path or domain tenancy, scoped relations, invites and memberships out of the box.
+- **AI-readable** — predictable file layout and naming, plus built-in [Claude Code skills](.claude/skills) that teach AI assistants the patterns.
+
 ## Documentation
 
 Full documentation at **[radioactive-labs.github.io/plutonium-core](https://radioactive-labs.github.io/plutonium-core/)**
@@ -97,18 +123,14 @@ Full documentation at **[radioactive-labs.github.io/plutonium-core](https://radi
 
 ## Requirements
 
-- Ruby 3.2+
-- Rails 7.1+ (Rails 8 recommended)
+- Ruby 3.2.2+
+- Rails 7.2+ (Rails 8 recommended)
 - Node.js 18+
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
-## Status
-
-Plutonium is used in production but still evolving. APIs may change between minor versions. Pin your version in Gemfile.
-
 ## License
 
-MIT License - see [LICENSE](LICENSE).
+MIT License — see [LICENSE.txt](LICENSE.txt).

@@ -42,7 +42,7 @@ rails g pu:res:scaffold Organization name:string:uniq slug:string:uniq --dest=ma
 
 ```bash
 rails g pu:res:scaffold Post organization:belongs_to title:string content:text --dest=main_app
-rails db:migrate
+rails db:prepare
 ```
 
 ### 3. Scope the portal to the entity

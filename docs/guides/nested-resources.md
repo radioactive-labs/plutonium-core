@@ -20,7 +20,7 @@ All of this happens with no manual route wiring — Plutonium generates it from 
 ```bash
 rails g pu:res:scaffold Company name:string --dest=main_app
 rails g pu:res:scaffold Property company:belongs_to name:string --dest=main_app
-rails db:migrate
+rails db:prepare
 ```
 
 ### 2. Connect both to the portal
