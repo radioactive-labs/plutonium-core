@@ -50,4 +50,14 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
   # the param-extraction path: the extraction instance must be given the record
   # before its form is rendered.
   action :assign_reviewer, interaction: Catalog::AssignReviewer
+  # Display-only `condition:` — defined (route exists) but only rendered when the
+  # proc is truthy. `object` is the row/shown record (record & collection-record
+  # actions).
+  action :draft_only_demo, interaction: Catalog::PublishProduct,
+    label: "Draft Only Demo",
+    condition: -> { object.draft? }
+  # `condition:` also delegates to the view context — here it reads params.
+  action :param_gated_demo, interaction: Catalog::PublishProduct,
+    label: "Param Gated Demo",
+    condition: -> { params[:show_demo] == "1" }
 end

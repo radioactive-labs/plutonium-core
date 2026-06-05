@@ -15,7 +15,7 @@ module Plutonium
         end
 
         def page_actions
-          super || current_definition.defined_actions.values.select { |a| a.record_action? && a.permitted_by?(current_policy) }
+          super || current_definition.defined_actions.values.select { |a| a.record_action? && a.permitted_by?(current_policy) && a.condition_met?(view_context, record: resource_record!) }
         end
 
         def render_default_content

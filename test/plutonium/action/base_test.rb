@@ -161,6 +161,54 @@ module Plutonium
         action = Base.new(:a, turbo_frame: "_top")
         assert_equal "_top", action.turbo_frame(stub_definition(modal_mode: false))
       end
+
+      # Minimal stand-in for the view context. The condition runs inside a
+      # ConditionContext that exposes object/record and delegates the rest here.
+      def stub_view(current_user: nil)
+        Struct.new(:current_user).new(current_user)
+      end
+
+      def test_condition_met_true_when_no_condition
+        assert Base.new(:a).condition_met?(stub_view)
+        assert Base.new(:a).condition_met?(stub_view, record: Object.new)
+      end
+
+      def test_condition_met_evaluates_proc_result
+        shown = Base.new(:a, condition: -> { true })
+        hidden = Base.new(:a, condition: -> { false })
+        assert shown.condition_met?(stub_view)
+        refute hidden.condition_met?(stub_view)
+      end
+
+      def test_condition_can_access_record_via_object_and_record
+        record = Struct.new(:draft).new(true)
+        via_object = Base.new(:a, condition: -> { object.draft })
+        via_record = Base.new(:a, condition: -> { record.draft })
+        assert via_object.condition_met?(stub_view, record:)
+        assert via_record.condition_met?(stub_view, record:)
+
+        record.draft = false
+        refute via_object.condition_met?(stub_view, record:)
+      end
+
+      def test_condition_object_is_nil_without_record
+        action = Base.new(:a, condition: -> { object.nil? })
+        assert action.condition_met?(stub_view)
+      end
+
+      def test_condition_delegates_missing_to_the_view_context
+        action = Base.new(:a, condition: -> { current_user == "alice" })
+        assert action.condition_met?(stub_view(current_user: "alice"))
+        refute action.condition_met?(stub_view(current_user: "bob"))
+      end
+
+      def test_condition_round_trips_through_with
+        condition = -> { object.draft }
+        action = Base.new(:a, condition:)
+        cloned = action.with(label: "Renamed")
+        assert_equal "Renamed", cloned.label
+        assert_same condition, cloned.condition
+      end
     end
   end
 end

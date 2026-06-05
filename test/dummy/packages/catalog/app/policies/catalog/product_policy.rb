@@ -19,6 +19,17 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
     record.is_a?(Catalog::Product)
   end
 
+  # Always permitted by policy; visibility is governed entirely by each
+  # action's `condition:` proc, exercising the separation between
+  # authorization (policy) and display-only conditions.
+  def draft_only_demo?
+    record.is_a?(Catalog::Product)
+  end
+
+  def param_gated_demo?
+    record.is_a?(Catalog::Product)
+  end
+
   def permitted_attributes_for_create
     [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail]
   end

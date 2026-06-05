@@ -1050,11 +1050,9 @@ action :name,
   collection_record_action: true,
   bulk_action: true,
 
-  # Conditional visibility — display-only proc, like inputs/displays/columns.
-  # Evaluated per render with the contextual record as `object`/`record`
-  # (nil for resource & bulk actions). NOT authorization — keep that in the
-  # policy. A hidden action still has a live route.
-  condition: -> { object.draft? },
+  # Conditional visibility — display-only toggle, NOT authorization (see below).
+  # `-> { false }` keeps the route live but hides the button (e.g. API-only).
+  condition: -> { params[:beta] == "1" },
 
   # Grouping
   category: :primary,               # :primary, :secondary, :danger
@@ -1067,6 +1065,36 @@ action :name,
   modal: :slideover,                # :slideover / :centered — overrides definition's modal mode
   size:  :lg                        # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
 ```
+
+### Conditional Actions (`condition:`)
+
+Like `condition:` on inputs/displays/columns — define an action but render its **button** only when a runtime proc is truthy. The action and its route stay live either way; `condition:` only toggles the UI.
+
+Headline use case: **expose an action's endpoint without a button** — one you call from the API, a webhook, or another service. Hide it with an always-falsy condition; the route still works:
+
+```ruby
+# Defined and callable (API / programmatic), but no button anywhere:
+action :sync_inventory, interaction: SyncInventoryInteraction, condition: -> { false }
+
+# Per-record display state — object is the row/shown record:
+action :reopen, interaction: ReopenInteraction, condition: -> { object.closed? }
+
+# View/request-level toggle (feature flag, beta mode):
+action :preview, interaction: PreviewInteraction, condition: -> { params[:beta] == "1" }
+```
+
+Inside the proc, `object`/`record` is the contextual record — the row/shown record for **record** and **collection-record** actions, **nil** for **resource** and **bulk** actions (guard with `object&.…` if shared). Every other call delegates to the **view context**: `current_user`, `current_parent`, `params`, `request`, `allowed_to?`, `resource_record!`, etc. `object` is evaluated per row in tables/grids, so per-record show/hide works there.
+
+🚨 **`condition:` is NOT authorization — it only hides the button.** A hidden action still has a live route; anyone with the URL can trigger it. "Who may run this" belongs in the policy:
+
+```ruby
+# 🚫 WRONG — does not stop non-admins; the route is live.
+action :wipe, interaction: WipeInteraction, condition: -> { current_user.admin? }
+# ✅ RIGHT — authorization in the policy, enforced regardless of condition:
+def wipe? = current_user.admin?
+```
+
+The two compose: an action's button shows only when the policy permits **and** the condition is truthy; execution is gated by the policy alone. Use `object` in `condition:` for per-record *display*; use the policy for per-record *authorization*.
 
 `Action#with(...)` — actions are frozen value objects; clone with overrides:
 

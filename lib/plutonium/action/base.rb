@@ -6,7 +6,7 @@ module Plutonium
   module Action
     # Base class for all actions in the Plutonium framework.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to, :condition
 
       def initialize(name, **options)
         @name = name.to_sym
@@ -27,6 +27,7 @@ module Plutonium
         @position = options[:position] || 50
         @modal_mode = options[:modal]
         @modal_size = options[:size]
+        @condition = options[:condition]
         validate_modal_mode!
         validate_modal_size!
 
@@ -62,6 +63,21 @@ module Plutonium
         policy.allowed_to?(:"#{name}?")
       end
 
+      # Display-only visibility gate, mirroring the `condition:` proc on
+      # inputs/displays/columns. Returns true when no condition is set.
+      #
+      # The proc is evaluated against a ConditionContext: `object`/`record` is
+      # the contextual record (nil for resource/bulk actions), and every other
+      # call delegates to the view context (current_user, params, request,
+      # allowed_to?, resource_record!, …).
+      #
+      # NOT an authorization boundary — a hidden action still has a live route;
+      # keep authorization in the policy.
+      def condition_met?(view_context, record: nil)
+        return true if @condition.nil?
+        ConditionContext.new(view_context, record).instance_exec(&@condition)
+      end
+
       # Returns a new Action with the given options merged over this one.
       def with(**overrides)
         self.class.new(name, **to_options.merge(overrides))
@@ -90,7 +106,8 @@ module Plutonium
           category: @category.to_sym,
           position: @position,
           modal: @modal_mode,
-          size: @modal_size
+          size: @modal_size,
+          condition: @condition
         }
       end
 

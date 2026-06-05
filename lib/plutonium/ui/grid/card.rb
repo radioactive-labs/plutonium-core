@@ -232,12 +232,13 @@ module Plutonium
 
         def row_actions
           @row_actions ||= resource_definition.defined_actions.values.select { |a|
-            a.collection_record_action? && a.permitted_by?(record_policy)
+            a.collection_record_action? && a.permitted_by?(record_policy) && a.condition_met?(view_context, record:)
           }
         end
 
         def can_show?
-          resource_definition.defined_actions[:show]&.permitted_by?(record_policy)
+          action = resource_definition.defined_actions[:show]
+          action&.permitted_by?(record_policy) && action.condition_met?(view_context, record:)
         end
 
         def record_policy

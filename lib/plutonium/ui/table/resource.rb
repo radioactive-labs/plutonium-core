@@ -134,7 +134,7 @@ module Plutonium
               policy = policy_for(record:)
 
               actions = resource_definition.defined_actions
-                .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") }
+                .select { |k, a| a.collection_record_action? && policy.allowed_to?(:"#{k}?") && a.condition_met?(view_context, record:) }
                 .values
 
               primary_actions = actions.select { |a| a.category.primary? }.sort_by(&:position)
@@ -161,7 +161,7 @@ module Plutonium
 
         def bulk_actions
           @bulk_actions ||= resource_definition.defined_actions
-            .select { |k, a| a.bulk_action? }
+            .select { |k, a| a.bulk_action? && a.condition_met?(view_context) }
             .values
         end
 

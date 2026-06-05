@@ -61,8 +61,8 @@ action :name,
   collection_record_action: true,
   bulk_action:              true,
 
-  # Conditional visibility — display-only proc (see below)
-  condition: -> { object.draft? },
+  # Conditional visibility — display-only proc, NOT authorization (see below)
+  condition: -> { params[:beta] == "1" },
 
   # Grouping
   category: :primary,                    # :primary, :secondary, :danger
@@ -89,29 +89,54 @@ end
 
 ## Conditional visibility — `condition:`
 
-Just like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. Use it for UI state — "show *Publish* only while the record is a draft":
+Like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. It's purely a toggle on whether the **button is shown** — the action (and its route) stays fully live either way.
+
+The headline use case: **expose an action's endpoint without surfacing it in the UI** — e.g. one you call from the API, a webhook, or another service. Hide the button with an always-falsy condition; the route still works:
 
 ```ruby
-# Per-record actions — the proc sees the row/shown record as `object`/`record`:
-action :publish, interaction: PublishInteraction, condition: -> { object.draft? }
-action :reopen,  interaction: ReopenInteraction,  condition: -> { object.closed? }
-
-# Resource / bulk actions have no single record, so `object` is nil —
-# branch on context instead:
-action :import, interaction: ImportInteraction, condition: -> { current_user.admin? }
+# Defined and callable (API / programmatic), but no button anywhere in the UI:
+action :sync_inventory, interaction: SyncInventoryInteraction, condition: -> { false }
 ```
 
-The proc is evaluated at every render point (show page, table rows, grid cards, index/bulk toolbars) with the same context as field conditions:
+It also works as a dynamic toggle driven by the **record** or the **view/request** context:
+
+```ruby
+# object → the row/shown record (record & collection-record actions):
+action :reopen,  interaction: ReopenInteraction,  condition: -> { object.closed? }
+# view/request state — feature flag, preview/beta mode:
+action :preview, interaction: PreviewInteraction, condition: -> { params[:beta] == "1" }
+```
+
+Inside the proc, `object`/`record` is the contextual record, and every other call delegates to the **view context**:
 
 | Available | Notes |
 |---|---|
-| `object` / `record` | The contextual record. **`nil`** for `resource_action` and `bulk_action` (no single record). |
-| `current_user`, `current_parent` | The signed-in user and (nested) parent. |
+| `object` / `record` | The row/shown record for **record** and **collection-record** actions; **`nil`** for resource and bulk actions (no single record). Guard with `object&.…` if a condition is shared across action kinds. |
 | `params`, `request` | Current request. |
-| `allowed_to?`, other helpers | The usual component helpers. |
+| `current_user`, `current_parent` | The signed-in user and (nested) parent. |
+| `resource_record!` | The shown record on the show page; raises on index/table — prefer `object`. |
+| `allowed_to?`, `policy_for`, other helpers | The usual view helpers. |
 
-::: danger `condition:` is display-only — NOT authorization
-A hidden action still has a **live route**. `condition:` decides whether the *button renders*, not whether the *request is allowed*. Keep "who may run this" in the policy method (`def publish?`). The two compose: an action appears only when the policy permits **and** the condition is truthy.
+`object` is evaluated **per row** in tables and grids, so per-record show/hide works there too.
+
+::: danger `condition:` is NOT authorization — it only hides the button
+A hidden action still has a **live route**: anyone who knows the URL can still trigger it. `condition:` decides whether the *button renders*, never whether the *request is allowed*.
+
+```ruby
+# 🚫 WRONG — this does NOT stop non-admins. The route is live; they can POST to it.
+action :wipe, interaction: WipeInteraction, condition: -> { current_user.admin? }
+
+# ✅ RIGHT — authorization belongs in the policy. The action only runs if this returns true.
+class WidgetPolicy < ResourcePolicy
+  def wipe? = current_user.admin?
+end
+```
+
+**Rule of thumb:** "who may run this" → **policy** (`def action_name?`). "is this UI relevant right now" → `condition:`. Authorization is enforced regardless of `condition:`; the two compose — an action appears only when the policy permits **and** the condition is truthy.
+:::
+
+::: tip Per-record display vs. per-record authorization
+`condition: -> { object.draft? }` is fine for **showing/hiding** a per-record button. But if the rule is about **who may run it** ("only while draft *and* nobody else has it locked"), put it in the policy — `def publish? = record.draft?` is also evaluated per record (per row), and unlike `condition:` it actually gates execution.
 :::
 
 ## Simple actions (navigation)
