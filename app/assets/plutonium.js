@@ -28237,20 +28237,34 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   // src/js/controllers/dirty_form_guard_controller.js
   var dirty_form_guard_controller_default = class extends Controller {
     static targets = ["confirmDialog"];
-    // Set by controllers, not the user — comparing them would flag
-    // every form as dirty on connect (return_to) or on submit (pre_submit).
+    // Set by controllers, not the user — they're already present (or absent)
+    // when the baseline is taken, so they never contribute to the diff; listed
+    // for safety against a controller writing them mid-edit.
     static IGNORED_KEYS = /* @__PURE__ */ new Set(["authenticity_token", "return_to", "pre_submit"]);
+    // Keys that move focus or dismiss the dialog rather than edit it — they
+    // must not, on their own, baseline the form.
+    static NON_EDITING_KEYS = /* @__PURE__ */ new Set([
+      "Tab",
+      "Escape",
+      "Shift",
+      "Control",
+      "Alt",
+      "Meta"
+    ]);
     connect() {
       this.dialog = this.element.closest("dialog");
       if (!this.dialog) return;
-      this.snapshot = this.#serialize();
+      this.baseline = null;
       this.forceClose = false;
       this.submitting = false;
+      this.onFirstIntent = this.#onFirstIntent.bind(this);
       this.onCancel = this.#onCancel.bind(this);
       this.onSubmit = this.#onSubmit.bind(this);
       this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
       this.onConfirmCancel = this.#onConfirmCancel.bind(this);
       this.onKeydown = this.#onKeydown.bind(this);
+      this.element.addEventListener("pointerdown", this.onFirstIntent, true);
+      this.element.addEventListener("keydown", this.onFirstIntent, true);
       document.addEventListener("keydown", this.onKeydown, true);
       this.dialog.addEventListener("cancel", this.onCancel, true);
       this.element.addEventListener("submit", this.onSubmit);
@@ -28263,6 +28277,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     disconnect() {
       if (!this.dialog) return;
+      this.element.removeEventListener("pointerdown", this.onFirstIntent, true);
+      this.element.removeEventListener("keydown", this.onFirstIntent, true);
       document.removeEventListener("keydown", this.onKeydown, true);
       this.dialog.removeEventListener("cancel", this.onCancel, true);
       this.element.removeEventListener("submit", this.onSubmit);
@@ -28285,6 +28301,16 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (!this.dialog) return [];
       return this.dialog.querySelectorAll('[data-action~="remote-modal#close"]');
     }
+    // Capture the baseline the first time the user really touches the form —
+    // a trusted pointer or editing keystroke. The form has rendered (so widgets
+    // have settled) and the event fires before the value changes, so this is
+    // the settled, pre-edit state. Runs once; later interactions are no-ops.
+    #onFirstIntent(event) {
+      if (this.baseline != null) return;
+      if (!event.isTrusted) return;
+      if (event.type === "keydown" && this.constructor.NON_EDITING_KEYS.has(event.key)) return;
+      this.baseline = this.#serialize();
+    }
     #serialize() {
       const data = new FormData(this.element);
       const enc = encodeURIComponent;
@@ -28293,8 +28319,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         return `${enc(key)}=${enc(v4)}`;
       }).sort().join("&");
     }
+    // No interaction → no baseline → never dirty. Otherwise dirty iff the form
+    // now serializes differently than it did at first touch (so an edit reverted
+    // to its original value reads as clean).
     #isDirty() {
-      return this.#serialize() !== this.snapshot;
+      return this.baseline != null && this.#serialize() !== this.baseline;
     }
     #onSubmit() {
       this.submitting = true;

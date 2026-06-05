@@ -100,44 +100,81 @@ module Plutonium
         end
 
         def render_subheader_slot
-          value = field_value(slots[:subheader])
-          return if value.blank?
-          p(class: "text-xs text-[var(--pu-text-muted)] truncate") { plain helpers.display_name_of(value) }
+          name = slots[:subheader]
+          value = field_value(name)
+          p(class: "text-xs text-[var(--pu-text-muted)] truncate") do
+            value.blank? ? render_blank_placeholder : render_formatted_value(name, value)
+          end
         end
 
         def render_body_slot
-          value = field_value(slots[:body])
-          return if value.blank?
-          p(class: "text-sm text-[var(--pu-text)] line-clamp-3") { plain helpers.display_name_of(value) }
+          name = slots[:body]
+          value = field_value(name)
+          p(class: "text-sm text-[var(--pu-text)] line-clamp-3") do
+            value.blank? ? render_blank_placeholder : render_formatted_value(name, value)
+          end
         end
 
         def render_meta_slot
           fields = Array(slots[:meta])
           values = fields.map { |f| field_value(f) }.reject(&:blank?)
-          return if values.empty?
 
           div(class: "flex flex-wrap items-center gap-1.5 mt-1") do
-            values.each do |v|
-              span(class: "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium " \
-                          "bg-[var(--pu-surface-alt)] text-[var(--pu-text-muted)]") do
-                plain helpers.display_name_of(v)
-              end
+            if values.empty?
+              render_blank_placeholder
+            else
+              values.each { |v| render_meta_badge(v) }
             end
           end
         end
 
         def render_footer_slot
-          value = field_value(footer_field)
-          return if value.blank?
+          name = footer_field
+          value = field_value(name)
           p(class: "text-xs text-[var(--pu-text-subtle)] mt-1") do
-            if value.respond_to?(:strftime)
-              # display_datetime_value returns HTML-safe <time> markup
-              # rendered by the timeago Stimulus controller.
-              raw safe(helpers.display_datetime_value(value))
-            else
-              plain helpers.display_name_of(value)
-            end
+            value.blank? ? render_blank_placeholder : render_formatted_value(name, value)
           end
+        end
+
+        # Emits a slot value formatted by type, reusing the display layer's
+        # logic without its show-page label/wrapper chrome:
+        #   - dates/times → timeago markup (same path as the footer used)
+        #   - has_cents columns → currency (matches the Currency component)
+        #   - everything else → display_name_of
+        def render_formatted_value(name, value)
+          if value.respond_to?(:strftime)
+            # display_datetime_value returns HTML-safe <time> markup
+            # rendered by the timeago Stimulus controller.
+            raw safe(helpers.display_datetime_value(value))
+          elsif currency_field?(name)
+            plain helpers.number_to_currency(value, unit: "")
+          else
+            plain helpers.display_name_of(value)
+          end
+        end
+
+        # Renders a meta value as a colored pill, borrowing the Badge
+        # display component's semantic color + humanize logic. Status-like
+        # values (published, pending, failed…) get meaningful colors;
+        # free-form values get a deterministic decorative color.
+        def render_meta_badge(value)
+          badge = Plutonium::UI::Display::Components::Badge
+          variant = badge.variant_for(value)
+          span(class: tokens("pu-badge", "pu-badge-#{variant}")) do
+            plain badge.humanize(value)
+          end
+        end
+
+        def currency_field?(name)
+          klass = record.class
+          klass.respond_to?(:has_cents_decimal_attribute?) && klass.has_cents_decimal_attribute?(name.to_sym)
+        end
+
+        # A declared slot with no value renders a muted em-dash rather than
+        # collapsing, so cards in a grid keep an even height instead of
+        # ragged rows when some records lack the field.
+        def render_blank_placeholder
+          span(class: "text-[var(--pu-text-subtle)]") { plain "—" }
         end
 
         # ---------------------------------------------------------------

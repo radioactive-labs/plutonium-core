@@ -14,7 +14,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
   # possibly-blank text body.
   grid_fields(
     header: :name,
-    subheader: :email_address,
+    subheader: :price,
     body: :description,
     meta: [:status, :plan, :tier],
     footer: :meeting_at
@@ -29,6 +29,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
   field :favorite_color, as: :color                            # color input + swatch display
   field :age, as: :integer
   input :balance, as: :decimal
+  input :price, as: :decimal                                   # has_cents: edit dollars, stored as price_cents
   field :description, as: :text                                # textarea + text display
 
   # DOM-mutating widgets
@@ -47,7 +48,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
 
   # Display-only renderers
   display :status, as: :badge
-  display :balance_cents, as: :currency
+  display :price, as: :currency, unit: "$"                     # has_cents: 123456 cents -> $1,234.56
 
   # Hidden
   input :secret_token, as: :hidden

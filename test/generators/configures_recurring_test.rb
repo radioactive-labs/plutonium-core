@@ -34,7 +34,7 @@ class ConfiguresRecurringTest < ActiveSupport::TestCase
   test "injects tasks under every environment in an env-scoped file" do
     result = RecurringYAML.new.inject(ENV_SCOPED, TASKS)
 
-    assert_equal 2, result.scan(/sqlite_maintenance:/).length
+    assert_equal 2, result.scan("sqlite_maintenance:").length
     assert_match(/^  sqlite_maintenance:$/, result)
     assert_includes result, "existing_task:"
   end
@@ -42,7 +42,7 @@ class ConfiguresRecurringTest < ActiveSupport::TestCase
   test "appends tasks to a flat (non-env-scoped) file" do
     result = RecurringYAML.new.inject(FLAT, TASKS)
 
-    assert_equal 1, result.scan(/sqlite_maintenance:/).length
+    assert_equal 1, result.scan("sqlite_maintenance:").length
     assert_match(/^sqlite_maintenance:$/, result)
     assert_includes result, "existing_task:"
   end

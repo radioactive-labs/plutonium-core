@@ -34,7 +34,7 @@ class CreateKitchenSinks < ActiveRecord::Migration[8.1]
       t.string :phone, default: "+14155552671"
       t.json :config, default: {theme: "dark", beta: true}
       t.json :prefs, default: {newsletter: "weekly"}
-      t.integer :balance_cents, default: 123456
+      t.integer :price_cents, default: 123456   # has_cents -> virtual :price (1234.56)
       t.string :secret_token, default: "s3cr3t"
 
       t.timestamps
