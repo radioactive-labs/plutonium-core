@@ -1,3 +1,16 @@
+## [0.56.1] - 2026-06-05
+
+### 🚀 Features
+
+- *(actions)* Add display-only condition: to actions
+
+### 🐛 Bug Fixes
+
+- *(dummy)* Version-adapt kitchen_sinks migration
+
+### 📚 Documentation
+
+- Recommend db:prepare, firm up README, document conditional actions
 ## [0.56.0] - 2026-06-05
 
 ### 🚀 Features
