@@ -77,7 +77,7 @@ module Plutonium
           end
 
           def link_classes(first = false, last = false)
-            base = "flex items-center justify-center w-9 h-9 text-[var(--pu-text-muted)] bg-[var(--pu-surface)] border border-[var(--pu-border)] hover:bg-[var(--pu-surface-alt)] hover:text-[var(--pu-text)] transition-colors"
+            base = "flex items-center justify-center min-w-9 h-9 px-2 text-[var(--pu-text-muted)] bg-[var(--pu-surface)] border border-[var(--pu-border)] hover:bg-[var(--pu-surface-alt)] hover:text-[var(--pu-text)] transition-colors"
             classes = [base]
             classes << "rounded-l-lg" if first
             classes << "rounded-r-lg" if last
@@ -86,11 +86,11 @@ module Plutonium
           end
 
           def current_link_classes
-            "flex items-center justify-center w-9 h-9 text-white bg-primary-600 border border-primary-600 rounded-lg font-medium cursor-default"
+            "flex items-center justify-center min-w-9 h-9 px-2 text-white bg-primary-600 border border-primary-600 rounded-lg font-medium cursor-default"
           end
 
           def disabled_link_classes(first = false, last = false)
-            base = "flex items-center justify-center w-9 h-9 text-[var(--pu-text-subtle)] bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] opacity-50 cursor-not-allowed"
+            base = "flex items-center justify-center min-w-9 h-9 px-2 text-[var(--pu-text-subtle)] bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] opacity-50 cursor-not-allowed"
             classes = [base]
             classes << "rounded-l-lg" if first
             classes << "rounded-r-lg" if last
