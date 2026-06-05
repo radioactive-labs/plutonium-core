@@ -1,4 +1,4 @@
-class CreateKitchenSinks < ActiveRecord::Migration[8.1]
+class CreateKitchenSinks < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :kitchen_sinks do |t|
       t.references :organization, null: false, foreign_key: true
