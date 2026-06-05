@@ -26,7 +26,16 @@ module Pu
         # Shell out to a fresh process so the sync reads the newly-installed
         # gem's skills. Invoking in-process would reuse the already-loaded
         # (pre-update) gem, whose Plutonium.root still points at the old skills.
-        run "bin/rails generate pu:skills:sync"
+        #
+        # Must run unbundled: this process was booted with the pre-update gem,
+        # and its bundler environment (BUNDLE_GEMFILE, RUBYOPT=-rbundler/setup,
+        # the pinned load path) is inherited by the subprocess. Without clearing
+        # it, the "fresh" bin/rails re-uses the old locked gem set and syncs the
+        # stale skills anyway. with_unbundled_env lets it re-resolve from the
+        # updated Gemfile.lock and load the new gem.
+        Bundler.with_unbundled_env do
+          run "bin/rails generate pu:skills:sync"
+        end
       end
 
       def update_gem
