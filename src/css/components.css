@@ -780,8 +780,11 @@ body.pu-rail-pinned .icon-rail-pin-expand {
   box-shadow: var(--pu-shadow-lg);
   padding: 6px;
   animation: pu-rail-flyout-in 120ms ease-out;
-  /* Cap to the viewport so long menus scroll instead of overflowing. */
+  /* Cap to the viewport so long menus scroll instead of overflowing.
+     dvh tracks the visible viewport so the cap holds on mobile (where
+     100vh sits behind the browser chrome); 100vh is the fallback. */
   max-height: calc(100vh - 16px);
+  max-height: calc(100dvh - 16px);
   overflow-y: auto;
   overscroll-behavior: contain;
 }

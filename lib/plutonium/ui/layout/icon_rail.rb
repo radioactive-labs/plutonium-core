@@ -39,7 +39,7 @@ module Plutonium
             id: "sidebar-navigation",
             data: {controller: "sidebar icon-rail"},
             aria: {label: "Sidebar Navigation"},
-            class: "fixed top-0 left-0 z-40 h-screen " \
+            class: "fixed top-0 left-0 z-40 h-dvh " \
                    "bg-[var(--pu-surface)] border-r border-[var(--pu-border)] " \
                    "flex flex-col transition-[width] duration-200 overflow-x-hidden " \
                    "-translate-x-full lg:translate-x-0"
