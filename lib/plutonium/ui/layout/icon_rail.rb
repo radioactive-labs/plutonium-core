@@ -54,7 +54,11 @@ module Plutonium
 
         def render_brand_section
           div(class: "h-12 flex items-center justify-center border-b border-[var(--pu-border)] shrink-0") do
-            render brand_slot if brand_slot?
+            next unless brand_slot?
+
+            a(href: root_path, aria: {label: "Home"}, class: "flex items-center justify-center") do
+              render brand_slot
+            end
           end
         end
 
