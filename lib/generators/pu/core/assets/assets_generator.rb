@@ -12,6 +12,7 @@ module Pu
       desc "Setup plutonium assets"
 
       def start
+        verify_prerequisites
         install_dependencies
         copy_tailwind_config
         configure_application
@@ -23,6 +24,22 @@ module Pu
       end
 
       private
+
+      # The asset pipeline assumes the app was generated with esbuild + Tailwind.
+      # Without those, `application.tailwind.css` doesn't exist and the generator
+      # later crashes with a cryptic inject_into_file error. Fail early with a fix.
+      def verify_prerequisites
+        return if File.exist?("app/assets/stylesheets/application.tailwind.css")
+
+        error <<~MSG
+          Plutonium assets require a Rails app generated with esbuild and Tailwind.
+          Expected app/assets/stylesheets/application.tailwind.css, but it is missing.
+
+          Re-create the app with the required flags:
+            rails new myapp -a propshaft -j esbuild -c tailwind \\
+              -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
+        MSG
+      end
 
       def copy_tailwind_config
         copy_file "tailwind.config.js", force: true

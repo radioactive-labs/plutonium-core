@@ -21,7 +21,7 @@
       </div>
 
       <div class="hc-term-wrap">
-        <pre class="pu-term hc-term"><span class="prompt">$</span> rails new my_app -m {{ activeUrl }}<span class="pu-term-cursor"></span></pre>
+        <pre class="pu-term hc-term"><span class="prompt">$</span> {{ activeCommand }}<span class="pu-term-cursor"></span></pre>
         <button class="hc-copy" :class="{ 'hc-copy--ok': copied }" @click="copy" :title="copied ? 'Copied' : 'Copy command'" :aria-label="copied ? 'Copied' : 'Copy command'">
           <component :is="copied ? IconCheck : IconCopy" :size="16" :stroke-width="2" />
         </button>
@@ -49,7 +49,7 @@ const options = [
 ]
 const selected = ref("plutonium")
 const activeUrl = computed(() => options.find(o => o.id === selected.value).url)
-const activeCommand = computed(() => `rails new my_app -m ${activeUrl.value}`)
+const activeCommand = computed(() => `rails new my_app -a propshaft -j esbuild -c tailwind -m ${activeUrl.value}`)
 const copied = ref(false)
 
 async function copy() {
