@@ -10,7 +10,8 @@ module Plutonium
 
             nav(role: "tablist",
               aria: {label: "Scope"},
-              class: "flex items-center gap-1 px-4 py-2 border-b border-[var(--pu-border)]") do
+              class: "flex flex-nowrap items-center gap-1 px-4 py-2 border-b border-[var(--pu-border)] " \
+                     "overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden") do
               render_all_pill
               scopes.each_key { |key| render_pill(key) }
             end
@@ -43,7 +44,7 @@ module Plutonium
           end
 
           def pill_classes(active)
-            base = "px-3 py-1 rounded-md text-sm transition-colors"
+            base = "shrink-0 px-3 py-1 rounded-md text-sm transition-colors"
             state = if active
               "bg-primary-100 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300"
             else
