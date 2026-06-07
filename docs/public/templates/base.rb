@@ -10,5 +10,5 @@ after_bundle do
   generate "pu:core:install"
 
   git add: "."
-  git commit: %( -m 'install plutonium' )
+  git commit: %( -m 'chore: install plutonium' )
 end
