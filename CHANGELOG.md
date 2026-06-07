@@ -1,3 +1,11 @@
+## [0.56.3] - 2026-06-07
+
+### 🐛 Bug Fixes
+
+- *(ui/sidebar)* Use dynamic viewport height so mobile rail toggle stays visible
+- *(ui/sidebar)* Link icon rail logo to home
+- *(ui/sidebar)* Default icon rail to pinned
+- *(ui/table)* Let scopes bar scroll horizontally on small screens
 ## [0.56.2] - 2026-06-05
 
 ### 🐛 Bug Fixes
