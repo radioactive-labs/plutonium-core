@@ -44,11 +44,12 @@ module Plutonium
         # preferences read from localStorage:
         # - Color mode: applies `dark` class on <html> so dark theme renders
         #   from the first frame instead of flashing light.
-        # - Rail-pin: applies `pu-rail-pinned` on <body> (when present) and
-        #   on every incoming body via turbo:before-render, so a
-        #   Turbo.visit (e.g. the redirect after a form submit) doesn't
-        #   flash the rail into its collapsed state before the
-        #   icon-rail Stimulus controller can restore it.
+        # - Rail-pin: the rail is pinned by default, so this applies
+        #   `pu-rail-pinned` on <body> (when present) and on every incoming
+        #   body via turbo:before-render unless the user explicitly collapsed
+        #   it (localStorage "false"), so a Turbo.visit (e.g. the redirect
+        #   after a form submit) doesn't flash the rail into its collapsed
+        #   state before the icon-rail Stimulus controller can restore it.
         def render_pre_paint_scripts
           script do
             raw(safe(<<~JS))
@@ -62,10 +63,10 @@ module Plutonium
                 } catch (e) {}
 
                 try {
-                  if (localStorage.getItem("pu_rail_pinned") !== "true") return;
+                  if (localStorage.getItem("pu_rail_pinned") === "false") return;
                   if (document.body) document.body.classList.add("pu-rail-pinned");
                   document.addEventListener("turbo:before-render", function (event) {
-                    if (localStorage.getItem("pu_rail_pinned") === "true") {
+                    if (localStorage.getItem("pu_rail_pinned") !== "false") {
                       event.detail.newBody.classList.add("pu-rail-pinned");
                     }
                   });

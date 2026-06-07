@@ -9,10 +9,9 @@ export default class extends Controller {
   }
 
   connect() {
-    const pinned = localStorage.getItem(this.storageKeyValue) === "true"
-    if (pinned) {
-      document.body.classList.add("pu-rail-pinned")
-    }
+    // Pinned is the default; only an explicit "false" collapses the rail.
+    const pinned = localStorage.getItem(this.storageKeyValue) !== "false"
+    document.body.classList.toggle("pu-rail-pinned", pinned)
   }
 
   togglePin() {

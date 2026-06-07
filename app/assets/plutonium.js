@@ -28021,10 +28021,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       storageKey: { type: String, default: "pu_rail_pinned" }
     };
     connect() {
-      const pinned = localStorage.getItem(this.storageKeyValue) === "true";
-      if (pinned) {
-        document.body.classList.add("pu-rail-pinned");
-      }
+      const pinned = localStorage.getItem(this.storageKeyValue) !== "false";
+      document.body.classList.toggle("pu-rail-pinned", pinned);
     }
     togglePin() {
       const pinned = document.body.classList.toggle("pu-rail-pinned");
