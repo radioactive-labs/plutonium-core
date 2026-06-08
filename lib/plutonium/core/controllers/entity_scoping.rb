@@ -115,7 +115,10 @@ module Plutonium
         def remember_scoped_entity
           return unless scoped_to_entity?
 
-          session[scoped_entity_session_key] = current_scoped_entity.to_global_id.to_s
+          entity = current_scoped_entity
+          return unless entity
+
+          session[scoped_entity_session_key] = entity.to_global_id.to_s
         end
 
         # Retrieves the remembered scoped entity from the session.
