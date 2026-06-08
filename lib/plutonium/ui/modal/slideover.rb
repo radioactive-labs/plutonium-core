@@ -33,7 +33,7 @@ module Plutonium
           # showModal() and is dropped when the dialog leaves the top layer
           # on close(), so it still covers the panel's slide-out. Mirrors
           # the .pu-dialog::backdrop rule in components.css.
-          "fixed top-0 right-0 bottom-0 left-auto m-0 h-screen max-w-full max-h-screen " \
+          "fixed top-0 right-0 bottom-0 left-auto m-0 h-dvh max-w-full max-h-dvh " \
             "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] " \
             "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
             "rounded-none p-0 " \
