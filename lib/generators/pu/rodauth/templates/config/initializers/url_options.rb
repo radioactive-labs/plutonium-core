@@ -1,17 +1,11 @@
 # frozen_string_literal: true
 
-Rails.application.config.after_initialize do
-  default_url = ENV["RAILS_DEFAULT_URL"]
-  if default_url && Rails.application.config.action_mailer.default_url_options.blank?
-    uri = URI.parse(default_url)
-    Rails.application.config.action_mailer.default_url_options = {
-      host: uri.host,
-      port: uri.port,
-      protocol: uri.scheme
-    }
-  end
+if (default_url = ENV["RAILS_DEFAULT_URL"])
+  uri = URI.parse(default_url)
+  default_port = (uri.scheme == "https") ? 443 : 80
+  url_options = {host: uri.host, protocol: uri.scheme}
+    .tap { |opts| opts[:port] = uri.port if uri.port != default_port }
 
-  if Rails.application.routes.default_url_options.blank?
-    Rails.application.routes.default_url_options = Rails.application.config.action_mailer.default_url_options
-  end
+  ActionMailer::Base.default_url_options = url_options if ActionMailer::Base.default_url_options.blank?
+  Rails.application.routes.default_url_options = url_options if Rails.application.routes.default_url_options.blank?
 end
