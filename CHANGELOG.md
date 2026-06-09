@@ -1,3 +1,18 @@
+## [0.57.0] - 2026-06-09
+
+### 🚀 Features
+
+- *(scopes)* Add display-only condition: to scopes
+
+### 🐛 Bug Fixes
+
+- *(generators/assets)* Guard tailwind prerequisite and fix landing page command
+- *(entity_scoping)* Guard against nil current_scoped_entity in remember_scoped_entity
+- *(ui/slideover)* Use dynamic viewport height to prevent clipping on mobile
+
+### ⚙️ Miscellaneous Tasks
+
+- *(templates)* Add skill sync to plutonium template and use conventional commits
 ## [0.56.3] - 2026-06-07
 
 ### 🐛 Bug Fixes
