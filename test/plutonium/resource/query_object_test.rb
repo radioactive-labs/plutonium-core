@@ -147,6 +147,56 @@ module Plutonium
         assert_match(/Cannot find scope :nonexistent/, error.message)
       end
 
+      def test_define_scope_with_condition_stores_condition
+        condition = -> { true }
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published, condition:
+        end
+
+        assert_equal condition, query_object.scope_conditions[:published]
+      end
+
+      def test_define_scope_without_condition_stores_nothing
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published
+        end
+
+        assert_empty query_object.scope_conditions
+      end
+
+      def test_scope_visible_returns_true_when_no_condition
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published
+        end
+
+        assert query_object.scope_visible?(:published, nil)
+      end
+
+      def test_scope_visible_returns_true_when_condition_truthy
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published, condition: -> { true }
+        end
+
+        assert query_object.scope_visible?(:published, nil)
+      end
+
+      def test_scope_visible_returns_false_when_condition_falsy
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published, condition: -> { false }
+        end
+
+        refute query_object.scope_visible?(:published, nil)
+      end
+
+      def test_scope_visible_condition_receives_view_context_via_delegation
+        view_context = Struct.new(:current_user).new("alice")
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_scope :published, condition: -> { current_user == "alice" }
+        end
+
+        assert query_object.scope_visible?(:published, view_context)
+      end
+
       # ==================== Default Scope Selection Tests ====================
 
       def test_selected_scope_uses_default_when_no_params

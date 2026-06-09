@@ -14,6 +14,7 @@ module Plutonium
               div(class: "flex flex-wrap items-center gap-2") do
                 render_all_scope_button
                 current_query_object.scope_definitions.each_key do |name|
+                  next unless current_query_object.scope_visible?(name, view_context)
                   render_scope_button(name)
                 end
               end
@@ -60,7 +61,7 @@ module Plutonium
           end
 
           def render?
-            current_query_object.scope_definitions.present?
+            current_query_object.scope_definitions.any? { |name, _| current_query_object.scope_visible?(name, view_context) }
           end
         end
       end

@@ -79,11 +79,34 @@ class Plutonium::UI::Table::Components::ScopesPillsTest < Minitest::Test
     assert_equal 1, selected
   end
 
+  def test_scope_with_truthy_condition_renders
+    html = build_component(params: {}, default_scope: nil, scopes: [{name: :published, condition: -> { true }}, {name: :draft, condition: nil}]).call
+    assert_includes html, "Published"
+    assert_includes html, "Draft"
+  end
+
+  def test_scope_with_falsy_condition_is_hidden
+    html = build_component(params: {}, default_scope: nil, scopes: [{name: :published, condition: -> { false }}, {name: :draft, condition: nil}]).call
+    refute_includes html, "Published"
+    assert_includes html, "Draft"
+  end
+
+  def test_renders_nothing_when_all_scopes_have_falsy_conditions
+    html = build_component(params: {}, default_scope: nil, scopes: [{name: :published, condition: -> { false }}]).call
+    assert_empty html
+  end
+
   private
 
   def build_component(params:, default_scope:, scopes:)
     query_object = Plutonium::Resource::QueryObject.new(MockResource, params, "/posts") do |qo|
-      scopes.each { |s| qo.define_scope s }
+      scopes.each do |s|
+        if s.is_a?(Hash)
+          qo.define_scope s[:name], condition: s[:condition]
+        else
+          qo.define_scope s
+        end
+      end
       qo.default_scope_name = default_scope if default_scope
     end
 
@@ -92,6 +115,7 @@ class Plutonium::UI::Table::Components::ScopesPillsTest < Minitest::Test
 
     component.define_singleton_method(:current_query_object) { query_object }
     component.define_singleton_method(:raw_resource_query_params) { params }
+    component.define_singleton_method(:view_context) { nil }
 
     component
   end

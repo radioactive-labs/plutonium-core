@@ -31,9 +31,11 @@ module Plutonium
       #
       # @param name [Symbol] The name of the scope.
       # @param body [Proc, nil] The body of the scope.
-      def define_scope(name, body = nil, **)
+      # @param condition [Proc, nil] Display-only visibility gate (same semantics as condition: on actions).
+      def define_scope(name, body = nil, condition: nil, **)
         body ||= name
         scope_definitions[name] = build_query(body)
+        scope_conditions[name] = condition if condition
       end
 
       # Defines a sort with the given name and body.
@@ -117,6 +119,16 @@ module Plutonium
       end
 
       def scope_definitions = @scope_definitions ||= {}.with_indifferent_access
+
+      def scope_conditions = @scope_conditions ||= {}.with_indifferent_access
+
+      # Display-only visibility gate for a scope, mirroring condition: on actions.
+      # Returns true when no condition is set.
+      def scope_visible?(name, view_context)
+        condition = scope_conditions[name]
+        return true if condition.nil?
+        Plutonium::Action::ConditionContext.new(view_context, nil).instance_exec(&condition)
+      end
 
       # Returns true if user explicitly selected "All" scope (no filtering)
       def all_scope_selected? = @all_scope_selected

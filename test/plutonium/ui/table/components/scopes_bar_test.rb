@@ -129,11 +129,55 @@ class Plutonium::UI::Table::Components::ScopesBarTest < Minitest::Test
     assert_empty html
   end
 
+  def test_scope_with_truthy_condition_renders
+    component = build_component(
+      params: {},
+      default_scope: nil,
+      scopes: [{name: :published, condition: -> { true }}, {name: :draft, condition: nil}]
+    )
+
+    html = component.call
+
+    assert_includes html, "Published"
+    assert_includes html, "Draft"
+  end
+
+  def test_scope_with_falsy_condition_is_hidden
+    component = build_component(
+      params: {},
+      default_scope: nil,
+      scopes: [{name: :published, condition: -> { false }}, {name: :draft, condition: nil}]
+    )
+
+    html = component.call
+
+    refute_includes html, "Published"
+    assert_includes html, "Draft"
+  end
+
+  def test_does_not_render_when_all_scopes_have_falsy_conditions
+    component = build_component(
+      params: {},
+      default_scope: nil,
+      scopes: [{name: :published, condition: -> { false }}]
+    )
+
+    html = component.call
+
+    assert_empty html
+  end
+
   private
 
   def build_component(params:, default_scope:, scopes:)
     query_object = Plutonium::Resource::QueryObject.new(MockResource, params, "/posts") do |qo|
-      scopes.each { |s| qo.define_scope s }
+      scopes.each do |s|
+        if s.is_a?(Hash)
+          qo.define_scope s[:name], condition: s[:condition]
+        else
+          qo.define_scope s
+        end
+      end
       qo.default_scope_name = default_scope if default_scope
     end
 
@@ -143,6 +187,7 @@ class Plutonium::UI::Table::Components::ScopesBarTest < Minitest::Test
     # Stub the helper methods the component depends on
     component.define_singleton_method(:current_query_object) { query_object }
     component.define_singleton_method(:raw_resource_query_params) { params }
+    component.define_singleton_method(:view_context) { nil }
 
     component
   end

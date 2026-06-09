@@ -214,6 +214,26 @@ When a default is set:
 - The default scope button is highlighted (not "All").
 - Clicking "All" shows the unscoped collection.
 
+### Conditional visibility — `condition:`
+
+Like `condition:` on [actions](./actions), a scope can be **defined but only render its button when a runtime proc is truthy**. The scope (and its URL) stays live either way — `condition:` only toggles the button.
+
+```ruby
+scope :admin_only,   condition: -> { current_user.admin? }
+scope :beta_feature, condition: -> { params[:beta] == "1" }
+
+# Expose a scope's URL (API/programmatic) without surfacing a button
+scope :internal, condition: -> { false }
+```
+
+The proc is evaluated against the view context so `current_user`, `params`, `request`, and `allowed_to?` are all available directly. There is no `object`/`record` — scopes have no single-record context.
+
+::: danger `condition:` is NOT authorization
+A hidden scope button still has a **live URL** anyone can navigate to. `condition:` decides whether the *button renders*, not whether the *records are accessible*.
+
+Use `condition:` for UI relevance ("show this tab to admins only"). Use the policy's `relation_scope` to restrict which records a user can see at all.
+:::
+
 ## Sorting
 
 ```ruby

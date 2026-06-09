@@ -978,6 +978,20 @@ scope(:mine)   { |s| s.where(author: current_user) }
 default_scope :published   # applied on initial load; "All" button clears it
 ```
 
+### Conditional scopes (`condition:`)
+
+Like `condition:` on actions and fields — define a scope but only **render its button** when a proc is truthy. The scope itself (and its URL) stays live; `condition:` only controls UI visibility.
+
+```ruby
+scope :admin_only,   condition: -> { current_user.admin? }
+scope :beta_feature, condition: -> { params[:beta] == "1" }
+scope :never_shown,  condition: -> { false }  # hides button but URL still works
+```
+
+The proc is evaluated against the view context — `current_user`, `params`, `request`, `allowed_to?` are all available directly. There is no `object`/`record` (scopes have no single-record context).
+
+🚨 **`condition:` is NOT authorization.** A hidden scope button still has a live URL. Use `condition:` for UI relevance ("show admins only this tab"). Use the policy's `relation_scope` for "who can see these records at all".
+
 ## Sorting
 
 ```ruby

@@ -59,7 +59,7 @@ module Plutonium
           end
 
           def scopes
-            @scopes ||= current_query_object.scope_definitions
+            @scopes ||= current_query_object.scope_definitions.select { |name, _| current_query_object.scope_visible?(name, view_context) }
           end
         end
       end
