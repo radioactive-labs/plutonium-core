@@ -70,16 +70,14 @@ module Plutonium
       #
       # @return [Plutonium::Interaction::Outcome] The result of the interaction.
       def call
-        if valid?
-          outcome = execute
-          unless outcome.is_a?(Plutonium::Interaction::Outcome)
-            raise "#{self.class}#execute must return an instance of Plutonium::Interaction::Outcome.\n" \
-                  "#{outcome.inspect} received instead"
-          end
-          outcome
-        else
-          failure.with_message("An error occurred")
+        return failure unless valid?
+
+        outcome = execute
+        unless outcome.is_a?(Plutonium::Interaction::Outcome)
+          raise "#{self.class}#execute must return an instance of Plutonium::Interaction::Outcome.\n" \
+                "#{outcome.inspect} received instead"
         end
+        outcome
       end
 
       private
