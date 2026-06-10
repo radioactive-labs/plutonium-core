@@ -1,3 +1,11 @@
+## [0.58.0] - 2026-06-10
+
+### 🐛 Bug Fixes
+
+- *(rodauth)* Set url_options directly on ActionMailer::Base instead of config
+- *(interaction)* Short-circuit call with failure when validation fails
+- *(form)* Pre-populate extraction record so conditioned selects resolve correctly
+- *(invites)* Use after_commit to avoid orphaned email jobs on rollback
 ## [0.57.0] - 2026-06-09
 
 ### 🚀 Features
