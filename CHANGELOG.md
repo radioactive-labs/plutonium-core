@@ -1,3 +1,8 @@
+## [0.58.1] - 2026-06-10
+
+### 🐛 Bug Fixes
+
+- *(ui/layout)* Prevent pu-rail-pinned persisting on non-rail pages
 ## [0.58.0] - 2026-06-10
 
 ### 🐛 Bug Fixes
