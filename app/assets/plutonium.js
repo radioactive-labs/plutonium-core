@@ -28022,10 +28022,15 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     };
     connect() {
       const pinned = localStorage.getItem(this.storageKeyValue) !== "false";
-      document.body.classList.toggle("pu-rail-pinned", pinned);
+      document.documentElement.classList.toggle("pu-rail-pinned", pinned);
+    }
+    disconnect() {
+      if (!document.querySelector('[data-controller~="icon-rail"]')) {
+        document.documentElement.classList.remove("pu-rail-pinned");
+      }
     }
     togglePin() {
-      const pinned = document.body.classList.toggle("pu-rail-pinned");
+      const pinned = document.documentElement.classList.toggle("pu-rail-pinned");
       localStorage.setItem(this.storageKeyValue, pinned);
     }
   };

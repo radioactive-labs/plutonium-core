@@ -44,12 +44,10 @@ module Plutonium
         # preferences read from localStorage:
         # - Color mode: applies `dark` class on <html> so dark theme renders
         #   from the first frame instead of flashing light.
-        # - Rail-pin: the rail is pinned by default, so this applies
-        #   `pu-rail-pinned` on <body> (when present) and on every incoming
-        #   body via turbo:before-render unless the user explicitly collapsed
-        #   it (localStorage "false"), so a Turbo.visit (e.g. the redirect
-        #   after a form submit) doesn't flash the rail into its collapsed
-        #   state before the icon-rail Stimulus controller can restore it.
+        # - Rail-pin: a turbo:before-render listener adds/removes `pu-rail-pinned`
+        #   on <html> based on whether the incoming body contains an icon-rail,
+        #   preventing layout shift on Turbo navigations between rail and non-rail
+        #   pages. Initial-load rail-pinned is handled by ResourceLayout.
         def render_pre_paint_scripts
           script do
             raw(safe(<<~JS))
@@ -63,11 +61,12 @@ module Plutonium
                 } catch (e) {}
 
                 try {
-                  if (localStorage.getItem("pu_rail_pinned") === "false") return;
-                  if (document.body) document.body.classList.add("pu-rail-pinned");
-                  document.addEventListener("turbo:before-render", function (event) {
-                    if (localStorage.getItem("pu_rail_pinned") !== "false") {
-                      event.detail.newBody.classList.add("pu-rail-pinned");
+                  document.addEventListener("turbo:before-render", function (e) {
+                    var hasRail = !!e.detail.newBody.querySelector('[data-controller~="icon-rail"]');
+                    if (hasRail && localStorage.getItem("pu_rail_pinned") !== "false") {
+                      document.documentElement.classList.add("pu-rail-pinned");
+                    } else {
+                      document.documentElement.classList.remove("pu-rail-pinned");
                     }
                   });
                 } catch (e) {}

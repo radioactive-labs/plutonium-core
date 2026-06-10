@@ -689,16 +689,16 @@ aside[data-controller~="icon-rail"] {
 }
 
 /* Pinned mode: rail expands, labels appear */
-body.pu-rail-pinned aside[data-controller~="icon-rail"] {
+html.pu-rail-pinned aside[data-controller~="icon-rail"] {
   width: 14rem !important;  /* 224px */
 }
 
-body.pu-rail-pinned .icon-rail-label {
+html.pu-rail-pinned .icon-rail-label {
   display: inline-flex !important;
 }
 
-body.pu-rail-pinned .icon-rail-leaf,
-body.pu-rail-pinned .icon-rail-parent-trigger {
+html.pu-rail-pinned .icon-rail-leaf,
+html.pu-rail-pinned .icon-rail-parent-trigger {
   width: 100%;
   justify-content: flex-start;
   gap: 8px;
@@ -707,7 +707,7 @@ body.pu-rail-pinned .icon-rail-parent-trigger {
 
 /* When pinned, chevron flows inline after the label (right-aligned)
    and rotates to point down — mirrors a typical disclosure caret. */
-body.pu-rail-pinned .icon-rail-chevron {
+html.pu-rail-pinned .icon-rail-chevron {
   position: static;
   background: transparent;
   box-shadow: none;
@@ -720,7 +720,7 @@ body.pu-rail-pinned .icon-rail-chevron {
 }
 
 /* When pinned, items stretch full width so labels read left-to-right */
-body.pu-rail-pinned #sidebar-navigation-content {
+html.pu-rail-pinned #sidebar-navigation-content {
   align-items: stretch;
   padding-left: 8px;
   padding-right: 8px;
@@ -728,31 +728,31 @@ body.pu-rail-pinned #sidebar-navigation-content {
 
 /* When pinned, brand area aligns to the start so it reads as part of the
    left-aligned column instead of staying centered while items go left. */
-body.pu-rail-pinned aside[data-controller~="icon-rail"] > div:first-child {
+html.pu-rail-pinned aside[data-controller~="icon-rail"] > div:first-child {
   justify-content: flex-start;
   padding-left: 14px;
 }
 
 /* When pinned, pin button right-aligns to anchor the collapse affordance
    to the rail edge it'll snap toward. */
-body.pu-rail-pinned aside[data-controller~="icon-rail"] > div:last-child {
+html.pu-rail-pinned aside[data-controller~="icon-rail"] > div:last-child {
   justify-content: flex-end;
   padding-right: 8px;
 }
 
 /* Pin button icon swap */
-body.pu-rail-pinned .icon-rail-pin-collapse {
+html.pu-rail-pinned .icon-rail-pin-collapse {
   display: inline-flex !important;
 }
 
-body.pu-rail-pinned .icon-rail-pin-expand {
+html.pu-rail-pinned .icon-rail-pin-expand {
   display: none !important;
 }
 
 /* Main content padding when pinned: rail width + 1.5rem breathing room
    (matches the collapsed-state lg:pl-20 = rail 3.5rem + 1.5rem gap). */
 @media (min-width: 1024px) {
-  body.pu-rail-pinned main {
+  html.pu-rail-pinned main {
     padding-left: 15.5rem !important;
   }
 }

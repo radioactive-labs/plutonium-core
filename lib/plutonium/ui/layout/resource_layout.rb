@@ -4,6 +4,24 @@ module Plutonium
       class ResourceLayout < Base
         private
 
+        # Sets pu-rail-pinned immediately on initial page load so the rail
+        # renders in its pinned state from the first frame. Turbo navigations
+        # are handled by the turbo:before-render listener in Base.
+        def render_pre_paint_scripts
+          super
+          script do
+            raw(safe(<<~JS))
+              (function () {
+                try {
+                  if (localStorage.getItem("pu_rail_pinned") !== "false") {
+                    document.documentElement.classList.add("pu-rail-pinned");
+                  }
+                } catch (e) {}
+              })();
+            JS
+          end
+        end
+
         def main_attributes
           classes = case Plutonium.configuration.shell
           when :modern

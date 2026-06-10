@@ -11,11 +11,20 @@ export default class extends Controller {
   connect() {
     // Pinned is the default; only an explicit "false" collapses the rail.
     const pinned = localStorage.getItem(this.storageKeyValue) !== "false"
-    document.body.classList.toggle("pu-rail-pinned", pinned)
+    document.documentElement.classList.toggle("pu-rail-pinned", pinned)
+  }
+
+  disconnect() {
+    // Guard: if another icon-rail is already in the DOM (Turbo swapped to a
+    // page that also has a rail), leave the class alone — the new controller's
+    // connect() will assert the correct value immediately after.
+    if (!document.querySelector('[data-controller~="icon-rail"]')) {
+      document.documentElement.classList.remove("pu-rail-pinned")
+    }
   }
 
   togglePin() {
-    const pinned = document.body.classList.toggle("pu-rail-pinned")
+    const pinned = document.documentElement.classList.toggle("pu-rail-pinned")
     localStorage.setItem(this.storageKeyValue, pinned)
   }
 }
