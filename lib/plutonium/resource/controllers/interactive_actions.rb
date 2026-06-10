@@ -262,6 +262,17 @@ module Plutonium
             elsif action.bulk_action?
               instance.resources = interactive_bulk
             end
+            # Pre-populate sibling attributes from submitted params before rendering
+            # the form for extraction. When a select input's `choices:` depends on a
+            # sibling attribute and `condition:` guards it, the condition evaluates to
+            # false on a fresh instance (sibling is nil), making AcceptsChoices
+            # validate against an empty choices list and nullify a valid submitted
+            # value. Pre-populating lets conditions evaluate against submitted values,
+            # so the real select (with correct choices) is used for extraction.
+            submitted = params[:interaction]&.to_unsafe_h || {}
+            base_keys = instance.attribute_names.map(&:to_s) - %w[resource resources]
+            extra_keys = submitted.keys.map(&:to_s).select { |k| instance.respond_to?("#{k}=") } - %w[resource resources]
+            instance.assign_attributes(submitted.slice(*(base_keys | extra_keys)))
             extracted = interaction
               .build_form(instance)
               .extract_input(params, view_context:)[:interaction]

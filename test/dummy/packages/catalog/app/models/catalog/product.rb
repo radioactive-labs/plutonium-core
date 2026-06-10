@@ -43,6 +43,8 @@ class Catalog::Product < Catalog::ResourceRecord
 
   # add delegations above.
 
+  # Virtual attribute used in form condition/choices tests — not persisted.
+  attr_accessor :tier
   # add misc attribute macros above.
 
   # add methods above. add private methods below.

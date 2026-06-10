@@ -146,6 +146,21 @@ module Plutonium
         # Pass form_action: false to prevent form from trying to generate URL (cloned record has id: nil)
         extraction_record = resource_record?&.dup || resource_class.new
         @submitted_resource_params ||= begin
+          # Pre-populate from submitted params so condition: procs evaluate against submitted
+          # values during extraction. Without this, a select whose choices: depend on a sibling
+          # attribute would see nil for that sibling (fresh/cloned record) and resolve to empty
+          # choices, causing AcceptsChoices to nullify a valid submitted value.
+          # attribute_names covers DB columns and `attribute :` declarations.
+          # The union with respond_to? also covers attr_accessor virtual attributes.
+          submitted = params[resource_param_key]&.to_unsafe_h || {}
+          base_keys = extraction_record.attribute_names.map(&:to_s)
+          # Also include attr_accessor virtual attributes not in attribute_names.
+          # Exclude AR association writers — they expect object instances, not param strings.
+          extra_keys = (submitted.keys.map(&:to_s) - base_keys).select { |k|
+            extraction_record.respond_to?("#{k}=") &&
+              extraction_record.class.reflect_on_association(k.to_sym).nil?
+          }
+          extraction_record.assign_attributes(submitted.slice(*(base_keys | extra_keys)))
           extracted = build_form(extraction_record, form_action: false)
             .extract_input(params, view_context:)[resource_param_key.to_sym].compact
           clean_structured_inputs(current_definition, extracted)

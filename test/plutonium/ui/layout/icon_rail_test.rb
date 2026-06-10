@@ -68,7 +68,7 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
     assert_includes html, "fixed"
     assert_includes html, "top-0"
     assert_includes html, "left-0"
-    assert_includes html, "h-screen"
+    assert_includes html, "h-dvh"
   end
 
   test "aside has sidebar and icon-rail data-controllers" do
@@ -97,9 +97,10 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
   # ---------------------------------------------------------------------------
 
   test "brand slot renders into top section when provided" do
+    fake_vc = Object.new.tap { |o| o.define_singleton_method(:root_path) { "/" } }
     component = Plutonium::UI::Layout::IconRail.new
     component.with_brand { "BRAND_MARK" }
-    html = render_html(component)
+    html = component.call(context: {rails_view_context: fake_vc})
     assert_includes html, "BRAND_MARK"
   end
 

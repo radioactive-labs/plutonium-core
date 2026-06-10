@@ -1,5 +1,23 @@
 class Catalog::ProductDefinition < Catalog::ResourceDefinition
   field :description, as: :text
+
+  # Regression fixture: `tier` is an attr_accessor (not a DB column) so it won't
+  # appear in attribute_names. The `status` input is conditioned on it and its
+  # choices: lambda depends on it. This verifies that virtual attr_accessor
+  # fields are pre-populated before extraction so conditions and choices resolve
+  # correctly.
+  input :tier, as: :select,
+    choices: [["Basic", "basic"], ["Pro", "pro"]],
+    pre_submit: true
+
+  # Block syntax is required here: the choices lambda must be created inside the
+  # form's instance_exec context so `object` resolves to the form's resource
+  # record. A class-level `choices:` option would only have the definition class
+  # as `self` and would fail to find `object`.
+  input :status,
+    condition: -> { object.tier.present? } do |f|
+      f.select_tag(choices: -> { (object.tier == "pro") ? %w[active discontinued] : %w[draft] })
+    end
   # `featured` auto-renders: switch in forms, boolean pill in show/index.
 
   # Opt into the Grid index view alongside the default Table. Keeps :table as
@@ -50,6 +68,9 @@ class Catalog::ProductDefinition < Catalog::ResourceDefinition
   # the param-extraction path: the extraction instance must be given the record
   # before its form is rendered.
   action :assign_reviewer, interaction: Catalog::AssignReviewer
+  # Regression guard: a conditioned select whose choices: proc returns [] on a
+  # fresh instance must not nullify the submitted value during param extraction.
+  action :conditioned_select, interaction: Catalog::ConditionedSelect
   # Display-only `condition:` — defined (route exists) but only rendered when the
   # proc is truthy. `object` is the row/shown record (record & collection-record
   # actions).

@@ -19,6 +19,10 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
     record.is_a?(Catalog::Product)
   end
 
+  def conditioned_select?
+    record.is_a?(Catalog::Product)
+  end
+
   # Always permitted by policy; visibility is governed entirely by each
   # action's `condition:` proc, exercising the separation between
   # authorization (policy) and display-only conditions.
@@ -31,7 +35,7 @@ class Catalog::ProductPolicy < Catalog::ResourcePolicy
   end
 
   def permitted_attributes_for_create
-    [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail]
+    [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail, :tier]
   end
 
   def permitted_attributes_for_read
