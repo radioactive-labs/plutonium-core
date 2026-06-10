@@ -41,7 +41,7 @@ module Plutonium
 
           # Callbacks
           before_validation :set_token_defaults, on: :create
-          after_create :send_invitation_email
+          after_commit :send_invitation_email, on: :create
 
           # Core validations
           validates :email, presence: true
