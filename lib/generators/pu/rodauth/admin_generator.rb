@@ -95,13 +95,16 @@ module Pu
       def create_invite_interaction
         template "app/interactions/invite_admin_interaction.rb",
           "app/interactions/#{normalized_name}/invite_interaction.rb"
+        template "app/interactions/resend_admin_interaction.rb",
+          "app/interactions/#{normalized_name}/resend_invite_interaction.rb"
 
         inject_into_file "app/definitions/#{normalized_name}_definition.rb",
-          "  action :invite, interaction: #{name.classify}::InviteInteraction, collection: true, category: :primary\n",
+          "  action :invite, interaction: #{name.classify}::InviteInteraction, collection: true, category: :primary\n" \
+          "  action :resend_invite, interaction: #{name.classify}::ResendInviteInteraction, record_action: true, category: :secondary\n",
           after: /class #{name.classify}Definition < .+\n/
 
         inject_into_file "app/policies/#{normalized_name}_policy.rb",
-          "def invite?\n    true\n  end\n\n  ",
+          "def invite?\n    true\n  end\n\n  def resend_invite?\n    record.unverified?\n  end\n\n  ",
           before: "# Core attributes"
       end
 

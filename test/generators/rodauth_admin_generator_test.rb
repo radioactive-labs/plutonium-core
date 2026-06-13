@@ -66,6 +66,36 @@ class RodauthAdminGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "generates resend invite interaction using rodauth verify_account_resend" do
+    run_generator ["TestAdmin"]
+
+    assert_file "app/interactions/test_admin/resend_invite_interaction.rb" do |content|
+      assert_match(/class TestAdmin::ResendInviteInteraction/, content)
+      assert_match(/attribute :resource/, content)
+      assert_match(/resource\.unverified\?/, content)
+      assert_match(/RodauthApp\.rodauth\(:test_admin\)\.verify_account_resend\(login: resource\.email\)/, content)
+      assert_match(/rescue ::Rodauth::InternalRequestError/, content)
+    end
+  end
+
+  test "injects resend invite action into definition" do
+    run_generator ["TestAdmin"]
+
+    assert_file "app/definitions/test_admin_definition.rb" do |content|
+      assert_match(/action :resend_invite, interaction: TestAdmin::ResendInviteInteraction, record_action: true, category: :secondary\n/, content)
+      # Visibility is gated by the policy, not an action condition: proc
+      refute_match(/condition:/, content)
+    end
+  end
+
+  test "injects resend invite policy method gated on unverified records" do
+    run_generator ["TestAdmin"]
+
+    assert_file "app/policies/test_admin_policy.rb" do |content|
+      assert_match(/def resend_invite\?\s*\n\s*record\.unverified\?\s*\n\s*end/, content)
+    end
+  end
+
   test "accepts extra_attributes option without error" do
     # extra_attributes are passed through to account generator
     # Currently they only affect scaffold (definition/policy), not migration

@@ -70,7 +70,7 @@ rails generate pu:rodauth:account user [options]
 
 ### Admin account — `pu:rodauth:admin`
 
-Pre-configured secure admin with multi-phase login, required TOTP, recovery codes, lockout, active session tracking, audit logging, role-based access, invite interaction, and **no public signup**.
+Pre-configured secure admin with multi-phase login, required TOTP, recovery codes, lockout, active session tracking, audit logging, role-based access, invite + resend-invite interactions, and **no public signup**.
 
 ```bash
 rails generate pu:rodauth:admin admin
@@ -88,6 +88,12 @@ rails generate pu:rodauth:admin admin --extra-attributes=name:string,department:
 ```ruby
 enum :role, super_admin: 0, admin: 1
 ```
+
+**Invite + resend actions.** The admin resource gets two actions:
+- **Invite** — invite a new admin by email; they set their password via the verification link.
+- **Resend invitation** — re-send that verification email, shown only for admins who haven't verified yet.
+
+This is Rodauth account verification — distinct from the tenancy invitation system (see [[plutonium-tenancy]]).
 
 Rake task for direct admin creation (namespace is `rodauth`, task name is the account name):
 

@@ -80,6 +80,13 @@ rails g pu:rodauth:admin admin --extra-attributes=name:string,department:string
 enum :role, super_admin: 0, admin: 1
 ```
 
+**Invite + resend.** The admin resource gets two actions:
+
+- **Invite** — invite a new admin by email; Rodauth sends a verification link and the invitee sets their own password through the verify flow.
+- **Resend invitation** — re-send the verification email. Only shown for admins who haven't verified yet.
+
+This uses Rodauth account verification, separate from the [Tenancy › Invites](/reference/tenancy/invites) system.
+
 Rake task for direct admin creation (generated alongside the account — namespace is `rodauth`, task name is the account name):
 
 ```bash
