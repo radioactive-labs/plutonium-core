@@ -1,3 +1,13 @@
+## [0.59.0] - 2026-06-13
+
+### 🚀 Features
+
+- *(resource)* Add built-in policy-gated CSV export
+
+### 🐛 Bug Fixes
+
+- *(generators)* Configure solid_errors reading connection and env lookup
+- *(query)* Resolve association filter class via resource_class reflection
 ## [0.58.1] - 2026-06-10
 
 ### 🐛 Bug Fixes
