@@ -9,6 +9,11 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   # Column customizations
   column :user, label: "Author"
 
+  # CSV export customizations — custom header (label:) and cell value (block).
+  # :user is intentionally left without an `export` block so the default
+  # association rendering (display label, not "#<User:…>") is exercised.
+  export :status, label: "State", &->(post) { post.status.to_s.upcase }
+
   # Search configuration
   search do |scope, query|
     scope.where("title LIKE ? OR body LIKE ?", "%#{query}%", "%#{query}%")

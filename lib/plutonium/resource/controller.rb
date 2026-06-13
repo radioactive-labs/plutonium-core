@@ -16,6 +16,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::CrudActions
       include Plutonium::Resource::Controllers::InteractiveActions
       include Plutonium::Resource::Controllers::Typeahead
+      include Plutonium::Resource::Controllers::ExportCsv
       include Plutonium::StructuredInputs::ParamsConcern
 
       included do

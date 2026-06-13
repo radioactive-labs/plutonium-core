@@ -186,6 +186,16 @@ module Plutonium
         index?
       end
 
+      # Checks if CSV export is permitted.
+      #
+      # Defaults to false so export is strictly opt-in. Enable it per
+      # resource by overriding to return true (or delegating to index?).
+      #
+      # @return [Boolean] false by default.
+      def export_csv?
+        false
+      end
+
       # Core attributes
 
       # Returns the permitted attributes for the create action.
@@ -226,6 +236,17 @@ module Plutonium
       # @return [Array<Symbol>] Delegates to permitted_attributes_for_read.
       def permitted_attributes_for_show
         permitted_attributes_for_read
+      end
+
+      # Returns the attributes included in an export (e.g. CSV columns).
+      #
+      # Format-agnostic on purpose (named `_export`, not `_export_csv`) so a
+      # future export format can reuse the same column set. Defaults to the
+      # index columns; override to tailor the exported columns.
+      #
+      # @return [Array<Symbol>] Delegates to permitted_attributes_for_index.
+      def permitted_attributes_for_export
+        permitted_attributes_for_index
       end
 
       # Returns the permitted attributes for the new action.

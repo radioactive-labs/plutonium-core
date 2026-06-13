@@ -327,4 +327,27 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     policy.define_singleton_method(:index?) { false }
     refute policy.typeahead?
   end
+
+  # CSV export permission tests
+
+  # A bare policy that takes the framework defaults (Blogging::PostPolicy
+  # intentionally customizes export in the dummy app, so it can't stand in
+  # for default behaviour here).
+  def default_policy
+    Class.new(Plutonium::Resource::Policy).new(
+      record: Blogging::Post,
+      user: @user,
+      entity_scope: nil
+    )
+  end
+
+  def test_export_csv_defaults_to_false
+    refute default_policy.export_csv?
+  end
+
+  def test_permitted_attributes_for_export_defaults_to_index
+    policy = default_policy
+    policy.define_singleton_method(:permitted_attributes_for_index) { [:title, :body] }
+    assert_equal [:title, :body], policy.permitted_attributes_for_export
+  end
 end

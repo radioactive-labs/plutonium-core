@@ -131,6 +131,7 @@ export default defineConfig(withMermaid({
             { text: "Definition", link: "/reference/resource/definition" },
             { text: "Query", link: "/reference/resource/query" },
             { text: "Actions", link: "/reference/resource/actions" },
+            { text: "CSV Export", link: "/reference/resource/export" },
           ]
         },
         {

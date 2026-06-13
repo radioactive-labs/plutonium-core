@@ -375,6 +375,9 @@ end
 | `new?` | `create?` | Rarely needed |
 | `edit?` | `update?` | Rarely needed |
 | `search?` | `index?` | Search-specific rules |
+| `typeahead?` | `index?` | Autocomplete-specific rules |
+
+`export_csv?` is the exception — it defaults to `false` (not derived) so CSV export is strictly opt-in. Override it to `true` (or `index?`) to enable the built-in export. The exported column set is `permitted_attributes_for_export` (defaults to `permitted_attributes_for_index`). See [[plutonium-resource]] → CSV Export.
 
 ### Custom actions
 
@@ -423,6 +426,7 @@ end
 | `permitted_attributes_for_show` | `permitted_attributes_for_read` |
 | `permitted_attributes_for_new` | `permitted_attributes_for_create` |
 | `permitted_attributes_for_edit` | `permitted_attributes_for_update` |
+| `permitted_attributes_for_export` | `permitted_attributes_for_index` (CSV export columns; primary key is always prepended) |
 
 ### Per-action override
 

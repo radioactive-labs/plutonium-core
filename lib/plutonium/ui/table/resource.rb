@@ -47,8 +47,25 @@ module Plutonium
             views: resource_definition.defined_index_views,
             current_view: :table,
             view_cookie_name: Plutonium::UI::Page::Index.view_cookie_name(resource_class),
-            view_cookie_path: Plutonium::UI::Page::Index.view_cookie_path(request)
+            view_cookie_path: Plutonium::UI::Page::Index.view_cookie_path(request),
+            export: export_toolbar_config
           )
+        end
+
+        # Export split-button config, or nil when the policy forbids export.
+        # The primary link carries the current query (selected scope + filters
+        # + search); "Export all" carries `?all=1`.
+        def export_toolbar_config
+          return nil unless current_policy.allowed_to?(:export_csv?)
+
+          {
+            scoped_url: resource_url_for(resource_class, action: :export_csv, **export_query_params),
+            all_url: resource_url_for(resource_class, action: :export_csv, all: 1)
+          }
+        end
+
+        def export_query_params
+          params[:q].present? ? {q: params[:q].to_unsafe_h} : {}
         end
 
         def render_filter_pills

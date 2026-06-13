@@ -25,6 +25,20 @@ module Plutonium
         assert_includes TestDefinition._defineable_props_store, :filters
         assert_includes TestDefinition._defineable_props_store, :scopes
         assert_includes TestDefinition._defineable_props_store, :sorts
+        assert_includes TestDefinition._defineable_props_store, :exports
+      end
+
+      def test_export_defineable_prop_captures_label_and_block
+        definition_class = Class.new(Plutonium::Definition::Base) do
+          export :author, label: "Author email" do |record|
+            record.author_email
+          end
+        end
+
+        entry = definition_class.new.defined_exports[:author]
+        assert_equal "Author email", entry[:options][:label]
+        record = Struct.new(:author_email).new("a@example.com")
+        assert_equal "a@example.com", entry[:block].call(record)
       end
 
       def test_page_classes

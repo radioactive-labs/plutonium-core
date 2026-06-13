@@ -17,6 +17,10 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
     true
   end
 
+  def export_csv?
+    true
+  end
+
   # Custom actions
 
   def publish?
@@ -39,6 +43,11 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 
   def permitted_attributes_for_read
     [:title, :body, :user, :author, :editor, :organization, :status, :created_at]
+  end
+
+  # Tailor the CSV export columns (id is always prepended automatically)
+  def permitted_attributes_for_export
+    [:title, :status, :user, :created_at]
   end
 
   # Associations

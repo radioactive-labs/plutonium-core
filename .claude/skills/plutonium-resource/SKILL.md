@@ -1290,6 +1290,55 @@ end
 - **Immediate** — interaction has only `:resource` (or `:resources`) and no other inputs. Shows an auto-generated browser confirmation (`"#{label}?"`, e.g. `"Archive?"`) on click, then runs. Pass `confirmation: "Custom message"` to override, or `confirmation: false` to skip.
 - **Form** — interaction declares extra `attribute`/`input` beyond `:resource`/`:resources`. Renders a modal form first; no auto-confirmation (the form itself is the confirmation step).
 
+## CSV Export (built-in)
+
+Every resource has a streamed CSV export, **disabled by default**. It is not declared
+with `action :export_csv` — it's a policy-gated capability with its own split button.
+The route (`GET /<resources>/export_csv`) is auto-mounted; the button appears on the
+index page once the policy permits it. Enable it by overriding one policy method:
+
+```ruby
+class PostPolicy < ResourcePolicy
+  def export_csv? = true          # or `index?` to mirror list access
+end
+```
+
+**Two exports** (split button in the index toolbar, after Filter):
+- **Export** (primary) — the current view: selected scope + filters + search (the
+  index's `?q`), all matching rows (not just the visible page). File: `posts_<date>.csv`.
+- **Export all** (dropdown) — the entire authorized scope, ignoring scope/filters/
+  search (`?all=1`). File: `posts_all_<date>.csv`.
+
+Both stream via `find_each` (memory-safe on large tables; primary-key order, so the
+file does not preserve the index sort).
+
+- **Columns** = `permitted_attributes_for_export` (defaults to the index columns),
+  with the **primary key always first**. Override to tailor:
+
+```ruby
+def permitted_attributes_for_export = [:title, :author, :total, :created_at]
+```
+
+- **Per-field output** — customize a cell's value and header in the definition with
+  the `export` DSL (parallels `display`/`column`):
+
+```ruby
+class PostDefinition < ResourceDefinition
+  export :author, label: "Author email", &->(post) { post.author.email }
+  export :total,                          &->(post) { post.total.format }
+end
+```
+
+- **Without** an `export` block a column is read off the record: scalars as-is,
+  associations as their `display_name_of` label (e.g. `User #5`, not `#<User:…>`). A
+  computed/virtual column with no real method **needs** an `export` block (a `label:`-only
+  `export` doesn't supply a value) — otherwise the cell renders `<<invalid column>>`.
+- **CSV/formula injection** is neutralized automatically (cells starting with `= + - @` or
+  tab/CR get a leading `'`).
+
+The button opens in a new tab (so the streamed download bypasses Turbo). Full reference:
+`docs/reference/resource/export.md`.
+
 ---
 
 ## Related Skills

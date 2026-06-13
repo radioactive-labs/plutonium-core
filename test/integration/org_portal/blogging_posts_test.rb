@@ -100,4 +100,33 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     assert_match my_post.title, response.body
     refute_match other_post.title, response.body
   end
+
+  # CSV export must never leak rows outside the current tenant — both the
+  # default (filtered) export and the ?all=1 export resolve through
+  # current_authorized_scope, which carries the entity scope.
+  test "scoping: csv export only includes posts from the current organization" do
+    require "csv"
+    mine = create_post!(user: @user, organization: @org, title: "Mine #{SecureRandom.hex(4)}")
+    other_org = create_organization!
+    theirs = create_post!(organization: other_org, title: "Theirs #{SecureRandom.hex(4)}")
+
+    get "#{current_path_prefix}/blogging/posts/export_csv"
+    assert_response :success
+    titles = CSV.parse(response.body)[1..].map { |row| row[1] }
+    assert_includes titles, mine.title
+    refute_includes titles, theirs.title
+  end
+
+  test "scoping: ?all=1 csv export is still confined to the current organization" do
+    require "csv"
+    mine = create_post!(user: @user, organization: @org, title: "Mine #{SecureRandom.hex(4)}")
+    other_org = create_organization!
+    theirs = create_post!(organization: other_org, title: "Theirs #{SecureRandom.hex(4)}")
+
+    get "#{current_path_prefix}/blogging/posts/export_csv?all=1"
+    assert_response :success
+    titles = CSV.parse(response.body)[1..].map { |row| row[1] }
+    assert_includes titles, mine.title
+    refute_includes titles, theirs.title
+  end
 end

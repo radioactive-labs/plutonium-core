@@ -62,6 +62,9 @@ module Plutonium
       # fields
       defineable_props :field, :input, :display, :column
 
+      # export
+      defineable_prop :export
+
       # queries
       defineable_props :filter, :scope
 

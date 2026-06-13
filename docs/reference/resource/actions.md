@@ -360,6 +360,9 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+> **CSV export is not an action.** It's a built-in, policy-gated capability with its own
+> button — see [CSV Export](./export.md). Don't declare it with `action :export_csv`.
+
 ## Interaction responses
 
 ```ruby

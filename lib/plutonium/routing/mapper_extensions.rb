@@ -42,6 +42,7 @@ module Plutonium
           define_member_interactive_actions
           define_collection_interactive_actions
           define_collection_typeahead_actions
+          define_collection_export_actions
         end
       end
 
@@ -179,6 +180,18 @@ module Plutonium
             as: :typeahead_input
           get "typeahead/filter/:name", action: :typeahead_filter,
             as: :typeahead_filter
+        end
+      end
+
+      # Defines the collection-level CSV export action. Auto-mounted on
+      # every Plutonium resource alongside typeahead and bulk actions.
+      # The action itself is gated by the `export_csv?` policy (default
+      # false), so the route is harmless until a resource opts in.
+      #
+      # @return [void]
+      def define_collection_export_actions
+        collection do
+          get "export_csv", action: :export_csv, as: :export_csv
         end
       end
     end

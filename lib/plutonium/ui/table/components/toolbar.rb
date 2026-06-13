@@ -8,7 +8,7 @@ module Plutonium
         # inline search, and column config / overflow icon buttons into a single
         # tight strip rendered above the table when shell == :modern.
         class Toolbar < Plutonium::UI::Component::Base
-          def initialize(query:, search_url:, search_param: :q, search_value: nil, views: [:table], current_view: :table, view_cookie_name: nil, view_cookie_path: "/")
+          def initialize(query:, search_url:, search_param: :q, search_value: nil, views: [:table], current_view: :table, view_cookie_name: nil, view_cookie_path: "/", export: nil)
             @query = query
             @search_url = search_url
             @search_param = search_param
@@ -17,10 +17,11 @@ module Plutonium
             @current_view = current_view
             @view_cookie_name = view_cookie_name
             @view_cookie_path = view_cookie_path
+            @export = export
           end
 
           def render?
-            @views.size > 1 || has_filters? || has_search?
+            @views.size > 1 || has_filters? || has_search? || @export.present?
           end
 
           def view_template
@@ -29,9 +30,15 @@ module Plutonium
               render switcher
               render_divider if switcher.render?
               render_filter_button
+              render_export_button if @export
               div(class: "flex-1")
               render_search if has_search?
             end
+          end
+
+          # Export split button, rendered just after the Filter button.
+          def render_export_button
+            render Plutonium::UI::ExportButton.new(**@export)
           end
 
           private
