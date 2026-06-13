@@ -26,6 +26,18 @@ module Plutonium
           end
         end
 
+        # Mocks a resource_class whose association key does NOT match the target
+        # class name (e.g. belongs_to :related_user, class_name: "User"). Only the
+        # reflection knows the real class; key-inference would constantize the wrong
+        # name and raise.
+        class MockReflection
+          def klass = MockCategory
+        end
+
+        class MockResourceWithReflection
+          def self.reflect_on_association(_key) = MockReflection.new
+        end
+
         # ==================== Initialization Tests ====================
 
         def test_initialization_with_explicit_class
@@ -38,6 +50,28 @@ module Plutonium
           filter = Association.new(key: :category, class_name: MockCategory, multiple: true)
 
           assert_equal :category, filter.key
+        end
+
+        # ==================== Class Resolution Tests ====================
+
+        def test_resolves_class_from_reflection_when_key_mismatches_class_name
+          # No class_name given; key (:related_user) would constantize to a
+          # nonexistent "RelatedUser". The reflection off resource_class is the
+          # only thing that resolves it. Regression: the bridge must thread
+          # resource_class through for this to work.
+          filter = Association.new(key: :related_user, resource_class: MockResourceWithReflection)
+
+          assert_equal MockCategory, filter.send(:association_class)
+        end
+
+        def test_explicit_class_name_takes_precedence_over_reflection
+          filter = Association.new(
+            key: :related_user,
+            class_name: MockCategory,
+            resource_class: MockResourceWithReflection
+          )
+
+          assert_equal MockCategory, filter.send(:association_class)
         end
 
         # ==================== Apply Tests - Single Value ====================

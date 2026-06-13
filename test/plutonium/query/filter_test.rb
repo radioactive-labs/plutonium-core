@@ -63,6 +63,39 @@ module Plutonium
 
         assert_equal Plutonium::Query::Filters::DateRange, klass
       end
+
+      # ==================== resource_class Tests ====================
+      #
+      # The query bridge (Queryable#current_query_object) injects resource_class
+      # into *every* filter it builds. The base must accept and expose it, and the
+      # forwarding filters (Text/Select/DateRange/...) — which splat **opts into
+      # super — must not raise on it. Otherwise injecting resource_class universally
+      # breaks every non-association filter.
+
+      def test_base_accepts_and_exposes_resource_class
+        filter = Filter.new(key: :name, resource_class: :some_resource)
+
+        assert_equal :some_resource, filter.resource_class
+      end
+
+      def test_resource_class_defaults_to_nil
+        filter = Filter.new(key: :name)
+
+        assert_nil filter.resource_class
+      end
+
+      def test_forwarding_filters_accept_resource_class
+        # Each of these splats ** into super; the base must absorb resource_class.
+        [
+          Filters::Text.new(key: :name, resource_class: :r),
+          Filters::Select.new(key: :status, resource_class: :r),
+          Filters::DateRange.new(key: :created_at, resource_class: :r),
+          Filters::Date.new(key: :created_at, resource_class: :r),
+          Filters::Boolean.new(key: :active, resource_class: :r)
+        ].each do |filter|
+          assert_equal :r, filter.resource_class, "#{filter.class} dropped resource_class"
+        end
+      end
     end
   end
 end

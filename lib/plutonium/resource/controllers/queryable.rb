@@ -40,6 +40,7 @@ module Plutonium
                   filter_class = Plutonium::Query::Filter.lookup(with)
                   options = value[:options].except(:with)
                   options[:key] ||= key
+                  options[:resource_class] ||= resource_class
                   with = filter_class.new(**options)
                 end
                 query_object.define_filter key, with, &value[:block]

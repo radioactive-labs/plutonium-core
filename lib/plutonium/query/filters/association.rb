@@ -16,10 +16,9 @@ module Plutonium
       #   filter :user, with: :association, class_name: User, scope: ->(s) { s.active }
       #
       class Association < Filter
-        def initialize(class_name: nil, resource_class: nil, scope: nil, multiple: true, **)
+        def initialize(class_name: nil, scope: nil, multiple: true, **)
           super(**)
           @class_name = class_name
-          @resource_class = resource_class
           @scope_proc = scope
           @multiple = multiple
         end

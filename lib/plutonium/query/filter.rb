@@ -17,9 +17,12 @@ module Plutonium
         end
       end
 
-      def initialize(key:)
+      attr_reader :resource_class
+
+      def initialize(key:, resource_class: nil)
         super()
         @key = key
+        @resource_class = resource_class
       end
     end
   end
