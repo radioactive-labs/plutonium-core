@@ -562,9 +562,9 @@ class ArticleDefinition < ResourceDefinition
 end
 ```
 
-### Referencing an unknown field raises
+### Fields not in the permitted set are skipped
 
-A `section` that lists a field key that is not a known attribute of the model raises `ArgumentError` at render time — this catches typos early.
+A `section` only renders the fields that are actually in the form's permitted set for the current request. A key it lists that isn't there — a typo, or a field excluded by policy, per-action `permitted_attributes`, entity scoping, or nesting — is **silently dropped**, never an error. This lets a single `form_layout` reference conditionally-permitted fields without crashing the form in the contexts where they're filtered out.
 
 ### On interactions
 

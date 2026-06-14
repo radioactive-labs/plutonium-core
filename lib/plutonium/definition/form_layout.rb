@@ -105,16 +105,15 @@ module Plutonium
         resource_fields = resource_fields.map(&:to_sym)
         known = resource_fields.to_set
 
-        # First-section-wins assignment: map each field to the first section key.
+        # First-section-wins assignment: each field is claimed by the first
+        # section that lists it. A field a section lists but that isn't in the
+        # currently-permitted set (policy, per-action, entity scoping, nesting)
+        # is simply skipped — it never renders and is never an error.
         owner = {}
         layout.each do |section|
           next if section.ungrouped?
           section.fields.each do |f|
-            unless known.include?(f)
-              raise ArgumentError,
-                "form_layout section :#{section.key} references unknown field :#{f}"
-            end
-            owner[f] ||= section.key
+            owner[f] ||= section.key if known.include?(f)
           end
         end
         leftovers = resource_fields.reject { |f| owner.key?(f) }

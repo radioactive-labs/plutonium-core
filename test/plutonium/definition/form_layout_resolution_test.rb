@@ -59,9 +59,14 @@ class Plutonium::Definition::FormLayoutResolutionTest < Minitest::Test
     assert_equal %i[name], resolved.find { |r| r.section.key == :a }.fields
   end
 
-  def test_unknown_field_raises
-    d = definition { form_layout { section :a, :nope } }
-    error = assert_raises(ArgumentError) { d.resolve_form_sections(%i[name]) }
-    assert_match(/unknown field :nope/, error.message)
+  def test_field_not_in_permitted_set_is_skipped_not_raised
+    # `:nope` isn't in the permitted set (a typo, or a field filtered by
+    # policy/scoping/per-action). It's silently dropped, never an error — so a
+    # layout can reference conditionally-permitted fields without crashing.
+    d = definition { form_layout { section :a, :nope, :name } }
+    resolved = d.resolve_form_sections(%i[name])
+    section_a = resolved.find { |r| r.section.key == :a }
+    assert_equal %i[name], section_a.fields
+    refute_includes section_a.fields, :nope
   end
 end

@@ -146,9 +146,9 @@ heading/description/wrapper so they're themeable like the rest of the form.
   hidden**. It renders through the normal path with defaults (its default/declared
   chrome). There is no automatic empty-hiding; to hide a section conditionally,
   use `condition:`.
-- **Unknown field key in a `section`** (not an attribute at all) → raise at
-  render with a clear message (catches typos), consistent with how the form
-  already errors on unknown fields.
+- **Field key in a `section` not in the permitted set** (a typo, or filtered by
+  policy / per-action / scoping / nesting) → **silently skipped**, never an
+  error. _(Amended — originally raised; see Amendments.)_
 - **`condition` falsey** → section renders nothing; its fields do **not** spill
   into `ungrouped` (they remain owned by the suppressed section).
 - **No leftovers** → `ungrouped` renders with defaults (with no fields and no
@@ -175,8 +175,8 @@ heading/description/wrapper so they're themeable like the rest of the form.
 - **Assignment:** fields land in the right section in declared order; leftovers
   collect into `ungrouped`; `ungrouped` default position is last; explicit
   position honored.
-- **Filtering:** policy-filtered field is skipped; an empty section still renders
-  with defaults (is **not** hidden); unknown field key raises.
+- **Filtering:** a field not in the permitted set (policy-filtered or a typo) is
+  skipped; an empty section still renders with defaults (is **not** hidden).
 - **Conditions:** falsey `condition` hides the section and withholds its fields.
 - **Rendering:** headings/descriptions present; collapsible emits
   `<details>`/`<summary>` with correct `open`; `columns:` changes grid classes.
@@ -220,6 +220,16 @@ Changes made after the original plan landed:
   once per render in `Form::Resource#resolve_form_layout` (visibility + option
   evaluation in one pass); `render_form_section` is pure presentation. `columns:`
   stays a validated literal (it feeds the grid class).
+
+- **Unknown / filtered field keys are skipped, not raised.** A `section` key not
+  in the form's permitted set (`submittable_attributes_for(action)`) is silently
+  dropped instead of raising `ArgumentError`. The original raise couldn't tell a
+  typo from a field that's simply not permitted in the current context (per-action
+  `permitted_attributes`, entity scoping, nesting, per-user policy), so it crashed
+  forms that referenced conditionally-permitted fields. Skipping makes one
+  `form_layout` safe across all those contexts. (`resolve_form_sections` only ever
+  saw the filtered list, so it could never reliably distinguish typo from filtered
+  anyway.)
 
 - **Interactions: verified + exercised.** `Form::Interaction < Form::Resource`
   already inherited the layout path; this is now covered by a dummy interaction

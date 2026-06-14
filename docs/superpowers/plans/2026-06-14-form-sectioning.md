@@ -290,7 +290,7 @@ git commit -m "feat(forms): add form_layout/section/ungrouped DSL registry"
 
 ### Task 2: Resolve a field list into ordered sections
 
-**Goal:** Add `resolve_form_sections(resource_fields)` to `FormLayout` — assign permitted fields to sections (in declared order), collect leftovers into `ungrouped` (default **last**, else at its declared position), raise on unknown field keys, and keep empty sections (no hiding). _(Amended: default was "first" — see Amendments at the end.)_
+**Goal:** Add `resolve_form_sections(resource_fields)` to `FormLayout` — assign permitted fields to sections (in declared order), collect leftovers into `ungrouped` (default **last**, else at its declared position), skip section keys not in the permitted set, and keep empty sections (no hiding). _(Amended: default was "first", and unknown keys originally raised — see Amendments at the end.)_
 
 **Files:**
 - Modify: `lib/plutonium/definition/form_layout.rb` (add instance method `resolve_form_sections`)
@@ -302,7 +302,7 @@ git commit -m "feat(forms): add form_layout/section/ungrouped DSL registry"
 - [ ] `ungrouped` collects all unclaimed permitted fields, in `resource_fields` order.
 - [ ] Without an `ungrouped` macro, leftovers render in a heading-less section placed **last** (appended after all declared sections). _(Amended — was "first".)_
 - [ ] With an `ungrouped` macro, leftovers render at the macro's declared position with its options.
-- [ ] A section referencing a field absent from `resource_fields` *and* not a known attribute raises `ArgumentError`; a field merely filtered by policy is silently dropped (it's still "known" — see note).
+- [ ] A section referencing a field not in `resource_fields` (a typo, or a field filtered by policy/scoping/per-action) is **silently skipped**, not raised. _(Amended — originally raised `ArgumentError`.)_
 - [ ] Empty sections are returned (not hidden).
 
 > **Known-vs-permitted note:** `resolve_form_sections` only sees the policy-filtered `resource_fields`. To distinguish "typo" from "filtered out", it raises only when the field is not present in `resource_fields` AND the caller passes it as not-an-attribute. For unit purposes we treat any field not in `resource_fields` as unknown → raises. The form passes the *full* attribute set check at render via existing machinery; here we validate against `resource_fields`. Keep it strict: unknown key → raise.
@@ -897,6 +897,15 @@ steps/snippets are left as-built; these supersede them where they conflict.
   instance context (same as `condition:`). The layout is resolved once per
   render — visibility + option evaluation in one pass — and `render_form_section`
   is pure presentation. Example: `collapsed: -> { object.persisted? }`.
+
+- **Unknown / filtered section keys skipped, not raised** (`form_layout.rb`,
+  `resolve_form_sections`). A key not in the form's permitted set
+  (`submittable_attributes_for(action)`) is dropped silently. The original raise
+  crashed forms whenever a layout referenced a field excluded by per-action
+  `permitted_attributes`, entity scoping, nesting, or per-user policy — the
+  resolver only ever saw the filtered list, so it couldn't tell a typo from a
+  legitimately-filtered field. Test renamed
+  `test_unknown_field_raises` → `test_field_not_in_permitted_set_is_skipped_not_raised`.
 
 - **Interactions exercised** — `ReconfigureKitchenSink` (record action on
   `KitchenSink`) + `test/integration/admin_portal/form_layout_interaction_test.rb`
