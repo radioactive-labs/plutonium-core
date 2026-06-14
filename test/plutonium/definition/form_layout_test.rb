@@ -50,7 +50,12 @@ class Plutonium::Definition::FormLayoutTest < Minitest::Test
 
   def test_duplicate_ungrouped_raises
     assert_raises(ArgumentError) do
-      build_definition { form_layout { ungrouped; ungrouped } }
+      build_definition {
+        form_layout {
+          ungrouped
+          ungrouped
+        }
+      }
     end
   end
 

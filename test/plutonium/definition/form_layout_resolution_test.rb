@@ -45,7 +45,12 @@ class Plutonium::Definition::FormLayoutResolutionTest < Minitest::Test
   end
 
   def test_empty_section_kept_when_field_filtered
-    d = definition { form_layout { section :a, :name; section :b, :name } }
+    d = definition {
+      form_layout {
+        section :a, :name
+        section :b, :name
+      }
+    }
     resolved = d.resolve_form_sections(%i[name])
     keys = resolved.map { |r| r.section.key }
     assert_includes keys, :b

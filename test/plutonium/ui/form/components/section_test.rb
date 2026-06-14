@@ -24,7 +24,7 @@ class Plutonium::UI::Form::Components::SectionTest < Minitest::Test
     end
 
     component.define_singleton_method(:details) do |**attrs, &block|
-      open_attr = attrs.key?(:open) && attrs[:open] ? " open" : ""
+      open_attr = (attrs.key?(:open) && attrs[:open]) ? " open" : ""
       output << %(<details class="#{attrs[:class]}"#{open_attr}>)
       block&.call
       output << "</details>"

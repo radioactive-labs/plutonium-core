@@ -46,5 +46,4 @@ class OrgPortal::VirtualAttrConditionedSelectTest < ActionDispatch::IntegrationT
     assert_response :redirect
     assert_equal "active", Catalog::Product.last.status
   end
-
 end
