@@ -13,7 +13,7 @@ module Pu
       desc "Generate views for selected features\n\n" \
            "Supported Features\n" \
            "=========================================\n" \
-           "#{VIEW_CONFIG.keys.sort.map(&:to_s).join "\n"}\n\n\n\n"
+           "#{VIEW_CONFIG.keys.sort.join "\n"}\n\n\n\n"
 
       argument :plugin_name, type: :string, optional: true,
         desc: "[CONFIG] Name of the configured rodauth app. Leave blank to use the primary account."

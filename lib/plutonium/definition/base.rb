@@ -34,6 +34,7 @@ module Plutonium
       include Search
       include NestedInputs
       include StructuredInputs
+      include FormLayout
       include IndexViews
       include Metadata
 

@@ -10,6 +10,11 @@ class Catalog::PublishProduct < Catalog::ResourceInteraction
   attribute :file
   input :file, as: :file
 
+  form_layout do
+    section :details, :reference, :file, label: "Details"
+    ungrouped
+  end
+
   validate :must_be_draft
 
   private

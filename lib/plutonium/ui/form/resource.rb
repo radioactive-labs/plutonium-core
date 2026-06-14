@@ -98,11 +98,81 @@ module Plutonium
         end
 
         def render_fields
-          fields_wrapper {
-            resource_fields.each { |name|
-              render_resource_field name
+          sections = resolve_form_layout
+          if sections.nil?
+            fields_wrapper {
+              resource_fields.each { |name| render_resource_field name }
             }
-          }
+          else
+            sections.each { |rs| render_form_section(rs) }
+          end
+        end
+
+        # Resolve the whole form layout for THIS render, in one pass: drop
+        # condition-hidden sections and evaluate any proc-valued options, all in
+        # the form instance context (where `object`, `current_user`, `params` and
+        # helpers live — same context as input/section `condition:`). Returns nil
+        # when no form_layout is declared (caller falls back to a single grid).
+        def resolve_form_layout
+          sections = resource_definition.resolve_form_sections(resource_fields)
+          return nil if sections.nil?
+
+          sections.filter_map do |resolved|
+            section = resolved.section
+            condition = section.condition
+            next if condition && !instance_exec(&condition)
+
+            # `columns` stays a validated literal; everything else may be a proc.
+            options = section.options.to_h do |key, value|
+              [key, (key != :condition && value.is_a?(Proc)) ? instance_exec(&value) : value]
+            end
+            Plutonium::Definition::FormLayout::ResolvedSection.new(
+              section: Plutonium::Definition::FormLayout::Section.new(
+                key: section.key, fields: section.fields, options: options.freeze
+              ),
+              fields: resolved.fields
+            )
+          end
+        end
+
+        # Pure presentation — the section is already resolved (visible, options
+        # evaluated) by resolve_form_layout.
+        def render_form_section(resolved)
+          section = resolved.section
+          render Plutonium::UI::Form::Components::Section.new(
+            resolved, grid_class: section_grid_class(section.columns)
+          ) do
+            # Inside a multi-column section, let fields flow into the grid cells
+            # instead of forcing each to span the full row (see col-span default
+            # in render_simple_resource_field).
+            previous = @section_columns
+            @section_columns = section.columns
+            begin
+              resolved.fields.each { |name| render_resource_field name }
+            ensure
+              @section_columns = previous
+            end
+          end
+        end
+
+        # True while rendering fields inside a section that declared an explicit
+        # column count > 1. Such fields default to a single grid cell rather than
+        # `col-span-full`, so the section's grid actually lays out in columns.
+        def in_multi_column_section?
+          @section_columns.to_i > 1
+        end
+
+        # nil → the form's default responsive grid; an Integer overrides columns.
+        def section_grid_class(columns)
+          return themed(:fields_wrapper, nil) if columns.nil?
+
+          base = "grid gap-6 grid-flow-row-dense grid-cols-1"
+          case columns.to_i
+          when 1 then base
+          when 2 then "#{base} md:grid-cols-2"
+          when 3 then "#{base} md:grid-cols-2 lg:grid-cols-3"
+          else "#{base} md:grid-cols-2 2xl:grid-cols-#{columns.to_i}"
+          end
         end
 
         def render_actions
@@ -232,10 +302,18 @@ module Plutonium
             end
           else
             wrapper_options = input_options[:wrapper] || {}
+            # Only supply a default column span when the field hasn't declared its
+            # own (via `wrapper: {class: "col-span-..."}`). A field-level col-span
+            # ALWAYS wins — including inside a section with `columns:` — so authors
+            # can opt a single field back to full width in a multi-column section,
+            # or vice versa.
+            # TODO: remove the string check once theming supports class merges.
             if !wrapper_options[:class] || !wrapper_options[:class].include?("col-span")
-              # temp hack to allow col span overrides
-              # TODO: remove once we complete theming, which will support merges
-              wrapper_options[:class] = tokens("col-span-full", wrapper_options[:class])
+              # In a multi-column section the field flows into a single grid cell
+              # (no col-span), so the declared `columns:` actually takes effect.
+              # Everywhere else fields span the full row.
+              default_span = in_multi_column_section? ? nil : "col-span-full"
+              wrapper_options[:class] = tokens(default_span, wrapper_options[:class])
             end
 
             render form.field(name, **field_options).wrapped(

@@ -1,4 +1,19 @@
 class KitchenSinkDefinition < ::ResourceDefinition
+  # Interactive record action — exercises form_layout (incl. a dynamic
+  # `collapsed:`) inside an interaction form. See ReconfigureKitchenSink.
+  action :reconfigure, interaction: ReconfigureKitchenSink
+
+  form_layout do
+    section :identity, :name, :email_address, label: "Identity",
+      description: "Who this is"
+    # `collapsed:` is a proc resolved at render in the form/record context —
+    # existing records open collapsed, new records open expanded.
+    section :appearance, :favorite_color, :active, :website,
+      collapsible: true, collapsed: -> { object.persisted? }, columns: 2
+    section :secret, :secret_token, label: "Secret stuff", condition: -> { false }
+    ungrouped label: "Everything else"
+  end
+
   # A deliberate "kitchen sink" exercising every available input and display
   # type — especially the JS widgets that mutate the DOM after connect
   # (intl-tel-input, flatpickr, slim-select, easymde, key-value, json), which
@@ -25,7 +40,9 @@ class KitchenSinkDefinition < ::ResourceDefinition
   # Basic scalar inputs
   input :email_address, as: :email
   input :secret, as: :password
-  input :website, as: :url
+  # In the 2-column :appearance section, but opts back to full width via an
+  # explicit col-span — which must survive the section's `columns:` default.
+  input :website, as: :url, wrapper: {class: "col-span-full"}
   field :favorite_color, as: :color                            # color input + swatch display
   field :age, as: :integer
   input :balance, as: :decimal

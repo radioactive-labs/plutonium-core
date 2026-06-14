@@ -8,7 +8,7 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
   # ---------------------------------------------------------------------------
 
   # Minimal definition stub that satisfies render_resource_field
-  FakeDefinition = Struct.new(:defined_fields, :defined_displays, keyword_init: true) do
+  FakeDefinition = Struct.new(:defined_fields, :defined_displays) do
     def initialize(defined_fields: {}, defined_displays: {})
       super
     end

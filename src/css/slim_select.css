@@ -43,9 +43,11 @@
   border-radius: var(--pu-radius-md);
   color: var(--pu-text);
 }
+
 .ss-main:hover {
   border-color: var(--pu-border-strong);
 }
+
 .ss-main:focus,
 .ss-main[aria-expanded="true"] {
   border-color: var(--pu-input-focus-ring);
@@ -196,9 +198,11 @@
   font-size: inherit;
   line-height: inherit;
 }
+
 .ss-content .ss-search input::placeholder {
   color: var(--pu-input-placeholder);
 }
+
 .ss-content .ss-search input:focus {
   border-color: var(--pu-input-focus-ring);
   box-shadow: 0 0 0 3px theme(colors.primary.500 / 15%);
@@ -225,7 +229,7 @@
 
 /* List */
 .ss-content .ss-list {
-  @apply flex-auto h-auto overflow-x-hidden overflow-y-auto;
+  @apply flex-auto h-auto overflow-x-hidden overflow-y-auto mb-2;
 }
 
 .ss-content .ss-list .ss-error {
@@ -345,10 +349,12 @@
 .ss-main.ss-invalid {
   @apply border-danger-500 bg-danger-50/50 text-danger-900;
 }
+
 .ss-main.ss-invalid:focus,
 .ss-main.ss-invalid[aria-expanded="true"] {
   box-shadow: 0 0 0 3px theme(colors.danger.500 / 15%);
 }
+
 .dark .ss-main.ss-invalid {
   @apply bg-danger-950/20 border-danger-500/70 text-danger-200;
 }
@@ -360,10 +366,12 @@
 .ss-main.ss-valid {
   @apply border-success-500 bg-success-50/50 text-success-900;
 }
+
 .ss-main.ss-valid:focus,
 .ss-main.ss-valid[aria-expanded="true"] {
   box-shadow: 0 0 0 3px theme(colors.success.500 / 15%);
 }
+
 .dark .ss-main.ss-valid {
   @apply bg-success-950/20 border-success-500/70 text-success-200;
 }
@@ -385,7 +393,8 @@
   width: 100% !important;
   border-radius: 0 !important;
   margin: 0 !important;
-  pointer-events: none !important; /* Disabled by default */
+  pointer-events: none !important;
+  /* Disabled by default */
 }
 
 /* When active (dropdown is expanded), enable pointer events */
