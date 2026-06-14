@@ -21,6 +21,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::Catalog::Spec
   register_resource ::NetworkDevice
   register_resource ::UserProfile
+  register_resource ::KitchenSink
   # register resources above.
 end
 

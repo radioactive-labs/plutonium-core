@@ -1,4 +1,11 @@
 class KitchenSinkDefinition < ::ResourceDefinition
+  form_layout do
+    section :identity, :name, :email_address, label: "Identity",
+      description: "Who this is"
+    section :appearance, :favorite_color, :active, collapsible: true, columns: 2
+    ungrouped label: "Everything else"
+  end
+
   # A deliberate "kitchen sink" exercising every available input and display
   # type — especially the JS widgets that mutate the DOM after connect
   # (intl-tel-input, flatpickr, slim-select, easymde, key-value, json), which

@@ -98,11 +98,41 @@ module Plutonium
         end
 
         def render_fields
-          fields_wrapper {
-            resource_fields.each { |name|
-              render_resource_field name
+          resolved = resource_definition.resolve_form_sections(resource_fields)
+          if resolved.nil?
+            fields_wrapper {
+              resource_fields.each { |name| render_resource_field name }
             }
-          }
+          else
+            resolved.each { |rs| render_form_section(rs) }
+          end
+        end
+
+        def render_form_section(resolved)
+          section = resolved.section
+          condition = section.condition
+          # condition runs in the form instance context (same as input conditions),
+          # where `object` is the record.
+          return if condition && !instance_exec(&condition)
+
+          render Plutonium::UI::Form::Components::Section.new(
+            resolved, grid_class: section_grid_class(section.columns)
+          ) do
+            resolved.fields.each { |name| render_resource_field name }
+          end
+        end
+
+        # nil → the form's default responsive grid; an Integer overrides columns.
+        def section_grid_class(columns)
+          return themed(:fields_wrapper, nil) if columns.nil?
+
+          base = "grid gap-6 grid-flow-row-dense grid-cols-1"
+          case columns.to_i
+          when 1 then base
+          when 2 then "#{base} md:grid-cols-2"
+          when 3 then "#{base} md:grid-cols-2 lg:grid-cols-3"
+          else "#{base} md:grid-cols-2 2xl:grid-cols-#{columns.to_i}"
+          end
         end
 
         def render_actions
