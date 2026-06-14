@@ -26,6 +26,7 @@ module Plutonium
       include Plutonium::Definition::ConfigAttr
       include Plutonium::Definition::Presentable
       include Plutonium::Definition::StructuredInputs
+      include Plutonium::Definition::FormLayout
 
       # On interactions, declaring a structured input also declares the backing
       # ActiveModel attribute so the value survives `attributes=` and appears in
