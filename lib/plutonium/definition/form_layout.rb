@@ -82,6 +82,50 @@ module Plutonium
       def defined_form_layout
         self.class.defined_form_layout
       end
+
+      # Resolve the policy-filtered field list into ordered ResolvedSections.
+      # Returns nil when no layout is declared (caller falls back to one grid).
+      def resolve_form_sections(resource_fields)
+        layout = defined_form_layout
+        return nil unless layout
+
+        resource_fields = resource_fields.map(&:to_sym)
+        known = resource_fields.to_set
+
+        # First-section-wins assignment: map each field to the first section key.
+        owner = {}
+        layout.each do |section|
+          next if section.ungrouped?
+          section.fields.each do |f|
+            unless known.include?(f)
+              raise ArgumentError,
+                "form_layout section :#{section.key} references unknown field :#{f}"
+            end
+            owner[f] ||= section.key
+          end
+        end
+        leftovers = resource_fields.reject { |f| owner.key?(f) }
+
+        resolved = layout.map do |section|
+          fields =
+            if section.ungrouped?
+              leftovers
+            else
+              section.fields.select { |f| owner[f] == section.key }
+            end
+          ResolvedSection.new(section:, fields:)
+        end
+
+        unless layout.any?(&:ungrouped?)
+          implicit = ResolvedSection.new(
+            section: Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: {}.freeze),
+            fields: leftovers
+          )
+          resolved.unshift(implicit)
+        end
+
+        resolved
+      end
     end
   end
 end
