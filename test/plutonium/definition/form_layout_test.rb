@@ -111,6 +111,29 @@ class Plutonium::Definition::FormLayoutTest < Minitest::Test
     assert_equal cond, s.condition
   end
 
+  def test_columns_zero_raises
+    assert_raises(ArgumentError) do
+      build_definition { form_layout { section :a, :x, columns: 0 } }
+    end
+  end
+
+  def test_columns_negative_raises
+    assert_raises(ArgumentError) do
+      build_definition { form_layout { section :a, :x, columns: -2 } }
+    end
+  end
+
+  def test_columns_string_raises
+    assert_raises(ArgumentError) do
+      build_definition { form_layout { section :a, :x, columns: "2" } }
+    end
+  end
+
+  def test_columns_positive_integer_is_fine
+    klass = build_definition { form_layout { section :a, :x, columns: 3 } }
+    assert_equal 3, klass.defined_form_layout.first.columns
+  end
+
   def test_defaults_for_unset_options
     klass = build_definition { form_layout { section :a, :x } }
     s = klass.defined_form_layout.first

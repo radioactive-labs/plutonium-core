@@ -47,13 +47,26 @@ module Plutonium
             raise ArgumentError,
               "`section :#{UNGROUPED_KEY}` is reserved — use the `ungrouped` macro"
           end
+          validate_columns!(options)
           @sections << Section.new(key:, fields: fields.freeze, options: options.freeze)
         end
 
         def ungrouped(**options)
           raise ArgumentError, "`ungrouped` may only be declared once" if @ungrouped_seen
           @ungrouped_seen = true
+          validate_columns!(options)
           @sections << Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: options.freeze)
+        end
+
+        private
+
+        def validate_columns!(options)
+          return unless options.key?(:columns)
+          value = options[:columns]
+          unless Integer === value && value > 0
+            raise ArgumentError,
+              "form_layout :columns must be a positive Integer, got #{value.inspect}"
+          end
         end
       end
 

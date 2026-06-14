@@ -26,6 +26,13 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "<summary"
   end
 
+  test "a section with a falsey condition renders nothing and withholds its fields" do
+    get "/admin/kitchen_sinks/new"
+    assert_response :success
+    refute_includes response.body, "Secret stuff"
+    refute_includes response.body, %(name="kitchen_sink[secret_token]")
+  end
+
   test "a definition without form_layout still renders the single grid" do
     get "/admin/comments/new"
     assert_response :success

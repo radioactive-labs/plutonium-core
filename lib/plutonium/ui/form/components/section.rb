@@ -13,15 +13,20 @@ module Plutonium
             @grid_class = grid_class
           end
 
+          SECTION_CLASS = "space-y-4 border-t border-[var(--pu-border-muted)] pt-6 first:border-t-0 first:pt-0"
+          HEADING_CLASS = "text-base font-semibold text-[var(--pu-text)]"
+          SUMMARY_CLASS = "#{HEADING_CLASS} cursor-pointer select-none"
+          DESCRIPTION_CLASS = "text-sm text-[var(--pu-text-muted)]"
+
           def view_template(&fields_block)
             if @section.collapsible?
-              details(open: !@section.collapsed?, class: "pu-form-section pu-form-section-collapsible") do
-                summary(class: "pu-form-section-summary") { heading_text }
+              details(open: !@section.collapsed?, class: SECTION_CLASS) do
+                summary(class: SUMMARY_CLASS) { heading_text }
                 describe
                 grid(&fields_block)
               end
             else
-              div(class: "pu-form-section") do
+              div(class: SECTION_CLASS) do
                 header_block
                 grid(&fields_block)
               end
@@ -32,7 +37,7 @@ module Plutonium
 
           def header_block
             return if @section.ungrouped? && @section.options[:label].nil?
-            h3(class: "pu-form-section-title") { heading_text }
+            h3(class: HEADING_CLASS) { heading_text }
             describe
           end
 
@@ -40,7 +45,7 @@ module Plutonium
 
           def describe
             return unless @section.description
-            p(class: "pu-form-section-description") { @section.description }
+            p(class: DESCRIPTION_CLASS) { @section.description }
           end
 
           def grid(&fields_block)

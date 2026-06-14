@@ -3,6 +3,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
     section :identity, :name, :email_address, label: "Identity",
       description: "Who this is"
     section :appearance, :favorite_color, :active, collapsible: true, columns: 2
+    section :secret, :secret_token, label: "Secret stuff", condition: -> { false }
     ungrouped label: "Everything else"
   end
 
