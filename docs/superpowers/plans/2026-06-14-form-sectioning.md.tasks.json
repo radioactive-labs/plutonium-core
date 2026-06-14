@@ -1,0 +1,40 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-14-form-sectioning.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: FormLayout DSL module + registry",
+      "status": "pending",
+      "description": "Add form_layout/section/ungrouped DSL + ordered inheritable registry + validations; include in Definition::Base and Interaction::Base.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/definition/form_layout.rb\", \"lib/plutonium/definition/base.rb\", \"lib/plutonium/interaction/base.rb\", \"test/plutonium/definition/form_layout_test.rb\", \"test/plutonium/interaction/form_layout_test.rb\"], \"verifyCommand\": \"bin/rails test test/plutonium/definition/form_layout_test.rb test/plutonium/interaction/form_layout_test.rb\", \"acceptanceCriteria\": [\"form_layout records sections in order\", \"section :ungrouped and duplicate ungrouped raise\", \"default label humanizes key\", \"subclasses inherit; redeclare replaces\", \"instance + interaction expose registry\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Resolve field list into ordered sections",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "Add resolve_form_sections(resource_fields): assign fields (first-section-wins, order preserved), leftovers to ungrouped (default first / declared position), raise on unknown keys, keep empty sections.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/definition/form_layout.rb\", \"test/plutonium/definition/form_layout_resolution_test.rb\"], \"verifyCommand\": \"bin/rails test test/plutonium/definition/form_layout_resolution_test.rb\", \"acceptanceCriteria\": [\"nil without layout\", \"fields assigned in order; leftovers to ungrouped\", \"ungrouped default-first / explicit-position\", \"unknown field raises\", \"empty sections kept (first-section-wins)\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Section chrome component + columns helper",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "Add Components::Section (heading/description, native <details> collapsible, grid by columns), yields field rendering to the form.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/form/components/section.rb\", \"test/plutonium/ui/form/components/section_test.rb\"], \"verifyCommand\": \"bin/rails test test/plutonium/ui/form/components/section_test.rb\", \"acceptanceCriteria\": [\"heading + description render\", \"collapsible emits <details> with open/collapsed\", \"non-collapsible has no <details>\", \"grid_class applied and block content rendered\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Render sections in resource forms + integration",
+      "status": "pending",
+      "blockedBy": [2, 3],
+      "description": "Form::Resource#render_fields groups via resolver + Section component, evaluates condition in form context, falls back to single grid. Register KitchenSink in admin + add form_layout to KitchenSinkDefinition; integration test.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/form/resource.rb\", \"test/dummy/app/definitions/kitchen_sink_definition.rb\", \"test/dummy/packages/admin_portal/config/routes.rb\", \"test/integration/admin_portal/form_layout_rendering_test.rb\"], \"verifyCommand\": \"bin/rails test test/integration/admin_portal/form_layout_rendering_test.rb test/integration/admin_portal\", \"acceptanceCriteria\": [\"sections + headings render and group fields\", \"collapsible emits <details>\", \"no layout -> single grid unchanged\", \"falsey condition hides section\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Interaction forms render sections",
+      "status": "pending",
+      "blockedBy": [4],
+      "description": "Confirm interaction forms render form_layout sections (shared render_fields path). Add form_layout to a dummy interaction exercised by an org_portal test; assert grouped render.\n\n```json:metadata\n{\"files\": [\"test/integration/org_portal/form_layout_interaction_test.rb\"], \"verifyCommand\": \"bin/rails test test/integration/org_portal/form_layout_interaction_test.rb\", \"acceptanceCriteria\": [\"interaction form renders section headings\", \"interaction attribute input names unchanged\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-14T12:55:00Z"
+}
