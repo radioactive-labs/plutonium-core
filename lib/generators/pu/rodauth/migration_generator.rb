@@ -20,7 +20,7 @@ module Pu
       desc "Generate migrations for supported features\n\n" \
            "Supported Features\n" \
            "=========================================\n" \
-           "#{MIGRATION_CONFIG.keys.sort.map(&:to_s).join "\n"}\n\n\n\n"
+           "#{MIGRATION_CONFIG.keys.sort.join "\n"}\n\n\n\n"
 
       class_option :features, required: true, type: :array,
         desc: "Rodauth features to create tables for (otp, sms_codes, single_session, account_expiration etc.)"

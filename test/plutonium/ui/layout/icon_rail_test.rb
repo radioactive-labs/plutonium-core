@@ -9,13 +9,13 @@ class Plutonium::UI::Layout::IconRailTest < ActiveSupport::TestCase
 
   # Minimal stand-in for a Phlexi::Menu::Item. `options` mirrors the real
   # Item#options hash (extra kwargs like :target / :rel).
-  StubItem = Struct.new(:label, :url, :icon, :items, :options, keyword_init: true) do
+  StubItem = Struct.new(:label, :url, :icon, :items, :options) do
     def active?(*)
       false
     end
   end
 
-  ActiveStubItem = Struct.new(:label, :url, :icon, :items, :options, keyword_init: true) do
+  ActiveStubItem = Struct.new(:label, :url, :icon, :items, :options) do
     def active?(*)
       true
     end
