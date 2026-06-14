@@ -82,4 +82,42 @@ class Plutonium::Definition::FormLayoutTest < Minitest::Test
     klass = build_definition { form_layout { section :a, :x } }
     assert_equal %i[a], klass.new.defined_form_layout.map(&:key)
   end
+
+  def test_registry_options_are_frozen
+    klass = build_definition { form_layout { section :a, :x, columns: 2 } }
+    section = klass.defined_form_layout.first
+    assert section.options.frozen?, "section options must be frozen (immutable registry)"
+    assert_raises(FrozenError) { section.options[:columns] = 99 }
+  end
+
+  def test_label_falls_back_to_humanized_key_when_label_is_nil
+    klass = build_definition { form_layout { section :billing_address, :x, label: nil } }
+    assert_equal "Billing address", klass.defined_form_layout.first.label
+  end
+
+  def test_section_option_accessors
+    cond = -> { true }
+    klass = build_definition do
+      form_layout do
+        section :a, :x, description: "Desc", collapsible: true, collapsed: true,
+          columns: 3, condition: cond
+      end
+    end
+    s = klass.defined_form_layout.first
+    assert_equal "Desc", s.description
+    assert s.collapsible?
+    assert s.collapsed?
+    assert_equal 3, s.columns
+    assert_equal cond, s.condition
+  end
+
+  def test_defaults_for_unset_options
+    klass = build_definition { form_layout { section :a, :x } }
+    s = klass.defined_form_layout.first
+    assert_nil s.description
+    refute s.collapsible?
+    refute s.collapsed?
+    assert_nil s.columns
+    assert_nil s.condition
+  end
 end

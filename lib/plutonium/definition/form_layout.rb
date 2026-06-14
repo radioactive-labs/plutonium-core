@@ -21,7 +21,7 @@ module Plutonium
       # One declared section, or the implicit `ungrouped` bucket (empty `fields`).
       Section = Struct.new(:key, :fields, :options, keyword_init: true) do
         def ungrouped? = key == UNGROUPED_KEY
-        def label = options.fetch(:label) { key.to_s.humanize }
+        def label = options[:label] || key.to_s.humanize
         def description = options[:description]
         def collapsible? = !!options[:collapsible]
         def collapsed? = !!options[:collapsed]
@@ -47,13 +47,13 @@ module Plutonium
             raise ArgumentError,
               "`section :#{UNGROUPED_KEY}` is reserved — use the `ungrouped` macro"
           end
-          @sections << Section.new(key:, fields: fields.freeze, options:)
+          @sections << Section.new(key:, fields: fields.freeze, options: options.freeze)
         end
 
         def ungrouped(**options)
           raise ArgumentError, "`ungrouped` may only be declared once" if @ungrouped_seen
           @ungrouped_seen = true
-          @sections << Section.new(key: UNGROUPED_KEY, fields: [].freeze, options:)
+          @sections << Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: options.freeze)
         end
       end
 
