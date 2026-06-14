@@ -47,39 +47,69 @@ end
 
 ## Custom layouts
 
-### Sectioned form
+### Sectioned form (declarative — preferred)
+
+Declare sections in the **definition** using `form_layout`. The form picks up the layout automatically — no `Form` subclass needed for common cases.
 
 ```ruby
-class Form < Form
-  def form_template
-    section("Basic Information") do
-      render_resource_field :title
-      render_resource_field :slug
-    end
+class PostDefinition < ResourceDefinition
+  form_layout do
+    section :basics, :title, :slug,
+      label: "Basic information"
 
-    section("Content") do
-      render_resource_field :content
-      render_resource_field :excerpt
-    end
+    section :content, :body, :excerpt,
+      label: "Content", columns: 1
 
-    section("Publishing") do
-      render_resource_field :published_at
-      render_resource_field :category
-    end
-
-    render_actions
+    section :publishing, :published_at, :category,
+      label: "Publishing", collapsible: true, collapsed: true
   end
+end
+```
 
-  private
+This handles headings, collapsible panels, per-section column counts, and `condition:`-based visibility — all with no view code. See [Resource › Definition › Form layout](/reference/resource/definition#form-layout) for the full DSL reference, including `ungrouped`, `condition:`, `columns:`, and the "On interactions" note.
 
-  def section(title, &)
-    div(class: "mb-8") do
-      h3(class: "text-lg font-semibold mb-4 text-[var(--pu-text)]") { title }
-      fields_wrapper(&)
+### Full control: override `render_fields`
+
+When the declarative DSL doesn't cover your use case — asymmetric multi-column layouts, embedding a panel widget between sections, etc. — override `render_fields` in a nested `Form` class:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  class Form < Form
+    def form_template
+      render_fields   # replaced below
+      render_actions
+    end
+
+    def render_fields
+      div(class: "mb-8") do
+        h3(class: "text-lg font-semibold mb-4 text-[var(--pu-text)]") { "Basic Information" }
+        fields_wrapper do
+          render_resource_field :title
+          render_resource_field :slug
+        end
+      end
+
+      div(class: "mb-8") do
+        h3(class: "text-lg font-semibold mb-4 text-[var(--pu-text)]") { "Content" }
+        fields_wrapper do
+          render_resource_field :content
+          render_resource_field :excerpt
+        end
+      end
+
+      div(class: "mb-8") do
+        h3(class: "text-lg font-semibold mb-4 text-[var(--pu-text)]") { "Publishing" }
+        fields_wrapper do
+          render_resource_field :published_at
+          render_resource_field :category
+        end
+      end
     end
   end
 end
 ```
+
+Prefer `form_layout` in the definition — it keeps layout config out of view code and works for interactions too.
 
 ### Two-column layout
 

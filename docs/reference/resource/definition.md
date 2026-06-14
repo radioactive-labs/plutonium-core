@@ -459,6 +459,108 @@ validate do
 end
 ```
 
+## Form layout
+
+Declare a declarative layout for forms without changing per-field configuration. Sections are evaluated against the policy-filtered field list at render time, so a field filtered out by the policy is simply skipped.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  form_layout do
+    section :identity, :title, :slug,
+      label: "Post identity", description: "Visible URL and title"
+
+    section :content, :body, :excerpt,
+      collapsible: true, columns: 1
+
+    section :publishing, :published_at, :category,
+      collapsible: true, collapsed: true,
+      condition: -> { current_user.publisher? }
+
+    ungrouped label: "Other details"
+  end
+end
+```
+
+### `form_layout` block
+
+The block is evaluated once and stored on the class. Re-declaring `form_layout` in a subclass replaces the parent layout as a unit; per-field `input` config inherits normally.
+
+With no `form_layout` declared the form renders unchanged as a single responsive grid — fully backwards-compatible.
+
+### `section(key, *fields, **opts)`
+
+Groups a set of fields under an optional heading.
+
+| Argument | Description |
+|---|---|
+| `key` | Symbol. `:ungrouped` is reserved — use the `ungrouped` macro instead (raises `ArgumentError` otherwise). |
+| `*fields` | Ordered field keys to place in this section. |
+| `label:` | Section heading. Defaults to `key.to_s.humanize` (e.g. `:shipping_address` → `"Shipping address"`). |
+| `description:` | Optional help line rendered below the heading. |
+| `collapsible:` | Boolean (default `false`). Wraps the section in a native `<details>/<summary>` (no JS). |
+| `collapsed:` | Boolean (default `false`). Initial collapsed state when `collapsible: true`. |
+| `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer — any other value raises. |
+| `condition:` | Lambda evaluated in the form instance context — same semantics as `input ..., condition:`. `object`, `current_user`, helpers etc. are all available. A falsey result hides the entire section and withholds its fields (they do not spill into `ungrouped`). |
+
+Empty sections (all fields filtered by the policy, or none assigned) are **not** hidden automatically. Use `condition:` to hide a section conditionally.
+
+### `ungrouped(**opts)`
+
+A macro (not a `section` call) that configures the implicit bucket collecting every permitted field not claimed by any `section`. Takes **no field list** — its fields are computed at render time.
+
+- Accepts the same options as `section`: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:`, `condition:`.
+- **Position** — where `ungrouped` is called in the block sets where leftovers appear. Omit it entirely and leftovers render **first** with no heading.
+- Declaring `ungrouped` more than once in a single `form_layout` raises `ArgumentError`.
+
+```ruby
+form_layout do
+  ungrouped label: "Core fields"   # leftovers rendered first with a heading
+  section :advanced, :seo_title, :seo_description, collapsible: true
+end
+```
+
+### Layout references keys; config stays on `input`
+
+`form_layout` and `section` carry section-level options only. All per-field rendering config — `as:`, the field's own `label:`, `choices:`, per-field `condition:`, `pre_submit:`, blocks — remains on the `input` declaration. Layout never duplicates field config.
+
+```ruby
+class ArticleDefinition < ResourceDefinition
+  # per-field config on input — untouched by form_layout
+  input :body, as: :markdown
+  input :published_at, hint: "Leave blank to save as draft"
+  input :visibility, as: :select, choices: %w[public private unlisted]
+
+  form_layout do
+    section :writing, :title, :body, :excerpt, label: "Content"
+    section :meta, :published_at, :visibility, :tags, label: "Publishing settings"
+  end
+end
+```
+
+### Referencing an unknown field raises
+
+A `section` that lists a field key that is not a known attribute of the model raises `ArgumentError` at render time — this catches typos early.
+
+### On interactions
+
+`form_layout` is also available on `Plutonium::Interaction::Base`. The same DSL groups the interaction's `attribute` declarations into sections. Interaction forms (`Plutonium::UI::Form::Interaction`) pick up the layout automatically — no extra wiring needed.
+
+```ruby
+class PublishPostInteraction < Plutonium::Interaction::Base
+  attribute :publish_at, :datetime
+  attribute :notify_subscribers, :boolean, default: false
+  attribute :notify_message, :string
+
+  form_layout do
+    section :timing, :publish_at, label: "When to publish"
+    section :notifications, :notify_subscribers, :notify_message,
+      label: "Subscriber notifications",
+      collapsible: true,
+      condition: -> { object.has_subscribers? }
+  end
+end
+```
+
 ## File uploads
 
 ```ruby
