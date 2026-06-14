@@ -74,7 +74,8 @@ end
 - Accepts the same options as `section` (`label:`, `description:`,
   `collapsible:`, `collapsed:`, `columns:`, `condition:`).
 - **Position:** where the macro is called sets where leftovers render. If the
-  macro is omitted, leftovers render **first**, with **no heading**.
+  macro is omitted, leftovers render **last** (appended after all declared
+  sections), with **no heading**. _(Amended — was "first"; see Amendments.)_
 - Calling `ungrouped` more than once in a single `form_layout` raises
   `ArgumentError`.
 
@@ -112,7 +113,7 @@ interaction instances.
    - The `ungrouped` bucket gets `resource_fields` minus all claimed fields,
      preserving `resource_fields` order.
    - Build the ordered render list: sections in declared order with the
-     `ungrouped` bucket inserted at its declared position (default: first).
+     `ungrouped` bucket inserted at its declared position (default: **last**).
    - For each entry: evaluate `condition` (skip if falsey); render a Section
      component with its renderable fields. Empty sections are **not**
      special-cased — they render with defaults (see Edge cases).
@@ -172,7 +173,7 @@ heading/description/wrapper so they're themeable like the rest of the form.
   raises; `section :ungrouped` raises; inheritance duplicates registry;
   re-declaring `form_layout` replaces.
 - **Assignment:** fields land in the right section in declared order; leftovers
-  collect into `ungrouped`; `ungrouped` default position is first; explicit
+  collect into `ungrouped`; `ungrouped` default position is last; explicit
   position honored.
 - **Filtering:** policy-filtered field is skipped; an empty section still renders
   with defaults (is **not** hidden); unknown field key raises.
@@ -192,3 +193,45 @@ heading/description/wrapper so they're themeable like the rest of the form.
 - Per-field layout hints (e.g. `field :notes, span: 2`) — Style 1 keeps fields
   positional; this can be added later via the nested-block form if needed.
 - Stimulus-driven animated collapse (native `<details>` chosen for leanness).
+
+## Amendments (post-implementation)
+
+Changes made after the original plan landed:
+
+- **Implicit `ungrouped` placement: first → last.** When no `ungrouped` macro is
+  declared, leftover fields are now appended **after** all declared sections
+  (was: prepended). This matches the convention of the explicit macro ("the
+  rest" trails the sections you care about) and makes "omit it" equivalent to
+  "declare it last." To float leftovers above your sections, declare `ungrouped`
+  explicitly at the top.
+
+- **`columns:` actually lays out in a grid.** Previously every field wrapper got
+  `col-span-full`, so a section's `columns: N` had no visible effect. Fields in a
+  multi-column section now flow into single grid cells. A field that declares its
+  own span (`input :x, wrapper: {class: "col-span-..."}`) **always wins** — in any
+  section — so authors can opt a field back to full width (or wider) inside a
+  multi-column section.
+
+- **Dynamic section options.** Every section option except `columns:`
+  (`collapsed`, `collapsible`, `label`, `description`, plus the existing
+  `condition`) may be a **proc**, resolved at render time in the form instance
+  context — the same context as input/section `condition:` (so `object`,
+  `current_user`, `params`, helpers are available). The whole layout is resolved
+  once per render in `Form::Resource#resolve_form_layout` (visibility + option
+  evaluation in one pass); `render_form_section` is pure presentation. `columns:`
+  stays a validated literal (it feeds the grid class).
+
+- **Interactions: verified + exercised.** `Form::Interaction < Form::Resource`
+  already inherited the layout path; this is now covered by a dummy interaction
+  (`ReconfigureKitchenSink`, a record action on `KitchenSink`) and an integration
+  test. In an interaction form `object` is the interaction instance and
+  `object.resource` is the record, so record-aware dynamic options work there too
+  (e.g. `collapsed: -> { object.resource.archived? }`).
+
+- **Unrelated fix surfaced while driving the dummy in `development`:** the package
+  engine system (`Plutonium::Package::Engine`) called `Rails.application.initializers`
+  from a `before_configuration` hook, prematurely memoizing `Rails.application.railties`
+  and dropping package engines from the autoload paths when a second
+  `Rails::Application` (combustion, in dev) was instantiated before the packages
+  glob ran — surfacing as `uninitialized constant Blogging::Post`. The view-path
+  neutralization was moved to a real initializer (`before: :add_view_paths`).

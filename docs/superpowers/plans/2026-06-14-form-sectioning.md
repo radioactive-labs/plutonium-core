@@ -290,7 +290,7 @@ git commit -m "feat(forms): add form_layout/section/ungrouped DSL registry"
 
 ### Task 2: Resolve a field list into ordered sections
 
-**Goal:** Add `resolve_form_sections(resource_fields)` to `FormLayout` — assign permitted fields to sections (in declared order), collect leftovers into `ungrouped` (default first, else at its declared position), raise on unknown field keys, and keep empty sections (no hiding).
+**Goal:** Add `resolve_form_sections(resource_fields)` to `FormLayout` — assign permitted fields to sections (in declared order), collect leftovers into `ungrouped` (default **last**, else at its declared position), raise on unknown field keys, and keep empty sections (no hiding). _(Amended: default was "first" — see Amendments at the end.)_
 
 **Files:**
 - Modify: `lib/plutonium/definition/form_layout.rb` (add instance method `resolve_form_sections`)
@@ -300,7 +300,7 @@ git commit -m "feat(forms): add form_layout/section/ungrouped DSL registry"
 - [ ] Returns `nil` when no layout is declared.
 - [ ] Each section gets `section.fields ∩ resource_fields`, preserving the section's field order.
 - [ ] `ungrouped` collects all unclaimed permitted fields, in `resource_fields` order.
-- [ ] Without an `ungrouped` macro, leftovers render in a heading-less section placed **first**.
+- [ ] Without an `ungrouped` macro, leftovers render in a heading-less section placed **last** (appended after all declared sections). _(Amended — was "first".)_
 - [ ] With an `ungrouped` macro, leftovers render at the macro's declared position with its options.
 - [ ] A section referencing a field absent from `resource_fields` *and* not a known attribute raises `ArgumentError`; a field merely filtered by policy is silently dropped (it's still "known" — see note).
 - [ ] Empty sections are returned (not hidden).
@@ -872,3 +872,46 @@ Run the broader suite to confirm no regressions:
 bin/rails test test/plutonium test/integration/admin_portal test/integration/org_portal
 ```
 Then `bin/standardrb` (the repo's `default` rake task runs `test` + `standard`).
+
+---
+
+## Amendments (post-implementation)
+
+Refinements made after the task-by-task plan above was executed. The historical
+steps/snippets are left as-built; these supersede them where they conflict.
+
+- **Implicit `ungrouped` placement: first → last** (`form_layout.rb`,
+  `resolve_form_sections`: `unshift` → `push`; test renamed
+  `..._first_by_default` → `..._last_by_default`). Omitting `ungrouped` now
+  appends leftovers after all declared sections — equivalent to declaring it
+  last. Declare it explicitly at the top to float leftovers above sections.
+
+- **`columns:` actually lays out in a grid** (`resource.rb`,
+  `render_simple_resource_field`). The old `col-span-full` default made every
+  field span the whole row, so `columns: N` had no visible effect. Fields in a
+  multi-column section now take single grid cells; a field's own
+  `wrapper: {class: "col-span-..."}` always wins (in any section).
+
+- **Dynamic section options** (`resource.rb`, `resolve_form_layout`). Every
+  option except `columns:` may be a proc, resolved at render in the form
+  instance context (same as `condition:`). The layout is resolved once per
+  render — visibility + option evaluation in one pass — and `render_form_section`
+  is pure presentation. Example: `collapsed: -> { object.persisted? }`.
+
+- **Interactions exercised** — `ReconfigureKitchenSink` (record action on
+  `KitchenSink`) + `test/integration/admin_portal/form_layout_interaction_test.rb`
+  cover form_layout (incl. a dynamic `collapsed:`) in an interaction form, where
+  `object` is the interaction and `object.resource` the record.
+
+- **Unrelated dev-mode fix** (`lib/plutonium/package/engine.rb` +
+  `test/plutonium/package/engine_test.rb`): the package engine's
+  `before_configuration` hook prematurely memoized `Rails.application.railties`
+  (via `Rails.application.initializers`), dropping package engines from the
+  autoload paths whenever a second `Rails::Application` was created before the
+  packages glob (combustion, in `development`) — surfacing as `uninitialized
+  constant Blogging::Post`. Moved the `add_view_paths` neutralization to a real
+  initializer (`before: :add_view_paths`). Surfaced while driving the dummy in
+  dev to verify this feature.
+
+Reference docs updated: `docs/reference/resource/definition.md` (ungrouped
+placement, dynamic options, columns/col-span).

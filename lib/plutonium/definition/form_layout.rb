@@ -134,7 +134,7 @@ module Plutonium
             section: Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: {}.freeze),
             fields: leftovers
           )
-          resolved.unshift(implicit)
+          resolved.push(implicit)
         end
 
         resolved

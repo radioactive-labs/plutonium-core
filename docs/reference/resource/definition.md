@@ -499,8 +499,17 @@ Groups a set of fields under an optional heading.
 | `description:` | Optional help line rendered below the heading. |
 | `collapsible:` | Boolean (default `false`). Wraps the section in a native `<details>/<summary>` (no JS). |
 | `collapsed:` | Boolean (default `false`). Initial collapsed state when `collapsible: true`. |
-| `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer — any other value raises. |
+| `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer — any other value raises. (Literal only — not dynamic.) |
 | `condition:` | Lambda evaluated in the form instance context — same semantics as `input ..., condition:`. `object`, `current_user`, helpers etc. are all available. A falsey result hides the entire section and withholds its fields (they do not spill into `ungrouped`). |
+
+Every option except `columns:` may be either a literal **or a proc** resolved at render time in the same form instance context as `condition:` (so `object`, `current_user`, `params`, helpers are all available). This makes the layout record-aware — e.g. collapse a section by default only for existing records:
+
+```ruby
+section :advanced, :seo_title, :notes,
+  collapsible: true,
+  collapsed: -> { object.persisted? },          # open for new, collapsed for edits
+  label: -> { object.new_record? ? "Set up" : "Advanced" }
+```
 
 Empty sections (all fields filtered by the policy, or none assigned) are **not** hidden automatically. Use `condition:` to hide a section conditionally.
 
@@ -509,12 +518,18 @@ Empty sections (all fields filtered by the policy, or none assigned) are **not**
 A macro (not a `section` call) that configures the implicit bucket collecting every permitted field not claimed by any `section`. Takes **no field list** — its fields are computed at render time.
 
 - Accepts the same options as `section`: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:`, `condition:`.
-- **Position** — where `ungrouped` is called in the block sets where leftovers appear. Omit it entirely and leftovers render **first** with no heading.
+- **Position** — where you call `ungrouped` in the block is where leftovers appear. Omit it entirely and leftovers render **last**, after every declared section, with no heading. (Declaring `ungrouped` at the very end is therefore equivalent to omitting it, except that the explicit form lets you add a `label:` and other options.)
 - Declaring `ungrouped` more than once in a single `form_layout` raises `ArgumentError`.
 
 ```ruby
 form_layout do
-  ungrouped label: "Core fields"   # leftovers rendered first with a heading
+  section :advanced, :seo_title, :seo_description, collapsible: true
+  ungrouped label: "Core fields"   # leftovers rendered here, with a heading
+end
+
+# To float leftovers ABOVE your sections, declare `ungrouped` first:
+form_layout do
+  ungrouped label: "Core fields"
   section :advanced, :seo_title, :seo_description, collapsible: true
 end
 ```
@@ -522,6 +537,16 @@ end
 ### Layout references keys; config stays on `input`
 
 `form_layout` and `section` carry section-level options only. All per-field rendering config — `as:`, the field's own `label:`, `choices:`, per-field `condition:`, `pre_submit:`, blocks — remains on the `input` declaration. Layout never duplicates field config.
+
+This includes a field's **column span**. In a section with `columns:`, fields flow into single grid cells by default; a field that declares its own span via `wrapper: {class: "col-span-..."}` keeps it — a field-level span always wins, so you can opt one field back to full width inside a multi-column section:
+
+```ruby
+input :notes, wrapper: {class: "col-span-full"}   # spans the whole row...
+
+form_layout do
+  section :details, :first_name, :last_name, :notes, columns: 2  # ...even here
+end
+```
 
 ```ruby
 class ArticleDefinition < ResourceDefinition
@@ -544,6 +569,8 @@ A `section` that lists a field key that is not a known attribute of the model ra
 ### On interactions
 
 `form_layout` is also available on `Plutonium::Interaction::Base`. The same DSL groups the interaction's `attribute` declarations into sections. Interaction forms (`Plutonium::UI::Form::Interaction`) pick up the layout automatically — no extra wiring needed.
+
+Dynamic options and `condition:` work here too, with one difference: in an interaction form `object` is the **interaction instance** (not a record). For a record action, the record is `object.resource` — so e.g. `collapsed: -> { object.resource.archived? }`.
 
 ```ruby
 class PublishPostInteraction < Plutonium::Interaction::Base

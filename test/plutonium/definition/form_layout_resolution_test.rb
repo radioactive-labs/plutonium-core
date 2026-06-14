@@ -11,16 +11,18 @@ class Plutonium::Definition::FormLayoutResolutionTest < Minitest::Test
     assert_nil definition {}.resolve_form_sections(%i[a b])
   end
 
-  def test_assigns_fields_and_collects_leftovers_first_by_default
+  def test_assigns_fields_and_collects_leftovers_last_by_default
     d = definition do
       form_layout do
         section :identity, :name, :email
       end
     end
     resolved = d.resolve_form_sections(%i[name email notes secret])
-    assert_equal %i[ungrouped identity], resolved.map { |r| r.section.key }
-    assert_equal %i[notes secret], resolved.first.fields
-    assert_equal %i[name email], resolved.last.fields
+    # Without an explicit `ungrouped` macro, leftovers render *after* the
+    # declared sections.
+    assert_equal %i[identity ungrouped], resolved.map { |r| r.section.key }
+    assert_equal %i[name email], resolved.first.fields
+    assert_equal %i[notes secret], resolved.last.fields
   end
 
   def test_ungrouped_macro_controls_position_and_options

@@ -26,11 +26,48 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "<summary"
   end
 
+  test "a dynamic collapsed: proc is resolved in the record context" do
+    # :appearance declares `collapsed: -> { object.persisted? }`.
+    # New record → not persisted → the Appearance <details> is open.
+    get "/admin/kitchen_sinks/new"
+    new_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)
+    assert new_tag, "expected a collapsible Appearance <details>"
+    assert_includes new_tag[1], "open", "Appearance should be open for a new record"
+
+    # Existing record → persisted → same section renders collapsed (no `open`).
+    org = Organization.create!(name: "Sink Org #{SecureRandom.hex(4)}")
+    sink = KitchenSink.create!(name: "Sink", organization: org)
+    get "/admin/kitchen_sinks/#{sink.id}/edit"
+    assert_response :success
+    edit_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)
+    assert edit_tag, "expected a collapsible Appearance <details>"
+    refute_includes edit_tag[1], "open", "Appearance should be collapsed for a persisted record"
+  end
+
   test "a section with a falsey condition renders nothing and withholds its fields" do
     get "/admin/kitchen_sinks/new"
     assert_response :success
     refute_includes response.body, "Secret stuff"
     refute_includes response.body, %(name="kitchen_sink[secret_token]")
+  end
+
+  test "fields in a multi-column section flow into grid cells, not full rows" do
+    get "/admin/kitchen_sinks/new"
+    assert_response :success
+
+    # Identity declares no `columns:` → fields span the full row.
+    name_wrapper = response.body[/<div[^>]*id="kitchen_sink_name_wrapper"[^>]*>/]
+    assert_includes name_wrapper, "col-span-full"
+
+    # Appearance declares `columns: 2` → its fields occupy single grid cells
+    # so the two-column grid actually lays out in columns.
+    color_wrapper = response.body[/<div[^>]*id="kitchen_sink_favorite_color_wrapper"[^>]*>/]
+    refute_includes color_wrapper, "col-span-full"
+
+    # ...but a field with its own `wrapper: {class: "col-span-full"}` keeps it,
+    # even inside the multi-column section — field-level col-span always wins.
+    website_wrapper = response.body[/<div[^>]*id="kitchen_sink_website_wrapper"[^>]*>/]
+    assert_includes website_wrapper, "col-span-full"
   end
 
   test "a definition without form_layout still renders the single grid" do

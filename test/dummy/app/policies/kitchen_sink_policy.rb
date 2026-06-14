@@ -1,4 +1,9 @@
 class KitchenSinkPolicy < ::ResourcePolicy
+  # Interactive action — gated in the policy (record-typed), per house style.
+  def reconfigure?
+    record.is_a?(KitchenSink)
+  end
+
   # Core actions
 
   # def create?
