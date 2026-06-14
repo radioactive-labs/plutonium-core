@@ -1,3 +1,9 @@
+## [0.60.0] - 2026-06-14
+
+### 🚀 Features
+
+- *(generators)* Add resend-invite action to rodauth admin
+- *(forms)* Form sectioning DSL (form_layout / section / ungrouped) (#61)
 ## [0.59.0] - 2026-06-13
 
 ### 🚀 Features
