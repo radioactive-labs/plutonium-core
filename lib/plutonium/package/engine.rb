@@ -35,16 +35,6 @@ module Plutonium
           end
         end
       end
-
-      class_methods do
-        # Shell variant for this engine's controllers (:modern / :plain /
-        # :classic). Overrides the global Plutonium.configuration.shell and is
-        # itself overridden by a controller's own `shell`. Unset (nil) inherits.
-        def shell(value = nil)
-          @shell = value unless value.nil?
-          @shell
-        end
-      end
     end
   end
 end

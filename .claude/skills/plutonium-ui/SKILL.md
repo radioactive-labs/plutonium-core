@@ -509,10 +509,15 @@ end
 `:plain` keeps the Topbar but drops the icon rail. **Shell resolves global → engine → controller**, each overriding the one above (`nil` falls through); read it with `controller.shell`:
 
 ```ruby
-config.shell = :plain                       # 1. global default
-class CustomerPortal::Engine; shell :plain;  # 2. per-engine (lib/engine.rb)
-class DashboardController; shell :modern;     # 3. per-controller (overrides engine/global)
+config.shell = :plain                        # 1. global default
+# 2. per-engine — inside the engine's config.after_initialize (with scope_to_entity)
+class CustomerPortal::Engine
+  config.after_initialize { shell :plain }
+end
+class DashboardController; shell :modern; end # 3. per-controller (overrides engine/global)
 ```
+
+`shell` takes a symbol so the class body works too, but the generated engine already has a `config.after_initialize` block (home of `scope_to_entity`) — keep it there for consistency.
 
 Alongside `shell`, the controller-only `rail` DSL flips just the rail (inherited `class_attribute`, so a portal opts in/out once in its concern) — `rail false` / `rail true`; `rail nil` (default) inherits the resolved shell, `rail?` reads the resolved value:
 

@@ -32,11 +32,14 @@ The shell resolves across three layers, each overriding the one above it:
 # 1. Global default (config/initializers/plutonium.rb)
 Plutonium.configure { |config| config.shell = :modern }
 
-# 2. Per-engine — set it on a portal/package engine (lib/engine.rb)
+# 2. Per-engine — set it on a portal engine (lib/engine.rb)
 module CustomerPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    shell :plain   # this whole portal is rail-less
+
+    config.after_initialize do
+      shell :plain   # this whole portal is rail-less
+    end
   end
 end
 
@@ -45,6 +48,8 @@ class DashboardController < ResourceController
   shell :modern   # opt this controller back into the rail
 end
 ```
+
+`shell` takes a plain symbol, so it's safe in the class body too — but the generated engine already has a `config.after_initialize` block (where `scope_to_entity` lives), so keeping it there is the consistent home.
 
 An unset engine/controller value (`nil`) falls through to the next layer. Read the resolved value with the `shell` helper (`controller.shell`).
 

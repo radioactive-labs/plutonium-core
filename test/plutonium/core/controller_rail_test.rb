@@ -118,4 +118,12 @@ class Plutonium::Core::ControllerRailTest < ActiveSupport::TestCase
       refute klass.new.rail?
     end
   end
+
+  test "shell is registered as a helper method" do
+    assert_includes build_controller_class._helper_methods, :shell
+  end
+
+  test "shell is callable as a public method" do
+    assert_includes build_controller_class.new.public_methods, :shell
+  end
 end

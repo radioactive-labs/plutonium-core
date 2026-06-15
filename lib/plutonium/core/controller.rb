@@ -73,16 +73,11 @@ module Plutonium
         shell == :modern
       end
 
-      # Resolved shell variant for this request: controller override, else the
-      # engine's shell, else the global Plutonium.configuration.shell.
       def shell
         return _shell unless _shell.nil?
 
         engine = current_engine
-        engine_shell = engine.shell unless engine == Rails.application.class
-        return engine_shell unless engine_shell.nil?
-
-        Plutonium.configuration.shell
+        (engine == Rails.application.class) ? Plutonium.configuration.shell : engine.shell
       end
 
       private
