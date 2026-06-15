@@ -12,6 +12,14 @@ module Plutonium
 
         def attribute_options = {}
 
+        def inputs = {}
+
+        def validations = []
+
+        def imported_validate_fn = nil
+
+        def form_layout_sections = nil
+
         def defined_structured_inputs = {}
       end
 

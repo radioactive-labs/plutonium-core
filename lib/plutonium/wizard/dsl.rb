@@ -34,8 +34,7 @@ module Plutonium
             fields: capture,
             on_submit: capture.delete_hook(:on_submit),
             on_rollback: capture.delete_hook(:on_rollback),
-            using_spec: capture.using_spec,
-            form_layout: capture.form_layout_sections
+            using_spec: capture.using_spec
           )
         end
 
