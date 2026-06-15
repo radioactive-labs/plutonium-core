@@ -18,15 +18,39 @@ If you're starting fresh, use `:modern`. `:classic` exists so apps upgrading fro
 
 ## Shell variants & the icon rail
 
-`config.shell` selects the chrome for the whole app:
+The shell variant selects the page chrome:
 
 - `:modern` (default) — Topbar plus the desktop icon rail.
-- `:plain` — Topbar but **no** icon rail. The Topbar is kept; only the rail is removed, so the whole app is rail-less.
+- `:plain` — Topbar but **no** icon rail. The Topbar is kept; only the rail is removed, so the surface is rail-less.
 - `:classic` — legacy Header/Sidebar (upgrade paths only).
 
-### Per-controller / per-portal override
+### Resolving the shell (global → engine → controller)
 
-Any Plutonium resource controller exposes a class-level `rail` DSL that overrides the shell default. It's a `class_attribute`, so it's inherited: a portal opts its entire surface in or out by calling `rail false` (or `rail true`) once in its controller concern.
+The shell resolves across three layers, each overriding the one above it:
+
+```ruby
+# 1. Global default (config/initializers/plutonium.rb)
+Plutonium.configure { |config| config.shell = :modern }
+
+# 2. Per-engine — set it on a portal/package engine (lib/engine.rb)
+module CustomerPortal
+  class Engine < Rails::Engine
+    include Plutonium::Portal::Engine
+    shell :plain   # this whole portal is rail-less
+  end
+end
+
+# 3. Per-controller — overrides the engine/global default for one controller (and subclasses)
+class DashboardController < ResourceController
+  shell :modern   # opt this controller back into the rail
+end
+```
+
+An unset engine/controller value (`nil`) falls through to the next layer. Read the resolved value with the `shell` helper (`controller.shell`).
+
+### `rail` — a controller-level rail toggle
+
+Alongside `shell`, any resource controller exposes a class-level `rail` DSL that flips just the icon rail without changing the shell. It's a `class_attribute`, so it's inherited — a portal opts its entire surface in or out by calling `rail false` (or `rail true`) once in its controller concern:
 
 ```ruby
 module CustomerPortal
@@ -39,7 +63,7 @@ module CustomerPortal
 end
 ```
 
-`rail nil` (the default) inherits the shell default — the rail shows when `config.shell == :modern`. Read the resolved value with the `rail?` predicate.
+`rail nil` (the default) inherits the resolved shell — the rail shows when the resolved `shell == :modern`. Read the resolved value with the `rail?` predicate.
 
 ### Stable CSS hooks
 

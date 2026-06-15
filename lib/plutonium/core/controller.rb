@@ -47,7 +47,8 @@ module Plutonium
         helper_method :registered_resources
 
         class_attribute :_rail_enabled, instance_writer: false, default: nil
-        helper_method :rail?
+        class_attribute :_shell, instance_writer: false, default: nil
+        helper_method :rail?, :shell
       end
 
       class_methods do
@@ -56,6 +57,12 @@ module Plutonium
         def rail(enabled)
           self._rail_enabled = enabled
         end
+
+        # Set the shell variant for this controller and its subclasses,
+        # overriding the engine/global default. nil (default) inherits.
+        def shell(value)
+          self._shell = value
+        end
       end
 
       # Whether the modern icon rail is active for this request. Resolves the
@@ -63,7 +70,19 @@ module Plutonium
       # Public: the resource layout calls `controller.rail?`.
       def rail?
         return _rail_enabled unless _rail_enabled.nil?
-        Plutonium.configuration.shell == :modern
+        shell == :modern
+      end
+
+      # Resolved shell variant for this request: controller override, else the
+      # engine's shell, else the global Plutonium.configuration.shell.
+      def shell
+        return _shell unless _shell.nil?
+
+        engine = current_engine
+        engine_shell = engine.shell unless engine == Rails.application.class
+        return engine_shell unless engine_shell.nil?
+
+        Plutonium.configuration.shell
       end
 
       private

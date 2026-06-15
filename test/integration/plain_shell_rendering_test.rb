@@ -58,4 +58,14 @@ class PlainShellRenderingTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, 'classList.toggle("pu-no-rail"'
   end
+
+  test "engine-level shell makes the whole portal rail-less" do
+    AdminPortal::Engine.shell(:plain)
+    get "/admin/kitchen_sinks"
+    assert_response :success
+    refute_includes response.body, 'data-controller="sidebar icon-rail"'
+    assert_match(/<html[^>]*class="[^"]*pu-no-rail/, response.body)
+  ensure
+    AdminPortal::Engine.instance_variable_set(:@shell, nil)
+  end
 end

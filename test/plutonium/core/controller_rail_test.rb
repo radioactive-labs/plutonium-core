@@ -76,4 +76,46 @@ class Plutonium::Core::ControllerRailTest < ActiveSupport::TestCase
   test "rail? is callable as a public method" do
     assert_includes build_controller_class.new.public_methods, :rail?
   end
+
+  test "shell falls back to the global config when nothing overrides it" do
+    with_shell(:plain) do
+      assert_equal :plain, build_controller_class.new.shell
+    end
+  end
+
+  test "controller shell DSL overrides the global default" do
+    klass = build_controller_class
+    klass.shell :classic
+    with_shell(:modern) do
+      assert_equal :classic, klass.new.shell
+    end
+  end
+
+  test "engine shell overrides the global default when the controller is unset" do
+    engine = Class.new { def self.shell = :plain }
+    controller = build_controller_class.new
+    controller.define_singleton_method(:current_engine) { engine }
+    with_shell(:modern) do
+      assert_equal :plain, controller.shell
+    end
+  end
+
+  test "controller shell overrides the engine shell" do
+    engine = Class.new { def self.shell = :plain }
+    klass = build_controller_class
+    klass.shell :classic
+    controller = klass.new
+    controller.define_singleton_method(:current_engine) { engine }
+    with_shell(:modern) do
+      assert_equal :classic, controller.shell
+    end
+  end
+
+  test "rail? follows the resolved shell" do
+    klass = build_controller_class
+    klass.shell :plain
+    with_shell(:modern) do
+      refute klass.new.rail?
+    end
+  end
 end

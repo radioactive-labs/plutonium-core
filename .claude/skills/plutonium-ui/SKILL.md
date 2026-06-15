@@ -506,7 +506,15 @@ Plutonium.configure do |config|
 end
 ```
 
-`:plain` keeps the Topbar but drops the icon rail. Override per-controller (and so per-portal, since it's an inherited `class_attribute`) with the `rail` DSL — `rail false` / `rail true`; `rail nil` (default) inherits the shell default, `rail?` reads the resolved value:
+`:plain` keeps the Topbar but drops the icon rail. **Shell resolves global → engine → controller**, each overriding the one above (`nil` falls through); read it with `controller.shell`:
+
+```ruby
+config.shell = :plain                       # 1. global default
+class CustomerPortal::Engine; shell :plain;  # 2. per-engine (lib/engine.rb)
+class DashboardController; shell :modern;     # 3. per-controller (overrides engine/global)
+```
+
+Alongside `shell`, the controller-only `rail` DSL flips just the rail (inherited `class_attribute`, so a portal opts in/out once in its concern) — `rail false` / `rail true`; `rail nil` (default) inherits the resolved shell, `rail?` reads the resolved value:
 
 ```ruby
 module CustomerPortal::Concerns::Controller

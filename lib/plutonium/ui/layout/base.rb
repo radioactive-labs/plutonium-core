@@ -52,7 +52,7 @@ module Plutonium
         #   signal) for non-classic shells, since Turbo Drive does not update
         #   <html> attributes across cross-URL visits.
         def render_pre_paint_scripts
-          manage_no_rail = Plutonium.configuration.shell != :classic
+          manage_no_rail = pre_paint_shell != :classic
           script do
             raw(safe(<<~JS))
               (function () {
@@ -79,6 +79,11 @@ module Plutonium
             JS
           end
         end
+
+        # Shell variant used by pre-paint scripts. Base uses the global config
+        # (safe for non-resource layouts whose controllers lack #shell);
+        # ResourceLayout overrides this to the resolved shell.
+        def pre_paint_shell = Plutonium.configuration.shell
 
         def render_body(&)
           body(**body_attributes) {

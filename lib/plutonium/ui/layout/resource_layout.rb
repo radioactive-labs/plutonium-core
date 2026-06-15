@@ -8,6 +8,12 @@ module Plutonium
         # the controller's resolution (shell default + per-controller `rail`).
         def rail? = controller.rail?
 
+        def shell = controller.shell
+
+        # Override Base's seam so all pre-paint shell logic uses the resolved
+        # (controller/engine/global) shell rather than only the global config.
+        def pre_paint_shell = shell
+
         # Sets pu-rail-pinned immediately on initial page load so the rail
         # renders in its pinned state from the first frame. Turbo navigations
         # are handled by the turbo:before-render listener in Base. Skipped
@@ -34,13 +40,13 @@ module Plutonium
         # Scoped to the modern family — :classic keeps its own offsets.
         def html_attributes
           attrs = super
-          return attrs if Plutonium.configuration.shell == :classic
+          return attrs if shell == :classic
 
           rail? ? attrs : mix(attrs, {class: "pu-no-rail"})
         end
 
         def main_attributes
-          classes = if Plutonium.configuration.shell == :classic
+          classes = if shell == :classic
             "pt-20 lg:ml-64"
           else
             rail? ? "pt-16 pb-6 px-6 lg:pl-20" : "pt-16 pb-6 px-6"
