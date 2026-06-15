@@ -17,6 +17,7 @@ module Plutonium
           row.status ||= "in_progress"
           row.data = state.data
           row.tracked_records = state.persisted
+          row.visited = state.visited
           row.owner = state.owner
           row.anchor = state.anchor
           row.scope = state.scope
@@ -28,7 +29,7 @@ module Plutonium
 
         def complete(instance_key)
           row = Session.find_by!(instance_key: instance_key)
-          row.update!(status: "completed", completed_at: Time.current, data: {}, tracked_records: {})
+          row.update!(status: "completed", completed_at: Time.current, data: {}, tracked_records: {}, visited: [])
         end
 
         def clear(instance_key)
@@ -56,6 +57,7 @@ module Plutonium
             status: row.status,
             data: row.data,
             persisted: row.tracked_records,
+            visited: row.visited,
             owner: row.owner,
             anchor: row.anchor,
             scope: row.scope,

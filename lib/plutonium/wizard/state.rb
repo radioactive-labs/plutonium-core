@@ -5,8 +5,8 @@ module Plutonium
     # In-memory snapshot of one wizard instance's stored state, exchanged between
     # the {Store} and the runner. Independent of any persistence backend.
     #
-    # +data+ and +persisted+ default to an empty hash so callers never have to
-    # nil-check them.
+    # +data+ and +persisted+ default to an empty hash, +visited+ to an empty
+    # array, so callers never have to nil-check them.
     State = Struct.new(
       :wizard,
       :instance_key,
@@ -14,6 +14,7 @@ module Plutonium
       :status,
       :data,
       :persisted,
+      :visited,
       :owner,
       :anchor,
       :scope,
@@ -23,6 +24,8 @@ module Plutonium
       def data = self[:data] || {}
 
       def persisted = self[:persisted] || {}
+
+      def visited = self[:visited] || []
     end
   end
 end

@@ -26,6 +26,9 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
 
       t.public_send(json_type, :data, null: false, default: {})
       t.public_send(json_type, :tracked_records, null: false, default: {})
+      # Steps the user has actually visited+validated (§6.3 completeness). A
+      # zero-validation step is only "complete" once it's been visited.
+      t.public_send(json_type, :visited, null: false, default: [])
 
       t.datetime :expires_at
       t.datetime :completed_at

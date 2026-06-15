@@ -66,11 +66,12 @@ module Plutonium
 
         stage(params)
         run_on_submit(step) if step.on_submit
+        @state.visited |= [step.key.to_s]
         @state.current_step = next_visible_after(step)&.key&.to_s
         persist_state
         Result.new(ok: true)
       rescue ActiveRecord::RecordInvalid => e
-        Result.new(ok: false, errors: e.record.errors.group_by_attribute)
+        Result.new(ok: false, errors: message_errors(e.record))
       rescue StepError => e
         Result.new(ok: false, errors: {e.attribute => [e.message]})
       end
@@ -120,10 +121,16 @@ module Plutonium
         end
       rescue ActiveRecord::RecordInvalid => e
         revert_completing!
-        Result.new(ok: false, errors: e.record.errors.group_by_attribute)
+        Result.new(ok: false, errors: message_errors(e.record))
       rescue StepError => e
         revert_completing!
         Result.new(ok: false, errors: {e.attribute => [e.message]})
+      rescue
+        # `lock_for_completion!` committed `completing` in its own transaction
+        # before `execute` ran (§6.2). Any hard failure here must revert that row
+        # to `in_progress` so the user can retry, then propagate.
+        revert_completing!
+        raise
       end
 
       private
@@ -140,11 +147,18 @@ module Plutonium
       def persist_state
         @store.write(@instance_key, @state, cleanup_after: @wizard_class.cleanup_after)
       rescue ActiveRecord::RecordNotUnique
-        # Concurrent creation raced us to the unique instance_key index; re-read the
-        # existing row and proceed (§ carry-forward learning). The data we staged is
-        # already in @state; a subsequent write will reconcile it.
+        # Concurrent creation raced us to the unique instance_key index. Re-read the
+        # existing row and merge the data/cursor/visited we just staged onto it, then
+        # write once more so this advance's work isn't lost (§6.2 carry-forward).
         existing = @store.read(@instance_key)
-        @state = existing if existing
+        return unless existing
+
+        existing.data = existing.data.merge(@state.data)
+        existing.persisted = existing.persisted.merge(@state.persisted)
+        existing.visited |= @state.visited
+        existing.current_step = @state.current_step
+        @state = existing
+        @store.write(@instance_key, @state, cleanup_after: @wizard_class.cleanup_after)
       end
 
       def step_for(key)
@@ -171,13 +185,13 @@ module Plutonium
         merged = @state.data.merge(params)
         errors = {}
         imported = step.imported_validate_fn&.call(merged)
-        errors.merge!(imported) if imported
+        errors.merge!(stringify_messages(imported)) if imported
         errors.merge!(inline_errors(step, merged)) { |_k, a, b| Array(a) + Array(b) }
         errors.reject { |_attr, msgs| Array(msgs).blank? }
       end
 
       # Run the step's inline `validates` against a transient ActiveModel built from
-      # the union schema, returning {attribute => [messages]} keyed by symbol.
+      # the union schema, returning {attribute => [String messages]} keyed by symbol.
       def inline_errors(step, merged)
         validations = step.validations
         return {} if validations.blank?
@@ -185,7 +199,7 @@ module Plutonium
         klass = inline_validator_class(validations)
         obj = klass.new(merged)
         obj.valid?
-        obj.errors.group_by_attribute
+        message_errors(obj)
       end
 
       def inline_validator_class(validations)
@@ -193,6 +207,10 @@ module Plutonium
         Class.new do
           include ActiveModel::Model
           include ActiveModel::Attributes
+
+          # Anonymous classes have no name, which breaks `error.message`'s
+          # translation lookup (it calls `model_name`). Supply a stable one.
+          def self.model_name = ActiveModel::Name.new(self, nil, "WizardStep")
 
           schema.each { |name, type| attribute(name, type) }
 
@@ -244,10 +262,16 @@ module Plutonium
         Array(@state.persisted[step.key.to_s]).filter_map { |gid| GlobalID::Locator.locate(gid) }
       end
 
-      # The first visible non-review step that hasn't been visited+validated, i.e.
-      # whose currently-staged data fails its validations (§6.3 completeness).
+      # The first visible non-review step that hasn't been visited+validated (§6.3):
+      # a step is incomplete if it was never visited OR its staged data is invalid.
+      # A zero-validation step is therefore NOT complete until visited, so a user
+      # can't skip it and still finalize. Branch-hidden steps fall out of
+      # `visible_path` and are excluded naturally.
       def first_incomplete_visible
-        visible_path.reject(&:review?).find { |step| validate(step, {}).any? }
+        visited = @state.visited
+        visible_path.reject(&:review?).find do |step|
+          !visited.include?(step.key.to_s) || validate(step, {}).any?
+        end
       end
 
       # Drop staged data for attributes not owned by a currently-visible step (§6.3
@@ -295,6 +319,7 @@ module Plutonium
           status: "in_progress",
           data: {},
           persisted: {},
+          visited: [],
           owner:,
           anchor:,
           scope:,
@@ -303,7 +328,20 @@ module Plutonium
       end
 
       def wizard_errors
-        @wizard.errors.group_by_attribute.transform_values { |errs| errs.map(&:message) }
+        message_errors(@wizard)
+      end
+
+      # Normalize a model's errors to {attribute_sym => [String messages]} (§6.1).
+      def message_errors(obj)
+        obj.errors.group_by_attribute.transform_values { |errs| errs.map(&:message) }
+      end
+
+      # Normalize a {attribute => [ActiveModel::Error | String]} hash (e.g. from
+      # `imported_validate_fn`) to {attribute => [String messages]} (§6.1).
+      def stringify_messages(errors)
+        errors.transform_values do |msgs|
+          Array(msgs).map { |m| m.respond_to?(:message) ? m.message : m }
+        end
       end
 
       # Accumulates the records passed to the `persist` macro inside `on_submit`.

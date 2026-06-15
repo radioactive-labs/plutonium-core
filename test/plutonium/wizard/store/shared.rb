@@ -5,11 +5,12 @@
 # set @store in setup.
 module WizardStoreBehavior
   def test_write_then_read_roundtrip
-    st = build_state(data: {"a" => 1})
+    st = build_state(data: {"a" => 1}, visited: ["one"])
     @store.write(st.instance_key, st, cleanup_after: 1.day)
     got = @store.read(st.instance_key)
     refute_nil got
     assert_equal({"a" => 1}, got.data)
+    assert_equal ["one"], got.visited
     assert_equal "in_progress", got.status
     assert_equal "W", got.wizard
     assert_equal st.instance_key, got.instance_key
@@ -36,6 +37,7 @@ module WizardStoreBehavior
     assert_equal "completed", got.status
     assert_empty got.data
     assert_empty got.persisted
+    assert_empty got.visited
   end
 
   def test_completed_query

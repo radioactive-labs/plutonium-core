@@ -26,6 +26,7 @@ module Plutonium
           state.status = "completed"
           state.data = {}
           state.persisted = {}
+          state.visited = []
           state
         end
 

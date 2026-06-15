@@ -81,6 +81,33 @@ module Plutonium
         end
       end
 
+      # --- a wizard whose execute raises a hard error ---
+      class ExecuteRaises < Plutonium::Wizard::Base
+        step(:a) do
+          attribute :go, :string
+          validates :go, presence: true
+        end
+        review label: "R"
+
+        def execute
+          raise "boom"
+        end
+      end
+
+      # --- a wizard with a zero-validation always-visible step after a required one ---
+      class WithSkippable < Plutonium::Wizard::Base
+        step(:a) do
+          attribute :go, :string
+          validates :go, presence: true
+        end
+        step(:b) do
+          attribute :note, :string
+        end
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
       setup do
         Plutonium::Wizard::Session.delete_all
         Organization.delete_all if defined?(Organization)
@@ -153,6 +180,10 @@ module Plutonium
         refute res.ok?
         assert res.errors.key?(:name), "imported validation should surface"
         assert res.errors.key?(:extra), "inline validation should surface"
+        # §6.1: error values are normalized to plain String messages, never
+        # ActiveModel::Error objects.
+        assert_kind_of String, res.errors[:name].first
+        assert_kind_of String, res.errors[:extra].first
       end
 
       test "nil imported_validate_fn (validate:false) is nil-safe" do
@@ -308,6 +339,97 @@ module Plutonium
         assert first.completed?
         second = build_runner(W, store: store, key: "ar-k").finalize
         refute second.completed?
+      end
+
+      # ---- finalize hard failure reverts completing → in_progress (§6.2) ----
+
+      test "finalize hard execute error reverts completing and re-raises" do
+        Plutonium::Wizard::Session.delete_all
+        store = Plutonium::Wizard::Store::ActiveRecord.new
+        runner = build_runner(ExecuteRaises, store: store, key: "ar-raise")
+        runner.advance(:a, {"go" => "yes"})
+
+        assert_raises(RuntimeError) do
+          build_runner(ExecuteRaises, store: store, key: "ar-raise").finalize
+        end
+
+        row = Plutonium::Wizard::Session.find_by!(instance_key: "ar-raise")
+        assert row.status_in_progress?, "row must revert to in_progress so the user can retry"
+      end
+
+      # ---- RecordNotUnique recovery preserves staged data (Fix 3) ----
+
+      # A store that raises RecordNotUnique on its FIRST write (simulating a
+      # concurrent INSERT racing us to the unique instance_key index) and serves a
+      # pre-existing row from #read, so the runner must merge + re-write.
+      class RacingStore < Plutonium::Wizard::Store::Memory
+        def initialize(existing)
+          super()
+          @existing = existing
+          @raised = false
+        end
+
+        def read(key)
+          @rows[key] ? super : @existing.dup
+        end
+
+        def write(key, state, cleanup_after:)
+          unless @raised
+            @raised = true
+            raise ActiveRecord::RecordNotUnique, "raced"
+          end
+          super
+        end
+      end
+
+      test "RecordNotUnique recovery merges staged data onto the existing row and re-writes" do
+        existing = Plutonium::Wizard::State.new(
+          wizard: W.name, instance_key: "race", current_step: "a",
+          status: "in_progress", data: {"pre" => "kept"}, persisted: {}, visited: []
+        )
+        store = RacingStore.new(existing)
+        runner = build_runner(W, store: store, key: "race")
+        res = runner.advance(:a, {"go" => "yes"})
+        assert res.ok?
+
+        stored = store.read("race")
+        assert_equal "kept", stored.data["pre"], "pre-existing data must survive the race"
+        assert_equal "yes", stored.data["go"], "freshly staged data must survive the race"
+        assert_includes stored.visited, "a"
+      end
+
+      # ---- visited-set completeness (§6.3) ----
+
+      test "finalize bounces to an unvisited zero-validation step, then completes once submitted" do
+        runner = build_runner(WithSkippable)
+        runner.advance(:a, {"go" => "yes"}) # a visited+valid; b not yet visited
+
+        # b has no validations but was never visited → finalize must redirect to it.
+        res = build_runner(WithSkippable).finalize
+        refute res.completed?
+        assert_equal :b, res.redirect_step
+
+        # Now visit b, then finalize succeeds.
+        build_runner(WithSkippable).advance(:b, {"note" => "hi"})
+        done = build_runner(WithSkippable).finalize
+        assert done.completed?
+        assert_equal :done, done.value
+      end
+
+      test "advance stamps the step into the visited set" do
+        runner = build_runner(WithSkippable)
+        runner.advance(:a, {"go" => "yes"})
+        assert_includes @store.read("k").visited, "a"
+      end
+
+      test "back does not change the visited set" do
+        runner = build_runner(WithSkippable)
+        runner.advance(:a, {"go" => "yes"})
+        runner = build_runner(WithSkippable)
+        runner.advance(:b, {"note" => "hi"})
+        runner = build_runner(WithSkippable)
+        runner.back
+        assert_equal %w[a b].sort, @store.read("k").visited.sort
       end
     end
   end
