@@ -1,3 +1,12 @@
+## [0.60.1] - 2026-06-15
+
+### 🚀 Features
+
+- *(layout)* First-class railless portal support
+
+### 🐛 Bug Fixes
+
+- *(forms)* Skip section fields not in the permitted set instead of raising
 ## [0.60.0] - 2026-06-14
 
 ### 🚀 Features
