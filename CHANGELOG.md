@@ -1,3 +1,8 @@
+## [0.60.4] - 2026-06-15
+
+### 🚀 Features
+
+- *(layout)* Drop the section divider rule, keep the accent bar
 ## [0.60.3] - 2026-06-15
 
 ### 🚀 Features
