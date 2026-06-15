@@ -15,9 +15,12 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Identity"
     assert_includes response.body, "Who this is"
-    assert_includes response.body, "Everything else"
     assert_includes response.body, %(name="kitchen_sink[name]")
     assert_includes response.body, %(name="kitchen_sink[favorite_color]")
+    # No `ungrouped` label is declared, so leftover fields render last with no
+    # heading — the field still appears, the bucket has no chrome.
+    refute_includes response.body, "Everything else"
+    assert_includes response.body, %(name="kitchen_sink[age]")
   end
 
   test "collapsible section renders a details element" do
@@ -57,9 +60,10 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     # :all_absent lists only :never_permitted, which is never in the permitted
     # set, so the section resolves to zero fields — no heading, no chrome.
     refute_includes response.body, "All Absent Section"
-    # ...but sibling sections that do have fields still render.
+    # ...but sibling sections that do have fields still render, as do the
+    # unheaded ungrouped leftovers.
     assert_includes response.body, "Identity"
-    assert_includes response.body, "Everything else"
+    assert_includes response.body, %(name="kitchen_sink[age]")
   end
 
   test "fields in a multi-column section flow into grid cells, not full rows" do

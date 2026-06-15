@@ -13,7 +13,7 @@ module Plutonium
             @grid_class = grid_class
           end
 
-          SECTION_CLASS = "space-y-5 border-t border-[var(--pu-border)] pt-7 first:border-t-0 first:pt-0"
+          SECTION_CLASS = "space-y-5 pt-7 first:pt-0"
           # A short primary accent rule to the left of the heading — anchors the
           # section and adds a touch of brand. Shared by the grouped <div> header
           # and the collapsible <summary> so both read the same.
