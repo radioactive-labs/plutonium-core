@@ -19,7 +19,7 @@ Entry point for all Plutonium work. Does three things:
 - **For anything touching tenant scoping** — load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
 - **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
 
-## The 8 skills
+## The skills
 
 | Skill | Covers |
 |---|---|
@@ -30,6 +30,7 @@ Entry point for all Plutonium work. Does three things:
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
 | **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
 | **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
+| **[[plutonium-wizard]]** | Multi-step flows — the wizard DSL (`step`/`review`/`using:`/`condition:`, per-step `on_submit`/`persist`/`on_rollback`, `execute`), anchoring & resume, one-time wizards + gate, registration (`wizard` macro + `register_wizard`), storage/config + SweepJob |
 
 ## Greenfield bootstrap bundle
 
@@ -65,6 +66,7 @@ Add when relevant:
 | Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
 | Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
 | Write tests for a resource, run `pu:test:scaffold`, include `Plutonium::Testing::*` concerns | **[[plutonium-testing]]** |
+| Build a multi-step flow — onboarding, checkout, branching create — register a `wizard` / `register_wizard`, gate a one-time wizard | **[[plutonium-wizard]]** |
 
 ## Resource architecture at a glance
 

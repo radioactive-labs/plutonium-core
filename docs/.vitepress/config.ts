@@ -88,6 +88,7 @@ export default defineConfig(withMermaid({
             { text: "Multi-tenancy", link: "/guides/multi-tenancy" },
             { text: "Search & Filtering", link: "/guides/search-filtering" },
             { text: "User Invites", link: "/guides/user-invites" },
+            { text: "Wizards", link: "/guides/wizards" },
           ]
         },
         {
@@ -156,6 +157,18 @@ export default defineConfig(withMermaid({
             { text: "Components", link: "/reference/ui/components" },
             { text: "Layouts", link: "/reference/ui/layouts" },
             { text: "Assets", link: "/reference/ui/assets" },
+          ]
+        },
+        {
+          text: "Wizard",
+          collapsed: false,
+          items: [
+            { text: "Overview", link: "/reference/wizard/" },
+            { text: "DSL", link: "/reference/wizard/dsl" },
+            { text: "Anchoring & resume", link: "/reference/wizard/anchoring-resume" },
+            { text: "Storage & config", link: "/reference/wizard/storage-config" },
+            { text: "Registration & launch", link: "/reference/wizard/registration-launch" },
+            { text: "One-time", link: "/reference/wizard/one-time" },
           ]
         },
         {
