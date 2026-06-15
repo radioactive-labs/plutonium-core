@@ -106,11 +106,14 @@ module Plutonium
         end
       end
 
-      # PRG out of a completed wizard: clear the signed token cookie and redirect to
-      # the outcome value's URL (or the portal root as a fallback).
+      # PRG out of a completed wizard: clear the signed token cookie and redirect.
+      # A gate (§9 {Plutonium::Wizard::Gate}) may have stashed the user's intended
+      # destination in `session[:return_to]` before bouncing them into a one-time
+      # wizard; prefer that bounce target over the outcome value's URL.
       def complete_wizard!(result)
         cookies.delete(Plutonium::Wizard::Controller.token_cookie_key(current_wizard_class))
-        redirect_to wizard_completion_url(result.value), status: :see_other
+        target = session.delete(:return_to).presence || wizard_completion_url(result.value)
+        redirect_to target, status: :see_other
       end
 
       # --- rendering ---

@@ -1,0 +1,51 @@
+# frozen_string_literal: true
+
+module Plutonium
+  module Wizard
+    # The abandonment sweep (§8.1). Reaps idle wizard sessions whose +expires_at+
+    # has passed (status +in_progress+ or +completing+ — the latter catches a
+    # finalize that crashed mid-flight, §6.2). For each row it builds a {Runner}
+    # and calls +cancel+, which runs the wizard's cleanup — the per-step
+    # +on_rollback+ (or the default destroy) of every tracked record, in reverse
+    # order — and then deletes the row.
+    #
+    # This is **load-bearing for save-as-you-go wizards**: for +execute+-only
+    # wizards an unscheduled sweep merely leaves stale session rows (harmless), but
+    # for +on_submit+ wizards the sweep is the only thing that cleans up abandoned
+    # partial domain records. Hosts must schedule it (a periodic job / rake task).
+    #
+    # The job is idempotent and safe to re-run: a row already cleared is skipped,
+    # and an unconstantizable wizard class is skipped while the row is still reaped.
+    # +completed+ rows are never touched (the +sweepable+ scope excludes them).
+    class SweepJob < ActiveJob::Base
+      def perform(now: Time.current)
+        store = Store::ActiveRecord.new
+
+        Session.sweepable(now).find_each do |row|
+          sweep_row(row, store)
+        end
+      end
+
+      private
+
+      def sweep_row(row, store)
+        wizard_class = row.wizard.safe_constantize
+
+        if wizard_class
+          # `cancel` runs the wizard's cleanup (on_rollback/destroy tracked records)
+          # and then clears the row via the store.
+          Runner.new(
+            wizard_class: wizard_class,
+            store: store,
+            instance_key: row.instance_key
+          ).cancel
+        end
+
+        # Safety net: an unconstantizable wizard never ran `cancel` (so the row is
+        # still present), and a `cancel` failure shouldn't leave the row behind.
+        # `clear` is a no-op when the row is already gone.
+        store.clear(row.instance_key)
+      end
+    end
+  end
+end

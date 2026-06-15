@@ -2,6 +2,10 @@ AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"
+  register_wizard ::WelcomeWizard, at: "welcome"
+
+  # A page gated behind the one-time WelcomeWizard (see GatedController).
+  get "gated", to: "gated#index"
 
   register_resource ::User
   register_resource ::Organization
