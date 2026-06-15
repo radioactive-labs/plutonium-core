@@ -13,16 +13,26 @@ module Plutonium
             @grid_class = grid_class
           end
 
-          SECTION_CLASS = "space-y-4 border-t border-[var(--pu-border-muted)] pt-6 first:border-t-0 first:pt-0"
-          HEADING_CLASS = "text-base font-semibold text-[var(--pu-text)]"
-          SUMMARY_CLASS = "#{HEADING_CLASS} cursor-pointer select-none"
-          DESCRIPTION_CLASS = "text-sm text-[var(--pu-text-muted)]"
+          SECTION_CLASS = "space-y-5 border-t border-[var(--pu-border)] pt-7 first:border-t-0 first:pt-0"
+          # A short primary accent rule to the left of the heading — anchors the
+          # section and adds a touch of brand. Shared by the grouped <div> header
+          # and the collapsible <summary> so both read the same.
+          ACCENT_CLASS = "border-l-[3px] border-primary-500 pl-3.5"
+          HEADING_CLASS = "text-base font-semibold tracking-tight text-[var(--pu-text)]"
+          SUMMARY_CLASS = "#{HEADING_CLASS} #{ACCENT_CLASS} cursor-pointer select-none"
+          # font-normal resets the semibold inherited from a <summary> parent.
+          DESCRIPTION_CLASS = "mt-1 text-sm font-normal text-[var(--pu-text-muted)]"
 
           def view_template(&fields_block)
             if @section.collapsible?
               details(open: !@section.collapsed?, class: SECTION_CLASS) do
-                summary(class: SUMMARY_CLASS) { heading_text }
-                describe
+                # <summary> must be the first child of <details> and can't be
+                # wrapped, so the title text and its description both live inside
+                # it — keeping the description hugging the title under one accent.
+                summary(class: SUMMARY_CLASS) do
+                  plain heading_text
+                  describe
+                end
                 grid(&fields_block)
               end
             else
@@ -35,10 +45,15 @@ module Plutonium
 
           private
 
+          # Title + description grouped under one accented header so the
+          # description hugs the heading (mt-1) instead of inheriting the
+          # section's larger vertical rhythm.
           def header_block
             return if @section.ungrouped? && @section.options[:label].nil?
-            h3(class: HEADING_CLASS) { heading_text }
-            describe
+            div(class: ACCENT_CLASS) do
+              h3(class: HEADING_CLASS) { heading_text }
+              describe
+            end
           end
 
           def heading_text = @section.label
