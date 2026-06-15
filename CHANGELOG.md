@@ -1,3 +1,13 @@
+## [0.60.3] - 2026-06-15
+
+### 🚀 Features
+
+- *(layout)* Drop form_layout sections that resolve to zero fields
+- *(layout)* Refine form_layout section header styling
+
+### 🚜 Refactor
+
+- *(layout)* Move engine shell to Portal::Engine with live cascade
 ## [0.60.2] - 2026-06-15
 
 ### 🚀 Features
