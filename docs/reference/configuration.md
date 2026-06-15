@@ -35,7 +35,7 @@ Loads the baseline defaults for a given framework version. Call this first; late
 | `development` | `ENV["PLUTONIUM_DEV"]` | Development mode for the framework itself (local assets, hot reload, verbose errors). Query with `config.development?`. You rarely set this in an app — see [Development mode](#development-mode). |
 | `cache_discovery` | `true` outside `development` env | Cache resource/route discovery. Disable to pick up new resources without a reboot. |
 | `enable_hotreload` | `true` in `development` env | Hot-reload Plutonium components on change. |
-| `shell` | `:modern` | Chrome style: `:modern` (topbar + icon rail) or `:classic` (legacy header + sidebar, only for upgrades). See [Layouts](./ui/layouts). |
+| `shell` | `:modern` | Chrome style: `:modern` (topbar + icon rail), `:plain` (topbar, no icon rail), or `:classic` (legacy header + sidebar, only for upgrades). See [Layouts](./ui/layouts). |
 | `navii_host_url` | `"https://api.navii.dev"` | Host of the [Navii](https://navii.dev) avatar service used by [`Avatar`](./ui/components#avatar). The component appends `/avatar/:seed`. Repoint to self-host or proxy. |
 | `assets.logo` | `"plutonium.png"` | Brand logo asset. See [Assets](./ui/assets). |
 | `assets.favicon` | `"plutonium.ico"` | Favicon asset. |

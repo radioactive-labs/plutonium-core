@@ -1,12 +1,13 @@
 # Layouts
 
-The overall page chrome — topbar, sidebar, footer, body wrapping. Plutonium ships two shells; you can eject the templates or write a custom `ResourceLayout` for total control.
+The overall page chrome — topbar, sidebar, footer, body wrapping. Plutonium ships three shells; you can eject the templates or write a custom `ResourceLayout` for total control.
 
 ## Shell
 
 ```ruby
 Plutonium.configure do |config|
   config.shell = :modern     # default — topbar + icon rail
+  # config.shell = :plain    # topbar, no icon rail (rail-less app)
   # config.shell = :classic  # legacy header + sidebar (only when upgrading)
 end
 ```
@@ -14,6 +15,41 @@ end
 ::: tip `:classic` is only for upgrade paths
 If you're starting fresh, use `:modern`. `:classic` exists so apps upgrading from pre-`:modern` versions can preserve their chrome while migrating.
 :::
+
+## Shell variants & the icon rail
+
+`config.shell` selects the chrome for the whole app:
+
+- `:modern` (default) — Topbar plus the desktop icon rail.
+- `:plain` — Topbar but **no** icon rail. The Topbar is kept; only the rail is removed, so the whole app is rail-less.
+- `:classic` — legacy Header/Sidebar (upgrade paths only).
+
+### Per-controller / per-portal override
+
+Any Plutonium resource controller exposes a class-level `rail` DSL that overrides the shell default. It's a `class_attribute`, so it's inherited: a portal opts its entire surface in or out by calling `rail false` (or `rail true`) once in its controller concern.
+
+```ruby
+module CustomerPortal
+  module Concerns
+    module Controller
+      extend ActiveSupport::Concern
+      included { rail false }  # entire portal rail-less
+    end
+  end
+end
+```
+
+`rail nil` (the default) inherits the shell default — the rail shows when `config.shell == :modern`. Read the resolved value with the `rail?` predicate.
+
+### Stable CSS hooks
+
+Rail-less rendering exposes a few stable hooks for custom overrides:
+
+- `pu-topbar` — class on the Topbar nav.
+- `pu-sticky-footer` — class on the form sticky-footer div.
+- `html.pu-no-rail` — root class present whenever the current page is rail-less.
+
+A built-in rule cancels the desktop rail inset on `.pu-topbar` and `.pu-sticky-footer` under `html.pu-no-rail`; target these hooks to layer your own CSS.
 
 ## Eject the chrome for per-portal customization
 

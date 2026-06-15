@@ -176,7 +176,7 @@ class AdminController < PlutoniumController
 end
 ```
 
-`Plutonium::Auth::Rodauth(:name)` exposes `current_user`, `logout_url`, and `rodauth` in the controller.
+`Plutonium::Auth::Rodauth(:name)` exposes `current_user`, `logout_url`, and `rodauth` in the controller. It also adds a named accessor `current_<name>` aliased to `current_user` — e.g. `Rodauth(:admin)` gives `current_admin`. Read the signed-in account with `current_user` or its named alias (e.g. `current_admin`).
 
 For portal wiring (`AdminPortal::Concerns::Controller`), see [[plutonium-app]] › Portal controller concern.
 

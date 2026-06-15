@@ -4,11 +4,18 @@ module Plutonium
       class ResourceLayout < Base
         private
 
+        # Whether the modern icon rail is active for this request. Delegates to
+        # the controller's resolution (shell default + per-controller `rail`).
+        def rail? = controller.rail?
+
         # Sets pu-rail-pinned immediately on initial page load so the rail
         # renders in its pinned state from the first frame. Turbo navigations
-        # are handled by the turbo:before-render listener in Base.
+        # are handled by the turbo:before-render listener in Base. Skipped
+        # entirely when the layout renders no rail.
         def render_pre_paint_scripts
           super
+          return unless rail?
+
           script do
             raw(safe(<<~JS))
               (function () {
@@ -22,12 +29,21 @@ module Plutonium
           end
         end
 
+        # Adds `pu-no-rail` to <html> (server-side, no FOUC) so decoupled fixed
+        # chrome (Topbar, form StickyFooter) can cancel their rail insets.
+        # Scoped to the modern family — :classic keeps its own offsets.
+        def html_attributes
+          attrs = super
+          return attrs if Plutonium.configuration.shell == :classic
+
+          rail? ? attrs : mix(attrs, {class: "pu-no-rail"})
+        end
+
         def main_attributes
-          classes = case Plutonium.configuration.shell
-          when :modern
-            "pt-16 pb-6 px-6 lg:pl-20"
-          else
+          classes = if Plutonium.configuration.shell == :classic
             "pt-20 lg:ml-64"
+          else
+            rail? ? "pt-16 pb-6 px-6 lg:pl-20" : "pt-16 pb-6 px-6"
           end
 
           mix(super, {class: classes})
@@ -43,7 +59,7 @@ module Plutonium
           super
 
           render partial("resource_header")
-          render partial("resource_sidebar")
+          render partial("resource_sidebar") if rail?
         end
       end
     end

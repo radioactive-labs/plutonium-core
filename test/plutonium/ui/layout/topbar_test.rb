@@ -252,4 +252,9 @@ class Plutonium::UI::Layout::TopbarTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
+
+  test "nav has pu-topbar stable hook class" do
+    html = render_html(build_component)
+    assert_includes html, "pu-topbar"
+  end
 end

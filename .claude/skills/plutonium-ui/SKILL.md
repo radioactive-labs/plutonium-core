@@ -501,9 +501,21 @@ Show pages with `permitted_associations` (see [[plutonium-behavior]]) render a t
 ```ruby
 Plutonium.configure do |config|
   config.shell = :modern    # default — topbar + icon rail
+  # config.shell = :plain   # topbar, no icon rail (whole app rail-less)
   # config.shell = :classic # legacy header + sidebar (only when upgrading)
 end
 ```
+
+`:plain` keeps the Topbar but drops the icon rail. Override per-controller (and so per-portal, since it's an inherited `class_attribute`) with the `rail` DSL — `rail false` / `rail true`; `rail nil` (default) inherits the shell default, `rail?` reads the resolved value:
+
+```ruby
+module CustomerPortal::Concerns::Controller
+  extend ActiveSupport::Concern
+  included { rail false }  # entire portal rail-less
+end
+```
+
+Stable CSS hooks for rail-less overrides: `pu-topbar` (Topbar nav), `pu-sticky-footer` (form footer), and the `html.pu-no-rail` root class. A built-in rule cancels the desktop rail inset on the first two under `html.pu-no-rail`.
 
 ## Eject the chrome for per-portal customization
 

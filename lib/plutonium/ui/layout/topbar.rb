@@ -33,7 +33,7 @@ module Plutonium
 
         def view_template
           nav(
-            class: "fixed top-0 right-0 left-0 lg:left-14 z-30 h-12 " \
+            class: "pu-topbar fixed top-0 right-0 left-0 lg:left-14 z-30 h-12 " \
                    "bg-[var(--pu-surface)] border-b border-[var(--pu-border)] " \
                    "flex items-center gap-3 px-4",
             data: {

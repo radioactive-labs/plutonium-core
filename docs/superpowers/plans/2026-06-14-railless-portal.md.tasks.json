@@ -1,0 +1,51 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-14-railless-portal.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Controller rail DSL + rail? resolution",
+      "status": "completed",
+      "description": "**Goal:** Add inherited `rail` class DSL and `rail?` predicate to `Plutonium::Core::Controller`, defaulting from `config.shell`.\n\n**Files:** Modify lib/plutonium/core/controller.rb; create test/plutonium/core/controller_rail_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/core/controller.rb\", \"test/plutonium/core/controller_rail_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/core/controller_rail_test.rb\", \"acceptanceCriteria\": [\"rail? resolves shell default\", \"rail DSL overrides + inherits\", \"rail? public helper\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Gate ResourceLayout rendering on rail?",
+      "status": "completed",
+      "blockedBy": [1],
+      "description": "**Goal:** ResourceLayout delegates rail? to controller; skips sidebar partial, initial pin script, and main rail offset when rail-less; emits pu-no-rail on <html>.\n\n**Files:** Modify lib/plutonium/ui/layout/resource_layout.rb; create test/plutonium/ui/layout/resource_layout_rail_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/layout/resource_layout.rb\", \"test/plutonium/ui/layout/resource_layout_rail_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/layout/resource_layout_rail_test.rb\", \"acceptanceCriteria\": [\"rail? delegates\", \"sidebar/pin gated\", \"main_attributes branches\", \"pu-no-rail emitted\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Stable hooks + pu-no-rail CSS + asset build",
+      "status": "completed",
+      "description": "**Goal:** Add pu-topbar/pu-sticky-footer classes; CSS cancels lg:left-14 under html.pu-no-rail; rebuild assets via yarn build.\n\n**Files:** Modify topbar.rb, sticky_footer.rb, src/css/components.css; regenerate app/assets/plutonium.css + .min.js; modify topbar_test.rb, sticky_footer_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/layout/topbar.rb\", \"lib/plutonium/ui/form/components/sticky_footer.rb\", \"src/css/components.css\", \"app/assets/plutonium.css\", \"app/assets/plutonium.min.js\", \"test/plutonium/ui/layout/topbar_test.rb\", \"test/plutonium/ui/form/components/sticky_footer_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/ui/layout/topbar_test.rb test/plutonium/ui/form/components/sticky_footer_test.rb\", \"acceptanceCriteria\": [\"hook classes added\", \"CSS cancel rule\", \"assets rebuilt\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Integration test for plain vs modern shell",
+      "status": "completed",
+      "blockedBy": [1, 2, 3],
+      "description": "**Goal:** End-to-end: plain shell omits icon-rail + pin script, has pu-no-rail; modern unchanged.\n\n**Files:** create test/integration/plain_shell_rendering_test.rb\n\n```json:metadata\n{\"files\": [\"test/integration/plain_shell_rendering_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/plain_shell_rendering_test.rb\", \"acceptanceCriteria\": [\"plain rail-less e2e\", \"modern unchanged\", \"shell restored\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Named current_<account> Rodauth accessor",
+      "status": "completed",
+      "description": "**Goal:** Rodauth(name) exposes current_<name> aliased to current_user, both helper methods.\n\n**Files:** Modify lib/plutonium/auth/rodauth.rb; modify test/plutonium/auth/rodauth_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/auth/rodauth.rb\", \"test/plutonium/auth/rodauth_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/auth/rodauth_test.rb\", \"acceptanceCriteria\": [\"named accessor helper\", \"same account\", \"user name no-op safe\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Docs + config comments",
+      "status": "completed",
+      "blockedBy": [1, 2, 3, 5],
+      "description": "**Goal:** Document :plain shell, rail DSL, named accessor; comment shell config sites.\n\n**Files:** Modify lib/plutonium/configuration.rb, lib/generators/pu/core/install/templates/config/initializers/plutonium.rb, docs/, .claude/skills/\n\n```json:metadata\n{\"files\": [\"lib/plutonium/configuration.rb\", \"lib/generators/pu/core/install/templates/config/initializers/plutonium.rb\", \"docs\", \".claude/skills\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"config doc\", \"initializer comment\", \"docs+skills updated\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Fix final-review findings (pu-no-rail Turbo nav + plain offset)",
+      "status": "completed",
+      "description": "**Goal:** From the final holistic review: (1) the turbo:before-render listener in base.rb now toggles pu-no-rail (inverse of hasRail, gated to non-classic shells) so the class stays consistent across Turbo navigations; (2) main_attributes keys the modern-family offset off rail? so :plain+rail true gets lg:pl-20. Commit f60bb5cd.\n\n**Files:** lib/plutonium/ui/layout/base.rb, lib/plutonium/ui/layout/resource_layout.rb, test/plutonium/ui/layout/resource_layout_rail_test.rb, test/integration/plain_shell_rendering_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/layout/base.rb\", \"lib/plutonium/ui/layout/resource_layout.rb\", \"test/plutonium/ui/layout/resource_layout_rail_test.rb\", \"test/integration/plain_shell_rendering_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 rake test\", \"acceptanceCriteria\": [\"listener toggles pu-no-rail (non-classic)\", \"plain+rail true gets lg:pl-20\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-15T00:00:00Z"
+}

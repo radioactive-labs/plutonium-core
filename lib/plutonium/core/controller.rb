@@ -45,6 +45,25 @@ module Plutonium
         append_view_path File.expand_path("app/views", Plutonium.root)
         layout -> { turbo_frame_request? ? false : "resource" }
         helper_method :registered_resources
+
+        class_attribute :_rail_enabled, instance_writer: false, default: nil
+        helper_method :rail?
+      end
+
+      class_methods do
+        # Enable or disable the modern icon rail for this controller and its
+        # subclasses. nil (the default) inherits the global shell default.
+        def rail(enabled)
+          self._rail_enabled = enabled
+        end
+      end
+
+      # Whether the modern icon rail is active for this request. Resolves the
+      # per-controller `rail` setting, falling back to the shell default.
+      # Public: the resource layout calls `controller.rail?`.
+      def rail?
+        return _rail_enabled unless _rail_enabled.nil?
+        Plutonium.configuration.shell == :modern
       end
 
       private

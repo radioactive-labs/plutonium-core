@@ -67,6 +67,31 @@ class Plutonium::Auth::RodauthTest < ActiveSupport::TestCase
     assert_equal "Plutonium::Auth::Rodauth(:admin)", mod.inspect
   end
 
+  test "module includes named current_<account> helper method" do
+    mod = Plutonium::Auth::Rodauth.for(:admin)
+    controller_class = build_controller_class(mod)
+
+    assert_includes controller_class._helper_methods, :current_admin
+  end
+
+  test "named accessor returns the same account as current_user" do
+    mod = Plutonium::Auth::Rodauth.for(:admin)
+    controller_class = build_controller_class(mod)
+    controller = controller_class.new
+    account = Object.new
+    controller.send(:rodauth).rails_account = account
+
+    assert_same account, controller.send(:current_user)
+    assert_same account, controller.send(:current_admin)
+  end
+
+  test "for(:user) still defines current_user without error" do
+    mod = Plutonium::Auth::Rodauth.for(:user)
+    controller_class = build_controller_class(mod)
+
+    assert_includes controller_class._helper_methods, :current_user
+  end
+
   private
 
   def build_controller_class(mod)
@@ -75,7 +100,7 @@ class Plutonium::Auth::RodauthTest < ActiveSupport::TestCase
 
       # Stub rodauth method to avoid actual Rodauth dependency
       def rodauth(name = nil)
-        @mock_rodauth ||= Struct.new(:rails_account, :logout_path, :url_options=).new(nil, "/logout", nil)
+        @mock_rodauth ||= Struct.new(:rails_account, :logout_path, :url_options).new(nil, "/logout", nil)
       end
     end
   end

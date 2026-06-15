@@ -27,7 +27,8 @@ module Plutonium
     # @return [Float] the current defaults version
     attr_reader :defaults_version
 
-    # @return [Symbol] :classic (legacy Header/Sidebar) or :modern (Topbar/IconRail)
+    # @return [Symbol] :modern (Topbar/IconRail, default), :plain (Topbar, no
+    #   icon rail), or :classic (legacy Header/Sidebar).
     attr_accessor :shell
 
     # @return [String] host URL of the Navii avatar service (no path), used by

@@ -48,7 +48,11 @@ module Plutonium
         #   on <html> based on whether the incoming body contains an icon-rail,
         #   preventing layout shift on Turbo navigations between rail and non-rail
         #   pages. Initial-load rail-pinned is handled by ResourceLayout.
+        #   The same listener also keeps `pu-no-rail` in sync (inverse of the rail
+        #   signal) for non-classic shells, since Turbo Drive does not update
+        #   <html> attributes across cross-URL visits.
         def render_pre_paint_scripts
+          manage_no_rail = Plutonium.configuration.shell != :classic
           script do
             raw(safe(<<~JS))
               (function () {
@@ -68,6 +72,7 @@ module Plutonium
                     } else {
                       document.documentElement.classList.remove("pu-rail-pinned");
                     }
+                    #{'document.documentElement.classList.toggle("pu-no-rail", !hasRail);' if manage_no_rail}
                   });
                 } catch (e) {}
               })();

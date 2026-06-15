@@ -31,6 +31,11 @@ class Plutonium::UI::Form::Components::StickyFooterTest < Minitest::Test
     assert_includes outer_class, "gap-2"
   end
 
+  def test_outer_div_has_pu_sticky_footer_stable_hook
+    outer_class = capture_outer_div_class
+    assert_includes outer_class, "pu-sticky-footer"
+  end
+
   private
 
   def build_component

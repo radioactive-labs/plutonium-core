@@ -757,6 +757,15 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   }
 }
 
+/* Rail-less layouts (html.pu-no-rail): cancel the icon-rail inset on fixed
+   chrome so the topbar and form sticky footer span the full width. */
+@media (min-width: 1024px) {
+  html.pu-no-rail .pu-topbar,
+  html.pu-no-rail .pu-sticky-footer {
+    left: 0 !important;
+  }
+}
+
 /* Flyout: visibility controlled by Stimulus (data-flyout-open) via position:fixed */
 .icon-rail-parent {
   position: relative;
