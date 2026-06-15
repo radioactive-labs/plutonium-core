@@ -111,6 +111,7 @@ module Plutonium
 
     def extend_action_dispatch
       ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::MapperExtensions
+      ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::WizardRegistration
       ActionDispatch::Routing::RouteSet.prepend Plutonium::Routing::RouteSetExtensions
       Rails::Engine.include Plutonium::Routing::ResourceRegistration
     end

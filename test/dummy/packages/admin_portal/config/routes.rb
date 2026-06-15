@@ -1,6 +1,8 @@
 AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
+  register_wizard ::OnboardOrganizationWizard, at: "onboarding"
+
   register_resource ::User
   register_resource ::Organization
   register_resource ::OrganizationUser
