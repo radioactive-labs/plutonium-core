@@ -12,8 +12,9 @@ module Plutonium
     # The union `data` schema (§2.6) is built from inline `attribute name, type`
     # declarations recorded here as `attribute_schema` ({name => type}).
     #
-    # `using:` import (Task 3) is recorded as a marker (`using_spec`) and merged
-    # later; this object only captures inline declarations.
+    # `using:` import (a model — see FieldImporter) is recorded as a marker
+    # (`using_spec`) and merged lazily; this object only captures inline
+    # declarations and composes them over the resolved import (inline wins).
     class FieldCapture
       include Plutonium::Definition::DefineableProps
       include Plutonium::Definition::StructuredInputs

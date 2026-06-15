@@ -2,25 +2,32 @@
 
 module Plutonium
   module Wizard
-    # Resolves a step's `using:` option (§2.4) — importing a field surface from an
-    # **interaction** or a **resource definition** instead of re-declaring it.
+    # Resolves a step's `using:` option (§2.4) — importing a field surface from a
+    # **model (ActiveRecord class)** instead of re-declaring it.
+    #
+    # `using:` targets a model only. A `Plutonium::Resource::Definition` carries no
+    # link to its model (it's an empty class the controller binds at request time),
+    # so the only reliable direction is **model → definition**: the importer
+    # auto-resolves `"#{Model}Definition"` to overlay input styling, best-effort.
     #
     # The imported surface is:
-    #   - **attribute_schema** ({name => type}) — types from the interaction's
-    #     `attribute` declarations, or (for a definition) from the backing record
-    #     class's `attribute_types`.
-    #   - **inputs** ({name => {options:, block:}}) — the source's `input` config,
-    #     sliced to the imported names.
-    #   - **form_layout** — the source's `defined_form_layout`, filtered to the
-    #     imported fields (skipped when `layout: false`).
-    #   - **validate_fn** — runs the source's `valid?` over a data slice and keeps
+    #   - **attribute_schema** ({name => type}) — the field universe is
+    #     `Model.attribute_names` (filtered by selectors); types are
+    #     `Model.attribute_types[name].type`.
+    #   - **inputs** ({name => {options:, block:}}) — overlaid from the resolved
+    #     `<Model>Definition`'s `field`/`input` config (`as:`, options, labels),
+    #     sliced to the imported names. No definition → empty input config.
+    #   - **form_layout** — the resolved `<Model>Definition`'s `defined_form_layout`,
+    #     filtered to the imported fields, **plus a trailing ungrouped section** for
+    #     imported fields not named in any explicit section (skipped when
+    #     `layout: false`).
+    #   - **validate_fn** — runs a transient `Model.new(slice).valid?` and keeps
     #     errors only on the imported fields **plus `:base`** (skipped when
     #     `validate: false`).
     #
-    # Validation is *run-and-filtered* rather than cloned: AR/ActiveModel validators
-    # can't be cloned cleanly, and one mechanism covers both targets. Filtering to
-    # imported fields + `:base` is what prevents a partial model reporting presence
-    # errors for columns this step never collects.
+    # Validation is *run-and-filtered* rather than cloned: AR validators can't be
+    # cloned cleanly. Filtering to imported fields + `:base` is what prevents a
+    # partial model reporting presence errors for columns this step never collects.
     module FieldImporter
       # The resolved import surface for one `using:` declaration.
       Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, keyword_init: true) do
@@ -33,10 +40,11 @@ module Plutonium
       end
 
       class << self
-        # @param using [Class] an interaction or resource definition class
+        # @param using [Class] an ActiveRecord model class
         # @param opts [Hash] fields:/only:/except:/validate:/layout:/validation_context:
         # @return [Spec]
         def resolve(using:, opts:)
+          model = model!(using)
           opts ||= {}
           only = normalize(opts[:fields] || opts[:only])
           except = normalize(opts[:except]) || []
@@ -44,17 +52,33 @@ module Plutonium
           do_layout = opts.fetch(:layout, true)
           context = opts[:validation_context]
 
-          if interaction?(using)
-            from_interaction(using, only:, except:, do_validate:, do_layout:, context:)
-          else
-            from_definition(using, only:, except:, do_validate:, do_layout:, context:)
+          names = select(model.attribute_names.map(&:to_sym), only:, except:)
+          definition = "#{model.name}Definition".safe_constantize
+
+          schema = names.index_with { |n| record_type(model, n) }
+
+          validate_fn = build_validate(do_validate) do |slice|
+            record = model.new(string_slice(slice, names))
+            run_and_filter(record, names, context)
           end
+
+          Spec.new(
+            attribute_schema: schema,
+            inputs: inputs_for(definition, names),
+            form_layout: do_layout ? layout_for(definition, names) : nil,
+            validate_fn:
+          )
         end
 
         private
 
-        def interaction?(klass)
-          klass.is_a?(Class) && klass < Plutonium::Interaction::Base
+        # `using:` accepts a model class only. Anything else is a programming error.
+        def model!(using)
+          unless using.is_a?(Class) && using < ActiveRecord::Base
+            raise ArgumentError,
+              "using: expects a model class (an ActiveRecord::Base subclass), got #{using.inspect}"
+          end
+          using
         end
 
         def normalize(value)
@@ -66,85 +90,6 @@ module Plutonium
         def select(names, only:, except:)
           names = names.select { |n| only.include?(n) } if only
           names - except
-        end
-
-        # --- interaction target ---
-        #
-        # Types come straight from the interaction's `attribute :x, :type`
-        # declarations; validation instantiates the interaction and runs `valid?`.
-        def from_interaction(klass, only:, except:, do_validate:, do_layout:, context:)
-          names = select(klass.attribute_names.map(&:to_sym), only:, except:)
-          schema = names.index_with { |n| klass.attribute_types[n.to_s].type }
-
-          validate_fn = build_validate(do_validate) do |slice|
-            obj = klass.new(view_context: nil)
-            obj.attributes = string_slice(slice, names)
-            run_and_filter(obj, names, context)
-          end
-
-          Spec.new(
-            attribute_schema: schema,
-            inputs: klass.defined_inputs.slice(*names),
-            form_layout: do_layout ? layout_for(klass, names) : nil,
-            validate_fn:
-          )
-        end
-
-        # --- resource-definition target ---
-        #
-        # The field's TYPE comes from the backing record class
-        # (`Model.attribute_types`); the definition's `field`/`input` config (as:,
-        # options, label) is overlaid (input wins, matching the form pipeline).
-        # Validation runs against a transient `Model.new(slice)`.
-        #
-        # The importable surface is the union of the definition's `field` and
-        # `input` declarations — both render on the form — in field-then-input
-        # declaration order.
-        def from_definition(defn, only:, except:, do_validate:, do_layout:, context:)
-          model = model_class_for(defn)
-          fields = defn.defined_fields
-          inputs = defn.defined_inputs
-
-          available = (fields.keys + inputs.keys).map(&:to_sym).uniq
-          names = select(available, only:, except:)
-          schema = names.index_with { |n| record_type(model, n) }
-          imported_inputs = names.index_with { |n| overlay_field_input(fields[n], inputs[n]) }
-
-          validate_fn = build_validate(do_validate) do |slice|
-            record = model.new(string_slice(slice, names))
-            run_and_filter(record, names, context)
-          end
-
-          Spec.new(
-            attribute_schema: schema,
-            inputs: imported_inputs,
-            form_layout: do_layout ? layout_for(defn, names) : nil,
-            validate_fn:
-          )
-        end
-
-        # Merge a definition's `field` and `input` declaration for one name into a
-        # single {options:, block:} input spec — the `input` declaration wins on
-        # conflicting options (matching the resource form pipeline).
-        def overlay_field_input(field, input)
-          field ||= {}
-          input ||= {}
-          options = (field[:options] || {}).merge(input[:options] || {})
-          block = input[:block] || field[:block]
-          {options:, block:}.compact
-        end
-
-        # A resource definition carries no model reference; the framework binds them
-        # by name convention (`FooDefinition` ↔ `Foo`), the same mapping the resource
-        # controller uses (`"#{resource_class}Definition".constantize`).
-        def model_class_for(defn)
-          name = defn.name
-          unless name&.end_with?("Definition")
-            raise ArgumentError,
-              "cannot infer a record class for #{defn.inspect}: a `using:` definition " \
-              "must be a named `*Definition` class"
-          end
-          name.delete_suffix("Definition").constantize
         end
 
         def record_type(model, name)
@@ -168,20 +113,72 @@ module Plutonium
           obj.errors.group_by_attribute.slice(*keep)
         end
 
-        # Inherit the source's form_layout, filtered to the imported fields: each
-        # declared section keeps only the imported fields it lists; sections that
-        # resolve to zero imported fields are dropped.
-        def layout_for(source, names)
-          layout = source.defined_form_layout
+        # Build an input config for every imported name (so each gets rendered),
+        # overlaying styling from the resolved `<Model>Definition` where present. A
+        # definition's `field` and `input` declarations both render on the form;
+        # merge them per name (input wins on conflicting options, matching the
+        # resource form pipeline). No definition → each name maps to an empty config.
+        def inputs_for(definition, names)
+          fields = definition&.defined_fields || {}
+          inputs = definition&.defined_inputs || {}
+          names.index_with { |n| overlay_field_input(fields[n], inputs[n]) }
+        end
+
+        def overlay_field_input(field, input)
+          field ||= {}
+          input ||= {}
+          options = (field[:options] || {}).merge(input[:options] || {})
+          block = input[:block] || field[:block]
+          {options: options.presence, block:}.compact
+        end
+
+        # Inherit the resolved definition's form_layout, filtered to the imported
+        # fields. Mirrors the canonical `resolve_form_sections` leftover handling
+        # (form_layout.rb): each imported field is claimed by the first explicit
+        # section that lists it; imported fields no section names fall into a
+        # trailing **ungrouped** section, so none silently disappears.
+        def layout_for(definition, names)
+          return nil unless definition
+          layout = definition.defined_form_layout
           return nil unless layout
 
-          keep = names.to_set
-          layout.filter_map do |section|
+          imported = names.to_set
+
+          # First-section-wins ownership among imported fields.
+          owner = {}
+          layout.each do |section|
             next if section.ungrouped?
-            fields = section.fields.map(&:to_sym).select { |f| keep.include?(f) }
-            next if fields.empty?
+            section.fields.map(&:to_sym).each do |f|
+              owner[f] ||= section.key if imported.include?(f)
+            end
+          end
+          leftovers = names.reject { |f| owner.key?(f) }
+
+          resolved = layout.filter_map do |section|
+            fields =
+              if section.ungrouped?
+                leftovers
+              else
+                section.fields.map(&:to_sym).select { |f| owner[f] == section.key }
+              end
+            # Drop explicit sections that resolve to zero imported fields; keep an
+            # explicit ungrouped section as the leftover home even when empty-listed.
+            next if fields.empty? && !section.ungrouped?
             Plutonium::Definition::FormLayout::ResolvedSection.new(section, fields)
           end
+
+          # No explicit ungrouped section, but leftover imported fields exist →
+          # synthesize a trailing ungrouped section so nothing disappears.
+          if leftovers.any? && layout.none?(&:ungrouped?)
+            ungrouped = Plutonium::Definition::FormLayout::Section.new(
+              key: Plutonium::Definition::FormLayout::UNGROUPED_KEY,
+              fields: [].freeze,
+              options: {}.freeze
+            )
+            resolved.push(Plutonium::Definition::FormLayout::ResolvedSection.new(ungrouped, leftovers))
+          end
+
+          resolved
         end
       end
     end
