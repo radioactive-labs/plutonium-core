@@ -48,6 +48,7 @@ module Plutonium
     loader.ignore("#{__dir__}/rodauth")
     loader.inflector.inflect("ui" => "UI")
     loader.inflector.inflect("workflow_dsl" => "WorkflowDSL")
+    loader.inflector.inflect("dsl" => "DSL")
     loader.enable_reloading if defined?(Rails.env) && Rails.env.development?
     loader.setup
   end
