@@ -1,3 +1,8 @@
+## [0.60.2] - 2026-06-15
+
+### 🚀 Features
+
+- *(layout)* Resolve shell across global, engine, and controller tiers
 ## [0.60.1] - 2026-06-15
 
 ### 🚀 Features
