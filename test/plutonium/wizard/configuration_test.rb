@@ -17,7 +17,9 @@ module Plutonium
         wizards = Plutonium.configuration.wizards
 
         assert_instance_of Plutonium::Wizard::Configuration, wizards
-        assert_equal false, wizards.enabled
+        # NOTE: the dummy app enables wizards in its initializer so the sessions
+        # table migrates for the AR-store tests; the +enabled+ default itself is
+        # covered by #test_default_values against a fresh Configuration.
         assert_equal 30.days, wizards.cleanup_after
         assert_equal :primary, wizards.database
       end
