@@ -182,7 +182,21 @@ end
 
 ## Custom layouts
 
-### Sectioned
+### Sectioned — prefer the `form_layout` DSL
+
+**For grouping fields into sections, don't hand-roll a `Form` subclass — declare `form_layout` in the definition.** It handles headings, descriptions, collapsible `<details>`, per-section `columns:`, `condition:`-based visibility, and **auto-drops sections that resolve to zero fields** (so `+ New` doesn't sprout empty headings). See [[plutonium-resource]] › Form Layout.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  form_layout do
+    section :basic, :title, :slug, label: "Basic"
+    section :publishing, :published_at, :category, label: "Publishing", columns: 2
+    ungrouped label: "Other"
+  end
+end
+```
+
+Only drop to a custom `Form#form_template` when you need layout the DSL can't express (arbitrary wrapper markup, interleaved non-field content). The escape hatch:
 
 ```ruby
 class Form < Form
@@ -210,6 +224,8 @@ class Form < Form
   end
 end
 ```
+
+A hand-rolled `section` like this renders its heading unconditionally — that's exactly the empty-heading problem `form_layout` avoids. If you must hand-roll, guard empty sections yourself.
 
 ### Two-column
 

@@ -834,6 +834,30 @@ end
 
 `modal:` is the default for framework `:new` / `:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win.
 
+## Form Layout (`form_layout`)
+
+Group form fields into sections **declaratively in the definition** — no `Form` subclass, no view code. Prefer this over hand-rolling a `section` helper in a custom `form_template`.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  form_layout do
+    section :identity, :name, :email, label: "Identity", description: "Who this is"
+    section :address, :street, :city,
+      collapsible: true, collapsed: -> { object.persisted? }, columns: 2,
+      condition: -> { object.requires_address? }   # hide the whole section as a unit
+    ungrouped label: "Other"                        # bucket for unlisted fields; position = where it renders
+  end
+end
+```
+
+- **Layout references field KEYS only** — all per-field config (`as:`, `hint:`, blocks, per-field `condition:`) stays on `input`. Never duplicated here.
+- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:` (positive Integer, literal only), `condition:`. Every option except `columns:` may be a **proc** resolved at render in the form context (`object`, `current_user`, `params`, helpers).
+- **Absent fields are skipped.** A key the section lists that isn't in the permitted set (policy, per-action, scoping, nesting, or a typo) is silently dropped — never an error. The same layout serves a richly-permitted `edit` and a minimal `new`.
+- **🚨 Zero-field sections drop entirely** — no heading, no grid. So `+ New` (fewer permitted attributes) won't sprout empty headings. This checks *field presence only*; per-field `condition:` runs later, so to hide a whole section by state, gate it with the **section's own `condition:`**, not by hiding every field inside it.
+- **Works on interactions too** (`Plutonium::Interaction::Base`) — groups `attribute` declarations. There `object` is the interaction instance; for record actions the record is `object.resource`.
+
+Full DSL reference: [Resource › Definition › Form layout](/reference/resource/definition#form-layout).
+
 ## Metadata Panel (show page)
 
 Declares fields rendered in the show page's right-side aside as label/value rows.

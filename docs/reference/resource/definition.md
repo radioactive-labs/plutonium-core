@@ -511,7 +511,12 @@ section :advanced, :seo_title, :notes,
   label: -> { object.new_record? ? "Set up" : "Advanced" }
 ```
 
-Empty sections (all fields filtered by the policy, or none assigned) are **not** hidden automatically. Use `condition:` to hide a section conditionally.
+A section that resolves to **zero fields** — every declared field filtered out by the permitted set, or no field assigned — renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset). The check is purely "are there fields to render"; it does **not** evaluate per-field `condition:` procs (those run later, at field render). So if you want a whole section to appear only under some state, gate it with the section's own `condition:` rather than relying on every field inside it being hidden:
+
+```ruby
+section :shipping, :address, :city, :postcode,
+  condition: -> { object.requires_shipping? }   # hide the section as a unit
+```
 
 ### `ungrouped(**opts)`
 
@@ -564,7 +569,7 @@ end
 
 ### Fields not in the permitted set are skipped
 
-A `section` only renders the fields that are actually in the form's permitted set for the current request. A key it lists that isn't there — a typo, or a field excluded by policy, per-action `permitted_attributes`, entity scoping, or nesting — is **silently dropped**, never an error. This lets a single `form_layout` reference conditionally-permitted fields without crashing the form in the contexts where they're filtered out.
+A `section` only renders the fields that are actually in the form's permitted set for the current request. A key it lists that isn't there — a typo, or a field excluded by policy, per-action `permitted_attributes`, entity scoping, or nesting — is **silently dropped**, never an error. This lets a single `form_layout` reference conditionally-permitted fields without crashing the form in the contexts where they're filtered out. And when every field a section lists is dropped this way, the section's chrome is dropped with it (see the zero-fields note above) — so the same layout can serve a richly-permitted `edit` and a minimal `new` without leaving empty headings behind.
 
 ### On interactions
 

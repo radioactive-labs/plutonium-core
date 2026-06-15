@@ -51,6 +51,17 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     refute_includes response.body, %(name="kitchen_sink[secret_token]")
   end
 
+  test "a section whose fields are all absent from the permitted set renders nothing" do
+    get "/admin/kitchen_sinks/new"
+    assert_response :success
+    # :all_absent lists only :never_permitted, which is never in the permitted
+    # set, so the section resolves to zero fields — no heading, no chrome.
+    refute_includes response.body, "All Absent Section"
+    # ...but sibling sections that do have fields still render.
+    assert_includes response.body, "Identity"
+    assert_includes response.body, "Everything else"
+  end
+
   test "fields in a multi-column section flow into grid cells, not full rows" do
     get "/admin/kitchen_sinks/new"
     assert_response :success

@@ -29,8 +29,11 @@ class AdminPortal::FormLayoutInteractionTest < ActionDispatch::IntegrationTest
     form_for(sink)
     assert_response :success
     assert_includes response.body, "Basics"                    # section heading
-    assert_includes response.body, "Anything else"             # ungrouped label
     assert_includes response.body, %(name="interaction[name]") # field renders, interaction-keyed
+    # Every interaction attribute is claimed by :basics/:appearance, so the
+    # declared `ungrouped` bucket resolves to zero fields — its "Anything else"
+    # chrome is dropped rather than rendered as an empty heading.
+    refute_includes response.body, "Anything else"
   end
 
   test "dynamic collapsed: is resolved against object.resource in the interaction" do

@@ -122,6 +122,16 @@ module Plutonium
             condition = section.condition
             next if condition && !instance_exec(&condition)
 
+            # Drop sections left with no fields — e.g. every declared field was
+            # filtered out by the permitted set (policy, per-action, scoping,
+            # nesting). Rendering the chrome (heading + empty grid) for these
+            # litters the form with empty headings (notably on `+ New`, where
+            # fewer attributes are permitted than declared). Field-level
+            # `condition:` is evaluated later, at render — a section whose fields
+            # are all condition-hidden is the author's call to gate via the
+            # section's own `condition:`.
+            next if resolved.fields.empty?
+
             # `columns` stays a validated literal; everything else may be a proc.
             options = section.options.to_h do |key, value|
               [key, (key != :condition && value.is_a?(Proc)) ? instance_exec(&value) : value]
