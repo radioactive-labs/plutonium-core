@@ -59,6 +59,15 @@ module Plutonium
         assert_nil w.data.plan              # uncollected → nil
       end
 
+      def test_data_memo_invalidated_on_reassign
+        w = CreateCo.new
+        w.data_attributes = {"name" => "Acme"}
+        assert_equal "Acme", w.data.name
+
+        w.data_attributes = {"name" => "Globex"}
+        assert_equal "Globex", w.data.name
+      end
+
       def test_review_must_be_last
         err = assert_raises(ArgumentError) do
           Class.new(Plutonium::Wizard::Base) do

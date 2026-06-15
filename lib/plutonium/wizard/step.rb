@@ -27,6 +27,10 @@ module Plutonium
       # `data` schema. `using:` imports are merged in later (Task 3).
       def attribute_schema = fields.attribute_schema
 
+      # The per-attribute options ({name => {default:, ...}}) contributed to the
+      # typed `data` snapshot, so e.g. `default:` applies (§2.6).
+      def attribute_options = fields.attribute_options
+
       # The structured inputs declared in this step ({name => {options:, block:}}).
       def structured_inputs = fields.defined_structured_inputs
     end

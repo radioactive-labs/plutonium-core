@@ -21,7 +21,7 @@ module Plutonium
 
       defineable_props :field, :input
 
-      attr_reader :attribute_schema, :validations, :hooks, :using_spec
+      attr_reader :attribute_schema, :attribute_options, :validations, :hooks, :using_spec
 
       def self.build(using: nil, using_opts: {}, &block)
         capture = new
@@ -32,14 +32,18 @@ module Plutonium
 
       def initialize
         @attribute_schema = {}
+        @attribute_options = {}
         @validations = []
         @hooks = {}
       end
 
-      # Inline `attribute :name, :type` — records the union-schema type. Also
-      # accepts options (default:, etc.) which are kept for later use.
+      # Inline `attribute :name, :type` — records the union-schema type and any
+      # options (default:, etc.), which are threaded into the typed `data`
+      # snapshot so e.g. `default:` applies (§2.6).
       def attribute(name, type = :string, **options)
-        @attribute_schema[name.to_sym] = type
+        key = name.to_sym
+        @attribute_schema[key] = type
+        @attribute_options[key] = options unless options.empty?
         self
       end
 

@@ -31,8 +31,17 @@ module Plutonium
       include Plutonium::Definition::Presentable
       include DSL
 
-      attr_accessor :data_attributes, :view_context
+      attr_reader :data_attributes
+      attr_accessor :view_context
       attr_writer :anchor, :scope, :token
+
+      # The runner reuses a single wizard instance across a request, reassigning
+      # `data_attributes` between reads, so invalidate the memoized `data` snapshot
+      # whenever the staged attributes change.
+      def data_attributes=(attrs)
+        @data_attributes = attrs
+        @data = nil
+      end
 
       def initialize(view_context: nil, **)
         @view_context = view_context
@@ -46,6 +55,14 @@ module Plutonium
         def union_attribute_schema
           steps.reject(&:review?).each_with_object({}) do |step, acc|
             acc.merge!(step.attribute_schema)
+          end
+        end
+
+        # The union of every non-review step's per-attribute options
+        # ({name => {default:, ...}}), threaded into the typed `data` snapshot.
+        def union_attribute_options
+          steps.reject(&:review?).each_with_object({}) do |step, acc|
+            acc.merge!(step.attribute_options)
           end
         end
 
@@ -84,6 +101,7 @@ module Plutonium
       def data
         @data ||= Data.class_for(
           self.class.union_attribute_schema,
+          options: self.class.union_attribute_options,
           structured: self.class.structured_data_schema
         ).new(data_attributes)
       end

@@ -10,6 +10,8 @@ module Plutonium
       class EmptyFields
         def attribute_schema = {}
 
+        def attribute_options = {}
+
         def defined_structured_inputs = {}
       end
 

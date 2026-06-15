@@ -28,13 +28,14 @@ module Plutonium
       end
 
       # @param schema [Hash{Symbol=>Symbol}] scalar attribute name => type
+      # @param options [Hash{Symbol=>Hash}] scalar attribute name => options (default:, etc.)
       # @param structured [Hash{Symbol=>Array<Symbol>}] structured name => sub-field names
-      def self.class_for(schema, structured: {})
+      def self.class_for(schema, options: {}, structured: {})
         Class.new do
           include ActiveModel::Model
           include ActiveModel::Attributes
 
-          schema.each { |name, type| attribute(name, type) }
+          schema.each { |name, type| attribute(name, type, **(options[name] || {})) }
 
           structured.each do |name, fields|
             # Backed by a plain accessor (not an ActiveModel attribute) so the raw

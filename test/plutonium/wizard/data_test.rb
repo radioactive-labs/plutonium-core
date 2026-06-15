@@ -36,6 +36,33 @@ module Plutonium
         assert_empty data.attributes
       end
 
+      def test_inline_attribute_default_applies_when_unset
+        klass = Plutonium::Wizard::Data.class_for(
+          {foo: :string},
+          options: {foo: {default: "bar"}}
+        )
+
+        assert_equal "bar", klass.new({}).foo
+        assert_equal "set", klass.new({"foo" => "set"}).foo
+      end
+
+      class WithDefault < Plutonium::Wizard::Base
+        step :details do
+          attribute :foo, :string, default: "bar"
+          input :foo
+        end
+
+        def execute = succeed
+      end
+
+      def test_step_inline_default_threads_into_data_snapshot
+        assert_equal "bar", WithDefault.new.data.foo
+
+        w = WithDefault.new
+        w.data_attributes = {"foo" => "given"}
+        assert_equal "given", w.data.foo
+      end
+
       class WithStructured < Plutonium::Wizard::Base
         step :team do
           structured_input :invites, repeat: 5 do |f|
