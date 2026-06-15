@@ -56,6 +56,30 @@ module Plutonium
         path.find { |s| s.key.to_s == @state.current_step.to_s } || path.first
       end
 
+      # The keys of steps the user has visited (advanced past). UI helper (§7).
+      def visited_keys
+        @state.visited.map(&:to_s)
+      end
+
+      # Whether a visible non-review step is complete: visited AND its staged data
+      # currently validates (§6.3). Drives the review step's per-step jump links
+      # and the gated Finish button (§2.5). A review step is "complete" iff every
+      # other visible step is.
+      def step_complete?(step)
+        return incomplete_visible_steps.empty? if step.review?
+
+        visited_keys.include?(step.key.to_s) && validate(step, {}).empty?
+      end
+
+      # The ordered visible non-review steps that aren't yet complete (§6.3). The
+      # review step lists these as "fix this" jump links and gates Finish.
+      def incomplete_visible_steps
+        visited = visited_keys
+        visible_path.reject(&:review?).select do |step|
+          !visited.include?(step.key.to_s) || validate(step, {}).any?
+        end
+      end
+
       # Validate + stage a step, run its `on_submit` (in a transaction), then move
       # the cursor to the next visible step. On validation/`on_submit` failure the
       # cursor does not move and the errors are returned.
@@ -74,6 +98,28 @@ module Plutonium
         Result.new(ok: false, errors: message_errors(e.record))
       rescue StepError => e
         Result.new(ok: false, errors: {e.attribute => [e.message]})
+      end
+
+      # Point the cursor at a specific visible step on a GET (stepper jump / resume
+      # via direct URL). Only honored when the target is a currently-visible step
+      # the user has already visited — forward jumps to unvisited steps are not
+      # allowed (§7). The review step is reachable once it's the visible terminal.
+      # No persistence: a GET must not mutate stored state; the cursor move lives
+      # for this request so the right step renders seeded from staged data.
+      def go_to(step_key)
+        return if step_key.blank?
+
+        target = visible_path.find { |s| s.key.to_s == step_key.to_s }
+        return unless target
+        return if target.key.to_s == @state.current_step.to_s
+
+        # The review step is reachable once the user has started the flow (visited
+        # at least one step): it shows the auto-summary, the outstanding "fix this"
+        # links, and a Finish that stays disabled until every step is complete —
+        # the actual finalize POST re-checks completeness regardless. Other steps
+        # are reachable only once visited (no forward jumps to unvisited steps).
+        reachable = target.review? ? visited_keys.any? : visited_keys.include?(target.key.to_s)
+        @state.current_step = target.key.to_s if reachable
       end
 
       # Move the cursor to the previous visible step. No validation; never discards
@@ -212,7 +258,7 @@ module Plutonium
           # translation lookup (it calls `model_name`). Supply a stable one.
           def self.model_name = ActiveModel::Name.new(self, nil, "WizardStep")
 
-          schema.each { |name, type| attribute(name, type) }
+          schema.each { |name, type| attribute(name, Plutonium::Wizard.safe_attribute_type(type)) }
 
           define_method(:initialize) do |attrs = {}|
             super((attrs || {}).symbolize_keys.slice(*schema.keys))

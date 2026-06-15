@@ -28426,6 +28426,32 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/wizard_controller.js
+  var wizard_controller_default = class extends Controller {
+    static targets = ["direction"];
+    connect() {
+      this.submitting = false;
+      this.element.addEventListener("submit", this.onSubmit);
+    }
+    disconnect() {
+      this.element.removeEventListener("submit", this.onSubmit);
+    }
+    // Set the hidden `_direction` value programmatically (optional helper).
+    setDirection(value) {
+      if (this.hasDirectionTarget) this.directionTarget.value = value;
+    }
+    onSubmit = (event) => {
+      if (this.submitting) {
+        event.preventDefault();
+        return;
+      }
+      this.submitting = true;
+      setTimeout(() => {
+        this.submitting = false;
+      }, 0);
+    };
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28464,6 +28490,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("view-switcher", view_switcher_controller_default);
     application2.register("autosubmit", autosubmit_controller_default);
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
+    application2.register("wizard", wizard_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

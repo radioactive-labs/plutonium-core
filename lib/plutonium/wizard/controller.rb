@@ -22,6 +22,7 @@ module Plutonium
     # cookie (minted on first GET when absent); the cookie is cleared on completion.
     module Controller
       extend ActiveSupport::Concern
+      include Plutonium::StructuredInputs::ParamsConcern
 
       # Signed-cookie key holding the per-(wizard) token for non-anchored flows.
       def self.token_cookie_key(wizard_class)
@@ -38,6 +39,10 @@ module Plutonium
           return redirect_to wizard_step_url(target), status: :see_other
         end
 
+        # Honor a direct GET to a specific (visited/visible) step — stepper jumps
+        # and resume-by-URL. Forward jumps to unvisited steps are ignored.
+        runner.go_to(params[:step])
+
         @wizard_runner = runner
         render_wizard_step(runner)
       end
@@ -49,7 +54,7 @@ module Plutonium
         @wizard_runner = runner
 
         if params[:pre_submit]
-          return render_wizard_step(runner, status: :unprocessable_content)
+          return render_wizard_pre_submit(runner)
         end
 
         result =
@@ -74,7 +79,7 @@ module Plutonium
       def advance_or_finalize(runner)
         return runner.finalize if wizard_posting_last_step?(runner)
 
-        runner.advance(params[:step], wizard_params)
+        runner.advance(params[:step], wizard_params(runner))
       end
 
       # Whether the step being POSTed is the last visible step (so Next → Finish).
@@ -108,7 +113,7 @@ module Plutonium
         redirect_to wizard_completion_url(result.value), status: :see_other
       end
 
-      # --- rendering (minimal; Task 6 replaces with the real page/stepper) ---
+      # --- rendering ---
 
       def render_wizard_step(runner, status: :ok)
         render(
@@ -120,6 +125,22 @@ module Plutonium
           status:,
           **wizard_modal_render_options
         )
+      end
+
+      # A `change->form#preSubmit` re-render: in a turbo frame (modal), replace just
+      # the step form; otherwise re-render the whole page. Mirrors interactive
+      # actions, where conditional inputs depend on sibling values.
+      def render_wizard_pre_submit(runner)
+        form = wizard_step_form(runner)
+        respond_to do |format|
+          format.turbo_stream do
+            render turbo_stream: turbo_stream.replace(
+              helpers.turbo_scoped_dom_id("wizard-form"),
+              view_context.render(form)
+            )
+          end
+          format.html { render_wizard_step(runner, status: :unprocessable_content) }
+        end
       end
 
       def wizard_modal_render_options
@@ -215,11 +236,30 @@ module Plutonium
 
       # --- params ---
 
-      def wizard_params
-        raw = params[:wizard]
-        return {} if raw.blank?
+      # Extract the current step's submitted params through the step form (like
+      # interactions), so typed inputs and structured/repeater inputs are parsed
+      # consistently with how they were rendered — then clean structured inputs
+      # (drop blank/template rows) and stringify keys for the data snapshot.
+      def wizard_params(runner)
+        return {} if params[:wizard].blank?
 
-        raw.to_unsafe_h.stringify_keys
+        step = runner.current_step
+        form = wizard_step_form(runner)
+        extracted = form.extract_input(params, view_context:)[:wizard] || {}
+        cleaned = clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
+        cleaned.stringify_keys
+      end
+
+      # The form for the current step, seeded from the wizard's typed data — used
+      # for both param extraction and the pre_submit turbo re-render.
+      def wizard_step_form(runner)
+        step = runner.current_step
+        Plutonium::UI::Form::Wizard.new(
+          step:,
+          data: runner.wizard.data,
+          action: wizard_step_url(step&.key),
+          fields: step.attribute_schema.keys.map(&:to_sym) + step.structured_inputs.keys.map(&:to_sym)
+        )
       end
 
       # --- URL helpers ---

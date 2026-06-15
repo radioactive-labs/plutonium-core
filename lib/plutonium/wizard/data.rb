@@ -35,7 +35,15 @@ module Plutonium
           include ActiveModel::Model
           include ActiveModel::Attributes
 
-          schema.each { |name, type| attribute(name, type, **(options[name] || {})) }
+          # Anonymous classes have no name, which breaks label/error translation
+          # lookups (`human_attribute_name` / `errors.full_messages` call
+          # `model_name`). Supply a stable one so the form/display pipelines can
+          # humanize attribute labels.
+          def self.model_name = ActiveModel::Name.new(self, nil, "Wizard")
+
+          schema.each do |name, type|
+            attribute(name, Plutonium::Wizard.safe_attribute_type(type), **(options[name] || {}))
+          end
 
           structured.each do |name, fields|
             # Backed by a plain accessor (not an ActiveModel attribute) so the raw
