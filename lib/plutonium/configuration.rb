@@ -24,6 +24,9 @@ module Plutonium
     # @return [AssetConfiguration] asset configuration
     attr_reader :assets
 
+    # @return [Plutonium::Wizard::Configuration] wizard subsystem configuration
+    attr_reader :wizards
+
     # @return [Float] the current defaults version
     attr_reader :defaults_version
 
@@ -54,6 +57,7 @@ module Plutonium
     def initialize
       @defaults_version = nil
       @assets = AssetConfiguration.new
+      @wizards = Plutonium::Wizard::Configuration.new
 
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?

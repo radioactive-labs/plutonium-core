@@ -39,6 +39,20 @@ module Plutonium
       load_plutonium_initializers
     end
 
+    initializer "plutonium.register_migrations" do
+      Plutonium::Migrations.register(:wizards, Plutonium.root.join("db/migrate/wizard").to_s)
+    end
+
+    # Runs after the host's config/initializers/plutonium.rb (load_config_initializers)
+    # so feature flags like config.wizards.enabled are honoured. Railtie
+    # initializers otherwise run before host initializers, leaving the flag false.
+    initializer "plutonium.migrations", after: :load_config_initializers do |app|
+      Plutonium::Migrations.enabled_paths.each do |path|
+        app.config.paths["db/migrate"] << path if Plutonium.configuration.wizards.database == :primary
+        ActiveRecord::Migrator.migrations_paths << path unless ActiveRecord::Migrator.migrations_paths.include?(path)
+      end
+    end
+
     initializer "plutonium.asset_server" do
       setup_development_asset_server if Plutonium.configuration.development?
     end

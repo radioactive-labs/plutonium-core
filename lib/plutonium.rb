@@ -10,6 +10,8 @@ require "phlexi-display"
 require "phlexi-form"
 require "phlexi-table"
 
+require_relative "plutonium/wizard"
+require_relative "plutonium/migrations"
 require_relative "plutonium/configuration"
 require_relative "rodauth/plugins" if defined?(Rodauth)
 
