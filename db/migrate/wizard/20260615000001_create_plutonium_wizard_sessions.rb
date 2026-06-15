@@ -25,7 +25,7 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
       t.string :token
 
       t.public_send(json_type, :data, null: false, default: {})
-      t.public_send(json_type, :persisted, null: false, default: {})
+      t.public_send(json_type, :tracked_records, null: false, default: {})
 
       t.datetime :expires_at
       t.datetime :completed_at

@@ -11,32 +11,6 @@ module Plutonium
     class Session < ActiveRecord::Base
       self.table_name = "plutonium_wizard_sessions"
 
-      # The +persisted+ JSON column collides with ActiveRecord::Persistence#persisted?
-      # (AR would try to generate a +persisted?+ predicate and refuses, raising
-      # DangerousAttributeError). We keep the spec-mandated column name, suppress the
-      # generated predicate, and access the column through explicit accessors so
-      # +persisted?+ retains its AR meaning (load-bearing for save / find_or_initialize).
-      def self.dangerous_attribute_method?(name)
-        return false if name.to_s == "persisted?"
-        super
-      end
-
-      # Read the JSON +persisted+ column (not the AR persistence predicate).
-      def persisted
-        read_attribute(:persisted)
-      end
-
-      # Write the JSON +persisted+ column.
-      def persisted=(value)
-        write_attribute(:persisted, value)
-      end
-
-      # Preserve ActiveRecord::Persistence#persisted? semantics despite the column
-      # of the same stem.
-      def persisted?
-        !(new_record? || destroyed?)
-      end
-
       belongs_to :owner, polymorphic: true, optional: true
       belongs_to :anchor, polymorphic: true, optional: true
       belongs_to :scope, polymorphic: true, optional: true
