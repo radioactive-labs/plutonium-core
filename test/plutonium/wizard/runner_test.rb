@@ -371,6 +371,84 @@ module Plutonium
         assert_equal [org], runner.wizard.persisted[:make]
       end
 
+      # ---- lazy persisted rehydration (§4.5) ----
+
+      # Run `block` while counting `GlobalID::Locator.locate` calls.
+      def counting_locates
+        count = 0
+        original = GlobalID::Locator.method(:locate)
+        GlobalID::Locator.define_singleton_method(:locate) do |*args, **kw|
+          count += 1
+          original.call(*args, **kw)
+        end
+        yield
+        count
+      ensure
+        GlobalID::Locator.singleton_class.send(:remove_method, :locate)
+        GlobalID::Locator.define_singleton_method(:locate, original)
+      end
+
+      def stored_persisting_runner
+        org = Organization.create!(name: "Stored")
+        state = Plutonium::Wizard::State.new(
+          wizard: Persisting.name, instance_key: "k", current_step: "make",
+          status: "in_progress", data: {"name" => "Stored"},
+          persisted: {"make" => [org.to_global_id.to_s]}
+        )
+        @store.write("k", state, cleanup_after: 1.day)
+        [build_runner(Persisting), org]
+      end
+
+      test "a render/no-op that never reads persisted issues zero locate calls" do
+        runner, _org = stored_persisting_runner
+        locates = counting_locates do
+          # build already happened; now a typical GET render touches the path,
+          # current step, visited keys — none of which read `persisted`.
+          runner.visible_path
+          runner.current_step
+          runner.visited_keys
+          runner.back
+        end
+        assert_equal 0, locates, "a request that never reads persisted must not locate"
+      end
+
+      test "constructing the runner alone issues zero locate calls (lazy)" do
+        org = Organization.create!(name: "Stored")
+        state = Plutonium::Wizard::State.new(
+          wizard: Persisting.name, instance_key: "k", current_step: "make",
+          status: "in_progress", data: {"name" => "Stored"},
+          persisted: {"make" => [org.to_global_id.to_s]}
+        )
+        @store.write("k", state, cleanup_after: 1.day)
+        locates = counting_locates { build_runner(Persisting) }
+        assert_equal 0, locates, "construction must not eagerly rehydrate persisted"
+      end
+
+      test "first read of persisted[:key] locates once; second read is memoized" do
+        runner, org = stored_persisting_runner
+
+        first_count = counting_locates do
+          assert_equal [org], runner.wizard.persisted[:make]
+        end
+        assert_equal 1, first_count, "first read locates the key's single GID once"
+
+        second_count = counting_locates do
+          assert_equal [org], runner.wizard.persisted[:make]
+        end
+        assert_equal 0, second_count, "second read is served from the memo"
+      end
+
+      test "records persisted this request are returned without locating" do
+        runner = build_runner(Persisting)
+        runner.advance(:make, {"name" => "Acme"})
+        org = Organization.find_by!(name: "Acme")
+
+        locates = counting_locates do
+          assert_equal [org], runner.wizard.persisted[:make]
+        end
+        assert_equal 0, locates, "live records from this request's persist need no locate"
+      end
+
       # ---- concurrent finalize (AR store + lock) ----
 
       test "concurrent finalize: loser does not re-run execute" do

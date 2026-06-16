@@ -103,7 +103,7 @@ On resume the engine:
 
 - Restores the step cursor and `data` (typed snapshot rehydrated from the JSON column).
 - Re-renders the current step's form seeded from staged `data` — including repeater rows (a `structured_input ..., repeat:` step re-renders the right number of filled rows, not one blank row).
-- Rehydrates `persisted[:key]` from stored GlobalIDs, so a per-step `on_submit` create flow returning later still sees records made by earlier steps.
+- Lazily rehydrates `persisted[:key]` from stored GlobalIDs on first access (memoized per request), so a per-step `on_submit` create flow returning later still sees records made by earlier steps — without paying a `GlobalID.locate` on requests that never read `persisted`.
 
 Navigation never loses data: **Back** moves the cursor without validating and never discards `data`; branch-hidden steps' data is kept in the store and only pruned (on a working copy) at finalize.
 

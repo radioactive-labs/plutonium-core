@@ -57,7 +57,11 @@ module Plutonium
         @wizard.current_user = current_user
         @wizard.current_scoped_entity = current_scoped_entity
         @wizard.wizard_token = token
-        rehydrate_persisted
+        # `persisted` is rehydrated LAZILY (§4.5): inject the stored GID source so
+        # `wizard.persisted[:key]` locates that key's GIDs on first read (memoized)
+        # — a request that never reads `persisted` issues zero locate queries. The
+        # anchor (the authz/scoping gate) is still resolved eagerly above.
+        @wizard.persisted_gid_source = @state.persisted
       end
 
       # Whether a row already existed at this key when the runner was built — i.e.
@@ -389,15 +393,6 @@ module Plutonium
       def revert_completing!
         Session.where(instance_key: @instance_key, status: "completing")
           .update_all(status: "in_progress")
-      end
-
-      def rehydrate_persisted
-        return if @state.persisted.blank?
-
-        @state.persisted.each do |step_key, gids|
-          records = Array(gids).filter_map { |gid| GlobalID::Locator.locate(gid) }
-          @wizard.persisted[step_key.to_sym] = records
-        end
       end
 
       # Owner-scoping check (§4.5): a non-`anonymous` wizard's row may only be

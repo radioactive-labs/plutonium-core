@@ -199,7 +199,7 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 | `data` | Typed, dot-accessible snapshot of everything entered so far (union of all steps' attributes). Read-only; not-yet-collected fields read as `nil` or their `default:`. |
 | `data.<field>` | The cast value (real Boolean/Integer/Date, not raw string). `data.<structured>` → array of typed sub-objects. |
 | `anchor` | The record the wizard was launched against. Raises `NotAnchoredError` if the wizard isn't `anchored`. |
-| `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Rehydrated on resume. |
+| `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Lazily rehydrated on first access (located from stored GlobalIDs the first time you read the key, memoized thereafter). |
 
 ## Outcome helpers
 

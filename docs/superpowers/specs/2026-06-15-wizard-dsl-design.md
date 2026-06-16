@@ -357,7 +357,7 @@ The portal's **`current_scoped_entity`** is **folded into the `concurrency_key` 
 
 **Context methods** exposed to the wizard/gate (and inside `concurrency_key`): `current_user`, `current_scoped_entity` (tenant/scope), `anchor` (resolved record, §3), and `wizard_token` (the per-run id; for guest/repeatable identity — *not* a pre-auth principal that survives login).
 
-On resume the engine restores the cursor + `data` and rehydrates `persisted[:key]` from stored GlobalIDs.
+On resume the engine restores the cursor + `data` and lazily rehydrates `persisted[:key]` from stored GlobalIDs on first access (memoized per request — a request that never reads `persisted` issues no `GlobalID.locate`).
 
 ---
 

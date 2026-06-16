@@ -135,10 +135,18 @@ module Plutonium
         [*Array.wrap(key), current_scoped_entity]
       end
 
-      # Records the per-step `on_submit`/`persist` macro registers (§2.2),
-      # rehydrated by the runner. Empty here.
+      # The `{ "step_key" => [gids] }` source the runner injects from the stored
+      # state, backing the lazy `persisted` view. Reassigning it resets the memo.
+      def persisted_gid_source=(source)
+        @persisted = LazyPersisted.new(source)
+      end
+
+      # Records the per-step `on_submit`/`persist` macro registers (§2.2), as a
+      # LAZY view over the stored GIDs: a key is located on first read and
+      # memoized, so a request that never reads `persisted` issues zero locates
+      # (§4.5). Records set this request (the `persist` macro) are live already.
       def persisted
-        @persisted ||= {}
+        @persisted ||= LazyPersisted.new
       end
 
       # The at-end commit hook (§2.3). Authors override it.
