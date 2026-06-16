@@ -351,7 +351,7 @@ The portal's **`current_scoped_entity`** is **folded into the `concurrency_key` 
 **Wizards require authentication by default** — entry without a `current_user` is rejected. A wizard opts into guest access with the **`anonymous`** macro. Wizards **never cross the auth boundary mid-flow**; the *only* boundary a guest wizard may cross is its **terminal `execute`** (e.g. a signup flow whose `execute` creates the account and logs in).
 
 - **Default (authenticated)** → `current_user` required throughout; identity via `concurrency_key` (else a per-run id); **all session lookups are owner-scoped** (`where(owner: current_user)`), so a run id leaked in a URL can't be resumed by another user.
-- **`anonymous`** → may run with no `current_user`; identity = a **server-minted, unguessable guest run id held in the Rails session**, namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`) — **not a cookie, and with no TTL**. The **row's `cleanup_after` → sweep is the authoritative lifetime**; the session id is just a session-scoped pointer to it. Session storage gives: browser-close ephemerality, **auto-clear on login/logout via Rodauth's `reset_session`** (confirmed: `rodauth-rails` maps `clear_session` → `reset_session`), and clearing on completion; the id is **never read from or written to a URL** (no leak surface). It guards only the user's *own* in-progress data (no cross-account exposure). `execute` *may* authenticate — and that login goes through **Rodauth, which rotates the Rails session, so fixation is handled**. There is **no** mid-flow owner-stamping, token-survives-login, or instance_key rekey. *(Authenticated repeatable runs keep their URL-carried per-run id, owner-scoped on the row.)*
+- **`anonymous`** → may run with no `current_user`; identity = a **server-minted, unguessable guest run id held in the Rails session** (an alphanumeric `SecureRandom.alphanumeric(32)` token — ~190 bits, URL-clean, not a UUID), namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`) — **not a cookie, and with no TTL**. The **row's `cleanup_after` → sweep is the authoritative lifetime**; the session id is just a session-scoped pointer to it. Session storage gives: browser-close ephemerality, **auto-clear on login/logout via Rodauth's `reset_session`** (confirmed: `rodauth-rails` maps `clear_session` → `reset_session`), and clearing on completion; the id is **never read from or written to a URL** (no leak surface). It guards only the user's *own* in-progress data (no cross-account exposure). `execute` *may* authenticate — and that login goes through **Rodauth, which rotates the Rails session, so fixation is handled**. There is **no** mid-flow owner-stamping, token-survives-login, or instance_key rekey. *(Authenticated repeatable runs keep their URL-carried per-run id, owner-scoped on the row.)*
 
 **Mounting:** default wizards are portal-hosted (authenticated). An `anonymous` wizard needs a **public route** (pre-login), so `register_wizard` takes a `public:`/unauthenticated mount option used only for opted-in `anonymous` wizards.
 
@@ -616,7 +616,14 @@ File uploads cannot sit in the JSON column → use ActiveStorage direct upload (
 #   complete(instance_key)           → marks completed, nulls data/tracked_records columns (one-time retain)
 #   clear(instance_key)              → deletes the row (repeatable completion + cancel)
 #   completed?(instance_key:)        → bool   (one-time check — existence of a completed row at the key)
-#   in_progress_for(owner, scope: nil) → [State]  (listing; scope-narrowed when given)
+#   in_progress_for(owner, scope:)  → [State]  (listing; scope: REQUIRED keyword —
+#                                      non-nil narrows to that tenant, explicit nil = no filter)
+#
+# Public/ergonomic API:
+#   Plutonium::Wizard.in_progress_for(view_context) → [Resume::Entry]
+#     takes the view_context (as interactions do) and derives owner = current_user,
+#     scope = current_scoped_entity (when scoped_to_entity?, else nil), then calls
+#     the low-level store query with scope passed explicitly.
 #
 # State carries: wizard, current_step, data, persisted (rehydrated records),
 #                owner, anchor, token.

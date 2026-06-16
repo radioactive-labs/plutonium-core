@@ -52,16 +52,28 @@ module Plutonium
     end
 
     # The "continue where you left off" listing (§4.5): in-progress wizard runs
-    # owned by +owner+, optionally narrowed to a tenant +scope+, each enriched with
-    # the wizard's label/icon, current step (+ label), updated_at, and a resolved
-    # resume_url (nil with a reason when a mount can't be resolved generically).
+    # for the current user, narrowed to the current tenant scope when the portal is
+    # entity-scoped, each enriched with the wizard's label/icon, current step (+
+    # label), updated_at, and a resolved resume_url (nil with a reason when a mount
+    # can't be resolved generically).
     #
-    #   Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)
+    # This is the public, ergonomic API: like interactions, it takes the
+    # +view_context+ and derives the run owner and tenant scope from the controller
+    # it carries — `current_user` (the run owner) and `current_scoped_entity` (the
+    # tenant, when `scoped_to_entity?`; nil for a non-scoped portal).
     #
-    # @param owner [Object]
-    # @param scope [Object, nil]
+    #   Plutonium::Wizard.in_progress_for(view_context)
+    #
+    # The low-level query (`Resume.entries_for(owner, scope:)` →
+    # `Store#in_progress_for(owner, scope:)`) takes +scope:+ as a REQUIRED keyword;
+    # this method derives and passes it explicitly (possibly nil).
+    #
+    # @param view_context [ActionView::Base] the current view context (as interactions take)
     # @return [Array<Plutonium::Wizard::Resume::Entry>]
-    def self.in_progress_for(owner, scope: nil)
+    def self.in_progress_for(view_context)
+      controller = view_context.controller
+      owner = controller.helpers.current_user
+      scope = controller.scoped_to_entity? ? controller.current_scoped_entity : nil
       Resume.entries_for(owner, scope: scope)
     end
   end

@@ -241,7 +241,7 @@ module Plutonium
       #
       # - **Guest (`anonymous`) runs** key off the **Rails session**, namespaced
       #   per wizard (`session["plutonium_wizards"][<wizard_key>]`), minted with
-      #   `SecureRandom.uuid` and stored if absent, read each request. We never
+      #   `SecureRandom.alphanumeric(32)` and stored if absent, read each request. We never
       #   read the token from the URL for a guest run — the session is the only
       #   source, so there is no URL-leak surface. There is no TTL: the row's
       #   `cleanup_after` → sweep is the authoritative lifetime; the session token
@@ -257,7 +257,7 @@ module Plutonium
           if current_wizard_class.anonymous?
             guest_session_token
           else
-            params[:token].presence || SecureRandom.uuid
+            params[:token].presence || SecureRandom.alphanumeric(32)
           end
       end
 
@@ -267,7 +267,7 @@ module Plutonium
       def guest_session_token
         bucket = (session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY] ||= {})
         key = Plutonium::Wizard::Driving.session_token_key(current_wizard_class)
-        bucket[key] ||= SecureRandom.uuid
+        bucket[key] ||= SecureRandom.alphanumeric(32)
       end
 
       # The token to thread into a step URL, if any. An authenticated REPEATABLE

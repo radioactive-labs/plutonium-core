@@ -360,10 +360,10 @@ v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the 
 
 ### Listing in-progress wizards
 
-Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. It returns the user's in-progress runs — optionally narrowed to a tenant `scope` so it stays tenant-aware — each enriched for a list item:
+Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. Like interactions, it takes the `view_context` and derives the run owner (`current_user`) and tenant scope (`current_scoped_entity`, when the portal is entity-scoped) from it — so it stays tenant-aware automatically. It returns the user's in-progress runs, each enriched for a list item:
 
 ```ruby
-entries = Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)
+entries = Plutonium::Wizard.in_progress_for(view_context)
 
 entries.each do |entry|
   entry.label               # the wizard's presents label
@@ -381,6 +381,8 @@ end
 - A `wizard`-macro **anchored** wizard resolves to its resource member route, rebuilt from the row's anchor.
 
 When a mount can't be resolved generically — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
+
+Under the hood, `in_progress_for(view_context)` derives `owner`/`scope` and calls the low-level query `Store#in_progress_for(owner, scope:)`, where `scope:` is a **required** keyword (no `nil` default): a non-nil scope narrows to that tenant, and an explicit `nil` (non-scoped portal) applies no scope filter. Call it directly only when you already have an owner and have decided the scope explicitly.
 
 ## Where to go next
 

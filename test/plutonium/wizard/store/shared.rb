@@ -60,12 +60,12 @@ module WizardStoreBehavior
     owner = make_owner
     st = build_state(owner: owner)
     @store.write(st.instance_key, st, cleanup_after: 1.day)
-    states = @store.in_progress_for(owner)
+    states = @store.in_progress_for(owner, scope: nil)
     assert_equal 1, states.size
     assert_equal st.instance_key, states.first.instance_key
 
     @store.complete(st.instance_key)
-    assert_empty @store.in_progress_for(owner)
+    assert_empty @store.in_progress_for(owner, scope: nil)
   end
 
   def test_in_progress_for_owner_narrows_by_scope
@@ -79,7 +79,7 @@ module WizardStoreBehavior
     @store.write(in_b.instance_key, in_b, cleanup_after: 1.day)
 
     # No scope → both.
-    assert_equal 2, @store.in_progress_for(owner).size
+    assert_equal 2, @store.in_progress_for(owner, scope: nil).size
 
     # Scoped → only that scope's row.
     scoped = @store.in_progress_for(owner, scope: scope_a)

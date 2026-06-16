@@ -37,13 +37,15 @@ module Plutonium
         # @return [Boolean]
         def completed?(instance_key:) = raise NotImplementedError
 
-        # In-progress sessions owned by +owner+, optionally narrowed to a tenant
-        # +scope+ (tenant-aware listing for "continue where you left off").
+        # In-progress sessions owned by +owner+, narrowed to a tenant +scope+
+        # (tenant-aware listing for "continue where you left off"). +scope:+ is a
+        # REQUIRED keyword: a non-nil scope filters to that tenant; an explicit nil
+        # (non-scoped portal) applies no scope filter. Callers pass it explicitly.
         #
         # @param owner [Object]
-        # @param scope [Object, nil] when given, only sessions with this scope
+        # @param scope [Object, nil] non-nil → filter to this scope; nil → no filter
         # @return [Array<State>]
-        def in_progress_for(owner, scope: nil) = raise NotImplementedError
+        def in_progress_for(owner, scope:) = raise NotImplementedError
       end
     end
   end

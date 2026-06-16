@@ -9,7 +9,7 @@ module Plutonium
     #
     # A host renders this on a dashboard:
     #
-    #   Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)
+    #   Plutonium::Wizard.in_progress_for(view_context)
     #
     # Resume URLs are resolved by scanning the host's route sets:
     #
@@ -42,9 +42,10 @@ module Plutonium
       module_function
 
       # @param owner [Object] the run owner (e.g. current_user)
-      # @param scope [Object, nil] tenant scope; when given, narrows to that scope
+      # @param scope [Object, nil] tenant scope (REQUIRED keyword); when non-nil,
+      #   narrows to that scope; explicit nil (non-scoped portal) → no scope filter
       # @return [Array<Entry>] in-progress entries, newest first
-      def entries_for(owner, scope: nil)
+      def entries_for(owner, scope:)
         rel = Session.status_in_progress.where(owner: owner)
         rel = rel.where(scope: scope) unless scope.nil?
         rel.order(updated_at: :desc).filter_map { |row| entry_for(row) }

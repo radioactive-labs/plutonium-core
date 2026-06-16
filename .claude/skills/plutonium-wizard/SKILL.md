@@ -283,7 +283,7 @@ The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<
 
 ## Listing in-progress wizards
 
-`Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)` returns the user's in-progress runs (scope-narrowed when given), newest-first, for a "continue where you left off" dashboard. Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, and a `resume_url` (a real route for `register_wizard` and `wizard`-macro **anchored** mounts; `nil` + `resume_unresolved_reason` when the row lacks the identity to rebuild the URL — e.g. a non-anchored `wizard`-macro run).
+`Plutonium::Wizard.in_progress_for(view_context)` takes the `view_context` (as interactions do) and derives the run owner (`current_user`) and tenant scope (`current_scoped_entity` when `scoped_to_entity?`, else nil) from it, returning the user's in-progress runs (tenant-narrowed when scoped), newest-first, for a "continue where you left off" dashboard. Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, and a `resume_url` (a real route for `register_wizard` and `wizard`-macro **anchored** mounts; `nil` + `resume_unresolved_reason` when the row lacks the identity to rebuild the URL — e.g. a non-anchored `wizard`-macro run). The low-level `Store#in_progress_for(owner, scope:)` takes `scope:` as a **required** keyword (no nil default).
 
 ## Storage & config
 
