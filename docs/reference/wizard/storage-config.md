@@ -34,7 +34,7 @@ The migration ships **in the gem** and Rails runs it **in place** — there is n
 - `db:migrate:status` shows the migration's file living in the gem (cosmetic; reads "file missing" if the gem is later removed) — standard for gem-shipped migrations.
 
 ::: warning v1 supports the primary database only
-The wizard table lives on your app's **primary** database in v1. `config.wizards.database` is **reserved for future use** — setting it to a non-primary connection has no effect yet (the migration path is registered on the primary database), and the railtie logs a warning if you set it to anything other than `:primary`. Multi-database routing for wizard sessions is a roadmap follow-up.
+The wizard table lives on your app's **primary** database in v1. `config.wizards.database` is **reserved for future use** — multi-database routing for wizard sessions is a roadmap follow-up. Setting it to anything other than `:primary` (while wizards are enabled) **raises at boot**, rather than silently registering the migration on the primary database.
 :::
 
 ## The table — `plutonium_wizard_sessions`
