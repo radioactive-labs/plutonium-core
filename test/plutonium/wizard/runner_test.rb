@@ -302,6 +302,42 @@ module Plutonium
         assert_equal :make, build_runner(StepErrorFail).current_step.key
       end
 
+      # ---- re-submitting a step whose on_submit already ran ----
+
+      test "re-submitting a persisted step with CHANGED input rolls back the old record and re-runs" do
+        build_runner(Persisting).advance(:make, {"name" => "First"})
+        first = Organization.find_by!(name: "First")
+        assert_equal [first.to_global_id.to_s], @store.read("k").persisted["make"]
+
+        # Back to the step, edit, Next again.
+        build_runner(Persisting).advance(:make, {"name" => "Second"})
+
+        refute Organization.exists?(id: first.id), "the prior record is destroyed, not orphaned"
+        second = Organization.find_by!(name: "Second")
+        assert_equal [second.to_global_id.to_s], @store.read("k").persisted["make"]
+        assert_equal 1, Organization.where(name: %w[First Second]).count, "no duplicate left behind"
+      end
+
+      test "re-submitting a persisted step with the SAME input keeps the prior record (no re-run)" do
+        build_runner(Persisting).advance(:make, {"name" => "Same"})
+        first = Organization.find_by!(name: "Same")
+
+        build_runner(Persisting).advance(:make, {"name" => "Same"})
+
+        assert Organization.exists?(id: first.id), "unchanged re-submit keeps the original record"
+        assert_equal 1, Organization.where(name: "Same").count, "no duplicate created"
+        assert_equal [first.to_global_id.to_s], @store.read("k").persisted["make"]
+      end
+
+      test "re-submitting with changed input runs the prior attempt's on_rollback (compensation)" do
+        RollbackCustom.side_effects.clear
+        build_runner(RollbackCustom).advance(:make, {"name" => "Old"})
+        build_runner(RollbackCustom).advance(:make, {"name" => "New"})
+
+        assert_includes RollbackCustom.side_effects, "Old", "on_rollback compensates the prior attempt"
+        refute_includes RollbackCustom.side_effects, "New"
+      end
+
       # ---- back ----
 
       test "back moves cursor without validating and keeps data" do

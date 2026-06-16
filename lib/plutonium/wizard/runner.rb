@@ -133,8 +133,20 @@ module Plutonium
         errors = validate(step, params)
         return Result.new(ok: false, errors:) if errors.any?
 
+        # Re-submitting a step whose on_submit ALREADY ran (you went back to it and
+        # Nexted again): undo the prior attempt — its on_rollback then destroy its
+        # tracked records — BEFORE re-running, so records/side effects aren't
+        # duplicated and the old records aren't orphaned. `persisted` carries the
+        # step's key once on_submit has run (a side-effect-only step records an empty
+        # list), so it's the "already ran" signal. An UNCHANGED re-submit keeps the
+        # prior result untouched — no needless rollback + re-charge.
+        ran_before = step.on_submit && @state.persisted.key?(step.key.to_s)
+        changed = step_input_changed?(step, params)
         stage(step.key, params)
-        run_on_submit(step) if step.on_submit
+        if step.on_submit && (!ran_before || changed)
+          rollback_prior_submit(step) if ran_before
+          run_on_submit(step)
+        end
         @state.visited |= [step.key.to_s]
         # Staging this step's params may have flipped a branch `condition:`, hiding
         # an earlier step that already persisted records (save-as-you-go). Prune it
@@ -365,6 +377,25 @@ module Plutonium
         end
         @state.persisted = @state.persisted.merge(step.key.to_s => tracker.gids)
         @wizard.persisted[step.key.to_sym] = tracker.records
+      end
+
+      # Undo a step's PRIOR on_submit before it is re-run (a re-submit with changed
+      # input). Runs the same compensation as cancel/branch-prune — the step's
+      # on_rollback then `destroy!` of its tracked records — in its own transaction
+      # (consistent with `run_cleanup`/`prune_departed_steps`), then forgets the
+      # step's persisted entry so the fresh on_submit starts clean.
+      def rollback_prior_submit(step)
+        ActiveRecord::Base.transaction { rollback_step(step) }
+        @state.persisted = @state.persisted.except(step.key.to_s)
+        @wizard.persisted[step.key.to_sym] = []
+      end
+
+      # Whether the incoming params would change the step's already-staged slice —
+      # i.e. the user edited something. An unchanged re-submit (back, then Next with
+      # no edits) must NOT re-run a side-effecting on_submit.
+      def step_input_changed?(step, params)
+        current = @state.data[step.key.to_s] || {}
+        current.merge(params) != current
       end
 
       # Reverse-order cleanup of every step's tracked records (§2.3): run each
