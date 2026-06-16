@@ -167,6 +167,21 @@ module Plutonium
         assert enc.encrypt_data?
       end
 
+      def test_anonymous_defaults_to_false_and_opts_in
+        refute CreateCo.anonymous?, "wizards require authentication by default"
+
+        guest = Class.new(Plutonium::Wizard::Base) { anonymous }
+        assert guest.anonymous?
+      end
+
+      def test_anonymous_is_not_inherited_by_reference
+        guest = Class.new(Plutonium::Wizard::Base) { anonymous }
+        sub = Class.new(guest)
+        assert sub.anonymous?, "subclass inherits the anonymous flag"
+        # And a plain subclass of a default wizard stays authenticated.
+        refute Class.new(CreateCo).anonymous?
+      end
+
       def test_presents
         assert_equal "Create a company", CreateCo.label
         assert_equal "Create a company", CreateCo.new.label

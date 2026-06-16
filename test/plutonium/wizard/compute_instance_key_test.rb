@@ -76,14 +76,14 @@ class Plutonium::Wizard::ComputeInstanceKeyTest < ActiveSupport::TestCase
     refute_equal compute(PerAnchorWizard, anchor: a1), compute(PerAnchorWizard, anchor: a2)
   end
 
-  test "pre-auth then auth does NOT rekey a concurrency-keyed run" do
-    # A keyed run's identity is the concurrency_key, not the owner — so stamping
-    # owner after login leaves the key unchanged (§4.5). For PerUserWizard the key
-    # IS current_user, so simulate a pre-auth key with a fixed scope: a tokened
-    # wizard's key never changes when owner is added either.
-    pre = compute(TokenedWizard, current_user: nil, wizard_token: "tok")
-    post = compute(TokenedWizard, current_user: @user, wizard_token: "tok")
-    assert_equal pre, post, "tokened identity is stable across pre-auth → auth (no rekey)"
+  test "a tokened run's identity does not depend on the owner" do
+    # A tokened run's identity is the wizard_token, NOT the owner — so adding an
+    # owner (e.g. a guest run whose `execute` later authenticates) never rekeys it
+    # (§4.5). Wizards don't cross the auth boundary mid-flow, so there's no rekey
+    # to worry about; this just pins that the digest ignores the owner.
+    without_owner = compute(TokenedWizard, current_user: nil, wizard_token: "tok")
+    with_owner = compute(TokenedWizard, current_user: @user, wizard_token: "tok")
+    assert_equal without_owner, with_owner, "tokened identity ignores the owner (no rekey)"
   end
 
   test "a concurrency_key referencing a missing method raises a clear error" do

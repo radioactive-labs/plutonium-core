@@ -37,8 +37,9 @@ module Plutonium
 
       # Identity/concurrency context (§4.5), supplied by the runner/driving layer
       # so `concurrency_key` resolvers and the tenancy fold can reach them.
-      # `wizard_token` is the per-wizard token (the tokened/pre-auth principal,
-      # available inside `concurrency_key`).
+      # `wizard_token` is the per-run id (the identity for guest/repeatable runs,
+      # available inside `concurrency_key`) — NOT a pre-auth principal that
+      # survives login.
       attr_accessor :current_user, :current_scoped_entity, :wizard_token
 
       # The runner reuses a single wizard instance across a request, reassigning

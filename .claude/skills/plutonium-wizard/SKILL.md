@@ -71,6 +71,7 @@ end
 | `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs. |
 | `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
 | `encrypt_data` | Encrypt the staged `data`/`tracked_records` columns (PII flows). |
+| `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). |
 
 ## Branching — `condition:`
 
@@ -257,6 +258,28 @@ Draws `GET/POST /onboarding(/:token)/:step` within the portal + an `onboarding_w
 
 > [!DANGER]
 > **A portal-level wizard with no `authorize?` is runnable by ANY authenticated portal user** — it has no resource policy and defaults to allowed. **Always define `def authorize?`** for anything privileged (admin-only, per-user gating, tenant checks).
+
+## Authentication
+
+**Auth is required by default** — entry without a `current_user` is rejected. Authenticated lookups are **owner-scoped**: a run id leaked in a URL can't be resumed by another logged-in user (foreign row → 404).
+
+Opt into guest access with `anonymous`, and mount it on a **public route**:
+
+```ruby
+class GuestSignupWizard < Plutonium::Wizard::Base
+  anonymous                         # runs pre-login; identity = the server-minted run-id cookie
+  step(:account) { attribute :email, :string; input :email; validates :email, presence: true }
+  review label: "Review"
+  def execute                       # the ONE boundary it may cross
+    succeed(Account.create!(email: data.email))   # may also sign the user in (host calls Rodauth)
+  end
+end
+
+# in a portal's routes — drawn on a public (unauthenticated) route automatically
+register_wizard ::GuestSignupWizard, at: "signup", public: true
+```
+
+The run-id cookie is httponly / `secure` / `same_site: :lax` / short-lived and is cleared on completion. **No mid-flow auth crossing**: a guest wizard never stamps an owner mid-flow or carries a token across login — it only ever authenticates at `execute`.
 
 ## Storage & config
 

@@ -15,8 +15,10 @@ module Plutonium
     # wizards are non-anchored — anchored wizards mount on the resource controller),
     # and the per-step URL built from the named route helper `register_wizard` draws.
     #
-    # Identity (§4): non-anchored / pre-auth flows carry a `token` in a signed
-    # cookie (minted on first GET when absent); the cookie is cleared on completion.
+    # Identity (§4): non-keyed flows carry a per-run id `token` in a signed cookie
+    # (minted on first GET when absent); the cookie is cleared on completion. It is
+    # NOT a pre-auth principal that survives login — authenticated runs are guarded
+    # by owner-scoping and never cross the auth boundary mid-flow (§4.5).
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Wizard::Driving

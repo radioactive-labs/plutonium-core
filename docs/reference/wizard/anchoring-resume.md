@@ -85,13 +85,15 @@ instance_key = SHA256("tokened|#{wizard}|#{wizard_token}")
 ```
 
 - **`concurrency_key`** is serialized records → GID, scalars → string, arrays joined — with the **tenant (`current_scoped_entity`) folded in automatically**, so the same user running the same keyed wizard in two tenant portals gets two distinct rows.
-- **`wizard_token`** (URL param ?? signed cookie, minted if absent) keys runs with no `concurrency_key` — a fresh token per launch makes each run distinct and repeatable; pre-auth→auth keeps the same token (no rekey).
+- **`wizard_token`** (URL param ?? signed cookie, minted if absent) is the **per-run id** for runs with no `concurrency_key` — a fresh, unguessable token per launch makes each run distinct and repeatable. It is **not** a pre-auth principal that survives login: authenticated runs are guarded by [owner-scoping](#authentication), and a wizard never crosses the auth boundary mid-flow.
 
 The owner, anchor, and scope are also stored as plain polymorphic columns (`owner_type`/`owner_id`, etc.) for listing and querying — but identity is the digest.
 
 ## Resume
 
-A `concurrency_key`-keyed wizard's `in_progress` row **is the lock**: a second launch at the same key resumes it instead of forking. Look up the row by `instance_key`; if one exists, the user continues where they left off. A tokened (no `concurrency_key`) wizard resumes via its token cookie within the same session, and starts a fresh run otherwise.
+A `concurrency_key`-keyed wizard's `in_progress` row **is the lock**: a second launch at the same key resumes it instead of forking. Look up the row by `instance_key`; if one exists, the user continues where they left off. A tokened (no `concurrency_key`) wizard resumes via its run-id cookie within the same session, and starts a fresh run otherwise.
+
+For a non-`anonymous` (authenticated) wizard, **every resume is owner-scoped**: a row may only be resumed by the user that owns it. A run id leaked in a URL can't be picked up by another logged-in user — the engine treats a foreign row as not-found (404). See [Authentication](#authentication).
 
 On resume the engine:
 
@@ -100,6 +102,34 @@ On resume the engine:
 - Rehydrates `persisted[:key]` from stored GlobalIDs, so a per-step `on_submit` create flow returning later still sees records made by earlier steps.
 
 Navigation never loses data: **Back** moves the cursor without validating and never discards `data`; branch-hidden steps' data is kept in the store and only pruned (on a working copy) at finalize.
+
+## Authentication
+
+**Wizards require authentication by default.** Entry without a `current_user` is rejected (redirect to login / 401). A wizard never crosses the auth boundary mid-flow.
+
+- **Default (authenticated).** `current_user` is required throughout. Every session lookup/resume is **owner-scoped** (`where(owner: current_user)` + an owner check), so a run id leaked in a URL can't be resumed by another logged-in user.
+- **`anonymous` (guest).** Opt in with the `anonymous` macro. The wizard may run with no `current_user`; its identity is the server-minted, unguessable `wizard_token` (httponly, `secure`, `same_site: :lax`, short-TTL cookie, cleared on completion). It guards only the user's own in-progress data. Its terminal `execute` **may** authenticate (e.g. a signup flow that creates the account and logs in) — that login goes through Rodauth, which rotates the Rails session. There is **no** mid-flow owner-stamping, token-survives-login, or instance_key rekey.
+
+```ruby
+class GuestSignupWizard < Plutonium::Wizard::Base
+  anonymous                       # may run pre-login
+
+  step :account do
+    attribute :email, :string
+    input :email, as: :email
+    validates :email, presence: true
+  end
+  review label: "Review"
+
+  def execute                     # the ONE boundary a guest wizard may cross
+    account = Account.create!(email: data.email)
+    # sign the account in here (the host calls Rodauth) — no special framework handling
+    succeed(account)
+  end
+end
+```
+
+An `anonymous` wizard must be [mounted on a public route](/reference/wizard/registration-launch#public-mount-for-anonymous-wizards).
 
 ## Related
 

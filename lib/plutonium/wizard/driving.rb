@@ -23,7 +23,11 @@ module Plutonium
       extend ActiveSupport::Concern
       include Plutonium::StructuredInputs::ParamsConcern
 
-      # Signed-cookie key holding the per-(wizard) token for non-anchored flows.
+      # How long the per-run id cookie lives. Short by design — it only needs to
+      # outlast an in-progress run, and a guest run's data hangs off it (§4.5).
+      TOKEN_COOKIE_TTL = 1.day
+
+      # Signed-cookie key holding the per-(wizard) run id for non-keyed flows.
       def self.token_cookie_key(wizard_class)
         :"pu_wizard_#{wizard_class.name.underscore.tr("/", "_")}"
       end
@@ -32,7 +36,9 @@ module Plutonium
 
       # GET .../:step — render the current step (or bounce on a completeness gap).
       def wizard_show
+        require_wizard_authentication!
         runner = build_wizard_runner
+        deny_wizard_resume_for_other_user!(runner)
         authorize_wizard_entry!(runner)
 
         # Re-entering a finished one-time wizard (§4.3/§9): its key holds a
@@ -55,7 +61,9 @@ module Plutonium
 
       # POST .../:step — advance / back / cancel.
       def wizard_update
+        require_wizard_authentication!
         runner = build_wizard_runner
+        deny_wizard_resume_for_other_user!(runner)
         authorize_wizard_entry!(runner)
         @wizard_runner = runner
 
@@ -166,13 +174,24 @@ module Plutonium
           store: wizard_store,
           instance_key: resolved_wizard_instance_key,
           view_context:,
-          owner: current_user,
+          owner: resolved_wizard_owner,
           anchor: resolved_wizard_anchor,
           scope: resolved_wizard_scope,
           token: wizard_token,
-          current_user: current_user,
+          current_user: resolved_wizard_owner,
           current_scoped_entity: resolved_wizard_scope
         )
+      end
+
+      # The authenticated user driving this run, or nil for a guest (`anonymous`)
+      # run (§4.5). The public surface stubs `current_user` to the "Guest"
+      # sentinel; a guest run has NO owner — its identity is the unguessable
+      # `wizard_token`, not a principal. Normalizing to nil keeps the runner's
+      # owner-scoping and the wizard's `current_user` honest.
+      def resolved_wizard_owner
+        return nil if current_wizard_class.anonymous?
+
+        current_user_present_for_wizard? ? current_user : nil
       end
 
       def wizard_store
@@ -187,7 +206,7 @@ module Plutonium
       def resolved_wizard_instance_key
         Plutonium::Wizard.compute_instance_key(
           wizard_class: current_wizard_class,
-          current_user: current_user,
+          current_user: resolved_wizard_owner,
           current_scoped_entity: resolved_wizard_scope,
           anchor: resolved_wizard_anchor,
           wizard_token: wizard_token
@@ -202,23 +221,80 @@ module Plutonium
         current_scoped_entity
       end
 
-      # The per-wizard token (§4.5): URL `:token` param ?? signed cookie, minted
-      # and set if absent. The identity principal for tokened/repeatable runs and
-      # the pre-auth principal; folded into `concurrency_key` resolution. Minted
-      # for every run (authed or not) so a tokened (no-concurrency_key) wizard
-      # always has a stable per-launch identity. The cookie is cleared on
-      # completion.
+      # The per-run id (§4.5): URL `:token` param ?? signed cookie, server-minted
+      # and set if absent. It is the identity principal for runs without a
+      # `concurrency_key` — guest (`anonymous`) runs AND authenticated repeatable
+      # runs — and is folded into `concurrency_key` resolution. It is NOT a
+      # pre-auth principal that survives login: authenticated runs are guarded by
+      # owner-scoping, and the wizard never crosses the auth boundary mid-flow.
+      #
+      # The token is unguessable (`SecureRandom.uuid`). The cookie is the only
+      # thing protecting an in-progress GUEST run's data, so it is hardened:
+      # httponly, secure, same_site :lax, short-lived; it is cleared on completion.
       def wizard_token
         return @wizard_token if defined?(@wizard_token)
 
         key = Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class)
         token = params[:token].presence || cookies.signed[key].presence
         token ||= SecureRandom.uuid
-        cookies.signed[key] = {value: token, httponly: true} unless cookies.signed[key] == token
+        unless cookies.signed[key] == token
+          cookies.signed[key] = {
+            value: token,
+            httponly: true,
+            secure: wizard_cookie_secure?,
+            same_site: :lax,
+            expires: Plutonium::Wizard::Driving::TOKEN_COOKIE_TTL.from_now
+          }
+        end
         @wizard_token = token
       end
 
+      # `secure: true` everywhere except when the request itself isn't over TLS
+      # (local HTTP dev/test) — a `secure` cookie is dropped by the browser on
+      # plain HTTP, which would silently break the dev/test flow.
+      def wizard_cookie_secure?
+        request.ssl? || Rails.env.production?
+      end
+
       # --- authorization ---
+
+      # Authentication gate (§4.5). Wizards REQUIRE authentication by default —
+      # entry without a `current_user` is rejected. An `anonymous` wizard opts out
+      # (guest access; it may authenticate only at its terminal `execute`).
+      #
+      # When a `current_user` is missing for a non-`anonymous` wizard we reject the
+      # way the host already handles unauthenticated access: Rodauth's
+      # `require_authentication` (redirect to login) when the portal exposes it,
+      # else a plain 401. We deliberately do NOT lean on the portal's own auth
+      # before_action because the public mount (for `anonymous` wizards) runs
+      # OUTSIDE the portal's authenticated route constraint.
+      def require_wizard_authentication!
+        return if current_wizard_class.anonymous?
+        return if current_user_present_for_wizard?
+
+        if respond_to?(:rodauth, true)
+          rodauth.require_authentication
+        else
+          head :unauthorized
+        end
+      end
+
+      # `current_user` is truthy AND not the {Plutonium::Auth::Public} "Guest"
+      # sentinel (a public controller stubs `current_user` to the string "Guest").
+      def current_user_present_for_wizard?
+        user = current_user
+        user.present? && user != "Guest"
+      end
+
+      # Owner-scoped resume (§4.5): a non-`anonymous` wizard's row may only be
+      # resumed by its owner. The runner flags a mismatched row as forbidden; we
+      # 404 (rather than fork a fresh run) so a run id leaked in a URL can't be
+      # picked up by — or even probed by — another logged-in user.
+      def deny_wizard_resume_for_other_user!(runner)
+        return unless runner.forbidden?
+
+        raise ActiveRecord::RecordNotFound, "wizard run not found"
+      end
 
       # Entry auth (§5.2 / §6.5). A wizard may define `authorize?` (default allow);
       # false → 403 via the existing ActionPolicy::Unauthorized rescue. Resource-

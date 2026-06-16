@@ -3,7 +3,8 @@
 module Plutonium
   module Wizard
     # The author-facing class macros: `step`, `review`, `anchored`, `navigation`,
-    # `cleanup_after`, `concurrency_key`, `one_time`, `encrypt_data`. Mixed into {Base}.
+    # `cleanup_after`, `concurrency_key`, `one_time`, `encrypt_data`, `anonymous`.
+    # Mixed into {Base}.
     module DSL
       extend ActiveSupport::Concern
 
@@ -120,7 +121,7 @@ module Plutonium
         #
         #   concurrency_key { current_user }                 # ≤1 in-progress per user
         #   concurrency_key { anchor }                        # ≤1 per anchored record
-        #   concurrency_key { current_user || wizard_token }  # pre-auth-safe
+        #   concurrency_key { wizard_token }                  # per-run id (e.g. guest)
         #   concurrency_key :current_user                     # method shorthand
         def concurrency_key(method = nil, &block)
           @concurrency_key =
@@ -167,6 +168,20 @@ module Plutonium
           true
         end
 
+        # --- authentication (§4.5) ---
+
+        # Opt this wizard into GUEST (unauthenticated) access. By default a wizard
+        # requires a `current_user` to enter — entry without one is rejected. An
+        # `anonymous` wizard may run with no `current_user`; its identity is the
+        # server-minted `wizard_token` (httponly/secure/same_site cookie), and it
+        # may authenticate ONLY at its terminal `execute` (e.g. a signup flow). It
+        # NEVER crosses the auth boundary mid-flow (§4.5).
+        def anonymous
+          @anonymous = true
+        end
+
+        def anonymous? = !!@anonymous
+
         # --- encryption (§8.1) ---
 
         def encrypt_data(flag = true)
@@ -197,6 +212,7 @@ module Plutonium
           subclass.instance_variable_set(:@concurrency_key, @concurrency_key)
           subclass.instance_variable_set(:@one_time, @one_time)
           subclass.instance_variable_set(:@encrypt_data, @encrypt_data)
+          subclass.instance_variable_set(:@anonymous, @anonymous)
         end
       end
     end

@@ -39,6 +39,16 @@ module Plutonium
         # row, incl. a completed one-time marker) for the digest; a fresh launch
         # with no row builds new state.
         existing = store.read(instance_key)
+
+        # Owner-scoped resume (§4.5): for a non-`anonymous` wizard, a row may only
+        # be resumed by its owner. A run id leaked in a URL can't be picked up by a
+        # different logged-in user — a mismatch reads as "no such run for you".
+        # `@forbidden` lets the driving layer 404 rather than silently fork.
+        if existing && owner_mismatch?(wizard_class, existing, current_user)
+          existing = nil
+          @forbidden = true
+        end
+
         @resumed = !existing.nil?
         @state = existing || new_state(owner:, anchor:, scope:, token:)
         @wizard = wizard_class.new(view_context:)
@@ -47,17 +57,17 @@ module Plutonium
         @wizard.current_user = current_user
         @wizard.current_scoped_entity = current_scoped_entity
         @wizard.wizard_token = token
-        # A pre-auth row resumed after login: stamp the owner without rekeying
-        # (§4.5). The digest is token/concurrency-based, so this is identity-safe.
-        if owner && @state.owner.nil?
-          @state.owner = owner
-        end
         rehydrate_persisted
       end
 
       # Whether a row already existed at this key when the runner was built — i.e.
       # this launch RESUMED rather than started fresh (§4.2).
       def resumed? = @resumed
+
+      # Whether an existing row at this key belongs to a DIFFERENT user (§4.5
+      # owner-scoping). The driving layer turns this into a 404 so a leaked run id
+      # can't be resumed by another logged-in user.
+      def forbidden? = !!@forbidden
 
       # Whether this run's key already has a retained `completed` one-time marker
       # (§4.3 / §9) — re-entering a finished one-time wizard. The driving layer
@@ -388,6 +398,20 @@ module Plutonium
           records = Array(gids).filter_map { |gid| GlobalID::Locator.locate(gid) }
           @wizard.persisted[step_key.to_sym] = records
         end
+      end
+
+      # Owner-scoping check (§4.5): a non-`anonymous` wizard's row may only be
+      # resumed by the user that owns it. An `anonymous` wizard is guarded by its
+      # unguessable run id instead (no owner), so it never mismatches here.
+      def owner_mismatch?(wizard_class, state, current_user)
+        return false if wizard_class.anonymous?
+        return false if state.owner.nil?
+
+        gid(state.owner) != gid(current_user)
+      end
+
+      def gid(record)
+        record&.to_global_id&.to_s
       end
 
       def new_state(owner:, anchor:, scope:, token:)

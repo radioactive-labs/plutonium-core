@@ -47,10 +47,10 @@ One framework-owned table serves everything; **no changes to your models.**
 | `status` | `in_progress` \| `completing` \| `completed`. |
 | `current_step` | The step cursor. |
 | `instance_key` (unique) | The deterministic identity digest (see [Anchoring & resume](/reference/wizard/anchoring-resume#instance-identity)). |
-| `owner_type` / `owner_id` | The user (nullable for pre-auth). |
+| `owner_type` / `owner_id` | The user (nullable — `null` for an `anonymous`/guest run). Authenticated lookups are owner-scoped against this. |
 | `anchor_type` / `anchor_id` | The anchor record (nullable). |
 | `scope_type` / `scope_id` | The portal scoping entity / tenant (nullable). |
-| `token` | Pre-auth / tokened concurrent instances (nullable). |
+| `token` | The per-run id for guest/tokened (no-`concurrency_key`) instances (nullable). |
 | `data` | Staged field values (JSON; `jsonb` on PostgreSQL). |
 | `tracked_records` | GlobalIDs of records registered via `persist`, by step key. Exposed to authors as `persisted[:key]`. |
 | `visited` | Visited step keys. |

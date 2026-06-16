@@ -4,6 +4,12 @@ AdminPortal::Engine.routes.draw do
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"
   register_wizard ::WelcomeWizard, at: "welcome"
 
+  # An `anonymous` (guest) wizard mounted on a PUBLIC route (pre-login). Because
+  # the portal engine is mounted behind the host's auth constraint, this draws on
+  # the MAIN app route set instead (outside the constraint) — see §4.5 / the
+  # `public:` option. `public: true` is the default for `anonymous` wizards.
+  register_wizard ::GuestSignupWizard, at: "signup", public: true
+
   # A page gated behind the one-time WelcomeWizard (see GatedController).
   get "gated", to: "gated#index"
 

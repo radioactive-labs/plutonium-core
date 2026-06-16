@@ -56,6 +56,7 @@ end
 |---|---|
 | `at:` (required) | The portal-relative base path for the wizard's steps. |
 | `as:` | Override the route helper name prefix (defaults to the wizard's name, e.g. `OnboardOrganizationWizard` → `onboarding`). |
+| `public:` | Mount on a **public (unauthenticated) route** for an [`anonymous`](#public-mount-for-anonymous-wizards) wizard. Defaults to the wizard's own `anonymous?` flag. |
 
 This draws the wizard's step routes within the portal — so they inherit the portal's scope/auth/layout — and dispatches them to a portal-namespaced wizard controller (synthesized for you; there is no hand-written controller file). It provides `<name>_wizard_path` / `_url` helpers.
 
@@ -90,6 +91,20 @@ A portal-level wizard (registered with `register_wizard`) has **no resource poli
 Define `def authorize?` on the wizard. The controller checks it only when the wizard responds to it (default: allowed).
 :::
 
+## Public mount for `anonymous` wizards
+
+**Wizards require authentication by default.** A guest ([`anonymous`](/reference/wizard/anchoring-resume#authentication)) wizard needs a route reachable **before** login. Because a portal engine is mounted *inside* the host's authentication constraint (`constraints Rodauth::Rails.authenticate(:user) { mount ... }`), a route drawn in the portal is unreachable pre-login. So `register_wizard` draws an `anonymous` wizard's route on the **main application's** route set, outside that constraint:
+
+```ruby
+# in the portal engine's routes (register_wizard is available there)
+register_wizard ::GuestSignupWizard, at: "signup", public: true
+#   → GET/POST /signup(/:token)/:step  (a top-level, unauthenticated route)
+```
+
+- `public: true` is the **default for an `anonymous` wizard**; you can pass it explicitly for clarity.
+- A **non-`anonymous`** wizard may **not** be mounted public (raises) — and an **`anonymous`** wizard may **not** be mounted authenticated (it would be unreachable pre-login).
+- The public route dispatches to a synthesized top-level `WizardsController` that renders **full-page** with a standalone layout (no resource sidebar / user menu) and treats the request as a guest (no `current_user`).
+
 ## One-time gating
 
 To make a wizard run once and gate a controller behind it, see [One-time wizards](/reference/wizard/one-time) — a `concurrency_key` + `one_time` + the `Plutonium::Wizard::Gate` concern (`ensure_wizard_completed`).
@@ -99,7 +114,7 @@ To make a wizard run once and gate a controller behind it, see [One-time wizards
 v1 hosts wizards inside portals only. A few surfaces are deliberate follow-ups:
 
 - **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing a `with:`-anchored wizard to **`register_wizard`** raises — portal-level mounts have no resource record to anchor to. A **`via:`-anchored** (context-anchored) wizard *does* mount portal-level — its anchor is resolved by a controller method, not a URL `:id`.
-- **Main-app (non-portal) standalone wizards** are out of scope for v1 — wizards inherit a portal's auth/scoping/layout/rendering.
+- **Main-app (non-portal) standalone wizards** are out of scope for v1 — authenticated wizards inherit a portal's auth/scoping/layout/rendering. The one exception is an [`anonymous` wizard's public mount](#public-mount-for-anonymous-wizards), which is drawn on the main app outside the portal's auth constraint precisely because it must be reachable pre-login.
 
 ## Related
 

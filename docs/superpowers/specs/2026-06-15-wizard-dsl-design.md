@@ -111,7 +111,8 @@ This is **Option A**: inline steps + a single final `execute`. Atomic, no orphan
 | **`encrypt_data`** | Optional `encrypt_data true` to apply Rails 7 `encrypts` to the `data`/`persisted` payload (off by default), for flows that stage PII. See §8.1. |
 | **`concurrency_key { … }`** | Optional block (Solid Queue–style) returning the value(s) a run is keyed by; ≤1 in-progress run per key (the keyed row is the lock, created at start). Omit → unlimited concurrent tokened runs. Identity source for §4. |
 | **`one_time`** | Optional; with a `concurrency_key`, **retain** the completed row at the key → permanently blocks a restart (gate-able). Omit → row deleted on completion → repeatable. See §4.3/§9. |
-| **`wizard_token`** | Context method (URL param ?? signed cookie, minted if absent) — the per-wizard token; identity for non-`concurrency_key` (tokened/repeatable) runs and the pre-auth principal. Available in `concurrency_key`. |
+| **`wizard_token`** | Context method — the per-run id (server-minted; identity for non-`concurrency_key`/guest runs). Available in `concurrency_key`. Not a pre-auth principal that survives login. |
+| **`anonymous`** | Opt-in macro: the wizard may run without authentication (guest). Default = authentication required. Guest wizards may authenticate only at their terminal `execute`; never mid-flow. See §4.5. |
 
 Steps reuse the existing field DSL verbatim — a step is essentially an interaction's field surface rendered on its own screen, fed through the same `form_layout` → form-rendering pipeline.
 
@@ -345,9 +346,16 @@ The keyed row blocks for its whole life: `in_progress` blocks concurrent starts;
 
 The portal's **`current_scoped_entity`** is **folded into the `concurrency_key` and the completion check automatically** (and stored as the `scope` column), so concurrency, completion, and the in-progress list are **tenant-isolated by default** — the author doesn't thread it. This makes per-membership fall out for free: in a tenant portal, `concurrency_key { current_user } + one_time` is automatically once per **(user, tenant)**.
 
-### 4.5 Context methods & pre-auth
+### 4.5 Authentication & guest (`anonymous`) wizards
 
-The wizard controller/gate expose, alongside `current_user`: **`current_scoped_entity`** (tenant/scope), **`anchor`** (resolved record, §3), and **`wizard_token`** (the per-wizard token — URL param ?? signed cookie, minted if absent). All are available inside `concurrency_key`. For a **pre-auth** keyed wizard, `wizard_token` is the stable principal until login; on authentication `owner` is stamped onto the row without rekeying, and the cookie is cleared on completion.
+**Wizards require authentication by default** — entry without a `current_user` is rejected. A wizard opts into guest access with the **`anonymous`** macro. Wizards **never cross the auth boundary mid-flow**; the *only* boundary a guest wizard may cross is its **terminal `execute`** (e.g. a signup flow whose `execute` creates the account and logs in).
+
+- **Default (authenticated)** → `current_user` required throughout; identity via `concurrency_key` (else a per-run id); **all session lookups are owner-scoped** (`where(owner: current_user)`), so a run id leaked in a URL can't be resumed by another user.
+- **`anonymous`** → may run with no `current_user`; identity = a **server-minted, unguessable guest run id** (httponly, `secure`, `same_site: :lax`, short-TTL, cleared on completion). It guards only the user's *own* in-progress data (no cross-account exposure). `execute` *may* authenticate — and that login goes through **Rodauth, which rotates the Rails session (`clear_session` → `reset_session`), so fixation is handled** (confirmed: `rodauth-rails` base feature). There is **no** mid-flow owner-stamping, token-survives-login, or instance_key rekey.
+
+**Mounting:** default wizards are portal-hosted (authenticated). An `anonymous` wizard needs a **public route** (pre-login), so `register_wizard` takes a `public:`/unauthenticated mount option used only for opted-in `anonymous` wizards.
+
+**Context methods** exposed to the wizard/gate (and inside `concurrency_key`): `current_user`, `current_scoped_entity` (tenant/scope), `anchor` (resolved record, §3), and `wizard_token` (the per-run id; for guest/repeatable identity — *not* a pre-auth principal that survives login).
 
 On resume the engine restores the cursor + `data` and rehydrates `persisted[:key]` from stored GlobalIDs.
 
@@ -380,11 +388,14 @@ For a wizard not tied to a single resource (e.g. onboarding), register it **in t
 ```ruby
 # packages/admin_portal/config/routes.rb (inside the portal engine)
 PlutoniumPortal.routes.draw do
-  register_wizard OnboardingWizard, at: "onboarding"   # portal-relative path
+  register_wizard OnboardingWizard, at: "onboarding"            # portal-relative, authenticated
+  register_wizard GuestSignupWizard, at: "signup", public: true # anonymous → public (pre-login)
 end
 ```
 
-This draws the wizard's step routes **within the portal** (so they get the portal's scope/auth/layout) and provides a path helper. The wizard runs through a portal-hosted wizard controller (the `Plutonium::Wizard::Controller` concern mixed into the portal's controller, like resource controllers). `scope_gid` comes from the portal's `scoped_entity` when the portal is entity-scoped.
+This draws an authenticated wizard's step routes **within the portal** (so they get the portal's scope/auth/layout) and provides a path helper. The wizard runs through a portal-hosted wizard controller (the `Plutonium::Wizard::Controller` concern mixed into the portal's controller, like resource controllers). `scope_gid` comes from the portal's `scoped_entity` when the portal is entity-scoped.
+
+**Public mount (`anonymous` only).** Because a portal engine is mounted *inside* the host's auth constraint (`constraints Rodauth::Rails.authenticate(:user) { mount … }`), a route drawn in the portal is unreachable pre-login. A guest (`anonymous`) wizard therefore takes `public: true` (the default for `anonymous`), and `register_wizard` draws its route on the **main application's** route set, outside that constraint, dispatching to a synthesized top-level `WizardsController` (full Plutonium controller stack + `Plutonium::Auth::Public`, rendered full-page with a standalone layout). A non-`anonymous` wizard may not be mounted public, and an `anonymous` wizard may not be mounted authenticated — both raise.
 
 Portal-level wizards have no resource policy, so they're gated by a **wizard-level `authorize?` hook** checked before entry/each request:
 

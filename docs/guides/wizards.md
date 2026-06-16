@@ -326,6 +326,34 @@ end
 
 This draws the wizard's step routes within the portal and provides an `<at>_wizard_path` helper. See [Registration & launch](/reference/wizard/registration-launch).
 
+### Authentication & guest wizards
+
+**Wizards require authentication by default** — entering without a `current_user` is rejected, and every resume is **owner-scoped** (a run id leaked in a URL can't be picked up by another logged-in user). A wizard **never crosses the auth boundary mid-flow**.
+
+Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable cookie (httponly / `secure` / `same_site: :lax` / short-lived, cleared on completion); its terminal `execute` is the *only* place it may authenticate (e.g. a signup that creates the account and logs the user in — the host calls Rodauth, which rotates the session):
+
+```ruby
+class GuestSignupWizard < Plutonium::Wizard::Base
+  anonymous
+
+  step :account do
+    attribute :email, :string
+    input :email, as: :email
+    validates :email, presence: true
+  end
+  review label: "Review"
+
+  def execute
+    succeed(Account.create!(email: data.email))   # may also sign the user in here
+  end
+end
+
+# in the portal's routes — public: true is the default for anonymous wizards
+register_wizard ::GuestSignupWizard, at: "signup", public: true
+```
+
+Because the portal engine is mounted behind the host's auth constraint, an `anonymous` wizard's route is drawn on the **main app** (outside that constraint) so it's reachable before login. See [Authentication](/reference/wizard/anchoring-resume#authentication) and the [public mount](/reference/wizard/registration-launch#public-mount-for-anonymous-wizards).
+
 ::: warning v1 scope
 v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (portal-level mounts have no resource record), but a `via:`-anchored (context) wizard mounts portal-level fine. Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
 :::

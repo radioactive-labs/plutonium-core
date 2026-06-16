@@ -474,6 +474,50 @@ module Plutonium
         runner.back
         assert_equal %w[a b].sort, @store.read("k").visited.sort
       end
+
+      # --- owner-scoped resume (§4.5) -----------------------------------------
+
+      # An `anonymous` wizard so we can compare it against a default (authed) one.
+      class GuestW < Plutonium::Wizard::Base
+        anonymous
+        step(:a) { attribute :x, :string }
+        review label: "R"
+        def execute = succeed(:done)
+      end
+
+      test "a non-anonymous run owned by user A is forbidden for user B" do
+        a = Organization.create!(name: "User-A")
+        b = Organization.create!(name: "User-B")
+
+        # A starts and stages a row at key "k".
+        build_runner(W, owner: a, current_user: a).advance(:a, {"go" => "yes"})
+        assert_equal a.to_global_id.to_s, @store.read("k").owner.to_global_id.to_s
+
+        # B resumes the SAME key → flagged forbidden, A's row is NOT resumed.
+        runner_b = build_runner(W, owner: b, current_user: b)
+        assert runner_b.forbidden?, "another user's row must be forbidden"
+        refute runner_b.resumed?, "B must not resume A's row"
+      end
+
+      test "the owner can resume their own non-anonymous run" do
+        a = Organization.create!(name: "User-A")
+        build_runner(W, owner: a, current_user: a).advance(:a, {"go" => "yes"})
+
+        runner_a = build_runner(W, owner: a, current_user: a)
+        refute runner_a.forbidden?
+        assert runner_a.resumed?, "the owner resumes their own row"
+      end
+
+      test "an anonymous run is never owner-forbidden (guarded by its run id)" do
+        # A guest row has no owner; a different (or no) user at the same key resumes
+        # it — the unguessable run id is the only guard, not an owner check.
+        build_runner(GuestW).advance(:a, {"x" => "1"})
+        assert_nil @store.read("k").owner
+
+        runner = build_runner(GuestW)
+        refute runner.forbidden?
+        assert runner.resumed?
+      end
     end
   end
 end

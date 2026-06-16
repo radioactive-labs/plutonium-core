@@ -13,6 +13,9 @@
 #   concurrency_key { … }        key a run (tenant folded in); keyed in_progress row is the lock
 #   one_time                     retain the completed row at the key → run once (needs concurrency_key)
 #   cleanup_after 7.days|:never   idle TTL before abandoned sessions are swept
+#   anonymous                    opt into guest (unauthenticated) access; mount public: true.
+#                                auth is REQUIRED by default; authed lookups are owner-scoped.
+#                                a guest wizard may authenticate ONLY at its terminal execute.
 #   def authorize?              entry gate for portal-level wizards (no resource policy)
 #   step :key, label:, condition:, using:  do ... end   one screen (block declares its
 #                                fields/hooks); condition: gates it (branching). The block
@@ -181,6 +184,36 @@ class WelcomeWizard < Plutonium::Wizard::Base
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 4. Guest (anonymous) signup — runs PRE-LOGIN, mounted on a public route.
+#    Auth is required by default; `anonymous` opts out. A guest run's identity is
+#    a server-minted, unguessable cookie (httponly/secure/same_site, cleared on
+#    completion). The wizard NEVER crosses the auth boundary mid-flow — the only
+#    boundary it may cross is its terminal `execute` (here: create + sign in).
+# ─────────────────────────────────────────────────────────────────────────────
+class GuestSignupWizard < Plutonium::Wizard::Base
+  presents label: "Sign up"
+
+  anonymous # may run without a current_user
+
+  step :account do
+    attribute :email, :string
+    attribute :password, :string
+    input :email, as: :email
+    input :password, as: :password
+    validates :email, :password, presence: true
+  end
+
+  review label: "Review"
+
+  def execute
+    account = Account.create!(email: data.email, password: data.password)
+    # A real signup would sign the account in here (the host calls Rodauth, which
+    # rotates the Rails session) — no special framework handling is needed.
+    succeed(account).with_message("Welcome!")
+  end
+end
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Registration
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -195,6 +228,11 @@ end
 # (b) Portal-level — inside a portal engine's routes (alongside register_resource).
 #     Runs within the portal (auth/scoping/layout inherited). Portal-relative path.
 #   register_wizard WelcomeWizard, at: "welcome"
+#
+#     A guest (anonymous) wizard mounts on a PUBLIC route (drawn on the main app,
+#     outside the portal's auth constraint, so it's reachable pre-login).
+#     public: true is the default for an anonymous wizard.
+#   register_wizard GuestSignupWizard, at: "signup", public: true
 
 # (c) Gating the one-time wizard — in a portal/ApplicationController. Redirects
 #     the user into the wizard until completed, then bounces them back.
