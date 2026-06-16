@@ -1,9 +1,17 @@
 import { Controller } from "@hotwired/stimulus";
 
 // Connects to data-controller="dirty-form-guard"
-// Prompts before dismissing a modal form whose contents have changed.
-// Self-disables when not inside a <dialog>, so it's safe to attach to
-// every form unconditionally.
+// Prompts before discarding a form's unsaved changes. Two guard surfaces,
+// both driven off the same dirtiness diff:
+//
+//   • Modal dismissal — when the form is inside a <dialog>, guard Esc / the
+//     close button / backdrop cancel (the original behaviour).
+//   • Full-page leave — guard a click on any control marked
+//     `data-dirty-form-guard-leave="<message>"` that posts WITHOUT this form's
+//     fields (e.g. a wizard Back/Cancel). The attribute value is the prompt.
+//
+// Safe to attach to every form unconditionally: with no dialog and no leave
+// controls it never prompts.
 //
 // Dirtiness is a diff against a baseline captured at the user's *first*
 // real interaction — not at connect. Field widgets (intl-tel-input,
@@ -46,52 +54,63 @@ export default class extends Controller {
 
   connect() {
     this.dialog = this.element.closest("dialog");
-    if (!this.dialog) return;
 
     this.baseline = null;
     this.forceClose = false;
     this.submitting = false;
 
     this.onFirstIntent = this.#onFirstIntent.bind(this);
-    this.onCancel = this.#onCancel.bind(this);
     this.onSubmit = this.#onSubmit.bind(this);
-    this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
-    this.onConfirmCancel = this.#onConfirmCancel.bind(this);
-    this.onKeydown = this.#onKeydown.bind(this);
+    this.onLeaveClick = this.#onLeaveClick.bind(this);
 
     // A trusted pointer/key action inside the form is the user starting to
     // edit — capture the (settled, pre-edit) baseline then. Capture phase so
-    // a widget that stops propagation can't hide it from us.
+    // a widget that stops propagation can't hide it from us. Applies in both
+    // modal and full-page modes.
     this.element.addEventListener("pointerdown", this.onFirstIntent, true);
     this.element.addEventListener("keydown", this.onFirstIntent, true);
-
-    document.addEventListener("keydown", this.onKeydown, true);
-    // Capture phase so this runs before remote-modal's cancel handler
-    // — that way `defaultPrevented` is visible there if we intervene.
-    this.dialog.addEventListener("cancel", this.onCancel, true);
-
     this.element.addEventListener("submit", this.onSubmit);
-    this.#closeButtons().forEach((btn) =>
-      btn.addEventListener("click", this.onCloseButtonClick, true),
-    );
 
-    if (this.hasConfirmDialogTarget) {
-      this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+    // Full-page leave guard: a `data-dirty-form-guard-leave` control can live
+    // outside this form (a sibling nav strip), so listen at the document in the
+    // capture phase to intercept its click before the form it submits.
+    document.addEventListener("click", this.onLeaveClick, true);
+
+    if (this.dialog) {
+      this.onCancel = this.#onCancel.bind(this);
+      this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
+      this.onConfirmCancel = this.#onConfirmCancel.bind(this);
+      this.onKeydown = this.#onKeydown.bind(this);
+
+      document.addEventListener("keydown", this.onKeydown, true);
+      // Capture phase so this runs before remote-modal's cancel handler
+      // — that way `defaultPrevented` is visible there if we intervene.
+      this.dialog.addEventListener("cancel", this.onCancel, true);
+      this.#closeButtons().forEach((btn) =>
+        btn.addEventListener("click", this.onCloseButtonClick, true),
+      );
+
+      if (this.hasConfirmDialogTarget) {
+        this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+      }
     }
   }
 
   disconnect() {
-    if (!this.dialog) return;
     this.element.removeEventListener("pointerdown", this.onFirstIntent, true);
     this.element.removeEventListener("keydown", this.onFirstIntent, true);
-    document.removeEventListener("keydown", this.onKeydown, true);
-    this.dialog.removeEventListener("cancel", this.onCancel, true);
     this.element.removeEventListener("submit", this.onSubmit);
-    this.#closeButtons().forEach((btn) =>
-      btn.removeEventListener("click", this.onCloseButtonClick, true),
-    );
-    if (this.hasConfirmDialogTarget) {
-      this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+    document.removeEventListener("click", this.onLeaveClick, true);
+
+    if (this.dialog) {
+      document.removeEventListener("keydown", this.onKeydown, true);
+      this.dialog.removeEventListener("cancel", this.onCancel, true);
+      this.#closeButtons().forEach((btn) =>
+        btn.removeEventListener("click", this.onCloseButtonClick, true),
+      );
+      if (this.hasConfirmDialogTarget) {
+        this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+      }
     }
   }
 
@@ -154,6 +173,42 @@ export default class extends Controller {
 
   #onSubmit() {
     this.submitting = true;
+  }
+
+  // Full-page leave guard. A control marked `data-dirty-form-guard-leave` posts
+  // without this form's fields, so its unsaved edits would be lost. If the form
+  // is dirty, confirm first through the app's themed dialog; the attribute's
+  // value is the prompt. We always intercept the click (the themed confirm is
+  // async), then re-submit the trigger's form if the user confirms.
+  async #onLeaveClick(event) {
+    const trigger = event.target.closest("[data-dirty-form-guard-leave]");
+    if (!trigger) return;
+    if (this.forceClose || this.submitting) return;
+    if (!this.#isDirty()) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const message =
+      trigger.getAttribute("data-dirty-form-guard-leave") ||
+      "You have unsaved changes that will be lost. Continue?";
+    const confirmed = await this.#confirm(message);
+    if (!confirmed) return;
+
+    // Approved — let the original navigation through without re-prompting.
+    this.forceClose = true;
+    trigger.closest("form")?.requestSubmit();
+  }
+
+  // Defer to the themed Turbo confirm dialog the app installs as the global
+  // confirm method (a styled <dialog>, not the native chrome bar); fall back to
+  // window.confirm only if it isn't available. Returns a Promise<boolean>.
+  #confirm(message) {
+    const turboConfirm = window.Turbo?.config?.forms?.confirm;
+    if (typeof turboConfirm === "function") {
+      return Promise.resolve(turboConfirm(message));
+    }
+    return Promise.resolve(window.confirm(message));
   }
 
   #confirmIsOpen() {

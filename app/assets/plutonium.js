@@ -28282,40 +28282,45 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     ]);
     connect() {
       this.dialog = this.element.closest("dialog");
-      if (!this.dialog) return;
       this.baseline = null;
       this.forceClose = false;
       this.submitting = false;
       this.onFirstIntent = this.#onFirstIntent.bind(this);
-      this.onCancel = this.#onCancel.bind(this);
       this.onSubmit = this.#onSubmit.bind(this);
-      this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
-      this.onConfirmCancel = this.#onConfirmCancel.bind(this);
-      this.onKeydown = this.#onKeydown.bind(this);
+      this.onLeaveClick = this.#onLeaveClick.bind(this);
       this.element.addEventListener("pointerdown", this.onFirstIntent, true);
       this.element.addEventListener("keydown", this.onFirstIntent, true);
-      document.addEventListener("keydown", this.onKeydown, true);
-      this.dialog.addEventListener("cancel", this.onCancel, true);
       this.element.addEventListener("submit", this.onSubmit);
-      this.#closeButtons().forEach(
-        (btn) => btn.addEventListener("click", this.onCloseButtonClick, true)
-      );
-      if (this.hasConfirmDialogTarget) {
-        this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+      document.addEventListener("click", this.onLeaveClick, true);
+      if (this.dialog) {
+        this.onCancel = this.#onCancel.bind(this);
+        this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
+        this.onConfirmCancel = this.#onConfirmCancel.bind(this);
+        this.onKeydown = this.#onKeydown.bind(this);
+        document.addEventListener("keydown", this.onKeydown, true);
+        this.dialog.addEventListener("cancel", this.onCancel, true);
+        this.#closeButtons().forEach(
+          (btn) => btn.addEventListener("click", this.onCloseButtonClick, true)
+        );
+        if (this.hasConfirmDialogTarget) {
+          this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+        }
       }
     }
     disconnect() {
-      if (!this.dialog) return;
       this.element.removeEventListener("pointerdown", this.onFirstIntent, true);
       this.element.removeEventListener("keydown", this.onFirstIntent, true);
-      document.removeEventListener("keydown", this.onKeydown, true);
-      this.dialog.removeEventListener("cancel", this.onCancel, true);
       this.element.removeEventListener("submit", this.onSubmit);
-      this.#closeButtons().forEach(
-        (btn) => btn.removeEventListener("click", this.onCloseButtonClick, true)
-      );
-      if (this.hasConfirmDialogTarget) {
-        this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+      document.removeEventListener("click", this.onLeaveClick, true);
+      if (this.dialog) {
+        document.removeEventListener("keydown", this.onKeydown, true);
+        this.dialog.removeEventListener("cancel", this.onCancel, true);
+        this.#closeButtons().forEach(
+          (btn) => btn.removeEventListener("click", this.onCloseButtonClick, true)
+        );
+        if (this.hasConfirmDialogTarget) {
+          this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+        }
       }
     }
     discard() {
@@ -28356,6 +28361,34 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #onSubmit() {
       this.submitting = true;
+    }
+    // Full-page leave guard. A control marked `data-dirty-form-guard-leave` posts
+    // without this form's fields, so its unsaved edits would be lost. If the form
+    // is dirty, confirm first through the app's themed dialog; the attribute's
+    // value is the prompt. We always intercept the click (the themed confirm is
+    // async), then re-submit the trigger's form if the user confirms.
+    async #onLeaveClick(event) {
+      const trigger = event.target.closest("[data-dirty-form-guard-leave]");
+      if (!trigger) return;
+      if (this.forceClose || this.submitting) return;
+      if (!this.#isDirty()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const message = trigger.getAttribute("data-dirty-form-guard-leave") || "You have unsaved changes that will be lost. Continue?";
+      const confirmed = await this.#confirm(message);
+      if (!confirmed) return;
+      this.forceClose = true;
+      trigger.closest("form")?.requestSubmit();
+    }
+    // Defer to the themed Turbo confirm dialog the app installs as the global
+    // confirm method (a styled <dialog>, not the native chrome bar); fall back to
+    // window.confirm only if it isn't available. Returns a Promise<boolean>.
+    #confirm(message) {
+      const turboConfirm = window.Turbo?.config?.forms?.confirm;
+      if (typeof turboConfirm === "function") {
+        return Promise.resolve(turboConfirm(message));
+      }
+      return Promise.resolve(window.confirm(message));
     }
     #confirmIsOpen() {
       return this.hasConfirmDialogTarget && this.confirmDialogTarget.open;

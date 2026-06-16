@@ -44,7 +44,10 @@ module Plutonium
             render_marker(index, state)
             render_label(step, state)
             unless index == @steps.length - 1
-              span(class: "mx-2 h-px w-6 bg-[var(--pu-border)]", aria_hidden: "true")
+              # Highlight the connector once the step it trails is done, so the
+              # stepper reads as filled-up-to-here progress.
+              fill = (state == :completed) ? "bg-primary-500 dark:bg-primary-400" : "bg-[var(--pu-border)]"
+              span(class: "mx-2 h-px w-6 #{fill}", aria_hidden: "true")
             end
           end
         end
@@ -52,9 +55,9 @@ module Plutonium
         def render_marker(index, state)
           classes = case state
           when :current
-            "bg-[var(--pu-primary)] text-white border-[var(--pu-primary)]"
+            "bg-primary-600 text-white border-primary-600 shadow-sm"
           when :completed
-            "bg-[var(--pu-primary)]/10 text-[var(--pu-primary)] border-[var(--pu-primary)]"
+            "bg-primary-50 text-primary-700 border-primary-500 dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-500"
           else
             "bg-[var(--pu-surface)] text-[var(--pu-text-muted)] border-[var(--pu-border)]"
           end
@@ -88,11 +91,19 @@ module Plutonium
           :upcoming
         end
 
-        # Only visited (non-current) steps are reachable. Forward jumps to unvisited
-        # steps are never allowed; mode only differs in nuance (both gate on
-        # visited here, since the path is linear by construction).
+        # Which step headers link. Mirrors the engine's `Runner#go_to` reachability
+        # so the stepper never offers (or withholds) a jump the engine would reject:
+        #
+        #   - the current step never links to itself;
+        #   - the terminal review step links once the flow has started (any step
+        #     visited) — it's never itself "visited" (you Finish from it, you don't
+        #     advance past it), so without this it would be permanently unclickable,
+        #     stranding a user who navigated back from it;
+        #   - every other step links once visited. Forward jumps to unvisited steps
+        #     stay disallowed.
         def clickable?(step, state)
           return false if state == :current
+          return @visited.any? if step.review?
           @visited.include?(step.key.to_s)
         end
       end

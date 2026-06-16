@@ -66,13 +66,13 @@ module Plutonium
         # --- step form --------------------------------------------------------
 
         def render_step_form(step)
-          seed_errors!
+          seed_errors!(step)
           render Plutonium::UI::Form::Wizard.new(
             step:,
-            data: @runner.wizard.data,
+            data: @runner.wizard.data[step.key],
             action: @step_url,
             fields: step_fields(step),
-            errors: form_error_messages
+            errors: form_error_messages(step)
           )
           render_nav(finish: false)
         end
@@ -85,8 +85,11 @@ module Plutonium
         # --- review -----------------------------------------------------------
 
         def render_review_body(step)
-          seed_errors!
-          h2(class: "text-xl font-semibold text-[var(--pu-text)] mb-4") { step.label.to_s }
+          seed_errors!(step)
+          div(class: "mb-5") do
+            h2(class: "text-xl font-semibold text-[var(--pu-text)]") { step.label.to_s }
+            p(class: "mt-1 text-sm text-[var(--pu-text-muted)]") { "Check everything over before you finish." }
+          end
           render_base_errors
           form(action: @step_url, method: "post", id: "wizard-form", data: {controller: "wizard"}) do
             authenticity_field
@@ -130,11 +133,17 @@ module Plutonium
         # <form> (review). Otherwise it's its own mini-form posting to the step URL
         # so the step form (Next) and Back/Cancel submit independently.
         def nav_button(label, direction:, style:, embedded:, disabled: false, name: nil)
+          data = {wizard_nav: name || direction}
+          # Back/Cancel post WITHOUT the step's field values, so any unsaved edits
+          # on the current step are discarded. Mark them so the (already-attached)
+          # dirty-form-guard warns before that loss. Next/Finish save, so no guard.
+          data["dirty-form-guard-leave"] = leave_warning(direction) if %w[back cancel].include?(direction)
+
           if embedded
             button(
               type: :submit, name: "_direction", value: direction,
               class: "pu-btn pu-btn-md #{style}", disabled: disabled || nil,
-              data: {wizard_nav: name || direction}
+              data:
             ) { label }
           elsif direction == "next"
             # Next submits the step form (which holds the inputs). The page's nav
@@ -142,7 +151,7 @@ module Plutonium
             button(
               type: :submit, form: "wizard-form", name: "_direction", value: "next",
               class: "pu-btn pu-btn-md #{style}", disabled: disabled || nil,
-              data: {wizard_nav: name || direction}
+              data:
             ) { label }
           else
             # Back/Cancel post on their own — no field validation, so an independent
@@ -153,29 +162,43 @@ module Plutonium
               button(
                 type: :submit,
                 class: "pu-btn pu-btn-md #{style}",
-                data: {wizard_nav: name || direction}
+                data:
               ) { label }
             end
           end
         end
 
-        # --- errors -----------------------------------------------------------
-
-        # Push runner errors onto the wizard `data` object so the form/field error
-        # chrome renders them on the right fields, and :base errors surface.
-        def seed_errors!
-          return if @errors.blank?
-
-          data = @runner.wizard.data
-          data.errors.clear
-          @errors.each do |attr, messages|
-            Array(messages).each { |m| data.errors.add(attr.to_sym, m) }
+        # Confirmation copy shown by dirty-form-guard when the current step has
+        # unsaved edits and the user clicks a control that abandons them.
+        def leave_warning(direction)
+          case direction
+          when "back" then "You have unsaved changes on this step. Go back and lose them?"
+          when "cancel" then "You have unsaved changes. Cancel the wizard and lose them?"
           end
         end
 
-        def form_error_messages
+        # --- errors -----------------------------------------------------------
+
+        # Push runner errors onto the CURRENT step's typed sub-object (the form
+        # object), so the form/field error chrome renders them. A review step has no
+        # sub-object (base errors render separately) — no-op there.
+        def seed_errors!(step)
+          return if @errors.blank?
+
+          obj = @runner.wizard.data[step.key]
+          return unless obj
+
+          obj.errors.clear
+          @errors.each do |attr, messages|
+            Array(messages).each { |m| obj.errors.add(attr.to_sym, m) }
+          end
+        end
+
+        def form_error_messages(step)
           return nil if @errors.blank?
-          @runner.wizard.data.errors.full_messages
+
+          obj = @runner.wizard.data[step.key]
+          obj&.errors&.full_messages
         end
 
         # Base (form-level) errors for the review step (which has no field form to
@@ -184,9 +207,9 @@ module Plutonium
           base = Array(@errors[:base]) | Array(@errors["base"])
           return if base.empty?
 
-          div(class: "rounded-lg border border-[var(--pu-danger)] bg-[var(--pu-danger)]/10 p-4 mb-4", role: "alert") do
+          div(class: "rounded-lg border border-danger-200 bg-danger-50 dark:border-danger-800 dark:bg-danger-950/30 p-4 mb-4", role: "alert") do
             ul(class: "space-y-1") do
-              base.each { |m| li(class: "text-sm text-[var(--pu-danger)]") { m } }
+              base.each { |m| li(class: "text-sm text-danger-700 dark:text-danger-400") { m } }
             end
           end
         end
