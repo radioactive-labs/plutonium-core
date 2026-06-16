@@ -44,8 +44,12 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     end
   end
 
+  # Custom content rendered after the auto-summary. The block runs in the Phlex
+  # view context (`self` is the rendering component), so it may emit Phlex markup
+  # (`div`, `render SomeComponent.new`, …) and reach view/route helpers via
+  # `helpers.*`; it is yielded the wizard (→ `data`, `anchor`, `persisted`,
+  # `current_user`). Returning a String — the simplest case — renders it as text.
   review label: "Review" do |wizard|
-    # A custom block on the review step (rendered after the auto-summary).
     "Ready to onboard #{wizard.data.identity.name}"
   end
 

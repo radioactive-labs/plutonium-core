@@ -164,6 +164,29 @@ end
 
 A `review` step declares no fields of its own.
 
+### The custom block's render context
+
+The block runs **in the Phlex view context** (`self` is the rendering component), not the controller — that's what lets it emit markup. So you can:
+
+- **return a String** (the simplest case) — it renders as the block's text;
+- **emit Phlex** directly — `div`, `span`, `plain`, `render SomeComponent.new(...)`;
+- reach **view / route helpers** via `helpers.*` (e.g. `helpers.link_to`, `helpers.current_user`, a path helper).
+
+The block is **yielded the wizard**, so `wizard.data`, `wizard.anchor`, `wizard.persisted`, and `wizard.current_user` are all in hand.
+
+```ruby
+review label: "Review & submit" do |wizard|
+  div(class: "text-sm") do
+    plain "Billing to "
+    strong { wizard.data.company.name }
+    plain " — "
+    plain helpers.link_to("see our terms", helpers.terms_path)
+  end
+end
+```
+
+Don't mix styles in one block: Phlex emits a returned String *in addition to* anything you wrote with `div`/`render`, so returning a String after emitting markup double-renders it. Pick one.
+
 ## `execute`
 
 The at-end commit hook, run once after the last visible step, in one transaction.

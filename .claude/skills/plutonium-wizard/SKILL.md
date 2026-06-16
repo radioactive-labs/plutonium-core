@@ -150,6 +150,8 @@ end
 
 Lists invalid/unvisited steps as fix-this jump links; Finish disabled until all visible steps valid. Declares no fields.
 
+The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String — Phlex renders the returned String too, double-rendering it.
+
 ## Per-step writes — `on_submit` / `persist` / `on_rollback`
 
 `execute` is the default (atomic). Use `on_submit` **only** when a real record must exist mid-flow (external handoff, reviewer sees partials, payload too large for the row).
