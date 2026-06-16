@@ -2,8 +2,6 @@
 
 class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
   def change
-    json_type = (connection.adapter_name =~ /postgres/i) ? :jsonb : :json
-
     create_table :plutonium_wizard_sessions do |t|
       t.string :wizard, null: false
       t.string :status, null: false, default: "in_progress" # in_progress | completing | completed
@@ -16,19 +14,19 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
 
       # Polymorphic refs — for querying/listing, NOT identity. *_id is string-typed
       # to accommodate bigint or uuid host primary keys.
+      t.string :scope_type
+      t.string :scope_id
       t.string :owner_type
       t.string :owner_id
       t.string :anchor_type
       t.string :anchor_id
-      t.string :scope_type
-      t.string :scope_id
       t.string :token
 
-      t.public_send(json_type, :data, null: false, default: {})
-      t.public_send(json_type, :tracked_records, null: false, default: {})
+      t.public_send(:jsonb, :data, null: false, default: {})
+      t.public_send(:jsonb, :tracked_records, null: false, default: {})
       # Steps the user has actually visited+validated (§6.3 completeness). A
       # zero-validation step is only "complete" once it's been visited.
-      t.public_send(json_type, :visited, null: false, default: [])
+      t.public_send(:jsonb, :visited, null: false, default: [])
 
       t.datetime :expires_at
       t.datetime :completed_at

@@ -267,7 +267,7 @@ Opt into guest access with `anonymous`, and mount it on a **public route**:
 
 ```ruby
 class GuestSignupWizard < Plutonium::Wizard::Base
-  anonymous                         # runs pre-login; identity = the server-minted run-id cookie
+  anonymous                         # runs pre-login; identity = a server-minted run-id in the Rails session
   step(:account) { attribute :email, :string; input :email; validates :email, presence: true }
   review label: "Review"
   def execute                       # the ONE boundary it may cross
@@ -279,7 +279,11 @@ end
 register_wizard ::GuestSignupWizard, at: "signup", public: true
 ```
 
-The run-id cookie is httponly / `secure` / `same_site: :lax` / short-lived and is cleared on completion. **No mid-flow auth crossing**: a guest wizard never stamps an owner mid-flow or carries a token across login — it only ever authenticates at `execute`.
+The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<wizard_key>]`) — **no cookie, no TTL** (the row's `cleanup_after` is the lifetime). It's browser-close ephemeral, **auto-cleared on login/logout** (Rodauth `reset_session`), cleared on completion, and **never in a URL**. Authenticated repeatable runs keep their URL `:token` segment instead (owner-scoped). **No mid-flow auth crossing**: a guest wizard never stamps an owner mid-flow or carries a token across login — it only ever authenticates at `execute`.
+
+## Listing in-progress wizards
+
+`Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)` returns the user's in-progress runs (scope-narrowed when given), newest-first, for a "continue where you left off" dashboard. Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, and a `resume_url` (a real route for `register_wizard` and `wizard`-macro **anchored** mounts; `nil` + `resume_unresolved_reason` when the row lacks the identity to rebuild the URL — e.g. a non-anchored `wizard`-macro run).
 
 ## Storage & config
 

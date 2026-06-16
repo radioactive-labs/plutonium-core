@@ -40,8 +40,10 @@ module Plutonium
           Session.status_completed.where(instance_key: instance_key).exists?
         end
 
-        def in_progress_for(owner)
-          Session.status_in_progress.where(owner: owner).map { |row| to_state(row) }
+        def in_progress_for(owner, scope: nil)
+          rel = Session.status_in_progress.where(owner: owner)
+          rel = rel.where(scope: scope) unless scope.nil?
+          rel.order(updated_at: :desc).map { |row| to_state(row) }
         end
 
         private

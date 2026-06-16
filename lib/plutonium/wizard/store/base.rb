@@ -37,10 +37,13 @@ module Plutonium
         # @return [Boolean]
         def completed?(instance_key:) = raise NotImplementedError
 
-        # In-progress sessions owned by +owner+.
+        # In-progress sessions owned by +owner+, optionally narrowed to a tenant
+        # +scope+ (tenant-aware listing for "continue where you left off").
         #
+        # @param owner [Object]
+        # @param scope [Object, nil] when given, only sessions with this scope
         # @return [Array<State>]
-        def in_progress_for(owner) = raise NotImplementedError
+        def in_progress_for(owner, scope: nil) = raise NotImplementedError
       end
     end
   end

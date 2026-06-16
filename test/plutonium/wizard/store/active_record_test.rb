@@ -69,4 +69,8 @@ class Plutonium::Wizard::Store::ActiveRecordTest < ActiveSupport::TestCase
   def make_owner
     Organization.create!(name: "Org-#{SecureRandom.hex(4)}")
   end
+
+  def make_scope
+    Organization.create!(name: "Scope-#{SecureRandom.hex(4)}")
+  end
 end

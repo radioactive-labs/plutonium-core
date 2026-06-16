@@ -15,18 +15,15 @@ module Plutonium
     # wizards are non-anchored — anchored wizards mount on the resource controller),
     # and the per-step URL built from the named route helper `register_wizard` draws.
     #
-    # Identity (§4): non-keyed flows carry a per-run id `token` in a signed cookie
-    # (minted on first GET when absent); the cookie is cleared on completion. It is
-    # NOT a pre-auth principal that survives login — authenticated runs are guarded
-    # by owner-scoping and never cross the auth boundary mid-flow (§4.5).
+    # Identity (§4): a guest (`anonymous`) run's per-run id lives in the Rails
+    # session, namespaced per wizard (no cookie, no TTL); it is cleared on
+    # completion and auto-cleared on login/logout (Rodauth `reset_session`). An
+    # authenticated repeatable run carries its per-run id in the URL `:token`
+    # segment, guarded by owner-scoping; neither crosses the auth boundary
+    # mid-flow (§4.5).
     module Controller
       extend ActiveSupport::Concern
       include Plutonium::Wizard::Driving
-
-      # Back-compat shim: the cookie key helper used to live here.
-      def self.token_cookie_key(wizard_class)
-        Plutonium::Wizard::Driving.token_cookie_key(wizard_class)
-      end
 
       # GET .../:step — render the current step.
       def show
@@ -85,7 +82,8 @@ module Plutonium
       # route-validated path.
       def wizard_step_url(step_key)
         url_options = {step: step_key}
-        url_options[:token] = params[:token] if params[:token].present?
+        token = wizard_url_token
+        url_options[:token] = token if token.present?
         # An entity-scoped portal's wizard routes carry the scope path segment
         # (e.g. `:organization_scoped`); thread it through from the request so the
         # generated URL stays inside the tenant.

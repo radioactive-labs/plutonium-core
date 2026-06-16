@@ -6,8 +6,9 @@ require "plutonium/testing"
 # Drives the AUTHENTICATION-HARDENING surface (§4.5):
 #
 # - an `anonymous` (guest) wizard runs with NO `current_user`, mounted on a PUBLIC
-#   route (outside the portal's auth constraint), completes, and clears its run-id
-#   cookie on completion — `execute` is the only boundary it may cross;
+#   route (outside the portal's auth constraint), persists across requests via the
+#   RAILS SESSION (no cookie, no URL token), completes, and clears its session
+#   token on completion — `execute` is the only boundary it may cross;
 # - a non-`anonymous` wizard with no `current_user` rejects entry (redirect/401);
 # - owner-scoping: user B cannot resume user A's in-progress run via A's URL.
 class AdminPortal::WizardAnonymousTest < ActionDispatch::IntegrationTest
@@ -23,6 +24,9 @@ class AdminPortal::WizardAnonymousTest < ActionDispatch::IntegrationTest
 
   def signup = "/signup"
 
+  # The session key shape for a guest run's token (§4.5).
+  def guest_session_key = Plutonium::Wizard::Driving.session_token_key(GuestSignupWizard)
+
   test "an anonymous wizard runs with no current_user and renders its first step" do
     # No login. The public mount is OUTSIDE the portal auth constraint.
     get "#{signup}/account"
@@ -30,23 +34,51 @@ class AdminPortal::WizardAnonymousTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(name="wizard[name]")
   end
 
-  test "an anonymous wizard completes (execute runs) and clears its run-id cookie" do
-    get "#{signup}/account"
+  test "a guest run persists across requests via the Rails session (no cookie, no URL token)" do
+    # First POST stages data → mints a session token and an in_progress row.
+    post "#{signup}/account", params: {wizard: {name: "Guest Co"}, _direction: "next"}
+    assert_response :redirect
+
+    # The token lives in the Rails session, namespaced per wizard — NOT in a cookie.
+    bucket = session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY]
+    assert bucket.is_a?(Hash), "guest token must live in the Rails session"
+    token = bucket[guest_session_key]
+    assert token.present?, "a guest run mints a session token"
+
+    # No dedicated wizard token cookie was set, and no URL carries the token.
+    set_cookie = response.headers["Set-Cookie"].to_s
+    refute_includes set_cookie, "pu_wizard", "no wizard token cookie may be set"
+    refute_includes response.headers["Location"].to_s, token,
+      "the guest token must not appear in any URL"
+
+    # The row exists and is keyed by the session token.
+    row = Plutonium::Wizard::Session.where(status: "in_progress").sole
+    assert_equal token, row.token
+
+    # A FRESH request (same session) resumes that same row — staged data survives.
+    assert_no_difference -> { Plutonium::Wizard::Session.count } do
+      get "#{signup}/account"
+    end
     assert_response :success
+    assert_includes response.body, %(value="Guest Co"), "staged data survives across requests"
+  end
+
+  test "an anonymous wizard completes (execute runs) and clears its session token" do
+    post "#{signup}/account", params: {wizard: {name: "Guest Co"}, _direction: "next"}
+    assert_response :redirect
+    assert session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY].present?
 
     assert_difference -> { Organization.count }, 1 do
-      post "#{signup}/account", params: {wizard: {name: "Guest Co"}, _direction: "next"}
       follow_redirect! # → review
       post "#{signup}/review", params: {_direction: "next"} # finalize → execute
     end
     assert_response :redirect
     assert Organization.exists?(name: "Guest Co")
 
-    # The run-id cookie is cleared on completion (§4.5).
-    cookie_key = Plutonium::Wizard::Driving.token_cookie_key(GuestSignupWizard)
-    set_cookie = response.headers["Set-Cookie"]
-    assert set_cookie.to_s.include?(cookie_key.to_s),
-      "completion must touch (clear) the run-id cookie"
+    # The session token entry is cleared on completion (§4.5).
+    bucket = session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY]
+    assert bucket.nil? || !bucket.key?(guest_session_key),
+      "completion must clear the guest run's session token"
   end
 
   # --- auth required by default -----------------------------------------------

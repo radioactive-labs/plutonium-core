@@ -21,7 +21,10 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   def base = "/admin/onboarding"
 
   # Advance the linear flow up to (but not including) the named step, staging
-  # valid data for each step in between.
+  # valid data for each step in between. OnboardOrganizationWizard is tokened
+  # (no concurrency_key), so for an authenticated run the per-run id rides the URL
+  # `:token` segment — thread it through each POST so steps stay on one run
+  # (instead of forking a fresh tokened run per request).
   def advance_through(*steps)
     payloads = {
       "identity" => {name: "Acme Inc", plan: "pro"},
@@ -30,10 +33,16 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
       "members" => {invites: [{email: "a@example.com", role: "admin"}]}
     }
     steps.each do |step|
-      post "#{base}/#{step}", params: {wizard: payloads.fetch(step), _direction: "next"}
+      step_base = @wizard_token ? "#{base}/#{@wizard_token}" : base
+      post "#{step_base}/#{step}", params: {wizard: payloads.fetch(step), _direction: "next"}
       follow_redirect!
+      @wizard_token ||= Plutonium::Wizard::Session.where(status: "in_progress").first&.token
     end
   end
+
+  # The base URL for the run started by `advance_through`, carrying the per-run
+  # token so a subsequent direct request stays on that run (not a fresh fork).
+  def tbase = @wizard_token ? "#{base}/#{@wizard_token}" : base
 
   test "GET first step renders the step form fields" do
     get "#{base}/identity"
@@ -81,9 +90,10 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(data-wizard-stepper-state="current")
     assert_includes response.body, %(data-wizard-stepper-state="upcoming")
 
-    # After advancing, the visited step links back; the new current is marked.
+    # After advancing, the visited step links back; the new current is marked. The
+    # link carries the per-run token segment (authenticated tokened run, §4.5).
     advance_through("identity")
-    assert_match(%r{<a href="/admin/onboarding/identity"[^>]*>Identity</a>}, response.body)
+    assert_match(%r{<a href="/admin/onboarding/#{@wizard_token}/identity"[^>]*>Identity</a>}, response.body)
   end
 
   # --- repeater rehydration on GET (resume) ----------------------------------
@@ -91,7 +101,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   test "a structured_input repeat: step rehydrates N rows from staged data on GET" do
     advance_through("identity", "details", "profile")
     # now on members — stage two invite rows
-    post "#{base}/members", params: {
+    post "#{tbase}/members", params: {
       wizard: {invites: [
         {email: "a@example.com", role: "admin"},
         {email: "b@example.com", role: "member"}
@@ -101,7 +111,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     follow_redirect! # advances to review
 
     # Navigate back to members via a direct GET (stepper jump / resume).
-    get "#{base}/members"
+    get "#{tbase}/members"
     assert_response :success
     assert_includes response.body, %(data-controller="nested-resource-form-fields")
     # Both rows render, seeded with their staged values (not just one blank row).
@@ -128,7 +138,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   test "review lists outstanding steps as fix-this links and disables finish" do
     advance_through("identity") # only the first step is complete
     # Jump to review via direct GET — it surfaces outstanding steps + gated finish.
-    get "#{base}/review"
+    get "#{tbase}/review"
     assert_response :success
     assert_includes response.body, "wizard-review-outstanding"
     assert_includes response.body, %(data-wizard-review-fix="details")
@@ -139,7 +149,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   test "finalize is blocked while a step is incomplete (bounces, no record)" do
     advance_through("identity")
     assert_no_difference -> { Organization.count } do
-      post "#{base}/review", params: {_direction: "next"}
+      post "#{tbase}/review", params: {_direction: "next"}
     end
     # Bounced to the first incomplete step.
     assert_response :redirect
@@ -152,7 +162,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Review"
 
     assert_difference -> { Organization.count }, 1 do
-      post "#{base}/review", params: {_direction: "next"}
+      post "#{tbase}/review", params: {_direction: "next"}
     end
     assert_response :redirect
     assert Organization.exists?(name: "Acme Inc")
@@ -167,7 +177,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
 
   test "back direction moves to the previous step without validating" do
     advance_through("identity")
-    post "#{base}/details", params: {_direction: "back"}
+    post "#{tbase}/details", params: {_direction: "back"}
     assert_response :redirect
     follow_redirect!
     assert_includes response.body, %(name="wizard[name]")
@@ -177,17 +187,17 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     advance_through("identity")
     assert_operator Plutonium::Wizard::Session.count, :>=, 1
 
-    post "#{base}/identity", params: {_direction: "cancel"}
+    post "#{tbase}/identity", params: {_direction: "cancel"}
     assert_response :redirect
     assert_equal 0, Plutonium::Wizard::Session.where(status: "in_progress").count
   end
 
   # §4: a wizard with no `concurrency_key` (OnboardOrganizationWizard) is
-  # TOKENED/REPEATABLE — identity is the per-launch `wizard_token`. The token is
-  # minted into a signed cookie, so a second GET in the same session reuses it →
-  # the same instance_key → the SAME row is resumed (not forked). The owner is
-  # still stamped for listing.
-  test "authenticated tokened wizard resumes via its token cookie, not forks" do
+  # TOKENED/REPEATABLE — identity is the per-launch `wizard_token`. For an
+  # AUTHENTICATED run the token rides the URL `:token` segment (owner-scoped on the
+  # row), so resuming via the token-carrying URL re-uses the same instance_key →
+  # the SAME row (not forked). The owner is stamped for listing.
+  test "authenticated tokened wizard resumes via its URL token, not forks" do
     advance_through("identity")
     assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count
 
@@ -195,9 +205,12 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert row.token.present?, "a tokened (no concurrency_key) wizard mints a token"
     assert_equal @admin.to_global_id.to_s, row.owner.to_global_id.to_s
 
-    # Resuming (a fresh GET, same session/cookie) does not spawn a second row.
-    get "#{base}/identity"
+    # Resuming via the token-carrying URL does not spawn a second row.
+    get "#{base}/#{row.token}/identity"
     assert_response :success
     assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count
+
+    # The rendered form action carries the token, so the next POST stays on this run.
+    assert_includes response.body, "#{base}/#{row.token}/"
   end
 end

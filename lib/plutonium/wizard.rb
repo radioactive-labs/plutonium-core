@@ -50,5 +50,19 @@ module Plutonium
         "available in this context (#{e.message}). Available: current_user, " \
         "current_scoped_entity, anchor, wizard_token, or a host method."
     end
+
+    # The "continue where you left off" listing (§4.5): in-progress wizard runs
+    # owned by +owner+, optionally narrowed to a tenant +scope+, each enriched with
+    # the wizard's label/icon, current step (+ label), updated_at, and a resolved
+    # resume_url (nil with a reason when a mount can't be resolved generically).
+    #
+    #   Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)
+    #
+    # @param owner [Object]
+    # @param scope [Object, nil]
+    # @return [Array<Plutonium::Wizard::Resume::Entry>]
+    def self.in_progress_for(owner, scope: nil)
+      Resume.entries_for(owner, scope: scope)
+    end
   end
 end

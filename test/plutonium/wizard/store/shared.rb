@@ -68,6 +68,25 @@ module WizardStoreBehavior
     assert_empty @store.in_progress_for(owner)
   end
 
+  def test_in_progress_for_owner_narrows_by_scope
+    owner = make_owner
+    scope_a = make_scope
+    scope_b = make_scope
+
+    in_a = build_state(owner: owner, scope: scope_a, data: {"x" => "a"})
+    in_b = build_state(owner: owner, scope: scope_b, data: {"x" => "b"})
+    @store.write(in_a.instance_key, in_a, cleanup_after: 1.day)
+    @store.write(in_b.instance_key, in_b, cleanup_after: 1.day)
+
+    # No scope → both.
+    assert_equal 2, @store.in_progress_for(owner).size
+
+    # Scoped → only that scope's row.
+    scoped = @store.in_progress_for(owner, scope: scope_a)
+    assert_equal 1, scoped.size
+    assert_equal in_a.instance_key, scoped.first.instance_key
+  end
+
   private
 
   def build_state(wizard: "W", data: {}, owner: nil, **extra)
@@ -83,5 +102,8 @@ module WizardStoreBehavior
   end
 
   # Overridden by AR test to supply a persisted record; memory store accepts anything.
-  def make_owner = "owner-#{object_id}"
+  def make_owner = "owner-#{object_id}-#{rand(1_000_000)}"
+
+  # Overridden by AR test to supply a persisted scope record; memory store accepts anything.
+  def make_scope = "scope-#{object_id}-#{rand(1_000_000)}"
 end

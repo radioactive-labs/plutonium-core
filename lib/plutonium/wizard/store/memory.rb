@@ -39,8 +39,11 @@ module Plutonium
           !!row && row.status == "completed"
         end
 
-        def in_progress_for(owner)
-          @rows.values.select { |s| s.status == "in_progress" && s.owner == owner }
+        def in_progress_for(owner, scope: nil)
+          @rows.values.select do |s|
+            s.status == "in_progress" && s.owner == owner &&
+              (scope.nil? || s.scope == scope)
+          end
         end
       end
     end

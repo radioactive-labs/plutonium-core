@@ -105,9 +105,12 @@ module Plutonium
           params[:wizard_name]
         end
 
-        # Carry the `:token` segment only when present.
+        # Carry the `:token` segment for an authenticated repeatable (tokened) run,
+        # so a fresh GET resumes rather than forks (§4.5). Guest/keyed runs add no
+        # URL token (see Driving#wizard_url_token).
         def wizard_token_param
-          params[:token].present? ? {token: params[:token]} : {}
+          token = wizard_url_token
+          token.present? ? {token: token} : {}
         end
 
         # --- registry / authorization ---

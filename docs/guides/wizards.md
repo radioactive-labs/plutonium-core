@@ -330,7 +330,7 @@ This draws the wizard's step routes within the portal and provides an `<at>_wiza
 
 **Wizards require authentication by default** — entering without a `current_user` is rejected, and every resume is **owner-scoped** (a run id leaked in a URL can't be picked up by another logged-in user). A wizard **never crosses the auth boundary mid-flow**.
 
-Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable cookie (httponly / `secure` / `same_site: :lax` / short-lived, cleared on completion); its terminal `execute` is the *only* place it may authenticate (e.g. a signup that creates the account and logs the user in — the host calls Rodauth, which rotates the session):
+Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable id held in the **Rails session**, namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`) — **not a cookie, and with no TTL**. The row's `cleanup_after` → sweep is the authoritative lifetime; the session id is just a pointer to it. Session storage means the id is browser-close ephemeral, **auto-cleared on login/logout** (Rodauth's `clear_session` → `reset_session`), and cleared on completion — and it never appears in a URL, so there is no leak surface. Its terminal `execute` is the *only* place a guest wizard may authenticate (e.g. a signup that creates the account and logs the user in — the host calls Rodauth, which rotates the session):
 
 ```ruby
 class GuestSignupWizard < Plutonium::Wizard::Base
@@ -357,6 +357,30 @@ Because the portal engine is mounted behind the host's auth constraint, an `anon
 ::: warning v1 scope
 v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (portal-level mounts have no resource record), but a `via:`-anchored (context) wizard mounts portal-level fine. Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
 :::
+
+### Listing in-progress wizards
+
+Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. It returns the user's in-progress runs — optionally narrowed to a tenant `scope` so it stays tenant-aware — each enriched for a list item:
+
+```ruby
+entries = Plutonium::Wizard.in_progress_for(current_user, scope: current_scoped_entity)
+
+entries.each do |entry|
+  entry.label               # the wizard's presents label
+  entry.icon                # the wizard's presents icon
+  entry.current_step        # the step key the run is paused on
+  entry.current_step_label  # that step's label (if resolvable)
+  entry.updated_at          # last activity (entries are newest-first)
+  entry.resume_url          # a route back into the run, or nil (see below)
+end
+```
+
+`resume_url` is resolved from the run's mount:
+
+- A `register_wizard` (portal/public) wizard resolves to its named route, threading the tenant scope segment and — for a tokened (no `concurrency_key`) run — the per-run `:token`.
+- A `wizard`-macro **anchored** wizard resolves to its resource member route, rebuilt from the row's anchor.
+
+When a mount can't be resolved generically — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
 
 ## Where to go next
 

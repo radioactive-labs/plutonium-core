@@ -23,13 +23,13 @@ module Plutonium
       extend ActiveSupport::Concern
       include Plutonium::StructuredInputs::ParamsConcern
 
-      # How long the per-run id cookie lives. Short by design — it only needs to
-      # outlast an in-progress run, and a guest run's data hangs off it (§4.5).
-      TOKEN_COOKIE_TTL = 1.day
+      # The Rails-session bucket holding per-wizard guest run ids (§4.5). A guest
+      # (`anonymous`) run's token lives under `session[SESSION_TOKENS_KEY][wizard_key]`.
+      SESSION_TOKENS_KEY = "plutonium_wizards"
 
-      # Signed-cookie key holding the per-(wizard) run id for non-keyed flows.
-      def self.token_cookie_key(wizard_class)
-        :"pu_wizard_#{wizard_class.name.underscore.tr("/", "_")}"
+      # The per-wizard key under {SESSION_TOKENS_KEY} for a guest run's token.
+      def self.session_token_key(wizard_class)
+        wizard_class.name.underscore.tr("/", "_")
       end
 
       private
@@ -122,14 +122,24 @@ module Plutonium
         end
       end
 
-      # PRG out of a completed wizard: clear the signed token cookie and redirect.
-      # A gate (§9 {Plutonium::Wizard::Gate}) may have stashed the user's intended
-      # destination in `session[:return_to]` before bouncing them into a one-time
-      # wizard; prefer that bounce target over the outcome value's URL.
+      # PRG out of a completed wizard: clear the guest run's session token and
+      # redirect. A gate (§9 {Plutonium::Wizard::Gate}) may have stashed the user's
+      # intended destination in `session[:return_to]` before bouncing them into a
+      # one-time wizard; prefer that bounce target over the outcome value's URL.
       def complete_wizard!(result)
-        cookies.delete(Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class))
+        clear_wizard_session_token
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
         redirect_to target, status: :see_other, allow_other_host: false
+      end
+
+      # Drop a guest run's token from the Rails session (on completion). A no-op
+      # for authenticated runs, whose token rides the URL, not the session.
+      def clear_wizard_session_token
+        bucket = session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY]
+        return unless bucket.is_a?(Hash)
+
+        bucket.delete(Plutonium::Wizard::Driving.session_token_key(current_wizard_class))
+        session.delete(Plutonium::Wizard::Driving::SESSION_TOKENS_KEY) if bucket.empty?
       end
 
       # --- rendering ---
@@ -221,39 +231,56 @@ module Plutonium
         current_scoped_entity
       end
 
-      # The per-run id (§4.5): URL `:token` param ?? signed cookie, server-minted
-      # and set if absent. It is the identity principal for runs without a
+      # The per-run id (§4.5). It is the identity principal for runs without a
       # `concurrency_key` — guest (`anonymous`) runs AND authenticated repeatable
       # runs — and is folded into `concurrency_key` resolution. It is NOT a
       # pre-auth principal that survives login: authenticated runs are guarded by
       # owner-scoping, and the wizard never crosses the auth boundary mid-flow.
       #
-      # The token is unguessable (`SecureRandom.uuid`). The cookie is the only
-      # thing protecting an in-progress GUEST run's data, so it is hardened:
-      # httponly, secure, same_site :lax, short-lived; it is cleared on completion.
+      # Two sources, by run identity:
+      #
+      # - **Guest (`anonymous`) runs** key off the **Rails session**, namespaced
+      #   per wizard (`session["plutonium_wizards"][<wizard_key>]`), minted with
+      #   `SecureRandom.uuid` and stored if absent, read each request. We never
+      #   read the token from the URL for a guest run — the session is the only
+      #   source, so there is no URL-leak surface. There is no TTL: the row's
+      #   `cleanup_after` → sweep is the authoritative lifetime; the session token
+      #   is just a pointer (browser-close ephemeral, auto-cleared by Rodauth's
+      #   `reset_session` on login/logout, and cleared on completion).
+      # - **Authenticated repeatable runs** carry their per-run id in the URL
+      #   `:token` segment (owner-scoped on the row), minting one when absent so a
+      #   fresh launch is a fresh run.
       def wizard_token
         return @wizard_token if defined?(@wizard_token)
 
-        key = Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class)
-        token = params[:token].presence || cookies.signed[key].presence
-        token ||= SecureRandom.uuid
-        unless cookies.signed[key] == token
-          cookies.signed[key] = {
-            value: token,
-            httponly: true,
-            secure: wizard_cookie_secure?,
-            same_site: :lax,
-            expires: Plutonium::Wizard::Driving::TOKEN_COOKIE_TTL.from_now
-          }
-        end
-        @wizard_token = token
+        @wizard_token =
+          if current_wizard_class.anonymous?
+            guest_session_token
+          else
+            params[:token].presence || SecureRandom.uuid
+          end
       end
 
-      # `secure: true` everywhere except when the request itself isn't over TLS
-      # (local HTTP dev/test) — a `secure` cookie is dropped by the browser on
-      # plain HTTP, which would silently break the dev/test flow.
-      def wizard_cookie_secure?
-        request.ssl? || Rails.env.production?
+      # Read (minting + storing if absent) the guest run's token from the Rails
+      # session bucket. Session storage gives browser-close ephemerality and
+      # auto-clear on login/logout (Rodauth's `clear_session` → `reset_session`).
+      def guest_session_token
+        bucket = (session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY] ||= {})
+        key = Plutonium::Wizard::Driving.session_token_key(current_wizard_class)
+        bucket[key] ||= SecureRandom.uuid
+      end
+
+      # The token to thread into a step URL, if any. An authenticated REPEATABLE
+      # run (no `concurrency_key` → tokened identity) carries its per-run id in the
+      # URL `:token` segment, so a fresh GET resumes rather than forks. A guest
+      # (`anonymous`) run keys off the Rails session, so its token MUST NOT appear
+      # in the URL (no leak surface); a keyed run's identity is its
+      # `concurrency_key`, so the token is irrelevant there. `nil` keeps it off.
+      def wizard_url_token
+        return nil if current_wizard_class.anonymous?
+        return nil if current_wizard_class.concurrency_key?
+
+        wizard_token
       end
 
       # --- authorization ---

@@ -46,8 +46,12 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     follow_redirect! # now on review
 
+    # ConfigureWidgetWizard has no concurrency_key → tokened identity; the per-run
+    # id rides the URL (§4.5), so thread it through the finalize POST to stay on
+    # this run (a bare POST would fork a fresh, empty tokened run).
+    token = Plutonium::Wizard::Session.where(status: "in_progress").sole.token
     assert_no_difference -> { Widget.count } do
-      post "#{base}/review", params: {_direction: "next"}
+      post "#{base}/#{token}/review", params: {_direction: "next"}
     end
     assert_response :redirect
 
