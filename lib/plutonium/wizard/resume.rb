@@ -35,8 +35,7 @@ module Plutonium
         :updated_at,
         :resume_url,
         :resume_unresolved_reason,
-        :session,
-        keyword_init: true
+        :session
       )
 
       module_function

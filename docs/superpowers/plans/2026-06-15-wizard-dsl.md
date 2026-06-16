@@ -416,8 +416,7 @@ module Plutonium
     # In-memory snapshot of one wizard instance's stored state.
     State = Struct.new(
       :wizard, :instance_key, :current_step, :status,
-      :data, :persisted, :owner, :anchor, :scope, :token,
-      keyword_init: true
+      :data, :persisted, :owner, :anchor, :scope, :token
     ) do
       def data = super || {}
       def persisted = super || {}
@@ -948,7 +947,7 @@ end
 module Plutonium
   module Wizard
     module FieldImporter
-      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, keyword_init: true) do
+      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn) do
         def validate(data_slice) = validate_fn ? validate_fn.call(data_slice) : {}
       end
 
@@ -1119,7 +1118,7 @@ end
 module Plutonium
   module Wizard
     class Runner
-      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value, keyword_init: true) do
+      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value) do
         def ok? = !!ok
         def completed? = !!completed
       end
