@@ -57,33 +57,39 @@ module Plutonium
       end
 
       class << self
-        # The union of every non-review step's inline attribute schema, used to
-        # build the typed `data` snapshot (§2.6). `using:` imports merge in later.
-        def union_attribute_schema
+        # Per-step data spec ({step_key => {schema:, options:, structured:}}), used
+        # to build the step-keyed `data` container (§2.6). Each step contributes its
+        # OWN schema/options/structured — no cross-step union, so two steps may share
+        # a field name without colliding. `using:` imports are already composed into
+        # each step's `attribute_schema`.
+        def data_steps_spec
           steps.reject(&:review?).each_with_object({}) do |step, acc|
-            acc.merge!(step.attribute_schema)
+            acc[step.key.to_sym] = {
+              schema: step.attribute_schema,
+              options: step.attribute_options,
+              structured: step_structured_schema(step)
+            }
           end
         end
 
-        # The union of every non-review step's per-attribute options
-        # ({name => {default:, ...}}), threaded into the typed `data` snapshot.
-        def union_attribute_options
-          steps.reject(&:review?).each_with_object({}) do |step, acc|
-            acc.merge!(step.attribute_options)
-          end
-        end
-
-        # Structured collections across all steps, as {name => [sub-field names]},
-        # so `data.<name>` exposes typed sub-objects (§2.6 / §7.2).
-        def structured_data_schema
-          steps.reject(&:review?).each_with_object({}) do |step, acc|
-            step.structured_inputs.each do |name, entry|
-              acc[name.to_sym] = structured_sub_fields(entry)
-            end
+        # The per-step typed sub-object classes ({step_key => Class}), built once
+        # per wizard class from {data_steps_spec} and reused for every `data`
+        # snapshot (the container is cheap to instantiate; the classes aren't).
+        def data_step_classes
+          @data_step_classes ||= data_steps_spec.transform_values do |spec|
+            Data.class_for(spec[:schema], options: spec[:options], structured: spec[:structured])
           end
         end
 
         private
+
+        # One step's structured collections, as {name => [sub-field names]}, so
+        # `data.<step>.<name>` exposes typed sub-objects (§2.6 / §7.2).
+        def step_structured_schema(step)
+          step.structured_inputs.each_with_object({}) do |(name, entry), acc|
+            acc[name.to_sym] = structured_sub_fields(entry)
+          end
+        end
 
         # Resolve the declared sub-field names of a structured_input entry by
         # evaluating its block (or `using:` holder) against a FieldsDefinition.
@@ -103,14 +109,11 @@ module Plutonium
         end
       end
 
-      # Typed, dot-accessible snapshot over the union schema, reconstituted from
-      # the staged `data_attributes` each call site needs it (§2.6).
+      # The step-keyed `data` snapshot (§2.6), reconstituted from the nested staged
+      # `data_attributes` ({step_key => {field => value}}). Addressed as
+      # `data.<step>.<field>`; `data[:step]` for dynamic access.
       def data
-        @data ||= Data.class_for(
-          self.class.union_attribute_schema,
-          options: self.class.union_attribute_options,
-          structured: self.class.structured_data_schema
-        ).new(data_attributes)
+        @data ||= Data::Container.new(self.class.data_step_classes, data_attributes)
       end
 
       # The record this wizard was launched against (§3). Raises when the wizard

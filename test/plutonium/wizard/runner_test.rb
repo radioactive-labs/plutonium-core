@@ -14,7 +14,7 @@ module Plutonium
           attribute :go, :string
           validates :go, presence: true
         end
-        step(:b, condition: -> { data.go == "yes" }) do
+        step(:b, condition: -> { data.a.go == "yes" }) do
           attribute :note, :string
         end
         review label: "R"
@@ -28,7 +28,7 @@ module Plutonium
           attribute :name, :string
           validates :name, presence: true
           on_submit do
-            persist Organization.create!(name: data.name)
+            persist Organization.create!(name: data.make.name)
           end
         end
         review label: "R"
@@ -48,7 +48,7 @@ module Plutonium
 
         step(:make) do
           attribute :name, :string
-          on_submit { persist Organization.create!(name: data.name) }
+          on_submit { persist Organization.create!(name: data.make.name) }
           on_rollback { persisted[:make].each { |r| RollbackCustom.side_effects << r.name } }
         end
         review label: "R"
@@ -143,7 +143,7 @@ module Plutonium
           attribute :path, :string
           validates :path, presence: true
         end
-        step(:b, condition: -> { data.path == "x" }) do
+        step(:b, condition: -> { data.a.path == "x" }) do
           attribute :note, :string
           on_submit { persist Organization.create!(name: "b-record") }
         end
@@ -166,7 +166,7 @@ module Plutonium
           attribute :path, :string
           validates :path, presence: true
         end
-        step(:b, condition: -> { data.path == "x" }) do
+        step(:b, condition: -> { data.a.path == "x" }) do
           attribute :note, :string
           on_submit { persist Organization.create!(name: "b-record") }
           on_rollback { persisted[:b].each { |r| BranchPersistRollback.side_effects << r.id } }
@@ -226,7 +226,7 @@ module Plutonium
         res = @runner.advance(:a, {"go" => "yes"})
         assert res.ok?
         reloaded = build_runner(W)
-        assert_equal "yes", reloaded.wizard.data.go
+        assert_equal "yes", reloaded.wizard.data.a.go
         assert_equal :b, reloaded.current_step.key
       end
 
@@ -313,7 +313,7 @@ module Plutonium
         assert res.ok?
         reloaded = build_runner(W)
         assert_equal :a, reloaded.current_step.key
-        assert_equal "yes", reloaded.wizard.data.go # data intact
+        assert_equal "yes", reloaded.wizard.data.a.go # data intact
       end
 
       # ---- cancel ----
@@ -403,7 +403,7 @@ module Plutonium
         # A second launch with the same key + context finds the same row.
         second = build_runner(OneTimeW, current_user: "u1")
         assert second.resumed?, "a second launch with the same key resumes, not forks"
-        assert_equal({"go" => "ok"}, second.state.data)
+        assert_equal({"a" => {"go" => "ok"}}, second.state.data)
       end
 
       test "finalize failure reverts and returns errors" do
@@ -421,7 +421,7 @@ module Plutonium
             attribute :go, :string
             validates :go, presence: true
           end
-          step(:b, condition: -> { data.go == "yes" }) { attribute :note, :string }
+          step(:b, condition: -> { data.a.go == "yes" }) { attribute :note, :string }
           review label: "R"
           define_method(:execute) do
             captured = data_attributes.dup
@@ -436,8 +436,8 @@ module Plutonium
         runner = build_runner(klass)
         runner.advance(:a, {"go" => "no"})
         build_runner(klass).finalize
-        refute captured.key?("note"), "branch-hidden note must be pruned before execute"
-        assert_equal "no", captured["go"]
+        refute captured.key?("b"), "branch-hidden step b must be pruned before execute"
+        assert_equal "no", captured["a"]["go"]
       end
 
       # ---- branch-hidden step with persisted records is fully pruned (§6.3) ----
@@ -454,7 +454,7 @@ module Plutonium
         seen = @store.read("k")
         assert_equal [org.to_global_id.to_s], seen.persisted["b"]
         assert_includes seen.visited, "b"
-        assert_equal "hi", seen.data["note"]
+        assert_equal "hi", seen.data["b"]["note"]
 
         # Flip a so b is now branch-hidden.
         build_runner(BranchPersist).advance(:a, {"path" => "y"})
@@ -462,7 +462,7 @@ module Plutonium
         refute Organization.exists?(id: org.id), "the hidden step's record must be destroyed"
         state = @store.read("k")
         refute state.persisted.key?("b"), "persisted entry for b must be cleared"
-        refute state.data.key?("note"), "b's staged data must be dropped"
+        refute state.data.key?("b"), "b's staged data slice must be dropped"
         refute_includes state.visited, "b", "b must be removed from visited"
       end
 
@@ -492,9 +492,10 @@ module Plutonium
         build_runner(BranchPersist).advance(:a, {"path" => "y"}) # b hidden + pruned
         refute Organization.exists?(id: first.id)
 
-        # Path back to x re-exposes b; it was un-visited so on_submit re-runs.
+        # Path back to x re-exposes b; its staged slice was dropped by the prune, so
+        # it reads as un-submitted and its on_submit re-runs fresh.
         build_runner(BranchPersist).advance(:a, {"path" => "x"})
-        refute_includes @store.read("k").visited, "b", "b is unvisited after pruning"
+        refute @store.read("k").data.key?("b"), "b's staged slice is cleared after pruning"
         build_runner(BranchPersist).advance(:b, {"note" => "second"})
 
         second = Organization.find_by!(name: "b-record")
@@ -510,7 +511,7 @@ module Plutonium
         state = Plutonium::Wizard::State.new(
           wizard: BranchPersist.name, instance_key: "k", current_step: "review",
           status: "in_progress",
-          data: {"path" => "y", "note" => "stale", "tail" => "t"},
+          data: {"a" => {"path" => "y"}, "b" => {"note" => "stale"}, "c" => {"tail" => "t"}},
           persisted: {"b" => [org.to_global_id.to_s]},
           visited: %w[a b c]
         )
@@ -691,7 +692,7 @@ module Plutonium
 
         stored = store.read("race")
         assert_equal "kept", stored.data["pre"], "pre-existing data must survive the race"
-        assert_equal "yes", stored.data["go"], "freshly staged data must survive the race"
+        assert_equal "yes", stored.data["a"]["go"], "freshly staged data must survive the race"
         assert_includes stored.visited, "a"
       end
 
@@ -719,14 +720,17 @@ module Plutonium
         assert_includes @store.read("k").visited, "a"
       end
 
-      test "back does not change the visited set" do
+      test "back does not change the visited (reached) set" do
         runner = build_runner(WithSkippable)
         runner.advance(:a, {"go" => "yes"})
         runner = build_runner(WithSkippable)
         runner.advance(:b, {"note" => "hi"})
+        before = @store.read("k").visited.sort
+        # advancing a→b→review has reached all three (high-water mark).
+        assert_equal %w[a b review].sort, before
         runner = build_runner(WithSkippable)
         runner.back
-        assert_equal %w[a b].sort, @store.read("k").visited.sort
+        assert_equal before, @store.read("k").visited.sort
       end
 
       # --- owner-scoped resume (§4.5) -----------------------------------------

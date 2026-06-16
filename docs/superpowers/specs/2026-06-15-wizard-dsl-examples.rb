@@ -28,7 +28,8 @@
 #                                (persist'd records are ALWAYS destroyed by the engine regardless)
 #   review label:                terminal step: auto-summary + gated Finish
 #   def execute                  at-end hook; returns succeed(...) / failed(...) (an Outcome)
-#   data.<field>                 typed, dot-accessible snapshot of everything entered so far
+#   data.<step>.<field>          step-keyed, typed snapshot (e.g. data.company.name);
+#                                two steps may share a field name without colliding
 #   anchor / persisted[:key]     the launched-against record / records created via persist
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -66,9 +67,9 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
   end
 
   # `condition:` decides whether this step is included (subtractive branching).
-  # It runs against the typed `data` snapshot; `data.plan` is nil until the plan
-  # step is filled, and `nil == "pro"` is false — so it must be written nil-safe.
-  step :billing, label: "Billing", condition: -> { data.plan == "pro" } do
+  # It runs against the step-keyed `data` snapshot; `data.plan.plan` is nil until
+  # the plan step is filled, and `nil == "pro"` is false — so it must be nil-safe.
+  step :billing, label: "Billing", condition: -> { data.plan.plan == "pro" } do
     attribute :card_token, :string
     input :card_token
     validates :card_token, presence: true
@@ -76,7 +77,7 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
 
   step :team, label: "Invite your team" do
     # `structured_input ..., repeat:` = a repeatable group of sub-fields.
-    # Reachable later as data.invites (an array of typed sub-objects).
+    # Reachable later as data.team.invites (an array of typed sub-objects).
     structured_input :invites, repeat: 5 do |f|
       f.input :email, as: :email
       f.input :role, as: :select, choices: %w[admin member]
@@ -91,9 +92,9 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
   # failure raises → the engine rolls back and re-renders with the error.
   # Return an Outcome: succeed(value) / failed(errors).
   def execute
-    company = Company.create!(name: data.name, subdomain: data.subdomain, plan: data.plan)
-    Billing.create!(company:, token: data.card_token) if data.plan == "pro"
-    data.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
+    company = Company.create!(name: data.company.name, subdomain: data.company.subdomain, plan: data.plan.plan)
+    Billing.create!(company:, token: data.billing.card_token) if data.plan.plan == "pro"
+    data.team.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
     succeed(company).with_message("You're all set!")   # with_message → flash
   end
 end
@@ -128,10 +129,10 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
 
     # `on_submit` runs when THIS step completes (opt-in save-as-you-go).
     on_submit do
-      charge = PaymentApi.authorize!(anchor, data.card_token)
+      charge = PaymentApi.authorize!(anchor, data.billing.card_token)
       fail!("Card was declined") unless charge.ok?            # abort with a base error
       # `persist` registers the record for resume + cleanup → persisted[:billing]
-      persist Billing.create!(company: anchor, token: data.card_token, charge_id: charge.id)
+      persist Billing.create!(company: anchor, token: data.billing.card_token, charge_id: charge.id)
     end
 
     # ADDITIONAL cleanup if the wizard is cancelled/abandoned. The engine ALWAYS
@@ -179,8 +180,8 @@ class WelcomeWizard < Plutonium::Wizard::Base
 
   def execute
     current_user.update!(
-      full_name: data.full_name, timezone: data.timezone,
-      newsletter: data.newsletter, onboarded_at: Time.current
+      full_name: data.profile.full_name, timezone: data.profile.timezone,
+      newsletter: data.preferences.newsletter, onboarded_at: Time.current
     )
     succeed.with_message("Welcome aboard!")
   end
@@ -209,7 +210,7 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   review label: "Review"
 
   def execute
-    account = Account.create!(email: data.email, password: data.password)
+    account = Account.create!(email: data.account.email, password: data.account.password)
     # A real signup would sign the account in here (the host calls Rodauth, which
     # rotates the Rails session) — no special framework handling is needed.
     succeed(account).with_message("Welcome!")

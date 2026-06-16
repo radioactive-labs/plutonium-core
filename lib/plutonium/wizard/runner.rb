@@ -96,27 +96,32 @@ module Plutonium
         path.find { |s| s.key.to_s == @state.current_step.to_s } || path.first
       end
 
-      # The keys of steps the user has visited (advanced past). UI helper (§7).
+      # The keys of steps the user has REACHED (the high-water mark — every step the
+      # cursor has landed on, including the one advanced from and the one advanced
+      # to). Drives stepper clickability / `go_to` reachability (§7); it does NOT
+      # gate completeness — that's `submitted?`. Reaching a step lets you navigate
+      # back to it without forcing it to count as done.
       def visited_keys
         @state.visited.map(&:to_s)
       end
 
-      # Whether a visible non-review step is complete: visited AND its staged data
-      # currently validates (§6.3). Drives the review step's per-step jump links
-      # and the gated Finish button (§2.5). A review step is "complete" iff every
-      # other visible step is.
+      # Whether a visible non-review step is complete: SUBMITTED AND its staged data
+      # currently validates (§6.3). Drives the review step's per-step jump links and
+      # the gated Finish button (§2.5). A review step is "complete" iff every other
+      # visible step is. "Submitted" (advanced THROUGH, not merely reached) is the
+      # gating notion — distinct from `visited`/reached, which is for navigation —
+      # so a user can't skip a zero-validation step just by landing on it.
       def step_complete?(step)
         return incomplete_visible_steps.empty? if step.review?
 
-        visited_keys.include?(step.key.to_s) && validate(step, {}).empty?
+        submitted?(step) && validate(step, {}).empty?
       end
 
       # The ordered visible non-review steps that aren't yet complete (§6.3). The
       # review step lists these as "fix this" jump links and gates Finish.
       def incomplete_visible_steps
-        visited = visited_keys
         visible_path.reject(&:review?).select do |step|
-          !visited.include?(step.key.to_s) || validate(step, {}).any?
+          !submitted?(step) || validate(step, {}).any?
         end
       end
 
@@ -128,7 +133,7 @@ module Plutonium
         errors = validate(step, params)
         return Result.new(ok: false, errors:) if errors.any?
 
-        stage(params)
+        stage(step.key, params)
         run_on_submit(step) if step.on_submit
         @state.visited |= [step.key.to_s]
         # Staging this step's params may have flipped a branch `condition:`, hiding
@@ -139,6 +144,13 @@ module Plutonium
         # not move and the advance's data is not lost (the prune persists state).
         prune_departed_steps
         @state.current_step = next_visible_after(step)&.key&.to_s
+        # Mark the step we ARRIVE at visited too, not just the one we left. `visited`
+        # is the set of steps the user has *reached* (the high-water mark) — what the
+        # stepper uses to decide which headers link. Without this, landing on a step
+        # and navigating away before completing it would leave it unreachable (you
+        # couldn't click back to it). Completeness gating is unaffected: it also
+        # checks validity, so a required step reached-but-empty still reads incomplete.
+        @state.visited |= [@state.current_step].compact
         persist_state
         Result.new(ok: true)
       rescue ActiveRecord::RecordInvalid => e
@@ -245,8 +257,13 @@ module Plutonium
         @wizard.data_attributes = @state.data
       end
 
-      def stage(params)
-        @state.data = @state.data.merge(params)
+      # Stage a step's submitted (flat) fields under its step key — `data` is keyed
+      # by step ({step_key => {field => value}}), so a step's writes never touch
+      # another step's slice.
+      def stage(step_key, params)
+        key = step_key.to_s
+        current = @state.data[key] || {}
+        @state.data = @state.data.merge(key => current.merge(params))
         sync_data
       end
 
@@ -259,7 +276,9 @@ module Plutonium
         existing = @store.read(@instance_key)
         return unless existing
 
-        existing.data = existing.data.merge(@state.data)
+        # `data` is nested ({step_key => {field => value}}); deep-merge so a
+        # concurrent step's fields aren't clobbered by a shallow top-level merge.
+        existing.data = existing.data.deep_merge(@state.data)
         existing.persisted = existing.persisted.merge(@state.persisted)
         existing.visited |= @state.visited
         existing.current_step = @state.current_step
@@ -288,7 +307,7 @@ module Plutonium
       def validate(step, params)
         return {} if step.review?
 
-        merged = @state.data.merge(params)
+        merged = (@state.data[step.key.to_s] || {}).merge(params)
         errors = {}
         imported = step.imported_validate_fn&.call(merged)
         errors.merge!(stringify_messages(imported)) if imported
@@ -297,19 +316,19 @@ module Plutonium
       end
 
       # Run the step's inline `validates` against a transient ActiveModel built from
-      # the union schema, returning {attribute => [String messages]} keyed by symbol.
+      # THIS step's schema (not a cross-step union), returning {attribute => [String
+      # messages]} keyed by symbol.
       def inline_errors(step, merged)
         validations = step.validations
         return {} if validations.blank?
 
-        klass = inline_validator_class(validations)
+        klass = inline_validator_class(step.attribute_schema, validations)
         obj = klass.new(merged)
         obj.valid?
         message_errors(obj)
       end
 
-      def inline_validator_class(validations)
-        schema = @wizard_class.union_attribute_schema
+      def inline_validator_class(schema, validations)
         Class.new do
           include ActiveModel::Model
           include ActiveModel::Attributes
@@ -385,24 +404,30 @@ module Plutonium
         Array(@state.persisted[step.key.to_s]).filter_map { |gid| GlobalID::Locator.locate(gid) }
       end
 
-      # The first visible non-review step that hasn't been visited+validated (§6.3):
-      # a step is incomplete if it was never visited OR its staged data is invalid.
-      # A zero-validation step is therefore NOT complete until visited, so a user
-      # can't skip it and still finalize. Branch-hidden steps fall out of
-      # `visible_path` and are excluded naturally.
+      # The first visible non-review step that hasn't been submitted+validated
+      # (§6.3): a step is incomplete if it was never SUBMITTED (advanced through) OR
+      # its staged data is invalid. A zero-validation step is therefore NOT complete
+      # until submitted, so a user can't skip it and still finalize. Branch-hidden
+      # steps fall out of `visible_path` and are excluded naturally.
       def first_incomplete_visible
-        visited = @state.visited
         visible_path.reject(&:review?).find do |step|
-          !visited.include?(step.key.to_s) || validate(step, {}).any?
+          !submitted?(step) || validate(step, {}).any?
         end
       end
 
-      # Drop staged data for attributes not owned by a currently-visible step (§6.3
-      # pruning) — returns a working copy; the stored data is untouched.
+      # Whether a step has been SUBMITTED (advanced through) — its staged `data`
+      # slice exists. Distinct from `visited`/reached: advancing TO a step (landing
+      # on it) doesn't stage its data, so it isn't "submitted" until the user
+      # Nexts through it. This is what gates completeness/Finish (§6.3).
+      def submitted?(step)
+        @state.data.key?(step.key.to_s)
+      end
+
+      # Drop the staged slice of any step not currently visible (§6.3 pruning) —
+      # `data` is keyed by step, so this is a slice of the visible step keys.
+      # Returns a working copy; the stored data is untouched.
       def prune_hidden(data)
-        visible_keys = visible_path.flat_map { |s| s.attribute_schema.keys.map(&:to_s) }
-        visible_keys += visible_path.flat_map { |s| s.structured_inputs.keys.map(&:to_s) }
-        data.slice(*visible_keys)
+        data.slice(*visible_path.reject(&:review?).map { |s| s.key.to_s })
       end
 
       # Fully prune every step that has left the visible path but still has
@@ -435,13 +460,12 @@ module Plutonium
       end
 
       # Whether a step holds anything worth pruning: persisted records (its key is
-      # present in stored `persisted`) or staged `data` for one of its attributes.
-      # Pure hash/key inspection — never locates.
+      # present in stored `persisted`) or a non-empty staged `data` slice for the
+      # step. Pure hash/key inspection — never locates.
       def step_has_state?(step)
         return true if @state.persisted.key?(step.key.to_s)
 
-        keys = step.attribute_schema.keys.map(&:to_s) + step.structured_inputs.keys.map(&:to_s)
-        keys.any? { |k| @state.data.key?(k) }
+        @state.data[step.key.to_s].present?
       end
 
       # Erase all trace of a step that left the visible path: its persisted GIDs
@@ -453,8 +477,7 @@ module Plutonium
         @state.persisted = @state.persisted.except(key)
         @wizard.persisted[step.key.to_sym] = []
 
-        drop = step.attribute_schema.keys.map(&:to_s) + step.structured_inputs.keys.map(&:to_s)
-        @state.data = @state.data.except(*drop)
+        @state.data = @state.data.except(key)
         @state.visited = @state.visited - [key]
         sync_data
       end

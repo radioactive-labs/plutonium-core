@@ -13,7 +13,7 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
   step :branding, label: "Branding" do
     attribute :logo, :string
     input :logo
-    on_submit { anchor.update!(logo: data.logo) }   # mutate the anchor
+    on_submit { anchor.update!(logo: data.branding.logo) }   # mutate the anchor
   end
 
   def execute
@@ -44,7 +44,7 @@ class ArchiveWithReasonWizard < Plutonium::Wizard::Base
   end
 
   def execute
-    anchor.update!(archived_at: Time.current, archive_reason: data.reason)
+    anchor.update!(archived_at: Time.current, archive_reason: data.reason.reason)
     succeed(anchor)
   end
 end
@@ -126,7 +126,7 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   review label: "Review"
 
   def execute                     # the ONE boundary a guest wizard may cross
-    account = Account.create!(email: data.email)
+    account = Account.create!(email: data.account.email)
     # sign the account in here (the host calls Rodauth) — no special framework handling
     succeed(account)
   end

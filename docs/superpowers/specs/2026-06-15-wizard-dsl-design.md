@@ -66,7 +66,7 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
     validates :plan, presence: true
   end
 
-  step :billing, label: "Billing", condition: -> { data.plan == "pro" } do
+  step :billing, label: "Billing", condition: -> { data.plan.plan == "pro" } do
     attribute :card_token, :string
     input :card_token
     validates :card_token, presence: true
@@ -81,9 +81,9 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
 
   # ONE atomic write at the finish. Reads everything from `data`.
   def execute
-    company = Company.create!(name: data.name, subdomain: data.subdomain, plan: data.plan)
-    Billing.create!(company:, token: data.card_token) if data.plan == "pro"
-    data.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
+    company = Company.create!(name: data.company.name, subdomain: data.company.subdomain, plan: data.plan.plan)
+    Billing.create!(company:, token: data.billing.card_token) if data.plan.plan == "pro"
+    data.team.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
     succeed(company).with_message("You're all set!")
   end
 end
@@ -231,19 +231,18 @@ end
 - **Optional block** for custom content; omit it for the pure auto-summary. A `review` step declares no fields of its own.
 - **Terminal:** `review` must be the **last** step, and no `condition:` may make a step resolve *after* it. The engine **asserts this at boot** (raises on a wizard that declares a step following `review`, or whose branching could place one there), so "terminal" and branching can't contradict.
 
-### 2.6 The `data` object (typed, dot-accessible, nil-safe)
+### 2.6 The `data` object (step-keyed, typed, dot-accessible, nil-safe)
 
-`data` is **not** the raw JSON column. The wizard builds a **union schema** from *all* steps' attribute declarations, and `data` is an **ActiveModel::Attributes-backed snapshot** reconstituted from the JSON each request — so values are **cast to their declared types** and exposed as methods. Types come from:
+`data` is **not** the raw JSON column. It is **step-keyed**: a container exposing one typed sub-object per step, so fields are addressed as **`data.<step>.<field>`** (e.g. `data.identity.name`, `data.profile.tier`). Each step sub-object is an **ActiveModel::Attributes-backed snapshot** of that step's declarations, reconstituted from the nested JSON each request — so values are **cast to their declared types** and exposed as methods. Step namespacing means two steps may declare the **same field name without colliding** — each lives on its own step's sub-object. Types come from:
 
 - inline `attribute :name, :type` declarations;
-- `using:` an **interaction** → its `attribute :x, :type` declarations;
-- `using:` a **resource definition** → the **backing record class's** column/attribute types (`Model.attribute_types`), since definitions carry no types (§2.4).
+- `using:` a **model** → the model's column/attribute types (`Model.attribute_types`); integer-backed **enum** columns import as `:string` so the enum key round-trips (§2.4 / §3).
 
 So:
 
-- `data.plan` returns the cast value (e.g. a real Boolean/Integer/Date, not a raw string); `data.invites` returns an **array of typed sub-objects** responding to the `structured_input`'s declared fields (`i.email`, `i.role`).
-- The schema is the **union across steps**, so `data` exposes every declared attribute regardless of which step is current.
-- **Not-yet-collected fields read as `nil`** (or the attribute's declared `default:`). Because `condition:` lambdas run against this snapshot at every transition — including before the deciding step has been filled — **`condition:` lambdas MUST be nil-safe** (e.g. `-> { data.plan == "pro" }` is fine since `nil == "pro"` is false; avoid `-> { data.plan.upcase == "PRO" }` which raises on nil). This rule applies equally in `on_submit`/`execute`, though those run after their data exists.
+- `data.plan.plan` returns the cast value (a real Boolean/Integer/Date, not a raw string); `data.team.invites` returns an **array of typed sub-objects** responding to the `structured_input`'s declared fields (`i.email`, `i.role`). Storage nests by step (`{step_key => {field => value}}`); `data[:step]` is the dynamic accessor and `data.to_h` gives the nested view.
+- Each step's sub-object only exposes **that step's** fields; there is no cross-step union. A field is read through its owning step (`data.identity.name`), including from `condition:`/`on_submit`/`execute`.
+- **Not-yet-collected fields read as `nil`** (or the attribute's declared `default:`); a step never filled still yields a sub-object whose fields are all `nil`. Because `condition:` lambdas run against this snapshot at every transition — including before the deciding step has been filled — **`condition:` lambdas MUST be nil-safe** (e.g. `-> { data.plan.plan == "pro" }` is fine since `nil == "pro"` is false; avoid `-> { data.plan.plan.upcase == "PRO" }` which raises on nil). This rule applies equally in `on_submit`/`execute`, though those run after their data exists.
 - `data` is a **read-only snapshot** in `condition:`/`on_submit`/`execute`; the engine stages writes from validated step input, not by mutating `data` directly.
 
 ---
@@ -261,7 +260,7 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
   step :branding do
     attribute :logo, :string
     input :logo, as: :string
-    on_submit { anchor.update!(logo: data.logo) }   # mutates the anchor; nothing new to track
+    on_submit { anchor.update!(logo: data.branding.logo) }   # mutates the anchor; nothing new to track
   end
 
   def execute
@@ -290,7 +289,7 @@ class ArchiveWithReasonWizard < Plutonium::Wizard::Base
   end
 
   def execute
-    anchor.update!(archived_at: Time.current, archive_reason: data.reason)
+    anchor.update!(archived_at: Time.current, archive_reason: data.reason.reason)
     succeed(anchor)
   end
 end
@@ -461,7 +460,7 @@ end
 
 ```ruby
 on_submit do
-  result = PaymentApi.charge(data.card_token)
+  result = PaymentApi.charge(data.billing.card_token)
   fail!("Payment was declined") unless result.ok?      # → base error, rolls back, stays on step
   persist Order.create!(charge_id: result.id)
 end

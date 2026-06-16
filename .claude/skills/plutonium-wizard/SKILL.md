@@ -13,7 +13,8 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 
 - **Enable the subsystem first.** `config.wizards.enabled = true` in `config/initializers/plutonium.rb`, then `rails db:migrate`. It's `false` by default — without it there's no `plutonium_wizard_sessions` table.
 - **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a **raised exception** — a non-bang `false` advances the wizard and silently loses data. Or call `fail!("msg")`.
-- **`condition:` lambdas must be nil-safe.** They run against `data` at every transition, including before their deciding step is filled (value is `nil`). `-> { data.plan == "pro" }` ✓; `-> { data.plan.upcase == "PRO" }` raises on nil ✗.
+- **`data` is step-keyed:** `data.<step>.<field>` (e.g. `data.company.name`, `data.plan.plan`). Each step has its own typed sub-object, so two steps may share a field name without colliding. Read a field through its owning step everywhere (`condition:`/`on_submit`/`execute`).
+- **`condition:` lambdas must be nil-safe.** They run against `data` at every transition, including before their deciding step is filled (value is `nil`). `-> { data.plan.plan == "pro" }` ✓; `-> { data.plan.plan.upcase == "PRO" }` raises on nil ✗.
 - **`review` must be the LAST step.** A step declared after `review` raises at load.
 - **`using:` targets a MODEL only** — not an interaction, not a bare definition. Selectors `fields:`/`only:`/`except:`.
 - **No generator.** Author wizards by hand, like interactions. They live in `app/wizards/`.
@@ -48,7 +49,7 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
   review label: "Review & submit"
 
   def execute
-    company = Company.create!(name: data.name, subdomain: data.subdomain, plan: data.plan)
+    company = Company.create!(name: data.company.name, subdomain: data.company.subdomain, plan: data.plan.plan)
     succeed(company).with_message("You're all set!")
   end
 end
@@ -56,7 +57,7 @@ end
 
 - `presents label:/icon:` — launch button chrome (same as interactions).
 - A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]).
-- `data.<field>` reads the **typed** value (cast to declared type), available anywhere.
+- `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
 - `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
 - `execute` — runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
 
@@ -78,7 +79,7 @@ end
 Subtractive: a falsy `condition:` removes the step from the visible path.
 
 ```ruby
-step :billing, label: "Billing", condition: -> { data.plan == "pro" } do
+step :billing, label: "Billing", condition: -> { data.plan.plan == "pro" } do
   attribute :card_token, :string
   input :card_token
   validates :card_token, presence: true
@@ -120,11 +121,11 @@ Inside a `step` block, the field DSL from [[plutonium-resource]] applies verbati
 
 ```ruby
 step :company, label: "Company details" do
-  attribute :name, :string                 # typed → feeds data.name
+  attribute :name, :string                 # typed → feeds data.company.name
   input :name                              # how it renders
   validates :name, presence: true          # ActiveModel, run on Next
 
-  structured_input :invites, repeat: 5 do |f|   # data.invites → array of typed sub-objects
+  structured_input :invites, repeat: 5 do |f|   # data.company.invites → array of typed sub-objects
     f.input :email, as: :email
     f.input :role, as: :select, choices: %w[admin member]
   end
@@ -143,7 +144,7 @@ Repeater rows rehydrate from staged `data` on GET (resume / back re-renders fill
 review label: "Review & submit"            # auto-summary + gated finish
 
 review label: "Review & submit" do |wizard|  # custom content after the summary
-  "By submitting you agree to the #{wizard.data.plan} plan terms."
+  "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
 ```
 
@@ -160,9 +161,9 @@ step :billing, label: "Billing" do
   validates :card_token, presence: true
 
   on_submit do                              # runs when THIS step completes, own transaction
-    charge = PaymentApi.authorize!(anchor, data.card_token)
+    charge = PaymentApi.authorize!(anchor, data.billing.card_token)
     fail!("Card was declined") unless charge.ok?         # base error; fail!(:field, "msg") for field error
-    persist Billing.create!(company: anchor, token: data.card_token)   # → persisted[:billing]
+    persist Billing.create!(company: anchor, token: data.billing.card_token)   # → persisted[:billing]
   end
 
   # on_rollback = ADDITIONAL cleanup of UNTRACKED side effects (refund/external API).
@@ -276,7 +277,7 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   step(:account) { attribute :email, :string; input :email; validates :email, presence: true }
   review label: "Review"
   def execute                       # the ONE boundary it may cross
-    succeed(Account.create!(email: data.email))   # may also sign the user in (host calls Rodauth)
+    succeed(Account.create!(email: data.account.email))   # may also sign the user in (host calls Rodauth)
   end
 end
 

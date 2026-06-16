@@ -19,7 +19,7 @@ class ConfigureWidgetWizard < Plutonium::Wizard::Base
   review label: "Review"
 
   def execute
-    anchor.update!(name: data.name)
+    anchor.update!(name: data.rename.name)
     succeed(anchor).with_message("Widget configured")
   end
 end

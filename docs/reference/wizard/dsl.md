@@ -41,7 +41,7 @@ step(key, label: nil, condition: nil, using: nil, **using_opts, &block)
 A `step` is one screen. The block declares its fields with the existing field DSL (`attribute`/`input`/`validates`/`structured_input`/`form_layout`) and may attach the per-step hooks `on_submit`/`on_rollback`.
 
 ```ruby
-step :company, label: "Company details", condition: -> { data.kind == "business" } do
+step :company, label: "Company details", condition: -> { data.plan.kind == "business" } do
   attribute :name, :string
   attribute :subdomain, :string
   input :name
@@ -69,7 +69,7 @@ A step's block is the same field DSL used on definitions and interactions:
 - `attribute :name, :type` — declares a typed attribute (feeds the `data` snapshot).
 - `input :name, as:, ...` — how the field renders.
 - `validates :name, ...` — ActiveModel validations, run on Next.
-- `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.name` is an array of typed sub-objects.
+- `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects.
 - `form_layout do ... end` — section the step's fields (`section`, `columns:`, `collapsible:`, etc.), scoped to this step.
 
 See [plutonium-resource › Definition](/reference/resource/definition) for the full field/input/layout vocabulary.
@@ -124,9 +124,9 @@ Runs in its own transaction when the step completes (after its fields validate).
 
 ```ruby
 on_submit do
-  charge = PaymentApi.authorize!(anchor, data.card_token)
+  charge = PaymentApi.authorize!(anchor, data.billing.card_token)
   fail!("Card was declined") unless charge.ok?
-  persist Billing.create!(company: anchor, token: data.card_token, charge_id: charge.id)
+  persist Billing.create!(company: anchor, token: data.billing.card_token, charge_id: charge.id)
 end
 ```
 
@@ -158,7 +158,7 @@ review label: "Review & submit"
 
 # Custom content after the auto-summary — the block receives the wizard:
 review label: "Review & submit" do |wizard|
-  "By submitting you agree to the #{wizard.data.plan} plan terms."
+  "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
 ```
 
@@ -170,7 +170,7 @@ The at-end commit hook, run once after the last visible step, in one transaction
 
 ```ruby
 def execute
-  company = Company.create!(name: data.name, subdomain: data.subdomain)
+  company = Company.create!(name: data.company.name, subdomain: data.company.subdomain)
   succeed(company).with_message("You're all set!")
 end
 ```

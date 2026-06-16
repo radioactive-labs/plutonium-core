@@ -59,7 +59,7 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
   review label: "Review & submit"
 
   def execute
-    company = Company.create!(name: data.name, subdomain: data.subdomain, plan: data.plan)
+    company = Company.create!(name: data.company.name, subdomain: data.company.subdomain, plan: data.plan.plan)
     succeed(company).with_message("You're all set!")
   end
 end
@@ -68,7 +68,7 @@ end
 - A wizard is a plain class — `< Plutonium::Wizard::Base`. There is no generator (just like interactions); author it by hand.
 - `presents label:/icon:` sets the launch button's label and icon, exactly like interactions.
 - Each `step :key, label: do ... end` is one screen. Inside the block, declare its fields with the same DSL you use on a definition or interaction.
-- `data.name` reads the **typed** value the user entered (cast to the declared type), available from any step and from `execute`.
+- `data` is **step-keyed**: `data.company.name` reads the **typed** value entered on the `:company` step (cast to the declared type), available from any step and from `execute`. Each step has its own sub-object, so two steps may use the same field name without colliding.
 - `review` is a built-in terminal step (auto-summary + gated Finish). It must be **last**.
 - `execute` runs once at the end and returns an `Outcome` (`succeed(...)` / `failed(...)`). **Use bang methods** (`create!`/`update!`) — failure is signalled by a raised exception, never a return value.
 
@@ -88,7 +88,7 @@ step :plan, label: "Plan" do
 end
 
 # Only shown when the user picked "pro".
-step :billing, label: "Billing", condition: -> { data.plan == "pro" } do
+step :billing, label: "Billing", condition: -> { data.plan.plan == "pro" } do
   attribute :card_token, :string
   input :card_token
   validates :card_token, presence: true
@@ -96,7 +96,7 @@ end
 ```
 
 ::: warning `condition:` lambdas must be nil-safe
-A `condition:` runs against the typed `data` snapshot at **every** transition — including before its deciding step has been filled, when the value is still `nil`. `-> { data.plan == "pro" }` is fine (`nil == "pro"` is `false`); `-> { data.plan.upcase == "PRO" }` raises on `nil`. Always write conditions that tolerate `nil`.
+A `condition:` runs against the typed `data` snapshot at **every** transition — including before its deciding step has been filled, when the value is still `nil`. `-> { data.plan.plan == "pro" }` is fine (`nil == "pro"` is `false`); `-> { data.plan.plan.upcase == "PRO" }` raises on `nil`. Always write conditions that tolerate `nil`.
 :::
 
 The condition can also read `anchor` (for [anchored wizards](#anchored-wizards)). Data belonging to branch-hidden steps is pruned before `execute`, so `execute` only ever sees data for steps that actually applied.
@@ -145,7 +145,7 @@ end
 
 ## Repeatable / structured fields
 
-Because a step uses the existing form pipeline, `structured_input` works inside a step. The values land in `data.<name>` as an array of typed sub-objects:
+Because a step uses the existing form pipeline, `structured_input` works inside a step. The values land in `data.<step>.<name>` as an array of typed sub-objects:
 
 ```ruby
 step :team, label: "Invite your team" do
@@ -156,8 +156,8 @@ step :team, label: "Invite your team" do
 end
 
 def execute
-  company = Company.create!(name: data.name)
-  data.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
+  company = Company.create!(name: data.company.name)
+  data.team.invites.each { |i| company.invites.create!(email: i.email, role: i.role) }
   succeed(company)
 end
 ```
@@ -177,7 +177,7 @@ review label: "Review & submit"
 
 # Or with custom content after the auto-summary:
 review label: "Review & submit" do |wizard|
-  "By submitting you agree to the #{wizard.data.plan} plan terms."
+  "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
 ```
 
@@ -197,10 +197,10 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
 
     # Runs when THIS step completes (opt-in save-as-you-go), in its own transaction.
     on_submit do
-      charge = PaymentApi.authorize!(anchor, data.card_token)
+      charge = PaymentApi.authorize!(anchor, data.billing.card_token)
       fail!("Card was declined") unless charge.ok?   # → base error, stays on step
       # `persist` registers the record for resume + cleanup → persisted[:billing]
-      persist Billing.create!(company: anchor, token: data.card_token, charge_id: charge.id)
+      persist Billing.create!(company: anchor, token: data.billing.card_token, charge_id: charge.id)
     end
 
     # ADDITIONAL cleanup on Cancel/abandonment. The engine ALWAYS destroys the
@@ -265,7 +265,7 @@ class WelcomeWizard < Plutonium::Wizard::Base
   review label: "All set?"
 
   def execute
-    current_user.update!(full_name: data.full_name, onboarded_at: Time.current)
+    current_user.update!(full_name: data.profile.full_name, onboarded_at: Time.current)
     succeed.with_message("Welcome aboard!")
   end
 
@@ -346,7 +346,7 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   review label: "Review"
 
   def execute
-    succeed(Account.create!(email: data.email))   # may also sign the user in here
+    succeed(Account.create!(email: data.account.email))   # may also sign the user in here
   end
 end
 

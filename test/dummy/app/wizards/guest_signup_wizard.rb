@@ -25,7 +25,7 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   # user in here (the host calls Rodauth, which rotates the Rails session); the
   # framework needs no special handling beyond letting `execute` run.
   def execute
-    org = Organization.create!(name: data.name)
+    org = Organization.create!(name: data.account.name)
     succeed(org).with_message("Welcome!")
   end
 end

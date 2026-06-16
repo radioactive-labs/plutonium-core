@@ -15,7 +15,7 @@ module Plutonium
           validates :name, presence: true
         end
 
-        step :plan, condition: -> { data.name.present? } do
+        step :plan, condition: -> { data.company.name.present? } do
           attribute :plan, :string
           input :plan
         end
@@ -45,27 +45,29 @@ module Plutonium
         assert_nil company.condition
       end
 
-      def test_union_attribute_schema
-        assert_equal({name: :string, employees: :integer, plan: :string},
-          CreateCo.union_attribute_schema)
+      def test_data_steps_spec_is_per_step
+        spec = CreateCo.data_steps_spec
+        assert_equal %i[company plan], spec.keys
+        assert_equal({name: :string, employees: :integer}, spec[:company][:schema])
+        assert_equal({plan: :string}, spec[:plan][:schema])
       end
 
-      def test_typed_data_snapshot
+      def test_typed_data_snapshot_is_step_keyed
         w = CreateCo.new
-        w.data_attributes = {"name" => "Acme", "employees" => "12"}
+        w.data_attributes = {"company" => {"name" => "Acme", "employees" => "12"}}
 
-        assert_equal "Acme", w.data.name
-        assert_equal 12, w.data.employees   # cast to Integer
-        assert_nil w.data.plan              # uncollected → nil
+        assert_equal "Acme", w.data.company.name
+        assert_equal 12, w.data.company.employees   # cast to Integer
+        assert_nil w.data.plan.plan                 # uncollected → nil
       end
 
       def test_data_memo_invalidated_on_reassign
         w = CreateCo.new
-        w.data_attributes = {"name" => "Acme"}
-        assert_equal "Acme", w.data.name
+        w.data_attributes = {"company" => {"name" => "Acme"}}
+        assert_equal "Acme", w.data.company.name
 
-        w.data_attributes = {"name" => "Globex"}
-        assert_equal "Globex", w.data.name
+        w.data_attributes = {"company" => {"name" => "Globex"}}
+        assert_equal "Globex", w.data.company.name
       end
 
       def test_review_must_be_last

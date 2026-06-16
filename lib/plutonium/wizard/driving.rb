@@ -358,7 +358,7 @@ module Plutonium
         step = runner.current_step
         Plutonium::UI::Form::Wizard.new(
           step:,
-          data: runner.wizard.data,
+          data: runner.wizard.data[step.key],
           action: wizard_step_url(step&.key),
           fields: step.attribute_schema.keys.map(&:to_sym) + step.structured_inputs.keys.map(&:to_sym)
         )

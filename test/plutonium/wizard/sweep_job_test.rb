@@ -16,7 +16,7 @@ module Plutonium
       class Persisting < Plutonium::Wizard::Base
         step(:make) do
           attribute :name, :string
-          on_submit { persist Organization.create!(name: data.name) }
+          on_submit { persist Organization.create!(name: data.make.name) }
         end
         review label: "R"
 
@@ -34,7 +34,7 @@ module Plutonium
 
         step(:make) do
           attribute :name, :string
-          on_submit { persist Organization.create!(name: data.name) }
+          on_submit { persist Organization.create!(name: data.make.name) }
           on_rollback { persisted[:make].each { |r| CustomRollback.side_effects << r.name } }
         end
         review label: "R"

@@ -18,7 +18,6 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   step :identity do
     attribute :name, :string
     attribute :plan, :string
-    input :name
     input :plan, as: :select, choices: %w[free pro enterprise]
     validates :name, presence: true
 
@@ -47,11 +46,11 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
 
   review label: "Review" do |wizard|
     # A custom block on the review step (rendered after the auto-summary).
-    "Ready to onboard #{wizard.data.name}"
+    "Ready to onboard #{wizard.data.identity.name}"
   end
 
   def execute
-    org = Organization.create!(name: data.name)
+    org = Organization.create!(name: data.identity.name)
     succeed(org).with_message("Organization onboarded")
   end
 end

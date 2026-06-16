@@ -56,11 +56,11 @@ module Plutonium
       end
 
       def test_step_inline_default_threads_into_data_snapshot
-        assert_equal "bar", WithDefault.new.data.foo
+        assert_equal "bar", WithDefault.new.data.details.foo
 
         w = WithDefault.new
-        w.data_attributes = {"foo" => "given"}
-        assert_equal "given", w.data.foo
+        w.data_attributes = {"details" => {"foo" => "given"}}
+        assert_equal "given", w.data.details.foo
       end
 
       class WithStructured < Plutonium::Wizard::Base
@@ -82,31 +82,52 @@ module Plutonium
       def test_structured_array_yields_typed_sub_objects
         w = WithStructured.new
         w.data_attributes = {
-          "invites" => [
-            {"email" => "a@x.com", "role" => "admin"},
-            {"email" => "b@x.com", "role" => "member"}
-          ],
-          "note" => "hi"
+          "team" => {
+            "invites" => [
+              {"email" => "a@x.com", "role" => "admin"},
+              {"email" => "b@x.com", "role" => "member"}
+            ]
+          },
+          "details" => {"note" => "hi"}
         }
 
-        invites = w.data.invites
+        invites = w.data.team.invites
         assert_kind_of Array, invites
         assert_equal 2, invites.size
         assert_equal "a@x.com", invites.first.email
         assert_equal "admin", invites.first.role
         assert_equal "b@x.com", invites.last.email
-        assert_equal "hi", w.data.note
+        assert_equal "hi", w.data.details.note
       end
 
       def test_structured_array_empty_when_uncollected
         w = WithStructured.new
-        assert_equal [], w.data.invites
+        assert_equal [], w.data.team.invites
       end
 
       def test_structured_array_handles_indifferent_access
         w = WithStructured.new
-        w.data_attributes = {"invites" => [{email: "c@x.com", role: "admin"}]}
-        assert_equal "c@x.com", w.data.invites.first.email
+        w.data_attributes = {"team" => {"invites" => [{email: "c@x.com", role: "admin"}]}}
+        assert_equal "c@x.com", w.data.team.invites.first.email
+      end
+
+      # --- container (step-keyed dispatch) ------------------------------------
+
+      def test_container_dispatches_to_step_sub_objects
+        w = WithStructured.new
+        w.data_attributes = {"details" => {"note" => "hi"}}
+
+        assert_respond_to w.data, :team
+        assert_respond_to w.data, :details
+        assert_equal %i[team details], w.data.step_keys
+        assert_equal "hi", w.data[:details].note   # dynamic [] access
+        assert_nil w.data[:nope]                    # unknown step → nil
+      end
+
+      def test_container_to_h_is_nested_and_typed
+        w = WithDefault.new
+        w.data_attributes = {"details" => {"foo" => "given"}}
+        assert_equal({details: {foo: "given"}}, w.data.to_h)
       end
     end
   end
