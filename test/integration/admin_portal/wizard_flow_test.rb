@@ -182,19 +182,20 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_equal 0, Plutonium::Wizard::Session.where(status: "in_progress").count
   end
 
-  # §4: the documented default is a SINGLETON per (user, wizard). For an
-  # authenticated non-anchored wizard the engine mints NO token — the principal is
-  # the owner GID — so a second visit resumes the SAME session row, and the row
-  # carries no token (two tabs/devices share one draft).
-  test "authenticated non-anchored wizard is a singleton with no token" do
+  # §4: a wizard with no `concurrency_key` (OnboardOrganizationWizard) is
+  # TOKENED/REPEATABLE — identity is the per-launch `wizard_token`. The token is
+  # minted into a signed cookie, so a second GET in the same session reuses it →
+  # the same instance_key → the SAME row is resumed (not forked). The owner is
+  # still stamped for listing.
+  test "authenticated tokened wizard resumes via its token cookie, not forks" do
     advance_through("identity")
     assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count
 
     row = Plutonium::Wizard::Session.where(status: "in_progress").sole
-    assert_nil row.token, "authenticated wizard must not mint a token (singleton-per-user)"
+    assert row.token.present?, "a tokened (no concurrency_key) wizard mints a token"
     assert_equal @admin.to_global_id.to_s, row.owner.to_global_id.to_s
 
-    # Resuming (a fresh GET) does not spawn a second row — same instance key.
+    # Resuming (a fresh GET, same session/cookie) does not spawn a second row.
     get "#{base}/identity"
     assert_response :success
     assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count

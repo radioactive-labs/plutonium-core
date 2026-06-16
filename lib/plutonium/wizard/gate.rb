@@ -4,30 +4,27 @@ module Plutonium
   module Wizard
     # Controller concern that gates access behind a **one-time wizard** (§9).
     #
-    # +ensure_wizard_completed(WizardClass)+ installs a +before_action+ that, for a
-    # +one_time+ wizard, checks whether the current principal has a durable
-    # completion marker (a +completed+ session row). If not, it stashes the intended
-    # destination and redirects into the wizard's entry step; once the wizard's own
-    # finalize records the marker, the gate lets the user through and the controller
-    # bounces back to the stashed destination (PRG, wired in {Controller}).
+    # +ensure_wizard_completed(WizardClass)+ installs a +before_action+ that
+    # recomputes the wizard's +instance_key+ (from its +concurrency_key+ — resolved
+    # against the host controller's identity context, with the tenant folded in,
+    # §4.4) and checks whether a retained +completed+ row exists at that key. If
+    # not, it stashes the intended destination and redirects into the wizard's
+    # entry step; once the wizard's own finalize retains the completion marker, the
+    # gate lets the user through and the controller bounces back to the stashed
+    # destination (PRG, wired in {Controller}).
     #
     #   class DashboardController < AdminPortal::PlutoniumController
     #     include Plutonium::Wizard::Gate
     #     ensure_wizard_completed OnboardingWizard
     #   end
     #
-    # **Completion keying** follows the wizard's +one_time_scope+ (§9):
+    # Only **one-time** wizards (a +concurrency_key+ plus +one_time+) are gateable —
+    # they are the only ones with a durable retained marker. Gating any other
+    # wizard raises a clear error at install time.
     #
-    # - +once_per: :user+ (default) → keyed by +owner: current_user+. This is the
-    #   primary, fully-supported case.
-    # - +once_per: :anchor+ → keyed by +anchor:+, resolved via
-    #   {#wizard_gate_anchor} (override it to supply the anchor record; the default
-    #   raises, since there is no generic way to know which record a gate is about).
-    #
-    # **Entry URL** (§5.3): the wizard's first step of its synthesized route. The
-    # default {#wizard_entry_path} derives the +register_wizard+ helper name from the
-    # wizard class (`<name>_wizard_path(step: <first_step_key>)`); override it for a
-    # custom mount.
+    # The instance_key recomputation MUST match the runner/driving digest exactly
+    # (both go through {Plutonium::Wizard.compute_instance_key}), or the gate would
+    # never see the completion the wizard recorded.
     module Gate
       extend ActiveSupport::Concern
 
@@ -35,6 +32,12 @@ module Plutonium
         # Install the gating +before_action+. Extra options (e.g. +only:/except:+)
         # are forwarded to +before_action+.
         def ensure_wizard_completed(wizard_class, **before_action_opts)
+          unless wizard_class.one_time?
+            raise ArgumentError,
+              "#{wizard_class.name} is not a one-time wizard (needs a " \
+              "`concurrency_key` + `one_time`); only one-time wizards are gateable (§9)."
+          end
+
           before_action(**before_action_opts) do
             enforce_wizard_completion!(wizard_class)
           end
@@ -52,27 +55,32 @@ module Plutonium
       end
 
       def wizard_completed?(wizard_class)
-        wizard_gate_store.completed?(**wizard_completion_key(wizard_class))
+        wizard_gate_store.completed?(instance_key: wizard_gate_instance_key(wizard_class))
       end
 
-      # The +completed?+ lookup key for this wizard, keyed per +one_time_scope+.
-      def wizard_completion_key(wizard_class)
-        case wizard_class.one_time_scope
-        when :anchor
-          {wizard: wizard_class.name, anchor: wizard_gate_anchor(wizard_class)}
-        else
-          {wizard: wizard_class.name, owner: current_user}
-        end
+      # Recompute the wizard's instance_key on the host controller (§9). The
+      # identity context (`current_user`, `current_scoped_entity`, `anchor`, custom
+      # host methods) is read from this controller; a referenced method that's
+      # missing raises a clear error via {compute_instance_key}.
+      def wizard_gate_instance_key(wizard_class)
+        Plutonium::Wizard.compute_instance_key(
+          wizard_class: wizard_class,
+          current_user: current_user,
+          current_scoped_entity: wizard_gate_scoped_entity,
+          anchor: nil,
+          wizard_token: nil
+        )
       end
 
-      # Resolve the anchor for a +once_per: :anchor+ gate. There is no generic way to
-      # know which record a gate is about, so override this in the host controller
-      # (e.g. return the current tenant/workspace). The default raises rather than
-      # silently mis-keying the completion check.
-      def wizard_gate_anchor(wizard_class)
-        raise NotImplementedError,
-          "#{self.class} must override #wizard_gate_anchor to gate the " \
-          "once_per: :anchor wizard #{wizard_class.name}"
+      # The tenant folded into the gate's key recomputation (§4.4) — the portal
+      # scoping entity when the host portal is entity-scoped, else nil. Mirrors the
+      # driving layer's `resolved_wizard_scope`. `current_user`/`scoped_to_entity?`
+      # are private on portal controllers, so call them directly (a `respond_to?`
+      # check would be false for private methods and silently mis-key).
+      def wizard_gate_scoped_entity
+        return unless scoped_to_entity?
+
+        current_scoped_entity
       end
 
       def wizard_gate_store

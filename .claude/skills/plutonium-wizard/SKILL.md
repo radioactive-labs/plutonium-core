@@ -66,9 +66,10 @@ end
 |---|---|
 | `presents label:, icon:` | Launch button label + icon. |
 | `navigation :linear \| :free` | Stepper jumps. `:linear` (default) = back to any visited step; `:free` = any visible visited step. Forward to unvisited is never allowed. |
-| `anchored with: Model` | Run against an existing record (read via `anchor`). |
+| `anchored with: Model` / `anchored via: :method` | Run against an existing record (read via `anchor`). `with:` = URL `:id` (resource-mounted); `via:` = a controller method (portal-level, context). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the sweep reaps the session + rolls back tracked records. Default `config.wizards.cleanup_after`. |
-| `one_time once_per: :user \| :anchor` | Run once; durable completion marker. |
+| `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs. |
+| `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
 | `encrypt_data` | Encrypt the staged `data`/`tracked_records` columns (PII flows). |
 
 ## Branching — `condition:`
@@ -195,7 +196,9 @@ anchored                            # generic — type bound at registration
 ```ruby
 class WelcomeWizard < Plutonium::Wizard::Base
   presents label: "Welcome"
-  one_time once_per: :user          # :user (default) | :anchor
+
+  concurrency_key { current_user }  # stable row to retain (tenant folded in)
+  one_time                           # retain on complete → run once
 
   step :greeting do
     attribute :acknowledged, :string
@@ -223,7 +226,7 @@ module AdminPortal
 end
 ```
 
-Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. For `once_per: :anchor`, override `wizard_gate_anchor` (default raises).
+Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. The gate recomputes the wizard's `instance_key` from its `concurrency_key` (resolved on the host controller — `current_user`/`current_scoped_entity`/`anchor`/custom available) and checks `completed?(instance_key:)`. Only one-time wizards are gateable. Use `concurrency_key { anchor }` for "set up this record once".
 
 ## Registration & launch (portal-hosted)
 
@@ -250,7 +253,7 @@ end
 Draws `GET/POST /onboarding(/:token)/:step` within the portal + an `onboarding_wizard_path` helper.
 
 > [!TIP]
-> **Anchored wizards mount on the resource, not portal-level.** Register an `anchored` wizard on the anchored resource's definition with the `wizard` macro — it auto-mounts a record (member) action whose anchor is the scoped `resource_record!`. Passing an `anchored` wizard to `register_wizard` **raises** (portal-level mounts have no resource record to anchor to).
+> **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro — it auto-mounts a record (member) action whose anchor is the scoped `resource_record!`. Passing a `with:`-anchored wizard to `register_wizard` **raises** (no resource record). A **`via:`-anchored** (context) wizard mounts portal-level fine — its anchor is a controller method (e.g. `via: :current_scoped_entity`).
 
 > [!DANGER]
 > **A portal-level wizard with no `authorize?` is runnable by ANY authenticated portal user** — it has no resource policy and defaults to allowed. **Always define `def authorize?`** for anything privileged (admin-only, per-user gating, tenant checks).
@@ -277,7 +280,8 @@ end
 - **`condition:` not nil-safe** → raises on the value before its step is filled.
 - **`review` not last** → load-time error.
 - **`using:` a definition or interaction** → `using:` is model-only.
-- **`once_per: :anchor` without `wizard_gate_anchor`** → `NotImplementedError`.
+- **`one_time` without `concurrency_key`** → raises (no stable row to retain).
+- **Gating a non-one-time wizard** (`ensure_wizard_completed` on a repeatable wizard) → raises.
 - **`on_submit` wizard without scheduled SweepJob** → abandoned partial records pile up.
 
 ## Related Skills

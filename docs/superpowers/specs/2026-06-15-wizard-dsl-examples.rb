@@ -8,8 +8,10 @@
 # ── DSL cheatsheet ───────────────────────────────────────────────────────────
 #   presents label:/icon:        chrome (button label + icon), like interactions
 #   navigation :linear|:free     stepper navigation policy (default :linear)
-#   anchored with: Model         wizard runs against an existing record; read via `anchor`
-#   one_time once_per: :user     run once per user (or :anchor); durable completion
+#   anchored with: Model         wizard runs against an existing record (URL :id); read via `anchor`
+#   anchored via: :method        context anchor resolved by a controller method (portal-level)
+#   concurrency_key { … }        key a run (tenant folded in); keyed in_progress row is the lock
+#   one_time                     retain the completed row at the key → run once (needs concurrency_key)
 #   cleanup_after 7.days|:never   idle TTL before abandoned sessions are swept
 #   def authorize?              entry gate for portal-level wizards (no resource policy)
 #   step :key, label:, condition:, using:  do ... end   one screen (block declares its
@@ -146,8 +148,10 @@ end
 class WelcomeWizard < Plutonium::Wizard::Base
   presents label: "Welcome"
 
-  # Records a durable "done" marker; the gate (below) stops re-running it.
-  one_time once_per: :user
+  # Keyed per user (tenant folded in); `one_time` retains the completed row as a
+  # durable "done" marker the gate (below) checks — so it never re-runs.
+  concurrency_key { current_user }
+  one_time
 
   # Portal-level wizards have no resource policy, so gate entry with `authorize?`.
   def authorize? = current_user.present?

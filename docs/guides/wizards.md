@@ -245,12 +245,14 @@ See [Anchoring & resume](/reference/wizard/anchoring-resume).
 
 ## One-time onboarding + gate
 
-A one-time wizard runs once per user (or per anchor) and records a durable completion marker. A controller gate redirects users into it until they finish.
+A one-time wizard is a keyed wizard (`concurrency_key`) that **retains** its completed row as a durable marker. A controller gate redirects users into it until they finish.
 
 ```ruby
 class WelcomeWizard < Plutonium::Wizard::Base
   presents label: "Welcome"
-  one_time once_per: :user      # :user (default) | :anchor
+
+  concurrency_key { current_user }   # the stable row to retain (tenant folded in)
+  one_time                            # retain on completion → run once
 
   step :profile, label: "Your profile" do
     attribute :full_name, :string
@@ -325,7 +327,7 @@ end
 This draws the wizard's step routes within the portal and provides an `<at>_wizard_path` helper. See [Registration & launch](/reference/wizard/registration-launch).
 
 ::: warning v1 scope
-v1 hosts wizards **inside portals only**. Anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` still raises for an `anchored` wizard (portal-level mounts have no resource record). `once_per: :anchor` gating needs a host-provided anchor resolver (override `wizard_gate_anchor`). Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
+v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (portal-level mounts have no resource record), but a `via:`-anchored (context) wizard mounts portal-level fine. Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
 :::
 
 ## Where to go next

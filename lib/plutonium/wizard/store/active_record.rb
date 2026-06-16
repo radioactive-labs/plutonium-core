@@ -36,15 +36,8 @@ module Plutonium
           Session.where(instance_key: instance_key).delete_all
         end
 
-        def completed?(wizard:, owner: Base::OMITTED, anchor: Base::OMITTED)
-          # An explicitly-passed nil key can never match a row (it identifies a
-          # principal with no value); only an OMITTED key drops the predicate.
-          return false if owner.nil? || anchor.nil?
-
-          scope = Session.status_completed.where(wizard: wizard.to_s)
-          scope = scope.where(owner: owner) unless owner.equal?(Base::OMITTED)
-          scope = scope.where(anchor: anchor) unless anchor.equal?(Base::OMITTED)
-          scope.exists?
+        def completed?(instance_key:)
+          Session.status_completed.where(instance_key: instance_key).exists?
         end
 
         def in_progress_for(owner)

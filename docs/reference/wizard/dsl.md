@@ -18,9 +18,10 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 |---|---|
 | `presents label:, icon:` | The launch button's label + icon (same as interactions). |
 | `navigation :linear \| :free` | Stepper jump policy. `:linear` (default) — back to any visited step; `:free` — any visible visited step. Forward jumps to unvisited steps are never allowed. |
-| `anchored with: Model` | Run against an existing record; read via `anchor`. See [Anchoring & resume](/reference/wizard/anchoring-resume). |
+| `anchored with: Model` / `anchored via: :method` | Run against an existing record; read via `anchor`. `with:` resolves from the URL `:id` (resource-mounted); `via:` resolves by calling a controller method (portal-level, context-anchored). See [Anchoring & resume](/reference/wizard/anchoring-resume). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the abandonment sweep reaps a session and rolls back its tracked records. Defaults to `config.wizards.cleanup_after`. `:never` opts out. |
-| `one_time once_per: :user \| :anchor` | Run once; record a durable completion marker. See [One-time wizards](/reference/wizard/one-time). |
+| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs. |
+| `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
 | `encrypt_data` | Apply Rails `encrypts` to the `data`/`tracked_records` columns (off by default), for flows that stage PII. |
 
 ```ruby

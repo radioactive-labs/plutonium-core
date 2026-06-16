@@ -109,6 +109,9 @@ This is **Option A**: inline steps + a single final `execute`. Atomic, no orphan
 | **`navigation`** | `:linear` (default) or `:free`. Controls stepper jump behavior (see §7). |
 | **`cleanup_after <ttl>`** | Idle TTL before the abandonment sweep reaps a session and rolls back its tracked records. Stamped per write as a concrete `expires_at`. `:never` opts out (records persist). Defaults to `config.wizards.cleanup_after`. See §2.3. |
 | **`encrypt_data`** | Optional `encrypt_data true` to apply Rails 7 `encrypts` to the `data`/`persisted` payload (off by default), for flows that stage PII. See §8.1. |
+| **`concurrency_key { … }`** | Optional block (Solid Queue–style) returning the value(s) a run is keyed by; ≤1 in-progress run per key (the keyed row is the lock, created at start). Omit → unlimited concurrent tokened runs. Identity source for §4. |
+| **`one_time`** | Optional; with a `concurrency_key`, **retain** the completed row at the key → permanently blocks a restart (gate-able). Omit → row deleted on completion → repeatable. See §4.3/§9. |
+| **`wizard_token`** | Context method (URL param ?? signed cookie, minted if absent) — the per-wizard token; identity for non-`concurrency_key` (tokened/repeatable) runs and the pre-auth principal. Available in `concurrency_key`. |
 
 Steps reuse the existing field DSL verbatim — a step is essentially an interaction's field surface rendered on its own screen, fed through the same `form_layout` → form-rendering pipeline.
 
@@ -298,27 +301,55 @@ The wizard body never cares where the anchor came from; the launch surface resol
 
 ---
 
-## 4. Instance identity & resume
+## 4. Identity, concurrency & repeatability
 
-Every running wizard has an **instance key** derived from its URL plus the current user/cookie — a deterministic digest the store row is uniquely keyed by (`instance_key` column, §8.1). The owner/anchor are *also* stored as polymorphic columns for querying, but identity is the digest (so nullable components can't spawn duplicate singletons).
+These are **three orthogonal concerns** (do not conflate them — a wizard's anchor, in particular, does *not* determine any of them):
 
-**Instance key recipe.** The digest is over **`wizard` + scope GID + anchor GID + identity principal**, where the **identity principal is `token` if present, else the owner GID**:
+### 4.1 Identity — which run am I, how do I resume
 
+Every wizard run is a **session row** with its own `instance_key`, carried in the URL. Resume = that URL, or the in-progress list (`where(owner: current_user, scope: tenant, status: :in_progress)`). The `instance_key` is:
+
+- **`concurrency_key` set** → `SHA256(wizard, serialized(concurrency_key))` — a stable key (see §4.2).
+- **omitted** → `SHA256(wizard, wizard_token)` — a fresh per-launch token (see §4.3), so every launch is a distinct run.
+
+`owner`/`anchor`/`scope` are also stored as columns (for listing/queries); identity is the digest.
+
+### 4.2 Concurrency — `concurrency_key { … }` (borrowed from Solid Queue)
+
+An optional author block, `instance_exec`'d in the wizard/controller context (where `current_user`, `current_scoped_entity`, `anchor`, `wizard_token` are available), returning the value(s) the run is keyed by (records → GID, scalars → string, arrays joined):
+
+```ruby
+concurrency_key { current_user }                          # ≤1 in-progress per user
+concurrency_key { anchor }                                # ≤1 in-progress per anchored record
+concurrency_key { current_user || wizard_token }          # pre-auth-safe (token until login)
 ```
-instance_key = SHA256("#{wizard}|#{scope_gid}|#{anchor_gid}|#{token.presence || owner_gid}")
-```
 
-- **`scope_gid`** is the current Plutonium **scoping entity** (the portal's `scoped_entity`, when the engine is scoped to one — e.g. the tenant Organization), blank otherwise. Folding it in means the *same user running the same non-anchored wizard in two different tenant portals gets two distinct rows* instead of colliding into one. (See §8 multi-tenancy.)
-- The crucial property: **when a `token` exists, the owner GID is *not* in the digest.** This is what makes pre-auth → authenticated transitions safe (Blocking concern below). `owner`/`anchor`/`scope` are still stored as columns for querying; only the *principal* drives identity.
+The keyed session row is **created at the start** (`status: in_progress`) and *is the lock*: a second launch with the same key **resumes that row instead of forking** — at most one in-progress run per key. Omit `concurrency_key` → unlimited concurrent runs (each tokened). *(This is what an explicit "singleton" is — author-chosen, not implicit.)*
 
-- **Anchored wizard** → anchor GID is in the digest (already in the URL). Resume = "continue configuring *this* record." (Authenticated, so principal = owner GID; the anchor disambiguates per-record.)
-- **Non-anchored (create) wizard** → a **token** is the create-flow's equivalent of the anchor id, and becomes the principal. Default **singleton per `(user, wizard)`** (no token → principal = owner GID); tokened multi-concurrent mode is opt-in (mint a token → principal = token).
+### 4.3 Repeatability — `one_time` (retain-on-complete)
 
-**Resume policy (default):** singleton per `(user, wizard)`. Revisiting an in-flight wizard shows a **resume confirmation** ("continue where you left off, or start over?"). Tokened concurrent drafts + shareable resume links are an opt-in.
+The keyed row blocks for its whole life: `in_progress` blocks concurrent starts; on completion its fate is the only difference between repeatable and one-time:
 
-**Pre-auth → authenticated transition (the signup/onboarding case).** A pre-auth wizard (no `current_user`) is **always tokened** — a `token` in a **signed cookie** is the principal, so `instance_key` digests `token`, not the (blank) owner. When the wizard authenticates the user mid-flow (e.g. signup creates the User), the engine **stamps `owner_type`/`owner_id` onto the existing row but does NOT rekey** — the principal stays the token, so the digest is unchanged and the in-progress row is neither orphaned nor duplicated. The owner column is now populated (for listing/ownership) while identity continuity is preserved by the token. The signed cookie is cleared on completion.
+- **`one_time`** → the completed row is **retained** at the key → permanently blocks a restart (and is what the gate, §9, checks).
+- **not `one_time`** → the row is **deleted** on completion → repeatable (run it again later, e.g. "import data").
 
-On resume the engine restores the cursor + `data` and rehydrates `persisted[:key]` from stored GlobalIDs, so a per-step `on_submit` create flow can return later and still see records made by earlier steps.
+`one_time` requires a `concurrency_key` (that's the stable row to retain); a run with no `concurrency_key` is tokened and always repeatable.
+
+| wizard | `concurrency_key` | `one_time` | behaviour |
+|---|---|---|---|
+| onboarding | `{ current_user }` | yes | one in-progress per user; once done, never again |
+| import data | `{ current_user }` | no | one at a time per user; re-runnable after each finishes |
+| create company | — | — | unlimited concurrent drafts; always repeatable |
+
+### 4.4 Tenancy (cross-cutting, automatic)
+
+The portal's **`current_scoped_entity`** is **folded into the `concurrency_key` and the completion check automatically** (and stored as the `scope` column), so concurrency, completion, and the in-progress list are **tenant-isolated by default** — the author doesn't thread it. This makes per-membership fall out for free: in a tenant portal, `concurrency_key { current_user } + one_time` is automatically once per **(user, tenant)**.
+
+### 4.5 Context methods & pre-auth
+
+The wizard controller/gate expose, alongside `current_user`: **`current_scoped_entity`** (tenant/scope), **`anchor`** (resolved record, §3), and **`wizard_token`** (the per-wizard token — URL param ?? signed cookie, minted if absent). All are available inside `concurrency_key`. For a **pre-auth** keyed wizard, `wizard_token` is the stable principal until login; on authentication `owner` is stamped onto the row without rekeying, and the cookie is cleared on completion.
+
+On resume the engine restores the cursor + `data` and rehydrates `persisted[:key]` from stored GlobalIDs.
 
 ---
 
@@ -509,9 +540,10 @@ create_table :plutonium_wizard_sessions do |t|
   t.string :status,       null: false, default: "in_progress"   # in_progress | completing | completed
   t.string :current_step
 
-  # Identity — a deterministic digest of (wizard, owner, anchor, token).
-  # A single unique column is required because nullable polymorphic columns can't
-  # enforce the singleton rule: Postgres/SQLite treat NULL ≠ NULL in unique indexes.
+  # Identity — a deterministic digest: either of the serialized concurrency_key
+  # (tenant folded in) or of the wizard_token (§4). A single unique column is
+  # required because nullable polymorphic columns can't enforce the singleton
+  # rule: Postgres/SQLite treat NULL ≠ NULL in unique indexes.
   t.string :instance_key, null: false
 
   # Polymorphic refs — for querying/listing and rebuilding context (NOT identity).
@@ -547,8 +579,8 @@ end
 
 One table serves everything:
 
-- **Resume** = look up the `in_progress` row by `instance_key` (single-column unique index). The key is derived deterministically from `wizard` + scope GID + anchor GID + principal (blanks for nils), so null components can't spawn duplicate singletons.
-- **One-time check** = does a `completed` row exist for `(wizard, anchor)` (anchor) or `(wizard, owner)` (user) — see §9.
+- **Resume** = look up the row by `instance_key` (single-column unique index). The key is the concurrency_key digest (tenant folded in) or the wizard_token digest, so an existing `in_progress` keyed row IS the lock — a second launch resumes it.
+- **One-time check** = does a `completed` row exist at the recomputed `instance_key` (`completed?(instance_key:)`) — see §9.
 - **In-progress listing** = `where(owner: current_user, status: "in_progress")`; per-tenant = `where(scope: current_scope, status: "in_progress")`.
 - **Multi-tenancy** = the current portal **scoping entity** is folded into `instance_key` (§4) and stored as `scope_type`/`scope_id`, so the same user running the same non-anchored wizard in two tenant portals gets **two distinct rows** rather than colliding. Blank for non-scoped (e.g. main-app) flows.
 - **Sweep** = `where(status: ["in_progress", "completing"]).where("expires_at < ?", now)` (rows with null `expires_at` — `cleanup_after :never` — are skipped). The `completing` inclusion reaps rows where a finalize crashed mid-flight (§6.2). For each, run the wizard's **cleanup** (§2.3 — `on_rollback`/destroy tracked records) and then delete the row; **never** touch `completed`. `expires_at` is re-stamped (`now + cleanup_after`) on every write, so an actively-progressing wizard keeps pushing its expiry forward. Because the row stores the GIDs of records registered via the per-step `persist` macro, cleanup needs no `draft` column on host models.
@@ -570,9 +602,9 @@ File uploads cannot sit in the JSON column → use ActiveStorage direct upload (
 # Plutonium::Wizard::Store::Base — port
 #   read(instance_key)               → State | nil
 #   write(instance_key, state)       → State   (upsert; sets owner/anchor/token + expires_at = now + cleanup_after)
-#   complete(instance_key)           → marks completed, nulls data/tracked_records columns
-#   clear(instance_key)              → deletes the row
-#   completed?(wizard, owner:, anchor:)  → bool   (one-time check)
+#   complete(instance_key)           → marks completed, nulls data/tracked_records columns (one-time retain)
+#   clear(instance_key)              → deletes the row (repeatable completion + cancel)
+#   completed?(instance_key:)        → bool   (one-time check — existence of a completed row at the key)
 #   in_progress_for(owner)           → [State]  (listing)
 #
 # State carries: wizard, current_step, data, persisted (rehydrated records),
@@ -590,7 +622,8 @@ A one-time wizard needs a **durable completion marker** — you cannot remember 
 
 ```ruby
 class OnboardingWizard < Plutonium::Wizard::Base
-  one_time once_per: :user        # :user (default) | :anchor
+  concurrency_key { current_user }   # the stable row to retain (tenant folded in, §4.4)
+  one_time                            # retain the completed row → never again
 
   # ... steps ...
 
@@ -601,8 +634,8 @@ class OnboardingWizard < Plutonium::Wizard::Base
 end
 ```
 
-- **Completion** = the instance row reaching `status: :completed`. `one_time` implies durable completion automatically.
-- **`once_per: :anchor`** keys completion by the anchor's GlobalID ("set up *this* workspace once") instead of the user.
+- **Completion** = the instance row reaching `status: :completed`, **retained** at the wizard's `instance_key` (`one_time` keeps it instead of deleting).
+- **`one_time` requires a `concurrency_key`** — that's the stable key the retained marker lives at (and the key the gate recomputes). `concurrency_key { anchor }` keys completion by the anchor ("set up *this* workspace once"); `concurrency_key { current_user }` keys it per user; the **tenant is folded in automatically** (§4.4).
 - **Gating / auto-trigger** via a controller/portal concern:
 
   ```ruby
@@ -610,7 +643,7 @@ end
   ensure_wizard_completed OnboardingWizard   # before_action: redirect into the wizard until done
   ```
 
-  After login, an un-onboarded user hits the gate → redirected to the wizard → on completion, marked done and bounced to the original destination (PRG). Completed users never see it again.
+  The gate **recomputes the wizard's `instance_key`** from its `concurrency_key` (resolved against the host controller — `current_user`/`current_scoped_entity`/`anchor`/custom methods are available) and checks `completed?(instance_key:)`. This digest MUST match the runner/driving one (both go through `Plutonium::Wizard.compute_instance_key`), or gating silently breaks. Only one-time wizards are gateable — gating any other raises. After login, an un-onboarded user hits the gate → redirected to the wizard → on completion, the marker is retained and the user is bounced to the original destination (PRG). Completed users never see it again.
 
 Dismissible / "remind me later" onboarding is a **follow-up**, not v1.
 
@@ -688,7 +721,9 @@ Plutonium::Wizard::Base            # author class: steps DSL, anchored, navigati
 Plutonium::Wizard::Step            # step metadata: key, label, condition, fields definition, on_submit/on_rollback blocks
 Plutonium::Wizard::ReviewStep      # terminal review step: auto-summary + outstanding-items + gated finish
 Plutonium::Wizard::FieldImporter   # resolves `using:` — imports attributes/inputs/form_layout from an interaction/definition; validates via source.new(data_slice).valid? (unless validate: false)
-Plutonium::Wizard::DSL::*          # concerns: Steps, Anchoring, Navigation, OneTime (mixed into Base)
+Plutonium::Wizard::DSL             # class macros: step/review/anchored/navigation/cleanup_after/concurrency_key/one_time/encrypt_data (mixed into Base)
+Plutonium::Wizard::InstanceKey     # identity digest builders: .concurrency(name, key_values) / .tokened(name, token)
+Plutonium::Wizard.compute_instance_key  # shared digest used by BOTH runner/driving and the gate (must stay identical)
 Plutonium::Wizard::Runner          # navigation/path computation, validation, on_submit, execute orchestration
 Plutonium::Wizard::State           # value object: cursor, data, persisted (GIDs)
 Plutonium::Wizard::Store::Base     # storage port
@@ -771,8 +806,8 @@ All names below are **decided** — kept here as the canonical glossary:
 8a. **Finalize preconditions (§6.3):** before `execute`, assert every currently-visible step is visited+valid (else redirect to it), and prune `data` for branch-hidden steps.
 8b. **Authorization:** resource wizards use the action policy predicate; standalone wizards use a wizard-level `authorize?` hook (checked per request).
 9. **Storage:** DB-only, single `plutonium_wizard_sessions` table; **polymorphic** owner/anchor/**scope** (for listing/queries) + a derived unique **`instance_key`** digest (for identity, since nullable polymorphic cols can't enforce the singleton); the **portal scoping entity is folded into the key + stored** so the same user's same non-anchored wizard doesn't collide across tenants; concrete **`expires_at`** stamped per write (sweep = `expires_at < now`, null = never); **opt-in `encrypt_data`**; Store port + in-memory test adapter; files via ActiveStorage `signed_id`.
-10. **One-time:** `one_time once_per: :user/:anchor`; completion = `completed` row; `ensure_wizard_completed` gate.
+10. **Identity/concurrency/repeatability (§4):** three orthogonal axes. **Identity** = `instance_key` digest — `concurrency_key` set → `SHA256(name | serialized(key))` (tenant always folded in, §4.4); omitted → `SHA256(name | wizard_token)` (fresh per launch, repeatable). **Concurrency** = `concurrency_key { … }` (Solid Queue-style); the keyed `in_progress` row IS the lock — a second launch at the same key resumes, never forks. **Repeatability** = `one_time` (requires a `concurrency_key`): on completion RETAIN the row (blocks restart, gate-able); without it DELETE the row (repeatable; tokened runs always are). `wizard_token` (URL param ?? signed cookie, minted) is the tokened/pre-auth principal, available in `concurrency_key`; pre-auth→auth stamps `owner` without rekeying. Gate = `ensure_wizard_completed` recomputes the same `instance_key` and checks `completed?(instance_key:)`; only one-time wizards are gateable. (Replaces the earlier `once_per`/`one_time once_per:` model.)
 11. **Migrations:** gem-shipped (kept over copy-generator), per-feature subdirs, Railtie appends enabled paths **after `:load_config_initializers`** (timing fix), targeting `config.wizards.database` (multi-db aware); `schema.rb` round-trips so `db:schema:load`/CI work normally. Namespaced `config.wizards.enabled = true` (false default), `.cleanup_after`, `.database`.
 12. **No generator in v1.**
-13. **Defaults:** `instance_key` = `SHA256("#{wizard}|#{scope_gid}|#{anchor_gid}|#{token.presence || owner_gid}")` — scope folded in for tenant isolation; **token is the identity principal when present, so owner is excluded from the digest** (pre-auth→auth doesn't rekey; login stamps owner onto the row without rekeying). `status` ∈ `in_progress | completing | completed` (`completing` is the transient lock-guard state for concurrent-submit protection §6.2; sweep hard-deletes idle `in_progress`, no `abandoned`); one-time completion markers kept **forever**; pre-auth `token` carried in a **signed** cookie, cleared on completion.
+13. **Defaults:** `instance_key` is either `SHA256("concurrency|#{wizard}|#{serialized(concurrency_key)}")` (keyed; tenant folded into the serialized key) or `SHA256("tokened|#{wizard}|#{wizard_token}")` (no `concurrency_key`). Owner is **never** in the digest — keyed runs are identified by the `concurrency_key`, tokened runs by the `wizard_token` — so pre-auth→auth never rekeys; login just stamps `owner` onto the row. `status` ∈ `in_progress | completing | completed` (`completing` is the transient lock-guard state for concurrent-submit protection §6.2; sweep hard-deletes idle `in_progress`, no `abandoned`); one-time completion markers kept **forever**; pre-auth `token` carried in a **signed** cookie, cleared on completion.
 14. **Error handling:** `on_submit`/`execute` **must use bang methods** (`create!`/`update!`) — failure is signaled by a raised exception, not a return value (non-bang `false` would advance silently). Engine catches `ActiveRecord::RecordInvalid` (→ field errors), `Plutonium::Wizard::StepError` (→ base error, for non-AR failures), re-raises other `StandardError`. `execute` may also `failed(...)`. (§6.1)

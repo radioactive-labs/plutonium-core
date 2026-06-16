@@ -35,6 +35,12 @@ module Plutonium
         runner = build_wizard_runner
         authorize_wizard_entry!(runner)
 
+        # Re-entering a finished one-time wizard (§4.3/§9): its key holds a
+        # retained `completed` row, so there is nothing to run — bounce out.
+        if runner.completed_one_time?
+          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+        end
+
         if (target = wizard_redirect_step)
           return redirect_to wizard_step_url(target), status: :see_other, allow_other_host: false
         end
@@ -52,6 +58,10 @@ module Plutonium
         runner = build_wizard_runner
         authorize_wizard_entry!(runner)
         @wizard_runner = runner
+
+        if runner.completed_one_time?
+          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+        end
 
         if params[:pre_submit]
           return render_wizard_pre_submit(runner)
@@ -159,7 +169,9 @@ module Plutonium
           owner: current_user,
           anchor: resolved_wizard_anchor,
           scope: resolved_wizard_scope,
-          token: resolved_wizard_token
+          token: wizard_token,
+          current_user: current_user,
+          current_scoped_entity: resolved_wizard_scope
         )
       end
 
@@ -167,47 +179,43 @@ module Plutonium
         Plutonium::Wizard::Store::ActiveRecord.new
       end
 
+      # The instance_key for this run (§4.1). A wizard with a `concurrency_key`
+      # gets a stable digest over its resolved key value(s) (tenant folded in);
+      # otherwise the digest is over the per-launch `wizard_token` (fresh per
+      # launch → repeatable). This MUST stay byte-identical to the gate's
+      # recomputation (§9), so both go through {InstanceKey}.
       def resolved_wizard_instance_key
-        Plutonium::Wizard::InstanceKey.for(
-          wizard: current_wizard_class.name,
-          scope: resolved_wizard_scope,
+        Plutonium::Wizard.compute_instance_key(
+          wizard_class: current_wizard_class,
+          current_user: current_user,
+          current_scoped_entity: resolved_wizard_scope,
           anchor: resolved_wizard_anchor,
-          token: resolved_wizard_token,
-          owner: current_user
+          wizard_token: wizard_token
         )
       end
 
-      # The portal scoping entity (tenant) when the portal is entity-scoped (§4 /
-      # §8 multi-tenancy); nil otherwise.
+      # The portal scoping entity (tenant) when the portal is entity-scoped (§4.4 /
+      # §8 multi-tenancy); nil otherwise. Folded into the key automatically.
       def resolved_wizard_scope
         return unless scoped_to_entity?
 
         current_scoped_entity
       end
 
-      # The identity principal for non-anchored / pre-auth flows (§4).
-      #
-      # When there is a `current_user`, we mint **no** token: the principal falls
-      # back to the owner GID, giving the documented default of a **singleton per
-      # (user, wizard)** — two tabs/devices resume the SAME draft (§4). Tokened
-      # concurrent drafts are a deliberate future opt-in, not the default.
-      #
-      # When there is no `current_user` (pre-auth onboarding/signup), a token in a
-      # signed cookie is the only stable principal, so we read/mint one. The cookie
-      # is cleared on completion.
-      def resolved_wizard_token
-        return @resolved_wizard_token if defined?(@resolved_wizard_token)
+      # The per-wizard token (§4.5): URL `:token` param ?? signed cookie, minted
+      # and set if absent. The identity principal for tokened/repeatable runs and
+      # the pre-auth principal; folded into `concurrency_key` resolution. Minted
+      # for every run (authed or not) so a tokened (no-concurrency_key) wizard
+      # always has a stable per-launch identity. The cookie is cleared on
+      # completion.
+      def wizard_token
+        return @wizard_token if defined?(@wizard_token)
 
-        @resolved_wizard_token =
-          if current_user
-            nil
-          else
-            key = Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class)
-            token = params[:token].presence || cookies.signed[key].presence
-            token ||= SecureRandom.uuid
-            cookies.signed[key] = {value: token, httponly: true} unless cookies.signed[key] == token
-            token
-          end
+        key = Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class)
+        token = params[:token].presence || cookies.signed[key].presence
+        token ||= SecureRandom.uuid
+        cookies.signed[key] = {value: token, httponly: true} unless cookies.signed[key] == token
+        @wizard_token = token
       end
 
       # --- authorization ---

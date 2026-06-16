@@ -34,17 +34,9 @@ module Plutonium
           @rows.delete(instance_key)
         end
 
-        def completed?(wizard:, owner: Base::OMITTED, anchor: Base::OMITTED)
-          # An explicitly-passed nil key can never match a row; only an OMITTED key
-          # drops the predicate (matching the AR store's behavior).
-          return false if owner.nil? || anchor.nil?
-
-          @rows.values.any? do |s|
-            s.status == "completed" &&
-              s.wizard == wizard.to_s &&
-              (owner.equal?(Base::OMITTED) || s.owner == owner) &&
-              (anchor.equal?(Base::OMITTED) || s.anchor == anchor)
-          end
+        def completed?(instance_key:)
+          row = @rows[instance_key]
+          !!row && row.status == "completed"
         end
 
         def in_progress_for(owner)

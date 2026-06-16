@@ -65,30 +65,33 @@ The anchor is **not** part of `persisted` — `persisted` holds only records the
 
 The wizard body never cares where the anchor came from; the launch surface resolves it:
 
-- **Record action** (`wizard :configure, ...` on a definition for an anchored wizard) — auto-mounted as a **member route** (`/companies/:id/wizards/configure/:step`) on the resource controller. The anchor is resolved through that controller's scoped, policy-gated `resource_record!` — never an unscoped `find_by`, so a record outside the portal's authorized scope (or a non-existent id) 404s instead of leaking another tenant's record.
+- **Record action** (`wizard :configure, ...` on a definition for a `with:`-anchored wizard) — auto-mounted as a **member route** (`/companies/:id/wizards/configure/:step`) on the resource controller. The anchor is resolved through that controller's scoped, policy-gated `resource_record!` — never an unscoped `find_by`, so a record outside the portal's authorized scope (or a non-existent id) 404s instead of leaking another tenant's record.
+- **Context anchor** (`anchored via: :method`) — mounted **portal-level** with `register_wizard`; the anchor is resolved by calling that method on the controller (e.g. `via: :current_scoped_entity` for the tenant). No URL `:id`, IDOR-safe (trusted context). An optional `with:` type-asserts the result.
 - **Collection action / create flow** — no anchor.
 
 ::: tip Anchored member routes are IDOR-safe by construction
-Because the anchor comes from `resource_record!` (the same scoped lookup CRUD and interactive record actions use), an anchored wizard can only ever operate on a record the current user is authorized to see in this portal. For `once_per: :anchor` gating on a **portal-level** wizard, the host must still supply the anchor via `wizard_gate_anchor` (see [One-time wizards](/reference/wizard/one-time#once-per-anchor)).
+Because the anchor comes from `resource_record!` (the same scoped lookup CRUD and interactive record actions use), a `with:`-anchored wizard can only ever operate on a record the current user is authorized to see in this portal. A `via:`-anchored wizard is IDOR-safe by trusting the resolved context.
 :::
 
 ## Instance identity
 
-Every running wizard has a deterministic **instance key** — a digest the session row is uniquely keyed by. It is derived from the wizard class, the portal scoping entity, the anchor, and the identity principal:
+Every running wizard has a deterministic **instance key** — a digest the session row is uniquely keyed by. There are two recipes, by identity axis ([see Identity, concurrency & repeatability](/reference/wizard/dsl)):
 
 ```
-instance_key = SHA256("#{wizard}|#{scope_gid}|#{anchor_gid}|#{token.presence || owner_gid}")
+# concurrency_key set:
+instance_key = SHA256("concurrency|#{wizard}|#{serialized(concurrency_key)}")
+# no concurrency_key:
+instance_key = SHA256("tokened|#{wizard}|#{wizard_token}")
 ```
 
-- **`scope_gid`** — the current portal scoping entity (the tenant), when the portal is entity-scoped; blank otherwise. Folding it in means the same user running the same non-anchored wizard in two different tenant portals gets two distinct rows rather than colliding.
-- **`anchor_gid`** — the anchor's GlobalID, for anchored wizards.
-- **principal** — `token` if present, else the owner (user) GID.
+- **`concurrency_key`** is serialized records → GID, scalars → string, arrays joined — with the **tenant (`current_scoped_entity`) folded in automatically**, so the same user running the same keyed wizard in two tenant portals gets two distinct rows.
+- **`wizard_token`** (URL param ?? signed cookie, minted if absent) keys runs with no `concurrency_key` — a fresh token per launch makes each run distinct and repeatable; pre-auth→auth keeps the same token (no rekey).
 
-The owner, anchor, and scope are also stored as plain polymorphic columns (`owner_type`/`owner_id`, etc.) for listing and querying — but identity is the digest, so nullable components can't spawn duplicate singletons.
+The owner, anchor, and scope are also stored as plain polymorphic columns (`owner_type`/`owner_id`, etc.) for listing and querying — but identity is the digest.
 
 ## Resume
 
-The default policy is a **singleton per `(user, wizard)`**. Look up the `in_progress` row by `instance_key`; if one exists, the user continues where they left off.
+A `concurrency_key`-keyed wizard's `in_progress` row **is the lock**: a second launch at the same key resumes it instead of forking. Look up the row by `instance_key`; if one exists, the user continues where they left off. A tokened (no `concurrency_key`) wizard resumes via its token cookie within the same session, and starts a fresh run otherwise.
 
 On resume the engine:
 

@@ -124,16 +124,40 @@ module Plutonium
         assert_nil never.cleanup_after
       end
 
+      def test_concurrency_key
+        refute CreateCo.concurrency_key?
+
+        keyed = Class.new(Plutonium::Wizard::Base) { concurrency_key { current_user } }
+        assert keyed.concurrency_key?
+        refute_nil keyed.concurrency_key_resolver
+
+        # Method shorthand.
+        by_method = Class.new(Plutonium::Wizard::Base) { concurrency_key :current_user }
+        assert by_method.concurrency_key?
+      end
+
+      def test_concurrency_key_value_folds_tenant
+        keyed = Class.new(Plutonium::Wizard::Base) { concurrency_key { current_user } }
+        w = keyed.new
+        w.current_user = "user-1"
+        w.current_scoped_entity = "tenant-9"
+        assert_equal ["user-1", "tenant-9"], w.concurrency_key_value
+      end
+
+      def test_one_time_requires_concurrency_key
+        # `one_time` without a `concurrency_key` raises at first use.
+        bad = Class.new(Plutonium::Wizard::Base) { one_time }
+        assert_raises(ArgumentError) { bad.one_time? }
+      end
+
       def test_one_time
         refute CreateCo.one_time?
 
-        ot = Class.new(Plutonium::Wizard::Base) { one_time once_per: :anchor }
+        ot = Class.new(Plutonium::Wizard::Base) do
+          concurrency_key { current_user }
+          one_time
+        end
         assert ot.one_time?
-        assert_equal :anchor, ot.one_time_scope
-
-        ot_default = Class.new(Plutonium::Wizard::Base) { one_time }
-        assert ot_default.one_time?
-        assert_equal :user, ot_default.one_time_scope
       end
 
       def test_encrypt_data

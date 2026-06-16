@@ -272,12 +272,55 @@ module Plutonium
         assert_equal :a, res.redirect_step
       end
 
-      test "finalize success runs execute, completes row, returns value" do
+      test "finalize success runs execute and (repeatable) deletes the row" do
         @runner.advance(:a, {"go" => "no"}) # b hidden → a + review only
         res = @runner.finalize
         assert res.completed?
         assert_equal :done, res.value
+        # W has no concurrency_key → repeatable → the row is deleted on completion (§4.3).
+        assert_nil @store.read("k")
+      end
+
+      # ---- identity axes (§4): concurrency resume, one_time retain, repeatable ----
+
+      # A keyed, one-time wizard: retains its completed row at the key (blocks
+      # restart; the gate checks it).
+      class OneTimeW < Plutonium::Wizard::Base
+        concurrency_key { current_user }
+        one_time
+        step(:a) do
+          attribute :go, :string
+          validates :go, presence: true
+        end
+        review label: "R"
+        def execute = succeed(:done)
+      end
+
+      test "one_time wizard RETAINS the completed row on finish" do
+        runner = build_runner(OneTimeW, current_user: "u1")
+        runner.advance(:a, {"go" => "ok"})
+        res = runner.finalize
+        assert res.completed?
         assert_equal "completed", @store.read("k").status
+      end
+
+      test "re-entering a completed one_time run is flagged completed_one_time?" do
+        runner = build_runner(OneTimeW, current_user: "u1")
+        runner.advance(:a, {"go" => "ok"})
+        runner.finalize
+        reentry = build_runner(OneTimeW, current_user: "u1")
+        assert reentry.completed_one_time?
+      end
+
+      test "concurrency-keyed launch resumes the existing in_progress row" do
+        first = build_runner(OneTimeW, current_user: "u1")
+        first.advance(:a, {"go" => "ok"})
+        refute first.resumed?, "the first launch starts fresh"
+
+        # A second launch with the same key + context finds the same row.
+        second = build_runner(OneTimeW, current_user: "u1")
+        assert second.resumed?, "a second launch with the same key resumes, not forks"
+        assert_equal({"go" => "ok"}, second.state.data)
       end
 
       test "finalize failure reverts and returns errors" do

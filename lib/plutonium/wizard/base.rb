@@ -35,6 +35,12 @@ module Plutonium
       attr_accessor :view_context
       attr_writer :anchor, :scope, :token
 
+      # Identity/concurrency context (§4.5), supplied by the runner/driving layer
+      # so `concurrency_key` resolvers and the tenancy fold can reach them.
+      # `wizard_token` is the per-wizard token (the tokened/pre-auth principal,
+      # available inside `concurrency_key`).
+      attr_accessor :current_user, :current_scoped_entity, :wizard_token
+
       # The runner reuses a single wizard instance across a request, reassigning
       # `data_attributes` between reads, so invalidate the memoized `data` snapshot
       # whenever the staged attributes change.
@@ -113,6 +119,19 @@ module Plutonium
           raise NotAnchoredError, "#{self.class} is not declared `anchored`"
         end
         @anchor
+      end
+
+      # Resolve this wizard's concurrency_key VALUE(S) in the wizard context
+      # (§4.2), with the tenant ALWAYS folded in (§4.4). Returns nil when no
+      # `concurrency_key` is declared (→ tokened identity). The returned value is
+      # an array `[*key_values, tenant_gid]`; {InstanceKey.concurrency} serializes
+      # it. The tenant is appended even when nil so the digest is stable.
+      def concurrency_key_value
+        resolver = self.class.concurrency_key_resolver
+        return nil unless resolver
+
+        key = instance_exec(&resolver)
+        [*Array.wrap(key), current_scoped_entity]
       end
 
       # Records the per-step `on_submit`/`persist` macro registers (§2.2),

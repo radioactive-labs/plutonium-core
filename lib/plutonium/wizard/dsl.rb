@@ -3,7 +3,7 @@
 module Plutonium
   module Wizard
     # The author-facing class macros: `step`, `review`, `anchored`, `navigation`,
-    # `cleanup_after`, `one_time`, `encrypt_data`. Mixed into {Base}.
+    # `cleanup_after`, `concurrency_key`, `one_time`, `encrypt_data`. Mixed into {Base}.
     module DSL
       extend ActiveSupport::Concern
 
@@ -46,15 +46,40 @@ module Plutonium
 
         # --- anchoring (§3) ---
 
-        def anchored(with: nil, &resolver)
+        # Declare that this wizard runs against an anchor record. Two anchoring
+        # strategies (which may combine):
+        #
+        # - `anchored with: Company` — a TYPE anchor. The anchor is resolved from
+        #   the URL `:id` via the resource controller's scoped, policy-gated
+        #   `resource_record!` (resource-mounted member route). IDOR-safe because
+        #   the record is scoped+authorized.
+        # - `anchored via: :current_scoped_entity` — a CONTEXT anchor. The anchor
+        #   is resolved by calling that method on the controller at request time
+        #   (`:current_user`, `:current_scoped_entity`, or any host method). No
+        #   `:id`, IDOR-safe (trusted context). Mounted portal-level via
+        #   `register_wizard`.
+        # - combined `anchored via: :current_scoped_entity, with: Organization` —
+        #   resolve via the method, then assert the result is an Organization.
+        #
+        # A resolved anchor that is nil raises (anchored-ness is declared).
+        def anchored(with: nil, via: nil, &resolver)
           @anchored = true
           @anchor_types = Array(with).presence
+          @anchor_via = via
           @anchor_resolver = resolver
         end
 
         def anchored? = !!@anchored
 
         def anchor_types = @anchor_types
+
+        # The controller method used to resolve a CONTEXT anchor, or nil for a
+        # TYPE (`with:`-only) anchor.
+        def anchor_via = @anchor_via
+
+        # Whether this wizard's anchor is a CONTEXT anchor (resolved via a method),
+        # as opposed to a TYPE anchor (resolved from the URL `:id`).
+        def anchored_via? = !@anchor_via.nil?
 
         def anchor_resolver = @anchor_resolver
 
@@ -78,15 +103,69 @@ module Plutonium
           @cleanup_after = (ttl == :never) ? nil : ttl
         end
 
-        # --- one-time (§9) ---
+        # --- concurrency (§4.2) ---
 
-        def one_time(once_per: :user)
-          @one_time = once_per
+        # Declare the run's CONCURRENCY KEY — the value(s) a run is keyed by
+        # (Solid Queue-style). The keyed session row is created at start
+        # (`in_progress`) and IS the lock: a second launch with the same key
+        # resumes that row instead of forking (at most one in-progress run per
+        # key). Omit → unlimited concurrent runs, each identified by a fresh
+        # `wizard_token` (§4.3).
+        #
+        # The resolver runs in the wizard instance context (where `current_user`,
+        # `current_scoped_entity`, `anchor`, and `wizard_token` are available) and
+        # returns the value(s): records → GlobalID, scalars → to_s, arrays joined.
+        # The portal tenant (`current_scoped_entity`) is ALWAYS folded in
+        # automatically (§4.4) — authors never thread it.
+        #
+        #   concurrency_key { current_user }                 # ≤1 in-progress per user
+        #   concurrency_key { anchor }                        # ≤1 per anchored record
+        #   concurrency_key { current_user || wizard_token }  # pre-auth-safe
+        #   concurrency_key :current_user                     # method shorthand
+        def concurrency_key(method = nil, &block)
+          @concurrency_key =
+            if block
+              block
+            elsif method
+              m = method.to_sym
+              -> { public_send(m) }
+            else
+              raise ArgumentError, "concurrency_key requires a block or a method name"
+            end
         end
 
-        def one_time? = !@one_time.nil?
+        # Whether this wizard has a concurrency_key (keyed/singleton runs).
+        def concurrency_key? = !@concurrency_key.nil?
 
-        def one_time_scope = @one_time
+        # The resolver proc (or nil when omitted → tokened runs).
+        def concurrency_key_resolver = @concurrency_key
+
+        # --- repeatability / one-time (§4.3 / §9) ---
+
+        # Opt a wizard into being ONE-TIME: on successful completion the completed
+        # row is RETAINED at its concurrency_key, permanently blocking a restart
+        # (and is what the gate, §9, checks). Without `one_time` the row is DELETED
+        # on completion → repeatable.
+        #
+        # Requires a `concurrency_key` (that's the stable row to retain); a run
+        # with no concurrency_key is tokened and always repeatable. The
+        # requirement is enforced lazily in {#one_time?} so subclass timing and
+        # declaration order don't matter.
+        def one_time
+          @one_time = true
+        end
+
+        # Whether this wizard is one-time. Raises if `one_time` was declared
+        # without a `concurrency_key` (only keyed runs can be retained).
+        def one_time?
+          return false unless @one_time
+          unless concurrency_key?
+            raise ArgumentError,
+              "#{name || "wizard"} declares `one_time` without a `concurrency_key`; " \
+              "one-time retention needs a stable key to retain (§4.3)"
+          end
+          true
+        end
 
         # --- encryption (§8.1) ---
 
@@ -110,10 +189,12 @@ module Plutonium
           subclass.instance_variable_set(:@steps, steps.dup)
           subclass.instance_variable_set(:@anchored, @anchored)
           subclass.instance_variable_set(:@anchor_types, @anchor_types)
+          subclass.instance_variable_set(:@anchor_via, @anchor_via)
           subclass.instance_variable_set(:@anchor_resolver, @anchor_resolver)
           subclass.instance_variable_set(:@navigation, @navigation)
           subclass.instance_variable_set(:@cleanup_after, @cleanup_after)
           subclass.instance_variable_set(:@cleanup_after_set, @cleanup_after_set)
+          subclass.instance_variable_set(:@concurrency_key, @concurrency_key)
           subclass.instance_variable_set(:@one_time, @one_time)
           subclass.instance_variable_set(:@encrypt_data, @encrypt_data)
         end

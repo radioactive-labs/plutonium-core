@@ -29,15 +29,41 @@ module Plutonium
       attr_reader :wizard, :state
 
       def initialize(wizard_class:, store:, instance_key:, view_context: nil,
-        owner: nil, anchor: nil, scope: nil, token: nil)
+        owner: nil, anchor: nil, scope: nil, token: nil,
+        current_user: nil, current_scoped_entity: nil)
         @wizard_class = wizard_class
         @store = store
         @instance_key = instance_key
-        @state = store.read(instance_key) || new_state(owner:, anchor:, scope:, token:)
+        # The keyed row IS the lock (§4.2): an existing in_progress row at this
+        # instance_key is RESUMED, never forked. `read` returns it (or any prior
+        # row, incl. a completed one-time marker) for the digest; a fresh launch
+        # with no row builds new state.
+        existing = store.read(instance_key)
+        @resumed = !existing.nil?
+        @state = existing || new_state(owner:, anchor:, scope:, token:)
         @wizard = wizard_class.new(view_context:)
         @wizard.data_attributes = @state.data
         @wizard.anchor = (@state.anchor || anchor) if wizard_class.anchored?
+        @wizard.current_user = current_user
+        @wizard.current_scoped_entity = current_scoped_entity
+        @wizard.wizard_token = token
+        # A pre-auth row resumed after login: stamp the owner without rekeying
+        # (§4.5). The digest is token/concurrency-based, so this is identity-safe.
+        if owner && @state.owner.nil?
+          @state.owner = owner
+        end
         rehydrate_persisted
+      end
+
+      # Whether a row already existed at this key when the runner was built — i.e.
+      # this launch RESUMED rather than started fresh (§4.2).
+      def resumed? = @resumed
+
+      # Whether this run's key already has a retained `completed` one-time marker
+      # (§4.3 / §9) — re-entering a finished one-time wizard. The driving layer
+      # redirects such a request out rather than re-running it.
+      def completed_one_time?
+        @wizard_class.one_time? && @state.status.to_s == "completed"
       end
 
       # The currently-visible step path (§6.2 subtractive branching). Each step's
@@ -159,7 +185,14 @@ module Plutonium
         end
 
         if outcome.success?
-          @store.complete(@instance_key)
+          # Repeatability (§4.3): a one-time wizard RETAINS its completed row at
+          # the key (blocks restart, the gate checks it); every other wizard
+          # DELETES the row on completion (repeatable — tokened runs always are).
+          if @wizard_class.one_time?
+            @store.complete(@instance_key)
+          else
+            @store.clear(@instance_key)
+          end
           Result.new(ok: true, completed: true, value: outcome.value)
         else
           revert_completing!

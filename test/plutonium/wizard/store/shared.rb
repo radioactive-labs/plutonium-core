@@ -43,32 +43,10 @@ module WizardStoreBehavior
   def test_completed_query
     st = build_state
     @store.write(st.instance_key, st, cleanup_after: 1.day)
-    refute @store.completed?(wizard: "W")
+    refute @store.completed?(instance_key: st.instance_key)
     @store.complete(st.instance_key)
-    assert @store.completed?(wizard: "W")
-    refute @store.completed?(wizard: "Other")
-  end
-
-  def test_completed_with_explicit_nil_owner_never_matches
-    owner = make_owner
-    st = build_state(owner: owner)
-    @store.write(st.instance_key, st, cleanup_after: 1.day)
-    @store.complete(st.instance_key)
-
-    # A completed row with a non-nil owner exists, but an explicit `owner: nil`
-    # (a pre-auth gate) must NOT match it — it identifies a principal with no value.
-    refute @store.completed?(wizard: "W", owner: nil)
-    # Sanity: omitting the owner key still matches (any completed row).
-    assert @store.completed?(wizard: "W")
-    # And the real owner still matches.
-    assert @store.completed?(wizard: "W", owner: owner)
-  end
-
-  def test_completed_with_explicit_nil_anchor_never_matches
-    st = build_state
-    @store.write(st.instance_key, st, cleanup_after: 1.day)
-    @store.complete(st.instance_key)
-    refute @store.completed?(wizard: "W", anchor: nil)
+    assert @store.completed?(instance_key: st.instance_key)
+    refute @store.completed?(instance_key: "some-other-key")
   end
 
   def test_clear_removes_the_row

@@ -27,12 +27,18 @@ module Plutonium
       # @param at [String] the portal-relative base path for the wizard's steps
       # @param as [String, Symbol, nil] override the route helper name prefix
       def register_wizard(wizard_class, at:, as: nil)
-        if wizard_class.anchored?
+        # A CONTEXT anchor (`anchored via: :method`) is portal-level: the anchor is
+        # resolved by calling a controller method, needs no URL `:id`, and is
+        # IDOR-safe (trusted context) — so it CAN mount here. Only a TYPE anchor
+        # (`with:`-only, resolved from the URL `:id`) is rejected, because it needs
+        # the resource controller's scoped, policy-gated `resource_record!`.
+        if wizard_class.anchored? && !wizard_class.anchored_via?
           raise ArgumentError,
-            "register_wizard #{wizard_class.name} — anchored wizards are not mounted " \
-            "portal-level. Register them on the anchored resource's definition with the " \
-            "`wizard` macro, which auto-mounts a record action whose anchor is resolved " \
-            "through the resource controller's scoped, policy-gated `resource_record!`."
+            "register_wizard #{wizard_class.name} — `with:`-anchored wizards are not " \
+            "mounted portal-level. Register them on the anchored resource's definition " \
+            "with the `wizard` macro, which auto-mounts a record action whose anchor is " \
+            "resolved through the resource controller's scoped, policy-gated " \
+            "`resource_record!`. (A `via:`-anchored wizard mounts here fine.)"
         end
 
         ensure_wizard_controller!(wizard_class)

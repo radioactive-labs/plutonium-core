@@ -4,10 +4,14 @@ A **one-time** wizard runs once — for onboarding, a one-shot setup, a "welcome
 
 ## Declaring `one_time`
 
+A one-time wizard is a **keyed** wizard (`concurrency_key`) that **retains** its completed row instead of deleting it. So `one_time` always pairs with a `concurrency_key` — the stable key the retained marker lives at (and the key the gate recomputes).
+
 ```ruby
 class WelcomeWizard < Plutonium::Wizard::Base
   presents label: "Welcome"
-  one_time once_per: :user        # :user (default) | :anchor
+
+  concurrency_key { current_user }   # the stable row to retain (tenant folded in)
+  one_time                            # retain the completed row → never again
 
   step :greeting do
     attribute :acknowledged, :string
@@ -23,9 +27,9 @@ class WelcomeWizard < Plutonium::Wizard::Base
 end
 ```
 
-- **Completion** = the instance row reaching `status: completed`. `one_time` implies durable completion automatically.
-- **`once_per: :user`** (default) keys completion by the current user.
-- **`once_per: :anchor`** keys completion by the anchor's GlobalID ("set up *this* workspace once").
+- **Completion** = the instance row reaching `status: completed`, **retained** at the wizard's `instance_key`.
+- **`one_time` requires a `concurrency_key`** — declaring `one_time` without one raises (there's no stable row to retain). A wizard without `one_time` deletes its row on completion (repeatable).
+- **`concurrency_key { current_user }`** keys completion per user; **`concurrency_key { anchor }`** keys it per anchored record ("set up *this* workspace once"). The **tenant (`current_scoped_entity`) is folded in automatically**, so in a tenant portal it's per-(user, tenant) for free.
 - On completion, the row is kept as the marker but its `data` / `tracked_records` are nulled out (privacy + size).
 
 The completion marker is recorded by the wizard's own finalize, the same `execute` → PRG path as any wizard — no extra code in `execute`.
@@ -58,31 +62,18 @@ ensure_wizard_completed ::WelcomeWizard, only: %i[index show]
 
 The entry URL is derived from the `register_wizard` route helper (`<name>_wizard_path(step: <first_step>)`). Override `wizard_entry_path` for a custom mount.
 
-## `once_per: :anchor`
+## How the gate keys completion
 
-For an anchor-keyed one-time wizard, the gate can't generically know *which* record it's about, so you must supply it by overriding `wizard_gate_anchor` in the gated controller:
+The gate **recomputes the wizard's `instance_key`** from its `concurrency_key`, resolving the key block against the **host controller** — so `current_user`, `current_scoped_entity` (folded automatically), `anchor`, and any custom host method are available — then checks `completed?(instance_key:)`. This digest is computed by the same `Plutonium::Wizard.compute_instance_key` the runner uses, so the gate sees exactly the marker the wizard recorded.
 
-```ruby
-module AdminPortal
-  class WorkspaceController < AdminPortal::PlutoniumController
-    include Plutonium::Wizard::Gate
-    ensure_wizard_completed ::WorkspaceSetupWizard
+A `concurrency_key { anchor }` wizard therefore keys completion by the anchor with **no extra resolver** — the gate evaluates the key block on the controller, where the anchor context lives. (If your `concurrency_key` references a method the gated controller doesn't expose, you get a clear error rather than a silent mis-key.)
 
-    private
-
-    def wizard_gate_anchor(_wizard_class)
-      current_scoped_entity          # e.g. the current tenant / workspace
-    end
-  end
-end
-```
-
-::: warning As-built: `once_per: :anchor` needs a resolver
-The default `wizard_gate_anchor` raises `NotImplementedError` rather than silently mis-keying the completion check. `once_per: :user` is the primary, fully-supported case; `:anchor` gating requires this host-provided resolver.
+::: warning Only one-time wizards are gateable
+`ensure_wizard_completed` raises unless the wizard is `one_time` (a `concurrency_key` **plus** `one_time`) — only a retained marker can be checked. Repeatable wizards have nothing durable to gate on.
 :::
 
 ## Related
 
-- [DSL reference](/reference/wizard/dsl) — `one_time`, `authorize?`.
+- [DSL reference](/reference/wizard/dsl) — `concurrency_key`, `one_time`, `authorize?`.
 - [Storage & config](/reference/wizard/storage-config) — the durable completion row.
 - [Registration & launch](/reference/wizard/registration-launch) — mounting the wizard the gate redirects into.

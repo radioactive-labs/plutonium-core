@@ -37,9 +37,9 @@ class AdminPortal::WizardOneTimeTest < ActionDispatch::IntegrationTest
     follow_redirect! # → review
     post "#{wizard}/review", params: {_direction: "next"} # finalize
 
-    # The durable completion marker exists for this user.
+    # The durable completion marker exists at this user's recomputed key.
     assert Plutonium::Wizard::Store::ActiveRecord.new.completed?(
-      wizard: WelcomeWizard.name, owner: @admin
+      instance_key: welcome_key_for(@admin)
     ), "a completed marker must exist for the user"
 
     # PRG bounce back to the stashed destination.
@@ -54,12 +54,24 @@ class AdminPortal::WizardOneTimeTest < ActionDispatch::IntegrationTest
 
   test "an already-completed user passes straight through the gate" do
     Plutonium::Wizard::Session.create!(
-      wizard: WelcomeWizard.name, instance_key: SecureRandom.hex,
+      wizard: WelcomeWizard.name, instance_key: welcome_key_for(@admin),
       status: "completed", owner: @admin
     )
 
     get gated
     assert_response :success
     assert_includes response.body, "gated ok"
+  end
+
+  private
+
+  # Recompute the WelcomeWizard instance_key the gate/runner would use for a given
+  # user (admin portal is not entity-scoped → tenant folds to nil). MUST match the
+  # framework digest, so it goes through the same helper.
+  def welcome_key_for(user)
+    Plutonium::Wizard.compute_instance_key(
+      wizard_class: WelcomeWizard, current_user: user,
+      current_scoped_entity: nil, anchor: nil, wizard_token: nil
+    )
   end
 end

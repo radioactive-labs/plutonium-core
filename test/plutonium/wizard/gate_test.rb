@@ -4,25 +4,26 @@ require "test_helper"
 
 module Plutonium
   module Wizard
-    # Focused tests for the one-time gate concern (§9): completion keying per
-    # `one_time_scope`, the redirect/stash-on-incomplete + pass-through-on-complete
-    # before_action behavior, and entry-path derivation. Driven through a bare
-    # anonymous controller so the gate is exercised without full portal route wiring
-    # (the end-to-end portal flow is covered by the integration suite).
+    # Focused tests for the one-time gate concern (§9): the gate recomputes the
+    # wizard's instance_key from its `concurrency_key` (folded tenant included) and
+    # checks `completed?(instance_key:)`; the redirect/stash-on-incomplete +
+    # pass-through-on-complete before_action behavior; entry-path derivation; and
+    # the "only one-time wizards are gateable" guard. Driven through a bare
+    # anonymous controller (the end-to-end portal flow is in the integration suite).
     class GateTest < ActiveSupport::TestCase
       class UserWizard < Plutonium::Wizard::Base
-        one_time once_per: :user
+        concurrency_key { current_user }
+        one_time
         step(:welcome) { attribute :ok, :string }
         review label: "R"
         def execute = succeed
       end
 
-      class AnchorWizard < Plutonium::Wizard::Base
-        one_time once_per: :anchor
-        anchored with: Organization
-        step(:setup) { attribute :ok, :string }
+      # A repeatable (not one-time) wizard — must NOT be gateable.
+      class RepeatableWizard < Plutonium::Wizard::Base
+        step(:x) { attribute :ok, :string }
         review label: "R"
-        def execute = succeed(anchor)
+        def execute = succeed
       end
 
       # A minimal host controller mixing in the gate, with the controller surface
@@ -31,7 +32,7 @@ module Plutonium
         include Plutonium::Wizard::Gate
 
         attr_accessor :current_user, :session, :redirected_to, :request_fullpath
-        attr_writer :gate_store, :gate_anchor
+        attr_writer :gate_store
 
         def initialize
           @session = {}
@@ -46,12 +47,13 @@ module Plutonium
         end
 
         # Make the private gate methods callable from tests.
-        public :enforce_wizard_completion!, :wizard_completed?, :wizard_completion_key
+        public :enforce_wizard_completion!, :wizard_completed?, :wizard_gate_instance_key
 
-        # Stub the store + anchor + entry path so we exercise pure gate logic.
+        # Stub the store + entry path so we exercise pure gate logic. No tenant
+        # scoping here (a non-scoped host), so the folded tenant is nil.
         def wizard_gate_store = @gate_store
-        def wizard_gate_anchor(_wizard_class) = @gate_anchor
         def wizard_entry_path(wizard_class) = "/wiz/#{wizard_class.name}"
+        def scoped_to_entity? = false
       end
 
       setup do
@@ -64,25 +66,25 @@ module Plutonium
         @ctrl.gate_store = @store
       end
 
-      # ---- completion keying ----
+      # ---- gateability guard ----
 
-      test "once_per: :user keys completion by owner: current_user" do
-        key = @ctrl.wizard_completion_key(UserWizard)
-        assert_equal({wizard: UserWizard.name, owner: @user}, key)
-      end
-
-      test "once_per: :anchor keys completion by the resolved anchor" do
-        anchor = Organization.create!(name: "Workspace")
-        @ctrl.gate_anchor = anchor
-        key = @ctrl.wizard_completion_key(AnchorWizard)
-        assert_equal({wizard: AnchorWizard.name, anchor: anchor}, key)
-      end
-
-      test "wizard_gate_anchor raises by default (must be overridden)" do
-        bare = Class.new { include Plutonium::Wizard::Gate }.new
-        assert_raises(NotImplementedError) do
-          bare.send(:wizard_gate_anchor, AnchorWizard)
+      test "gating a non-one-time wizard raises" do
+        klass = Class.new do
+          include Plutonium::Wizard::Gate
         end
+        assert_raises(ArgumentError) do
+          klass.ensure_wizard_completed(RepeatableWizard)
+        end
+      end
+
+      # ---- key recomputation matches the runner/driving digest ----
+
+      test "gate recomputes the same instance_key the runner would use" do
+        runner_key = Plutonium::Wizard.compute_instance_key(
+          wizard_class: UserWizard, current_user: @user,
+          current_scoped_entity: nil, anchor: nil, wizard_token: nil
+        )
+        assert_equal runner_key, @ctrl.wizard_gate_instance_key(UserWizard)
       end
 
       # ---- gate behavior: not completed → stash + redirect ----
@@ -101,8 +103,8 @@ module Plutonium
 
       # ---- gate behavior: completed → pass through ----
 
-      test "completed (user): passes through, no redirect, no stash" do
-        complete_for_user(UserWizard, @user)
+      test "completed: passes through, no redirect, no stash" do
+        complete_at(@ctrl.wizard_gate_instance_key(UserWizard))
         @ctrl.enforce_wizard_completion!(UserWizard)
         assert_nil @ctrl.redirected_to
         refute @ctrl.session.key?(:return_to)
@@ -110,24 +112,19 @@ module Plutonium
 
       test "completed for a DIFFERENT user does not satisfy the gate" do
         other = Organization.create!(name: "Other")
-        complete_for_user(UserWizard, other)
+        other_ctrl = FakeController.new
+        other_ctrl.current_user = other
+        other_ctrl.gate_store = @store
+        complete_at(other_ctrl.wizard_gate_instance_key(UserWizard))
+
+        # @ctrl (the first user) still has no completion at its own key.
         @ctrl.enforce_wizard_completion!(UserWizard)
         assert_equal "/wiz/#{UserWizard.name}", @ctrl.redirected_to
-      end
-
-      test "completed (anchor): passes through when the anchor matches" do
-        anchor = Organization.create!(name: "Workspace")
-        @ctrl.gate_anchor = anchor
-        complete_for_anchor(AnchorWizard, anchor)
-        @ctrl.enforce_wizard_completion!(AnchorWizard)
-        assert_nil @ctrl.redirected_to
       end
 
       # ---- entry-path derivation (default helper-name logic) ----
 
       test "default entry path derives the register_wizard helper name + first step" do
-        # A bare host that includes the gate but does NOT override wizard_entry_path,
-        # so the real default helper-name derivation runs.
         ctrl = Class.new { include Plutonium::Wizard::Gate }.new
         captured = nil
         ctrl.define_singleton_method(:onboarding_wizard_path) do |step:|
@@ -147,17 +144,9 @@ module Plutonium
 
       private
 
-      def complete_for_user(wizard, owner)
+      def complete_at(instance_key)
         Plutonium::Wizard::Session.create!(
-          wizard: wizard.name, instance_key: SecureRandom.hex,
-          status: "completed", owner: owner
-        )
-      end
-
-      def complete_for_anchor(wizard, anchor)
-        Plutonium::Wizard::Session.create!(
-          wizard: wizard.name, instance_key: SecureRandom.hex,
-          status: "completed", anchor: anchor
+          wizard: UserWizard.name, instance_key: instance_key, status: "completed"
         )
       end
     end

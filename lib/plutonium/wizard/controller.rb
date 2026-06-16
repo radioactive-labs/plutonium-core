@@ -43,12 +43,36 @@ module Plutonium
         @current_wizard_class ||= params.fetch(:wizard_class).to_s.constantize
       end
 
-      # Portal-level wizards are non-anchored. Anchored wizards mount on the
-      # resource controller (see {WizardActions}), where the anchor is resolved
-      # through the scoped, policy-gated `resource_record!` — never an unscoped
-      # `find_by`, which would be a cross-tenant IDOR.
+      # Portal-level wizards are either non-anchored or CONTEXT-anchored
+      # (`anchored via: :method`, §3). A `with:`-only (TYPE) anchor mounts on the
+      # resource controller instead (see {WizardActions}), where the anchor is
+      # resolved through the scoped, policy-gated `resource_record!` — never an
+      # unscoped `find_by`, which would be a cross-tenant IDOR.
+      #
+      # For a CONTEXT anchor we call the declared method on this controller; a nil
+      # result is a programming error (the wizard declared itself anchored).
       def resolved_wizard_anchor
-        nil
+        klass = current_wizard_class
+        return nil unless klass.anchored_via?
+
+        record = send(klass.anchor_via)
+        if record.nil?
+          raise Plutonium::Wizard::NotAnchoredError,
+            "#{klass.name} resolves its anchor via `#{klass.anchor_via}`, which returned nil"
+        end
+        assert_anchor_type!(klass, record)
+        record
+      end
+
+      # When a CONTEXT anchor also declares `with:` types, type-assert the result.
+      def assert_anchor_type!(klass, record)
+        types = klass.anchor_types
+        return if types.nil?
+        return if types.any? { |t| record.is_a?(t) }
+
+        raise Plutonium::Wizard::NotAnchoredError,
+          "#{klass.name} anchor resolved to #{record.class} but expects one of " \
+          "#{types.join(", ")}"
       end
 
       # Build the GET URL for a given step of this wizard, preserving the
@@ -60,6 +84,12 @@ module Plutonium
       def wizard_step_url(step_key)
         url_options = {step: step_key}
         url_options[:token] = params[:token] if params[:token].present?
+        # An entity-scoped portal's wizard routes carry the scope path segment
+        # (e.g. `:organization_scoped`); thread it through from the request so the
+        # generated URL stays inside the tenant.
+        if scoped_to_entity?
+          url_options[scoped_entity_param_key] = params[scoped_entity_param_key]
+        end
         current_engine.routes.url_helpers.public_send(wizard_step_url_helper, **url_options)
       end
 

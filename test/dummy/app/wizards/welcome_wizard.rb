@@ -9,7 +9,10 @@
 class WelcomeWizard < Plutonium::Wizard::Base
   presents label: "Welcome"
 
-  one_time once_per: :user
+  # One in-progress run per user (the tenant is folded in automatically, §4.4),
+  # and `one_time` RETAINS the completed row so the gate blocks a restart forever.
+  concurrency_key { current_user }
+  one_time
 
   step :greeting do
     attribute :acknowledged, :string

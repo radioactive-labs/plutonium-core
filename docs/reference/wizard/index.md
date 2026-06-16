@@ -10,7 +10,7 @@ For a task-oriented walkthrough, start with the [Wizards guide](/guides/wizards)
 - **[Anchoring & resume](./anchoring-resume)** — running against an existing record (`anchored` / `anchor`), instance identity, and how a user resumes where they left off.
 - **[Storage & config](./storage-config)** — enabling the subsystem, the `plutonium_wizard_sessions` table, `config.wizards.*`, encryption, and the cleanup `SweepJob`.
 - **[Registration & launch](./registration-launch)** — reaching a user: the `wizard` definition macro and portal-level `register_wizard`.
-- **[One-time wizards](./one-time)** — durable completion markers (`one_time`) and the `ensure_wizard_completed` gate.
+- **[One-time wizards](./one-time)** — `concurrency_key` + `one_time` durable completion markers and the `ensure_wizard_completed` gate.
 
 ## At a glance
 
@@ -23,8 +23,9 @@ For a task-oriented walkthrough, start with the [Wizards guide](/guides/wizards)
 | Terminal recap | `review label:` |
 | Per-step write | `on_submit { persist record; fail!(...) }` + `on_rollback` |
 | Commit | `def execute` → `succeed(...)` / `failed(...)` (use bang methods) |
-| Existing record | `anchored with: Model` → `anchor` |
-| Run once | `one_time once_per: :user \| :anchor` + `ensure_wizard_completed` |
+| Existing record | `anchored with: Model` / `anchored via: :method` → `anchor` |
+| Concurrency / resume | `concurrency_key { … }` (keyed row is the lock; tenant folded in) |
+| Run once | `concurrency_key { … }` + `one_time` + `ensure_wizard_completed` |
 | Cleanup TTL | `cleanup_after <ttl> \| :never` (+ `SweepJob`) |
 
 ## Prerequisite

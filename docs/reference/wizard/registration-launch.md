@@ -92,14 +92,13 @@ Define `def authorize?` on the wizard. The controller checks it only when the wi
 
 ## One-time gating
 
-To make a wizard run once and gate a controller behind it, see [One-time wizards](/reference/wizard/one-time) — `one_time once_per:` + the `Plutonium::Wizard::Gate` concern (`ensure_wizard_completed`).
+To make a wizard run once and gate a controller behind it, see [One-time wizards](/reference/wizard/one-time) — a `concurrency_key` + `one_time` + the `Plutonium::Wizard::Gate` concern (`ensure_wizard_completed`).
 
 ## Known limitations
 
 v1 hosts wizards inside portals only. A few surfaces are deliberate follow-ups:
 
-- **Record-anchored wizards mount on the resource, not portal-level.** Register an `anchored` wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing an `anchored?` wizard to **`register_wizard`** still raises — portal-level mounts have no resource record to anchor to.
-- **`once_per: :anchor` gating** needs a host-provided anchor resolver — override `wizard_gate_anchor` in the gated controller (the default raises). See [One-time wizards](/reference/wizard/one-time#once-per-anchor).
+- **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing a `with:`-anchored wizard to **`register_wizard`** raises — portal-level mounts have no resource record to anchor to. A **`via:`-anchored** (context-anchored) wizard *does* mount portal-level — its anchor is resolved by a controller method, not a URL `:id`.
 - **Main-app (non-portal) standalone wizards** are out of scope for v1 — wizards inherit a portal's auth/scoping/layout/rendering.
 
 ## Related

@@ -1,6 +1,10 @@
 OrgPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
+  # A CONTEXT-anchored (`anchored via:`) portal-level wizard — its anchor is the
+  # tenant resolved via `current_scoped_entity`, so it mounts here (no URL :id).
+  register_wizard ::ConfigureOrgWizard, at: "configure"
+
   # Organization is registered as singular to test URL generation when the entity scope model
   # is also a registered resource (creates nested routes that can shadow top-level routes).
   register_resource ::Organization, singular: true
