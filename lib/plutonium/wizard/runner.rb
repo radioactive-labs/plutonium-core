@@ -18,7 +18,7 @@ module Plutonium
       # - +completed+ — finalize ran `execute` to completion.
       # - +redirect_step+ — finalize found a completeness gap; the step to bounce to.
       # - +value+ — the successful `execute` outcome's value.
-      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value, keyword_init: true) do
+      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value) do
         def ok? = !!ok
 
         def completed? = !!completed

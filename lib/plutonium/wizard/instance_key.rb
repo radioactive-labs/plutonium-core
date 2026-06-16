@@ -65,7 +65,7 @@ module Plutonium
       end
 
       def self.digest(*parts)
-        Digest::SHA256.hexdigest(parts.map(&:to_s).join("|"))
+        Digest::SHA256.hexdigest(parts.join("|"))
       end
       private_class_method :digest
     end

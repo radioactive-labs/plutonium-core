@@ -30,7 +30,7 @@ module Plutonium
     # partial model reporting presence errors for columns this step never collects.
     module FieldImporter
       # The resolved import surface for one `using:` declaration.
-      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, keyword_init: true) do
+      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn) do
         # Run the imported validation over a staged data slice, returning a hash of
         # {attribute => [messages]} for the imported fields + :base. Empty when
         # `validate: false`.
