@@ -134,7 +134,7 @@ The wizard never advances past a failed `on_submit`. Earlier committed steps are
 
 ### `on_rollback`
 
-The compensating block run on Cancel or abandonment-sweep. Reads `persisted[...]`. Omitted, the engine destroys the tracked record(s) in reverse step order.
+The compensating block run on Cancel, abandonment-sweep, **or when this step becomes branch-hidden** (a later answer flips its `condition:` false, so save-as-you-go records it created would otherwise be orphaned). Reads `persisted[...]`. Omitted, the engine destroys the tracked record(s) in reverse step order. When a step is pruned this way its `data` / `persisted` / `visited` state is also cleared, so re-entering that branch re-runs `on_submit` from scratch.
 
 ```ruby
 on_rollback { persisted[:billing].destroy! }

@@ -105,7 +105,7 @@ On resume the engine:
 - Re-renders the current step's form seeded from staged `data` — including repeater rows (a `structured_input ..., repeat:` step re-renders the right number of filled rows, not one blank row).
 - Lazily rehydrates `persisted[:key]` from stored GlobalIDs on first access (memoized per request), so a per-step `on_submit` create flow returning later still sees records made by earlier steps — without paying a `GlobalID.locate` on requests that never read `persisted`.
 
-Navigation never loses data: **Back** moves the cursor without validating and never discards `data`; branch-hidden steps' data is kept in the store and only pruned (on a working copy) at finalize.
+Navigation never loses data: **Back** moves the cursor without validating and never discards `data`. A step whose answer is later **un-chosen** (its `condition:` flips false) leaves the visible path and is **fully pruned**: its staged `data` is dropped, and if its `on_submit` had **persisted records** (save-as-you-go) those records are **rolled back** — its `on_rollback` runs if declared, otherwise they're destroyed — so nothing is orphaned. The step's `persisted` / `data` / `visited` state is cleared, so re-entering that branch re-runs its `on_submit` from scratch. Pruning fires as soon as the branch is hidden (during the advance that flips it) and again as a safety net at finalize.
 
 ## Authentication
 

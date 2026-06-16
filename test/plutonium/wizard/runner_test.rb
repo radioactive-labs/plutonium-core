@@ -108,6 +108,42 @@ module Plutonium
         def execute = succeed(:done)
       end
 
+      # --- a branch whose hidden step persisted a real record (save-as-you-go) ---
+      # Step `a` chooses a path; `b` is only visible when path == "x" and its
+      # `on_submit` creates + persists an Organization; `c` is always visible.
+      class BranchPersist < Plutonium::Wizard::Base
+        step(:a) do
+          attribute :path, :string
+          validates :path, presence: true
+        end
+        step(:b, condition: -> { data.path == "x" }) do
+          attribute :note, :string
+          on_submit { persist Organization.create!(name: "b-record") }
+        end
+        step(:c) { attribute :tail, :string }
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
+      # Same shape as BranchPersist but `b` declares a custom on_rollback that
+      # soft-deletes (renames) instead of destroying.
+      class BranchPersistRollback < Plutonium::Wizard::Base
+        step(:a) do
+          attribute :path, :string
+          validates :path, presence: true
+        end
+        step(:b, condition: -> { data.path == "x" }) do
+          attribute :note, :string
+          on_submit { persist Organization.create!(name: "b-record") }
+          on_rollback { persisted[:b].each { |r| r.update!(name: "rolled-back") } }
+        end
+        step(:c) { attribute :tail, :string }
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
       setup do
         Plutonium::Wizard::Session.delete_all
         Organization.delete_all if defined?(Organization)
@@ -355,6 +391,97 @@ module Plutonium
         build_runner(klass).finalize
         refute captured.key?("note"), "branch-hidden note must be pruned before execute"
         assert_equal "no", captured["go"]
+      end
+
+      # ---- branch-hidden step with persisted records is fully pruned (§6.3) ----
+
+      # Drive a → b (record persisted) → flip a so b is now hidden. Assert the
+      # record is rolled back (destroyed by default), its persisted/data/visited
+      # state cleared, and the cleared state is durable.
+      test "advance that hides a persisted step destroys its record and clears its state" do
+        runner = build_runner(BranchPersist)
+        runner.advance(:a, {"path" => "x"})
+        build_runner(BranchPersist).advance(:b, {"note" => "hi"})
+
+        org = Organization.find_by!(name: "b-record")
+        seen = @store.read("k")
+        assert_equal [org.to_global_id.to_s], seen.persisted["b"]
+        assert_includes seen.visited, "b"
+        assert_equal "hi", seen.data["note"]
+
+        # Flip a so b is now branch-hidden.
+        build_runner(BranchPersist).advance(:a, {"path" => "y"})
+
+        refute Organization.exists?(id: org.id), "the hidden step's record must be destroyed"
+        state = @store.read("k")
+        refute state.persisted.key?("b"), "persisted entry for b must be cleared"
+        refute state.data.key?("note"), "b's staged data must be dropped"
+        refute_includes state.visited, "b", "b must be removed from visited"
+      end
+
+      test "advance that hides a persisted step runs its custom on_rollback" do
+        runner = build_runner(BranchPersistRollback)
+        runner.advance(:a, {"path" => "x"})
+        build_runner(BranchPersistRollback).advance(:b, {"note" => "hi"})
+        org = Organization.find_by!(name: "b-record")
+
+        build_runner(BranchPersistRollback).advance(:a, {"path" => "y"})
+
+        assert Organization.exists?(id: org.id), "on_rollback soft-deletes; record survives"
+        assert_equal "rolled-back", org.reload.name, "custom on_rollback ran instead of destroy"
+        refute @store.read("k").persisted.key?("b")
+      end
+
+      # Re-entering b after it was un-visited re-runs its on_submit cleanly (a brand
+      # new record), since forget_step removed it from visited.
+      test "re-entering a pruned branch re-runs on_submit with a fresh record" do
+        runner = build_runner(BranchPersist)
+        runner.advance(:a, {"path" => "x"})
+        build_runner(BranchPersist).advance(:b, {"note" => "first"})
+        first = Organization.find_by!(name: "b-record")
+
+        build_runner(BranchPersist).advance(:a, {"path" => "y"}) # b hidden + pruned
+        refute Organization.exists?(id: first.id)
+
+        # Path back to x re-exposes b; it was un-visited so on_submit re-runs.
+        build_runner(BranchPersist).advance(:a, {"path" => "x"})
+        refute_includes @store.read("k").visited, "b", "b is unvisited after pruning"
+        build_runner(BranchPersist).advance(:b, {"note" => "second"})
+
+        second = Organization.find_by!(name: "b-record")
+        refute_equal first.id, second.id, "a brand new record is created on re-entry"
+        assert_equal [second.to_global_id.to_s], @store.read("k").persisted["b"]
+      end
+
+      # finalize is a safety net: a branch hidden via seeded/resumed state (not via
+      # advance) still has its persisted record rolled back before execute.
+      test "finalize leaves no orphaned persisted record after a branch-hide" do
+        org = Organization.create!(name: "b-record")
+        # Seed a state where b's record is persisted but path now hides b.
+        state = Plutonium::Wizard::State.new(
+          wizard: BranchPersist.name, instance_key: "k", current_step: "review",
+          status: "in_progress",
+          data: {"path" => "y", "note" => "stale", "tail" => "t"},
+          persisted: {"b" => [org.to_global_id.to_s]},
+          visited: %w[a b c]
+        )
+        @store.write("k", state, cleanup_after: 1.day)
+
+        build_runner(BranchPersist).finalize
+        refute Organization.exists?(id: org.id), "finalize must roll back the orphaned record"
+      end
+
+      # The lazy-persisted contract must not regress: an advance that hides nothing
+      # issues no locate calls beyond what the flow already needed (here: zero).
+      test "advance that hides nothing issues no extra locates" do
+        runner = build_runner(BranchPersist)
+        runner.advance(:a, {"path" => "x"}) # nothing hidden; b becomes visible
+
+        runner = build_runner(BranchPersist)
+        locates = counting_locates do
+          runner.advance(:c, {"tail" => "t"}) # c is always visible; hides nothing
+        end
+        assert_equal 0, locates, "an advance that prunes nothing must not locate"
       end
 
       # ---- resume / rehydration ----

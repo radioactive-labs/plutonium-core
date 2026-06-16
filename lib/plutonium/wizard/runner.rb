@@ -131,6 +131,13 @@ module Plutonium
         stage(params)
         run_on_submit(step) if step.on_submit
         @state.visited |= [step.key.to_s]
+        # Staging this step's params may have flipped a branch `condition:`, hiding
+        # an earlier step that already persisted records (save-as-you-go). Prune it
+        # NOW — roll its records back and clear its state — so nothing is orphaned
+        # for the rest of the flow (§6.3). A rollback failure here surfaces as a
+        # step failure (same as `on_submit`), it is not swallowed; the cursor does
+        # not move and the advance's data is not lost (the prune persists state).
+        prune_departed_steps
         @state.current_step = next_visible_after(step)&.key&.to_s
         persist_state
         Result.new(ok: true)
@@ -187,6 +194,11 @@ module Plutonium
         gap = first_incomplete_visible
         return Result.new(ok: false, redirect_step: gap.key) if gap
 
+        # Safety net (§6.3): roll back + forget any branch-hidden step that still
+        # holds persisted records or staged data, so nothing orphaned survives into
+        # `execute`. `advance` prunes promptly, but a step can be hidden via paths
+        # that don't pass through `advance` (e.g. seeded/resumed state).
+        prune_departed_steps
         pruned = prune_hidden(@state.data)
 
         return Result.new(ok: false) unless lock_for_completion!
@@ -338,16 +350,27 @@ module Plutonium
       # Reverse-order cleanup of every step's tracked records (§2.3): the step's
       # `on_rollback` if it has one (with `persisted` populated), else destroy.
       def run_cleanup
-        @wizard_class.steps.reverse_each do |step|
-          records = located_records(step)
-          next if records.empty?
+        ActiveRecord::Base.transaction do
+          @wizard_class.steps.reverse_each { |step| rollback_step(step) }
+        end
+      end
 
-          @wizard.persisted[step.key.to_sym] = records
-          if step.on_rollback
-            @wizard.instance_exec(&step.on_rollback)
-          else
-            records.reverse_each(&:destroy!)
-          end
+      # Per-step rollback (§2.3), shared by `run_cleanup` (cancel/sweep) and the
+      # branch-hidden prune path (§6.3). Locates the step's tracked records,
+      # populates `wizard.persisted[step]` so an `on_rollback` block can read them,
+      # then runs that block — or, with no block, destroys the records in reverse
+      # order. A no-op when the step tracked nothing (so a step never persisted to
+      # issues no locate beyond the single `located_records` probe). Callers wrap
+      # this in a transaction so the compensating writes are atomic.
+      def rollback_step(step)
+        records = located_records(step)
+        return if records.empty?
+
+        @wizard.persisted[step.key.to_sym] = records
+        if step.on_rollback
+          @wizard.instance_exec(&step.on_rollback)
+        else
+          records.reverse_each(&:destroy!)
         end
       end
 
@@ -373,6 +396,59 @@ module Plutonium
         visible_keys = visible_path.flat_map { |s| s.attribute_schema.keys.map(&:to_s) }
         visible_keys += visible_path.flat_map { |s| s.structured_inputs.keys.map(&:to_s) }
         data.slice(*visible_keys)
+      end
+
+      # Fully prune every step that has left the visible path but still has
+      # persisted records or staged `data` (§6.3). Save-as-you-go means a step's
+      # `on_submit` may have persisted records; when a later answer hides that step
+      # those records would otherwise be orphaned (`prune_hidden` only slices the
+      # working-copy `data`, it never rolls records back). For each departed step we
+      # roll its records back (`rollback_step` — `on_rollback`/destroy), clear its
+      # persisted/data/visited state, then persist so the cleared state is durable.
+      #
+      # Only departed steps that actually hold something are touched — a step never
+      # persisted to and with no staged data issues no locate (we don't probe the
+      # whole step list), so the lazy-persisted contract is preserved.
+      def prune_departed_steps
+        visible = visible_path
+        departed = @wizard_class.steps.reject do |step|
+          visible.any? { |v| v.key == step.key } || !step_has_state?(step)
+        end
+        return if departed.empty?
+
+        # Compensating writes are atomic, consistent with `run_cleanup`/`on_submit`.
+        # Reverse order so later steps unwind before the earlier ones they built on.
+        ActiveRecord::Base.transaction do
+          departed.reverse_each { |step| rollback_step(step) }
+        end
+
+        departed.each { |step| forget_step(step) }
+        persist_state
+      end
+
+      # Whether a step holds anything worth pruning: persisted records (its key is
+      # present in stored `persisted`) or staged `data` for one of its attributes.
+      # Pure hash/key inspection — never locates.
+      def step_has_state?(step)
+        return true if @state.persisted.key?(step.key.to_s)
+
+        keys = step.attribute_schema.keys.map(&:to_s) + step.structured_inputs.keys.map(&:to_s)
+        keys.any? { |k| @state.data.key?(k) }
+      end
+
+      # Erase all trace of a step that left the visible path: its persisted GIDs
+      # (state + the live wizard view), its staged `data`, and its visited mark — so
+      # if the branch is re-entered the step is treated as unvisited and its
+      # `on_submit` re-runs cleanly (§6.3).
+      def forget_step(step)
+        key = step.key.to_s
+        @state.persisted = @state.persisted.except(key)
+        @wizard.persisted[step.key.to_sym] = []
+
+        drop = step.attribute_schema.keys.map(&:to_s) + step.structured_inputs.keys.map(&:to_s)
+        @state.data = @state.data.except(*drop)
+        @state.visited = @state.visited - [key]
+        sync_data
       end
 
       # The locked `in_progress → completing` transition (§6.2). With the AR store a
