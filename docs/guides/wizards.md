@@ -291,14 +291,22 @@ Wizards are **portal-hosted** — they run inside a Plutonium portal, inheriting
 
 ### On a resource — the `wizard` macro
 
-Register a wizard on a resource definition with the `wizard` macro. It synthesizes the launching action; placement mirrors interactions (anchored → record action, no anchor → resource/collection action). Bulk wizards are not supported.
+Register a wizard on a resource definition with the `wizard` macro. It synthesizes the launching action and **auto-mounts the wizard's routes on the resource's own controller** — placement mirrors interactions: anchored → record (member) action, non-anchored → resource (collection) action. Bulk wizards are not supported.
 
 ```ruby
 class CompanyDefinition < Plutonium::Resource::Definition
-  wizard :configure, ConfigureCompanyWizard      # anchored → record action
-  wizard :onboard,   CompanyOnboardingWizard      # no anchor → resource action
+  wizard :configure, ConfigureCompanyWizard     # anchored → record action (/companies/:id/wizards/configure/:step)
+  wizard :onboard,   CompanyOnboardingWizard     # no anchor → resource action (/companies/wizards/onboard/:step)
 end
 ```
+
+::: tip Anchored wizards are IDOR-safe
+An anchored (record) wizard resolves its anchor through the resource controller's scoped, policy-gated `resource_record!` — the same lookup CRUD and interactive record actions use. A record outside the portal's authorized scope (another tenant's, or a non-existent id) **404s**; it's never loaded via an unscoped `find_by`. Gate it with a policy predicate named after the wizard key (`def configure? = update?`).
+:::
+
+::: danger Portal-level wizards are open to any authenticated user by default
+A portal-level wizard with no `authorize?` can be run by **any authenticated portal user** — it has no resource policy. Always define `def authorize?` for anything privileged.
+:::
 
 ### Portal-level — `register_wizard`
 
@@ -317,7 +325,7 @@ end
 This draws the wizard's step routes within the portal and provides an `<at>_wizard_path` helper. See [Registration & launch](/reference/wizard/registration-launch).
 
 ::: warning v1 scope
-v1 hosts wizards **inside portals only**. Anchored *resource member routes* (`/companies/:id/wizards/...`) are a follow-up — the portal-level path is the primary one. `once_per: :anchor` gating needs a host-provided anchor resolver (override `wizard_gate_anchor`). Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
+v1 hosts wizards **inside portals only**. Anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` still raises for an `anchored` wizard (portal-level mounts have no resource record). `once_per: :anchor` gating needs a host-provided anchor resolver (override `wizard_gate_anchor`). Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
 :::
 
 ## Where to go next

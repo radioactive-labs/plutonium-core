@@ -324,7 +324,7 @@ On resume the engine restores the cursor + `data` and rehydrates `persisted[:key
 
 ## 5. Registration & launch surfaces
 
-Two ways a wizard reaches a user; both synthesize real Plutonium **actions** under the hood (policy gating, buttons, placement all come for free).
+Wizards are **portal-hosted** — they run inside a Plutonium portal, exactly like resources, so they inherit the portal's authentication, tenant **scoping entity**, layout, and Phlex rendering. (Main-app / non-portal standalone wizards are out of scope for v1 — §16.) Two ways a wizard reaches a user within a portal; both synthesize real Plutonium **actions** under the hood (policy gating, buttons, placement all come for free).
 
 ### 5.1 On a resource — the `wizard` DSL in a definition
 
@@ -342,24 +342,28 @@ end
 - **Placement mirrors interactions**: anchored-to-this-model → **record** action; no anchor → **resource** (collection) action. Inference parallels interactions (`attribute :resource` / neither), with `record_action:` / `collection:` overrides. **Bulk wizards (operating on many records) are not supported** — wizards are inherently per-instance flows; use a bulk interaction instead.
 - **Authorization mirrors actions**: a resource policy predicate gates it (`def configure? = update?`). Generic wizards derive a default predicate name from the registration key.
 
-### 5.2 Standalone — `register_wizard` in routes
+### 5.2 Portal-level — `register_wizard` in a portal engine
+
+For a wizard not tied to a single resource (e.g. onboarding), register it **in the portal engine's routes**, alongside `register_resource`:
 
 ```ruby
-# config/routes.rb (or within a portal/package engine)
-register_wizard OnboardingWizard, at: "/welcome"
-```
-
-Mounts the wizard's controller + step routes and provides a path helper (`welcome_wizard_path`) for post-login redirects, etc.
-
-Standalone wizards have no resource policy, so they're gated by a **wizard-level `authorize?` hook** checked before entry/each request:
-
-```ruby
-class OnboardingWizard < Plutonium::Wizard::Base
-  authorize { current_user.present? && !current_user.onboarded? }   # or `def authorize? ... end`
+# packages/admin_portal/config/routes.rb (inside the portal engine)
+PlutoniumPortal.routes.draw do
+  register_wizard OnboardingWizard, at: "onboarding"   # portal-relative path
 end
 ```
 
-Returning false → `ActionPolicy::Unauthorized` (→ 403, via the existing rescue). Resource-attached wizards use their action's policy predicate instead (§5.1); the `authorize?` hook is the standalone counterpart, and may also be defined on any wizard as an extra gate.
+This draws the wizard's step routes **within the portal** (so they get the portal's scope/auth/layout) and provides a path helper. The wizard runs through a portal-hosted wizard controller (the `Plutonium::Wizard::Controller` concern mixed into the portal's controller, like resource controllers). `scope_gid` comes from the portal's `scoped_entity` when the portal is entity-scoped.
+
+Portal-level wizards have no resource policy, so they're gated by a **wizard-level `authorize?` hook** checked before entry/each request:
+
+```ruby
+class OnboardingWizard < Plutonium::Wizard::Base
+  def authorize? = current_user.present? && !current_user.onboarded?
+end
+```
+
+Returning false → `ActionPolicy::Unauthorized` (→ 403, via the existing rescue). Resource-attached wizards use their action's policy predicate instead (§5.1); the `authorize?` instance method is the portal-level counterpart, and may also be defined on any wizard as an extra gate. (A block-form `authorize { … }` macro is a possible future nicety; v1 uses the plain `def authorize?` method.)
 
 ### 5.3 Synthesized routes
 
@@ -743,6 +747,7 @@ All names below are **decided** — kept here as the canonical glossary:
 
 ## 16. Out of scope / follow-ups
 
+- **Main-app / non-portal standalone wizards** — v1 hosts wizards **inside portals only** (they inherit portal auth/scoping/layout/rendering). A non-portal mount is a possible follow-up.
 - **Bulk wizards** (operating on many records at once) — explicitly **not supported**; use a bulk interaction. Wizards are per-instance flows.
 - Wizard generator (`pu:wizard`).
 - Dismissible / "remind me later" onboarding.

@@ -1,4 +1,9 @@
 class WidgetPolicy < ResourcePolicy
+  # Gates the anchored `configure` wizard record action (mirrors interactions).
+  def configure?
+    true
+  end
+
   def permitted_attributes_for_create
     [:name, :organization]
   end

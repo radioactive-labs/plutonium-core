@@ -65,11 +65,11 @@ The anchor is **not** part of `persisted` — `persisted` holds only records the
 
 The wizard body never cares where the anchor came from; the launch surface resolves it:
 
-- **Record action** (`wizard :configure, ...` on a definition for an anchored wizard) — auto-injected from the URL `:id`.
+- **Record action** (`wizard :configure, ...` on a definition for an anchored wizard) — auto-mounted as a **member route** (`/companies/:id/wizards/configure/:step`) on the resource controller. The anchor is resolved through that controller's scoped, policy-gated `resource_record!` — never an unscoped `find_by`, so a record outside the portal's authorized scope (or a non-existent id) 404s instead of leaking another tenant's record.
 - **Collection action / create flow** — no anchor.
 
-::: warning As-built: anchor resolution
-Record-anchored member routes (`/companies/:id/wizards/...`) are a v1 follow-up — the portal-level mount is the primary path (see [Registration & launch](/reference/wizard/registration-launch#known-limitations)). For `once_per: :anchor` gating, the host must supply the anchor via `wizard_gate_anchor` (see [One-time wizards](/reference/wizard/one-time#once-per-anchor)).
+::: tip Anchored member routes are IDOR-safe by construction
+Because the anchor comes from `resource_record!` (the same scoped lookup CRUD and interactive record actions use), an anchored wizard can only ever operate on a record the current user is authorized to see in this portal. For `once_per: :anchor` gating on a **portal-level** wizard, the host must still supply the anchor via `wizard_gate_anchor` (see [One-time wizards](/reference/wizard/one-time#once-per-anchor)).
 :::
 
 ## Instance identity

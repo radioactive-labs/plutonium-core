@@ -18,7 +18,7 @@ module Plutonium
       # Initialize a new wizard Configuration instance with default values.
       def initialize
         @enabled = false
-        @cleanup_after = 30.days
+        @cleanup_after = 14.days
         @database = :primary
       end
     end

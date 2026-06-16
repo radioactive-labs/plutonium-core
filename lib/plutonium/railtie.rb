@@ -47,6 +47,17 @@ module Plutonium
     # so feature flags like config.wizards.enabled are honoured. Railtie
     # initializers otherwise run before host initializers, leaving the flag false.
     initializer "plutonium.migrations", after: :load_config_initializers do |app|
+      # v1 supports `config.wizards.database == :primary` only; the option is
+      # reserved for future multi-db routing of wizard sessions. Warn loudly if a
+      # host sets it to a non-primary connection so the silent no-op is visible.
+      if Plutonium.configuration.wizards.database != :primary
+        Rails.logger&.warn {
+          "[plutonium] config.wizards.database = #{Plutonium.configuration.wizards.database.inspect} " \
+          "is not supported in v1 (only :primary). The wizard migration path is registered on the " \
+          "primary database; multi-db routing for wizard sessions is a roadmap follow-up."
+        }
+      end
+
       Plutonium::Migrations.enabled_paths.each do |path|
         app.config.paths["db/migrate"] << path if Plutonium.configuration.wizards.database == :primary
         ActiveRecord::Migrator.migrations_paths << path unless ActiveRecord::Migrator.migrations_paths.include?(path)

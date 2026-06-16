@@ -10,7 +10,7 @@
 #   anchored with: Model         wizard runs against an existing record; read via `anchor`
 #   one_time once_per: :user     run once per user (or :anchor); durable completion
 #   cleanup_after 7.days|:never   idle TTL before abandoned sessions are swept
-#   authorize { ... }            entry gate for standalone wizards (no resource policy)
+#   def authorize?              entry gate for portal-level wizards (no resource policy)
 #   step :key, label:, condition:, using:  do ... end   one screen (block declares its
 #                                fields/hooks); condition: gates it (branching). The block
 #                                is optional only when `using:` supplies everything.
@@ -108,10 +108,11 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
   # back). Use :never to keep partial records indefinitely.
   cleanup_after 7.days
 
-  # `using:` imports a field surface (types from the record, inputs/validations/
-  # form_layout from the definition) — no need to re-declare. `fields:` selects a
-  # subset. Persistence stays wizard-side; only the declarations are reused.
-  step :branding, label: "Branding", using: CompanyDefinition, fields: %i[logo brand_color]
+  # `using:` imports a field surface from a model (types + validations from the
+  # model; input styling from its auto-resolved CompanyDefinition) — no need to
+  # re-declare. `fields:` selects a subset. Persistence stays wizard-side; only
+  # the declarations are reused.
+  step :branding, label: "Branding", using: Company, fields: %i[logo brand_color]
 
   step :billing, label: "Billing", condition: -> { anchor.paid_plan? } do
     attribute :card_token, :string
@@ -147,8 +148,8 @@ class WelcomeWizard < Plutonium::Wizard::Base
   # Records a durable "done" marker; the gate (below) stops re-running it.
   one_time once_per: :user
 
-  # Standalone wizards have no resource policy, so gate entry with `authorize`.
-  authorize { current_user.present? }
+  # Portal-level wizards have no resource policy, so gate entry with `authorize?`.
+  def authorize? = current_user.present?
 
   step :profile, label: "Your profile" do
     attribute :full_name, :string
@@ -186,8 +187,9 @@ class CompanyDefinition < Plutonium::Resource::Definition
   wizard :onboard, CompanyOnboardingWizard           # no anchor → collection action
 end
 
-# (b) Standalone — in config/routes.rb. Draws /welcome/:step + welcome_wizard_path.
-#   register_wizard WelcomeWizard, at: "/welcome"
+# (b) Portal-level — inside a portal engine's routes (alongside register_resource).
+#     Runs within the portal (auth/scoping/layout inherited). Portal-relative path.
+#   register_wizard WelcomeWizard, at: "welcome"
 
 # (c) Gating the one-time wizard — in a portal/ApplicationController. Redirects
 #     the user into the wizard until completed, then bounces them back.

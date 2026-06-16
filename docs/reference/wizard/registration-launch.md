@@ -10,22 +10,33 @@ A `wizard` macro in a resource definition registers a wizard and synthesizes its
 class CompanyDefinition < Plutonium::Resource::Definition
   wizard :configure, ConfigureCompanyWizard            # anchored → record action
   wizard :onboard,   CompanyOnboardingWizard           # no anchor → resource action
-  wizard :archive,   ArchiveWithReasonWizard, record_action: true   # override
+  wizard :archive,   ArchiveWithReasonWizard, record_action: true   # override placement
 end
 ```
 
-- **Placement mirrors interactions** — an anchored wizard becomes a **record** action (per row / show page); a non-anchored wizard becomes a **resource** (collection) action (index header). Use `record_action:` / `collection:` to override.
+- **Placement mirrors interactions** — an **anchored** wizard becomes a **record** (member) action, a **non-anchored** wizard becomes a **resource** (collection) action (index header). Use `record_action:` / `collection:` to override placement.
+- **Auto-mounted on the resource controller** — the `wizard` macro's routes are drawn on the resource's own controller, exactly like interactive record/resource actions. There is nothing else to wire up.
+- **The anchor is IDOR-safe** — an anchored (record) wizard resolves its anchor through the resource controller's scoped, policy-gated `resource_record!`. A record outside the portal's authorized scope (another tenant's, or a non-existent id) **404s**; it is never loaded via an unscoped `find_by`.
 - **Bulk wizards are not supported** — wizards are inherently per-instance flows. Use a bulk interaction instead.
-- **Authorization mirrors actions** — a resource policy predicate gates it (`def configure? = update?`).
+- **Authorization mirrors actions** — a resource policy predicate named after the wizard key gates it (`def configure? = update?`, `def onboard? = create?`).
 
 | Option | Meaning |
 |---|---|
 | `record_action:` | Force record (member) placement. |
 | `collection:` | Force resource (collection) placement. |
-| `at:` | The wizard's portal-relative base path (used to build the launch URL); defaults to the wizard's route name. |
 | `label:` / `icon:` / `position:` / `category:` / `confirmation:` | Standard action chrome. |
 
-The synthesized action's URL resolves the wizard's first-step GET route at render time. It relies on the wizard's routes being drawn (via `register_wizard`).
+### Synthesized routes (resource-mounted)
+
+```
+# anchored → member route (anchor = the scoped resource_record!)
+GET/POST  /companies/:id/wizards/:wizard_name(/:token)/:step
+
+# non-anchored → collection route (create flow)
+GET/POST  /companies/wizards/:wizard_name(/:token)/:step
+```
+
+The synthesized action's URL resolves the wizard's first-step GET route at render time, on these auto-mounted routes.
 
 ## Portal-level — `register_wizard`
 
@@ -69,7 +80,11 @@ class WelcomeWizard < Plutonium::Wizard::Base
 end
 ```
 
-A falsy return → `ActionPolicy::Unauthorized` (403). Resource-attached wizards instead use their action's policy predicate (`def configure?` etc.).
+A falsy return → `ActionPolicy::Unauthorized` (403). Resource-attached wizards instead use their action's policy predicate (`def onboard?` etc.).
+
+::: danger A portal-level wizard with no `authorize?` is open to ANY authenticated portal user
+A portal-level wizard (registered with `register_wizard`) has **no resource policy** and **defaults to allowed** — so if you omit `authorize?`, every authenticated user of that portal can run it. **Always define `def authorize?`** for anything privileged (admin-only flows, per-user gating, tenant checks). The default-allow is only safe for flows that are genuinely fine for any signed-in portal user (e.g. self-service onboarding).
+:::
 
 ::: warning As-built: `authorize?` is an instance method
 Define `def authorize?` on the wizard. The controller checks it only when the wizard responds to it (default: allowed).
@@ -83,7 +98,7 @@ To make a wizard run once and gate a controller behind it, see [One-time wizards
 
 v1 hosts wizards inside portals only. A few surfaces are deliberate follow-ups:
 
-- **Anchored resource member routes** (`/companies/:id/wizards/configure/:step`) are a follow-up — the **portal-level mount** (`register_wizard`) is the primary, fully-wired path. The `wizard` definition macro synthesizes the action and resolves the launch URL against the drawn wizard routes.
+- **Record-anchored wizards mount on the resource, not portal-level.** Register an `anchored` wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing an `anchored?` wizard to **`register_wizard`** still raises — portal-level mounts have no resource record to anchor to.
 - **`once_per: :anchor` gating** needs a host-provided anchor resolver — override `wizard_gate_anchor` in the gated controller (the default raises). See [One-time wizards](/reference/wizard/one-time#once-per-anchor).
 - **Main-app (non-portal) standalone wizards** are out of scope for v1 — wizards inherit a portal's auth/scoping/layout/rendering.
 

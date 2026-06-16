@@ -22,17 +22,20 @@ rails db:migrate
 | Config | Default | Meaning |
 |---|---|---|
 | `config.wizards.enabled` | `false` | Registers the gem migration so `rails db:migrate` creates the table. Required to use wizards. |
-| `config.wizards.cleanup_after` | `30.days` | Global default idle TTL for the abandonment sweep; overridable per wizard via `cleanup_after`. |
-| `config.wizards.database` | `:primary` | Which database connection the wizard table lives on (multi-db apps). |
+| `config.wizards.cleanup_after` | `14.days` | Global default idle TTL for the abandonment sweep; overridable per wizard via `cleanup_after`. |
+| `config.wizards.database` | `:primary` | Which database connection the wizard table lives on. **v1 supports the primary database only** — see below. |
 
 ## Gem-shipped migration
 
 The migration ships **in the gem** and Rails runs it **in place** — there is no copy-into-your-app step (unlike `pu:rodauth`/`pu:invites`, which are app-customized templates). Enabling `config.wizards.enabled` registers the gem migration path; `rails db:migrate` then runs it.
 
 - Once run, the table is dumped into your `schema.rb` / `structure.sql` like any other, so `db:schema:load` on fresh/CI databases recreates it normally.
-- `config.wizards.database` targets the migration at the right connection in multi-db apps.
 - Disable later → the path isn't registered; the existing table is left alone (never auto-dropped).
 - `db:migrate:status` shows the migration's file living in the gem (cosmetic; reads "file missing" if the gem is later removed) — standard for gem-shipped migrations.
+
+::: warning v1 supports the primary database only
+The wizard table lives on your app's **primary** database in v1. `config.wizards.database` is **reserved for future use** — setting it to a non-primary connection has no effect yet (the migration path is registered on the primary database), and the railtie logs a warning if you set it to anything other than `:primary`. Multi-database routing for wizard sessions is a roadmap follow-up.
+:::
 
 ## The table — `plutonium_wizard_sessions`
 

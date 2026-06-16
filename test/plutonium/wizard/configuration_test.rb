@@ -9,7 +9,7 @@ module Plutonium
         config = Plutonium::Wizard::Configuration.new
 
         assert_equal false, config.enabled
-        assert_equal 30.days, config.cleanup_after
+        assert_equal 14.days, config.cleanup_after
         assert_equal :primary, config.database
       end
 
@@ -20,7 +20,7 @@ module Plutonium
         # NOTE: the dummy app enables wizards in its initializer so the sessions
         # table migrates for the AR-store tests; the +enabled+ default itself is
         # covered by #test_default_values against a fresh Configuration.
-        assert_equal 30.days, wizards.cleanup_after
+        assert_equal 14.days, wizards.cleanup_after
         assert_equal :primary, wizards.database
       end
 

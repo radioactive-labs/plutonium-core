@@ -23,43 +23,43 @@
     },
     {
       "id": 10,
-      "subject": "Task 3: FieldImporter — using: an interaction or resource definition",
-      "status": "pending",
+      "subject": "Task 3: FieldImporter — using: a model (model-only; model→definition overlay)",
+      "status": "completed",
       "blockedBy": [9],
       "description": "using: imports attributes(+types)/inputs/validations(filter to fields+:base)/form_layout; validate/layout/context opts; inline composes.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/field_importer.rb\",\"lib/plutonium/wizard/dsl.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/field_importer_test.rb\", \"acceptanceCriteria\": [\"interaction import\",\"definition import type-from-record+overlay\",\"validation filter fields+:base\",\"validate/layout/context\",\"inline composes\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 11,
       "subject": "Task 4: Runner — navigation, on_submit/persist/rollback, finalize lock + completeness/prune, resume",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [8, 9, 10],
       "description": "Pure engine: visible_path, advance, back, cancel, finalize (completeness+prune+lock+execute), persisted rehydrate, failure mapping.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/runner.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/runner_test.rb\", \"acceptanceCriteria\": [\"visible_path branching\",\"advance+track GIDs\",\"back no-validate\",\"cancel rollback+clear\",\"finalize lock+completeness+prune\",\"resume rehydrate\",\"failure mapping\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 12,
-      "subject": "Task 5: Controller, register_wizard routing, wizard definition DSL, authorize?",
-      "status": "pending",
+      "subject": "Task 5: Portal-hosted controller, register_wizard routing, wizard definition DSL, authorize?",
+      "status": "completed",
       "blockedBy": [11],
       "description": "Single controller (GET/POST _direction+pre_submit, PRG), register_wizard routes, wizard definition macro (no bulk), instance resolution, authorize?/policy.\n\n```json:metadata\n{\"files\": [\"app/controllers/plutonium/wizard/controller.rb\",\"lib/plutonium/routing/wizard_registration.rb\",\"lib/plutonium/definition/wizards.rb\",\"lib/plutonium/routing/mapper_extensions.rb\",\"lib/plutonium/definition/base.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"acceptanceCriteria\": [\"register_wizard routes\",\"wizard DSL no-bulk\",\"GET/POST next/back/cancel+pre_submit\",\"PRG finalize\",\"authorize?/policy\",\"anchor/scope/token\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 13,
       "subject": "Task 6: UI — Page::Wizard, Stepper, review auto-summary, step form + repeater rehydration",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [12],
       "description": "Render step (reuse interaction form), stepper, review auto-summary + jump links + gated finish, repeater rehydration, modal vs full-page.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/page/wizard.rb\",\"lib/plutonium/ui/wizard/stepper.rb\",\"lib/plutonium/ui/wizard/review.rb\",\"lib/plutonium/ui/form/wizard_step.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"acceptanceCriteria\": [\"step renders+form_layout\",\"stepper states+click rules\",\"repeater rehydrate\",\"review summary+jump+gated finish\",\"modal vs full-page\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 14,
       "subject": "Task 7: One-time wizards (gate + completion) and SweepJob",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [11, 12],
       "description": "one_time completion (user/anchor), ensure_wizard_completed gate, SweepJob reaps expired in_progress/completing with cleanup.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/gate.rb\",\"lib/plutonium/wizard/sweep_job.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/sweep_job_test.rb\", \"acceptanceCriteria\": [\"one_time completion\",\"gate redirect+bounce\",\"SweepJob cleanup keeps completed/null\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 15,
       "subject": "Task 8: Documentation and plutonium-wizard skill",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [13, 14],
       "description": "Guide, reference pages, plutonium-wizard skill + umbrella map, VitePress nav. yarn docs:build passes.\n\n```json:metadata\n{\"files\": [\".claude/skills/plutonium-wizard/SKILL.md\",\"docs/guides/wizards.md\",\"docs/reference/wizard/dsl.md\",\".claude/skills/plutonium/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"guide covers flows\",\"skill+umbrella map\",\"docs:build passes\"], \"requiresUserVerification\": false}\n```"
     }

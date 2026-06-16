@@ -4,7 +4,8 @@ module Plutonium
   module Definition
     # The `wizard` definition macro (§5.1) — sugar over the Action system, mirroring
     # {Plutonium::Definition::Actions}. It registers a launching action for a
-    # portal-hosted wizard on a resource:
+    # wizard auto-mounted on the resource's own controller (see
+    # {Plutonium::Resource::Controllers::WizardActions}):
     #
     #   class CompanyDefinition < Plutonium::Resource::Definition
     #     wizard :configure, ConfigureCompanyWizard            # anchored → record action
@@ -12,37 +13,51 @@ module Plutonium
     #     wizard :archive,   ArchiveWithReasonWizard, record_action: true  # override
     #   end
     #
-    # Placement mirrors interactions: an anchored wizard becomes a **record** action;
-    # a non-anchored wizard becomes a **resource** (collection) action. Bulk wizards
-    # are not supported (§5.1) — wizards are per-instance flows.
+    # Placement mirrors interactions: an **anchored** wizard becomes a **record**
+    # action (the anchor is the URL `:id`, resolved through the resource controller's
+    # scoped, policy-gated `resource_record!`); a **non-anchored** wizard becomes a
+    # **resource** (collection) action. Bulk wizards are not supported (§5.1) —
+    # wizards are per-instance flows.
     #
-    # The synthesized action's URL is resolved by a proc that builds the wizard's
-    # GET route for the subject (the first step). It relies on the wizard routes
-    # being drawn for that resource (via `register_wizard` portal-relative, or
-    # per-resource wizard member routes); the proc resolves the path at render time.
+    # The macro keeps a per-definition registry (`registered_wizards`) the
+    # resource-mounted {WizardActions} concern reads to resolve the wizard class by
+    # the `:wizard_name` route segment, and synthesizes a launch action whose URL
+    # resolver targets the auto-mounted member (anchored) or collection routes.
     module Wizards
       extend ActiveSupport::Concern
 
       class_methods do
+        # @return [Hash{Symbol=>Hash}] registry of wizards declared on this
+        #   definition: `{name => {wizard_class:, record_action:}}`. Read by
+        #   {Plutonium::Resource::Controllers::WizardActions} to resolve + gate.
+        def registered_wizards
+          @registered_wizards ||= {}
+        end
+
+        # Definitions are inheritable; carry the wizard registry to subclasses.
+        def inherited(subclass)
+          super
+          subclass.instance_variable_set(:@registered_wizards, registered_wizards.dup)
+        end
+
         # @param name [Symbol] the action key (e.g. :configure)
         # @param wizard_class [Class] a Plutonium::Wizard::Base subclass
         # @param record_action [Boolean, nil] force record (member) placement
         # @param collection [Boolean, nil] force resource (collection) placement
-        # @param at [String, nil] the wizard's portal-relative base path; defaults
-        #   to the wizard's route name (used to build the launch URL)
-        def wizard(name, wizard_class, record_action: nil, collection: nil, at: nil, **opts)
-          anchored = wizard_class.anchored?
+        def wizard(name, wizard_class, record_action: nil, collection: nil, **opts)
           is_record =
             if !record_action.nil?
               record_action
             elsif !collection.nil?
               !collection
             else
-              anchored
+              # Placement mirrors interactions: anchored → record action.
+              wizard_class.anchored?
             end
 
-          base_path = (at || wizard_route_name(wizard_class)).to_s
-          resolver = wizard_launch_resolver(wizard_class, base_path, is_record)
+          registered_wizards[name.to_sym] = {wizard_class:, record_action: is_record}
+
+          resolver = wizard_launch_resolver(name, is_record)
 
           action(
             name,
@@ -61,10 +76,6 @@ module Plutonium
 
         private
 
-        def wizard_route_name(wizard_class)
-          wizard_class.name.demodulize.underscore.sub(/_wizard\z/, "")
-        end
-
         def wizard_label(wizard_class, name)
           if wizard_class.respond_to?(:label) && wizard_class.label.present?
             wizard_class.label
@@ -74,22 +85,29 @@ module Plutonium
         end
 
         # A url_resolver proc (§5.1). Evaluated against the controller with the
-        # subject; builds the wizard's first-step GET URL. The wizard's first step
-        # is the entry point — the controller redirects to the resolved step.
-        def wizard_launch_resolver(wizard_class, base_path, is_record)
-          first_step = wizard_class.steps.first&.key
-          helper = :"#{base_path}_wizard_path"
+        # subject; builds the wizard's first-step GET URL on the auto-mounted
+        # resource route — the member route for an anchored wizard (id from the
+        # subject), the collection route otherwise. The first step is the entry
+        # point; the controller redirects to the resolved step.
+        def wizard_launch_resolver(name, is_record)
+          wizard_name = name.to_s
 
           proc do |subject|
-            args = {step: first_step}
-            args[:id] = subject if is_record && subject
+            wizard_class = current_definition.class.registered_wizards.fetch(name.to_sym)[:wizard_class]
+            first_step = wizard_class.steps.first&.key
 
-            engine = current_engine.routes.url_helpers
-            if engine.respond_to?(helper)
-              engine.public_send(helper, **args)
+            if is_record
+              resource_url_for(
+                subject,
+                action: :wizard_record_action,
+                wizard_name:, step: first_step
+              )
             else
-              url_for(controller: "wizards", action: :show,
-                wizard_class: wizard_class.name, **args)
+              resource_url_for(
+                resource_class,
+                action: :wizard_resource_action,
+                wizard_name:, step: first_step
+              )
             end
           end
         end

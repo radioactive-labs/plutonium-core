@@ -227,14 +227,16 @@ Un-completed user → redirected into the wizard (destination stashed); on compl
 
 ## Registration & launch (portal-hosted)
 
-**(a) On a resource definition** — the `wizard` macro synthesizes the launch action (anchored → record action, no anchor → resource action; no bulk):
+**(a) On a resource definition** — the `wizard` macro synthesizes the launch action AND auto-mounts the wizard's routes on the resource's own controller. Placement mirrors interactions: anchored → record (member) action, non-anchored → resource (collection) action; no bulk:
 
 ```ruby
 class CompanyDefinition < Plutonium::Resource::Definition
-  wizard :configure, ConfigureCompanyWizard      # anchored → record action
-  wizard :onboard,   CompanyOnboardingWizard      # no anchor → resource action
+  wizard :configure, ConfigureCompanyWizard     # anchored → record action: /companies/:id/wizards/configure/:step
+  wizard :onboard,   CompanyOnboardingWizard     # no anchor → resource action: /companies/wizards/onboard/:step
 end
 ```
+
+The anchored member action resolves its anchor through the resource controller's scoped, policy-gated `resource_record!` (IDOR-safe: out-of-scope / non-existent ids 404). Gate it with a policy predicate named after the wizard key (`def configure? = update?`).
 
 **(b) Portal-level** — inside a portal engine's routes, alongside `register_resource`:
 
@@ -246,6 +248,12 @@ end
 ```
 
 Draws `GET/POST /onboarding(/:token)/:step` within the portal + an `onboarding_wizard_path` helper.
+
+> [!TIP]
+> **Anchored wizards mount on the resource, not portal-level.** Register an `anchored` wizard on the anchored resource's definition with the `wizard` macro — it auto-mounts a record (member) action whose anchor is the scoped `resource_record!`. Passing an `anchored` wizard to `register_wizard` **raises** (portal-level mounts have no resource record to anchor to).
+
+> [!DANGER]
+> **A portal-level wizard with no `authorize?` is runnable by ANY authenticated portal user** — it has no resource policy and defaults to allowed. **Always define `def authorize?`** for anything privileged (admin-only, per-user gating, tenant checks).
 
 ## Storage & config
 

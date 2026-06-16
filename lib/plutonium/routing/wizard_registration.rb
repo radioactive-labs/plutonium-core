@@ -27,9 +27,20 @@ module Plutonium
       # @param at [String] the portal-relative base path for the wizard's steps
       # @param as [String, Symbol, nil] override the route helper name prefix
       def register_wizard(wizard_class, at:, as: nil)
+        if wizard_class.anchored?
+          raise ArgumentError,
+            "register_wizard #{wizard_class.name} — anchored wizards are not mounted " \
+            "portal-level. Register them on the anchored resource's definition with the " \
+            "`wizard` macro, which auto-mounts a record action whose anchor is resolved " \
+            "through the resource controller's scoped, policy-gated `resource_record!`."
+        end
+
         ensure_wizard_controller!(wizard_class)
 
-        helper_name = (as || wizard_route_name(wizard_class)).to_s
+        # The helper name defaults to the mount path (`at:`), so
+        # `register_wizard W, at: "onboarding"` yields `onboarding_wizard_path`.
+        # `as:` overrides it; the wizard's own route name is the final fallback.
+        helper_name = (as || at.presence || wizard_route_name(wizard_class)).to_s.tr("/", "_")
         defaults = {wizard_class: wizard_class.name}
 
         scope path: at do

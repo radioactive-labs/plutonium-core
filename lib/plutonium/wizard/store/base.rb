@@ -29,10 +29,16 @@ module Plutonium
         # @param instance_key [String]
         def clear(instance_key) = raise NotImplementedError
 
+        # Sentinel distinguishing "key omitted" from "key explicitly nil" in
+        # {#completed?}. An explicit `owner: nil` / `anchor: nil` means "this
+        # principal has no value" → it must NOT match any row (returning false),
+        # rather than silently dropping the filter and matching ANY completed row.
+        OMITTED = Object.new.freeze
+
         # One-time completion check.
         #
         # @return [Boolean]
-        def completed?(wizard:, owner: nil, anchor: nil) = raise NotImplementedError
+        def completed?(wizard:, owner: OMITTED, anchor: OMITTED) = raise NotImplementedError
 
         # In-progress sessions owned by +owner+.
         #
