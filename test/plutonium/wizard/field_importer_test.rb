@@ -25,6 +25,14 @@ module Plutonium
         assert_equal({name: :string, age: :integer, active: :boolean}, spec.attribute_schema)
       end
 
+      def test_enum_columns_import_as_string_not_integer
+        # status/plan/tier are integer-backed AR enums. Forms submit the string key
+        # ("a"), so importing the raw :integer column type would cast it to 0. They
+        # must import as :string so the enum key round-trips through wizard `data`.
+        spec = resolve(KitchenSink, fields: %i[status plan tier])
+        assert_equal({status: :string, plan: :string, tier: :string}, spec.attribute_schema)
+      end
+
       def test_field_universe_is_model_attribute_names
         # `price` is a has_cents virtual accessor, NOT a real column, so it is not
         # in the importable universe even if requested.
@@ -188,12 +196,12 @@ module Plutonium
           step.attribute_schema)
       end
 
-      def test_step_union_data_includes_imported_attributes
+      def test_step_data_includes_imported_attributes
         w = ImportThenInline.new
-        w.data_attributes = {"name" => "Acme", "age" => "7", "preferred_time" => "noon"}
-        assert_equal "Acme", w.data.name
-        assert_equal 7, w.data.age
-        assert_equal "noon", w.data.preferred_time
+        w.data_attributes = {"company" => {"name" => "Acme", "age" => "7", "preferred_time" => "noon"}}
+        assert_equal "Acme", w.data.company.name
+        assert_equal 7, w.data.company.age
+        assert_equal "noon", w.data.company.preferred_time
       end
 
       def test_step_composes_imported_with_inline_inputs

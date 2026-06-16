@@ -93,6 +93,12 @@ module Plutonium
         end
 
         def record_type(model, name)
+          # AR enum columns are integer-backed, but forms submit the string enum
+          # *key* ("active"), not the integer. Importing the raw :integer type would
+          # cast the key to 0. Keep enum fields as :string so the key round-trips —
+          # the author's `Model.new(field: data.field)` then lets AR map key → int,
+          # and the review summary shows the key, not a meaningless integer.
+          return :string if model.defined_enums.key?(name.to_s)
           model.attribute_types[name.to_s]&.type || :string
         end
 
