@@ -109,6 +109,8 @@ register_wizard ::GuestSignupWizard, at: "signup", public: true
 
 To make a wizard run once and gate a controller behind it, see [One-time wizards](/reference/wizard/one-time) — a `concurrency_key` + `one_time` + the `Plutonium::Wizard::Gate` concern (`ensure_wizard_completed`).
 
+For a **one-time** wizard, the launch action this macro synthesizes also **hides itself once the current user has completed it** (via a render-time action `condition:`); a custom `condition:` composes with that check. See [The launch action hides itself once completed](/reference/wizard/one-time#the-launch-action-hides-itself-once-completed).
+
 ## Known limitations
 
 v1 hosts wizards inside portals only. A few surfaces are deliberate follow-ups:

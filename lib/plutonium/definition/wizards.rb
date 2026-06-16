@@ -70,11 +70,57 @@ module Plutonium
             icon: opts[:icon],
             position: opts[:position],
             label: opts[:label] || wizard_label(wizard_class, name),
-            confirmation: opts[:confirmation]
+            confirmation: opts[:confirmation],
+            condition: wizard_launch_condition(wizard_class, opts[:condition])
           )
         end
 
         private
+
+        # The launch action's `condition:` (§9). A **one-time** wizard's launch is
+        # hidden once the current user has already completed it: the condition
+        # recomputes the wizard's `instance_key` for the current context (same
+        # {Plutonium::Wizard.compute_instance_key} the driving layer + gate use) and
+        # returns false when a retained `completed` row exists at that key. A
+        # repeatable (non-one-time) wizard gets NO completion condition.
+        #
+        # When the author also passed a `condition:`, the two are AND-ed: the action
+        # shows only if the author's condition is met AND the wizard isn't already
+        # completed.
+        #
+        # The proc runs in a {Plutonium::Action::ConditionContext}: `object`/`record`
+        # is the anchor for a record action (nil for a resource action), view helpers
+        # (`current_user`) delegate to the view context, and `current_scoped_entity` /
+        # `scoped_to_entity?` are read off the host controller (`controller`) exactly
+        # as the gate recomputes them.
+        def wizard_launch_condition(wizard_class, author_condition)
+          return author_condition unless wizard_class.one_time?
+
+          completion_condition = proc do
+            scope =
+              if controller.scoped_to_entity?
+                controller.current_scoped_entity
+              end
+
+            instance_key = Plutonium::Wizard.compute_instance_key(
+              wizard_class: wizard_class,
+              current_user: current_user,
+              current_scoped_entity: scope,
+              anchor: wizard_class.anchored? ? object : nil,
+              wizard_token: nil
+            )
+
+            !Plutonium::Wizard::Store::ActiveRecord.new.completed?(instance_key: instance_key)
+          end
+
+          return completion_condition if author_condition.nil?
+
+          # AND the author's condition with the completion check; both run in the
+          # same ConditionContext, so evaluate each via instance_exec on self.
+          proc do
+            instance_exec(&author_condition) && instance_exec(&completion_condition)
+          end
+        end
 
         def wizard_label(wizard_class, name)
           if wizard_class.respond_to?(:label) && wizard_class.label.present?

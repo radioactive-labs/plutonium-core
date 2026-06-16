@@ -72,6 +72,27 @@ A `concurrency_key { anchor }` wizard therefore keys completion by the anchor wi
 `ensure_wizard_completed` raises unless the wizard is `one_time` (a `concurrency_key` **plus** `one_time`) — only a retained marker can be checked. Repeatable wizards have nothing durable to gate on.
 :::
 
+## The launch action hides itself once completed
+
+When you register a one-time wizard on a resource definition with the [`wizard` macro](/reference/wizard/registration-launch), the synthesized launch action (button/link) is **automatically hidden once the current user has completed it**. The macro attaches a render-time `condition:` to the action that recomputes the wizard's `instance_key` for the current context (the same `Plutonium::Wizard.compute_instance_key` the driving layer and the [gate](#how-the-gate-keys-completion) use) and returns false when a retained `completed` row exists at that key:
+
+```ruby
+class CompanyDefinition < Plutonium::Resource::Definition
+  wizard :onboard, CompanyOnboardingWizard   # one_time → button vanishes after completion
+end
+```
+
+- It keys exactly like the wizard's own completion: per-user for `concurrency_key { current_user }`, per-anchor for `concurrency_key { anchor }` (the anchor is the record the action sits on), with the tenant folded in.
+- This is **display-only** — like every action `condition:`, it hides the button but does **not** revoke the route. Keep authorization in the policy (`def onboard? = …`).
+- **Repeatable** (non-`one_time`) wizards get **no** completion condition — their launch action always shows.
+
+A custom `condition:` **composes** with the completion check (they're AND-ed) — the action shows only when your condition is met **and** the wizard isn't already completed:
+
+```ruby
+wizard :onboard, CompanyOnboardingWizard,
+  condition: -> { current_user.admin? }   # admin AND not yet completed
+```
+
 ## Related
 
 - [DSL reference](/reference/wizard/dsl) — `concurrency_key`, `one_time`, `authorize?`.
