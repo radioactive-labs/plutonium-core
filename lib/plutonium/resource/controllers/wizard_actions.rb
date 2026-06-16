@@ -82,15 +82,32 @@ module Plutonium
         end
 
         # Build the GET URL for a given step, preserving the `:id` (member),
-        # `:wizard_name`, and `:token` segments. Derived from the current request
-        # path by swapping the trailing `:step` segment, mirroring the standalone
-        # controller's robust path-based approach.
+        # `:wizard_name`, and `:token` segments. Built through `resource_url_for`
+        # with the `wizard:` kwarg (mirroring how interactions build their URLs via
+        # `resource_url_for(..., interaction:)`) — never string-surgery on
+        # `request.path`, so the URL is always a same-host, route-validated path.
         def wizard_step_url(step_key)
-          step = step_key.to_s
-          current = params[:step].to_s
-          path = request.path
-          base = current.present? ? path.delete_suffix("/#{current}") : path
-          "#{base}/#{step}"
+          resource_url_for(
+            wizard_url_subject,
+            wizard: current_wizard_name,
+            step: step_key,
+            **wizard_token_param
+          )
+        end
+
+        # The URL anchor: the scoped record for member (record) actions, the
+        # resource class for collection (resource) actions.
+        def wizard_url_subject
+          params[:id].present? ? resource_record! : resource_class
+        end
+
+        def current_wizard_name
+          params[:wizard_name]
+        end
+
+        # Carry the `:token` segment only when present.
+        def wizard_token_param
+          params[:token].present? ? {token: params[:token]} : {}
         end
 
         # --- registry / authorization ---

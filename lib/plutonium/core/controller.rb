@@ -127,7 +127,7 @@ module Plutonium
       #
       # @return [Hash] args to pass to `url_for`
       #
-      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, interaction: nil, **kwargs)
+      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, interaction: nil, wizard: nil, **kwargs)
         element = args.first
 
         raise ArgumentError, "parent is required when using symbol association name" if element.is_a?(Symbol) && parent.nil?
@@ -136,6 +136,12 @@ module Plutonium
           raise ArgumentError, "cannot pass both `interaction:` and `action:`" if action
           action = interactive_action_type_for(element, ids: kwargs[:ids])
           kwargs[:interactive_action] = interaction
+        end
+
+        if wizard
+          raise ArgumentError, "cannot pass both `wizard:` and `action:`" if action
+          action = wizard_action_type_for(element)
+          kwargs[:wizard_name] = wizard
         end
 
         # For nested resources, use named route helpers to avoid Rails param recall ambiguity
@@ -191,6 +197,17 @@ module Plutonium
           ids.present? ? :interactive_bulk_action : :interactive_resource_action
         else
           :interactive_record_action
+        end
+      end
+
+      # Determine the wizard launch action type for the given element.
+      # Records → :wizard_record_action (member), classes/symbols/nil →
+      # :wizard_resource_action (collection). Wizards have no bulk variant.
+      def wizard_action_type_for(element)
+        if element.is_a?(Class) || element.is_a?(Symbol) || element.nil?
+          :wizard_resource_action
+        else
+          :wizard_record_action
         end
       end
 

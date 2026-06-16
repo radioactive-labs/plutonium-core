@@ -13,7 +13,7 @@ module Plutonium
     # concern only adapts that logic to the standalone surface: the `show`/`update`
     # actions, the wizard class carried as a route default, no anchor (portal-level
     # wizards are non-anchored — anchored wizards mount on the resource controller),
-    # and the per-step URL derived from the request path.
+    # and the per-step URL built from the named route helper `register_wizard` draws.
     #
     # Identity (§4): non-anchored / pre-auth flows carry a `token` in a signed
     # cookie (minted on first GET when absent); the cookie is cleared on completion.
@@ -52,14 +52,33 @@ module Plutonium
       end
 
       # Build the GET URL for a given step of this wizard, preserving the
-      # `:token` segment. Derived from the current request path by swapping the
-      # trailing `:step` segment.
+      # `:token` segment. Built through the named route helper that
+      # `register_wizard` draws (resolved from the current engine's route set by
+      # the wizard class, so `at:`/`as:` overrides are honored) — never
+      # string-surgery on `request.path`, so the URL is always a same-host,
+      # route-validated path.
       def wizard_step_url(step_key)
-        step = step_key.to_s
-        current = params[:step].to_s
-        path = request.path
-        base = current.present? ? path.delete_suffix("/#{current}") : path
-        "#{base}/#{step}"
+        url_options = {step: step_key}
+        url_options[:token] = params[:token] if params[:token].present?
+        current_engine.routes.url_helpers.public_send(wizard_step_url_helper, **url_options)
+      end
+
+      # The `<name>_wizard_path` helper for this wizard's standalone mount. Found
+      # by the GET route `register_wizard` draws (named `:"#{helper}_wizard"`,
+      # carrying the `wizard_class` route default) so the lookup tracks the actual
+      # `at:`/`as:` used at registration rather than re-deriving a slug.
+      def wizard_step_url_helper
+        @wizard_step_url_helper ||= begin
+          route = current_engine.routes.routes.find do |r|
+            d = r.defaults
+            r.name.present? &&
+              d[:action].to_s == "show" &&
+              d[:wizard_class].to_s == current_wizard_class.name
+          end
+          raise "no register_wizard route found for #{current_wizard_class.name}" unless route
+
+          :"#{route.name}_path"
+        end
       end
     end
   end

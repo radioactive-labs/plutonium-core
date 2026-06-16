@@ -36,7 +36,7 @@ module Plutonium
         authorize_wizard_entry!(runner)
 
         if (target = wizard_redirect_step)
-          return redirect_to wizard_step_url(target), status: :see_other
+          return redirect_to wizard_step_url(target), status: :see_other, allow_other_host: false
         end
 
         # Honor a direct GET to a specific (visited/visible) step — stepper jumps
@@ -63,7 +63,7 @@ module Plutonium
             runner.back
           when "cancel"
             runner.cancel
-            return redirect_to wizard_exit_url, status: :see_other
+            return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
           else
             advance_or_finalize(runner)
           end
@@ -93,11 +93,11 @@ module Plutonium
         end
 
         if (target = result.redirect_step)
-          return redirect_to wizard_step_url(target), status: :see_other
+          return redirect_to wizard_step_url(target), status: :see_other, allow_other_host: false
         end
 
         if result.ok?
-          redirect_to wizard_step_url(runner.current_step&.key), status: :see_other
+          redirect_to wizard_step_url(runner.current_step&.key), status: :see_other, allow_other_host: false
         else
           @wizard_errors = result.errors
           render_wizard_step(runner, status: :unprocessable_content)
@@ -111,7 +111,7 @@ module Plutonium
       def complete_wizard!(result)
         cookies.delete(Plutonium::Wizard::Driving.token_cookie_key(current_wizard_class))
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
-        redirect_to target, status: :see_other
+        redirect_to target, status: :see_other, allow_other_host: false
       end
 
       # --- rendering ---

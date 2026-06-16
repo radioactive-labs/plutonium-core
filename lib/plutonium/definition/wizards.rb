@@ -97,17 +97,9 @@ module Plutonium
             first_step = wizard_class.steps.first&.key
 
             if is_record
-              resource_url_for(
-                subject,
-                action: :wizard_record_action,
-                wizard_name:, step: first_step
-              )
+              resource_url_for(subject, wizard: wizard_name, step: first_step)
             else
-              resource_url_for(
-                resource_class,
-                action: :wizard_resource_action,
-                wizard_name:, step: first_step
-              )
+              resource_url_for(resource_class, wizard: wizard_name, step: first_step)
             end
           end
         end

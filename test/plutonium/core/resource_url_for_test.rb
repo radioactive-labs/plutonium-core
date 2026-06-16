@@ -647,6 +647,46 @@ class Plutonium::Core::ResourceUrlForTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # `wizard:` convenience kwarg (sugar over `action:` + `wizard_name:`), mirroring
+  # `interaction:`. Records → member (wizard_record_action), classes → collection
+  # (wizard_resource_action). `step:`/`token:` flow through as URL params.
+
+  test "wizard: top-level record (instance) generates member wizard URL" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, @post, wizard: :configure, step: :branding)
+    assert_match %r{/admin/blogging/posts/#{@post.id}/wizards/configure/branding$}, url
+  end
+
+  test "wizard: top-level record carries the token segment when given" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, @post, wizard: :configure, step: :branding, token: "abc123")
+    assert_match %r{/admin/blogging/posts/#{@post.id}/wizards/configure/abc123/branding$}, url
+  end
+
+  test "wizard: top-level resource (class) generates collection wizard URL" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    url = controller.send(:resource_url_for, Blogging::Post, wizard: :onboard, step: :first)
+    assert_match %r{/admin/blogging/posts/wizards/onboard/first$}, url
+  end
+
+  test "wizard: entity-scoped top-level record" do
+    login_as_user
+    get "/org/#{@org.to_param}/widgets"
+    url = controller.send(:resource_url_for, @widget, wizard: :configure, step: :branding)
+    assert_match %r{/org/#{@org.to_param}/widgets/#{@widget.id}/wizards/configure/branding$}, url
+  end
+
+  test "wizard: passing both wizard: and action: raises ArgumentError" do
+    login_as_admin
+    get "/admin/blogging/posts"
+    assert_raises(ArgumentError) do
+      controller.send(:resource_url_for, @post, wizard: :configure, action: :edit)
+    end
+  end
+
   # Top-level URL when entity-scoped singular resource creates ambiguous routes
   # When Organization is registered as singular: true and has_many :widgets,
   # both /:org_scope/widgets/:id and /:org_scope/organization/nested_widgets/:id exist.
