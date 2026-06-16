@@ -24,7 +24,8 @@
 #     on_submit { ... }          OPTIONAL per-step write hook (save-as-you-go)
 #       persist record           inside on_submit: register record(s) → persisted[:key]
 #       fail!("msg")             abort the step with an error (sugar over StepError)
-#     on_rollback { ... }        how to undo this step on cancel/abandonment
+#     on_rollback { ... }        OPTIONAL extra cleanup of untracked side effects on cancel/abandon
+#                                (persist'd records are ALWAYS destroyed by the engine regardless)
 #   review label:                terminal step: auto-summary + gated Finish
 #   def execute                  at-end hook; returns succeed(...) / failed(...) (an Outcome)
 #   data.<field>                 typed, dot-accessible snapshot of everything entered so far
@@ -133,9 +134,11 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
       persist Billing.create!(company: anchor, token: data.card_token, charge_id: charge.id)
     end
 
-    # How to undo this step if the wizard is cancelled/abandoned.
-    # (Omit it and the engine just destroys the tracked record by default.)
-    on_rollback { persisted[:billing].destroy! }
+    # ADDITIONAL cleanup if the wizard is cancelled/abandoned. The engine ALWAYS
+    # destroys the persisted Billing record on rollback — on_rollback is only for
+    # side effects the engine can't see (here: refunding the external charge). It
+    # runs BEFORE the destroy, so `persisted[:billing]` is still alive to read.
+    on_rollback { PaymentApi.refund!(persisted[:billing].charge_id) }
   end
 
   def execute

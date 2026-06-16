@@ -36,11 +36,38 @@ module Plutonium
         def execute = succeed(:done)
       end
 
+      # A custom `on_rollback` performs an ADDITIONAL side effect (recorded here by
+      # writing the persisted record's name into a class-level sink). The engine
+      # STILL destroys the persisted record afterwards — on_rollback is additive,
+      # not a replacement for the destroy.
       class RollbackCustom < Plutonium::Wizard::Base
+        @side_effects = []
+        class << self
+          attr_reader :side_effects
+        end
+
         step(:make) do
           attribute :name, :string
           on_submit { persist Organization.create!(name: data.name) }
-          on_rollback { persisted[:make].each { |r| r.update!(name: "rolled-back") } }
+          on_rollback { persisted[:make].each { |r| RollbackCustom.side_effects << r.name } }
+        end
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
+      # A side-effect-only step: `on_submit` registers NO record but has an
+      # `on_rollback` that must still run on cleanup (e.g. to undo an API call).
+      class SideEffectOnly < Plutonium::Wizard::Base
+        @rolled_back = false
+        class << self
+          attr_accessor :rolled_back
+        end
+
+        step(:make) do
+          attribute :name, :string
+          on_submit {} # no persist — pure side effect elsewhere
+          on_rollback { SideEffectOnly.rolled_back = true }
         end
         review label: "R"
 
@@ -127,8 +154,14 @@ module Plutonium
       end
 
       # Same shape as BranchPersist but `b` declares a custom on_rollback that
-      # soft-deletes (renames) instead of destroying.
+      # performs an ADDITIONAL side effect (recorded in a sink). The engine still
+      # destroys the persisted record afterwards.
       class BranchPersistRollback < Plutonium::Wizard::Base
+        @side_effects = []
+        class << self
+          attr_reader :side_effects
+        end
+
         step(:a) do
           attribute :path, :string
           validates :path, presence: true
@@ -136,7 +169,7 @@ module Plutonium
         step(:b, condition: -> { data.path == "x" }) do
           attribute :note, :string
           on_submit { persist Organization.create!(name: "b-record") }
-          on_rollback { persisted[:b].each { |r| r.update!(name: "rolled-back") } }
+          on_rollback { persisted[:b].each { |r| BranchPersistRollback.side_effects << r.id } }
         end
         step(:c) { attribute :tail, :string }
         review label: "R"
@@ -147,6 +180,9 @@ module Plutonium
       setup do
         Plutonium::Wizard::Session.delete_all
         Organization.delete_all if defined?(Organization)
+        RollbackCustom.side_effects.clear
+        BranchPersistRollback.side_effects.clear
+        SideEffectOnly.rolled_back = false
         @store = Plutonium::Wizard::Store::Memory.new
         @runner = build_runner(W)
       end
@@ -291,12 +327,23 @@ module Plutonium
         assert_nil @store.read("k")
       end
 
-      test "cancel runs custom on_rollback when present" do
+      test "cancel runs custom on_rollback AND still destroys the record" do
         runner = build_runner(RollbackCustom)
         runner.advance(:make, {"name" => "Acme"})
         org = Organization.find_by!(name: "Acme")
         runner.cancel
-        assert_equal "rolled-back", org.reload.name # on_rollback ran instead of destroy
+        # on_rollback ran (additive side effect) ...
+        assert_equal ["Acme"], RollbackCustom.side_effects
+        # ... AND the engine still destroyed the tracked record.
+        refute Organization.exists?(id: org.id), "persist'd record is always destroyed"
+        assert_nil @store.read("k")
+      end
+
+      test "cancel runs a side-effect-only step's on_rollback (no persisted record)" do
+        runner = build_runner(SideEffectOnly)
+        runner.advance(:make, {"name" => "Acme"})
+        runner.cancel
+        assert SideEffectOnly.rolled_back, "on_rollback must run even with no persisted record"
         assert_nil @store.read("k")
       end
 
@@ -419,7 +466,7 @@ module Plutonium
         refute_includes state.visited, "b", "b must be removed from visited"
       end
 
-      test "advance that hides a persisted step runs its custom on_rollback" do
+      test "advance that hides a persisted step runs its custom on_rollback AND destroys" do
         runner = build_runner(BranchPersistRollback)
         runner.advance(:a, {"path" => "x"})
         build_runner(BranchPersistRollback).advance(:b, {"note" => "hi"})
@@ -427,8 +474,10 @@ module Plutonium
 
         build_runner(BranchPersistRollback).advance(:a, {"path" => "y"})
 
-        assert Organization.exists?(id: org.id), "on_rollback soft-deletes; record survives"
-        assert_equal "rolled-back", org.reload.name, "custom on_rollback ran instead of destroy"
+        # on_rollback ran (additive side effect saw the live record) ...
+        assert_equal [org.id], BranchPersistRollback.side_effects
+        # ... AND the engine still destroyed the persisted record.
+        refute Organization.exists?(id: org.id), "persist'd record is always destroyed on prune"
         refute @store.read("k").persisted.key?("b")
       end
 

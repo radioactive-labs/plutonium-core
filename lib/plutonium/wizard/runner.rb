@@ -177,9 +177,10 @@ module Plutonium
         Result.new(ok: true)
       end
 
-      # Abandon the flow: run cleanup (`on_rollback`/destroy tracked records, in
-      # reverse step order) BEFORE clearing the row — `clear` is a `delete_all`
-      # with no callbacks, so compensation must happen first (§2.3).
+      # Abandon the flow: run cleanup (each step's `on_rollback`, then always
+      # destroy its tracked records, in reverse step order) BEFORE clearing the
+      # row — `clear` is a `delete_all` with no callbacks, so compensation must
+      # happen first (§2.3).
       def cancel
         run_cleanup
         @store.clear(@instance_key)
@@ -347,8 +348,8 @@ module Plutonium
         @wizard.persisted[step.key.to_sym] = tracker.records
       end
 
-      # Reverse-order cleanup of every step's tracked records (§2.3): the step's
-      # `on_rollback` if it has one (with `persisted` populated), else destroy.
+      # Reverse-order cleanup of every step's tracked records (§2.3): run each
+      # step's `on_rollback` (if any) then always destroy its tracked records.
       def run_cleanup
         ActiveRecord::Base.transaction do
           @wizard_class.steps.reverse_each { |step| rollback_step(step) }
@@ -356,22 +357,28 @@ module Plutonium
       end
 
       # Per-step rollback (§2.3), shared by `run_cleanup` (cancel/sweep) and the
-      # branch-hidden prune path (§6.3). Locates the step's tracked records,
-      # populates `wizard.persisted[step]` so an `on_rollback` block can read them,
-      # then runs that block — or, with no block, destroys the records in reverse
-      # order. A no-op when the step tracked nothing (so a step never persisted to
-      # issues no locate beyond the single `located_records` probe). Callers wrap
-      # this in a transaction so the compensating writes are atomic.
+      # branch-hidden prune path (§6.3). `persist`'d records are ALWAYS destroyed
+      # by the engine; `on_rollback` is an OPTIONAL hook for ADDITIONAL cleanup of
+      # untracked side effects (refund a charge, call an external API), run while
+      # the records are still alive so it can read `persisted[step]`.
+      #
+      # Order: locate the step's tracked records and populate `wizard.persisted`,
+      # run the user's `on_rollback` FIRST (records still alive — e.g. to read a
+      # `charge_id` to refund), THEN destroy the records in reverse order via
+      # `destroy!` (which respects a model's own soft-delete/paranoia override).
+      #
+      # A no-op only when the step tracked nothing AND has no `on_rollback` (so a
+      # step never persisted to and with no compensator issues no locate beyond
+      # the single `located_records` probe). A side-effect-only step (an
+      # `on_rollback` but no persisted records) still runs its `on_rollback`.
+      # Callers wrap this in a transaction so the compensating writes are atomic.
       def rollback_step(step)
         records = located_records(step)
-        return if records.empty?
+        return if records.empty? && step.on_rollback.nil?
 
         @wizard.persisted[step.key.to_sym] = records
-        if step.on_rollback
-          @wizard.instance_exec(&step.on_rollback)
-        else
-          records.reverse_each(&:destroy!)
-        end
+        @wizard.instance_exec(&step.on_rollback) if step.on_rollback
+        records.reverse_each(&:destroy!)
       end
 
       def located_records(step)
@@ -403,8 +410,9 @@ module Plutonium
       # `on_submit` may have persisted records; when a later answer hides that step
       # those records would otherwise be orphaned (`prune_hidden` only slices the
       # working-copy `data`, it never rolls records back). For each departed step we
-      # roll its records back (`rollback_step` — `on_rollback`/destroy), clear its
-      # persisted/data/visited state, then persist so the cleared state is durable.
+      # roll its records back (`rollback_step` — the step's `on_rollback` then the
+      # engine's destroy), clear its persisted/data/visited state, then persist so
+      # the cleared state is durable.
       #
       # Only departed steps that actually hold something are touched — a step never
       # persisted to and with no staged data issues no locate (we don't probe the

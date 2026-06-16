@@ -134,13 +134,16 @@ The wizard never advances past a failed `on_submit`. Earlier committed steps are
 
 ### `on_rollback`
 
-The compensating block run on Cancel, abandonment-sweep, **or when this step becomes branch-hidden** (a later answer flips its `condition:` false, so save-as-you-go records it created would otherwise be orphaned). Reads `persisted[...]`. Omitted, the engine destroys the tracked record(s) in reverse step order. When a step is pruned this way its `data` / `persisted` / `visited` state is also cleared, so re-entering that branch re-runs `on_submit` from scratch.
+On any rollback — Cancel, abandonment-sweep, **or when this step becomes branch-hidden** (a later answer flips its `condition:` false, so save-as-you-go records it created would otherwise be orphaned) — the engine **always** destroys every `persist`'d record in reverse step order via `destroy!` (which respects a model's own soft-delete/paranoia override). When a step is pruned this way its `data` / `persisted` / `visited` state is also cleared, so re-entering that branch re-runs `on_submit` from scratch.
+
+`on_rollback` is an **optional, ADDITIONAL** compensating block for side effects the engine can't see — refunding a charge, calling an external API, deleting something `persist` didn't track. It reads `persisted[...]` and runs **before** the engine's destroy (records still alive), **in addition to** it — never instead of it. Don't destroy the `persist`'d record yourself in the block; the engine does that.
 
 ```ruby
-on_rollback { persisted[:billing].destroy! }
+# The engine destroys persisted[:billing] for you; this just refunds the charge.
+on_rollback { PaymentApi.refund!(persisted[:billing].charge_id) }
 ```
 
-Supply a custom `on_rollback` when undo needs more than a destroy (refund a charge, detach instead of delete), or when `on_submit` registered no record (side-effect-only steps).
+Supply an `on_rollback` when abandonment must do more than drop the record(s) — refund a charge, call an external API — or when `on_submit` registered no record at all (side-effect-only steps, whose `on_rollback` still runs). To *keep* a partial record rather than destroy it, make the model itself soft-delete (so its `destroy!` detaches) or use `cleanup_after :never`.
 
 ## `review`
 

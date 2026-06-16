@@ -6,8 +6,9 @@ module Plutonium
   module Wizard
     # Exercises the abandonment sweep (§8.1) against the real AR store + table.
     # An idle in_progress/completing row past its expires_at must be reaped:
-    # the wizard's cleanup (on_rollback/destroy of tracked records) runs, then the
-    # row is deleted. Completed rows and rows with a null expires_at are never swept.
+    # the wizard's cleanup (each step's on_rollback, then always destroy of tracked
+    # records) runs, then the row is deleted. Completed rows and rows with a null
+    # expires_at are never swept.
     class SweepJobTest < ActiveSupport::TestCase
       # A save-as-you-go wizard whose on_submit creates a real, GlobalID-able record.
       # Default cleanup destroys it; this is the partial domain record the sweep
@@ -22,13 +23,19 @@ module Plutonium
         def execute = succeed(:done)
       end
 
-      # Custom on_rollback (soft-delete style) — proves the sweep runs the wizard's
-      # compensating block, not a blind destroy.
+      # Custom on_rollback that performs an ADDITIONAL side effect — proves the
+      # sweep runs the wizard's compensating block AND still destroys the tracked
+      # record (on_rollback is additive, not a replacement for the destroy).
       class CustomRollback < Plutonium::Wizard::Base
+        @side_effects = []
+        class << self
+          attr_reader :side_effects
+        end
+
         step(:make) do
           attribute :name, :string
           on_submit { persist Organization.create!(name: data.name) }
-          on_rollback { persisted[:make].each { |r| r.update!(name: "swept") } }
+          on_rollback { persisted[:make].each { |r| CustomRollback.side_effects << r.name } }
         end
         review label: "R"
 
@@ -38,6 +45,7 @@ module Plutonium
       setup do
         Plutonium::Wizard::Session.delete_all
         Organization.delete_all
+        CustomRollback.side_effects.clear
         @store = Plutonium::Wizard::Store::ActiveRecord.new
       end
 
@@ -64,13 +72,15 @@ module Plutonium
         refute Plutonium::Wizard::Session.exists?(instance_key: "expired"), "swept row must be gone"
       end
 
-      test "sweep runs the wizard's custom on_rollback instead of a blind destroy" do
+      test "sweep runs the wizard's custom on_rollback AND still destroys the record" do
         org = stage_persisting(CustomRollback, key: "soft", name: "Acme", expires_at: 1.hour.ago)
 
         Plutonium::Wizard::SweepJob.perform_now
 
-        assert Organization.exists?(org.id), "custom on_rollback should not destroy the record"
-        assert_equal "swept", org.reload.name
+        # on_rollback ran (additive side effect saw the live record) ...
+        assert_equal ["Acme"], CustomRollback.side_effects
+        # ... AND the engine still destroyed the tracked record.
+        refute Organization.exists?(org.id), "persist'd record is always destroyed on sweep"
         refute Plutonium::Wizard::Session.exists?(instance_key: "soft")
       end
 

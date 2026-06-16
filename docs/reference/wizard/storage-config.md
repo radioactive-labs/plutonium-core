@@ -90,7 +90,7 @@ File uploads can't sit in the JSON column. Use ActiveStorage direct upload (the 
 
 `cleanup_after` stamps a concrete `expires_at` (`now + ttl`) on every write, so an actively-progressing wizard keeps pushing its expiry forward. A later change to the wizard's TTL never retroactively shifts existing rows. `cleanup_after :never` stores a null `expires_at`, opting out of sweeping (partial records persist by design).
 
-`Plutonium::Wizard::SweepJob` reaps idle `in_progress` / `completing` rows past `expires_at`: for each it runs the wizard's cleanup (`on_rollback`, or the default destroy of every tracked record, in reverse order) and deletes the row. Completed rows are never touched. The job is idempotent and safe to re-run.
+`Plutonium::Wizard::SweepJob` reaps idle `in_progress` / `completing` rows past `expires_at`: for each it runs the wizard's cleanup (each step's `on_rollback` if declared, then always destroy every tracked record, in reverse order) and deletes the row. Completed rows are never touched. The job is idempotent and safe to re-run.
 
 ### SweepJob is load-bearing for save-as-you-go
 

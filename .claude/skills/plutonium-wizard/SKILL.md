@@ -165,9 +165,14 @@ step :billing, label: "Billing" do
     persist Billing.create!(company: anchor, token: data.card_token)   # → persisted[:billing]
   end
 
-  on_rollback { persisted[:billing].destroy! }   # undo on Cancel/sweep; omit → default destroy
+  # on_rollback = ADDITIONAL cleanup of UNTRACKED side effects (refund/external API).
+  # The engine ALWAYS destroys persisted[:billing] itself; this runs BEFORE that
+  # destroy (record still alive). Don't destroy the persist'd record here.
+  on_rollback { PaymentApi.refund!(persisted[:billing].charge_id) }
 end
 ```
+
+**`persist` always cleans up.** On any rollback (Cancel, sweep, branch-prune) the engine **always** destroys every `persist`'d record via `destroy!` (respects a model's soft-delete override). `on_rollback` is **optional, additive** — it compensates side effects the engine can't see, runs **before** the destroy, and a side-effect-only step (no `persist`) still runs its `on_rollback`. To keep a partial record, make the model soft-delete or use `cleanup_after :never`.
 
 `on_submit` is not atomic across steps (HTTP), which is why `cleanup_after` + `SweepJob` exist.
 

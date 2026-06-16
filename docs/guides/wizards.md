@@ -203,9 +203,11 @@ class ConfigureCompanyWizard < Plutonium::Wizard::Base
       persist Billing.create!(company: anchor, token: data.card_token, charge_id: charge.id)
     end
 
-    # How to undo this step on Cancel/abandonment. Omit it and the engine just
-    # destroys the tracked record(s).
-    on_rollback { persisted[:billing].destroy! }
+    # ADDITIONAL cleanup on Cancel/abandonment. The engine ALWAYS destroys the
+    # persist'd Billing record — on_rollback is only for side effects it can't see
+    # (here, refunding the external charge). It runs BEFORE the destroy, so
+    # persisted[:billing] is still alive to read.
+    on_rollback { PaymentApi.refund!(persisted[:billing].charge_id) }
   end
 
   def execute
@@ -217,7 +219,7 @@ end
 
 - `on_submit` runs in its own transaction when the step completes. Inside it, `persist record` registers record(s) the engine tracks for resume and cleanup — reachable later as `persisted[:step_key]`.
 - `fail!("msg")` aborts the step with a base (form-level) error; `fail!(:field, "msg")` attaches it to a field. Both roll back the step's transaction and re-render with input intact.
-- `on_rollback` is the compensating block run on Cancel or abandonment-sweep. Omitted, the engine destroys the tracked records (reverse order).
+- The engine **always** destroys every `persist`'d record on rollback (Cancel, abandonment-sweep, branch-prune), in reverse order, via `destroy!` (which respects a model's own soft-delete override). `on_rollback` is an **optional, additive** compensating block for side effects the engine can't see — refund a charge, call an external API — and runs **before** the destroy, so `persisted[:key]` is still alive inside it. Don't destroy the tracked record yourself; the engine does.
 - Because `on_submit` writes mid-flow, it isn't atomic across steps — that's why `cleanup_after` + the SweepJob exist. See [Storage & config](/reference/wizard/storage-config) and the [DSL reference](/reference/wizard/dsl#per-step-hooks).
 
 ## Anchored wizards
