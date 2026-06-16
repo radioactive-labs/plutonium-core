@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 #
 # Sample wizards illustrating the Plutonium::Wizard DSL.
 # Companion to docs/superpowers/specs/2026-06-15-wizard-dsl-design.md.
