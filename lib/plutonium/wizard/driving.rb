@@ -34,6 +34,25 @@ module Plutonium
 
       private
 
+      # GET the bare mount (no :step) — the canonical launch. Resolve the run (mint
+      # the per-run token for a tokened wizard, or resolve the keyed/guest identity),
+      # then PRG to its entry step — the resumed cursor for an in-progress keyed/guest
+      # run, else the first visible step. The redirect URL carries the token, so the
+      # address bar shows a stable, shareable run URL from the first paint (no more
+      # "token appears only after the first submit", and no fork-on-reload).
+      def wizard_launch
+        require_wizard_authentication!
+        runner = build_wizard_runner
+        deny_wizard_resume_for_other_user!(runner)
+        authorize_wizard_entry!(runner)
+
+        if runner.completed_one_time?
+          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+        end
+
+        redirect_to wizard_step_url(runner.current_step&.key), status: :see_other, allow_other_host: false
+      end
+
       # GET .../:step — render the current step (or bounce on a completeness gap).
       def wizard_show
         require_wizard_authentication!

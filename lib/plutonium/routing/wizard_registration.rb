@@ -80,6 +80,11 @@ module Plutonium
         defaults = {wizard_class: wizard_class.name}
 
         scope path: at do
+          # Canonical launch: GET the bare mount → resolve/mint the run and PRG to
+          # its first (or resumed) step, with the token already in the URL. This is
+          # the shareable entry point; `wizard_step_url` builds the stepped URLs.
+          get "/", to: "#{WIZARD_CONTROLLER_NAME}#launch",
+            as: :"#{helper_name}_wizard_launch", defaults: defaults
           get "(/:token)/:step", to: "#{WIZARD_CONTROLLER_NAME}#show",
             as: :"#{helper_name}_wizard", defaults: defaults
           post "(/:token)/:step", to: "#{WIZARD_CONTROLLER_NAME}#update",
@@ -117,6 +122,8 @@ module Plutonium
 
         Rails.application.routes.append do
           scope path: mount_path do
+            get "/", to: "wizards#launch",
+              as: :"#{helper_name}_wizard_launch", defaults: defaults
             get "(/:token)/:step", to: "wizards#show",
               as: :"#{helper_name}_wizard", defaults: defaults
             post "(/:token)/:step", to: "wizards#update",

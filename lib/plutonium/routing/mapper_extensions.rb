@@ -194,6 +194,9 @@ module Plutonium
       # @return [void]
       def define_member_wizard_actions
         member do
+          # Bare launch (no :step): resolve/mint the run and redirect to its step.
+          get "wizards/:wizard_name", action: :launch_wizard_record_action,
+            as: :launch_wizard_record_action
           get "wizards/:wizard_name(/:token)/:step", action: :wizard_record_action,
             as: :wizard_record_action
           post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_record_action,
@@ -209,6 +212,9 @@ module Plutonium
       # @return [void]
       def define_collection_wizard_actions
         collection do
+          # Bare launch (no :step): resolve/mint the run and redirect to its step.
+          get "wizards/:wizard_name", action: :launch_wizard_resource_action,
+            as: :launch_wizard_resource_action
           get "wizards/:wizard_name(/:token)/:step", action: :wizard_resource_action,
             as: :wizard_resource_action
           post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_resource_action,

@@ -25,6 +25,11 @@ module Plutonium
       extend ActiveSupport::Concern
       include Plutonium::Wizard::Driving
 
+      # GET the bare mount — resolve/mint the run and redirect to its step.
+      def launch
+        wizard_launch
+      end
+
       # GET .../:step — render the current step.
       def show
         wizard_show

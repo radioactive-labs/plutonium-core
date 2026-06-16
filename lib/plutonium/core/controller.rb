@@ -140,7 +140,7 @@ module Plutonium
 
         if wizard
           raise ArgumentError, "cannot pass both `wizard:` and `action:`" if action
-          action = wizard_action_type_for(element)
+          action = wizard_action_type_for(element, step: kwargs[:step])
           kwargs[:wizard_name] = wizard
         end
 
@@ -200,14 +200,16 @@ module Plutonium
         end
       end
 
-      # Determine the wizard launch action type for the given element.
-      # Records → :wizard_record_action (member), classes/symbols/nil →
-      # :wizard_resource_action (collection). Wizards have no bulk variant.
-      def wizard_action_type_for(element)
-        if element.is_a?(Class) || element.is_a?(Symbol) || element.nil?
-          :wizard_resource_action
+      # Determine the wizard action type for the given element. Records → member,
+      # classes/symbols/nil → collection (wizards have no bulk variant). With no
+      # `step:`, target the bare LAUNCH action (which resolves the run and redirects
+      # to its current step); with a `step:`, target the stepped show action.
+      def wizard_action_type_for(element, step: nil)
+        member = !(element.is_a?(Class) || element.is_a?(Symbol) || element.nil?)
+        if step.nil?
+          member ? :launch_wizard_record_action : :launch_wizard_resource_action
         else
-          :wizard_record_action
+          member ? :wizard_record_action : :wizard_resource_action
         end
       end
 

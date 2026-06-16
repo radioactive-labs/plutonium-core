@@ -44,6 +44,15 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   # token so a subsequent direct request stays on that run (not a fresh fork).
   def tbase = @wizard_token ? "#{base}/#{@wizard_token}" : base
 
+  test "GET the bare mount launches: redirects to the first step with a token" do
+    get base
+    assert_response :redirect
+    # Tokened wizard (no concurrency_key) → the redirect carries a freshly-minted
+    # :token segment, landing on the first step. No fork-on-reload: the token is in
+    # the URL from here on.
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
+  end
+
   test "GET first step renders the step form fields" do
     get "#{base}/identity"
     assert_response :success

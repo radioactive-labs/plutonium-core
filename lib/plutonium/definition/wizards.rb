@@ -131,21 +131,20 @@ module Plutonium
         end
 
         # A url_resolver proc (§5.1). Evaluated against the controller with the
-        # subject; builds the wizard's first-step GET URL on the auto-mounted
-        # resource route — the member route for an anchored wizard (id from the
-        # subject), the collection route otherwise. The first step is the entry
-        # point; the controller redirects to the resolved step.
+        # subject; builds the wizard's bare LAUNCH URL on the auto-mounted resource
+        # route — the member route for an anchored wizard (id from the subject), the
+        # collection route otherwise. The launch action resolves the run and
+        # redirects to its current step (the resumed cursor for an in-progress keyed
+        # run, else the first step), with the token already in the URL — so we never
+        # hardcode a step here.
         def wizard_launch_resolver(name, is_record)
           wizard_name = name.to_s
 
           proc do |subject|
-            wizard_class = current_definition.class.registered_wizards.fetch(name.to_sym)[:wizard_class]
-            first_step = wizard_class.steps.first&.key
-
             if is_record
-              resource_url_for(subject, wizard: wizard_name, step: first_step)
+              resource_url_for(subject, wizard: wizard_name)
             else
-              resource_url_for(resource_class, wizard: wizard_name, step: first_step)
+              resource_url_for(resource_class, wizard: wizard_name)
             end
           end
         end

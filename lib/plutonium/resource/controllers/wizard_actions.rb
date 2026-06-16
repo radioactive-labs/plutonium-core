@@ -27,17 +27,31 @@ module Plutonium
 
         included do
           before_action :validate_wizard_action!, only: %i[
+            launch_wizard_record_action launch_wizard_resource_action
             wizard_record_action commit_wizard_record_action
             wizard_resource_action commit_wizard_resource_action
           ]
 
           before_action :authorize_wizard_record_action!, only: %i[
+            launch_wizard_record_action
             wizard_record_action commit_wizard_record_action
           ]
 
           before_action :authorize_wizard_resource_action!, only: %i[
+            launch_wizard_resource_action
             wizard_resource_action commit_wizard_resource_action
           ]
+        end
+
+        # GET /resources/:id/wizards/:wizard_name — resolve the run, redirect to step.
+        def launch_wizard_record_action
+          wizard_launch
+        end
+
+        # GET /resources/wizards/:wizard_name — resolve the run, redirect to step.
+        def launch_wizard_resource_action
+          skip_verify_current_authorized_scope!
+          wizard_launch
         end
 
         # GET /resources/:id/wizards/:wizard_name/(:token)/:step

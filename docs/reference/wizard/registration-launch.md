@@ -30,13 +30,15 @@ end
 
 ```
 # anchored → member route (anchor = the scoped resource_record!)
+GET       /companies/:id/wizards/:wizard_name                 → launch (redirect to step)
 GET/POST  /companies/:id/wizards/:wizard_name(/:token)/:step
 
 # non-anchored → collection route (create flow)
+GET       /companies/wizards/:wizard_name                     → launch (redirect to step)
 GET/POST  /companies/wizards/:wizard_name(/:token)/:step
 ```
 
-The synthesized action's URL resolves the wizard's first-step GET route at render time, on these auto-mounted routes.
+The synthesized launch action points at the **bare** wizard URL (no step). A `GET` there resolves the run — minting the per-run `:token` for a tokened wizard, or resolving the keyed identity — and redirects to its current step: the **resumed cursor** for an in-progress keyed run, else the **first step**, with the token already in the URL. So clicking the launch button resumes where the user left off (rather than jumping back to step 1) and never forks a fresh run on a first-step reload.
 
 ## Portal-level — `register_wizard`
 
@@ -63,9 +65,12 @@ This draws the wizard's step routes within the portal — so they inherit the po
 ### Synthesized routes
 
 ```
+GET  /onboarding                  → launch: resolve/mint the run, redirect to its step
 GET  /onboarding(/:token)/:step   → renders the step
 POST /onboarding(/:token)/:step   → advances (the `_direction` param carries next/back/cancel)
 ```
+
+The bare **`/onboarding`** is the canonical entry point (helper `onboarding_wizard_launch_path`). A `GET` there resolves the run — minting the per-run `:token` for a tokened wizard, or resolving the keyed/guest identity — and `303`-redirects to its entry step: the **resumed cursor** for an in-progress keyed/guest run, else the **first visible step**. Because the redirect target already carries the token, the address bar shows a stable, shareable run URL from the first paint (the token no longer "appears" only after the first submit, and reloading the first step can't fork a second run). Link to `/onboarding` from menus/dashboards; the stepped `/onboarding(/:token)/:step` URLs are built for you by the engine.
 
 `scope_gid` (folded into the instance key) comes from the portal's scoping entity when the portal is entity-scoped.
 

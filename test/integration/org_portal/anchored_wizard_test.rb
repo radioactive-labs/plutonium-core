@@ -34,6 +34,14 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
   def prefix = "/org/#{@org.to_param}"
   def base = "#{prefix}/widgets/#{@widget.id}/wizards/configure"
 
+  test "GET the bare wizard mount launches: redirects to the first step with a token" do
+    get base
+    assert_response :redirect
+    # Tokened anchored wizard → the launch mints the per-run :token and lands on the
+    # first step, so the run URL is stable/shareable from the first paint.
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/rename\z}, URI(response.location).path
+  end
+
   test "GET the first step renders the anchored wizard's step form" do
     get "#{base}/rename"
     assert_response :success
