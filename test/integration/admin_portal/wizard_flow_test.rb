@@ -128,6 +128,10 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     # now on review (all steps complete)
     assert_includes response.body, %(data-wizard-review-step="identity")
     assert_includes response.body, "Acme Inc"          # summarized value
+    # The repeatable `members` step (structured_input) is summarized too, as a
+    # labelled list of its staged rows — not silently dropped.
+    assert_includes response.body, %(data-wizard-review-collection="invites")
+    assert_includes response.body, "a@example.com"
     assert_includes response.body, "Ready to onboard Acme Inc" # custom block
     assert_match(/data-wizard-nav="finish"/, response.body)
     # All steps complete → Finish is NOT disabled.
