@@ -163,6 +163,10 @@ module Plutonium
         raise NotImplementedError, "#{self.class} must implement #execute"
       end
 
+      # Entry authorization (§5.2/§6.5). Authors override it; false → 403. Default
+      # allow — resource-mounted surfaces additionally gate via the action policy.
+      def authorize? = true
+
       private
 
       # Raise a StepError from `on_submit`/`execute` (§6.1).

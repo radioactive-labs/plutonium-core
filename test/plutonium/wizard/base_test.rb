@@ -235,13 +235,16 @@ module Plutonium
         assert ot.one_time?
       end
 
-      def test_on_relaunch_defaults_to_new_and_opts_into_prompt
-        assert_equal :new, CreateCo.on_relaunch
-        refute CreateCo.relaunch_prompt?
+      def test_on_relaunch_defaults_to_prompt_and_opts_out_to_new
+        # A bare relaunch with pending runs preserves the user's in-progress work by
+        # default (the resume-or-new chooser) rather than silently forking a fresh run.
+        assert_equal :prompt, CreateCo.on_relaunch
+        assert CreateCo.relaunch_prompt?
 
-        prompt = Class.new(Plutonium::Wizard::Base) { on_relaunch :prompt }
-        assert_equal :prompt, prompt.on_relaunch
-        assert prompt.relaunch_prompt?
+        # `:new` is the explicit opt-out for wizards that always start fresh.
+        fresh = Class.new(Plutonium::Wizard::Base) { on_relaunch :new }
+        assert_equal :new, fresh.on_relaunch
+        refute fresh.relaunch_prompt?
       end
 
       def test_on_relaunch_is_inherited
@@ -268,6 +271,13 @@ module Plutonium
         child.completed(&other)
         assert_equal other, child.completed_block
         assert_equal block, parent.completed_block
+      end
+
+      def test_authorize_defaults_to_true_and_is_overridable
+        assert CreateCo.new.authorize?, "entry is allowed by default"
+
+        denied = Class.new(Plutonium::Wizard::Base) { def authorize? = false }
+        refute denied.new.authorize?
       end
 
       def test_encrypt_data

@@ -61,6 +61,9 @@ module Plutonium
             steps: @runner.visible_path,
             current: @runner.current_step,
             visited: @runner.visited_keys,
+            # Actually-complete (submitted + valid) steps drive the done-check —
+            # `visited` alone would mark a reached-but-unsubmitted branch step done.
+            complete: @runner.visible_path.reject(&:review?).select { |s| @runner.step_complete?(s) }.map { |s| s.key.to_s },
             navigation: @runner.wizard.class.navigation,
             step_url: method(:url_for_step)
           )

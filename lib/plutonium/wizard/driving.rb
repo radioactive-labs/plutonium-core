@@ -130,7 +130,17 @@ module Plutonium
         # extract this submission through the wrong step's form: the edited fields
         # are silently dropped and the stored-cursor step's fields leak in. The step
         # carried in the URL is the one being submitted, so make it current.
-        runner.go_to(params[:step])
+        #
+        # `go_to` returns false when that step is NOT reachable for this run — a
+        # branch-hidden step, or a forward jump to an unvisited step. A forged or
+        # stale POST to such a step must be REFUSED here: otherwise `advance` would
+        # look the step up across the whole declaration list and validate/stage/run
+        # its `on_submit` for a step the user can't see (the branch-prune only
+        # compensates `persist`ed records, never raw side effects). PRG back to the
+        # run's actual current step instead of processing the submission.
+        unless runner.go_to(params[:step])
+          return redirect_to wizard_step_url(runner.current_step&.key), status: :see_other, allow_other_host: false
+        end
 
         if params[:pre_submit]
           return render_wizard_pre_submit(runner)
@@ -418,7 +428,6 @@ module Plutonium
       # both surfaces.
       def authorize_wizard_entry!(runner)
         wizard = runner.wizard
-        return unless wizard.respond_to?(:authorize?)
         return if wizard.authorize?
 
         raise ActionPolicy::Unauthorized.new(wizard.class, :authorize?)

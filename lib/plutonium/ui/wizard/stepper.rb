@@ -15,13 +15,17 @@ module Plutonium
       class Stepper < Plutonium::UI::Component::Base
         # @param steps     [Array<Step>] the visible path.
         # @param current   [Step] the current step.
-        # @param visited   [Array<String>] visited step keys.
+        # @param visited   [Array<String>] visited (reached) step keys.
+        # @param complete  [Array<String>] keys of steps that are actually complete
+        #   (submitted AND valid) — distinct from `visited`. A step can be reached
+        #   (e.g. the cursor landed on a branch step) without being completed.
         # @param navigation [Symbol] :linear or :free.
         # @param step_url   [Proc] step_key → GET url.
-        def initialize(steps:, current:, visited:, navigation:, step_url:)
+        def initialize(steps:, current:, visited:, navigation:, step_url:, complete: [])
           @steps = steps
           @current = current
           @visited = visited.map(&:to_s)
+          @complete = complete.map(&:to_s).to_set
           @navigation = navigation
           @step_url = step_url
         end
@@ -81,9 +85,19 @@ module Plutonium
           render Phlex::TablerIcons::Flag.new(class: "pu-step-flag w-4 h-4")
         end
 
+        # A step's visual state. `:completed` (the done-check) means actually
+        # complete — submitted AND valid — NOT merely reached: a branch step the
+        # cursor landed on but that was never submitted (or is now invalid) is
+        # `:incomplete`, so the rail never claims a step is done when the review
+        # still lists it under "needs attention". The terminal review node is the
+        # finish flag, so it reads `:completed` once reached (its check is suppressed
+        # by `data-terminal`).
         def step_state(step)
           return :current if step.key.to_s == @current&.key.to_s
-          return :completed if @visited.include?(step.key.to_s)
+          if @visited.include?(step.key.to_s)
+            return :completed if step.review? || @complete.include?(step.key.to_s)
+            return :incomplete
+          end
           :upcoming
         end
 

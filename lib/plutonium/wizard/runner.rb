@@ -193,12 +193,19 @@ module Plutonium
       # allowed (§7). The review step is reachable once it's the visible terminal.
       # No persistence: a GET must not mutate stored state; the cursor move lives
       # for this request so the right step renders seeded from staged data.
+      #
+      # Returns true when the requested step is the legitimate current step for this
+      # request — already current, or reachable and now aligned — and false when it
+      # is not reachable (blank, branch-hidden, or a forward jump to an unvisited
+      # step). The driving layer uses this confirmation to abort a POST that targets
+      # an unreachable step BEFORE it validates/stages/runs the step's on_submit, so
+      # a forged or stale submission can't drive a step the user can't see.
       def go_to(step_key)
-        return if step_key.blank?
+        return false if step_key.blank?
 
         target = visible_path.find { |s| s.key.to_s == step_key.to_s }
-        return unless target
-        return if target.key.to_s == @state.current_step.to_s
+        return false unless target
+        return true if target.key.to_s == @state.current_step.to_s
 
         # The review step is reachable once the user has started the flow (visited
         # at least one step): it shows the auto-summary, the outstanding "fix this"
@@ -206,7 +213,10 @@ module Plutonium
         # the actual finalize POST re-checks completeness regardless. Other steps
         # are reachable only once visited (no forward jumps to unvisited steps).
         reachable = target.review? ? visited_keys.any? : visited_keys.include?(target.key.to_s)
-        @state.current_step = target.key.to_s if reachable
+        return false unless reachable
+
+        @state.current_step = target.key.to_s
+        true
       end
 
       # Move the cursor to the previous visible step. No validation; never discards
@@ -307,7 +317,11 @@ module Plutonium
         # `data` is nested ({step_key => {field => value}}); deep-merge so a
         # concurrent step's fields aren't clobbered by a shallow top-level merge.
         existing.data = existing.data.deep_merge(@state.data)
-        existing.persisted = existing.persisted.merge(@state.persisted)
+        # `persisted` is {step_key => [gids]}; UNION the lists per step. A shallow
+        # `merge` would replace the winner's GID list with ours for a shared step
+        # key (both raced first-step on_submits), orphaning the winner's records
+        # (no longer tracked for rollback/sweep). Union keeps both sides tracked.
+        existing.persisted = existing.persisted.merge(@state.persisted) { |_key, a, b| a | b }
         existing.visited |= @state.visited
         existing.current_step = @state.current_step
         @state = existing

@@ -183,6 +183,10 @@ export default class extends Controller {
   async #onLeaveClick(event) {
     const trigger = event.target.closest("[data-dirty-form-guard-leave]");
     if (!trigger) return;
+    // The document listener fires for every guarded form on the page. A leave
+    // control discards exactly one form — the one it bypasses — so only that
+    // form's instance responds; otherwise unrelated forms would double-prompt.
+    if (this.#guardedFormFor(trigger) !== this.element) return;
     if (this.forceClose || this.submitting) return;
     if (!this.#isDirty()) return;
 
@@ -198,6 +202,35 @@ export default class extends Controller {
     // Approved — let the original navigation through without re-prompting.
     this.forceClose = true;
     trigger.closest("form")?.requestSubmit();
+  }
+
+  // The single guarded form a leave control discards: the one containing it, or —
+  // for a control outside any form (a wizard's sibling nav strip) — the closest
+  // `form.dirty-form-guard`, i.e. the one sharing the deepest common ancestor with
+  // the trigger. Returns the only guarded form on simple pages.
+  #guardedFormFor(trigger) {
+    const inside = trigger.closest("form.dirty-form-guard");
+    if (inside) return inside;
+
+    let best = null;
+    let bestDepth = -1;
+    document.querySelectorAll("form.dirty-form-guard").forEach((form) => {
+      let ancestor = form;
+      while (ancestor && !ancestor.contains(trigger)) ancestor = ancestor.parentElement;
+      if (!ancestor) return;
+      const depth = this.#depthOf(ancestor);
+      if (depth > bestDepth) {
+        bestDepth = depth;
+        best = form;
+      }
+    });
+    return best;
+  }
+
+  #depthOf(node) {
+    let depth = 0;
+    while ((node = node.parentElement)) depth++;
+    return depth;
   }
 
   // Defer to the themed Turbo confirm dialog the app installs as the global

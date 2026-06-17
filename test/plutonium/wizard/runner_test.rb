@@ -213,6 +213,42 @@ module Plutonium
         assert_kind_of W, @runner.wizard
       end
 
+      # ---- go_to returns whether the cursor is aligned to the requested step ----
+      # The driving layer relies on this confirmation: a POST whose target step is
+      # not reachable (branch-hidden, or a forward jump to an unvisited step) must
+      # be aborted before it validates/stages/runs on_submit, instead of silently
+      # processing a step the user can't see.
+
+      test "go_to returns true when already on the target step" do
+        # fresh W: the cursor sits on :a, the first visible step
+        assert_equal true, @runner.go_to(:a)
+        assert_equal :a, @runner.current_step.key
+      end
+
+      test "go_to returns true and moves the cursor to a visited, visible step" do
+        @runner.advance(:a, {"go" => "yes"}) # cursor → :b, visited {a, b}
+        runner = build_runner(W)             # resumes with the cursor on :b
+        assert_equal true, runner.go_to(:a)
+        assert_equal :a, runner.current_step.key
+      end
+
+      test "go_to returns false for a branch-hidden step and leaves the cursor" do
+        # fresh W: :b is hidden (a.go != "yes"), so it is not in the visible path
+        assert_equal false, @runner.go_to(:b)
+        assert_equal :a, @runner.current_step.key
+      end
+
+      test "go_to returns false for a forward jump to a visible but unvisited step" do
+        runner = build_runner(WithSkippable) # visible [a, b, review], cursor :a, none visited
+        assert_equal false, runner.go_to(:b)
+        assert_equal :a, runner.current_step.key
+      end
+
+      test "go_to returns false for a blank step key" do
+        assert_equal false, @runner.go_to(nil)
+        assert_equal false, @runner.go_to("")
+      end
+
       # ---- advance ----
 
       test "advance invalid stays put with errors" do
@@ -287,6 +323,46 @@ module Plutonium
         state = @store.read("k")
         assert_equal [org.to_global_id.to_s], state.persisted["make"]
         assert_equal [org], runner.wizard.persisted[:make]
+      end
+
+      # Concurrent first-step submits race on the unique instance_key (a
+      # double-click): the loser re-reads the winner's row and carries its work
+      # forward. Per-step persisted GIDs must UNION, not replace, or the winner's
+      # tracked record becomes untracked (orphaned). Needs the AR store — its
+      # unique index is what raises RecordNotUnique.
+      test "carry-forward on a RecordNotUnique race unions persisted, not replaces" do
+        Plutonium::Wizard::Session.delete_all
+        Organization.delete_all
+        ar = Plutonium::Wizard::Store::ActiveRecord.new
+        loser = build_runner(Persisting, store: ar, key: "race") # reads: no row → fresh
+
+        # The winner's row is already persisted, tracking its own on_submit record.
+        winner_org = Organization.create!(name: "Winner")
+        Plutonium::Wizard::Session.create!(
+          wizard: Persisting.name, instance_key: "race", status: "in_progress",
+          current_step: "review", data: {"make" => {"name" => "Winner"}},
+          tracked_records: {"make" => [winner_org.to_global_id.to_s]}, visited: ["make"]
+        )
+
+        # Force the loser's FIRST write to build a fresh row (as if it hadn't seen
+        # the winner) so save! hits the unique index → RecordNotUnique → the
+        # carry-forward path; its own re-write (2nd call) finds the winner + updates.
+        calls = 0
+        real = Plutonium::Wizard::Session.method(:find_or_initialize_by)
+        Plutonium::Wizard::Session.define_singleton_method(:find_or_initialize_by) do |*a, **k|
+          calls += 1
+          (calls == 1) ? new(instance_key: "race") : real.call(*a, **k)
+        end
+        begin
+          loser.advance(:make, {"name" => "Loser"})
+        ensure
+          Plutonium::Wizard::Session.singleton_class.send(:remove_method, :find_or_initialize_by)
+        end
+
+        loser_org = Organization.find_by!(name: "Loser")
+        persisted = ar.read("race").persisted["make"]
+        assert_includes persisted, winner_org.to_global_id.to_s, "winner's record stays tracked"
+        assert_includes persisted, loser_org.to_global_id.to_s, "loser's record is tracked too"
       end
 
       test "on_submit RecordInvalid → step failure, no advance" do

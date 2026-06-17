@@ -53,10 +53,10 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
   end
 
-  # --- relaunch chooser (`on_relaunch :prompt`) ------------------------------
+  # --- relaunch chooser (default `on_relaunch :prompt`) ----------------------
 
-  # OnboardOrganizationWizard is tokened and declares `on_relaunch :prompt`: a bare
-  # launch with NO pending runs still mints a fresh run (unchanged).
+  # OnboardOrganizationWizard is tokened and relies on the default `on_relaunch
+  # :prompt`: a bare launch with NO pending runs still mints a fresh run (unchanged).
   test "bare launch with no pending runs starts fresh" do
     assert_equal 0, Plutonium::Wizard::Session.where(status: "in_progress").count
     get base
@@ -467,5 +467,82 @@ class AdminPortal::WizardChromeTest < ActionDispatch::IntegrationTest
     # Finish is enabled (the single step is complete).
     finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
     refute_includes finish_btn, "disabled"
+  end
+
+  # ChromelessWizard declares `on_relaunch :new`, opting OUT of the default
+  # resume-or-new chooser: a bare relaunch silently mints a fresh run even when a
+  # pending one exists. (Guards the opt-out against the `:prompt` default.)
+  test "on_relaunch :new forks a fresh run instead of prompting" do
+    get base
+    follow_redirect!
+    first_token = Plutonium::Wizard::Session.where(status: "in_progress").first&.token
+    post "#{base}/#{first_token}/only", params: {wizard: {name: "Acme"}, _direction: "next"}
+    assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count
+
+    get base
+    assert_response :redirect, "must fork silently, not render the resume-or-new chooser"
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/only\z}, URI(response.location).path
+    new_token = URI(response.location).path[%r{/chromeless/([^/]+)/}, 1]
+    refute_equal first_token, new_token, "the relaunch forks a new run, not the pending one"
+  end
+
+  # --- reachability guard: a POST to an unreachable step is refused -----------
+
+  # Regression: advancing into a branch that HIDES a later step must not let a
+  # forged/stale POST to that hidden step run its on_submit. The driver aborts
+  # (PRG back to the run's current step) when the runner can't align the cursor
+  # to the posted step.
+  test "POST to a branch-hidden step is refused and its on_submit never runs" do
+    BranchGuardWizard.fired.clear
+    bg = "/admin/branch-guard"
+
+    get bg
+    token = URI(response.location).path[%r{/branch-guard/([^/]+)/}, 1]
+    run = "#{bg}/#{token}"
+
+    # Choose the branch that HIDES :secret — the run advances past it to review.
+    post "#{run}/choice", params: {wizard: {mode: "no"}, _direction: "next"}
+    follow_redirect!
+
+    # Forge a POST straight to the now-hidden :secret step.
+    post "#{run}/secret", params: {wizard: {note: "x"}, _direction: "next"}
+
+    assert_empty BranchGuardWizard.fired,
+      "on_submit must not run for a step the user can't reach"
+    assert_response :redirect
+    refute_match %r{/secret\z}, URI(response.location).path,
+      "the refused POST should PRG back to the current step, not the hidden one"
+  end
+
+  # Regression: a branch step the cursor LANDS on (so it's `visited`) but that was
+  # never submitted must read as `incomplete` on the rail — never a done-check — so
+  # the rail agrees with the review's "needs attention" gating.
+  test "a reached-but-unsubmitted branch step shows incomplete on the rail, not a checkmark" do
+    bg = "/admin/branch-guard"
+    get bg
+    token = URI(response.location).path[%r{/branch-guard/([^/]+)/}, 1]
+    run = "#{bg}/#{token}"
+
+    # Choice = no → :secret hidden, advance to review.
+    post "#{run}/choice", params: {wizard: {mode: "no"}, _direction: "next"}
+    follow_redirect!
+    # Edit choice → yes → :secret becomes visible; the cursor lands on it (so it's
+    # visited) but it is never submitted.
+    post "#{run}/choice", params: {wizard: {mode: "yes"}, _direction: "next"}
+    follow_redirect! # now on :secret
+
+    get "#{run}/review"
+    assert_response :success
+
+    # The review gates :secret as outstanding ...
+    assert_includes response.body, "wizard-review-outstanding"
+    assert_includes response.body, %(data-wizard-review-fix="secret")
+
+    # ... and the rail AGREES: :secret is `incomplete` (not `completed`), while the
+    # submitted :choice is `completed`.
+    secret_state = response.body[%r{<li data-state="([a-z]+)"[^>]*>(?:(?!</li>).)*?Secret}m, 1]
+    choice_state = response.body[%r{<li data-state="([a-z]+)"[^>]*>(?:(?!</li>).)*?Choice}m, 1]
+    assert_equal "incomplete", secret_state, "reached-but-unsubmitted step is not a checkmark"
+    assert_equal "completed", choice_state
   end
 end

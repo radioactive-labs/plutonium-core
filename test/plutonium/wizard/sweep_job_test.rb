@@ -42,10 +42,29 @@ module Plutonium
         def execute = succeed(:done)
       end
 
+      # Captures the tenant the sweep reconstructs — its on_rollback records
+      # `current_scoped_entity`, which the runner sets from the passed argument.
+      class ScopedRollback < Plutonium::Wizard::Base
+        @seen_scope = nil
+        class << self
+          attr_accessor :seen_scope
+        end
+
+        step(:make) do
+          attribute :name, :string
+          on_submit { persist Organization.create!(name: data.make.name) }
+          on_rollback { ScopedRollback.seen_scope = current_scoped_entity }
+        end
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
       setup do
         Plutonium::Wizard::Session.delete_all
         Organization.delete_all
         CustomRollback.side_effects.clear
+        ScopedRollback.seen_scope = nil
         @store = Plutonium::Wizard::Store::ActiveRecord.new
       end
 
@@ -70,6 +89,46 @@ module Plutonium
 
         refute Organization.exists?(org.id), "tracked record must be destroyed by cleanup"
         refute Plutonium::Wizard::Session.exists?(instance_key: "expired"), "swept row must be gone"
+      end
+
+      # The sweep must clean up an OWNER-stamped run (the default — non-anonymous
+      # wizards stamp the owner). Without adopting the owner, owner-scoping would
+      # drop the loaded state and cancel an empty run, orphaning the record.
+      test "sweeps an owner-stamped row: still destroys the tracked record" do
+        owner = Organization.create!(name: "Owner")
+        runner = Plutonium::Wizard::Runner.new(
+          wizard_class: Persisting, store: @store, instance_key: "owned",
+          owner: owner, current_user: owner
+        )
+        runner.advance(:make, {"name" => "Acme"})
+        org = Organization.find_by!(name: "Acme")
+        row = Plutonium::Wizard::Session.find_by!(instance_key: "owned")
+        assert_equal owner.to_global_id.to_s, row.owner.to_global_id.to_s, "row is owner-stamped"
+        Plutonium::Wizard::Session.where(instance_key: "owned").update_all(expires_at: 1.hour.ago)
+
+        Plutonium::Wizard::SweepJob.perform_now
+
+        refute Organization.exists?(org.id), "owner-scoped tracked record must still be destroyed"
+        refute Plutonium::Wizard::Session.exists?(instance_key: "owned"), "swept row must be gone"
+      end
+
+      # The sweep reconstructs the run's tenant too, so a tenant-aware on_rollback
+      # doesn't run with a nil scope.
+      test "sweeps an owner+tenant-scoped row: on_rollback sees the row's tenant" do
+        owner = Organization.create!(name: "Owner")
+        tenant = Organization.create!(name: "Tenant")
+        runner = Plutonium::Wizard::Runner.new(
+          wizard_class: ScopedRollback, store: @store, instance_key: "scoped",
+          owner: owner, current_user: owner, scope: tenant, current_scoped_entity: tenant
+        )
+        runner.advance(:make, {"name" => "Acme"})
+        Plutonium::Wizard::Session.where(instance_key: "scoped").update_all(expires_at: 1.hour.ago)
+
+        Plutonium::Wizard::SweepJob.perform_now
+
+        assert_equal tenant.to_global_id.to_s, ScopedRollback.seen_scope&.to_global_id.to_s,
+          "on_rollback must see the run's tenant, not nil"
+        refute Plutonium::Wizard::Session.exists?(instance_key: "scoped")
       end
 
       test "sweep runs the wizard's custom on_rollback AND still destroys the record" do

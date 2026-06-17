@@ -5,6 +5,10 @@ AdminPortal::Engine.routes.draw do
   register_wizard ::WelcomeWizard, at: "welcome"
   register_wizard ::ChromelessWizard, at: "chromeless"
 
+  # A branching wizard whose hidden step has a side-effecting on_submit — used to
+  # prove a POST to an unreachable (branch-hidden) step is refused before it runs.
+  register_wizard ::BranchGuardWizard, at: "branch-guard"
+
   # An `anonymous` (guest) wizard mounted on a PUBLIC route (pre-login). Because
   # the portal engine is mounted behind the host's auth constraint, this draws on
   # the MAIN app route set instead (outside the constraint) — see §4.5 / the

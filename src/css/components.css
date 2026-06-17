@@ -985,6 +985,18 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 .pu-wizard-steps > li[data-state="completed"] .pu-step-number { display: none; }
 .pu-wizard-steps > li[data-state="completed"] .pu-step-node::after { content: "\2713"; }
 
+/* reached but NOT complete — a revealed branch step the cursor landed on that was
+   never submitted (or is now invalid). Show the number in a warning tint (matching
+   the review's "needs attention" banner), never the done-check. */
+.pu-wizard-steps > li[data-state="incomplete"] .pu-step-node {
+  @apply text-warning-600; border-color: theme(colors.warning.500);
+  background: color-mix(in srgb, theme(colors.warning.500) 12%, var(--pu-surface));
+}
+.dark .pu-wizard-steps > li[data-state="incomplete"] .pu-step-node {
+  @apply text-warning-400; border-color: theme(colors.warning.400);
+  background: color-mix(in srgb, theme(colors.warning.400) 16%, var(--pu-surface));
+}
+
 /* the terminal (review) node shows a finish flag, never the done-check — even
    once it's been reached (`completed` state) */
 .pu-wizard-steps > li[data-terminal] .pu-step-node::after { content: none; }
@@ -995,12 +1007,16 @@ html.pu-rail-pinned .icon-rail-pin-expand {
    filled line into the reached step that follows it — no stray gray segment. */
 .pu-wizard-steps > li[data-state="completed"]::before,
 .pu-wizard-steps > li[data-state="current"]::before,
+.pu-wizard-steps > li[data-state="incomplete"]::before,
 .pu-wizard-steps > li:has(+ li[data-state="completed"])::after,
-.pu-wizard-steps > li:has(+ li[data-state="current"])::after { background: theme(colors.primary.500); }
+.pu-wizard-steps > li:has(+ li[data-state="current"])::after,
+.pu-wizard-steps > li:has(+ li[data-state="incomplete"])::after { background: theme(colors.primary.500); }
 .dark .pu-wizard-steps > li[data-state="completed"]::before,
 .dark .pu-wizard-steps > li[data-state="current"]::before,
+.dark .pu-wizard-steps > li[data-state="incomplete"]::before,
 .dark .pu-wizard-steps > li:has(+ li[data-state="completed"])::after,
-.dark .pu-wizard-steps > li:has(+ li[data-state="current"])::after { background: theme(colors.primary.400); }
+.dark .pu-wizard-steps > li:has(+ li[data-state="current"])::after,
+.dark .pu-wizard-steps > li:has(+ li[data-state="incomplete"])::after { background: theme(colors.primary.400); }
 
 /* compact on small screens: hide labels, nodes-only track */
 @media (max-width: 640px) {

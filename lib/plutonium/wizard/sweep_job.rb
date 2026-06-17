@@ -35,10 +35,25 @@ module Plutonium
         if wizard_class
           # `cancel` runs the wizard's cleanup (each step's on_rollback, then the
           # engine always destroys its tracked records) and then clears the row.
+          #
+          # Reconstruct the run's context from the row the sweep already trusts:
+          #
+          # - `current_user: row.owner` — a non-`anonymous` wizard's state is
+          #   owner-scoped (§4.5), so with no owner the runner would mismatch, drop
+          #   the loaded state, and cancel an EMPTY run, orphaning every `persist`'d
+          #   record (the exact case the sweep exists for).
+          # - `current_scoped_entity: row.scope` — the wizard's `current_scoped_entity`
+          #   is set from this argument (not the loaded state), so a tenant-aware
+          #   `on_rollback` would otherwise run with a nil tenant.
+          #
+          # (The `anchor` needs no argument — the runner restores it from the loaded
+          # state.)
           Runner.new(
             wizard_class: wizard_class,
             store: store,
-            instance_key: row.instance_key
+            instance_key: row.instance_key,
+            current_user: row.owner,
+            current_scoped_entity: row.scope
           ).cancel
         end
 
