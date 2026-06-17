@@ -38,6 +38,15 @@ module Plutonium
       #   may not be mounted public; an `anonymous` wizard may not be mounted
       #   authenticated (its whole point is pre-login access). See §4.5.
       def register_wizard(wizard_class, at:, as: nil, public: nil)
+        # The wizard subsystem is opt-in (`config.wizards.enabled`). When disabled,
+        # draw no routes — its tables/migrations are skipped too, so a mounted route
+        # couldn't work anyway. Warn rather than fail silently, so a
+        # registered-but-disabled wizard is discoverable instead of a mystery 404.
+        unless Plutonium.configuration.wizards.enabled
+          Rails.logger.warn { "[Plutonium::Wizard] not registering routes for #{wizard_class} — config.wizards.enabled is false" }
+          return
+        end
+
         # A CONTEXT anchor (`anchored via: :method`) is portal-level: the anchor is
         # resolved by calling a controller method, needs no URL `:id`, and is
         # IDOR-safe (trusted context) — so it CAN mount here. Only a TYPE anchor

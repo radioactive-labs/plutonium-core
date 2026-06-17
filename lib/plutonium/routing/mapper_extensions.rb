@@ -193,6 +193,8 @@ module Plutonium
       #
       # @return [void]
       def define_member_wizard_actions
+        return unless Plutonium.configuration.wizards.enabled
+
         member do
           # Bare launch (no :step): resolve/mint the run and redirect to its step.
           get "wizards/:wizard_name", action: :launch_wizard_record_action,
@@ -211,6 +213,8 @@ module Plutonium
       #
       # @return [void]
       def define_collection_wizard_actions
+        return unless Plutonium.configuration.wizards.enabled
+
         collection do
           # Bare launch (no :step): resolve/mint the run and redirect to its step.
           get "wizards/:wizard_name", action: :launch_wizard_resource_action,

@@ -21,7 +21,7 @@ rails db:migrate
 
 | Config | Default | Meaning |
 |---|---|---|
-| `config.wizards.enabled` | `false` | Registers the gem migration so `rails db:migrate` creates the table. Required to use wizards. |
+| `config.wizards.enabled` | `false` | The subsystem's master switch. Registers the gem migration (so `rails db:migrate` creates the table) **and** draws wizard routes — both `register_wizard` and the resource-mounted `wizard`-macro actions. While `false`, `register_wizard` is a no-op (it logs a warning so a registered-but-disabled wizard isn't a silent 404) and no wizard routes are mounted. Required to use wizards. |
 | `config.wizards.cleanup_after` | `14.days` | Global default idle TTL for the abandonment sweep; overridable per wizard via `cleanup_after`. |
 | `config.wizards.database` | `:primary` | Which database connection the wizard table lives on. **v1 supports the primary database only** — see below. |
 
