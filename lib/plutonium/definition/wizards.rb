@@ -8,16 +8,19 @@ module Plutonium
     # {Plutonium::Resource::Controllers::WizardActions}):
     #
     #   class CompanyDefinition < Plutonium::Resource::Definition
-    #     wizard :configure, ConfigureCompanyWizard            # anchored → record action
-    #     wizard :onboard,   CompanyOnboardingWizard           # no anchor → resource action
-    #     wizard :archive,   ArchiveWithReasonWizard, record_action: true  # override
+    #     wizard :configure, ConfigureCompanyWizard                # anchored → record action (show + list)
+    #     wizard :configure, ConfigureCompanyWizard, collection_record_action: false  # show page only
+    #     wizard :onboard,   CompanyOnboardingWizard               # no anchor → resource action
     #   end
     #
-    # Placement mirrors interactions: an **anchored** wizard becomes a **record**
-    # action (the anchor is the URL `:id`, resolved through the resource controller's
-    # scoped, policy-gated `resource_record!`); a **non-anchored** wizard becomes a
-    # **resource** (collection) action. Bulk wizards are not supported (§5.1) —
-    # wizards are per-instance flows.
+    # Placement is dictated by the wizard, mirroring interactions: an **anchored**
+    # wizard is a **record** action (the anchor is the URL `:id`, resolved through the
+    # resource controller's scoped, policy-gated `resource_record!`); a **non-anchored**
+    # wizard is a **resource** (collection) action. It's not overridable — a flag that
+    # doesn't apply to the kind raises. The configurable surface is where a RECORD
+    # action shows: the show page (`record_action:`) and the list rows
+    # (`collection_record_action:`), both on by default. Bulk wizards are not
+    # supported (§5.1) — wizards are per-instance flows.
     #
     # The macro keeps a per-definition registry (`registered_wizards`) the
     # resource-mounted {WizardActions} concern reads to resolve the wizard class by
@@ -40,42 +43,71 @@ module Plutonium
           subclass.instance_variable_set(:@registered_wizards, registered_wizards.dup)
         end
 
+        # Placement is dictated by the wizard, not chosen: an **anchored** wizard is
+        # a **record** action (it needs a record — the anchor), a **non-anchored**
+        # wizard is a **resource** (collection) action. The only configurable surface
+        # is WHERE a *record* action shows — the **show** page (`record_action:`) and
+        # the **list** rows (`collection_record_action:`), both on by default. Flags
+        # that don't apply to the wizard's kind are rejected.
+        #
         # @param name [Symbol] the action key (e.g. :configure)
         # @param wizard_class [Class] a Plutonium::Wizard::Base subclass
-        # @param record_action [Boolean, nil] force record (member) placement
-        # @param collection [Boolean, nil] force resource (collection) placement
-        def wizard(name, wizard_class, record_action: nil, collection: nil, **opts)
-          is_record =
-            if !record_action.nil?
-              record_action
-            elsif !collection.nil?
-              !collection
-            else
-              # Placement mirrors interactions: anchored → record action.
-              wizard_class.anchored?
-            end
+        # @param opts [Hash] action overrides — chrome (`label:`/`icon:`/`position:`/
+        #   `category:`/`confirmation:`/`turbo_frame:`) plus, for a RECORD wizard, the
+        #   show/list surface flags `record_action:`/`collection_record_action:`.
+        def wizard(name, wizard_class, **opts)
+          is_record = wizard_class.anchored?
+          reject_inapplicable_surface!(name, wizard_class, is_record, opts)
 
           registered_wizards[name.to_sym] = {wizard_class:, record_action: is_record}
 
           resolver = wizard_launch_resolver(name, is_record)
 
+          # A record (anchored) wizard surfaces on BOTH the show page (`record_action`)
+          # AND each list row (`collection_record_action`, scoped to that row's
+          # record); a resource (non-anchored) wizard is the collection-level
+          # `resource_action`. `opts` are spliced AFTER, so a record wizard can opt out
+          # of either surface (e.g. `collection_record_action: false` → show page only).
           action(
             name,
             route_options: Plutonium::Action::RouteOptions.new(
               method: :get, url_resolver: resolver
             ),
+            label: wizard_label(wizard_class, name),
+            category: :primary,
             record_action: is_record,
+            collection_record_action: is_record,
             resource_action: !is_record,
-            category: opts.fetch(:category, :primary),
-            icon: opts[:icon],
-            position: opts[:position],
-            label: opts[:label] || wizard_label(wizard_class, name),
-            confirmation: opts[:confirmation],
+            **opts.except(:condition),
             condition: wizard_launch_condition(wizard_class, opts[:condition])
           )
         end
 
         private
+
+        # Reject surface flags that don't apply to the wizard's kind. Placement is
+        # fixed by `anchored?`: a RECORD (anchored) wizard can only be placed on the
+        # show page / list rows (`record_action:`/`collection_record_action:`) — it
+        # can't be a `resource_action` (there's no record at the collection level); a
+        # RESOURCE (non-anchored) wizard is a collection-level action with no record,
+        # so the record/list surfaces don't apply.
+        def reject_inapplicable_surface!(name, wizard_class, is_record, opts)
+          disallowed =
+            if is_record
+              [:resource_action]
+            else
+              [:record_action, :collection_record_action]
+            end
+          bad = disallowed.select { |flag| opts.key?(flag) }
+          return if bad.empty?
+
+          kind = is_record ? "anchored (a record action)" : "not anchored (a resource action)"
+          applies = is_record ? "record_action: / collection_record_action: (show page / list rows)" : "none (it's the collection-level action)"
+          raise ArgumentError,
+            "wizard :#{name} — #{wizard_class} is #{kind}; " \
+            "#{bad.join(", ")} #{(bad.size == 1) ? "doesn't" : "don't"} apply. " \
+            "Configurable surface here: #{applies}."
+        end
 
         # The launch action's `condition:` (§9). A **one-time** wizard's launch is
         # hidden once the current user has already completed it: the condition

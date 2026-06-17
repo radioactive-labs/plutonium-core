@@ -14,7 +14,7 @@ class CompanyDefinition < Plutonium::Resource::Definition
 end
 ```
 
-- **Placement mirrors interactions** — an **anchored** wizard becomes a **record** (member) action, a **non-anchored** wizard becomes a **resource** (collection) action (index header). Use `record_action:` / `collection:` to override placement.
+- **Placement is dictated by the wizard, not chosen** — an **anchored** wizard is a **record** action (it needs a record — the anchor); a **non-anchored** wizard is a collection-level **resource** action (index header). A record-action wizard surfaces on BOTH the record's show page *and* each list row (`collection_record_action`, scoped to that row's record), exactly like `edit`/`destroy`. The only thing you configure is **where a record action shows** (see the table); a flag that doesn't apply to the wizard's kind (e.g. `resource_action:` on an anchored wizard) **raises**.
 - **Auto-mounted on the resource controller** — the `wizard` macro's routes are drawn on the resource's own controller, exactly like interactive record/resource actions. There is nothing else to wire up.
 - **The anchor is IDOR-safe** — an anchored (record) wizard resolves its anchor through the resource controller's scoped, policy-gated `resource_record!`. A record outside the portal's authorized scope (another tenant's, or a non-existent id) **404s**; it is never loaded via an unscoped `find_by`.
 - **Bulk wizards are not supported** — wizards are inherently per-instance flows. Use a bulk interaction instead.
@@ -22,9 +22,11 @@ end
 
 | Option | Meaning |
 |---|---|
-| `record_action:` | Force record (member) placement. |
-| `collection:` | Force resource (collection) placement. |
-| `label:` / `icon:` / `position:` / `category:` / `confirmation:` | Standard action chrome. |
+| `record_action:` | **(Record wizards only)** show on the record's **show page**. Default `true`; `false` removes it from there. |
+| `collection_record_action:` | **(Record wizards only)** show on each **list row** (scoped to that row's record). Default `true`; `false` keeps it on the show page but off the list. |
+| `label:` / `icon:` / `position:` / `category:` / `confirmation:` / `turbo_frame:` | Standard action chrome — any `action` option passes through. |
+
+Placement isn't an option — it follows `anchored?`. Passing a flag that doesn't apply (`resource_action:` on a record wizard, or `record_action:`/`collection_record_action:` on a resource wizard) raises.
 
 ### Synthesized routes (resource-mounted)
 
