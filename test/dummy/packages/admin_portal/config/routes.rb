@@ -3,6 +3,7 @@ AdminPortal::Engine.routes.draw do
 
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"
   register_wizard ::WelcomeWizard, at: "welcome"
+  register_wizard ::ChromelessWizard, at: "chromeless"
 
   # An `anonymous` (guest) wizard mounted on a PUBLIC route (pre-login). Because
   # the portal engine is mounted behind the host's auth constraint, this draws on
@@ -34,6 +35,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::NetworkDevice
   register_resource ::UserProfile
   register_resource ::KitchenSink
+  register_resource ::Widget
   # register resources above.
 end
 

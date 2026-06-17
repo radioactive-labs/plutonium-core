@@ -21,6 +21,13 @@ class ConfigureOrgWizard < Plutonium::Wizard::Base
 
   review label: "Review"
 
+  # A custom completed page (§9): replaces the default confirmation body entirely
+  # when this one-time wizard is re-opened after completion.
+  completed do |wizard|
+    h1(class: "text-xl font-bold") { "This organization is already configured." }
+    p(data: {wizard_completed: "custom"}) { "Nothing left to set up here." }
+  end
+
   def execute
     anchor.update!(name: data.rename.name)
     succeed(anchor).with_message("Organization configured")

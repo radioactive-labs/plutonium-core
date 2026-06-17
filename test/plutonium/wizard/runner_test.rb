@@ -252,6 +252,10 @@ module Plutonium
         refute res.ok?
         assert res.errors.key?(:name), "imported validation should surface"
         assert res.errors.key?(:extra), "inline validation should surface"
+        # The imported field is validated ONLY through the transient model, not
+        # again by the inline pass — so its presence error appears exactly once.
+        assert_equal ["can't be blank"], res.errors[:name],
+          "imported field must not be double-validated by the inline pass"
         # §6.1: error values are normalized to plain String messages, never
         # ActiveModel::Error objects.
         assert_kind_of String, res.errors[:name].first

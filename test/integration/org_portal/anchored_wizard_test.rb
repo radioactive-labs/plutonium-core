@@ -34,12 +34,23 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
   def prefix = "/org/#{@org.to_param}"
   def base = "#{prefix}/widgets/#{@widget.id}/wizards/configure"
 
-  test "GET the bare wizard mount launches: redirects to the first step with a token" do
+  test "GET the bare wizard mount launches: redirects to the first step (keyed)" do
     get base
     assert_response :redirect
-    # Tokened anchored wizard → the launch mints the per-run :token and lands on the
-    # first step, so the run URL is stable/shareable from the first paint.
-    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/rename\z}, URI(response.location).path
+    # ConfigureWidgetWizard is `anchored with: Widget` with NO explicit
+    # concurrency_key, so it's IMPLICITLY keyed by [widget, current_user] (tenant
+    # folded). The run is identified by that key — the launch lands on the first
+    # step with NO URL token, and re-launching resumes it.
+    assert_equal "#{base}/rename", URI(response.location).path
+  end
+
+  test "implicitly keyed by [widget, user]: a second launch resumes, not forks" do
+    post "#{base}/rename", params: {wizard: {name: "Draft"}, _direction: "next"}
+    assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count
+
+    get base # re-launch the same widget as the same user
+    assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count,
+      "an anchored wizard with no explicit concurrency_key resumes its keyed run"
   end
 
   test "GET the first step renders the anchored wizard's step form" do
@@ -54,12 +65,10 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_response :redirect
     follow_redirect! # now on review
 
-    # ConfigureWidgetWizard has no concurrency_key → tokened identity; the per-run
-    # id rides the URL (§4.5), so thread it through the finalize POST to stay on
-    # this run (a bare POST would fork a fresh, empty tokened run).
-    token = Plutonium::Wizard::Session.where(status: "in_progress").sole.token
+    # Keyed by [widget, user] → the run is resolved from the URL (the widget id) +
+    # the key, so a bare POST to the same URL stays on this run (no token to thread).
     assert_no_difference -> { Widget.count } do
-      post "#{base}/#{token}/review", params: {_direction: "next"}
+      post "#{base}/review", params: {_direction: "next"}
     end
     assert_response :redirect
 

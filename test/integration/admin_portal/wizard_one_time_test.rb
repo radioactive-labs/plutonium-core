@@ -52,6 +52,29 @@ class AdminPortal::WizardOneTimeTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "gated ok"
   end
 
+  # Re-opening a completed one-time wizard renders the standalone "already
+  # completed" page (its `data` was cleared on completion, so there's nothing to
+  # review) — not a redirect to root, and not the review/form.
+  test "re-opening a completed one-time wizard renders the completed page" do
+    Plutonium::Wizard::Session.create!(
+      wizard: WelcomeWizard.name, instance_key: welcome_key_for(@admin),
+      status: "completed", owner: @admin
+    )
+
+    get "#{wizard}/greeting"
+    assert_response :success
+    assert_includes response.body, "pu-wizard-completed"
+    assert_includes response.body, "already completed"
+    assert_includes response.body, %(data-wizard-completed="exit") # the Continue button
+    # Not the step form.
+    refute_includes response.body, %(name="wizard[acknowledged]")
+
+    # The bare launch URL lands on the same completed page (not a redirect to a step).
+    get wizard
+    assert_response :success
+    assert_includes response.body, "pu-wizard-completed"
+  end
+
   test "an already-completed user passes straight through the gate" do
     Plutonium::Wizard::Session.create!(
       wizard: WelcomeWizard.name, instance_key: welcome_key_for(@admin),

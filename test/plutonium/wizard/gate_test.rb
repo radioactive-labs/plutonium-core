@@ -26,6 +26,27 @@ module Plutonium
         def execute = succeed
       end
 
+      # A `via:`-anchored one-time wizard: the gate can resolve its anchor by
+      # calling the declared `anchor_via` method on the controller.
+      class ViaAnchoredWizard < Plutonium::Wizard::Base
+        anchored via: :current_org
+        concurrency_key { anchor }
+        one_time
+        step(:x) { attribute :ok, :string }
+        review label: "R"
+        def execute = succeed
+      end
+
+      # A `with:`-anchored one-time wizard relying on the IMPLIED [anchor, user]
+      # key: there's no `anchor_via`, so the gate can't auto-resolve the anchor.
+      class WithAnchoredWizard < Plutonium::Wizard::Base
+        anchored with: Organization
+        one_time
+        step(:x) { attribute :ok, :string }
+        review label: "R"
+        def execute = succeed
+      end
+
       # A minimal host controller mixing in the gate, with the controller surface
       # the gate leans on stubbed out.
       class FakeController
@@ -120,6 +141,33 @@ module Plutonium
         # @ctrl (the first user) still has no completion at its own key.
         @ctrl.enforce_wizard_completion!(UserWizard)
         assert_equal "/wiz/#{UserWizard.name}", @ctrl.redirected_to
+      end
+
+      # ---- anchored wizards: the gate resolves the anchor (§9) ----
+
+      test "via:-anchored wizard: the gate auto-resolves the anchor and matches the runner key" do
+        anchor = Organization.create!(name: "Anchor")
+        @ctrl.define_singleton_method(:current_org) { anchor }
+
+        runner_key = Plutonium::Wizard.compute_instance_key(
+          wizard_class: ViaAnchoredWizard, current_user: @user,
+          current_scoped_entity: nil, anchor: anchor, wizard_token: nil
+        )
+        assert_equal runner_key, @ctrl.wizard_gate_instance_key(ViaAnchoredWizard)
+      end
+
+      test "anchored implied-key wizard the gate can't resolve the anchor for raises" do
+        err = assert_raises(ArgumentError) { @ctrl.wizard_gate_instance_key(WithAnchoredWizard) }
+        assert_match(/anchor/i, err.message)
+      end
+
+      test "an explicit anchor: resolver lets the gate key an anchored wizard" do
+        anchor = Organization.create!(name: "Anchor2")
+        runner_key = Plutonium::Wizard.compute_instance_key(
+          wizard_class: WithAnchoredWizard, current_user: @user,
+          current_scoped_entity: nil, anchor: anchor, wizard_token: nil
+        )
+        assert_equal runner_key, @ctrl.wizard_gate_instance_key(WithAnchoredWizard, -> { anchor })
       end
 
       # ---- entry-path derivation (default helper-name logic) ----

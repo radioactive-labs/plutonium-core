@@ -46,6 +46,63 @@ module Plutonium
         assert_equal "set", klass.new({"foo" => "set"}).foo
       end
 
+      # The form pipeline infers a field's required marker from
+      # `object.class.validators_on(key)`, so the step's inline `validates` must be
+      # replayed onto the typed data class — otherwise required fields render
+      # without the asterisk.
+      def test_inline_validations_are_replayed_onto_the_data_class
+        klass = Plutonium::Wizard::Data.class_for(
+          {name: :string, note: :string},
+          validations: [[[:name], {presence: true}]]
+        )
+
+        assert klass.validators_on(:name).any? { |v| v.kind == :presence }
+        assert_empty klass.validators_on(:note)
+      end
+
+      class WithRequired < Plutonium::Wizard::Base
+        step :identity do
+          attribute :name, :string
+          attribute :plan, :string
+          input :name
+          input :plan
+          validates :name, presence: true
+        end
+
+        def execute = succeed
+      end
+
+      def test_step_presence_validation_threads_into_data_snapshot
+        identity = WithRequired.new.data.identity
+
+        assert identity.class.validators_on(:name).any? { |v| v.kind == :presence },
+          "expected the step's presence validator on the typed data class"
+        assert_empty identity.class.validators_on(:plan)
+      end
+
+      # A `using:` import must also surface the source model's form-relevant
+      # validators onto the data class, so imported required fields render the
+      # marker just like inline ones. KitchenSink validates :name presence.
+      class WithImport < Plutonium::Wizard::Base
+        step :acct, using: KitchenSink, fields: %i[name description]
+        def execute = succeed
+      end
+
+      def test_imported_model_validations_thread_into_data_snapshot
+        acct = WithImport.new.data.acct
+
+        assert acct.class.validators_on(:name).any? { |v| v.kind == :presence },
+          "expected the imported model's presence validator on the typed data class"
+        assert_empty acct.class.validators_on(:description)
+      end
+
+      # The runner validates imported fields via the importer's transient model
+      # (imported_validate_fn), so imported validators must NOT also leak into
+      # `step.validations` — that would double-validate the field.
+      def test_imported_validations_do_not_pollute_the_runner_validations
+        assert_empty WithImport.steps.first.validations
+      end
+
       class WithDefault < Plutonium::Wizard::Base
         step :details do
           attribute :foo, :string, default: "bar"

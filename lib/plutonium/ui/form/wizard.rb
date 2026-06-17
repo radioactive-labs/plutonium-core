@@ -44,6 +44,13 @@ module Plutonium
         def render_actions
         end
 
+        # The step form sits INSIDE the wizard card body (which already supplies the
+        # surface + padding), so drop the default `pu-card my-4 p-8` form chrome —
+        # otherwise it reads as a card-in-card. Keep just the vertical field rhythm.
+        def form_class
+          "space-y-6"
+        end
+
         attr_reader :form_action
 
         def initialize_attributes

@@ -16,6 +16,8 @@ module Plutonium
 
         def validations = []
 
+        def imported_form_validators = []
+
         def imported_validate_fn = nil
 
         def form_layout_sections = nil
@@ -23,14 +25,24 @@ module Plutonium
         def defined_structured_inputs = {}
       end
 
-      attr_reader :block
+      attr_reader :block, :summary, :header
 
-      def initialize(key: :review, label: "Review", condition: nil, block: nil)
-        super(key:, label:, condition:, fields: EmptyFields.new)
+      def initialize(key: :review, label: "Review", description: nil, condition: nil, summary: true, header: true, block: nil)
+        super(key:, label:, description:, condition:, fields: EmptyFields.new)
+        @summary = summary
+        @header = header
         @block = block
       end
 
       def review? = true
+
+      # Whether the auto-summary of completed steps renders in the COMPLETE state
+      # (see the `review summary:` macro). Always true in the incomplete state.
+      def summary? = @summary
+
+      # Whether the step-header section (label + prompt) renders above the review
+      # body (see the `review header:` macro).
+      def header? = @header
     end
   end
 end

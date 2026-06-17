@@ -29,8 +29,14 @@ module Plutonium
     # cloned cleanly. Filtering to imported fields + `:base` is what prevents a
     # partial model reporting presence errors for columns this step never collects.
     module FieldImporter
+      # The validator kinds the form pipeline reads for field metadata (required
+      # marker, maxlength/minlength, min/max, pattern, auto-choices). Other kinds
+      # (uniqueness, custom EachValidators) carry no form meaning, so we skip them
+      # — and replaying a custom kind through `validates` would raise.
+      FORM_VALIDATOR_KINDS = %i[presence length numericality format inclusion].freeze
+
       # The resolved import surface for one `using:` declaration.
-      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn) do
+      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, :form_validators) do
         # Run the imported validation over a staged data slice, returning a hash of
         # {attribute => [messages]} for the imported fields + :base. Empty when
         # `validate: false`.
@@ -66,11 +72,26 @@ module Plutonium
             attribute_schema: schema,
             inputs: inputs_for(definition, names),
             form_layout: do_layout ? layout_for(definition, names) : nil,
-            validate_fn:
+            validate_fn:,
+            form_validators: form_validators_for(model, names)
           )
         end
 
         private
+
+        # The imported fields' form-relevant validators, as raw `[[name], options]`
+        # pairs replayable through `validates` onto the typed data class — so the
+        # form pipeline surfaces imported required/length/etc. the same as inline
+        # `validates`. Kept SEPARATE from `validate_fn`: the runner validates
+        # imported fields through the transient model, so these must not feed it.
+        def form_validators_for(model, names)
+          names.flat_map do |name|
+            model.validators_on(name).filter_map do |validator|
+              next unless FORM_VALIDATOR_KINDS.include?(validator.kind)
+              [[name], {validator.kind => validator.options.presence || true}]
+            end
+          end
+        end
 
         # `using:` accepts a model class only. Anything else is a programming error.
         def model!(using)

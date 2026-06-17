@@ -53,11 +53,60 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
   end
 
+  # --- relaunch chooser (`on_relaunch :prompt`) ------------------------------
+
+  # OnboardOrganizationWizard is tokened and declares `on_relaunch :prompt`: a bare
+  # launch with NO pending runs still mints a fresh run (unchanged).
+  test "bare launch with no pending runs starts fresh" do
+    assert_equal 0, Plutonium::Wizard::Session.where(status: "in_progress").count
+    get base
+    assert_response :redirect
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
+  end
+
+  # With a pending run, the bare launch shows the resume-or-new chooser instead of
+  # forking — listing the pending run with a Resume link (carrying its token) and a
+  # Start-new control.
+  test "bare launch with a pending run shows the resume-or-new chooser" do
+    advance_through("identity") # one in-progress run owned by the admin (now on details)
+    get base
+    assert_response :success
+    assert_includes response.body, "pu-wizard-chooser"
+    assert_match %r{href="#{Regexp.escape(base)}/#{@wizard_token}/details"[^>]*data-wizard-chooser-resume}, response.body
+    assert_match %r{data-wizard-chooser-start-new}, response.body
+    assert_includes response.body, "?new=1"
+  end
+
+  # The Start-new path (`?new=1`) bypasses the chooser and mints a fresh run, even
+  # when a pending one exists. No new row yet (token minted; row created on first submit).
+  test "bare launch with ?new=1 starts fresh despite a pending run" do
+    advance_through("identity")
+    before = Plutonium::Wizard::Session.where(status: "in_progress").count
+    get "#{base}?new=1"
+    assert_response :redirect
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
+    assert_equal before, Plutonium::Wizard::Session.where(status: "in_progress").count
+  end
+
   test "GET first step renders the step form fields" do
     get "#{base}/identity"
     assert_response :success
     assert_includes response.body, %(name="wizard[name]")
     assert_includes response.body, %(name="_direction")
+  end
+
+  # A step's inline `validates ... presence: true` is replayed onto the typed
+  # data class, so the shared form pipeline surfaces the required marker — same
+  # as a resource form. `name` is required; `plan` is not.
+  test "required step fields render the required marker" do
+    get "#{base}/identity"
+    assert_response :success
+
+    name_label = response.body[/<label[^>]*for="wizard_name"[^>]*>.*?<\/label>/m]
+    plan_label = response.body[/<label[^>]*for="wizard_plan"[^>]*>.*?<\/label>/m]
+
+    assert_match(/<abbr[^>]*title="required"/, name_label, "expected required marker on the validated `name` field")
+    refute_match(/<abbr[^>]*title="required"/, plan_label, "did not expect a required marker on the unvalidated `plan` field")
   end
 
   # --- typed inputs (not plain text) -----------------------------------------
@@ -100,9 +149,26 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(data-wizard-stepper-state="upcoming")
 
     # After advancing, the visited step links back; the new current is marked. The
-    # link carries the per-run token segment (authenticated tokened run, §4.5).
+    # link carries the per-run token segment (authenticated tokened run, §4.5) and
+    # wraps the step's node + label.
     advance_through("identity")
-    assert_match(%r{<a href="/admin/onboarding/#{@wizard_token}/identity"[^>]*>Identity</a>}, response.body)
+    assert_match(
+      %r{<a href="/admin/onboarding/#{@wizard_token}/identity"[^>]*class="pu-step-link"[^>]*>.*?Identity.*?</a>}m,
+      response.body
+    )
+  end
+
+  # The review step isn't a numbered step (it's the finish line): no "Step N of M"
+  # count on its card or a numbered node in the rail — a flag icon instead. Real
+  # steps count among themselves (review excluded from the denominator).
+  test "review carries no step count; real steps count with review excluded" do
+    advance_through("identity") # now on details: step 2 of the 4 real steps
+    assert_includes response.body, "Step 2 of 4"
+
+    get "#{tbase}/review"
+    assert_response :success
+    refute_match(/Step\s+\d+\s+of\s+\d+/i, response.body) # no count on review
+    assert_includes response.body, "pu-step-flag"          # rail review node = flag
   end
 
   # --- repeater rehydration on GET (resume) ----------------------------------
@@ -130,31 +196,43 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(value="b@example.com")
   end
 
-  # --- review: auto-summary + gated finish + jump links ----------------------
+  # --- review: state machine -------------------------------------------------
 
-  test "the review step renders an auto-summary, a custom block, and a finish" do
+  # Summary is on by default, so a complete review shows the summary AND the
+  # author's custom block BELOW it (the block is additive, not a replacement) —
+  # plus the "check everything over" prompt, since the summary is shown.
+  test "a complete review shows the summary with the custom block below it" do
     advance_through("identity", "details", "profile", "members")
-    # now on review (all steps complete)
-    assert_includes response.body, %(data-wizard-review-step="identity")
-    assert_includes response.body, "Acme Inc"          # summarized value
-    # The repeatable `members` step (structured_input) is summarized too, as a
-    # labelled list of its staged rows — not silently dropped.
-    assert_includes response.body, %(data-wizard-review-collection="invites")
-    assert_includes response.body, "a@example.com"
-    assert_includes response.body, "Ready to onboard Acme Inc" # custom block
-    assert_match(/data-wizard-nav="finish"/, response.body)
-    # All steps complete → Finish is NOT disabled.
+    # now on review (all steps complete), summary on + custom block
+    assert_includes response.body, %(data-wizard-review-step="identity") # summary
+    assert_includes response.body, "Acme Inc"
+    assert_includes response.body, "Ready to onboard Acme Inc"           # custom block
+    assert_includes response.body, %(data-wizard-review-custom)
+    # The custom block sits BELOW the summary.
+    assert_operator response.body.index(%(data-wizard-review-step="identity")),
+      :<, response.body.index(%(data-wizard-review-custom)),
+      "the custom block should render below the summary"
+    # The custom body is bare — no tinted "green field" callout around it.
+    refute_includes response.body, "bg-primary-50"
+    # The check-everything prompt shows because the summary is shown.
+    assert_includes response.body, "Check everything over before you finish"
+    # Finish is enabled (all steps complete).
     finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
     refute_includes finish_btn, "disabled"
   end
 
-  test "review lists outstanding steps as fix-this links and disables finish" do
+  # The auto-summary is the INCOMPLETE-state (review-and-fix) view: it lists the
+  # entered data alongside the outstanding-steps banner.
+  test "an incomplete review shows outstanding steps and the entered-data summary" do
     advance_through("identity") # only the first step is complete
     # Jump to review via direct GET — it surfaces outstanding steps + gated finish.
     get "#{tbase}/review"
     assert_response :success
     assert_includes response.body, "wizard-review-outstanding"
     assert_includes response.body, %(data-wizard-review-fix="details")
+    # The summary of what's entered so far renders too.
+    assert_includes response.body, %(data-wizard-review-step="identity")
+    assert_includes response.body, "Acme Inc"
     finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
     assert_includes finish_btn, "disabled"
   end
@@ -181,11 +259,132 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert Organization.exists?(name: "Acme Inc")
   end
 
+  # A finalize (`execute`) that fails a model validation — e.g. a uniqueness
+  # check — must SURFACE the error on the review page, not silently re-render. The
+  # error is field-level (name), and review has no field form to attach it to, so
+  # it renders as a full message in the review's error banner.
+  test "a finalize validation error is surfaced on the review page" do
+    Organization.create!(name: "Acme Inc") # the name advance_through stages → duplicate
+    advance_through("identity", "details", "profile", "members") # → review, all complete
+
+    assert_no_difference -> { Organization.count } do
+      post "#{tbase}/review", params: {_direction: "next"}
+    end
+    assert_response :unprocessable_content
+    assert_match(/has already been taken/i, response.body)
+  end
+
   test "advance with invalid input re-renders with errors and does not advance" do
     post "#{base}/identity", params: {wizard: {name: ""}, _direction: "next"}
     assert_response :unprocessable_content
-    assert_includes response.body, "name"
+    # The validation MESSAGE must actually render — not just the field label. (A
+    # `data` memo reset between seed_errors! and the form read once swallowed it.)
+    assert_match(/can.{0,6}t be blank/i, response.body) # HTML-escaped apostrophe (&#39;)
     assert_equal 0, Organization.count
+  end
+
+  # Regression (§6): navigating BACK to an earlier step via a GET doesn't persist
+  # the cursor, so the stored cursor still points at a later step. A subsequent
+  # POST to the earlier step must still extract THIS step's fields (not the stored
+  # cursor step's) — otherwise the edit is silently dropped and the later step's
+  # fields leak into this step's slice.
+  test "re-submitting an earlier step after a back-jump stages the edited value" do
+    advance_through("identity", "details")
+    # Cursor is now on profile. Jump back to identity via a GET (no persist).
+    get "#{tbase}/identity"
+    assert_response :success
+    assert_includes response.body, %(value="Acme Inc")
+
+    # Edit the name and submit the identity step.
+    post "#{tbase}/identity", params: {wizard: {name: "Renamed Co", plan: "pro"}, _direction: "next"}
+    assert_response :redirect
+
+    # The review summary reflects the edited value — not the stale one.
+    get "#{tbase}/review"
+    assert_includes response.body, "Renamed Co"
+    refute_includes response.body, "Acme Inc"
+
+    # And the identity slice didn't pick up a foreign field (e.g. details' `note`).
+    get "#{tbase}/identity"
+    assert_includes response.body, %(value="Renamed Co")
+  end
+
+  # --- forward button labels + Save & review shortcut (§7) -------------------
+
+  def forward_button = response.body[/<button[^>]*data-wizard-nav="next"[^>]*>.*?<\/button>/m]
+
+  def review_shortcut_button = response.body[/<button[^>]*data-wizard-nav="save_review"[^>]*>.*?<\/button>/m]
+
+  test "a freshly-reached, unsubmitted step shows a plain Next" do
+    advance_through("identity") # cursor on details: reached but not submitted
+    assert_includes forward_button, "Next"
+    refute_includes forward_button, "Save"
+    refute_includes response.body, %(data-wizard-nav="save_review")
+  end
+
+  test "revisiting an already-submitted step labels the forward button Save & continue" do
+    advance_through("identity", "details") # identity submitted; cursor on profile
+    get "#{tbase}/identity"
+    assert_response :success
+    assert_includes forward_button, "Save &amp; continue" # HTML-escaped ampersand
+  end
+
+  test "when every step is complete an earlier step offers Save & review as primary" do
+    advance_through("identity", "details", "profile", "members") # all complete; on review
+    get "#{tbase}/identity"
+    assert_response :success
+
+    # The shortcut is present, carries `_goto=review`, and is the primary button.
+    assert review_shortcut_button, "expected a Save & review shortcut button"
+    assert_includes review_shortcut_button, %(name="_goto")
+    assert_includes review_shortcut_button, %(value="review")
+    assert_includes review_shortcut_button, "pu-btn-primary"
+
+    # Save & continue is the secondary (outline) forward action.
+    assert_includes forward_button, "Save &amp; continue"
+    assert_includes forward_button, "pu-btn-outline"
+  end
+
+  test "Save & review stages the edited step then jumps straight to review" do
+    advance_through("identity", "details", "profile", "members")
+    get "#{tbase}/identity"
+    # The Save & review button posts `_goto=review` with NO `_direction`.
+    post "#{tbase}/identity", params: {wizard: {name: "Edited Co", plan: "pro"}, _goto: "review"}
+    assert_response :redirect
+    assert_match %r{/review\z}, URI(response.location).path
+
+    follow_redirect!
+    assert_includes response.body, "Edited Co" # the edit was staged
+  end
+
+  test "the last step before review does not show the redundant Save & review shortcut" do
+    advance_through("identity", "details", "profile")
+    # Complete members (the last non-review step) so everything is complete.
+    post "#{tbase}/members", params: {wizard: {invites: [{email: "x@y.com", role: "admin"}]}, _direction: "next"}
+    follow_redirect! # review
+    get "#{tbase}/members"
+    assert_response :success
+    # Next step IS review → the shortcut would be redundant, so it's hidden.
+    refute_includes response.body, %(data-wizard-nav="save_review")
+    assert_includes forward_button, "Save &amp; continue"
+  end
+
+  # Finish/Cancel redirect OUT of the wizard to a differently-structured page. The
+  # layout opts into Turbo morphing, so without opting these submitters out of
+  # Turbo the destination morphs INTO the wizard DOM (nesting it). In-wizard
+  # Next/Back stay on Turbo (same structure → morph is correct).
+  test "exit controls (Finish, Cancel) opt out of Turbo; in-wizard nav does not" do
+    advance_through("identity", "details", "profile", "members") # → review
+    finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
+    assert_includes finish_btn, %(data-turbo="false"), "Finish must do a full navigation"
+
+    # On a step page, Cancel exits → its mini-form opts out of Turbo; Next does not.
+    get "#{tbase}/identity"
+    assert_response :success
+    cancel_form = response.body[/<form[^>]*>\s*<input[^>]*name="authenticity_token"[^>]*>\s*<input[^>]*value="cancel"[^>]*>.*?<\/form>/m]
+    assert cancel_form, "expected the Cancel mini-form"
+    assert_includes cancel_form, %(data-turbo="false")
+    refute_includes forward_button, %(data-turbo="false"), "in-wizard Next stays on Turbo"
   end
 
   test "back direction moves to the previous step without validating" do
@@ -225,5 +424,48 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
 
     # The rendered form action carries the token, so the next POST stays on this run.
     assert_includes response.body, "#{base}/#{row.token}/"
+  end
+end
+
+# Drives ChromelessWizard, which opts out of the chrome: `stepper false` (no top
+# rail) and `review summary: false` with no custom block (→ the built-in "ready
+# to complete" panel).
+class AdminPortal::WizardChromeTest < ActionDispatch::IntegrationTest
+  include IntegrationTestHelper
+  include Plutonium::Testing::AuthHelpers
+
+  setup do
+    @admin = create_admin!
+    login_as(@admin, portal: :admin)
+    Plutonium::Wizard::Session.delete_all
+  end
+
+  def base = "/admin/chromeless"
+
+  test "stepper false hides the top rail" do
+    get "#{base}/only"
+    assert_response :success
+    refute_includes response.body, "pu-wizard-stepper", "stepper false must hide the top rail"
+  end
+
+  test "a complete summary-off review with no custom block renders the ready panel" do
+    get base
+    follow_redirect!
+    token = Plutonium::Wizard::Session.where(status: "in_progress").first&.token
+    post "#{base}/#{token}/only", params: {wizard: {name: "Acme"}, _direction: "next"}
+    follow_redirect! # lands on review (complete)
+
+    assert_response :success
+    # :ready mode — the built-in confirmation panel, not the auto-summary.
+    assert_includes response.body, %(data-wizard-review-ready)
+    assert_match(/You.{0,6}re all set/, response.body) # HTML-escaped apostrophe (&#39;)
+    refute_includes response.body, %(data-wizard-review-step=)
+    # `header: false` drops the step-header section — no "Done" heading on the card.
+    refute_match(/<h2[^>]*>Done<\/h2>/, response.body)
+    # The header carries no canned review prompt that would contradict the panel.
+    refute_includes response.body, "Check everything over before you finish"
+    # Finish is enabled (the single step is complete).
+    finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
+    refute_includes finish_btn, "disabled"
   end
 end

@@ -931,3 +931,78 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 .dark .pu-alert-info        { @apply text-info-400; }
 .pu-alert-info .pu-alert-close       { @apply bg-info-50 text-info-500 hover:bg-info-200 focus:ring-info-400; }
 .dark .pu-alert-info .pu-alert-close { @apply text-info-400; }
+
+/* ===========================================================================
+   Wizard — horizontal "steps" stepper (numbered nodes on a connector track)
+   =========================================================================== */
+.pu-wizard-steps { @apply flex list-none m-0 p-0; }
+.pu-wizard-steps > li { @apply relative flex-1 min-w-0 text-center; }
+
+/* the connector track: two halves behind each node, so first/last don't overhang */
+.pu-wizard-steps > li::before,
+.pu-wizard-steps > li::after {
+  content: ""; position: absolute; top: 17px; height: 2px; z-index: 0;
+  background: var(--pu-border);
+}
+.pu-wizard-steps > li::before { left: 0; right: 50%; }
+.pu-wizard-steps > li::after  { left: 50%; right: 0; }
+.pu-wizard-steps > li:first-child::before,
+.pu-wizard-steps > li:last-child::after { display: none; }
+
+.pu-wizard-steps .pu-step-link { @apply block no-underline; }
+.pu-wizard-steps .pu-step-node {
+  @apply relative z-10 mx-auto grid place-items-center font-semibold;
+  width: 34px; height: 34px; border-radius: 9999px; font-size: .85rem;
+  background: var(--pu-surface); border: 2px solid var(--pu-border-strong);
+  color: var(--pu-text-subtle); transition: all .2s;
+}
+.pu-wizard-steps .pu-step-label {
+  @apply block mt-2 font-bold; font-size: .8rem; color: var(--pu-text-muted);
+}
+.pu-wizard-steps a.pu-step-link:hover .pu-step-label { @apply underline; }
+
+/* current */
+.pu-wizard-steps > li[data-state="current"] .pu-step-node {
+  @apply bg-primary-600 text-white; border-color: theme(colors.primary.600);
+  box-shadow: 0 0 0 5px color-mix(in srgb, theme(colors.primary.600) 16%, transparent);
+}
+.dark .pu-wizard-steps > li[data-state="current"] .pu-step-node {
+  @apply bg-primary-400 text-primary-950; border-color: theme(colors.primary.400);
+  box-shadow: 0 0 0 5px color-mix(in srgb, theme(colors.primary.400) 20%, transparent);
+}
+.pu-wizard-steps > li[data-state="current"] .pu-step-label { color: var(--pu-text); }
+
+/* done — opaque tint (mixed with the surface, not transparent) so the connector
+   track behind the node never shows through and "cuts" the circle */
+.pu-wizard-steps > li[data-state="completed"] .pu-step-node {
+  @apply text-primary-600; border-color: theme(colors.primary.600);
+  background: color-mix(in srgb, theme(colors.primary.600) 12%, var(--pu-surface));
+}
+.dark .pu-wizard-steps > li[data-state="completed"] .pu-step-node {
+  @apply text-primary-400; border-color: theme(colors.primary.400);
+  background: color-mix(in srgb, theme(colors.primary.400) 16%, var(--pu-surface));
+}
+.pu-wizard-steps > li[data-state="completed"] .pu-step-number { display: none; }
+.pu-wizard-steps > li[data-state="completed"] .pu-step-node::after { content: "\2713"; }
+
+/* the terminal (review) node shows a finish flag, never the done-check — even
+   once it's been reached (`completed` state) */
+.pu-wizard-steps > li[data-terminal] .pu-step-node::after { content: none; }
+
+/* filled connectors: a node's trailing half (::after) colors only when the NEXT
+   node is reached (completed/current), and its leading half (::before) colors
+   when this node itself is reached. So navigating BACK to a step still shows a
+   filled line into the reached step that follows it — no stray gray segment. */
+.pu-wizard-steps > li[data-state="completed"]::before,
+.pu-wizard-steps > li[data-state="current"]::before,
+.pu-wizard-steps > li:has(+ li[data-state="completed"])::after,
+.pu-wizard-steps > li:has(+ li[data-state="current"])::after { background: theme(colors.primary.500); }
+.dark .pu-wizard-steps > li[data-state="completed"]::before,
+.dark .pu-wizard-steps > li[data-state="current"]::before,
+.dark .pu-wizard-steps > li:has(+ li[data-state="completed"])::after,
+.dark .pu-wizard-steps > li:has(+ li[data-state="current"])::after { background: theme(colors.primary.400); }
+
+/* compact on small screens: hide labels, nodes-only track */
+@media (max-width: 640px) {
+  .pu-wizard-steps .pu-step-label { @apply hidden; }
+}

@@ -42,15 +42,45 @@ module Plutonium
       # "token appears only after the first submit", and no fork-on-reload).
       def wizard_launch
         require_wizard_authentication!
+
+        # `on_relaunch :prompt` (§4.5): when the user already has pending runs of
+        # this (tokened) wizard, show a "resume or start new" chooser instead of
+        # forking a fresh run. Decided BEFORE `build_wizard_runner`, which would
+        # otherwise mint a token.
+        if wizard_relaunch_prompt?
+          return render_wizard_chooser
+        end
+
         runner = build_wizard_runner
         deny_wizard_resume_for_other_user!(runner)
         authorize_wizard_entry!(runner)
 
         if runner.completed_one_time?
-          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+          return render_wizard_completed(runner)
         end
 
         redirect_to wizard_step_url(runner.current_step&.key), status: :see_other, allow_other_host: false
+      end
+
+      # Whether the bare launch should divert to the resume-or-new chooser: the
+      # wizard opted in (`on_relaunch :prompt`), it's an authenticated TOKENED run
+      # (keyed wizards already auto-resume; `anonymous` runs are session-keyed),
+      # the request isn't the explicit "start new" path, and a pending run exists.
+      def wizard_relaunch_prompt?
+        klass = current_wizard_class
+        return false unless klass.relaunch_prompt?
+        return false if klass.anonymous? || klass.concurrency_key?
+        return false if params[:new].present?
+
+        wizard_pending_entries.any?
+      end
+
+      # This wizard's in-progress runs for the current owner (tenant-scoped),
+      # enriched with resume URLs — via the shared {Resume} listing module.
+      def wizard_pending_entries
+        @wizard_pending_entries ||=
+          Plutonium::Wizard::Resume.entries_for(resolved_wizard_owner, scope: resolved_wizard_scope)
+            .select { |entry| entry.wizard_class == current_wizard_class }
       end
 
       # GET .../:step — render the current step (or bounce on a completeness gap).
@@ -61,9 +91,10 @@ module Plutonium
         authorize_wizard_entry!(runner)
 
         # Re-entering a finished one-time wizard (§4.3/§9): its key holds a
-        # retained `completed` row, so there is nothing to run — bounce out.
+        # retained `completed` row whose `data` was cleared on completion, so there
+        # is nothing to review — render the standalone "already completed" page.
         if runner.completed_one_time?
-          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+          return render_wizard_completed(runner)
         end
 
         if (target = wizard_redirect_step)
@@ -86,9 +117,20 @@ module Plutonium
         authorize_wizard_entry!(runner)
         @wizard_runner = runner
 
+        # A POST to a finished one-time wizard (stale form / double submit): nothing
+        # to run. PRG to the step URL so the follow-up GET renders the completed page.
         if runner.completed_one_time?
-          return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+          return redirect_to wizard_step_url(runner.current_step&.key), status: :see_other, allow_other_host: false
         end
+
+        # Align the in-memory cursor to the step being POSTed. A user can navigate
+        # BACK to an earlier step via a GET (stepper jump / direct URL), which by
+        # design does NOT persist the cursor — so the stored cursor still points at
+        # a LATER step. Without realigning, `wizard_params`/`wizard_step_form` would
+        # extract this submission through the wrong step's form: the edited fields
+        # are silently dropped and the stored-cursor step's fields leak in. The step
+        # carried in the URL is the one being submitted, so make it current.
+        runner.go_to(params[:step])
 
         if params[:pre_submit]
           return render_wizard_pre_submit(runner)
@@ -114,7 +156,7 @@ module Plutonium
       def advance_or_finalize(runner)
         return runner.finalize if wizard_posting_last_step?(runner)
 
-        runner.advance(params[:step], wizard_params(runner))
+        runner.advance(params[:step], wizard_params(runner), goto: params[:_goto].presence)
       end
 
       # Whether the step being POSTed is the last visible step (so Next → Finish).
@@ -162,6 +204,33 @@ module Plutonium
       end
 
       # --- rendering ---
+
+      # The "resume or start new" chooser (§4.5), rendered at the bare launch URL
+      # when `on_relaunch :prompt` and pending runs exist. "Start new" re-enters
+      # this launch with `?new=1`, which skips the chooser and mints a fresh run.
+      def render_wizard_chooser
+        render(
+          Plutonium::UI::Page::WizardChooser.new(
+            wizard_class: current_wizard_class,
+            entries: wizard_pending_entries,
+            start_new_url: "#{request.path}?new=1"
+          ),
+          **wizard_modal_render_options
+        )
+      end
+
+      # The standalone "already completed" page for a re-opened one-time wizard
+      # (§9). Its `data` was cleared on completion, so this never shows the review —
+      # just a confirmation (or the wizard's `completed` block).
+      def render_wizard_completed(runner)
+        render(
+          Plutonium::UI::Page::WizardCompleted.new(
+            runner:,
+            exit_url: wizard_exit_url
+          ),
+          **wizard_modal_render_options
+        )
+      end
 
       def render_wizard_step(runner, status: :ok)
         render(

@@ -44,8 +44,13 @@ module Plutonium
 
       # The runner reuses a single wizard instance across a request, reassigning
       # `data_attributes` between reads, so invalidate the memoized `data` snapshot
-      # whenever the staged attributes change.
+      # whenever the staged attributes change. Only rebuild when the value actually
+      # CHANGES: the runner calls this on every `visible_path` (via `sync_data`),
+      # and an unconditional reset would discard a `data` snapshot the view layer
+      # has since mutated — e.g. validation errors `seed_errors!` added before the
+      # form reads them back (they'd silently vanish).
       def data_attributes=(attrs)
+        return if @data && attrs == @data_attributes
         @data_attributes = attrs
         @data = nil
       end
@@ -67,7 +72,8 @@ module Plutonium
             acc[step.key.to_sym] = {
               schema: step.attribute_schema,
               options: step.attribute_options,
-              structured: step_structured_schema(step)
+              structured: step_structured_schema(step),
+              validations: step.validations + step.imported_form_validators
             }
           end
         end
@@ -77,7 +83,7 @@ module Plutonium
         # snapshot (the container is cheap to instantiate; the classes aren't).
         def data_step_classes
           @data_step_classes ||= data_steps_spec.transform_values do |spec|
-            Data.class_for(spec[:schema], options: spec[:options], structured: spec[:structured])
+            Data.class_for(spec[:schema], options: spec[:options], structured: spec[:structured], validations: spec[:validations])
           end
         end
 

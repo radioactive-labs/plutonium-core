@@ -117,6 +117,15 @@ module Plutonium
         submitted?(step) && validate(step, {}).empty?
       end
 
+      # Whether a step has been SUBMITTED (advanced through) — its staged `data`
+      # slice exists. Distinct from `visited`/reached: advancing TO a step (landing
+      # on it) doesn't stage its data, so it isn't "submitted" until the user Nexts
+      # through it. Drives the forward button label (revisiting a submitted step →
+      # "Save & continue") and gates completeness (§6.3).
+      def submitted?(step)
+        @state.data.key?(step.key.to_s)
+      end
+
       # The ordered visible non-review steps that aren't yet complete (§6.3). The
       # review step lists these as "fix this" jump links and gates Finish.
       def incomplete_visible_steps
@@ -128,7 +137,14 @@ module Plutonium
       # Validate + stage a step, run its `on_submit` (in a transaction), then move
       # the cursor to the next visible step. On validation/`on_submit` failure the
       # cursor does not move and the errors are returned.
-      def advance(step_key, params)
+      #
+      # `goto:` overrides the post-advance cursor target (the "Save & review"
+      # shortcut, §7): after staging this step it points the cursor at the named
+      # visible step (typically the review step) instead of the next one, so a user
+      # editing one step after completing the wizard returns straight to review. The
+      # override is ignored if it doesn't name a currently-visible step; review's
+      # own finalize re-checks completeness, so a forged jump can't skip the gate.
+      def advance(step_key, params, goto: nil)
         step = step_for(step_key)
         errors = validate(step, params)
         return Result.new(ok: false, errors:) if errors.any?
@@ -155,7 +171,7 @@ module Plutonium
         # step failure (same as `on_submit`), it is not swallowed; the cursor does
         # not move and the advance's data is not lost (the prune persists state).
         prune_departed_steps
-        @state.current_step = next_visible_after(step)&.key&.to_s
+        @state.current_step = advance_target(step, goto)&.key&.to_s
         # Mark the step we ARRIVE at visited too, not just the one we left. `visited`
         # is the set of steps the user has *reached* (the high-water mark) — what the
         # stepper uses to decide which headers link. Without this, landing on a step
@@ -308,6 +324,16 @@ module Plutonium
         idx ? path[idx + 1] : path.first
       end
 
+      # The cursor's post-advance target: the `goto` step when it names a currently-
+      # visible step (the "Save & review" shortcut), else the next visible step.
+      def advance_target(step, goto)
+        if goto.present?
+          target = visible_path.find { |s| s.key.to_s == goto.to_s }
+          return target if target
+        end
+        next_visible_after(step)
+      end
+
       def previous_visible
         path = visible_path
         idx = path.index { |s| s.key.to_s == @state.current_step.to_s } || 0
@@ -327,38 +353,21 @@ module Plutonium
         errors.reject { |_attr, msgs| Array(msgs).blank? }
       end
 
-      # Run the step's inline `validates` against a transient ActiveModel built from
-      # THIS step's schema (not a cross-step union), returning {attribute => [String
-      # messages]} keyed by symbol.
+      # Run the step's inline `validates` against a transient instance of the SAME
+      # typed class the form/data layer uses ({Data.class_for}), built from THIS
+      # step's schema (not a cross-step union). Passes ONLY the inline `validations`
+      # — NOT the import's `form_validators` — because imported fields are validated
+      # separately through the transient model (`imported_validate_fn`); folding the
+      # imported validators in here too would double-report them. Returns
+      # {attribute => [String messages]} keyed by symbol.
       def inline_errors(step, merged)
         validations = step.validations
         return {} if validations.blank?
 
-        klass = inline_validator_class(step.attribute_schema, validations)
+        klass = Plutonium::Wizard::Data.class_for(step.attribute_schema, validations:)
         obj = klass.new(merged)
         obj.valid?
         message_errors(obj)
-      end
-
-      def inline_validator_class(schema, validations)
-        Class.new do
-          include ActiveModel::Model
-          include ActiveModel::Attributes
-
-          # Anonymous classes have no name, which breaks `error.message`'s
-          # translation lookup (it calls `model_name`). Supply a stable one.
-          def self.model_name = ActiveModel::Name.new(self, nil, "WizardStep")
-
-          schema.each { |name, type| attribute(name, Plutonium::Wizard.safe_attribute_type(type)) }
-
-          define_method(:initialize) do |attrs = {}|
-            super((attrs || {}).symbolize_keys.slice(*schema.keys))
-          end
-
-          validations.each do |args, options|
-            validates(*args, **options)
-          end
-        end
       end
 
       # Run the step's `on_submit` in a transaction, with the `persist` macro bound
@@ -444,14 +453,6 @@ module Plutonium
         visible_path.reject(&:review?).find do |step|
           !submitted?(step) || validate(step, {}).any?
         end
-      end
-
-      # Whether a step has been SUBMITTED (advanced through) — its staged `data`
-      # slice exists. Distinct from `visited`/reached: advancing TO a step (landing
-      # on it) doesn't stage its data, so it isn't "submitted" until the user
-      # Nexts through it. This is what gates completeness/Finish (§6.3).
-      def submitted?(step)
-        @state.data.key?(step.key.to_s)
       end
 
       # Drop the staged slice of any step not currently visible (§6.3 pruning) —

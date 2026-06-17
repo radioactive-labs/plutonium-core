@@ -114,6 +114,39 @@ module Plutonium
         assert_equal :free, free.navigation
       end
 
+      def test_stepper_default_and_override
+        assert_equal true, CreateCo.stepper?, "stepper (top rail) is on by default"
+
+        railless = Class.new(Plutonium::Wizard::Base) { stepper false }
+        assert_equal false, railless.stepper?
+      end
+
+      def test_stepper_is_inherited_not_shared
+        railless = Class.new(Plutonium::Wizard::Base) { stepper false }
+        sub = Class.new(railless)
+        assert_equal false, sub.stepper?, "subclass inherits the stepper setting"
+      end
+
+      def test_review_summary_default_and_override
+        assert CreateCo.steps.last.summary?, "review auto-summary is on by default"
+
+        no_summary = Class.new(Plutonium::Wizard::Base) do
+          step(:a) { attribute :x, :string }
+          review label: "R", summary: false
+        end
+        refute no_summary.steps.last.summary?
+      end
+
+      def test_review_header_default_and_override
+        assert CreateCo.steps.last.header?, "review header section is shown by default"
+
+        no_header = Class.new(Plutonium::Wizard::Base) do
+          step(:a) { attribute :x, :string }
+          review label: "R", header: false
+        end
+        refute no_header.steps.last.header?
+      end
+
       def test_cleanup_after_default_from_config
         assert_equal Plutonium.configuration.wizards.cleanup_after, CreateCo.cleanup_after
       end
@@ -146,6 +179,46 @@ module Plutonium
         assert_equal ["user-1", "tenant-9"], w.concurrency_key_value
       end
 
+      # An anchored wizard with no explicit key is implicitly keyed by
+      # [anchor, current_user] (tenant folds in) — one draft per user per record.
+      def test_anchored_wizard_implies_anchor_user_key
+        klass = Class.new(Plutonium::Wizard::Base) { anchored with: String }
+        assert klass.concurrency_key?, "anchored ⇒ keyed by default"
+        assert klass.implied_anchor_key?
+
+        w = klass.new
+        w.anchor = "rec"
+        w.current_user = "user-1"
+        w.current_scoped_entity = "tenant-9"
+        assert_equal ["rec", "user-1", "tenant-9"], w.concurrency_key_value
+      end
+
+      def test_explicit_concurrency_key_overrides_implied_anchor_key
+        klass = Class.new(Plutonium::Wizard::Base) do
+          anchored with: String
+          concurrency_key { anchor }
+        end
+        refute klass.implied_anchor_key?
+        w = klass.new
+        w.anchor = "rec"
+        w.current_scoped_entity = "t"
+        assert_equal ["rec", "t"], w.concurrency_key_value, "explicit key wins"
+      end
+
+      def test_anonymous_anchored_wizard_stays_tokened
+        klass = Class.new(Plutonium::Wizard::Base) do
+          anchored with: String
+          anonymous
+        end
+        refute klass.concurrency_key?, "a guest has no real user to key by"
+        refute klass.implied_anchor_key?
+      end
+
+      def test_non_anchored_wizard_is_not_implicitly_keyed
+        refute CreateCo.concurrency_key?
+        refute CreateCo.implied_anchor_key?
+      end
+
       def test_one_time_requires_concurrency_key
         # `one_time` without a `concurrency_key` raises at first use.
         bad = Class.new(Plutonium::Wizard::Base) { one_time }
@@ -160,6 +233,41 @@ module Plutonium
           one_time
         end
         assert ot.one_time?
+      end
+
+      def test_on_relaunch_defaults_to_new_and_opts_into_prompt
+        assert_equal :new, CreateCo.on_relaunch
+        refute CreateCo.relaunch_prompt?
+
+        prompt = Class.new(Plutonium::Wizard::Base) { on_relaunch :prompt }
+        assert_equal :prompt, prompt.on_relaunch
+        assert prompt.relaunch_prompt?
+      end
+
+      def test_on_relaunch_is_inherited
+        prompt = Class.new(Plutonium::Wizard::Base) { on_relaunch :prompt }
+        assert Class.new(prompt).relaunch_prompt?
+      end
+
+      def test_completed_block_defaults_to_nil_and_is_recorded
+        assert_nil CreateCo.completed_block
+
+        block = proc { "done" }
+        with_block = Class.new(Plutonium::Wizard::Base) { completed(&block) }
+        assert_equal block, with_block.completed_block
+      end
+
+      def test_completed_block_is_inherited_not_shared
+        block = proc { "done" }
+        parent = Class.new(Plutonium::Wizard::Base) { completed(&block) }
+        child = Class.new(parent)
+
+        assert_equal block, child.completed_block
+        # Overriding on the child doesn't mutate the parent's block.
+        other = proc { "child" }
+        child.completed(&other)
+        assert_equal other, child.completed_block
+        assert_equal block, parent.completed_block
       end
 
       def test_encrypt_data

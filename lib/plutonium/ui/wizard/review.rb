@@ -3,17 +3,19 @@
 module Plutonium
   module UI
     module Wizard
-      # The terminal review step's body (§2.5). It renders:
+      # The terminal review step's body (§2.5), a small state machine (see
+      # {#render_mode}):
       #
-      #   - an auto-summary of every visible non-review step's collected `data`,
-      #     grouped by step, through the display pipeline (SummaryDisplay);
-      #   - a "fix this" jump link for each visible step that is unvisited or
-      #     invalid (so the user can complete it);
-      #   - the review step's optional custom block, if present;
-      #   - the Finish button is rendered by the page; this component only signals
-      #     (via `complete?`) whether the page should enable it.
+      #   - INCOMPLETE (a visible step is unvisited/invalid) → a "fix this" jump
+      #     link per outstanding step + an auto-summary of what's entered so far.
+      #   - COMPLETE + custom block → the author's block, rendered bare.
+      #   - COMPLETE + no block, `summary: true` (default) → the auto-summary of
+      #     every visible step's collected `data` (via SummaryDisplay).
+      #   - COMPLETE + no block, `summary: false` → the built-in "ready to
+      #     complete" panel (for a fully author-owned / chromeless review).
       #
-      # Finish is gated: rendered disabled while any visible step is incomplete.
+      # The Finish button is rendered by the page (gated: disabled while any
+      # visible step is incomplete); this component only renders the body.
       class Review < Plutonium::UI::Component::Base
         # @param runner  [Plutonium::Wizard::Runner]
         # @param step_url [Proc] step_key → GET url, for the fix-this links.
@@ -23,12 +25,38 @@ module Plutonium
         end
 
         def view_template
-          render_outstanding
-          render_summary
-          render_custom_block
+          render_outstanding if show_outstanding?
+          render_summary if show_summary?
+          render_custom_block if show_custom?
+          render_ready if show_ready?
         end
 
         private
+
+        # The review body composes from these pieces (see the `review summary:`
+        # macro). Order of render: outstanding → summary → custom → ready.
+        #
+        #   - outstanding banner — while any visible step is incomplete.
+        #   - summary cards      — whenever the auto-summary is on: the
+        #     review-and-fix view when incomplete, the check-before-finish view
+        #     when complete.
+        #   - custom block       — author content, ONLY once complete; sits BELOW
+        #     the summary when summary is on, and REPLACES it when summary is off.
+        #   - ready panel        — complete + summary off + no custom block: the
+        #     built-in "ready to complete" confirmation (chromeless finish).
+        def show_outstanding? = !complete?
+
+        def show_summary? = summary?
+
+        def show_custom? = complete? && !custom_block.nil?
+
+        def show_ready? = complete? && !summary? && custom_block.nil?
+
+        def complete? = @runner.incomplete_visible_steps.empty?
+
+        def summary? = @runner.current_step.summary?
+
+        def custom_block = @runner.current_step.block
 
         def steps = @runner.visible_path.reject(&:review?)
 
@@ -128,14 +156,30 @@ module Plutonium
           end
         end
 
-        # The review step's optional custom block, rendered as a tinted callout so
-        # author text inherits a theme-aware colour (legible in dark mode).
+        # The review step's custom block, rendered BARE — just a spacing + targeting
+        # wrapper, no surface/border/typography of its own — so the author has full
+        # control over the body's look.
         def render_custom_block
-          block = @runner.current_step.block
-          return unless block
+          div(class: "pu-wizard-review-custom", data: {wizard_review_custom: true}) do
+            instance_exec(@runner.wizard, &custom_block)
+          end
+        end
 
-          div(class: "pu-wizard-review-custom mt-5 rounded-[var(--pu-radius-lg)] border border-primary-200 bg-primary-50 px-5 py-4 text-sm text-[var(--pu-text)] dark:border-primary-900/60 dark:bg-primary-900/20") do
-            instance_exec(@runner.wizard, &block)
+        # The built-in "ready to complete" panel: shown when everything is valid,
+        # there's no custom block, and the auto-summary is turned off (`summary:
+        # false`). A clean confirmation so a chromeless review still reads as done.
+        def render_ready
+          div(
+            class: "pu-wizard-review-ready flex flex-col items-center text-center py-6",
+            data: {wizard_review_ready: true}
+          ) do
+            div(class: "mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400") do
+              render Phlex::TablerIcons::Check.new(class: "h-7 w-7")
+            end
+            h3(class: "text-lg font-semibold tracking-tight text-[var(--pu-text)]") { "You're all set" }
+            p(class: "mt-1.5 max-w-prose text-sm text-[var(--pu-text-muted)]") do
+              "Everything looks good. Click Finish to complete."
+            end
           end
         end
       end

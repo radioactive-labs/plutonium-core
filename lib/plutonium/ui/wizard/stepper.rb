@@ -27,8 +27,8 @@ module Plutonium
         end
 
         def view_template
-          nav(class: "pu-wizard-stepper mb-8", aria_label: "Progress") do
-            ol(class: "flex flex-wrap items-center gap-x-2 gap-y-3") do
+          nav(class: "pu-wizard-stepper mb-7", aria_label: "Progress") do
+            ol(class: "pu-wizard-steps") do
               @steps.each_with_index do |step, index|
                 render_step(step, index)
               end
@@ -38,51 +38,47 @@ module Plutonium
 
         private
 
+        # One step: a numbered node on the connector track + a label beneath. Both
+        # are wrapped in a link when the step is reachable (CSS draws the track,
+        # node states, and the done check via [data-state]).
         def render_step(step, index)
           state = step_state(step)
-          li(class: "flex items-center gap-2") do
-            render_marker(index, state)
-            render_label(step, state)
-            unless index == @steps.length - 1
-              # Highlight the connector once the step it trails is done, so the
-              # stepper reads as filled-up-to-here progress.
-              fill = (state == :completed) ? "bg-primary-500 dark:bg-primary-400" : "bg-[var(--pu-border)]"
-              span(class: "mx-2 h-px w-6 #{fill}", aria_hidden: "true")
+          # `data-terminal` marks the review node so the CSS suppresses the
+          # "completed" checkmark for it — it's the finish flag, never a done-check.
+          li(data: {state:, wizard_stepper_state: state, terminal: step.review? ? "true" : nil}) do
+            if clickable?(step, state)
+              a(href: @step_url.call(step.key), class: "pu-step-link",
+                aria_current: (state == :current) ? "step" : nil) do
+                render_node(step, index)
+                span(class: "pu-step-label") { step.label.to_s }
+              end
+            else
+              span(class: "pu-step-link") do
+                render_node(step, index)
+                span(class: "pu-step-label",
+                  aria_current: (state == :current) ? "step" : nil) { step.label.to_s }
+              end
             end
           end
         end
 
-        def render_marker(index, state)
-          classes = case state
-          when :current
-            "bg-primary-600 text-white border-primary-600 shadow-sm"
-          when :completed
-            "bg-primary-50 text-primary-700 border-primary-500 dark:bg-primary-900/40 dark:text-primary-300 dark:border-primary-500"
-          else
-            "bg-[var(--pu-surface)] text-[var(--pu-text-muted)] border-[var(--pu-border)]"
+        # The node: a numbered badge for a real step. The terminal review step isn't
+        # a numbered step (it's the "finish line"), so it shows a flag icon instead —
+        # no step number, here or in the card header (see Page::Wizard).
+        def render_node(step, index)
+          span(class: "pu-step-node") do
+            if step.review?
+              render_review_icon
+            else
+              # Review is always last, so a real step's index in the full path is
+              # also its position among real steps → a clean 1-based badge.
+              span(class: "pu-step-number") { (index + 1).to_s }
+            end
           end
-          span(
-            class: "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold #{classes}",
-            data: {wizard_stepper_state: state}
-          ) { (index + 1).to_s }
         end
 
-        def render_label(step, state)
-          text_class =
-            (state == :current) ? "text-[var(--pu-text)] font-semibold" : "text-[var(--pu-text-muted)]"
-
-          if clickable?(step, state)
-            a(
-              href: @step_url.call(step.key),
-              class: "text-sm #{text_class} hover:underline",
-              aria_current: (state == :current) ? "step" : nil
-            ) { step.label.to_s }
-          else
-            span(
-              class: "text-sm #{text_class}",
-              aria_current: (state == :current) ? "step" : nil
-            ) { step.label.to_s }
-          end
+        def render_review_icon
+          render Phlex::TablerIcons::Flag.new(class: "pu-step-flag w-4 h-4")
         end
 
         def step_state(step)

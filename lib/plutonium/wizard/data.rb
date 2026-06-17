@@ -33,7 +33,12 @@ module Plutonium
       # @param schema [Hash{Symbol=>Symbol}] scalar attribute name => type
       # @param options [Hash{Symbol=>Hash}] scalar attribute name => options (default:, etc.)
       # @param structured [Hash{Symbol=>Array<Symbol>}] structured name => sub-field names
-      def self.class_for(schema, options: {}, structured: {})
+      # @param validations [Array<[Array, Hash]>] inline `validates` declarations
+      #   ([args, options]) replayed onto the class so the form pipeline can infer
+      #   required markers via `validators_on` (§7). The class is never `.valid?`'d
+      #   in the form path — validation runs through the runner — so this only
+      #   feeds introspection.
+      def self.class_for(schema, options: {}, structured: {}, validations: [])
         Class.new do
           include ActiveModel::Model
           include ActiveModel::Attributes
@@ -47,6 +52,8 @@ module Plutonium
           schema.each do |name, type|
             attribute(name, Plutonium::Wizard.safe_attribute_type(type), **(options[name] || {}))
           end
+
+          validations.each { |args, opts| validates(*args, **opts) }
 
           structured.each do |name, fields|
             # Backed by a plain accessor (not an ActiveModel attribute) so the raw

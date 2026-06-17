@@ -84,6 +84,14 @@ module Plutonium
         imported_spec&.validate_fn
       end
 
+      # The imported model's form-relevant validators ([[name], options] pairs),
+      # replayed onto the typed data class so imported fields render their
+      # required/length/etc. metadata. Empty without a `using:` import. Distinct
+      # from `validations` (inline, runner-bound) so imports aren't double-validated.
+      def imported_form_validators
+        imported_spec&.form_validators || []
+      end
+
       # The resolved `using:` import surface, or nil. Memoized.
       def imported_spec
         return @imported_spec if defined?(@imported_spec)

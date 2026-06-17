@@ -12,6 +12,14 @@ module Plutonium
       UNSET = Object.new
       private_constant :UNSET
 
+      # The default concurrency key an anchored wizard gets when it declares no
+      # explicit `concurrency_key`: one in-progress run per (anchor, user). The
+      # tenant folds in automatically (§4.4), and the anchor's GlobalID is already
+      # globally unique, so this is the full identity. Evaluated in the wizard
+      # instance context (where `anchor`/`current_user` live).
+      IMPLIED_ANCHOR_KEY = -> { [anchor, current_user] }
+      private_constant :IMPLIED_ANCHOR_KEY
+
       class_methods do
         def steps
           @steps ||= []
@@ -23,7 +31,7 @@ module Plutonium
         # `Module#using` refinements clash). The block, when present, adds inline
         # fields on top. Selector options for `using:` (only:/except:/fields:/etc.)
         # are captured and merged in Task 3.
-        def step(key, label: nil, condition: nil, using: nil, **using_opts, &block)
+        def step(key, label: nil, description: nil, condition: nil, using: nil, **using_opts, &block)
           assert_not_after_review!(key)
 
           capture = FieldCapture.build(using:, using_opts:, &block)
@@ -31,6 +39,7 @@ module Plutonium
           steps << Step.new(
             key:,
             label:,
+            description:,
             condition:,
             fields: capture,
             on_submit: capture.delete_hook(:on_submit),
@@ -40,9 +49,20 @@ module Plutonium
         end
 
         # Declare the terminal review step (§2.5). Must be last.
-        def review(label: "Review", condition: nil, &block)
+        #
+        # `summary:` (default true) controls the auto-summary of completed steps in
+        # the COMPLETE state: with no custom block, `summary: true` renders the
+        # per-step summary, `summary: false` renders the built-in "ready to
+        # complete" panel instead — for a fully author-owned review. (The summary
+        # always renders in the INCOMPLETE state, where it's the review-and-fix
+        # view, regardless of this flag.)
+        #
+        # `header:` (default true) controls the step-header section (the label +
+        # the "check everything over" prompt). `header: false` drops it entirely,
+        # leaving just the review body in the card — for a chromeless finish.
+        def review(label: "Review", description: nil, condition: nil, summary: true, header: true, &block)
           assert_not_after_review!(:review)
-          steps << ReviewStep.new(label:, condition:, block:)
+          steps << ReviewStep.new(label:, description:, condition:, summary:, header:, block:)
         end
 
         # --- anchoring (§3) ---
@@ -94,6 +114,31 @@ module Plutonium
           end
         end
 
+        # Whether the top rail (the step indicator, §7) is shown. On by default;
+        # `stepper false` hides it for a chromeless flow. Uses UNSET so the `false`
+        # value reads back correctly (a plain `|| true` would re-enable it).
+        def stepper(flag = UNSET)
+          return (@stepper = flag) unless flag.equal?(UNSET)
+          return @stepper unless @stepper.nil?
+          true
+        end
+
+        def stepper? = stepper
+
+        # What a bare launch does when the user already has pending (in-progress)
+        # runs of this wizard. `:new` (default) always mints a fresh run; `:prompt`
+        # renders a "resume or start new" chooser instead (§4.5). Only meaningful
+        # for authenticated TOKENED wizards — keyed wizards already auto-resume
+        # their single keyed run, and `anonymous` runs are session-keyed; the
+        # driving layer no-ops the prompt for both.
+        def on_relaunch(mode = nil)
+          return @on_relaunch || :new if mode.nil?
+          @on_relaunch = mode
+        end
+
+        # Whether a bare launch should show the resume-or-new chooser (§4.5).
+        def relaunch_prompt? = on_relaunch == :prompt
+
         # --- cleanup (§2.3) ---
 
         def cleanup_after(ttl = UNSET)
@@ -120,9 +165,14 @@ module Plutonium
         # automatically (§4.4) — authors never thread it.
         #
         #   concurrency_key { current_user }                 # ≤1 in-progress per user
-        #   concurrency_key { anchor }                        # ≤1 per anchored record
-        #   concurrency_key { wizard_token }                  # per-run id (e.g. guest)
+        #   concurrency_key { anchor }                        # ≤1 per anchored record (any user)
+        #   concurrency_key { wizard_token }                  # per-run id → tokened/repeatable
         #   concurrency_key :current_user                     # method shorthand
+        #
+        # An `anchored` (authenticated) wizard with NO explicit key DEFAULTS to
+        # `{ [anchor, current_user] }` — one draft per user per record (see
+        # {IMPLIED_ANCHOR_KEY}). To make an anchored wizard repeatable instead
+        # (a fresh run per launch), declare `concurrency_key { wizard_token }`.
         def concurrency_key(method = nil, &block)
           @concurrency_key =
             if block
@@ -135,11 +185,21 @@ module Plutonium
             end
         end
 
-        # Whether this wizard has a concurrency_key (keyed/singleton runs).
-        def concurrency_key? = !@concurrency_key.nil?
+        # Whether this wizard is keyed (keyed/singleton runs) — an explicit
+        # `concurrency_key` OR the implied anchored default.
+        def concurrency_key? = !@concurrency_key.nil? || implied_anchor_key?
 
-        # The resolver proc (or nil when omitted → tokened runs).
-        def concurrency_key_resolver = @concurrency_key
+        # The resolver proc, or nil when the wizard is tokened. Falls back to the
+        # implied `{ [anchor, current_user] }` for an anchored wizard with no
+        # explicit key.
+        def concurrency_key_resolver
+          @concurrency_key || (implied_anchor_key? ? IMPLIED_ANCHOR_KEY : nil)
+        end
+
+        # Whether the implied anchored key applies: the wizard is `anchored`, isn't
+        # `anonymous` (a guest has no real user to key by — it stays session-keyed),
+        # and declared no explicit `concurrency_key`.
+        def implied_anchor_key? = anchored? && !anonymous? && @concurrency_key.nil?
 
         # --- repeatability / one-time (§4.3 / §9) ---
 
@@ -167,6 +227,25 @@ module Plutonium
           end
           true
         end
+
+        # A custom body for the "already completed" page shown when a finished
+        # ONE-TIME wizard is re-opened (§9). The completion marker is retained but
+        # its `data` is cleared, so there's nothing to review — just a confirmation.
+        # The block renders in the {Plutonium::UI::Page::WizardCompleted} Phlex
+        # context (with the wizard yielded) and REPLACES the default body entirely
+        # (icon/title/message/button — the author supplies their own). Omit for the
+        # built-in confirmation page.
+        #
+        #   completed do |wizard|
+        #     h1 { "You're all set up!" }
+        #     a(href: "/dashboard") { "Go to your dashboard" }
+        #   end
+        def completed(&block)
+          @completed_block = block
+        end
+
+        # The custom completed-page block, or nil for the built-in default.
+        def completed_block = @completed_block
 
         # --- authentication (§4.5) ---
 
@@ -207,10 +286,13 @@ module Plutonium
           subclass.instance_variable_set(:@anchor_via, @anchor_via)
           subclass.instance_variable_set(:@anchor_resolver, @anchor_resolver)
           subclass.instance_variable_set(:@navigation, @navigation)
+          subclass.instance_variable_set(:@stepper, @stepper)
+          subclass.instance_variable_set(:@on_relaunch, @on_relaunch)
           subclass.instance_variable_set(:@cleanup_after, @cleanup_after)
           subclass.instance_variable_set(:@cleanup_after_set, @cleanup_after_set)
           subclass.instance_variable_set(:@concurrency_key, @concurrency_key)
           subclass.instance_variable_set(:@one_time, @one_time)
+          subclass.instance_variable_set(:@completed_block, @completed_block)
           subclass.instance_variable_set(:@encrypt_data, @encrypt_data)
           subclass.instance_variable_set(:@anonymous, @anonymous)
         end

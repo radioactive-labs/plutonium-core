@@ -31,7 +31,14 @@ module Plutonium
       class_methods do
         # Install the gating +before_action+. Extra options (e.g. +only:/except:+)
         # are forwarded to +before_action+.
-        def ensure_wizard_completed(wizard_class, **before_action_opts)
+        #
+        # +anchor:+ tells the gate how to resolve an ANCHORED wizard's anchor in
+        # THIS controller's context (a symbol method name or a proc evaluated on the
+        # controller) — required to recompute an anchor-keyed wizard's instance_key.
+        # A `via:`-anchored wizard whose anchor method the controller exposes is
+        # resolved automatically, so this is only needed when the anchor isn't in
+        # scope (e.g. a `with:`-anchored wizard, or gating from another portal).
+        def ensure_wizard_completed(wizard_class, anchor: nil, **before_action_opts)
           unless wizard_class.one_time?
             raise ArgumentError,
               "#{wizard_class.name} is not a one-time wizard (needs a " \
@@ -39,7 +46,7 @@ module Plutonium
           end
 
           before_action(**before_action_opts) do
-            enforce_wizard_completion!(wizard_class)
+            enforce_wizard_completion!(wizard_class, anchor)
           end
         end
       end
@@ -47,29 +54,63 @@ module Plutonium
       private
 
       # The before_action body: pass through when completed, else stash + redirect.
-      def enforce_wizard_completion!(wizard_class)
-        return if wizard_completed?(wizard_class)
+      def enforce_wizard_completion!(wizard_class, anchor_resolver = nil)
+        return if wizard_completed?(wizard_class, anchor_resolver)
 
         session[:return_to] ||= request.fullpath
         redirect_to wizard_entry_path(wizard_class)
       end
 
-      def wizard_completed?(wizard_class)
-        wizard_gate_store.completed?(instance_key: wizard_gate_instance_key(wizard_class))
+      def wizard_completed?(wizard_class, anchor_resolver = nil)
+        wizard_gate_store.completed?(instance_key: wizard_gate_instance_key(wizard_class, anchor_resolver))
       end
 
       # Recompute the wizard's instance_key on the host controller (§9). The
       # identity context (`current_user`, `current_scoped_entity`, `anchor`, custom
       # host methods) is read from this controller; a referenced method that's
       # missing raises a clear error via {compute_instance_key}.
-      def wizard_gate_instance_key(wizard_class)
+      def wizard_gate_instance_key(wizard_class, anchor_resolver = nil)
         Plutonium::Wizard.compute_instance_key(
           wizard_class: wizard_class,
           current_user: current_user,
           current_scoped_entity: wizard_gate_scoped_entity,
-          anchor: nil,
+          anchor: wizard_gate_anchor(wizard_class, anchor_resolver),
           wizard_token: nil
         )
+      end
+
+      # Resolve an anchored wizard's anchor in this controller's context, so an
+      # anchor-keyed wizard's `instance_key` recomputes to the SAME digest the run
+      # used (§9). Order: an explicit `anchor:` resolver wins; otherwise a
+      # `via:`-anchored wizard whose anchor method the controller exposes is
+      # resolved automatically (the same method the wizard uses); otherwise nil — a
+      # non-anchored wizard, or an anchor that can't be reached here. The latter is a
+      # misconfiguration for an anchor-keyed wizard, so raise rather than mis-key.
+      def wizard_gate_anchor(wizard_class, anchor_resolver)
+        return resolve_gate_anchor(anchor_resolver) if anchor_resolver
+        return nil unless wizard_class.anchored?
+
+        via = wizard_class.anchor_via
+        return send(via) if via && respond_to?(via, true)
+
+        # Couldn't auto-resolve the anchor. When the wizard relies on the IMPLIED
+        # anchor key, the anchor is DEFINITELY part of the identity, so a nil would
+        # silently mis-key (the gate would loop forever) — raise instead. For an
+        # explicit key we can't tell whether it references the anchor, so leave it
+        # nil (best-effort, same contract as any host-method the key may reference).
+        if wizard_class.implied_anchor_key?
+          raise ArgumentError,
+            "#{wizard_class.name} is anchored and keyed by its anchor, but #{self.class} " \
+            "can't resolve it#{via ? " (no `#{via}` here)" : ""}. Pass `anchor:` to " \
+            "`ensure_wizard_completed` (a method name or proc)."
+        end
+        nil
+      end
+
+      # Evaluate an explicit `anchor:` resolver: a proc runs in the controller
+      # context, a symbol is sent to the controller.
+      def resolve_gate_anchor(resolver)
+        resolver.respond_to?(:call) ? instance_exec(&resolver) : send(resolver)
       end
 
       # The tenant folded into the gate's key recomputation (§4.4) — the portal

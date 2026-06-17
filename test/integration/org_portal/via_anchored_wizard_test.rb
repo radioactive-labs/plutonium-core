@@ -52,7 +52,7 @@ class OrgPortal::ViaAnchoredWizardTest < ActionDispatch::IntegrationTest
       "a second launch with the same concurrency key resumes, never forks"
   end
 
-  test "one_time: the completed row is retained and re-entry bounces out" do
+  test "one_time: the completed row is retained and re-entry shows the completed page" do
     post "#{base}/rename", params: {wizard: {name: "Final"}, _direction: "next"}
     follow_redirect!
     post "#{base}/review", params: {_direction: "next"} # finalize
@@ -60,8 +60,17 @@ class OrgPortal::ViaAnchoredWizardTest < ActionDispatch::IntegrationTest
     # The completed marker is retained (one_time), not deleted.
     assert_equal 1, Plutonium::Wizard::Session.where(status: "completed").count
 
-    # Re-entering the finished one-time wizard bounces out (no re-run).
+    # Re-entering the finished one-time wizard renders the completed page (no
+    # re-run, no review). ConfigureOrgWizard declares a custom `completed` block,
+    # which replaces the default body entirely.
     get "#{base}/rename"
-    assert_response :redirect
+    assert_response :success
+    assert_includes response.body, "pu-wizard-completed"
+    assert_includes response.body, %(data-wizard-completed="custom")
+    assert_includes response.body, "already configured"
+    # The custom block replaced the default body — no default Continue button.
+    refute_includes response.body, %(data-wizard-completed="exit")
+    # And not the step form.
+    refute_includes response.body, %(name="wizard[name]")
   end
 end

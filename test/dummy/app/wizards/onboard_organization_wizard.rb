@@ -13,9 +13,14 @@
 #
 # `execute` creates an Organization atomically.
 class OnboardOrganizationWizard < Plutonium::Wizard::Base
-  presents label: "Onboard an organization"
+  presents label: "Onboard an organization",
+    description: "Set up a workspace for your team — a few quick steps and you're in."
 
-  step :identity do
+  # Tokened/repeatable, so a bare launch with pending runs shows the resume-or-new
+  # chooser instead of silently forking (§4.5).
+  on_relaunch :prompt
+
+  step :identity, description: "Tell us who you are — this names the workspace." do
     attribute :name, :string
     attribute :plan, :string
     input :plan, as: :select, choices: %w[free pro enterprise]
@@ -26,7 +31,7 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     end
   end
 
-  step :details do
+  step :details, description: "Anything we should know? This is optional." do
     attribute :note, :string
     input :note, as: :textarea
   end
@@ -34,10 +39,11 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   # Import a field surface from a model (KitchenSink) — its <Model>Definition
   # overlays input styling (a :text/textarea and a :select), so we can assert the
   # imported fields render with their typed inputs, not plain text.
-  step :profile, using: KitchenSink, fields: [:description, :tier]
+  step :profile, description: "A bit more about the account so we can tailor things.",
+    using: KitchenSink, fields: [:description, :tier]
 
   # A repeatable structured input — must rehydrate N rows from staged data on GET.
-  step :members do
+  step :members, description: "Add teammates now — they'll get an email to join." do
     structured_input :invites, repeat: 5 do |f|
       f.input :email
       f.input :role

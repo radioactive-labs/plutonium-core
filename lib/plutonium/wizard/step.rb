@@ -6,13 +6,14 @@ module Plutonium
     # field surface, per-step hooks, and the `using:` import marker (resolved in
     # Task 3). A value object — holds no runtime state.
     class Step
-      attr_reader :key, :label, :condition, :fields,
+      attr_reader :key, :label, :description, :condition, :fields,
         :on_submit, :on_rollback, :using_spec
 
-      def initialize(key:, fields:, label: nil, condition: nil,
+      def initialize(key:, fields:, label: nil, description: nil, condition: nil,
         on_submit: nil, on_rollback: nil, using_spec: nil)
         @key = key
         @label = label || key.to_s.humanize
+        @description = description
         @condition = condition
         @fields = fields
         @on_submit = on_submit
@@ -42,6 +43,12 @@ module Plutonium
 
       # Inline `validates` declarations recorded for this step (raw [args, options]).
       def validations = fields.validations
+
+      # Form-metadata validators contributed by a `using:` import ([args, options]
+      # pairs), replayed onto the typed data class alongside inline `validations`
+      # so imported fields surface required/length/etc. — without feeding the
+      # runner (which validates imports through the transient model).
+      def imported_form_validators = fields.imported_form_validators
 
       # The imported validation runner ({attribute => [messages]} over a data
       # slice), or nil when there's no `using:` import or `validate: false`.
