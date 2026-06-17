@@ -27680,6 +27680,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     async #animateClose() {
       if (this._closing) return;
       this._closing = true;
+      this.element.getAnimations().forEach((animation) => animation.finish());
       this.element.removeAttribute("data-open");
       const animations = this.element.getAnimations({ subtree: true });
       await Promise.allSettled(animations.map((a4) => a4.finished));
@@ -28489,7 +28490,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       "scale-95",
       "data-[open]:opacity-100",
       "data-[open]:scale-100",
-      "transition-[opacity,transform]",
+      "transition-[opacity,scale]",
       "duration-200",
       "ease-out"
     ].join(" ");

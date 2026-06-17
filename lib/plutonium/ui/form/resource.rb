@@ -66,7 +66,7 @@ module Plutonium
               "w-full max-w-md p-0 " \
               "open:flex flex-col " \
               "opacity-0 scale-95 data-[open]:opacity-100 data-[open]:scale-100 " \
-              "transition-[opacity,transform] duration-200 ease-out",
+              "transition-[opacity,scale] duration-200 ease-out",
             data: {"dirty-form-guard-target": "confirmDialog"},
             # Modern Chrome refuses user-agent close requests (Esc, backdrop);
             # older browsers fall back to the JS controller's interception.

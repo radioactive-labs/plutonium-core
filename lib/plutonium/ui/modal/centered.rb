@@ -22,16 +22,19 @@ module Plutonium
         # Surface (bg, border, radius, backdrop) lives in `.pu-dialog` so
         # the centered modal, dirty-form-guard prompt, and Turbo confirm
         # can't drift on design tokens. The remaining utilities are
-        # positioning, sizing, and the open/close transform animation —
+        # positioning, sizing, and the open/close opacity+scale animation —
         # driven by [data-open] (set on the frame after showModal() by
         # remote_modal_controller); avoids the @starting-style spec dance.
+        # The transition must name `scale` (not `transform`): Tailwind v4's
+        # `scale-*` sets the discrete `scale` CSS property, so a
+        # `transition-[...,transform]` would leave the scale pop un-animated.
         def base_dialog_classes
           "pu-dialog " \
             "top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 " \
             "max-h-[80vh] " \
             "open:flex flex-col p-0 " \
             "opacity-0 scale-95 data-[open]:opacity-100 data-[open]:scale-100 " \
-            "transition-[opacity,transform] duration-200 ease-out"
+            "transition-[opacity,scale] duration-200 ease-out"
         end
       end
     end

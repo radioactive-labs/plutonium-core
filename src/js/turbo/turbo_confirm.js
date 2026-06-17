@@ -35,7 +35,7 @@ function ensureDialog() {
     "scale-95",
     "data-[open]:opacity-100",
     "data-[open]:scale-100",
-    "transition-[opacity,transform]",
+    "transition-[opacity,scale]",
     "duration-200",
     "ease-out",
   ].join(" ");

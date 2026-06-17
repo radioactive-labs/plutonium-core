@@ -67,6 +67,16 @@ export default class extends Controller {
     if (this._closing) return;
     this._closing = true;
 
+    // Commit any in-flight enter transition to its open end-state before
+    // reversing it. Removing data-open while the enter is still running
+    // reverses that transition, and CSS shortens the reverse duration in
+    // proportion to how far the enter got — so a quick open→close snaps
+    // shut instead of animating, which reads as choppy. finish() jumps to
+    // the open state so the exit always plays its full duration. Scoped to
+    // the dialog's own transitions (not the subtree) so a descendant's
+    // infinite animation can't throw on finish().
+    this.element.getAnimations().forEach((animation) => animation.finish());
+
     this.element.removeAttribute("data-open");
 
     const animations = this.element.getAnimations({ subtree: true });
