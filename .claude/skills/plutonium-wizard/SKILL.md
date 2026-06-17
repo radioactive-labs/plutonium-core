@@ -68,7 +68,7 @@ end
 | `presents label:, icon:` | Launch button label + icon. |
 | `navigation :linear \| :free` | Stepper jumps. `:linear` (default) = back to any visited step; `:free` = any visible visited step. Forward to unvisited is never allowed. |
 | `stepper false` | Hide the top rail (step indicator). On by default. |
-| `on_relaunch :prompt` | Bare-launching a **tokened** wizard with pending runs shows a "resume or start new" chooser instead of forking. Default `:new` (always fresh). No-op for keyed/`anonymous` (already auto-resume). |
+| `on_relaunch :new` | Bare-relaunching a **tokened** wizard with pending runs shows a "resume or start new" chooser by default (`:prompt`) instead of silently forking; `:new` opts out (always fresh). No-op for keyed/`anonymous` (already auto-resume). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record (read via `anchor`). `with:` = URL `:id` (resource-mounted); `via:` = a controller method (portal-level, context). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the sweep reaps the session + rolls back tracked records. Default `config.wizards.cleanup_after`. |
 | `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs — **except `anchored`**, which defaults to `{ [anchor, current_user] }` (one draft per user per record). `{ anchor }` = one per record any-user; `{ wizard_token }` = repeatable. |

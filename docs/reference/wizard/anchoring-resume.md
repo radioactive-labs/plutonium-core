@@ -113,13 +113,13 @@ Anonymous (guest) anchored wizards are exempt — a guest has no real user to ke
 
 ### Relaunching a tokened wizard
 
-A keyed wizard auto-resumes (its keyed row is the lock), so a bare launch always continues the single in-progress run. A **tokened** wizard has no such single run — each bare launch mints a fresh one — so by default re-launching forks. Opt into a chooser instead:
+A keyed wizard auto-resumes (its keyed row is the lock), so a bare launch always continues the single in-progress run. A **tokened** wizard has no such single run — each bare launch could mint a fresh one. By default it doesn't silently fork: it prompts. Opt out for flows that should always start clean:
 
 ```ruby
-on_relaunch :prompt
+on_relaunch :new
 ```
 
-With `on_relaunch :prompt`, a bare launch (e.g. `GET /onboarding`) checks the user's pending runs (owner- and tenant-scoped, via the same listing as above). If any exist, it renders a **"resume or start new" page** — each pending run with a Resume link, plus a **Start new** button — instead of forking. With no pending runs it starts fresh as usual, and **Start new** (the bare launch URL with `?new=1`) always forces a fresh run. The default (`:new`) keeps the always-fork behavior, which is what you want for flows meant to be run repeatedly.
+With the default (`on_relaunch :prompt`), a bare launch (e.g. `GET /onboarding`) checks the user's pending runs (owner- and tenant-scoped, via the same listing as above). If any exist, it renders a **"resume or start new" page** — each pending run with a Resume link, plus a **Start new** button — instead of silently discarding that in-progress work. With no pending runs it starts fresh as usual, and **Start new** (the bare launch URL with `?new=1`) always forces a fresh run. Because the chooser only appears when a pending run exists, `:prompt` is a safe superset of `:new`. Use `on_relaunch :new` to opt out — always fork a fresh run — for flows meant to be run repeatedly from scratch.
 
 This only applies to authenticated tokened wizards: keyed wizards already auto-resume, and `anonymous` (guest) runs are session-keyed to a single run — `on_relaunch` is a no-op for both.
 

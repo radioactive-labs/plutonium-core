@@ -412,10 +412,12 @@ Under the hood, `in_progress_for(view_context)` derives `owner`/`scope` and call
 
 ### Resume or start new on launch
 
-A keyed wizard auto-resumes its single run, but a **tokened** wizard forks a fresh run on every launch. Opt into a chooser instead — when the user has pending runs, launching shows a "resume or start new" page rather than forking:
+A keyed wizard auto-resumes its single run. A **tokened** wizard could fork a fresh run on every launch — but by default it doesn't silently: when the user has pending runs, launching shows a "resume or start new" page rather than discarding that work. Opt out for flows that should always start clean:
 
 ```ruby
-on_relaunch :prompt   # default :new = always a fresh run
+# `on_relaunch :prompt` (the default) shows the resume-or-new chooser when a
+# pending run exists; `:new` always forks a fresh run.
+on_relaunch :new
 ```
 
 ![The resume-or-new chooser — pending runs with their current step and a Resume button, plus a Start new action](/images/guides/wizards-chooser.png)
