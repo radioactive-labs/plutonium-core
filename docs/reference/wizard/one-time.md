@@ -34,6 +34,21 @@ end
 
 The completion marker is recorded by the wizard's own finalize, the same `execute` → PRG path as any wizard — no extra code in `execute`.
 
+## Re-opening a completed wizard
+
+Navigating back to a finished one-time wizard (its URL, or its bare launch route) doesn't re-run it — the retained `completed` row has had its `data` cleared, so there's nothing to resume or review. Instead the wizard renders a standalone **"already completed" page**: a success badge, the wizard's label, a short message, and a Continue button out.
+
+Supply a [`completed` block](/reference/wizard/dsl#completed) on the wizard to replace that body with your own:
+
+```ruby
+completed do |wizard|
+  h1 { "You're already set up." }
+  a(href: "/dashboard") { "Back to your dashboard" }
+end
+```
+
+This is a one-time-only concept: a **repeatable** wizard deletes its row on completion, so re-launching simply starts a fresh run — there's no completed page.
+
 ## Gating a controller — `ensure_wizard_completed`
 
 The `Plutonium::Wizard::Gate` concern installs a `before_action` that redirects users into the wizard until they complete it.
@@ -66,7 +81,21 @@ The entry URL is derived from the `register_wizard` route helper (`<name>_wizard
 
 The gate **recomputes the wizard's `instance_key`** from its `concurrency_key`, resolving the key block against the **host controller** — so `current_user`, `current_scoped_entity` (folded automatically), `anchor`, and any custom host method are available — then checks `completed?(instance_key:)`. This digest is computed by the same `Plutonium::Wizard.compute_instance_key` the runner uses, so the gate sees exactly the marker the wizard recorded.
 
-A `concurrency_key { anchor }` wizard therefore keys completion by the anchor with **no extra resolver** — the gate evaluates the key block on the controller, where the anchor context lives. (If your `concurrency_key` references a method the gated controller doesn't expose, you get a clear error rather than a silent mis-key.)
+### Gating an anchored wizard
+
+An anchor-keyed wizard (explicit `{ anchor }`, or the [implied anchored key](/reference/wizard/anchoring-resume#the-implied-anchored-key)) keys completion by its anchor — so the gate needs that anchor to recompute the key. It resolves it two ways:
+
+- **Automatic** for a `via:`-anchored wizard — the gate calls the wizard's own `anchor_via` method on the host controller. Gating a `via: :current_scoped_entity` wizard inside its own entity-scoped portal is zero-config (`ConfigureOrgWizard` gated on an org-portal controller just works).
+- **Explicit** otherwise — pass `anchor:` (a method name or proc, evaluated on the controller) when the anchor isn't auto-resolvable (a `with:`-anchored wizard, or gating from a different context):
+
+  ```ruby
+  ensure_wizard_completed ConfigureWizard, anchor: :current_widget
+  ensure_wizard_completed ConfigureWizard, anchor: -> { current_account.widget }
+  ```
+
+If an anchor-keyed wizard's anchor can't be resolved and no `anchor:` is given, the gate **raises** (rather than silently mis-keying and looping you into the wizard forever). A wizard keyed by a *non-anchor* method the controller doesn't expose still gives the same clear error.
+
+A wizard keyed by an anchor is only gateable **where that anchor can be reconstructed** — a tenant-anchored wizard, within that tenant's context. That's a property of the keying, not a gap in the gate.
 
 ::: warning Only one-time wizards are gateable
 `ensure_wizard_completed` raises unless the wizard is `one_time` (a `concurrency_key` **plus** `one_time`) — only a retained marker can be checked. Repeatable wizards have nothing durable to gate on.

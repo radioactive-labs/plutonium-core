@@ -67,10 +67,13 @@ end
 |---|---|
 | `presents label:, icon:` | Launch button label + icon. |
 | `navigation :linear \| :free` | Stepper jumps. `:linear` (default) = back to any visited step; `:free` = any visible visited step. Forward to unvisited is never allowed. |
+| `stepper false` | Hide the top rail (step indicator). On by default. |
+| `on_relaunch :prompt` | Bare-launching a **tokened** wizard with pending runs shows a "resume or start new" chooser instead of forking. Default `:new` (always fresh). No-op for keyed/`anonymous` (already auto-resume). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record (read via `anchor`). `with:` = URL `:id` (resource-mounted); `via:` = a controller method (portal-level, context). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the sweep reaps the session + rolls back tracked records. Default `config.wizards.cleanup_after`. |
-| `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs. |
+| `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs — **except `anchored`**, which defaults to `{ [anchor, current_user] }` (one draft per user per record). `{ anchor }` = one per record any-user; `{ wizard_token }` = repeatable. |
 | `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
+| `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). |
 | `encrypt_data` | Encrypt the staged `data`/`tracked_records` columns (PII flows). |
 | `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). |
 
@@ -138,17 +141,31 @@ end
 
 Repeater rows rehydrate from staged `data` on GET (resume / back re-renders filled rows).
 
+Validations drive the form's field affordances just like a resource form: `presence` → the required marker (`*`); `length`/`numericality`/`format`/`inclusion` → `maxlength`/`min`/`max`/`pattern`/auto-choices. This holds for validations imported via `using:` too. (Structured-input sub-fields are the exception — they carry no validators, so no markers there.)
+
 ## The review step
 
 ```ruby
-review label: "Review & submit"            # auto-summary + gated finish
+review label: "Review & submit"               # auto-summary + gated finish
 
-review label: "Review & submit" do |wizard|  # custom content after the summary
+review label: "Review & submit" do |wizard|   # custom content BELOW the summary
   "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
+
+review summary: false, header: false          # fully chromeless → "ready to complete" panel
 ```
 
-Lists invalid/unvisited steps as fix-this jump links; Finish disabled until all visible steps valid. Declares no fields.
+Always lists invalid/unvisited steps as fix-this jump links; Finish disabled until all visible steps valid. Declares no fields. The body is a small state machine:
+
+| State | Body |
+|---|---|
+| **Incomplete** | outstanding fix-this links **+** auto-summary of what's entered |
+| **Complete**, `summary: true` (default) | auto-summary; custom block (if any) renders **below** it |
+| **Complete**, `summary: false` + block | block **replaces** the summary |
+| **Complete**, `summary: false`, no block | built-in "ready to complete" panel |
+
+- `summary:` (default true) — show the auto-summary of completed steps. `false` hands the complete-state body to your block (or the "ready to complete" panel). The summary always shows in the incomplete state.
+- `header:` (default true) — the step-header section (label + the "check everything over" prompt, shown only when the summary is). `false` drops it for a chromeless finish. Pair with `stepper false` for no chrome at all.
 
 The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String — Phlex renders the returned String too, double-rendering it.
 
@@ -235,7 +252,11 @@ module AdminPortal
 end
 ```
 
-Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. The gate recomputes the wizard's `instance_key` from its `concurrency_key` (resolved on the host controller — `current_user`/`current_scoped_entity`/`anchor`/custom available) and checks `completed?(instance_key:)`. Only one-time wizards are gateable. Use `concurrency_key { anchor }` for "set up this record once".
+Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. The gate recomputes the wizard's `instance_key` from its `concurrency_key` (resolved on the host controller — `current_user`/`current_scoped_entity`/custom available) and checks `completed?(instance_key:)`. Only one-time wizards are gateable. Use `concurrency_key { anchor }` for "set up this record once".
+
+**Gating an anchored wizard:** the gate needs the anchor to recompute the key. A `via:`-anchored wizard is resolved automatically (the gate calls its `anchor_via` method on the controller); otherwise pass `ensure_wizard_completed Wizard, anchor: :method_or_proc`. An anchor it can't resolve raises (no silent loop). Anchor-keyed wizards are only gateable where the anchor is reconstructable.
+
+**Re-opening a completed one-time wizard** doesn't re-run it (the retained row's `data` is cleared) — it renders an "already completed" page (success badge + label + Continue). Override the body with `completed do |wizard| … end`. Repeatable wizards have no completed page (re-launch starts fresh).
 
 ## Registration & launch (portal-hosted)
 

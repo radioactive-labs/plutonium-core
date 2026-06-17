@@ -99,6 +99,30 @@ For a non-`anonymous` (authenticated) wizard, **every resume is owner-scoped**: 
 
 `Plutonium::Wizard.in_progress_for(view_context)` takes the `view_context` (as interactions do) and derives the run owner (`current_user`) and tenant scope (`current_scoped_entity` when `scoped_to_entity?`, else `nil`) from it, returning the owner's in-progress runs (tenant-narrowed when scoped), newest-first, each enriched with the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, and a resolved `resume_url`. A `register_wizard` mount and a `wizard`-macro **anchored** mount resolve to a real route (with the tenant scope segment and, for tokened runs, the `:token`); a mount whose identity isn't recoverable from the row (e.g. a non-anchored `wizard`-macro run) yields `resume_url: nil` plus a `resume_unresolved_reason`. The low-level query `Store#in_progress_for(owner, scope:)` takes `scope:` as a **required** keyword (no `nil` default) — a non-nil scope narrows to that tenant, an explicit `nil` applies no scope filter. See the [guide](/guides/wizards#listing-in-progress-wizards).
 
+### The implied anchored key
+
+An `anchored` wizard with **no explicit `concurrency_key`** is keyed by default — `{ [anchor, current_user] }`, with the tenant folded in. So an anchored wizard, out of the box, is **one in-progress draft per user per record**: re-launching it for the same record resumes your draft, and two users editing the same record get **independent** runs (no collision).
+
+This is the right default because anchoring without keying is a footgun in both directions: a *tokened* anchored wizard forks a new run on every launch, while `{ anchor }` (record-only) keys across users — so a second user editing the same record collides with the first and is owner-scoped out (a 404). The implied key threads the needle. The anchor's GlobalID is already globally unique (and pins the tenant for a tenant-scoped record), so `[anchor, current_user]` is the full identity; the auto-folded tenant is redundant there but load-bearing for non-anchor keys.
+
+Override when you want different semantics:
+- `concurrency_key { anchor }` — a true singleton: **one run per record, any user** ("configure this once, by anyone"). A concurrent second user is blocked (owner-scoped) until the first finishes.
+- `concurrency_key { wizard_token }` — make the anchored wizard **repeatable** (a fresh run per launch).
+
+Anonymous (guest) anchored wizards are exempt — a guest has no real user to key by, so they stay session-tokened.
+
+### Relaunching a tokened wizard
+
+A keyed wizard auto-resumes (its keyed row is the lock), so a bare launch always continues the single in-progress run. A **tokened** wizard has no such single run — each bare launch mints a fresh one — so by default re-launching forks. Opt into a chooser instead:
+
+```ruby
+on_relaunch :prompt
+```
+
+With `on_relaunch :prompt`, a bare launch (e.g. `GET /onboarding`) checks the user's pending runs (owner- and tenant-scoped, via the same listing as above). If any exist, it renders a **"resume or start new" page** — each pending run with a Resume link, plus a **Start new** button — instead of forking. With no pending runs it starts fresh as usual, and **Start new** (the bare launch URL with `?new=1`) always forces a fresh run. The default (`:new`) keeps the always-fork behavior, which is what you want for flows meant to be run repeatedly.
+
+This only applies to authenticated tokened wizards: keyed wizards already auto-resume, and `anonymous` (guest) runs are session-keyed to a single run — `on_relaunch` is a no-op for both.
+
 On resume the engine:
 
 - Restores the step cursor and `data` (typed snapshot rehydrated from the JSON column).

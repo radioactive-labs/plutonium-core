@@ -168,18 +168,28 @@ Repeater rows rehydrate from staged `data` on GET, so navigating back (or resumi
 
 `review` is a built-in terminal step. It:
 
-- Renders a read-only auto-summary of every visible step's data (reusing display components).
+- Renders a read-only auto-summary of every visible step's data (reusing display components). The custom block, if any, renders **below** the summary.
 - Lists invalid/unvisited visible steps as "fix this" jump links.
 - Disables Finish until all visible steps are valid; clicking it runs `execute`.
 
 ```ruby
 review label: "Review & submit"
 
-# Or with custom content after the auto-summary:
+# Custom content BELOW the auto-summary:
 review label: "Review & submit" do |wizard|
   "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
 ```
+
+You can hand the body fully to your own design. The custom block sits below the summary by default; `summary: false` lets it **replace** the summary, and `header: false` drops the step-header (label + prompt). With `summary: false` and no block you get a built-in "ready to complete" panel. Pair with the wizard-level `stepper false` for a fully chromeless flow:
+
+```ruby
+stepper false                          # no top rail
+# ...
+review summary: false, header: false   # no header, no summary → "ready to complete" panel
+```
+
+See the [DSL reference](/reference/wizard/dsl#review) for the full state table.
 
 ## Per-step writes — `on_submit` / `persist` / `on_rollback`
 

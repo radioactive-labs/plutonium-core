@@ -18,10 +18,13 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 |---|---|
 | `presents label:, icon:` | The launch button's label + icon (same as interactions). |
 | `navigation :linear \| :free` | Stepper jump policy. `:linear` (default) — back to any visited step; `:free` — any visible visited step. Forward jumps to unvisited steps are never allowed. |
+| `stepper false` | Hide the top rail (the step indicator). On by default. |
+| `on_relaunch :prompt` | When a **tokened** wizard is bare-launched and the user has pending (in-progress) runs, show a "resume or start new" chooser instead of forking. Default `:new` (always fresh). No-op for keyed/`anonymous` wizards (they already auto-resume their single run). See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record; read via `anchor`. `with:` resolves from the URL `:id` (resource-mounted); `via:` resolves by calling a controller method (portal-level, context-anchored). See [Anchoring & resume](/reference/wizard/anchoring-resume). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the abandonment sweep reaps a session and rolls back its tracked records. Defaults to `config.wizards.cleanup_after`. `:never` opts out. |
-| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs. |
+| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs — **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
 | `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
+| `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). See [`completed`](#completed) below and [One-time wizards](/reference/wizard/one-time#re-opening-a-completed-wizard). |
 | `encrypt_data` | Apply Rails `encrypts` to the `data`/`tracked_records` columns (off by default), for flows that stage PII. |
 
 ```ruby
@@ -68,7 +71,7 @@ A step's block is the same field DSL used on definitions and interactions:
 
 - `attribute :name, :type` — declares a typed attribute (feeds the `data` snapshot).
 - `input :name, as:, ...` — how the field renders.
-- `validates :name, ...` — ActiveModel validations, run on Next.
+- `validates :name, ...` — ActiveModel validations, run on Next. These also drive the form's field affordances exactly like a resource form: a `presence` validation renders the required marker (`*`), and `length`/`numericality`/`format`/`inclusion` feed `maxlength`/`min`/`max`/`pattern`/auto-choices. Validations imported via `using:` surface these too.
 - `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects.
 - `form_layout do ... end` — section the step's fields (`section`, `columns:`, `collapsible:`, etc.), scoped to this step.
 
@@ -148,21 +151,38 @@ Supply an `on_rollback` when abandonment must do more than drop the record(s) �
 ## `review`
 
 ```ruby
-review(label: "Review", condition: nil, &block)
+review(label: "Review", description: nil, condition: nil, summary: true, header: true, &block)
 ```
 
-The built-in **terminal** step. Must be last. It auto-summarizes every visible step's data, lists outstanding (invalid/unvisited) steps as jump links, and gates Finish until all visible steps are valid.
+The built-in **terminal** step. Must be last. It lists outstanding (invalid/unvisited) steps as jump links and gates Finish until all visible steps are valid. It declares no fields of its own.
+
+What it renders depends on completion state and the `summary:` / block options:
+
+| State | Body |
+|---|---|
+| **Incomplete** (a visible step is invalid/unvisited) | The outstanding "fix this" links **+** the auto-summary of what's entered so far (the review-and-fix view). |
+| **Complete**, `summary: true` (default) | The auto-summary of every visible step; the custom block, if any, renders **below** it. |
+| **Complete**, `summary: false`, with a block | The custom block **replaces** the summary (author owns the body). |
+| **Complete**, `summary: false`, no block | A built-in "ready to complete" confirmation panel. |
+
+| Option | Meaning |
+|---|---|
+| `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block — or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
+| `header:` | Show the step-header section — the label + the "check everything over" prompt (the prompt only appears when the summary is shown) — above the body (default `true`). `false` drops it for a chromeless finish. |
 
 ```ruby
-review label: "Review & submit"
+review label: "Review & submit"                       # auto-summary + gated finish
 
-# Custom content after the auto-summary — the block receives the wizard:
-review label: "Review & submit" do |wizard|
+review label: "Review & submit" do |wizard|           # custom content BELOW the summary
   "By submitting you agree to the #{wizard.data.plan.plan} plan terms."
 end
+
+review summary: false, header: false                  # fully chromeless → "ready to complete" panel
 ```
 
-A `review` step declares no fields of its own.
+::: tip
+`stepper false` (a wizard-level macro) + `review summary: false, header: false` + no block gives a fully chromeless flow — no rail, no header, no summary — ending on the built-in "ready to complete" panel.
+:::
 
 ### The custom block's render context
 
@@ -186,6 +206,33 @@ end
 ```
 
 Don't mix styles in one block: Phlex emits a returned String *in addition to* anything you wrote with `div`/`render`, so returning a String after emitting markup double-renders it. Pick one.
+
+## `completed`
+
+```ruby
+completed do |wizard|
+  # …Phlex body…
+end
+```
+
+A custom body for the **"already completed" page** — what a finished [one-time wizard](/reference/wizard/one-time#re-opening-a-completed-wizard) shows when a user re-opens it. On completion a one-time wizard retains its row but clears the `data`, so there's nothing to review; re-entry renders this standalone page instead of re-running the flow. Only meaningful for one-time wizards (repeatable ones leave no completed row, so re-launching just starts fresh).
+
+Without `completed`, a built-in confirmation renders (a success badge, the wizard's label, a short message, and a Continue button out). The block **replaces that body entirely** — you supply your own content (and your own way out):
+
+```ruby
+class WelcomeWizard < Plutonium::Wizard::Base
+  concurrency_key { current_user }
+  one_time
+  # …steps…
+
+  completed do |wizard|
+    h1 { "You're all set up!" }
+    a(href: "/dashboard") { "Go to your dashboard" }
+  end
+end
+```
+
+The block runs in the **same Phlex view context** as the [review block](#the-custom-block-s-render-context) (`self` is the component; reach helpers via `helpers.*`) and is yielded the `wizard`. The same don't-mix-styles caveat applies.
 
 ## `execute`
 
