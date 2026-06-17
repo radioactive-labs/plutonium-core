@@ -76,6 +76,10 @@ end
 The engine detects failure by a **raised exception**. Non-bang `create`/`save`/`update` return `false` on failure without raising — the engine can't see that, treats the step as successful, and advances, silently losing the data. Always use `create!`/`update!`/`save!`, or call `fail!("message")`.
 :::
 
+Each step renders as a focused card with a numbered stepper rail (the terminal `review` shows a finish flag, not a number) and a Back / Next / Cancel strip:
+
+![A wizard step page — numbered stepper rail, a focused step card with typed inputs, and Back/Next/Cancel navigation](/images/guides/wizards-step.png)
+
 ## Branching with `condition:`
 
 A step's `condition:` lambda decides whether the step is included. Branching is **subtractive** — a falsy `condition:` removes the step from the visible path.
@@ -164,6 +168,8 @@ end
 
 Repeater rows rehydrate from staged `data` on GET, so navigating back (or resuming) re-renders the rows you already filled.
 
+![A structured/repeater step — multiple invite rows with Add/Remove, inside the wizard step card](/images/guides/wizards-repeater.png)
+
 ## The review step
 
 `review` is a built-in terminal step. It:
@@ -171,6 +177,8 @@ Repeater rows rehydrate from staged `data` on GET, so navigating back (or resumi
 - Renders a read-only auto-summary of every visible step's data (reusing display components). The custom block, if any, renders **below** the summary.
 - Lists invalid/unvisited visible steps as "fix this" jump links.
 - Disables Finish until all visible steps are valid; clicking it runs `execute`.
+
+![The review step — a grouped auto-summary of every step's data with per-step Edit links and a gated Finish](/images/guides/wizards-review.png)
 
 ```ruby
 review label: "Review & submit"
@@ -297,7 +305,11 @@ module AdminPortal
 end
 ```
 
-An un-completed user hitting the gate is redirected into the wizard (their destination stashed); on completion they're bounced back (PRG). Completed users pass straight through. See [One-time wizards](/reference/wizard/one-time).
+An un-completed user hitting the gate is redirected into the wizard (their destination stashed); on completion they're bounced back (PRG). Completed users pass straight through. Re-opening a finished one-time wizard renders an "already completed" page (override its body with a `completed do |wizard| … end` block) rather than re-running it:
+
+![The "already completed" page for a re-opened one-time wizard — a success badge, the wizard's label, and a Continue button](/images/guides/wizards-completed.png)
+
+See [One-time wizards](/reference/wizard/one-time).
 
 ## Registration & launch
 
@@ -305,7 +317,9 @@ Wizards are **portal-hosted** — they run inside a Plutonium portal, inheriting
 
 ### On a resource — the `wizard` macro
 
-Register a wizard on a resource definition with the `wizard` macro. It synthesizes the launching action and **auto-mounts the wizard's routes on the resource's own controller** — placement mirrors interactions: anchored → record (member) action, non-anchored → resource (collection) action. Bulk wizards are not supported.
+Register a wizard on a resource definition with the `wizard` macro. It synthesizes the launching action and **auto-mounts the wizard's routes on the resource's own controller**. Placement follows `anchored?`: an anchored wizard is a record action — it surfaces on the record's show page *and* on each index row (like `edit`/`destroy`); a non-anchored wizard is a collection-level resource action. Bulk wizards are not supported.
+
+![A resource index — each row carries the anchored wizard's launch action (Show · Edit · Configure widget · ⋮)](/images/guides/wizards-index-action.png)
 
 ```ruby
 class CompanyDefinition < Plutonium::Resource::Definition
@@ -395,6 +409,18 @@ end
 When a mount can't be resolved generically — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
 
 Under the hood, `in_progress_for(view_context)` derives `owner`/`scope` and calls the low-level query `Store#in_progress_for(owner, scope:)`, where `scope:` is a **required** keyword (no `nil` default): a non-nil scope narrows to that tenant, and an explicit `nil` (non-scoped portal) applies no scope filter. Call it directly only when you already have an owner and have decided the scope explicitly.
+
+### Resume or start new on launch
+
+A keyed wizard auto-resumes its single run, but a **tokened** wizard forks a fresh run on every launch. Opt into a chooser instead — when the user has pending runs, launching shows a "resume or start new" page rather than forking:
+
+```ruby
+on_relaunch :prompt   # default :new = always a fresh run
+```
+
+![The resume-or-new chooser — pending runs with their current step and a Resume button, plus a Start new action](/images/guides/wizards-chooser.png)
+
+See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard).
 
 ## Where to go next
 
