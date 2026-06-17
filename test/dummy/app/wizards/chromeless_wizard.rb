@@ -13,6 +13,10 @@ class ChromelessWizard < Plutonium::Wizard::Base
 
   stepper false
 
+  # Opt OUT of the default resume-or-new chooser: a bare relaunch always mints a
+  # fresh run (this tiny flow is meant to be started clean every time).
+  on_relaunch :new
+
   step :only, description: "Just one field." do
     attribute :name, :string
     input :name

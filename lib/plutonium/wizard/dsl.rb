@@ -126,13 +126,16 @@ module Plutonium
         def stepper? = stepper
 
         # What a bare launch does when the user already has pending (in-progress)
-        # runs of this wizard. `:new` (default) always mints a fresh run; `:prompt`
-        # renders a "resume or start new" chooser instead (§4.5). Only meaningful
-        # for authenticated TOKENED wizards — keyed wizards already auto-resume
-        # their single keyed run, and `anonymous` runs are session-keyed; the
-        # driving layer no-ops the prompt for both.
+        # runs of this wizard. `:prompt` (default) renders a "resume or start new"
+        # chooser so the user's in-progress work isn't silently discarded; `:new`
+        # is the explicit opt-out for wizards that always start fresh, minting a new
+        # run every time. Only meaningful for authenticated TOKENED wizards — keyed
+        # wizards already auto-resume their single keyed run, and `anonymous` runs
+        # are session-keyed; the driving layer no-ops the prompt for both. The
+        # chooser only appears when a pending run actually exists, so `:prompt` is a
+        # safe superset of `:new` (with no pending run it mints fresh either way).
         def on_relaunch(mode = nil)
-          return @on_relaunch || :new if mode.nil?
+          return @on_relaunch || :prompt if mode.nil?
           @on_relaunch = mode
         end
 

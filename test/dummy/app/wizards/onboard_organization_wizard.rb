@@ -16,9 +16,9 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   presents label: "Onboard an organization",
     description: "Set up a workspace for your team — a few quick steps and you're in."
 
-  # Tokened/repeatable, so a bare launch with pending runs shows the resume-or-new
-  # chooser instead of silently forking (§4.5).
-  on_relaunch :prompt
+  # Tokened/repeatable: a bare launch with pending runs shows the resume-or-new
+  # chooser instead of silently forking (§4.5). This is the DEFAULT (`:prompt`),
+  # so it needs no declaration — left implicit here on purpose to exercise it.
 
   step :identity, description: "Tell us who you are — this names the workspace." do
     attribute :name, :string
