@@ -366,7 +366,16 @@ end
 
 - One framework table `plutonium_wizard_sessions` (gem-shipped migration, runs in place on `rails db:migrate`). No changes to your models.
 - DB-backed → resume across devices, in-progress listing, durable one-time markers.
-- **`Plutonium::Wizard::SweepJob`** reaps idle/expired sessions and rolls back their tracked records. **Schedule it** (recurring job) for every wizard app — stale rows pile up otherwise, and for `on_submit`/`persist` wizards it's the *only* thing that rolls back abandoned mid-flow records.
+- **`Plutonium::Wizard::SweepJob`** (an `ActiveJob`) reaps idle/expired sessions and rolls back their tracked records. **Schedule it** for every wizard app — stale rows pile up otherwise, and for `on_submit`/`persist` wizards it's the *only* thing that rolls back abandoned mid-flow records. In a Solid Queue app (`rails g pu:lite:solid_queue` sets up the backend), add it to `config/recurring.yml`:
+
+  ```yaml
+  # config/recurring.yml
+  wizard_sweep:
+    class: Plutonium::Wizard::SweepJob
+    schedule: every 15 minutes
+  ```
+
+  (Or any recurring mechanism your app already has — sidekiq-cron, `whenever`, a cron'd rake task. `perform` takes no required args.)
 
 ## Common gotchas
 
