@@ -160,7 +160,18 @@ module Plutonium
       def advance(step_key, params, goto: nil)
         step = step_for(step_key)
         errors = validate(step, params)
-        return Result.new(ok: false, errors:) if errors.any?
+        if errors.any?
+          # Reflect the rejected submission back into the IN-MEMORY step data (via
+          # `stage`, which never persists — only `persist_state` does) so the
+          # re-rendered form shows exactly what the user just typed, with the errors
+          # attached. Without this, validation failure reverts every field on the
+          # step to its last STAGED value — so a sibling field the user filled in
+          # correctly silently empties out on the error re-render. Render-only: the
+          # cursor and stored row are untouched, so an abandoned invalid submit
+          # stages nothing.
+          stage(step.key, params)
+          return Result.new(ok: false, errors:)
+        end
 
         # Re-submitting a step whose on_submit ALREADY ran (you went back to it and
         # Nexted again): undo the prior attempt — its on_rollback then destroy its

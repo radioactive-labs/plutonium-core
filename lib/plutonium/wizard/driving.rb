@@ -27,6 +27,12 @@ module Plutonium
       # (`anonymous`) run's token lives under `session[SESSION_TOKENS_KEY][wizard_key]`.
       SESSION_TOKENS_KEY = "plutonium_wizards"
 
+      # The Rails-session bucket holding the per-wizard "return to" path captured at
+      # launch — the page the user came from. Cancel redirects there instead of the
+      # host root. Namespaced per wizard so two in-flight wizards don't clobber each
+      # other.
+      WIZARD_RETURN_TO_KEY = "plutonium_wizard_return_to"
+
       # The per-wizard key under {SESSION_TOKENS_KEY} for a guest run's token.
       def self.session_token_key(wizard_class)
         wizard_class.name.underscore.tr("/", "_")
@@ -42,6 +48,7 @@ module Plutonium
       # "token appears only after the first submit", and no fork-on-reload).
       def wizard_launch
         require_wizard_authentication!
+        stash_wizard_return_to!
 
         # `on_relaunch :prompt` (§4.5): when the user already has pending runs of
         # this (tokened) wizard, show a "resume or start new" chooser instead of
@@ -152,7 +159,9 @@ module Plutonium
             runner.back
           when "cancel"
             runner.cancel
-            return redirect_to wizard_exit_url, status: :see_other, allow_other_host: false
+            target = wizard_exit_url
+            clear_wizard_return_to
+            return redirect_to target, status: :see_other, allow_other_host: false
           else
             advance_or_finalize(runner)
           end
@@ -199,6 +208,11 @@ module Plutonium
       # one-time wizard; prefer that bounce target over the outcome value's URL.
       def complete_wizard!(result)
         clear_wizard_session_token
+        # Completion lands on the RESULT (the created/updated resource) by default,
+        # not the launch origin — so drop the captured return-to. A gate's stashed
+        # `:return_to` (the page the user was bounced FROM into a one-time wizard)
+        # still wins, so they resume where they were headed.
+        clear_wizard_return_to
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
         redirect_to target, status: :see_other, allow_other_host: false
       end
@@ -469,7 +483,32 @@ module Plutonium
         form = wizard_step_form(runner)
         extracted = form.extract_input(params, view_context:)[:wizard] || {}
         cleaned = clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
+        stage_wizard_uploads!(step, cleaned)
         cleaned.stringify_keys
+      end
+
+      # Replace each attachment field's value with a staged TOKEN, minting one from
+      # an uploaded file for a plain (non-direct-upload) field. Reads the RAW param
+      # so a multipart `UploadedFile` isn't mangled by form extraction, then
+      # overrides the extracted value. A nil result (blank / no new file) drops the
+      # key, so the token already in `data` survives a Back/re-submit (`stage`
+      # merges, it doesn't replace). Direct-upload fields arrive as a token string
+      # and pass through unchanged.
+      def stage_wizard_uploads!(step, cleaned)
+        raw = params[:wizard]
+        step.inputs.each do |name, config|
+          next unless Plutonium::Wizard::Attachments.field?(config)
+
+          token = Plutonium::Wizard::Attachments.stage_upload(
+            raw[name], backend: config.dig(:options, :backend)
+          )
+          if token.nil?
+            cleaned.delete(name)
+            cleaned.delete(name.to_s)
+          else
+            cleaned[name] = token
+          end
+        end
       end
 
       # The form for the current step, seeded from the wizard's typed data — used
@@ -478,7 +517,7 @@ module Plutonium
         step = runner.current_step
         Plutonium::UI::Form::Wizard.new(
           step:,
-          data: runner.wizard.data[step.key],
+          data: Plutonium::Wizard::AttachmentData.wrap(runner.wizard.data[step.key], step),
           action: wizard_step_url(step&.key),
           fields: step.attribute_schema.keys.map(&:to_sym) + step.structured_inputs.keys.map(&:to_sym)
         )
@@ -498,9 +537,67 @@ module Plutonium
         main_or_portal_root_url
       end
 
-      # Where Cancel redirects out to.
+      # Where Cancel redirects out to: the page the user launched from (captured at
+      # launch), falling back to the host root.
       def wizard_exit_url
-        main_or_portal_root_url
+        peek_wizard_return_to || main_or_portal_root_url
+      end
+
+      # Capture the launch origin so Cancel can return there. Called only at the bare
+      # launch (the step pages' referer is the wizard itself). Prefers an explicit
+      # `?return_to=` over the referer; both are sanitized to a same-host local path
+      # that isn't the wizard's own mount, so there's no open-redirect surface.
+      def stash_wizard_return_to!
+        candidate = wizard_return_to_candidate
+        return if candidate.blank?
+
+        bucket = (session[WIZARD_RETURN_TO_KEY] ||= {})
+        bucket[Plutonium::Wizard::Driving.session_token_key(current_wizard_class)] = candidate
+      end
+
+      def wizard_return_to_candidate
+        [params[:return_to].to_s, request.referer].each do |raw|
+          path = local_wizard_return_path(raw)
+          return path if path
+        end
+        nil
+      end
+
+      # Sanitize a candidate return-to into a same-host absolute path (with query),
+      # or nil. Rejects other hosts (open-redirect), protocol-relative `//host`
+      # paths, and the wizard's own pages (so Cancel never bounces back into the
+      # flow it's leaving).
+      def local_wizard_return_path(raw)
+        return nil if raw.blank?
+
+        uri = begin
+          URI.parse(raw)
+        rescue URI::InvalidURIError
+          nil
+        end
+        return nil if uri.nil?
+        return nil unless uri.host.nil? || uri.host == request.host
+
+        path = uri.path.presence
+        return nil if path.nil? || !path.start_with?("/") || path.start_with?("//")
+        return nil if path.start_with?(request.path)
+
+        uri.query.present? ? "#{path}?#{uri.query}" : path
+      end
+
+      def peek_wizard_return_to
+        bucket = session[WIZARD_RETURN_TO_KEY]
+        return nil unless bucket.is_a?(Hash)
+
+        bucket[Plutonium::Wizard::Driving.session_token_key(current_wizard_class)].presence
+      end
+
+      def clear_wizard_return_to
+        bucket = session[WIZARD_RETURN_TO_KEY]
+        return unless bucket.is_a?(Hash)
+
+        bucket.delete(Plutonium::Wizard::Driving.session_token_key(current_wizard_class))
+        session.delete(WIZARD_RETURN_TO_KEY) if bucket.empty?
       end
 
       def main_or_portal_root_url

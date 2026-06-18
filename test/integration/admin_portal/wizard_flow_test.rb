@@ -286,6 +286,17 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_equal 0, Organization.count
   end
 
+  test "a validation error keeps the submitted sibling values, not stale ones" do
+    # `name` is invalid (blank), but the user also picked a `plan`. The error
+    # re-render must KEEP the chosen plan — reverting it (the bug: only success
+    # stages data, so an error reverted every field to its last staged value)
+    # silently discards correct input the user already entered.
+    post "#{base}/identity", params: {wizard: {name: "", plan: "pro"}, _direction: "next"}
+    assert_response :unprocessable_content
+    assert_match(/<option[^>]*value="pro"[^>]*selected|selected[^>]*value="pro"/, response.body,
+      "the plan the user chose survives a sibling field's validation error")
+  end
+
   # Regression (§6): navigating BACK to an earlier step via a GET doesn't persist
   # the cursor, so the stored cursor still points at a later step. A subsequent
   # POST to the earlier step must still extract THIS step's fields (not the stored
@@ -405,6 +416,44 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     post "#{tbase}/identity", params: {_direction: "cancel"}
     assert_response :redirect
     assert_equal 0, Plutonium::Wizard::Session.where(status: "in_progress").count
+  end
+
+  # --- cancel returns to the launch origin (return_to) --------------------------
+
+  # The tokened wizard mints its run-id into the launch redirect URL (the row is
+  # written on the first POST), so read the token from the redirect.
+  def launch_token
+    URI(response.location).path[%r{/onboarding/([A-Za-z0-9]{32})/}, 1]
+  end
+
+  test "cancel returns to the launch origin captured from the referer" do
+    get base, headers: {"HTTP_REFERER" => "http://www.example.com/admin/companies"}
+    assert_response :redirect
+    token = launch_token
+    assert token, "launch redirects into a tokened run URL"
+
+    post "#{base}/#{token}/identity", params: {_direction: "cancel"}
+    assert_response :redirect
+    assert_equal "/admin/companies", URI(response.location).path
+  end
+
+  test "an explicit ?return_to wins over the referer" do
+    get "#{base}?return_to=/admin/widgets",
+      headers: {"HTTP_REFERER" => "http://www.example.com/admin/companies"}
+    token = launch_token
+
+    post "#{base}/#{token}/identity", params: {_direction: "cancel"}
+    assert_equal "/admin/widgets", URI(response.location).path
+  end
+
+  test "a cross-host referer is ignored; cancel falls back to root" do
+    get base, headers: {"HTTP_REFERER" => "http://evil.example/phish"}
+    token = launch_token
+
+    post "#{base}/#{token}/identity", params: {_direction: "cancel"}
+    assert_response :redirect
+    refute_includes URI(response.location).to_s, "evil.example",
+      "a foreign-host referer must never become the redirect target"
   end
 
   # §4: a wizard with no `concurrency_key` (OnboardOrganizationWizard) is

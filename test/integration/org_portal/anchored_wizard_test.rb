@@ -75,6 +75,23 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed", @widget.reload.name
   end
 
+  # --- cancel returns to the launch origin --------------------------------------
+
+  # A resource-anchored wizard is launched FROM the record (e.g. its show page), so
+  # Cancel should return there — not the portal root. The origin is captured from
+  # the referer at launch and stashed per-wizard in the session.
+  test "cancel returns to the record it was launched from, not the portal root" do
+    origin = "#{prefix}/widgets/#{@widget.id}"
+    get base, headers: {"HTTP_REFERER" => "http://www.example.com#{origin}"}
+    assert_response :redirect
+    follow_redirect! # → rename step
+
+    post "#{base}/rename", params: {_direction: "cancel"}
+    assert_response :redirect
+    assert_equal origin, URI(response.location).path,
+      "Cancel returns to the launching record, not root"
+  end
+
   # --- IDOR: the anchor is scoped, never an unscoped find_by --------------------
 
   test "a widget id outside the portal's authorized scope returns not-found" do
