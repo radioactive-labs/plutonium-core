@@ -123,7 +123,10 @@ module Plutonium
 
       # Handle the signup form submission.
       def handle_signup_submission
-        email = @invite.enforce_email? ? @invite.email : params[:email]
+        # Normalize the login up front so the existing-account guard below and
+        # the account it creates agree on case with case-insensitive lookups
+        # (account_from_login) on a case-sensitive DB.
+        email = (@invite.enforce_email? ? @invite.email : params[:email])&.downcase
         password = params[:password]
         password_confirmation = params[:password_confirmation]
 
