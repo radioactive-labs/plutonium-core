@@ -13,13 +13,16 @@ module Plutonium
                 # Hidden field for ensuring removal of esp. has_one_attached attachments
                 input(type: :hidden, name: attributes[:name], multiple: attributes[:multiple], value: nil, autocomplete: "off", hidden: true)
 
-                next if field.value.nil?
-
+                # Always render the preview container — even when empty — so the
+                # `attachment-input` controller's `attachment-preview-container`
+                # OUTLET exists on a fresh (valueless) field. Without it the FIRST
+                # upload can't inject its preview: Stimulus raises on the missing
+                # outlet and the uploaded token never reaches the form.
                 div(
                   class: "attachment-preview-container grid grid-cols-[repeat(auto-fill,minmax(0,180px))] gap-4",
                   data_controller: "attachment-preview-container"
                 ) do
-                  render_existing_attachments
+                  render_existing_attachments unless field.value.nil?
                 end
               end
 
