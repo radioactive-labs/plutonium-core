@@ -25,7 +25,7 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 | `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs — **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
 | `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). See [`completed`](#completed) below and [One-time wizards](/reference/wizard/one-time#re-opening-a-completed-wizard). |
-| `encrypt_data` | Apply Rails `encrypts` to the `data`/`tracked_records` columns (off by default), for flows that stage PII. |
+| `encrypt_data` | Encrypt the staged `data` column at rest using ActiveRecord's encryption keys (off by default), for flows that stage PII. Requires `active_record.encryption` keys — see [Storage & config](/reference/wizard/storage-config#encryption). |
 
 ```ruby
 class CompanyOnboardingWizard < Plutonium::Wizard::Base

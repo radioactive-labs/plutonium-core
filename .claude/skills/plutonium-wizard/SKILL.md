@@ -23,6 +23,28 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 
 ---
 
+## 🛑 Before you author: confirm the configuration (ASK — don't infer)
+
+Wizard configuration is dense and the dimensions **interact** — guess wrong about mounting, anchoring, or run identity and you get a wizard that compiles but misbehaves: it forks a new run on every visit, 404s on resume, leaks across tenants, or can't be gated. A one-line request ("a checkout wizard", "onboarding") does **not** determine these.
+
+**STOP and ask the user — use `AskUserQuestion` — before writing the class.** Resolve each decision below (skip one only when the user already stated it), then restate the resolved shape in a sentence and confirm:
+
+1. **End result — what does `execute` do?** Create a new record, update an existing one, touch several models, or fire a side effect (email/charge/API)? This drives anchoring *and* persistence.
+2. **Anchored or fresh?** Does it operate on an **existing** record or create something new?
+   - existing record from the URL → `anchored with: Model` (resource-mounted member route)
+   - existing context (the tenant, the current user) → `anchored via: :current_scoped_entity`
+   - brand new → non-anchored
+3. **Mount & audience.** A resource action (`wizard` macro on a definition) or a standalone portal entry (`register_wizard`)? Authenticated, or **public/guest pre-login** (`anonymous`, e.g. signup)?
+4. **Run identity.** Resume the user's **one** in-progress run (keyed — `concurrency_key`), or start a **fresh** run each launch (tokened/repeatable)? (Anchored wizards default to one run per `[anchor, current_user]`.)
+5. **One-time?** Run at most once and keep a completed marker (`one_time`) — e.g. to **gate** a page behind it?
+6. **Persistence model.** Write everything atomically at `execute` (default, simplest), or **save-as-you-go** with per-step `on_submit`/`persist` (then `SweepJob` must be scheduled, and `on_rollback` added for any *uncompensated* side effect)?
+7. **Steps & branching.** Which steps/fields/validations? Any step shown only under a `condition:`?
+8. **Tenancy.** Is the host portal entity-scoped? (The tenant folds into run identity automatically — don't thread it by hand.)
+
+These compound: *anchored ⇒ keyed by default*; *anonymous ⇒ no owner ⇒ tokened*; *one-time ⇒ keyed + gateable*; *save-as-you-go ⇒ SweepJob + rollback*. Surface the implication when you confirm ("public ⇒ guest ⇒ session-keyed, ownerless"). The DSL sections below map each decision to its macro.
+
+---
+
 ## Minimal wizard
 
 The common case writes nothing until the end. Steps collect `data`; one `execute` does all writes atomically.
@@ -74,8 +96,8 @@ end
 | `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs — **except `anchored`**, which defaults to `{ [anchor, current_user] }` (one draft per user per record). `{ anchor }` = one per record any-user; `{ wizard_token }` = repeatable. |
 | `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). |
-| `encrypt_data` | Encrypt the staged `data`/`tracked_records` columns (PII flows). |
-| `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). |
+| `encrypt_data` | Encrypt the staged `data` column at rest via ActiveRecord's encryption keys (PII flows). Requires `active_record.encryption` keys — first write raises (naming the wizard) if unconfigured. Unset inherits `config.wizards.encrypt_data` (global default, off); `encrypt_data false` opts out when that default is on. |
+| `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`** — a guest's identity is its session token (already session-keyed/repeatable); whichever macro is declared last raises. |
 
 ## Branching — `condition:`
 

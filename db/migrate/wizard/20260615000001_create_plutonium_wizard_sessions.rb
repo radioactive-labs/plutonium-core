@@ -22,6 +22,13 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
       t.string :anchor_id
       t.string :token
 
+      # The portal (engine) this run was launched in, e.g. "OrgPortal::Engine" (the
+      # main app's class name for a public mount). Records the run's portal context
+      # so the "continue where you left off" listing only ever shows — and links —
+      # runs that belong to the portal being viewed (two portals can share an entity
+      # scope, so scope alone can't identify the portal).
+      t.string :engine
+
       t.public_send(:jsonb, :data, null: false, default: {})
       t.public_send(:jsonb, :tracked_records, null: false, default: {})
       # Steps the user has actually visited+validated (§6.3 completeness). A
@@ -34,7 +41,7 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
 
       t.index :instance_key, unique: true
       t.index [:status, :expires_at]
-      t.index [:owner_type, :owner_id, :status]
+      t.index [:owner_type, :owner_id, :engine, :status]
       t.index [:scope_type, :scope_id, :status]
       t.index [:wizard, :anchor_type, :anchor_id, :status]
     end

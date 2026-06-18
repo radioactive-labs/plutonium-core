@@ -79,7 +79,7 @@ module Plutonium
       # enriched with resume URLs — via the shared {Resume} listing module.
       def wizard_pending_entries
         @wizard_pending_entries ||=
-          Plutonium::Wizard::Resume.entries_for(resolved_wizard_owner, scope: resolved_wizard_scope)
+          Plutonium::Wizard::Resume.entries_for(view_context)
             .select { |entry| entry.wizard_class == current_wizard_class }
       end
 
@@ -286,6 +286,9 @@ module Plutonium
           anchor: resolved_wizard_anchor,
           scope: resolved_wizard_scope,
           token: wizard_token,
+          # The portal this run is launched in — recorded so the resume listing
+          # only ever surfaces it from THIS portal (§4.5).
+          engine: current_engine.name,
           current_user: resolved_wizard_owner,
           current_scoped_entity: resolved_wizard_scope
         )

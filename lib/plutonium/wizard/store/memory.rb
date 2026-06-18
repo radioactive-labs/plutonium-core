@@ -38,13 +38,6 @@ module Plutonium
           row = @rows[instance_key]
           !!row && row.status == "completed"
         end
-
-        def in_progress_for(owner, scope:)
-          @rows.values.select do |s|
-            s.status == "in_progress" && s.owner == owner &&
-              (scope.nil? || s.scope == scope)
-          end
-        end
       end
     end
   end

@@ -60,21 +60,16 @@ module Plutonium
     # This is the public, ergonomic API: like interactions, it takes the
     # +view_context+ and derives the run owner and tenant scope from the controller
     # it carries — `current_user` (the run owner) and `current_scoped_entity` (the
-    # tenant, when `scoped_to_entity?`; nil for a non-scoped portal).
+    # tenant, when `scoped_to_entity?`; nil for a non-scoped portal). It delegates to
+    # {Resume.entries_for}, which does that derivation and builds the resume URLs in
+    # this portal.
     #
     #   Plutonium::Wizard.in_progress_for(view_context)
-    #
-    # The low-level query (`Resume.entries_for(owner, scope:)` →
-    # `Store#in_progress_for(owner, scope:)`) takes +scope:+ as a REQUIRED keyword;
-    # this method derives and passes it explicitly (possibly nil).
     #
     # @param view_context [ActionView::Base] the current view context (as interactions take)
     # @return [Array<Plutonium::Wizard::Resume::Entry>]
     def self.in_progress_for(view_context)
-      controller = view_context.controller
-      owner = controller.helpers.current_user
-      scope = controller.scoped_to_entity? ? controller.current_scoped_entity : nil
-      Resume.entries_for(owner, scope: scope)
+      Resume.entries_for(view_context)
     end
   end
 end

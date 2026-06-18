@@ -6,8 +6,9 @@ module Plutonium
     #
     # Identity is the derived {InstanceKey} digest stored in +instance_key+; the
     # polymorphic owner/anchor/scope refs exist for listing and rebuilding context,
-    # not for identity. Encryption (+encrypt_data+) is applied by the wizard class
-    # when requested, not statically here.
+    # not for identity. At-rest encryption (the wizard's +encrypt_data+ opt-in) is
+    # applied by {Store::ActiveRecord} as a self-describing envelope in the +data+
+    # column, not statically here — so this model stays a plain schema mapping.
     class Session < ActiveRecord::Base
       self.table_name = "plutonium_wizard_sessions"
 

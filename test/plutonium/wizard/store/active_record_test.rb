@@ -6,9 +6,58 @@ require_relative "shared"
 class Plutonium::Wizard::Store::ActiveRecordTest < ActiveSupport::TestCase
   include WizardStoreBehavior
 
+  # A NAMED wizard fixture so the store can resolve `encrypt_data?` from the row's
+  # stored class name. (The shared contract's synthetic "W" can't be constantized,
+  # which exercises the "unresolvable → treated as clear" path.)
+  class StoreEncryptingWizard < Plutonium::Wizard::Base
+    encrypt_data
+  end
+
   setup do
     @store = Plutonium::Wizard::Store::ActiveRecord.new
     Plutonium::Wizard::Session.delete_all
+    # Configure encryption with deterministic test keys (Rails-conventional: keys
+    # live in the suite, not per-test). The unconfigured path is driven by a stub.
+    ActiveRecord::Encryption.configure(
+      primary_key: "a" * 32, deterministic_key: "b" * 32, key_derivation_salt: "c" * 32
+    )
+  end
+
+  test "an encrypt_data wizard stores its data as an encrypted envelope and reads it back" do
+    st = build_state(wizard: StoreEncryptingWizard.name, data: {"account" => {"email" => "ada@example.com"}})
+    @store.write(st.instance_key, st, cleanup_after: 1.day)
+
+    raw = Plutonium::Wizard::Session.find_by!(instance_key: st.instance_key).data
+    assert_equal [Plutonium::Wizard::Store::ActiveRecord::ENCRYPTED_ENVELOPE_KEY], raw.keys,
+      "the data column holds only the encrypted envelope"
+    refute_includes raw.to_json, "ada@example.com", "no plaintext field value is stored at rest"
+
+    got = @store.read(st.instance_key)
+    assert_equal({"account" => {"email" => "ada@example.com"}}, got.data, "read decrypts the envelope")
+  end
+
+  test "a non-encrypting wizard stores its data in clear (no envelope)" do
+    st = build_state(wizard: "W", data: {"a" => 1})
+    @store.write(st.instance_key, st, cleanup_after: 1.day)
+    raw = Plutonium::Wizard::Session.find_by!(instance_key: st.instance_key).data
+    assert_equal({"a" => 1}, raw)
+  end
+
+  test "encrypt_data with unconfigured encryption raises a wizard-named error" do
+    # Simulate an unconfigured key set by overriding the encryptor to raise the
+    # same Configuration error ActiveRecord raises lazily; restore it after.
+    raising = Object.new
+    def raising.encrypt(*) = raise ActiveRecord::Encryption::Errors::Configuration, "key provider not configured"
+    ActiveRecord::Encryption.define_singleton_method(:encryptor) { raising }
+
+    st = build_state(wizard: StoreEncryptingWizard.name, data: {"a" => 1})
+    err = assert_raises(ActiveRecord::Encryption::Errors::Configuration) do
+      @store.write(st.instance_key, st, cleanup_after: 1.day)
+    end
+    assert_match(/StoreEncryptingWizard/, err.message)
+    assert_match(/not configured/, err.message)
+  ensure
+    ActiveRecord::Encryption.singleton_class.send(:remove_method, :encryptor)
   end
 
   test "write stamps expires_at = now + cleanup_after" do

@@ -177,6 +177,7 @@ module Plutonium
         # {IMPLIED_ANCHOR_KEY}). To make an anchored wizard repeatable instead
         # (a fresh run per launch), declare `concurrency_key { wizard_token }`.
         def concurrency_key(method = nil, &block)
+          reject_anonymous_keying!("concurrency_key") if anonymous?
           @concurrency_key =
             if block
               block
@@ -216,11 +217,14 @@ module Plutonium
         # requirement is enforced lazily in {#one_time?} so subclass timing and
         # declaration order don't matter.
         def one_time
+          reject_anonymous_keying!("one_time") if anonymous?
           @one_time = true
         end
 
         # Whether this wizard is one-time. Raises if `one_time` was declared
-        # without a `concurrency_key` (only keyed runs can be retained).
+        # without a `concurrency_key` (only keyed runs can be retained). The
+        # `one_time` + `anonymous` conflict is rejected eagerly in the macros
+        # (whichever is declared last raises), so it can't reach here.
         def one_time?
           return false unless @one_time
           unless concurrency_key?
@@ -259,18 +263,45 @@ module Plutonium
         # may authenticate ONLY at its terminal `execute` (e.g. a signup flow). It
         # NEVER crosses the auth boundary mid-flow (§4.5).
         def anonymous
+          reject_anonymous_keying!("anonymous") if @concurrency_key || @one_time
           @anonymous = true
         end
 
         def anonymous? = !!@anonymous
 
+        # `anonymous` is mutually exclusive with `concurrency_key`/`one_time`: a
+        # guest's only sound identity is its session token, so the wizard stays
+        # session-keyed and repeatable. A custom `concurrency_key` resolved in a
+        # guest context (`current_user` → nil) would collide every guest on one
+        # run, and `one_time` has no durable principal to retain a completion
+        # against. Rejected eagerly so whichever macro is declared LAST raises,
+        # regardless of order.
+        def reject_anonymous_keying!(macro)
+          raise ArgumentError,
+            "#{name || "wizard"} declares `#{macro}` together with `anonymous`, which are " \
+            "mutually exclusive: a guest's identity is its session token, so the wizard is " \
+            "already session-keyed and repeatable. A `concurrency_key` would collide all " \
+            "guests on one run, and `one_time` has no durable identity to retain against. " \
+            "Drop `anonymous`, or drop `concurrency_key`/`one_time` (§4.5)."
+        end
+
         # --- encryption (§8.1) ---
 
+        # Opt this wizard's staged `data` into at-rest encryption (§8.1). Pass
+        # `false` to opt OUT explicitly when the app encrypts everything by default
+        # (`config.wizards.encrypt_data`). Left unset, the wizard inherits that
+        # global default.
         def encrypt_data(flag = true)
           @encrypt_data = flag
         end
 
-        def encrypt_data? = !!@encrypt_data
+        # Effective at-rest encryption for this wizard: an explicit `encrypt_data`
+        # (true) / `encrypt_data false` wins; unset inherits the global default
+        # (`config.wizards.encrypt_data`, off unless the app opts in).
+        def encrypt_data?
+          return !!@encrypt_data unless @encrypt_data.nil?
+          Plutonium.configuration.wizards.encrypt_data
+        end
 
         private
 

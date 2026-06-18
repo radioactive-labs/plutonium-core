@@ -18,7 +18,8 @@ module Plutonium
       :owner,
       :anchor,
       :scope,
-      :token
+      :token,
+      :engine
     ) do
       def data = self[:data] || {}
 

@@ -29,8 +29,9 @@ module Plutonium
       attr_reader :wizard, :state
 
       def initialize(wizard_class:, store:, instance_key:, view_context: nil,
-        owner: nil, anchor: nil, scope: nil, token: nil,
+        owner: nil, anchor: nil, scope: nil, token: nil, engine: nil,
         current_user: nil, current_scoped_entity: nil)
+        @engine = engine
         @wizard_class = wizard_class
         @store = store
         @instance_key = instance_key
@@ -574,7 +575,8 @@ module Plutonium
           owner:,
           anchor:,
           scope:,
-          token:
+          token:,
+          engine: @engine
         )
       end
 

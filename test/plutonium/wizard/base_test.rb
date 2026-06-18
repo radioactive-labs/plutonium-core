@@ -235,6 +235,48 @@ module Plutonium
         assert ot.one_time?
       end
 
+      # `anonymous` is mutually exclusive with `concurrency_key`/`one_time`: a
+      # guest's identity is its session token (session-keyed, repeatable), so a
+      # custom key would collide all guests and `one_time` has no durable
+      # principal to retain against. Rejected eagerly in whichever macro is
+      # declared LAST, so the conflict can't be declared in EITHER order.
+      def test_anonymous_rejects_concurrency_key_in_either_order
+        # concurrency_key after anonymous → concurrency_key raises.
+        e = assert_raises(ArgumentError) do
+          Class.new(Plutonium::Wizard::Base) do
+            anonymous
+            concurrency_key { current_user }
+          end
+        end
+        assert_match(/mutually exclusive/, e.message)
+
+        # anonymous after concurrency_key → anonymous raises.
+        assert_raises(ArgumentError) do
+          Class.new(Plutonium::Wizard::Base) do
+            concurrency_key { wizard_token }
+            anonymous
+          end
+        end
+      end
+
+      def test_anonymous_rejects_one_time_in_either_order
+        # one_time after anonymous → one_time raises.
+        assert_raises(ArgumentError) do
+          Class.new(Plutonium::Wizard::Base) do
+            anonymous
+            one_time
+          end
+        end
+
+        # anonymous after one_time → anonymous raises.
+        assert_raises(ArgumentError) do
+          Class.new(Plutonium::Wizard::Base) do
+            one_time
+            anonymous
+          end
+        end
+      end
+
       def test_on_relaunch_defaults_to_prompt_and_opts_out_to_new
         # A bare relaunch with pending runs preserves the user's in-progress work by
         # default (the resume-or-new chooser) rather than silently forking a fresh run.
@@ -285,6 +327,32 @@ module Plutonium
 
         enc = Class.new(Plutonium::Wizard::Base) { encrypt_data }
         assert enc.encrypt_data?
+      end
+
+      def test_encrypt_data_inherits_global_default_when_unset
+        undeclared = Class.new(Plutonium::Wizard::Base)
+        opted_out = Class.new(Plutonium::Wizard::Base) { encrypt_data false }
+        opted_in = Class.new(Plutonium::Wizard::Base) { encrypt_data }
+
+        with_global_encrypt_data(true) do
+          assert undeclared.encrypt_data?, "an undeclared wizard inherits the global default"
+          refute opted_out.encrypt_data?, "`encrypt_data false` opts out of the global default"
+          assert opted_in.encrypt_data?
+        end
+
+        with_global_encrypt_data(false) do
+          refute undeclared.encrypt_data?, "off by default unless the app opts in"
+          assert opted_in.encrypt_data?, "an explicit opt-in wins regardless of the default"
+        end
+      end
+
+      def with_global_encrypt_data(value)
+        config = Plutonium.configuration.wizards
+        previous = config.encrypt_data
+        config.encrypt_data = value
+        yield
+      ensure
+        config.encrypt_data = previous
       end
 
       def test_anonymous_defaults_to_false_and_opts_in

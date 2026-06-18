@@ -11,19 +11,21 @@ module Plutonium
     #
     #   Plutonium::Wizard.in_progress_for(view_context)
     #
-    # Resume URLs are resolved by scanning the host's route sets:
+    # Resume URLs are built in the CURRENT portal (the one whose `view_context` is
+    # passed), so a run is only ever linked from the portal it belongs to:
     #
     # - A `register_wizard` (portal/public) wizard draws a NAMED route carrying a
     #   `wizard_class` route default; we find it and build the URL from its helper,
     #   threading the tenant scope segment and (for tokened runs) the `:token`.
-    # - A `wizard`-macro (resource-mounted) ANCHORED wizard draws a member route
-    #   (`.../:id/wizards/:wizard_name/:step`); we resolve it from the row's anchor
-    #   + the registering definition's wizard name.
+    # - A `wizard`-macro (resource-mounted) ANCHORED wizard's member URL is built by
+    #   the same `resource_url_for(record, wizard:, step:)` machinery the launch
+    #   button uses — portal- and scope-correct by construction — from the row's
+    #   anchor + the registering definition's wizard name.
     #
-    # When a row's mount can't be resolved generically (e.g. a non-anchored
-    # resource-mounted wizard, whose resource identity isn't on the row), the entry
-    # is returned with `resume_url: nil` and a `resume_unresolved_reason`, rather
-    # than guessing or raising.
+    # When a row's mount can't be resolved in this portal (e.g. a non-anchored
+    # resource-mounted wizard, whose resource identity isn't on the row, or a wizard
+    # not mounted here), the entry is returned with `resume_url: nil` and a
+    # `resume_unresolved_reason`, rather than guessing or raising.
     module Resume
       # One enriched in-progress wizard, ready for a dashboard list item.
       Entry = Struct.new(
@@ -40,23 +42,45 @@ module Plutonium
 
       module_function
 
-      # @param owner [Object] the run owner (e.g. current_user)
-      # @param scope [Object, nil] tenant scope (REQUIRED keyword); when non-nil,
-      #   narrows to that scope; explicit nil (non-scoped portal) → no scope filter
-      # @return [Array<Entry>] in-progress entries, newest first
-      def entries_for(owner, scope:)
-        rel = Session.status_in_progress.where(owner: owner)
-        rel = rel.where(scope: scope) unless scope.nil?
-        rel.order(updated_at: :desc).filter_map { |row| entry_for(row) }
+      # In-progress entries for the run owner and tenant scope derived from the
+      # current portal's +view_context+ (the same object interactions take). A run
+      # belongs to exactly one portal context, so the scope MATCHES it: a scoped
+      # portal narrows to its tenant; a non-scoped portal narrows to runs with no
+      # scope (never another portal's entity-scoped runs). Resume URLs are built
+      # through that same view_context, so they land in THIS portal. Newest first.
+      #
+      # @param view_context [ActionView::Base] the current view context
+      # @return [Array<Entry>]
+      def entries_for(view_context)
+        controller = view_context.controller
+        owner = controller.helpers.current_user
+        # A guest has no owner-tracked runs — anonymous runs are session-keyed and
+        # ownerless (§4.5). The public surface stubs `current_user` to "Guest", so
+        # bail rather than query `where(owner: "Guest")` (a non-record). And never
+        # normalize "Guest" to nil: `where(owner: nil)` would match EVERY guest's
+        # ownerless run — a cross-guest leak.
+        return [] unless owner.present? && owner != "Guest"
+
+        # `current_scoped_entity` is a helper_method — read it off the view context.
+        scope = controller.scoped_to_entity? ? view_context.current_scoped_entity : nil
+        # The portal pins the listing: a run is only shown by the portal it was
+        # launched in. `scope` still isolates the tenant WITHIN a scoped portal —
+        # `engine` alone can't (one engine serves every tenant via path scoping).
+        engine = view_context.current_engine.name
+
+        Session.status_in_progress
+          .where(owner: owner, engine: engine, scope: scope)
+          .order(updated_at: :desc)
+          .filter_map { |row| entry_for(row, view_context) }
       end
 
       # @return [Entry, nil] nil when the wizard class can't be loaded
-      def entry_for(row)
+      def entry_for(row, view_context)
         wizard_class = row.wizard.to_s.safe_constantize
         return nil unless wizard_class
 
         step = resolve_step(wizard_class, row.current_step)
-        resolved = ResumeUrl.new(row, wizard_class).resolve
+        resolved = ResumeUrl.new(row, wizard_class, view_context).resolve
 
         Entry.new(
           wizard_class: wizard_class,
@@ -77,11 +101,12 @@ module Plutonium
         wizard_class.steps.find { |s| s.key.to_s == key.to_s }
       end
 
-      # Resolves a single row to its resume URL by scanning route sets.
+      # Resolves a single row to its resume URL in the current portal.
       class ResumeUrl
-        def initialize(row, wizard_class)
+        def initialize(row, wizard_class, view_context)
           @row = row
           @wizard_class = wizard_class
+          @view_context = view_context
         end
 
         # @return [Hash] {url:, reason:} — exactly one of the two is non-nil.
@@ -121,9 +146,13 @@ module Plutonium
           {step: @row.current_step}.merge(scope_param).merge(token_param)
         end
 
-        # A resource-mounted ANCHORED wizard draws a member route named
-        # `wizard_record_action_<...>`. Resolve it from the row's anchor + the
-        # registering definition's wizard name.
+        # A resource-mounted ANCHORED wizard's member URL is built by the SAME
+        # `resource_url_for(record, wizard:, step:)` machinery the launch button uses
+        # (§5.1) — so it's portal- and scope-correct by construction (it resolves on
+        # the current portal's `current_engine`, threads the entity segment when the
+        # portal is path-scoped, and singularizes the member helper). We pass the
+        # row's anchor as the record, the registering definition's wizard name, and
+        # the resumed step; a tokened (non-keyed) run also carries its run token.
         def resource_member_url
           anchor = @row.anchor
           return nil if anchor.nil?
@@ -131,43 +160,10 @@ module Plutonium
           wizard_name = registered_wizard_name
           return nil if wizard_name.nil?
 
-          route_sets.each do |route_set|
-            route = member_route_for(route_set, anchor)
-            next unless route
-
-            params = {
-              id: anchor.to_param,
-              wizard_name: wizard_name,
-              step: @row.current_step
-            }
-            params.merge!(scope_param)
-            params.merge!(token_param)
-            return build_url(route_set, route.name, params)
-          end
+          @view_context.resource_url_for(anchor, wizard: wizard_name, step: @row.current_step, **token_param)
+        rescue => e
+          Rails.logger.warn { "[Plutonium::Wizard] resume url build failed for #{@wizard_class.name}: #{e.message}" }
           nil
-        end
-
-        # Find the resource controller's TOP-LEVEL member wizard route for the
-        # anchor's model. The controller is `<model>.pluralize.underscore`,
-        # optionally portal-namespaced (e.g. `org_portal/widgets`), so match on the
-        # controller suffix. The same model can mount BOTH a top-level and nested
-        # member route (the latter requires a parent id we don't have on the row),
-        # so prefer the fewest-required-parts (top-level) candidate.
-        def member_route_for(route_set, anchor)
-          suffix = anchor.class.to_s.pluralize.underscore
-          candidates = route_set.routes.select do |r|
-            next false unless r.name.present?
-            next false unless r.defaults[:action].to_s == "wizard_record_action"
-
-            controller = r.defaults[:controller].to_s
-            controller == suffix || controller.end_with?("/#{suffix}")
-          end
-          # Prefer the TOP-LEVEL mount: fewest required parts, and a non-nested
-          # route name (a nested mount, even with a singular parent that adds no
-          # :id, would resolve to the wrong canonical URL).
-          candidates.min_by do |r|
-            [r.required_parts.size, r.name.to_s.include?("_nested_") ? 1 : 0]
-          end
         end
 
         # Reverse-lookup the `wizard`-macro name registered for this wizard class on
@@ -234,19 +230,11 @@ module Plutonium
           register_wizard_url.nil?
         end
 
-        # Every Plutonium engine route set plus the main app's (for public mounts).
+        # The CURRENT portal's route set, plus the main app's (for `public:` mounts).
+        # Scoped to this portal so a `register_wizard` wizard mounted in several
+        # portals resolves here, not in whichever engine happens to be scanned first.
         def route_sets
-          @route_sets ||= begin
-            sets = [Rails.application.routes]
-            Rails::Engine.subclasses.each do |engine|
-              next unless engine.respond_to?(:routes)
-
-              sets << engine.routes
-            rescue
-              next
-            end
-            sets.uniq
-          end
+          @route_sets ||= [@view_context.current_engine.routes, Rails.application.routes].uniq
         end
       end
     end

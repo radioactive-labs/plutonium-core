@@ -56,36 +56,6 @@ module WizardStoreBehavior
     assert_nil @store.read(st.instance_key)
   end
 
-  def test_in_progress_for_owner
-    owner = make_owner
-    st = build_state(owner: owner)
-    @store.write(st.instance_key, st, cleanup_after: 1.day)
-    states = @store.in_progress_for(owner, scope: nil)
-    assert_equal 1, states.size
-    assert_equal st.instance_key, states.first.instance_key
-
-    @store.complete(st.instance_key)
-    assert_empty @store.in_progress_for(owner, scope: nil)
-  end
-
-  def test_in_progress_for_owner_narrows_by_scope
-    owner = make_owner
-    scope_a = make_scope
-    scope_b = make_scope
-
-    in_a = build_state(owner: owner, scope: scope_a, data: {"x" => "a"})
-    in_b = build_state(owner: owner, scope: scope_b, data: {"x" => "b"})
-    @store.write(in_a.instance_key, in_a, cleanup_after: 1.day)
-    @store.write(in_b.instance_key, in_b, cleanup_after: 1.day)
-
-    # No scope → both.
-    assert_equal 2, @store.in_progress_for(owner, scope: nil).size
-
-    # Scoped → only that scope's row.
-    scoped = @store.in_progress_for(owner, scope: scope_a)
-    assert_equal 1, scoped.size
-    assert_equal in_a.instance_key, scoped.first.instance_key
-  end
 
   private
 
