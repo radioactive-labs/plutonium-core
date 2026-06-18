@@ -93,6 +93,9 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, %(name="wizard[name]")
     assert_includes response.body, %(name="_direction")
+    # A portal `register_wizard` mount defaults to the in-shell chrome.
+    assert_includes response.body, "sidebar-navigation",
+      "a portal standalone wizard defaults to the in-shell layout"
   end
 
   # A step's inline `validates ... presence: true` is replayed onto the typed

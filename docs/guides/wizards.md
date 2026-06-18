@@ -313,7 +313,7 @@ See [One-time wizards](/reference/wizard/one-time).
 
 ## Registration & launch
 
-Wizards are **portal-hosted** — they run inside a Plutonium portal, inheriting its auth, tenant scoping, layout, and rendering. There are two ways to reach a user.
+A wizard reaches a user as a **resource action** (the `wizard` macro) or a **route-mounted entry** (`register_wizard`) — inside a portal, or on the main app. A portal mount inherits the portal's auth, tenant scoping, layout, and rendering; a main-app mount runs standalone.
 
 ### On a resource — the `wizard` macro
 
@@ -336,21 +336,32 @@ An anchored (record) wizard resolves its anchor through the resource controller'
 A portal-level wizard with no `authorize?` can be run by **any authenticated portal user** — it has no resource policy. Always define `def authorize?` for anything privileged.
 :::
 
-### Portal-level — `register_wizard`
+### Route-mounted — `register_wizard`
 
-For a wizard not tied to a single resource (onboarding, welcome), register it inside the portal engine's routes, alongside `register_resource`:
+For a wizard not tied to a single resource (onboarding, welcome, set-up), register it with `register_wizard` — inside a portal engine's routes, or on the main app, alongside `register_resource`:
 
 ```ruby
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
-  register_wizard ::OnboardOrganizationWizard, at: "onboarding"
-  register_wizard ::WelcomeWizard, at: "welcome"
+  register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # in-shell (portal default)
+  register_wizard ::SetupOrgWizard, at: "setup", shell: false                 # shell-less
 
   register_resource ::Company
 end
+
+# config/routes.rb — a main-app (portal-less) wizard
+Rails.application.routes.draw do
+  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # shell-less by default
+end
 ```
 
-This draws the wizard's step routes within the portal and provides an `<at>_wizard_path` helper. See [Registration & launch](/reference/wizard/registration-launch).
+This draws the wizard's step routes within the host and provides an `<at>_wizard_path` helper. The `shell:` option picks the full-page layout (`true` = sidebar/topbar, `false` = shell-less standalone; default portal → `true`, main-app → `false`).
+
+::: tip Authenticated main-app wizards: define your own controller
+A portal mount inherits the portal's auth. A main-app mount is served by a **bare** synthesized controller with **no `current_user`** — so an authenticated main-app wizard requires you to define `::WizardsController` yourself (`include Plutonium::Wizard::Controller` + your auth concern), the same "app owns the controller" contract as `register_resource`. An `anonymous` public wizard needs no such controller (a guest one is synthesized).
+:::
+
+See [Registration & launch](/reference/wizard/registration-launch#route-mounted-register_wizard).
 
 ### Authentication & guest wizards
 
@@ -380,8 +391,8 @@ register_wizard ::GuestSignupWizard, at: "signup", public: true
 
 Because the portal engine is mounted behind the host's auth constraint, an `anonymous` wizard's route is drawn on the **main app** (outside that constraint) so it's reachable before login. See [Authentication](/reference/wizard/anchoring-resume#authentication) and the [public mount](/reference/wizard/registration-launch#public-mount-for-anonymous-wizards).
 
-::: warning v1 scope
-v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (portal-level mounts have no resource record), but a `via:`-anchored (context) wizard mounts portal-level fine. Main-app (non-portal) standalone wizards are out of scope. See [Registration & launch › Known limitations](/reference/wizard/registration-launch#known-limitations).
+::: warning Anchoring constraint
+`with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (a route-level mount has no resource record), but a `via:`-anchored (context) wizard mounts route-level fine. See [Registration & launch › Constraints](/reference/wizard/registration-launch#constraints).
 :::
 
 ### Listing in-progress wizards

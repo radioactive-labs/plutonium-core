@@ -41,7 +41,13 @@ module Plutonium
       #   Defaults to the wizard's own `anonymous?` flag. A non-`anonymous` wizard
       #   may not be mounted public; an `anonymous` wizard may not be mounted
       #   authenticated (its whole point is pre-login access). See §4.5.
-      def register_wizard(wizard_class, at:, as: nil, public: nil)
+      # @param shell [Boolean, nil] whether this mount renders inside the app shell
+      #   (sidebar/topbar). `true` = in-shell; `false` = shell-less (standalone, e.g.
+      #   an onboarding screen). Only meaningful for `register_wizard` mounts;
+      #   resource-defined (`wizard` macro) wizards are always embedded. Defaults by
+      #   context (portal → shelled, main-app → shell-less); turbo-frame requests are
+      #   always layout-less regardless.
+      def register_wizard(wizard_class, at:, as: nil, public: nil, shell: nil)
         # The wizard subsystem is opt-in (`config.wizards.enabled`). When disabled,
         # draw no routes — its tables/migrations are skipped too, so a mounted route
         # couldn't work anyway. Warn rather than fail silently, so a
@@ -82,7 +88,7 @@ module Plutonium
             "`anonymous` wizards)."
         end
 
-        return register_public_wizard(wizard_class, at:, as:) if is_public
+        return register_public_wizard(wizard_class, at:, as:, shell:) if is_public
 
         ensure_wizard_controller!(wizard_class)
 
@@ -90,7 +96,7 @@ module Plutonium
         # `register_wizard W, at: "onboarding"` yields `onboarding_wizard_path`.
         # `as:` overrides it; the wizard's own route name is the final fallback.
         helper_name = (as || at.presence || wizard_route_name(wizard_class)).to_s.tr("/", "_")
-        defaults = {wizard_class: wizard_class.name}
+        defaults = wizard_route_defaults(wizard_class, shell)
 
         scope path: at do
           # Canonical launch: GET the bare mount → resolve/mint the run and PRG to
@@ -107,6 +113,16 @@ module Plutonium
 
       private
 
+      # Route defaults carried on every wizard route: the wizard class (resolves the
+      # wizard at request time) and, when explicitly set, the `shell` toggle (in-shell
+      # vs shell-less). An unset `shell` is omitted — the driving layer then defaults
+      # it by context (portal → shelled, main-app → shell-less).
+      def wizard_route_defaults(wizard_class, shell)
+        defaults = {wizard_class: wizard_class.name}
+        defaults[:wizard_shell] = shell.to_s unless shell.nil?
+        defaults
+      end
+
       # Mount an `anonymous` wizard on a PUBLIC (unauthenticated) route (§4.5).
       #
       # Portal engines are mounted INSIDE the host's auth constraint
@@ -119,11 +135,11 @@ module Plutonium
       # The route dispatches to a synthesized top-level `WizardsController` that
       # includes the full Plutonium controller stack + `Plutonium::Auth::Public`
       # (so `current_user` is the guest sentinel) + {Plutonium::Wizard::Controller}.
-      def register_public_wizard(wizard_class, at:, as:)
+      def register_public_wizard(wizard_class, at:, as:, shell: nil)
         ensure_public_wizard_controller!
 
         helper_name = (as || at.presence || wizard_route_name(wizard_class)).to_s.tr("/", "_")
-        defaults = {wizard_class: wizard_class.name}
+        defaults = wizard_route_defaults(wizard_class, shell)
         mount_path = at.to_s.sub(%r{\A/}, "")
 
         # `Rails.application.routes.append` blocks are RETAINED and re-run on every
@@ -148,43 +164,44 @@ module Plutonium
 
         Rails.application.routes.append do
           scope path: mount_path do
-            get "/", to: "wizards#launch",
+            get "/", to: "public_wizards#launch",
               as: :"#{helper_name}_wizard_launch", defaults: defaults
-            get "(/:token)/:step", to: "wizards#show",
+            get "(/:token)/:step", to: "public_wizards#show",
               as: :"#{helper_name}_wizard", defaults: defaults
-            post "(/:token)/:step", to: "wizards#update",
+            post "(/:token)/:step", to: "public_wizards#update",
               defaults: defaults
           end
         end
       end
 
-      # Synthesize the top-level public `WizardsController` once. Unlike the portal
-      # controller (built on the portal's authenticated `PlutoniumController`), the
-      # public one is built directly on the Plutonium controller stack with
+      # Synthesize the top-level public `PublicWizardsController` once. Unlike the
+      # portal controller (built on the portal's authenticated `PlutoniumController`),
+      # the public one is built directly on the Plutonium controller stack with
       # `Plutonium::Auth::Public`, so it has the rendering/scoping infra a wizard
       # needs WITHOUT requiring a login.
+      #
+      # It is a DISTINCT const from the authenticated main-app `::WizardsController`
+      # (see {#ensure_wizard_controller!}): the two must not share a controller, or a
+      # public (guest) and an authenticated main-app wizard in the same app would
+      # collapse onto whichever was synthesized first — an authenticated main-app
+      # wizard would then run through `Auth::Public` and reject every logged-in user.
       def ensure_public_wizard_controller!
-        return if Object.const_defined?(:WizardsController, false)
+        return if Object.const_defined?(:PublicWizardsController, false)
 
-        # Inherit from the host's top-level `PlutoniumController` so the controller
-        # lookup chain contributes the `plutonium` view-path prefix — that's what
-        # resolves the gem's shared partials (`plutonium/_flash`, etc.) the layout
-        # renders. Falling back to ApplicationController would lose that prefix.
-        base = "PlutoniumController".safe_constantize ||
-          "ApplicationController".safe_constantize ||
-          ActionController::Base
+        # Build on a BARE base, decoupled from the app's `::PlutoniumController`
+        # (which portals inherit and may carry auth). `Plutonium::Wizard::Controller`
+        # brings the full rendering stack — including `Core::Controller`'s gem
+        # view-path, which resolves the shared partials (`plutonium/_flash`, etc.) —
+        # so no PlutoniumController inheritance is needed for that.
+        base = "ApplicationController".safe_constantize || ActionController::Base
         klass = Class.new(base) do
-          include Plutonium::Core::Controller
+          # `Auth::Public` provides the guest `current_user`; an `anonymous` wizard
+          # ignores it for identity (session-token keyed) but the host still needs a
+          # `current_user` defined.
           include Plutonium::Auth::Public
           include Plutonium::Wizard::Controller
-
-          # A guest wizard renders FULL-PAGE without the resource shell (no sidebar /
-          # resource header / user menu — none of which make sense pre-login). Use
-          # the standalone layout (just the base HTML document); turbo-frame
-          # requests still drop the layout entirely (see Driving#wizard_modal_render_options).
-          layout -> { turbo_frame_request? ? false : "plutonium_standalone" }
         end
-        Object.const_set(:WizardsController, klass)
+        Object.const_set(:PublicWizardsController, klass)
       end
 
       def wizard_route_name(wizard_class)
@@ -204,8 +221,15 @@ module Plutonium
 
         portal_module = wizard_portal_module(engine)
         if portal_module.nil?
-          # Main-app / non-namespaced mount: a top-level WizardsController is enough.
-          define_wizard_controller(Object, "WizardsController", "PlutoniumController", nil)
+          # Main-app / non-namespaced mount. Synthesize a BARE top-level
+          # WizardsController (ApplicationController + the wizard module) — it is NOT
+          # rooted in the app's `::PlutoniumController` (portals inherit that, so auth
+          # there would leak). A bare synthesized controller has NO auth, so a
+          # public/`anonymous` wizard works as-is; an AUTHENTICATED main-app wizard
+          # requires the app to define its own `::WizardsController` (with its auth
+          # concern), which the const-check below picks up instead of synthesizing —
+          # the same "app owns the controller" contract as `register_resource`.
+          define_wizard_controller(Object, "WizardsController", "ApplicationController", nil)
           return
         end
 
@@ -217,10 +241,15 @@ module Plutonium
         )
       end
 
+      # Synthesize a wizard controller unless one is already defined (the app's
+      # override wins — define `<Portal>::WizardsController` / `::WizardsController`
+      # to take over). `Plutonium::Wizard::Controller` brings the full rendering
+      # stack, so the parent only needs to supply auth/scope (a portal's
+      # PlutoniumController) or nothing (a bare main-app base).
       def define_wizard_controller(namespace, const_name, parent_name, concern_name)
         return if namespace.const_defined?(const_name, false)
 
-        parent = parent_name.safe_constantize || ::PlutoniumController
+        parent = parent_name.safe_constantize || ActionController::Base
         klass = Class.new(parent) do
           include Plutonium::Wizard::Controller
         end

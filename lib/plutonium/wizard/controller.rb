@@ -23,7 +23,30 @@ module Plutonium
     # mid-flow (§4.5).
     module Controller
       extend ActiveSupport::Concern
+      # The complete include surface for a standalone wizard controller: the
+      # Plutonium rendering/scoping stack PLUS the wizard driving. Including this
+      # one module yields a fully renderable wizard controller, so the synthesizer
+      # and any app override (`class WizardsController < MyAuthBase; include
+      # Plutonium::Wizard::Controller; end`) both get everything. Re-including Core
+      # on a host that already has it (a portal controller) is a harmless no-op.
+      include Plutonium::Core::Controller
       include Plutonium::Wizard::Driving
+
+      included do
+        helper_method :current_user
+      end
+
+      class_methods do
+        # The gem's shared partials (`plutonium/_flash`, …) are looked up by a
+        # "plutonium" view prefix, which normally comes from inheriting a controller
+        # whose `controller_path` is "plutonium" (the app's `PlutoniumController`). A
+        # bare host (a main-app / public wizard rooted in `ActionController::Base`)
+        # has no such ancestor, so contribute the prefix here — making the module
+        # self-sufficient and the "main-app can be bare" path actually work.
+        def _prefixes
+          @_wizard_view_prefixes ||= (super | ["plutonium"])
+        end
+      end
 
       # GET the bare mount — resolve/mint the run and redirect to its step.
       def launch
@@ -41,6 +64,17 @@ module Plutonium
       end
 
       private
+
+      # Identity for a standalone wizard host. Defers to the host's own auth
+      # concern when present — a portal controller's `Rodauth(:account)`, or an
+      # app-defined `::WizardsController`'s — and is `nil` on a bare host (a public
+      # mount, or a misconfigured authenticated main-app wizard with no auth
+      # controller). An `anonymous` wizard never consults this; a non-anonymous
+      # wizard on a bare host resolves `nil` and is rejected by
+      # `require_wizard_authentication!`.
+      def current_user
+        defined?(super) ? super : nil
+      end
 
       # The wizard class is carried as a route default (see WizardRegistration).
       def current_wizard_class

@@ -1,6 +1,6 @@
 # Registration & launch
 
-Wizards are **portal-hosted** — they run inside a Plutonium portal, exactly like resources, inheriting the portal's authentication, tenant scoping entity, layout, and Phlex rendering. There are two ways a wizard reaches a user.
+A wizard reaches a user one of two ways: as a **resource action** (the `wizard` macro on a definition) or as a **route-mounted entry** (`register_wizard`) — inside a portal *or* on the main application. A portal mount inherits the portal's authentication, tenant scoping entity, layout, and Phlex rendering, exactly like a resource; a main-app mount runs standalone (you supply the auth — see [Hosting & the controller override hook](#hosting-the-controller-override-hook)).
 
 ## On a resource — the `wizard` macro
 
@@ -42,27 +42,68 @@ GET/POST  /companies/wizards/:wizard_name(/:token)/:step
 
 The synthesized launch action points at the **bare** wizard URL (no step). A `GET` there resolves the run (minting the per-run `:token` for a tokened wizard, or resolving the keyed identity) and redirects to its current step: the **resumed cursor** for an in-progress keyed run, else the **first step**, with the token already in the URL. So clicking the launch button resumes where the user left off (rather than jumping back to step 1) and never forks a fresh run on a first-step reload.
 
-## Portal-level — `register_wizard`
+## Route-mounted — `register_wizard`
 
-For a wizard not tied to a single resource (onboarding, welcome), register it **inside the portal engine's routes**, alongside `register_resource`:
+For a wizard not tied to a single resource (onboarding, welcome, set-up), register it with `register_wizard` — **inside a portal engine's routes** (most common) or **on the main application's routes**, alongside `register_resource`:
 
 ```ruby
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
-  register_wizard ::OnboardOrganizationWizard, at: "onboarding"
-  register_wizard ::WelcomeWizard, at: "welcome"
+  register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # in-shell (portal default)
+  register_wizard ::SetupOrgWizard, at: "setup", shell: false                 # shell-less
 
   register_resource ::Company
+end
+
+# config/routes.rb — a main-app (portal-less) wizard
+Rails.application.routes.draw do
+  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # shell-less (main-app default)
 end
 ```
 
 | Argument | Meaning |
 |---|---|
-| `at:` (required) | The portal-relative base path for the wizard's steps. |
-| `as:` | Override the route helper name prefix (defaults to the wizard's name, e.g. `OnboardOrganizationWizard` → `onboarding`). |
+| `at:` (required) | The host-relative base path for the wizard's steps. |
+| `as:` | Override the route helper name prefix (defaults to `at:`, then the wizard's name, e.g. `OnboardOrganizationWizard` → `onboarding`). |
 | `public:` | Mount on a **public (unauthenticated) route** for an [`anonymous`](#public-mount-for-anonymous-wizards) wizard. Defaults to the wizard's own `anonymous?` flag. |
+| `shell:` | Render inside the app [shell](#shell-vs-shell-less)? `true` (sidebar + topbar) or `false` (shell-less standalone). Defaults by host — **portal → `true`**, **main-app → `false`**. |
 
-This draws the wizard's step routes within the portal (so they inherit the portal's scope/auth/layout) and dispatches them to a portal-namespaced wizard controller (synthesized for you; there is no hand-written controller file). It provides `<name>_wizard_path` / `_url` helpers.
+This draws the wizard's step routes within the host (so a portal mount inherits the portal's scope/auth/layout) and dispatches them to a wizard controller. It provides `<name>_wizard_path` / `_url` helpers.
+
+### Hosting & the controller override hook
+
+`register_wizard` resolves the controller it dispatches to **override-first**: if you've defined the conventional controller it is used as-is; otherwise one is synthesized. This is the same "app owns the controller" contract as `register_resource` — there is no hand-written file unless you want to customize.
+
+| Host | Controller | Base / auth |
+|---|---|---|
+| **Portal** | `<Portal>::WizardsController` if defined, else synthesized | the portal's `PlutoniumController` (inherits its auth/scope/layout) |
+| **Main app, authenticated** | `::WizardsController` — **you define it** | yours: a base + `include Plutonium::Auth::Rodauth(:account)` |
+| **Main app, public** (`anonymous`) | `::PublicWizardsController` (synthesized) | a bare base + `Plutonium::Auth::Public` (guest) |
+
+The synthesized **main-app** controller is **bare** — rooted in `ApplicationController`/`ActionController::Base`, deliberately *not* in `::PlutoniumController` (which portals inherit and may carry auth, which would leak into a guest flow). A bare controller has **no `current_user`**, so an **authenticated** main-app wizard requires you to define `::WizardsController` yourself with the auth concern:
+
+```ruby
+# app/controllers/wizards_controller.rb
+class WizardsController < ApplicationController
+  include Plutonium::Wizard::Controller          # the complete include surface
+  include Plutonium::Auth::Rodauth(:user)        # supplies current_user
+end
+```
+
+`Plutonium::Wizard::Controller` is the whole mechanism: including it on any base yields a renderable wizard controller. It pulls in `Plutonium::Core::Controller` (asset/layout machinery) and **contributes the `"plutonium"` view-lookup prefix itself**, so even a bare `ActionController::Base` host resolves the gem's shared partials (`plutonium/_flash`, …). For an app that needs no custom auth base, subclass the ready-made `Plutonium::Wizard::BaseController` (`< ActionController::Base` with the module already included). The module is the contract; the class is sugar.
+
+### Shell vs shell-less
+
+`shell:` picks the full-page layout a route-mounted wizard renders in, selected at render time (so it works regardless of which controller serves the wizard, without touching the `Page` component):
+
+| `shell:` | Appearance | Layout |
+|---|---|---|
+| `true` | sidebar + topbar + wizard (in-app) | the inherited `resource` layout |
+| `false` | no sidebar/topbar — e.g. "set up your organization" | `plutonium_standalone` (`BasicLayout`) |
+
+- **Defaults by host:** portal → `true`; main-app → `false` (a bare main-app host has no shell to embed in). Both overridable via `shell:`.
+- **Turbo-frame requests are always layout-less** regardless of the setting — that's the embedded/modal path (how resource-anchored `wizard`-macro launches render).
+- `shell:` is a **`register_wizard` option only**; it travels with the mount, not the wizard class. Resource-defined wizards take no `shell:` (always embedded).
 
 ### Synthesized routes
 
@@ -110,7 +151,7 @@ register_wizard ::GuestSignupWizard, at: "signup", public: true
 
 - `public: true` is the **default for an `anonymous` wizard**; you can pass it explicitly for clarity.
 - A **non-`anonymous`** wizard may **not** be mounted public (raises) — and an **`anonymous`** wizard may **not** be mounted authenticated (it would be unreachable pre-login).
-- The public route dispatches to a synthesized top-level `WizardsController` that renders **full-page** with a standalone layout (no resource sidebar / user menu) and treats the request as a guest (no `current_user`).
+- The public route dispatches to a synthesized top-level `::PublicWizardsController` (a **distinct** const from an authenticated main-app `::WizardsController`, so the two never collapse onto each other) that renders **full-page** with a standalone layout (no resource sidebar / user menu) and treats the request as a guest via `Plutonium::Auth::Public`.
 
 ## One-time gating
 
@@ -118,12 +159,10 @@ To make a wizard run once and gate a controller behind it, see [One-time wizards
 
 For a **one-time** wizard, the launch action this macro synthesizes also **hides itself once the current user has completed it** (via a render-time action `condition:`); a custom `condition:` composes with that check. See [The launch action hides itself once completed](/reference/wizard/one-time#the-launch-action-hides-itself-once-completed).
 
-## Known limitations
+## Constraints
 
-v1 hosts wizards inside portals only. A few surfaces are deliberate follow-ups:
-
-- **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing a `with:`-anchored wizard to **`register_wizard`** raises: portal-level mounts have no resource record to anchor to. A **`via:`-anchored** (context-anchored) wizard *does* mount portal-level; its anchor is resolved by a controller method, not a URL `:id`.
-- **Main-app (non-portal) standalone wizards** are out of scope for v1 — authenticated wizards inherit a portal's auth/scoping/layout/rendering. The one exception is an [`anonymous` wizard's public mount](#public-mount-for-anonymous-wizards), which is drawn on the main app outside the portal's auth constraint precisely because it must be reachable pre-login.
+- **`with:`-anchored wizards mount on the resource, not route-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing a `with:`-anchored wizard to **`register_wizard`** raises: a route-level mount has no resource record to anchor to. A **`via:`-anchored** (context-anchored) wizard *does* mount route-level; its anchor is resolved by a controller method, not a URL `:id`.
+- **An authenticated main-app wizard needs an app-defined controller.** The synthesized main-app controller is bare (no `current_user`); supply your own `::WizardsController` with an auth concern (see [Hosting & the controller override hook](#hosting-the-controller-override-hook)). Portal mounts and `anonymous` public mounts need nothing.
 
 ## Related
 

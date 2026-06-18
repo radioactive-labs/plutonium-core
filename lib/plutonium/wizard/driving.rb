@@ -270,8 +270,28 @@ module Plutonium
         end
       end
 
+      # The render options (chiefly the layout) for a wizard page:
+      # - turbo-frame request → no layout (the embedded/modal case);
+      # - shell-less → the bare `plutonium_standalone` (BasicLayout) — no
+      #   sidebar/topbar (e.g. an onboarding screen);
+      # - shelled → inherit the controller's default layout (the resource shell).
       def wizard_modal_render_options
-        helpers.current_turbo_frame.present? ? {layout: false} : {}
+        return {layout: false} if helpers.current_turbo_frame.present?
+        return {} if wizard_shell?
+
+        {layout: "plutonium_standalone"}
+      end
+
+      # Whether this run renders inside the app shell (sidebar/topbar). An explicit
+      # `shell:` from `register_wizard` rides as a route default; otherwise it
+      # defaults by context — portal mounts are shelled, main-app mounts are
+      # shell-less (there's no shell to embed in). Resource-defined wizards carry no
+      # `shell:` and render embedded (turbo frame → no layout, handled above).
+      def wizard_shell?
+        raw = params[:wizard_shell]
+        return ActiveModel::Type::Boolean.new.cast(raw) unless raw.nil?
+
+        current_engine != Rails.application.class
       end
 
       # --- runner construction ---

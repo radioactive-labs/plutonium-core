@@ -9,6 +9,12 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # A MAIN-APP (portal-less) authenticated wizard, mounted directly on the
+  # application route set — the standalone-onboarding shape. Auth comes from
+  # ::PlutoniumController (Rodauth(:user)); the synthesized top-level
+  # `WizardsController` is distinct from the public `PublicWizardsController`.
+  register_wizard ::MainAppOnboardingWizard, at: "onboarding"
+
   # Defines the root path route ("/")
   # Bridges authenticated users into the path-scoped OrgPortal. This is
   # also where rodauth's `login_redirect "/"` lands after sign-in.
