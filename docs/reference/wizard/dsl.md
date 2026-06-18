@@ -26,6 +26,7 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 | `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). See [`completed`](#completed) below and [One-time wizards](/reference/wizard/one-time#re-opening-a-completed-wizard). |
 | `encrypt_data` | Encrypt the staged `data` column at rest using ActiveRecord's encryption keys (off by default), for flows that stage PII. Requires `active_record.encryption` keys — see [Storage & config](/reference/wizard/storage-config#encryption). |
+| `anonymous` | Opt into **guest (unauthenticated) access** — the wizard runs pre-login (auth is required otherwise). The guest's identity is a server-minted run-id in the Rails session; it crosses the auth boundary only at its terminal `execute`. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`** — a guest is already session-keyed and repeatable, so declaring both raises (whichever is declared last). See [Authentication](/reference/wizard/anchoring-resume#authentication). |
 
 ```ruby
 class CompanyOnboardingWizard < Plutonium::Wizard::Base

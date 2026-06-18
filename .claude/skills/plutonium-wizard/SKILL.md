@@ -1,6 +1,6 @@
 ---
 name: plutonium-wizard
-description: Use BEFORE building any multi-step Plutonium flow — onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), and storage/config. The single source for "how do I build a wizard".
+description: Use BEFORE building any multi-step Plutonium flow — onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), guest/anonymous flows, at-rest data encryption, and storage/config. The single source for "how do I build a wizard".
 ---
 
 # Plutonium Wizards
@@ -19,7 +19,7 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 - **`using:` targets a MODEL only** — not an interaction, not a bare definition. Selectors `fields:`/`only:`/`except:`.
 - **No generator.** Author wizards by hand, like interactions. They live in `app/wizards/`.
 - **Wizards are portal-hosted.** They run inside a portal (auth/scoping/layout inherited). Main-app standalone wizards are out of scope for v1.
-- **Schedule `SweepJob` if you use `on_submit`.** It's the only thing that cleans up abandoned mid-flow records.
+- **Schedule `SweepJob`** (a periodic job/cron). It reaps abandoned/expired sessions — always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
 
 ---
 
@@ -334,7 +334,9 @@ The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<
 
 ## Listing in-progress wizards
 
-`Plutonium::Wizard.in_progress_for(view_context)` takes the `view_context` (as interactions do) and derives the run owner (`current_user`) and tenant scope (`current_scoped_entity` when `scoped_to_entity?`, else nil) from it, returning the user's in-progress runs (tenant-narrowed when scoped), newest-first, for a "continue where you left off" dashboard. Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, and a `resume_url` (a real route for `register_wizard` and `wizard`-macro **anchored** mounts; `nil` + `resume_unresolved_reason` when the row lacks the identity to rebuild the URL — e.g. a non-anchored `wizard`-macro run). The low-level `Store#in_progress_for(owner, scope:)` takes `scope:` as a **required** keyword (no nil default).
+`Plutonium::Wizard.in_progress_for(view_context)` (→ `Resume.entries_for(view_context)`) takes the `view_context` (as interactions do) and derives the run owner (`current_user`), tenant scope, and **portal** from it — returning that user's in-progress runs **for the current portal**, newest-first, for a "continue where you left off" dashboard. A run is only ever listed (and linked) by the portal it was launched in: a non-scoped portal lists only unscoped runs, a scoped portal narrows to the current tenant. (Two portals can share an entity scope, so the launching portal — the `engine` — is recorded per-run; scope alone can't identify it.)
+
+Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a `resume_url` built through the **current portal's** routes — `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, the named route for a `register_wizard` mount; `nil` + `resume_unresolved_reason` when the row can't be resolved here (e.g. a non-anchored `wizard`-macro run). There's no per-wizard query helper — filter the array: `…in_progress_for(vc).select { |e| e.wizard_class == X }` (per wizard) or `{ |e| e.session.anchor == record }` (per anchored resource).
 
 ## Storage & config
 
@@ -343,13 +345,14 @@ The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<
 Plutonium.configure do |config|
   config.wizards.enabled = true            # false by default — required
   config.wizards.cleanup_after = 14.days   # global default sweep TTL
-  config.wizards.database = :primary       # multi-db target
+  config.wizards.encrypt_data = false      # encrypt every wizard's data at rest (needs AR encryption keys)
+  config.wizards.database = :primary       # reserved — v1 supports :primary only (else raises at boot)
 end
 ```
 
 - One framework table `plutonium_wizard_sessions` (gem-shipped migration, runs in place on `rails db:migrate`). No changes to your models.
 - DB-backed → resume across devices, in-progress listing, durable one-time markers.
-- **`Plutonium::Wizard::SweepJob`** reaps idle sessions and rolls back tracked records. **Schedule it** (recurring job) — load-bearing for `on_submit` wizards; without it, abandoned mid-flow records accumulate forever.
+- **`Plutonium::Wizard::SweepJob`** reaps idle/expired sessions and rolls back their tracked records. **Schedule it** (recurring job) for every wizard app — stale rows pile up otherwise, and for `on_submit`/`persist` wizards it's the *only* thing that rolls back abandoned mid-flow records.
 
 ## Common gotchas
 
@@ -359,6 +362,8 @@ end
 - **`review` not last** → load-time error.
 - **`using:` a definition or interaction** → `using:` is model-only.
 - **`one_time` without `concurrency_key`** → raises (no stable row to retain).
+- **`anonymous` + `concurrency_key`/`one_time`** → raises (a guest is already session-keyed; whichever is declared last raises).
+- **`encrypt_data` without AR encryption keys** → first write raises (naming the wizard). Run `bin/rails db:encryption:init`.
 - **Gating a non-one-time wizard** (`ensure_wizard_completed` on a repeatable wizard) → raises.
 - **`on_submit` wizard without scheduled SweepJob** → abandoned partial records pile up.
 

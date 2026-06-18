@@ -386,7 +386,7 @@ v1 hosts wizards **inside portals only**. `with:`-anchored wizards mount on the 
 
 ### Listing in-progress wizards
 
-Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. Like interactions, it takes the `view_context` and derives the run owner (`current_user`) and tenant scope (`current_scoped_entity`, when the portal is entity-scoped) from it — so it stays tenant-aware automatically. It returns the user's in-progress runs, each enriched for a list item:
+Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. Like interactions, it takes the `view_context` and derives the run owner (`current_user`), tenant scope (`current_scoped_entity`, when the portal is entity-scoped), and **portal** from it — so it stays tenant- and portal-aware automatically. It returns the user's in-progress runs **for the current portal**, each enriched for a list item:
 
 ```ruby
 entries = Plutonium::Wizard.in_progress_for(view_context)
@@ -398,17 +398,25 @@ entries.each do |entry|
   entry.current_step_label  # that step's label (if resolvable)
   entry.updated_at          # last activity (entries are newest-first)
   entry.resume_url          # a route back into the run, or nil (see below)
+  entry.session             # the raw Wizard::Session row (owner, scope, anchor, …)
 end
 ```
 
-`resume_url` is resolved from the run's mount:
+A run is only ever listed (and linked) by **the portal it was launched in**: a non-scoped portal lists only unscoped runs; a scoped portal narrows to the current tenant. Two portals can share an entity scope, so the launching portal (the `engine`) is recorded on each run — scope alone can't identify it.
+
+`resume_url` is built through the **current portal's** routes:
 
 - A `register_wizard` (portal/public) wizard resolves to its named route, threading the tenant scope segment and — for a tokened (no `concurrency_key`) run — the per-run `:token`.
-- A `wizard`-macro **anchored** wizard resolves to its resource member route, rebuilt from the row's anchor.
+- A `wizard`-macro **anchored** wizard resolves via `resource_url_for(record, wizard:, step:)` — the same helper the launch button uses — from the row's anchor.
 
-When a mount can't be resolved generically — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
+When a mount can't be resolved in this portal — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
 
-Under the hood, `in_progress_for(view_context)` derives `owner`/`scope` and calls the low-level query `Store#in_progress_for(owner, scope:)`, where `scope:` is a **required** keyword (no `nil` default): a non-nil scope narrows to that tenant, and an explicit `nil` (non-scoped portal) applies no scope filter. Call it directly only when you already have an owner and have decided the scope explicitly.
+There's no per-wizard query helper — filter the array yourself:
+
+```ruby
+Plutonium::Wizard.in_progress_for(view_context).select { |e| e.wizard_class == OnboardingWizard }  # per wizard
+Plutonium::Wizard.in_progress_for(view_context).select { |e| e.session.anchor == @company }        # per anchored record
+```
 
 ### Resume or start new on launch
 

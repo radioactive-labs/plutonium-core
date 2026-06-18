@@ -64,7 +64,7 @@ What the single table powers:
 
 - **Resume** — look up the `in_progress` row by `instance_key`.
 - **One-time check** — does a `completed` row exist for `(wizard, owner)` or `(wizard, anchor)`.
-- **In-progress listing** — by owner, or by scope (tenant).
+- **In-progress listing** — by owner, portal (`engine`), and tenant scope, so a run is only ever listed by the portal it was launched in.
 - **Multi-tenancy** — the portal scoping entity is folded into `instance_key` and stored as `scope_*`, so the same user's same non-anchored wizard doesn't collide across tenants.
 - **Sweep** — idle `in_progress`/`completing` rows past `expires_at`.
 
