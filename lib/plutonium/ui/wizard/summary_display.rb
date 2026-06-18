@@ -32,11 +32,26 @@ module Plutonium
         def render_summary_field(name)
           input_options = @summary_inputs[name]&.dig(:options) || {}
           field_options = input_options[:label] ? {label: input_options[:label]} : {}
+
           render field(name, **field_options).wrapped do |f|
-            # Wizard `data` holds plain typed scalars, so a string display covers
-            # every value — no association/attachment components are in play.
-            render f.string_tag
+            render instance_exec(f, &summary_tag_block(name))
           end
+        end
+
+        # Pick the display component the same way a resource display does — infer it
+        # from the value's TYPE (date, boolean, number, currency, …) instead of
+        # stringifying everything. The one override: an attachment field stages a
+        # string TOKEN, so inference can't tell it's an attachment — force it (the
+        # data object is decorated upstream to resolve the token to an attachment).
+        def summary_tag_block(name)
+          ->(f) {
+            tag = Plutonium::Wizard::Attachments.field?(@summary_inputs[name]) ? :attachment : f.inferred_field_component
+            if tag.is_a?(Class)
+              f.send(:create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym)
+            else
+              f.send(:"#{tag}_tag")
+            end
+          }
         end
       end
     end

@@ -127,7 +127,9 @@ module Plutonium
               render_step_header(step)
               render Plutonium::UI::Form::Wizard.new(
                 step:,
-                data: @runner.wizard.data[step.key],
+                # Decorate so attachment fields read as resolved attachments (the
+                # Uppy preview rehydrates on Back/resume); other fields pass through.
+                data: Plutonium::Wizard::AttachmentData.wrap(@runner.wizard.data[step.key], step),
                 action: @step_url,
                 fields: step_fields(step),
                 errors: form_error_messages(step)

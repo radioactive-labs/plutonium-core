@@ -112,7 +112,15 @@ module Plutonium
               ) { "Edit" }
             end
             div(class: "px-5 py-4") do
-              render SummaryDisplay.new(step_data(step), fields:, inputs: step.inputs) if fields.any?
+              # Decorate so attachment fields resolve to displayable attachments —
+              # the SummaryDisplay then renders them through the normal attachment
+              # display component, not the raw token string.
+              if fields.any?
+                render SummaryDisplay.new(
+                  Plutonium::Wizard::AttachmentData.wrap(step_data(step), step),
+                  fields:, inputs: step.inputs
+                )
+              end
               render_structured(step) if structured.any?
             end
           end

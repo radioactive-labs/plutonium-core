@@ -21,12 +21,21 @@ module Plutonium
       #   individually regardless of this default.
       attr_accessor :encrypt_data
 
+      # @return [Symbol, nil] the storage backend used to SERVER-SIDE-stage a plain
+      #   (non-direct-upload) wizard attachment field — `:active_storage` or
+      #   `:shrine`. `nil` auto-detects (active_shrine loaded → `:shrine`, else
+      #   `:active_storage`). A field may override with `input …, backend:`. Only
+      #   relevant when a file rides the step POST; direct-upload fields already
+      #   arrive as a token and ignore this.
+      attr_accessor :attachment_backend
+
       # Initialize a new wizard Configuration instance with default values.
       def initialize
         @enabled = false
         @cleanup_after = 14.days
         @database = :primary
         @encrypt_data = false
+        @attachment_backend = nil
       end
     end
   end
