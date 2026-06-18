@@ -43,6 +43,20 @@ Wizard configuration is dense and the dimensions **interact** — guess wrong ab
 
 These compound: *anchored ⇒ keyed by default*; *anonymous ⇒ no owner ⇒ tokened*; *one-time ⇒ keyed + gateable*; *save-as-you-go ⇒ SweepJob + rollback*. Surface the implication when you confirm ("public ⇒ guest ⇒ session-keyed, ownerless"). The DSL sections below map each decision to its macro.
 
+## ✅ Before you author: verify the ground truth (CHECK — read it, don't ask for it)
+
+The ASK gate resolves the *design*; this confirms the app can actually *run* it. You have file access — inspect these yourself before writing the class (don't ask the user to confirm what you can read):
+
+| Check | How | Why it matters |
+|---|---|---|
+| Subsystem enabled | grep `config/initializers/plutonium.rb` for `wizards.enabled = true`; confirm `plutonium_wizard_sessions` exists (`db:migrate`) | **OFF by default — without it nothing works** (the #1 gotcha) |
+| Anchor model exists & reachable | Read the model an `anchored` wizard runs against | Missing/unreadable anchor ⇒ 404 / `NotAnchoredError` |
+| Host portal exists & its scoping | Read the portal engine (`scope_to_entity`?) + its real module name | Tenant folds into run identity; a guessed portal name breaks `register_wizard` |
+| Guest-flow prereqs | AR encryption keys if `encrypt_data`; no `concurrency_key`/`one_time` with `anonymous` | First write raises otherwise |
+| `on_submit` ⇒ SweepJob scheduled | The recurring-job config | Abandoned mid-flow records pile up forever |
+
+**Don't author the class until `config.wizards.enabled` is confirmed and the anchor/target model + portal are read.** Until then, any class you show is provisional — say so; don't present a guessed field/column mapping as final.
+
 ---
 
 ## Minimal wizard

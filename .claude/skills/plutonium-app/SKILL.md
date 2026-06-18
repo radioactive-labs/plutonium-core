@@ -21,6 +21,47 @@ For the resources themselves (model + definition + scaffold options), see [[plut
 
 ---
 
+## 🛑 Before you install or scaffold structure: confirm the shape (ASK — don't infer)
+
+"Set up Plutonium" / "make an admin area" / "create a billing package" each hide a high-blast-radius decision. Get one wrong and you **clobber a year of git history**, build the wrong kind of package, or ship a portal nobody can log into. Resolve each — confirming by inspection (next section), not assumption:
+
+1. **Fresh app or existing one?** Existing ⇒ `bundle add plutonium` + `pu:core:install` (the `base.rb` path). **NEVER the `plutonium.rb` fresh-app template on an existing app** — it re-bootstraps (dotenv/annotate/solid_*/assets) and drops "initial commit" commits that clobber history. This is the single most dangerous mistake in this skill — confirm it's greenfield *before* reaching for `plutonium.rb`.
+2. **Feature package or portal package?** Business logic (models/policies/definitions/interactions) ⇒ `pu:pkg:package` (feature, no UI). A web surface (controllers/views/routes/auth) ⇒ `pu:pkg:portal`. Hard split — "billing" is a *feature*; "admin area" is a *portal*. A feature package is invisible until its resources are `pu:res:conn`'d into a portal.
+3. **Auth per portal.** `--auth=<account>` / `--public` / `--byo` / `--scope=<Entity>` (multi-tenant). Unguessable from "admin area" — decide, don't default silently.
+4. **Don't stop half-wired.** A resource reaches the browser only after: scaffold → migrate → `pu:res:conn --dest=portal` → portal engine `mount`ed in `config/routes.rb` → registered (conn does the last). Name the whole chain before you start.
+
+**Never ship a guessed schema, portal name, or auth flag as applied commands** — read them off the app first; fall back to `AskUserQuestion` only for genuine product choices (separate staff accounts vs shared, which payment backend). The decisions compound: *existing app ⇒ base.rb path*; *feature package ⇒ needs a portal to be visible*; *new portal ⇒ pick auth + mount it*.
+
+## ✅ Before you run a generator: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **inspect**; don't ask the user to describe their app.
+
+| Check | How | Why it matters |
+|---|---|---|
+| Greenfield vs existing | `git log --oneline \| head`; is there a populated `Gemfile`/`app/`? | An existing app must use the `base.rb` path — **never** `plutonium.rb` |
+| Plutonium already installed | grep `Gemfile` for `plutonium`; `ls config/packages.rb app/controllers/resource_controller.rb` | Avoid re-installing / double bootstrap |
+| Package/portal already exists | `ls packages/<name>` | Don't duplicate — connect to / extend the existing one |
+| Existing auth | grep `Gemfile`/`app/models` for `rodauth`/`devise`/`has_secure_password` | Drives `--auth` vs `--byo` |
+| Portal engine mounted | grep `config/routes.rb` for `mount <Portal>::Engine` | An unmounted portal 404s |
+| Resource registered | grep the portal's `config/routes.rb` for `register_resource ::<X>` | Unregistered ⇒ no URLs (`resource_url_for` fails) |
+| Migrations applied | `rails db:migrate:status` before `pu:res:conn` | `conn` seeds the policy from columns |
+
+Inspect with your own tools **before** running any generator.
+
+## 🛠 Use the generator — pick the right install path
+
+Never hand-write base controllers, engine files, layouts, or route registration. Pass `--dest`/`--auth`/`--force`/`--skip-bundle` for unattended runs.
+
+| Task | Generator | Verify first |
+|---|---|---|
+| Install — **existing** app | `bundle add plutonium` + `pu:core:install` | It's an existing app (use `base.rb`, **not** `plutonium.rb`) |
+| Install — **fresh** app | `rails new … -m …/plutonium.rb` | Brand-new app **only** |
+| Feature package | `pu:pkg:package <name>` | Not already present |
+| Portal package | `pu:pkg:portal <name> --auth=…/--public/--byo/--scope=…` | Auth strategy decided; then `mount` the engine by hand |
+| Connect a resource | `pu:res:conn <Res> --dest=portal` | Migrated; target portal exists |
+
+---
+
 # Part 1 — Installation
 
 ## Fresh Rails app (recommended)

@@ -25,6 +25,49 @@ Cross-references back to [[plutonium-resource]] (models, definitions) and [[plut
 
 ---
 
+## 🛑 Before you scope anything: confirm the shape (ASK — don't infer)
+
+Tenancy decisions are **underspecified by a one-line request and have high blast radius**: guess the entity, the strategy, or the association path and you ship a model that *compiles but leaks across tenants*, *raises at runtime*, or *produces the wrong URL*. "Scope X to the tenant" does **not** determine any of the below.
+
+Resolve each decision — **by inspecting the app (next section), not by guessing** — then restate the resolved shape in a sentence and confirm:
+
+1. **Is this portal even entity-scoped?** A model is only tenant-filtered inside a portal that declares `scope_to_entity`. No `scope_to_entity` ⇒ your model change does nothing. (Verify it exists *before* touching the model.)
+2. **Which entity model, and which strategy?** `Organization` / `Account` / `Tenant` / `Company`? `:path` (most common) or custom (subdomain/session)? **Never default to `Organization` + `:path`** — read it.
+3. **What is the association PATH from this model to the entity?** Direct `belongs_to`, multi-hop `has_one :through`, a membership/join, or polymorphic needing a custom `associated_with_<entity>` scope (§ Three model shapes). This is the #1 thing to confirm against the **actual model** — wrong path ⇒ leak *or* raise.
+4. **Nested (parent-scoped) or entity-scoped?** Reached through a parent ⇒ parent scoping wins, don't double-scope. And **nesting is ONE level only** — a three-level URL request can't be met with `register_resource` nesting; say so before wiring it.
+5. **Uniqueness scoped to the tenant FK?** Any `validates … uniqueness` must scope to the tenant FK (`scope: :organization_id`) or it leaks across tenants.
+
+**Never emit applied scoping code from a *guessed* association path.** Confirm the path against the real model first; fall back to `AskUserQuestion` only for genuinely product-level choices you can't read off the code (which entity, which strategy). The decisions compound: *no scoped portal ⇒ nothing filters*; *nested ⇒ parent-scoped, not entity-scoped*; *multi-hop ⇒ needs `has_one :through` or a custom scope*.
+
+## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **use it.** "Paste me the model" is a fallback for when you genuinely can't read the repo, **not** the default. Inspect first, then act:
+
+| Check | How | Why it matters |
+|---|---|---|
+| Portal is scoped | `rg "scope_to_entity" -n` in the portal engine(s) | Confirms entity class + strategy; absent ⇒ scoping is a no-op |
+| Model is a resource | Read the model — `include Plutonium::Resource::Record` / `< ResourceRecord` | `associated_with` only exists on resource records |
+| Association path resolves | Read the model's `belongs_to`/`has_one :through` chain to the entity (or a `associated_with_<entity>` scope) | This is the real fix site; missing path ⇒ raise |
+| Denormalized FK already present | Read the schema/migration for an existing `<entity>_id` column | Collapses a multi-hop chain to a one-line `belongs_to` |
+| No leaky override | `rg "relation_scope" -n` in the policy | A manual `where(<entity>:…)` is the leak — **remove it**, don't patch it |
+| (Invites) prerequisites | Membership model exists with `enum :role`; AR encryption keys set (`bin/rails db:encryption:init`) | `pu:invites:install` fails loudly without both |
+
+Do this inspection with your own tools **before** proposing code. Surfacing a concrete edit you haven't grounded in the real files is how the "looks right, leaks anyway" bug ships.
+
+## 🛠 Use the generator — and verify its precondition first
+
+Hand-wiring tenancy (invite models, membership tables, join records) is how leaks happen. Reach for the generator, run it with `--dest=` to avoid prompts, and **confirm the precondition before running**:
+
+| Task | Generator | Verify first |
+|---|---|---|
+| New SaaS spine (user + entity + membership + join) | `pu:saas:setup --user U --entity E` | None — this is the bootstrap |
+| Scope a portal to an entity | `pu:pkg:portal --scope=Entity` | Entity model exists |
+| New tenant-scoped model | `pu:res:scaffold Model entity:belongs_to …` then `pu:res:conn` | Migrations from prior scaffolds are run |
+| Invite flow | `pu:invites:install` | Membership model exists (`enum :role`) **and** AR encryption keys configured |
+| App model notified on accept | `pu:invites:invitable Model` | Invites already installed |
+
+---
+
 # Part 1 — Entity Scoping
 
 Built on three cooperating pieces:

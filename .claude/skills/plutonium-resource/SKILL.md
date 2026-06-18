@@ -22,6 +22,46 @@ For tenancy / `associated_with` / `relation_scope`, load [[plutonium-tenancy]]. 
 
 ---
 
+## 🛑 Before you scaffold or edit: confirm the shape (ASK — don't infer)
+
+"Add a Product" / "add a status field" is underspecified. Guess wrong and you scaffold into the wrong package, churn migrations, store money as a lossy float, reference a model that doesn't exist, or **clobber files the user has customized**. Resolve each — **by inspecting (next section), not guessing** — then restate the resolved shape and confirm:
+
+1. **New resource, or editing an existing one?** Existing ⇒ **NEVER re-run `pu:res:scaffold`** (it overwrites the customized model/definition/policy/controller). Add an incremental migration + hand-edit. Confirm by reading the files *first*.
+2. **Destination & portal.** `--dest=main_app` or a package? Which portal does `pu:res:conn` wire it to? Both are **required** and unguessable from the request.
+3. **Field types — and the money question.** A monetary field ⇒ `has_cents` (`price_cents:integer` + `has_cents :price_cents`, reference `:price`), **never a bare `decimal`**. Enums, attachments (`:attachment`/`:attachments`), rich text, references each have specific syntax (§ Field Type Syntax). Confirm types rather than inventing them.
+4. **Referenced associations must already exist.** `category:belongs_to` silently targets a `Category` — if that model isn't there, scaffold it first.
+5. **Beyond columns:** does it need search / filters / scopes / custom or bulk actions? Those live in the definition + policy, not the scaffold — name them now so you don't half-build.
+
+**Never emit applied scaffold commands from a guessed `--dest`, portal, or money-shape.** Confirm or read them first; fall back to `AskUserQuestion` only for product choices you can't read off the code (which portal, is `price` money). The decisions compound: *existing+customized ⇒ migration not scaffold*; *money ⇒ `has_cents` + `:price` in the policy*; *new reference ⇒ target model must exist*.
+
+## ✅ Before you touch files: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **use it.** "Paste me the model" is a fallback for when you genuinely can't read the repo, not the default.
+
+| Check | How | Why it matters |
+|---|---|---|
+| Resource already exists | Read `app/models/<x>.rb` + `app/**/definitions/<x>_definition.rb`; `ls` the policy/controller | Existing + customized ⇒ **incremental edit, never re-scaffold** |
+| Model is a resource record | grep `Plutonium::Resource::Record` / `< ResourceRecord` | Auto-detection + the field DSL depend on it |
+| Name collision | Read `db/schema.rb` for the column; grep the model for an existing method/enum/assoc of that name | A clashing `status` silently breaks the enum |
+| Referenced association target | `ls app/models` for the `belongs_to` target class | `x:belongs_to` to a missing model fails the scaffold |
+| `has_cents` policy leak | grep the policy/definition for `_cents` | Generator emits `:price_cents`; fix to the virtual `:price` |
+| Migrations applied | `rails db:migrate:status` before `pu:res:conn` | Unmigrated / unconnected ⇒ the resource is invisible |
+
+Inspect with your own tools **before** proposing commands or edits.
+
+## 🛠 Use the generator — and don't clobber
+
+Never hand-write the initial model, migration, policy, definition, or controller. Reach for the generator; quote args with `?`/`{}`; pass `--dest=`.
+
+| Task | Generator | Verify first |
+|---|---|---|
+| New resource | `pu:res:scaffold Model field:type … --dest=` | `--dest` confirmed; referenced models exist |
+| Connect to a portal | `pu:res:conn Model --dest=portal` | Migrations are run |
+| Regenerate model from columns | `pu:res:scaffold Model --no-migration` | ⚠ **regenerates the model file** — review the diff; overwrites customizations |
+| Add a field to an **existing, customized** resource | `rails g migration AddXToYs …` + hand-edit model/definition/policy | This resource was already scaffolded — re-scaffolding clobbers it |
+
+---
+
 # Part 1 — Creating a Resource
 
 ## Quick checklist

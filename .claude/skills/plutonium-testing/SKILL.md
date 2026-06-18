@@ -12,6 +12,44 @@ description: Use BEFORE writing tests for a Plutonium resource, running pu:test:
 - **One file per (resource × portal).** Same model in admin and org portals = two test files. Each portal has different auth, scoping, and allowed actions.
 - **Stub methods are required.** Concerns ship with `NotImplementedError` stubs — your test class supplies the test data via `create_resource!`, `valid_create_params`, `policy_roles`, etc.
 
+---
+
+## 🛑 Before you scaffold tests: confirm the shape (ASK — don't infer)
+
+"Write tests for X" leaves out what actually drives the files. Resolve each — confirming by inspection (next section):
+
+1. **Which concerns?** `crud` / `policy` / `definition` / `model` / `nested` / `interaction` / `portal_access`. Don't scaffold all blindly — pick what the resource needs.
+2. **Which portals?** **One file per (resource × portal)** — each has different auth, scoping, and allowed actions. A resource in admin + org ⇒ two files.
+3. **Nested?** A child resource needs `--parent=` **and** a real `parent_record!` stub.
+4. **Auth flavor.** Rodauth (the default `login_as` POSTs the hardcoded `password123`) or custom (override `sign_in_for_tests`)?
+
+**Never ship a guessed policy matrix, factory name, or field list** — read the model/definition/policy for the real actions, roles, and fields before filling stubs.
+
+## ✅ Before you scaffold: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **inspect**; don't ask the user to describe their setup.
+
+| Check | How | Why it matters |
+|---|---|---|
+| Harness installed | grep `test/test_helper.rb` for `require "plutonium/testing"` | Concerns never autoload — run `pu:test:install` first |
+| Resource exposed in each named portal | The resource is `register_resource`'d in each portal | `--portals=` must match mounted engines |
+| Portal engine names | `:admin` ⇒ `AdminPortal::Engine` | Mismatch ⇒ pass `path_prefix:` explicitly |
+| Login password | Test accounts seeded with `password123` (fixtures/factories) | `login_as` POSTs that hardcoded value, or use `sign_in_for_tests` |
+| Tenant binding | `create_resource!`/`policy_record` return `@tenant`-bound records | Else scope tests pass for the wrong reason |
+
+Inspect with your own tools **before** scaffolding.
+
+## 🛠 Use the generator — fill the stubs, don't hand-write
+
+| Task | Generator | Verify first |
+|---|---|---|
+| Install harness (once per app) | `pu:test:install` | Not already in `test_helper.rb` |
+| Scaffold tests | `pu:test:scaffold Klass --portals=… --concerns=…` | Harness installed; resource exposed in those portals |
+
+Hand-written test files drift from conventions — scaffold, then fill the `NotImplementedError` stubs with tenant-correct data.
+
+---
+
 ## Quick start
 
 ```bash

@@ -18,6 +18,20 @@ Entry point for all Plutonium work. Does three things:
 - **For targeted edits** — use the **router table** to jump to the right skill.
 - **For anything touching tenant scoping** — load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
 - **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
+- **Inspect before you act.** Every targeted skill now opens with a CHECK gate — read the relevant files yourself before scaffolding or editing. Don't ask the user to describe their app when you can read it.
+
+## ✅ Orient before you route (CHECK — read the app, don't assume)
+
+A one-line request rarely says whether this is a new app, a half-built one, or a multi-tenant one — and those change which path you take. Spend 30 seconds reading the app **before** loading a bundle or running anything:
+
+| Read | Tells you |
+|---|---|
+| `git log --oneline \| head`; is there a populated `Gemfile` + `app/`? | Greenfield vs existing → install path (`plutonium-app`: `base.rb`, **never** `plutonium.rb` on an existing app) |
+| grep `Gemfile` for `plutonium`; `ls config/packages.rb` | Already installed? → skip install |
+| `ls packages/` | What portals / feature packages already exist |
+| Does any model `belongs_to` an org/team/tenant? | Multi-tenant → load `plutonium-tenancy` **before** declaring scoping |
+
+This is the global "look before you leap"; each targeted skill carries its own ASK/CHECK gate for the specifics. **Never run an installer or scaffold from a one-line request without first reading what's already there.**
 
 ## The skills
 
