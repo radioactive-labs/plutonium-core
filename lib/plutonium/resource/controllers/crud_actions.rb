@@ -142,7 +142,7 @@ module Plutonium
                 notice: "#{resource_class.model_name.human} was successfully deleted."
             end
             format.json { head :no_content }
-          rescue ActiveRecord::InvalidForeignKey
+          rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
             format.turbo_stream do
               flash.alert = "#{resource_class.model_name.human} is referenced by other records."
               render turbo_stream: helpers.turbo_stream_redirect(resource_url_for(resource_record!))
