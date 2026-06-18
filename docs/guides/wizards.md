@@ -422,12 +422,17 @@ A run is only ever listed (and linked) by **the portal it was launched in**: a n
 
 When a mount can't be resolved in this portal (e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row), `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
 
-There's no per-wizard query helper — filter the array yourself:
+For the per-record / per-wizard resume widget — "does this record have an unfinished draft of wizard X?" — pass the optional `anchor:` / `wizard:` filters. They narrow **in the query, before each row is enriched**, so rows you'd otherwise discard are never resume-URL-resolved or anchor-loaded — cheaper than `select`-ing the returned array (which enriches every row first). They compose, and the `wizard + anchor` pair is index-covered:
 
 ```ruby
-Plutonium::Wizard.in_progress_for(view_context).select { |e| e.wizard_class == OnboardingWizard }  # per wizard
-Plutonium::Wizard.in_progress_for(view_context).select { |e| e.session.anchor == @company }        # per anchored record
+# the one unfinished `configure` draft for this company
+Plutonium::Wizard.in_progress_for(view_context, wizard: ConfigureCompanyWizard, anchor: @company).first
+
+# all pending runs of one wizard
+Plutonium::Wizard.in_progress_for(view_context, wizard: OnboardingWizard)
 ```
+
+`wizard:` takes the wizard **class**; `anchor:` takes the record. For ad-hoc post-filtering the array still works — `e.wizard_class` is already on each entry, so `select { |e| e.wizard_class == X }` costs nothing extra. Avoid filtering on `e.session.anchor`, though: that loads the polymorphic anchor per row — use `anchor:` instead.
 
 ### Resume or start new on launch
 

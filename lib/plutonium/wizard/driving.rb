@@ -83,11 +83,12 @@ module Plutonium
       end
 
       # This wizard's in-progress runs for the current owner (tenant-scoped),
-      # enriched with resume URLs — via the shared {Resume} listing module.
+      # enriched with resume URLs — via the shared {Resume} listing module. The
+      # `wizard:` filter narrows in the query, so only THIS wizard's rows are
+      # enriched (not every pending run of every wizard, then discarded).
       def wizard_pending_entries
         @wizard_pending_entries ||=
-          Plutonium::Wizard::Resume.entries_for(view_context)
-            .select { |entry| entry.wizard_class == current_wizard_class }
+          Plutonium::Wizard::Resume.entries_for(view_context, wizard: current_wizard_class)
       end
 
       # GET .../:step — render the current step (or bounce on a completeness gap).

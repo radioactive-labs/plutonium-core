@@ -111,6 +111,38 @@ class Plutonium::Wizard::ResumeTest < ActiveSupport::TestCase
     assert_empty Plutonium::Wizard.in_progress_for(view_context_for(@owner))
   end
 
+  # --- query-level filters (anchor:/wizard:) ----------------------------------
+  # These narrow IN THE QUERY, before enrichment, so rows headed for the trash
+  # are never URL-resolved / anchor-loaded.
+
+  test "wizard: narrows to a single wizard class" do
+    keep = session!(wizard: "OnboardOrganizationWizard", current_step: "details", owner: @owner, token: "t1")
+    session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner)
+
+    entries = Plutonium::Wizard.in_progress_for(view_context_for(@owner), wizard: OnboardOrganizationWizard)
+    assert_equal [keep.id], entries.map { |e| e.session.id }
+  end
+
+  test "anchor: narrows to runs against a single record" do
+    on_org = session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner, anchor: @org)
+    session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner, anchor: @other_org)
+    session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner) # no anchor
+
+    entries = Plutonium::Wizard.in_progress_for(view_context_for(@owner), anchor: @org)
+    assert_equal [on_org.id], entries.map { |e| e.session.id }
+  end
+
+  test "anchor: and wizard: compose to the one run for this wizard on this record" do
+    match = session!(wizard: "OnboardOrganizationWizard", current_step: "details", owner: @owner, anchor: @org)
+    session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner, anchor: @org)
+    session!(wizard: "OnboardOrganizationWizard", current_step: "details", owner: @owner, anchor: @other_org)
+
+    entries = Plutonium::Wizard.in_progress_for(
+      view_context_for(@owner), anchor: @org, wizard: OnboardOrganizationWizard
+    )
+    assert_equal [match.id], entries.map { |e| e.session.id }
+  end
+
   # --- resume_url resolution per mount type -----------------------------------
 
   # A register_wizard (portal-level) run resolves through its named route. The

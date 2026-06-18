@@ -49,9 +49,16 @@ module Plutonium
       # scope (never another portal's entity-scoped runs). Resume URLs are built
       # through that same view_context, so they land in THIS portal. Newest first.
       #
+      # Optional +anchor:+/+wizard:+ filters narrow IN THE QUERY (before enrichment)
+      # so discarded rows are never URL-resolved or anchor-loaded — cheaper than
+      # filtering the returned array. Both compose; the `wizard + anchor` pair is
+      # index-covered by `[:wizard, :anchor_type, :anchor_id, :status]`.
+      #
       # @param view_context [ActionView::Base] the current view context
+      # @param anchor [ActiveRecord::Base, nil] narrow to runs anchored against this record
+      # @param wizard [Class, nil] narrow to runs of this wizard class
       # @return [Array<Entry>]
-      def entries_for(view_context)
+      def entries_for(view_context, anchor: nil, wizard: nil)
         controller = view_context.controller
         owner = controller.helpers.current_user
         # A guest has no owner-tracked runs — anonymous runs are session-keyed and
@@ -68,8 +75,11 @@ module Plutonium
         # `engine` alone can't (one engine serves every tenant via path scoping).
         engine = view_context.current_engine.name
 
-        Session.status_in_progress
-          .where(owner: owner, engine: engine, scope: scope)
+        relation = Session.status_in_progress.where(owner: owner, engine: engine, scope: scope)
+        relation = relation.where(anchor: anchor) if anchor
+        relation = relation.where(wizard: wizard.name) if wizard
+
+        relation
           .order(updated_at: :desc)
           .filter_map { |row| entry_for(row, view_context) }
       end

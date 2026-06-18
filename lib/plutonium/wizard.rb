@@ -65,11 +65,22 @@ module Plutonium
     # this portal.
     #
     #   Plutonium::Wizard.in_progress_for(view_context)
+    #   Plutonium::Wizard.in_progress_for(view_context, wizard: ConfigureCompanyWizard)
+    #   Plutonium::Wizard.in_progress_for(view_context, anchor: company)
+    #
+    # +anchor:+ and +wizard:+ are OPTIONAL narrowing filters applied IN THE QUERY,
+    # before each row is enriched (resume-URL built, anchor loaded) — so filtering
+    # here is cheaper than `select`-ing the returned array, which enriches every row
+    # first. Use them for the per-record / per-wizard resume widgets (e.g. "does this
+    # company have an unfinished `configure` draft?"). They compose. Omit both for
+    # the full "continue where you left off" dashboard list.
     #
     # @param view_context [ActionView::Base] the current view context (as interactions take)
+    # @param anchor [ActiveRecord::Base, nil] narrow to runs anchored against this record
+    # @param wizard [Class, nil] narrow to runs of this wizard class
     # @return [Array<Plutonium::Wizard::Resume::Entry>]
-    def self.in_progress_for(view_context)
-      Resume.entries_for(view_context)
+    def self.in_progress_for(view_context, anchor: nil, wizard: nil)
+      Resume.entries_for(view_context, anchor: anchor, wizard: wizard)
     end
   end
 end
