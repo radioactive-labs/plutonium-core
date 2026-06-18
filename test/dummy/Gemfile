@@ -70,3 +70,7 @@ gem "rodauth-rails", "~> 2.1"
 gem "rotp", "~> 6.3"
 
 gem "rqrcode", "~> 3.2"
+
+# Exercises the Shrine attachment backend (alongside ActiveStorage) for wizard
+# attachment fields — the Shrine-backed alternative to ActiveStorage.
+gem "active_shrine"

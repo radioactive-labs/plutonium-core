@@ -13,6 +13,7 @@ appraise "rails-7" do
   gem "bcrypt"
   gem "rotp"
   gem "rqrcode"
+  gem "active_shrine" # exercises the Shrine attachment backend in the dummy
   gem "tzinfo-data", platforms: %i[windows jruby]
 end
 
@@ -31,6 +32,7 @@ appraise "rails-8.0" do
   gem "bcrypt"
   gem "rotp"
   gem "rqrcode"
+  gem "active_shrine" # exercises the Shrine attachment backend in the dummy
   gem "tzinfo-data", platforms: %i[windows jruby]
 end
 
@@ -49,5 +51,6 @@ appraise "rails-8.1" do
   gem "bcrypt"
   gem "rotp"
   gem "rqrcode"
+  gem "active_shrine" # exercises the Shrine attachment backend in the dummy
   gem "tzinfo-data", platforms: %i[windows jruby]
 end
