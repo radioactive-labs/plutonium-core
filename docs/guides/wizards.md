@@ -344,18 +344,18 @@ For a wizard not tied to a single resource (onboarding, welcome, set-up), regist
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # in-shell (portal default)
-  register_wizard ::SetupOrgWizard, at: "setup", shell: false                 # shell-less
+  register_wizard ::SetupOrgWizard, at: "setup", layout: :basic               # bare (BasicLayout)
 
   register_resource ::Company
 end
 
 # config/routes.rb — a main-app (portal-less) wizard
 Rails.application.routes.draw do
-  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # shell-less by default
+  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # main-app default → :basic
 end
 ```
 
-This draws the wizard's step routes within the host and provides an `<at>_wizard_path` helper. The `shell:` option picks the full-page layout (`true` = sidebar/topbar, `false` = shell-less standalone; default portal → `true`, main-app → `false`).
+This draws the wizard's step routes within the host and provides an `<at>_wizard_path` helper. The `layout:` option is the Rails layout to render in — a layout *name*, like the controller `layout` macro: `:basic` (bare), `:resource` (shell), or any app layout. It defaults by host (portal → the resource shell, main-app → `:basic`).
 
 ::: tip Authenticated main-app wizards: define your own controller
 A portal mount inherits the portal's auth. A main-app mount is served by a **bare** synthesized controller with **no `current_user`** — so an authenticated main-app wizard requires you to define `::WizardsController` yourself (`include Plutonium::Wizard::Controller` + your auth concern), the same "app owns the controller" contract as `register_resource`. An `anonymous` public wizard needs no such controller (a guest one is synthesized).

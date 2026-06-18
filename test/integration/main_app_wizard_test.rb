@@ -47,7 +47,7 @@ class MainAppWizardTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_response :success
     refute_includes response.body, "sidebar-navigation",
-      "a main-app standalone wizard defaults to the shell-less layout"
+      "a main-app wizard defaults to the bare basic layout"
   end
 
   test "an authenticated user runs the main-app wizard to completion" do

@@ -60,6 +60,14 @@ class Plutonium::Routing::WizardRegistrationTest < Minitest::Test
     end
   end
 
+  # `layout:` is a Rails layout NAME (like the controller `layout` macro), passed
+  # through as the `wizard_layout` route default; omitted, it's absent so the driving
+  # layer defaults it by host.
+  def test_layout_rides_the_route_defaults
+    assert_equal "basic", mapper.send(:wizard_route_defaults, AnonWizard, :basic)[:wizard_layout]
+    assert_nil mapper.send(:wizard_route_defaults, AnonWizard, nil)[:wizard_layout]
+  end
+
   # C13: re-registering the SAME public wizard (boot/reload/multiple portals) is a
   # no-op — no duplicate append, no clash.
   def test_re_registering_the_same_public_wizard_is_a_noop

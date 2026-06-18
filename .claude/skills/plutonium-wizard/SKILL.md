@@ -34,7 +34,7 @@ Wizard configuration is dense and the dimensions **interact** — guess wrong ab
    - existing record from the URL → `anchored with: Model` (resource-mounted member route)
    - existing context (the tenant, the current user) → `anchored via: :current_scoped_entity`
    - brand new → non-anchored
-3. **Mount, host & shell.** A resource action (`wizard` macro), a **portal** entry (`register_wizard` in a portal engine), or a **main-app** entry (`register_wizard` on the app)? Authenticated, or **public/guest pre-login** (`anonymous`, e.g. signup)? For a route mount, **shelled or shell-less** (`shell: true`/`false` — sidebar/topbar, or a bare standalone screen)? (Resource wizards are always embedded; an authenticated main-app wizard needs an app-defined `::WizardsController`.)
+3. **Mount, host & shell.** A resource action (`wizard` macro), a **portal** entry (`register_wizard` in a portal engine), or a **main-app** entry (`register_wizard` on the app)? Authenticated, or **public/guest pre-login** (`anonymous`, e.g. signup)? For a route mount, what **layout** (`layout: :basic` for a bare screen, `:resource` for the shell, or omit for the host default)? (Resource wizards are always embedded; an authenticated main-app wizard needs an app-defined `::WizardsController`.)
 4. **Run identity.** Resume the user's **one** in-progress run (keyed — `concurrency_key`), or start a **fresh** run each launch (tokened/repeatable)? (Anchored wizards default to one run per `[anchor, current_user]`.)
 5. **One-time?** Run at most once and keep a completed marker (`one_time`) — e.g. to **gate** a page behind it?
 6. **Persistence model.** Write everything atomically at `execute` (default, simplest), or **save-as-you-go** with per-step `on_submit`/`persist` (then `SweepJob` must be scheduled, and `on_rollback` added for any *uncompensated* side effect)?
@@ -312,11 +312,11 @@ The anchored member action resolves its anchor through the resource controller's
 ```ruby
 AdminPortal::Engine.routes.draw do
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # portal, in-shell (default)
-  register_wizard ::SetupOrgWizard, at: "setup", shell: false                 # portal, shell-less
+  register_wizard ::SetupOrgWizard, at: "setup", layout: :basic               # portal, bare (BasicLayout)
 end
 
 Rails.application.routes.draw do
-  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # main app, shell-less (default)
+  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # main app, :basic (default)
 end
 ```
 
@@ -327,7 +327,7 @@ Draws `GET /onboarding` (canonical launch) + `GET/POST /onboarding(/:token)/:ste
 | `at:` (required) | Host-relative base path for the steps. |
 | `as:` | Override the route-helper prefix (defaults to `at:`, then the wizard's name). |
 | `public:` | Mount on a **public (unauthenticated)** route for an `anonymous` wizard. Defaults to the wizard's `anonymous?` flag. |
-| `shell:` | Render inside the app shell? `true` (sidebar/topbar) or `false` (shell-less standalone). Default by host — portal → `true`, main-app → `false`. Turbo-frame requests are always layout-less regardless. |
+| `layout:` | The Rails layout to render in (a layout name, like the controller `layout` macro): `:basic` (bare), `:resource` (shell), or any app layout. Default by host — portal → the resource shell, main-app → `:basic`. Turbo-frame requests are always layout-less regardless. |
 
 ### Hosting & the controller override hook
 

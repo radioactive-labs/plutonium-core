@@ -50,14 +50,14 @@ For a wizard not tied to a single resource (onboarding, welcome, set-up), regist
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # in-shell (portal default)
-  register_wizard ::SetupOrgWizard, at: "setup", shell: false                 # shell-less
+  register_wizard ::SetupOrgWizard, at: "setup", layout: :basic               # bare (BasicLayout)
 
   register_resource ::Company
 end
 
 # config/routes.rb — a main-app (portal-less) wizard
 Rails.application.routes.draw do
-  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # shell-less (main-app default)
+  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # main-app default → :basic
 end
 ```
 
@@ -66,7 +66,7 @@ end
 | `at:` (required) | The host-relative base path for the wizard's steps. |
 | `as:` | Override the route helper name prefix (defaults to `at:`, then the wizard's name, e.g. `OnboardOrganizationWizard` → `onboarding`). |
 | `public:` | Mount on a **public (unauthenticated) route** for an [`anonymous`](#public-mount-for-anonymous-wizards) wizard. Defaults to the wizard's own `anonymous?` flag. |
-| `shell:` | Render inside the app [shell](#shell-vs-shell-less)? `true` (sidebar + topbar) or `false` (shell-less standalone). Defaults by host — **portal → `true`**, **main-app → `false`**. |
+| `layout:` | The Rails [layout](#layout) to render in (a layout name, like the controller `layout` macro): `:basic` (bare), `:resource` (shell), or any app layout. Defaults by host — **portal → the resource shell**, **main-app → `:basic`**. |
 
 This draws the wizard's step routes within the host (so a portal mount inherits the portal's scope/auth/layout) and dispatches them to a wizard controller. It provides `<name>_wizard_path` / `_url` helpers.
 
@@ -92,18 +92,20 @@ end
 
 `Plutonium::Wizard::Controller` is the whole mechanism: including it on any base yields a renderable wizard controller. It pulls in `Plutonium::Core::Controller` (asset/layout machinery) and **contributes the `"plutonium"` view-lookup prefix itself**, so even a bare `ActionController::Base` host resolves the gem's shared partials (`plutonium/_flash`, …). For an app that needs no custom auth base, subclass the ready-made `Plutonium::Wizard::BaseController` (`< ActionController::Base` with the module already included). The module is the contract; the class is sugar.
 
-### Shell vs shell-less
+### Layout
 
-`shell:` picks the full-page layout a route-mounted wizard renders in, selected at render time (so it works regardless of which controller serves the wizard, without touching the `Page` component):
+`layout:` is the **Rails layout** the wizard renders in — a layout *name*, exactly like the controller `layout` macro. It's applied at render time, so it works regardless of which controller serves the wizard (without touching the `Page` component):
 
-| `shell:` | Appearance | Layout |
+| `layout:` | Appearance | Layout |
 |---|---|---|
-| `true` | sidebar + topbar + wizard (in-app) | the inherited `resource` layout |
-| `false` | no sidebar/topbar — e.g. "set up your organization" | `plutonium_standalone` (`BasicLayout`) |
+| `:basic` | no sidebar/topbar — e.g. "set up your organization" | `basic` (`BasicLayout`) |
+| `:resource` | sidebar + topbar + wizard (in-app) | the `resource` shell layout |
+| *(any app layout)* | whatever that layout renders | passed straight to Rails |
+| *(omitted)* | host default — see below | — |
 
-- **Defaults by host:** portal → `true`; main-app → `false` (a bare main-app host has no shell to embed in). Both overridable via `shell:`.
+- **Defaults by host:** portal → the `resource` shell; main-app → `:basic` (a bare main-app host has no shell to embed in). Pass `layout:` to override.
 - **Turbo-frame requests are always layout-less** regardless of the setting — that's the embedded/modal path (how resource-anchored `wizard`-macro launches render).
-- `shell:` is a **`register_wizard` option only**; it travels with the mount, not the wizard class. Resource-defined wizards take no `shell:` (always embedded).
+- `layout:` is a **`register_wizard` option only**; it travels with the mount, not the wizard class. Resource-defined wizards take no `layout:` (always embedded).
 
 ### Synthesized routes
 

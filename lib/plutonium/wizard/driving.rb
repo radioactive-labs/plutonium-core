@@ -287,26 +287,31 @@ module Plutonium
 
       # The render options (chiefly the layout) for a wizard page:
       # - turbo-frame request → no layout (the embedded/modal case);
-      # - shell-less → the bare `plutonium_standalone` (BasicLayout) — no
-      #   sidebar/topbar (e.g. an onboarding screen);
-      # - shelled → inherit the controller's default layout (the resource shell).
+      # - a resolved layout NAME → render in it (e.g. `basic` for an onboarding
+      #   screen);
+      # - nil → inherit the controller's layout (the resource shell), so a custom
+      #   controller layout still wins.
       def wizard_modal_render_options
         return {layout: false} if helpers.current_turbo_frame.present?
-        return {} if wizard_shell?
 
-        {layout: "plutonium_standalone"}
+        layout = wizard_layout
+        layout ? {layout:} : {}
       end
 
-      # Whether this run renders inside the app shell (sidebar/topbar). An explicit
-      # `shell:` from `register_wizard` rides as a route default; otherwise it
-      # defaults by context — portal mounts are shelled, main-app mounts are
-      # shell-less (there's no shell to embed in). Resource-defined wizards carry no
-      # `shell:` and render embedded (turbo frame → no layout, handled above).
-      def wizard_shell?
-        raw = params[:wizard_shell]
-        return ActiveModel::Type::Boolean.new.cast(raw) unless raw.nil?
+      # The Rails layout this run renders in — a layout NAME, exactly like the
+      # controller `layout` macro: `basic` (the bare BasicLayout, e.g. onboarding),
+      # `resource` (the standard shell), or any app layout. An explicit `layout:`
+      # from `register_wizard` rides as a route DEFAULT — one synthesized controller
+      # serves many mounts, so the per-mount value travels on the route, not the
+      # controller. Absent, it defaults by host: main-app → `"basic"` (no shell to
+      # embed in), portal → nil (inherit the controller's resource shell). Resource-
+      # defined wizards carry no `layout:` and render embedded (turbo frame → no
+      # layout, above).
+      def wizard_layout
+        explicit = params[:wizard_layout]
+        return explicit if explicit.present?
 
-        current_engine != Rails.application.class
+        (current_engine == Rails.application.class) ? "basic" : nil
       end
 
       # --- runner construction ---

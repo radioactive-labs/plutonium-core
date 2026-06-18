@@ -145,22 +145,26 @@ Therefore:
 
 ## 3. Chrome — a `register_wizard` option, three modes
 
-> **NAMING (as-built):** the option shipped as **`shell:` (boolean)**, not `chrome:`.
-> "Shell" is Plutonium's own word for the sidebar/topbar frame, so `shell: false`
-> reads as a plain on/off toggle; `layout:` would collide with Rails' `layout`. The
-> three "modes" below collapse to two states + the automatic embedded (turbo-frame)
-> path: `shell: true` (in-shell) / `shell: false` (shell-less). Read "chrome" as
-> "shell" and `chrome: :standalone` as `shell: false` throughout this section.
+> **NAMING (as-built):** the option shipped as **`layout:` — a Rails layout NAME**,
+> exactly like the controller `layout` macro (not a closed enum). It went `chrome:`
+> → `shell:` → `layout:`: `chrome:` was disliked; `shell:` collided with the
+> framework's `shell` chrome-variant enum (`:modern`/`:plain`/`:classic`), a
+> different axis (*which* chrome vs *whether*); `layout:` names what it controls and
+> the value *is* the layout (`:basic` ↔ `basic.html.erb`/`BasicLayout`, like
+> `resource` ↔ `ResourceLayout`). The three "modes" below are: embedded (automatic,
+> turbo-frame), `layout: :basic` (bare), and the host default / `:resource` (shell).
+> Read "chrome" as the layout choice and `chrome: :standalone` as `layout: :basic`
+> throughout this section.
 
 The shell is a layout concern, so chrome = layout selection, made by the **driving
 layer at render time** (works regardless of which controller serves the wizard,
 and without touching the `Page` component):
 
-| Mode | Appearance | Layout |
+| Mode | Appearance | `layout:` |
 |---|---|---|
-| **Embedded** | overlays the current page (launched from a button) | `layout: false` (turbo-frame) — already automatic |
-| **In-shell** (`:shell`) | sidebar + topbar + wizard | inherited `resource` layout |
-| **Shell-less** (`:standalone`) | no sidebar/topbar — e.g. "set up your organization" | `plutonium_standalone` (`BasicLayout`) |
+| **Embedded** | overlays the current page (launched from a button) | `false` (turbo-frame) — already automatic |
+| **In-shell** | sidebar + topbar + wizard | `:resource` (or omit on a portal) — the `resource` layout |
+| **Bare** | no sidebar/topbar — e.g. "set up your organization" | `:basic` — `BasicLayout` |
 
 Rules:
 
@@ -206,7 +210,7 @@ To revert before implementing:
 2. Main-app synthesis: bare `ActionController::Base` base (drop the
    `::PlutoniumController` parent); keep the const-check override.
 3. `register_wizard … chrome:`; driving layer selects the layout
-   (`false` / `plutonium_standalone` / inherited) at render.
+   (`false` / `basic` / inherited) at render.
 4. Remove `Auth::Public`; route guest identity through `anonymous` + the driving
    layer; treat `current_user.nil?` as guest.
 5. Dummy: app-defined `::WizardsController` (auth) for the authenticated main-app
