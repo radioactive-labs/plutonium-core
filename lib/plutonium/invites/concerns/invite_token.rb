@@ -40,6 +40,7 @@ module Plutonium
           enum :state, pending: 0, accepted: 1, expired: 2, cancelled: 3
 
           # Callbacks
+          before_validation :normalize_email
           before_validation :set_token_defaults, on: :create
           after_commit :send_invitation_email, on: :create
 
@@ -164,6 +165,14 @@ module Plutonium
         def extract_domain(email)
           return nil unless email&.include?("@")
           email.split("@").last&.downcase
+        end
+
+        # Normalize the login to lowercase so it agrees with case-insensitive
+        # lookups (account_from_login, find_by(email:)) on a case-sensitive DB.
+        # This is the single source of truth: every creation path stores a
+        # normalized email regardless of how the record was built.
+        def normalize_email
+          self.email = email.downcase if email.present?
         end
 
         def set_token_defaults

@@ -29,6 +29,15 @@ module Plutonium
           attribute :resource
           attribute :email
 
+          # Normalize the login to lowercase so the dedup guards
+          # (user_not_already_member, no_pending_invitation) and the created
+          # invite all agree on case. Lookups elsewhere downcase, and the DB may
+          # be case-sensitive. Defined on the class so it overrides the
+          # ActiveModel attribute reader; super reaches the stored value.
+          def email
+            super&.downcase
+          end
+
           validates :email, presence: true
           validate :role_is_present
           validate :user_not_already_member
