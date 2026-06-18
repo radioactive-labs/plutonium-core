@@ -194,7 +194,12 @@ module Plutonium
         # when the next step already IS review (it would be redundant).
         def render_forward_buttons(embedded:)
           step = @runner.current_step
-          continue_label = @runner.submitted?(step) ? "Save & continue" : "Next"
+          # On a validation-error re-render the rejected input is staged IN MEMORY
+          # (so the form keeps what was typed), which flips `submitted?` true — but
+          # nothing was persisted, so this isn't a re-edit. Keep "Next" there; the
+          # presence of `@errors` is the error-render signal.
+          revisiting = @runner.submitted?(step) && @errors.blank?
+          continue_label = revisiting ? "Save & continue" : "Next"
 
           if review_shortcut?(step)
             nav_button(continue_label, direction: "next", style: "pu-btn-outline", embedded:, name: "next")

@@ -295,6 +295,11 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_match(/<option[^>]*value="pro"[^>]*selected|selected[^>]*value="pro"/, response.body,
       "the plan the user chose survives a sibling field's validation error")
+    # The forward button stays "Next" — the errored step wasn't actually submitted
+    # (the rejected input is staged in-memory only, which would otherwise flip the
+    # label to "Save & continue").
+    assert_includes forward_button, "Next"
+    refute_includes forward_button, "Save"
   end
 
   # Regression (§6): navigating BACK to an earlier step via a GET doesn't persist
