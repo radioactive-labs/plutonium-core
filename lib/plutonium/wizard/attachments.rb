@@ -23,10 +23,6 @@ module Plutonium
     module Attachments
       module_function
 
-      # The `as:` input types that render through the `Uppy` (file upload)
-      # component — i.e. the step inputs whose staged value is an upload token.
-      FILE_INPUT_TYPES = %i[file attachment uppy].freeze
-
       # Resolve a staged attachment token (or array of them) into uniform
       # {Resolved} view(s).
       #
@@ -39,10 +35,11 @@ module Plutonium
       end
 
       # Whether a step input renders as an attachment (its `as:` is a file alias),
-      # so its staged token should be resolved for display.
+      # so its staged token should be resolved for display. Keys off the form's
+      # canonical file-input alias set, so the two never drift.
       def field?(input_options)
         as = input_options&.dig(:options, :as) || input_options&.dig(:as)
-        FILE_INPUT_TYPES.include?(as&.to_sym)
+        Plutonium::UI::Form::Base::Builder::FILE_INPUT_TYPES.include?(as&.to_sym)
       end
 
       # SERVER-SIDE staging: turn a submitted attachment value into a token string

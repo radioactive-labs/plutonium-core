@@ -68,11 +68,16 @@ module Plutonium
           end
           alias_method :phone_tag, :int_tel_input_tag
 
+          # The `as:` values that render through the Uppy file-upload component —
+          # the single source of truth, also consulted by
+          # {Plutonium::Wizard::Attachments.field?} so a wizard can detect an
+          # attachment field model-free without re-listing the aliases.
+          FILE_INPUT_TYPES = %i[uppy file attachment].freeze
+
           def uppy_tag(**, &)
             create_component(Components::Uppy, :uppy, **, &)
           end
-          alias_method :file_tag, :uppy_tag
-          alias_method :attachment_tag, :uppy_tag
+          (FILE_INPUT_TYPES - [:uppy]).each { |name| alias_method :"#{name}_tag", :uppy_tag }
 
           def key_value_store_tag(**, &)
             create_component(Components::KeyValueStore, :key_value_store, **, &)
