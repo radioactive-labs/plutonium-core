@@ -10,7 +10,7 @@ module Rodauth
       logins = [login_param]
       logins << login_confirm_param if respond_to?(:login_confirm_param)
 
-      if [logins].include?(key)
+      if logins.include?(key)
         super.downcase
       else
         super

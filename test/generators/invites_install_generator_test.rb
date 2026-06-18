@@ -153,6 +153,18 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "signup normalizes the login before creating/looking up the account" do
+    run_generator default_args
+
+    assert_file "packages/invites/app/controllers/invites/organization_user_invitations_controller.rb" do |content|
+      # The login must be downcased up front so it matches the case-insensitive
+      # lookup (account_from_login downcases) on a case-sensitive DB.
+      assert_match(/def create_user_for_signup\(email, password\).*?\n\s*email = email\.downcase/m, content)
+      # The matching branch should compare the already-normalized email.
+      assert_match(/if email == @invite\.email\.downcase/, content)
+    end
+  end
+
   test "generates welcome controller" do
     run_generator default_args
 

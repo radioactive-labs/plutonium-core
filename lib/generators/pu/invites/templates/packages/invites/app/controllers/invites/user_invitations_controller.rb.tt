@@ -54,9 +54,14 @@ module Invites
 
 <% if rodauth? -%>
     def create_user_for_signup(email, password)
+      # Normalize the login up front. Lookups (account_from_login) downcase the
+      # login, so on a case-sensitive database a verbatim mixed-case email would
+      # be created but never found again. Downcasing here keeps create and
+      # lookup in agreement across both branches.
+      email = email.downcase
       password_hash = rodauth.password_hash(password)
 
-      if email.downcase == @invite.email.downcase
+      if email == @invite.email.downcase
         # Email matches invitation - create verified account directly
         <%= user_model %>.create!(
           email: email,
