@@ -143,14 +143,32 @@ module Plutonium
         refute Plutonium::Wizard::Session.exists?(instance_key: "soft")
       end
 
-      test "sweeps an expired completing row (crashed mid-finalize)" do
+      test "sweeps a stale completing row (crashed mid-finalize)" do
         org = stage_persisting(Persisting, key: "midcommit", name: "Acme", expires_at: 1.hour.ago)
-        Plutonium::Wizard::Session.where(instance_key: "midcommit").update_all(status: "completing")
+        # A finalize that flipped to `completing` and then crashed: its `updated_at`
+        # (stamped on the flip) is older than the grace window, so it's reaped.
+        Plutonium::Wizard::Session.where(instance_key: "midcommit").update_all(
+          status: "completing",
+          updated_at: Plutonium::Wizard::Session::COMPLETING_GRACE.ago - 1.minute
+        )
 
         Plutonium::Wizard::SweepJob.perform_now
 
         refute Organization.exists?(org.id)
         refute Plutonium::Wizard::Session.exists?(instance_key: "midcommit")
+      end
+
+      test "does not sweep a recent completing row (finalize may still be running)" do
+        org = stage_persisting(Persisting, key: "inflight", name: "Acme", expires_at: 1.hour.ago)
+        # `update_all` doesn't touch timestamps, so `updated_at` stays at creation
+        # (now) — within the grace window, i.e. a finalize that may still be running
+        # `execute`. Reaping it would destroy the records `execute` is using (§6.2).
+        Plutonium::Wizard::Session.where(instance_key: "inflight").update_all(status: "completing")
+
+        Plutonium::Wizard::SweepJob.perform_now
+
+        assert Organization.exists?(org.id), "an in-flight finalize's tracked records must not be destroyed"
+        assert Plutonium::Wizard::Session.exists?(instance_key: "inflight")
       end
 
       test "never touches a completed row" do

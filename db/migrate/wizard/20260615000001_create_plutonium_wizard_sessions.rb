@@ -29,6 +29,14 @@ class CreatePlutoniumWizardSessions < ActiveRecord::Migration[7.2]
       # scope, so scope alone can't identify the portal).
       t.string :engine
 
+      # Optimistic-merge version. The runner reads a row at one version and writes
+      # it back a request later; a concurrent advance bumps the version in between.
+      # The store compares the version the state was read at against the row's
+      # current version under a row lock and MERGES (rather than clobbers) when they
+      # differ, so two concurrent writers on the same run never lose each other's
+      # staged data.
+      t.integer :lock_version, null: false, default: 0
+
       t.public_send(:jsonb, :data, null: false, default: {})
       t.public_send(:jsonb, :tracked_records, null: false, default: {})
       # Steps the user has actually visited+validated (§6.3 completeness). A

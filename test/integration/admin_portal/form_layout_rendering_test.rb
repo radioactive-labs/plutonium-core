@@ -17,9 +17,9 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Who this is"
     assert_includes response.body, %(name="kitchen_sink[name]")
     assert_includes response.body, %(name="kitchen_sink[favorite_color]")
-    # No `ungrouped` label is declared, so leftover fields render last with no
-    # heading — the field still appears, the bucket has no chrome.
-    refute_includes response.body, "Everything else"
+    # The definition declares `ungrouped label: "Everything else"`, so leftover
+    # fields render last under that heading (and the field still appears).
+    assert_includes response.body, "Everything else"
     assert_includes response.body, %(name="kitchen_sink[age]")
   end
 

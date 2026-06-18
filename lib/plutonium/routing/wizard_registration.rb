@@ -23,8 +23,12 @@ module Plutonium
     module WizardRegistration
       WIZARD_CONTROLLER_NAME = "wizards"
 
-      # Tracks which public wizard route blocks have already been appended to the
-      # main app route set, so re-draws don't stack duplicate (named) routes.
+      # Tracks public wizard mounts already appended to the main app route set, so
+      # re-draws (boot, reload, multiple portals) don't stack duplicate named
+      # routes. Keyed by the wizard CLASS NAME (not the helper name) so two distinct
+      # anonymous wizards never collapse into one entry — a helper-name collision
+      # between different wizards is a hard error (see {#register_public_wizard}),
+      # not a silent drop. Maps `wizard_class.name => helper_name`.
       class << self
         attr_accessor :appended_public_wizards
       end
@@ -123,11 +127,24 @@ module Plutonium
         mount_path = at.to_s.sub(%r{\A/}, "")
 
         # `Rails.application.routes.append` blocks are RETAINED and re-run on every
-        # route reload — so append a given wizard's block at most once, keyed by its
-        # route name. Re-drawing the engine routes (boot, reload, multiple portals)
-        # otherwise stacks duplicate blocks → "route name already in use".
-        registered = (Plutonium::Routing::WizardRegistration.appended_public_wizards ||= Set.new)
-        return unless registered.add?(:"#{helper_name}_wizard")
+        # route reload — so append a given wizard's block at most once. Key by the
+        # wizard CLASS (not the helper name) so re-drawing the SAME wizard is a no-op
+        # while two DIFFERENT wizards are never silently collapsed.
+        registered = (Plutonium::Routing::WizardRegistration.appended_public_wizards ||= {})
+
+        # Two distinct public wizards sharing a helper name (same `at:`/`as:`) would
+        # draw the same route name → Rails "route name already in use", or worse, a
+        # silent drop. Fail loudly with a fix instead.
+        clash = registered.find { |klass_name, helper| helper == helper_name && klass_name != wizard_class.name }
+        if clash
+          raise ArgumentError,
+            "register_wizard #{wizard_class.name}, at: #{at.inspect} — the route helper " \
+            "`#{helper_name}_wizard` is already used by #{clash.first}. Give one of them a " \
+            "distinct `at:` or `as:`."
+        end
+
+        return unless registered[wizard_class.name].nil?
+        registered[wizard_class.name] = helper_name
 
         Rails.application.routes.append do
           scope path: mount_path do

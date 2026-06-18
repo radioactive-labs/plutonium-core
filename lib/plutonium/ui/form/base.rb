@@ -172,9 +172,11 @@ module Plutonium
           attributes["data-controller"] = form_data_controller
         end
 
-        # `dirty-form-guard` is attached unconditionally — it self-disables
-        # outside a <dialog>. Branching on `in_modal?` here would fail:
-        # Phlex forbids view-context access before rendering begins.
+        # `dirty-form-guard` is attached unconditionally — it is inert until it has
+        # something to guard: a modal (Esc/close/cancel) or a control marked
+        # `data-dirty-form-guard-leave` posting without this form's fields. With
+        # neither it never prompts. Branching on `in_modal?` here would fail: Phlex
+        # forbids view-context access before rendering begins.
         def form_data_controller
           "form dirty-form-guard"
         end

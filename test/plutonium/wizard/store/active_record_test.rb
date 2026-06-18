@@ -93,20 +93,57 @@ class Plutonium::Wizard::Store::ActiveRecordTest < ActiveSupport::TestCase
     assert row.status_completed?
   end
 
-  test "sweepable scope selects expired in_progress/completing rows" do
+  test "sweepable scope selects expired in_progress and stale completing rows" do
     now = Time.current
+    grace = Plutonium::Wizard::Session::COMPLETING_GRACE
     expired = create_session(instance_key: "expired", status: "in_progress", expires_at: now - 1.hour)
     create_session(instance_key: "fresh", status: "in_progress", expires_at: now + 1.hour)
     create_session(instance_key: "never", status: "in_progress", expires_at: nil)
     create_session(instance_key: "done", status: "completed", expires_at: now - 1.hour)
-    completing = create_session(instance_key: "completing", status: "completing", expires_at: now - 1.hour)
+
+    # A `completing` row is swept only once it has been completing longer than the
+    # grace window (a CRASHED finalize) — never while a finalize may still be
+    # running `execute` (a recent `updated_at`), which would destroy its records.
+    stale = create_session(instance_key: "stale-completing", status: "completing", expires_at: now - 1.hour)
+    stale.update_column(:updated_at, now - (grace + 1.minute))
+    create_session(instance_key: "recent-completing", status: "completing", expires_at: now - 1.hour)
 
     keys = Plutonium::Wizard::Session.sweepable(now).pluck(:instance_key)
     assert_includes keys, expired.instance_key
-    assert_includes keys, completing.instance_key
+    assert_includes keys, stale.instance_key
     refute_includes keys, "fresh"
     refute_includes keys, "never"
     refute_includes keys, "done"
+    refute_includes keys, "recent-completing"
+  end
+
+  # Two requests read the same run at version 0, then both write. Without the
+  # locked version-aware merge the later writer would clobber the earlier
+  # advance (last-writer-wins); with it, both survive (§6.2 / Fix C20).
+  test "a stale write merges instead of clobbering a concurrent advance" do
+    seed = build_state(data: {"one" => {"x" => "1"}})
+    @store.write(seed.instance_key, seed, cleanup_after: 1.day) # creates v0
+    read_a = @store.read(seed.instance_key)                     # v0
+    read_b = @store.read(seed.instance_key)                     # v0
+
+    # Request A advances step "two" (no concurrent writer yet → verbatim, → v1).
+    read_a.data = read_a.data.merge("two" => {"y" => "2"})
+    @store.write(read_a.instance_key, read_a, cleanup_after: 1.day) do |latest|
+      latest.data = latest.data.deep_merge(read_a.data)
+      latest
+    end
+
+    # Request B is still at v0 but the row is now v1 → the store must MERGE B's
+    # "three" onto A's committed state, not drop A's "two".
+    read_b.data = read_b.data.merge("three" => {"z" => "3"})
+    @store.write(read_b.instance_key, read_b, cleanup_after: 1.day) do |latest|
+      latest.data = latest.data.deep_merge(read_b.data)
+      latest
+    end
+
+    final = @store.read(seed.instance_key).data
+    assert_equal "2", final.dig("two", "y"), "concurrent advance A must survive"
+    assert_equal "3", final.dig("three", "z"), "advance B must survive"
   end
 
   private

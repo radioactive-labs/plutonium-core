@@ -81,6 +81,34 @@ class Plutonium::Definition::WizardLaunchConditionTest < ActiveSupport::TestCase
     @user = Organization.create!(name: "User-#{SecureRandom.hex(4)}")
   end
 
+  # ---- the completion check must not query a disabled/unmigrated table (C12) ----
+
+  test "launch is hidden without a DB query when the wizard subsystem is disabled" do
+    action = action_for(PerUserDefinition, :welcome)
+    cfg = Plutonium.configuration.wizards
+    original = cfg.enabled
+    # Disabled → routes aren't drawn (a launch button would 404), so hide the
+    # action rather than hitting the (possibly absent) table.
+    cfg.enabled = false
+    begin
+      refute action.condition_met?(view_for(@user))
+    ensure
+      cfg.enabled = original
+    end
+  end
+
+  test "launch shows without raising when enabled but the sessions table is absent" do
+    action = action_for(PerUserDefinition, :welcome)
+    # Pre-migration: the table doesn't exist yet. The render must not raise
+    # StatementInvalid — treat the wizard as not-yet-completed (shown).
+    Plutonium::Wizard::Session.define_singleton_method(:table_exists?) { false }
+    begin
+      assert action.condition_met?(view_for(@user))
+    ensure
+      Plutonium::Wizard::Session.singleton_class.send(:remove_method, :table_exists?)
+    end
+  end
+
   # ---- one-time, per-user (resource action) ----
 
   test "per-user one-time launch shows when not completed, hides after completion" do

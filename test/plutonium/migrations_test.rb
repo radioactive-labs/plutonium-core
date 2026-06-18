@@ -6,11 +6,15 @@ module Plutonium
   class MigrationsTest < Minitest::Test
     def setup
       Plutonium::Migrations.reset!
+      # RESTORE the original flag in teardown (don't hard-code false): the dummy app
+      # enables wizards at boot, and leaving it false here would make any later test
+      # that reloads routes (e.g. ResumeTest) silently drop the wizard routes.
+      @was_enabled = Plutonium.configuration.wizards.enabled
     end
 
     def teardown
       Plutonium::Migrations.reset!
-      Plutonium.configuration.wizards.enabled = false
+      Plutonium.configuration.wizards.enabled = @was_enabled
     end
 
     def test_enabled_paths_excludes_disabled_features
@@ -18,8 +22,6 @@ module Plutonium
       Plutonium::Migrations.register(:wizards, "/some/path")
 
       assert_empty Plutonium::Migrations.enabled_paths
-    ensure
-      Plutonium.configuration.wizards.enabled = false
     end
 
     def test_enabled_paths_includes_enabled_features
@@ -27,8 +29,6 @@ module Plutonium
       Plutonium::Migrations.register(:wizards, "/some/path")
 
       assert_includes Plutonium::Migrations.enabled_paths, "/some/path"
-    ensure
-      Plutonium.configuration.wizards.enabled = false
     end
 
     def test_enabled_paths_ignores_unknown_features
@@ -42,8 +42,6 @@ module Plutonium
       Plutonium::Migrations.register("wizards", "/string/path")
 
       assert_includes Plutonium::Migrations.enabled_paths, "/string/path"
-    ensure
-      Plutonium.configuration.wizards.enabled = false
     end
   end
 end

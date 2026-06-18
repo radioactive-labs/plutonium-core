@@ -127,14 +127,10 @@ module Plutonium
         # A `register_wizard` route is named and carries `defaults[:wizard_class]`.
         def register_wizard_url
           route_sets.each do |route_set|
-            route = route_set.routes.find do |r|
-              r.name.present? &&
-                r.defaults[:action].to_s == "show" &&
-                r.defaults[:wizard_class].to_s == @wizard_class.name
-            end
-            next unless route
+            name = Plutonium::Wizard::RouteResolution.route_name(route_set, @wizard_class, action: "show")
+            next unless name
 
-            return build_url(route_set, route.name, register_wizard_params)
+            return build_url(route_set, name, register_wizard_params)
           end
           nil
         end
@@ -181,8 +177,9 @@ module Plutonium
           "#{record.class.name}Definition".safe_constantize
         end
 
-        # The scope path segment for an entity-scoped portal, keyed by the route
-        # set's engine scoped_entity_param_key, valued from the row's scope record.
+        # The scope path segment for an entity-scoped portal, keyed by the portal
+        # engine's own +scoped_entity_param_key+ (which honors a custom +param_key:+
+        # passed to +scope_to_entity+), valued from the row's scope record.
         def scope_param
           scope = @row.scope
           return {} if scope.nil?
@@ -190,10 +187,11 @@ module Plutonium
           {scoped_entity_param_key => scope.to_param}
         end
 
+        # The route's scope param key comes from the engine the resume URL is built
+        # in — NOT re-derived from the scope model, which would diverge from the
+        # actual route segment whenever the portal set a custom `param_key:`.
         def scoped_entity_param_key
-          # All entity-scoped portals key the same way; derive from the scope model.
-          scope = @row.scope
-          :"#{scope.model_name.singular_route_key}_scoped"
+          @view_context.current_engine.scoped_entity_param_key
         end
 
         # A tokened (no concurrency_key) run carries its per-run id in the URL.

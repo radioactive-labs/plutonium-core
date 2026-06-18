@@ -104,15 +104,12 @@ module Plutonium
       # `at:`/`as:` used at registration rather than re-deriving a slug.
       def wizard_step_url_helper
         @wizard_step_url_helper ||= begin
-          route = current_engine.routes.routes.find do |r|
-            d = r.defaults
-            r.name.present? &&
-              d[:action].to_s == "show" &&
-              d[:wizard_class].to_s == current_wizard_class.name
-          end
-          raise "no register_wizard route found for #{current_wizard_class.name}" unless route
+          name = Plutonium::Wizard::RouteResolution.route_name(
+            current_engine.routes, current_wizard_class, action: "show"
+          )
+          raise "no register_wizard route found for #{current_wizard_class.name}" unless name
 
-          :"#{route.name}_path"
+          :"#{name}_path"
         end
       end
     end

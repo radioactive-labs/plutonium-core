@@ -2,7 +2,10 @@ AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
 
   register_wizard ::OnboardOrganizationWizard, at: "onboarding"
-  register_wizard ::WelcomeWizard, at: "welcome"
+  # Mounted at a path that deliberately DIFFERS from the wizard's class slug
+  # (`welcome`) so the gate must resolve the route by the `wizard_class` default,
+  # not by re-deriving a slug from the class name (which would 404 / raise).
+  register_wizard ::WelcomeWizard, at: "welcome_aboard"
   register_wizard ::ChromelessWizard, at: "chromeless"
 
   # A branching wizard whose hidden step has a side-effecting on_submit — used to

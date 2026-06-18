@@ -101,7 +101,7 @@ module Plutonium
         if wizard_class.implied_anchor_key?
           raise ArgumentError,
             "#{wizard_class.name} is anchored and keyed by its anchor, but #{self.class} " \
-            "can't resolve it#{via ? " (no `#{via}` here)" : ""}. Pass `anchor:` to " \
+            "can't resolve it#{" (no `#{via}` here)" if via}. Pass `anchor:` to " \
             "`ensure_wizard_completed` (a method name or proc)."
         end
         nil
@@ -128,18 +128,43 @@ module Plutonium
         Plutonium::Wizard::Store::ActiveRecord.new
       end
 
-      # The entry URL for the wizard's first step (§5.3). Derives the
-      # +register_wizard+ route helper name (`<name>_wizard`) and calls it with the
-      # wizard's first step. Override for a custom mount / helper name.
+      # The entry URL for the wizard (§5.3): the bare LAUNCH route `register_wizard`
+      # drew, resolved from THIS portal's route set by the wizard's `wizard_class`
+      # route default — so the actual `at:`/`as:` used at registration is honored
+      # (re-deriving a slug from the class name breaks whenever they differ, e.g.
+      # `register_wizard W, at: "onboarding"`). The launch action resolves/mints the
+      # run and PRGs to its current (resumed) step, so no `:step` is needed here. The
+      # tenant scope path segment is threaded for an entity-scoped portal (the route
+      # requires it). Override for a custom mount.
       def wizard_entry_path(wizard_class)
-        helper = wizard_entry_path_helper(wizard_class)
-        first_step = wizard_class.steps.first&.key
-        public_send(helper, step: first_step)
+        route_set = wizard_gate_route_set
+        name = Plutonium::Wizard::RouteResolution.route_name(route_set, wizard_class, action: "launch")
+        unless name
+          raise ArgumentError,
+            "#{self.class} gates #{wizard_class.name} but no `register_wizard` launch " \
+            "route for it was found in #{(route_set === Rails.application.routes) ? "the application" : "this portal"}. " \
+            "Register it with `register_wizard #{wizard_class.name}, at: \"…\"`, or override " \
+            "`wizard_entry_path` for a custom mount."
+        end
+
+        route_set.url_helpers.public_send(:"#{name}_path", **wizard_gate_scope_param)
       end
 
-      def wizard_entry_path_helper(wizard_class)
-        name = wizard_class.name.demodulize.underscore.sub(/_wizard\z/, "")
-        :"#{name}_wizard_path"
+      # The route set the gated wizard is mounted in — the host portal's engine
+      # routes (it's registered alongside the portal's resources). Override if the
+      # gate lives outside the wizard's portal.
+      def wizard_gate_route_set
+        current_engine.routes
+      end
+
+      # The tenant scope path segment for an entity-scoped portal, threaded from the
+      # current request so the entry URL stays inside the tenant. The route's param
+      # key is the engine's own `scoped_entity_param_key` (honors a custom
+      # `param_key:`); empty for a non-scoped portal.
+      def wizard_gate_scope_param
+        return {} unless scoped_to_entity?
+
+        {scoped_entity_param_key => params[scoped_entity_param_key]}
       end
     end
   end

@@ -16,10 +16,23 @@ export default class extends Controller {
   connect() {
     this.submitting = false
     this.element.addEventListener("submit", this.onSubmit)
+    // Re-enable when the submission's request SETTLES (success or failure), so a
+    // real later submit works while a double-click mid-flight stays blocked. A
+    // bare setTimeout(0) fired on the next tick — sub-millisecond, long before a
+    // human's second click — so it never actually guarded a double-click.
+    this.element.addEventListener("turbo:submit-end", this.onSettled)
+    // A non-Turbo full-page submit navigates away; on a Turbo back/forward
+    // (bfcache) restore the cached form returns with `submitting` still set —
+    // clear it so the restored page is usable.
+    document.addEventListener("turbo:load", this.onSettled)
+    window.addEventListener("pageshow", this.onSettled)
   }
 
   disconnect() {
     this.element.removeEventListener("submit", this.onSubmit)
+    this.element.removeEventListener("turbo:submit-end", this.onSettled)
+    document.removeEventListener("turbo:load", this.onSettled)
+    window.removeEventListener("pageshow", this.onSettled)
   }
 
   // Set the hidden `_direction` value programmatically (optional helper).
@@ -33,10 +46,9 @@ export default class extends Controller {
       return
     }
     this.submitting = true
-    // Re-enable after Turbo restores the page (back/forward cache) so a later
-    // submit isn't permanently blocked.
-    setTimeout(() => {
-      this.submitting = false
-    }, 0)
+  }
+
+  onSettled = () => {
+    this.submitting = false
   }
 }

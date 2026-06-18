@@ -19,12 +19,19 @@ class AdminPortal::WizardOneTimeTest < ActionDispatch::IntegrationTest
   end
 
   def gated = "/admin/gated"
-  def wizard = "/admin/welcome"
+  # WelcomeWizard is mounted `at: "welcome_aboard"` (≠ its class slug "welcome"),
+  # exercising the gate's route-by-`wizard_class`-default resolution (§5.3 / C10).
+  def wizard = "/admin/welcome_aboard"
 
   test "un-completed user is redirected into the wizard when hitting the gated page" do
     get gated
     assert_response :redirect
-    assert_match %r{/admin/welcome/greeting}, response.headers["Location"]
+    # The gate redirects to the bare LAUNCH route (resume-aware), which then PRGs
+    # to the run's entry step.
+    assert_match %r{/admin/welcome_aboard\z}, response.headers["Location"]
+    follow_redirect!
+    assert_response :redirect
+    assert_match %r{/admin/welcome_aboard/greeting}, response.headers["Location"]
   end
 
   test "completing the one-time wizard records the durable marker and gate lets the user through" do

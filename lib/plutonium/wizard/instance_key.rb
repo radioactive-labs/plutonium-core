@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "json"
 
 module Plutonium
   module Wizard
@@ -39,20 +40,27 @@ module Plutonium
         digest("tokened", wizard_name, token.to_s)
       end
 
-      # Serialize a key value for the digest:
-      #   - Array → each element serialized, then joined with "|"
+      # Serialize a key value into a STRUCTURED, unambiguous form for the digest:
+      #   - Array → each element serialized, kept as a nested array
       #   - AR record / GlobalID-able → its GlobalID string
-      #   - nil → "" (so a nil tenant folds to a stable blank, not the literal)
+      #   - nil → nil (a nil tenant folds to a stable, distinct blank)
       #   - scalar → to_s
       #
+      # Structure (not a flat join) is the point: the digest hashes the JSON of the
+      # nested form, so `["a", "b"]` and the scalar `"a|b"` serialize to distinct
+      # JSON (`["a","b"]` vs `"a|b"`) and can never collide. A separator-joined form
+      # would make a key element containing the separator indistinguishable from a
+      # structural boundary (two distinct runs collapsing to one row — cross-run
+      # data exposure / one-time gating satisfied by the wrong run).
+      #
       # @param value [Object]
-      # @return [String]
+      # @return [Object] a JSON-serializable structure (String / nested Array / nil)
       def self.serialize(value)
         case value
         when Array
-          value.map { |v| serialize(v) }.join("|")
+          value.map { |v| serialize(v) }
         when nil
-          ""
+          nil
         when String, Symbol, Numeric, true, false
           value.to_s
         else
@@ -64,10 +72,26 @@ module Plutonium
         end
       end
 
+      # Hash the JSON of [salt, *parts]. JSON makes the boundaries between parts (and
+      # between nested array elements) unambiguous; the salt (the app secret) makes
+      # the digest a MAC over otherwise-public identifiers (wizard name + key GIDs),
+      # so it can't be recomputed off-app to probe another run's existence/state.
       def self.digest(*parts)
-        Digest::SHA256.hexdigest(parts.join("|"))
+        Digest::SHA256.hexdigest(JSON.generate([salt, *parts]))
       end
       private_class_method :digest
+
+      # A stable, app-specific salt. Falls back to a constant when no Rails app /
+      # secret is configured (e.g. isolated unit contexts) so the digest is still
+      # deterministic — the MAC property simply degrades to the unsalted form there.
+      def self.salt
+        if defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
+          ::Rails.application.secret_key_base.to_s
+        else
+          "plutonium-wizard"
+        end
+      end
+      private_class_method :salt
     end
   end
 end

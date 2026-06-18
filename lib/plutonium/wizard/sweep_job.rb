@@ -23,13 +23,22 @@ module Plutonium
         store = Store::ActiveRecord.new
 
         Session.sweepable(now).find_each do |row|
-          sweep_row(row, store)
+          sweep_row(row, store, now)
         end
       end
 
       private
 
-      def sweep_row(row, store)
+      def sweep_row(row, store, now)
+        # Re-check the row is STILL sweepable under a fresh read. The finalize we may
+        # be racing (a `completing` row within, or just past, the grace window) could
+        # have completed — and a one-time wizard RETAINS its `completed` row as the
+        # gate marker. Without this re-check, the sweep could cancel+delete a row the
+        # finalize just completed, destroying that marker (un-gating the user) or
+        # racing the cleanup of its tracked records. A still-sweepable row is safe to
+        # reap; anything else (completed, cleared, or refreshed) is skipped.
+        return unless Session.sweepable(now).exists?(id: row.id)
+
         wizard_class = row.wizard.safe_constantize
 
         if wizard_class

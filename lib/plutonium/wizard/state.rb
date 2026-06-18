@@ -19,7 +19,11 @@ module Plutonium
       :anchor,
       :scope,
       :token,
-      :engine
+      :engine,
+      # The optimistic-merge version the row was read at (nil for a state that was
+      # never read from a row, i.e. a fresh run). The store uses it to detect a
+      # concurrent write and merge instead of clobbering (§6.2).
+      :lock_version
     ) do
       def data = self[:data] || {}
 

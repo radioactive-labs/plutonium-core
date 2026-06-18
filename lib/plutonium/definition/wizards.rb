@@ -50,6 +50,14 @@ module Plutonium
         # the **list** rows (`collection_record_action:`), both on by default. Flags
         # that don't apply to the wizard's kind are rejected.
         #
+        # Like an interaction, a `wizard` action is gated by a policy predicate named
+        # after its key — `def configure? = update?` for `wizard :configure, …`. The
+        # SAME predicate drives both the launch action's visibility
+        # (`Action#permitted_by?` on index/show) and its authorization
+        # ({WizardActions#authorize_wizard_*_action!}), so the button and the action
+        # stay in lockstep. A missing predicate raises `ActionPolicy::UnknownRule`
+        # (exactly as a missing interaction predicate does) — define it.
+        #
         # @param name [Symbol] the action key (e.g. :configure)
         # @param wizard_class [Class] a Plutonium::Wizard::Base subclass
         # @param opts [Hash] action overrides — chrome (`label:`/`icon:`/`position:`/
@@ -129,6 +137,15 @@ module Plutonium
           return author_condition unless wizard_class.one_time?
 
           completion_condition = proc do
+            # This runs on EVERY index/show render. The `wizard` macro is not gated
+            # on `config.wizards.enabled` (only routing is), so guard the DB query:
+            # when the subsystem is disabled its routes aren't drawn (a launch button
+            # would 404) → hide the action; when it's enabled but the sessions table
+            # hasn't been migrated yet, treat the wizard as not-yet-completed (show)
+            # rather than raising StatementInvalid mid-render.
+            next false unless Plutonium.configuration.wizards.enabled
+            next true unless Plutonium::Wizard::Session.table_exists?
+
             scope =
               if controller.scoped_to_entity?
                 controller.current_scoped_entity

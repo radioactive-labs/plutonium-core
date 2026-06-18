@@ -755,6 +755,20 @@ module Plutonium
         refute second.completed?
       end
 
+      test "concurrent finalize: loser of the lock PRGs to the terminal step, not a blank error" do
+        Plutonium::Wizard::Session.delete_all
+        store = Plutonium::Wizard::Store::ActiveRecord.new
+        build_runner(W, store: store, key: "ar-lose").advance(:a, {"go" => "no"})
+        # A concurrent winner is mid-finalize: the row sits in `completing`.
+        Plutonium::Wizard::Session.where(instance_key: "ar-lose").update_all(status: "completing")
+
+        res = build_runner(W, store: store, key: "ar-lose").finalize
+        refute res.completed?
+        refute res.ok?
+        assert_equal :review, res.redirect_step,
+          "the loser redirects to the terminal step (PRG), not a blank-error 422"
+      end
+
       # ---- finalize hard failure reverts completing → in_progress (§6.2) ----
 
       test "finalize hard execute error reverts completing and re-raises" do
@@ -771,32 +785,34 @@ module Plutonium
         assert row.status_in_progress?, "row must revert to in_progress so the user can retry"
       end
 
-      # ---- RecordNotUnique recovery preserves staged data (Fix 3) ----
+      # ---- concurrent-write merge preserves staged data (Fix 3 / §6.2) ----
 
-      # A store that raises RecordNotUnique on its FIRST write (simulating a
-      # concurrent INSERT racing us to the unique instance_key index) and serves a
-      # pre-existing row from #read, so the runner must merge + re-write.
+      # A store that simulates a CONCURRENT writer on its FIRST write: it invokes the
+      # runner's merge block with a pre-existing row's state (as the real AR store
+      # does under a row lock when the version it read has moved), then writes the
+      # merged result. Later writes are normal. This exercises the runner's
+      # `merge_concurrent_state` block.
       class RacingStore < Plutonium::Wizard::Store::Memory
         def initialize(existing)
           super()
           @existing = existing
-          @raised = false
+          @merged = false
         end
 
         def read(key)
           @rows[key] ? super : @existing.dup
         end
 
-        def write(key, state, cleanup_after:)
-          unless @raised
-            @raised = true
-            raise ActiveRecord::RecordNotUnique, "raced"
+        def write(key, state, cleanup_after:, &merge)
+          if !@merged && merge
+            @merged = true
+            state = merge.call(@existing.dup)
           end
-          super
+          super(key, state, cleanup_after: cleanup_after)
         end
       end
 
-      test "RecordNotUnique recovery merges staged data onto the existing row and re-writes" do
+      test "a concurrent write merges staged data onto the existing row, not clobbers it" do
         existing = Plutonium::Wizard::State.new(
           wizard: W.name, instance_key: "race", current_step: "a",
           status: "in_progress", data: {"pre" => "kept"}, persisted: {}, visited: []
@@ -807,8 +823,8 @@ module Plutonium
         assert res.ok?
 
         stored = store.read("race")
-        assert_equal "kept", stored.data["pre"], "pre-existing data must survive the race"
-        assert_equal "yes", stored.data["a"]["go"], "freshly staged data must survive the race"
+        assert_equal "kept", stored.data["pre"], "the concurrent writer's data must survive the merge"
+        assert_equal "yes", stored.data["a"]["go"], "freshly staged data must survive the merge"
         assert_includes stored.visited, "a"
       end
 

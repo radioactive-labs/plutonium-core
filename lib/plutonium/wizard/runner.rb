@@ -253,7 +253,14 @@ module Plutonium
         prune_departed_steps
         pruned = prune_hidden(@state.data)
 
-        return Result.new(ok: false) unless lock_for_completion!
+        # Lost a concurrent finalize (the row is already `completing` or `completed`,
+        # §6.2): another request/tab is running — or already ran — `execute`. Don't
+        # render a blank-error 422; PRG back to the terminal step so the follow-up
+        # GET resolves to the right place (the "already completed" page for a
+        # one-time wizard, or a fresh re-render once the winner finishes).
+        unless lock_for_completion!
+          return Result.new(ok: false, redirect_step: visible_path.last&.key)
+        end
 
         outcome = nil
         ActiveRecord::Base.transaction do
@@ -306,27 +313,37 @@ module Plutonium
         sync_data
       end
 
+      # Persist the staged state. The store writes verbatim on the normal
+      # single-writer path; when a CONCURRENT advance committed since we read the
+      # row (double-submit, two tabs, or the first-step unique-index create race),
+      # it calls {#merge_concurrent_state} under a row lock so neither side's data
+      # is lost (§6.2). The returned state carries the bumped `lock_version`, so a
+      # later write in this same request is recognised as current (not a conflict).
       def persist_state
-        @store.write(@instance_key, @state, cleanup_after: @wizard_class.cleanup_after)
-      rescue ActiveRecord::RecordNotUnique
-        # Concurrent creation raced us to the unique instance_key index. Re-read the
-        # existing row and merge the data/cursor/visited we just staged onto it, then
-        # write once more so this advance's work isn't lost (§6.2 carry-forward).
-        existing = @store.read(@instance_key)
-        return unless existing
+        @state = @store.write(@instance_key, @state, cleanup_after: @wizard_class.cleanup_after) do |latest|
+          merge_concurrent_state(latest)
+        end
+      end
 
-        # `data` is nested ({step_key => {field => value}}); deep-merge so a
-        # concurrent step's fields aren't clobbered by a shallow top-level merge.
-        existing.data = existing.data.deep_merge(@state.data)
-        # `persisted` is {step_key => [gids]}; UNION the lists per step. A shallow
-        # `merge` would replace the winner's GID list with ours for a shared step
-        # key (both raced first-step on_submits), orphaning the winner's records
-        # (no longer tracked for rollback/sweep). Union keeps both sides tracked.
-        existing.persisted = existing.persisted.merge(@state.persisted) { |_key, a, b| a | b }
-        existing.visited |= @state.visited
-        existing.current_step = @state.current_step
-        @state = existing
-        @store.write(@instance_key, @state, cleanup_after: @wizard_class.cleanup_after)
+      # Merge this request's staged changes onto the LATEST committed state (read
+      # under the store's row lock), returning the state to persist. `data` is
+      # nested ({step_key => {field => value}}) → deep-merge so a concurrent step's
+      # fields aren't clobbered. `persisted` is {step_key => [gids]} → UNION the
+      # lists per step; a shallow merge would replace the other writer's GID list
+      # for a shared step key (both raced first-step on_submits), orphaning its
+      # records (no longer tracked for rollback/sweep). Identity/context fields are
+      # taken from whichever side has them (the row may have been a bare create).
+      def merge_concurrent_state(latest)
+        latest.data = latest.data.deep_merge(@state.data)
+        latest.persisted = latest.persisted.merge(@state.persisted) { |_key, a, b| a | b }
+        latest.visited |= @state.visited
+        latest.current_step = @state.current_step
+        latest.owner ||= @state.owner
+        latest.anchor ||= @state.anchor
+        latest.scope ||= @state.scope
+        latest.token ||= @state.token
+        latest.engine ||= @state.engine
+        latest
       end
 
       def step_for(key)

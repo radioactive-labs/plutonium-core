@@ -15,6 +15,14 @@ class Plutonium::Routing::WizardRegistrationTest < Minitest::Test
     def execute = succeed(anchor)
   end
 
+  # A guest (public) wizard, for the public-mount dedup/clash tests.
+  class AnonWizard < Plutonium::Wizard::Base
+    anonymous
+    step(:a) { attribute :x, :string }
+    review label: "R"
+    def execute = succeed
+  end
+
   def mapper = Object.new.extend(Plutonium::Routing::WizardRegistration)
 
   def setup
@@ -34,5 +42,34 @@ class Plutonium::Routing::WizardRegistrationTest < Minitest::Test
   def test_register_wizard_validates_and_draws_when_enabled
     Plutonium.configuration.wizards.enabled = true
     assert_raises(ArgumentError) { mapper.register_wizard(WithAnchoredWizard, at: "x") }
+  end
+
+  # C13: two DIFFERENT public wizards sharing a mount (helper name) must raise a
+  # clear error, not silently drop the second. We pre-seed the registry with a
+  # different class at the same helper so the clash is detected before any route
+  # is appended to the global app route set.
+  def test_two_public_wizards_sharing_a_mount_raise
+    Plutonium.configuration.wizards.enabled = true
+    saved = Plutonium::Routing::WizardRegistration.appended_public_wizards
+    Plutonium::Routing::WizardRegistration.appended_public_wizards = {"Some::OtherWizard" => "shared"}
+    begin
+      err = assert_raises(ArgumentError) { mapper.register_wizard(AnonWizard, at: "shared") }
+      assert_match(/already used by Some::OtherWizard/, err.message)
+    ensure
+      Plutonium::Routing::WizardRegistration.appended_public_wizards = saved
+    end
+  end
+
+  # C13: re-registering the SAME public wizard (boot/reload/multiple portals) is a
+  # no-op — no duplicate append, no clash.
+  def test_re_registering_the_same_public_wizard_is_a_noop
+    Plutonium.configuration.wizards.enabled = true
+    saved = Plutonium::Routing::WizardRegistration.appended_public_wizards
+    Plutonium::Routing::WizardRegistration.appended_public_wizards = {AnonWizard.name => "shared"}
+    begin
+      assert_nil mapper.register_wizard(AnonWizard, at: "shared")
+    ensure
+      Plutonium::Routing::WizardRegistration.appended_public_wizards = saved
+    end
   end
 end

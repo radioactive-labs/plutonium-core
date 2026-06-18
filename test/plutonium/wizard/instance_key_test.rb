@@ -24,7 +24,8 @@ class Plutonium::Wizard::InstanceKeyTest < Minitest::Test
   end
 
   def test_tokened_matches_recipe
-    expected = Digest::SHA256.hexdigest(["tokened", "W", "abc"].join("|"))
+    # Recipe: SHA256 of the JSON of [salt, "tokened", wizard, token] (§4.1).
+    expected = Digest::SHA256.hexdigest(JSON.generate([IK.send(:salt), "tokened", "W", "abc"]))
     assert_equal expected, IK.tokened("W", "abc")
   end
 
@@ -56,17 +57,25 @@ class Plutonium::Wizard::InstanceKeyTest < Minitest::Test
     refute_equal IK.tokened("W", "k"), IK.concurrency("W", ["k"])
   end
 
-  # --- serialization ---
-
-  def test_serialize_array_joins_elements
-    obj = Struct.new(:gid) { def to_global_id = gid }.new("gid://dummy/Company/9")
-    assert_equal "gid://dummy/Company/9|x", IK.serialize([obj, "x"])
+  # Distinct key shapes must never collide (the old "|"-join was ambiguous: an
+  # array ["a","b"] and the scalar "a|b" both serialized to "a|b", §4.1 / C2).
+  def test_concurrency_no_separator_collision
+    refute_equal IK.concurrency("W", ["a", "b"]), IK.concurrency("W", "a|b")
+    refute_equal IK.concurrency("W", [["a"], ["b"]]), IK.concurrency("W", ["a", "b"])
   end
 
-  def test_serialize_nil_is_blank
-    assert_equal "", IK.serialize(nil)
-    # A nil tenant folds to a stable blank, not the literal "nil".
-    assert_equal "user-1|", IK.serialize(["user-1", nil])
+  # --- serialization ---
+
+  def test_serialize_array_keeps_structure
+    obj = Struct.new(:gid) { def to_global_id = gid }.new("gid://dummy/Company/9")
+    # Structured (nested), not "|"-joined.
+    assert_equal ["gid://dummy/Company/9", "x"], IK.serialize([obj, "x"])
+  end
+
+  def test_serialize_nil
+    assert_nil IK.serialize(nil)
+    # A nil tenant folds to a stable, distinct blank (nil), not the literal "nil".
+    assert_equal ["user-1", nil], IK.serialize(["user-1", nil])
   end
 
   def test_serialize_record_uses_global_id

@@ -170,24 +170,61 @@ module Plutonium
         assert_equal runner_key, @ctrl.wizard_gate_instance_key(WithAnchoredWizard, -> { anchor })
       end
 
-      # ---- entry-path derivation (default helper-name logic) ----
+      # ---- entry-path resolution (route-based, honors at:/as:) ----
 
-      test "default entry path derives the register_wizard helper name + first step" do
-        ctrl = Class.new { include Plutonium::Wizard::Gate }.new
-        captured = nil
-        ctrl.define_singleton_method(:onboarding_wizard_path) do |step:|
-          captured = step
-          "/admin/onboarding/#{step}"
+      EngineDouble = Struct.new(:routes)
+
+      # The entry path is resolved from the registered LAUNCH route by the wizard's
+      # `wizard_class` default — NOT by re-deriving a slug from the class name — so a
+      # mount whose path differs from the class slug still resolves. Here the class
+      # is `OnboardingWizard` but it's mounted `at: "kickoff"`.
+      test "entry path resolves the register_wizard launch route by wizard_class default" do
+        route_set = ActionDispatch::Routing::RouteSet.new
+        route_set.draw do
+          get "kickoff", to: "wizards#launch",
+            as: :kickoff_wizard_launch, defaults: {wizard_class: "OnboardingWizard"}
+          get "kickoff/:step", to: "wizards#show",
+            as: :kickoff_wizard, defaults: {wizard_class: "OnboardingWizard"}
         end
+
         klass = Class.new(Plutonium::Wizard::Base) do
           def self.name = "OnboardingWizard"
           step(:identity) { attribute :x, :string }
           review label: "R"
           def execute = succeed
         end
-        path = ctrl.send(:wizard_entry_path, klass)
-        assert_equal "/admin/onboarding/identity", path
-        assert_equal :identity, captured
+
+        ctrl = Class.new do
+          include Plutonium::Wizard::Gate
+
+          def initialize(rs) = @rs = rs
+          def current_engine = EngineDouble.new(@rs)
+          def scoped_to_entity? = false
+        end.new(route_set)
+
+        # The launch route carries no `:step` — it resolves/PRGs to the run's step.
+        assert_equal "/kickoff", ctrl.send(:wizard_entry_path, klass)
+      end
+
+      test "entry path raises a clear error when the wizard has no launch route here" do
+        route_set = ActionDispatch::Routing::RouteSet.new
+        route_set.draw { get "/", to: "home#index", as: :root }
+        klass = Class.new(Plutonium::Wizard::Base) do
+          def self.name = "UnmountedWizard"
+          step(:x) { attribute :y, :string }
+          review label: "R"
+          def execute = succeed
+        end
+        ctrl = Class.new do
+          include Plutonium::Wizard::Gate
+
+          def initialize(rs) = @rs = rs
+          def current_engine = EngineDouble.new(@rs)
+          def scoped_to_entity? = false
+        end.new(route_set)
+
+        err = assert_raises(ArgumentError) { ctrl.send(:wizard_entry_path, klass) }
+        assert_match(/register_wizard/, err.message)
       end
 
       private

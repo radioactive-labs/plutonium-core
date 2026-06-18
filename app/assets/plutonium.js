@@ -28288,10 +28288,14 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.onFirstIntent = this.#onFirstIntent.bind(this);
       this.onSubmit = this.#onSubmit.bind(this);
       this.onLeaveClick = this.#onLeaveClick.bind(this);
+      this.onSettled = this.#onSettled.bind(this);
       this.element.addEventListener("pointerdown", this.onFirstIntent, true);
       this.element.addEventListener("keydown", this.onFirstIntent, true);
       this.element.addEventListener("submit", this.onSubmit);
-      document.addEventListener("click", this.onLeaveClick, true);
+      this.element.addEventListener("turbo:submit-end", this.onSettled);
+      if (!this.dialog) {
+        document.addEventListener("click", this.onLeaveClick, true);
+      }
       if (this.dialog) {
         this.onCancel = this.#onCancel.bind(this);
         this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
@@ -28311,7 +28315,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.removeEventListener("pointerdown", this.onFirstIntent, true);
       this.element.removeEventListener("keydown", this.onFirstIntent, true);
       this.element.removeEventListener("submit", this.onSubmit);
-      document.removeEventListener("click", this.onLeaveClick, true);
+      this.element.removeEventListener("turbo:submit-end", this.onSettled);
+      if (!this.dialog) {
+        document.removeEventListener("click", this.onLeaveClick, true);
+      }
       if (this.dialog) {
         document.removeEventListener("keydown", this.onKeydown, true);
         this.dialog.removeEventListener("cancel", this.onCancel, true);
@@ -28362,6 +28369,14 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     #onSubmit() {
       this.submitting = true;
     }
+    // A submission settled. Reset the transient guards so a same-URL Turbo-morph
+    // re-render (which keeps this element and does NOT reconnect the controller)
+    // doesn't leave the guard permanently disabled. Re-baseline on next interaction.
+    #onSettled() {
+      this.submitting = false;
+      this.forceClose = false;
+      this.baseline = null;
+    }
     // Full-page leave guard. A control marked `data-dirty-form-guard-leave` posts
     // without this form's fields, so its unsaved edits would be lost. If the form
     // is dirty, confirm first through the app's themed dialog; the attribute's
@@ -28379,18 +28394,28 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const confirmed = await this.#confirm(message);
       if (!confirmed) return;
       this.forceClose = true;
-      trigger.closest("form")?.requestSubmit();
+      const form = trigger.closest("form");
+      if (form) {
+        const submitter2 = trigger.matches("button, input[type=submit], input[type=image]") ? trigger : null;
+        form.requestSubmit(submitter2);
+      }
     }
+    // The CSS selector for a guarded form. The guard is attached as a Stimulus
+    // controller (`data-controller="… dirty-form-guard"`), NOT as a CSS class — so
+    // match on the controller token, not `form.dirty-form-guard` (which never
+    // matches the framework's forms, leaving the leave guard silently dormant).
+    static GUARDED_FORM_SELECTOR = "form[data-controller~='dirty-form-guard']";
     // The single guarded form a leave control discards: the one containing it, or —
     // for a control outside any form (a wizard's sibling nav strip) — the closest
-    // `form.dirty-form-guard`, i.e. the one sharing the deepest common ancestor with
-    // the trigger. Returns the only guarded form on simple pages.
+    // guarded form, i.e. the one sharing the deepest common ancestor with the
+    // trigger. Returns the only guarded form on simple pages.
     #guardedFormFor(trigger) {
-      const inside = trigger.closest("form.dirty-form-guard");
+      const selector = this.constructor.GUARDED_FORM_SELECTOR;
+      const inside = trigger.closest(selector);
       if (inside) return inside;
       let best = null;
       let bestDepth = -1;
-      document.querySelectorAll("form.dirty-form-guard").forEach((form) => {
+      document.querySelectorAll(selector).forEach((form) => {
         let ancestor = form;
         while (ancestor && !ancestor.contains(trigger)) ancestor = ancestor.parentElement;
         if (!ancestor) return;
@@ -28492,9 +28517,15 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     connect() {
       this.submitting = false;
       this.element.addEventListener("submit", this.onSubmit);
+      this.element.addEventListener("turbo:submit-end", this.onSettled);
+      document.addEventListener("turbo:load", this.onSettled);
+      window.addEventListener("pageshow", this.onSettled);
     }
     disconnect() {
       this.element.removeEventListener("submit", this.onSubmit);
+      this.element.removeEventListener("turbo:submit-end", this.onSettled);
+      document.removeEventListener("turbo:load", this.onSettled);
+      window.removeEventListener("pageshow", this.onSettled);
     }
     // Set the hidden `_direction` value programmatically (optional helper).
     setDirection(value) {
@@ -28506,9 +28537,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         return;
       }
       this.submitting = true;
-      setTimeout(() => {
-        this.submitting = false;
-      }, 0);
+    };
+    onSettled = () => {
+      this.submitting = false;
     };
   };
 
