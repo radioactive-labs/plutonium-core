@@ -87,6 +87,20 @@ module Plutonium
           end
         end
 
+        # Per-step typed classes carrying ONLY the step's INLINE `validates` (no
+        # imported form validators — those are validated separately via the
+        # transient model, so folding them in here would double-report). Built once
+        # per wizard class and reused by the runner's inline validation, which
+        # otherwise recompiles an equivalent anonymous class on every `validate`
+        # call (and `validate` runs many times per render). `{step_key => Class}`,
+        # omitting steps with no inline validations.
+        def inline_validation_classes
+          @inline_validation_classes ||= steps.reject(&:review?).each_with_object({}) do |step, acc|
+            next if step.validations.blank?
+            acc[step.key.to_sym] = Data.class_for(step.attribute_schema, validations: step.validations)
+          end
+        end
+
         private
 
         # One step's structured collections, as {name => [sub-field names]}, so

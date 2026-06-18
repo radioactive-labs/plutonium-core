@@ -11,18 +11,20 @@ module Plutonium
         @gid = @org.to_global_id.to_s
       end
 
+      # Counts BATCH resolutions (locate_many) — one per non-empty key read, vs the
+      # old one-locate-per-GID. A multi-record key therefore still counts as 1.
       def counting_locates
         count = 0
-        original = GlobalID::Locator.method(:locate)
-        GlobalID::Locator.define_singleton_method(:locate) do |*args, **kw|
+        original = GlobalID::Locator.method(:locate_many)
+        GlobalID::Locator.define_singleton_method(:locate_many) do |*args, **kw|
           count += 1
           original.call(*args, **kw)
         end
         yield
         count
       ensure
-        GlobalID::Locator.singleton_class.send(:remove_method, :locate)
-        GlobalID::Locator.define_singleton_method(:locate, original)
+        GlobalID::Locator.singleton_class.send(:remove_method, :locate_many)
+        GlobalID::Locator.define_singleton_method(:locate_many, original)
       end
 
       test "empty source: untouched key returns [] and never locates" do
@@ -38,6 +40,25 @@ module Plutonium
 
         second = counting_locates { assert_equal [@org], lp[:make] }
         assert_equal 0, second
+      end
+
+      test "a multi-record key resolves in a single batch (no N+1)" do
+        others = Array.new(3) { |i| Organization.create!(name: "Multi-#{i}") }
+        gids = [@org, *others].map { |r| r.to_global_id.to_s }
+        lp = LazyPersisted.new("make" => gids)
+
+        # One batched resolution for the whole list (was one locate per GID), and
+        # order is preserved.
+        calls = counting_locates { assert_equal [@org, *others], lp[:make] }
+        assert_equal 1, calls
+      end
+
+      test "a missing/destroyed GID is dropped, not raised" do
+        gone = Organization.create!(name: "Gone")
+        gid = gone.to_global_id.to_s
+        gone.destroy!
+        lp = LazyPersisted.new("make" => [@gid, gid])
+        assert_equal [@org], lp[:make]
       end
 
       test "string and symbol keys resolve the same stored entry" do

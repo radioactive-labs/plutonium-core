@@ -169,17 +169,12 @@ module Plutonium
           layout = definition.defined_form_layout
           return nil unless layout
 
-          imported = names.to_set
-
-          # First-section-wins ownership among imported fields.
-          owner = {}
-          layout.each do |section|
-            next if section.ungrouped?
-            section.fields.map(&:to_sym).each do |f|
-              owner[f] ||= section.key if imported.include?(f)
-            end
-          end
-          leftovers = names.reject { |f| owner.key?(f) }
+          # First-section-wins ownership among imported fields (shared with the
+          # canonical resolver). The ASSEMBLY below differs deliberately: an
+          # imported layout drops explicit sections that resolve to zero imported
+          # fields, and only synthesizes a trailing ungrouped section when there
+          # are leftovers — so it can't share the full `resolve_sections`.
+          owner, leftovers = Plutonium::Definition::FormLayout.assign_ownership(layout, names)
 
           resolved = layout.filter_map do |section|
             fields =

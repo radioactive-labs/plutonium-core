@@ -33,6 +33,59 @@ module Plutonium
       # filtering). Produced by #resolve_form_sections (a later task).
       ResolvedSection = Struct.new(:section, :fields)
 
+      # First-section-wins ownership, shared by every layout resolver (the resource
+      # form via {#resolve_form_sections}, and the wizard's {StepAdapter} /
+      # {FieldImporter}). Each field is claimed by the FIRST explicit section that
+      # lists it, restricted to the currently-permitted `fields`; a listed field
+      # outside that set is simply skipped (never renders, never an error).
+      #
+      # @param layout [Array<Section>]
+      # @param fields [Array<Symbol,String>] the permitted field set, in order
+      # @return [Array(Hash, Array<Symbol>)] `[owner_by_field, leftover_fields]`
+      def self.assign_ownership(layout, fields)
+        fields = fields.map(&:to_sym)
+        known = fields.to_set
+        owner = {}
+        layout.each do |section|
+          next if section.ungrouped?
+          section.fields.map(&:to_sym).each { |f| owner[f] ||= section.key if known.include?(f) }
+        end
+        leftovers = fields.reject { |f| owner.key?(f) }
+        [owner, leftovers]
+      end
+
+      # The canonical resolution: first-section-wins ownership, with unclaimed
+      # permitted fields falling into the (explicit, or a synthesized trailing)
+      # ungrouped bucket so nothing silently disappears. Every declared section is
+      # kept (empty ones are dropped at render). Shared by {#resolve_form_sections}
+      # and the wizard {StepAdapter}'s raw-layout path so the two never drift.
+      #
+      # @param layout [Array<Section>]
+      # @param fields [Array<Symbol,String>] the permitted field set, in order
+      # @return [Array<ResolvedSection>]
+      def self.resolve_sections(layout, fields)
+        owner, leftovers = assign_ownership(layout, fields)
+
+        resolved = layout.map do |section|
+          section_fields =
+            if section.ungrouped?
+              leftovers
+            else
+              section.fields.map(&:to_sym).select { |f| owner[f] == section.key }
+            end
+          ResolvedSection.new(section:, fields: section_fields)
+        end
+
+        unless layout.any?(&:ungrouped?)
+          resolved.push(ResolvedSection.new(
+            section: Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: {}.freeze),
+            fields: leftovers
+          ))
+        end
+
+        resolved
+      end
+
       # Collects section/ungrouped calls from a form_layout block in order.
       class Builder
         attr_reader :sections
@@ -102,41 +155,7 @@ module Plutonium
         layout = defined_form_layout
         return nil unless layout
 
-        resource_fields = resource_fields.map(&:to_sym)
-        known = resource_fields.to_set
-
-        # First-section-wins assignment: each field is claimed by the first
-        # section that lists it. A field a section lists but that isn't in the
-        # currently-permitted set (policy, per-action, entity scoping, nesting)
-        # is simply skipped — it never renders and is never an error.
-        owner = {}
-        layout.each do |section|
-          next if section.ungrouped?
-          section.fields.each do |f|
-            owner[f] ||= section.key if known.include?(f)
-          end
-        end
-        leftovers = resource_fields.reject { |f| owner.key?(f) }
-
-        resolved = layout.map do |section|
-          fields =
-            if section.ungrouped?
-              leftovers
-            else
-              section.fields.select { |f| owner[f] == section.key }
-            end
-          ResolvedSection.new(section:, fields:)
-        end
-
-        unless layout.any?(&:ungrouped?)
-          implicit = ResolvedSection.new(
-            section: Section.new(key: UNGROUPED_KEY, fields: [].freeze, options: {}.freeze),
-            fields: leftovers
-          )
-          resolved.push(implicit)
-        end
-
-        resolved
+        FormLayout.resolve_sections(layout, resource_fields)
       end
     end
   end

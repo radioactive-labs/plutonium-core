@@ -666,19 +666,21 @@ module Plutonium
 
       # ---- lazy persisted rehydration (§4.5) ----
 
-      # Run `block` while counting `GlobalID::Locator.locate` calls.
+      # Run `block` while counting `GlobalID::Locator.locate_many` calls — the
+      # batched resolution persisted-record reads use (one per non-empty key, vs
+      # the old one-locate-per-GID).
       def counting_locates
         count = 0
-        original = GlobalID::Locator.method(:locate)
-        GlobalID::Locator.define_singleton_method(:locate) do |*args, **kw|
+        original = GlobalID::Locator.method(:locate_many)
+        GlobalID::Locator.define_singleton_method(:locate_many) do |*args, **kw|
           count += 1
           original.call(*args, **kw)
         end
         yield
         count
       ensure
-        GlobalID::Locator.singleton_class.send(:remove_method, :locate)
-        GlobalID::Locator.define_singleton_method(:locate, original)
+        GlobalID::Locator.singleton_class.send(:remove_method, :locate_many)
+        GlobalID::Locator.define_singleton_method(:locate_many, original)
       end
 
       def stored_persisting_runner

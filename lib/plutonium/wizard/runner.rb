@@ -83,12 +83,24 @@ module Plutonium
 
       # The currently-visible step path (§6.2 subtractive branching). Each step's
       # `condition:` is evaluated against the latest staged `data`; the review step
-      # is always last by construction. Recomputed each call.
+      # is always last by construction.
+      #
+      # Called many times per request (current_step, step_complete?, prune_*, the
+      # page render), and each call instance_execs every step's `condition:` — so
+      # memoize the result, keyed on the IDENTITY of `@state.data`. Every data
+      # mutation reassigns `@state.data` to a NEW hash (`merge`/`except`/`deep_merge`
+      # or a fresh `@state`), so an identity change is a reliable "data moved"
+      # signal; conditions only depend on `data` (and the request-stable `anchor`).
+      # `sync_data` still runs each call to preserve the wizard's live `data` view.
       def visible_path
         sync_data
-        @wizard_class.steps.select do |step|
+        return @visible_path if defined?(@visible_path) && @visible_path_data.equal?(@state.data)
+
+        @visible_path = @wizard_class.steps.select do |step|
           step.condition.nil? || @wizard.instance_exec(&step.condition)
         end
+        @visible_path_data = @state.data
+        @visible_path
       end
 
       # The visible step matching the stored cursor, or the first visible step.
@@ -393,10 +405,12 @@ module Plutonium
       # imported validators in here too would double-report them. Returns
       # {attribute => [String messages]} keyed by symbol.
       def inline_errors(step, merged)
-        validations = step.validations
-        return {} if validations.blank?
+        # Reuse the wizard class's memoized inline-validation class (built once)
+        # instead of recompiling an anonymous class on every call. nil → the step
+        # has no inline validations.
+        klass = @wizard_class.inline_validation_classes[step.key.to_sym]
+        return {} unless klass
 
-        klass = Plutonium::Wizard::Data.class_for(step.attribute_schema, validations:)
         obj = klass.new(merged)
         obj.valid?
         message_errors(obj)
@@ -473,7 +487,12 @@ module Plutonium
       end
 
       def located_records(step)
-        Array(@state.persisted[step.key.to_s]).filter_map { |gid| GlobalID::Locator.locate(gid) }
+        gids = Array(@state.persisted[step.key.to_s])
+        return [] if gids.empty?
+
+        # One query per model class (vs one locate per GID) for a multi-record step;
+        # `ignore_missing` drops already-destroyed records, order is preserved.
+        GlobalID::Locator.locate_many(gids, ignore_missing: true)
       end
 
       # The first visible non-review step that hasn't been submitted+validated

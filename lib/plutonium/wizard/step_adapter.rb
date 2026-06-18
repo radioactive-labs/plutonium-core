@@ -75,41 +75,12 @@ module Plutonium
         end
       end
 
-      # Raw inline Sections — mirror Definition::FormLayout#resolve_form_sections:
-      # first-section-wins ownership; unlisted permitted fields fall into a trailing
-      # ungrouped bucket so nothing silently disappears.
+      # Raw inline Sections resolve exactly like a resource definition's layout
+      # (first-section-wins ownership; unlisted permitted fields fall into a
+      # trailing ungrouped bucket) — so delegate to the canonical resolver rather
+      # than re-implement it.
       def resolve_raw_sections(layout, resource_fields)
-        known = resource_fields.to_set
-
-        owner = {}
-        layout.each do |section|
-          next if section.ungrouped?
-          section.fields.map(&:to_sym).each { |f| owner[f] ||= section.key if known.include?(f) }
-        end
-        leftovers = resource_fields.reject { |f| owner.key?(f) }
-
-        resolved = layout.map do |section|
-          fields =
-            if section.ungrouped?
-              leftovers
-            else
-              section.fields.map(&:to_sym).select { |f| owner[f] == section.key }
-            end
-          Plutonium::Definition::FormLayout::ResolvedSection.new(section, fields)
-        end
-
-        unless layout.any?(&:ungrouped?)
-          implicit = Plutonium::Definition::FormLayout::ResolvedSection.new(
-            Plutonium::Definition::FormLayout::Section.new(
-              key: Plutonium::Definition::FormLayout::UNGROUPED_KEY,
-              fields: [].freeze, options: {}.freeze
-            ),
-            leftovers
-          )
-          resolved.push(implicit)
-        end
-
-        resolved
+        Plutonium::Definition::FormLayout.resolve_sections(layout, resource_fields)
       end
     end
   end

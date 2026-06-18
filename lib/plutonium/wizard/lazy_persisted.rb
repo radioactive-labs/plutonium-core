@@ -61,8 +61,16 @@ module Plutonium
 
       private
 
+      # Batch-resolve a key's GIDs in ONE query per model class (vs one locate per
+      # GID — an N+1 for a multi-record step). `ignore_missing: true` drops GIDs
+      # whose record no longer exists (e.g. swept/destroyed), matching the old
+      # per-GID `filter_map` that dropped nils; unparseable/invalid GIDs are dropped
+      # too, and input order is preserved.
       def locate(gids)
-        Array(gids).filter_map { |gid| GlobalID::Locator.locate(gid) }
+        gids = Array(gids)
+        return [] if gids.empty?
+
+        GlobalID::Locator.locate_many(gids, ignore_missing: true)
       end
     end
   end
