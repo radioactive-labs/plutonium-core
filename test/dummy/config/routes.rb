@@ -15,6 +15,12 @@ Rails.application.routes.draw do
   # `WizardsController` is distinct from the public `PublicWizardsController`.
   register_wizard ::MainAppOnboardingWizard, at: "onboarding"
 
+  # A wizard exercising attachment fields against BOTH backends (ActiveStorage +
+  # active_shrine). The Shrine direct-upload endpoint is mounted here; ActiveStorage's
+  # `/rails/active_storage/direct_uploads` is auto-mounted by its engine.
+  register_wizard ::AttachmentDemoWizard, at: "uploads"
+  mount Shrine.upload_endpoint(:cache) => "/shrine/upload"
+
   # Defines the root path route ("/")
   # Bridges authenticated users into the path-scoped OrgPortal. This is
   # also where rodauth's `login_redirect "/"` lands after sign-in.
