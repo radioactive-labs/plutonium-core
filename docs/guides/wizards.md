@@ -170,6 +170,43 @@ Repeater rows rehydrate from staged `data` on GET, so navigating back (or resumi
 
 ![A structured/repeater step — multiple invite rows with Add/Remove, inside the wizard step card](/images/guides/wizards-repeater.png)
 
+## File uploads (attachments)
+
+A step can collect a file. You declare it like any other field — a **`:string`** attribute (it holds the upload **token**, not the bytes) plus a file input:
+
+```ruby
+step :photo, label: "Photo" do
+  attribute :photo, :string
+  input :photo, as: :file        # also: as: :uppy / as: :attachment
+end
+```
+
+A wizard stages its `data` as JSON across several requests, so a file can't ride along — only a **token** does. The field stages the backend's upload token (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data); your `execute` assigns that token to the model's attachment, which both backends accept natively:
+
+```ruby
+def execute
+  member = Member.create!(name: data.profile.name)
+  member.photo.attach(data.photo.photo) if data.photo.photo.present?   # ActiveStorage
+  # or, with active_shrine:  Member.create!(photo: data.photo.photo)
+  succeed(member)
+end
+```
+
+The review summary and the step's preview (when you go Back or resume) render the file for you — reading `data.photo.photo` resolves the token to a displayable attachment automatically.
+
+### Server-side vs direct upload
+
+The same field works two ways:
+
+- **Server-side (default)** — `input :photo, as: :file`. The file is submitted with the step (a plain file input) and the wizard uploads it to the backend's cache while staging. Nothing else to wire up; works for both ActiveStorage and active_shrine.
+- **Direct upload** — `input :photo, as: :uppy, direct_upload: true, endpoint: "/upload"`. The browser uploads straight to the endpoint (with a progress UI) and posts back a token. Use this for large files or an async UX; it needs the backend's direct-upload endpoint reachable (ActiveStorage's direct uploads, or Shrine's `upload_endpoint`).
+
+::: tip Match the backend to the model
+In server-side mode the backend defaults to `config.wizards.attachment_backend` — auto-detected as Shrine when active_shrine is installed, else ActiveStorage. Override per field with `backend:` (`input :photo, as: :file, backend: :active_storage`). It must match the model your `execute` assigns to: an ActiveStorage model can't accept a Shrine token, and vice-versa.
+:::
+
+For **multiple** files, use an array attribute with `multiple: true`; the staged value is then an array of tokens. A staged-but-abandoned upload (cancel/sweep) is an unattached blob / cached file that each storage backend's own cleanup reaps.
+
 ## The review step
 
 `review` is a built-in terminal step. It:

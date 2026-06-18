@@ -114,6 +114,27 @@ What gets imported:
 A `Plutonium::Resource::Definition` carries no link to its model — the controller binds them at request time. The only reliable direction is **model → definition**, so the model is the reuse target, and `<Model>Definition` is auto-resolved from it for styling.
 :::
 
+### Attachment fields
+
+A file field is a **`:string`** attribute (it holds the upload **token**, not the bytes) plus a file input (`as: :file`, `:uppy`, or `:attachment`):
+
+```ruby
+step :photo, label: "Photo" do
+  attribute :photo, :string
+  input :photo, as: :file                    # server-side staged (default)
+  # input :photo, as: :uppy, direct_upload: true, endpoint: "/upload"  # direct upload
+end
+```
+
+`data` is JSON staged across requests, so a file can't ride along — only its backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data). `execute` assigns the token to the model's attachment natively (`model.photo.attach(data.photo.photo)` for AS, `model.update!(photo: data.photo.photo)` for active_shrine). The review summary and the input preview (on Back/resume) resolve the token to a displayable attachment automatically.
+
+| | Declare | Behaviour |
+|---|---|---|
+| **Server-side** (default) | `as: :file` | file submitted with the step; the wizard uploads it to the backend cache while staging. AS *and* active_shrine. |
+| **Direct upload** | `as: :uppy, direct_upload: true, endpoint:` | browser uploads to the endpoint, posts a token (async UI). |
+| **Backend** (server-side) | `backend: :active_storage` / `:shrine` | defaults to `config.wizards.attachment_backend` (auto-detects active_shrine, else AS). **Must match the model** `execute` assigns to. |
+| **Multiple** | array attribute + `multiple: true` | staged value is an array of tokens. |
+
 ## Per-step hooks
 
 `execute` is the default commit point (atomic, at the end). Per-step `on_submit` is opt-in save-as-you-go — use it only when a real record must exist mid-flow.

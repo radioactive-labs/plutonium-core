@@ -13,6 +13,7 @@ Plutonium.configure do |config|
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
   config.wizards.database = :primary       # which DB the wizard table lives on (multi-db)
   config.wizards.encrypt_data = true       # encrypt every wizard's data at rest (needs AR encryption keys)
+  config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect)
 end
 ```
 
@@ -26,6 +27,7 @@ rails db:migrate
 | `config.wizards.cleanup_after` | `14.days` | Global default idle TTL for the abandonment sweep; overridable per wizard via `cleanup_after`. |
 | `config.wizards.database` | `:primary` | Which database connection the wizard table lives on. **v1 supports the primary database only** — see below. |
 | `config.wizards.encrypt_data` | `false` | Encrypt **every** wizard's staged `data` at rest by default. Off by default because it needs ActiveRecord encryption keys; a wizard still overrides it individually with `encrypt_data` / `encrypt_data false`. See [Encryption](#encryption). |
+| `config.wizards.attachment_backend` | `nil` | Storage backend for **server-side** [attachment](/reference/wizard/dsl#attachment-fields) staging (a plain `as: :file` field). `nil` auto-detects — active_shrine installed → `:shrine`, else `:active_storage`. Override per field with `input …, backend:`. Direct-upload fields ignore it (they arrive as a token). |
 
 ## Gem-shipped migration
 

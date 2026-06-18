@@ -1,6 +1,6 @@
 ---
 name: plutonium-wizard
-description: Use BEFORE building any multi-step Plutonium flow — onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), guest/anonymous flows, at-rest data encryption, and storage/config. The single source for "how do I build a wizard".
+description: Use BEFORE building any multi-step Plutonium flow — onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, attachment/file-upload fields, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), guest/anonymous flows, at-rest data encryption, and storage/config. The single source for "how do I build a wizard".
 ---
 
 # Plutonium Wizards
@@ -178,6 +178,41 @@ end
 Repeater rows rehydrate from staged `data` on GET (resume / back re-renders filled rows).
 
 Validations drive the form's field affordances just like a resource form: `presence` → the required marker (`*`); `length`/`numericality`/`format`/`inclusion` → `maxlength`/`min`/`max`/`pattern`/auto-choices. This holds for validations imported via `using:` too. (Structured-input sub-fields are the exception — they carry no validators, so no markers there.)
+
+## Attachment fields (file uploads)
+
+A step can collect a file. Declare it like any field — a **`:string`** attribute (it holds the upload **token**, not the bytes) + a file input:
+
+```ruby
+step :photo, label: "Photo" do
+  attribute :photo, :string
+  input :photo, as: :file          # or as: :uppy / as: :attachment
+end
+```
+
+The file is staged into `data` as a backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data) — never the bytes (they can't ride JSON `data` across steps). `execute` assigns that token to the model's attachment **natively** (both backends accept it):
+
+```ruby
+def execute
+  member = Member.create!(name: data.profile.name)
+  member.photo.attach(data.photo.photo) if data.photo.photo.present?   # ActiveStorage
+  # active_shrine: Member.create!(photo: data.photo.photo)
+  succeed(member)
+end
+```
+
+The review summary and the step's preview (on Back/resume) render the file automatically — `data.<step>.<field>` resolves the token to a displayable attachment at the boundary; nothing extra to write.
+
+**Two upload modes** — same field, differ only by `direct_upload:`:
+
+| Mode | Declare | Notes |
+|---|---|---|
+| **Server-side** (default) | `input :file, as: :file` | the file rides the step POST; the wizard uploads it to the backend's cache while staging. Simplest; works for **AS *and* active_shrine**; no JS/endpoint needed. |
+| **Direct upload** | `input :file, as: :uppy, direct_upload: true, endpoint: "/upload"` | the browser uploads to the endpoint and posts back a token (async progress UI). Needs that endpoint reachable (AS direct-uploads, or Shrine's `upload_endpoint`). |
+
+- **Backend** (server-side mode): defaults to `config.wizards.attachment_backend`, which **auto-detects** active_shrine → `:shrine`, else `:active_storage`. Override per field with `backend:`. It **must match the model `execute` assigns to** — an AS model ⇒ `:active_storage`, an active_shrine model ⇒ `:shrine` (an AS model won't accept a Shrine token, and vice-versa).
+- **Multiple:** an array attribute + `multiple: true` → the staged value is an array of tokens.
+- **Cleanup:** a staged-then-abandoned upload is an unattached blob / cached Shrine file — each backend's own unattached cleanup reaps it (the wizard `SweepJob` doesn't touch it).
 
 ## The review step
 
@@ -394,6 +429,7 @@ Plutonium.configure do |config|
   config.wizards.cleanup_after = 14.days   # global default sweep TTL
   config.wizards.encrypt_data = false      # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.database = :primary       # reserved — v1 supports :primary only (else raises at boot)
+  config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect active_shrine/AS)
 end
 ```
 
