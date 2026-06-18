@@ -27,7 +27,7 @@ Then run the migration (it ships in the gem and runs in place — no copy step):
 rails db:migrate
 ```
 
-This creates the single framework table `plutonium_wizard_sessions`. See [Storage & config](/reference/wizard/storage-config) for the full story.
+This creates the single framework table `plutonium_wizard_sessions`. See [Storage & config](/reference/wizard/storage-config) for the details.
 
 ::: warning Schedule the SweepJob for save-as-you-go wizards
 For plain `execute`-only wizards, leaving the sweep unscheduled only leaves stale session rows (harmless). But if you use per-step `on_submit` (which creates **real records mid-flow**), `Plutonium::Wizard::SweepJob` is the **only** thing that cleans up abandoned partial records. Schedule it as a recurring job. See [Storage & config](/reference/wizard/storage-config#sweepjob).
@@ -197,7 +197,7 @@ stepper false                          # no top rail
 review summary: false, header: false   # no header, no summary → "ready to complete" panel
 ```
 
-See the [DSL reference](/reference/wizard/dsl#review) for the full state table.
+See the [DSL reference](/reference/wizard/dsl#review) for the complete state table.
 
 ## Per-step writes — `on_submit` / `persist` / `on_rollback`
 
@@ -237,7 +237,7 @@ end
 
 - `on_submit` runs in its own transaction when the step completes. Inside it, `persist record` registers record(s) the engine tracks for resume and cleanup — reachable later as `persisted[:step_key]`.
 - `fail!("msg")` aborts the step with a base (form-level) error; `fail!(:field, "msg")` attaches it to a field. Both roll back the step's transaction and re-render with input intact.
-- The engine **always** destroys every `persist`'d record on rollback (Cancel, abandonment-sweep, branch-prune), in reverse order, via `destroy!` (which respects a model's own soft-delete override). `on_rollback` is an **optional, additive** compensating block for side effects the engine can't see — refund a charge, call an external API — and runs **before** the destroy, so `persisted[:key]` is still alive inside it. Don't destroy the tracked record yourself; the engine does.
+- The engine **always** destroys every `persist`'d record on rollback (Cancel, abandonment-sweep, branch-prune), in reverse order, via `destroy!` (which respects a model's own soft-delete override). `on_rollback` is an **optional, additive** compensating block for side effects the engine can't see (refund a charge, call an external API), and runs **before** the destroy, so `persisted[:key]` is still alive inside it. Don't destroy the tracked record yourself; the engine does.
 - Because `on_submit` writes mid-flow, it isn't atomic across steps — that's why `cleanup_after` + the SweepJob exist. See [Storage & config](/reference/wizard/storage-config) and the [DSL reference](/reference/wizard/dsl#per-step-hooks).
 
 ## Anchored wizards
@@ -356,7 +356,7 @@ This draws the wizard's step routes within the portal and provides an `<at>_wiza
 
 **Wizards require authentication by default** — entering without a `current_user` is rejected, and every resume is **owner-scoped** (a run id leaked in a URL can't be picked up by another logged-in user). A wizard **never crosses the auth boundary mid-flow**.
 
-Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable id held in the **Rails session**, namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`) — **not a cookie, and with no TTL**. The row's `cleanup_after` → sweep is the authoritative lifetime; the session id is just a pointer to it. Session storage means the id is browser-close ephemeral, **auto-cleared on login/logout** (Rodauth's `clear_session` → `reset_session`), and cleared on completion — and it never appears in a URL, so there is no leak surface. Its terminal `execute` is the *only* place a guest wizard may authenticate (e.g. a signup that creates the account and logs the user in — the host calls Rodauth, which rotates the session):
+Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable id held in the **Rails session**, namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`): **not a cookie, and with no TTL**. The row's `cleanup_after` → sweep is the authoritative lifetime; the session id is just a pointer to it. Session storage means the id is browser-close ephemeral, **auto-cleared on login/logout** (Rodauth's `clear_session` → `reset_session`), and cleared on completion. It never appears in a URL, so there is no leak surface. Its terminal `execute` is the *only* place a guest wizard may authenticate (e.g. a signup that creates the account and logs the user in; the host calls Rodauth, which rotates the session):
 
 ```ruby
 class GuestSignupWizard < Plutonium::Wizard::Base
@@ -409,7 +409,7 @@ A run is only ever listed (and linked) by **the portal it was launched in**: a n
 - A `register_wizard` (portal/public) wizard resolves to its named route, threading the tenant scope segment and — for a tokened (no `concurrency_key`) run — the per-run `:token`.
 - A `wizard`-macro **anchored** wizard resolves via `resource_url_for(record, wizard:, step:)` — the same helper the launch button uses — from the row's anchor.
 
-When a mount can't be resolved in this portal — e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row — `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
+When a mount can't be resolved in this portal (e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row), `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
 
 There's no per-wizard query helper — filter the array yourself:
 

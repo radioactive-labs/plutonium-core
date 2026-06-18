@@ -138,16 +138,16 @@ The wizard never advances past a failed `on_submit`. Earlier committed steps are
 
 ### `on_rollback`
 
-On any rollback — Cancel, abandonment-sweep, **or when this step becomes branch-hidden** (a later answer flips its `condition:` false, so save-as-you-go records it created would otherwise be orphaned) — the engine **always** destroys every `persist`'d record in reverse step order via `destroy!` (which respects a model's own soft-delete/paranoia override). When a step is pruned this way its `data` / `persisted` / `visited` state is also cleared, so re-entering that branch re-runs `on_submit` from scratch.
+Rollback happens on Cancel, abandonment-sweep, **or when this step becomes branch-hidden** (a later answer flips its `condition:` false, so save-as-you-go records it created would otherwise be orphaned). On any of these, the engine **always** destroys every `persist`'d record in reverse step order via `destroy!` (which respects a model's own soft-delete/paranoia override). When a step is pruned this way its `data` / `persisted` / `visited` state is also cleared, so re-entering that branch re-runs `on_submit` from scratch.
 
-`on_rollback` is an **optional, ADDITIONAL** compensating block for side effects the engine can't see — refunding a charge, calling an external API, deleting something `persist` didn't track. It reads `persisted[...]` and runs **before** the engine's destroy (records still alive), **in addition to** it — never instead of it. Don't destroy the `persist`'d record yourself in the block; the engine does that.
+`on_rollback` is an **optional, ADDITIONAL** compensating block for side effects the engine can't see: refunding a charge, calling an external API, deleting something `persist` didn't track. It reads `persisted[...]` and runs **before** the engine's destroy (records still alive), **in addition to** it, never instead of it. Don't destroy the `persist`'d record yourself in the block; the engine does that.
 
 ```ruby
 # The engine destroys persisted[:billing] for you; this just refunds the charge.
 on_rollback { PaymentApi.refund!(persisted[:billing].charge_id) }
 ```
 
-Supply an `on_rollback` when abandonment must do more than drop the record(s) — refund a charge, call an external API — or when `on_submit` registered no record at all (side-effect-only steps, whose `on_rollback` still runs). To *keep* a partial record rather than destroy it, make the model itself soft-delete (so its `destroy!` detaches) or use `cleanup_after :never`.
+Supply an `on_rollback` when abandonment must do more than drop the record(s) (refund a charge, call an external API), or when `on_submit` registered no record at all (side-effect-only steps, whose `on_rollback` still runs). To *keep* a partial record rather than destroy it, make the model itself soft-delete (so its `destroy!` detaches) or use `cleanup_after :never`.
 
 ## `review`
 
@@ -169,7 +169,7 @@ What it renders depends on completion state and the `summary:` / block options:
 | Option | Meaning |
 |---|---|
 | `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block — or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
-| `header:` | Show the step-header section — the label + the "check everything over" prompt (the prompt only appears when the summary is shown) — above the body (default `true`). `false` drops it for a chromeless finish. |
+| `header:` | Show the step-header section (the label plus the "check everything over" prompt, which only appears when the summary is shown) above the body (default `true`). `false` drops it for a chromeless finish. |
 
 ```ruby
 review label: "Review & submit"                       # auto-summary + gated finish
@@ -182,7 +182,7 @@ review summary: false, header: false                  # fully chromeless → "re
 ```
 
 ::: tip
-`stepper false` (a wizard-level macro) + `review summary: false, header: false` + no block gives a fully chromeless flow — no rail, no header, no summary — ending on the built-in "ready to complete" panel.
+`stepper false` (a wizard-level macro) + `review summary: false, header: false` + no block gives a fully chromeless flow (no rail, no header, no summary), ending on the built-in "ready to complete" panel.
 :::
 
 ### The custom block's render context

@@ -79,7 +79,7 @@ The entry URL is derived from the `register_wizard` route helper (`<name>_wizard
 
 ## How the gate keys completion
 
-The gate **recomputes the wizard's `instance_key`** from its `concurrency_key`, resolving the key block against the **host controller** — so `current_user`, `current_scoped_entity` (folded automatically), `anchor`, and any custom host method are available — then checks `completed?(instance_key:)`. This digest is computed by the same `Plutonium::Wizard.compute_instance_key` the runner uses, so the gate sees exactly the marker the wizard recorded.
+The gate **recomputes the wizard's `instance_key`** from its `concurrency_key`, resolving the key block against the **host controller**, so `current_user`, `current_scoped_entity` (folded automatically), `anchor`, and any custom host method are available. It then checks `completed?(instance_key:)`. This digest is computed by the same `Plutonium::Wizard.compute_instance_key` the runner uses, so the gate sees exactly the marker the wizard recorded.
 
 ### Gating an anchored wizard
 
