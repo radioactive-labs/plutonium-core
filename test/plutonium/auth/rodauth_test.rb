@@ -67,22 +67,16 @@ class Plutonium::Auth::RodauthTest < ActiveSupport::TestCase
     assert_equal "Plutonium::Auth::Rodauth(:admin)", mod.inspect
   end
 
-  test "module includes named current_<account> helper method" do
-    mod = Plutonium::Auth::Rodauth.for(:admin)
-    controller_class = build_controller_class(mod)
-
-    assert_includes controller_class._helper_methods, :current_admin
-  end
-
-  test "named accessor returns the same account as current_user" do
+  test "does not define a named current_<account> alias" do
+    # The named alias (e.g. current_admin) was removed: it collided with
+    # other context accessors (e.g. current_parent / entity-scoped helpers).
+    # Only current_user is exposed.
     mod = Plutonium::Auth::Rodauth.for(:admin)
     controller_class = build_controller_class(mod)
     controller = controller_class.new
-    account = Object.new
-    controller.send(:rodauth).rails_account = account
 
-    assert_same account, controller.send(:current_user)
-    assert_same account, controller.send(:current_admin)
+    refute_includes controller_class._helper_methods, :current_admin
+    refute_respond_to controller, :current_admin
   end
 
   test "for(:user) still defines current_user without error" do

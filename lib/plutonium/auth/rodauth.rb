@@ -7,7 +7,7 @@ module Plutonium
           extend ActiveSupport::Concern
 
           included do
-            helper_method :current_user, :current_#{name}
+            helper_method :current_user
             helper_method :logout_url
             helper_method :profile_url
           end
@@ -23,7 +23,6 @@ module Plutonium
           def current_user
             rodauth.rails_account
           end
-          alias_method :current_#{name}, :current_user
 
           def logout_url
             rodauth.logout_path
