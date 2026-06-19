@@ -22,7 +22,7 @@ class Plutonium::Definition::WizardsTest < Minitest::Test
   end
 
   class PresentedW < Plutonium::Wizard::Base
-    presents label: "Launch it", icon: "rocket"
+    presents label: "Launch it", icon: "rocket", description: "Spin one up"
     step(:a) { attribute :x, :string }
     review label: "R"
     def execute = succeed(true)
@@ -131,6 +131,20 @@ class Plutonium::Definition::WizardsTest < Minitest::Test
     action = defn.new.defined_actions[:onboard]
     assert_equal "rocket", action.icon
     assert_equal "Launch it", action.label
+  end
+
+  def test_wizard_description_comes_from_presents
+    defn = Class.new(Plutonium::Resource::Definition) do
+      wizard :onboard, PresentedW
+    end
+    assert_equal "Spin one up", defn.new.defined_actions[:onboard].description
+  end
+
+  def test_explicit_description_overrides_presents
+    defn = Class.new(Plutonium::Resource::Definition) do
+      wizard :onboard, PresentedW, description: "Custom"
+    end
+    assert_equal "Custom", defn.new.defined_actions[:onboard].description
   end
 
   def test_explicit_icon_overrides_presents

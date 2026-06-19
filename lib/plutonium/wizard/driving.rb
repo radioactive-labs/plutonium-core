@@ -262,7 +262,8 @@ module Plutonium
           Plutonium::UI::Page::Wizard.new(
             runner:,
             step_url: wizard_step_url(runner.current_step&.key),
-            errors: @wizard_errors
+            errors: @wizard_errors,
+            description: wizard_page_description
           ),
           status:,
           **wizard_modal_render_options
@@ -284,6 +285,8 @@ module Plutonium
           format.html { render_wizard_step(runner, status: :unprocessable_content) }
         end
       end
+
+      def wizard_page_description = nil
 
       # The render options (chiefly the layout) for a wizard page:
       # - turbo-frame request → no layout (the embedded/modal case);

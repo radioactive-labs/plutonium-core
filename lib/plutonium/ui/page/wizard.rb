@@ -16,10 +16,11 @@ module Plutonium
         # @param runner   [Plutonium::Wizard::Runner]
         # @param step_url [String] the current step's POST/GET URL.
         # @param errors   [Hash{Symbol=>Array<String>}] runner errors (per-field + :base).
-        def initialize(runner:, step_url:, errors: nil)
+        def initialize(runner:, step_url:, errors: nil, description: nil)
           @runner = runner
           @step_url = step_url
           @errors = errors || {}
+          @description = description
           super(page_title: wizard_title, page_description: nil)
         end
 
@@ -47,7 +48,7 @@ module Plutonium
             h1(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") do
               @runner.wizard.class.label
             end
-            desc = @runner.wizard.class.description
+            desc = @description.presence || @runner.wizard.class.description
             if desc.present?
               p(class: "mx-auto mt-1.5 max-w-prose text-[var(--pu-text-muted)]") { desc }
             end

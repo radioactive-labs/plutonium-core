@@ -60,6 +60,12 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(name="_direction")
   end
 
+  test "GET the first step renders the macro-level wizard description" do
+    get "#{base}/rename"
+    assert_response :success
+    assert_includes response.body, "Set this widget up"
+  end
+
   test "advance then finish updates the anchored record (PRG)" do
     post "#{base}/rename", params: {wizard: {name: "Renamed"}, _direction: "next"}
     assert_response :redirect

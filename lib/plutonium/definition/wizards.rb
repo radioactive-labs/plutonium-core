@@ -83,6 +83,7 @@ module Plutonium
             ),
             label: wizard_label(wizard_class, name),
             icon: wizard_icon(wizard_class),
+            description: wizard_class.description,
             category: :primary,
             record_action: is_record,
             collection_record_action: is_record,

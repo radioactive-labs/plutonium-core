@@ -96,6 +96,8 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     # A portal `register_wizard` mount defaults to the in-shell chrome.
     assert_includes response.body, "sidebar-navigation",
       "a portal standalone wizard defaults to the in-shell layout"
+    assert_includes response.body, "Set up a workspace for your team",
+      "the wizard's presents description renders in the page header"
   end
 
   # A step's inline `validates ... presence: true` is replayed onto the typed

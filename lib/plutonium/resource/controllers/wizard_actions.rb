@@ -137,6 +137,10 @@ module Plutonium
           registered_wizards.fetch(params[:wizard_name]&.to_sym)
         end
 
+        def wizard_page_description
+          current_definition.defined_actions[params[:wizard_name]&.to_sym]&.description
+        end
+
         def validate_wizard_action!
           key = params[:wizard_name]&.to_sym
           unless registered_wizards.key?(key)
