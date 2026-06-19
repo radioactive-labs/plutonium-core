@@ -21,24 +21,29 @@ module Plutonium
 
         protected
 
-        # Animation is driven by `data-open`, toggled by the remote-modal
-        # controller on the frame after showModal(). Mirrors the filter
-        # slideover's pattern — see Centered for the same rationale.
+        # Transparent full-viewport flex container pinning the panel to the
+        # right edge (`justify-end`). Deliberately transform-free (see
+        # Base#dialog_classes): the panel, not the dialog, carries the
+        # slide, so fixed UI opened from inside isn't trapped in a
+        # transformed box. The backdrop dim+blur is static (no [data-open]
+        # gating, no transition): a ::backdrop that fades its bg-color while
+        # carrying backdrop-filter re-rasterises the blur every frame and
+        # stutters the panel slide. Keeping it static lets only the panel
+        # animate (transform), composited smoothly.
         def base_dialog_classes
-          # The backdrop dim+blur is static (no [data-open] gating, no
-          # transition): a ::backdrop that fades its bg-color while carrying
-          # backdrop-filter re-rasterises the blur every frame and stutters
-          # the panel slide. Keeping it static lets only the panel animate
-          # (transform), composited smoothly. The backdrop snaps in at
-          # showModal() and is dropped when the dialog leaves the top layer
-          # on close(), so it still covers the panel's slide-out. Mirrors
-          # the .pu-dialog::backdrop rule in components.css.
-          "fixed top-0 right-0 bottom-0 left-auto m-0 h-dvh max-w-full max-h-dvh " \
-            "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] " \
-            "backdrop:bg-black/60 backdrop:backdrop-blur-sm " \
-            "rounded-none p-0 " \
-            "open:flex flex-col " \
-            "translate-x-full data-[open]:translate-x-0 " \
+          "group fixed inset-0 m-0 w-full h-full max-w-none max-h-none " \
+            "bg-transparent border-0 p-0 " \
+            "open:flex justify-end items-stretch " \
+            "backdrop:bg-black/60 backdrop:backdrop-blur-sm"
+        end
+
+        # Surface + the slide animation, driven by the dialog's `[data-open]`
+        # via `group-data-[open]:` (toggled on the frame after showModal()
+        # by remote_modal_controller). Mirrors the filter slideover's pattern.
+        def base_panel_classes
+          "flex flex-col min-h-0 h-full max-h-full overflow-hidden " \
+            "bg-[var(--pu-surface)] border-l border-[var(--pu-border)] rounded-none " \
+            "translate-x-full group-data-[open]:translate-x-0 " \
             "transition-transform duration-300 ease-out"
         end
       end

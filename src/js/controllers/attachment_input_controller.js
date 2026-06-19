@@ -95,6 +95,17 @@ export default class extends Controller {
   //======= Config
 
   configureUppy() {
+    // When the field lives inside a modal <dialog> (the browser top
+    // layer), mount the Dashboard's overlay INTO that dialog so it shares
+    // the top layer and renders ABOVE the modal instead of behind it.
+    // The modal dialog is transform-free (see modal/base.rb), so the
+    // overlay's `position: fixed` still resolves against the viewport.
+    // Outside a modal, closest() is null and the overlay mounts to <body>
+    // (uppy's default) as before.
+    const dashboardOptions = { inline: false, closeAfterFinish: true }
+    const dialog = this.element.closest("dialog")
+    if (dialog) dashboardOptions.target = dialog
+
     this.uppy = new Uppy({
       restrictions: {
         maxFileSize: this.maxFileSizeValue,
@@ -106,7 +117,7 @@ export default class extends Controller {
         requiredMetaFields: this.requiredMetaFieldsValue,
       }
     })
-      .use(Dashboard, { inline: false, closeAfterFinish: true })
+      .use(Dashboard, dashboardOptions)
       .use(ImageEditor, { target: Dashboard })
 
     this.#configureUploader()

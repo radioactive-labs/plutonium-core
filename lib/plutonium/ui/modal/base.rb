@@ -33,7 +33,7 @@ module Plutonium
 
         def view_template(&block)
           dialog(**dialog_attributes) do
-            div(class: inner_classes) do
+            div(class: panel_classes) do
               render_header
               render_body(&block)
               render_footer if footer_slot?
@@ -70,15 +70,34 @@ module Plutonium
           @description_id ||= "pu-modal-desc-#{SecureRandom.hex(4)}"
         end
 
+        # The <dialog> is a transparent, transform-free, full-viewport
+        # positioning container — NOT the visible surface. It must carry
+        # no transform: a transformed element becomes the containing block
+        # for its `position: fixed` descendants, which would trap any fixed
+        # UI opened from inside the modal (uppy's upload overlay, teleported
+        # dropdowns, date pickers) inside the panel's box. So the surface,
+        # size, and open/close transform animation all live on the inner
+        # panel; the dialog only positions and dims (::backdrop).
         def dialog_classes
-          "#{base_dialog_classes} #{size_classes}"
+          base_dialog_classes
         end
 
-        # Positioning, backdrop, transitions — everything that does
-        # not vary with `size`. Width/height tokens live in
-        # `size_classes` so size keys can fully replace them
-        # (notably `:auto`, which needs `w-fit` instead of `w-full`).
+        # Container-only: full-viewport positioning + flex alignment +
+        # backdrop + `group` (so the panel can read the dialog's
+        # `data-open`). No surface, no size, no transform.
         def base_dialog_classes
+          raise NotImplementedError
+        end
+
+        # The visible panel: surface (bg/border/radius), `size_classes`,
+        # and the open/close animation — driven by the dialog's `data-open`
+        # via `group-data-[open]:`. Width/height tokens live here, not on
+        # the dialog, so the dialog can stay a full-viewport container.
+        def panel_classes
+          "#{base_panel_classes} #{size_classes}"
+        end
+
+        def base_panel_classes
           raise NotImplementedError
         end
 
@@ -90,10 +109,6 @@ module Plutonium
           return if VALID_SIZES.include?(@size)
           raise ArgumentError,
             "modal size must be one of #{VALID_SIZES.inspect}, got #{@size.inspect}"
-        end
-
-        def inner_classes
-          "flex flex-col h-full max-h-[inherit] min-h-0"
         end
 
         def render_header

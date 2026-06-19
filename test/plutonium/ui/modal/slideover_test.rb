@@ -22,22 +22,30 @@ class Plutonium::UI::Modal::SlideoverTest < ActiveSupport::TestCase
     assert_includes html, 'closedby="any"'
   end
 
-  test "dialog has slideover positioning: pinned to right edge" do
+  test "pins the panel to the right edge via flex" do
     html = render_html(Plutonium::UI::Modal::Slideover.new)
-    assert_includes html, "top-0"
-    assert_includes html, "right-0"
-    assert_includes html, "bottom-0"
+    assert_includes html, "justify-end"
+    assert_includes html, "inset-0"
   end
 
-  test "dialog has responsive width class" do
+  test "dialog is a transparent, transform-free container" do
+    # The dialog only positions + dims; the surface and the slide live on
+    # the inner panel. `bg-transparent` is unique to the container-dialog
+    # — its presence means the dialog carries no surface/transform, so
+    # fixed UI opened inside the modal isn't trapped in a transformed box.
+    html = render_html(Plutonium::UI::Modal::Slideover.new)
+    assert_includes html, "bg-transparent"
+  end
+
+  test "panel has responsive width class" do
     html = render_html(Plutonium::UI::Modal::Slideover.new)
     assert_includes html, "sm:w-[480px]"
   end
 
-  test "dialog has slide-in transition classes" do
+  test "panel carries the slide-in transition via group-data-[open]" do
     html = render_html(Plutonium::UI::Modal::Slideover.new)
     assert_includes html, "translate-x-full"
-    assert_includes html, "data-[open]:translate-x-0"
+    assert_includes html, "group-data-[open]:translate-x-0"
   end
 
   test "renders title in header when provided" do
@@ -81,9 +89,10 @@ class Plutonium::UI::Modal::SlideoverTest < ActiveSupport::TestCase
     assert_includes html, "Slide Footer"
   end
 
-  test "renders inner flex column wrapper" do
+  test "renders panel with surface + flex column layout" do
     html = render_html(Plutonium::UI::Modal::Slideover.new)
-    assert_includes html, "flex flex-col h-full max-h-[inherit] min-h-0"
+    assert_includes html, "flex flex-col min-h-0"
+    assert_includes html, "border-l border-[var(--pu-border)]"
   end
 
   test "slideover does not have centered positioning classes" do
