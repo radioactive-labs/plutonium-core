@@ -82,6 +82,7 @@ module Plutonium
               method: :get, url_resolver: resolver
             ),
             label: wizard_label(wizard_class, name),
+            icon: wizard_icon(wizard_class),
             category: :primary,
             record_action: is_record,
             collection_record_action: is_record,
@@ -177,6 +178,10 @@ module Plutonium
           else
             name.to_s.humanize
           end
+        end
+
+        def wizard_icon(wizard_class)
+          wizard_class.icon || Phlex::TablerIcons::Wand
         end
 
         # A url_resolver proc (§5.1). Evaluated against the controller with the

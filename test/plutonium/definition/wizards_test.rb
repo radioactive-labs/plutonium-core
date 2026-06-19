@@ -21,6 +21,13 @@ class Plutonium::Definition::WizardsTest < Minitest::Test
     def execute = succeed(true)
   end
 
+  class PresentedW < Plutonium::Wizard::Base
+    presents label: "Launch it", icon: "rocket"
+    step(:a) { attribute :x, :string }
+    review label: "R"
+    def execute = succeed(true)
+  end
+
   class CreateDefinition < Plutonium::Resource::Definition
     wizard :onboard, CreateW
   end
@@ -115,6 +122,27 @@ class Plutonium::Definition::WizardsTest < Minitest::Test
       end
     end
     assert_match(/collection_record_action/, err.message)
+  end
+
+  def test_wizard_icon_comes_from_presents
+    defn = Class.new(Plutonium::Resource::Definition) do
+      wizard :onboard, PresentedW
+    end
+    action = defn.new.defined_actions[:onboard]
+    assert_equal "rocket", action.icon
+    assert_equal "Launch it", action.label
+  end
+
+  def test_explicit_icon_overrides_presents
+    defn = Class.new(Plutonium::Resource::Definition) do
+      wizard :onboard, PresentedW, icon: "gear"
+    end
+    assert_equal "gear", defn.new.defined_actions[:onboard].icon
+  end
+
+  def test_wizard_without_presented_icon_defaults_to_wand
+    action = CreateDefinition.new.defined_actions[:onboard]
+    assert_equal Phlex::TablerIcons::Wand, action.icon
   end
 
   def test_url_resolver_is_a_proc
