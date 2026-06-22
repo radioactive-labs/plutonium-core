@@ -25,8 +25,9 @@ Gemfile.lock
 
 log/
 test/dummy/log/*.log
-test/dummy/storage/*.sqlite*
+test/dummy/storage/*
 test/dummy/tmp
+test/dummy/public/uploads/*
 
 .yarn
 

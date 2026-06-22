@@ -59,6 +59,20 @@ class PlainShellRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, 'classList.toggle("pu-no-rail"'
   end
 
+  test "classic shell still renders its sidebar" do
+    Plutonium.configuration.shell = :classic
+    get "/admin/kitchen_sinks"
+
+    assert_response :success
+    # Regression: the railless work gated the sidebar on rail?, which is false
+    # for :classic, so the sidebar stopped rendering while main still reserved
+    # the lg:ml-64 offset (empty left gap, no sidebar).
+    assert_includes response.body, 'data-controller="sidebar icon-rail"',
+      "classic shell should still render its sidebar"
+    assert_match(/<main[^>]*class="[^"]*lg:ml-64/, response.body,
+      "classic shell should keep its sidebar offset")
+  end
+
   test "engine-level shell makes the whole portal rail-less" do
     AdminPortal::Engine.shell(:plain)
     get "/admin/kitchen_sinks"

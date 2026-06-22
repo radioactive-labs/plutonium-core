@@ -61,11 +61,17 @@ module Plutonium
           )
         end
 
+        # The classic shell always renders its sidebar; the modern family
+        # renders the icon rail only when the rail is active. Mirrors the
+        # classic special-casing in main_attributes/html_attributes, whose
+        # offsets are likewise rail-independent for :classic.
+        def render_sidebar? = shell == :classic || rail?
+
         def render_before_main
           super
 
           render partial("resource_header")
-          render partial("resource_sidebar") if rail?
+          render partial("resource_sidebar") if render_sidebar?
         end
       end
     end

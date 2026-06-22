@@ -50,4 +50,16 @@ class Plutonium::UI::Layout::ResourceLayoutRailTest < ActiveSupport::TestCase
     attrs = build_layout(rail: false, shell: :classic).send(:html_attributes)
     refute_includes attrs[:class].to_s, "pu-no-rail"
   end
+
+  test "render_sidebar? is true for the classic shell even without a rail" do
+    assert build_layout(rail: false, shell: :classic).send(:render_sidebar?)
+  end
+
+  test "render_sidebar? is true for modern with the rail active" do
+    assert build_layout(rail: true, shell: :modern).send(:render_sidebar?)
+  end
+
+  test "render_sidebar? is false for a rail-less modern shell" do
+    refute build_layout(rail: false, shell: :plain).send(:render_sidebar?)
+  end
 end
