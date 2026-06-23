@@ -95,6 +95,20 @@ export default class extends Controller {
   //======= Config
 
   configureUppy() {
+    // A modal <dialog> opened with showModal() lives in the browser top
+    // layer, which paints above everything else regardless of z-index.
+    // uppy's Dashboard overlay (inline: false) mounts to <body> by default,
+    // so it renders BEHIND the modal. Targeting the enclosing dialog makes
+    // the overlay a descendant of the top-layer dialog, so it paints above
+    // the modal instead. (The dialog carries an open/close transform, so the
+    // overlay's `position: fixed` resolves against the dialog's box rather
+    // than the viewport — it renders within the modal bounds, above it.)
+    // Outside a modal, closest() is null and the overlay mounts to <body>
+    // (uppy's default) as before.
+    const dashboardOptions = { inline: false, closeAfterFinish: true }
+    const dialog = this.element.closest("dialog")
+    if (dialog) dashboardOptions.target = dialog
+
     this.uppy = new Uppy({
       restrictions: {
         maxFileSize: this.maxFileSizeValue,
@@ -106,7 +120,7 @@ export default class extends Controller {
         requiredMetaFields: this.requiredMetaFieldsValue,
       }
     })
-      .use(Dashboard, { inline: false, closeAfterFinish: true })
+      .use(Dashboard, dashboardOptions)
       .use(ImageEditor, { target: Dashboard })
 
     this.#configureUploader()
