@@ -29,19 +29,16 @@ export default class extends Controller {
     this.onCancel = this.#onCancel.bind(this);
     this.onClose = this.#onClose.bind(this);
     this.onRequestClose = () => this.#animateClose();
-    this.onLightDismiss = this.#onLightDismiss.bind(this);
 
     this.element.addEventListener("cancel", this.onCancel);
     this.element.addEventListener("close", this.onClose);
     this.element.addEventListener("modal:request-close", this.onRequestClose);
-    this.element.addEventListener("click", this.onLightDismiss);
   }
 
   disconnect() {
     this.element.removeEventListener("cancel", this.onCancel);
     this.element.removeEventListener("close", this.onClose);
     this.element.removeEventListener("modal:request-close", this.onRequestClose);
-    this.element.removeEventListener("click", this.onLightDismiss);
     this.#restoreBodyState();
   }
 
@@ -62,20 +59,6 @@ export default class extends Controller {
     this.#animateClose();
   }
 
-  #onLightDismiss(event) {
-    // The dialog is a full-viewport, transparent container with the panel
-    // as a child, so native backdrop light-dismiss can't fire (clicks land
-    // on the dialog, never on its ::backdrop). A click whose target is the
-    // dialog element itself = a click in the transparent area outside the
-    // panel → treat it as a dismiss. Clicks on the panel, its descendants,
-    // or an uppy overlay mounted into the dialog have a different target
-    // and pass through. Routed through a synthetic `cancel` so the same
-    // guards as Escape (dirty-form-guard) and the #onCancel → animateClose
-    // path handle it uniformly.
-    if (event.target !== this.element) return;
-    this.element.dispatchEvent(new Event("cancel", { cancelable: true }));
-  }
-
   #onClose() {
     this.#restoreBodyState();
   }
@@ -89,17 +72,10 @@ export default class extends Controller {
     // reverses that transition, and CSS shortens the reverse duration in
     // proportion to how far the enter got — so a quick open→close snaps
     // shut instead of animating, which reads as choppy. finish() jumps to
-    // the open state so the exit always plays its full duration. The enter
-    // animation lives on the panel (a descendant), so commit the whole
-    // subtree — but guard each finish(): an infinite descendant animation
-    // (e.g. a spinner) throws on finish() and must be left running.
-    this.element.getAnimations({ subtree: true }).forEach((animation) => {
-      try {
-        animation.finish();
-      } catch {
-        /* infinite animation — leave it running */
-      }
-    });
+    // the open state so the exit always plays its full duration. Scoped to
+    // the dialog's own transitions (not the subtree) so a descendant's
+    // infinite animation can't throw on finish().
+    this.element.getAnimations().forEach((animation) => animation.finish());
 
     this.element.removeAttribute("data-open");
 

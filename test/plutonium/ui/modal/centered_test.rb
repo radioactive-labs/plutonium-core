@@ -24,30 +24,15 @@ class Plutonium::UI::Modal::CenteredTest < ActiveSupport::TestCase
 
   test "dialog has centered positioning classes" do
     html = render_html(Plutonium::UI::Modal::Centered.new)
-    assert_includes html, "items-center"
-    assert_includes html, "justify-center"
+    assert_includes html, "top-1/2"
+    assert_includes html, "-translate-y-1/2"
+    assert_includes html, "left-1/2"
+    assert_includes html, "-translate-x-1/2"
   end
 
-  test "dialog is transform-free (no containing block for fixed children)" do
-    # A transformed <dialog> becomes the containing block for its
-    # position:fixed descendants, trapping fixed UI (uppy's upload overlay,
-    # teleported dropdowns) inside the panel box. Centering must be
-    # flex-based, not translate-based.
-    html = render_html(Plutonium::UI::Modal::Centered.new)
-    refute_includes html, "top-1/2"
-    refute_includes html, "-translate-y-1/2"
-    refute_includes html, "-translate-x-1/2"
-  end
-
-  test "panel has max-h-[80vh] class" do
+  test "dialog has max-h-[80vh] class" do
     html = render_html(Plutonium::UI::Modal::Centered.new)
     assert_includes html, "max-h-[80vh]"
-  end
-
-  test "panel carries the open/close scale animation via group-data-[open]" do
-    html = render_html(Plutonium::UI::Modal::Centered.new)
-    assert_includes html, "scale-95"
-    assert_includes html, "group-data-[open]:scale-100"
   end
 
   test "renders title in header when provided" do
@@ -98,10 +83,9 @@ class Plutonium::UI::Modal::CenteredTest < ActiveSupport::TestCase
     assert_includes html, "Footer content"
   end
 
-  test "renders panel with surface + flex column layout" do
+  test "renders inner flex column wrapper" do
     html = render_html(Plutonium::UI::Modal::Centered.new)
-    assert_includes html, "pu-dialog"
-    assert_includes html, "flex flex-col min-h-0"
+    assert_includes html, "flex flex-col h-full max-h-[inherit] min-h-0"
   end
 
   test "size defaults to :md" do
