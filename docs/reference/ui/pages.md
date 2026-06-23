@@ -150,6 +150,8 @@ end
 
 Show pages with `permitted_associations` (see [Behavior › Policy](/reference/behavior/policies#association-permissions)) render a tablist: **Details** tab first, then one tab per association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reload / back navigation. Tab rows scroll horizontally on narrow viewports — they don't wrap.
 
+If the policy permits **no fields**, the empty Details tab is dropped and the first association tab leads instead.
+
 ## Portal-specific overrides
 
 Each portal can override page classes independently. The portal definition inherits from the base definition, and its nested classes inherit from the base's nested classes:

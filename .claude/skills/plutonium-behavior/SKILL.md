@@ -494,7 +494,7 @@ def permitted_associations
 end
 ```
 
-Declares which associations get their own **tab on the show page**. When `permitted_associations` is non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association — each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs.
+Declares which associations get their own **tab on the show page**. When `permitted_associations` is non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association — each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs. If `permitted_attributes_for_show` resolves to **no fields**, the empty Details tab is omitted and the first association tab leads instead.
 
 Each named association must:
 

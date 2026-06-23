@@ -104,7 +104,7 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
 
     component = Plutonium::UI::Display::Resource.new(
       obj,
-      resource_fields: [],
+      resource_fields: [:name],
       resource_associations: [:widgets],
       resource_definition: definition
     )
@@ -133,7 +133,7 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
 
     component = Plutonium::UI::Display::Resource.new(
       obj,
-      resource_fields: [],
+      resource_fields: [:name],
       resource_associations: [:widgets],
       resource_definition: definition
     )
@@ -165,7 +165,7 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
 
     component = Plutonium::UI::Display::Resource.new(
       obj,
-      resource_fields: [],
+      resource_fields: [:name],
       resource_associations: [:widgets],
       resource_definition: definition
     )
@@ -187,6 +187,36 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
     # Only the Details tab should have been added
     assert_equal 1, tabs_added.length
     assert_equal "details", tabs_added.first[:identifier]
+  end
+
+  test "render_tablist_with_details omits Details tab when no fields are permitted" do
+    obj = Organization.new(name: "Acme")
+    definition = FakeDefinition.new
+
+    component = Plutonium::UI::Display::Resource.new(
+      obj,
+      resource_fields: [],
+      resource_associations: [:widgets],
+      resource_definition: definition
+    )
+    component.define_singleton_method(:present_associations?) { true }
+
+    tabs_added = []
+    fake_tablist = Object.new
+    fake_tablist.define_singleton_method(:with_tab) { |identifier:, title:, &block| tabs_added << {identifier: identifier, title: title, block: block} }
+
+    component.define_singleton_method(:BuildTabList) { fake_tablist }
+    component.define_singleton_method(:render_fields) { :fields }
+    component.define_singleton_method(:registered_resources) { [Widget] }
+    component.define_singleton_method(:association_src) { |_name, _reflection| "/widgets" }
+    component.define_singleton_method(:FrameNavigatorPanel) { |**_kwargs| nil }
+    component.define_singleton_method(:render) { |_tablist| nil }
+
+    component.send(:render_tablist_with_details)
+
+    # No Details tab — only the association tab leads.
+    assert_equal 1, tabs_added.length
+    assert_equal Organization.human_attribute_name(:widgets).parameterize, tabs_added.first[:identifier]
   end
 
   test "render_tablist_with_details raises on unknown association" do

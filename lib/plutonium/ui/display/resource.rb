@@ -74,18 +74,23 @@ module Plutonium
         def render_tablist_with_details
           tablist = BuildTabList()
 
-          # Build an inner display component for the Details tab.
-          # It must be a standalone Phlex component so that TabList can call
-          # `render(details_display)` from within its own context. Phlex propagates
-          # @_state through render calls, so the inner component writes to the same
-          # buffer as the outer Resource display even though self changes.
-          details_display = build_details_display
+          # Only render the Details tab when the user is permitted to see at
+          # least one field. With no permitted fields the tab would be empty,
+          # so we drop it and let the first association tab lead instead.
+          if resource_fields.present?
+            # Build an inner display component for the Details tab.
+            # It must be a standalone Phlex component so that TabList can call
+            # `render(details_display)` from within its own context. Phlex propagates
+            # @_state through render calls, so the inner component writes to the same
+            # buffer as the outer Resource display even though self changes.
+            details_display = build_details_display
 
-          tablist.with_tab(
-            identifier: "details",
-            title: -> { plain "Details" }
-          ) do
-            render details_display
+            tablist.with_tab(
+              identifier: "details",
+              title: -> { plain "Details" }
+            ) do
+              render details_display
+            end
           end
 
           resource_associations.each do |name|
