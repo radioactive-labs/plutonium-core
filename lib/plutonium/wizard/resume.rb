@@ -124,15 +124,54 @@ module Plutonium
           if (named = register_wizard_url)
             return {url: named, reason: nil}
           end
-
+ 
           if (member = resource_member_url)
             return {url: member, reason: nil}
           end
-
+ 
+          if (collection = resource_collection_url)
+            return {url: collection, reason: nil}
+          end
+ 
           {url: nil, reason: unresolved_reason}
         end
-
+ 
         private
+ 
+        # A resource-mounted non-anchored (collection) wizard's URL is built using
+        # the resource class and the wizard name.
+        def resource_collection_url
+          return nil unless @row.anchor.nil?
+ 
+          # Scan all registered resources in the current engine to see which definition
+          # registers this wizard class.
+          engine = @view_context.current_engine
+          engine.resource_register.resources.each do |resource_class|
+            wizard_name = registered_wizard_name_for(resource_class)
+            next if wizard_name.nil?
+ 
+            # Found the matching resource class and wizard name!
+            url = @view_context.resource_url_for(
+              resource_class,
+              wizard: wizard_name,
+              step: @row.current_step,
+              **token_param
+            )
+            return url if url.present?
+          rescue => e
+            Rails.logger.warn { "[Plutonium::Wizard] resume collection url build failed for #{resource_class.name}: #{e.message}" }
+          end
+          nil
+        end
+ 
+        def registered_wizard_name_for(resource_class)
+          definition = "#{resource_class.name}Definition".safe_constantize
+          return nil unless definition.respond_to?(:registered_wizards)
+ 
+          definition.registered_wizards.find do |_name, reg|
+            reg[:wizard_class] == @wizard_class
+          end&.first
+        end
 
         # A `register_wizard` route is named and carries `defaults[:wizard_class]`.
         def register_wizard_url
