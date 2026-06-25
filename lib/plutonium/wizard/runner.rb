@@ -243,6 +243,13 @@ module Plutonium
         true
       end
 
+      # Stage a step's params for a render-only refresh (the pre_submit re-render).
+      # Unlike `advance` it never persists, so the step isn't marked submitted and
+      # an abandoned refresh leaves nothing durable.
+      def stage_inputs(step_key, params)
+        stage(step_key, params)
+      end
+
       # Move the cursor to the previous visible step. No validation; never discards
       # staged data (§6 — back is navigation, not submission).
       def back
