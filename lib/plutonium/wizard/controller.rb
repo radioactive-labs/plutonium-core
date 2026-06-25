@@ -62,6 +62,11 @@ module Plutonium
       def update
         wizard_update
       end
+ 
+      # DELETE .../:token
+      def discard
+        wizard_discard
+      end
 
       private
 
@@ -153,9 +158,18 @@ module Plutonium
             current_engine.routes, current_wizard_class, action: "show"
           )
           raise "no register_wizard route found for #{current_wizard_class.name}" unless name
-
+ 
           :"#{name}_path"
         end
+      end
+ 
+      def wizard_launch_url
+        url_options = {}
+        if scoped_to_entity?
+          url_options[scoped_entity_param_key] = params[scoped_entity_param_key]
+        end
+        helper_name = wizard_step_url_helper.to_s.sub(/_path\z/, "_launch_path").to_sym
+        current_engine.routes.url_helpers.public_send(helper_name, **url_options)
       end
     end
   end

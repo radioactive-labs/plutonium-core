@@ -68,10 +68,31 @@ module Plutonium
               end
               p(class: "mt-0.5 text-xs text-[var(--pu-text-muted)]") { "Updated #{updated_ago(entry)} ago" }
             end
-            if entry.resume_url.present?
-              a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline shrink-0", data: {wizard_chooser_resume: true}) { "Resume" }
-            else
-              span(class: "pu-btn pu-btn-sm pu-btn-outline shrink-0 opacity-50 cursor-not-allowed") { "Resume" }
+            div(class: "flex items-center gap-2 shrink-0") do
+              if entry.resume_url.present?
+                a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline", data: {wizard_chooser_resume: true}) { "Resume" }
+              else
+                span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { "Resume" }
+              end
+ 
+              # Discard form
+              discard_url = entry.resume_url ? entry.resume_url.sub(/\/[^\/]+\z/, "") : nil
+              if discard_url.present?
+                # We can use helpers.form_with or direct html form.
+                # Since this is a Phlex component, we can use a direct html form helper:
+                # form(action: discard_url, method: "post") do
+                #   input(type: "hidden", name: "_method", value: "delete")
+                #   ...
+                # end
+                form(action: discard_url, method: "post", class: "inline-block") do
+                  token = helpers.form_authenticity_token
+                  input(type: "hidden", name: "authenticity_token", value: token)
+                  input(type: "hidden", name: "_method", value: "delete")
+                  button(type: "submit", class: "pu-btn pu-btn-sm pu-btn-danger pu-btn-outline", data: {wizard_chooser_discard: true, confirm: "Are you sure you want to discard this progress?"}) do
+                    "Discard"
+                  end
+                end
+              end
             end
           end
         end
