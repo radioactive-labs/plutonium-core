@@ -169,6 +169,22 @@ module Plutonium
 
         respond_to_wizard_result(runner, result)
       end
+ 
+      # DELETE (/:token) — discard run.
+      def wizard_discard
+        require_wizard_authentication!
+        runner = build_wizard_runner
+        deny_wizard_resume_for_other_user!(runner)
+        authorize_wizard_entry!(runner)
+ 
+        runner.cancel
+        clear_wizard_session_token
+ 
+        # PRG back to the bare launch path (or return_to), which will reload the chooser or start a new run.
+        # But we'll redirect back to the launch url of the wizard.
+        target = wizard_launch_url
+        redirect_to target, status: :see_other, allow_other_host: false
+      end
 
       # Advance the current step; if the POSTed step is the last visible step,
       # finalize. The last visible step is the terminal `review` (no fields), so
@@ -641,6 +657,11 @@ module Plutonium
 
       # @return [String] the GET URL for a given step of this wizard.
       def wizard_step_url(step_key)
+        raise NotImplementedError
+      end
+ 
+      # @return [String] the GET URL for launching this wizard.
+      def wizard_launch_url
         raise NotImplementedError
       end
     end
