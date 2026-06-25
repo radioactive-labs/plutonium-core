@@ -339,6 +339,45 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(value="Renamed Co")
   end
 
+  # --- pre_submit (dynamic conditional re-render) ----------------------------
+
+  # A `pre_submit: true` input fires a form re-render on change. The re-rendered
+  # step form must reflect the JUST-SUBMITTED values — exactly like the resource /
+  # interaction pre_submit path — so a conditional input dependent on the changed
+  # field appears/disappears. Seeding the re-render from STORED data only (the bug)
+  # kept the conditional field hidden no matter what the user picked.
+  test "pre_submit re-render reflects submitted values so a conditional field appears" do
+    advance_through("identity") # now on details
+    # `contact_email` is conditional on contact_pref == "email"; hidden initially.
+    refute_includes response.body, %(name="wizard[contact_email]")
+
+    post "#{tbase}/details",
+      params: {wizard: {note: "hi", contact_pref: "email"}, pre_submit: "contact_pref"}
+    assert_includes response.body, %(name="wizard[contact_email]"),
+      "the conditional field should appear once pre_submit reflects the chosen value"
+  end
+
+  # The pre_submit re-render also keeps the OTHER just-typed values (so the user
+  # doesn't lose what they entered when the form swaps).
+  test "pre_submit re-render keeps the other submitted values" do
+    advance_through("identity") # now on details
+    post "#{tbase}/details",
+      params: {wizard: {note: "keep me", contact_pref: "email"}, pre_submit: "contact_pref"}
+    assert_includes response.body, "keep me",
+      "sibling values typed before the pre_submit must survive the re-render"
+  end
+
+  # A pre_submit is render-only: it must NOT persist the step or move the cursor,
+  # so the step stays outstanding on review until really submitted.
+  test "pre_submit does not persist the step" do
+    advance_through("identity") # on details (never submitted)
+    post "#{tbase}/details",
+      params: {wizard: {note: "hi", contact_pref: "email"}, pre_submit: "contact_pref"}
+    get "#{tbase}/review"
+    assert_includes response.body, %(data-wizard-review-fix="details"),
+      "a pre_submit must not mark the step submitted"
+  end
+
   # --- forward button labels + Save & review shortcut (§7) -------------------
 
   def forward_button = response.body[/<button[^>]*data-wizard-nav="next"[^>]*>.*?<\/button>/m]
