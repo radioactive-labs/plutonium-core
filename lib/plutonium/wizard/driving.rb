@@ -274,6 +274,8 @@ module Plutonium
       # the step form; otherwise re-render the whole page. Mirrors interactive
       # actions, where conditional inputs depend on sibling values.
       def render_wizard_pre_submit(runner)
+        runner.stage_inputs(runner.current_step.key, wizard_extracted_inputs(runner).stringify_keys)
+
         form = wizard_step_form(runner)
         respond_to do |format|
           format.turbo_stream do
@@ -488,12 +490,21 @@ module Plutonium
       def wizard_params(runner)
         return {} if params[:wizard].blank?
 
+        cleaned = wizard_extracted_inputs(runner)
+        stage_wizard_uploads!(runner.current_step, cleaned)
+        cleaned.stringify_keys
+      end
+
+      # Like {#wizard_params} but WITHOUT staging uploads — shared with the
+      # `pre_submit` re-render, which must not stage them, or every `change` event
+      # would push the selected file to the backend cache.
+      def wizard_extracted_inputs(runner)
+        return {} if params[:wizard].blank?
+
         step = runner.current_step
         form = wizard_step_form(runner)
         extracted = form.extract_input(params, view_context:)[:wizard] || {}
-        cleaned = clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
-        stage_wizard_uploads!(step, cleaned)
-        cleaned.stringify_keys
+        clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
       end
 
       # Replace each attachment field's value with a staged TOKEN, minting one from

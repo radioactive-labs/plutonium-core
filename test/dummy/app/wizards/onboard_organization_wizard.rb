@@ -34,6 +34,13 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   step :details, description: "Anything we should know? This is optional." do
     attribute :note, :string
     input :note, as: :textarea
+
+    # pre_submit on a wizard step: contact_email is revealed only once the
+    # just-picked contact_pref re-renders the form (not the stored value).
+    attribute :contact_pref, :string
+    input :contact_pref, as: :select, choices: %w[none email], pre_submit: true
+    attribute :contact_email, :string
+    input :contact_email, condition: -> { object.contact_pref == "email" }
   end
 
   # Import a field surface from a model (KitchenSink) — its <Model>Definition
