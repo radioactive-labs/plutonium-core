@@ -205,6 +205,8 @@ module Plutonium
             as: :wizard_record_action
           post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_record_action,
             as: :commit_wizard_record_action
+          delete "wizards/:wizard_name(/:token)", action: :discard_wizard_record_action,
+            as: :discard_wizard_record_action
         end
       end
 
@@ -225,6 +227,8 @@ module Plutonium
             as: :wizard_resource_action
           post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_resource_action,
             as: :commit_wizard_resource_action
+          delete "wizards/:wizard_name(/:token)", action: :discard_wizard_resource_action,
+            as: :discard_wizard_resource_action
         end
       end
 
