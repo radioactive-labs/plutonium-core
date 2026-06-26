@@ -130,9 +130,21 @@ module Plutonium
           respond_to do |format|
             format.turbo_stream do
               streams = [turbo_stream.update("kanban-col-#{from.key}", render_kanban_column_html(from))]
-              if from.key != to.key
-                streams << turbo_stream.update("kanban-col-#{to.key}", render_kanban_column_html(to))
+              streams << turbo_stream.update("kanban-col-#{to.key}", render_kanban_column_html(to)) if from.key != to.key
+
+              # Broadcast the same frame updates to other connected viewers of this
+              # board, when realtime broadcasting is enabled. The mover will also
+              # receive this broadcast (they are subscribed to the stream too) — but
+              # re-rendering the same frames is idempotent, so the double update is
+              # harmless.
+              if board.realtime?
+                Plutonium::Kanban::Broadcaster.broadcast(
+                  resource_class: resource_class,
+                  scoped_entity: scoped_to_entity? ? current_scoped_entity : nil,
+                  content: streams.join
+                )
               end
+
               render turbo_stream: streams
             end
           end
@@ -157,7 +169,9 @@ module Plutonium
             board:,
             grouped_data:,
             resource_definition: current_definition,
-            resource_fields: permitted_attributes_for("index")
+            resource_fields: permitted_attributes_for("index"),
+            resource_class: resource_class,
+            scoped_entity: scoped_to_entity? ? current_scoped_entity : nil
           )
         end
 

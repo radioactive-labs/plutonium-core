@@ -21,10 +21,13 @@ module Plutonium
       # Task 14 implements the broadcaster and fills in that method body.
       class Resource < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::TurboFrameTag
+        include Phlex::Rails::Helpers::TurboStreamFrom
 
-        attr_reader :board, :grouped_data, :resource_definition, :resource_fields
+        attr_reader :board, :grouped_data, :resource_definition, :resource_fields,
+          :resource_class, :scoped_entity
 
-        def initialize(board:, grouped_data:, resource_definition:, resource_fields:)
+        def initialize(board:, grouped_data:, resource_definition:, resource_fields:,
+          resource_class: nil, scoped_entity: nil)
           @board = board
           @grouped_data = grouped_data
           @resource_definition = resource_definition
@@ -35,6 +38,10 @@ module Plutonium
           # eventually builds) just receives the final field list and renders
           # it; it does not resolve card_fields itself.
           @resource_fields = resource_fields
+          # Used by render_realtime_subscription (Task 14) to scope the
+          # ActionCable stream to the correct tenant + resource.
+          @resource_class = resource_class
+          @scoped_entity = scoped_entity
         end
 
         def view_template
@@ -60,11 +67,20 @@ module Plutonium
 
         private
 
-        # Realtime subscription placeholder.
-        # Task 14 fills this in — e.g. by calling turbo_stream_from scoped to
-        # the resource class so pushed column updates land in the right frame.
+        # Emits a <turbo-cable-stream-source> element that subscribes this page
+        # to the kanban board's tenant-scoped ActionCable stream.
+        #
+        # Only called when board.realtime? is true (gated by the caller in
+        # view_template). The stream name matches the one used by
+        # Plutonium::Kanban::Broadcaster#broadcast so move events reach exactly
+        # the right subscribers.
         def render_realtime_subscription
-          # intentional no-op; Task 14 implements this
+          turbo_stream_from(
+            *Plutonium::Kanban::Broadcaster.stream_name(
+              resource_class: resource_class,
+              scoped_entity: scoped_entity
+            )
+          )
         end
 
         def render_column_frame(column)
