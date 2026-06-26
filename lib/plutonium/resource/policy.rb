@@ -172,6 +172,14 @@ module Plutonium
         update?
       end
 
+      # Authorizes a kanban board move. Delegates to update? by default — override
+      # to allow board drags without granting full edit-form access.
+      #
+      # @return [Boolean] Delegates to update?.
+      def kanban_move?
+        update?
+      end
+
       # Checks if record search is permitted.
       #
       # @return [Boolean] Delegates to index?.
