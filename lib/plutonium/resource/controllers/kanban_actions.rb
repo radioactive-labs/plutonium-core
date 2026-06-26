@@ -58,39 +58,54 @@ module Plutonium
           authorize_current! resource_class
 
           board = current_kanban_board
-          column_key = params[:column].to_sym
-          context = Plutonium::Kanban::Context.new(view_context)
 
-          # Build the authorized, query-applied relation then group it.
-          # Calling kanban_base_relation also satisfies verify_current_authorized_scope.
-          groups = Plutonium::Kanban::Grouping.call(
-            board: board,
-            relation: kanban_base_relation,
-            context: context
-          )
+          # Resolve only the requested column rather than grouping the whole
+          # board: Grouping.call would scope+count+limit every column (≈2 queries
+          # each) on every lazy frame request. We compare keys as strings to
+          # avoid interning arbitrary request input into symbols.
+          columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
+          column = columns.find { |c| c.key.to_s == params[:column] }
 
-          entry = groups.find { |g| g[:column].key == column_key }
-
-          if entry
-            # resource_fields is the policy-permitted attribute list, used by
-            # Grid::Card to gate slot visibility. Slot mapping comes from
-            # resource_definition.defined_grid_fields (or board.card_fields
-            # will be applied at Task 10 time via a definition decorator).
-            column_component = Plutonium::UI::Kanban::Column.new(
-              column: entry[:column],
-              cards: entry[:cards],
-              total: entry[:total],
-              per_column: board.per_column,
-              resource_definition: current_definition,
-              resource_fields: presentable_attributes
-            )
-            html = view_context.render(column_component)
-          else
-            # Unknown column key — render an empty frame body, no crash.
-            html = ""
+          # Unknown column key — render an empty frame body, no crash.
+          # kanban_base_relation is referenced so verify_current_authorized_scope
+          # still passes even on the empty path.
+          unless column
+            kanban_base_relation
+            return render(html: "", layout: false)
           end
 
-          render html: html.html_safe, layout: false
+          # Single-column scope → order → cap. Mirrors Grouping.call's per-column
+          # body but for just this one column.
+          scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
+          ordered = board.position_config.order(scoped)
+          if board.per_column
+            total = ordered.count
+            cards = ordered.limit(board.per_column).to_a
+          else
+            cards = ordered.to_a
+            total = cards.size
+          end
+
+          # resource_fields is the policy-permitted attribute list, used by
+          # Grid::Card to gate slot visibility. Slot mapping comes from
+          # resource_definition.defined_grid_fields (or board.card_fields
+          # will be applied at Task 10 time via a definition decorator).
+          column_component = Plutonium::UI::Kanban::Column.new(
+            column: column,
+            cards: cards,
+            total: total,
+            per_column: board.per_column,
+            resource_definition: current_definition,
+            resource_fields: presentable_attributes
+          )
+
+          render html: view_context.render(column_component).html_safe, layout: false
+        end
+
+        # Evaluation context for dynamic `columns do…end` blocks — delegates to
+        # the view_context so the block can call current_user, params, etc.
+        def kanban_context
+          @kanban_context ||= Plutonium::Kanban::Context.new(view_context)
         end
       end
     end

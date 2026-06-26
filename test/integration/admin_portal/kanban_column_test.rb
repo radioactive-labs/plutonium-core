@@ -83,19 +83,40 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Todo Alpha"
   end
 
+  # ─── Per-column cap ───────────────────────────────────────────────────────
+
+  # The board's per_column is 25; seeding 30 todo tasks must cap the rendered
+  # cards at 25 and surface a "+5 more" footer for the remainder. Cards are
+  # counted by the stable data-kanban-record-id marker each Kanban::Card emits.
+  test "rendered cards are capped at per_column with a +N more footer" do
+    extra = 30 - Task.where(status: "todo").count
+    extra.times { |i| Task.create!(title: "Bulk #{i}", status: "todo") }
+    assert_equal 30, Task.where(status: "todo").count
+
+    get "/admin/tasks?view=kanban&column=todo"
+    assert_response :success
+
+    card_count = response.body.scan("data-kanban-record-id").size
+    assert_equal 25, card_count, "expected exactly per_column (25) cards rendered"
+    assert_includes response.body, "+5 more"
+  end
+
   # ─── Query pipeline applied ───────────────────────────────────────────────
 
-  # Demonstrates that the relation is query-applied: a search param narrows
-  # the column's cards, not just the overall collection. (The TaskDefinition
-  # must configure search for this to take effect; if search is not configured,
-  # the filter is a no-op, in which case the test still proves no crash.)
+  # Demonstrates that the relation is query-applied: a query param flows
+  # through current_query_object.apply, narrowing the column's cards rather
+  # than just the overall collection. The TaskDefinition currently declares
+  # no search/filter, so we can only assert the pipeline does not crash and
+  # still authorizes/returns the column.
   #
-  # We test a simpler proxy: sending ?q[scope]=nonexistent does not crash and
-  # still returns 200. A full search-filter assertion would require configuring
-  # search in the dummy definition, which is out of scope for Task 6.
-  test "passing query params does not crash the column endpoint" do
+  # TODO(Task 6+): once the dummy board has a searchable/filterable field,
+  # assert that a real filter narrows the cards — e.g. a card that should be
+  # filtered OUT is absent while an included one is present. Until then this
+  # test only proves the query pipeline is wired, not that filtering narrows.
+  test "passing query params flows through the pipeline without crashing" do
     get "/admin/tasks?view=kanban&column=todo&q[scope]=nonexistent"
     assert_response :success
+    assert_includes response.body, "Todo Alpha"
   end
 
   # ─── Unknown / absent column key ──────────────────────────────────────────
