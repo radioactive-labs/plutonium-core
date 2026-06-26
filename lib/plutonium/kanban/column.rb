@@ -12,7 +12,7 @@ module Plutonium
 
       def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_drop: nil,
         collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil)
-        preset = role ? ROLE_PRESETS.fetch(role, {}) : {}
+        preset = role ? ROLE_PRESETS.fetch(role) { raise ArgumentError, "Unknown column role: #{role.inspect}. Valid: #{ROLE_PRESETS.keys.inspect}" } : {}
         @key = key.to_sym
         @label = label || key.to_s.titleize
         @color = color.nil? ? preset[:color] : color
@@ -38,6 +38,8 @@ module Plutonium
         case @accepts
         when Array then @accepts.include?(source_key)
         when true, false then @accepts
+        # Proc/predicate case: permit at the column level here; the move handler
+        # evaluates the predicate per-card later with the actual record.
         else true
         end
       end

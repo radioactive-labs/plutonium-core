@@ -131,6 +131,13 @@ module Plutonium
         refute board.columns.first.add?
       end
 
+      def test_unknown_role_raises_argument_error
+        error = assert_raises(ArgumentError) do
+          DSL.build { column :weird, role: :bogus }
+        end
+        assert_match(/Unknown column role/, error.message)
+      end
+
       # ------------------------------------------------------------------ #
       # Column-scoped actions                                                 #
       # ------------------------------------------------------------------ #
@@ -235,6 +242,13 @@ module Plutonium
         refute board.columns.first.accepts?(:done)
       end
 
+      def test_accepts_proc_permits_at_column_level
+        col = Column.new(:todo, accepts: ->(card) { true })
+        # Proc/predicate is permitted at the column level; the per-card
+        # predicate is evaluated later by the move handler.
+        assert_equal true, col.accepts?(:any)
+      end
+
       # ------------------------------------------------------------------ #
       # Board-level options                                                   #
       # ------------------------------------------------------------------ #
@@ -271,12 +285,36 @@ module Plutonium
 
       def test_lazy_defaults_true
         board = DSL.build {}
-        assert board.lazy
+        assert board.lazy?
       end
 
       def test_lazy_can_be_set_false
         board = DSL.build { lazy false }
-        refute board.lazy
+        refute board.lazy?
+      end
+
+      # ------------------------------------------------------------------ #
+      # Immutability — columns are deep-frozen                                #
+      # ------------------------------------------------------------------ #
+
+      def test_columns_collection_is_frozen
+        board = DSL.build { column :todo }
+        assert board.columns.frozen?
+      end
+
+      def test_pushing_to_columns_raises
+        board = DSL.build { column :todo }
+        assert_raises(FrozenError) { board.columns << Object.new }
+      end
+
+      def test_each_column_is_frozen
+        board = DSL.build { column :todo }
+        assert board.columns.first.frozen?
+      end
+
+      def test_card_fields_is_frozen_when_present
+        board = DSL.build { card_fields title: :name }
+        assert board.card_fields.frozen?
       end
 
       # ------------------------------------------------------------------ #
@@ -320,13 +358,24 @@ module Plutonium
         assert board.position_config.disabled?
       end
 
-      def test_position_on_with_block_stores_config
-        block_called = false
+      def test_position_on_with_block_retains_block
+        received_move = nil
+        capture = ->(move) { received_move = move }
         board = DSL.build do
-          position_on(:rank) { |_move| block_called = true }
+          position_on(:rank, &capture)
         end
+
         assert_equal :rank, board.position_config.attribute
         refute board.position_config.disabled?
+
+        # Drive the stored config to prove the block was retained (Mode B).
+        record = Object.new
+        board.position_config.reposition!(
+          record:, column: :c, prev_record: nil, next_record: nil, index: 0
+        )
+        assert_instance_of Positioning::Move, received_move
+        assert_same record, received_move.record
+        assert_equal :c, received_move.column
       end
 
       # ------------------------------------------------------------------ #
