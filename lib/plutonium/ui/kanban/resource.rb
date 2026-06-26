@@ -43,7 +43,14 @@ module Plutonium
 
           div(
             class: "pu-kanban-board flex gap-4 overflow-x-auto p-4 min-h-0",
-            data: {controller: "kanban"}
+            data: {
+              controller: "kanban",
+              # Stimulus value consumed by the drag controller to build the
+              # per-record move URL at drop time. The collection path comes from
+              # request.path so tenant / engine scoping is preserved automatically.
+              # Example: /admin/tasks/__ID__/kanban_move
+              kanban_move_url_template_value: kanban_move_url_template
+            }
           ) do
             grouped_data.each do |entry|
               render_column_frame(entry[:column])
@@ -104,6 +111,16 @@ module Plutonium
           when :gray   then "var(--pu-text-muted)"
           else color.to_s
           end
+        end
+
+        # Builds the move URL template for the Stimulus drag controller.
+        # The collection path from the current request is used so engine
+        # mounting and path-scoped tenancy are automatically preserved.
+        # The literal string "__ID__" is a placeholder; the JS controller
+        # replaces it with the dragged card's record id at drop time.
+        def kanban_move_url_template
+          base = request.path.delete_suffix("/")
+          "#{base}/__ID__/kanban_move"
         end
 
         # Returns the turbo-frame element id for a column.

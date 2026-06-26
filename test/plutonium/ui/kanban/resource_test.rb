@@ -155,10 +155,64 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     # to check the outer wrapper element.
     resource.define_singleton_method(:render_column_frame) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
+    stub_kanban_move_url_template(resource)
 
     html = resource.call
 
     assert_match(/data-controller="kanban"/, html)
+  end
+
+  def test_wrapper_has_move_url_template_value
+    col = build_col(:todo)
+    resource = build_resource(columns: [col])
+    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_realtime_subscription) { }
+    stub_request(resource, path: "/admin/tasks", query_params: {})
+
+    html = resource.call
+
+    assert_match(/data-kanban-move-url-template-value=/, html)
+  end
+
+  def test_move_url_template_contains_id_placeholder
+    col = build_col(:todo)
+    resource = build_resource(columns: [col])
+    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_realtime_subscription) { }
+    stub_request(resource, path: "/admin/tasks", query_params: {})
+
+    html = resource.call
+
+    assert_match(/__ID__/, html)
+    assert_match(%r{__ID__/kanban_move}, html)
+  end
+
+  def test_move_url_template_uses_request_path
+    col = build_col(:todo)
+    resource = build_resource(columns: [col])
+    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_realtime_subscription) { }
+    stub_request(resource, path: "/admin/tasks", query_params: {})
+
+    html = resource.call
+
+    assert_match(%r{/admin/tasks/__ID__/kanban_move}, html)
+  end
+
+  def test_kanban_move_url_template_method
+    col = build_col(:todo)
+    resource = build_resource(columns: [col])
+    stub_request(resource, path: "/admin/tasks", query_params: {})
+
+    assert_equal "/admin/tasks/__ID__/kanban_move", resource.send(:kanban_move_url_template)
+  end
+
+  def test_kanban_move_url_template_strips_trailing_slash
+    col = build_col(:todo)
+    resource = build_resource(columns: [col])
+    stub_request(resource, path: "/admin/tasks/", query_params: {})
+
+    assert_equal "/admin/tasks/__ID__/kanban_move", resource.send(:kanban_move_url_template)
   end
 
   # ---------------------------------------------------------------------------
@@ -202,6 +256,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: true)
     resource.define_singleton_method(:render_column_frame) { |_col| }
+    stub_kanban_move_url_template(resource)
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -215,6 +270,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: false)
     resource.define_singleton_method(:render_column_frame) { |_col| }
+    stub_kanban_move_url_template(resource)
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -257,6 +313,12 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def stub_request(component, path:, query_params:)
     fake_request = Struct.new(:path, :query_parameters).new(path, query_params)
     component.define_singleton_method(:request) { fake_request }
+  end
+
+  # Stubs out kanban_move_url_template so tests that don't care about URL
+  # generation don't need a full request stub.
+  def stub_kanban_move_url_template(component, template: "/tasks/__ID__/kanban_move")
+    component.define_singleton_method(:kanban_move_url_template) { template }
   end
 
   def stub_record
