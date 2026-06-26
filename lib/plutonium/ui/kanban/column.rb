@@ -41,7 +41,13 @@ module Plutonium
         # Set by the controller when column.add? is true and the policy permits
         # create. Carries kanban_column=<key> so the new form pre-fills the
         # grouping attribute via apply_kanban_column_defaults!.
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil)
+        #
+        # card_fields: optional slot-layout hash from the board's card_fields
+        # declaration (e.g. { header: :title, meta: [:status] }).  Threaded
+        # through to each Kanban::Card (and ultimately Grid::Card) so it
+        # overrides the resource definition's grid_fields for every card in the
+        # column.  nil means "use the definition's grid_fields" (default).
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil)
           @column = column
           @cards = cards
           @total = total
@@ -50,6 +56,7 @@ module Plutonium
           @resource_fields = resource_fields
           @column_action_data = column_action_data
           @column_add_url = column_add_url
+          @card_fields = card_fields
         end
 
         def view_template
@@ -189,7 +196,8 @@ module Plutonium
               record,
               column_key: column.key,
               resource_definition: resource_definition,
-              resource_fields: resource_fields
+              resource_fields: resource_fields,
+              card_fields: @card_fields
             )
           end
         end

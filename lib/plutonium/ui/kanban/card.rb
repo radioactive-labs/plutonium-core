@@ -16,13 +16,17 @@ module Plutonium
       # delegated to Plutonium::UI::Grid::Card which already handles slots,
       # policy-gated actions, and the row-click controller.
       class Card < Plutonium::UI::Component::Base
-        attr_reader :record, :column_key, :resource_definition, :resource_fields
+        attr_reader :record, :column_key, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, column_key:, resource_definition:, resource_fields:)
+        def initialize(record, column_key:, resource_definition:, resource_fields:, card_fields: nil)
           @record = record
           @column_key = column_key
           @resource_definition = resource_definition
           @resource_fields = resource_fields
+          # Optional slot-layout override from the board's card_fields declaration.
+          # Threaded through to Grid::Card so it takes precedence over the
+          # resource definition's grid_fields.  nil means use the definition.
+          @card_fields = card_fields
         end
 
         def view_template
@@ -45,7 +49,8 @@ module Plutonium
           render Plutonium::UI::Grid::Card.new(
             record,
             resource_definition: resource_definition,
-            resource_fields: resource_fields
+            resource_fields: resource_fields,
+            card_fields: @card_fields
           )
         end
       end

@@ -70,7 +70,12 @@ module Plutonium
           from    = columns.find { |c| c.key.to_s == params[:from_column].to_s }
           to      = columns.find { |c| c.key.to_s == params[:to_column].to_s }
 
-          unless from && to && to.accepts?(from.key) && !from.locked?
+          # accepts_record? evaluates Proc accepts: against the actual record
+          # (returning the Proc's boolean result) while delegating to accepts?
+          # semantics for true/false/Array values.  This is the server-side
+          # authority; the client-side data-kanban-accepts attribute (which
+          # treats Proc as "all") is only a drop-hint.
+          unless from && to && to.accepts_record?(record, from.key) && !from.locked?
             return render_kanban_rejection(params[:from_column])
           end
 
@@ -275,7 +280,8 @@ module Plutonium
             resource_definition: current_definition,
             resource_fields: permitted_attributes_for("index"),
             column_action_data:,
-            column_add_url:
+            column_add_url:,
+            card_fields: board.card_fields
           )
           view_context.render(component).html_safe
         end

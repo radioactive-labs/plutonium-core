@@ -285,6 +285,61 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
     refute_match(/data-kanban-action/, html)
   end
 
+  # ---------------------------------------------------------------------------
+  # card_fields threading — Kanban::Column → Kanban::Card
+  #
+  # Kanban::Column receives card_fields from the controller and must thread it
+  # through to each Kanban::Card it constructs in render_cards.
+  # We capture the Grid::Card that Kanban::Card passes to `render` (via the
+  # card's own render seam) to verify card_fields reaches Grid::Card.
+  # ---------------------------------------------------------------------------
+
+  def test_card_fields_threaded_to_kanban_card
+    # Verify that card_fields stored on the Column component is passed
+    # through to each Kanban::Card constructed in render_cards.
+    card_fields = {header: :title, meta: [:status]}
+    col = build_column(:todo)
+    record = stub_records(1).first
+    component = Plutonium::UI::Kanban::Column.new(
+      column: col,
+      cards: [record],
+      total: 1,
+      per_column: 10,
+      resource_definition: nil,
+      resource_fields: [],
+      card_fields: card_fields
+    )
+
+    captured_card_fields = []
+    component.define_singleton_method(:render) do |c|
+      # c is a Kanban::Card; grab its card_fields
+      captured_card_fields << c.card_fields if c.respond_to?(:card_fields)
+    end
+    component.send(:render_cards)
+
+    assert_equal 1, captured_card_fields.size,
+      "render_cards should render exactly one Kanban::Card for the single record"
+    assert_equal card_fields, captured_card_fields.first,
+      "card_fields must be threaded from Column to Kanban::Card"
+  end
+
+  def test_nil_card_fields_threaded_to_kanban_card
+    # When card_fields is nil (board has no card_fields declaration) the nil
+    # must still be threaded so Grid::Card falls back to defined_grid_fields.
+    col = build_column(:todo)
+    record = stub_records(1).first
+    component = build_component(col, cards: [record], total: 1, per_column: 10)
+
+    captured_card_fields = [:sentinel]  # anything non-nil as initial state
+    component.define_singleton_method(:render) do |c|
+      captured_card_fields = [c.card_fields] if c.respond_to?(:card_fields)
+    end
+    component.send(:render_cards)
+
+    assert_equal [nil], captured_card_fields,
+      "nil card_fields must be threaded so Grid::Card uses the definition fallback"
+  end
+
   private
 
   def build_column(key, **opts)

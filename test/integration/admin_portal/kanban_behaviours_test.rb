@@ -25,10 +25,10 @@ require "test_helper"
 #      on the wrapper) shows one and hides the other.
 #
 # The dummy Task board (TaskDefinition) uses:
-#   :todo  (role :backlog)  — accepts: true (all), locked: false
-#   :doing (wip: 3)         — accepts: true (all), locked: false
-#   :done  (role :done,     — accepts: [:doing],   locked: false
-#           accepts: [:doing], collapsed: true by role)
+#   :todo  (role :backlog)  — accepts: true (all),          locked: false
+#   :doing (wip: 3)         — accepts: true (all),          locked: false
+#   :done  (role :done,     — accepts: Proc (per-card),     locked: false
+#           collapsed: true by role) — Proc evaluates task.status == "doing"
 #
 # All tests are server-side only (ActionDispatch::IntegrationTest); no browser
 # required for JS behaviour verification.
@@ -52,11 +52,14 @@ class AdminPortal::KanbanBehavioursTest < ActionDispatch::IntegrationTest
     assert_match(/data-kanban-accepts="all"/, response.body)
   end
 
-  test "restricted column carries data-kanban-accepts with allowed source keys" do
-    # :done column has accepts: [:doing], so only cards from :doing may be dropped.
+  test "proc accepts column carries data-kanban-accepts=all for client-side hints" do
+    # :done column uses accepts: Proc (per-card predicate).  The client-side
+    # hint is "all" — the Stimulus controller doesn't restrict drops visually
+    # because the server evaluates the Proc per-card in the move handler.
+    # This prevents a false "no drop" flash on cards that the Proc would allow.
     get "/admin/tasks?view=kanban&column=done"
     assert_response :success
-    assert_match(/data-kanban-accepts="doing"/, response.body)
+    assert_match(/data-kanban-accepts="all"/, response.body)
   end
 
   test "doing column carries data-kanban-accepts=all" do

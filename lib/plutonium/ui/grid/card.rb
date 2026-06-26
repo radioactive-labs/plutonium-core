@@ -8,12 +8,13 @@ module Plutonium
       # `grid_fields` on the resource definition. Each slot is optional;
       # `header` falls back to `record.to_label` when undeclared.
       class Card < Plutonium::UI::Component::Base
-        attr_reader :record, :resource_definition, :resource_fields
+        attr_reader :record, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, resource_definition:, resource_fields: nil)
+        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil)
           @record = record
           @resource_definition = resource_definition
           @resource_fields = resource_fields
+          @card_fields = card_fields
         end
 
         def view_template
@@ -32,7 +33,12 @@ module Plutonium
 
         private
 
-        def slots = resource_definition.defined_grid_fields
+        # Returns the slot hash used for rendering.
+        # When the kanban board declares `card_fields`, it is passed in
+        # explicitly and takes precedence over the resource definition's
+        # `defined_grid_fields`.  A nil card_fields falls back to the
+        # definition, which is the default for the grid view.
+        def slots = @card_fields || resource_definition.defined_grid_fields
 
         # ---------------------------------------------------------------
         # Layout shells

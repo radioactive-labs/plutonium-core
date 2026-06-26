@@ -34,12 +34,33 @@ module Plutonium
       def add? = !!@add
       def locked? = @locked
 
+      # Column-level accepts check — used for client-side drop hints and as the
+      # first gate in the move handler (before the record is needed).
+      # Proc accepts: is treated as permissive at the column level; call
+      # accepts_record? with the actual record to evaluate the predicate.
       def accepts?(source_key)
         case @accepts
         when Array then @accepts.include?(source_key)
         when true, false then @accepts
         # Proc/predicate case: permit at the column level here; the move handler
-        # evaluates the predicate per-card later with the actual record.
+        # evaluates the predicate per-card via accepts_record? with the actual record.
+        else true
+        end
+      end
+
+      # Per-card accepts check — evaluates a Proc accepts: against the actual
+      # record.  Called by the move handler after the record is loaded.
+      #
+      # Convention for Proc accepts:
+      #   accepts: ->(card) { … }   # receives the record, returns true/false
+      #
+      # For non-Proc values the behaviour matches accepts?(source_key) exactly,
+      # so the move handler can unconditionally switch to accepts_record?.
+      def accepts_record?(record, source_key)
+        case @accepts
+        when Array then @accepts.include?(source_key)
+        when true, false then @accepts
+        when Proc then @accepts.call(record)
         else true
         end
       end
