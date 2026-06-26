@@ -305,7 +305,15 @@ module Plutonium
           column = columns.find { |c| c.key.to_s == params[:kanban_column].to_s }
           return unless column&.add?
 
-          seed_attrs = kanban_column_on_drop_seed(column)
+          # A raising on_drop must not 500 the new form — degrade to an unseeded
+          # form so the user can still create the record (and set the grouping
+          # field manually).
+          seed_attrs = begin
+            kanban_column_on_drop_seed(column)
+          rescue => e
+            Rails.logger.warn { "kanban quick-add seed failed for column #{column.key}: #{e.message}" }
+            return
+          end
           return if seed_attrs.blank?
 
           # Inject into params (indifferent access — string key is fine).
@@ -317,6 +325,13 @@ module Plutonium
         # Runs on_drop against a sentinel record that intercepts save/update!
         # calls so no row is written to the DB. Returns the attribute changes
         # the on_drop block would have applied (e.g. {"status" => "todo"}).
+        #
+        # NOTE: this only stubs save/save!/update/update! on the sentinel record.
+        # An on_drop that has external side effects (enqueuing jobs, API calls,
+        # touching OTHER records) would fire those side effects on every "+ Add"
+        # click, since they bypass the stubbed methods. This is acceptable for
+        # the common `attr = value` / `update!(attr: value)` pattern but is a
+        # footgun for exotic on_drop callbacks.
         def kanban_column_on_drop_seed(column)
           return {} unless column.on_drop
 
