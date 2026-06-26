@@ -25,6 +25,12 @@ module Plutonium
           @board = board
           @grouped_data = grouped_data
           @resource_definition = resource_definition
+          # TODO (Tasks 6/10): resource_fields arrives ALREADY resolved — the
+          # column endpoint / index page is responsible for the
+          # `board.card_fields || definition.grid_fields` fallback before
+          # constructing this component. Kanban::Resource (and the Card it
+          # eventually builds) just receives the final field list and renders
+          # it; it does not resolve card_fields itself.
           @resource_fields = resource_fields
         end
 

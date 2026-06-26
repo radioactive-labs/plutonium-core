@@ -187,7 +187,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     html = resource.call
 
-    assert_match(/>2</, html, "card count should appear in header badge")
+    assert_match(/pu-badge[^"]*">\s*2\s*</, html, "card count should appear in header badge")
   end
 
   # ---------------------------------------------------------------------------
