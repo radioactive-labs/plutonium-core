@@ -12,10 +12,15 @@ module Plutonium
         columns = resolve_columns(board, context)
         pos = board.position_config
         columns.map do |col|
-          scoped = apply_scope(relation, col.scope, context)
+          scoped = apply_scope(relation, col.scope)
           ordered = pos.order(scoped)
-          total = ordered.count
-          cards = board.per_column ? ordered.limit(board.per_column).to_a : ordered.to_a
+          if board.per_column
+            total = ordered.count
+            cards = ordered.limit(board.per_column).to_a
+          else
+            cards = ordered.to_a
+            total = cards.size
+          end
           {column: col, cards: cards, total: total}
         end
       end
@@ -33,13 +38,12 @@ module Plutonium
       #   Symbol → relation.public_send(sym)   (named scope)
       #   Proc   → relation.instance_exec(&scope) (inline lambda, e.g. -> { where(status: "todo") })
       #   nil    → relation unchanged
-      #   other  → relation.merge(scope)
-      def apply_scope(relation, scope, context)
+      def apply_scope(relation, scope)
         case scope
         when Symbol then relation.public_send(scope)
         when Proc   then relation.instance_exec(&scope)
         when nil    then relation
-        else relation.merge(scope)
+        else raise ArgumentError, "Unsupported column scope: #{scope.inspect} (expected Symbol, Proc, or nil)"
         end
       end
     end

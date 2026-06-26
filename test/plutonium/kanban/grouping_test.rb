@@ -137,6 +137,15 @@ module Plutonium
         assert_equal 2, result[0][:total]
       end
 
+      def test_unsupported_scope_type_raises_argument_error
+        board = DSL.build { column :bad, scope: 42 }
+
+        error = assert_raises(ArgumentError) do
+          Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
+        end
+        assert_match(/Unsupported column scope/, error.message)
+      end
+
       # ------------------------------------------------------------------ #
       # Ordering — position overrides any prior ordering (uses reorder)      #
       # ------------------------------------------------------------------ #
