@@ -19,15 +19,24 @@ module Plutonium
       # handlers (interactive bulk actions). The buttons carry data-kanban-action
       # and data-kanban-column attributes for Stimulus targeting.
       class Column < Plutonium::UI::Component::Base
+        include Phlex::Rails::Helpers::LinkTo
+
         attr_reader :column, :cards, :total, :per_column, :resource_definition, :resource_fields
 
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:)
+        # column_action_data: array of {action: Plutonium::Kanban::Action, ids: [Integer, ...]}
+        # Resolved by the controller (KanbanActions#render_kanban_column_html) and
+        # threaded here so the component can render real bulk-action links without
+        # needing to re-query the DB.  Defaults to [] when the component is
+        # constructed outside of a controller context (e.g., tests or the board
+        # shell which renders column frames without card data).
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [])
           @column = column
           @cards = cards
           @total = total
           @per_column = per_column
           @resource_definition = resource_definition
           @resource_fields = resource_fields
+          @column_action_data = column_action_data
         end
 
         def view_template
@@ -52,6 +61,7 @@ module Plutonium
                      "[writing-mode:vertical-lr] rotate-180",
             ) { plain column.label }
             span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
+            render_column_actions if column.actions.any?
           end
         end
 
@@ -136,25 +146,44 @@ module Plutonium
         end
 
         # ---------------------------------------------------------------
-        # Column action slot (Task 8 hook)
+        # Column action slot
         # ---------------------------------------------------------------
 
-        # Renders placeholder buttons for each column action. Task 8 replaces
-        # these with fully-wired interactive bulk action handlers. The data
-        # attributes are the targeting seam for the Stimulus controller.
+        # Renders bulk-action links for each column action.
+        #
+        # Each link targets GET /resources/bulk_actions/:key?ids[]=…, which is
+        # the existing interactive_bulk_action route.  The action is only rendered
+        # when:
+        #   1. The resolved action is registered in defined_actions (auto-registered
+        #      by Definition::IndexViews.kanban at class-load time).
+        #   2. current_policy.allowed_to?(:"#{key}?") returns true.
+        #
+        # The bulk endpoint re-authorizes each record individually, so this
+        # check is a display-only gate — not the security boundary.
         def render_column_actions
           div(class: "flex items-center gap-1 shrink-0") do
-            column.actions.each do |action|
-              button(
-                type: "button",
+            @column_action_data.each do |entry|
+              col_action = entry[:action]
+              ids = entry[:ids]
+
+              registered = current_definition.defined_actions[col_action.key]
+              next unless registered&.permitted_by?(current_policy)
+
+              url = resource_url_for(resource_class, interaction: col_action.key, ids: ids)
+              label = col_action.label || col_action.key.to_s.humanize
+              data_attrs = {
+                kanban_action: col_action.key.to_s,
+                kanban_column: column.key.to_s
+              }
+              data_attrs[:turbo_confirm] = col_action.confirmation if col_action.confirmation
+
+              link_to(
+                url,
                 class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
-                data: {
-                  kanban_action: action.key.to_s,
-                  kanban_column: column.key.to_s
-                },
-                title: action.label || action.key.to_s.humanize
+                title: label,
+                data: data_attrs
               ) do
-                plain action.label || action.key.to_s.humanize
+                plain label
               end
             end
           end

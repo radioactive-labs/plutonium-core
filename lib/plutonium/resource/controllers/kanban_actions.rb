@@ -238,15 +238,41 @@ module Plutonium
           # index/read attribute set rather than the action name. This keeps the
           # move action from needing a `permitted_attributes_for_kanban_move`
           # method — kanban deliberately has no permitted-attributes concept.
+          column_action_data = column.actions.map do |col_action|
+            {action: col_action, ids: kanban_column_action_ids(column, on: col_action.on)}
+          end
+
           component = Plutonium::UI::Kanban::Column.new(
             column:,
             cards:,
             total:,
             per_column: board.per_column,
             resource_definition: current_definition,
-            resource_fields: permitted_attributes_for("index")
+            resource_fields: permitted_attributes_for("index"),
+            column_action_data:
           )
           view_context.render(component).html_safe
+        end
+
+        # Returns the primary-key ids for a column action based on `on:` scope.
+        #
+        # on: :all     → ids of ALL records matching the column scope within
+        #                 the current kanban_base_relation (ignores per_column).
+        # on: :visible → ids of the rendered, per_column-capped subset (applies
+        #                 position ordering + limit, then plucks ids).
+        #
+        # Any other value falls back to :all behaviour.
+        def kanban_column_action_ids(column, on:)
+          scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
+          case on.to_sym
+          when :visible
+            board = current_kanban_board
+            ordered = board.position_config.order(scoped)
+            limited = board.per_column ? ordered.limit(board.per_column) : ordered
+            limited.pluck(resource_class.primary_key)
+          else # :all and any unknown value
+            scoped.pluck(resource_class.primary_key)
+          end
         end
 
         # Renders a 422 turbo stream response that re-renders the source column

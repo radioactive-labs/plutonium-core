@@ -88,9 +88,38 @@ module Plutonium
         # Declares a kanban board for this resource and enables the :kanban
         # index view (mirrors how grid_fields enables :grid). The block is the
         # kanban DSL, compiled lazily into a Plutonium::Kanban::Board later.
+        #
+        # ## Column action auto-registration
+        #
+        # Each column action declared inside the block is automatically registered
+        # as an interactive resource action (via `action name, interaction:`) so
+        # the existing bulk_actions/:key route resolves and
+        # `interactive_resource_actions` look-up succeeds at request time.
+        #
+        # Only STATIC columns (declared with `column :key …`) can be introspected
+        # at class-load time. Dynamic boards (`columns do … end`) must declare
+        # any column-action interactions as top-level definition `action` calls
+        # separately (the constraint is structural: the block is only evaluated at
+        # request time with a live context object, so its columns are unknown here).
         def kanban(&block)
           self.defined_kanban_block = block
           self.defined_index_views = defined_index_views + [:kanban] unless defined_index_views.include?(:kanban)
+
+          # Eagerly compile the board to extract static column actions and
+          # register each one as an interactive resource action. This is safe at
+          # class-load time: the board DSL never accesses the database.
+          board = Plutonium::Kanban::DSL.build(&block)
+          board.columns.each do |col|
+            col.actions.each do |col_action|
+              action(
+                col_action.key,
+                interaction: col_action.interaction,
+                label: col_action.label,
+                icon: col_action.icon,
+                confirmation: col_action.confirmation
+              )
+            end
+          end
         end
       end
 
