@@ -106,8 +106,14 @@ module Plutonium
       b = @item_class.create!(status: "todo") # position 2.0
       c = @item_class.create!(status: "todo") # position 3.0
 
+      # Move b out of the way first so the assertion proves real movement,
+      # not just that b happened to already sit at the midpoint of a and c.
+      b.update_column(:position, 99.0)
+
       b.reposition!(prev_record: a, next_record: c)
-      assert_in_delta 2.0, b.reload.position.to_f, 1e-3
+
+      assert b.reload.position.to_f > a.position.to_f, "b should land after a"
+      assert b.position.to_f < c.position.to_f, "b should land before c"
     end
 
     def test_reposition_to_front_with_nil_prev
@@ -171,6 +177,39 @@ module Plutonium
       assert_equal 2.0, todo2.reload.position.to_f
       assert_equal 1.0, done1.reload.position.to_f
       assert_equal 2.0, done2.reload.position.to_f
+    end
+
+    def test_backfill_numbers_globally_when_no_scope
+      ActiveRecord::Base.with_connection do |c|
+        c.create_table(:positioning_test_globals, force: true) do |t|
+          t.decimal :position, precision: 20, scale: 10
+          t.timestamps
+        end
+      end
+
+      global_class = Class.new(ActiveRecord::Base) do
+        self.table_name = "positioning_test_globals"
+        include Plutonium::Positioning
+        positioned_on :position
+      end
+
+      t0 = Time.current
+      first = global_class.create!(created_at: t0)
+      second = global_class.create!(created_at: t0 + 1)
+      third = global_class.create!(created_at: t0 + 2)
+
+      # Scramble positions so backfill has something to fix
+      global_class.update_all(position: 99.0)
+
+      global_class.backfill_positions!(order: :created_at)
+
+      assert_equal 1.0, first.reload.position.to_f
+      assert_equal 2.0, second.reload.position.to_f
+      assert_equal 3.0, third.reload.position.to_f
+    ensure
+      ActiveRecord::Base.with_connection do |c|
+        c.drop_table(:positioning_test_globals, if_exists: true)
+      end
     end
   end
 end

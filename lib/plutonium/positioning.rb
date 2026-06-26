@@ -63,8 +63,10 @@ module Plutonium
       def backfill_positions!(order: :created_at)
         groups = positioning_scope_attr ? all.group_by(&positioning_scope_attr) : {nil => all.to_a}
         groups.each_value do |rows|
-          rows.sort_by { |r| r.public_send(order) }.each_with_index do |row, i|
-            row.update_column(positioning_column, (i + 1).to_f)
+          ActiveRecord::Base.transaction do
+            rows.sort_by { |r| r.public_send(order) }.each_with_index do |row, i|
+              row.update_column(positioning_column, (i + 1).to_f)
+            end
           end
         end
       end
@@ -108,8 +110,10 @@ module Plutonium
 
     def rebalance_scope_group!
       col = self.class.positioning_column
-      positioning_group_relation.order(col).each_with_index do |row, i|
-        row.update_column(col, (i + 1).to_f)
+      ActiveRecord::Base.transaction do
+        positioning_group_relation.order(col).each_with_index do |row, i|
+          row.update_column(col, (i + 1).to_f)
+        end
       end
     end
   end
