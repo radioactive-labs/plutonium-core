@@ -171,7 +171,7 @@ end
 | `role:` | `:backlog`, `:done` | `nil` | Preset shorthand (see below) |
 | `collapsed:` | Boolean | `false` | Start collapsed |
 | `add:` | Boolean | `false` | Show `+ Add` quick-add button |
-| `accepts:` | `true`, `false`, or Array of keys | `true` | Which source column keys are accepted. `true` = all, `false` = none, `[:doing]` = only from `:doing`. A Proc is also accepted (evaluated per-card server-side) |
+| `accepts:` | `true`, `false`, Array of keys, or Proc | `true` | Which drops are accepted. `true` = all, `false` = none, `[:doing]` = only from `:doing`. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time and returns a boolean (e.g. `->(task) { task.status == "doing" }`) |
 | `locked:` | Boolean | `false` | Prevent dragging cards **out of** this column |
 | `wip:` | Integer | `nil` | Work-in-progress limit. Cross-column drops that would exceed this count are rejected |
 
@@ -331,16 +331,25 @@ The index page renders a view-switcher toggle when more than one index view is a
 
 ```ruby
 class TaskDefinition < ResourceDefinition
-  default_index_view :kanban
-
   kanban do
     # ...
   end
+
+  # Call AFTER the kanban block — :kanban isn't a valid default until
+  # `kanban` has enabled the view. Reversing the order raises ArgumentError
+  # at class load.
+  default_index_view :kanban
 end
 ```
 
-To make the kanban board the **only** view (hide the switcher):
+To make the kanban board the **only** view (hide the switcher), call `index_views :kanban` after the block:
 
 ```ruby
-index_views :kanban
+class TaskDefinition < ResourceDefinition
+  kanban do
+    # ...
+  end
+
+  index_views :kanban   # drop :table/:grid; kanban is the sole view
+end
 ```

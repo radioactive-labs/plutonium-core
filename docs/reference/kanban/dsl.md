@@ -137,9 +137,9 @@ card_fields(
 )
 ```
 
-Override which fields appear on kanban cards using the same slot names as `grid_fields` (`:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer`).
+Overrides the slot layout for every kanban card on this board, using the same slot names as `grid_fields` (`:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer`). The kanban card renderer resolves its slots as `card_fields || definition.grid_fields`, so a board-level `card_fields` takes precedence over the resource's `grid_fields`.
 
-When not set, cards display the resource's permitted index-view attributes (the same fields visible in the table view).
+When `card_fields` is not set, cards fall back to the resource definition's `grid_fields`. If neither is declared, the card renders the default header-only layout.
 
 ---
 
@@ -177,7 +177,7 @@ end
 | `role:` | `:backlog`, `:done` | `nil` | Applies a preset (see below) |
 | `collapsed:` | Boolean | `false` | Column starts collapsed (a thin strip with the label rotated) |
 | `add:` | Boolean | `false` | Show a `+ Add` quick-add button |
-| `accepts:` | `true`, `false`, Array, or Proc | `true` | Drop source policy. `true` accepts any source column. `false` rejects all drops (display-only column). An Array of column key symbols accepts only those sources. A Proc is evaluated per-card server-side (`accepts?(source_key)` returns `true` for the column-level check; per-card evaluation happens in the move handler) |
+| `accepts:` | `true`, `false`, Array, or Proc | `true` | Drop policy. `true` accepts any source column. `false` rejects all drops (display-only column). An Array of column key symbols accepts only those sources. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time (via `accepts_record?`) and returns a boolean — e.g. `->(task) { task.status == "doing" }`. The client-side drag hint treats a Proc column as permissive (`data-kanban-accepts="all"`) since the browser can't run the Proc; the server enforces it precisely on every move |
 | `locked:` | Boolean | `false` | Prevent dragging cards **out of** this column |
 | `wip:` | Integer | `nil` | WIP limit. Reject cross-column drops when `dest_count + 1 > wip`. Has no effect on same-column reordering |
 
