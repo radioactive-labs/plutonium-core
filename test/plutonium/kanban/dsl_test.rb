@@ -1,0 +1,357 @@
+# frozen_string_literal: true
+
+require "test_helper"
+require "plutonium/kanban"
+
+module Plutonium
+  module Kanban
+    class DslTest < Minitest::Test
+      # ------------------------------------------------------------------ #
+      # DSL.build returns a Board                                            #
+      # ------------------------------------------------------------------ #
+
+      def test_build_with_no_block_returns_board
+        board = DSL.build
+        assert_instance_of Board, board
+      end
+
+      def test_build_with_block_returns_board
+        board = DSL.build { column :todo }
+        assert_instance_of Board, board
+      end
+
+      # ------------------------------------------------------------------ #
+      # Columns — declaration order, basic attributes                        #
+      # ------------------------------------------------------------------ #
+
+      def test_columns_keep_declaration_order
+        board = DSL.build do
+          column :todo
+          column :in_progress
+          column :done
+        end
+        assert_equal %i[todo in_progress done], board.columns.map(&:key)
+      end
+
+      def test_column_key_is_a_symbol
+        board = DSL.build { column :todo }
+        assert_equal :todo, board.columns.first.key
+      end
+
+      def test_column_label_defaults_to_titleized_key
+        board = DSL.build { column :in_progress }
+        assert_equal "In Progress", board.columns.first.label
+      end
+
+      def test_column_label_can_be_overridden
+        board = DSL.build { column :todo, label: "To Do" }
+        assert_equal "To Do", board.columns.first.label
+      end
+
+      def test_column_color_is_nil_by_default
+        board = DSL.build { column :todo }
+        assert_nil board.columns.first.color
+      end
+
+      def test_column_color_can_be_set
+        board = DSL.build { column :todo, color: :blue }
+        assert_equal :blue, board.columns.first.color
+      end
+
+      def test_column_wip_is_nil_by_default
+        board = DSL.build { column :todo }
+        assert_nil board.columns.first.wip
+      end
+
+      def test_column_wip_can_be_set
+        board = DSL.build { column :todo, wip: 5 }
+        assert_equal 5, board.columns.first.wip
+      end
+
+      # ------------------------------------------------------------------ #
+      # scope / on_drop — Proc or Symbol stored verbatim                     #
+      # ------------------------------------------------------------------ #
+
+      def test_scope_proc_stored_verbatim
+        my_scope = ->(r) { r.where(status: :todo) }
+        board = DSL.build { column :todo, scope: my_scope }
+        assert_same my_scope, board.columns.first.scope
+      end
+
+      def test_scope_symbol_stored_verbatim
+        board = DSL.build { column :todo, scope: :active }
+        assert_equal :active, board.columns.first.scope
+      end
+
+      def test_on_drop_proc_stored_verbatim
+        my_drop = ->(record, col) { record.update!(status: col) }
+        board = DSL.build { column :todo, on_drop: my_drop }
+        assert_same my_drop, board.columns.first.on_drop
+      end
+
+      def test_on_drop_symbol_stored_verbatim
+        board = DSL.build { column :todo, on_drop: :handle_drop }
+        assert_equal :handle_drop, board.columns.first.on_drop
+      end
+
+      # ------------------------------------------------------------------ #
+      # Role presets                                                          #
+      # ------------------------------------------------------------------ #
+
+      def test_role_backlog_sets_add_true
+        board = DSL.build { column :backlog, role: :backlog }
+        col = board.columns.first
+        assert col.add?, "expected add? to be true for :backlog role"
+      end
+
+      def test_role_done_sets_color_green
+        board = DSL.build { column :done, role: :done }
+        col = board.columns.first
+        assert_equal :green, col.color
+      end
+
+      def test_role_done_sets_collapsed_true
+        board = DSL.build { column :done, role: :done }
+        col = board.columns.first
+        assert col.collapsed?, "expected collapsed? to be true for :done role"
+      end
+
+      def test_explicit_color_overrides_role_preset
+        board = DSL.build { column :done, role: :done, color: :purple }
+        assert_equal :purple, board.columns.first.color
+      end
+
+      def test_explicit_collapsed_overrides_role_preset
+        board = DSL.build { column :done, role: :done, collapsed: false }
+        refute board.columns.first.collapsed?
+      end
+
+      def test_explicit_add_overrides_role_preset
+        board = DSL.build { column :backlog, role: :backlog, add: false }
+        refute board.columns.first.add?
+      end
+
+      # ------------------------------------------------------------------ #
+      # Column-scoped actions                                                 #
+      # ------------------------------------------------------------------ #
+
+      def test_column_action_is_compiled
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask
+          end
+        end
+        col = board.columns.first
+        assert_equal 1, col.actions.size
+        assert_equal :archive, col.actions.first.key
+      end
+
+      def test_column_action_stores_interaction
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask
+          end
+        end
+        assert_equal :ArchiveTask, board.columns.first.actions.first.interaction
+      end
+
+      def test_column_action_defaults_on_to_all
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask
+          end
+        end
+        assert_equal :all, board.columns.first.actions.first.on
+      end
+
+      def test_column_action_custom_on
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask, on: :selected
+          end
+        end
+        assert_equal :selected, board.columns.first.actions.first.on
+      end
+
+      def test_column_action_optional_label
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask, label: "Archive it"
+          end
+        end
+        assert_equal "Archive it", board.columns.first.actions.first.label
+      end
+
+      def test_column_action_optional_icon
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask, icon: :trash
+          end
+        end
+        assert_equal :trash, board.columns.first.actions.first.icon
+      end
+
+      def test_column_action_optional_confirmation
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask, confirmation: "Are you sure?"
+          end
+        end
+        assert_equal "Are you sure?", board.columns.first.actions.first.confirmation
+      end
+
+      def test_multiple_actions_on_one_column
+        board = DSL.build do
+          column :todo do
+            action :archive, interaction: :ArchiveTask
+            action :delete, interaction: :DeleteTask
+          end
+        end
+        assert_equal %i[archive delete], board.columns.first.actions.map(&:key)
+      end
+
+      # ------------------------------------------------------------------ #
+      # Column#accepts?                                                       #
+      # ------------------------------------------------------------------ #
+
+      def test_accepts_defaults_to_true
+        board = DSL.build { column :todo }
+        assert board.columns.first.accepts?(:other)
+      end
+
+      def test_accepts_true_allows_any_key
+        board = DSL.build { column :todo, accepts: true }
+        assert board.columns.first.accepts?(:anything)
+      end
+
+      def test_accepts_false_rejects_any_key
+        board = DSL.build { column :todo, accepts: false }
+        refute board.columns.first.accepts?(:anything)
+      end
+
+      def test_accepts_array_includes
+        board = DSL.build { column :todo, accepts: [:in_progress, :backlog] }
+        assert board.columns.first.accepts?(:in_progress)
+        refute board.columns.first.accepts?(:done)
+      end
+
+      # ------------------------------------------------------------------ #
+      # Board-level options                                                   #
+      # ------------------------------------------------------------------ #
+
+      def test_per_column_default_nil
+        board = DSL.build {}
+        assert_nil board.per_column
+      end
+
+      def test_per_column_set
+        board = DSL.build { per_column 10 }
+        assert_equal 10, board.per_column
+      end
+
+      def test_realtime_defaults_false
+        board = DSL.build {}
+        refute board.realtime?
+      end
+
+      def test_realtime_can_be_set_true
+        board = DSL.build { realtime true }
+        assert board.realtime?
+      end
+
+      def test_card_fields_default_nil
+        board = DSL.build {}
+        assert_nil board.card_fields
+      end
+
+      def test_card_fields_stored
+        board = DSL.build { card_fields title: :name, body: :description }
+        assert_equal({title: :name, body: :description}, board.card_fields)
+      end
+
+      def test_lazy_defaults_true
+        board = DSL.build {}
+        assert board.lazy
+      end
+
+      def test_lazy_can_be_set_false
+        board = DSL.build { lazy false }
+        refute board.lazy
+      end
+
+      # ------------------------------------------------------------------ #
+      # Dynamic columns block                                                 #
+      # ------------------------------------------------------------------ #
+
+      def test_dynamic_columns_block_stored
+        blk = -> { [] }
+        board = DSL.build { columns(&blk) }
+        assert_equal blk, board.columns_block
+      end
+
+      def test_dynamic_true_when_columns_block_set
+        board = DSL.build { columns { [] } }
+        assert board.dynamic?
+      end
+
+      def test_dynamic_false_without_columns_block
+        board = DSL.build { column :todo }
+        refute board.dynamic?
+      end
+
+      # ------------------------------------------------------------------ #
+      # position_on — wired to Positioning::Config factories                 #
+      # ------------------------------------------------------------------ #
+
+      def test_default_position_config_is_config_default
+        board = DSL.build {}
+        assert_equal :position, board.position_config.attribute
+        refute board.position_config.disabled?
+      end
+
+      def test_position_on_attribute_uses_config_attribute_factory
+        board = DSL.build { position_on :rank }
+        assert_equal :rank, board.position_config.attribute
+        refute board.position_config.disabled?
+      end
+
+      def test_position_on_false_disables_positioning
+        board = DSL.build { position_on false }
+        assert board.position_config.disabled?
+      end
+
+      def test_position_on_with_block_stores_config
+        block_called = false
+        board = DSL.build do
+          position_on(:rank) { |_move| block_called = true }
+        end
+        assert_equal :rank, board.position_config.attribute
+        refute board.position_config.disabled?
+      end
+
+      # ------------------------------------------------------------------ #
+      # Behaviour flags                                                       #
+      # ------------------------------------------------------------------ #
+
+      def test_column_collapsed_defaults_false
+        board = DSL.build { column :todo }
+        refute board.columns.first.collapsed?
+      end
+
+      def test_column_add_defaults_false
+        board = DSL.build { column :todo }
+        refute board.columns.first.add?
+      end
+
+      def test_column_locked_defaults_false
+        board = DSL.build { column :todo }
+        refute board.columns.first.locked?
+      end
+
+      def test_column_locked_can_be_set
+        board = DSL.build { column :todo, locked: true }
+        assert board.columns.first.locked?
+      end
+    end
+  end
+end
