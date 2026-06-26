@@ -18,7 +18,7 @@ module Plutonium
     module IndexViews
       extend ActiveSupport::Concern
 
-      KNOWN_VIEWS = %i[table grid].freeze
+      KNOWN_VIEWS = %i[table grid kanban].freeze
       GRID_SLOTS = %i[image header subheader body meta footer].freeze
       GRID_LAYOUTS = %i[compact media].freeze
 
@@ -28,6 +28,7 @@ module Plutonium
         class_attribute :defined_grid_fields, default: {}, instance_accessor: false
         class_attribute :defined_grid_layout, default: :compact, instance_accessor: false
         class_attribute :defined_grid_columns, default: nil, instance_accessor: false
+        class_attribute :defined_kanban_block, default: nil, instance_accessor: false
       end
 
       class_methods do
@@ -83,6 +84,14 @@ module Plutonium
         def grid_columns(value)
           self.defined_grid_columns = Integer(value)
         end
+
+        # Declares a kanban board for this resource and enables the :kanban
+        # index view (mirrors how grid_fields enables :grid). The block is the
+        # kanban DSL, compiled lazily into a Plutonium::Kanban::Board later.
+        def kanban(&block)
+          self.defined_kanban_block = block
+          self.defined_index_views = defined_index_views + [:kanban] unless defined_index_views.include?(:kanban)
+        end
       end
 
       def defined_index_views = self.class.defined_index_views
@@ -90,6 +99,7 @@ module Plutonium
       def defined_grid_fields = self.class.defined_grid_fields
       def defined_grid_layout = self.class.defined_grid_layout
       def defined_grid_columns = self.class.defined_grid_columns
+      def defined_kanban_block = self.class.defined_kanban_block
     end
   end
 end
