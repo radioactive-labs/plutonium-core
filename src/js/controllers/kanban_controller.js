@@ -287,7 +287,12 @@ export default class extends Controller {
   }
 
   #saveCollapseState(key, collapsed) {
-    localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0")
+    // Safari private-browsing reports a 0-byte quota and throws
+    // QuotaExceededError on setItem. Swallow it so the toggle still works
+    // visually — it just won't persist across reloads in that mode.
+    try {
+      localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0")
+    } catch { /* private browsing: toggle still works, just won't persist */ }
   }
 
   // Derives a unique localStorage key from the resource collection path so

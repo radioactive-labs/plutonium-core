@@ -28579,7 +28579,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       });
     }
     #saveCollapseState(key, collapsed) {
-      localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0");
+      try {
+        localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0");
+      } catch {
+      }
     }
     // Derives a unique localStorage key from the resource collection path so
     // different boards (different resources / tenants) don't share state.
