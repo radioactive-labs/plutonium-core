@@ -27293,6 +27293,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     //======= Config
     configureUppy() {
+      const dashboardOptions = { inline: false, closeAfterFinish: true };
+      const dialog2 = this.element.closest("dialog");
+      if (dialog2) dashboardOptions.target = dialog2;
       this.uppy = new Uppy_default({
         restrictions: {
           maxFileSize: this.maxFileSizeValue,
@@ -27303,7 +27306,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           allowedFileTypes: this.allowedFileTypesValue,
           requiredMetaFields: this.requiredMetaFieldsValue
         }
-      }).use(Dashboard2, { inline: false, closeAfterFinish: true }).use(ImageEditor, { target: Dashboard2 });
+      }).use(Dashboard2, dashboardOptions).use(ImageEditor, { target: Dashboard2 });
       this.#configureUploader();
       this.#configureEventHandlers();
     }
@@ -27635,6 +27638,28 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       } else {
         this.passwordTargets.forEach((passwordTarget) => passwordTarget.type = "password");
       }
+    }
+  };
+
+  // src/js/controllers/password_sentinel_controller.js
+  var password_sentinel_controller_default = class extends Controller {
+    static values = { sentinel: String };
+    connect() {
+      this.armed = this.element.value === this.sentinelValue;
+    }
+    beforeinput(event) {
+      if (!this.armed) return;
+      event.preventDefault();
+      this.armed = false;
+      let next = "";
+      if (event.inputType === "insertText" && event.data != null) {
+        next = event.data;
+      } else if (event.inputType === "insertFromPaste" && event.dataTransfer) {
+        next = event.dataTransfer.getData("text");
+      }
+      this.element.value = next;
+      this.element.setSelectionRange(next.length, next.length);
+      this.element.dispatchEvent(new Event("input", { bubbles: true }));
     }
   };
 
@@ -28404,6 +28429,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
+    application2.register("password-sentinel", password_sentinel_controller_default);
     application2.register("sidebar", sidebar_controller_default);
     application2.register("resource-header", resource_header_controller_default);
     application2.register("nested-resource-form-fields", nested_resource_form_fields_controller_default);

@@ -175,6 +175,42 @@ render field(:avatar).wrapped do |f|
 end
 ```
 
+### Password & secret fields {#password-fields}
+
+`password_tag` renders a masking input that **never emits the stored value** into the DOM. A stored secret renders a fixed sentinel (masking both the value and its length); on submit:
+
+| field state | result |
+|---|---|
+| untouched (sentinel) | kept — the stored secret is left unchanged |
+| edited to a new value, then failed re-render | comes back **blank + `required`** so the user re-types it (a submitted secret is never echoed back) |
+| cleared, then failed re-render | comes back blank, **not** `required` — the clear may be intentional, so it's allowed to stand |
+| emptied | explicit clear (clear-by-blank) — the `required` guard only prevents an *accidental* blank submit |
+| typed | set as the new value |
+
+The sentinel is guarded client-side by the `password-sentinel` Stimulus controller: the first edit (a keystroke, paste, or **backspace**) wipes the whole field, so a partial edit can't corrupt the sentinel into a literal new password. New records and interaction forms (set-password, reset-password) render an honest empty field.
+
+**Automatic detection.** A field is masked automatically when its name:
+
+- equals `password`, `token`, or `salt`;
+- starts with `encrypted_`;
+- ends with `_password`, `_digest`, `_hash`, `_token`, `_key`, or `_salt`;
+- contains `secret`.
+
+This is a naming convenience, **not** a security guarantee — tune it per field:
+
+```ruby
+# Opt OUT: render the value as a normal, readable text input
+field :api_token,   as: :string      # a token the admin needs to copy
+field :content_hash, as: :string     # a checksum, not a secret
+field :public_key,  as: :string      # *_key matches, but a public key is not secret
+
+# Opt IN: mask a secret the heuristic still misses (e.g. no telltale name)
+field :recovery_phrase, as: :password
+```
+
+> [!WARNING]
+> The heuristic is name-based and best-effort. A secret column with an unconventional name (e.g. `recovery_phrase`, `pin`) still renders its value into the page unless you set `as: :password`. Audit secret-bearing columns explicitly.
+
 ### Wrapped vs unwrapped
 
 - `wrapped` — includes label, hint, and error rendering. Use for normal form fields.

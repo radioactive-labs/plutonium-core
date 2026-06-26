@@ -19,6 +19,7 @@ import AttachmentPreviewController from "./attachment_preview_controller.js"
 import AttachmentPreviewContainerController from "./attachment_preview_container_controller.js"
 import SidebarController from "./sidebar_controller.js"
 import PasswordVisibilityController from "./password_visibility_controller.js"
+import PasswordSentinelController from "./password_sentinel_controller.js"
 import RemoteModalController from "./remote_modal_controller.js"
 import KeyValueStoreController from "./key_value_store_controller.js"
 import BulkActionsController from "./bulk_actions_controller.js"
@@ -38,6 +39,7 @@ import DirtyFormGuardController from "./dirty_form_guard_controller.js"
 export default function (application) {
   // Register controllers here
   application.register("password-visibility", PasswordVisibilityController)
+  application.register("password-sentinel", PasswordSentinelController)
   application.register("sidebar", SidebarController)
   application.register("resource-header", ResourceHeaderController)
   application.register("nested-resource-form-fields", NestedResourceFormFieldsController)

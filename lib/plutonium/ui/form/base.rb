@@ -47,6 +47,13 @@ module Plutonium
           end
           alias_method :switch_tag, :toggle_tag
 
+          # Password / secret input that never renders the stored value.
+          # Routed to here for both explicit `as: :password` and every field
+          # inferred as a password (see Options::InferredTypes#infer_field_component).
+          def password_tag(**, &)
+            create_component(Components::Password, :password, **, &)
+          end
+
           def slim_select_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select")
             select_tag(**attributes, required: false, class!: "", &)

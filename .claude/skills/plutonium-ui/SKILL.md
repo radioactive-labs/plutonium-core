@@ -288,6 +288,17 @@ render field(:published_at).wrapped { |f| f.flatpickr_tag(min_date: Date.today, 
 render field(:avatar).wrapped       { |f| f.uppy_tag(allowed_file_types: %w[.jpg .png], max_file_size: 5.megabytes) }
 ```
 
+### Password & secret fields
+
+`password_tag` masks the stored value — it **never emits the secret into the DOM**. A stored secret renders a sentinel; an untouched submit keeps it, an edit-to-new-value then failed re-render comes back blank + `required` (re-type — secrets are never echoed back), a *cleared* field comes back blank but **not** `required` (the clear may be intentional), a deliberately emptied field clears it (clear-by-blank), a typed value sets it. The sentinel is guarded by the `password-sentinel` Stimulus controller — the first edit (incl. **backspace**) wipes the whole field so a partial edit can't corrupt it.
+
+Auto-detected by name: `password`/`token`/`salt`, `encrypted_*`, `*_password`/`*_digest`/`*_hash`/`*_token`/`*_key`/`*_salt`, or any name containing `secret`. A convenience, **not** a guarantee — odd-named secrets (`recovery_phrase`, `pin`) still leak unless masked explicitly.
+
+```ruby
+field :api_token,   as: :string     # opt OUT — show a readable value (token to copy, checksum)
+field :recovery_phrase, as: :password   # opt IN  — mask a secret the heuristic misses
+```
+
 ## Submit buttons
 
 Default `render_actions` produces the primary submit, plus an optional "Save and add another" / "Update and continue editing" secondary button.

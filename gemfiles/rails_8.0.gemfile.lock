@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.59.0)
+    plutonium (0.60.4)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
