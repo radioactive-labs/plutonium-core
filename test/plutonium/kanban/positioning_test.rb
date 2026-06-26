@@ -74,14 +74,6 @@ module Plutonium
       # ------------------------------------------------------------------ #
 
       def test_mode_a_order_calls_reorder_with_attribute
-        reordered_relation = Object.new
-        relation = Struct.new(:reorder_args) do
-          def reorder(*args)
-            Struct.new(:captured) { }.new(args)
-          end
-        end.new
-
-        # Use a plain spy relation
         spy = build_relation_spy
         Positioning::Config.default.order(spy)
         assert_equal [:position], spy.reorder_args
