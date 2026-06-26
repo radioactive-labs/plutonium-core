@@ -170,8 +170,8 @@ module Plutonium
         respond_to_wizard_result(runner, result)
       end
  
-      # DELETE (/:token) — discard run.
-      def wizard_discard
+      # DELETE (/:token) — cancel run.
+      def wizard_cancel
         require_wizard_authentication!
         runner = build_wizard_runner
         deny_wizard_resume_for_other_user!(runner)
