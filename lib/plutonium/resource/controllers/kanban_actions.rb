@@ -20,7 +20,7 @@ module Plutonium
       #   1. Authorizes via kanban_move? policy predicate.
       #   2. Validates the drop (accepts? + locked?).
       #   3. Enforces the destination WIP limit (cross-column drops only).
-      #   4. Applies the column's on_drop callback (Symbol or 2-arg Proc).
+      #   4. Applies the column's on_drop callback (Symbol or 1-arg Proc).
       #   5. Repositions within the destination column via position_config.
       #   6. Responds with Turbo Stream updates for the from + to column frames.
       #      On rejection responds 422 and re-renders the unchanged source frame
@@ -75,7 +75,9 @@ module Plutonium
           to_index    = params[:to_index].to_i
 
           # WIP limit only applies to cross-column drops (reordering within the
-          # same column does not change its cardinality).
+          # same column does not change its cardinality). This is a
+          # pre-transaction read — benign TOCTOU: two concurrent moves could
+          # momentarily push the column one over wip. Acceptable for a UI guard.
           if to.wip && from.key != to.key && dest_cards.size + 1 > to.wip
             return render_kanban_rejection(params[:from_column])
           end
@@ -84,13 +86,16 @@ module Plutonium
           next_record = dest_cards[to_index]
 
           ActiveRecord::Base.transaction do
-            # Apply on_drop: Symbol dispatches to a named method on the record;
-            # Proc is called with (record, context) where context delegates to
-            # view_context (current_user, params, helpers, etc. are available).
+            # Apply on_drop:
+            #   Symbol → record.public_send(sym) (named method on the record)
+            #   Proc   → evaluated with self = kanban_context (delegates to
+            #            view_context so `current_user` etc. work as bare calls)
+            #            and the record as the single block arg, matching the
+            #            public 1-arg DSL form: on_drop: ->(task) { task.status = … }
             if to.on_drop.is_a?(Symbol)
               record.public_send(to.on_drop)
             elsif to.on_drop
-              to.on_drop.call(record, kanban_context)
+              kanban_context.instance_exec(record, &to.on_drop)
             end
 
             # Persist any in-memory attribute changes from on_drop (on_drop
@@ -205,13 +210,17 @@ module Plutonium
             total = cards.size
           end
 
+          # Cards are a read-only display, so resolve the visible fields from the
+          # index/read attribute set rather than the action name. This keeps the
+          # move action from needing a `permitted_attributes_for_kanban_move`
+          # method — kanban deliberately has no permitted-attributes concept.
           component = Plutonium::UI::Kanban::Column.new(
             column:,
             cards:,
             total:,
             per_column: board.per_column,
             resource_definition: current_definition,
-            resource_fields: presentable_attributes
+            resource_fields: permitted_attributes_for("index")
           )
           view_context.render(component).html_safe
         end

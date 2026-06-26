@@ -4,12 +4,12 @@ class TaskDefinition < ::ResourceDefinition
 
     column :todo,
       scope: -> { where(status: "todo") },
-      on_drop: ->(r, _ctx) { r.update!(status: "todo") },
+      on_drop: ->(r) { r.update!(status: "todo") },
       role: :backlog
 
     column :doing,
       scope: -> { where(status: "doing") },
-      on_drop: ->(r, _ctx) { r.update!(status: "doing") },
+      on_drop: ->(r) { r.update!(status: "doing") },
       wip: 3
 
     # :done uses a Symbol on_drop (dispatched as record.mark_done!) and only
