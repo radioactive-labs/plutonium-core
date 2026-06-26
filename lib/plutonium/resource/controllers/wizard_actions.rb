@@ -30,19 +30,19 @@ module Plutonium
             launch_wizard_record_action launch_wizard_resource_action
             wizard_record_action commit_wizard_record_action
             wizard_resource_action commit_wizard_resource_action
-            discard_wizard_record_action discard_wizard_resource_action
+            cancel_wizard_record_action cancel_wizard_resource_action
           ]
 
           before_action :authorize_wizard_record_action!, only: %i[
             launch_wizard_record_action
             wizard_record_action commit_wizard_record_action
-            discard_wizard_record_action
+            cancel_wizard_record_action
           ]
 
           before_action :authorize_wizard_resource_action!, only: %i[
             launch_wizard_resource_action
             wizard_resource_action commit_wizard_resource_action
-            discard_wizard_resource_action
+            cancel_wizard_resource_action
           ]
         end
 
@@ -68,8 +68,8 @@ module Plutonium
         end
 
         # DELETE /resources/:id/wizards/:wizard_name/(:token)
-        def discard_wizard_record_action
-          wizard_discard
+        def cancel_wizard_record_action
+          wizard_cancel
         end
 
         # GET /resources/wizards/:wizard_name/(:token)/:step
@@ -85,9 +85,9 @@ module Plutonium
         end
 
         # DELETE /resources/wizards/:wizard_name/(:token)
-        def discard_wizard_resource_action
+        def cancel_wizard_resource_action
           skip_verify_current_authorized_scope!
-          wizard_discard
+          wizard_cancel
         end
 
         private

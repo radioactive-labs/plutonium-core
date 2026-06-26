@@ -64,8 +64,8 @@ module Plutonium
       end
  
       # DELETE .../:token
-      def discard
-        wizard_discard
+      def cancel
+        wizard_cancel
       end
 
       private
