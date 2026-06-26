@@ -43,6 +43,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::UserProfile
   register_resource ::KitchenSink
   register_resource ::Widget
+  register_resource ::Task
   # register resources above.
 end
 
