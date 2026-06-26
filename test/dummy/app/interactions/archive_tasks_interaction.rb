@@ -9,7 +9,8 @@ class ArchiveTasksInteraction < ::ResourceInteraction
   attribute :resources
 
   def execute
+    count = resources.count
     resources.update_all(status: "archived")
-    succeed(resources).with_message("Archived #{resources.count} tasks")
+    succeed(resources).with_message("Archived #{count} tasks")
   end
 end
