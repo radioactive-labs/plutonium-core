@@ -89,6 +89,7 @@ export default defineConfig(withMermaid({
             { text: "Search & Filtering", link: "/guides/search-filtering" },
             { text: "User Invites", link: "/guides/user-invites" },
             { text: "Wizards", link: "/guides/wizards" },
+            { text: "Kanban Boards", link: "/guides/kanban" },
           ]
         },
         {
@@ -188,6 +189,16 @@ export default defineConfig(withMermaid({
             { text: "Storage & config", link: "/reference/wizard/storage-config" },
             { text: "Registration & launch", link: "/reference/wizard/registration-launch" },
             { text: "One-time", link: "/reference/wizard/one-time" },
+          ]
+        },
+        {
+          text: "Kanban",
+          collapsed: false,
+          items: [
+            { text: "Overview", link: "/reference/kanban/" },
+            { text: "DSL", link: "/reference/kanban/dsl" },
+            { text: "Positioning", link: "/reference/kanban/positioning" },
+            { text: "Authorization", link: "/reference/kanban/authorization" },
           ]
         },
         {

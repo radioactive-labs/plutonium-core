@@ -58,6 +58,12 @@ aside: false
       { name: 'Nested resources', link: '/plutonium-core/reference/tenancy/nested-resources' },
       { name: 'Invites', link: '/plutonium-core/reference/tenancy/invites' },
     ]},
+    { group: 'Kanban', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/kanban/' },
+      { name: 'DSL', link: '/plutonium-core/reference/kanban/dsl' },
+      { name: 'Positioning', link: '/plutonium-core/reference/kanban/positioning' },
+      { name: 'Authorization', link: '/plutonium-core/reference/kanban/authorization' },
+    ]},
     { group: 'Testing', items: [
       { name: 'Overview', link: '/plutonium-core/reference/testing/' },
     ]},
