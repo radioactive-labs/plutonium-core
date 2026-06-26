@@ -37,6 +37,10 @@ module Plutonium
           # Runs BEFORE setup_index_action! so no wasteful pagination query.
           before_action :maybe_render_kanban_column, only: :index
 
+          # Pre-fill the new form with the column's seed attributes when the
+          # user clicks "+ Add" on a kanban column (kanban_column= query param).
+          before_action :apply_kanban_column_defaults!, only: :new
+
           # Exposed to views/partials so _resource_kanban.html.erb can call it.
           helper_method :build_kanban_board_shell
         end
@@ -245,6 +249,10 @@ module Plutonium
             {action: col_action, ids: kanban_column_action_ids(column, on: col_action.on)}
           end
 
+          column_add_url = if column.add? && current_policy.allowed_to?(:create?)
+            resource_url_for(resource_class, action: :new, kanban_column: column.key)
+          end
+
           component = Plutonium::UI::Kanban::Column.new(
             column:,
             cards:,
@@ -252,7 +260,8 @@ module Plutonium
             per_column: board.per_column,
             resource_definition: current_definition,
             resource_fields: permitted_attributes_for("index"),
-            column_action_data:
+            column_action_data:,
+            column_add_url:
           )
           view_context.render(component).html_safe
         end
@@ -276,6 +285,54 @@ module Plutonium
           else # :all and any unknown value
             scoped.pluck(resource_class.primary_key)
           end
+        end
+
+        # Injects the column's seed attributes into params so the new form
+        # pre-fills the grouping attribute (e.g. status="todo").
+        #
+        # Triggered by the kanban_column= query param that the "+ Add" link
+        # carries. The seed is extracted by running a DRY-RUN of on_drop against
+        # a sentinel record whose save/update! methods are intercepted to prevent
+        # any DB write. The resulting attribute changes are merged into the
+        # resource params so maybe_apply_submitted_resource_params! sees them and
+        # pre-populates @resource_record before the form renders.
+        def apply_kanban_column_defaults!
+          return unless params[:kanban_column].present?
+          return unless current_definition.defined_kanban_block
+
+          board = current_kanban_board
+          columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
+          column = columns.find { |c| c.key.to_s == params[:kanban_column].to_s }
+          return unless column&.add?
+
+          seed_attrs = kanban_column_on_drop_seed(column)
+          return if seed_attrs.blank?
+
+          # Inject into params (indifferent access — string key is fine).
+          # Use ||= so an explicit user-provided value in the URL is preserved.
+          params[resource_param_key] ||= ActionController::Parameters.new({})
+          seed_attrs.stringify_keys.each { |k, v| params[resource_param_key][k] ||= v }
+        end
+
+        # Runs on_drop against a sentinel record that intercepts save/update!
+        # calls so no row is written to the DB. Returns the attribute changes
+        # the on_drop block would have applied (e.g. {"status" => "todo"}).
+        def kanban_column_on_drop_seed(column)
+          return {} unless column.on_drop
+
+          seed = resource_class.new
+          seed.define_singleton_method(:update!) { |attrs = {}| assign_attributes(attrs); self }
+          seed.define_singleton_method(:update)  { |attrs = {}| assign_attributes(attrs); true }
+          seed.define_singleton_method(:save!)   { |**| true }
+          seed.define_singleton_method(:save)    { |**| true }
+
+          if column.on_drop.is_a?(Symbol)
+            seed.public_send(column.on_drop)
+          else
+            kanban_context.instance_exec(seed, &column.on_drop)
+          end
+
+          seed.changes.transform_values { |(_, new_val)| new_val }
         end
 
         # Renders a 422 turbo stream response that re-renders the source column

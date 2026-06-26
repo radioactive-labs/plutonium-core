@@ -29,7 +29,12 @@ module Plutonium
         # needing to re-query the DB.  Defaults to [] when the component is
         # constructed outside of a controller context (e.g., tests or the board
         # shell which renders column frames without card data).
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [])
+        #
+        # column_add_url: URL for the "+ Add" quick-add button (or nil).
+        # Set by the controller when column.add? is true and the policy permits
+        # create. Carries kanban_column=<key> so the new form pre-fills the
+        # grouping attribute via apply_kanban_column_defaults!.
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil)
           @column = column
           @cards = cards
           @total = total
@@ -37,6 +42,7 @@ module Plutonium
           @resource_definition = resource_definition
           @resource_fields = resource_fields
           @column_action_data = column_action_data
+          @column_add_url = column_add_url
         end
 
         def view_template
@@ -87,7 +93,7 @@ module Plutonium
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
               render_wip_badge if column.wip
             end
-            render_column_actions if column.actions.any?
+            render_column_actions if @column_add_url || column.actions.any?
           end
         end
 
@@ -149,11 +155,25 @@ module Plutonium
         # Column action slot
         # ---------------------------------------------------------------
 
-        # Renders bulk-action links for each column action.
+        # Renders the "+ Add" quick-add button that opens the resource's new form
+        # in the remote modal frame, pre-seeded for this column.
+        def render_add_button
+          link_to(
+            @column_add_url,
+            class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
+            title: "Add to #{column.label}",
+            data: {turbo_frame: Plutonium::REMOTE_MODAL_FRAME}
+          ) do
+            plain "+ Add"
+          end
+        end
+
+        # Renders bulk-action links for each column action, and the "+ Add"
+        # quick-add button when column_add_url is present.
         #
-        # Each link targets GET /resources/bulk_actions/:key?ids[]=…, which is
-        # the existing interactive_bulk_action route.  The action is only rendered
-        # when:
+        # Each bulk-action link targets GET /resources/bulk_actions/:key?ids[]=…,
+        # which is the existing interactive_bulk_action route.  The action is only
+        # rendered when:
         #   1. The resolved action is registered in defined_actions (auto-registered
         #      by Definition::IndexViews.kanban at class-load time).
         #   2. current_policy.allowed_to?(:"#{key}?") returns true.
@@ -162,6 +182,7 @@ module Plutonium
         # check is a display-only gate — not the security boundary.
         def render_column_actions
           div(class: "flex items-center gap-1 shrink-0") do
+            render_add_button if @column_add_url
             @column_action_data.each do |entry|
               col_action = entry[:action]
               ids = entry[:ids]

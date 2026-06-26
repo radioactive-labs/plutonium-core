@@ -20,9 +20,13 @@ class TaskPolicy < ::ResourcePolicy
 
   # Core actions
 
-  # def create?
-  #   true
-  # end
+  # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.
+  cattr_accessor :deny_create, default: false
+
+  def create?
+    return false if self.class.deny_create
+    super
+  end
 
   # def read?
   #   true

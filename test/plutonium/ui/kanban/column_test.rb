@@ -184,6 +184,54 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   end
 
   # ---------------------------------------------------------------------------
+  # Quick-add button (column_add_url)
+  #
+  # The actual link_to requires a Rails view_context and is fully exercised by
+  # the integration test (kanban_quick_add_test.rb). These unit tests verify
+  # the structural contract using a stubbed render_add_button.
+  # ---------------------------------------------------------------------------
+
+  def test_add_button_container_renders_when_column_add_url_set
+    col = build_column(:todo, add: true)
+    component = build_component_with_add_url(col, add_url: "/tasks/new?kanban_column=todo")
+    component.define_singleton_method(:render_cards) { }
+    # Stub render_add_button to avoid link_to needing a view context in unit tests.
+    component.define_singleton_method(:render_add_button) { span(class: "add-stub") { plain "+ Add" } }
+
+    html = component.call
+
+    assert_includes html, "+ Add", "add button should appear when column_add_url is set"
+    assert_match(/flex items-center gap-1 shrink-0/, html,
+      "action slot container should wrap the add button")
+  end
+
+  def test_no_add_button_when_column_add_url_nil
+    col = build_column(:todo, add: true)
+    # build_component does not pass column_add_url → defaults to nil
+    component = build_component(col, cards: [], total: 0)
+    component.define_singleton_method(:render_cards) { }
+
+    html = component.call
+
+    refute_includes html, "+ Add", "no add button when column_add_url is nil"
+    # No action slot either (no actions, no add_url)
+    refute_match(/flex items-center gap-1 shrink-0/, html,
+      "no action container when neither add_url nor actions are present")
+  end
+
+  def test_action_slot_container_renders_with_only_add_url_and_no_actions
+    col = build_column(:doing)  # no actions, no add preset
+    component = build_component_with_add_url(col, add_url: "/tasks/new?kanban_column=doing")
+    component.define_singleton_method(:render_cards) { }
+    component.define_singleton_method(:render_add_button) { span(class: "add-stub") { plain "+ Add" } }
+
+    html = component.call
+
+    assert_match(/flex items-center gap-1 shrink-0/, html,
+      "action container renders when only add_url is present (no column actions)")
+  end
+
+  # ---------------------------------------------------------------------------
   # Column actions slot
   #
   # Real action links are rendered from controller-threaded `column_action_data`
@@ -246,6 +294,18 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
       per_column: per_column,
       resource_definition: nil,
       resource_fields: []
+    )
+  end
+
+  def build_component_with_add_url(column, add_url:, cards: [], total: 0, per_column: 10)
+    Plutonium::UI::Kanban::Column.new(
+      column: column,
+      cards: cards,
+      total: total,
+      per_column: per_column,
+      resource_definition: nil,
+      resource_fields: [],
+      column_add_url: add_url
     )
   end
 
