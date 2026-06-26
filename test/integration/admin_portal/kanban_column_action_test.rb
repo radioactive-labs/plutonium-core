@@ -126,12 +126,16 @@ class AdminPortal::KanbanColumnActionTest < ActionDispatch::IntegrationTest
       "todo column should have no bulk-action links"
   end
 
-  # ─── Empty done column still resolves without crash ──────────────────────
+  # ─── Empty done column renders no action link ────────────────────────────
 
-  test "done column with no tasks renders without crashing" do
+  # An empty id set would make resource_url_for(..., ids: []) resolve to the
+  # RESOURCE action route instead of the bulk route, so the link is suppressed
+  # entirely. Assert it is absent (and that the empty column does not crash).
+  test "done column with no tasks renders no action link" do
     get "/admin/tasks?view=kanban&column=done"
     assert_response :success
-    # No tasks → the action link may still render but with an empty ids list.
-    # The important thing is no exception.
+    refute_includes response.body, "bulk_actions",
+      "empty column should render no bulk-action link"
+    refute_includes response.body, "Archive all"
   end
 end

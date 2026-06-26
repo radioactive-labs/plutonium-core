@@ -29,6 +29,7 @@ module Plutonium
         class_attribute :defined_grid_layout, default: :compact, instance_accessor: false
         class_attribute :defined_grid_columns, default: nil, instance_accessor: false
         class_attribute :defined_kanban_block, default: nil, instance_accessor: false
+        class_attribute :defined_kanban_board, default: nil, instance_accessor: false
       end
 
       class_methods do
@@ -106,9 +107,21 @@ module Plutonium
           self.defined_index_views = defined_index_views + [:kanban] unless defined_index_views.include?(:kanban)
 
           # Eagerly compile the board to extract static column actions and
-          # register each one as an interactive resource action. This is safe at
-          # class-load time: the board DSL never accesses the database.
+          # register each one as an interactive resource action.
+          #
+          # Safety of compiling at class-load time:
+          #   * The board DSL never accesses the database.
+          #   * BUT interaction constants referenced in column action blocks
+          #     (e.g. `interaction: ArchiveTasksInteraction`) ARE resolved here,
+          #     at definition class-load time. They must therefore be autoloadable
+          #     WITHOUT a circular dependency back on this definition class — an
+          #     interaction that references the definition at its own load time
+          #     would deadlock the autoloader. In practice interactions depend only
+          #     on their model, so this constraint is naturally satisfied.
           board = Plutonium::Kanban::DSL.build(&block)
+          # Cache the compiled board so the controller can reuse it instead of
+          # recompiling per request (see KanbanActions#current_kanban_board).
+          self.defined_kanban_board = board
           board.columns.each do |col|
             col.actions.each do |col_action|
               action(
@@ -129,6 +142,7 @@ module Plutonium
       def defined_grid_layout = self.class.defined_grid_layout
       def defined_grid_columns = self.class.defined_grid_columns
       def defined_kanban_block = self.class.defined_kanban_block
+      def defined_kanban_board = self.class.defined_kanban_board
     end
   end
 end

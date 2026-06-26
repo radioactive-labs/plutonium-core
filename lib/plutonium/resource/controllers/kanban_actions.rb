@@ -157,9 +157,12 @@ module Plutonium
           )
         end
 
-        # Memoized kanban board compiled from the definition's kanban block.
+        # Memoized kanban board. Prefers the board precompiled at definition
+        # class-load time (Definition::IndexViews.kanban); falls back to building
+        # from the block for safety and dynamic edge cases.
         def current_kanban_board
-          @current_kanban_board ||= Plutonium::Kanban::DSL.build(&current_definition.defined_kanban_block)
+          @current_kanban_board ||= current_definition.defined_kanban_board ||
+            Plutonium::Kanban::DSL.build(&current_definition.defined_kanban_block)
         end
 
         # Authorized + query-applied UN-paginated relation.

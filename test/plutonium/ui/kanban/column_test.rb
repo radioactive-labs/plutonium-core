@@ -184,21 +184,31 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   end
 
   # ---------------------------------------------------------------------------
-  # Column actions placeholder slot
+  # Column actions slot
+  #
+  # Real action links are rendered from controller-threaded `column_action_data`
+  # (resolved ids + URL + policy gate), which requires a live view_context. That
+  # full rendering is covered by the integration test
+  # (test/integration/admin_portal/kanban_column_action_test.rb). These unit
+  # tests cover the view-context-free contract: without threaded data, no link
+  # renders even when the column declares actions.
   # ---------------------------------------------------------------------------
 
-  def test_renders_action_buttons_when_column_has_actions
+  def test_no_action_link_without_threaded_column_action_data
     col = build_column(:done)
     col.action(:archive_all, interaction: Object, on: :all, label: "Archive all")
+    # column_action_data defaults to [] — controller hasn't threaded ids in yet.
     component = build_component(col, cards: [], total: 0)
     component.define_singleton_method(:render_cards) { }
 
     html = component.call
 
-    assert_match(/Archive all/, html, "action label should appear in the action slot")
+    refute_match(/Archive all/, html,
+      "no action link should render until the controller threads column_action_data")
+    refute_match(/data-kanban-action/, html)
   end
 
-  def test_action_button_has_kanban_action_data_attr
+  def test_action_slot_div_present_when_column_has_actions
     col = build_column(:done)
     col.action(:archive_all, interaction: Object, on: :all, label: "Archive all")
     component = build_component(col, cards: [], total: 0)
@@ -206,7 +216,10 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
 
     html = component.call
 
-    assert_match(/data-kanban-action="archive_all"/, html)
+    # The action slot container renders (header calls render_column_actions),
+    # but it is empty until column_action_data is threaded in.
+    assert_match(/flex items-center gap-1 shrink-0/, html,
+      "action slot container should render when the column declares actions")
   end
 
   def test_no_action_slot_when_column_has_no_actions

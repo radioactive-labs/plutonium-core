@@ -169,6 +169,12 @@ module Plutonium
               registered = current_definition.defined_actions[col_action.key]
               next unless registered&.permitted_by?(current_policy)
 
+              # Skip when the resolved id set is empty: resource_url_for with
+              # ids: [] would resolve to the RESOURCE action route
+              # (/resource_actions/:key) rather than the bulk route, misfiring
+              # if clicked. An empty column simply renders no action link.
+              next if ids.empty?
+
               url = resource_url_for(resource_class, interaction: col_action.key, ids: ids)
               label = col_action.label || col_action.key.to_s.humanize
               data_attrs = {
@@ -183,6 +189,7 @@ module Plutonium
                 title: label,
                 data: data_attrs
               ) do
+                render col_action.icon.new(class: "h-4 w-4") if col_action.icon
                 plain label
               end
             end
