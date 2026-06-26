@@ -36,6 +36,9 @@ module Plutonium
           # Intercept index when view=kanban + column=<key> is present.
           # Runs BEFORE setup_index_action! so no wasteful pagination query.
           before_action :maybe_render_kanban_column, only: :index
+
+          # Exposed to views/partials so _resource_kanban.html.erb can call it.
+          helper_method :build_kanban_board_shell
         end
 
         # POST <member>/kanban_move
@@ -132,6 +135,27 @@ module Plutonium
         end
 
         private
+
+        # Builds the kanban board shell component for the index page.
+        #
+        # Used by the _resource_kanban partial (Task 10). The shell renders one
+        # lazy turbo-frame per column — no card data is fetched here; the frames
+        # load card bodies on demand via the Task 6 column endpoint.
+        #
+        # Resolves columns via Grouping.resolve_columns so dynamic boards work
+        # identically to static ones. grouped_data has empty card arrays because
+        # the shell header only needs the column metadata (label, color, key).
+        def build_kanban_board_shell
+          board = current_kanban_board
+          columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
+          grouped_data = columns.map { |col| {column: col, cards: [], total: 0} }
+          Plutonium::UI::Kanban::Resource.new(
+            board:,
+            grouped_data:,
+            resource_definition: current_definition,
+            resource_fields: permitted_attributes_for("index")
+          )
+        end
 
         # Memoized kanban board compiled from the definition's kanban block.
         def current_kanban_board

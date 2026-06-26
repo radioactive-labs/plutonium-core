@@ -14,7 +14,8 @@ module Plutonium
         class ViewSwitcher < Plutonium::UI::Component::Base
           SEGMENT_LABELS = {
             table: {label: "Table", icon: Phlex::TablerIcons::Table},
-            grid: {label: "Grid", icon: Phlex::TablerIcons::LayoutGrid}
+            grid: {label: "Grid", icon: Phlex::TablerIcons::LayoutGrid},
+            kanban: {label: "Board", icon: Phlex::TablerIcons::LayoutKanban}
           }.freeze
 
           def initialize(views:, current:, cookie_name:, cookie_path: "/")
