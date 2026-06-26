@@ -239,6 +239,15 @@ module Plutonium
         permitted_attributes_for_read
       end
 
+      # Returns the permitted attributes visible on a kanban card.
+      # Kanban is a read-only view (no form editing), so the field set is
+      # the same as the index — override to show fewer fields on cards.
+      #
+      # @return [Array<Symbol>] Delegates to permitted_attributes_for_index.
+      def permitted_attributes_for_kanban_move
+        permitted_attributes_for_index
+      end
+
       # Returns the permitted attributes for the show action.
       #
       # @return [Array<Symbol>] Delegates to permitted_attributes_for_read.

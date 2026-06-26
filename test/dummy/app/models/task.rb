@@ -29,5 +29,10 @@ class Task < ::ResourceRecord
 
   # add misc attribute macros above.
 
+  # Transitions the task to "done". Used as a Symbol on_drop in TaskDefinition
+  # to exercise the symbol-dispatch path in KanbanActions#kanban_move.
+  def mark_done!
+    update!(status: "done")
+  end
   # add methods above. add private methods below.
 end

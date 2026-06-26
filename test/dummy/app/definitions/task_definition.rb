@@ -12,9 +12,12 @@ class TaskDefinition < ::ResourceDefinition
       on_drop: ->(r, _ctx) { r.update!(status: "doing") },
       wip: 3
 
+    # :done uses a Symbol on_drop (dispatched as record.mark_done!) and only
+    # accepts cards dragged from :doing — direct todo→done drops are rejected.
     column :done,
       scope: -> { where(status: "done") },
-      on_drop: ->(r, _ctx) { r.update!(status: "done") },
+      on_drop: :mark_done!,
+      accepts: [:doing],
       role: :done do
       action :archive_all, interaction: ArchiveTasksInteraction, on: :all, label: "Archive all"
     end
