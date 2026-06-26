@@ -13,6 +13,7 @@ require "phlexi-table"
 require_relative "plutonium/wizard"
 require_relative "plutonium/migrations"
 require_relative "plutonium/configuration"
+require_relative "plutonium/positioning"
 require_relative "rodauth/plugins" if defined?(Rodauth)
 
 # Plutonium module
