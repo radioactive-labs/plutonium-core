@@ -75,21 +75,21 @@ module Plutonium
                 span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { "Resume" }
               end
  
-              # Discard form
-              discard_url = entry.resume_url ? entry.resume_url.sub(/\/[^\/]+\z/, "") : nil
-              if discard_url.present?
+              # Cancel form
+              cancel_url = entry.resume_url ? entry.resume_url.sub(/\/[^\/]+\z/, "") : nil
+              if cancel_url.present?
                 # We can use helpers.form_with or direct html form.
                 # Since this is a Phlex component, we can use a direct html form helper:
-                # form(action: discard_url, method: "post") do
+                # form(action: cancel_url, method: "post") do
                 #   input(type: "hidden", name: "_method", value: "delete")
                 #   ...
                 # end
-                form(action: discard_url, method: "post", class: "inline-block") do
+                form(action: cancel_url, method: "post", class: "inline-block") do
                   token = helpers.form_authenticity_token
                   input(type: "hidden", name: "authenticity_token", value: token)
                   input(type: "hidden", name: "_method", value: "delete")
-                  button(type: "submit", class: "pu-btn pu-btn-sm pu-btn-danger pu-btn-outline", data: {wizard_chooser_discard: true, confirm: "Are you sure you want to discard this progress?"}) do
-                    "Discard"
+                  button(type: "submit", class: "pu-btn pu-btn-sm pu-btn-danger pu-btn-outline", data: {wizard_chooser_cancel: true, confirm: "Are you sure you want to cancel this wizard?"}) do
+                    "Cancel"
                   end
                 end
               end

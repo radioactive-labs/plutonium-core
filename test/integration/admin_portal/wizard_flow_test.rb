@@ -75,11 +75,11 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{href="#{Regexp.escape(base)}/#{@wizard_token}/details"[^>]*data-wizard-chooser-resume}, response.body
     assert_match %r{data-wizard-chooser-start-new}, response.body
     assert_match %r{action="#{Regexp.escape(base)}/#{@wizard_token}"[^>]*method="post"}, response.body
-    assert_match %r{data-wizard-chooser-discard}, response.body
+    assert_match %r{data-wizard-chooser-cancel}, response.body
     assert_includes response.body, "?new=1"
   end
  
-  test "discarding a pending run calls cancel and redirects back to chooser/launch" do
+  test "cancelling a pending run calls cancel and redirects back to chooser/launch" do
     advance_through("identity")
     token = @wizard_token
     assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
