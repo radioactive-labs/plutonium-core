@@ -28442,6 +28442,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.addEventListener("dragleave", this.onDragLeave);
       this.element.addEventListener("drop", this.onDrop);
       this.element.addEventListener("dragend", this.onDragEnd);
+      this.#applyPersistedCollapseStates();
     }
     disconnect() {
       this.element.removeEventListener("dragstart", this.onDragStart);
@@ -28449,6 +28450,28 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.removeEventListener("dragleave", this.onDragLeave);
       this.element.removeEventListener("drop", this.onDrop);
       this.element.removeEventListener("dragend", this.onDragEnd);
+    }
+    // ─── Collapse toggle ─────────────────────────────────────────────────────────
+    // Stimulus action: data-action="click->kanban#toggleColumn"
+    // Expected on the expand button in the collapsed strip and the collapse
+    // button in the expanded header.  data-kanban-column-key on the button
+    // identifies which column to toggle.
+    toggleColumn(event) {
+      const key = event.currentTarget.dataset.kanbanColumnKey;
+      if (!key) return;
+      const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`);
+      if (!wrapper) return;
+      const strip = wrapper.querySelector("[data-kanban-role='strip']");
+      const body = wrapper.querySelector("[data-kanban-role='body']");
+      if (!strip || !body) return;
+      const isCollapsed = wrapper.classList.contains("pu-kanban-column-collapsed");
+      if (isCollapsed) {
+        wrapper.classList.remove("pu-kanban-column-collapsed");
+        this.#saveCollapseState(key, false);
+      } else {
+        wrapper.classList.add("pu-kanban-column-collapsed");
+        this.#saveCollapseState(key, true);
+      }
     }
     // ─── drag lifecycle ──────────────────────────────────────────────────────────
     #onDragStart(event) {
@@ -28458,10 +28481,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", card.dataset.kanbanRecordId);
       requestAnimationFrame(() => card.classList.add("pu-kanban-dragging"));
+      this.#applyDropHints(card.dataset.kanbanColumnKey);
     }
     #onDragOver(event) {
       const column = event.target.closest("[data-kanban-target='column']");
       if (!column) return;
+      const wrapper = event.target.closest("[data-kanban-col]");
+      if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       this.#highlightColumn(column);
@@ -28474,8 +28500,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     async #onDrop(event) {
       event.preventDefault();
       this.#clearHighlights();
+      if (!this.draggedCard) return;
+      const wrapper = event.target.closest("[data-kanban-col]");
+      if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
       const column = event.target.closest("[data-kanban-target='column']");
-      if (!column || !this.draggedCard) return;
+      if (!column) return;
       const recordId = this.draggedCard.dataset.kanbanRecordId;
       const fromColumn = this.draggedCard.dataset.kanbanColumnKey;
       const toColumn = column.dataset.kanbanColumnKeyValue;
@@ -28508,10 +28537,57 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #onDragEnd(_event) {
       this.#clearHighlights();
+      this.#clearDropHints();
       if (this.draggedCard) {
         this.draggedCard.classList.remove("pu-kanban-dragging");
         this.draggedCard = null;
       }
+    }
+    // ─── drop hints ──────────────────────────────────────────────────────────────
+    // Marks each column wrapper with `pu-kanban-no-drop` when it would refuse
+    // a card dragged from sourceKey. The server remains the authority; this
+    // is a display-only hint to give the user immediate visual feedback.
+    #applyDropHints(sourceKey) {
+      const sourceWrapper = this.element.querySelector(`[data-kanban-col="${sourceKey}"]`);
+      const sourceLocked = sourceWrapper?.dataset.kanbanLocked === "true";
+      this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
+        const noDrop = sourceLocked || !this.#columnAccepts(wrapper.dataset.kanbanAccepts, sourceKey);
+        wrapper.classList.toggle("pu-kanban-no-drop", noDrop);
+      });
+    }
+    #clearDropHints() {
+      this.element.querySelectorAll("[data-kanban-col]").forEach((w4) => w4.classList.remove("pu-kanban-no-drop"));
+    }
+    // Returns true if the column described by `accepts` (the serialised form
+    // from data-kanban-accepts) would accept a card from `sourceKey`.
+    #columnAccepts(accepts, sourceKey) {
+      if (!accepts || accepts === "all") return true;
+      if (accepts === "none") return false;
+      return accepts.split(",").map((k4) => k4.trim()).includes(sourceKey);
+    }
+    // ─── collapse persistence ─────────────────────────────────────────────────────
+    // Applies localStorage collapse states to all column wrappers currently in
+    // the DOM. Called on connect() and implicitly after Turbo frame swaps
+    // because Stimulus re-connects the controller when the frame content changes.
+    #applyPersistedCollapseStates() {
+      this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
+        const key = wrapper.dataset.kanbanCol;
+        const stored = localStorage.getItem(this.#storageKey(key));
+        if (stored === null) return;
+        const collapsed = stored === "1";
+        wrapper.classList.toggle("pu-kanban-column-collapsed", collapsed);
+      });
+    }
+    #saveCollapseState(key, collapsed) {
+      localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0");
+    }
+    // Derives a unique localStorage key from the resource collection path so
+    // different boards (different resources / tenants) don't share state.
+    // The move URL template is "/path/__ID__/kanban_move"; strip the suffix to
+    // recover the collection path.
+    #storageKey(key) {
+      const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "");
+      return `pu-kanban:${path}:${key}:collapsed`;
     }
     // ─── helpers ─────────────────────────────────────────────────────────────────
     // Returns the 0-based insertion index within the destination column by

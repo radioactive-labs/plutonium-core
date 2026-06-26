@@ -11,13 +11,20 @@ module Plutonium
       # src hits the column endpoint which renders this component as the body.
       #
       # Collapsed variant: when column.collapsed? the component renders a thin
-      # rotated-label strip instead of the full card list. The user can expand
-      # it later (Task 13 wires the toggle).
+      # rotated-label strip instead of the full card list. Both the strip and
+      # the expanded body are always emitted in the HTML; CSS (controlled by
+      # the `pu-kanban-column-collapsed` class on the wrapper) shows one and
+      # hides the other. The Stimulus controller's toggleColumn action flips the
+      # class and persists the choice to localStorage.
       #
       # Action slot: column.actions are rendered as minimal placeholder buttons
       # so the DOM seam is in place for Task 8 which wires the actual action
       # handlers (interactive bulk actions). The buttons carry data-kanban-action
       # and data-kanban-column attributes for Stimulus targeting.
+      #
+      # Drop policy: the wrapper emits data-kanban-accepts and data-kanban-locked
+      # so the Stimulus drag controller can provide client-side drop hints without
+      # re-implementing server-side logic. The server remains the authority.
       class Column < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::LinkTo
 
@@ -46,7 +53,23 @@ module Plutonium
         end
 
         def view_template
-          column.collapsed? ? render_collapsed_strip : render_expanded
+          # Wrapper carries the drop-policy data attributes and the initial
+          # collapsed CSS class. The Stimulus controller reads data-kanban-col
+          # to find wrappers unambiguously (distinct from toggle button attrs).
+          div(
+            class: tokens(
+              "pu-kanban-column-wrapper",
+              column.collapsed? && "pu-kanban-column-collapsed"
+            ),
+            data: {
+              kanban_col: column.key.to_s,
+              kanban_accepts: accepts_value,
+              kanban_locked: column.locked?.to_s
+            }
+          ) do
+            render_collapsed_strip
+            render_expanded
+          end
         end
 
         private
@@ -56,17 +79,33 @@ module Plutonium
         # ---------------------------------------------------------------
 
         def render_collapsed_strip
+          # CSS hides this strip when the wrapper lacks pu-kanban-column-collapsed.
+          # Always emitted so the JS toggle can switch between strip and body
+          # without a server round-trip.
           div(
-            class: "pu-kanban-column-collapsed w-10 flex flex-col items-center justify-between " \
+            class: "pu-kanban-strip w-10 flex flex-col items-center justify-between " \
                    "py-3 gap-2 bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
                    "rounded-[var(--pu-radius-md)] select-none",
-            data: {kanban_column_key: column.key.to_s}
+            data: {kanban_role: "strip"}
           ) do
             span(
               class: "text-xs font-semibold text-[var(--pu-text-muted)] " \
                      "[writing-mode:vertical-lr] rotate-180",
             ) { plain column.label }
             span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
+            # Expand toggle button — the primary interactive seam for
+            # collapsing/expanding. data-kanban-column-key is on this button so
+            # the integration test can assert the contract without JS execution.
+            button(
+              class: "p-0.5 rounded text-[var(--pu-text-muted)] " \
+                     "hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]",
+              title: "Expand #{column.label}",
+              type: "button",
+              data: {
+                action: "click->kanban#toggleColumn",
+                kanban_column_key: column.key.to_s
+              }
+            ) { plain "▶" }
             render_column_actions if column.actions.any?
           end
         end
@@ -76,10 +115,12 @@ module Plutonium
         # ---------------------------------------------------------------
 
         def render_expanded
+          # CSS hides this body when the wrapper has pu-kanban-column-collapsed.
           div(
-            class: "pu-kanban-column w-72 shrink-0 flex flex-col bg-[var(--pu-surface-alt)] " \
-                   "border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] overflow-hidden",
-            data: {kanban_column_key: column.key.to_s}
+            class: "pu-kanban-body pu-kanban-column w-72 shrink-0 flex flex-col " \
+                   "bg-[var(--pu-surface-alt)] border border-[var(--pu-border)] " \
+                   "rounded-[var(--pu-radius-md)] overflow-hidden",
+            data: {kanban_role: "body"}
           ) do
             render_header
             render_card_list
@@ -94,6 +135,20 @@ module Plutonium
               render_wip_badge if column.wip
             end
             render_column_actions if @column_add_url || column.actions.any?
+            # Collapse toggle — always present in the expanded header so the
+            # user can collapse a column even when no other actions are visible.
+            # Kept outside render_column_actions so the action-slot tests are
+            # unaffected (they check the flex-gap container which is conditional).
+            button(
+              class: "shrink-0 p-0.5 rounded text-[var(--pu-text-muted)] " \
+                     "hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]",
+              title: "Collapse #{column.label}",
+              type: "button",
+              data: {
+                action: "click->kanban#toggleColumn",
+                kanban_column_key: column.key.to_s
+              }
+            ) { plain "◀" }
           end
         end
 
@@ -227,6 +282,24 @@ module Plutonium
 
         def more_count
           [total - cards.size, 0].max
+        end
+
+        # Serialises the column's accepts policy for the data-kanban-accepts
+        # attribute consumed by the Stimulus drag controller for drop hints.
+        # The server remains the authority; this is display only.
+        #
+        # true  → "all"    (any source is accepted)
+        # false → "none"   (no source is accepted)
+        # Array → comma-joined list of accepted source column keys
+        # Proc  → "all"    (per-card predicate; treated as permissive at the
+        #                    column level — server evaluates per record)
+        def accepts_value
+          case column.accepts
+          when true  then "all"
+          when false then "none"
+          when Array then column.accepts.map(&:to_s).join(",")
+          else            "all"
+          end
         end
       end
     end

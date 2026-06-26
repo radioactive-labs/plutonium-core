@@ -149,6 +149,9 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   def test_collapsed_renders_collapsed_strip
     col = build_column(:done, collapsed: true)
     component = build_component(col, cards: stub_records(2), total: 2)
+    # Both strip and body are always emitted; stub render_cards so the body
+    # renders without needing a full record interface on the stub structs.
+    component.define_singleton_method(:render_cards) { }
 
     html = component.call
 
@@ -158,6 +161,7 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   def test_collapsed_shows_card_count
     col = build_column(:done, collapsed: true)
     component = build_component(col, cards: stub_records(3), total: 3)
+    component.define_singleton_method(:render_cards) { }
 
     html = component.call
 
@@ -167,6 +171,7 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   def test_collapsed_shows_column_label
     col = build_column(:done, collapsed: true)
     component = build_component(col, cards: [], total: 0)
+    component.define_singleton_method(:render_cards) { }
 
     html = component.call
 
