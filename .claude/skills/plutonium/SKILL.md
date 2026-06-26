@@ -41,6 +41,7 @@ This is the global "look before you leap"; each targeted skill carries its own A
 | **[[plutonium-resource]]** | The resource itself — `pu:res:scaffold`, field types, model layer (`Plutonium::Resource::Record`, `has_cents`, SGID, routing), definition layer (fields/inputs/displays/columns, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization) |
 | **[[plutonium-behavior]]** | Controllers (hooks, key methods, presentation), policies (action methods, `permitted_attributes_for_*`, `permitted_associations`), interactions (structure, outcomes, chaining, URL generation) |
 | **[[plutonium-ui]]** | Page classes, forms, displays, tables, custom Phlex components, layouts, modals & tabs, Tailwind config, Stimulus, design tokens, `.pu-*` classes, Phlexi themes |
+| **[[plutonium-kanban]]** | `kanban do…end` DSL in a Definition — columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy, quick-add, static vs dynamic boards |
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
 | **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
 | **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
@@ -76,6 +77,7 @@ Add when relevant:
 | Scope a model to a tenant, write `associated_with`, set portal entity strategy | **[[plutonium-tenancy]]** |
 | Configure parent/child nested routes, custom parent resolution | **[[plutonium-tenancy]]** |
 | Set up user invitations or entity membership | **[[plutonium-tenancy]]** |
+| Build or customize a kanban board view — `kanban do…end`, columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy | **[[plutonium-kanban]]** |
 | Build a custom page (override `ShowPage`/`IndexPage`/`NewPage`/`EditPage`), custom form, custom display, custom table, custom Phlex component | **[[plutonium-ui]]** |
 | Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
 | Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
