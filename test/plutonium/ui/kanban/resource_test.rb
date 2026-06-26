@@ -81,7 +81,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       frame_ids << id
       block&.call
     end
-    resource.define_singleton_method(:render_column_header) { |_col, _count| }
+    resource.define_singleton_method(:render_column_header) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
 
     resource.call
@@ -99,7 +99,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       captured.merge!(id: id, attrs: attrs)
       block&.call
     end
-    resource.define_singleton_method(:render_column_header) { |_col, _count| }
+    resource.define_singleton_method(:render_column_header) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
 
     resource.call
@@ -117,7 +117,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       captured.merge!(id: id, attrs: attrs)
       block&.call
     end
-    resource.define_singleton_method(:render_column_header) { |_col, _count| }
+    resource.define_singleton_method(:render_column_header) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
 
     resource.call
@@ -135,7 +135,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       captured.merge!(id: id, attrs: attrs)
       block&.call
     end
-    resource.define_singleton_method(:render_column_header) { |_col, _count| }
+    resource.define_singleton_method(:render_column_header) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
 
     resource.call
@@ -153,7 +153,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource = build_resource(columns: [col])
     # Stub render_column_frame so no view_context calls happen; we only want
     # to check the outer wrapper element.
-    resource.define_singleton_method(:render_column_frame) { |_col, _cards, _total| }
+    resource.define_singleton_method(:render_column_frame) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
 
     html = resource.call
@@ -178,7 +178,11 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     assert_match(/Todo/, html, "column label should appear in header")
   end
 
-  def test_column_header_contains_card_count
+  # The shell header deliberately renders NO card-count badge: the shell has no
+  # card data, so a count would flash (e.g. "0") then disappear when
+  # Kanban::Column — which renders no count badge either — replaces the frame
+  # body. This guards that structural consistency.
+  def test_column_header_omits_card_count_badge
     col = build_col(:todo)
     resource = build_resource(columns: [col], cards: [stub_record, stub_record])
     stub_request(resource, path: "/tasks", query_params: {})
@@ -187,7 +191,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     html = resource.call
 
-    assert_match(/pu-badge[^"]*">\s*2\s*</, html, "card count should appear in header badge")
+    refute_match(/pu-badge/, html, "shell header should not render a count badge")
   end
 
   # ---------------------------------------------------------------------------
@@ -197,7 +201,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_realtime_subscription_called_when_realtime
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: true)
-    resource.define_singleton_method(:render_column_frame) { |_col, _cards, _total| }
+    resource.define_singleton_method(:render_column_frame) { |_col| }
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -210,7 +214,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_realtime_subscription_not_called_when_not_realtime
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: false)
-    resource.define_singleton_method(:render_column_frame) { |_col, _cards, _total| }
+    resource.define_singleton_method(:render_column_frame) { |_col| }
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }

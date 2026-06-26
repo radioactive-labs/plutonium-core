@@ -40,27 +40,14 @@ class AdminPortal::KanbanIndexViewTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "board shell contains turbo-frame for todo column with lazy loading" do
+  test "board shell renders a lazy turbo-frame for each column" do
     get "/admin/tasks?view=kanban"
-    assert_includes response.body, 'id="kanban-col-todo"'
-    assert_includes response.body, 'loading="lazy"'
-  end
-
-  test "board shell contains turbo-frame for doing column" do
-    get "/admin/tasks?view=kanban"
-    assert_includes response.body, 'id="kanban-col-doing"'
-  end
-
-  test "board shell contains turbo-frame for done column" do
-    get "/admin/tasks?view=kanban"
-    assert_includes response.body, 'id="kanban-col-done"'
-  end
-
-  test "board shell renders all three column frames" do
-    get "/admin/tasks?view=kanban"
-    assert_includes response.body, 'id="kanban-col-todo"'
-    assert_includes response.body, 'id="kanban-col-doing"'
-    assert_includes response.body, 'id="kanban-col-done"'
+    # Each column emits its own <turbo-frame id="kanban-col-<key>" … loading="lazy">.
+    # Assert id AND lazy together per frame so neither can silently regress.
+    %w[todo doing done].each do |key|
+      assert_match(/<turbo-frame[^>]*loading="lazy"[^>]*id="kanban-col-#{key}"/, response.body,
+        "expected a lazy turbo-frame for the #{key} column")
+    end
   end
 
   test "board shell does not render a table element" do
@@ -93,22 +80,19 @@ class AdminPortal::KanbanIndexViewTest < ActionDispatch::IntegrationTest
   # The shell renders column headers inside each turbo-frame so the board is
   # meaningful while the lazy card bodies load. Labels come from the DSL column
   # definitions (title-cased from the key by default).
-
-  test "board shell contains Todo column header label" do
+  #
+  # These assertions target the HEADER label span specifically — the
+  # `font-semibold … truncate` span that Kanban::Resource#render_column_header
+  # wraps the label in — rather than a bare substring. A bare /todo/ would pass
+  # trivially against card titles ("Todo Alpha") and prove nothing about the
+  # header. (Cards aren't even rendered in the lazy shell, but the precise
+  # match keeps the test honest regardless.)
+  test "board shell renders each column label inside the header span" do
     get "/admin/tasks?view=kanban"
-    # The column label rendered in the header may be "Todo", "todo", or the
-    # titleized key. Match case-insensitively.
-    assert_match(/todo/i, response.body)
-  end
-
-  test "board shell contains Doing column header label" do
-    get "/admin/tasks?view=kanban"
-    assert_match(/doing/i, response.body)
-  end
-
-  test "board shell contains Done column header label" do
-    get "/admin/tasks?view=kanban"
-    assert_match(/done/i, response.body)
+    {todo: "Todo", doing: "Doing", done: "Done"}.each do |_key, label|
+      assert_match(/class="font-semibold[^"]*truncate"[^>]*>\s*#{label}\s*</, response.body,
+        "expected the #{label} label inside the column header span")
+    end
   end
 
   # ─── Table still renders on default / explicit table view ───────────────────

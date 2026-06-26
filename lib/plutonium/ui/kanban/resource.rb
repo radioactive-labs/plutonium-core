@@ -8,7 +8,10 @@ module Plutonium
       # Each frame id is "kanban-col-<key>". Its src merges view=kanban and
       # column=<key> into the current request URL so Task 6's column endpoint
       # fills the body on demand. The frame already contains the column header
-      # (label + count badge) so the shell is meaningful while the body loads.
+      # (color dot + label) so the shell is meaningful while the body loads. The
+      # header deliberately omits a card-count badge: the shell has no card data,
+      # so a "0" would flash then vanish when Kanban::Column (which renders no
+      # count badge) replaces the frame body.
       #
       # The outer wrapper carries data-controller="kanban" for the Stimulus
       # drag controller wired in Task 11.
@@ -43,7 +46,7 @@ module Plutonium
             data: {controller: "kanban"}
           ) do
             grouped_data.each do |entry|
-              render_column_frame(entry[:column], entry[:cards], entry[:total])
+              render_column_frame(entry[:column])
             end
           end
         end
@@ -57,7 +60,7 @@ module Plutonium
           # intentional no-op; Task 14 implements this
         end
 
-        def render_column_frame(column, cards, total)
+        def render_column_frame(column)
           attrs = {src: column_frame_src(column)}
           attrs[:loading] = "lazy" if board.lazy?
 
@@ -65,16 +68,17 @@ module Plutonium
             # Header is inside the frame so the shell is meaningful while the
             # body (card list) loads. Task 6 replaces the frame contents with
             # the full column body rendered by Kanban::Column.
-            render_column_header(column, cards.size)
+            render_column_header(column)
           end
         end
 
-        def render_column_header(column, count)
+        # Mirrors Kanban::Column#render_header structurally (no count badge) so
+        # the shell→loaded transition doesn't flash a stale count or restructure.
+        def render_column_header(column)
           div(class: "px-3 py-2 flex items-center justify-between border-b border-[var(--pu-border)] bg-[var(--pu-surface)]") do
             div(class: "flex items-center gap-2 min-w-0") do
               render_color_dot(column.color) if column.color
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
-              span(class: "pu-badge pu-badge-neutral text-xs font-mono ml-1") { plain count.to_s }
             end
           end
         end
