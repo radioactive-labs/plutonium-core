@@ -103,6 +103,40 @@ The `kanban_move` member route is wired automatically when the controller includ
 
 Visit the resource index and use the view switcher to select the Kanban view.
 
+![After dragging a card from Doing to Done — both column frames re-render and the WIP badge on Doing updates in place](/images/guides/kanban-after-move.png)
+
+---
+
+## Worked example — Status enum board
+
+A shorter example that groups by a Rails enum for status. Cards reuse `grid_fields` for their slot layout — no explicit `card_fields` needed. This mirrors the `KitchenSinkDefinition` in Plutonium's test suite.
+
+```ruby
+class KitchenSinkDefinition < ResourceDefinition
+  kanban do
+    column :active, label: "Active", role: :backlog,
+      scope:   -> { where(status: :active) },
+      on_drop: ->(ks) { ks.status = :active }
+
+    column :pending, label: "Pending", color: :yellow, wip: 5,
+      scope:   -> { where(status: :pending) },
+      on_drop: ->(ks) { ks.status = :pending }
+
+    column :archived, label: "Archived", role: :done,
+      scope:   -> { where(status: :archived) },
+      on_drop: ->(ks) { ks.status = :archived }
+
+    per_column 10
+  end
+end
+```
+
+Key points:
+- `role: :backlog` enables the `+ Add` button (equivalent to `add: true`).
+- `wip: 5` caps the Pending column; a cross-column drop that would push it past 5 is rejected server-side.
+- `role: :done` collapses the Archived column by default and shows a green header dot.
+- `on_drop` here assigns the attribute in memory (`ks.status = :active`). The framework calls `record.save!` automatically when the record has unsaved changes after `on_drop` returns — you do not need to call `update!` explicitly.
+
 ---
 
 ## Columns
@@ -185,6 +219,8 @@ end
 | `:done` | `color: :green, collapsed: true` |
 
 Explicitly provided options override the preset.
+
+**Collapse toggle:** Click the arrow button in any column header to collapse or expand it. Collapsed columns render as a thin vertical strip with the label rotated. The Stimulus controller persists each column's collapsed/expanded state to `localStorage` (key: `pu-kanban:<collection-path>:<column-key>:collapsed`) so the preference survives page reloads. The `collapsed:` DSL option sets the server-rendered initial state; `localStorage` takes precedence on subsequent loads.
 
 ---
 

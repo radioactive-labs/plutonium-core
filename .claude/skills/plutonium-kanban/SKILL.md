@@ -114,16 +114,19 @@ realtime true
 
 ### Dynamic columns
 
-Evaluates the block at request time with the view context as `self` (`current_user`, `params`, `current_scoped_entity`, helpers all available). Declare any column-action interactions as top-level definition `action` calls — the block is not introspectable at class-load time.
+Evaluates the block at request time with the view context as `self` (`current_user`, `params`, `current_scoped_entity`, helpers all available). The block must return an Array of `Plutonium::Kanban::Column` objects — `column` is a DSL method only available outside the `columns` block. Declare any column-action interactions as top-level definition `action` calls — the block is not introspectable at class-load time.
 
 ```ruby
 kanban do
   columns do
-    current_user.teams.each do |team|
-      column team.id,
+    # `self` is the view context here — use Plutonium::Kanban::Column.new, NOT `column`.
+    current_user.teams.map do |team|
+      Plutonium::Kanban::Column.new(
+        :"team_#{team.id}",
         label:   team.name,
         scope:   -> { where(team_id: team.id) },
         on_drop: ->(r) { r.update!(team_id: team.id) }
+      )
     end
   end
 end
@@ -140,7 +143,7 @@ column :key,
   wip:       3,                # max cross-column moves into this column
   scope:     -> { where(…) },  # 0-arg lambda or Symbol (sent to relation)
   on_drop:   ->(r) { … },      # 1-arg lambda or Symbol → record.method!
-  collapsed: true,             # starts collapsed
+  collapsed: true,             # starts collapsed (Stimulus persists toggle to localStorage)
   add:       true,             # show "+ Add" button (requires create?)
   accepts:   true,             # true (default), false, Array of source keys, or 1-arg Proc
   locked:    false,            # reject all incoming drops (server-enforced)
@@ -172,9 +175,12 @@ Checked server-side. Client-side visual hints read `data-kanban-accepts`.
 Runs inside a transaction after authorization and before repositioning. Receives the record for lambda form:
 
 ```ruby
-on_drop: ->(r) { r.update!(status: "done") }
-on_drop: :mark_done!    # dispatched as record.mark_done!
+on_drop: ->(r) { r.update!(status: "done") }   # update! directly
+on_drop: ->(r) { r.status = "done" }            # attribute assignment — saved automatically
+on_drop: :mark_done!                            # dispatched as record.mark_done!
 ```
+
+If `on_drop` only assigns attributes without calling `save!`/`update!`, the controller calls `record.save!` automatically when the record has unsaved changes after `on_drop` returns.
 
 ### Column actions
 
