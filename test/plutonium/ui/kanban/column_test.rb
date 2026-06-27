@@ -69,6 +69,29 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
     assert_match(/Doing/, html)
   end
 
+  # Regression: a column's `color:` must show in the LOADED header, not only in
+  # the shell placeholder header — otherwise the dot vanishes once the lazy
+  # frame loads (and the documented "dot color in the column header" is false).
+  def test_renders_color_dot_in_header_when_color_set
+    col = build_column(:doing, color: :green)
+    component = build_component(col, cards: [], total: 0)
+    component.define_singleton_method(:render_cards) { }
+
+    html = component.call
+
+    assert_match(/background-color: var\(--color-green-500\)/, html)
+  end
+
+  def test_no_color_dot_when_color_absent
+    col = build_column(:doing)
+    component = build_component(col, cards: [], total: 0)
+    component.define_singleton_method(:render_cards) { }
+
+    html = component.call
+
+    refute_match(/rounded-full/, html)
+  end
+
   def test_renders_wip_badge_when_wip_set
     col = build_column(:doing, wip: 3)
     component = build_component(col, cards: stub_records(2), total: 2)

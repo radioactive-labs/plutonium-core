@@ -26,6 +26,7 @@ module Plutonium
       # so the Stimulus drag controller can provide client-side drop hints without
       # re-implementing server-side logic. The server remains the authority.
       class Column < Plutonium::UI::Component::Base
+        include ColorDot
         include Phlex::Rails::Helpers::LinkTo
 
         attr_reader :column, :cards, :total, :per_column, :resource_definition, :resource_fields
@@ -138,6 +139,7 @@ module Plutonium
         def render_header
           div(class: "px-3 py-2 flex items-center justify-between gap-2 border-b border-[var(--pu-border)] bg-[var(--pu-surface)]") do
             div(class: "flex items-center gap-2 min-w-0 flex-1") do
+              render_color_dot(column.color) if column.color
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
               render_wip_badge if column.wip
             end

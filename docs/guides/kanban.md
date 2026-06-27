@@ -201,7 +201,7 @@ end
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `label:` | String | `key.to_s.titleize` | Column header text |
-| `color:` | Symbol or String | `nil` | Dot color — `:red`, `:orange`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`, or a raw CSS value |
+| `color:` | Symbol or String | `nil` | Dot color in the column header — `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`, or a raw CSS value |
 | `scope:` | Symbol or Proc | `nil` | Filters the resource relation to this column's cards. Symbol → named scope; Proc → 0-arg lambda called with `instance_exec` on the relation (e.g. `-> { where(status: "todo") }`) |
 | `on_drop:` | Symbol or Proc | `nil` | Called when a card lands in this column. Symbol → `record.public_send(sym)`; Proc → 1-arg lambda `->(record) { … }` where `self` is the view context |
 | `role:` | `:backlog`, `:done` | `nil` | Preset shorthand (see below) |

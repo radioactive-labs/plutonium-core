@@ -20,6 +20,7 @@ module Plutonium
       # render_realtime_subscription is called before the board wrapper.
       # Task 14 implements the broadcaster and fills in that method body.
       class Resource < Plutonium::UI::Component::Base
+        include ColorDot
         include Phlex::Rails::Helpers::TurboFrameTag
         include Phlex::Rails::Helpers::TurboStreamFrom
 
@@ -103,29 +104,6 @@ module Plutonium
               render_color_dot(column.color) if column.color
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
             end
-          end
-        end
-
-        def render_color_dot(color)
-          span(
-            class: "shrink-0 w-2.5 h-2.5 rounded-full",
-            style: "background-color: #{color_css_value(color)}"
-          )
-        end
-
-        # Maps a column color symbol to a CSS value via Tailwind design tokens.
-        # Raw CSS strings (e.g. "#ff0000") are passed through unchanged.
-        def color_css_value(color)
-          case color.to_sym
-          when :red    then "var(--color-red-500)"
-          when :orange then "var(--color-orange-500)"
-          when :yellow then "var(--color-yellow-500)"
-          when :green  then "var(--color-green-500)"
-          when :blue   then "var(--color-blue-500)"
-          when :purple then "var(--color-purple-500)"
-          when :pink   then "var(--color-pink-500)"
-          when :gray   then "var(--pu-text-muted)"
-          else color.to_s
           end
         end
 

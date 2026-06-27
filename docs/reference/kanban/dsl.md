@@ -171,7 +171,7 @@ end
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `label:` | String | `key.to_s.titleize` | Column header label |
-| `color:` | Symbol or String | `nil` | Header color dot. Named colors: `:red`, `:orange`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`. Raw CSS string also accepted |
+| `color:` | Symbol or String | `nil` | Header color dot. Named colors: `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`. Raw CSS string also accepted |
 | `scope:` | Symbol or Proc | `nil` | Relation filter for this column. **Symbol** → `relation.public_send(sym)` (named AR scope). **Proc** → 0-arg lambda called via `instance_exec` on the relation, e.g. `-> { where(status: "todo") }` |
 | `on_drop:` | Symbol or Proc | `nil` | Fired when a card is dropped into this column. **Symbol** → `record.public_send(sym)`. **Proc** → 1-arg lambda `->(record) { … }` where `self` inside the block is the view context (giving access to `current_user`, helpers, etc.). The callback may assign attributes in memory (`r.status = :done`) or call `update!` directly; if the record has unsaved changes after `on_drop` returns the controller saves it automatically. |
 | `role:` | `:backlog`, `:done` | `nil` | Applies a preset (see below) |
