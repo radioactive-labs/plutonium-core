@@ -38,6 +38,25 @@ class KitchenSinkDefinition < ::ResourceDefinition
     footer: :meeting_at
   )
 
+  # Kanban index view (?view=kanban) — groups by the status enum. Cards reuse
+  # grid_fields above. Drag a card between columns to flip its status; a wip
+  # on Pending; an "Archive all" column action on Archived.
+  kanban do
+    column :active, label: "Active", role: :backlog,
+      scope: -> { where(status: :active) },
+      on_drop: ->(ks) { ks.status = :active }
+
+    column :pending, label: "Pending", color: :amber, wip: 5,
+      scope: -> { where(status: :pending) },
+      on_drop: ->(ks) { ks.status = :pending }
+
+    column :archived, label: "Archived", role: :done,
+      scope: -> { where(status: :archived) },
+      on_drop: ->(ks) { ks.status = :archived }
+
+    per_column 10
+  end
+
   field :name                                                  # string
 
   # Basic scalar inputs
