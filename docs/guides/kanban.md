@@ -2,6 +2,8 @@
 
 Turn any resource index into a drag-and-drop kanban board — columns, WIP limits, quick-add, column actions, and opt-in realtime — all from a single `kanban do…end` block in your definition.
 
+![A kanban board grouped by status — cards with badges, a WIP badge on Pending, a quick-add button, and collapsible columns](/images/guides/kanban-board.png)
+
 ## What you get
 
 - Drag cards between columns; the server persists the column change and the position within the column.
