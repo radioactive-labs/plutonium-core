@@ -34,8 +34,8 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     @admin = create_admin!
     login_as_admin(@admin)
 
-    @todo  = Task.create!(title: "Todo Alpha", status: "todo")
-    @doing = Task.create!(title: "Doing One",  status: "doing")
+    @todo = Task.create!(title: "Todo Alpha", status: "todo")
+    @doing = Task.create!(title: "Doing One", status: "doing")
   end
 
   teardown { Task.delete_all }

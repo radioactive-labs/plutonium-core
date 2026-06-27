@@ -26,9 +26,9 @@ class AdminPortal::KanbanIndexViewTest < ActionDispatch::IntegrationTest
     @admin = create_admin!
     login_as_admin(@admin)
 
-    @todo  = Task.create!(title: "Todo Alpha",  status: "todo")
-    @doing = Task.create!(title: "Doing One",   status: "doing")
-    @done  = Task.create!(title: "Done One",    status: "done")
+    @todo = Task.create!(title: "Todo Alpha", status: "todo")
+    @doing = Task.create!(title: "Doing One", status: "doing")
+    @done = Task.create!(title: "Done One", status: "done")
   end
 
   teardown { Task.delete_all }

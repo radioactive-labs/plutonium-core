@@ -26,18 +26,22 @@ module Plutonium
         @columns << col
       end
 
+      # Fluent DSL setters — `attr_writer` would change the call syntax
+      # (`per_column 25` → `self.per_column = 25`), so keep them as methods.
+      # standard:disable Style/TrivialAccessors
       def columns(&blk) = @columns_block = blk
       def card_fields(**slots) = @card_fields = slots
       def per_column(n) = @per_column = n
       def realtime(v = true) = @realtime = v
       def lazy(v = true) = @lazy = v
+      # standard:enable Style/TrivialAccessors
 
       # Overrides where a card click opens the record's show page, for this
       # board only:
       #   :modal — open in a centered modal dialog
       #   :page  — navigate the whole page to the show route
       # When unset, the board inherits the definition's `show_in` (default :page).
-      def show_in(mode) = @show_in = mode
+      def show_in(mode) = @show_in = mode # standard:disable Style/TrivialAccessors
 
       def position_on(attr = :position, &blk)
         @position_config =

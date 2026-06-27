@@ -104,7 +104,7 @@ module Plutonium
           ) do
             span(
               class: "text-xs font-semibold text-[var(--pu-text-muted)] " \
-                     "[writing-mode:vertical-lr] rotate-180",
+                     "[writing-mode:vertical-lr] rotate-180"
             ) { plain column.label }
             span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
             # Expand toggle button — the primary interactive seam for
@@ -312,10 +312,10 @@ module Plutonium
         #                    column level — server evaluates per record)
         def accepts_value
           case column.accepts
-          when true  then "all"
+          when true then "all"
           when false then "none"
           when Array then column.accepts.map(&:to_s).join(",")
-          else            "all"
+          else "all"
           end
         end
       end

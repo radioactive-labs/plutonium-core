@@ -20,6 +20,7 @@ module Plutonium
       @item_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_items"
         include Plutonium::Positioning
+
         positioned_on :position, scope: :status
       end
     end
@@ -173,7 +174,7 @@ module Plutonium
       end)
 
       first = @item_class.create!(status: "todo") # the fixed left anchor
-      last  = @item_class.create!(status: "todo") # the fixed right anchor
+      last = @item_class.create!(status: "todo") # the fixed right anchor
 
       inserted = []
       30.times do
@@ -333,6 +334,7 @@ module Plutonium
       global_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_globals"
         include Plutonium::Positioning
+
         positioned_on :position
       end
 

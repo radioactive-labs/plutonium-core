@@ -34,9 +34,9 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     # Seed tasks. Positioning is scoped by :status so each column is
     # independent (positions 1.0, 2.0, … within each status group).
     @todo_a = Task.create!(title: "Todo Alpha", status: "todo")
-    @todo_b = Task.create!(title: "Todo Beta",  status: "todo")
-    @doing_a = Task.create!(title: "Doing One",  status: "doing")
-    @done_a  = Task.create!(title: "Done One",   status: "done")
+    @todo_b = Task.create!(title: "Todo Beta", status: "todo")
+    @doing_a = Task.create!(title: "Doing One", status: "doing")
+    @done_a = Task.create!(title: "Done One", status: "done")
   end
 
   teardown { Task.delete_all }
@@ -112,7 +112,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert todo_frame_start && doing_frame_start
 
     todo_segment = response.body[todo_frame_start...doing_frame_start]
-    assert_includes todo_segment, "Todo Beta",  "Todo Beta must still be in the todo frame"
+    assert_includes todo_segment, "Todo Beta", "Todo Beta must still be in the todo frame"
     refute_includes todo_segment, "Todo Alpha", "Todo Alpha must have left the todo frame"
   end
 
@@ -157,7 +157,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     end
 
     @todo_a.reload
-    assert_equal original_status,   @todo_a.status,   "status must not change on 403"
+    assert_equal original_status, @todo_a.status, "status must not change on 403"
     assert_equal original_position, @todo_a.position, "position must not change on 403"
   end
 
@@ -173,14 +173,14 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   end
 
   test "drop rejected by accepts makes no DB change" do
-    original_status   = @todo_a.status
+    original_status = @todo_a.status
     original_position = @todo_a.position
 
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
     @todo_a.reload
-    assert_equal original_status,   @todo_a.status
+    assert_equal original_status, @todo_a.status
     assert_equal original_position, @todo_a.position
   end
 
@@ -197,7 +197,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
 
   test "move to wip-full column returns 422" do
     # doing has wip: 3; fill it to the limit (one card already seeded).
-    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_b = Task.create!(title: "Doing Two", status: "doing")
     @doing_c = Task.create!(title: "Doing Three", status: "doing")
     # doing now has 3 cards = at WIP limit. Moving a 4th in must be rejected.
     assert_equal 3, Task.where(status: "doing").count
@@ -209,24 +209,24 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   end
 
   test "move to wip-full column makes no DB change" do
-    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_b = Task.create!(title: "Doing Two", status: "doing")
     @doing_c = Task.create!(title: "Doing Three", status: "doing")
 
-    original_status   = @todo_a.status
+    original_status = @todo_a.status
     original_position = @todo_a.position
 
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
     @todo_a.reload
-    assert_equal original_status,   @todo_a.status
+    assert_equal original_status, @todo_a.status
     assert_equal original_position, @todo_a.position
   end
 
   test "same-column reorder when at wip limit is not rejected" do
     # Fill doing to exactly wip (3 cards). A within-column reorder should pass
     # because it does not change the column cardinality.
-    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_b = Task.create!(title: "Doing Two", status: "doing")
     @doing_c = Task.create!(title: "Doing Three", status: "doing")
     assert_equal 3, Task.where(status: "doing").count
 
@@ -243,7 +243,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   # toast to the board's #kanban-flash region alongside the source-frame update.
 
   test "wip rejection appends a flash toast naming the WIP limit" do
-    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_b = Task.create!(title: "Doing Two", status: "doing")
     @doing_c = Task.create!(title: "Doing Three", status: "doing")
 
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
@@ -274,7 +274,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   # login to continue") must NOT leak into the rejection toast. The handler
   # renders only the specific reason, not the whole flash set.
   test "rejection toast does not leak a stale flash message" do
-    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_b = Task.create!(title: "Doing Two", status: "doing")
     @doing_c = Task.create!(title: "Doing Three", status: "doing")
 
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},

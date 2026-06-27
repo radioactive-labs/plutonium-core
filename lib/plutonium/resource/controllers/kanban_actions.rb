@@ -65,17 +65,17 @@ module Plutonium
             return
           end
 
-          board   = current_kanban_board
+          board = current_kanban_board
           columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
-          from    = columns.find { |c| c.key.to_s == params[:from_column].to_s }
-          to      = columns.find { |c| c.key.to_s == params[:to_column].to_s }
+          from = columns.find { |c| c.key.to_s == params[:from_column].to_s }
+          to = columns.find { |c| c.key.to_s == params[:to_column].to_s }
 
           # accepts_record? evaluates Proc accepts: against the actual record
           # (returning the Proc's boolean result) while delegating to accepts?
           # semantics for true/false/Array values.  This is the server-side
           # authority; the client-side data-kanban-accepts attribute (which
           # treats Proc as "all") is only a drop-hint.
-          unless from && to && to.accepts_record?(record, from.key) && !from.locked?
+          unless from && to&.accepts_record?(record, from.key) && !from.locked?
             reason =
               if from&.locked?
                 "Cards can't be moved out of “#{from.label}”."
@@ -91,8 +91,8 @@ module Plutonium
           # neighbor computation and WIP count are correct in all cases
           # (cross-column, same-column reorder, record already in destination).
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, to.scope)
-          dest_cards  = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
-          to_index    = params[:to_index].to_i
+          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
+          to_index = params[:to_index].to_i
 
           # WIP limit only applies to cross-column drops (reordering within the
           # same column does not change its cardinality). This is a
@@ -105,7 +105,7 @@ module Plutonium
             )
           end
 
-          prev_record = to_index > 0 ? dest_cards[to_index - 1] : nil
+          prev_record = (to_index > 0) ? dest_cards[to_index - 1] : nil
           next_record = dest_cards[to_index]
 
           ActiveRecord::Base.transaction do
@@ -269,7 +269,7 @@ module Plutonium
 
           return "".html_safe unless column
 
-          scoped  = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
+          scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
           ordered = board.position_config.order(scoped)
 
           if board.per_column
@@ -396,10 +396,16 @@ module Plutonium
           return {} unless column.on_drop
 
           seed = resource_class.new
-          seed.define_singleton_method(:update!) { |attrs = {}| assign_attributes(attrs); self }
-          seed.define_singleton_method(:update)  { |attrs = {}| assign_attributes(attrs); true }
-          seed.define_singleton_method(:save!)   { |**| true }
-          seed.define_singleton_method(:save)    { |**| true }
+          seed.define_singleton_method(:update!) { |attrs = {}|
+            assign_attributes(attrs)
+            self
+          }
+          seed.define_singleton_method(:update) { |attrs = {}|
+            assign_attributes(attrs)
+            true
+          }
+          seed.define_singleton_method(:save!) { |**| true }
+          seed.define_singleton_method(:save) { |**| true }
 
           if column.on_drop.is_a?(Symbol)
             seed.public_send(column.on_drop)

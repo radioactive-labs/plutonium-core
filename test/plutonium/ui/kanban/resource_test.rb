@@ -82,7 +82,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       block&.call
     end
     resource.define_singleton_method(:render_column_header) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     resource.call
 
@@ -96,11 +96,12 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     captured = {}
     resource.define_singleton_method(:turbo_frame_tag) do |id, **attrs, &block|
-      captured.merge!(id: id, attrs: attrs)
+      captured[:id] = id
+      captured[:attrs] = attrs
       block&.call
     end
     resource.define_singleton_method(:render_column_header) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     resource.call
 
@@ -114,11 +115,12 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     captured = {}
     resource.define_singleton_method(:turbo_frame_tag) do |id, **attrs, &block|
-      captured.merge!(id: id, attrs: attrs)
+      captured[:id] = id
+      captured[:attrs] = attrs
       block&.call
     end
     resource.define_singleton_method(:render_column_header) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     resource.call
 
@@ -132,11 +134,12 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     captured = {}
     resource.define_singleton_method(:turbo_frame_tag) do |id, **attrs, &block|
-      captured.merge!(id: id, attrs: attrs)
+      captured[:id] = id
+      captured[:attrs] = attrs
       block&.call
     end
     resource.define_singleton_method(:render_column_header) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     resource.call
 
@@ -154,7 +157,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     # Stub render_column_frame so no view_context calls happen; we only want
     # to check the outer wrapper element.
     resource.define_singleton_method(:render_column_frame) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
     stub_kanban_move_url_template(resource)
     stub_toolbar(resource)
 
@@ -167,7 +170,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     col = build_col(:todo)
     resource = build_resource(columns: [col])
     resource.define_singleton_method(:render_column_frame) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
     html = resource.call
@@ -179,7 +182,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     col = build_col(:todo)
     resource = build_resource(columns: [col])
     resource.define_singleton_method(:render_column_frame) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
     html = resource.call
@@ -192,7 +195,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     col = build_col(:todo)
     resource = build_resource(columns: [col])
     resource.define_singleton_method(:render_column_frame) { |_col| }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
     html = resource.call
@@ -226,7 +229,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     stub_request(resource, path: "/tasks", query_params: {})
     # Stub turbo_frame_tag to execute the block so the header HTML is captured.
     resource.define_singleton_method(:turbo_frame_tag) { |_id, **_attrs, &block| block&.call }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     html = resource.call
 
@@ -242,7 +245,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource = build_resource(columns: [col], cards: [stub_record, stub_record])
     stub_request(resource, path: "/tasks", query_params: {})
     resource.define_singleton_method(:turbo_frame_tag) { |_id, **_attrs, &block| block&.call }
-    resource.define_singleton_method(:render_realtime_subscription) { }
+    resource.define_singleton_method(:render_realtime_subscription) {}
 
     html = resource.call
 
@@ -326,8 +329,8 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def stub_toolbar(component)
     fake_query = Struct.new(:filter_definitions, :scope_definitions).new([], [])
     component.define_singleton_method(:current_query_object) { fake_query }
-    component.define_singleton_method(:render_scopes_pills) { }
-    component.define_singleton_method(:render_toolbar) { }
+    component.define_singleton_method(:render_scopes_pills) {}
+    component.define_singleton_method(:render_toolbar) {}
   end
 
   # Stubs out kanban_move_url_template so tests that don't care about URL

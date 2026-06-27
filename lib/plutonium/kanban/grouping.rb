@@ -41,8 +41,8 @@ module Plutonium
       def apply_scope(relation, scope)
         case scope
         when Symbol then relation.public_send(scope)
-        when Proc   then relation.instance_exec(&scope)
-        when nil    then relation
+        when Proc then relation.instance_exec(&scope)
+        when nil then relation
         else raise ArgumentError, "Unsupported column scope: #{scope.inspect} (expected Symbol, Proc, or nil)"
         end
       end

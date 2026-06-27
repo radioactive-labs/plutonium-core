@@ -133,10 +133,10 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
   end
 
   test "second task created in :todo gets a higher position than the first" do
-    post "/admin/tasks", params: {task: {title: "First",  status: "todo"}}
+    post "/admin/tasks", params: {task: {title: "First", status: "todo"}}
     post "/admin/tasks", params: {task: {title: "Second", status: "todo"}}
 
-    first  = Task.find_by(title: "First")
+    first = Task.find_by(title: "First")
     second = Task.find_by(title: "Second")
     assert second.position > first.position,
       "second task should have a higher position than the first (appended to end of column)"

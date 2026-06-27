@@ -28,7 +28,7 @@ class AdminPortal::KanbanShowFrameTest < ActionDispatch::IntegrationTest
     get "/admin/kitchen_sinks?view=kanban&column=active"
     assert_response :success
     assert_includes response.body, "Modal Card", "the seeded card should render in the active column"
-    assert_match(/data-turbo-frame="#{Plutonium::REMOTE_MODAL_FRAME}"/, response.body,
+    assert_match(/data-turbo-frame="#{Plutonium::REMOTE_MODAL_FRAME}"/o, response.body,
       "a card on a show_in :modal board should open the show page in the remote-modal frame")
   end
 

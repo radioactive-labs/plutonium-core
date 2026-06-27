@@ -5,7 +5,7 @@ require "test_helper"
 class Plutonium::UI::Kanban::CardTest < Minitest::Test
   def test_draggable_attrs_present
     card = build_card(record: stub_record(42), column_key: :todo)
-    card.define_singleton_method(:render_grid_card) { }
+    card.define_singleton_method(:render_grid_card) {}
 
     html = card.call
 
@@ -16,7 +16,7 @@ class Plutonium::UI::Kanban::CardTest < Minitest::Test
 
   def test_column_key_is_stringified
     card = build_card(record: stub_record(7), column_key: :in_progress)
-    card.define_singleton_method(:render_grid_card) { }
+    card.define_singleton_method(:render_grid_card) {}
 
     html = card.call
 

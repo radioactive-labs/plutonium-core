@@ -21,7 +21,7 @@ module Plutonium
         @on_drop = on_drop
         @collapsed = collapsed.nil? ? preset[:collapsed] : collapsed
         @add = add.nil? ? preset[:add] : add
-        @accepts = accepts.nil? ? true : accepts
+        @accepts = accepts.nil? || accepts
         @locked = locked || false
         @actions = []
       end

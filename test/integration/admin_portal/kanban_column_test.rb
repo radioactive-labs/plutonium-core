@@ -21,9 +21,9 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
     # Seed tasks across columns. Positioning is scoped by :status so each
     # column starts at position 1.0 and increments independently.
     @todo_a = Task.create!(title: "Todo Alpha", status: "todo")
-    @todo_b = Task.create!(title: "Todo Beta",  status: "todo")
-    @doing  = Task.create!(title: "Doing One",  status: "doing")
-    @done   = Task.create!(title: "Done One",   status: "done")
+    @todo_b = Task.create!(title: "Todo Beta", status: "todo")
+    @doing = Task.create!(title: "Doing One", status: "doing")
+    @done = Task.create!(title: "Done One", status: "done")
   end
 
   teardown { Task.delete_all }
@@ -85,7 +85,7 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
   test "cards appear in position order (alpha before beta in todo)" do
     get "/admin/tasks?view=kanban&column=todo"
     alpha_pos = response.body.index("Todo Alpha")
-    beta_pos  = response.body.index("Todo Beta")
+    beta_pos = response.body.index("Todo Beta")
     assert alpha_pos && beta_pos,
       "expected both todo titles in response body"
     assert alpha_pos < beta_pos,

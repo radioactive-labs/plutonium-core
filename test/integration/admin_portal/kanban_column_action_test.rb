@@ -86,7 +86,7 @@ class AdminPortal::KanbanColumnActionTest < ActionDispatch::IntegrationTest
   test "POST to bulk commit URL archives all targeted done tasks" do
     done1 = Task.create!(title: "Done 1", status: "done")
     done2 = Task.create!(title: "Done 2", status: "done")
-    _todo = Task.create!(title: "Todo 1", status: "todo")
+    todo = Task.create!(title: "Todo 1", status: "todo")
 
     post "/admin/tasks/bulk_actions/archive_all",
       params: {ids: [done1.id, done2.id]}
@@ -96,11 +96,11 @@ class AdminPortal::KanbanColumnActionTest < ActionDispatch::IntegrationTest
 
     done1.reload
     done2.reload
-    _todo.reload
+    todo.reload
 
     assert_equal "archived", done1.status, "done1 should be archived"
     assert_equal "archived", done2.status, "done2 should be archived"
-    assert_equal "todo",     _todo.status, "todo task should be untouched"
+    assert_equal "todo", todo.status, "todo task should be untouched"
   end
 
   # ─── Policy gate hides the action for unauthorized users ─────────────────

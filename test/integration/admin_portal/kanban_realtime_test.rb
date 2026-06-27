@@ -34,7 +34,7 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
     login_as_admin(@admin)
 
     @todo_a = Task.create!(title: "Todo Alpha", status: "todo")
-    @doing_a = Task.create!(title: "Doing One",  status: "doing")
+    @doing_a = Task.create!(title: "Doing One", status: "doing")
   end
 
   teardown { Task.delete_all }
@@ -78,7 +78,7 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
 
       assert captured.any?, "expected at least one broadcast element"
       targets = captured.map { |node| node["target"] }.compact
-      assert_includes targets, "kanban-col-todo",  "todo frame must be in the broadcast"
+      assert_includes targets, "kanban-col-todo", "todo frame must be in the broadcast"
       assert_includes targets, "kanban-col-doing", "doing frame must be in the broadcast"
     end
   end
