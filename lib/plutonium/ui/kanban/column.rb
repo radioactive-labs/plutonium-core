@@ -314,7 +314,7 @@ module Plutonium
           case column.accepts
           when true then "all"
           when false then "none"
-          when Array then column.accepts.map(&:to_s).join(",")
+          when Array then column.accepts.join(",")
           else "all"
           end
         end
