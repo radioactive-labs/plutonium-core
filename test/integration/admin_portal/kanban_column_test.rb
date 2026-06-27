@@ -56,6 +56,15 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Todo Beta"
   end
 
+  # Regression: a card's show link must target _top so clicking it navigates the
+  # whole page — otherwise the show page loads INSIDE the column's lazy
+  # turbo-frame (cards are reused from Grid::Card, which is normally not framed).
+  test "card show link breaks out of the column frame (turbo-frame _top)" do
+    get "/admin/tasks?view=kanban&column=todo"
+    assert_match(/data-turbo-frame="_top"/, response.body,
+      "kanban card show link should target _top to escape the column frame")
+  end
+
   test "todo column body does not contain cards from other columns" do
     get "/admin/tasks?view=kanban&column=todo"
     refute_includes response.body, "Doing One"

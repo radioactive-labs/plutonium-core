@@ -50,7 +50,10 @@ module Plutonium
             record,
             resource_definition: resource_definition,
             resource_fields: resource_fields,
-            card_fields: @card_fields
+            card_fields: @card_fields,
+            # Escape the column's lazy turbo-frame: open the show page at the top
+            # level instead of loading it inside the kanban-col-<key> frame.
+            show_turbo_frame: "_top"
           )
         end
       end

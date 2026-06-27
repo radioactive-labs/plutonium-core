@@ -10,11 +10,16 @@ module Plutonium
       class Card < Plutonium::UI::Component::Base
         attr_reader :record, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil)
+        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil)
           @record = record
           @resource_definition = resource_definition
           @resource_fields = resource_fields
           @card_fields = card_fields
+          # Overrides the show link's turbo-frame target. Defaults to the show
+          # action's own frame (nil → normal navigation). The kanban board sets
+          # "_top" so a card click escapes its column's lazy turbo-frame instead
+          # of loading the show page inside the column.
+          @show_turbo_frame = show_turbo_frame
         end
 
         def view_template
@@ -207,7 +212,7 @@ module Plutonium
           url = route_options_to_url(show.route_options, record)
           a(
             href: url,
-            data: {row_click_target: "show", turbo_frame: show.turbo_frame(resource_definition)},
+            data: {row_click_target: "show", turbo_frame: @show_turbo_frame || show.turbo_frame(resource_definition)},
             class: "sr-only",
             tabindex: "-1",
             "aria-label": "Open #{header_text}"
