@@ -116,5 +116,31 @@ module Plutonium
         end
       end
     end
+
+    # Migration helper that adds a position column pre-tuned for fractional
+    # ordering. Mixed into ActiveRecord's table-definition classes by the
+    # railtie, so it is available in both create_table and change_table:
+    #
+    #   create_table :tasks do |t|
+    #     t.position                # decimal :position, precision: 16, scale: 8
+    #     t.position :sort_order    # custom column name
+    #     t.position index: true    # also add a single-column index
+    #   end
+    #
+    #   change_table :tasks do |t|
+    #     t.position
+    #   end
+    #
+    # The precision/scale give midpoints ample headroom over the rebalance
+    # threshold (EPSILON = 1e-6) — a too-small scale lets the last subdivision
+    # round to a neighbor. Pass precision:/scale: to override.
+    module MigrationHelpers
+      DEFAULT_PRECISION = 16
+      DEFAULT_SCALE = 8
+
+      def position(name = :position, **options)
+        column name, :decimal, precision: DEFAULT_PRECISION, scale: DEFAULT_SCALE, **options
+      end
+    end
   end
 end

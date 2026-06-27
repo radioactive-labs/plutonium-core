@@ -34,13 +34,13 @@ class Task < ApplicationRecord
 end
 ```
 
-Migration — the position column must be `decimal`:
+Migration — add the position column with the `t.position` helper (a tuned `decimal(16,8)`; works in `create_table` and `change_table`). Don't hand-roll a small scale — `scale: 6` exactly matches the `1e-6` rebalance threshold and can round to a duplicate. Use `t.position` (scale 8) or ≥ 8 if hand-written:
 
 ```ruby
 create_table :tasks do |t|
-  t.string  :title,    null: false
-  t.string  :status,   null: false, default: "todo"
-  t.decimal :position, precision: 10, scale: 6
+  t.string :title,  null: false
+  t.string :status, null: false, default: "todo"
+  t.position        # decimal :position, precision: 16, scale: 8
   t.timestamps
 
   t.index [:status, :position]

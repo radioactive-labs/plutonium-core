@@ -58,7 +58,7 @@ position_on :sort_order
 Requires the model to:
 1. `include Plutonium::Positioning`
 2. Call `positioned_on :position, scope: :grouping_attribute`
-3. Have a `decimal` column for the position attribute, with scale ≥ 8 (e.g. `precision: 16, scale: 8`) — see [Positioning › Migration](/reference/kanban/positioning#migration)
+3. Have a `decimal` column for the position attribute — add it with the `t.position` migration helper (a tuned `decimal(16,8)`) — see [Positioning › Migration](/reference/kanban/positioning#migration)
 
 On drop, calls `record.reposition!(prev_record:, next_record:)` which computes the decimal midpoint and updates the record.
 

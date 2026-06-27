@@ -250,6 +250,56 @@ module Plutonium
     end
 
     # ------------------------------------------------------------------ #
+    # Migration helper: t.position                                         #
+    # ------------------------------------------------------------------ #
+
+    def test_position_migration_helper_creates_a_tuned_decimal_column
+      ActiveRecord::Base.with_connection do |c|
+        c.create_table(:positioning_helper_create, force: true) do |t|
+          t.position
+          t.position :sort_order
+        end
+        cols = c.columns(:positioning_helper_create).index_by(&:name)
+
+        pos = cols.fetch("position")
+        assert_equal :decimal, pos.type
+        assert_equal 16, pos.precision
+        assert_equal 8, pos.scale
+
+        assert cols.key?("sort_order"), "a custom-named position column should be created"
+        assert_equal 8, cols.fetch("sort_order").scale
+      ensure
+        c.drop_table(:positioning_helper_create, if_exists: true)
+      end
+    end
+
+    def test_position_migration_helper_allows_overrides
+      ActiveRecord::Base.with_connection do |c|
+        c.create_table(:positioning_helper_override, force: true) do |t|
+          t.position :position, scale: 10, precision: 20
+        end
+        pos = c.columns(:positioning_helper_override).find { |col| col.name == "position" }
+        assert_equal 10, pos.scale
+        assert_equal 20, pos.precision
+      ensure
+        c.drop_table(:positioning_helper_override, if_exists: true)
+      end
+    end
+
+    def test_position_migration_helper_works_in_change_table
+      ActiveRecord::Base.with_connection do |c|
+        c.create_table(:positioning_helper_alter, force: true) { |t| t.string :name }
+        c.change_table(:positioning_helper_alter) { |t| t.position }
+        pos = c.columns(:positioning_helper_alter).find { |col| col.name == "position" }
+        assert pos, "change_table t.position should add the column"
+        assert_equal :decimal, pos.type
+        assert_equal 8, pos.scale
+      ensure
+        c.drop_table(:positioning_helper_alter, if_exists: true)
+      end
+    end
+
+    # ------------------------------------------------------------------ #
     # DB-backed: backfill_positions! numbers per scope group              #
     # ------------------------------------------------------------------ #
 

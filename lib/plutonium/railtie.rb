@@ -71,6 +71,14 @@ module Plutonium
       extend_action_dispatch
     end
 
+    # Make `t.position` available in create_table / change_table blocks.
+    initializer "plutonium.positioning" do
+      ActiveSupport.on_load(:active_record) do
+        ActiveRecord::ConnectionAdapters::TableDefinition.include(Plutonium::Positioning::MigrationHelpers)
+        ActiveRecord::ConnectionAdapters::Table.include(Plutonium::Positioning::MigrationHelpers)
+      end
+    end
+
     initializer "plutonium.phlexi_themes" do
       setup_phlexi_themes
     end

@@ -30,28 +30,38 @@ After calling `positioned_on`, the model gets:
 
 ### Migration
 
+Use the **`t.position`** helper — it adds a `decimal` column already tuned for fractional ordering (`precision: 16, scale: 8`), so you can't get the scale wrong:
+
+```ruby
+create_table :tasks do |t|
+  t.string :status, null: false, default: "todo"
+  t.position                 # decimal :position, precision: 16, scale: 8
+  t.timestamps
+end
+add_index :tasks, [:status, :position]   # match your scope attribute
+```
+
+Adding the column to an existing table works the same way in a `change_table` block:
+
 ```ruby
 class AddPositionToTasks < ActiveRecord::Migration[8.1]
   def change
-    add_column :tasks, :position, :decimal, precision: 16, scale: 8
-    add_index  :tasks, [:status, :position]  # match your scope attribute
+    change_table(:tasks) { |t| t.position }
+    add_index :tasks, [:status, :position]
   end
 end
 ```
 
-Or inline in a `create_table`:
+`t.position` accepts a custom column name and any `column` options:
 
 ```ruby
-create_table :tasks do |t|
-  t.string  :status,   null: false, default: "todo"
-  t.decimal :position, precision: 16, scale: 8
-  t.timestamps
-end
-add_index :tasks, [:status, :position]
+t.position :sort_order               # custom name
+t.position :position, index: true    # also add a single-column index
+t.position :position, scale: 10      # override precision/scale
 ```
 
-::: tip Choose a scale with headroom over `EPSILON`
-Give the column at least **two more decimal places than `EPSILON` (`1e-6`)** — i.e. `scale: 8` or higher. Rebalancing triggers when a gap drops below `1e-6`, so a column that can store smaller values still has room to write the final midpoint cleanly. A `scale: 6` column has no headroom: the last subdivision before a rebalance can round to a neighbor and momentarily collide. `scale: 8` is safe.
+::: tip Why the helper picks `scale: 8`
+If you write the column by hand, give it at least **two more decimal places than `EPSILON` (`1e-6`)** — i.e. `scale: 8` or higher. Rebalancing triggers when a gap drops below `1e-6`, so a column that can store smaller values still has room to write the final midpoint cleanly. A `scale: 6` column has no headroom: the last subdivision before a rebalance can round to a neighbor and momentarily collide. `t.position` defaults to `scale: 8`, which is safe.
 :::
 
 ---

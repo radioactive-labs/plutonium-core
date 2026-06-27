@@ -3,7 +3,7 @@ class CreateTasks < ActiveRecord::Migration[8.1]
     create_table :tasks do |t|
       t.string :title, null: false
       t.string :status, null: false
-      t.decimal :position, precision: 16, scale: 8
+      t.position  # Plutonium helper: decimal(16,8) tuned for fractional ordering
 
       t.index :status
 
