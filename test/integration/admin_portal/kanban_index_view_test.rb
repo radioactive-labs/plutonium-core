@@ -128,18 +128,31 @@ class AdminPortal::KanbanIndexViewTest < ActionDispatch::IntegrationTest
     assert_response :redirect
   end
 
-  # ─── View switcher includes Board segment ───────────────────────────────────
+  # ─── Shared toolbar (view switcher + search) renders on every view ──────────
 
   # The TaskDefinition registers :kanban in defined_index_views, so the
-  # view switcher rendered inside Table::Resource (and Grid::Resource) will
-  # have more than one view, making it render. When the shell renders we are
-  # not inside Table::Resource, but we can confirm the segment label "Board"
-  # is present in a standard table view response (switcher renders there).
+  # view switcher (rendered inside the shared TableToolbar) has >1 view and
+  # therefore renders.
 
   test "table view response includes Board segment in view switcher" do
     get "/admin/tasks"
     assert_response :success
-    # The view switcher renders "Board" as the kanban segment label.
     assert_includes response.body, "Board"
+  end
+
+  # The board view renders the SAME toolbar as table/grid, so users can switch
+  # back to Table/Grid (and search/filter where configured) from the board —
+  # not just see bare columns.
+  test "kanban board renders the view switcher toolbar" do
+    get "/admin/tasks?view=kanban"
+    assert_response :success
+    # The view-switcher segmented control (its Stimulus controller) is present…
+    assert_match(/data-controller="view-switcher"/, response.body)
+    # …with the Board segment marked selected and a Table segment to switch to.
+    assert_match(/data-view-switcher-view-param="kanban"[^>]*|aria-selected="true"[^>]*Board/m, response.body)
+    assert_includes response.body, "Board"
+    assert_includes response.body, "Table"
+    # Wrapped in the filter-panel controller (so the filter button can open it).
+    assert_match(/data-controller="filter-panel"/, response.body)
   end
 end

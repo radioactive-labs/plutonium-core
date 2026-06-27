@@ -156,6 +156,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource.define_singleton_method(:render_column_frame) { |_col| }
     resource.define_singleton_method(:render_realtime_subscription) { }
     stub_kanban_move_url_template(resource)
+    stub_toolbar(resource)
 
     html = resource.call
 
@@ -257,6 +258,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource = build_resource(columns: [col], realtime: true)
     resource.define_singleton_method(:render_column_frame) { |_col| }
     stub_kanban_move_url_template(resource)
+    stub_toolbar(resource)
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -271,6 +273,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource = build_resource(columns: [col], realtime: false)
     resource.define_singleton_method(:render_column_frame) { |_col| }
     stub_kanban_move_url_template(resource)
+    stub_toolbar(resource)
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -313,6 +316,18 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def stub_request(component, path:, query_params:)
     fake_request = Struct.new(:path, :query_parameters).new(path, query_params)
     component.define_singleton_method(:request) { fake_request }
+    stub_toolbar(component)
+  end
+
+  # The shared toolbar (view switcher / search / filters) needs controller
+  # context (current_query_object, TableToolbar, …) that isn't present in these
+  # isolated component tests. It's covered by the kanban integration tests; here
+  # we stub it so the board/column-frame assertions can run.
+  def stub_toolbar(component)
+    fake_query = Struct.new(:filter_definitions, :scope_definitions).new([], [])
+    component.define_singleton_method(:current_query_object) { fake_query }
+    component.define_singleton_method(:render_scopes_pills) { }
+    component.define_singleton_method(:render_toolbar) { }
   end
 
   # Stubs out kanban_move_url_template so tests that don't care about URL
