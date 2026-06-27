@@ -56,9 +56,11 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Todo Beta"
   end
 
-  # Regression: a card's show link must target _top so clicking it navigates the
-  # whole page — otherwise the show page loads INSIDE the column's lazy
-  # turbo-frame (cards are reused from Grid::Card, which is normally not framed).
+  # The Task board declares `show_in :page`, so a card's show link targets _top
+  # and clicking it navigates the whole page — otherwise the show page would load
+  # INSIDE the column's lazy turbo-frame (cards are reused from Grid::Card, which
+  # is normally not framed). KitchenSink exercises the default :modal path
+  # (see kanban_show_frame_test.rb).
   test "card show link breaks out of the column frame (turbo-frame _top)" do
     get "/admin/tasks?view=kanban&column=todo"
     assert_match(/data-turbo-frame="_top"/, response.body,

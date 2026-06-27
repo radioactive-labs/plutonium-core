@@ -24,10 +24,14 @@ module Plutonium
           (mode == :centered) ? Plutonium::UI::Modal::Centered : Plutonium::UI::Modal::Slideover
         end
 
-        def initialize(title: nil, description: nil, size: :md)
+        def initialize(title: nil, description: nil, size: :md, open_full_url: nil)
           @title = title
           @description = description
           @size = size
+          # When set, the header shows an "open full page" affordance that opens
+          # this URL in a new tab as a standalone page (no modal frame). The show
+          # modal uses it so a user can pop the record out to its full page.
+          @open_full_url = open_full_url
           validate_size!
         end
 
@@ -106,7 +110,30 @@ module Plutonium
                 p(id: description_id, class: "mt-1 text-sm text-[var(--pu-text-muted)]") { @description }
               end
             end
-            render_close_button
+            # The corner-hugging offset lives on the GROUP (not the individual
+            # buttons) so the buttons' own margins don't collapse the gap when
+            # there are two of them (open-full + close).
+            div(class: "flex items-center gap-1 shrink-0 -mt-1.5 -mr-1.5") do
+              render_open_full_link if @open_full_url
+              render_close_button
+            end
+          end
+        end
+
+        # Opens the modal's content as a standalone full page in a new tab.
+        # target=_blank gives a fresh browsing context with no Turbo-Frame
+        # header, so the destination renders full-page rather than re-entering
+        # the modal frame.
+        def render_open_full_link
+          a(
+            href: @open_full_url,
+            target: "_blank",
+            rel: "noopener",
+            class: "p-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
+            "aria-label": "Open full page in a new tab",
+            title: "Open full page"
+          ) do
+            render Phlex::TablerIcons::ArrowsDiagonal.new(class: "w-5 h-5")
           end
         end
 
@@ -116,7 +143,7 @@ module Plutonium
           else
             button(
               type: "button",
-              class: "p-1.5 -m-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
+              class: "p-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
               data: {action: "remote-modal#close"},
               "aria-label": "Close dialog"
             ) do

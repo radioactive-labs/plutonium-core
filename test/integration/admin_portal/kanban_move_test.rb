@@ -236,6 +236,55 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_response :ok
   end
 
+  # ─── Rejection feedback (toast explains the snap-back) ──────────────────────
+  #
+  # A bare snap-back with no message is confusing — the user can't tell why the
+  # card refused to land. The rejection response appends a dismissable flash
+  # toast to the board's #kanban-flash region alongside the source-frame update.
+
+  test "wip rejection appends a flash toast naming the WIP limit" do
+    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_c = Task.create!(title: "Doing Three", status: "doing")
+
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    assert_includes response.body, 'target="kanban-flash"',
+      "rejection must append a toast to the persistent #kanban-flash region"
+    assert_includes response.body, "pu-toast",
+      "rejection feedback should reuse the standard flash toast markup"
+    assert_includes response.body, "WIP limit (3)",
+      "the toast should explain the move was blocked by the WIP limit"
+  end
+
+  test "accepts rejection appends a flash toast explaining the block" do
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "done", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    assert_includes response.body, 'target="kanban-flash"',
+      "accepts rejection must append a toast to the #kanban-flash region"
+    assert_includes response.body, "be moved into",
+      "the toast should explain the destination column refused the card"
+  end
+
+  # Regression: move POSTs never render the layout that consumes the flash, so
+  # a stale flash from an earlier request (e.g. the login redirect's "Please
+  # login to continue") must NOT leak into the rejection toast. The handler
+  # renders only the specific reason, not the whole flash set.
+  test "rejection toast does not leak a stale flash message" do
+    @doing_b = Task.create!(title: "Doing Two",   status: "doing")
+    @doing_c = Task.create!(title: "Doing Three", status: "doing")
+
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    refute_includes response.body, "Please login to continue",
+      "a stale, undisplayed flash must not leak into the kanban rejection toast"
+  end
+
   private
 
   def kanban_move_url(task)

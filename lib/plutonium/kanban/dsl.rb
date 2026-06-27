@@ -17,6 +17,7 @@ module Plutonium
         @realtime = false
         @position_config = Positioning::Config.default
         @lazy = true
+        @show_in = nil
       end
 
       def column(key, **opts, &blk)
@@ -30,6 +31,13 @@ module Plutonium
       def per_column(n) = @per_column = n
       def realtime(v = true) = @realtime = v
       def lazy(v = true) = @lazy = v
+
+      # Overrides where a card click opens the record's show page, for this
+      # board only:
+      #   :modal — open in a centered modal dialog
+      #   :page  — navigate the whole page to the show route
+      # When unset, the board inherits the definition's `show_in` (default :page).
+      def show_in(mode) = @show_in = mode
 
       def position_on(attr = :position, &blk)
         @position_config =
@@ -50,7 +58,8 @@ module Plutonium
           per_column: @per_column,
           realtime: @realtime,
           position_config: @position_config,
-          lazy: @lazy
+          lazy: @lazy,
+          show_in: @show_in
         )
       end
     end

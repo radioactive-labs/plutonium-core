@@ -36,6 +36,33 @@ class Plutonium::Resource::DefinitionTest < ActiveSupport::TestCase
     assert_equal :centered, klass.new.modal_mode
   end
 
+  # show_in — how the show page opens (independent of modal_mode)
+
+  test "default show_in is :page" do
+    klass = Class.new(Plutonium::Resource::Definition)
+    assert_equal :page, klass.show_in
+    assert_equal :page, klass.new.show_in
+  end
+
+  test "show_in :modal overrides default" do
+    klass = Class.new(Plutonium::Resource::Definition) { show_in :modal }
+    assert_equal :modal, klass.show_in
+  end
+
+  test "show_in :invalid raises a descriptive ArgumentError" do
+    error = assert_raises(ArgumentError) do
+      Class.new(Plutonium::Resource::Definition) { show_in :sidebar }
+    end
+    assert_match(/show_in must be one of/, error.message)
+    assert_match(":sidebar", error.message)
+  end
+
+  test "subclass inherits parent show_in" do
+    parent = Class.new(Plutonium::Resource::Definition) { show_in :modal }
+    child = Class.new(parent)
+    assert_equal :modal, child.show_in
+  end
+
   test "instance method #modal_mode returns default when not overridden" do
     klass = Class.new(Plutonium::Resource::Definition)
     assert_equal :slideover, klass.new.modal_mode

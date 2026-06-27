@@ -88,6 +88,8 @@ index_views :kanban           # remove table; kanban is the only view
 | `position_on false` | No ordering or repositioning (Mode C) | — |
 | `card_fields(**slots)` | Override grid slot layout for cards; same slot keys as `grid_fields` | inherits `grid_fields` |
 | `realtime true` | ActionCable broadcast after every move | false |
+| `lazy false` | Eager-load all column frames on the initial request | `true` (lazy) |
+| `show_in :modal` / `:page` | Open a card's show page in a centered modal (`:modal`) or full-page (`:page`). Overrides the definition's `show_in` for this board | inherits definition (`:page`) |
 | `columns do … end` | Dynamic columns evaluated at request time with view context | — |
 
 ### `card_fields`
@@ -110,6 +112,23 @@ Broadcasts refreshed column turbo-frames to all board subscribers after every su
 
 ```ruby
 realtime true
+```
+
+### `show_in`
+
+Where a card click opens the record's show page. `:modal` renders the show page in a **centered** dialog; `:page` is a full-page navigation. The show modal is always centered — deliberately NOT the definition's `modal_mode` (which styles `new`/`edit`). No per-card wiring: the `Show` page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome.
+
+`show_in` also exists **on the definition** (`show_in :modal` / `:page`, default `:page`), where it governs the table and grid show links too. The kanban board inherits the definition's value unless it sets its own — so set it once on the definition for everywhere, or on the board to override just the board.
+
+From inside the show modal, an expand icon (or ⌘/Ctrl/middle-click on the card) opens the full page in a new tab.
+
+```ruby
+class TaskDefinition < ResourceDefinition
+  show_in :modal      # table + grid + board open show in a centered modal
+  kanban do
+    # show_in :page   # override: this board navigates full-page
+  end
+end
 ```
 
 ### Dynamic columns
@@ -230,6 +249,8 @@ When `kanban_move?` returns `false`, the board renders read-only — no drag han
 3. Column `accepts:` / `locked:` checked — HTTP 422 + card snap-back on failure.
 4. `wip:` limit checked for cross-column moves — HTTP 422 on failure.
 5. `on_drop` fires + record repositioned, all in a transaction.
+
+On a 422 rejection (steps 3–4) the response re-renders the source column (snap-back) **and** appends a dismissable warning toast naming the reason (e.g. `“Pending” is at its WIP limit (5).`) to the board's `#kanban-flash` region — so the snap-back is never silent. The toast renders the shared `plutonium/toast` partial directly (not via `flash`), so a stale undisplayed flash can't leak into the turbo-stream response.
 
 ### No permitted-attributes gate
 

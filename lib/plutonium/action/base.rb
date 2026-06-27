@@ -49,8 +49,17 @@ module Plutonium
       # Downgrades the remote-modal frame to nil when the definition has
       # `modal false`, so the link navigates as a full page instead of
       # targeting a frame that won't exist. Other frames pass through.
+      #
+      # The canonical :show action carries no explicit frame; instead it reads
+      # the definition's `show_in` so a resource can open its show page in a
+      # modal (`show_in :modal`) or full-page (`:page`, default) without the
+      # caller threading a frame. This is deliberately independent of
+      # `modal_mode` (which styles :new/:edit) — show is always centered.
       def turbo_frame(definition = nil)
         return nil if definition && targets_remote_modal? && definition.modal_mode == false
+        if definition && name == :show && @turbo_frame.nil?
+          return (definition.show_in == :modal) ? Plutonium::REMOTE_MODAL_FRAME : nil
+        end
         @turbo_frame
       end
 

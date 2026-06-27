@@ -76,7 +76,15 @@ module Plutonium
           # authority; the client-side data-kanban-accepts attribute (which
           # treats Proc as "all") is only a drop-hint.
           unless from && to && to.accepts_record?(record, from.key) && !from.locked?
-            return render_kanban_rejection(params[:from_column])
+            reason =
+              if from&.locked?
+                "Cards can't be moved out of “#{from.label}”."
+              elsif to
+                "Cards can't be moved into “#{to.label}”."
+              else
+                "This card can't be moved there."
+              end
+            return render_kanban_rejection(params[:from_column], reason:)
           end
 
           # Build the destination card list excluding the moved record so the
@@ -91,7 +99,10 @@ module Plutonium
           # pre-transaction read — benign TOCTOU: two concurrent moves could
           # momentarily push the column one over wip. Acceptable for a UI guard.
           if to.wip && from.key != to.key && dest_cards.size + 1 > to.wip
-            return render_kanban_rejection(params[:from_column])
+            return render_kanban_rejection(
+              params[:from_column],
+              reason: "“#{to.label}” is at its WIP limit (#{to.wip})."
+            )
           end
 
           prev_record = to_index > 0 ? dest_cards[to_index - 1] : nil
@@ -290,9 +301,29 @@ module Plutonium
             resource_fields: permitted_attributes_for("index"),
             column_action_data:,
             column_add_url:,
-            card_fields: board.card_fields
+            card_fields: board.card_fields,
+            card_show_frame: kanban_card_show_frame(board)
           )
           view_context.render(component).html_safe
+        end
+
+        # Resolves the turbo-frame a card's show link targets, from the board's
+        # effective show_in (the board's own value, or the definition's when the
+        # board doesn't override it):
+        #
+        #   :modal → the remote-modal frame, so a card click opens the record in a
+        #            centered dialog (the show page is always centered).
+        #   :page  → "_top", a full-page navigation to the show route.
+        #
+        # Either target escapes the column's lazy turbo-frame: "_top" replaces the
+        # whole page, and the remote-modal frame lives in the layout (document-wide),
+        # so Turbo resolves it outside the column frame.
+        def kanban_card_show_frame(board)
+          if board.show_in_for(current_definition) == :modal
+            Plutonium::REMOTE_MODAL_FRAME
+          else
+            "_top"
+          end
         end
 
         # Returns the primary-key ids for a column action based on `on:` scope.
@@ -381,14 +412,30 @@ module Plutonium
 
         # Renders a 422 turbo stream response that re-renders the source column
         # unchanged, allowing the Stimulus drag controller to snap the card back.
-        def render_kanban_rejection(from_key)
-          render(
-            turbo_stream: turbo_stream.update(
+        #
+        # When a reason is given, a single dismissable toast is appended to the
+        # board's #kanban-flash region so the snap-back is explained rather than
+        # silent. It renders the shared _toast partial directly (not via flash)
+        # so a stale, undisplayed flash from an earlier request can't leak into
+        # the turbo_stream response — these move POSTs never render the layout
+        # that would otherwise consume the flash.
+        def render_kanban_rejection(from_key, reason: nil)
+          streams = [
+            turbo_stream.update(
               "kanban-col-#{from_key}",
               render_kanban_column_html(from_key.to_s)
-            ),
-            status: :unprocessable_content
-          )
+            )
+          ]
+
+          if reason
+            streams << turbo_stream.append(
+              "kanban-flash",
+              partial: "plutonium/toast",
+              locals: {type: :warning, msg: reason}
+            )
+          end
+
+          render turbo_stream: streams, status: :unprocessable_content
         end
 
         # Evaluation context for dynamic `columns do…end` blocks — delegates to

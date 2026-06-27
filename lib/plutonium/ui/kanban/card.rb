@@ -18,7 +18,7 @@ module Plutonium
       class Card < Plutonium::UI::Component::Base
         attr_reader :record, :column_key, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, column_key:, resource_definition:, resource_fields:, card_fields: nil)
+        def initialize(record, column_key:, resource_definition:, resource_fields:, card_fields: nil, show_turbo_frame: "_top")
           @record = record
           @column_key = column_key
           @resource_definition = resource_definition
@@ -27,6 +27,10 @@ module Plutonium
           # Threaded through to Grid::Card so it takes precedence over the
           # resource definition's grid_fields.  nil means use the definition.
           @card_fields = card_fields
+          # The turbo-frame the card's show link targets — the remote-modal frame
+          # (board show_in :modal) or "_top" (show_in :page). Either escapes the
+          # column's lazy frame. Defaults to "_top".
+          @show_turbo_frame = show_turbo_frame
         end
 
         def view_template
@@ -51,9 +55,10 @@ module Plutonium
             resource_definition: resource_definition,
             resource_fields: resource_fields,
             card_fields: @card_fields,
-            # Escape the column's lazy turbo-frame: open the show page at the top
-            # level instead of loading it inside the kanban-col-<key> frame.
-            show_turbo_frame: "_top"
+            # Escape the column's lazy turbo-frame: either "_top" (full page) or
+            # the document-wide remote-modal frame, both of which resolve outside
+            # the kanban-col-<key> frame.
+            show_turbo_frame: @show_turbo_frame
           )
         end
       end

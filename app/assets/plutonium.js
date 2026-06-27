@@ -28227,7 +28227,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (event.target.closest("a, button, input, label, select, textarea, [data-row-click-ignore]")) {
         return;
       }
-      this.element.querySelector('[data-row-click-target="show"]')?.click();
+      const show = this.element.querySelector('[data-row-click-target="show"]');
+      if (!show) return;
+      if (event.metaKey || event.ctrlKey || event.button === 1) {
+        window.open(show.href, "_blank", "noopener");
+        return;
+      }
+      show.click();
     }
   };
 

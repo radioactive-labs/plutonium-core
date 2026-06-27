@@ -345,6 +345,43 @@ module Plutonium
       end
 
       # ------------------------------------------------------------------ #
+      # show_in — where a card click opens the show page                     #
+      # ------------------------------------------------------------------ #
+
+      def test_show_in_defaults_to_nil_inherit
+        board = DSL.build {}
+        assert_nil board.show_in, "an unset board show_in should inherit the definition"
+      end
+
+      def test_show_in_can_be_set_to_modal
+        board = DSL.build { show_in :modal }
+        assert_equal :modal, board.show_in
+      end
+
+      def test_show_in_can_be_set_to_page
+        board = DSL.build { show_in :page }
+        assert_equal :page, board.show_in
+      end
+
+      def test_show_in_rejects_unknown_mode
+        error = assert_raises(ArgumentError) { DSL.build { show_in :sidebar } }
+        assert_match(/show_in must be one of/, error.message)
+      end
+
+      # show_in_for(definition): board value wins; otherwise inherit the definition.
+      def test_show_in_for_inherits_definition_when_unset
+        board = DSL.build {}
+        definition = Struct.new(:show_in).new(:modal)
+        assert_equal :modal, board.show_in_for(definition)
+      end
+
+      def test_show_in_for_board_overrides_definition
+        board = DSL.build { show_in :page }
+        definition = Struct.new(:show_in).new(:modal)
+        assert_equal :page, board.show_in_for(definition)
+      end
+
+      # ------------------------------------------------------------------ #
       # Immutability — columns are deep-frozen                                #
       # ------------------------------------------------------------------ #
 

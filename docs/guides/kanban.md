@@ -105,6 +105,34 @@ Visit the resource index and use the view switcher to select the Kanban view.
 
 ![After dragging a card from Doing to Done — both column frames re-render and the WIP badge on Doing updates in place](/images/guides/kanban-after-move.png)
 
+### When a drop is rejected
+
+If a move is refused server-side — the destination is at its `wip:` limit, its `accepts:` policy rejects the card, or the source column is `locked:` — the card snaps back to where it started **and** a dismissable toast explains why:
+
+![A warning toast reading “Pending” is at its WIP limit (5) after a rejected drop](/images/guides/kanban-wip-toast.png)
+
+The toast is appended to a `#kanban-flash` region in the board shell (outside the per-column frames, so it survives the snap-back re-render). The client-side drag hints already grey out columns a card plainly can't enter, so the toast mainly surfaces the cases the browser can't pre-check — most commonly a WIP-full column or a per-card `accepts:` Proc.
+
+### Opening a card
+
+Clicking a card opens its show page. Where it opens is controlled by [`show_in`](/reference/kanban/dsl#show_in) — full-page by default, or a **centered modal** that keeps the board visible behind it:
+
+![A card's show page open in a centered modal over the board, with an expand icon to open the full page](/images/guides/kanban-show-centered-modal.png)
+
+```ruby
+class TaskDefinition < ResourceDefinition
+  show_in :modal          # open show in a modal everywhere (table, grid, board)
+
+  kanban do
+    # show_in :page       # …or override just this board back to full-page
+  end
+end
+```
+
+- Set `show_in :modal` on the **definition** to open show in a modal from the table, grid, and board alike. Set it on the **kanban block** to change only the board. An unset board inherits the definition (which defaults to `:page`).
+- The show modal is always **centered** — distinct from `new`/`edit`, which follow the definition's `modal_mode` (a slideover by default).
+- From inside the modal, an expand icon opens the record's full page in a new tab. ⌘/Ctrl-click (or middle-click) on a card does the same directly.
+
 ---
 
 ## Worked example — Status enum board

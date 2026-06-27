@@ -127,6 +127,26 @@ When `false`, all column frames are loaded in the initial page request (one HTTP
 
 ---
 
+### `show_in(mode)` {#show_in}
+
+```ruby
+show_in :modal   # open a card's show page in a centered modal dialog
+show_in :page    # navigate the whole page to the show route
+```
+
+Overrides — **for this board** — where clicking a card opens the record's show page:
+
+- `:modal` — the card's show link targets the layout's `remote_modal` frame, so the show page renders in a **centered** dialog. (Show is always centered — deliberately not the definition's `modal_mode`, which styles `new`/`edit`.)
+- `:page` — the card's show link targets `_top`, navigating the whole page to the show route.
+
+When `show_in` is **not** set on the board, the board inherits the definition's [`show_in`](/reference/resource/definition#show_in) (which itself defaults to `:page`). So to open cards in a modal you can set it on the board, or once on the definition (which also covers the table and grid views).
+
+Either mode escapes the column's lazy turbo-frame — `:page` replaces the whole page, and the `remote_modal` frame lives in the layout (resolved document-wide), so it opens outside the column. No per-card configuration is needed; the show page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome. From inside the modal, an expand icon (or ⌘/Ctrl-click on the card) opens the full page in a new tab.
+
+An unknown mode raises `ArgumentError`.
+
+---
+
 ### `card_fields(**slots)`
 
 ```ruby

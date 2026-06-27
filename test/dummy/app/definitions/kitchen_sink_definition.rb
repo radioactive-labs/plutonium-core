@@ -1,4 +1,9 @@
 class KitchenSinkDefinition < ::ResourceDefinition
+  # Open the show page in a (centered) modal from any record link — table rows,
+  # grid cards, and kanban cards. The kanban board inherits this (it sets no
+  # show_in of its own). new/edit still use the default slideover modal_mode.
+  show_in :modal
+
   # Interactive record action — exercises form_layout (incl. a dynamic
   # `collapsed:`) inside an interaction form. See ReconfigureKitchenSink.
   action :reconfigure, interaction: ReconfigureKitchenSink

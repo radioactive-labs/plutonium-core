@@ -53,6 +53,13 @@ module Plutonium
           # the board carries the shared view switcher (Table | Grid | Board),
           # search, scopes, and filters rather than rendering bare columns.
           div(data: filter_panel_controller_data) do
+            # Persistent append target for move-rejection toasts. It lives
+            # OUTSIDE the per-column turbo-frames so it survives the frame swaps
+            # a move triggers; toasts are position:fixed, so its location in the
+            # DOM has no layout effect. The move handler appends a flash toast
+            # here via turbo_stream when a drop is rejected (WIP / accepts /
+            # locked) so the snap-back is explained rather than silent.
+            div(id: "kanban-flash")
             render_scopes_pills
             render_toolbar
 

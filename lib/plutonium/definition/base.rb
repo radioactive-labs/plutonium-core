@@ -121,6 +121,30 @@ module Plutonium
         modal_size size
       end
 
+      # show_in — how the :show page opens from a record link (table row,
+      # grid card). Unlike :new/:edit (which follow `modal_mode`), the show
+      # page is ALWAYS centered when shown in a modal, so this is just a
+      # modal/page switch — not a style.
+      #
+      #   :page  (default) — full-page navigation to the show route
+      #   :modal           — open the show page in a centered dialog
+      #
+      # The kanban board has its own `show_in` that overrides this per-board.
+      VALID_SHOW_IN = [:modal, :page].freeze
+
+      inheritable_config_attr :show_in
+      show_in :page
+
+      # Validated setter — raises on an unknown mode rather than silently
+      # falling back, matching the kanban board's `show_in`.
+      def self.show_in(value = :__not_set__)
+        return show_in_config if value == :__not_set__
+        unless VALID_SHOW_IN.include?(value)
+          raise ArgumentError, "show_in must be one of #{VALID_SHOW_IN.inspect}, got #{value.inspect}"
+        end
+        self.show_in_config = value
+      end
+
       def initialize
         super
       end

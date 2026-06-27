@@ -25,7 +25,7 @@ module Plutonium
         def view_template
           article(
             class: card_class,
-            data: {controller: "row-click", action: "click->row-click#click"}
+            data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"}
           ) do
             render_show_link if can_show?
             render_actions_dropdown

@@ -16,6 +16,19 @@ export default class extends Controller {
     if (event.target.closest("a, button, input, label, select, textarea, [data-row-click-ignore]")) {
       return
     }
-    this.element.querySelector('[data-row-click-target="show"]')?.click()
+
+    const show = this.element.querySelector('[data-row-click-target="show"]')
+    if (!show) return
+
+    // Modifier-click (⌘/Ctrl) or middle-click opens the record's full page in a
+    // new tab — the standard "open in new tab" gesture — instead of following
+    // the show link's configured target (which may be a modal frame). A new
+    // browsing context sends no Turbo-Frame header, so it renders full-page.
+    if (event.metaKey || event.ctrlKey || event.button === 1) {
+      window.open(show.href, "_blank", "noopener")
+      return
+    }
+
+    show.click()
   }
 }

@@ -48,7 +48,12 @@ module Plutonium
         # through to each Kanban::Card (and ultimately Grid::Card) so it
         # overrides the resource definition's grid_fields for every card in the
         # column.  nil means "use the definition's grid_fields" (default).
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil)
+        # card_show_frame: the turbo-frame each card's show link targets — the
+        # remote-modal frame (board show_in :modal) or "_top" (show_in :page).
+        # Resolved by the controller and threaded through to Kanban::Card.
+        # Defaults to "_top" so a card always escapes the column's lazy frame when
+        # the component is built outside a controller (tests, board shell).
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil, card_show_frame: "_top")
           @column = column
           @cards = cards
           @total = total
@@ -58,6 +63,7 @@ module Plutonium
           @column_action_data = column_action_data
           @column_add_url = column_add_url
           @card_fields = card_fields
+          @card_show_frame = card_show_frame
         end
 
         def view_template
@@ -199,7 +205,8 @@ module Plutonium
               column_key: column.key,
               resource_definition: resource_definition,
               resource_fields: resource_fields,
-              card_fields: @card_fields
+              card_fields: @card_fields,
+              show_turbo_frame: @card_show_frame
             )
           end
         end

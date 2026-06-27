@@ -2,6 +2,10 @@ class TaskDefinition < ::ResourceDefinition
   kanban do
     per_column 25
 
+    # Open a card's show page as a full-page navigation rather than the default
+    # modal. KitchenSinkDefinition exercises the default (:modal) path.
+    show_in :page
+
     # card_fields declares the slot layout for every kanban card on this board.
     # header: :title  — show the task title in the card header.
     # meta: [:status] — show a status badge in the meta row.
