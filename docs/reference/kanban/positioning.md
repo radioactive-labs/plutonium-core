@@ -1,6 +1,6 @@
 # Kanban Positioning
 
-Plutonium uses **decimal fractional positioning** for kanban card ordering. Cards always land exactly where you drop them — no renumbering, no integer gaps to exhaust over time.
+Plutonium uses **decimal fractional positioning** for kanban card ordering. A drop writes a single decimal position (the midpoint between its neighbors), so the common case touches exactly one row — no bulk renumbering. The one exception is rare **rebalancing**: when the same slot has been subdivided ~20 times and the gap between two neighbors shrinks below `1e-6`, Plutonium renumbers that one scope group back to clean integers before inserting (see [Gap exhaustion](#rebalancing)).
 
 ## `Plutonium::Positioning` concern
 
@@ -33,7 +33,7 @@ After calling `positioned_on`, the model gets:
 ```ruby
 class AddPositionToTasks < ActiveRecord::Migration[8.1]
   def change
-    add_column :tasks, :position, :decimal, precision: 10, scale: 6
+    add_column :tasks, :position, :decimal, precision: 16, scale: 8
     add_index  :tasks, [:status, :position]  # match your scope attribute
   end
 end
@@ -44,11 +44,15 @@ Or inline in a `create_table`:
 ```ruby
 create_table :tasks do |t|
   t.string  :status,   null: false, default: "todo"
-  t.decimal :position, precision: 10, scale: 6
+  t.decimal :position, precision: 16, scale: 8
   t.timestamps
 end
 add_index :tasks, [:status, :position]
 ```
+
+::: tip Choose a scale with headroom over `EPSILON`
+Give the column at least **two more decimal places than `EPSILON` (`1e-6`)** — i.e. `scale: 8` or higher. Rebalancing triggers when a gap drops below `1e-6`, so a column that can store smaller values still has room to write the final midpoint cleanly. A `scale: 6` column has no headroom: the last subdivision before a rebalance can round to a neighbor and momentarily collide. `scale: 8` is safe.
+:::
 
 ---
 
@@ -68,7 +72,9 @@ task.reposition!(prev_record: last_card, next_record: nil)   # append
 - Only `next_record` → `next.position - 1` (prepend)
 - Both present → `(prev.position + next.position) / 2.0` (midpoint)
 
-**Gap exhaustion:** When the gap between two neighbors is smaller than `1e-6` (i.e., repeated insertions at the same slot have subdivided the decimal to the minimum precision), Plutonium automatically rebalances the scope group by assigning fresh integer positions (`1.0, 2.0, 3.0, …`) before computing the new midpoint. The rebalance happens inside a transaction.
+### Gap exhaustion (rebalancing) {#rebalancing}
+
+Each midpoint insert into the *same* slot halves the gap (`1.0 → 0.5 → 0.25 → …`), so after roughly 20 consecutive insertions the gap drops below `EPSILON` (`1e-6`). At that point `reposition!` rebalances **only that scope group** — renumbering every row in the group to fresh integers (`1.0, 2.0, 3.0, …`) in current-position order, inside a transaction — then reloads the two neighbors and writes the new midpoint. Other scope groups are untouched. End moves (a `nil` neighbor) never rebalance: they always have integer room via `prev ± 1`.
 
 ---
 

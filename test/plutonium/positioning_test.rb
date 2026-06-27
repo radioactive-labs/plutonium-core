@@ -156,6 +156,99 @@ module Plutonium
       assert positions[1] < positions[2], "b should be before c"
     end
 
+    # Natural exhaustion: repeatedly inserting into the SAME slot halves the
+    # gap each time, so after ~20 inserts it drops below EPSILON and must
+    # rebalance — without ever colliding or losing the drag order. The earlier
+    # rebalance test jams positions artificially; this one drives the real path
+    # through reposition! and proves rebalancing actually fires.
+    def test_repeated_inserts_into_same_slot_rebalance_and_preserve_order
+      # Count rebalances so we prove the exhaustion branch ran (rather than the
+      # wide test column simply having room).
+      rebalances = 0
+      @item_class.prepend(Module.new do
+        define_method(:rebalance_scope_group!) do
+          rebalances += 1
+          super()
+        end
+      end)
+
+      first = @item_class.create!(status: "todo") # the fixed left anchor
+      last  = @item_class.create!(status: "todo") # the fixed right anchor
+
+      inserted = []
+      30.times do
+        # Insert between the two left-most rows: `first` and whatever currently
+        # sits second. Fetch fresh each pass so a rebalance (which renumbers via
+        # update_column, leaving our in-memory objects stale) can't mislead us.
+        left, right = @item_class.where(status: "todo").order(:position).limit(2).to_a
+        x = @item_class.create!(status: "todo")
+        x.reposition!(prev_record: left, next_record: right)
+        inserted << x
+      end
+
+      assert rebalances >= 1,
+        "30 insertions into the same slot must trigger at least one rebalance"
+
+      rows = @item_class.where(status: "todo").order(:position).to_a
+      positions = rows.map { |r| r.position.to_f }
+      assert_equal positions.length, positions.uniq.length,
+        "positions must stay distinct across rebalances"
+      # Each new card lands just after `first`, so the order is:
+      # first, newest … oldest, last.
+      expected_ids = [first.id] + inserted.reverse.map(&:id) + [last.id]
+      assert_equal expected_ids, rows.map(&:id),
+        "drag order must survive rebalancing"
+    end
+
+    # A rebalance renumbers the WHOLE scope group, not just the two neighbors —
+    # rows that weren't involved in the move must keep their relative order and
+    # come out with clean, distinct positions.
+    def test_rebalance_renumbers_whole_group_preserving_all_order
+      a = @item_class.create!(status: "todo", position: 1.0)
+      b = @item_class.create!(status: "todo", position: 2.0)
+      c = @item_class.create!(status: "todo", position: 3.0)
+      d = @item_class.create!(status: "todo", position: 4.0)
+      e = @item_class.create!(status: "todo", position: 5.0)
+
+      # Exhaust the gap between b and c.
+      tiny = Plutonium::Positioning::EPSILON / 10
+      b.update_column(:position, 2.0)
+      c.update_column(:position, 2.0 + tiny)
+
+      # Move e between b and c — triggers a full-group rebalance.
+      e.reposition!(prev_record: b, next_record: c)
+
+      rows = @item_class.where(status: "todo").order(:position).to_a
+      positions = rows.map { |r| r.position.to_f }
+      assert_equal positions.length, positions.uniq.length,
+        "no duplicate positions after rebalance"
+      # a and d were not neighbors of the move; they must keep their order, and
+      # e must land between b and c.
+      assert_equal [a.id, b.id, e.id, c.id, d.id], rows.map(&:id),
+        "rebalance must preserve every row's order, with e inserted between b and c"
+    end
+
+    # Identical neighbor positions (gap == 0) are an exhausted gap: reposition!
+    # must rebalance to break the tie rather than crash or write a duplicate.
+    def test_rebalance_resolves_identical_neighbor_positions
+      a = @item_class.create!(status: "todo")
+      b = @item_class.create!(status: "todo")
+      a.update_column(:position, 1.0)
+      b.update_column(:position, 1.0) # exact tie
+      c = @item_class.create!(status: "todo")
+
+      c.reposition!(prev_record: a, next_record: b)
+
+      positions = [a, b, c].map { |r| r.reload.position.to_f }
+      assert_equal 3, positions.uniq.length,
+        "the tie must be resolved into three distinct positions"
+      # c lands strictly between its (post-rebalance) neighbors, whichever order
+      # the tie resolved to.
+      lo, hi = [a.position.to_f, b.position.to_f].minmax
+      assert c.position.to_f > lo && c.position.to_f < hi,
+        "c should sit strictly between a and b"
+    end
+
     # ------------------------------------------------------------------ #
     # DB-backed: backfill_positions! numbers per scope group              #
     # ------------------------------------------------------------------ #
