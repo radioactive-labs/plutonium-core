@@ -344,9 +344,30 @@ kanban do
 end
 ```
 
-This requires ActionCable and `turbo-rails` in your Gemfile. After a successful move, Plutonium broadcasts the updated column frames to all connected viewers on the same stream.
+After a successful move, Plutonium broadcasts the updated column frames to all connected viewers on the same stream. Stream names are tenant-scoped: viewers of different tenant entities can never cross-contaminate each other's streams. See [Reference › Kanban › DSL](/reference/kanban/dsl#realtime) for the stream name format.
 
-Stream names are tenant-scoped: viewers of different tenant entities can never cross-contaminate each other's streams. See [Reference › Kanban › DSL](/reference/kanban/dsl#realtime) for the stream name format.
+### Setup (required for realtime to actually update other viewers)
+
+Plutonium emits the `<turbo-cable-stream-source>` subscription element and broadcasts on the server, but the **client must have an ActionCable consumer** to receive it. Plutonium's bundled JavaScript ships `@hotwired/turbo` only (no cable client), so you must wire the rest up yourself:
+
+1. **Gems** — `turbo-rails` and `actioncable` (Rails includes ActionCable; `turbo-rails` provides `Turbo::StreamsChannel` and `turbo_stream_from`).
+2. **Cable adapter** (`config/cable.yml`) — `async` is fine for a single-process dev server; use **Redis** (or Solid Cable) for multi-process production, otherwise a broadcast from one worker won't reach clients connected to another.
+3. **Mount ActionCable** — `mount ActionCable.server => "/cable"` (Rails mounts it by default when `action_cable/engine` is loaded).
+4. **Load the cable client in your app's JavaScript** — this is the step most people miss. Add **one** of:
+   ```js
+   // app pack, alongside your other imports
+   import "@hotwired/turbo-rails"   // registers <turbo-cable-stream-source> + a consumer
+   ```
+   …or, if you only want ActionCable:
+   ```js
+   import * as ActionCable from "@rails/actioncable"
+   window.ActionCable ||= ActionCable
+   ```
+   Without this, the server broadcasts but no browser is subscribed, so other viewers won't update until they reload.
+
+::: tip Verify it
+With two browser tabs on the same board, move a card in one — the other should update without a reload. If it doesn't, check the browser console/network for a `/cable` WebSocket connection; a missing connection means the cable client (step 4) isn't loaded.
+:::
 
 ---
 

@@ -109,7 +109,7 @@ Enables ActionCable broadcasting after every successful move. After a drop, Plut
 
 Two viewers share a stream only if they have the same resource class **and** the same scoped entity — cross-tenant leakage is impossible by construction.
 
-Requires `turbo-rails` and ActionCable in your Gemfile. Your application layout must include the ActionCable JavaScript.
+Requires `turbo-rails` + ActionCable (gems), a cable adapter in `config/cable.yml` (Redis/Solid Cable in multi-process production), ActionCable mounted at `/cable`, **and** an ActionCable client loaded in your app's JavaScript. Plutonium's bundle ships `@hotwired/turbo` only — without `@hotwired/turbo-rails` (or `@rails/actioncable`) in your pack, the `<turbo-cable-stream-source>` never connects and other viewers won't update. Server-side broadcasting works regardless; this is purely the client subscription. See the [guide's Realtime setup](/guides/kanban#setup-required-for-realtime-to-actually-update-other-viewers).
 
 Default: `false`.
 
