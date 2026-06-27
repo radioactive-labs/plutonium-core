@@ -35,6 +35,21 @@ class AdminPortal::KanbanColumnTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # Regression: the shell's lazy `<turbo-frame id="kanban-col-<key>" src=…>`
+  # only swaps in content if the response CONTAINS a turbo-frame with the same
+  # id — otherwise Turbo renders "Content missing" in the browser. Asserting
+  # the card content alone (other tests) does not catch a missing wrapper.
+  test "lazy column response is wrapped in the matching turbo-frame" do
+    get "/admin/tasks?view=kanban&column=todo"
+    assert_match(/<turbo-frame[^>]*\bid="kanban-col-todo"/, response.body)
+  end
+
+  test "unknown column still returns the matching (empty) turbo-frame" do
+    get "/admin/tasks?view=kanban&column=bogus"
+    assert_response :success
+    assert_match(/<turbo-frame[^>]*\bid="kanban-col-bogus"/, response.body)
+  end
+
   test "todo column body contains todo card titles" do
     get "/admin/tasks?view=kanban&column=todo"
     assert_includes response.body, "Todo Alpha"

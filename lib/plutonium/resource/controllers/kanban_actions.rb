@@ -222,15 +222,24 @@ module Plutonium
           columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
           column = columns.find { |c| c.key.to_s == params[:column] }
 
-          # Unknown column key — render an empty frame body, no crash.
+          # The lazy `<turbo-frame id="kanban-col-<key>" src=…>` in the shell
+          # requires the response to contain a turbo-frame with the SAME id, or
+          # Turbo renders "Content missing". Wrap the column body in that frame.
+          # (The move action targets the frame via turbo_stream.update instead,
+          # so render_kanban_column_html stays body-only for that path.)
+          frame_id = "kanban-col-#{params[:column]}"
+
+          # Unknown column key — render an empty (matching) frame, no crash.
           # kanban_base_relation is referenced so verify_current_authorized_scope
           # still passes even on the empty path.
           unless column
             kanban_base_relation
-            return render(html: "", layout: false)
+            empty = view_context.content_tag("turbo-frame", "", id: frame_id)
+            return render(html: empty, layout: false)
           end
 
-          render html: render_kanban_column_html(column), layout: false
+          framed = view_context.content_tag("turbo-frame", render_kanban_column_html(column), id: frame_id)
+          render html: framed, layout: false
         end
 
         # Renders a single column component to an HTML-safe string.
