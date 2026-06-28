@@ -95,6 +95,11 @@ module Plutonium
         return [] unless (backend || attachment_backend).to_sym == :shrine
 
         klass = shrine_uploader(uploader)
+        # Shrine's `validation` plugin is OPTIONAL — without it (or `validation_helpers`)
+        # the Attacher has no `#errors` and nothing to enforce. Detect it up front so a
+        # plugin-less app is a clean no-op, not a per-step rescued NoMethodError.
+        return [] unless klass::Attacher.method_defined?(:errors)
+
         Array(value).flat_map { |token| token_validation_errors(klass, token) }
       end
 

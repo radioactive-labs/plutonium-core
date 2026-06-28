@@ -131,10 +131,25 @@ class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
     assert_empty Plutonium::Wizard::Attachments.validation_errors(token, backend: :shrine, uploader: ValidatingUploader)
   end
 
-  test "validation_errors is a no-op for base Shrine with no rules and for ActiveStorage" do
-    shrine_token = upload_shrine.to_json
-    assert_empty Plutonium::Wizard::Attachments.validation_errors(shrine_token, backend: :shrine),
-      "base Shrine has no Attacher.validate here → nothing to enforce"
+  test "validation_errors is a CLEAN no-op when the validation plugin isn't loaded" do
+    # Shrine's `validation` plugin is optional — a plugin-less uploader's Attacher has
+    # no `#errors`. It must short-circuit (the capability gate), NOT raise into the
+    # rescue and log a spurious warning on every step.
+    plugin_less = Class.new(Shrine) # no :validation / :validation_helpers
+    token = Shrine.upload(shrine_io, :cache).to_json
+
+    out = StringIO.new
+    original_logger = Rails.logger
+    Rails.logger = Logger.new(out)
+    begin
+      assert_empty Plutonium::Wizard::Attachments.validation_errors(token, backend: :shrine, uploader: plugin_less)
+    ensure
+      Rails.logger = original_logger
+    end
+    assert_empty out.string, "no warning — the missing plugin is detected, not rescued"
+  end
+
+  test "validation_errors is a no-op for ActiveStorage" do
     assert_empty Plutonium::Wizard::Attachments.validation_errors(upload_blob.signed_id, backend: :active_storage),
       "ActiveStorage has no attacher validations at this layer"
   end

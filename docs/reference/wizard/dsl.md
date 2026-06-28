@@ -138,7 +138,7 @@ end
 | **Multiple** | array attribute + `multiple: true` | staged value is an array of tokens. |
 
 ::: tip Uploader validations are enforced on the step
-A Shrine file field is validated **on its step** against the field's **effective uploader** — its `uploader:` if given, else base `Shrine` (whichever carries the `Attacher.validate` rules). A file that violates them is rejected right there (a field error + re-render), exactly like a `validates` — *not* deferred to `execute`. Mechanically: `Uploader.upload` caches the file (running no validations), then the step's validation pass runs the attacher's validations against the staged token. ActiveStorage fields are unaffected, and a base `Shrine` with no rules is a no-op.
+A Shrine file field is validated **on its step** against the field's **effective uploader** — its `uploader:` if given, else base `Shrine` (whichever carries the `Attacher.validate` rules). A file that violates them is rejected right there (a field error + re-render), exactly like a `validates` — *not* deferred to `execute`. Mechanically: `Uploader.upload` caches the file (running no validations), then the step's validation pass runs the attacher's validations against the staged token. This needs Shrine's optional `validation`/`validation_helpers` plugin — without it there's nothing to enforce and it's a clean no-op. ActiveStorage fields are likewise unaffected.
 :::
 
 ## Per-step hooks
