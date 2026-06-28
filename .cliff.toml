@@ -66,3 +66,9 @@ ignore_tags = ""
 topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "oldest"
+
+[bump]
+# Pre-1.0 semver: a feature bumps the minor, a breaking change also bumps the
+# minor (not the major) while we're on 0.x. Fixes bump the patch.
+features_always_bump_minor = true
+breaking_always_bump_major = false

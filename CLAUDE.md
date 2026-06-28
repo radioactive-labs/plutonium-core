@@ -169,16 +169,24 @@ The `.claude/skills/` directory contains documentation for AI assistants:
 
 ## Release Process
 
+Publishing happens from a laptop. CI (`.github/workflows/release.yml`) does **not**
+push to any registry — when the `vX.Y.Z` tag lands it only cuts the GitHub Release
+(release notes + the built gem attached), so it can't race the local publish.
+
 ```bash
-bundle exec rake release:full
+# 1. Bump version + regenerate changelog + rebuild assets, commit (no push).
+#    Version is optional — git-cliff computes it from conventional commits.
+bundle exec rake release:prepare        # or release:prepare[1.2.3]
+
+git show                                # 2. review the bump commit
+
+bundle exec rake release:publish        # 3. push gem + npm, then tag + push → CI cuts the Release
 ```
 
-This:
-1. Checks npm authentication
-2. Bumps version
-3. Builds and publishes npm package
-4. Builds and publishes gem
-5. Pushes git tags
+`release:publish` is idempotent and resumable: it skips a gem/npm already live and
+only tags if the tag is missing, so a partial failure can be re-run safely.
+
+Helper: `rake release:version` shows the next version git-cliff would pick.
 
 ## Key Files Reference
 

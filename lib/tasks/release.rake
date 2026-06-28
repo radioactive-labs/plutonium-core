@@ -1,230 +1,171 @@
 # frozen_string_literal: true
 
+# Release flow
+# ------------
+# Publishing happens from a laptop. CI does NOT push to any registry — it only
+# cuts the GitHub Release (with notes + the built gem) when the tag lands.
+#
+#   1. rake release:prepare          # auto-computes next version via git-cliff
+#      rake release:prepare[1.2.3]   # ...or pass one explicitly
+#   2. git show                      # review the bump commit
+#   3. rake release:publish          # publish gem + npm, then tag + push → CI cuts the Release
+#
+# release:publish is idempotent and resumable: it skips a gem/npm already live
+# and only tags if the tag is missing, so a partial failure can just be re-run.
+
+require "json"
+
+RELEASE_CLIFF_CONFIG = ".cliff.toml"
+RELEASE_VERSION_FILE = "lib/plutonium/version.rb"
+RELEASE_PACKAGE_JSON = "package.json"
+RELEASE_NPM_PACKAGE = "@radioactive-labs/plutonium"
+
 namespace :release do
-  desc "Display next version based on conventional commits"
-  task :next_version do
-    current_version = Plutonium::VERSION
-    puts "Current version: #{current_version}"
+  # --- helpers --------------------------------------------------------------
 
-    # Find the tag to compare against
-    version_tag = "v#{current_version}"
-    tag_exists = system("git rev-parse #{version_tag} >/dev/null 2>&1")
-
-    unless tag_exists
-      # Fall back to most recent tag
-      version_tag = `git describe --tags --abbrev=0 2>/dev/null`.strip
-      if version_tag.empty?
-        puts "No tags found, comparing against initial commit"
-        version_tag = `git rev-list --max-parents=0 HEAD`.strip
-      else
-        puts "Tag v#{current_version} not found, comparing against #{version_tag}"
-      end
-    end
-
-    # Check for breaking changes, features, or fixes since last tag
-    breaking = `git log #{version_tag}..HEAD --oneline | grep -i "BREAKING CHANGE"`.strip
-    features = `git log #{version_tag}..HEAD --oneline | grep "^[a-f0-9]* feat"`.strip
-    fixes = `git log #{version_tag}..HEAD --oneline | grep "^[a-f0-9]* fix"`.strip
-
-    major, minor, patch = current_version.split(".").map(&:to_i)
-
-    if !breaking.empty?
-      next_version = "#{major + 1}.0.0"
-      puts "Next version (breaking changes): #{next_version}"
-    elsif !features.empty?
-      next_version = "#{major}.#{minor + 1}.0"
-      puts "Next version (new features): #{next_version}"
-    elsif !fixes.empty?
-      next_version = "#{major}.#{minor}.#{patch + 1}"
-      puts "Next version (bug fixes): #{next_version}"
-    else
-      puts "No changes detected"
-    end
+  def current_version
+    File.read(RELEASE_VERSION_FILE)[/VERSION = "([\d.]+)"/, 1] ||
+      abort("Could not read VERSION from #{RELEASE_VERSION_FILE}")
   end
 
-  desc "Prepare a new release"
+  def git_cliff?
+    system("which git-cliff > /dev/null 2>&1")
+  end
+
+  # Next version per conventional commits. git-cliff owns the semver math
+  # (including the pre-1.0 rules configured under [bump] in .cliff.toml).
+  def computed_next_version
+    abort "git-cliff not found. Install with: brew install git-cliff" unless git_cliff?
+    bumped = `git-cliff --config #{RELEASE_CLIFF_CONFIG} --bumped-version 2>/dev/null`.strip
+    abort "git-cliff could not compute a version (no conventional commits since last tag?)" if bumped.empty?
+    bumped.delete_prefix("v")
+  end
+
+  def gem_published?(version)
+    out = `gem list --remote --exact --all plutonium 2>/dev/null`
+    out.include?("#{version},") || out.include?("#{version})") || out.include?(" #{version} ")
+  end
+
+  def npm_published?(version)
+    published = `npm view #{RELEASE_NPM_PACKAGE}@#{version} version 2>/dev/null`.strip
+    published == version
+  end
+
+  # --- version --------------------------------------------------------------
+
+  desc "Show the next version computed from conventional commits"
+  task :version do
+    puts "Current version: #{current_version}"
+    puts "Next version:    #{computed_next_version}"
+  end
+
+  # --- prepare --------------------------------------------------------------
+
+  desc "Prepare a release commit (bump + changelog + assets). Version optional; git-cliff computes it."
   task :prepare, [:version] do |_t, args|
-    version = args[:version]
+    version = args[:version] || computed_next_version
 
-    unless version
-      puts "Usage: rake release:prepare[VERSION]"
-      puts "Example: rake release:prepare[0.27.0]"
-      exit 1
-    end
-
-    # Validate version format
     unless version.match?(/^\d+\.\d+\.\d+$/)
-      puts "Error: Version must be in format X.Y.Z"
-      exit 1
+      abort "Error: version must be in format X.Y.Z (got #{version.inspect})"
     end
 
-    # Update version.rb
-    version_file = "lib/plutonium/version.rb"
-    content = File.read(version_file)
-    updated_content = content.gsub(/VERSION = "[\d.]+"/, %(VERSION = "#{version}"))
-    File.write(version_file, updated_content)
-    puts "✓ Updated #{version_file}"
-
-    # Update package.json version
-    package_json_file = "package.json"
-    if File.exist?(package_json_file)
-      package_content = File.read(package_json_file)
-      updated_package = package_content.gsub(/"version":\s*"[\d.]+"/, %("version": "#{version}"))
-      File.write(package_json_file, updated_package)
-      puts "✓ Updated #{package_json_file}"
+    unless `git status --porcelain`.strip.empty?
+      abort "Error: working tree is dirty. Commit or stash first."
     end
 
-    # Generate changelog using git-cliff
-    if system("which git-cliff > /dev/null 2>&1")
-      system("git-cliff --tag v#{version} -o CHANGELOG.md")
-      puts "✓ Generated CHANGELOG.md"
-    else
-      puts "⚠ git-cliff not found. Install with: brew install git-cliff"
-      puts "  Skipping changelog generation"
-    end
+    puts "Preparing release v#{version}..."
 
-    # Build front-end assets
+    # Bump version.rb
+    content = File.read(RELEASE_VERSION_FILE)
+    File.write(RELEASE_VERSION_FILE, content.gsub(/VERSION = "[\d.]+"/, %(VERSION = "#{version}")))
+    puts "✓ #{RELEASE_VERSION_FILE}"
+
+    # Bump package.json
+    pkg = File.read(RELEASE_PACKAGE_JSON)
+    File.write(RELEASE_PACKAGE_JSON, pkg.gsub(/"version":\s*"[\d.]+"/, %("version": "#{version}")))
+    puts "✓ #{RELEASE_PACKAGE_JSON}"
+
+    # Changelog — same config CI uses for release notes, so they agree.
+    abort "git-cliff not found. Install with: brew install git-cliff" unless git_cliff?
+    system("git-cliff", "--config", RELEASE_CLIFF_CONFIG, "--tag", "v#{version}", "-o", "CHANGELOG.md") ||
+      abort("Changelog generation failed")
+    puts "✓ CHANGELOG.md"
+
+    # Rebuild committed frontend assets so the tagged tree ships current JS/CSS.
     Rake::Task["release:build_frontend"].invoke
 
-    puts "\nNext steps:"
-    puts "1. Review the changes:"
-    puts "   git diff"
-    puts "2. Commit the version bump:"
-    puts "   git add -A"
-    puts "   git commit -m 'chore(release): prepare for v#{version}'"
-    puts "3. Create and push the tag:"
-    puts "   git tag v#{version}"
-    puts "   git push origin main --tags"
-    puts "4. Build and release:"
-    puts "   rake release:publish"
+    # Commit straight to the current branch. No push — review, then `rake release:publish`.
+    system("git", "add", "-A") || abort("git add failed")
+    system("git", "commit", "-m", "chore(release): prepare for v#{version}") || abort("git commit failed")
+
+    puts "\n✓ Committed release v#{version}."
+    puts "Next:"
+    puts "  git show              # review"
+    puts "  rake release:publish  # publish gem + npm, then tag + push"
   end
 
   desc "Build front-end assets"
   task :build_frontend do
     puts "Building front-end assets..."
-    # in: File::NULL — yarn 4 puts the terminal in raw mode for its
-    # progress UI and doesn't always restore it on exit. Without this,
-    # subsequent `$stdin.gets` prompts read one keystroke at a time and
-    # never see a newline, so Enter never terminates the line.
     system("yarn build", in: File::NULL) || abort("Front-end build failed")
     puts "✓ Built front-end assets"
   end
 
-  desc "Publish the gem to RubyGems"
-  task :publish_gem do
-    # Reload version constant in case it was updated
-    load "lib/plutonium/version.rb"
-    version = Plutonium::VERSION
+  # --- publish (primary; idempotent + resumable) ----------------------------
 
-    # Build the gem
-    puts "Building gem..."
-    system("gem build plutonium.gemspec") || abort("Gem build failed")
-
-    # Push to RubyGems
-    puts "Publishing to RubyGems..."
-    gem_file = "plutonium-#{version}.gem"
-    system("gem push #{gem_file}") || abort("Gem push failed")
-
-    puts "✓ Published plutonium #{version} to RubyGems"
-
-    # Clean up
-    File.delete(gem_file) if File.exist?(gem_file)
-  end
-
-  desc "Publish the npm package"
-  task :publish_npm do
-    puts "Publishing npm package..."
-
-    # Check if user is logged in to npm, login if needed
-    unless system("npm whoami > /dev/null 2>&1")
-      puts "Not logged in to npm. Opening login..."
-      system("npm login") || abort("npm login failed")
-    end
-
-    # Publish to npm
-    system("npm publish --access public") || abort("npm publish failed")
-
-    # Get version from package.json
-    require "json"
-    package_json = JSON.parse(File.read("package.json"))
-    version = package_json["version"]
-
-    puts "✓ Published @radioactive-labs/plutonium #{version} to npm"
-  end
-
-  desc "Publish both gem and npm package"
-  task publish: [:build_frontend, :publish_gem, :publish_npm]
-
-  desc "Full release workflow"
-  task :full, [:version] do |_t, args|
-    version = args[:version]
-
-    unless version
-      puts "Usage: rake release:full[VERSION]"
-      exit 1
-    end
-
-    # Snapshot the terminal mode up front. yarn 4 and git-cliff both put
-    # the TTY in raw mode for progress UIs and don't always restore it,
-    # which breaks every subsequent `$stdin.gets` (Enter arrives as a
-    # bare \r and gets() never returns). Restore the snapshot before each
-    # prompt so the user can actually answer.
-    tty_state = `stty -g 2>/dev/null`.strip
-    restore_tty = -> { system("stty #{tty_state} 2>/dev/null") if tty_state != "" }
-
-    puts "Starting release workflow for v#{version}..."
-
-    # Check npm authentication early, login if needed
-    unless system("npm whoami > /dev/null 2>&1")
-      puts "Not logged in to npm. Opening login..."
-      system("npm login") || abort("npm login failed")
-    end
-    puts "✓ npm authenticated as: #{`npm whoami`.strip}"
-
-    # Check for uncommitted changes
+  desc "Publish gem + npm from this machine, then tag + push (fires the Release workflow)"
+  task publish: [:build_frontend] do
     unless `git status --porcelain`.strip.empty?
-      puts "Error: You have uncommitted changes. Please commit or stash them first."
-      exit 1
+      abort "Error: working tree is dirty. Run rake release:prepare first."
     end
 
-    # Check we're on main branch
-    current_branch = `git branch --show-current`.strip
-    unless current_branch == "main" || current_branch == "master"
-      puts "Warning: You're not on main/master branch (current: #{current_branch})"
-      restore_tty.call
-      print "Continue anyway? [y/N] "
-      exit 1 unless $stdin.gets.strip.downcase == "y"
+    version = current_version
+    tag = "v#{version}"
+
+    # Gem (skip if this version is already on RubyGems)
+    if gem_published?(version)
+      puts "• gem plutonium #{version} already on RubyGems — skipping"
+    else
+      puts "Building + pushing gem..."
+      system("gem build plutonium.gemspec") || abort("Gem build failed")
+      gem_file = "plutonium-#{version}.gem"
+      system("gem push #{gem_file}") || abort("Gem push failed")
+      File.delete(gem_file) if File.exist?(gem_file)
+      puts "✓ Published plutonium #{version} to RubyGems"
     end
 
-    # Prepare release
-    Rake::Task["release:prepare"].invoke(version)
+    # npm (skip if this version is already published)
+    if npm_published?(version)
+      puts "• npm #{RELEASE_NPM_PACKAGE}@#{version} already published — skipping"
+    else
+      unless system("npm whoami > /dev/null 2>&1")
+        puts "Not logged in to npm. Opening login..."
+        system("npm login") || abort("npm login failed")
+      end
+      system("npm publish --access public") || abort("npm publish failed")
+      puts "✓ Published #{RELEASE_NPM_PACKAGE} #{version} to npm"
+    end
 
-    # Confirm before proceeding
-    restore_tty.call
-    puts "\nReady to commit, tag, and publish?"
-    print "Continue? [y/N] "
-    exit 0 unless $stdin.gets.strip.downcase == "y"
+    # Tag + push last, so CI cuts the Release only once the packages are live.
+    branch = `git branch --show-current`.strip
+    if system("git rev-parse #{tag} >/dev/null 2>&1")
+      puts "• tag #{tag} already exists — skipping tag"
+    else
+      system("git", "tag", tag) || abort("git tag failed")
+    end
+    system("git", "push", "origin", branch) || abort("git push branch failed")
+    system("git", "push", "origin", tag) || abort("git push tag failed")
 
-    # Commit
-    system("git add -A")
-    system("git commit -m 'chore(release): prepare for v#{version}'")
-
-    # Push commit (without tags yet)
-    system("git push origin #{current_branch}")
-
-    # Build and publish (do this BEFORE tagging)
-    puts "\nBuilding and publishing gem and npm package..."
-    Rake::Task["release:publish"].invoke
-
-    # Only tag and push tag if publish succeeded
-    puts "\nCreating and pushing tag..."
-    system("git tag v#{version}")
-    system("git push origin v#{version}")
-
-    puts "\n✓ Release complete!"
-    puts "GitHub Actions will create the release shortly."
+    puts "\n✓ Released #{tag}. GitHub Actions will cut the Release from the tag."
+    puts "  Watch: https://github.com/radioactive-labs/plutonium-core/actions"
   end
 end
 
-desc "Release tasks"
-task release: ["release:next_version"]
+# Neutralize the dangerous bare `rake release` that bundler/gem_tasks defines
+# (it would tag + gem push directly). Point people at the real flow instead.
+if Rake::Task.task_defined?("release")
+  Rake::Task["release"].clear
+  task :release do
+    warn "Use `rake release:prepare` then `rake release:publish`. See lib/tasks/release.rake."
+  end
+end

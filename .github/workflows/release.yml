@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+# Publishing to RubyGems + npm happens from a laptop (rake release:publish).
+# This workflow only cuts the GitHub Release from the tag — it never pushes to a
+# registry, so it can't race the local publish.
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -27,20 +30,10 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      # Build the gem only to attach it to the GitHub Release — it is NOT pushed
+      # to RubyGems here (the laptop already did that via rake release:publish).
       - name: Build gem
         run: gem build plutonium.gemspec
-
-      - name: Publish to RubyGems
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p ~/.gem
-          cat << EOF > ~/.gem/credentials
-          ---
-          :rubygems_api_key: ${GEM_HOST_API_KEY}
-          EOF
-          chmod 0600 ~/.gem/credentials
-          gem push plutonium-${{ steps.version.outputs.VERSION }}.gem
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
