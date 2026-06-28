@@ -25,6 +25,52 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 
 ---
 
+## 🛑 Before you write behavior: place it in the right layer (ASK — don't infer)
+
+"Make X happen" doesn't say **where** X lives. Put it in the wrong layer and you get authorization that doesn't authorize, a 500 on the happy path, or a CRUD override that breaks params/auth. First place the requirement, then confirm names against the real code (next section):
+
+| The requirement (in plain words) | Goes in | **NOT** in |
+|---|---|---|
+| "only \<role/owner\> may do X" — *who is allowed* | **Policy** `def x?` | a `condition:` proc — that only hides the button; the route stays live and callable |
+| "doing X changes state / sends mail / charges a card" — *the work* | **Interaction** `execute`, registered as an action | a hand-written controller action; an override of `create`/`update` |
+| "after create/update go to Y" · "munge a param" · "reshape the index query" | **Controller hook** (`redirect_url_after_submit`, `resource_params`, `filtered_resource_collection`) | overriding `create`/`update`/`index` |
+| "which fields are visible / editable" | **Policy** `permitted_attributes_for_*` | the definition — that only controls *how* a field renders |
+
+Then resolve the specifics:
+
+1. **A custom action needs BOTH:** an interaction (the work) **and** a policy `def <action>?` (the authorization). Miss the policy method ⇒ the action silently returns `false` (dead button). Put the role check in `condition:` ⇒ it isn't enforced — a direct POST still runs.
+2. **`create?`/`read?` default to `false`** — override explicitly; derived methods (`update?`/`show?`/…) inherit.
+3. **Any `create!`/`update!`/`save!` in `execute`** ⇒ rescue `ActiveRecord::RecordInvalid` → `failed(e.record.errors)`. Not auto-rescued — otherwise a validation failure 500s.
+4. **`has_cents`** ⇒ permit `:price`, never `:price_cents`.
+5. **New vs editing** — never re-scaffold a controller/policy/interaction that's been customized.
+
+**Never ship a guessed role method, column, enum value, or association as applied code.** `user.finance?`, `record.status_approved?`, `expense.submitted_by` either exist in the app or they don't — confirm them before writing, don't assume. Fall back to `AskUserQuestion` only for genuine product choices (what the rule *should* be), never for facts you can read.
+
+## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **inspect**; don't ask the user to describe their own app.
+
+| Check | How | Why it matters |
+|---|---|---|
+| File already customized | Read `app/policies/<x>_policy.rb`, the controller, `app/interactions/*` | Edit incrementally — re-scaffolding clobbers customizations |
+| The role/method you authorize on exists | grep the user model for `def finance?` / `enum :role` / `has_role?` | `user.finance?` 500s (or is silently `false`) if absent |
+| The columns/enum your interaction writes | Read the model + `db/schema.rb` for the enum value, `approved_by`/`approved_at`, the submitter assoc | `update!(status: :approved)` raises if the value/column is missing |
+| Action not already wired | grep the definition for `action :<x>`; grep the policy for `def <x>?` | Avoids duplicate or dead actions |
+| Cross-resource access | Use `authorized_resource_scope` / `allowed_to?`, never raw `where`/`find` | Raw queries bypass the other resource's tenancy + visibility |
+
+Inspect with your own tools **before** proposing code.
+
+## 🛠 Use the generator — and know what's hand-authored
+
+| Task | How | Verify first |
+|---|---|---|
+| Base trio (controller + policy + interaction-base) | `pu:res:scaffold` | New resource |
+| Portal-specific controller/policy | `pu:res:conn … --dest=portal` | Resource exists |
+| **A custom-action interaction** | **Hand-author** in `app/interactions/<name>_interaction.rb` (subclass `ResourceInteraction`) — **there is NO `pu:res:interaction` generator; don't invent one** | — |
+| Edit an existing customized policy/controller/interaction | Hand-edit the file | It was already generated — re-scaffolding clobbers it |
+
+---
+
 # Part 1 — Controllers
 
 Plutonium controllers ship full CRUD out of the box; nearly all customization lives in definitions / policies / interactions. The controller stays thin.

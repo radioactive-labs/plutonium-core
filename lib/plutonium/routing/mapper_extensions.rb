@@ -43,6 +43,8 @@ module Plutonium
           define_collection_interactive_actions
           define_collection_typeahead_actions
           define_collection_export_actions
+          define_member_wizard_actions
+          define_collection_wizard_actions
         end
       end
 
@@ -180,6 +182,47 @@ module Plutonium
             as: :typeahead_input
           get "typeahead/filter/:name", action: :typeahead_filter,
             as: :typeahead_filter
+        end
+      end
+
+      # Defines member-level wizard launch actions (§5.1 / Fix A). Auto-mounted on
+      # every Plutonium resource alongside record_actions — the action 404s unless
+      # `:wizard_name` is a wizard registered (anchored → record) on the resource's
+      # definition, mirroring how `:interactive_action` gates record_actions. The
+      # anchor is the scoped, policy-gated `resource_record!` (IDOR-safe).
+      #
+      # @return [void]
+      def define_member_wizard_actions
+        return unless Plutonium.configuration.wizards.enabled
+
+        member do
+          # Bare launch (no :step): resolve/mint the run and redirect to its step.
+          get "wizards/:wizard_name", action: :launch_wizard_record_action,
+            as: :launch_wizard_record_action
+          get "wizards/:wizard_name(/:token)/:step", action: :wizard_record_action,
+            as: :wizard_record_action
+          post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_record_action,
+            as: :commit_wizard_record_action
+        end
+      end
+
+      # Defines collection-level wizard launch actions (§5.1 / Fix A) for
+      # non-anchored (create) wizards. Auto-mounted alongside resource_actions;
+      # the action 404s unless `:wizard_name` is a collection wizard registered on
+      # the resource's definition.
+      #
+      # @return [void]
+      def define_collection_wizard_actions
+        return unless Plutonium.configuration.wizards.enabled
+
+        collection do
+          # Bare launch (no :step): resolve/mint the run and redirect to its step.
+          get "wizards/:wizard_name", action: :launch_wizard_resource_action,
+            as: :launch_wizard_resource_action
+          get "wizards/:wizard_name(/:token)/:step", action: :wizard_resource_action,
+            as: :wizard_resource_action
+          post "wizards/:wizard_name(/:token)/:step", action: :commit_wizard_resource_action,
+            as: :commit_wizard_resource_action
         end
       end
 

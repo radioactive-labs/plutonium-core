@@ -28282,40 +28282,52 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     ]);
     connect() {
       this.dialog = this.element.closest("dialog");
-      if (!this.dialog) return;
       this.baseline = null;
       this.forceClose = false;
       this.submitting = false;
       this.onFirstIntent = this.#onFirstIntent.bind(this);
-      this.onCancel = this.#onCancel.bind(this);
       this.onSubmit = this.#onSubmit.bind(this);
-      this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
-      this.onConfirmCancel = this.#onConfirmCancel.bind(this);
-      this.onKeydown = this.#onKeydown.bind(this);
+      this.onLeaveClick = this.#onLeaveClick.bind(this);
+      this.onSettled = this.#onSettled.bind(this);
       this.element.addEventListener("pointerdown", this.onFirstIntent, true);
       this.element.addEventListener("keydown", this.onFirstIntent, true);
-      document.addEventListener("keydown", this.onKeydown, true);
-      this.dialog.addEventListener("cancel", this.onCancel, true);
       this.element.addEventListener("submit", this.onSubmit);
-      this.#closeButtons().forEach(
-        (btn) => btn.addEventListener("click", this.onCloseButtonClick, true)
-      );
-      if (this.hasConfirmDialogTarget) {
-        this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+      this.element.addEventListener("turbo:submit-end", this.onSettled);
+      if (!this.dialog) {
+        document.addEventListener("click", this.onLeaveClick, true);
+      }
+      if (this.dialog) {
+        this.onCancel = this.#onCancel.bind(this);
+        this.onCloseButtonClick = this.#onCloseButtonClick.bind(this);
+        this.onConfirmCancel = this.#onConfirmCancel.bind(this);
+        this.onKeydown = this.#onKeydown.bind(this);
+        document.addEventListener("keydown", this.onKeydown, true);
+        this.dialog.addEventListener("cancel", this.onCancel, true);
+        this.#closeButtons().forEach(
+          (btn) => btn.addEventListener("click", this.onCloseButtonClick, true)
+        );
+        if (this.hasConfirmDialogTarget) {
+          this.confirmDialogTarget.addEventListener("cancel", this.onConfirmCancel);
+        }
       }
     }
     disconnect() {
-      if (!this.dialog) return;
       this.element.removeEventListener("pointerdown", this.onFirstIntent, true);
       this.element.removeEventListener("keydown", this.onFirstIntent, true);
-      document.removeEventListener("keydown", this.onKeydown, true);
-      this.dialog.removeEventListener("cancel", this.onCancel, true);
       this.element.removeEventListener("submit", this.onSubmit);
-      this.#closeButtons().forEach(
-        (btn) => btn.removeEventListener("click", this.onCloseButtonClick, true)
-      );
-      if (this.hasConfirmDialogTarget) {
-        this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+      this.element.removeEventListener("turbo:submit-end", this.onSettled);
+      if (!this.dialog) {
+        document.removeEventListener("click", this.onLeaveClick, true);
+      }
+      if (this.dialog) {
+        document.removeEventListener("keydown", this.onKeydown, true);
+        this.dialog.removeEventListener("cancel", this.onCancel, true);
+        this.#closeButtons().forEach(
+          (btn) => btn.removeEventListener("click", this.onCloseButtonClick, true)
+        );
+        if (this.hasConfirmDialogTarget) {
+          this.confirmDialogTarget.removeEventListener("cancel", this.onConfirmCancel);
+        }
       }
     }
     discard() {
@@ -28356,6 +28368,79 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #onSubmit() {
       this.submitting = true;
+    }
+    // A submission settled. Reset the transient guards so a same-URL Turbo-morph
+    // re-render (which keeps this element and does NOT reconnect the controller)
+    // doesn't leave the guard permanently disabled. Re-baseline on next interaction.
+    #onSettled() {
+      this.submitting = false;
+      this.forceClose = false;
+      this.baseline = null;
+    }
+    // Full-page leave guard. A control marked `data-dirty-form-guard-leave` posts
+    // without this form's fields, so its unsaved edits would be lost. If the form
+    // is dirty, confirm first through the app's themed dialog; the attribute's
+    // value is the prompt. We always intercept the click (the themed confirm is
+    // async), then re-submit the trigger's form if the user confirms.
+    async #onLeaveClick(event) {
+      const trigger = event.target.closest("[data-dirty-form-guard-leave]");
+      if (!trigger) return;
+      if (this.#guardedFormFor(trigger) !== this.element) return;
+      if (this.forceClose || this.submitting) return;
+      if (!this.#isDirty()) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const message = trigger.getAttribute("data-dirty-form-guard-leave") || "You have unsaved changes that will be lost. Continue?";
+      const confirmed = await this.#confirm(message);
+      if (!confirmed) return;
+      this.forceClose = true;
+      const form = trigger.closest("form");
+      if (form) {
+        const submitter2 = trigger.matches("button, input[type=submit], input[type=image]") ? trigger : null;
+        form.requestSubmit(submitter2);
+      }
+    }
+    // The CSS selector for a guarded form. The guard is attached as a Stimulus
+    // controller (`data-controller="… dirty-form-guard"`), NOT as a CSS class — so
+    // match on the controller token, not `form.dirty-form-guard` (which never
+    // matches the framework's forms, leaving the leave guard silently dormant).
+    static GUARDED_FORM_SELECTOR = "form[data-controller~='dirty-form-guard']";
+    // The single guarded form a leave control discards: the one containing it, or —
+    // for a control outside any form (a wizard's sibling nav strip) — the closest
+    // guarded form, i.e. the one sharing the deepest common ancestor with the
+    // trigger. Returns the only guarded form on simple pages.
+    #guardedFormFor(trigger) {
+      const selector = this.constructor.GUARDED_FORM_SELECTOR;
+      const inside = trigger.closest(selector);
+      if (inside) return inside;
+      let best = null;
+      let bestDepth = -1;
+      document.querySelectorAll(selector).forEach((form) => {
+        let ancestor = form;
+        while (ancestor && !ancestor.contains(trigger)) ancestor = ancestor.parentElement;
+        if (!ancestor) return;
+        const depth = this.#depthOf(ancestor);
+        if (depth > bestDepth) {
+          bestDepth = depth;
+          best = form;
+        }
+      });
+      return best;
+    }
+    #depthOf(node) {
+      let depth = 0;
+      while (node = node.parentElement) depth++;
+      return depth;
+    }
+    // Defer to the themed Turbo confirm dialog the app installs as the global
+    // confirm method (a styled <dialog>, not the native chrome bar); fall back to
+    // window.confirm only if it isn't available. Returns a Promise<boolean>.
+    #confirm(message) {
+      const turboConfirm = window.Turbo?.config?.forms?.confirm;
+      if (typeof turboConfirm === "function") {
+        return Promise.resolve(turboConfirm(message));
+      }
+      return Promise.resolve(window.confirm(message));
     }
     #confirmIsOpen() {
       return this.hasConfirmDialogTarget && this.confirmDialogTarget.open;
@@ -28426,6 +28511,38 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/wizard_controller.js
+  var wizard_controller_default = class extends Controller {
+    static targets = ["direction"];
+    connect() {
+      this.submitting = false;
+      this.element.addEventListener("submit", this.onSubmit);
+      this.element.addEventListener("turbo:submit-end", this.onSettled);
+      document.addEventListener("turbo:load", this.onSettled);
+      window.addEventListener("pageshow", this.onSettled);
+    }
+    disconnect() {
+      this.element.removeEventListener("submit", this.onSubmit);
+      this.element.removeEventListener("turbo:submit-end", this.onSettled);
+      document.removeEventListener("turbo:load", this.onSettled);
+      window.removeEventListener("pageshow", this.onSettled);
+    }
+    // Set the hidden `_direction` value programmatically (optional helper).
+    setDirection(value) {
+      if (this.hasDirectionTarget) this.directionTarget.value = value;
+    }
+    onSubmit = (event) => {
+      if (this.submitting) {
+        event.preventDefault();
+        return;
+      }
+      this.submitting = true;
+    };
+    onSettled = () => {
+      this.submitting = false;
+    };
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28464,6 +28581,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("view-switcher", view_switcher_controller_default);
     application2.register("autosubmit", autosubmit_controller_default);
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
+    application2.register("wizard", wizard_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

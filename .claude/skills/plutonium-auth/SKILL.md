@@ -21,6 +21,46 @@ For multi-tenant invitations and membership, see [[plutonium-tenancy]] › Invit
 
 ---
 
+## 🛑 Before you set up auth: confirm the shape (ASK — don't infer)
+
+"Set up login" hides the one decision that determines everything: **is this multi-tenant SaaS or a single auth surface?** Pick wrong and you either hand-assemble what a meta-generator does in one shot, or scaffold a SaaS spine an app doesn't need. Resolve each — confirming by inspection (next section):
+
+1. **Single auth or multi-tenant SaaS?** "Each user belongs to / manages an org/team" ⇒ SaaS ⇒ **`pu:saas:setup`** (the meta-generator: user + entity + membership + portal + profile + welcome + invites in one). A plain login with no tenant ⇒ `pu:rodauth:install` + `pu:rodauth:account`.
+2. **Account type.** Basic user, **hardened admin** (`pu:rodauth:admin` — 2FA/lockout/audit, no public signup), or **API** (`--api_only --jwt`)? They're different generators.
+3. **Public signup allowed?** Default yes for `account`; admin accounts are invite-only.
+4. **Profile / account-settings page?** Needs `pu:profile:install` **and** `pu:profile:conn` (without conn there's no `/profile` route).
+5. **Roles.** Index 0 is most privileged (`owner`/`super_admin`); invites default new members to `roles[1]`. `pu:saas:setup` prepends `owner` — don't list it.
+
+**Never ship a guessed account-type, model name, or `--roles` as applied commands.** Read them off the app first; fall back to `AskUserQuestion` only for product choices (separate staff accounts vs shared, is signup open).
+
+## ✅ Before you run a generator: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **inspect**; don't ask the user to describe their app.
+
+| Check | How | Why it matters |
+|---|---|---|
+| Rodauth already installed | `ls app/rodauth/rodauth_app.rb`; grep `Gemfile` for `rodauth` | Re-running `pu:rodauth:install` clobbers config |
+| Existing account models | grep `app/models` for `Rodauth::Rails.model` | Which account type exists / don't duplicate |
+| SaaS spine already run | `ls` for the entity portal + membership model | **`pu:saas:setup` chains 4 generators — don't re-run them separately** |
+| Profile wired | grep the user model for `has_one :profile` + `after_create`; is `profile_url` defined? | Else `current_user.profile` is nil / no route (`pu:profile:conn` missing) |
+| Role ordering | Read the membership `enum :role` | Index 0 = most privileged; invites default to `roles[1]` |
+
+Inspect with your own tools **before** running any generator.
+
+## 🛠 Use the generator — never hand-write Rodauth
+
+Never hand-write Rodauth plugin files, account models, or profile resources.
+
+| Task | Generator | Verify first |
+|---|---|---|
+| Multi-tenant SaaS spine | `pu:saas:setup --user U --entity E --roles=…` | Not already run (don't re-run the 4 sub-generators it chains) |
+| Rodauth base | `pu:rodauth:install` | Not already installed |
+| Basic account | `pu:rodauth:account NAME --defaults` | Rodauth installed |
+| Hardened admin | `pu:rodauth:admin NAME --roles=…` | Rodauth installed |
+| Profile page | `pu:profile:install …` + `pu:profile:conn --dest=portal` | Migrated; portal exists |
+
+---
+
 ## Install
 
 ```bash

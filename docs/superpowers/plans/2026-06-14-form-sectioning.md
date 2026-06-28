@@ -169,7 +169,7 @@ module Plutonium
       UNGROUPED_KEY = :ungrouped
 
       # One declared section, or the implicit `ungrouped` bucket (empty `fields`).
-      Section = Struct.new(:key, :fields, :options, keyword_init: true) do
+      Section = Struct.new(:key, :fields, :options) do
         def ungrouped? = key == UNGROUPED_KEY
         def label = options.fetch(:label) { key.to_s.humanize }
         def description = options[:description]
@@ -181,7 +181,7 @@ module Plutonium
 
       # A section paired with the concrete fields it will render (after policy
       # filtering). Produced by #resolve_form_sections.
-      ResolvedSection = Struct.new(:section, :fields, keyword_init: true)
+      ResolvedSection = Struct.new(:section, :fields)
 
       # Collects section/ungrouped calls from a form_layout block in order.
       class Builder

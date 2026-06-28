@@ -127,7 +127,7 @@ module Plutonium
       #
       # @return [Hash] args to pass to `url_for`
       #
-      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, interaction: nil, **kwargs)
+      def resource_url_args_for(*args, action: nil, parent: nil, association: nil, package: nil, interaction: nil, wizard: nil, **kwargs)
         element = args.first
 
         raise ArgumentError, "parent is required when using symbol association name" if element.is_a?(Symbol) && parent.nil?
@@ -136,6 +136,12 @@ module Plutonium
           raise ArgumentError, "cannot pass both `interaction:` and `action:`" if action
           action = interactive_action_type_for(element, ids: kwargs[:ids])
           kwargs[:interactive_action] = interaction
+        end
+
+        if wizard
+          raise ArgumentError, "cannot pass both `wizard:` and `action:`" if action
+          action = wizard_action_type_for(element, step: kwargs[:step])
+          kwargs[:wizard_name] = wizard
         end
 
         # For nested resources, use named route helpers to avoid Rails param recall ambiguity
@@ -191,6 +197,19 @@ module Plutonium
           ids.present? ? :interactive_bulk_action : :interactive_resource_action
         else
           :interactive_record_action
+        end
+      end
+
+      # Determine the wizard action type for the given element. Records → member,
+      # classes/symbols/nil → collection (wizards have no bulk variant). With no
+      # `step:`, target the bare LAUNCH action (which resolves the run and redirects
+      # to its current step); with a `step:`, target the stepped show action.
+      def wizard_action_type_for(element, step: nil)
+        member = !(element.is_a?(Class) || element.is_a?(Symbol) || element.nil?)
+        if step.nil?
+          member ? :launch_wizard_record_action : :launch_wizard_resource_action
+        else
+          member ? :wizard_record_action : :wizard_resource_action
         end
       end
 

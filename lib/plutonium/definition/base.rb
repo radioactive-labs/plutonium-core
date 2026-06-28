@@ -29,6 +29,7 @@ module Plutonium
       include ConfigAttr
       include InheritableConfigAttr
       include Actions
+      include Wizards
       include Sorting
       include Scoping
       include Search

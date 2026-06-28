@@ -39,6 +39,30 @@ module Plutonium
       load_plutonium_initializers
     end
 
+    initializer "plutonium.register_migrations" do
+      Plutonium::Migrations.register(:wizards, Plutonium.root.join("db/migrate/wizard").to_s)
+    end
+
+    # Runs after the host's config/initializers/plutonium.rb (load_config_initializers)
+    # so feature flags like config.wizards.enabled are honoured. Railtie
+    # initializers otherwise run before host initializers, leaving the flag false.
+    initializer "plutonium.migrations", after: :load_config_initializers do |app|
+      # v1 supports `config.wizards.database == :primary` only; the option is
+      # reserved for future multi-db routing of wizard sessions. Fail loudly on an
+      # unsupported value rather than silently registering on the primary database.
+      if Plutonium.configuration.wizards.enabled &&
+          Plutonium.configuration.wizards.database != :primary
+        raise ArgumentError,
+          "config.wizards.database = #{Plutonium.configuration.wizards.database.inspect} is not " \
+          "supported (only :primary). Multi-database routing for wizard sessions is a roadmap follow-up."
+      end
+
+      Plutonium::Migrations.enabled_paths.each do |path|
+        app.config.paths["db/migrate"] << path
+        ActiveRecord::Migrator.migrations_paths << path unless ActiveRecord::Migrator.migrations_paths.include?(path)
+      end
+    end
+
     initializer "plutonium.asset_server" do
       setup_development_asset_server if Plutonium.configuration.development?
     end
@@ -97,6 +121,7 @@ module Plutonium
 
     def extend_action_dispatch
       ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::MapperExtensions
+      ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::WizardRegistration
       ActionDispatch::Routing::RouteSet.prepend Plutonium::Routing::RouteSetExtensions
       Rails::Engine.include Plutonium::Routing::ResourceRegistration
     end

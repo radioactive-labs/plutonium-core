@@ -18,8 +18,22 @@ Entry point for all Plutonium work. Does three things:
 - **For targeted edits** — use the **router table** to jump to the right skill.
 - **For anything touching tenant scoping** — load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
 - **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
+- **Inspect before you act.** Every targeted skill now opens with a CHECK gate — read the relevant files yourself before scaffolding or editing. Don't ask the user to describe their app when you can read it.
 
-## The 8 skills
+## ✅ Orient before you route (CHECK — read the app, don't assume)
+
+A one-line request rarely says whether this is a new app, a half-built one, or a multi-tenant one — and those change which path you take. Spend 30 seconds reading the app **before** loading a bundle or running anything:
+
+| Read | Tells you |
+|---|---|
+| `git log --oneline \| head`; is there a populated `Gemfile` + `app/`? | Greenfield vs existing → install path (`plutonium-app`: `base.rb`, **never** `plutonium.rb` on an existing app) |
+| grep `Gemfile` for `plutonium`; `ls config/packages.rb` | Already installed? → skip install |
+| `ls packages/` | What portals / feature packages already exist |
+| Does any model `belongs_to` an org/team/tenant? | Multi-tenant → load `plutonium-tenancy` **before** declaring scoping |
+
+This is the global "look before you leap"; each targeted skill carries its own ASK/CHECK gate for the specifics. **Never run an installer or scaffold from a one-line request without first reading what's already there.**
+
+## The skills
 
 | Skill | Covers |
 |---|---|
@@ -30,6 +44,7 @@ Entry point for all Plutonium work. Does three things:
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
 | **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
 | **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
+| **[[plutonium-wizard]]** | Multi-step flows — the wizard DSL (`step`/`review`/`using:`/`condition:`, per-step `on_submit`/`persist`/`on_rollback`, `execute`), anchoring & resume, one-time wizards + gate, registration (`wizard` macro + `register_wizard`), storage/config + SweepJob |
 
 ## Greenfield bootstrap bundle
 
@@ -65,6 +80,7 @@ Add when relevant:
 | Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
 | Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
 | Write tests for a resource, run `pu:test:scaffold`, include `Plutonium::Testing::*` concerns | **[[plutonium-testing]]** |
+| Build a multi-step flow — onboarding, checkout, branching create — register a `wizard` / `register_wizard`, gate a one-time wizard | **[[plutonium-wizard]]** |
 
 ## Resource architecture at a glance
 

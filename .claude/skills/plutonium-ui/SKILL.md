@@ -23,6 +23,44 @@ For field-level rendering (`field :foo, as: :markdown`, `display :status do |f| 
 
 ---
 
+## 🛑 Before you customize UI: pick the lightest seam (ASK — don't infer)
+
+Plutonium gives you escalating levels of customization. Reach for the **lightest that fits** — jumping to `view_template` or an eject loses breadcrumbs/header/DynaFrame behavior and saddles you with maintaining copied markup forever.
+
+| You want to… | Reach for | **NOT** |
+|---|---|---|
+| Add a banner / extra section to one page | nested page class + a **render hook** (`render_before_content`, `render_after_content`) | overriding `view_template` |
+| Re-arrange the record's fields | a custom `Display` (`display_template`) | a hand-rolled `Form`/`view_template` |
+| Group form fields into sections | the `form_layout` DSL in the definition | a `Form` subclass |
+| Recolor / rebrand | `plutoniumTailwindConfig.merge(...)` in `tailwind.config.js` | a plain object spread (drops Plutonium's defaults) |
+| Replace whole chrome per-portal | `pu:eject:shell` / `pu:eject:layout` — **last resort, you own it after** | ejecting when a hook/class/theme would do |
+
+Then: is the change **global** (base `PostDefinition`) or **per-portal** (`AdminPortal::PostDefinition`)? And does it touch CSS/JS (⇒ the asset toolchain must be set up)? Don't guess field names or the banner copy — read the definition.
+
+## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
+
+You have file access — **inspect**; don't ask the user to describe their app.
+
+| Check | How | Why it matters |
+|---|---|---|
+| Custom page/Display already exists | Read the definition for nested `ShowPage`/`Display`/`Form` | Re-declaring clobbers an existing override |
+| Global vs per-portal | Is it `::PostDefinition` or `AdminPortal::PostDefinition`? | Override the right one |
+| Real field names | Read the model/definition | Don't invent fields in `display_template` |
+| Asset toolchain wired | `ls tailwind.config.js`; the CSS `@import`; has `pu:core:assets` run? | Brand/CSS edits won't compile otherwise |
+| Stimulus registered | grep `app/javascript/controllers/index.js` for `registerControllers` | Else the interactive layer is dead |
+| Build watcher | Is `yarn dev` running? (`PLUTONIUM_DEV=1` when working on the gem) | CSS/JS changes need the rebuild |
+
+Inspect with your own tools **before** proposing code.
+
+## 🛠 Use the generator — and prefer hooks over ejecting
+
+| Task | How | Verify first |
+|---|---|---|
+| Custom Tailwind + Stimulus toolchain | `pu:core:assets` | Not already run |
+| Eject chrome (header/sidebar/layout) | `pu:eject:shell` / `pu:eject:layout --dest=portal` | A render hook / nested class / theme genuinely can't do it (last resort) |
+
+---
+
 # Part 1 — Pages
 
 Each definition has nested page classes. Override the ones you need to customize:

@@ -1,0 +1,68 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-15-wizard-dsl.md",
+  "tasks": [
+    {
+      "id": 7,
+      "subject": "Task 0: Namespace, errors, config.wizards, migrations registry",
+      "status": "completed",
+      "description": "Plumbing — Plutonium::Wizard namespace, NotAnchoredError/StepError, config.wizards (enabled/cleanup_after/database), Plutonium::Migrations registry + Railtie initializer (after :load_config_initializers).\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard.rb\",\"lib/plutonium/wizard/errors.rb\",\"lib/plutonium/wizard/configuration.rb\",\"lib/plutonium/migrations.rb\",\"lib/plutonium/configuration.rb\",\"lib/plutonium/railtie.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/configuration_test.rb test/plutonium/migrations_test.rb\", \"acceptanceCriteria\": [\"config.wizards defaults\",\"errors exist\",\"Migrations.enabled_paths gated\",\"initializer after :load_config_initializers\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 1: Migration, Session model, instance_key, State, Store (Memory + AR)",
+      "status": "completed",
+      "blockedBy": [7],
+      "description": "Persistence layer — plutonium_wizard_sessions table (spec 8.1), Session model, InstanceKey digest, State, Store port + Memory + AR.\n\n```json:metadata\n{\"files\": [\"db/migrate/wizard/20260615000001_create_plutonium_wizard_sessions.rb\",\"app/models/plutonium/wizard/session.rb\",\"lib/plutonium/wizard/instance_key.rb\",\"lib/plutonium/wizard/state.rb\",\"lib/plutonium/wizard/store/base.rb\",\"lib/plutonium/wizard/store/memory.rb\",\"lib/plutonium/wizard/store/active_record.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/store/active_record_test.rb test/plutonium/wizard/instance_key_test.rb\", \"acceptanceCriteria\": [\"table+indexes\",\"instance_key recipe\",\"Memory+AR shared behavior\",\"write upserts+expires_at\",\"complete nulls payload\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 2: Wizard DSL — Base, Step, ReviewStep, typed data, anchoring, navigation, one_time",
+      "status": "completed",
+      "blockedBy": [7],
+      "description": "Author class + DSL + typed data snapshot + anchor/persisted/fail!.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/step.rb\",\"lib/plutonium/wizard/review_step.rb\",\"lib/plutonium/wizard/data.rb\",\"lib/plutonium/wizard/dsl.rb\",\"lib/plutonium/wizard/base.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/base_test.rb test/plutonium/wizard/data_test.rb\", \"acceptanceCriteria\": [\"DSL macros\",\"review terminality raises\",\"typed union data\",\"anchor raises\",\"fail! raises StepError\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 3: FieldImporter — using: a model (model-only; model→definition overlay)",
+      "status": "completed",
+      "blockedBy": [9],
+      "description": "using: imports attributes(+types)/inputs/validations(filter to fields+:base)/form_layout; validate/layout/context opts; inline composes.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/field_importer.rb\",\"lib/plutonium/wizard/dsl.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/field_importer_test.rb\", \"acceptanceCriteria\": [\"interaction import\",\"definition import type-from-record+overlay\",\"validation filter fields+:base\",\"validate/layout/context\",\"inline composes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 11,
+      "subject": "Task 4: Runner — navigation, on_submit/persist/rollback, finalize lock + completeness/prune, resume",
+      "status": "completed",
+      "blockedBy": [8, 9, 10],
+      "description": "Pure engine: visible_path, advance, back, cancel, finalize (completeness+prune+lock+execute), persisted rehydrate, failure mapping.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/runner.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/runner_test.rb\", \"acceptanceCriteria\": [\"visible_path branching\",\"advance+track GIDs\",\"back no-validate\",\"cancel rollback+clear\",\"finalize lock+completeness+prune\",\"resume rehydrate\",\"failure mapping\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 12,
+      "subject": "Task 5: Portal-hosted controller, register_wizard routing, wizard definition DSL, authorize?",
+      "status": "completed",
+      "blockedBy": [11],
+      "description": "Single controller (GET/POST _direction+pre_submit, PRG), register_wizard routes, wizard definition macro (no bulk), instance resolution, authorize?/policy.\n\n```json:metadata\n{\"files\": [\"app/controllers/plutonium/wizard/controller.rb\",\"lib/plutonium/routing/wizard_registration.rb\",\"lib/plutonium/definition/wizards.rb\",\"lib/plutonium/routing/mapper_extensions.rb\",\"lib/plutonium/definition/base.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"acceptanceCriteria\": [\"register_wizard routes\",\"wizard DSL no-bulk\",\"GET/POST next/back/cancel+pre_submit\",\"PRG finalize\",\"authorize?/policy\",\"anchor/scope/token\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 13,
+      "subject": "Task 6: UI — Page::Wizard, Stepper, review auto-summary, step form + repeater rehydration",
+      "status": "completed",
+      "blockedBy": [12],
+      "description": "Render step (reuse interaction form), stepper, review auto-summary + jump links + gated finish, repeater rehydration, modal vs full-page.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/page/wizard.rb\",\"lib/plutonium/ui/wizard/stepper.rb\",\"lib/plutonium/ui/wizard/review.rb\",\"lib/plutonium/ui/form/wizard_step.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"acceptanceCriteria\": [\"step renders+form_layout\",\"stepper states+click rules\",\"repeater rehydrate\",\"review summary+jump+gated finish\",\"modal vs full-page\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 14,
+      "subject": "Task 7: One-time wizards (gate + completion) and SweepJob",
+      "status": "completed",
+      "blockedBy": [11, 12],
+      "description": "one_time completion (user/anchor), ensure_wizard_completed gate, SweepJob reaps expired in_progress/completing with cleanup.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/wizard/gate.rb\",\"lib/plutonium/wizard/sweep_job.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/wizard/sweep_job_test.rb\", \"acceptanceCriteria\": [\"one_time completion\",\"gate redirect+bounce\",\"SweepJob cleanup keeps completed/null\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 15,
+      "subject": "Task 8: Documentation and plutonium-wizard skill",
+      "status": "completed",
+      "blockedBy": [13, 14],
+      "description": "Guide, reference pages, plutonium-wizard skill + umbrella map, VitePress nav. yarn docs:build passes.\n\n```json:metadata\n{\"files\": [\".claude/skills/plutonium-wizard/SKILL.md\",\"docs/guides/wizards.md\",\"docs/reference/wizard/dsl.md\",\".claude/skills/plutonium/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"guide covers flows\",\"skill+umbrella map\",\"docs:build passes\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-15T01:00:00Z"
+}

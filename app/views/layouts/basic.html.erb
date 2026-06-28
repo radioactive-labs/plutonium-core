@@ -1,0 +1,7 @@
+<%= render Plutonium::UI::Layout::BasicLayout.new do |layout| %>
+  <%# Shell-less wizards have no topbar, so lift the content off the viewport edge %>
+  <%# and cap its width — keeping it comfortably centered like an onboarding screen. %>
+  <div class="mx-auto w-full max-w-3xl pt-8 sm:pt-14">
+    <%= yield %>
+  </div>
+<% end %>

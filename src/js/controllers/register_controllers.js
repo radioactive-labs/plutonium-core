@@ -35,6 +35,7 @@ import RowClickController from "./row_click_controller.js"
 import ViewSwitcherController from "./view_switcher_controller.js"
 import AutosubmitController from "./autosubmit_controller.js"
 import DirtyFormGuardController from "./dirty_form_guard_controller.js"
+import WizardController from "./wizard_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -74,4 +75,5 @@ export default function (application) {
   application.register("view-switcher", ViewSwitcherController)
   application.register("autosubmit", AutosubmitController)
   application.register("dirty-form-guard", DirtyFormGuardController)
+  application.register("wizard", WizardController)
 }

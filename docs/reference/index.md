@@ -39,6 +39,14 @@ aside: false
       { name: 'Layouts', link: '/plutonium-core/reference/ui/layouts' },
       { name: 'Assets', link: '/plutonium-core/reference/ui/assets' },
     ]},
+    { group: 'Wizard', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/wizard/' },
+      { name: 'DSL', link: '/plutonium-core/reference/wizard/dsl' },
+      { name: 'Anchoring & resume', link: '/plutonium-core/reference/wizard/anchoring-resume' },
+      { name: 'Storage & config', link: '/plutonium-core/reference/wizard/storage-config' },
+      { name: 'Registration & launch', link: '/plutonium-core/reference/wizard/registration-launch' },
+      { name: 'One-time', link: '/plutonium-core/reference/wizard/one-time' },
+    ]},
     { group: 'Auth', items: [
       { name: 'Overview', link: '/plutonium-core/reference/auth/' },
       { name: 'Accounts', link: '/plutonium-core/reference/auth/accounts' },

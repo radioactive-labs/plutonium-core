@@ -15,6 +15,7 @@ gem "sequel-activerecord_connection"
 gem "tilt"
 gem "bcrypt"
 gem "rqrcode"
+gem "active_shrine"
 gem "tzinfo-data", platforms: [:windows, :jruby]
 
 gemspec path: "../"
