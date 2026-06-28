@@ -7,6 +7,11 @@ on:
 
   pull_request:
 
+# Both jobs only check out the repo and run read-only checks; grant the
+# GITHUB_TOKEN the minimal contents:read scope (CodeQL: missing-workflow-permissions).
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
