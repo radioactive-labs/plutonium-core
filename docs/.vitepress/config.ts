@@ -160,18 +160,6 @@ export default defineConfig(withMermaid({
           ]
         },
         {
-          text: "Wizard",
-          collapsed: false,
-          items: [
-            { text: "Overview", link: "/reference/wizard/" },
-            { text: "DSL", link: "/reference/wizard/dsl" },
-            { text: "Anchoring & resume", link: "/reference/wizard/anchoring-resume" },
-            { text: "Storage & config", link: "/reference/wizard/storage-config" },
-            { text: "Registration & launch", link: "/reference/wizard/registration-launch" },
-            { text: "One-time", link: "/reference/wizard/one-time" },
-          ]
-        },
-        {
           text: "Auth",
           collapsed: false,
           items: [
@@ -188,6 +176,18 @@ export default defineConfig(withMermaid({
             { text: "Entity scoping", link: "/reference/tenancy/entity-scoping" },
             { text: "Nested resources", link: "/reference/tenancy/nested-resources" },
             { text: "Invites", link: "/reference/tenancy/invites" },
+          ]
+        },
+        {
+          text: "Wizard",
+          collapsed: false,
+          items: [
+            { text: "Overview", link: "/reference/wizard/" },
+            { text: "DSL", link: "/reference/wizard/dsl" },
+            { text: "Anchoring & resume", link: "/reference/wizard/anchoring-resume" },
+            { text: "Storage & config", link: "/reference/wizard/storage-config" },
+            { text: "Registration & launch", link: "/reference/wizard/registration-launch" },
+            { text: "One-time", link: "/reference/wizard/one-time" },
           ]
         },
         {
