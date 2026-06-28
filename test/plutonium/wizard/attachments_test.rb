@@ -26,8 +26,8 @@ class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
     ActiveStorage::Blob.create_and_upload!(io: StringIO.new("as-bytes"), filename: name, content_type: type)
   end
 
-  def shrine_io(name: "photo.jpg", type: "image/jpeg")
-    io = StringIO.new("shrine-bytes")
+  def shrine_io(name: "photo.jpg", type: "image/jpeg", bytes: "shrine-bytes")
+    io = StringIO.new(bytes)
     io.define_singleton_method(:original_filename) { name }
     io.define_singleton_method(:content_type) { type }
     io
@@ -109,6 +109,38 @@ class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
       Plutonium::Wizard::Attachments.stage_upload(shrine_io, backend: :shrine, uploader: String)
     end
     assert_match(/Shrine uploader/, err.message)
+  end
+
+  # An uploader carrying an Attacher validation, to exercise stage-phase validation.
+  class ValidatingUploader < Shrine
+    plugin :validation_helpers
+    Attacher.validate { validate_max_size 4 } # 4 bytes; the default test file is larger
+  end
+
+  test "validation_errors flags a file that violates the effective uploader's rules" do
+    token = Plutonium::Wizard::Attachments.stage_upload(shrine_io, backend: :shrine, uploader: ValidatingUploader)
+    # staging itself only caches — the over-size file IS cached (Uploader.upload runs no validations)…
+    assert token.present?
+    # …but stage-phase validation (run on the step via the effective uploader) catches it.
+    errors = Plutonium::Wizard::Attachments.validation_errors(token, backend: :shrine, uploader: ValidatingUploader)
+    assert errors.any?, "the over-size file fails the uploader's validation"
+  end
+
+  test "validation_errors is empty for a valid file" do
+    token = Plutonium::Wizard::Attachments.stage_upload(shrine_io(bytes: "ok"), backend: :shrine, uploader: ValidatingUploader)
+    assert_empty Plutonium::Wizard::Attachments.validation_errors(token, backend: :shrine, uploader: ValidatingUploader)
+  end
+
+  test "validation_errors is a no-op for base Shrine with no rules and for ActiveStorage" do
+    shrine_token = upload_shrine.to_json
+    assert_empty Plutonium::Wizard::Attachments.validation_errors(shrine_token, backend: :shrine),
+      "base Shrine has no Attacher.validate here → nothing to enforce"
+    assert_empty Plutonium::Wizard::Attachments.validation_errors(upload_blob.signed_id, backend: :active_storage),
+      "ActiveStorage has no attacher validations at this layer"
+  end
+
+  test "validation_errors tolerates a tampered token without raising" do
+    assert_empty Plutonium::Wizard::Attachments.validation_errors("not-a-real-token", backend: :shrine, uploader: ValidatingUploader)
   end
 
   test "field? detects file-alias inputs (nested or flat options)" do

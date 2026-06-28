@@ -77,6 +77,42 @@ module Plutonium
           (defined?(ActiveShrine) ? :shrine : :active_storage)
       end
 
+      # Run the EFFECTIVE Shrine uploader's attacher validations against a staged
+      # token (or array of them), returning the validation messages — so a file that
+      # violates the uploader's `validate_*` rules is rejected at the STEP (stage
+      # phase), not deferred to `execute`'s model assignment.
+      #
+      # The effective uploader is the field's `uploader:` if given, else base
+      # `Shrine` — both of which may carry `Attacher.validate` rules. Returns `[]`
+      # when the field isn't Shrine-backed (ActiveStorage has no attacher here), when
+      # nothing is staged, or when the effective uploader declares no validations.
+      #
+      # @param value [String, Array, nil] the staged token(s).
+      # @param backend [Symbol, nil] per-field override; nil → the configured default.
+      # @param uploader [Class, String, nil] the field's `uploader:` option.
+      # @return [Array<String>] validation messages (empty ⇒ valid).
+      def validation_errors(value, backend: nil, uploader: nil)
+        return [] unless (backend || attachment_backend).to_sym == :shrine
+
+        klass = shrine_uploader(uploader)
+        Array(value).flat_map { |token| token_validation_errors(klass, token) }
+      end
+
+      # Validate one cached token through an uploader's attacher. A broad rescue
+      # (like {resolve_token}) — a tampered/expired token shouldn't 500 the step; it
+      # surfaces at `execute` instead, where it's caught as a RecordInvalid.
+      def token_validation_errors(uploader_class, token)
+        return [] if token.blank?
+
+        attacher = uploader_class::Attacher.new
+        attacher.assign(token)
+        Array(attacher.errors)
+      rescue => e
+        Rails.logger.warn { "[Plutonium::Wizard] attachment validation skipped: #{e.class}: #{e.message}" }
+        []
+      end
+      private_class_method :token_validation_errors
+
       # Upload a file to the backend's CACHE and return its re-postable token. The
       # file lives in cache until `execute` assigns the token to a real attachment
       # (which promotes it); an abandoned upload is reaped by the backend's own

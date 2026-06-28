@@ -203,7 +203,7 @@ The same field works two ways:
 ::: tip Match the backend to the model
 In server-side mode the backend defaults to `config.wizards.attachment_backend` — auto-detected as Shrine when active_shrine is installed, else ActiveStorage. Override per field with `backend:` (`input :photo, as: :file, backend: :active_storage`). It must match the model your `execute` assigns to: an ActiveStorage model can't accept a Shrine token, and vice-versa.
 
-For Shrine, you can also cache through a specific uploader — `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` — so that uploader's cache-stage plugins (mime/dimension extraction, `generate_location`, validations) run while staging. The minted token stays uploader-agnostic, so display and `execute` promotion are unchanged.
+For Shrine, you can also cache through a specific uploader — `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` — so that uploader's cache-stage plugins (mime/dimension extraction, `generate_location`, processing) run while staging. The minted token stays uploader-agnostic, so display and `execute` promotion are unchanged. That uploader's **validations are enforced on the step** too: a file that violates them is rejected right there with a field error (validated against the field's effective uploader — its `uploader:`, or base `Shrine`), rather than slipping through to `execute`.
 :::
 
 For **multiple** files, use an array attribute with `multiple: true`; the staged value is then an array of tokens. A staged-but-abandoned upload (cancel/sweep) is an unattached blob / cached file that each storage backend's own cleanup reaps.
