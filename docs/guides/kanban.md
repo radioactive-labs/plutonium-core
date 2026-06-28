@@ -1,5 +1,9 @@
 # Kanban Boards
 
+::: warning Experimental
+Kanban boards are experimental — the DSL and behavior may change in a future release.
+:::
+
 Turn any resource index into a drag-and-drop kanban board — columns, WIP limits, quick-add, column actions, and opt-in realtime — all from a single `kanban do…end` block in your definition.
 
 ![A kanban board grouped by status — cards with badges, a WIP badge on Pending, a quick-add button, and collapsible columns](/images/guides/kanban-board.png)
@@ -15,11 +19,11 @@ Turn any resource index into a drag-and-drop kanban board — columns, WIP limit
 
 ## Worked example — Task board
 
-This is the actual fixture used by Plutonium's test suite, so the syntax is verified.
+A complete board for a `Task` model grouped by status — migration, model, definition, and policy.
 
 ### 1. Migration
 
-The model needs a `decimal` position column (fractional positioning requires decimal precision).
+The model needs a `decimal` position column. Use the **`t.position`** helper — it adds a `decimal` column already tuned for fractional ordering (`precision: 16, scale: 8`), so you can't pick a scale too small to rebalance cleanly (see [Positioning › Migration](/reference/kanban/positioning#migration)).
 
 ```ruby
 class CreateTasks < ActiveRecord::Migration[8.1]
@@ -27,10 +31,11 @@ class CreateTasks < ActiveRecord::Migration[8.1]
     create_table :tasks do |t|
       t.string :title, null: false
       t.string :status, null: false, default: "todo"
-      t.decimal :position, precision: 10, scale: 6
+      t.position        # decimal :position, precision: 16, scale: 8
       t.timestamps
+
+      t.index [:status, :position]
     end
-    add_index :tasks, [:status, :position]
   end
 end
 ```
@@ -137,7 +142,7 @@ end
 
 ## Worked example — Status enum board
 
-A shorter example that groups by a Rails enum for status. Cards reuse `grid_fields` for their slot layout — no explicit `card_fields` needed. This mirrors the `KitchenSinkDefinition` in Plutonium's test suite.
+A shorter example that groups by a Rails enum for status. Cards reuse `grid_fields` for their slot layout — no explicit `card_fields` needed.
 
 ```ruby
 class KitchenSinkDefinition < ResourceDefinition

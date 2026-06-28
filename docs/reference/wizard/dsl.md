@@ -1,5 +1,9 @@
 # Wizard DSL
 
+::: warning Experimental
+Wizards are experimental — the DSL and behavior may change in a future release.
+:::
+
 A wizard is a Ruby class — `class X < Plutonium::Wizard::Base`. It declares ordered `step`s, an optional terminal `review` step, wizard-level options, and an `execute` commit hook. This page is the full reference for the author-facing DSL.
 
 For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).

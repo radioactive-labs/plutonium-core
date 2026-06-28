@@ -1,5 +1,9 @@
 # Kanban DSL Reference
 
+::: warning Experimental
+Kanban boards are experimental — the DSL and behavior may change in a future release.
+:::
+
 Complete reference for the `kanban do…end` block declared inside a resource Definition.
 
 ## Entry point
