@@ -79,15 +79,22 @@ Every running wizard has a deterministic **instance key** — a digest the sessi
 
 ```
 # concurrency_key set:
-instance_key = SHA256("concurrency|#{wizard}|#{serialized(concurrency_key)}")
+instance_key = SHA256(JSON([secret_key_base, "concurrency", wizard, serialized(concurrency_key)]))
 # no concurrency_key:
-instance_key = SHA256("tokened|#{wizard}|#{wizard_token}")
+instance_key = SHA256(JSON([secret_key_base, "tokened", wizard, wizard_token]))
 ```
 
-- **`concurrency_key`** is serialized records → GID, scalars → string, arrays joined — with the **tenant (`current_scoped_entity`) folded in automatically**, so the same user running the same keyed wizard in two tenant portals gets two distinct rows.
+The digest hashes the **JSON of a structured array**, not a flat-joined string, and is **salted with the app's `secret_key_base`**:
+
+- **`concurrency_key`** is serialized records → GID, scalars → string, arrays kept as a **nested structure (not joined)** — so two distinct keys can never collide into one row (`["a", "b"]` ≠ `"a|b"`). The **tenant (`current_scoped_entity`) is folded in automatically**, so the same user running the same keyed wizard in two tenant portals gets two distinct rows.
+- **The `secret_key_base` salt** makes the digest a MAC over otherwise-public identifiers (the wizard name + key GIDs), so a run's existence/state can't be probed by recomputing the digest off-app.
 - **`wizard_token`** is the **per-run id** for runs with no `concurrency_key` — a fresh, unguessable token per launch makes each run distinct and repeatable. Its source depends on the run identity: an **authenticated** repeatable run carries it in the URL `:token` segment (guarded by [owner-scoping](#authentication)); a **guest (`anonymous`)** run keys off the **Rails session** (never the URL — no leak surface). It is **not** a pre-auth principal that survives login, and a wizard never crosses the auth boundary mid-flow.
 
 The owner, anchor, and scope are also stored as plain polymorphic columns (`owner_type`/`owner_id`, etc.) for listing and querying — but identity is the digest.
+
+::: warning Rotating `secret_key_base` invalidates in-progress runs
+Because the salt is `secret_key_base`, rotating it changes every instance-key digest. In-progress runs become unresumable (their rows no longer match the recomputed key) and **one-time gates re-open** (the retained `completed` marker no longer matches). This only affects rows live at rotation time; new runs key off the new secret. Drain or accept the reset when rotating.
+:::
 
 ## Resume
 
@@ -97,7 +104,28 @@ For a non-`anonymous` (authenticated) wizard, **every resume is owner-scoped**: 
 
 ### Listing in-progress wizards
 
-`Plutonium::Wizard.in_progress_for(view_context)` (→ `Resume.entries_for(view_context)`) takes the `view_context` (as interactions do) and derives the run owner (`current_user`), tenant scope (`current_scoped_entity` when `scoped_to_entity?`, else `nil`), and **portal** from it, returning the owner's in-progress runs **for the current portal**, newest-first, each enriched with the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a resolved `resume_url`. A run is only ever listed (and linked) by the portal it was launched in: a non-scoped portal lists only unscoped runs, a scoped portal narrows to the current tenant. Two portals can share an entity scope, so the launching portal (the `engine` column) is recorded per-run because scope alone can't identify it. `resume_url` is built through the current portal's routes: `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, the named route (with the scope segment and, for tokened runs, the `:token`) for a `register_wizard` mount; a row that can't be resolved here (e.g. a non-anchored `wizard`-macro run) yields `resume_url: nil` plus a `resume_unresolved_reason`. Optional `anchor:` / `wizard:` filters narrow **in the query, before enrichment**, so discarded rows are never resume-URL-resolved or anchor-loaded — cheaper than filtering the returned array. They compose, and the `wizard + anchor` pair is index-covered: `in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: record).first`. `wizard:` takes the wizard class. For ad-hoc post-filtering the array still works (`select { |e| e.wizard_class == X }`, free since the class is on each entry); avoid filtering on `e.session.anchor` (a polymorphic load per row) — use `anchor:`. See the [guide](/guides/wizards#listing-in-progress-wizards).
+```ruby
+Plutonium::Wizard.in_progress_for(view_context, anchor: nil, wizard: nil)
+#   → Array<Resume::Entry>, newest-first   (delegates to Resume.entries_for)
+```
+
+Like interactions, it takes the `view_context` and derives everything from it — the run **owner** (`current_user`), the **tenant scope** (`current_scoped_entity` when `scoped_to_entity?`, else `nil`), and the **portal** — returning that owner's in-progress runs **for the current portal**.
+
+**Each `entry` exposes:** `label`, `icon`, `current_step` (+ `current_step_label`), `updated_at`, `resume_url` (or `nil`), `resume_unresolved_reason`, `wizard_class`, and the raw `session` row.
+
+**Portal scoping.** A run is only ever listed (and linked) by the portal it was launched in — a non-scoped portal lists only unscoped runs; a scoped portal narrows to the current tenant. Two portals can share an entity scope, so the launching portal (the `engine` column) is recorded per-run because scope alone can't identify it.
+
+**`resume_url`** is built through the current portal's routes:
+- `wizard`-macro **anchored** mount → `resource_url_for(record, wizard:, step:)`.
+- `register_wizard` mount → the named route (with the scope segment, and the `:token` for tokened runs).
+- Unresolvable here (e.g. a non-anchored `wizard`-macro run, whose resource identity isn't on the row) → `resume_url: nil` + a `resume_unresolved_reason` string. Render those without a link rather than guessing.
+
+**`anchor:` / `wizard:` filters** (for a per-record resume widget — "does this record have an unfinished draft of wizard X?"):
+- They narrow **in the query, before enrichment**, so discarded rows are never resume-URL-resolved or anchor-loaded — cheaper than filtering the returned array.
+- They compose, and the `wizard + anchor` pair is index-covered: `in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: record).first`. `wizard:` takes the wizard **class**.
+- For ad-hoc post-filtering the array still works (`select { |e| e.wizard_class == X }` is free — the class is on each entry). Avoid filtering on `e.session.anchor` (a polymorphic load per row) — use `anchor:`.
+
+See the [guide](/guides/wizards#listing-in-progress-wizards) for a worked dashboard example.
 
 ### The implied anchored key
 

@@ -910,6 +910,42 @@ module Plutonium
         refute runner.forbidden?
         assert runner.resumed?
       end
+
+      # --- stage-phase attachment validation ---
+      # A file that fails the field's effective Shrine uploader is rejected on the
+      # step (field error + re-render), not deferred to execute.
+      class SizeLimitedUploader < Shrine
+        plugin :validation_helpers
+        Attacher.validate { validate_max_size 4 } # 4 bytes
+      end
+
+      class AttachmentValidating < Plutonium::Wizard::Base
+        step(:photo) do
+          attribute :photo, :string
+          input :photo, as: :file, backend: :shrine, uploader: SizeLimitedUploader
+        end
+        review label: "R"
+
+        def execute = succeed(:done)
+      end
+
+      def staged_token(bytes)
+        io = StringIO.new(bytes)
+        io.define_singleton_method(:original_filename) { "f.jpg" }
+        io.define_singleton_method(:content_type) { "image/jpeg" }
+        Plutonium::Wizard::Attachments.stage_upload(io, backend: :shrine, uploader: SizeLimitedUploader)
+      end
+
+      test "an attachment failing its uploader validation is rejected on the step" do
+        res = build_runner(AttachmentValidating).advance(:photo, {"photo" => staged_token("too-many-bytes")})
+        refute res.ok?, "the step must not advance"
+        assert res.errors[:photo].present?, "the failure is a field error on :photo"
+      end
+
+      test "a valid attachment advances the step" do
+        res = build_runner(AttachmentValidating).advance(:photo, {"photo" => staged_token("ok")})
+        assert res.ok?, res.errors.inspect
+      end
     end
   end
 end

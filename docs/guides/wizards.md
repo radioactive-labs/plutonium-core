@@ -17,7 +17,6 @@ Wizards are core code, but the storage table is **opt-in** so apps that don't us
 Plutonium.configure do |config|
   config.wizards.enabled = true            # false by default; registers the gem migration
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
-  config.wizards.database = :primary       # which DB the wizard table lives on (multi-db)
 end
 ```
 
@@ -66,7 +65,7 @@ end
 ```
 
 - A wizard is a plain class — `< Plutonium::Wizard::Base`. There is no generator (just like interactions); author it by hand.
-- `presents label:/icon:` sets the launch button's label and icon, exactly like interactions.
+- `presents label:/icon:` sets the launch button's label and icon, exactly like interactions; an optional `description:` renders as the wizard's header subheading.
 - Each `step :key, label: do ... end` is one screen. Inside the block, declare its fields with the same DSL you use on a definition or interaction.
 - `data` is **step-keyed**: `data.company.name` reads the **typed** value entered on the `:company` step (cast to the declared type), available from any step and from `execute`. Each step has its own sub-object, so two steps may use the same field name without colliding.
 - `review` is a built-in terminal step (auto-summary + gated Finish). It must be **last**.
@@ -203,6 +202,8 @@ The same field works two ways:
 
 ::: tip Match the backend to the model
 In server-side mode the backend defaults to `config.wizards.attachment_backend` — auto-detected as Shrine when active_shrine is installed, else ActiveStorage. Override per field with `backend:` (`input :photo, as: :file, backend: :active_storage`). It must match the model your `execute` assigns to: an ActiveStorage model can't accept a Shrine token, and vice-versa.
+
+For Shrine, you can also cache through a specific uploader — `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` — so that uploader's cache-stage plugins (mime/dimension extraction, `generate_location`, processing) run while staging. The minted token stays uploader-agnostic, so display and `execute` promotion are unchanged. That uploader's **validations are enforced on the step** too: a file that violates them is rejected right there with a field error (validated against the field's effective uploader — its `uploader:`, or base `Shrine`), rather than slipping through to `execute`.
 :::
 
 For **multiple** files, use an array attribute with `multiple: true`; the staged value is then an array of tokens. A staged-but-abandoned upload (cancel/sweep) is an unattached blob / cached file that each storage backend's own cleanup reaps.
@@ -354,9 +355,7 @@ A wizard reaches a user as a **resource action** (the `wizard` macro) or a **rou
 
 ### On a resource — the `wizard` macro
 
-Register a wizard on a resource definition with the `wizard` macro. It synthesizes the launching action and **auto-mounts the wizard's routes on the resource's own controller**. Placement follows `anchored?`: an anchored wizard is a record action — it surfaces on the record's show page *and* on each index row (like `edit`/`destroy`); a non-anchored wizard is a collection-level resource action. Bulk wizards are not supported.
-
-![A resource index — each row carries the anchored wizard's launch action (Show · Edit · Configure widget · ⋮)](/images/guides/wizards-index-action.png)
+Register a wizard on a resource definition. Placement follows `anchored?` automatically: an anchored wizard becomes a **record** action (the show page *and* each index row, like `edit`/`destroy`); a non-anchored wizard becomes a collection-level **resource** action.
 
 ```ruby
 class CompanyDefinition < Plutonium::Resource::Definition
@@ -365,46 +364,35 @@ class CompanyDefinition < Plutonium::Resource::Definition
 end
 ```
 
-::: tip Anchored wizards are IDOR-safe
-An anchored (record) wizard resolves its anchor through the resource controller's scoped, policy-gated `resource_record!` — the same lookup CRUD and interactive record actions use. A record outside the portal's authorized scope (another tenant's, or a non-existent id) **404s**; it's never loaded via an unscoped `find_by`. Gate it with a policy predicate named after the wizard key (`def configure? = update?`).
-:::
+![A resource index — each row carries the anchored wizard's launch action (Show · Edit · Configure widget · ⋮)](/images/guides/wizards-index-action.png)
 
-::: danger Portal-level wizards are open to any authenticated user by default
-A portal-level wizard with no `authorize?` can be run by **any authenticated portal user** — it has no resource policy. Always define `def authorize?` for anything privileged.
-:::
+The anchor resolves through the resource controller's scoped, policy-gated `resource_record!` (IDOR-safe — an out-of-scope or missing id 404s), and the action is gated by a policy predicate named after the wizard key (`def configure? = update?`). For placement flags, routes, and the full option list see [Registration & launch › the `wizard` macro](/reference/wizard/registration-launch#on-a-resource-the-wizard-macro).
 
 ### Route-mounted — `register_wizard`
 
-For a wizard not tied to a single resource (onboarding, welcome, set-up), register it with `register_wizard` — inside a portal engine's routes, or on the main app, alongside `register_resource`:
+For a wizard not tied to a single resource (onboarding, welcome, set-up), mount it alongside `register_resource` — in a portal engine's routes or on the main app:
 
 ```ruby
 # packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
-  register_wizard ::OnboardOrganizationWizard, at: "onboarding"               # in-shell (portal default)
-  register_wizard ::SetupOrgWizard, at: "setup", layout: :basic               # bare (BasicLayout)
-
-  register_resource ::Company
-end
-
-# config/routes.rb — a main-app (portal-less) wizard
-Rails.application.routes.draw do
-  register_wizard ::AppOnboardingWizard, at: "onboarding"                     # main-app default → :basic
+  register_wizard ::OnboardOrganizationWizard, at: "onboarding"      # in-shell (portal default)
+  register_wizard ::SetupOrgWizard, at: "setup", layout: :basic      # bare (BasicLayout)
 end
 ```
 
-This draws the wizard's step routes within the host and provides an `<at>_wizard_path` helper. The `layout:` option is the Rails layout to render in — a layout *name*, like the controller `layout` macro: `:basic` (bare), `:resource` (shell), or any app layout. It defaults by host (portal → the resource shell, main-app → `:basic`).
+This draws the step routes within the host and gives you an `onboarding_wizard_path` helper. See [Registration & launch › `register_wizard`](/reference/wizard/registration-launch#route-mounted-register_wizard) for `at:`/`as:`/`public:`/`layout:`, the per-host layout defaults, and the controller override hook.
 
-::: tip Authenticated main-app wizards: define your own controller
-A portal mount inherits the portal's auth. A main-app mount is served by a **bare** synthesized controller with **no `current_user`** — so an authenticated main-app wizard requires you to define `::WizardsController` yourself (`include Plutonium::Wizard::Controller` + your auth concern), the same "app owns the controller" contract as `register_resource`. An `anonymous` public wizard needs no such controller (a guest one is synthesized).
+::: danger Portal-level wizards are open to any authenticated user by default
+A `register_wizard` wizard has no resource policy and **defaults to allowed** — any authenticated portal user can run it. Always define `def authorize?` for anything privileged. (Resource-mounted wizards are gated by their action's policy predicate instead.)
 :::
 
-See [Registration & launch](/reference/wizard/registration-launch#route-mounted-register_wizard).
+::: tip Authenticated main-app wizards: define your own controller
+A portal mount inherits the portal's auth; a bare main-app mount has no `current_user`. An authenticated main-app wizard therefore needs you to define `::WizardsController` yourself (`include Plutonium::Wizard::Controller` + your auth concern) — the same "app owns the controller" contract as `register_resource`. See [Hosting & the controller override hook](/reference/wizard/registration-launch#hosting-the-controller-override-hook).
+:::
 
-### Authentication & guest wizards
+### Guest (unauthenticated) wizards
 
-**Wizards require authentication by default** — entering without a `current_user` is rejected, and every resume is **owner-scoped** (a run id leaked in a URL can't be picked up by another logged-in user). A wizard **never crosses the auth boundary mid-flow**.
-
-Opt into guest access with the `anonymous` macro, and mount it on a **public route** (pre-login). The guest run's identity is a server-minted, unguessable id held in the **Rails session**, namespaced per wizard (`session["plutonium_wizards"][<wizard_key>]`): **not a cookie, and with no TTL**. The row's `cleanup_after` → sweep is the authoritative lifetime; the session id is just a pointer to it. Session storage means the id is browser-close ephemeral, **auto-cleared on login/logout** (Rodauth's `clear_session` → `reset_session`), and cleared on completion. It never appears in a URL, so there is no leak surface. Its terminal `execute` is the *only* place a guest wizard may authenticate (e.g. a signup that creates the account and logs the user in; the host calls Rodauth, which rotates the session):
+Wizards require authentication by default — and every resume is **owner-scoped**, so a run id leaked in a URL can't be picked up by another user. Opt into pre-login access with the `anonymous` macro and mount it `public: true` (the default for `anonymous`). A guest run's identity is a server-minted id held in the **Rails session** (never a URL, no leak surface); it may authenticate only at its terminal `execute` (e.g. a signup that creates the account and logs in):
 
 ```ruby
 class GuestSignupWizard < Plutonium::Wizard::Base
@@ -422,68 +410,29 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   end
 end
 
-# in the portal's routes — public: true is the default for anonymous wizards
 register_wizard ::GuestSignupWizard, at: "signup", public: true
 ```
 
-Because the portal engine is mounted behind the host's auth constraint, an `anonymous` wizard's route is drawn on the **main app** (outside that constraint) so it's reachable before login. See [Authentication](/reference/wizard/anchoring-resume#authentication) and the [public mount](/reference/wizard/registration-launch#public-mount-for-anonymous-wizards).
+Full detail (owner-scoping, session-keying, the synthesized public controller): [Authentication](/reference/wizard/anchoring-resume#authentication) and [the public mount](/reference/wizard/registration-launch#public-mount-for-anonymous-wizards).
 
-::: warning Anchoring constraint
-`with:`-anchored wizards mount on the resource via the `wizard` macro (member action, anchor = scoped `resource_record!`); `register_wizard` raises for a `with:`-anchored wizard (a route-level mount has no resource record), but a `via:`-anchored (context) wizard mounts route-level fine. See [Registration & launch › Constraints](/reference/wizard/registration-launch#constraints).
-:::
+### Listing in-progress & resume-or-new
 
-### Listing in-progress wizards
-
-Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for`. Like interactions, it takes the `view_context` and derives the run owner (`current_user`), tenant scope (`current_scoped_entity`, when the portal is entity-scoped), and **portal** from it — so it stays tenant- and portal-aware automatically. It returns the user's in-progress runs **for the current portal**, each enriched for a list item:
+Build a "continue where you left off" dashboard with `Plutonium::Wizard.in_progress_for(view_context)` — it derives the owner, tenant scope, and portal from the view context and returns that user's in-progress runs for the current portal, each carrying `label` / `icon` / `current_step` / `updated_at` / `resume_url`:
 
 ```ruby
-entries = Plutonium::Wizard.in_progress_for(view_context)
-
-entries.each do |entry|
-  entry.label               # the wizard's presents label
-  entry.icon                # the wizard's presents icon
-  entry.current_step        # the step key the run is paused on
-  entry.current_step_label  # that step's label (if resolvable)
-  entry.updated_at          # last activity (entries are newest-first)
-  entry.resume_url          # a route back into the run, or nil (see below)
-  entry.session             # the raw Wizard::Session row (owner, scope, anchor, …)
+Plutonium::Wizard.in_progress_for(view_context).each do |entry|
+  link_to entry.label, entry.resume_url if entry.resume_url   # resume_url is nil when unresolvable here
 end
-```
 
-A run is only ever listed (and linked) by **the portal it was launched in**: a non-scoped portal lists only unscoped runs; a scoped portal narrows to the current tenant. Two portals can share an entity scope, so the launching portal (the `engine`) is recorded on each run — scope alone can't identify it.
-
-`resume_url` is built through the **current portal's** routes:
-
-- A `register_wizard` (portal/public) wizard resolves to its named route, threading the tenant scope segment and — for a tokened (no `concurrency_key`) run — the per-run `:token`.
-- A `wizard`-macro **anchored** wizard resolves via `resource_url_for(record, wizard:, step:)` — the same helper the launch button uses — from the row's anchor.
-
-When a mount can't be resolved in this portal (e.g. a non-anchored `wizard`-macro run, whose resource identity isn't recorded on the row), `resume_url` is `nil` and `entry.resume_unresolved_reason` explains why (render those entries without a resume link rather than guessing).
-
-For the per-record / per-wizard resume widget — "does this record have an unfinished draft of wizard X?" — pass the optional `anchor:` / `wizard:` filters. They narrow **in the query, before each row is enriched**, so rows you'd otherwise discard are never resume-URL-resolved or anchor-loaded — cheaper than `select`-ing the returned array (which enriches every row first). They compose, and the `wizard + anchor` pair is index-covered:
-
-```ruby
-# the one unfinished `configure` draft for this company
+# narrow to one record's unfinished draft (query-time filters, index-covered):
 Plutonium::Wizard.in_progress_for(view_context, wizard: ConfigureCompanyWizard, anchor: @company).first
-
-# all pending runs of one wizard
-Plutonium::Wizard.in_progress_for(view_context, wizard: OnboardingWizard)
 ```
 
-`wizard:` takes the wizard **class**; `anchor:` takes the record. For ad-hoc post-filtering the array still works — `e.wizard_class` is already on each entry, so `select { |e| e.wizard_class == X }` costs nothing extra. Avoid filtering on `e.session.anchor`, though: that loads the polymorphic anchor per row — use `anchor:` instead.
-
-### Resume or start new on launch
-
-A keyed wizard auto-resumes its single run. A **tokened** wizard could fork a fresh run on every launch — but by default it doesn't silently: when the user has pending runs, launching shows a "resume or start new" page rather than discarding that work. Opt out for flows that should always start clean:
-
-```ruby
-# `on_relaunch :prompt` (the default) shows the resume-or-new chooser when a
-# pending run exists; `:new` always forks a fresh run.
-on_relaunch :new
-```
+A **tokened** wizard (no `concurrency_key`) doesn't silently fork on relaunch — by default it shows a resume-or-new chooser when a pending run exists (`on_relaunch :new` opts out). Keyed and guest wizards auto-resume their single run.
 
 ![The resume-or-new chooser — pending runs with their current step and a Resume button, plus a Start new action](/images/guides/wizards-chooser.png)
 
-See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard).
+See [Anchoring & resume › Listing](/reference/wizard/anchoring-resume#listing-in-progress-wizards) for the full entry fields, portal-scoping rules, `resume_unresolved_reason`, and the filter performance notes.
 
 ## Where to go next
 

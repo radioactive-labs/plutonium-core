@@ -117,6 +117,8 @@ POST /onboarding(/:token)/:step   → advances (the `_direction` param carries n
 
 The bare **`/onboarding`** is the canonical entry point (helper `onboarding_wizard_launch_path`). A `GET` there resolves the run (minting the per-run `:token` for a tokened wizard, or resolving the keyed/guest identity) and `303`-redirects to its entry step: the **resumed cursor** for an in-progress keyed/guest run, else the **first visible step**. Because the redirect target already carries the token, the address bar shows a stable, shareable run URL from the first paint (the token no longer "appears" only after the first submit, and reloading the first step can't fork a second run). Link to `/onboarding` from menus/dashboards; the stepped `/onboarding(/:token)/:step` URLs are built for you by the engine.
 
+The POST `_direction` param carries `next` / `back` / `cancel`. **Where Cancel sends the user** is captured at launch from a `?return_to=` query param (or the referer), sanitized to a same-host local path that isn't the wizard's own mount (open-redirect-safe); Cancel returns there, falling back to the host root. So linking to `/onboarding?return_to=/dashboard` lands a cancelled run back on the dashboard.
+
 `scope_gid` (folded into the instance key) comes from the portal's scoping entity when the portal is entity-scoped.
 
 ## Entry authorization
@@ -165,6 +167,7 @@ For a **one-time** wizard, the launch action this macro synthesizes also **hides
 
 - **`with:`-anchored wizards mount on the resource, not route-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro (it auto-mounts a member action whose anchor is the scoped `resource_record!`). Passing a `with:`-anchored wizard to **`register_wizard`** raises: a route-level mount has no resource record to anchor to. A **`via:`-anchored** (context-anchored) wizard *does* mount route-level; its anchor is resolved by a controller method, not a URL `:id`.
 - **An authenticated main-app wizard needs an app-defined controller.** The synthesized main-app controller is bare (no `current_user`); supply your own `::WizardsController` with an auth concern (see [Hosting & the controller override hook](#hosting-the-controller-override-hook)). Portal mounts and `anonymous` public mounts need nothing.
+- **Route-helper names must be unique across public mounts.** A public (`anonymous`) wizard's route is drawn on the main app, keyed by its helper name (`as:` → `at:` → class-derived). Two distinct public wizards resolving to the **same** helper name **raise** at draw time — give one an explicit `as:`. (Re-drawing the *same* wizard on a route reload is a no-op, not a collision.)
 
 ## Related
 

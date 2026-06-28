@@ -91,8 +91,8 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
 end
 ```
 
-- `presents label:/icon:` — launch button chrome (same as interactions).
-- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]).
+- `presents label:/icon:/description:` — launch button label + icon (same as interactions); the optional `description:` renders as the wizard's header subheading.
+- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]). `step` (and `review`) also take an optional `description:` — a sub-label under the heading. `label:` defaults to `key.to_s.humanize`.
 - `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
 - `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
 - `execute` — runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
@@ -101,7 +101,7 @@ end
 
 | Macro | Meaning |
 |---|---|
-| `presents label:, icon:` | Launch button label + icon. |
+| `presents label:, icon:, description:` | Launch button label + icon; the optional `description:` renders as the wizard's header subheading. |
 | `navigation :linear \| :free` | Stepper jumps. `:linear` (default) = back to any visited step; `:free` = any visible visited step. Forward to unvisited is never allowed. |
 | `stepper false` | Hide the top rail (step indicator). On by default. |
 | `on_relaunch :new` | Bare-relaunching a **tokened** wizard with pending runs shows a "resume or start new" chooser by default (`:prompt`) instead of silently forking; `:new` opts out (always fresh). No-op for keyed/`anonymous` (already auto-resume). |
@@ -211,6 +211,7 @@ The review summary and the step's preview (on Back/resume) render the file autom
 | **Direct upload** | `input :file, as: :uppy, direct_upload: true, endpoint: "/upload"` | the browser uploads to the endpoint and posts back a token (async progress UI). Needs that endpoint reachable (AS direct-uploads, or Shrine's `upload_endpoint`). |
 
 - **Backend** (server-side mode): defaults to `config.wizards.attachment_backend`, which **auto-detects** active_shrine → `:shrine`, else `:active_storage`. Override per field with `backend:`. It **must match the model `execute` assigns to** — an AS model ⇒ `:active_storage`, an active_shrine model ⇒ `:shrine` (an AS model won't accept a Shrine token, and vice-versa).
+- **Uploader** (Shrine only): `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` caches through that uploader (running its cache-stage plugins — mime/dimension/location/processing — instead of base `Shrine`). The token stays uploader-agnostic, so display + `execute` promotion are unchanged. Server-side only; raises for `:active_storage`. The uploader's `:cache` storage must be the one the model's attacher promotes from (the default global `Shrine.storages[:cache]`). **Validations are enforced on the step** (when Shrine's optional `validation`/`validation_helpers` plugin is loaded — else a clean no-op): the file is validated against the field's effective uploader (its `uploader:`, else base `Shrine`), so a failing file is rejected with a field error — not deferred to `execute`. (`Uploader.upload` itself runs no validations; the step's validation pass does.)
 - **Multiple:** an array attribute + `multiple: true` → the staged value is an array of tokens.
 - **Cleanup:** a staged-then-abandoned upload is an unattached blob / cached Shrine file — each backend's own unattached cleanup reaps it (the wizard `SweepJob` doesn't touch it).
 
@@ -271,7 +272,7 @@ end
 
 | Accessor | Returns |
 |---|---|
-| `data` / `data.<field>` | Typed snapshot of everything entered. Not-yet-collected → `nil` / `default:`. Read-only. |
+| `data` / `data.<step>.<field>` | Typed snapshot of everything entered, **step-keyed** (read through the owning step). Not-yet-collected → `nil` / `default:`. Read-only. |
 | `anchor` | The launched-against record. Raises `NotAnchoredError` if not `anchored` (never nil). |
 | `persisted[:step_key]` | Record(s) registered via `persist` in `on_submit`. Rehydrated on resume. |
 | `succeed(v)` / `failed(errs)` | Outcome helpers (alias `success`). `.with_message`, `.with_redirect_response` chainable. |
@@ -458,6 +459,7 @@ end
 - **`encrypt_data` without AR encryption keys** → first write raises (naming the wizard). Run `bin/rails db:encryption:init`.
 - **Gating a non-one-time wizard** (`ensure_wizard_completed` on a repeatable wizard) → raises.
 - **`on_submit` wizard without scheduled SweepJob** → abandoned partial records pile up.
+- **Rotating `secret_key_base`** → invalidates every `instance_key` digest (it's salted with the app secret): in-progress runs become unresumable and one-time gates re-open. Only affects rows live at rotation time.
 
 ## Related Skills
 

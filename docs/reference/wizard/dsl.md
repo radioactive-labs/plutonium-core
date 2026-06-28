@@ -16,13 +16,13 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 
 | Macro | Meaning |
 |---|---|
-| `presents label:, icon:` | The launch button's label + icon (same as interactions). |
+| `presents label:, icon:, description:` | The launch button's label + icon (same as interactions), plus an optional `description:` rendered as the wizard's header subheading. |
 | `navigation :linear \| :free` | Stepper jump policy. `:linear` (default) — back to any visited step; `:free` — any visible visited step. Forward jumps to unvisited steps are never allowed. |
 | `stepper false` | Hide the top rail (the step indicator). On by default. |
 | `on_relaunch :new` | Controls a bare relaunch of a **tokened** wizard when the user has pending (in-progress) runs. Default `:prompt` shows a "resume or start new" chooser instead of silently forking; `:new` opts out and always mints a fresh run. No-op for keyed/`anonymous` wizards (they already auto-resume their single run). See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record; read via `anchor`. `with:` resolves from the URL `:id` (resource-mounted); `via:` resolves by calling a controller method (portal-level, context-anchored). See [Anchoring & resume](/reference/wizard/anchoring-resume). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the abandonment sweep reaps a session and rolls back its tracked records. Defaults to `config.wizards.cleanup_after`. `:never` opts out. |
-| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs — **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
+| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays serialized element-wise — structured, **not** flat-joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs — **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
 | `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). See [`completed`](#completed) below and [One-time wizards](/reference/wizard/one-time#re-opening-a-completed-wizard). |
 | `encrypt_data` | Encrypt the staged `data` column at rest using ActiveRecord's encryption keys (off by default), for flows that stage PII. Requires `active_record.encryption` keys — see [Storage & config](/reference/wizard/storage-config#encryption). |
@@ -39,7 +39,7 @@ end
 ## `step`
 
 ```ruby
-step(key, label: nil, condition: nil, using: nil, **using_opts, &block)
+step(key, label: nil, description: nil, condition: nil, using: nil, **using_opts, &block)
 ```
 
 A `step` is one screen. The block declares its fields with the existing field DSL (`attribute`/`input`/`validates`/`structured_input`/`form_layout`) and may attach the per-step hooks `on_submit`/`on_rollback`.
@@ -60,7 +60,8 @@ end
 
 | Option | Meaning |
 |---|---|
-| `label:` | The step's display label (stepper + heading). |
+| `label:` | The step's display label (stepper + heading). Defaults to `key.to_s.humanize`. |
+| `description:` | Optional sub-label rendered under the step heading. |
 | `condition:` | Lambda over `data` (and `anchor`) gating inclusion. Subtractive branching. Must be nil-safe. |
 | `using:` | Import a field surface from a **model**. See below. |
 
@@ -73,7 +74,7 @@ A step's block is the same field DSL used on definitions and interactions:
 - `attribute :name, :type` — declares a typed attribute (feeds the `data` snapshot).
 - `input :name, as:, ...` — how the field renders.
 - `validates :name, ...` — ActiveModel validations, run on Next. These also drive the form's field affordances exactly like a resource form: a `presence` validation renders the required marker (`*`), and `length`/`numericality`/`format`/`inclusion` feed `maxlength`/`min`/`max`/`pattern`/auto-choices. Validations imported via `using:` surface these too.
-- `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects.
+- `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects. The sub-fields can come from the block (above), or from a model via `using:` / `fields:` (same selectors as a step's `using:`) instead of a block.
 - `form_layout do ... end` — section the step's fields (`section`, `columns:`, `collapsible:`, etc.), scoped to this step.
 
 See [plutonium-resource › Definition](/reference/resource/definition) for the full field/input/layout vocabulary.
@@ -133,7 +134,12 @@ end
 | **Server-side** (default) | `as: :file` | file submitted with the step; the wizard uploads it to the backend cache while staging. AS *and* active_shrine. |
 | **Direct upload** | `as: :uppy, direct_upload: true, endpoint:` | browser uploads to the endpoint, posts a token (async UI). |
 | **Backend** (server-side) | `backend: :active_storage` / `:shrine` | defaults to `config.wizards.attachment_backend` (auto-detects active_shrine, else AS). **Must match the model** `execute` assigns to. |
+| **Uploader** (Shrine only) | `uploader: PhotoUploader` | cache the file through a specific Shrine uploader (its cache-stage plugins — mime/dimension extraction, `generate_location`, processing — run instead of base `Shrine`'s). The minted token stays uploader-agnostic, so display + promotion are unaffected. Accepts a class or a class-name string; raises for the AS backend. Server-side staging only (direct upload configures the uploader at its endpoint). Its **validations are enforced on the step** — see the note below. |
 | **Multiple** | array attribute + `multiple: true` | staged value is an array of tokens. |
+
+::: tip Uploader validations are enforced on the step
+A Shrine file field is validated **on its step** against the field's **effective uploader** — its `uploader:` if given, else base `Shrine` (whichever carries the `Attacher.validate` rules). A file that violates them is rejected right there (a field error + re-render), exactly like a `validates` — *not* deferred to `execute`. Mechanically: `Uploader.upload` caches the file (running no validations), then the step's validation pass runs the attacher's validations against the staged token. This needs Shrine's optional `validation`/`validation_helpers` plugin — without it there's nothing to enforce and it's a clean no-op. ActiveStorage fields are likewise unaffected.
+:::
 
 ## Per-step hooks
 
@@ -189,6 +195,8 @@ What it renders depends on completion state and the `summary:` / block options:
 
 | Option | Meaning |
 |---|---|
+| `label:` | The review step's label (default `"Review"`). |
+| `description:` | Optional sub-label under the review heading. |
 | `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block — or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
 | `header:` | Show the step-header section (the label plus the "check everything over" prompt, which only appears when the summary is shown) above the body (default `true`). `false` drops it for a chromeless finish. |
 
@@ -291,8 +299,8 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 
 | Accessor | Returns |
 |---|---|
-| `data` | Typed, dot-accessible snapshot of everything entered so far (union of all steps' attributes). Read-only; not-yet-collected fields read as `nil` or their `default:`. |
-| `data.<field>` | The cast value (real Boolean/Integer/Date, not raw string). `data.<structured>` → array of typed sub-objects. |
+| `data` | Typed, dot-accessible snapshot of everything entered so far, **step-keyed** — read a field through its owning step: `data.<step>.<field>`. Read-only; not-yet-collected fields read as `nil` or their `default:`. Each step has its own sub-object, so two steps may declare the same field name without colliding. |
+| `data.<step>.<field>` | The cast value (real Boolean/Integer/Date, not raw string). `data.<step>.<structured>` → array of typed sub-objects. An unknown step key reads as `nil`. |
 | `anchor` | The record the wizard was launched against. Raises `NotAnchoredError` if the wizard isn't `anchored`. |
 | `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Lazily rehydrated on first access (located from stored GlobalIDs the first time you read the key, memoized thereafter). |
 
@@ -308,8 +316,9 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 
 | Error | Raised when |
 |---|---|
-| `Plutonium::Wizard::NotAnchoredError` | `anchor` called on a non-anchored wizard. |
+| `Plutonium::Wizard::NotAnchoredError` | `anchor` called on a non-anchored wizard (also raised when a `via:` anchor resolves to `nil` or the wrong type). |
 | `Plutonium::Wizard::StepError` | Raised by `fail!` (or directly) for a custom, non-AR step failure → maps to a form error. |
+| `Plutonium::Wizard::UnknownWizardError` | A mount's `wizard_class` doesn't resolve to a loaded `Plutonium::Wizard::Base` subclass — a misconfigured mount or a tampered route param. |
 
 ## Related
 

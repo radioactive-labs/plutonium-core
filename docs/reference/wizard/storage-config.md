@@ -11,7 +11,6 @@ Wizards are core code, but the storage table is **opt-in** so apps that don't us
 Plutonium.configure do |config|
   config.wizards.enabled = true            # false by default
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
-  config.wizards.database = :primary       # which DB the wizard table lives on (multi-db)
   config.wizards.encrypt_data = true       # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect)
 end
@@ -48,7 +47,7 @@ One framework-owned table serves everything; **no changes to your models.**
 | Column | Purpose |
 |---|---|
 | `wizard` | The wizard class name. |
-| `status` | `in_progress` \| `completing` \| `completed`. |
+| `status` | `in_progress` \| `completing` \| `completed` (see the note below). |
 | `current_step` | The step cursor. |
 | `instance_key` (unique) | The deterministic identity digest (see [Anchoring & resume](/reference/wizard/anchoring-resume#instance-identity)). |
 | `owner_type` / `owner_id` | The user (nullable — `null` for an `anonymous`/guest run). Authenticated lookups are owner-scoped against this. |
@@ -115,13 +114,19 @@ A row therefore decrypts based on its **own shape**, independent of the wizard's
 
 ## Files
 
-File uploads can't sit in the JSON column. Use ActiveStorage direct upload (the existing `uppy` input) and store the blob's `signed_id` in `data` — which also sidesteps the classic "abandoned wizard leaks temp files" problem.
+A file can't sit in the JSON `data` column, so a wizard stages only the backend's **upload token** (an ActiveStorage `signed_id`, or Shrine cached-file data) and `execute` assigns it to the model's attachment. This works for both server-side and direct uploads, ActiveStorage and active_shrine. See [DSL › Attachment fields](/reference/wizard/dsl#attachment-fields) and the [guide](/guides/wizards#file-uploads-attachments) for the full surface (`backend:`, `multiple:`, direct upload).
+
+A staged-then-abandoned upload is an unattached blob / cached Shrine file. **Each storage backend's own unattached-cache cleanup reaps it — the wizard `SweepJob` does not** (it only tracks records registered via `persist`). Ensure that backend cleanup runs.
 
 ## Cleanup & the SweepJob
 
 `cleanup_after` stamps a concrete `expires_at` (`now + ttl`) on every write, so an actively-progressing wizard keeps pushing its expiry forward. A later change to the wizard's TTL never retroactively shifts existing rows. `cleanup_after :never` stores a null `expires_at`, opting out of sweeping (partial records persist by design).
 
 `Plutonium::Wizard::SweepJob` reaps idle `in_progress` / `completing` rows past `expires_at`: for each it runs the wizard's cleanup (each step's `on_rollback` if declared, then always destroy every tracked record, in reverse order) and deletes the row. Completed rows are never touched. The job is idempotent and safe to re-run.
+
+::: tip The `completing` state and its grace window
+A healthy finalize flips the row to `completing` and runs `execute` **outside** the completion lock (so a long `execute` doesn't block other requests), without bumping `expires_at`. To avoid sweeping a finalize that's still running, the sweep only reaps a `completing` row once it's been idle for a 15-minute grace window — long enough that a still-`completing` row past it is a *crashed* finalize, not a slow one. Keep individual `execute`s well under 15 minutes (offload long work to a job).
+:::
 
 ### SweepJob is load-bearing for save-as-you-go
 

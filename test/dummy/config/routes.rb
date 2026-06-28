@@ -21,6 +21,10 @@ Rails.application.routes.draw do
   register_wizard ::AttachmentDemoWizard, at: "uploads"
   mount Shrine.upload_endpoint(:cache) => "/shrine/upload"
 
+  # A wizard exercising STAGE-PHASE attachment validation via a per-field Shrine
+  # `uploader:` (LimitedUploader's max-size rule is enforced on the step).
+  register_wizard ::ValidatedUploadWizard, at: "validated-upload"
+
   # Defines the root path route ("/")
   # Bridges authenticated users into the path-scoped OrgPortal. This is
   # also where rodauth's `login_redirect "/"` lands after sign-in.

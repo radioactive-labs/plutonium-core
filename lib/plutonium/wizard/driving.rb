@@ -509,7 +509,9 @@ module Plutonium
           next unless Plutonium::Wizard::Attachments.field?(config)
 
           token = Plutonium::Wizard::Attachments.stage_upload(
-            raw[name], backend: config.dig(:options, :backend)
+            raw[name],
+            backend: config.dig(:options, :backend),
+            uploader: config.dig(:options, :uploader)
           )
           if token.nil?
             cleaned.delete(name)

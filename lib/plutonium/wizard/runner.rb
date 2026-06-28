@@ -405,7 +405,26 @@ module Plutonium
         imported = step.imported_validate_fn&.call(merged)
         errors.merge!(stringify_messages(imported)) if imported
         errors.merge!(inline_errors(step, merged)) { |_k, a, b| Array(a) + Array(b) }
+        errors.merge!(attachment_errors(step, merged)) { |_k, a, b| Array(a) + Array(b) }
         errors.reject { |_attr, msgs| Array(msgs).blank? }
+      end
+
+      # Stage-phase attachment validation: run each Shrine-backed file field's
+      # effective uploader (`uploader:` or base Shrine) validations against the
+      # staged token, so a file that violates them is rejected on THIS step — the
+      # same field-error/re-render path as `validates` — instead of only at
+      # `execute`. A no-op for ActiveStorage fields and for uploaders with no rules.
+      def attachment_errors(step, merged)
+        step.inputs.each_with_object({}) do |(name, config), acc|
+          next unless Plutonium::Wizard::Attachments.field?(config)
+
+          messages = Plutonium::Wizard::Attachments.validation_errors(
+            merged[name.to_s],
+            backend: config.dig(:options, :backend),
+            uploader: config.dig(:options, :uploader)
+          )
+          acc[name.to_sym] = messages if messages.any?
+        end
       end
 
       # Run the step's inline `validates` against a transient instance of the SAME

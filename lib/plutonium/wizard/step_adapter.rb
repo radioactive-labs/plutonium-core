@@ -20,6 +20,14 @@ module Plutonium
     # path unchanged — seeded from the wizard's typed `data` (the form `object`),
     # which is what makes resume/back rehydration (including repeater rows) work.
     class StepAdapter
+      # Options on a file `input` that are consumed SERVER-SIDE by Wizard::Driving
+      # (from the raw step) to stage the upload — never form/HTML concerns. They must
+      # be stripped from what the form renders: Phlex rejects a Class-valued
+      # `uploader:` as an attribute, and `backend:` would otherwise leak as a stray
+      # attribute. Driving reads them off `step.inputs` directly, so removing them
+      # here is invisible to staging.
+      STAGING_ONLY_INPUT_OPTIONS = %i[backend uploader].freeze
+
       def initialize(step)
         @step = step
       end
@@ -31,8 +39,16 @@ module Plutonium
       # `defined_fields[name]` (here {}) with `defined_inputs[name]`.
       def defined_fields = {}
 
-      # `{name => {options:, block:}}` — inline + `using:`-imported inputs.
-      def defined_inputs = step.inputs
+      # `{name => {options:, block:}}` — inline + `using:`-imported inputs, with the
+      # server-side staging options stripped so they don't render as HTML attributes.
+      def defined_inputs
+        step.inputs.transform_values do |config|
+          options = config[:options]
+          next config if options.nil? || STAGING_ONLY_INPUT_OPTIONS.none? { |k| options.key?(k) }
+
+          config.merge(options: options.except(*STAGING_ONLY_INPUT_OPTIONS))
+        end
+      end
 
       # `{name => {options:, block:}}` — structured (single/repeater) inputs.
       def defined_structured_inputs = step.structured_inputs
