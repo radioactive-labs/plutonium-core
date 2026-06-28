@@ -76,9 +76,20 @@ module Plutonium
         defined?(super) ? super : nil
       end
 
-      # The wizard class is carried as a route default (see WizardRegistration).
+      # The wizard class is carried as a route default (see WizardRegistration),
+      # so it is a server-set path parameter. Resolve it through an ALLOWLIST of
+      # the loaded wizard classes rather than `constantize`-ing the raw value:
+      # every standalone wizard route is drawn by handing `register_wizard` the
+      # class object, so by the time its route matches the class is loaded and
+      # registered as a `Base` descendant. Matching by name can therefore only
+      # ever return an actual wizard — it never triggers resolution of an
+      # arbitrary constant (the `constantize`-on-params code-execution surface).
       def current_wizard_class
-        @current_wizard_class ||= params.fetch(:wizard_class).to_s.constantize
+        @current_wizard_class ||= begin
+          name = params.fetch(:wizard_class).to_s
+          Plutonium::Wizard::Base.descendants.find { |klass| klass.name == name } ||
+            raise(Plutonium::Wizard::UnknownWizardError, "unknown wizard #{name.inspect}")
+        end
       end
 
       # Portal-level wizards are either non-anchored or CONTEXT-anchored

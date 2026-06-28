@@ -19,6 +19,12 @@ module Plutonium
     #
     # The module is the mechanism; this class is only sugar.
     class BaseController < ActionController::Base
+      # A bare `ActionController::Base` host normally inherits forgery protection
+      # from the app's `default_protect_from_forgery`, but make it explicit here so
+      # a standalone wizard mount is CSRF-protected regardless of app config (the
+      # wizard `update` is a state-changing POST).
+      protect_from_forgery with: :exception
+
       include Plutonium::Wizard::Controller
     end
   end
