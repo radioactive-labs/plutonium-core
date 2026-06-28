@@ -56,7 +56,6 @@ module WizardStoreBehavior
     assert_nil @store.read(st.instance_key)
   end
 
-
   private
 
   def build_state(wizard: "W", data: {}, owner: nil, **extra)
