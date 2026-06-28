@@ -65,7 +65,7 @@ end
 ```
 
 - A wizard is a plain class — `< Plutonium::Wizard::Base`. There is no generator (just like interactions); author it by hand.
-- `presents label:/icon:` sets the launch button's label and icon, exactly like interactions.
+- `presents label:/icon:` sets the launch button's label and icon, exactly like interactions; an optional `description:` renders as the wizard's header subheading.
 - Each `step :key, label: do ... end` is one screen. Inside the block, declare its fields with the same DSL you use on a definition or interaction.
 - `data` is **step-keyed**: `data.company.name` reads the **typed** value entered on the `:company` step (cast to the declared type), available from any step and from `execute`. Each step has its own sub-object, so two steps may use the same field name without colliding.
 - `review` is a built-in terminal step (auto-summary + gated Finish). It must be **last**.

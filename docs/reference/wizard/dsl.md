@@ -16,7 +16,7 @@ For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 
 | Macro | Meaning |
 |---|---|
-| `presents label:, icon:` | The launch button's label + icon (same as interactions). |
+| `presents label:, icon:, description:` | The launch button's label + icon (same as interactions), plus an optional `description:` rendered as the wizard's header subheading. |
 | `navigation :linear \| :free` | Stepper jump policy. `:linear` (default) — back to any visited step; `:free` — any visible visited step. Forward jumps to unvisited steps are never allowed. |
 | `stepper false` | Hide the top rail (the step indicator). On by default. |
 | `on_relaunch :new` | Controls a bare relaunch of a **tokened** wizard when the user has pending (in-progress) runs. Default `:prompt` shows a "resume or start new" chooser instead of silently forking; `:new` opts out and always mints a fresh run. No-op for keyed/`anonymous` wizards (they already auto-resume their single run). See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard). |

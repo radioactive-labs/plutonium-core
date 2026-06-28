@@ -91,7 +91,7 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
 end
 ```
 
-- `presents label:/icon:` — launch button chrome (same as interactions).
+- `presents label:/icon:/description:` — launch button label + icon (same as interactions); the optional `description:` renders as the wizard's header subheading.
 - A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]). `step` (and `review`) also take an optional `description:` — a sub-label under the heading. `label:` defaults to `key.to_s.humanize`.
 - `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
 - `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
@@ -101,7 +101,7 @@ end
 
 | Macro | Meaning |
 |---|---|
-| `presents label:, icon:` | Launch button label + icon. |
+| `presents label:, icon:, description:` | Launch button label + icon; the optional `description:` renders as the wizard's header subheading. |
 | `navigation :linear \| :free` | Stepper jumps. `:linear` (default) = back to any visited step; `:free` = any visible visited step. Forward to unvisited is never allowed. |
 | `stepper false` | Hide the top rail (step indicator). On by default. |
 | `on_relaunch :new` | Bare-relaunching a **tokened** wizard with pending runs shows a "resume or start new" chooser by default (`:prompt`) instead of silently forking; `:new` opts out (always fresh). No-op for keyed/`anonymous` (already auto-resume). |

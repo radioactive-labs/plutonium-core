@@ -16,7 +16,7 @@ For a task-oriented walkthrough, start with the [Wizards guide](/guides/wizards)
 
 | Concept | Macro / accessor |
 |---|---|
-| Launch chrome | `presents label:, icon:` |
+| Launch chrome | `presents label:, icon:, description:` |
 | A screen | `step :key, label:, condition:, using: do ... end` |
 | Branching | `condition: -> { data.<step>.<field> ... }` (subtractive, nil-safe) |
 | Field reuse | `using: Model, fields:/only:/except:` (model only) |
