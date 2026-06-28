@@ -55,13 +55,18 @@ module Plutonium
       # - an Array (multiple) → each element mapped, blanks dropped.
       #
       # @param backend [Symbol, nil] per-field override; nil → the configured default.
-      def stage_upload(value, backend: nil)
+      # @param uploader [Class, String, nil] a Shrine uploader to cache through
+      #   (`:shrine` backend only) — its cache-stage plugins (mime/dimension
+      #   extraction, `generate_location`, validations) run instead of base Shrine's.
+      #   The minted token stays uploader-agnostic, so display + `execute` promotion
+      #   are unaffected. Ignored shape for ActiveStorage (raises if given).
+      def stage_upload(value, backend: nil, uploader: nil)
         if value.is_a?(Array)
-          value.filter_map { |v| stage_upload(v, backend:) }.presence
+          value.filter_map { |v| stage_upload(v, backend:, uploader:) }.presence
         elsif value.is_a?(String)
           value.presence
         elsif value.respond_to?(:read)
-          upload_to_cache(value, backend || attachment_backend)
+          upload_to_cache(value, backend || attachment_backend, uploader:)
         end
       end
 
@@ -76,11 +81,12 @@ module Plutonium
       # file lives in cache until `execute` assigns the token to a real attachment
       # (which promotes it); an abandoned upload is reaped by the backend's own
       # unattached-cache cleanup.
-      def upload_to_cache(file, backend)
+      def upload_to_cache(file, backend, uploader: nil)
         case backend.to_sym
         when :shrine
-          Shrine.upload(file, :cache).to_json
+          shrine_uploader(uploader).upload(file, :cache).to_json
         when :active_storage
+          raise ArgumentError, "input `uploader:` is only supported for the :shrine backend" if uploader
           ActiveStorage::Blob.create_and_upload!(
             io: file, filename: file.original_filename, content_type: file.content_type
           ).signed_id
@@ -89,6 +95,20 @@ module Plutonium
         end
       end
       private_class_method :upload_to_cache
+
+      # Resolve an `uploader:` option to the Shrine uploader class to cache through.
+      # nil → base `Shrine`; a class is used as-is; a String/Symbol is constantized.
+      # Anything that isn't a Shrine subclass is a configuration error (fail loud).
+      def shrine_uploader(uploader)
+        return Shrine if uploader.nil?
+
+        klass = uploader.is_a?(Class) ? uploader : uploader.to_s.safe_constantize
+        unless klass.is_a?(Class) && klass <= Shrine
+          raise ArgumentError, "input `uploader:` must be a Shrine uploader class, got #{uploader.inspect}"
+        end
+        klass
+      end
+      private_class_method :shrine_uploader
 
       # Revive one token through whichever backend owns it, wrapped in {Resolved}. A
       # broad rescue is warranted here (unlike elsewhere): the token is arbitrary,

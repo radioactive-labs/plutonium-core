@@ -134,6 +134,7 @@ end
 | **Server-side** (default) | `as: :file` | file submitted with the step; the wizard uploads it to the backend cache while staging. AS *and* active_shrine. |
 | **Direct upload** | `as: :uppy, direct_upload: true, endpoint:` | browser uploads to the endpoint, posts a token (async UI). |
 | **Backend** (server-side) | `backend: :active_storage` / `:shrine` | defaults to `config.wizards.attachment_backend` (auto-detects active_shrine, else AS). **Must match the model** `execute` assigns to. |
+| **Uploader** (Shrine only) | `uploader: PhotoUploader` | cache the file through a specific Shrine uploader (its cache-stage plugins — mime/dimension extraction, `generate_location`, validations — run instead of base `Shrine`'s). The minted token stays uploader-agnostic, so display + promotion are unaffected. Accepts a class or a class-name string; raises for the AS backend. Server-side staging only (direct upload configures the uploader at its endpoint). |
 | **Multiple** | array attribute + `multiple: true` | staged value is an array of tokens. |
 
 ## Per-step hooks

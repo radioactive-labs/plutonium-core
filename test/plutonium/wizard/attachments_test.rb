@@ -9,15 +9,32 @@ require "test_helper"
 # by token SHAPE (JSON ⇒ Shrine, else ⇒ ActiveStorage) into a uniform {Resolved}
 # view, so the review + preview render either backend identically.
 class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
+  # A Shrine uploader subclass that records which storage it cached into, so a test
+  # can prove staging routed the upload through the field's `uploader:` (not base
+  # `Shrine`). It inherits the globally registered storages.
+  class RecordingUploader < Shrine
+    class << self
+      attr_accessor :last_storage
+      def upload(io, storage, **)
+        self.last_storage = storage
+        super
+      end
+    end
+  end
+
   def upload_blob(name: "logo.png", type: "image/png")
     ActiveStorage::Blob.create_and_upload!(io: StringIO.new("as-bytes"), filename: name, content_type: type)
   end
 
-  def upload_shrine(name: "photo.jpg", type: "image/jpeg")
+  def shrine_io(name: "photo.jpg", type: "image/jpeg")
     io = StringIO.new("shrine-bytes")
     io.define_singleton_method(:original_filename) { name }
     io.define_singleton_method(:content_type) { type }
-    Shrine.upload(io, :cache)
+    io
+  end
+
+  def upload_shrine(name: "photo.jpg", type: "image/jpeg")
+    Shrine.upload(shrine_io(name:, type:), :cache)
   end
 
   test "an ActiveStorage signed_id resolves to a uniform view over the blob" do
@@ -61,6 +78,37 @@ class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
   test "nil / empty resolves to empty" do
     assert_empty Plutonium::Wizard::Attachments.resolve(nil)
     assert_empty Plutonium::Wizard::Attachments.resolve([])
+  end
+
+  test "uploader: routes Shrine staging through the given uploader" do
+    RecordingUploader.last_storage = nil
+    io = shrine_io
+    token = Plutonium::Wizard::Attachments.stage_upload(io, backend: :shrine, uploader: RecordingUploader)
+
+    assert_equal :cache, RecordingUploader.last_storage, "the file was cached via the given uploader"
+    assert_equal "cache", JSON.parse(token)["storage"], "still a standard cached-file token"
+    # the token is uploader-agnostic, so it still resolves for display unchanged
+    assert_equal io.original_filename, Plutonium::Wizard::Attachments.resolve(token).first.filename
+  end
+
+  test "uploader: accepts a class name string" do
+    RecordingUploader.last_storage = nil
+    Plutonium::Wizard::Attachments.stage_upload(shrine_io, backend: :shrine, uploader: RecordingUploader.name)
+    assert_equal :cache, RecordingUploader.last_storage
+  end
+
+  test "uploader: is rejected for the active_storage backend" do
+    err = assert_raises(ArgumentError) do
+      Plutonium::Wizard::Attachments.stage_upload(shrine_io, backend: :active_storage, uploader: RecordingUploader)
+    end
+    assert_match(/uploader:/, err.message)
+  end
+
+  test "uploader: must be a Shrine uploader class" do
+    err = assert_raises(ArgumentError) do
+      Plutonium::Wizard::Attachments.stage_upload(shrine_io, backend: :shrine, uploader: String)
+    end
+    assert_match(/Shrine uploader/, err.message)
   end
 
   test "field? detects file-alias inputs (nested or flat options)" do
