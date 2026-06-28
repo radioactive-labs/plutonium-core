@@ -11,7 +11,6 @@ Wizards are core code, but the storage table is **opt-in** so apps that don't us
 Plutonium.configure do |config|
   config.wizards.enabled = true            # false by default
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
-  config.wizards.database = :primary       # which DB the wizard table lives on (multi-db)
   config.wizards.encrypt_data = true       # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect)
 end

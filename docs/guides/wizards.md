@@ -17,7 +17,6 @@ Wizards are core code, but the storage table is **opt-in** so apps that don't us
 Plutonium.configure do |config|
   config.wizards.enabled = true            # false by default; registers the gem migration
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
-  config.wizards.database = :primary       # which DB the wizard table lives on (multi-db)
 end
 ```
 
