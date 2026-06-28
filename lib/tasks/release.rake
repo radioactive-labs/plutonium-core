@@ -7,9 +7,13 @@
 #
 #   1. rake release:prepare          # auto-computes next version via git-cliff
 #      rake release:prepare[1.2.3]   # ...or pass one explicitly
-#   2. git show                      # review the bump commit
-#   3. rake release:publish          # publish gem + npm, then tag + push → CI cuts the Release
+#                                    # → bumps + regenerates changelog + builds assets,
+#                                    #   STAGES them, and shows the diff. Nothing is committed.
+#   2. git diff --cached             # review the staged changes
+#   3. rake release:publish          # commits, publishes gem + npm, then tags + pushes
+#                                    #   → CI cuts the Release from the tag
 #
+# To abort after prepare: git reset --hard (discards the staged changes).
 # release:publish is idempotent and resumable: it skips a gem/npm already live
 # and only tags if the tag is missing, so a partial failure can just be re-run.
 
@@ -61,7 +65,7 @@ namespace :release do
 
   # --- prepare --------------------------------------------------------------
 
-  desc "Prepare a release commit (bump + changelog + assets). Version optional; git-cliff computes it."
+  desc "Stage a release (bump + changelog + assets) for review. Version optional; git-cliff computes it."
   task :prepare, [:version] do |_t, args|
     version = args[:version] || computed_next_version
 
@@ -94,14 +98,16 @@ namespace :release do
     # Rebuild committed frontend assets so the tagged tree ships current JS/CSS.
     Rake::Task["release:build_frontend"].invoke
 
-    # Commit straight to the current branch. No push — review, then `rake release:publish`.
+    # Stage everything and show it — review happens BEFORE anything is committed.
     system("git", "add", "-A") || abort("git add failed")
-    system("git", "commit", "-m", "chore(release): prepare for v#{version}") || abort("git commit failed")
 
-    puts "\n✓ Committed release v#{version}."
-    puts "Next:"
-    puts "  git show              # review"
-    puts "  rake release:publish  # publish gem + npm, then tag + push"
+    puts "\n✓ Staged release v#{version} (nothing committed yet)."
+    puts "\nStaged changes:"
+    system("git", "--no-pager", "diff", "--cached", "--stat")
+    puts "\nNext:"
+    puts "  git diff --cached     # review the full diff"
+    puts "  rake release:publish  # commit, publish gem + npm, tag + push"
+    puts "  git reset --hard      # abort and discard the staged changes"
   end
 
   desc "Build front-end assets"
@@ -113,14 +119,20 @@ namespace :release do
 
   # --- publish (primary; idempotent + resumable) ----------------------------
 
-  desc "Publish gem + npm from this machine, then tag + push (fires the Release workflow)"
+  desc "Commit the prepared release, publish gem + npm, then tag + push (fires the Release workflow)"
   task publish: [:build_frontend] do
-    unless `git status --porcelain`.strip.empty?
-      abort "Error: working tree is dirty. Run rake release:prepare first."
-    end
-
     version = current_version
     tag = "v#{version}"
+
+    # Commit the changes prepare left staged for review. If the tree is already
+    # clean (e.g. re-running after a partial failure), there's nothing to commit.
+    if `git status --porcelain`.strip.empty?
+      puts "• working tree clean — nothing to commit"
+    else
+      system("git", "add", "-A") || abort("git add failed")
+      system("git", "commit", "-m", "chore(release): prepare for v#{version}") || abort("git commit failed")
+      puts "✓ Committed release v#{version}"
+    end
 
     # Gem (skip if this version is already on RubyGems)
     if gem_published?(version)
