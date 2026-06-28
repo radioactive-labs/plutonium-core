@@ -92,7 +92,7 @@ end
 ```
 
 - `presents label:/icon:` — launch button chrome (same as interactions).
-- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]).
+- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]). `step` (and `review`) also take an optional `description:` — a sub-label under the heading. `label:` defaults to `key.to_s.humanize`.
 - `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
 - `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
 - `execute` — runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
@@ -271,7 +271,7 @@ end
 
 | Accessor | Returns |
 |---|---|
-| `data` / `data.<field>` | Typed snapshot of everything entered. Not-yet-collected → `nil` / `default:`. Read-only. |
+| `data` / `data.<step>.<field>` | Typed snapshot of everything entered, **step-keyed** (read through the owning step). Not-yet-collected → `nil` / `default:`. Read-only. |
 | `anchor` | The launched-against record. Raises `NotAnchoredError` if not `anchored` (never nil). |
 | `persisted[:step_key]` | Record(s) registered via `persist` in `on_submit`. Rehydrated on resume. |
 | `succeed(v)` / `failed(errs)` | Outcome helpers (alias `success`). `.with_message`, `.with_redirect_response` chainable. |
@@ -458,6 +458,7 @@ end
 - **`encrypt_data` without AR encryption keys** → first write raises (naming the wizard). Run `bin/rails db:encryption:init`.
 - **Gating a non-one-time wizard** (`ensure_wizard_completed` on a repeatable wizard) → raises.
 - **`on_submit` wizard without scheduled SweepJob** → abandoned partial records pile up.
+- **Rotating `secret_key_base`** → invalidates every `instance_key` digest (it's salted with the app secret): in-progress runs become unresumable and one-time gates re-open. Only affects rows live at rotation time.
 
 ## Related Skills
 

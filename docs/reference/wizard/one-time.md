@@ -75,7 +75,7 @@ Extra options (`only:` / `except:`) are forwarded to `before_action`:
 ensure_wizard_completed ::WelcomeWizard, only: %i[index show]
 ```
 
-The entry URL is derived from the `register_wizard` route helper (`<name>_wizard_path(step: <first_step>)`). Override `wizard_entry_path` for a custom mount.
+The entry URL is derived from the `register_wizard` route helper (`<name>_wizard_path(step: <first_step>)`). Override `wizard_entry_path` for a custom mount. When gating from **outside** the wizard's own portal, also override `wizard_gate_route_set` (default `current_engine.routes`) so the gate looks the launch route up in the route set where the wizard is actually mounted.
 
 ## How the gate keys completion
 
