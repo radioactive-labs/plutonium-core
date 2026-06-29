@@ -63,14 +63,9 @@ module Plutonium
 
         case choices
         when Hash
-          # Convention in this codebase: { stored_value => display_label }
-          # e.g. { cash: "Cash" }, { female: "Female" }, { 1 => "Alice" }
-          # Match the KEY against the stored value; display the Hash VALUE.
           hit = choices.find { |k, _v| k.to_s == raw_str }
           hit ? hit[1].to_s : raw_value.to_s
         when Array
-          # Standard [label, value] pairs (as returned by `pluck(:name, :id)`,
-          # `map { |r| [r.to_label, r.id] }`, or a flat list of scalars).
           normalized = choices.map { |item|
             arr = Array(item)
             arr.size == 1 ? [arr[0].to_s, arr[0]] : arr
