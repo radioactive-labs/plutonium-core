@@ -230,6 +230,11 @@ module Plutonium
         # `:return_to` (the page the user was bounced FROM into a one-time wizard)
         # still wins, so they resume where they were headed.
         clear_wizard_return_to
+        if result.respond_to?(:messages)
+          result.messages.each do |message, type|
+            flash[type] = message
+          end
+        end
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
         redirect_to target, status: :see_other, allow_other_host: false
       end

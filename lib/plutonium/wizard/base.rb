@@ -205,7 +205,9 @@ module Plutonium
       def failed(errors = nil, attribute = :base)
         case errors
         when Hash
-          errors.each { |attr, error| self.errors.add(attr, error) }
+          errors.each do |attr, error|
+            Array(error).each { |err| self.errors.add(attr, err) }
+          end
         else
           Array(errors).each { |error| self.errors.add(attribute, error) }
         end
