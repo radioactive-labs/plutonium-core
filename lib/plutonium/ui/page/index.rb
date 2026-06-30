@@ -38,6 +38,7 @@ module Plutonium
 
         def render_default_content
           case selected_view
+          when :kanban then render partial("resource_kanban")
           when :grid then render partial("resource_grid")
           else render partial("resource_table")
           end

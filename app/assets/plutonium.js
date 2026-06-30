@@ -28227,7 +28227,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (event.target.closest("a, button, input, label, select, textarea, [data-row-click-ignore]")) {
         return;
       }
-      this.element.querySelector('[data-row-click-target="show"]')?.click();
+      const show = this.element.querySelector('[data-row-click-target="show"]');
+      if (!show) return;
+      if (event.metaKey || event.ctrlKey || event.button === 1) {
+        window.open(show.href, "_blank", "noopener");
+        return;
+      }
+      show.click();
     }
   };
 
@@ -28543,6 +28549,194 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     };
   };
 
+  // src/js/controllers/kanban_controller.js
+  var kanban_controller_default = class extends Controller {
+    static values = { moveUrlTemplate: String };
+    static targets = ["column"];
+    connect() {
+      this.draggedCard = null;
+      this.onDragStart = this.#onDragStart.bind(this);
+      this.onDragOver = this.#onDragOver.bind(this);
+      this.onDragLeave = this.#onDragLeave.bind(this);
+      this.onDrop = this.#onDrop.bind(this);
+      this.onDragEnd = this.#onDragEnd.bind(this);
+      this.element.addEventListener("dragstart", this.onDragStart);
+      this.element.addEventListener("dragover", this.onDragOver);
+      this.element.addEventListener("dragleave", this.onDragLeave);
+      this.element.addEventListener("drop", this.onDrop);
+      this.element.addEventListener("dragend", this.onDragEnd);
+      this.#applyPersistedCollapseStates();
+    }
+    disconnect() {
+      this.element.removeEventListener("dragstart", this.onDragStart);
+      this.element.removeEventListener("dragover", this.onDragOver);
+      this.element.removeEventListener("dragleave", this.onDragLeave);
+      this.element.removeEventListener("drop", this.onDrop);
+      this.element.removeEventListener("dragend", this.onDragEnd);
+    }
+    // ─── Collapse toggle ─────────────────────────────────────────────────────────
+    // Stimulus action: data-action="click->kanban#toggleColumn"
+    // Expected on the expand button in the collapsed strip and the collapse
+    // button in the expanded header.  data-kanban-column-key on the button
+    // identifies which column to toggle.
+    toggleColumn(event) {
+      const key = event.currentTarget.dataset.kanbanColumnKey;
+      if (!key) return;
+      const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`);
+      if (!wrapper) return;
+      const strip = wrapper.querySelector("[data-kanban-role='strip']");
+      const body = wrapper.querySelector("[data-kanban-role='body']");
+      if (!strip || !body) return;
+      const isCollapsed = wrapper.classList.contains("pu-kanban-column-collapsed");
+      if (isCollapsed) {
+        wrapper.classList.remove("pu-kanban-column-collapsed");
+        this.#saveCollapseState(key, false);
+      } else {
+        wrapper.classList.add("pu-kanban-column-collapsed");
+        this.#saveCollapseState(key, true);
+      }
+    }
+    // ─── drag lifecycle ──────────────────────────────────────────────────────────
+    #onDragStart(event) {
+      const card = event.target.closest("[data-kanban-record-id]");
+      if (!card) return;
+      this.draggedCard = card;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", card.dataset.kanbanRecordId);
+      requestAnimationFrame(() => card.classList.add("pu-kanban-dragging"));
+      this.#applyDropHints(card.dataset.kanbanColumnKey);
+    }
+    #onDragOver(event) {
+      const column = event.target.closest("[data-kanban-target='column']");
+      if (!column) return;
+      const wrapper = event.target.closest("[data-kanban-col]");
+      if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      this.#highlightColumn(column);
+    }
+    #onDragLeave(event) {
+      if (!this.element.contains(event.relatedTarget)) {
+        this.#clearHighlights();
+      }
+    }
+    async #onDrop(event) {
+      event.preventDefault();
+      this.#clearHighlights();
+      if (!this.draggedCard) return;
+      const wrapper = event.target.closest("[data-kanban-col]");
+      if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
+      const column = event.target.closest("[data-kanban-target='column']");
+      if (!column) return;
+      const recordId = this.draggedCard.dataset.kanbanRecordId;
+      const fromColumn = this.draggedCard.dataset.kanbanColumnKey;
+      const toColumn = column.dataset.kanbanColumnKeyValue;
+      const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
+      const toIndex = this.#computeDropIndex(event.clientY, existingCards);
+      const url = this.moveUrlTemplateValue.replace("__ID__", recordId);
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Accept": "text/vnd.turbo-stream.html",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": csrfToken
+          },
+          body: new URLSearchParams({
+            from_column: fromColumn,
+            to_column: toColumn,
+            to_index: toIndex
+          }),
+          credentials: "same-origin"
+        });
+        const body = await response.text();
+        if (window.Turbo) {
+          Turbo.renderStreamMessage(body);
+        }
+      } catch (error2) {
+        console.error("[kanban] move request failed:", error2);
+      }
+    }
+    #onDragEnd(_event) {
+      this.#clearHighlights();
+      this.#clearDropHints();
+      if (this.draggedCard) {
+        this.draggedCard.classList.remove("pu-kanban-dragging");
+        this.draggedCard = null;
+      }
+    }
+    // ─── drop hints ──────────────────────────────────────────────────────────────
+    // Marks each column wrapper with `pu-kanban-no-drop` when it would refuse
+    // a card dragged from sourceKey. The server remains the authority; this
+    // is a display-only hint to give the user immediate visual feedback.
+    #applyDropHints(sourceKey) {
+      const sourceWrapper = this.element.querySelector(`[data-kanban-col="${sourceKey}"]`);
+      const sourceLocked = sourceWrapper?.dataset.kanbanLocked === "true";
+      this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
+        const noDrop = sourceLocked || !this.#columnAccepts(wrapper.dataset.kanbanAccepts, sourceKey);
+        wrapper.classList.toggle("pu-kanban-no-drop", noDrop);
+      });
+    }
+    #clearDropHints() {
+      this.element.querySelectorAll("[data-kanban-col]").forEach((w4) => w4.classList.remove("pu-kanban-no-drop"));
+    }
+    // Returns true if the column described by `accepts` (the serialised form
+    // from data-kanban-accepts) would accept a card from `sourceKey`.
+    #columnAccepts(accepts, sourceKey) {
+      if (!accepts || accepts === "all") return true;
+      if (accepts === "none") return false;
+      return accepts.split(",").map((k4) => k4.trim()).includes(sourceKey);
+    }
+    // ─── collapse persistence ─────────────────────────────────────────────────────
+    // Applies localStorage collapse states to all column wrappers currently in
+    // the DOM. Called on connect() and implicitly after Turbo frame swaps
+    // because Stimulus re-connects the controller when the frame content changes.
+    #applyPersistedCollapseStates() {
+      this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
+        const key = wrapper.dataset.kanbanCol;
+        const stored = localStorage.getItem(this.#storageKey(key));
+        if (stored === null) return;
+        const collapsed = stored === "1";
+        wrapper.classList.toggle("pu-kanban-column-collapsed", collapsed);
+      });
+    }
+    #saveCollapseState(key, collapsed) {
+      try {
+        localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0");
+      } catch {
+      }
+    }
+    // Derives a unique localStorage key from the resource collection path so
+    // different boards (different resources / tenants) don't share state.
+    // The move URL template is "/path/__ID__/kanban_move"; strip the suffix to
+    // recover the collection path.
+    #storageKey(key) {
+      const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "");
+      return `pu-kanban:${path}:${key}:collapsed`;
+    }
+    // ─── helpers ─────────────────────────────────────────────────────────────────
+    // Returns the 0-based insertion index within the destination column by
+    // comparing the cursor y-position against each card's vertical midpoint.
+    // The card is inserted before the first card whose midpoint is below the
+    // cursor, or appended after all cards if the cursor is below every midpoint.
+    #computeDropIndex(clientY, cards) {
+      for (let i4 = 0; i4 < cards.length; i4++) {
+        const rect = cards[i4].getBoundingClientRect();
+        if (clientY < rect.top + rect.height / 2) return i4;
+      }
+      return cards.length;
+    }
+    #highlightColumn(column) {
+      this.columnTargets.forEach((c4) => {
+        c4.classList.toggle("pu-kanban-drop-target", c4 === column);
+      });
+    }
+    #clearHighlights() {
+      this.columnTargets.forEach((c4) => c4.classList.remove("pu-kanban-drop-target"));
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -28582,6 +28776,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("autosubmit", autosubmit_controller_default);
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
     application2.register("wizard", wizard_controller_default);
+    application2.register("kanban", kanban_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

@@ -681,6 +681,22 @@ end
 
 `modal:` is the default for framework `:new`/`:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win — see [Actions](./actions).
 
+### `show_in` {#show_in}
+
+```ruby
+class PostDefinition < ResourceDefinition
+  show_in :modal   # open the show page in a centered modal from table & grid links
+  # show_in :page  # (default) full-page navigation to the show route
+end
+```
+
+Controls how the **show page** opens when a record is clicked in the table or grid (and serves as the default for a [kanban board](/reference/kanban/dsl#show_in), which can override it per-board):
+
+- `:page` (default) — full-page navigation to the show route.
+- `:modal` — the show page opens in a **centered** dialog. This is deliberately independent of `modal:`/`modal_mode` above (which styles `:new`/`:edit`) — show is always centered, never a slideover. From inside the modal an expand icon opens the full page in a new tab; ⌘/Ctrl-click (or middle-click) on the row/card does the same directly.
+
+An unknown mode raises `ArgumentError`.
+
 ## Metadata panel (show page)
 
 A right-side aside on the show page rendering label/value rows. Keeps the main card focused on substance; chrome (timestamps, ownership, system flags) lives in the aside.

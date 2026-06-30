@@ -151,6 +151,7 @@ module Plutonium
             as: :interactive_record_action
           post "record_actions/:interactive_action", action: :commit_interactive_record_action,
             as: :commit_interactive_record_action
+          post "kanban_move", action: :kanban_move, as: :kanban_move
         end
       end
 

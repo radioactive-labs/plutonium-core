@@ -1,4 +1,9 @@
 class KitchenSinkDefinition < ::ResourceDefinition
+  # Open the show page in a (centered) modal from any record link — table rows,
+  # grid cards, and kanban cards. The kanban board inherits this (it sets no
+  # show_in of its own). new/edit still use the default slideover modal_mode.
+  show_in :modal
+
   # Interactive record action — exercises form_layout (incl. a dynamic
   # `collapsed:`) inside an interaction form. See ReconfigureKitchenSink.
   action :reconfigure, interaction: ReconfigureKitchenSink
@@ -37,6 +42,25 @@ class KitchenSinkDefinition < ::ResourceDefinition
     meta: [:status, :plan, :tier],
     footer: :meeting_at
   )
+
+  # Kanban index view (?view=kanban) — groups by the status enum. Cards reuse
+  # grid_fields above. Drag a card between columns to flip its status; a wip
+  # on Pending; an "Archive all" column action on Archived.
+  kanban do
+    column :active, label: "Active", role: :backlog,
+      scope: -> { where(status: :active) },
+      on_drop: ->(ks) { ks.status = :active }
+
+    column :pending, label: "Pending", color: :amber, wip: 5,
+      scope: -> { where(status: :pending) },
+      on_drop: ->(ks) { ks.status = :pending }
+
+    column :archived, label: "Archived", role: :done,
+      scope: -> { where(status: :archived) },
+      on_drop: ->(ks) { ks.status = :archived }
+
+    per_column 10
+  end
 
   field :name                                                  # string
 

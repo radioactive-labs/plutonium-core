@@ -12,7 +12,7 @@ module Plutonium
         # button). Rows without such a target become a no-op — no
         # special-casing needed in this layer.
         def table_body_row_attributes(wrapped_object)
-          super.merge(data: {controller: "row-click", action: "click->row-click#click"})
+          super.merge(data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"})
         end
 
         # Use custom SelectionColumn with Stimulus data attributes

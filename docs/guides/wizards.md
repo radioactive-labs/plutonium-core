@@ -1,5 +1,9 @@
 # Wizards
 
+::: warning Experimental
+Wizards are experimental — the DSL and behavior may change in a future release.
+:::
+
 Build multi-step flows — onboarding, checkout, "create several related records across screens", branching questionnaires — as a single declarative Ruby class.
 
 A wizard collects typed `data` across ordered `step`s, optionally branches with `condition:`, and commits at the end via `execute`. It reuses Plutonium's existing field DSL (`attribute`/`input`/`validates`/`structured_input`/`form_layout`), form rendering, actions, and policies — it does **not** invent a parallel stack.

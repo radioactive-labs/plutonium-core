@@ -6,9 +6,9 @@ module Plutonium
   module Action
     class BaseTest < Minitest::Test
       # Minimal stand-in for a Plutonium::Resource::Definition. The lazy
-      # accessors only need `modal_mode` and `modal_size`.
-      def stub_definition(modal_mode: :slideover, modal_size: :md)
-        Struct.new(:modal_mode, :modal_size).new(modal_mode, modal_size)
+      # accessors only need `modal_mode`, `modal_size`, and `show_in`.
+      def stub_definition(modal_mode: :slideover, modal_size: :md, show_in: :page)
+        Struct.new(:modal_mode, :modal_size, :show_in).new(modal_mode, modal_size, show_in)
       end
 
       def setup
@@ -160,6 +160,33 @@ module Plutonium
       def test_turbo_frame_passes_through_non_modal_frames
         action = Base.new(:a, turbo_frame: "_top")
         assert_equal "_top", action.turbo_frame(stub_definition(modal_mode: false))
+      end
+
+      # The canonical :show action carries no explicit frame; it reads the
+      # definition's show_in so a resource can open show in a modal or full-page.
+      def test_show_action_full_page_when_show_in_page
+        show = Base.new(:show)
+        assert_nil show.turbo_frame(stub_definition(show_in: :page))
+      end
+
+      def test_show_action_targets_modal_when_show_in_modal
+        show = Base.new(:show)
+        assert_equal Plutonium::REMOTE_MODAL_FRAME,
+          show.turbo_frame(stub_definition(show_in: :modal))
+      end
+
+      # show_in is independent of modal_mode (which styles new/edit): a :modal
+      # show opens even when modal_mode is false.
+      def test_show_action_modal_is_independent_of_modal_mode
+        show = Base.new(:show)
+        assert_equal Plutonium::REMOTE_MODAL_FRAME,
+          show.turbo_frame(stub_definition(show_in: :modal, modal_mode: false))
+      end
+
+      # A show action with an explicit frame keeps it (show_in does not apply).
+      def test_explicit_frame_on_show_action_wins_over_show_in
+        show = Base.new(:show, turbo_frame: "_top")
+        assert_equal "_top", show.turbo_frame(stub_definition(show_in: :modal))
       end
 
       # Minimal stand-in for the view context. The condition runs inside a

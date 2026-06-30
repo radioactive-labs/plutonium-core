@@ -26,6 +26,7 @@ aside: false
       { name: 'Multi-tenancy', link: '/plutonium-core/guides/multi-tenancy' },
       { name: 'Search & filtering', link: '/plutonium-core/guides/search-filtering' },
       { name: 'Wizards', desc: 'Multi-step flows — onboarding, checkout, branching create.', link: '/plutonium-core/guides/wizards' },
+      { name: 'Kanban boards', desc: 'Drag-and-drop board view — columns, moves, positioning, WIP limits.', link: '/plutonium-core/guides/kanban' },
     ]},
     { group: 'Customization', items: [
       { name: 'Customizing the UI', desc: 'A map of the override surface — pages, forms, displays, tables, components, layouts.', link: '/plutonium-core/guides/customizing-ui' },

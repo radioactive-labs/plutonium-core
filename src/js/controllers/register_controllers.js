@@ -36,6 +36,7 @@ import ViewSwitcherController from "./view_switcher_controller.js"
 import AutosubmitController from "./autosubmit_controller.js"
 import DirtyFormGuardController from "./dirty_form_guard_controller.js"
 import WizardController from "./wizard_controller.js"
+import KanbanController from "./kanban_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -76,4 +77,5 @@ export default function (application) {
   application.register("autosubmit", AutosubmitController)
   application.register("dirty-form-guard", DirtyFormGuardController)
   application.register("wizard", WizardController)
+  application.register("kanban", KanbanController)
 }

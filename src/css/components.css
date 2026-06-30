@@ -1022,3 +1022,44 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 @media (max-width: 640px) {
   .pu-wizard-steps .pu-step-label { @apply hidden; }
 }
+
+/* ===================
+   KANBAN BOARD
+   =================== */
+
+/*
+ * Column wrapper: by default show the expanded body and hide the strip.
+ * The Stimulus controller adds/removes `pu-kanban-column-collapsed` on the
+ * wrapper to toggle between the two halves without a server round-trip.
+ */
+.pu-kanban-column-wrapper > .pu-kanban-strip {
+  display: none;
+}
+
+/* Collapsed state: show strip, hide body */
+.pu-kanban-column-wrapper.pu-kanban-column-collapsed > .pu-kanban-strip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pu-kanban-column-wrapper.pu-kanban-column-collapsed > .pu-kanban-body {
+  display: none;
+}
+
+/* Card being dragged: ghost effect so the origin position is visible */
+.pu-kanban-dragging {
+  opacity: 0.3;
+}
+
+/* Column highlighted as the current drop target */
+.pu-kanban-drop-target {
+  outline: 2px solid var(--color-primary-500, #3b82f6);
+  outline-offset: -2px;
+  border-radius: var(--pu-radius-md, 0.5rem);
+}
+
+/* Column that would reject a drop: dimmed so the user sees valid targets */
+.pu-kanban-no-drop {
+  opacity: 0.45;
+}

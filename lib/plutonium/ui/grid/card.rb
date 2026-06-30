@@ -8,18 +8,24 @@ module Plutonium
       # `grid_fields` on the resource definition. Each slot is optional;
       # `header` falls back to `record.to_label` when undeclared.
       class Card < Plutonium::UI::Component::Base
-        attr_reader :record, :resource_definition, :resource_fields
+        attr_reader :record, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, resource_definition:, resource_fields: nil)
+        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil)
           @record = record
           @resource_definition = resource_definition
           @resource_fields = resource_fields
+          @card_fields = card_fields
+          # Overrides the show link's turbo-frame target. Defaults to the show
+          # action's own frame (nil → normal navigation). The kanban board sets
+          # "_top" so a card click escapes its column's lazy turbo-frame instead
+          # of loading the show page inside the column.
+          @show_turbo_frame = show_turbo_frame
         end
 
         def view_template
           article(
             class: card_class,
-            data: {controller: "row-click", action: "click->row-click#click"}
+            data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"}
           ) do
             render_show_link if can_show?
             render_actions_dropdown
@@ -32,7 +38,12 @@ module Plutonium
 
         private
 
-        def slots = resource_definition.defined_grid_fields
+        # Returns the slot hash used for rendering.
+        # When the kanban board declares `card_fields`, it is passed in
+        # explicitly and takes precedence over the resource definition's
+        # `defined_grid_fields`.  A nil card_fields falls back to the
+        # definition, which is the default for the grid view.
+        def slots = @card_fields || resource_definition.defined_grid_fields
 
         # ---------------------------------------------------------------
         # Layout shells
@@ -201,7 +212,7 @@ module Plutonium
           url = route_options_to_url(show.route_options, record)
           a(
             href: url,
-            data: {row_click_target: "show", turbo_frame: show.turbo_frame(resource_definition)},
+            data: {row_click_target: "show", turbo_frame: @show_turbo_frame || show.turbo_frame(resource_definition)},
             class: "sr-only",
             tabindex: "-1",
             "aria-label": "Open #{header_text}"

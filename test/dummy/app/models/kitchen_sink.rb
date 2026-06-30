@@ -1,4 +1,7 @@
 class KitchenSink < ::ResourceRecord
+  include Plutonium::Positioning
+
+  positioned_on :position, scope: :status
   # add concerns above.
 
   # add constants above.

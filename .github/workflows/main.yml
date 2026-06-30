@@ -7,6 +7,11 @@ on:
 
   pull_request:
 
+# Both jobs only check out the repo and run read-only checks; grant the
+# GITHUB_TOKEN the minimal contents:read scope (CodeQL: missing-workflow-permissions).
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -31,3 +36,36 @@ jobs:
         run: bundle exec brakeman -i config/brakeman.ignore --no-pager
       - name: Audit bundle
         run: bundle exec bundle-audit
+
+  positioning-postgres:
+    runs-on: ubuntu-latest
+    name: Positioning on PostgreSQL
+    env:
+      BUNDLE_GEMFILE: gemfiles/postgres.gemfile
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: plutonium_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libpq (for the pg native gem)
+        run: sudo apt-get update && sudo apt-get install -y libpq-dev
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Verify Plutonium::Positioning + t.position on PostgreSQL
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/plutonium_test
+        run: bundle exec ruby test/positioning_postgres_check.rb

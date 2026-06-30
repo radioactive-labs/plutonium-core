@@ -1,0 +1,8 @@
+# Minimal bundle for the "Positioning on PostgreSQL" CI check
+# (test/positioning_postgres_check.rb). Kept separate from the main Gemfile and
+# the appraisal gemfiles so `pg`'s native build is never forced on contributors
+# who only run the SQLite suite.
+source "https://rubygems.org"
+
+gem "rails", "~> 8.1.0"
+gem "pg", "~> 1.5"

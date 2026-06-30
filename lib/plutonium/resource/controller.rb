@@ -14,6 +14,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::Presentable
       include Plutonium::Resource::Controllers::Queryable
       include Plutonium::Resource::Controllers::CrudActions
+      include Plutonium::Resource::Controllers::KanbanActions
       include Plutonium::Resource::Controllers::InteractiveActions
       include Plutonium::Resource::Controllers::WizardActions
       include Plutonium::Resource::Controllers::Typeahead
