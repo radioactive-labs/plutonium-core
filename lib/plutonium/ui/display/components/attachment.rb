@@ -14,7 +14,7 @@ module Plutonium
 
             div(
               class: "p-2 w-full",
-              title: attachment.filename,
+              title: attachment.filename.to_s,
               data: {
                 controller: "attachment-preview",
                 attachment_preview_mime_type_value: attachment.content_type,
@@ -63,7 +63,7 @@ module Plutonium
             return if attributes[:caption] == false
 
             div(class: "w-full p-2 text-sm text-[var(--pu-text-muted)] truncate text-center") do
-              caption = attributes[:caption] || attachment.filename
+              caption = attributes[:caption] || attachment.filename.to_s
               a(
                 href: attachment.url,
                 class: "hover:text-primary-600 dark:hover:text-primary-400 transition-colors duration-200",
