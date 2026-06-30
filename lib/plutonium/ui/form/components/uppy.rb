@@ -75,7 +75,7 @@ module Plutonium
                 attachment_preview_thumbnail_url_value: attachment_thumbnail_url(attachment),
                 attachment_preview_target: "thumbnail"
               },
-              title: attachment.filename
+              title: attachment.filename.to_s
             ) do
               # Hidden field to preserve the uploaded file
               input(type: :hidden, name: input_name, multiple: attributes[:multiple], value: attachment.signed_id, autocomplete: "off", hidden: true)
@@ -111,7 +111,7 @@ module Plutonium
           def render_filename(attachment)
             div(
               class: "px-2 py-1.5 text-sm text-[var(--pu-text-muted)] border-t border-[var(--pu-border)] truncate text-center bg-[var(--pu-surface)]",
-              title: attachment.filename
+              title: attachment.filename.to_s
             ) do
               plain attachment.filename.to_s
             end
