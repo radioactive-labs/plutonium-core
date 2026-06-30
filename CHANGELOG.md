@@ -1,3 +1,12 @@
+## [0.60.5] - 2026-06-30
+
+### 🐛 Bug Fixes
+
+- *(ui)* Coerce ActiveStorage::Filename to String for HTML title attributes
+
+### ⚙️ Miscellaneous Tasks
+
+- Update yarn.lock and .yarnrc.yml after yarn install
 ## [0.60.4] - 2026-06-15
 
 ### 🚀 Features
