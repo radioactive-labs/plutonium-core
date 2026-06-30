@@ -1,3 +1,43 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.61.0] - 2026-06-30
+
+### Bug Fixes
+
+- Animate the dialog scale pop via the `scale` property
+- Normalize mixed-case logins to lowercase on input
+- Normalize invite email to lowercase at the source
+- Downcase login in signup handler's existing-account guard
+- Rescue DeleteRestrictionError in CRUD destroy
+- Keep modal dialogs transform-free so fixed overlays escape the panel
+- Render the classic shell sidebar again
+- Mount uppy Dashboard into the modal dialog so it renders above it
+- Coerce ActiveStorage::Filename to String for HTML title attributes ([#66](https://github.com/radioactive-labs/plutonium-core/issues/66))
+- Bump dompurify to 3.4.11 and esbuild to 0.28.1 to clear npm audit
+- Clear npm Dependabot alerts (lodash 4.18.1 + dev-tree dedupe)
+
+### Features
+
+- Omit empty Details tab when no fields are permitted
+- Mask password/secret fields so the stored value never reaches the DOM
+- Plutonium::Wizard — declarative multi-step wizard subsystem ([#62](https://github.com/radioactive-labs/plutonium-core/issues/62))
+- Kanban board DSL — first-class index view with drag-to-move ([#63](https://github.com/radioactive-labs/plutonium-core/issues/63))
+
+### Miscellaneous Tasks
+
+- Make releasing laptop-driven and race-free
+- Review before commit — prepare stages, publish commits
+
+### Refactoring
+
+- Drop the current_<name> alias from the rodauth mixin
+
+### Wizard
+
+- Docs accuracy + completeness audit, plus a per-field Shrine uploader for attachments ([#64](https://github.com/radioactive-labs/plutonium-core/issues/64))
+
 ## [0.60.5] - 2026-06-30
 
 ### 🐛 Bug Fixes
@@ -7,648 +47,680 @@
 ### ⚙️ Miscellaneous Tasks
 
 - Update yarn.lock and .yarnrc.yml after yarn install
+
 ## [0.60.4] - 2026-06-15
 
-### 🚀 Features
+### Features
 
-- *(layout)* Drop the section divider rule, keep the accent bar
+- Drop the section divider rule, keep the accent bar
+
 ## [0.60.3] - 2026-06-15
 
-### 🚀 Features
+### Features
 
-- *(layout)* Drop form_layout sections that resolve to zero fields
-- *(layout)* Refine form_layout section header styling
+- Drop form_layout sections that resolve to zero fields
+- Refine form_layout section header styling
 
-### 🚜 Refactor
+### Refactoring
 
-- *(layout)* Move engine shell to Portal::Engine with live cascade
+- Move engine shell to Portal::Engine with live cascade
+
 ## [0.60.2] - 2026-06-15
 
-### 🚀 Features
+### Features
 
-- *(layout)* Resolve shell across global, engine, and controller tiers
+- Resolve shell across global, engine, and controller tiers
+
 ## [0.60.1] - 2026-06-15
 
-### 🚀 Features
+### Bug Fixes
 
-- *(layout)* First-class railless portal support
+- Skip section fields not in the permitted set instead of raising
 
-### 🐛 Bug Fixes
+### Features
 
-- *(forms)* Skip section fields not in the permitted set instead of raising
+- First-class railless portal support
+
 ## [0.60.0] - 2026-06-14
 
-### 🚀 Features
+### Features
 
-- *(generators)* Add resend-invite action to rodauth admin
-- *(forms)* Form sectioning DSL (form_layout / section / ungrouped) (#61)
+- Add resend-invite action to rodauth admin
+- Form sectioning DSL (form_layout / section / ungrouped) ([#61](https://github.com/radioactive-labs/plutonium-core/issues/61))
+
 ## [0.59.0] - 2026-06-13
 
-### 🚀 Features
+### Bug Fixes
 
-- *(resource)* Add built-in policy-gated CSV export
+- Configure solid_errors reading connection and env lookup
+- Resolve association filter class via resource_class reflection
 
-### 🐛 Bug Fixes
+### Features
 
-- *(generators)* Configure solid_errors reading connection and env lookup
-- *(query)* Resolve association filter class via resource_class reflection
+- Add built-in policy-gated CSV export
+
 ## [0.58.1] - 2026-06-10
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui/layout)* Prevent pu-rail-pinned persisting on non-rail pages
+- Prevent pu-rail-pinned persisting on non-rail pages
+
 ## [0.58.0] - 2026-06-10
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(rodauth)* Set url_options directly on ActionMailer::Base instead of config
-- *(interaction)* Short-circuit call with failure when validation fails
-- *(form)* Pre-populate extraction record so conditioned selects resolve correctly
-- *(invites)* Use after_commit to avoid orphaned email jobs on rollback
+- Set url_options directly on ActionMailer::Base instead of config
+- Short-circuit call with failure when validation fails
+- Pre-populate extraction record so conditioned selects resolve correctly
+- Use after_commit to avoid orphaned email jobs on rollback
+
 ## [0.57.0] - 2026-06-09
 
-### 🚀 Features
+### Bug Fixes
 
-- *(scopes)* Add display-only condition: to scopes
+- Guard tailwind prerequisite and fix landing page command
+- Guard against nil current_scoped_entity in remember_scoped_entity
+- Use dynamic viewport height to prevent clipping on mobile
 
-### 🐛 Bug Fixes
+### Features
 
-- *(generators/assets)* Guard tailwind prerequisite and fix landing page command
-- *(entity_scoping)* Guard against nil current_scoped_entity in remember_scoped_entity
-- *(ui/slideover)* Use dynamic viewport height to prevent clipping on mobile
+- Add display-only condition: to scopes
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
-- *(templates)* Add skill sync to plutonium template and use conventional commits
+- Add skill sync to plutonium template and use conventional commits
+
 ## [0.56.3] - 2026-06-07
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui/sidebar)* Use dynamic viewport height so mobile rail toggle stays visible
-- *(ui/sidebar)* Link icon rail logo to home
-- *(ui/sidebar)* Default icon rail to pinned
-- *(ui/table)* Let scopes bar scroll horizontally on small screens
+- Use dynamic viewport height so mobile rail toggle stays visible
+- Link icon rail logo to home
+- Default icon rail to pinned
+- Let scopes bar scroll horizontally on small screens
+
 ## [0.56.2] - 2026-06-05
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(generators/update)* Run skills sync in unbundled env
-- *(ui/pagination)* Prevent large page numbers from overflowing buttons
+- Run skills sync in unbundled env
+- Prevent large page numbers from overflowing buttons
+
 ## [0.56.1] - 2026-06-05
 
-### 🚀 Features
+### Bug Fixes
 
-- *(actions)* Add display-only condition: to actions
+- Version-adapt kitchen_sinks migration
 
-### 🐛 Bug Fixes
-
-- *(dummy)* Version-adapt kitchen_sinks migration
-
-### 📚 Documentation
+### Documentation
 
 - Recommend db:prepare, firm up README, document conditional actions
+
+### Features
+
+- Add display-only condition: to actions
+
 ## [0.56.0] - 2026-06-05
 
-### 🚀 Features
+### Bug Fixes
 
-- *(ui)* Auto-rendered components for boolean, enum & money fields
-- *(generators/lite)* Add pu:lite:tune and pu:lite:maintenance for SQLite tuning + maintenance
-- *(ui)* Sidebar menu items accept arbitrary link attributes
-- *(ui)* Restore deleted nested rows + shared, polished removed bar
-- *(ui)* Type-aware grid cards + overhaul KitchenSink dummy resource
+- Sync skills in a fresh process; pin post-install notice to 0.49.0
+- Native multi-selects render at a usable height
+- Dropdown menu teleports to <body> to escape overflow clipping
+- Force :resources route_type for has_many nested routes
+- Record-scoped commit URL for actions with record_action: false
+- Serialize JSON values via as_json (ISO 8601 datetimes)
+- Add reading role to Rails Pulse connects_to config
+- Bind subject during interaction param extraction
+- Dirty-form-guard tracks edits via first-interaction baseline
+- Give the JSON form input dark-mode styling
 
-### 🐛 Bug Fixes
+### Features
 
-- *(generators/update)* Sync skills in a fresh process; pin post-install notice to 0.49.0
-- *(ui)* Native multi-selects render at a usable height
-- *(ui)* Dropdown menu teleports to <body> to escape overflow clipping
-- *(routing)* Force :resources route_type for has_many nested routes
-- *(ui)* Record-scoped commit URL for actions with record_action: false
-- *(api)* Serialize JSON values via as_json (ISO 8601 datetimes)
-- *(generators)* Add reading role to Rails Pulse connects_to config
-- *(actions)* Bind subject during interaction param extraction
-- *(ui)* Dirty-form-guard tracks edits via first-interaction baseline
-- *(ui)* Give the JSON form input dark-mode styling
+- Auto-rendered components for boolean, enum & money fields
+- Add pu:lite:tune and pu:lite:maintenance for SQLite tuning + maintenance
+- Sidebar menu items accept arbitrary link attributes
+- Restore deleted nested rows + shared, polished removed bar
+- Type-aware grid cards + overhaul KitchenSink dummy resource
 
-### 🧪 Testing
-
-- Fix stale generator assertions and drop committed dummy schema
-- *(dummy)* Add KitchenSink resource exercising every input/display type
-
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Sync appraisal gemfile.lock files to v0.55.0
+
+### Testing
+
+- Fix stale generator assertions and drop committed dummy schema
+- Add KitchenSink resource exercising every input/display type
+
 ## [0.55.0] - 2026-06-03
 
-### 🚀 Features
+### Bug Fixes
 
-- Structured_input — classless structured & repeater inputs (resources + interactions) (#60)
+- Keep modal backdrop static to smooth dialog dismiss
 
-### 🐛 Bug Fixes
+### Features
 
-- *(ui)* Keep modal backdrop static to smooth dialog dismiss
+- Structured_input — classless structured & repeater inputs (resources + interactions) ([#60](https://github.com/radioactive-labs/plutonium-core/issues/60))
 
-### 🧪 Testing
+### Testing
 
-- *(dummy)* Land authenticated users on the entity-scoped org portal
-- *(dummy)* Serve the Organization resource in the org portal
+- Land authenticated users on the entity-scoped org portal
+- Serve the Organization resource in the org portal
+
 ## [0.54.0] - 2026-06-01
 
-### 🚀 Features
+### Bug Fixes
 
-- *(ui)* Refine file-input height and required-marker theming
+- Match Plutonium::Engine by name to survive dev reload
+- Carry only an explicit return_to on resource forms
+- Ignore bubbled file-input cancel in modal dialogs
+- Cap icon-rail flyout to the viewport height
 
-### 🐛 Bug Fixes
+### Features
 
-- *(engine)* Match Plutonium::Engine by name to survive dev reload
-- *(ui)* Carry only an explicit return_to on resource forms
-- *(ui)* Ignore bubbled file-input cancel in modal dialogs
-- *(ui)* Cap icon-rail flyout to the viewport height
+- Refine file-input height and required-marker theming
 
-### 🚜 Refactor
+### Miscellaneous Tasks
 
-- *(ui)* Render flash via self-contained component classes
+- Rebuild bundled assets
 
-### 🧪 Testing
+### Refactoring
 
-- *(ui)* Characterize nested resource and interaction form rendering
+- Render flash via self-contained component classes
 
-### ⚙️ Miscellaneous Tasks
+### Testing
 
-- *(assets)* Rebuild bundled assets
+- Characterize nested resource and interaction form rendering
+
 ## [0.53.1] - 2026-05-31
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(routing)* Tolerate non-Plutonium engines during route reload
+- Tolerate non-Plutonium engines during route reload
+
 ## [0.53.0] - 2026-05-31
 
-### 🚀 Features
+### Bug Fixes
 
-- *(ui)* Add Avatar component with Navii fallback (#59)
+- Correct broken cross-page anchors in guides
+- Retract incorrect "never super" guidance in relation_scope
+- Correct scoped-URL shape in multi-tenancy docs
+- Match change_password_notify mailer template name
 
-### 🐛 Bug Fixes
+### Features
 
-- *(docs)* Correct broken cross-page anchors in guides
-- *(docs)* Retract incorrect "never super" guidance in relation_scope
-- *(docs)* Correct scoped-URL shape in multi-tenancy docs
-- *(rodauth)* Match change_password_notify mailer template name
+- Add Avatar component with Navii fallback ([#59](https://github.com/radioactive-labs/plutonium-core/issues/59))
 
-### 🚜 Refactor
+### Refactoring
 
-- *(helpers)* Remove dead view helpers superseded by Phlex components
+- Remove dead view helpers superseded by Phlex components
+
 ## [0.52.0] - 2026-05-21
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(generators)* Use inclusion validation for required booleans
-- *(generators/assets)* Warn on failed yarn add instead of silently continuing
-- *(docs)* Let StopWriting terminals scroll horizontally instead of overflowing the column
-- *(docs)* Drop misleading 15-min claim — hero CTA → 'Tutorial', getting-started title → 'Learn Plutonium by building'
-- *(generators,docs)* Tutorial walkthrough + reference audit (#57)
-- *(ui/form)* Scope form ids per turbo frame to prevent stream-replace collisions
-- *(ui/form)* Hide secure_association "+" inside secondary modal
-- *(js/form)* Dedupe pre_submit hidden field on repeat change events
-- *(ui)* Form error alert margin + include model name in New/Edit page titles
+- Use inclusion validation for required booleans
+- Warn on failed yarn add instead of silently continuing
+- Let StopWriting terminals scroll horizontally instead of overflowing the column
+- Drop misleading 15-min claim — hero CTA → 'Tutorial', getting-started title → 'Learn Plutonium by building'
+- Tutorial walkthrough + reference audit ([#57](https://github.com/radioactive-labs/plutonium-core/issues/57))
+- Scope form ids per turbo frame to prevent stream-replace collisions
+- Hide secure_association "+" inside secondary modal
+- Dedupe pre_submit hidden field on repeat change events
+- Form error alert margin + include model name in New/Edit page titles
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
-- *(appraisal)* Refresh rails-8.1 gemfile.lock for v0.51.0
+- Refresh rails-8.1 gemfile.lock for v0.51.0
+
 ## [0.51.0] - 2026-05-14
 
-### 🚀 Features
+### Bug Fixes
 
-- *(form)* Stack secondary modal for inline "+" on associations
-- *(form)* Json/jsonb input component with raw-value support
-- Typeahead endpoint for resource form inputs and filters (#55)
+- Stabilize generator test suite against hangs
+- Validate association SGIDs against full authz scope
+- Keep yarn out of the parent TTY
 
-### 🐛 Bug Fixes
-
-- *(test)* Stabilize generator test suite against hangs
-- *(form)* Validate association SGIDs against full authz scope
-- *(release)* Keep yarn out of the parent TTY
-
-### 🚜 Refactor
-
-- *(definition)* Rename views DSL to index_views
-- *(skills)* Compact and merge 19 skills into 8
-
-### 📚 Documentation
+### Documentation
 
 - Restructure into 7 functional areas + rewrite guides as task recipes
 
-### ⚙️ Miscellaneous Tasks
+### Features
 
+- Stack secondary modal for inline "+" on associations
+- Json/jsonb input component with raw-value support
+- Typeahead endpoint for resource form inputs and filters ([#55](https://github.com/radioactive-labs/plutonium-core/issues/55))
+
+### Miscellaneous Tasks
+
+- Bump frontend deps to clear Dependabot alerts
 - Bump appraisal lockfiles to 0.50.0
-- *(generators/update)* Drop dead pin_shell_to_classic hook
+- Drop dead pin_shell_to_classic hook
+
+### Refactoring
+
+- Rename views DSL to index_views
+- Compact and merge 19 skills into 8
+
 ## [0.50.0] - 2026-05-11
 
-### 🚀 Features
+### Bug Fixes
 
-- *(css)* Style WebKit autofill on .pu-input variants
+- Suppress label and chrome for hidden fields
+- Inject recurring tasks under env blocks
 
-### 🐛 Bug Fixes
+### Features
 
-- *(ui/form)* Suppress label and chrome for hidden fields
-- *(generators/rails_pulse)* Inject recurring tasks under env blocks
+- Style WebKit autofill on .pu-input variants
+
 ## [0.49.1] - 2026-05-06
 
-### 🚀 Features
+### Bug Fixes
 
-- *(invites)* Support multiple invite models per app
+- Scope parent association only to matching relations
+- Preserve sidebar scroll across Turbo navigations
+- Add invite_entity_attribute hook for non-:entity invite models
+- Restore default layout on direct loads
+- Unblock acceptance + non-importmap apps
+- Force text/html on failure response
+- Position calendar correctly inside modal dialogs
 
-### 🐛 Bug Fixes
+### Features
 
-- *(policy)* Scope parent association only to matching relations
-- *(ui)* Preserve sidebar scroll across Turbo navigations
-- *(invites)* Add invite_entity_attribute hook for non-:entity invite models
-- *(interactive_actions)* Restore default layout on direct loads
-- *(invites)* Unblock acceptance + non-importmap apps
-- *(interactive_actions)* Force text/html on failure response
-- *(flatpickr)* Position calendar correctly inside modal dialogs
+- Support multiple invite models per app
+
 ## [0.49.0] - 2026-05-04
 
-### 🚀 Features
+### Bug Fixes
 
-- *(generators)* Add `pu:gem:actual_db_schema` and wire into app template
-- *(ui)* Add auto mode to color mode selector
-- *(ui)* Render color mode selector on rodauth layout
-- *(generators)* Flesh out rails_pulse initializer template
+- Return clean 403 from non-HTML unauthorized handler
+- Align pu:lite:rails_pulse with v0.3 schema flow
+- Prefer main_app.root_path over login_redirect
 
-### 🐛 Bug Fixes
+### Features
 
-- *(controller)* Return clean 403 from non-HTML unauthorized handler
-- *(generators)* Align pu:lite:rails_pulse with v0.3 schema flow
-- *(rodauth)* Prefer main_app.root_path over login_redirect
+- Add `pu:gem:actual_db_schema` and wire into app template
+- Add auto mode to color mode selector
+- Render color mode selector on rodauth layout
+- Flesh out rails_pulse initializer template
 
-### 🚜 Refactor
+### Miscellaneous Tasks
 
-- *(routing)* Rename entity scope prefix from `_scope` to `_scoped`
-
-### ⚙️ Miscellaneous Tasks
-
-- *(pagy)* Rename :client_max_limit to :max_limit
+- Rename :client_max_limit to :max_limit
 - Run appraisals
+
+### Refactoring
+
+- Rename entity scope prefix from `_scope` to `_scoped`
+
 ## [0.48.0] - 2026-04-16
 
-### 🚀 Features
+### Bug Fixes
 
-- *(turbo)* Preserve scroll by emitting refresh when redirect target matches referer
+- Respect `confirmation: false` on interactive actions
 
-### 🐛 Bug Fixes
+### Features
 
-- *(action)* Respect `confirmation: false` on interactive actions
+- Preserve scroll by emitting refresh when redirect target matches referer
 
-### 🧪 Testing
+### Testing
 
-- *(system)* Browser coverage for Turbo refresh + scroll preservation
+- Browser coverage for Turbo refresh + scroll preservation
+
 ## [0.47.0] - 2026-04-15
 
-### 🚀 Features
+### Features
 
-- *(core)* Add `interaction:` kwarg to resource_url_for
-- *(testing)* Add Plutonium::Testing module, generators, skill, docs, and migrate in-repo tests
+- Add `interaction:` kwarg to resource_url_for
+- Add Plutonium::Testing module, generators, skill, docs, and migrate in-repo tests
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Update yarn
+
 ## [0.46.0] - 2026-04-11
 
-### 🚀 Features
+### Bug Fixes
 
-- *(profile)* Default profile model to {UserModel}Profile
-- *(generators)* Sync skills during pu:core:update if plutonium skill is installed
-- *(generators/active_shrine)* Disable Active Storage railtie and include ActiveShrine::Model
+- Resolve scoped entity class lazily to survive autoreload
+- Render page title in layout, drop per-view h1s
+- Use derived user association in current_membership
+- Redirect to login after verification email sent
 
-### 🐛 Bug Fixes
+### Documentation
 
-- *(engine)* Resolve scoped entity class lazily to survive autoreload
-- *(rodauth)* Render page title in layout, drop per-view h1s
-- *(generators/invites)* Use derived user association in current_membership
-- *(generators/rodauth)* Redirect to login after verification email sent
+- Clarify generator gotchas for installation, rodauth, and unattended runs
+- Comprehensive Plutonium skills overhaul
+- Document nested_attributes gotchas in policy and definition
 
-### 🚜 Refactor
+### Features
 
-- *(generators)* Add inject_into_concerns_controller to merge included blocks
+- Default profile model to {UserModel}Profile
+- Sync skills during pu:core:update if plutonium skill is installed
+- Disable Active Storage railtie and include ActiveShrine::Model
 
-### 📚 Documentation
-
-- *(skills)* Clarify generator gotchas for installation, rodauth, and unattended runs
-- *(skills)* Comprehensive Plutonium skills overhaul
-- *(skills)* Document nested_attributes gotchas in policy and definition
-
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Update test lockfiles
+
+### Refactoring
+
+- Add inject_into_concerns_controller to merge included blocks
+
 ## [0.45.3] - 2026-04-07
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(pagy)* Use Pagy::OPTIONS instead of frozen DEFAULT
+- Use Pagy::OPTIONS instead of frozen DEFAULT
+
 ## [0.45.2] - 2026-04-07
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(pagy)* Honor limit param by setting client_max_limit
+- Honor limit param by setting client_max_limit
+
 ## [0.45.1] - 2026-04-02
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(routing)* Use named route helpers for top-level resource URLs
+- Use named route helpers for top-level resource URLs
+
 ## [0.45.0] - 2026-04-01
 
-### 🚀 Features
+### Bug Fixes
 
-- *(generator)* Add entity link to portal resource header
-- *(tokens)* Add --pu-text-danger CSS token
+- Suffix scoped_entity_param_key to prevent route param collision
+- Add view path and fix nested form in invitation template
 
-### 🐛 Bug Fixes
+### Features
 
-- *(engine)* Suffix scoped_entity_param_key to prevent route param collision
-- *(invites)* Add view path and fix nested form in invitation template
+- Add entity link to portal resource header
+- Add --pu-text-danger CSS token
 
-### 🚜 Refactor
+### Refactoring
 
-- *(skills)* Consolidate skills and improve discoverability
+- Consolidate skills and improve discoverability
+
 ## [0.44.1] - 2026-03-30
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(railtie)* Register rescue responses before action_dispatch.configure
-- *(test)* Pass association SGIDs in create params to match form submission
+- Register rescue responses before action_dispatch.configure
+- Pass association SGIDs in create params to match form submission
 
-### 🚜 Refactor
+### Miscellaneous Tasks
 
-- *(form)* Use upstream @raw_choices from phlexi-form 0.14.2
+- Bump phlexi-form to >= 0.14.2
+
+### Refactoring
+
+- Use upstream @raw_choices from phlexi-form 0.14.2
+
 ## [0.44.0] - 2026-03-30
 
-### 🚀 Features
+### Bug Fixes
+
+- Lazy-load sequel to avoid requiring it when Rodauth is unused
+
+### Features
 
 - Support singular parent resources and entity scoping in nested URL generation
-- *(generators)* Add pu:saas:welcome generator for post-login onboarding
-- *(generators)* Extend pu:saas:setup with portal, welcome, invites, and profile
+- Add pu:saas:welcome generator for post-login onboarding
+- Extend pu:saas:setup with portal, welcome, invites, and profile
 
-### 🐛 Bug Fixes
-
-- *(auth)* Lazy-load sequel to avoid requiring it when Rodauth is unused
-
-### 🚜 Refactor
+### Refactoring
 
 - Upgrade pagy from v9 to v43
-- *(generators)* Improve SaaS generators and shared concerns
-- *(invites)* Improve welcome flow, idempotent routes, and skip action
-- *(generators)* Add non-interactive prompt, improve build tooling and association resolver
-- *(test)* Restructure dummy app with catalog, multi-portal architecture
+- Improve SaaS generators and shared concerns
+- Improve welcome flow, idempotent routes, and skip action
+- Add non-interactive prompt, improve build tooling and association resolver
+- Restructure dummy app with catalog, multi-portal architecture
+
 ## [0.43.2] - 2026-03-13
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(invites)* Use enum name for status and correct interaction base class
+- Use enum name for status and correct interaction base class
 
-### 🚜 Refactor
+### Miscellaneous Tasks
 
-- *(auth)* Extract current_policy_context to base authorizable
-- *(invites)* Use Rodauth module include and remove dead code
-
-### ⚙️ Miscellaneous Tasks
-
-- *(tests)* Fix generator assertions and remove dead code
+- Fix generator assertions and remove dead code
 - Remove trailing blank line in model_generator_base
 - Update Ruby to 3.4 and refresh dependencies
+
+### Refactoring
+
+- Extract current_policy_context to base authorizable
+- Use Rodauth module include and remove dead code
+
 ## [0.43.1] - 2026-03-09
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui)* Fix scope comparison and clean up scopes bar component
-- *(release)* Auto-run npm login instead of aborting on missing auth
+- Fix scope comparison and clean up scopes bar component
+- Auto-run npm login instead of aborting on missing auth
+
 ## [0.43.0] - 2026-03-05
 
-### 🚀 Features
+### Bug Fixes
 
-- *(generators)* Add TypeSpec API specification generator
-- *(forms)* Make submit_and_continue button configurable
-- *(generators)* Add package destination and namespace handling to invites
-- *(controller)* Auto-detect entity association by class
-- *(generators)* Add profile generators for user settings pages
-- *(auth)* Add profile_url helper method to rodauth module
+- Support custom primary keys and optional timestamps
+- Handle singular resources and entity scoping correctly
+- Improve robustness and package support
+- Handle class reloading in associated_with scope
+- Show profile link in user menu only when profile_url defined
+- Fix invites templates and null attribute handling
 
-### 🐛 Bug Fixes
-
-- *(ui)* Support custom primary keys and optional timestamps
-- *(routing)* Handle singular resources and entity scoping correctly
-- *(generators)* Improve robustness and package support
-- *(resource)* Handle class reloading in associated_with scope
-- *(ui)* Show profile link in user menu only when profile_url defined
-- *(generators)* Fix invites templates and null attribute handling
-
-### 🚜 Refactor
-
-- *(ui)* Extract breadcrumb rendering methods and add tests
-
-### 📚 Documentation
+### Documentation
 
 - Add profile guide and update skill documentation
 
-### 🧪 Testing
+### Features
+
+- Add TypeSpec API specification generator
+- Make submit_and_continue button configurable
+- Add package destination and namespace handling to invites
+- Auto-detect entity association by class
+- Add profile generators for user settings pages
+- Add profile_url helper method to rodauth module
+
+### Miscellaneous Tasks
+
+- Add profile_url stub to controller template and test fixtures
+
+### Refactoring
+
+- Extract breadcrumb rendering methods and add tests
+
+### Testing
 
 - Add OrgPortal fixture for entity scoping tests
 - Add tests for routing, authorization, and display helpers
 
-### ⚙️ Miscellaneous Tasks
-
-- Add profile_url stub to controller template and test fixtures
 ## [0.42.0] - 2026-02-14
 
-### 🚀 Features
-
-- *(ui)* Add clipboard controller and fix modal scroll lock
-- *(interaction)* Add turbo stream support to render response
-- *(interaction)* Add scoping concern for entity/parent access
-- *(generators)* Enhance rodauth generators
-- *(generators)* Add API client generator for SaaS apps
-
-### 🚜 Refactor
-
-- *(tests)* Consolidate generator test cleanup with git restore
-
-### 📚 Documentation
+### Documentation
 
 - Update generator documentation and improve saas generators
 
-### 🧪 Testing
+### Features
+
+- Add clipboard controller and fix modal scroll lock
+- Add turbo stream support to render response
+- Add scoping concern for entity/parent access
+- Enhance rodauth generators
+- Add API client generator for SaaS apps
+
+### Miscellaneous Tasks
+
+- Update gemfile locks
+
+### Refactoring
+
+- Consolidate generator test cleanup with git restore
+
+### Testing
 
 - Add unit tests for api client and response concerns
 
-### ⚙️ Miscellaneous Tasks
-
-- Update gemfile locks
 ## [0.41.1] - 2026-02-09
 
-### 🚀 Features
+### Features
 
-- *(generators)* Support JSON default values for jsonb fields
+- Support JSON default values for jsonb fields
+
 ## [0.41.0] - 2026-02-09
 
-### 🚀 Features
+### Bug Fixes
 
-- *(generators)* Add default value support and improve SQLite compatibility
-- *(generators)* Add class_name option for belongs_to fields
-- *(generators)* Add --policy and --definition flags to conn generator
+- Fix has_many association injection pattern
+- Add missing scripts to package.json in assets generator
+- Remove primary account support for rodauth
+- Use top-level Gem::Version to avoid namespace collision
+- Check resource registration before generating association add URL
 
-### 🐛 Bug Fixes
-
-- *(generators)* Fix has_many association injection pattern
-- *(generators)* Add missing scripts to package.json in assets generator
-- *(generators)* Remove primary account support for rodauth
-- *(generators)* Use top-level Gem::Version to avoid namespace collision
-- *(ui)* Check resource registration before generating association add URL
-
-### 📚 Documentation
+### Documentation
 
 - Add class_name option and associations section to generator docs
 
-### 🧪 Testing
+### Features
 
-- *(generators)* Add tests for named rodauth account configuration
-- *(sqlite)* Move type alias tests to core and test actual migrations
+- Add default value support and improve SQLite compatibility
+- Add class_name option for belongs_to fields
+- Add --policy and --definition flags to conn generator
+
+### Testing
+
+- Add tests for named rodauth account configuration
+- Move type alias tests to core and test actual migrations
+
 ## [0.40.0] - 2026-02-04
 
-### 🚀 Features
+### Bug Fixes
 
-- *(invites)* Add user invitation system for multi-tenant apps
-- *(generators)* Add roles and extra_attributes options to rodauth generators
-- *(generator)* Add --scope flag to portal generator for entity scoping
-- *(generator)* Add --singular flag to pu:res:conn for singular resources
-- *(generators)* Add pu:lite namespace for SQLite-based services
-- *(generators)* Add pu:saas namespace for multi-tenant SaaS setup
-- *(definition)* Add default_scope method for setting default query scope
+- Scope load_memory to account-specific paths
+- Resolve Thor invoke caching in entity generator
+- Use dynamic migration versioning for Rails compatibility
+- Wrap SQLite alias in defined? check for compatibility
+- Add variants to product policy permitted attributes
+- Improve has_one url assertion in resource_url_for test
+- Normalize CamelCase package names and validate resource records
+- Dedupe namespace and read model attrs with --no-model
+- Use local gem path when LOCAL=1
+- Guard against envs gems during template execution
+- Run db:prepare after config in lite generators
+- Restore ResourceController to portal generator
 
-### 🐛 Bug Fixes
+### Documentation
 
-- *(rodauth)* Scope load_memory to account-specific paths
-- *(generators)* Resolve Thor invoke caching in entity generator
-- *(test)* Use dynamic migration versioning for Rails compatibility
-- *(config)* Wrap SQLite alias in defined? check for compatibility
-- *(test)* Add variants to product policy permitted attributes
-- *(test)* Improve has_one url assertion in resource_url_for test
-- *(generators)* Normalize CamelCase package names and validate resource records
-- *(generators)* Dedupe namespace and read model attrs with --no-model
-- *(templates)* Use local gem path when LOCAL=1
-- *(generators)* Guard against envs gems during template execution
-- *(generators)* Run db:prepare after config in lite generators
-- *(generators)* Restore ResourceController to portal generator
+- Add invites skill and update rodauth skill
+- Add user invites guide
 
-### 🚜 Refactor
+### Features
 
-- *(generators)* Comment out default policy methods
+- Add user invitation system for multi-tenant apps
+- Add roles and extra_attributes options to rodauth generators
+- Add --scope flag to portal generator for entity scoping
+- Add --singular flag to pu:res:conn for singular resources
+- Add pu:lite namespace for SQLite-based services
+- Add pu:saas namespace for multi-tenant SaaS setup
+- Add default_scope method for setting default query scope
 
-### 📚 Documentation
+### Miscellaneous Tasks
 
-- *(skills)* Add invites skill and update rodauth skill
-- *(guides)* Add user invites guide
-
-### 🧪 Testing
-
-- *(generators)* Add tests for rodauth and invites generators
-
-### ⚙️ Miscellaneous Tasks
-
+- Update gemfile locks
 - Remove old assets
+
+### Refactoring
+
+- Comment out default policy methods
+
+### Testing
+
+- Add tests for rodauth and invites generators
+
 ## [0.39.2] - 2026-01-27
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
 - Handle create and update nested routes
+
 ## [0.39.1] - 2026-01-26
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui)* Include ImageTag helper for AssetsHelper compatibility
+- Include ImageTag helper for AssetsHelper compatibility
+
 ## [0.39.0] - 2026-01-26
 
-### 🚀 Features
-
-- *(core)* Handle ActionPolicy::Unauthorized for non-HTML formats
-- *(interactive_actions)* Add non-HTML response handlers for successful actions
-- *(routing)* Add has_one nested resource support
-- *(routing)* [**breaking**] Refactor nested resource URL generation with named route helpers
-- *(policy)* Add default_relation_scope method with verification
-- *(nested)* Use association names for nested resource titles and breadcrumbs
-
-### 🐛 Bug Fixes
+### Bug Fixes
 
 - Remove duplicate kv store controller and move improvements into original
-- *(filters)* Improve association filter class resolution
-- *(ui)* Improve dropdown positioning with viewport boundary
-- *(auth)* Dynamically detect database adapter for Rodauth (#51)
-- *(crud)* Use correct action attributes for form re-rendering on errors
-- *(form)* Distinguish empty vs not-submitted key-value store fields
-- *(controller)* Use existing record context for form param extraction
-- *(controller)* Prevent UrlGenerationError when extracting params for nested resource update
-- *(routing)* Correct URL generation for interactive actions on nested resources
-- *(ui)* Replace deprecated phlex-rails `helpers` method with `view_context`
-- *(routing)* Add named routes for commit actions and document route naming requirement
+- Improve association filter class resolution
+- Improve dropdown positioning with viewport boundary
+- Dynamically detect database adapter for Rodauth ([#51](https://github.com/radioactive-labs/plutonium-core/issues/51))
+- Use correct action attributes for form re-rendering on errors
+- Distinguish empty vs not-submitted key-value store fields
+- Use existing record context for form param extraction
+- Prevent UrlGenerationError when extracting params for nested resource update
+- Correct URL generation for interactive actions on nested resources
+- Replace deprecated phlex-rails `helpers` method with `view_context`
+- Add named routes for commit actions and document route naming requirement
 
-### 📚 Documentation
+### Documentation
 
-- *(definition)* Document formatter option for columns and displays
+- Document formatter option for columns and displays
 - Cleanup review definition
 - Add troubleshooting guide for inflection issue
 - Update nested resource routes to use nested_ prefix
 
-### 🧪 Testing
+### Features
 
-- Refactor tests to use real module implementations instead of mocks
+- Handle ActionPolicy::Unauthorized for non-HTML formats
+- Add non-HTML response handlers for successful actions
+- Add has_one nested resource support
+- [**breaking**] Refactor nested resource URL generation with named route helpers
+- Add default_relation_scope method with verification
+- Use association names for nested resource titles and breadcrumbs
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Use chokidar to fix dev build cyclic dependency issues
 - Warn when running tests without Appraisal
 - Switch to yarn
 - Update og image
+
+### Testing
+
+- Refactor tests to use real module implementations instead of mocks
+
 ## [0.37.0] - 2026-01-21
 
-### 🚀 Features
+### Features
 
-- *(ui)* Add textarea auto-grow functionality
+- Add textarea auto-grow functionality
 
-### 🚜 Refactor
+### Refactoring
 
-- *(ui)* Migrate slim-select styles to design tokens
+- Migrate slim-select styles to design tokens
+
 ## [0.36.0] - 2026-01-21
 
-### 🚀 Features
+### Features
 
-- *(generators)* Add pu:core:update to sync gem and npm versions
+- Add pu:core:update to sync gem and npm versions
+
 ## [0.35.0] - 2026-01-20
 
-### 🚀 Features
-
-- Add demo_features package and demo_portal for testing
-- Implement bulk actions for resource tables
-- Modernize UI with design token system and component classes
-- Add actions dropdown for secondary and danger actions
-- Add form input type aliases for explicit field type declarations
-- Add built-in filter types with dropdown filter panel UI
-- *(display)* Add boolean and color components with type aliases
-- *(filters)* Add clear all button with filter-panel controller
-
-### 🐛 Bug Fixes
+### Bug Fixes
 
 - Use turbo stream redirect action instead of HTTP 302 for form submissions
 - Exclude turbo_stream format from URL preservation
 - Improve table container scroll and telephone input padding
 - Pass unwrapped record into custom column blocks
-- *(docs)* Prevent h2 text cutoff in VitePress docs
+- Prevent h2 text cutoff in VitePress docs
 
-### 🚜 Refactor
-
-- Remove ResourceController from portal generator
-- Rename skills with plutonium- prefix to avoid conflicts
-- Simplify dashboard templates with design system classes
-- *(ui)* Update auth pages with new design tokens
-
-### 📚 Documentation
+### Documentation
 
 - Improve interaction docs
 - Overhaul README, CONTRIBUTING, and add CLAUDE.md for development
@@ -666,156 +738,194 @@
 - Document authorization methods
 - Add skills for themeing specifically
 
-### ⚙️ Miscellaneous Tasks
+### Features
+
+- Add demo_features package and demo_portal for testing
+- Implement bulk actions for resource tables
+- Modernize UI with design token system and component classes
+- Add actions dropdown for secondary and danger actions
+- Add form input type aliases for explicit field type declarations
+- Add built-in filter types with dropdown filter panel UI
+- Add boolean and color components with type aliases
+- Add clear all button with filter-panel controller
+
+### Miscellaneous Tasks
 
 - Optimize og graph title and images
 - Realign marketing material
 - Add seeds for demo models and fix foreign keys
 - Standardrb
+
+### Refactoring
+
+- Remove ResourceController from portal generator
+- Rename skills with plutonium- prefix to avoid conflicts
+- Simplify dashboard templates with design system classes
+- Update auth pages with new design tokens
+
 ## [0.34.1] - 2026-01-18
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(release)* Check npm auth early in release workflow
-- *(docs)* Correct generator flags to use --dest instead of --portal/--package
+- Check npm auth early in release workflow
+- Correct generator flags to use --dest instead of --portal/--package
+
 ## [0.34.0] - 2026-01-18
 
-### 🚀 Features
+### Bug Fixes
 
-- *(generators)* Configure default_url_options via RAILS_DEFAULT_URL env var
-- *(generators)* Add pu:skills:sync to install Claude Code skills
-- *(query)* Execute adhoc blocks in controller context
-- *(railtie)* Map ActionPolicy::Unauthorized to 403 Forbidden
-- *(query)* Add default scope support for resource queries
+- Handle turbo_stream format in CRUD and interactive actions
+- Support nullable syntax with type options
+- Prevent overwriting existing url_options configuration
+- Normalize reference names before comparing namespaces
+- Include engine migrations in programmatic migration paths
+- Handle missing version tag in next_version task
 
-### 🐛 Bug Fixes
-
-- *(controllers)* Handle turbo_stream format in CRUD and interactive actions
-- *(generators)* Support nullable syntax with type options
-- *(generators)* Prevent overwriting existing url_options configuration
-- *(generators)* Normalize reference names before comparing namespaces
-- *(package)* Include engine migrations in programmatic migration paths
-- *(release)* Handle missing version tag in next_version task
-
-### 📚 Documentation
+### Documentation
 
 - Add Claude Code skills and improve generator documentation
 - Add definition skills and update module documentation
 - Add comprehensive Claude Code skills for resources
 - Add package and portal skills
 - Add interaction skill for business logic actions
-- *(skills)* Add new Claude Code skills and enhance existing ones
+- Add new Claude Code skills and enhance existing ones
 
-### 🎨 Styling
+### Features
 
-- Standardrb linting
+- Configure default_url_options via RAILS_DEFAULT_URL env var
+- Add pu:skills:sync to install Claude Code skills
+- Execute adhoc blocks in controller context
+- Map ActionPolicy::Unauthorized to 403 Forbidden
+- Add default scope support for resource queries
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Overhaul documentation structure and test infrastructure
 - Move brakeman config to config/ and update ignore list
+
+### Styling
+
+- Standardrb linting
+
 ## [0.33.0] - 2026-01-12
 
-### ◀️ Revert
+### Revert
 
-- *(ui)* Remove semantic design token system
+- Remove semantic design token system
+
 ## [0.32.0] - 2026-01-12
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui)* Move fontFamily to theme root level
+- Move fontFamily to theme root level
+
 ## [0.31.0] - 2026-01-12
 
-### 🚀 Features
+### Bug Fixes
 
-- *(ui)* Add cross-tab color mode synchronization
-- *(release)* Add npm package publishing support
-- *(ui)* Add semantic design token system for theming
+- Preserve request format in redirects
+- Reset policy cache before rendering create response for api calls
 
-### 🐛 Bug Fixes
+### Features
 
-- *(core)* Preserve request format in redirects
-- *(api)* Reset policy cache before rendering create response for api calls
+- Add cross-tab color mode synchronization
+- Add npm package publishing support
+- Add semantic design token system for theming
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
-- *(release)* Build assets during prepare phase
+- Build assets during prepare phase
+
 ## [0.28.0] - 2025-11-12
 
-### 🚀 Features
+### Bug Fixes
+
+- Make controller_for inheritable and respect custom inflections
+
+### Features
 
 - Add sgid support and improve association serialization in API
 
-### 🐛 Bug Fixes
-
-- Make controller_for inheritable and respect custom inflections
 ## [0.27.0] - 2025-11-05
 
-### 🚀 Features
-
-- Add field-level options support for input/display/column definitions
-
-### 🐛 Bug Fixes
+### Bug Fixes
 
 - Reload version constant in release:publish task
 
-### 📚 Documentation
+### Documentation
 
 - Setup contribution guidelines using Conventional Commits
+
+### Features
+
+- Add field-level options support for input/display/column definitions
+
 ## [0.26.9] - 2025-09-25
 
-### 🚀 Features
+### Features
 
 - Disable csrf protection if authorization header is set
+
 ## [0.26.8] - 2025-08-11
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- Prevent SQLite adapter error when using non-SQLite databases (#42)
-- Fix STI model routing logic in controller (#43)
+- Prevent SQLite adapter error when using non-SQLite databases ([#42](https://github.com/radioactive-labs/plutonium-core/issues/42))
+- Fix STI model routing logic in controller ([#43](https://github.com/radioactive-labs/plutonium-core/issues/43))
+
 ## [0.26.6] - 2025-08-03
 
-### 🚜 Refactor
+### Refactoring
 
-- Enhance color mode selector and integrate into header layout (#41)
+- Enhance color mode selector and integrate into header layout ([#41](https://github.com/radioactive-labs/plutonium-core/issues/41))
+
 ## [0.26.2] - 2025-07-22
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- Handle redirect after interaction submission (#37)
-- Enhance flatpickr to attach to modals correctly (#35)
+- Handle redirect after interaction submission ([#37](https://github.com/radioactive-labs/plutonium-core/issues/37))
+- Enhance flatpickr to attach to modals correctly ([#35](https://github.com/radioactive-labs/plutonium-core/issues/35))
+
 ## [0.23.2] - 2025-05-27
 
-### 🚜 Refactor
+### Refactoring
 
-- Update EasyMDE styles (#33)
+- Update EasyMDE styles ([#33](https://github.com/radioactive-labs/plutonium-core/issues/33))
+
 ## [0.23.1] - 2025-05-27
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- Hide password visibility checkbox when not needed (#32)
+- Hide password visibility checkbox when not needed ([#32](https://github.com/radioactive-labs/plutonium-core/issues/32))
+
 ## [0.21.1] - 2025-04-27
 
-### 🚀 Features
+### Features
 
-- Preserve whitespace in hints to allow some formatting (#25)
+- Preserve whitespace in hints to allow some formatting ([#25](https://github.com/radioactive-labs/plutonium-core/issues/25))
 
-### 🚜 Refactor
+### Refactoring
 
-- Fix join condition for `has_one` and `has_many` associations (#23)
+- Fix join condition for `has_one` and `has_many` associations ([#23](https://github.com/radioactive-labs/plutonium-core/issues/23))
+
 ## [0.21.0] - 2025-04-01
 
-### 🚀 Features
+### Features
 
-- Add cleaner cards for resources on the dashboard index page (#22)
+- Add cleaner cards for resources on the dashboard index page ([#22](https://github.com/radioactive-labs/plutonium-core/issues/22))
+
 ## [0.20.4] - 2025-03-15
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- Fix Tailwind CSS v4 upgrade issue for existing projects (#18)
+- Fix Tailwind CSS v4 upgrade issue for existing projects ([#18](https://github.com/radioactive-labs/plutonium-core/issues/18))
+
 ## [0.19.13] - 2025-03-02
 
-### 🚀 Features
+### Features
 
-- Add password visibility toggle to sign up and login forms (#17)
+- Add password visibility toggle to sign up and login forms ([#17](https://github.com/radioactive-labs/plutonium-core/issues/17))
+
 ## [0.6.2] - 2024-02-21
+
+<!-- generated by git-cliff -->
