@@ -236,7 +236,15 @@ module Plutonium
           end
         end
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
-        redirect_to target, status: :see_other, allow_other_host: false
+
+        respond_to do |format|
+          format.turbo_stream do
+            render turbo_stream: helpers.turbo_stream_redirect(target)
+          end
+          format.html do
+            redirect_to target, status: :see_other, allow_other_host: false
+          end
+        end
       end
 
       # Drop a guest run's token from the Rails session (on completion). A no-op
