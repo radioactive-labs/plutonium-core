@@ -49,6 +49,7 @@
     "postcss-import": "^16.1.1",
     "tailwindcss": "^4.3.0",
     "vitepress": "^1.6.4",
+    "vitepress-plugin-llms": "^1.13.2",
     "vitepress-plugin-mermaid": "^2.0.17"
   },
   "scripts": {
@@ -59,8 +60,9 @@
     "js:dev": "node esbuild.config.js --dev",
     "css:prod": "postcss src/css/plutonium.entry.css -o app/assets/plutonium.css && postcss src/css/plutonium.entry.css -o src/dist/css/plutonium.css",
     "js:prod": "node esbuild.config.js",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:sync-skills": "node docs/.vitepress/sync-skills.mjs",
+    "docs:dev": "yarn docs:sync-skills && vitepress dev docs",
+    "docs:build": "yarn docs:sync-skills && vitepress build docs",
     "docs:preview": "vitepress preview docs"
   }
 }

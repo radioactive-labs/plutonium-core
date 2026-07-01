@@ -34,3 +34,4 @@ test/dummy/public/uploads/*
 .superpowers
 
 *.sqlite*
+docs/public/skills

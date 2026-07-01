@@ -1,5 +1,6 @@
 import { defineConfig } from "vitepress"
 import { withMermaid } from "vitepress-plugin-mermaid";
+import llmstxt from "vitepress-plugin-llms";
 
 const base = "/plutonium-core/"
 
@@ -22,6 +23,24 @@ export default defineConfig(withMermaid({
   ],
   ignoreDeadLinks: 'localhostLinks',
   srcExclude: ['superpowers/**'],
+  vite: {
+    plugins: [
+      // Generates llms.txt, llms-full.txt, and a raw .md twin for every page.
+      llmstxt({
+        // Site base (/plutonium-core/) is appended automatically — domain must not include it.
+        domain: "https://radioactive-labs.github.io",
+        // public/ is served verbatim (skills live there); superpowers/ is internal.
+        // Section landing pages are Vue components with no markdown content.
+        ignoreFiles: [
+          "superpowers/**",
+          "public/**",
+          "getting-started/index.md",
+          "guides/index.md",
+          "reference/index.md",
+        ],
+      }),
+    ],
+  },
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     logo: "/plutonium.png",
@@ -32,7 +51,8 @@ export default defineConfig(withMermaid({
       { text: "Home", link: "/" },
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Guides", link: "/guides/" },
-      { text: "Reference", link: "/reference/" }
+      { text: "Reference", link: "/reference/" },
+      { text: "For AI Agents", link: "/ai" }
     ],
     sidebar: {
       '/getting-started/': [
