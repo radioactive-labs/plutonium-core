@@ -163,11 +163,32 @@ module Plutonium
             extraction_record.respond_to?("#{k}=") &&
               extraction_record.class.reflect_on_association(k.to_sym).nil?
           }
-          extraction_record.assign_attributes(submitted.slice(*(base_keys | extra_keys)))
+          # Never assign attachment/file inputs to the throwaway extraction_record:
+          # the submitted value is a single-read Rack upload (UploadedFile), and a
+          # Shrine attacher consumes it to EOF on assign — so the later
+          # `resource_class.new(resource_params)` would re-read a closed stream
+          # ("IOError: closed stream"). Active Storage escaped this because its
+          # attachment reflects as an association (excluded above); Shrine's virtual
+          # `file=` accessor does not, so exclude file inputs explicitly. The value
+          # still reaches create/update via `extract_input` (which reads params, not
+          # this record), so nothing is dropped — the file is just read once, later.
+          assign_keys = (base_keys | extra_keys) - attachment_input_keys
+          extraction_record.assign_attributes(submitted.slice(*assign_keys))
           extracted = build_form(extraction_record, form_action: false)
             .extract_input(params, view_context:)[resource_param_key.to_sym].compact
           clean_structured_inputs(current_definition, extracted)
         end
+      end
+
+      # Attachment/file input names (as Strings) declared on the current
+      # definition — inputs whose `as:` is a file type (`:file`/`:uppy`/
+      # `:attachment`). Excluded from the extraction-record pre-assignment so a
+      # single-read Rack upload isn't consumed before create/update reads it.
+      def attachment_input_keys
+        file_types = Plutonium::UI::Form::Base::Builder::FILE_INPUT_TYPES
+        current_definition.defined_inputs.filter_map { |name, config|
+          name.to_s if file_types.include?(config.dig(:options, :as)&.to_sym)
+        }
       end
 
       # Returns the resource parameters, including scoped and parent parameters

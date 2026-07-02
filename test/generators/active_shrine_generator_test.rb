@@ -30,6 +30,14 @@ class ActiveShrineGeneratorTest < ActiveSupport::TestCase
     assert Pu::Gem::ActiveShrineGenerator.source_root.present?
     assert File.directory?(Pu::Gem::ActiveShrineGenerator.source_root)
   end
+
+  test "generator bundles mime-types (needed by the determine_mime_type analyzer)" do
+    source = File.read(
+      File.expand_path("../../lib/generators/pu/gem/active_shrine/active_shrine_generator.rb", __dir__)
+    )
+    assert_match(/bundle "mime-types"/, source,
+      "the shrine.rb :mime_types analyzer requires mime/types — the generator must bundle it")
+  end
 end
 
 class ActiveShrineTemplateTest < ActiveSupport::TestCase
@@ -66,6 +74,11 @@ class ActiveShrineTemplateTest < ActiveSupport::TestCase
 
   test "template includes remove_invalid plugin" do
     assert_match(/Shrine\.plugin :remove_invalid/, @template_content)
+  end
+
+  test "template refines text/plain via the mime_types analyzer (needs the mime-types gem)" do
+    assert_match(/analyzers\[:mime_types\]/, @template_content,
+      "this line is why the generator bundles mime-types; keep them in sync")
   end
 
   test "template includes backgrounding configuration" do

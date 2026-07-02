@@ -44,6 +44,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::KitchenSink
   register_resource ::Widget
   register_resource ::Task
+  register_resource ::ShrineDoc
   # register resources above.
 end
 

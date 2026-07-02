@@ -18,6 +18,11 @@ module Pu
 
       def start
         bundle "active_shrine"
+        # The generated shrine.rb determine_mime_type analyzer refines
+        # marcel's `text/plain` (e.g. CSV/TXT uploads) via Shrine's :mime_types
+        # analyzer, which does `require "mime/types"` — bundle it so the first
+        # text/plain upload doesn't 500 with `cannot load such file -- mime/types`.
+        bundle "mime-types"
         bundle "aws-sdk-s3" if options[:s3]
         bundle "fastimage" if options[:store_dimensions]
 
