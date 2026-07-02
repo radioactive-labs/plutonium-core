@@ -18,6 +18,16 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
+  # Drop interaction: mark a task lost (kanban :lost column drop_interaction).
+  # Delegates to update? so any user who can edit tasks can mark one lost.
+  # Set deny_mark_lost = true in integration tests to exercise the 403 path.
+  cattr_accessor :deny_mark_lost, default: false
+
+  def mark_lost?
+    return false if self.class.deny_mark_lost
+    update?
+  end
+
   # Core actions
 
   # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.

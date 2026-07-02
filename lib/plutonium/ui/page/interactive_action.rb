@@ -27,12 +27,22 @@ module Plutonium
               description: page_description,
               size: current_interactive_action.modal_size(current_definition)
             ) do
-              render partial("interactive_action_form")
+              render_interactive_action_form
             end
           else
-            div(class: "pb-20") { render partial("interactive_action_form") }
+            div(class: "pb-20") { render_interactive_action_form }
           end
         end
+
+        # Renders the interaction's form inside the modal/page chrome.
+        # Extracted as a seam so subclasses (e.g. the kanban drop-move page)
+        # can swap in a form that posts elsewhere and carries extra context
+        # without duplicating the modal chrome above.
+        def render_interactive_action_form
+          render partial(interactive_action_form_partial)
+        end
+
+        def interactive_action_form_partial = "interactive_action_form"
 
         def page_type = :interactive_action_page
       end

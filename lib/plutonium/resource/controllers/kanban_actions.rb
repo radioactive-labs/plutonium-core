@@ -190,7 +190,51 @@ module Plutonium
           end
         end
 
+        # GET <member>/kanban_move_form?from_column=&to_column=&to_index=
+        #
+        # Renders the drop-interaction modal for a card dropped into a column
+        # that declares a `drop_interaction:`. The modal shows the interaction's
+        # normal form, but wired to POST to `kanban_move` (Task 4) carrying the
+        # move context as hidden fields so the interaction runs AND the card is
+        # repositioned in one atomic request.
+        def kanban_move_form
+          record = kanban_base_relation.find(params[:id])
+          to = kanban_column_for(params[:to_column])
+
+          unless to&.drop_interaction?
+            # No interaction to authorize against on this path — the drop is
+            # simply invalid — so satisfy the authorize verifier explicitly.
+            skip_verify_authorize_current!
+            head :unprocessable_content
+            return
+          end
+
+          authorize_current! record, to: :"#{to.drop_interaction_key}?"
+
+          # Bind the drop_interaction's auto-registered record action as the
+          # current interactive action so the modal chrome (title, description,
+          # modal mode/size) resolves exactly like a standard record action.
+          params[:interactive_action] = to.drop_interaction_key
+
+          @interaction = to.drop_interaction.new(view_context:)
+          @interaction.resource = record
+          @kanban_move_params = {
+            from_column: params[:from_column],
+            to_column: params[:to_column],
+            to_index: params[:to_index]
+          }
+
+          render :kanban_move_form, formats: [:html], **modal_render_options
+        end
+
         private
+
+        # Resolves a kanban column by its key (String/Symbol). Compares keys as
+        # strings so arbitrary request input isn't interned into symbols.
+        def kanban_column_for(key)
+          columns = Plutonium::Kanban::Grouping.resolve_columns(current_kanban_board, kanban_context)
+          columns.find { |c| c.key.to_s == key.to_s }
+        end
 
         # Builds the kanban board shell component for the index page.
         #

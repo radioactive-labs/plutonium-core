@@ -38,5 +38,13 @@ class TaskDefinition < ::ResourceDefinition
       role: :done do
       action :archive_all, interaction: ArchiveTasksInteraction, on: :all, label: "Archive all"
     end
+
+    # :lost declares a drop_interaction — dropping a card here opens
+    # MarkLostInteraction's form (asking for a reason) instead of moving the
+    # card immediately. Exercises the kanban_move_form modal + kanban_move
+    # atomic-commit path.
+    column :lost,
+      scope: -> { where(status: "lost") },
+      drop_interaction: MarkLostInteraction
   end
 end
