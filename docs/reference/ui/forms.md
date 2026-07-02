@@ -162,6 +162,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `slim_select_tag` | Slim Select (enhanced dropdown) |
 | `flatpickr_tag` | Flatpickr date/time picker |
 | `phone_tag` / `int_tel_input_tag` | intl-tel-input phone field |
+| `currency_tag` | Money input (number field + optional unit prefix) |
 | `uppy_tag` / `file_tag` | Uppy file upload |
 | `secure_association_tag` | Association with policy-checked options (inline `+` add, typeahead) |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
@@ -196,6 +197,24 @@ end
 ```
 
 The field defaults to `strictMode: true`; override it via `intl_options: {strictMode: false}`.
+
+### Currency fields {#currency-fields}
+
+`as: :currency` renders a number input (`inputmode="decimal"`, `step="0.01"`) with an **optional** currency-unit prefix overlaid at its left edge. The unit resolves by the **same** chain as the currency *display* ([`Currency.resolve_unit`](../resource/model#has-cents)), so the form, show page, index, and wizard summary all show the same symbol:
+
+**explicit `unit:` → the record's `has_cents` unit → `config.default_currency_unit` → the i18n `number.currency.format.unit`.**
+
+```ruby
+input :price, as: :currency               # unit from has_cents / config / i18n
+input :price, as: :currency, unit: "£"    # a literal symbol
+input :price, as: :currency, unit: false  # no prefix — a plain number input
+```
+
+When nothing resolves (or `unit: false`), the prefix is omitted and it's an ordinary number input.
+
+**`has_cents` fields infer it automatically** — just like the display. A bare `input :price` on a `has_cents` attribute renders the currency input with the unit read off `has_cents`; no `as: :currency` needed. Use the explicit `as: :currency` for a non-`has_cents` decimal, or to override the unit.
+
+In a **wizard** step the data snapshot has no `has_cents` reflection, so there's nothing to infer from — declare `as: :currency` and pass `unit:` explicitly (`input :price, as: :currency, unit: "$"`); the review summary reads it back and formats the value as currency.
 
 ### Password & secret fields {#password-fields}
 

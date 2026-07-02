@@ -5,6 +5,8 @@ module Plutonium
     module Display
       module Options
         module InferredTypes
+          include Plutonium::UI::Options::HasCentsField
+
           private
 
           def infer_field_component
@@ -22,11 +24,6 @@ module Plutonium
             else
               super
             end
-          end
-
-          def has_cents_field?
-            klass = object.class
-            klass.respond_to?(:has_cents_decimal_attribute?) && klass.has_cents_decimal_attribute?(key)
           end
         end
       end

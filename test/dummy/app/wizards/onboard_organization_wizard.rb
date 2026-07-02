@@ -23,11 +23,18 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   step :identity, description: "Tell us who you are — this names the workspace." do
     attribute :name, :string
     attribute :plan, :string
-    input :plan, as: :select, choices: %w[free pro enterprise]
+    attribute :budget, :decimal
+    # [label, value] pairs (label != value) so the review summary must resolve
+    # the value ("pro") back to its label ("Pro"), not echo the raw value.
+    input :plan, as: :select, choices: [["Free", "free"], ["Pro", "pro"], ["Enterprise", "enterprise"]]
+    # A currency input (unit prefix on the form) — the review summary must render
+    # it as currency ("$1,500.50"), not a bare decimal, even though the wizard
+    # data snapshot carries no has_cents reflection.
+    input :budget, as: :currency, unit: "$"
     validates :name, presence: true
 
     form_layout do
-      section :basics, :name, :plan, label: "The basics"
+      section :basics, :name, :plan, :budget, label: "The basics"
     end
   end
 

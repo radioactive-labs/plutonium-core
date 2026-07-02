@@ -78,7 +78,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
   field :favorite_color, as: :color                            # color input + swatch display
   field :age, as: :integer
   input :balance, as: :decimal
-  input :price, as: :decimal                                   # has_cents: edit dollars, stored as price_cents
+  input :price                                                 # has_cents → inferred currency input ($ prefix, no as: needed)
   field :description, as: :text                                # textarea + text display
 
   # DOM-mutating widgets

@@ -204,6 +204,11 @@ What it renders depends on completion state and the `summary:` / block options:
 | `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block — or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
 | `header:` | Show the step-header section (the label plus the "check everything over" prompt, which only appears when the summary is shown) above the body (default `true`). `false` drops it for a chromeless finish. |
 
+The auto-summary renders each field through the display pipeline, honoring the input's declared `as:`/`label:`:
+
+- a **choice input** (`select`/`radio_buttons` with `choices:`) resolves the stored value back to its label (`"pro"` → `"Pro"`) using the same choice mapper the form uses, so the recap matches what the user picked;
+- an **`as: :currency`** input formats the value as currency (`"1500.5"` → `"$1,500.50"`) rather than echoing a bare decimal — pass `unit:` on the input (the data snapshot has no `has_cents` reflection to infer it from).
+
 ```ruby
 review label: "Review & submit"                       # auto-summary + gated finish
 

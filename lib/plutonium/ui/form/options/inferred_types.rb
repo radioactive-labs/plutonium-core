@@ -5,6 +5,8 @@ module Plutonium
     module Form
       module Options
         module InferredTypes
+          include Plutonium::UI::Options::HasCentsField
+
           private
 
           def infer_field_component
@@ -15,6 +17,10 @@ module Plutonium
             # the heuristic to secret-bearing names Phlexi misses (`*_secret`,
             # `*_key`, `salt`, ...) — see #secret_field_name?.
             return :password if inferred_string_field_type == :password || secret_field_name?
+
+            # has_cents decimal accessors render as a currency input (number field
+            # + unit prefix), mirroring the display — no explicit `as: :currency`.
+            return :currency if has_cents_field?
 
             case inferred_field_type
             when :rich_text

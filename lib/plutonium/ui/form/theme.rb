@@ -80,6 +80,13 @@ module Plutonium
             invalid_flatpickr: :invalid_input,
             neutral_flatpickr: :neutral_input,
 
+            # Currency (money input; the number field styles as a normal input,
+            # the unit prefix is overlaid by the component)
+            currency: :input,
+            valid_currency: :valid_input,
+            invalid_currency: :invalid_input,
+            neutral_currency: :neutral_input,
+
             # Int tel input
             int_tel_input: :input,
             valid_int_tel_input: :valid_input,

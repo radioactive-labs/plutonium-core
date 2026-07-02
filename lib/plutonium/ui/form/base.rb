@@ -63,6 +63,12 @@ module Plutonium
             create_component(Components::Flatpickr, :flatpickr, **, &)
           end
 
+          # Money input: a number field with an optional currency-unit prefix.
+          # See {Components::Currency} for how the unit resolves.
+          def currency_tag(**, &)
+            create_component(Components::Currency, :currency, **, &)
+          end
+
           def int_tel_input_tag(**, &)
             create_component(Components::IntlTelInput, :int_tel_input, **, &)
           end

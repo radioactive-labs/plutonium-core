@@ -119,6 +119,10 @@ up automatically anywhere the value renders as currency — show pages, tables, 
 grid/kanban cards — so you configure it once on the model. A per-display
 `display :price, as: :currency, unit: …` overrides it for that display.
 
+A `has_cents` field also **infers the currency input** on forms: a bare `input :price`
+renders the [currency input](../ui/forms#currency-fields) (number field + unit prefix),
+no `as: :currency` needed — matching the display side.
+
 Resolution is `display unit → has_cents unit → config default`, where `nil` means
 "not set, keep looking" and `false` means "stop, no symbol". When nothing is set, it
 falls back to `Plutonium.configuration.default_currency_unit`, which itself defaults

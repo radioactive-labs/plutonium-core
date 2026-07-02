@@ -27,7 +27,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   # (instead of forking a fresh tokened run per request).
   def advance_through(*steps)
     payloads = {
-      "identity" => {name: "Acme Inc", plan: "pro"},
+      "identity" => {name: "Acme Inc", plan: "pro", budget: "1500.50"},
       "details" => {note: "hello"},
       "profile" => {description: "a great org", tier: "1"},
       "members" => {invites: [{email: "a@example.com", role: "admin"}]}
@@ -211,6 +211,15 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     # now on review (all steps complete), summary on + custom block
     assert_includes response.body, %(data-wizard-review-step="identity") # summary
     assert_includes response.body, "Acme Inc"
+    # `plan` was submitted as "pro"; its select uses [label, value] choices, so
+    # the summary must show the resolved label "Pro", not the raw value.
+    identity_card = response.body[%r{data-wizard-review-step="identity".*?</section>}m]
+    assert_includes identity_card, "Pro",
+      "the choice field's summary should show its label, not the raw value"
+    # `budget` was submitted as "1500.50" via an `as: :currency` input; the
+    # summary must format it as currency, not echo the raw decimal.
+    assert_includes identity_card, "$1,500.50",
+      "the currency field's summary should render as currency, not a bare decimal"
     assert_includes response.body, "Ready to onboard Acme Inc"           # custom block
     assert_includes response.body, %(data-wizard-review-custom)
     # The custom block sits BELOW the summary.
