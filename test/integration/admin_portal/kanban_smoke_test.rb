@@ -30,12 +30,12 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_instance_of Plutonium::Kanban::Board, board
   end
 
-  test "board has exactly 3 columns" do
-    assert_equal 3, board.columns.length
+  test "board has exactly 4 columns" do
+    assert_equal 4, board.columns.length
   end
 
-  test "board column keys are :todo, :doing, :done" do
-    assert_equal %i[todo doing done], board.columns.map(&:key)
+  test "board column keys are :todo, :doing, :done, :lost" do
+    assert_equal %i[todo doing done lost], board.columns.map(&:key)
   end
 
   test "board per_column is 25" do
@@ -102,6 +102,21 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_equal ArchiveTasksInteraction, action.interaction
     assert_equal :all, action.on
     assert_equal "Archive all", action.label
+  end
+
+  # ─── Column: :lost (drop_interaction) ──────────────────────────────────────
+
+  def lost_col
+    board.columns.find { |c| c.key == :lost }
+  end
+
+  test ":lost column exists" do
+    assert_not_nil lost_col
+  end
+
+  test ":lost column declares a drop_interaction" do
+    assert lost_col.drop_interaction?, ":lost should declare a drop_interaction"
+    assert_equal MarkLostInteraction, lost_col.drop_interaction
   end
 
   # ─── Positioning ───────────────────────────────────────────────────────────
