@@ -190,6 +190,10 @@ export default class extends Controller {
     document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
     document.removeEventListener("turbo:frame-render", this.onFrameRender)
     document.removeEventListener("turbo:before-stream-render", this.onBeforeStreamRender)
+
+    // Drop any armed drop-interaction dismiss handler so a reconnect can't leak
+    // a listener onto the shared modal frame.
+    this.#disarmDropDismiss()
   }
 
   // ─── Frozen-board URL sync ────────────────────────────────────────────────────
@@ -367,12 +371,36 @@ export default class extends Controller {
   // clamp would otherwise be saved as the new position, a visible jump at the
   // far end), then restore once the columns are back.
   #onBeforeStreamRender(event) {
+    // Only interfere with streams that target one of THIS board's column
+    // frames. Any other stream (a redirect, a flash append, another board's
+    // update, the remote_modal empty on drop-interaction success) must render
+    // untouched so unrelated stream actions don't surface through this wrapper.
+    if (!this.#streamTargetsColumn(event.target)) return
+
+    // A committed move re-rendered a column, so any pending drop-interaction is
+    // now resolved — its dismiss handler becomes a no-op (distinguishes success
+    // from a cancel that never touches a column).
+    this.dropResolved = true
+
     const render = event.detail.render
     event.detail.render = async (streamElement) => {
       this.restoringScroll = true
       await render(streamElement)
       this.#scheduleScrollRestore()
     }
+  }
+
+  // True when the <turbo-stream> element targets a column frame contained by
+  // this board — via its `target` (frame id) or `targets` (CSS selector).
+  #streamTargetsColumn(streamElement) {
+    if (!streamElement) return false
+    const target = streamElement.getAttribute("target")
+    if (target) return this.#isColumnFrame(document.getElementById(target))
+    const targets = streamElement.getAttribute("targets")
+    if (targets) {
+      return [...document.querySelectorAll(targets)].some(el => this.#isColumnFrame(el))
+    }
+    return false
   }
 
   #columnFrames() {
@@ -476,6 +504,28 @@ export default class extends Controller {
       .filter(c => c !== this.draggedCard)
 
     const toIndex = this.#computeDropIndex(event.clientY, existingCards)
+
+    // Columns that declare a drop_interaction: open an interaction modal on a
+    // CROSS-column drop instead of committing the move directly. The dragged
+    // card is left in place (pending) until the modal resolves. Same-column
+    // reorders (from == toColumn) fall through to the direct POST, which the
+    // server treats as positioning-only — mirroring the server's rule.
+    const destWrapper = column.closest("[data-kanban-col]")
+    if (destWrapper?.dataset.kanbanDropInteraction === "true" && fromColumn !== toColumn) {
+      if (this.#openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex })) return
+      // Modal frame unavailable — fall through to the direct POST so a drop is
+      // never silently dropped.
+    }
+
+    this.#submitMove(recordId, { fromColumn, toColumn, toIndex })
+  }
+
+  // Direct move: POST {from_column, to_column, to_index} to the move endpoint
+  // and feed the Turbo Stream response to Turbo. On success the server
+  // re-renders the from + to column frames; on 422 it re-renders only the
+  // source frame so the card snaps back — the controller never hand-manages
+  // rollback state.
+  async #submitMove(recordId, { fromColumn, toColumn, toIndex }) {
     const url = this.moveUrlTemplateValue.replace("__ID__", recordId)
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? ""
 
@@ -508,6 +558,93 @@ export default class extends Controller {
     } catch (error) {
       console.error("[kanban] move request failed:", error)
     }
+  }
+
+  // ─── drop-interaction modal ────────────────────────────────────────────────
+  //
+  // A cross-column drop into a drop_interaction column opens the interaction's
+  // form in the shared remote-modal frame instead of committing the move. The
+  // card stays put (pending). Resolution:
+  //   • Success — the server's turbo-stream re-renders the kanban-col-* frames
+  //     (which #onBeforeStreamRender records by setting dropResolved) and empties
+  //     the remote_modal frame. The board updates naturally; no snap-back.
+  //   • Cancel/dismiss — the remote-modal <dialog> fires `close` (Esc, backdrop,
+  //     or the X button all funnel through remote-modal#animateClose → close()).
+  //     If no column stream landed (dropResolved is still false) we reload the
+  //     SOURCE column frame so the pending card is reconciled to server truth.
+  //
+  // Returns true when the modal was opened (caller should stop), false when the
+  // remote-modal frame is unavailable (caller falls back to the direct POST).
+  #openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex }) {
+    const template = destWrapper.dataset.kanbanDropFormUrlTemplate
+    // Plutonium::REMOTE_MODAL_FRAME — rendered once by the layout, outside this
+    // (permanent) board element.
+    const frame = document.getElementById("remote_modal")
+    if (!frame || !template) return false
+
+    const params = new URLSearchParams({
+      from_column: fromColumn,
+      to_column: toColumn,
+      to_index: toIndex,
+    })
+    const url = `${template.replace("__ID__", recordId)}?${params.toString()}`
+
+    this.pendingDrop = { fromColumn }
+    this.dropResolved = false
+    this.#armDropDismiss(frame, fromColumn)
+
+    // Point the modal frame at the interaction form. On success the server
+    // empties this frame; on 422 it re-renders the form (errors + preserved
+    // hidden fields) in place.
+    frame.src = url
+    return true
+  }
+
+  // Arm a one-time dismiss handler on the modal frame. `close` doesn't bubble,
+  // so we listen in the CAPTURE phase on the frame — that catches the event on
+  // whichever <dialog> currently lives inside it, surviving a 422 re-render that
+  // swaps in a fresh dialog. Guarded by dropResolved so it's a no-op on success.
+  #armDropDismiss(frame, fromColumn) {
+    this.#disarmDropDismiss()
+    this.dropDismissFrame = frame
+    this.dropDismissHandler = () => {
+      this.#disarmDropDismiss()
+      if (this.dropResolved) return
+      if (this.pendingDrop?.fromColumn !== fromColumn) return
+      this.#reloadColumnFrame(fromColumn)
+      this.pendingDrop = null
+    }
+    frame.addEventListener("close", this.dropDismissHandler, true)
+  }
+
+  #disarmDropDismiss() {
+    if (this.dropDismissFrame && this.dropDismissHandler) {
+      this.dropDismissFrame.removeEventListener("close", this.dropDismissHandler, true)
+    }
+    this.dropDismissFrame = null
+    this.dropDismissHandler = null
+  }
+
+  // Reload a column frame from its canonical src (morphed in place via
+  // #onBeforeFrameRender). Forces a fresh fetch even when the src is unchanged —
+  // the pending card was never moved optimistically, so the src still matches;
+  // reload() re-fetches regardless so the column reflects server truth.
+  #reloadColumnFrame(key) {
+    const frame = this.#columnFrame(key)
+    if (!frame) return
+    const desired = this.#columnFrameSrc(key)
+    const current = frame.getAttribute("src")
+    if (current && this.#canonicalUrl(current) === this.#canonicalUrl(desired)) {
+      frame.reload()
+    } else {
+      frame.src = desired
+    }
+  }
+
+  #columnFrame(key) {
+    return this.element.querySelector(
+      `turbo-frame[data-kanban-col-frame="${CSS.escape(String(key))}"]`
+    )
   }
 
   #onDragEnd(_event) {
