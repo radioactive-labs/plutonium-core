@@ -1,0 +1,68 @@
+{
+  "planPath": "docs/superpowers/plans/2026-07-02-kanban-drop-interactions.md",
+  "tasks": [
+    {
+      "id": 0,
+      "subject": "Task 0: Column#drop_interaction + derived action key",
+      "status": "completed",
+      "description": "Add drop_interaction: option to Plutonium::Kanban::Column; expose reader, drop_interaction? predicate, drop_interaction_key derivation (MarkLostInteraction -> :mark_lost); raise ArgumentError on non-interaction. Verify dsl.rb passthrough.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/kanban/column.rb\", \"test/plutonium/kanban/column_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/kanban/column_test.rb\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: Register drop_interaction as hidden record action",
+      "status": "completed",
+      "blockedBy": [0],
+      "description": "At kanban compile time register each column's drop_interaction as an interactive record action flagged kanban_drop: true; exclude kanban_drop? actions from toolbars.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/definition/index_views.rb\", \"lib/plutonium/action/base.rb\", \"lib/plutonium/action/interactive/factory.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/definition/index_views_test.rb\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Add GET kanban_move_form member route",
+      "status": "completed",
+      "blockedBy": [1],
+      "description": "Add GET <member>/kanban_move_form -> kanban_actions#kanban_move_form, named. POST kanban_move unchanged.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/routing/mapper_extensions.rb\"], \"verifyCommand\": \"cd test/dummy && bin/rails routes | grep kanban_move\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: kanban_move_form GET renders interaction modal",
+      "status": "completed",
+      "blockedBy": [2],
+      "description": "Build drop interaction as record action; render its form in remote modal; form action=kanban_move with hidden from/to_column, to_index; authorize transition; 422 when no drop_interaction.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/resource/controllers/kanban_actions.rb\", \"app/views/plutonium/resource/kanban_move_form.html.erb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: kanban_move POST — atomic interaction + on_drop + reposition",
+      "status": "completed",
+      "blockedBy": [2, 3],
+      "description": "Single transaction: authorize transition -> on_drop (membership) -> interaction.call (extras) -> reposition. Failure -> Rollback + 422 modal. Success -> column streams. Guards before interaction; plain columns + seed path unchanged.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/resource/controllers/kanban_actions.rb\", \"test/integration\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Emit data-kanban-drop-* on drop-interaction columns",
+      "status": "completed",
+      "blockedBy": [4],
+      "description": "Column component renders data-kanban-drop-interaction=true + data-kanban-drop-form-url-template with __ID__; plain columns render neither.\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/kanban/column.rb\", \"lib/plutonium/resource/controllers/kanban_actions.rb\", \"test/integration/admin_portal/kanban_dom_contract_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/kanban_dom_contract_test.rb\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Stimulus — open modal on drop (no snap-back; card never moves in DOM)",
+      "status": "completed",
+      "blockedBy": [5],
+      "description": "On drop into drop-interaction column navigate remote-modal frame to kanban_move_form with move params; hold pending; snap back on dismiss without success; plain columns keep direct POST. yarn build.\n\n```json:metadata\n{\"files\": [\"src/js/controllers/kanban_controller.js\", \"app/assets/plutonium.js\"], \"verifyCommand\": \"yarn build\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Document drop_interaction (guide + DSL ref + skill)",
+      "status": "completed",
+      "blockedBy": [6],
+      "description": "Guide section w/ worked example + MarkLostInteraction; two-flow model + author contract + def mark_lost? gate; DSL table row; skill Column-options + Authorization updates; yarn docs:build.\n\n```json:metadata\n{\"files\": [\"docs/guides/kanban.md\", \"docs/reference/kanban/dsl.md\", \".claude/skills/plutonium-kanban/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: E2E dummy drive + system test",
+      "status": "completed",
+      "blockedBy": [7, 6],
+      "description": "Dummy resource/interaction via generators + migration for lost_reason (inline index); system test covers commit-with-reason, blank-reason error, cancel snap-back; def mark_lost? on policy; manual browser drive.\n\n```json:metadata\n{\"files\": [\"test/system\", \"test/dummy\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/system\", \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-07-02"
+}
