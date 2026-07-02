@@ -142,4 +142,56 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     # The doing card's record-id must not appear in the todo column body.
     refute_match(/data-kanban-record-id="#{@doing.id}"/, response.body)
   end
+
+  # ─── Collapse cookie (server renders the user's state) ─────────────────────
+  # The board persists per-column collapse as a compact cookie of columns
+  # flipped from their default; the server reads it and renders each column in
+  # the user's state, so there's no client re-apply / FOUC.
+
+  COLLAPSE_COOKIE = Plutonium::UI::Kanban::Resource.collapse_cookie_name(Task)
+
+  test "board exposes the collapse cookie name and path to the controller" do
+    get "/admin/tasks?view=kanban"
+    assert_response :success
+    assert_match(/data-kanban-collapse-cookie-value="#{COLLAPSE_COOKIE}"/o, response.body)
+    assert_match(%r{data-kanban-collapse-path-value="/admin"}, response.body)
+  end
+
+  test "a column advertises its default collapse state for delta encoding" do
+    get "/admin/tasks?view=kanban&column=done"   # :done role ⇒ default collapsed
+    assert_response :success
+    assert_match(/data-kanban-default-collapsed="true"/, response.body)
+    get "/admin/tasks?view=kanban&column=todo"   # default expanded
+    assert_response :success
+    assert_match(/data-kanban-default-collapsed="false"/, response.body)
+  end
+
+  test "done column renders collapsed by default (no cookie)" do
+    get "/admin/tasks?view=kanban&column=done"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="done"[^>]*>/]
+    assert_includes wrapper, "pu-kanban-column-collapsed"
+  end
+
+  test "the cookie flips a column's rendered collapse state" do
+    # done defaults collapsed → flipping it expands it
+    cookies[COLLAPSE_COOKIE] = "done"
+    get "/admin/tasks?view=kanban&column=done"
+    assert_response :success
+    done = response.body[/<div[^>]*data-kanban-col="done"[^>]*>/]
+    refute_includes done, "pu-kanban-column-collapsed", "expected 'done' flipped to expanded"
+
+    # todo defaults expanded → the same cookie leaves it untouched
+    get "/admin/tasks?view=kanban&column=todo"
+    assert_response :success
+    todo = response.body[/<div[^>]*data-kanban-col="todo"[^>]*>/]
+    refute_includes todo, "pu-kanban-column-collapsed"
+
+    # …and flipping todo collapses it
+    cookies[COLLAPSE_COOKIE] = "todo"
+    get "/admin/tasks?view=kanban&column=todo"
+    assert_response :success
+    todo = response.body[/<div[^>]*data-kanban-col="todo"[^>]*>/]
+    assert_includes todo, "pu-kanban-column-collapsed", "expected 'todo' flipped to collapsed"
+  end
 end

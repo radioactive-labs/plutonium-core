@@ -53,7 +53,12 @@ module Plutonium
         # Resolved by the controller and threaded through to Kanban::Card.
         # Defaults to "_top" so a card always escapes the column's lazy frame when
         # the component is built outside a controller (tests, board shell).
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil, card_show_frame: "_top")
+        # collapsed: the EFFECTIVE collapse state for this render (the user's
+        # cookie-persisted choice resolved against the column default by the
+        # controller). nil → fall back to the column's declared default. The
+        # component still emits the DEFAULT separately (data-kanban-default-
+        # collapsed) so the controller can store only deltas from it.
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil)
           @column = column
           @cards = cards
           @total = total
@@ -64,6 +69,13 @@ module Plutonium
           @column_add_url = column_add_url
           @card_fields = card_fields
           @card_show_frame = card_show_frame
+          @collapsed = collapsed
+        end
+
+        # Effective collapse state: the caller's resolved value, or the column
+        # default when none was passed (tests / board shell / non-cookie paths).
+        def effective_collapsed?
+          @collapsed.nil? ? column.collapsed? : @collapsed
         end
 
         def view_template
@@ -73,10 +85,13 @@ module Plutonium
           div(
             class: tokens(
               "pu-kanban-column-wrapper",
-              column.collapsed? && "pu-kanban-column-collapsed"
+              effective_collapsed? && "pu-kanban-column-collapsed"
             ),
             data: {
               kanban_col: column.key.to_s,
+              # The DEFAULT (not the effective state) so the controller can store
+              # only a delta from it in the cookie.
+              kanban_default_collapsed: column.collapsed?.to_s,
               kanban_accepts: accepts_value,
               kanban_locked: column.locked?.to_s
             }
@@ -102,6 +117,9 @@ module Plutonium
                    "rounded-[var(--pu-radius-md)] select-none",
             data: {kanban_role: "strip"}
           ) do
+            # The color dot is the outcome signal for terminal columns (:done
+            # green, :lost red) — keep it visible when collapsed too.
+            render_color_dot(column.color) if column.color
             span(
               class: "text-xs font-semibold text-[var(--pu-text-muted)] " \
                      "[writing-mode:vertical-lr] rotate-180"
@@ -149,7 +167,13 @@ module Plutonium
             div(class: "flex items-center gap-2 min-w-0 flex-1") do
               render_color_dot(column.color) if column.color
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
-              render_wip_badge if column.wip
+              # Always show a card count (matching the collapsed strip); when a
+              # WIP limit is set it becomes the "count/limit" badge instead.
+              if column.wip
+                render_wip_badge
+              else
+                render_count_badge
+              end
             end
             render_column_actions if @column_add_url || column.actions.any?
             # Collapse toggle — always present in the expanded header so the
@@ -167,6 +191,12 @@ module Plutonium
               }
             ) { plain "◀" }
           end
+        end
+
+        # Plain card-count badge for columns without a WIP limit — mirrors the
+        # count shown on the collapsed strip so the number is visible either way.
+        def render_count_badge
+          span(class: "pu-badge pu-badge-neutral text-xs font-mono") { plain cards.size.to_s }
         end
 
         def render_wip_badge

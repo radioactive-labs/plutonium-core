@@ -28915,7 +28915,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
 
   // src/js/controllers/kanban_controller.js
   var kanban_controller_default = class extends Controller {
-    static values = { moveUrlTemplate: String };
+    static values = { moveUrlTemplate: String, collapseCookie: String, collapsePath: String };
     static targets = ["column"];
     connect() {
       this.draggedCard = null;
@@ -28929,13 +28929,19 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.addEventListener("dragleave", this.onDragLeave);
       this.element.addEventListener("drop", this.onDrop);
       this.element.addEventListener("dragend", this.onDragEnd);
+      this.scrollTarget = this.#readStoredScroll();
+      this.captureScroll = this.#captureScroll.bind(this);
       this.onBoardScroll = () => {
         if (this.restoringScroll) return;
-        const el = this.element;
-        el.__kanbanScrollLeft = el.scrollLeft;
-        el.__kanbanScrollAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2;
+        clearTimeout(this.scrollSaveTimer);
+        this.scrollSaveTimer = setTimeout(this.captureScroll, 120);
       };
       this.element.addEventListener("scroll", this.onBoardScroll, { passive: true });
+      this.onUserScrollIntent = () => this.#endScrollRestore();
+      this.element.addEventListener("wheel", this.onUserScrollIntent, { passive: true });
+      this.element.addEventListener("touchmove", this.onUserScrollIntent, { passive: true });
+      this.onPageHide = this.captureScroll;
+      window.addEventListener("pagehide", this.onPageHide);
       this.onTurboLoad = this.#syncColumnsToUrl.bind(this);
       this.onBeforeFrameRender = this.#onBeforeFrameRender.bind(this);
       this.onFrameRender = this.#onFrameRender.bind(this);
@@ -28944,7 +28950,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.addEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
       document.addEventListener("turbo:frame-render", this.onFrameRender);
       document.addEventListener("turbo:before-stream-render", this.onBeforeStreamRender);
-      this.#applyPersistedCollapseStates();
       this.#syncColumnsToUrl();
       this.#restoreScrollLeft();
     }
@@ -28954,8 +28959,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.removeEventListener("dragleave", this.onDragLeave);
       this.element.removeEventListener("drop", this.onDrop);
       this.element.removeEventListener("dragend", this.onDragEnd);
+      this.#captureScroll();
       this.element.removeEventListener("scroll", this.onBoardScroll);
+      this.element.removeEventListener("wheel", this.onUserScrollIntent);
+      this.element.removeEventListener("touchmove", this.onUserScrollIntent);
+      window.removeEventListener("pagehide", this.onPageHide);
       clearTimeout(this.restoreScrollTimer);
+      clearTimeout(this.scrollSaveTimer);
       document.removeEventListener("turbo:load", this.onTurboLoad);
       document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
       document.removeEventListener("turbo:frame-render", this.onFrameRender);
@@ -29007,56 +29017,95 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // morph so before/after hooks (turbo:before-frame-morph) still fire.
     #onBeforeFrameRender(event) {
       if (!this.#isColumnFrame(event.target)) return;
-      event.detail.render = (currentElement, newElement) => {
-        morphTurboFrameElements(currentElement, newElement);
-        this.#applyPersistedCollapseState(currentElement.dataset.kanbanColFrame);
-      };
+      event.detail.render = (currentElement, newElement) => morphTurboFrameElements(currentElement, newElement);
     }
     #onFrameRender(event) {
       if (!this.#isColumnFrame(event.target)) return;
-      this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame);
-      if (this.restoringScroll) this.#pinScroll();
+      if (this.restoringScroll) {
+        this.#pinScroll();
+        this.#bumpRestoreTimer();
+      }
     }
     // Apply the saved horizontal position: to the live max when the user was at
     // the end (so it tracks late width changes), otherwise to the exact offset.
-    // No-op when nothing was ever saved (never scrolled) so it can't yank to 0.
+    // No-op when nothing meaningful was saved so it can't yank a fresh board to 0.
     #pinScroll() {
-      const el = this.element;
-      if (!el.__kanbanScrollLeft && !el.__kanbanScrollAtEnd) return;
-      el.scrollLeft = el.__kanbanScrollAtEnd ? el.scrollWidth : el.__kanbanScrollLeft;
+      const t4 = this.scrollTarget;
+      if (!t4 || !t4.l && !t4.e) return;
+      this.element.scrollLeft = t4.e ? this.element.scrollWidth : t4.l;
     }
-    // Re-apply the saved horizontal scroll across a short window, because column
-    // renders (morph on nav, replace on move) settle their width a few frames
-    // late and each settle can clamp scrollLeft back toward 0. Used by both the
-    // reattach (search/filter) and turbo-stream (move) paths.
+    // Re-apply the saved horizontal scroll across a window that extends with each
+    // column render, because renders (morph on nav, replace on move, lazy load on
+    // full reload) settle their width late and each settle can clamp scrollLeft
+    // back toward 0. Used by the reattach, turbo-stream, and initial-load paths.
     #scheduleScrollRestore() {
+      if (!this.scrollTarget || !this.scrollTarget.l && !this.scrollTarget.e) return;
       this.restoringScroll = true;
       this.#pinScroll();
       requestAnimationFrame(() => this.#pinScroll());
-      clearTimeout(this.restoreScrollTimer);
-      this.restoreScrollTimer = setTimeout(() => {
-        this.#pinScroll();
-        this.restoringScroll = false;
-      }, 400);
+      this.#bumpRestoreTimer();
     }
-    // Put the horizontal scroll back after Turbo reattaches the board (nav). The
-    // saved value lives on the board node, so it survives the detach/reattach.
+    // (Re)arm the timer that ends the restore window. Reset on every column render
+    // so the window lives ~400ms past the LAST column to settle — enough for slow
+    // lazy frames on a fresh load without pinning forever.
+    #bumpRestoreTimer() {
+      clearTimeout(this.restoreScrollTimer);
+      this.restoreScrollTimer = setTimeout(() => this.#endScrollRestore(), 400);
+    }
+    #endScrollRestore() {
+      if (!this.restoringScroll) return;
+      this.#pinScroll();
+      this.restoringScroll = false;
+      clearTimeout(this.restoreScrollTimer);
+    }
+    // Restore on connect — covers Turbo reattach (search/filter) and a full page
+    // reload (F5), since scrollTarget is seeded from sessionStorage either way.
     #restoreScrollLeft() {
-      if (!this.element.__kanbanScrollLeft && !this.element.__kanbanScrollAtEnd) return;
       this.#scheduleScrollRestore();
     }
-    // A move / realtime update re-renders columns via turbo-stream (replace), not
-    // the frame path — and a plain rAF re-apply races the stream (it can run
-    // before Turbo swaps the column in, so the server default sticks). Wrap the
-    // stream's own render and re-assert collapse in the SAME tick, right after the
-    // DOM is swapped and before the browser paints, so an expanded column can't
-    // flash — or stay — collapsed after a drop.
+    // ── scroll persistence (sessionStorage) ──
+    // Per-tab and auto-cleared on tab close, so it can't accumulate. Keyed by the
+    // board's collection path (tenant + resource scoped) via the move template.
+    #scrollKey() {
+      const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "");
+      return `pu-kanban-scroll:${path}`;
+    }
+    #readStoredScroll() {
+      try {
+        const raw = sessionStorage.getItem(this.#scrollKey());
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+    // Read the live position (unless a restore currently owns scrollTarget) and
+    // persist it. Runs on the scroll debounce, on pagehide, and on disconnect —
+    // never on the raw scroll event, so the layout read can't stutter scrolling.
+    #captureScroll() {
+      if (!this.restoringScroll) {
+        const el = this.element;
+        this.scrollTarget = {
+          l: el.scrollLeft,
+          e: el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+        };
+      }
+      if (!this.scrollTarget) return;
+      try {
+        sessionStorage.setItem(this.#scrollKey(), JSON.stringify(this.scrollTarget));
+      } catch {
+      }
+    }
+    // A move / realtime update re-renders columns via turbo-stream (replace). The
+    // server renders them in the user's collapse state, so we only need to protect
+    // the horizontal scroll: freeze tracking BEFORE the swap (replacing a column
+    // briefly removes it, narrowing the board so scrollLeft clamps toward 0 — that
+    // clamp would otherwise be saved as the new position, a visible jump at the
+    // far end), then restore once the columns are back.
     #onBeforeStreamRender(event) {
       const render = event.detail.render;
       event.detail.render = async (streamElement) => {
         this.restoringScroll = true;
         await render(streamElement);
-        this.#applyPersistedCollapseStates();
         this.#scheduleScrollRestore();
       };
     }
@@ -29079,14 +29128,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const strip = wrapper.querySelector("[data-kanban-role='strip']");
       const body = wrapper.querySelector("[data-kanban-role='body']");
       if (!strip || !body) return;
-      const isCollapsed = wrapper.classList.contains("pu-kanban-column-collapsed");
-      if (isCollapsed) {
-        wrapper.classList.remove("pu-kanban-column-collapsed");
-        this.#saveCollapseState(key, false);
-      } else {
-        wrapper.classList.add("pu-kanban-column-collapsed");
-        this.#saveCollapseState(key, true);
-      }
+      const nowCollapsed = wrapper.classList.toggle("pu-kanban-column-collapsed");
+      const defaultCollapsed = wrapper.dataset.kanbanDefaultCollapsed === "true";
+      this.#persistCollapse(key, nowCollapsed !== defaultCollapsed);
     }
     // ─── drag lifecycle ──────────────────────────────────────────────────────────
     #onDragStart(event) {
@@ -29180,40 +29224,38 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (accepts === "none") return false;
       return accepts.split(",").map((k4) => k4.trim()).includes(sourceKey);
     }
-    // ─── collapse persistence ─────────────────────────────────────────────────────
-    // Applies localStorage collapse states to all column wrappers currently in
-    // the DOM. Called on connect() and implicitly after Turbo frame swaps
-    // because Stimulus re-connects the controller when the frame content changes.
-    #applyPersistedCollapseStates() {
-      this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
-        this.#applyPersistedCollapseState(wrapper.dataset.kanbanCol);
-      });
+    // ─── collapse persistence (cookie delta) ───────────────────────────────────
+    //
+    // The cookie stores ONLY the column keys whose state differs from the server
+    // default, comma-joined (e.g. "todo,done"). The server reads it and renders
+    // each column in the user's state directly, so there's no client re-apply and
+    // no FOUC on any render path. The delta encoding keeps it compact and
+    // self-trimming: a board at its defaults has no cookie, and toggling a column
+    // back to default drops its key (and an empty set deletes the cookie).
+    // `flipped` = the column's state now differs from its default.
+    #persistCollapse(key, flipped) {
+      const keys = new Set(this.#readCollapseCookie());
+      if (flipped) keys.add(key);
+      else keys.delete(key);
+      this.#writeCollapseCookie([...keys]);
     }
-    // Re-apply one column's persisted collapse state. Called after any path that
-    // re-renders a column's body — lazy load, search/filter/scope reload
-    // (turbo:frame-render), and a move (turbo-stream) — since the server always
-    // renders the column in its default state, dropping the client toggle.
-    #applyPersistedCollapseState(key) {
-      if (!key) return;
-      const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`);
-      if (!wrapper) return;
-      const stored = localStorage.getItem(this.#storageKey(key));
-      if (stored === null) return;
-      wrapper.classList.toggle("pu-kanban-column-collapsed", stored === "1");
+    #readCollapseCookie() {
+      const name = this.collapseCookieValue;
+      if (!name) return [];
+      const entry = document.cookie.split("; ").find((c4) => c4.startsWith(`${name}=`));
+      if (!entry) return [];
+      return decodeURIComponent(entry.slice(name.length + 1)).split(",").filter(Boolean);
     }
-    #saveCollapseState(key, collapsed) {
-      try {
-        localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0");
-      } catch {
+    #writeCollapseCookie(keys) {
+      const name = this.collapseCookieValue;
+      if (!name) return;
+      const path = this.collapsePathValue || "/";
+      if (keys.length === 0) {
+        document.cookie = `${name}=; path=${path}; max-age=0; SameSite=Lax`;
+        return;
       }
-    }
-    // Derives a unique localStorage key from the resource collection path so
-    // different boards (different resources / tenants) don't share state.
-    // The move URL template is "/path/__ID__/kanban_move"; strip the suffix to
-    // recover the collection path.
-    #storageKey(key) {
-      const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "");
-      return `pu-kanban:${path}:${key}:collapsed`;
+      const value = encodeURIComponent(keys.join(","));
+      document.cookie = `${name}=${value}; path=${path}; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`;
     }
     // ─── helpers ─────────────────────────────────────────────────────────────────
     // Returns the 0-based insertion index within the destination column by

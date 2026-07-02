@@ -24,6 +24,28 @@ module Plutonium
         include Phlex::Rails::Helpers::TurboFrameTag
         include Phlex::Rails::Helpers::TurboStreamFrom
 
+        # Per-board collapse cookie. Stores ONLY the column keys whose collapse
+        # state differs from the server default (a compact delta): a board sitting
+        # at its defaults writes nothing, and toggling a column back to default
+        # drops its key — so the cookie can't balloon. Path-scoped to the engine
+        # mount so it rides only this board's requests. The server reads it to
+        # render each column in the user's state (no client re-apply / FOUC); the
+        # kanban controller writes it on toggle.
+        def self.collapse_cookie_name(resource_class)
+          "pu_kbc_#{resource_class.name.gsub("::", "_").underscore}"
+        end
+
+        def self.collapse_cookie_path(request)
+          path = request.script_name.to_s
+          path.empty? ? "/" : path
+        end
+
+        # The set of column keys (strings) flipped from their default, parsed
+        # from the cookie value. Order/whitespace-tolerant; blanks dropped.
+        def self.collapse_flips(cookie_value)
+          cookie_value.to_s.split(",").filter_map { |k| k.strip.presence }
+        end
+
         attr_reader :board, :grouped_data, :resource_definition, :resource_fields,
           :resource_class, :scoped_entity
 
@@ -80,11 +102,15 @@ module Plutonium
                 # per-record move URL at drop time. The collection path comes from
                 # request.path so tenant / engine scoping is preserved automatically.
                 # Example: /admin/tasks/__ID__/kanban_move
-                kanban_move_url_template_value: kanban_move_url_template
+                kanban_move_url_template_value: kanban_move_url_template,
+                # Name + path the controller uses to write the collapse cookie —
+                # must match what the server reads (see collapse_cookie_name/path).
+                kanban_collapse_cookie_value: self.class.collapse_cookie_name(resource_class),
+                kanban_collapse_path_value: self.class.collapse_cookie_path(request)
               }
             ) do
               grouped_data.each do |entry|
-                render_column_frame(entry[:column])
+                render_column_frame(entry[:column], collapsed: entry[:collapsed])
               end
             end
 
@@ -166,7 +192,7 @@ module Plutonium
           )
         end
 
-        def render_column_frame(column)
+        def render_column_frame(column, collapsed: false)
           # `refresh: "morph"` marks the frame morphable; `data-kanban-col-frame`
           # lets the `kanban` controller find each column frame and rewrite its
           # src to the current URL params (search / filter / scope) so cards
@@ -179,22 +205,86 @@ module Plutonium
           attrs[:loading] = "lazy" if board.lazy?
 
           turbo_frame_tag(column_frame_id(column), **attrs) do
-            # Header is inside the frame so the shell is meaningful while the
-            # body (card list) loads. Task 6 replaces the frame contents with
-            # the full column body rendered by Kanban::Column.
+            # The placeholder mirrors the SHAPE of the loaded column (a thin strip
+            # when collapsed, the full w-72 box otherwise) so the lazy body load
+            # doesn't snap between orientations/widths — a collapsed column that
+            # renders as an open header and then flips shut is the FOUC this fixes.
+            if collapsed
+              render_collapsed_placeholder(column)
+            else
+              render_column_placeholder(column)
+            end
+          end
+        end
+
+        # Full-column placeholder: matches the loaded expanded column box (w-72)
+        # so an expanded column doesn't resize when its body arrives.
+        def render_column_placeholder(column)
+          div(class: "pu-kanban-column w-72 shrink-0 flex flex-col bg-[var(--pu-surface-alt)] " \
+                     "border border-[var(--pu-border)] rounded-[var(--pu-radius-md)] overflow-hidden") do
             render_column_header(column)
           end
         end
 
-        # Mirrors Kanban::Column#render_header structurally (no count badge) so
-        # the shell→loaded transition doesn't flash a stale count or restructure.
+        # Strip placeholder: matches the loaded collapsed strip's full layout
+        # (w-10, justify-between, dot + vertical label + count badge + expand
+        # icon) so a collapsed column paints as a strip from the first frame AND
+        # doesn't grow/redistribute when the real strip (with its count + button)
+        # swaps in. The count/icon are reserved as invisible-/subtle skeletons.
+        def render_collapsed_placeholder(column)
+          div(
+            class: "pu-kanban-strip w-10 shrink-0 flex flex-col items-center justify-between py-3 gap-2 " \
+                   "bg-[var(--pu-surface)] border border-[var(--pu-border)] " \
+                   "rounded-[var(--pu-radius-md)] select-none",
+            data: {kanban_role: "strip"}
+          ) do
+            render_color_dot(column.color) if column.color
+            span(
+              class: "text-xs font-semibold text-[var(--pu-text-muted)] " \
+                     "[writing-mode:vertical-lr] rotate-180"
+            ) { plain column.label }
+            # The strip ALWAYS shows a card-count badge + expand button when
+            # loaded, so reserve both (unlike the header's wip-only count).
+            span(class: "pu-badge pu-badge-neutral text-xs font-mono opacity-0", aria_hidden: "true") { plain "0" }
+            span(class: "p-0.5 text-[var(--pu-text-subtle)]", aria_hidden: "true") { plain "▶" }
+          end
+        end
+
+        # Mirrors Kanban::Column#render_header's LAYOUT (dot + label, plus reserved
+        # slots for the count badge and the collapse icon) so the header keeps its
+        # exact size when the loaded body swaps in — nothing shifts or grows. The
+        # reserved slots are invisible skeletons; the real count/icon replace them
+        # on load without a reflow.
         def render_column_header(column)
-          div(class: "px-3 py-2 flex items-center justify-between border-b border-[var(--pu-border)] bg-[var(--pu-surface)]") do
-            div(class: "flex items-center gap-2 min-w-0") do
+          div(class: "px-3 py-2 flex items-center justify-between gap-2 border-b border-[var(--pu-border)] bg-[var(--pu-surface)]") do
+            div(class: "flex items-center gap-2 min-w-0 flex-1") do
               render_color_dot(column.color) if column.color
               span(class: "font-semibold text-sm text-[var(--pu-text)] truncate") { plain column.label }
+              # The loaded header always shows a count now — a plain count, or a
+              # "count/limit" badge for wip columns — so reserve it either way,
+              # sized to the eventual text.
+              render_count_placeholder(column.wip ? "0/0" : "0")
             end
+            render_icon_placeholder
           end
+        end
+
+        # Invisible badge skeleton reserving the count badge's height and
+        # approximate width so the label doesn't reflow when the count appears.
+        def render_count_placeholder(text)
+          span(
+            class: "pu-badge pu-badge-neutral text-xs font-mono opacity-0",
+            aria_hidden: "true"
+          ) { plain text }
+        end
+
+        # Reserves the collapse toggle's footprint (the loaded header always has
+        # one on the right) so the row height and label width don't change on load.
+        def render_icon_placeholder
+          span(
+            class: "shrink-0 p-0.5 text-[var(--pu-text-subtle)]",
+            aria_hidden: "true"
+          ) { plain "◀" }
         end
 
         # Builds the move URL template for the Stimulus drag controller.

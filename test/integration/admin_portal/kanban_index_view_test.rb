@@ -81,18 +81,26 @@ class AdminPortal::KanbanIndexViewTest < ActionDispatch::IntegrationTest
   # meaningful while the lazy card bodies load. Labels come from the DSL column
   # definitions (title-cased from the key by default).
   #
-  # These assertions target the HEADER label span specifically — the
-  # `font-semibold … truncate` span that Kanban::Resource#render_column_header
-  # wraps the label in — rather than a bare substring. A bare /todo/ would pass
-  # trivially against card titles ("Todo Alpha") and prove nothing about the
-  # header. (Cards aren't even rendered in the lazy shell, but the precise
-  # match keeps the test honest regardless.)
-  test "board shell renders each column label inside the header span" do
+  # These assertions target the placeholder label span specifically rather than a
+  # bare substring. A bare /todo/ would pass trivially against card titles ("Todo
+  # Alpha") and prove nothing. The placeholder mirrors the loaded column's SHAPE,
+  # so an expanded column's label sits in the `font-semibold … truncate` header
+  # span while a collapsed column's (Done, role: :done) sits in the vertical
+  # strip span — the label is present either way.
+  test "board shell renders each expanded column label inside the header span" do
     get "/admin/tasks?view=kanban"
-    {todo: "Todo", doing: "Doing", done: "Done"}.each do |_key, label|
+    {todo: "Todo", doing: "Doing"}.each do |_key, label|
       assert_match(/class="font-semibold[^"]*truncate"[^>]*>\s*#{label}\s*</, response.body,
         "expected the #{label} label inside the column header span")
     end
+  end
+
+  test "board shell renders a collapsed column's label in its strip placeholder" do
+    get "/admin/tasks?view=kanban"
+    # Done defaults collapsed (role: :done) → its placeholder is a thin strip
+    # with the label rotated, so the frame doesn't render open then snap shut.
+    assert_match(/writing-mode:vertical-lr[^"]*"[^>]*>\s*Done\s*</, response.body,
+      "expected the Done label inside the collapsed strip placeholder")
   end
 
   # ─── Table still renders on default / explicit table view ───────────────────

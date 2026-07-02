@@ -180,7 +180,13 @@ module Plutonium
         def build_kanban_board_shell
           board = current_kanban_board
           columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
-          grouped_data = columns.map { |col| {column: col, cards: [], total: 0} }
+          # collapsed: the effective (cookie-resolved) state, so the lazy-frame
+          # placeholder renders in the SAME shape the loaded column will — a
+          # collapsed column shows a strip from the first paint instead of a full
+          # header that then snaps to a strip.
+          grouped_data = columns.map do |col|
+            {column: col, cards: [], total: 0, collapsed: kanban_effective_collapsed(col)}
+          end
           Plutonium::UI::Kanban::Resource.new(
             board:,
             grouped_data:,
@@ -302,9 +308,27 @@ module Plutonium
             column_action_data:,
             column_add_url:,
             card_fields: board.card_fields,
-            card_show_frame: kanban_card_show_frame(board)
+            card_show_frame: kanban_card_show_frame(board),
+            collapsed: kanban_effective_collapsed(column)
           )
           view_context.render(component).html_safe
+        end
+
+        # The user's persisted collapse choice for this column, resolved against
+        # the column default. The cookie stores only columns flipped FROM their
+        # default (see Kanban::Resource.collapse_cookie_name), so a listed key
+        # means "the opposite of the default". Rendering this server-side is what
+        # keeps the board in the user's state across morph/stream/reload with no
+        # client re-apply — and therefore no flash.
+        def kanban_effective_collapsed(column)
+          flipped = kanban_collapse_flips.include?(column.key.to_s)
+          flipped ? !column.collapsed? : column.collapsed?
+        end
+
+        def kanban_collapse_flips
+          @kanban_collapse_flips ||= Plutonium::UI::Kanban::Resource.collapse_flips(
+            cookies[Plutonium::UI::Kanban::Resource.collapse_cookie_name(resource_class)]
+          )
         end
 
         # Resolves the turbo-frame a card's show link targets, from the board's

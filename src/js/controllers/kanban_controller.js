@@ -38,17 +38,17 @@ import { morphTurboFrameElements } from "@hotwired/turbo"
 //
 // ## Collapse toggle
 //
-// toggleColumn reads data-kanban-column-key from the clicked button, finds
-// the matching [data-kanban-col] wrapper, and flips the CSS class
-// `pu-kanban-column-collapsed` on it. CSS handles show/hide of strip vs body.
-// The per-column state is persisted in localStorage keyed by the resource
-// path + column key so the preference survives page reloads.
+// toggleColumn reads data-kanban-column-key from the clicked button, finds the
+// matching [data-kanban-col] wrapper, and flips `pu-kanban-column-collapsed` on
+// it for instant feedback. CSS handles show/hide of strip vs body.
 //
-// On connect() the controller applies persisted states for any columns already
-// in the DOM, and re-applies a column's state whenever its body is re-rendered
-// (turbo:frame-render for lazy/search reloads; after the move turbo-stream) —
-// the server always renders a column in its default state, so the client toggle
-// must be re-asserted each time.
+// The choice is persisted in a per-board cookie (name/path supplied via the
+// collapse-cookie / collapse-path values) storing ONLY columns whose state
+// differs from their server default — read from data-kanban-default-collapsed.
+// Because the SERVER reads that cookie and renders each column in the user's
+// state, there is no client re-apply on any render path (lazy load, search
+// morph, move stream) and therefore no collapse FOUC. The delta encoding keeps
+// the cookie compact and self-trimming (default board → no cookie).
 //
 // ## Frozen board (search / filter / scope)
 //
@@ -89,7 +89,7 @@ import { morphTurboFrameElements } from "@hotwired/turbo"
 //                controller never hand-manages rollback state.
 // 4. dragend   — clean up opacity + highlights + drop-hint classes.
 export default class extends Controller {
-  static values = { moveUrlTemplate: String }
+  static values = { moveUrlTemplate: String, collapseCookie: String, collapsePath: String }
   static targets = ["column"]
 
   connect() {
@@ -107,23 +107,36 @@ export default class extends Controller {
     this.element.addEventListener("drop", this.onDrop)
     this.element.addEventListener("dragend", this.onDragEnd)
 
-    // Preserve horizontal scroll across navs. Turbo detaches→reattaches the
-    // permanent board, and the browser resets a container's scrollLeft to 0 on
-    // reattach. We stash the live position on the (persistent) board NODE — not
-    // the controller instance, which is recreated on every reconnect — and
-    // restore it below after reattach. The guard stops the restore's own
-    // scroll events from overwriting the saved value with a transient 0.
+    // Preserve horizontal scroll across navs AND full page reloads. The browser
+    // never restores an inner container's scroll, and neither a Turbo reattach
+    // (permanent board detached→reattached, scrollLeft reset to 0) nor an F5
+    // (fresh DOM) keeps it — so we persist it in sessionStorage, keyed per board,
+    // and restore it below. scrollTarget is the in-memory copy (seeded from
+    // storage on every connect, so it survives reconnects too).
+    this.scrollTarget = this.#readStoredScroll()
+
+    this.captureScroll = this.#captureScroll.bind(this)
+
+    // Trailing debounce: a scroll event only (re)arms the timer — it reads NO
+    // layout, so it can't force a reflow / stutter. The capture reads
+    // scrollLeft/scrollWidth once, after scrolling settles.
     this.onBoardScroll = () => {
       if (this.restoringScroll) return
-      const el = this.element
-      el.__kanbanScrollLeft = el.scrollLeft
-      // Remember an at-the-end position as "end", not an absolute pixel offset:
-      // the board's width settles a beat after a render, so replaying the old
-      // max would land short of the new end and jump. Pinning to the live max
-      // self-corrects. 2px absorbs sub-pixel rounding.
-      el.__kanbanScrollAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+      clearTimeout(this.scrollSaveTimer)
+      this.scrollSaveTimer = setTimeout(this.captureScroll, 120)
     }
     this.element.addEventListener("scroll", this.onBoardScroll, { passive: true })
+
+    // A genuine scroll gesture during the restore window means the user has taken
+    // over — stop pinning so we don't fight them.
+    this.onUserScrollIntent = () => this.#endScrollRestore()
+    this.element.addEventListener("wheel", this.onUserScrollIntent, { passive: true })
+    this.element.addEventListener("touchmove", this.onUserScrollIntent, { passive: true })
+
+    // Capture immediately before an F5 / cross-document nav unloads us, so a
+    // reload mid-scroll (before the debounce fires) still saves the position.
+    this.onPageHide = this.captureScroll
+    window.addEventListener("pagehide", this.onPageHide)
 
     // ── Frozen-board sync (see class header) ──
     this.onTurboLoad = this.#syncColumnsToUrl.bind(this)
@@ -136,16 +149,12 @@ export default class extends Controller {
     // Force a MORPH render on column-frame reloads (a plain src change would
     // blank→fill; morphing diffs cards in place).
     document.addEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
-    // Re-apply the persisted collapse state after a column frame (re)renders —
-    // the server re-renders it with its default state, dropping the user toggle.
+    // turbo:frame-render (nav reload) and turbo:before-stream-render (move /
+    // realtime) are hooked only to keep the horizontal scroll pinned as columns
+    // re-render — collapse state no longer needs re-applying, because the server
+    // renders each column in the user's cookie-persisted state directly.
     document.addEventListener("turbo:frame-render", this.onFrameRender)
-    // A move (and realtime broadcast) re-renders columns via turbo-stream, not
-    // the frame path above — so re-assert collapse state after those renders too.
     document.addEventListener("turbo:before-stream-render", this.onBeforeStreamRender)
-
-    // Apply any persisted collapse states from localStorage so columns
-    // retain the user's preference across page reloads.
-    this.#applyPersistedCollapseStates()
 
     // Reconcile immediately: when Turbo transplants the permanent board it
     // disconnects→reconnects this controller, so connect() itself runs on every
@@ -164,8 +173,15 @@ export default class extends Controller {
     this.element.removeEventListener("drop", this.onDrop)
     this.element.removeEventListener("dragend", this.onDragEnd)
 
+    // Capture before we lose this instance to a Turbo reconnect, so the next
+    // connect reads an up-to-date position.
+    this.#captureScroll()
     this.element.removeEventListener("scroll", this.onBoardScroll)
+    this.element.removeEventListener("wheel", this.onUserScrollIntent)
+    this.element.removeEventListener("touchmove", this.onUserScrollIntent)
+    window.removeEventListener("pagehide", this.onPageHide)
     clearTimeout(this.restoreScrollTimer)
+    clearTimeout(this.scrollSaveTimer)
 
     document.removeEventListener("turbo:load", this.onTurboLoad)
     document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
@@ -225,72 +241,112 @@ export default class extends Controller {
   // morph so before/after hooks (turbo:before-frame-morph) still fire.
   #onBeforeFrameRender(event) {
     if (!this.#isColumnFrame(event.target)) return
-    event.detail.render = (currentElement, newElement) => {
+    // Diff the card list in place instead of blank→fill. Collapse state rides
+    // along correctly because the server rendered the fetched frame in the
+    // user's state, so morphing to it keeps that state — no re-apply needed.
+    event.detail.render = (currentElement, newElement) =>
       morphTurboFrameElements(currentElement, newElement)
-      // Re-assert the user's collapse choice in the SAME synchronous render,
-      // before the browser paints. The server always renders a column in its
-      // default collapse state, so a column the user expanded (or collapsed)
-      // would otherwise flash the server default for one frame after the morph.
-      // Doing it here (not on the later turbo:frame-render) eliminates that FOUC.
-      this.#applyPersistedCollapseState(currentElement.dataset.kanbanColFrame)
-    }
   }
 
   #onFrameRender(event) {
     if (!this.#isColumnFrame(event.target)) return
-    this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame)
-    // A column reload can transiently change the board's width and clamp
-    // scrollLeft; keep pinning it while a restore is in flight.
-    if (this.restoringScroll) this.#pinScroll()
+    // Each column render can change the board's width and clamp scrollLeft. On a
+    // full reload the columns lazy-load one at a time AFTER connect, so keep
+    // pinning — and push the restore window out — with every frame that lands.
+    if (this.restoringScroll) {
+      this.#pinScroll()
+      this.#bumpRestoreTimer()
+    }
   }
 
   // Apply the saved horizontal position: to the live max when the user was at
   // the end (so it tracks late width changes), otherwise to the exact offset.
-  // No-op when nothing was ever saved (never scrolled) so it can't yank to 0.
+  // No-op when nothing meaningful was saved so it can't yank a fresh board to 0.
   #pinScroll() {
-    const el = this.element
-    if (!el.__kanbanScrollLeft && !el.__kanbanScrollAtEnd) return
-    el.scrollLeft = el.__kanbanScrollAtEnd ? el.scrollWidth : el.__kanbanScrollLeft
+    const t = this.scrollTarget
+    if (!t || (!t.l && !t.e)) return
+    this.element.scrollLeft = t.e ? this.element.scrollWidth : t.l
   }
 
-  // Re-apply the saved horizontal scroll across a short window, because column
-  // renders (morph on nav, replace on move) settle their width a few frames
-  // late and each settle can clamp scrollLeft back toward 0. Used by both the
-  // reattach (search/filter) and turbo-stream (move) paths.
+  // Re-apply the saved horizontal scroll across a window that extends with each
+  // column render, because renders (morph on nav, replace on move, lazy load on
+  // full reload) settle their width late and each settle can clamp scrollLeft
+  // back toward 0. Used by the reattach, turbo-stream, and initial-load paths.
   #scheduleScrollRestore() {
+    if (!this.scrollTarget || (!this.scrollTarget.l && !this.scrollTarget.e)) return
     this.restoringScroll = true
     this.#pinScroll()
     requestAnimationFrame(() => this.#pinScroll())
-    clearTimeout(this.restoreScrollTimer)
-    this.restoreScrollTimer = setTimeout(() => {
-      this.#pinScroll()
-      this.restoringScroll = false
-    }, 400)
+    this.#bumpRestoreTimer()
   }
 
-  // Put the horizontal scroll back after Turbo reattaches the board (nav). The
-  // saved value lives on the board node, so it survives the detach/reattach.
+  // (Re)arm the timer that ends the restore window. Reset on every column render
+  // so the window lives ~400ms past the LAST column to settle — enough for slow
+  // lazy frames on a fresh load without pinning forever.
+  #bumpRestoreTimer() {
+    clearTimeout(this.restoreScrollTimer)
+    this.restoreScrollTimer = setTimeout(() => this.#endScrollRestore(), 400)
+  }
+
+  #endScrollRestore() {
+    if (!this.restoringScroll) return
+    this.#pinScroll()
+    this.restoringScroll = false
+    clearTimeout(this.restoreScrollTimer)
+  }
+
+  // Restore on connect — covers Turbo reattach (search/filter) and a full page
+  // reload (F5), since scrollTarget is seeded from sessionStorage either way.
   #restoreScrollLeft() {
-    if (!this.element.__kanbanScrollLeft && !this.element.__kanbanScrollAtEnd) return
     this.#scheduleScrollRestore()
   }
 
-  // A move / realtime update re-renders columns via turbo-stream (replace), not
-  // the frame path — and a plain rAF re-apply races the stream (it can run
-  // before Turbo swaps the column in, so the server default sticks). Wrap the
-  // stream's own render and re-assert collapse in the SAME tick, right after the
-  // DOM is swapped and before the browser paints, so an expanded column can't
-  // flash — or stay — collapsed after a drop.
+  // ── scroll persistence (sessionStorage) ──
+  // Per-tab and auto-cleared on tab close, so it can't accumulate. Keyed by the
+  // board's collection path (tenant + resource scoped) via the move template.
+
+  #scrollKey() {
+    const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "")
+    return `pu-kanban-scroll:${path}`
+  }
+
+  #readStoredScroll() {
+    try {
+      const raw = sessionStorage.getItem(this.#scrollKey())
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  }
+
+  // Read the live position (unless a restore currently owns scrollTarget) and
+  // persist it. Runs on the scroll debounce, on pagehide, and on disconnect —
+  // never on the raw scroll event, so the layout read can't stutter scrolling.
+  #captureScroll() {
+    if (!this.restoringScroll) {
+      const el = this.element
+      this.scrollTarget = {
+        l: el.scrollLeft,
+        e: el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+      }
+    }
+    if (!this.scrollTarget) return
+    try {
+      sessionStorage.setItem(this.#scrollKey(), JSON.stringify(this.scrollTarget))
+    } catch { /* private mode / quota — in-memory target still works this session */ }
+  }
+
+  // A move / realtime update re-renders columns via turbo-stream (replace). The
+  // server renders them in the user's collapse state, so we only need to protect
+  // the horizontal scroll: freeze tracking BEFORE the swap (replacing a column
+  // briefly removes it, narrowing the board so scrollLeft clamps toward 0 — that
+  // clamp would otherwise be saved as the new position, a visible jump at the
+  // far end), then restore once the columns are back.
   #onBeforeStreamRender(event) {
     const render = event.detail.render
     event.detail.render = async (streamElement) => {
-      // Freeze scroll tracking BEFORE the swap: replacing a column frame briefly
-      // removes it, narrowing the board so scrollLeft clamps toward 0. Without
-      // this guard that clamp is saved as the user's new position (worst at the
-      // far end — a visible jump). Restore it once the columns are back.
       this.restoringScroll = true
       await render(streamElement)
-      this.#applyPersistedCollapseStates()
       this.#scheduleScrollRestore()
     }
   }
@@ -321,16 +377,12 @@ export default class extends Controller {
     if (!strip || !body) return
 
     // `pu-kanban-column-collapsed` on the wrapper is what CSS uses to decide
-    // which half to show. Toggling the class is the only state mutation.
-    const isCollapsed = wrapper.classList.contains("pu-kanban-column-collapsed")
-
-    if (isCollapsed) {
-      wrapper.classList.remove("pu-kanban-column-collapsed")
-      this.#saveCollapseState(key, false)
-    } else {
-      wrapper.classList.add("pu-kanban-column-collapsed")
-      this.#saveCollapseState(key, true)
-    }
+    // which half to show. Flip it for instant feedback, then persist the choice
+    // as a delta from the column's server default so the next render (from the
+    // server) comes back in this same state.
+    const nowCollapsed = wrapper.classList.toggle("pu-kanban-column-collapsed")
+    const defaultCollapsed = wrapper.dataset.kanbanDefaultCollapsed === "true"
+    this.#persistCollapse(key, nowCollapsed !== defaultCollapsed)
   }
 
   // ─── drag lifecycle ──────────────────────────────────────────────────────────
@@ -473,48 +525,44 @@ export default class extends Controller {
     return accepts.split(",").map(k => k.trim()).includes(sourceKey)
   }
 
-  // ─── collapse persistence ─────────────────────────────────────────────────────
+  // ─── collapse persistence (cookie delta) ───────────────────────────────────
+  //
+  // The cookie stores ONLY the column keys whose state differs from the server
+  // default, comma-joined (e.g. "todo,done"). The server reads it and renders
+  // each column in the user's state directly, so there's no client re-apply and
+  // no FOUC on any render path. The delta encoding keeps it compact and
+  // self-trimming: a board at its defaults has no cookie, and toggling a column
+  // back to default drops its key (and an empty set deletes the cookie).
 
-  // Applies localStorage collapse states to all column wrappers currently in
-  // the DOM. Called on connect() and implicitly after Turbo frame swaps
-  // because Stimulus re-connects the controller when the frame content changes.
-  #applyPersistedCollapseStates() {
-    this.element.querySelectorAll("[data-kanban-col]").forEach(wrapper => {
-      this.#applyPersistedCollapseState(wrapper.dataset.kanbanCol)
-    })
+  // `flipped` = the column's state now differs from its default.
+  #persistCollapse(key, flipped) {
+    const keys = new Set(this.#readCollapseCookie())
+    if (flipped) keys.add(key)
+    else keys.delete(key)
+    this.#writeCollapseCookie([...keys])
   }
 
-  // Re-apply one column's persisted collapse state. Called after any path that
-  // re-renders a column's body — lazy load, search/filter/scope reload
-  // (turbo:frame-render), and a move (turbo-stream) — since the server always
-  // renders the column in its default state, dropping the client toggle.
-  #applyPersistedCollapseState(key) {
-    if (!key) return
-    const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`)
-    if (!wrapper) return
-
-    const stored = localStorage.getItem(this.#storageKey(key))
-    if (stored === null) return  // No stored preference; use server-rendered initial state.
-
-    wrapper.classList.toggle("pu-kanban-column-collapsed", stored === "1")
+  #readCollapseCookie() {
+    const name = this.collapseCookieValue
+    if (!name) return []
+    const entry = document.cookie.split("; ").find(c => c.startsWith(`${name}=`))
+    if (!entry) return []
+    return decodeURIComponent(entry.slice(name.length + 1)).split(",").filter(Boolean)
   }
 
-  #saveCollapseState(key, collapsed) {
-    // Safari private-browsing reports a 0-byte quota and throws
-    // QuotaExceededError on setItem. Swallow it so the toggle still works
-    // visually — it just won't persist across reloads in that mode.
-    try {
-      localStorage.setItem(this.#storageKey(key), collapsed ? "1" : "0")
-    } catch { /* private browsing: toggle still works, just won't persist */ }
-  }
-
-  // Derives a unique localStorage key from the resource collection path so
-  // different boards (different resources / tenants) don't share state.
-  // The move URL template is "/path/__ID__/kanban_move"; strip the suffix to
-  // recover the collection path.
-  #storageKey(key) {
-    const path = this.moveUrlTemplateValue.replace("/__ID__/kanban_move", "")
-    return `pu-kanban:${path}:${key}:collapsed`
+  #writeCollapseCookie(keys) {
+    const name = this.collapseCookieValue
+    if (!name) return
+    const path = this.collapsePathValue || "/"
+    if (keys.length === 0) {
+      // Board back to all-defaults — drop the cookie entirely.
+      document.cookie = `${name}=; path=${path}; max-age=0; SameSite=Lax`
+      return
+    }
+    const value = encodeURIComponent(keys.join(","))
+    // ~6 months: refreshed on every toggle, so boards in active use persist and
+    // stale ones expire on their own — another guard against unbounded growth.
+    document.cookie = `${name}=${value}; path=${path}; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`
   }
 
   // ─── helpers ─────────────────────────────────────────────────────────────────
