@@ -137,6 +137,26 @@ module Plutonium
           # failure from a successful atomic commit.
           outcome = nil
 
+          # The drop_interaction represents ENTERING the column — a transition.
+          # A same-column reorder (from.key == to.key) is NOT a transition, so it
+          # must not re-prompt for a reason just to reposition a card. Skip the
+          # interaction (and the modal-close/toast streams) entirely and behave
+          # like a plain reorder. Task 6 (client) must mirror this: open no modal
+          # on a same-column reorder.
+          run_drop_interaction = to.drop_interaction? && from.key != to.key
+
+          # Authorize the transition BEFORE opening the transaction — hoisted out
+          # so a denied move can't leave a throwaway on_drop write on the 403
+          # path. Bind the drop_interaction's auto-registered hidden record action
+          # (so interaction_params / build_interactive_record_action_interaction
+          # resolve it) and reuse the already-loaded record as resource_record!
+          # (param-extraction subject + form URL) — no re-query, no divergent copy.
+          if run_drop_interaction
+            params[:interactive_action] = to.drop_interaction_key
+            @resource_record = record
+            authorize_current! record, to: :"#{to.drop_interaction_key}?"
+          end
+
           ActiveRecord::Base.transaction do
             # (1) Apply on_drop:
             #   Symbol → record.public_send(sym) (named method on the record)
@@ -156,19 +176,18 @@ module Plutonium
             record.save! if record.changed?
 
             # (2) Drop interaction — runs against the SAME record instance,
-            # atomic with the move. Reuses the interactive-record-action build
-            # machinery for correct param extraction (structured inputs /
-            # choices) by binding the drop key exactly like kanban_move_form.
-            if to.drop_interaction?
-              # Bind current_interactive_action to the drop_interaction's
-              # auto-registered hidden record action so interaction_params /
-              # build_interactive_record_action_interaction resolve it.
-              params[:interactive_action] = to.drop_interaction_key
-              # Reuse this already-loaded record for resource_record! (param
-              # extraction subject + form URL) — no re-query, no divergent copy.
-              @resource_record = record
-
-              authorize_current! record, to: :"#{to.drop_interaction_key}?"
+            # atomic with the move. Only fires on a CROSS-column move (entering a
+            # new column is the transition the interaction represents); a
+            # same-column reorder skips it (see run_drop_interaction above). The
+            # interactive_action binding + @resource_record + authorize were
+            # hoisted out above the transaction.
+            if run_drop_interaction
+              # build_interactive_record_action_interaction renders the action
+              # form to EXTRACT its params (structured inputs / choices). It runs
+              # INSIDE the transaction on purpose: so a `choices:` proc (or any
+              # form logic) sees the post-on_drop record state. Do NOT hoist this
+              # out — doing so would change the record state the form is built
+              # against and silently alter param-extraction semantics.
               build_interactive_record_action_interaction
               outcome = @interaction.call
               # Interaction validation failed → undo the on_drop write (and any
@@ -197,7 +216,7 @@ module Plutonium
           # Interaction failed → the transaction rolled back. Re-render the SAME
           # modal (422) with the validation errors + the submitted hidden move
           # fields, so the user can correct the input and resubmit the move.
-          if to.drop_interaction? && outcome&.failure?
+          if run_drop_interaction && outcome&.failure?
             return render :kanban_move_form, formats: [:html], **modal_render_options, status: :unprocessable_content
           end
 
@@ -224,11 +243,20 @@ module Plutonium
               end
 
               streams = column_streams
-              # When the move arrived via the drop-interaction modal, close that
-              # modal by emptying the remote-modal frame — mover-only. Plain moves
-              # aren't in a modal, so this stream is only appended on the
-              # interaction path.
-              streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")] if to.drop_interaction?
+              # When the move arrived via the drop-interaction modal (cross-column
+              # only), close that modal by emptying the remote-modal frame AND
+              # surface the interaction's success message(s) as toast(s). Both are
+              # mover-only: only this viewer has the modal open, so they are
+              # deliberately EXCLUDED from the realtime broadcast above (appended
+              # to `streams`, never to `column_streams`). Plain moves and
+              # same-column reorders aren't in a modal, so nothing is appended.
+              if run_drop_interaction
+                streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")]
+                outcome.messages.each do |msg, type|
+                  streams += [turbo_stream.append("kanban-flash", partial: "plutonium/toast",
+                    locals: {type: (type == :notice ? :success : type), msg:})]
+                end
+              end
 
               render turbo_stream: streams
             end

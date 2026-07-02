@@ -46,5 +46,18 @@ class TaskDefinition < ::ResourceDefinition
     column :lost,
       scope: -> { where(status: "lost") },
       drop_interaction: MarkLostInteraction
+
+    # :blocked declares BOTH an on_drop AND a drop_interaction. The on_drop sets
+    # status="blocked" (membership) and stamps lost_reason with a sentinel; the
+    # BlockTaskInteraction then overwrites lost_reason with the user's reason.
+    # Exercises the ordering guarantee (on_drop runs, THEN the interaction) — see
+    # KanbanDropInteractionTest's on_drop+interaction coverage test.
+    column :blocked,
+      scope: -> { where(status: "blocked") },
+      on_drop: ->(r) {
+        r.status = "blocked"
+        r.lost_reason = "SET_BY_ON_DROP"
+      },
+      drop_interaction: BlockTaskInteraction
   end
 end

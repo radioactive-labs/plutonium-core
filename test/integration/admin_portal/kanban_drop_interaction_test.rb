@@ -176,4 +176,80 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(target="#{REMOTE_MODAL_FRAME}"),
       "success via the modal path must emit a stream closing the remote modal frame"
   end
+
+  # ─── Criterion 7: interaction success message surfaced as a toast ──────────
+
+  test "successful drop appends the interaction's success message as a toast" do
+    post kanban_move_url(@doing),
+      params: {from_column: "doing", to_column: "lost", to_index: 0,
+               interaction: {reason: "budget cut"}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    assert_includes response.body, %(target="kanban-flash"),
+      "the interaction's success message must be appended to the flash region"
+    assert_includes response.body, "Marked as lost",
+      "the toast must carry the interaction's success message"
+  end
+
+  # ─── Criterion 8: a column with BOTH on_drop AND drop_interaction ──────────
+
+  test "cross-column drop into a column with on_drop AND drop_interaction persists both in order" do
+    # :blocked declares on_drop (status=blocked + lost_reason sentinel) AND
+    # BlockTaskInteraction (status=blocked + lost_reason=reason). An existing
+    # blocked card lets the reposition be observed.
+    blocked_zero = Task.create!(title: "Blocked Zero", status: "blocked")
+
+    post kanban_move_url(@doing),
+      params: {from_column: "doing", to_column: "blocked", to_index: 0,
+               interaction: {reason: "waiting on vendor"}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+
+    @doing.reload
+    # on_drop's membership write persisted (status).
+    assert_equal "blocked", @doing.status,
+      "the on_drop membership write must persist"
+    # The interaction's extras persisted, overwriting on_drop's sentinel — which
+    # proves on_drop ran FIRST, then the interaction (ordering guarantee).
+    assert_equal "waiting on vendor", @doing.lost_reason,
+      "the interaction extras must persist and overwrite the on_drop sentinel"
+    refute_equal "SET_BY_ON_DROP", @doing.lost_reason,
+      "the interaction must run AFTER on_drop (sentinel must be overwritten)"
+
+    # Both set status → final value is the interaction's (== on_drop's here).
+    assert_equal "blocked", @doing.status
+
+    # reposition ran last: index 0 places the card before the existing one.
+    assert @doing.position < blocked_zero.reload.position,
+      "reposition must run after on_drop + interaction"
+  end
+
+  # ─── Criterion 9: same-column reorder into a drop_interaction column ────────
+
+  test "same-column reorder into :lost does NOT run the drop_interaction" do
+    # An already-lost card with a recorded reason. Reordering WITHIN the lost
+    # column must not re-prompt (the interaction represents ENTERING the column,
+    # not repositioning inside it).
+    @lost_a.update!(lost_reason: "already recorded")
+    Task.create!(title: "Lost Beta", status: "lost")
+
+    post kanban_move_url(@lost_a),
+      params: {from_column: "lost", to_column: "lost", to_index: 1,
+               interaction: {reason: "should be ignored"}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    refute_includes response.body, %(target="#{REMOTE_MODAL_FRAME}"),
+      "a same-column reorder must NOT emit the drop-interaction modal-close stream"
+    refute_includes response.body, "Marked as lost",
+      "a same-column reorder must NOT run the interaction (no success toast)"
+
+    @lost_a.reload
+    assert_equal "already recorded", @lost_a.lost_reason,
+      "the interaction did not run, so lost_reason is unchanged"
+    assert_equal "lost", @lost_a.status,
+      "status is unchanged on a same-column reorder"
+  end
 end

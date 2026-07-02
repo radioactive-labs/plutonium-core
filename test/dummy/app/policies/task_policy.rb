@@ -28,6 +28,12 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
+  # Drop interaction: block a task (kanban :blocked column drop_interaction,
+  # which also declares an on_drop). Delegates to update?.
+  def block_task?
+    update?
+  end
+
   # Core actions
 
   # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.
