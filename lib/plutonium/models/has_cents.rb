@@ -76,6 +76,24 @@ module Plutonium
         class_attribute :has_cents_attributes, instance_writer: false, default: {}
       end
 
+      # Resolves the currency unit (symbol) configured for a has_cents decimal
+      # accessor, e.g. :price for `has_cents :price_cents, unit: "£"`.
+      #
+      # @param decimal_attribute [Symbol, String] The decimal accessor name.
+      # @return [String, nil] The unit — a String verbatim, the value of the
+      #   method named by a Symbol unit (per-row currencies), or nil when the
+      #   attribute has no unit configured / is not a has_cents accessor.
+      def has_cents_unit_for(decimal_attribute)
+        decimal_attribute = decimal_attribute.to_sym
+        config = self.class.has_cents_attributes.values.find { |opts| opts[:name] == decimal_attribute }
+        return unless config
+
+        case (unit = config[:unit])
+        when Symbol then public_send(unit)
+        else unit
+        end
+      end
+
       module ClassMethods
         # # Inherit validations from cents attribute to decimal attribute
         # def validate(*args, &block)
@@ -109,9 +127,19 @@ module Plutonium
         #   - rate: 1000 for dollars/mils (1 dollar = 1000 mils)
         #   - rate: 1 for a whole number representation
         # @param suffix [String] The suffix to append to the cents_name if name is not provided (default: "amount").
+        # @param unit [String, Symbol, nil] The currency unit used when the value is rendered as currency.
+        #   A String is used verbatim as the symbol ("£"); a Symbol names a method read off the record for
+        #   per-row currencies (`unit: :currency_symbol`); nil (default) renders with no symbol. Consumers
+        #   (the Currency display component, grid/kanban cards) read this via {#has_cents_unit_for}.
         #
         # @example Standard currency (dollars and cents)
         #   has_cents :price_cents
+        #
+        # @example Static currency symbol
+        #   has_cents :price_cents, unit: "£"
+        #
+        # @example Per-row currency symbol read off the record
+        #   has_cents :price_cents, unit: :currency_symbol
         #
         # @example Custom rate for a different currency division
         #   has_cents :amount_cents, name: :cost, rate: 1000
@@ -121,14 +149,14 @@ module Plutonium
         #
         # @example Using custom suffix
         #   has_cents :total_cents, suffix: "value"
-        def has_cents(cents_name, name: nil, rate: 100, suffix: "amount")
+        def has_cents(cents_name, name: nil, rate: 100, suffix: "amount", unit: nil)
           cents_name = cents_name.to_sym
           name ||= cents_name.to_s.gsub(/_cents$/, "")
           name = name.to_sym
           name = (name == cents_name) ? :"#{cents_name}_#{suffix}" : name
 
           self.has_cents_attributes = has_cents_attributes.merge(
-            cents_name => {name: name, rate: rate}
+            cents_name => {name: name, rate: rate, unit: unit}
           )
 
           class_eval <<-RUBY, __FILE__, __LINE__ + 1

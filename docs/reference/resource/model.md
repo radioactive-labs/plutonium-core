@@ -97,6 +97,9 @@ class Product < ResourceRecord
   has_cents :cost_cents, name: :wholesale   # custom accessor name
   has_cents :tax_cents, rate: 1000          # 3 decimal places (e.g. for fractional currencies)
   has_cents :amount_yen, rate: 1            # currencies with no subunit (JPY)
+  has_cents :gbp_cents, unit: "£"           # currency symbol used wherever this renders as currency
+  has_cents :multi_cents, unit: :currency_symbol  # per-row: reads record.currency_symbol
+  has_cents :points_cents, unit: false      # explicitly no symbol (skips the default)
 end
 
 product = Product.new
@@ -107,6 +110,25 @@ product.price        # => 19.99
 # Truncates, never rounds
 product.price = 10.999
 product.price_cents  # => 1099
+```
+
+**Currency symbol (`unit:`)** — a `String` is used verbatim (`unit: "£"`); a `Symbol`
+names a method read off the record for per-row currencies (`unit: :currency_symbol`
+→ `record.currency_symbol`); `false` explicitly renders no symbol. This unit is picked
+up automatically anywhere the value renders as currency — show pages, tables, and
+grid/kanban cards — so you configure it once on the model. A per-display
+`display :price, as: :currency, unit: …` overrides it for that display.
+
+Resolution is `display unit → has_cents unit → config default`, where `nil` means
+"not set, keep looking" and `false` means "stop, no symbol". When nothing is set, it
+falls back to `Plutonium.configuration.default_currency_unit`, which itself defaults
+to the i18n `number.currency.format.unit` *if the locale defines it* (`$` in `en`),
+else no symbol:
+
+```ruby
+Plutonium.configure do |config|
+  config.default_currency_unit = "£"   # app-wide default; false for no symbol; nil → i18n-if-set
+end
 ```
 
 ::: danger Use the virtual accessor in policies and definitions

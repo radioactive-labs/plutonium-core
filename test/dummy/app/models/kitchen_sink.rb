@@ -14,7 +14,7 @@ class KitchenSink < ::ResourceRecord
   enum :tier, {a: 0, b: 1, c: 2}, default: :b
   # add enums above.
 
-  has_cents :price_cents            # virtual :price decimal accessor (cents <-> dollars)
+  has_cents :price_cents, unit: "$" # virtual :price decimal accessor (cents <-> dollars); unit drives currency symbol
   # add model configurations above.
 
   belongs_to :organization

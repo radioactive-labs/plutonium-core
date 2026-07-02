@@ -40,6 +40,13 @@ module Plutonium
     #   or proxy the service.
     attr_accessor :navii_host_url
 
+    # @return [String, false, nil] the currency unit (symbol) used when rendering
+    #   a currency value that has no unit configured on `has_cents` or the display.
+    #   `nil` (default) falls back to the i18n `number.currency.format.unit` when
+    #   the locale defines it, otherwise no symbol. Set a literal like `"£"` to
+    #   change the default, or `false` (or `""`) for no symbol application-wide.
+    attr_accessor :default_currency_unit
+
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
       1.0 => proc do |config|

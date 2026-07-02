@@ -127,14 +127,13 @@ module Plutonium
         end
 
         def render_meta_slot
-          fields = Array(slots[:meta])
-          values = fields.map { |f| field_value(f) }.reject(&:blank?)
+          pairs = Array(slots[:meta]).map { |name| [name, field_value(name)] }.reject { |_, value| value.blank? }
 
           div(class: "flex flex-wrap items-center gap-1.5 mt-1") do
-            if values.empty?
+            if pairs.empty?
               render_blank_placeholder
             else
-              values.each { |v| render_meta_badge(v) }
+              pairs.each { |name, value| render_meta_badge(name, value) }
             end
           end
         end
@@ -158,27 +157,55 @@ module Plutonium
             # rendered by the timeago Stimulus controller.
             raw safe(helpers.display_datetime_value(value))
           elsif currency_field?(name)
-            plain helpers.number_to_currency(value, unit: "")
+            plain helpers.number_to_currency(value, unit: currency_unit_for(name))
           else
             plain helpers.display_name_of(value)
           end
         end
 
-        # Renders a meta value as a colored pill, borrowing the Badge
-        # display component's semantic color + humanize logic. Status-like
-        # values (published, pending, failed…) get meaningful colors;
-        # free-form values get a deterministic decorative color.
-        def render_meta_badge(value)
+        # Renders a meta value as a colored pill, borrowing the Badge display
+        # component's semantic color + humanize logic. Non-string types are
+        # formatted by type first so they don't badge their raw value:
+        #   - has_cents columns → currency (matches render_formatted_value)
+        #   - associations → display_name_of (label, not an object inspect)
+        #   - everything else → humanized, with the RAW value driving the
+        #     variant so status-like enums (in_progress, published…) still
+        #     resolve to a semantic color.
+        # The variant hashes the stable formatted label for currency/associations,
+        # so the decorative color no longer churns on an object's memory address.
+        def render_meta_badge(name, value)
           badge = Plutonium::UI::Display::Components::Badge
-          variant = badge.variant_for(value)
+
+          if currency_field?(name)
+            label = helpers.number_to_currency(value, unit: currency_unit_for(name))
+            variant = badge.variant_for(label)
+          elsif association_field?(name)
+            label = helpers.display_name_of(value)
+            variant = badge.variant_for(label)
+          else
+            label = badge.humanize(value)
+            variant = badge.variant_for(value)
+          end
+
           span(class: tokens("pu-badge", "pu-badge-#{variant}")) do
-            plain badge.humanize(value)
+            plain label
           end
         end
 
         def currency_field?(name)
           klass = record.class
           klass.respond_to?(:has_cents_decimal_attribute?) && klass.has_cents_decimal_attribute?(name.to_sym)
+        end
+
+        # Delegates to the shared resolver so cards format currency identically to
+        # the Currency display component — has_cents unit → configured/i18n default,
+        # with `false` meaning no symbol. Cards have no per-display unit (nil).
+        def currency_unit_for(name)
+          Plutonium::UI::Display::Components::Currency.resolve_unit(nil, record, name)
+        end
+
+        def association_field?(name)
+          record.class.reflect_on_association(name.to_sym).present?
         end
 
         # A declared slot with no value renders a muted em-dash rather than

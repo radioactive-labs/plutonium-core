@@ -47,6 +47,11 @@ class KitchenSinkDefinition < ::ResourceDefinition
   # grid_fields above. Drag a card between columns to flip its status; a wip
   # on Pending; an "Archive all" column action on Archived.
   kanban do
+    # Meta badges exercise the type-aware badge path: a has_cents field renders
+    # as currency and a belongs_to association renders as its label (not a raw
+    # decimal / object inspect). Enums still humanize + get semantic colors.
+    card_fields header: :name, meta: [:status, :plan, :tier, :price, :user]
+
     column :active, label: "Active", role: :backlog,
       scope: -> { where(status: :active) },
       on_drop: ->(ks) { ks.status = :active }

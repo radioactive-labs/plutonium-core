@@ -165,6 +165,8 @@ Overrides the slot layout for every kanban card on this board, using the same sl
 
 When `card_fields` is not set, cards fall back to the resource definition's `grid_fields`. If neither is declared, the card renders the default header-only layout.
 
+The `meta` slot renders each field as a colored badge, and formats values by type before badging: a `has_cents` field renders as currency, a `belongs_to` association renders as its label (not an object inspect), and everything else is humanized — with status-like enums (`active`, `pending`, `published`…) resolving to a semantic color. The badge color is deterministic per value, so a given status is the same color on every card.
+
 ---
 
 ## Static columns

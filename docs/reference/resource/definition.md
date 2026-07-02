@@ -121,13 +121,22 @@ These render automatically — declare an `as:` only to override or pass options
 |---|---|---|
 | `boolean` | Yes/No pill (`:boolean`) | green "Yes" / neutral "No"; override with `true_label:` / `false_label:` |
 | `enum` | status badge (`:badge`) | known statuses auto-colored; unknown values get a stable decorative color; override per-value with `colors:` |
-| `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals, **no symbol** unless you pass `unit:` (a literal `"£"` or a Symbol read off the record) |
+| `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals; symbol from `unit:` on `has_cents` (model-wide) or per-display, else `config.default_currency_unit` / the i18n default (see below) |
 
 ```ruby
 display :status, as: :badge, colors: {archived: :neutral, vip: :accent}
 display :price,  as: :currency, unit: "£"
 display :active, as: :boolean, true_label: "Live", false_label: "Off"
 ```
+
+**Currency symbol.** The `unit:` can be set on the model's `has_cents` declaration
+(`has_cents :price_cents, unit: "£"`, or `unit: :currency_symbol` to read a method
+off the record for per-row currencies). That model-level unit is used everywhere the
+value renders as currency — the show page, tables, **and grid/kanban cards**. A
+per-display `unit:` overrides it for that one display; `unit: false` explicitly
+renders no symbol. When neither is set, currency falls back to
+`Plutonium.configuration.default_currency_unit` (default: the i18n
+`number.currency.format.unit` if the locale defines it — `$` in `en` — else no symbol).
 
 ## Field options
 

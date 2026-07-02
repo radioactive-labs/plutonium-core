@@ -14,14 +14,22 @@ module Plutonium
         attribute :cost_cents, :integer
         attribute :suffix, :integer
         attribute :custom_suffix, :integer
+        attribute :gbp_cents, :integer
+        attribute :dynamic_cents, :integer
+        attribute :nosym_cents, :integer
 
         has_cents :price_cents
         has_cents :cost_cents, name: :wholesale_price, rate: 1000
         has_cents :suffix
         has_cents :custom_suffix, suffix: "attr"
+        has_cents :gbp_cents, name: :gbp, unit: "£"
+        has_cents :dynamic_cents, name: :dynamic, unit: :currency_symbol
+        has_cents :nosym_cents, name: :nosym, unit: false
 
         validates :price_cents, numericality: {greater_than_or_equal_to: 0}
         validate :invalidate_price
+
+        def currency_symbol = "€"
 
         private
 
@@ -36,12 +44,37 @@ module Plutonium
 
       def test_has_cents_attributes
         expected = {
-          price_cents: {name: :price, rate: 100},
-          cost_cents: {name: :wholesale_price, rate: 1000},
-          suffix: {name: :suffix_amount, rate: 100},
-          custom_suffix: {name: :custom_suffix_attr, rate: 100}
+          price_cents: {name: :price, rate: 100, unit: nil},
+          cost_cents: {name: :wholesale_price, rate: 1000, unit: nil},
+          suffix: {name: :suffix_amount, rate: 100, unit: nil},
+          custom_suffix: {name: :custom_suffix_attr, rate: 100, unit: nil},
+          gbp_cents: {name: :gbp, rate: 100, unit: "£"},
+          dynamic_cents: {name: :dynamic, rate: 100, unit: :currency_symbol},
+          nosym_cents: {name: :nosym, rate: 100, unit: false}
         }
         assert_equal expected, TestModel.has_cents_attributes
+      end
+
+      def test_has_cents_unit_for_returns_false_when_unit_disabled
+        # false is distinct from nil: an explicit opt-out of any symbol, which
+        # callers must not treat as "unconfigured, fall back to a default".
+        assert_equal false, @model.has_cents_unit_for(:nosym)
+      end
+
+      def test_has_cents_unit_for_static_string
+        assert_equal "£", @model.has_cents_unit_for(:gbp)
+      end
+
+      def test_has_cents_unit_for_symbol_reads_method_off_record
+        assert_equal "€", @model.has_cents_unit_for(:dynamic)
+      end
+
+      def test_has_cents_unit_for_returns_nil_when_no_unit_configured
+        assert_nil @model.has_cents_unit_for(:price)
+      end
+
+      def test_has_cents_unit_for_returns_nil_for_unknown_attribute
+        assert_nil @model.has_cents_unit_for(:not_a_field)
       end
 
       def test_has_cents_attribute
