@@ -200,6 +200,7 @@ end
 | `color:` | Symbol or String | `nil` | Header color dot. Named colors: `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`. Raw CSS string also accepted |
 | `scope:` | Symbol or Proc | `nil` | Relation filter for this column. **Symbol** → `relation.public_send(sym)` (named AR scope). **Proc** → 0-arg lambda called via `instance_exec` on the relation, e.g. `-> { where(status: "todo") }` |
 | `on_drop:` | Symbol or Proc | `nil` | Fired when a card is dropped into this column. **Symbol** → `record.public_send(sym)`. **Proc** → 1-arg lambda `->(record) { … }` where `self` inside the block is the view context (giving access to `current_user`, helpers, etc.). The callback may assign attributes in memory (`r.status = :done`) or call `update!` directly; if the record has unsaved changes after `on_drop` returns the controller saves it automatically. |
+| `drop_interaction:` | Class | `nil` | A **record-scoped** interaction class (declares `attribute :resource`) run when a card is dropped **into** this column from another column. Opens the interaction's form as a modal to collect input, then commits `on_drop` + the interaction + repositioning atomically. Auto-registered as a hidden record action keyed by the interaction's conventional name. See [drop_interaction](#drop-interaction) below |
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Applies a preset (see below) |
 | `collapsed:` | Boolean | `false` | Column starts collapsed (a thin strip with the label rotated). The Stimulus controller persists the toggled state to `localStorage` (key: `pu-kanban:<path>:<column-key>:collapsed`) so the user preference survives page reloads; this DSL value sets the server-rendered initial state only. |
 | `add:` | Boolean | `false` | Show a `+ Add` quick-add button |
@@ -220,6 +221,26 @@ colour signalling the outcome (`:done` = positive close, `:lost` = negative
 close). Use them as the won/lost pair in pipelines (leads, deals, tickets).
 
 Explicitly passed options override the preset. Unknown role values raise `ArgumentError`.
+
+### `drop_interaction:` {#drop-interaction}
+
+```ruby
+column :lost,
+  scope: -> { where(status: "lost") },
+  drop_interaction: MarkLostInteraction
+```
+
+Runs an authorization-aware, input-collecting interaction when a card is dropped **into** this column from another column.
+
+- **Must be a record-scoped interaction** — the class declares `attribute :resource` (singular) and acts on the one dropped card. A `resources`-plural (bulk) interaction is not valid here; that shape is for [column actions](#column-actions).
+- **Auto-registered as a hidden record action** keyed by the interaction's conventional name (`MarkLostInteraction` → `:mark_lost`). Hidden = it does not render as an action button on the show page, table rows, or grid cards; it is reachable only by a drop.
+- **Layered authorization** — both the board-wide `kanban_move?` predicate **and** the interaction's own named policy method (`mark_lost?`) must pass. Add `def mark_lost? = update?` (or stricter) to the policy.
+- **Move flow only.** Dropping cross-column opens the interaction's form as a modal; on submit `on_drop` + the interaction + repositioning commit in **one atomic transaction**. Validation failure rolls the whole transaction back (membership write included) and re-renders the modal with errors — nothing persists. Same-column reorders run positioning only (neither `on_drop` nor the interaction fires).
+- **Quick-add is unaffected** — `+ Add` still uses `on_drop`'s dry-run to seed the new-record form; the `drop_interaction` is not involved.
+- **Author contract** — when a column declares both, `on_drop` owns the membership attribute (e.g. `status`) and the interaction owns the extras (reason, mail, audit). If the interaction also writes the membership attribute it must set the same value `on_drop` does (idempotent). With no `on_drop`, the interaction owns everything.
+- **Success response limitation** — the interaction's success **message** (`.with_message`) surfaces as a toast, but a custom success *response* (`with_redirect_response`, `with_file_response`, …) is **not** honored on the drop path; the board just re-renders and closes the modal.
+
+See the [guide's Interaction on drop section](/guides/kanban#interaction-on-drop) for a full worked example.
 
 ---
 

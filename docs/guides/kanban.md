@@ -237,6 +237,7 @@ end
 | `color:` | Symbol or String | `nil` | Dot color in the column header — `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`, or a raw CSS value |
 | `scope:` | Symbol or Proc | `nil` | Filters the resource relation to this column's cards. Symbol → named scope; Proc → 0-arg lambda called with `instance_exec` on the relation (e.g. `-> { where(status: "todo") }`) |
 | `on_drop:` | Symbol or Proc | `nil` | Called when a card lands in this column. Symbol → `record.public_send(sym)`; Proc → 1-arg lambda `->(record) { … }` where `self` is the view context |
+| `drop_interaction:` | Class | `nil` | Record-scoped interaction run on a cross-column drop into this column — opens a modal to collect input, then commits atomically. See [Interaction on drop](#interaction-on-drop) |
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Preset shorthand (see below) |
 | `collapsed:` | Boolean | `false` | Start collapsed |
 | `add:` | Boolean | `false` | Show `+ Add` quick-add button |
@@ -284,6 +285,103 @@ end
 - `on: :visible` — passes IDs of only the rendered, `per_column`-capped cards.
 
 Column actions are rendered as buttons in the column header. They open the normal interactive-action modal (with form, authorization, success/failure handling) pre-loaded with the column's card IDs.
+
+---
+
+## Interaction on drop
+
+A column can declare `drop_interaction:` to run an authorization-aware, input-collecting [Interaction](/reference/behavior/interactions) when a card is dropped **into** it from another column. Use it when entering a column needs more than a membership flip — a reason, a notification email, an audit entry.
+
+```ruby
+column :lost,
+  scope: -> { where(status: "lost") },
+  drop_interaction: MarkLostInteraction
+```
+
+`drop_interaction:` takes an **Interaction class**. It must be **record-scoped** — it declares `attribute :resource` and acts on the single dropped card. A bulk (`attribute :resources`) interaction is not valid here; that shape is for [column actions](#column-actions).
+
+The interaction is **auto-registered as a hidden record action** keyed by its conventional name (`MarkLostInteraction` → `:mark_lost`). "Hidden" means it does **not** appear as an action button on the show page, table rows, or grid cards — it is reachable only by dropping a card into the column.
+
+### The interaction
+
+A drop interaction is an ordinary record-scoped interaction — nothing kanban-specific in the class:
+
+```ruby
+class MarkLostInteraction < ResourceInteraction
+  presents label: "Mark Lost",
+    icon: Phlex::TablerIcons::X
+
+  attribute :resource
+  attribute :reason, :string
+
+  input :reason
+
+  validates :reason, presence: true
+
+  def execute
+    resource.update!(status: "lost", lost_reason: reason)
+    succeed(resource).with_message("Marked as lost")
+  end
+end
+```
+
+### Layered authorization
+
+Two gates must both pass for the drop to commit:
+
+1. The board-wide **`kanban_move?`** policy predicate — can this card move at all (same as any drag).
+2. The interaction's **own policy method** — the natural predicate named after the action key. Add it to your policy:
+
+```ruby
+class TaskPolicy < ResourcePolicy
+  def mark_lost?
+    update?          # or stricter — only who may mark a task lost
+  end
+end
+```
+
+This is the clean-authorization win: the specific transition is gated by its own named predicate (`mark_lost?`), not buried in a `condition:` proc. If either gate fails the drop is refused and the card stays put.
+
+### Two flows, split by intent
+
+- **Move flow (drag a card cross-column).** Dropping into the column opens the interaction's form as a **modal** to collect input (the `reason`). On submit, the membership write (`on_drop`, if any), the interaction, and the repositioning are committed in **one atomic transaction**.
+- **Seed flow (quick-add `+ Add`).** Unchanged — the `+ Add` button still uses `on_drop`'s dry-run to pre-fill the new-record form (see [Quick-add](#quick-add)). The `drop_interaction` is **not** involved in quick-add.
+
+### Author contract: on_drop owns membership, the interaction owns extras
+
+A column can declare `on_drop:` and `drop_interaction:` together. When it does:
+
+- `on_drop` owns the **membership attribute** (the column's grouping value, e.g. `status`).
+- `drop_interaction` owns the **extras** — the reason, the mail, the audit trail.
+
+If the interaction also writes the membership attribute it **must set the same value** `on_drop` sets (idempotent). In this dummy-app example the `:blocked` column does exactly that — `on_drop` sets `status = "blocked"` and the interaction's `execute` re-asserts `status: "blocked"` while adding the reason:
+
+```ruby
+column :blocked,
+  scope: -> { where(status: "blocked") },
+  on_drop: ->(r) { r.status = "blocked" },
+  drop_interaction: BlockTaskInteraction
+```
+
+When a column declares **only** a `drop_interaction` (no `on_drop`, like `:lost` above), the interaction owns everything — including the membership write — because there is no `on_drop` to do it.
+
+### Same-column drops run positioning only
+
+Reordering a card **within** its current column runs positioning only. Neither `on_drop` nor the `drop_interaction` fires — both represent *entering* a column, and a same-column reorder is not an entry. Only cross-column drops trigger them.
+
+### Atomicity and failure
+
+Interaction validation failure rolls the **whole transaction back** — the membership write included — and re-renders the modal with errors. The move context is preserved, so the user can fix the input and resubmit. Nothing is persisted on failure. Keep side-effects on `deliver_later` (mailers, jobs): a rolled-back failure then sends no stray mail, because the enqueue never commits.
+
+### Success feedback and the response limitation
+
+On success the board's column frames re-render and the modal closes. The interaction's success **message** (`succeed(resource).with_message("Marked as lost")`) is surfaced as a toast.
+
+::: warning Custom success responses are not honored on the drop path
+A drop interaction's custom success *response* — `with_redirect_response`, `with_file_response`, etc. — is **not** honored when it runs from a drop: the board simply re-renders and closes the modal. Keep drop interactions to simple state + extras mutations, and use `.with_message` for feedback.
+:::
+
+There is no card "snap-back" to worry about on cancel — native drag never moves the card's DOM node, so canceling the modal just closes it and the card stays where it was.
 
 ---
 

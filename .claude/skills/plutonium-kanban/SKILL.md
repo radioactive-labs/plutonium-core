@@ -16,6 +16,7 @@ For field-level rendering on cards (card_fields slots), see [[plutonium-resource
 - **Static column actions are auto-registered** as interactive resource actions at class-load time. Dynamic boards (`columns do…end`) cannot introspect their columns at load time — declare any column-action interactions separately with top-level `action` calls.
 - **Moves bypass `permitted_attributes_for_update`** — the `on_drop` callback runs with full model access. Gate the move itself with `kanban_move?` in the policy.
 - **Quick-add (`add: true`) only appears when `create?` is true** in the policy.
+- **Same-column drops = positioning only** — a reorder within a column fires neither `on_drop` nor a `drop_interaction`; both represent *entering* a column, so only cross-column drops trigger them.
 
 ---
 
@@ -162,6 +163,7 @@ column :key,
   wip:       3,                # max cross-column moves into this column
   scope:     -> { where(…) },  # 0-arg lambda or Symbol (sent to relation)
   on_drop:   ->(r) { … },      # 1-arg lambda or Symbol → record.method!
+  drop_interaction: MarkLostInteraction, # record-scoped interaction run on cross-column drop (see below)
   collapsed: true,             # starts collapsed (Stimulus persists toggle to localStorage)
   add:       true,             # show "+ Add" button (requires create?)
   accepts:   true,             # true (default), false, Array of source keys, or 1-arg Proc
@@ -206,6 +208,32 @@ on_drop: :mark_done!                            # dispatched as record.mark_done
 
 If `on_drop` only assigns attributes without calling `save!`/`update!`, the controller calls `record.save!` automatically when the record has unsaved changes after `on_drop` returns.
 
+### `drop_interaction:`
+
+Run an input-collecting interaction when a card is dropped **into** this column from another column — for entries that need more than a membership flip (a reason, a mail, an audit entry).
+
+```ruby
+column :lost, scope: -> { where(status: "lost") }, drop_interaction: MarkLostInteraction
+
+class MarkLostInteraction < ResourceInteraction
+  attribute :resource                       # MUST be record-scoped (singular), not :resources
+  attribute :reason, :string
+  input :reason
+  validates :reason, presence: true
+  def execute
+    resource.update!(status: "lost", lost_reason: reason)
+    succeed(resource).with_message("Marked as lost")   # message → toast
+  end
+end
+```
+
+- **Auto-registered as a HIDDEN record action** keyed by the interaction's conventional name (`MarkLostInteraction` → `:mark_lost`) — no button on show/table/grid; reachable only by dropping.
+- **Move flow:** cross-column drop opens the interaction's form as a modal; on submit `on_drop` + interaction + repositioning commit in **one atomic transaction**. Validation failure rolls it all back (membership write included) and re-renders the modal with errors — nothing persists. Put side-effects on `deliver_later` so a rollback sends no stray mail.
+- **Same-column reorder = positioning only** — neither `on_drop` nor the interaction fires (both = *entering* a column).
+- **Quick-add unaffected:** `+ Add` still uses `on_drop`'s dry-run; the interaction is not involved.
+- **Author contract:** with both present, `on_drop` owns the membership attribute (`status`) and the interaction owns extras. If the interaction also writes membership it must set the **same** value (idempotent). With no `on_drop`, the interaction owns everything (like `:lost`).
+- **Limitation:** custom success *responses* (`with_redirect_response`, `with_file_response`, …) are NOT honored on the drop path — board re-renders + modal closes. Use `.with_message` for feedback.
+
 ### Column actions
 
 Declared inside the column block. Auto-registered as interactive resource actions:
@@ -246,6 +274,8 @@ end
 ```
 
 When `kanban_move?` returns `false`, the board renders read-only — no drag handles, no drop zones.
+
+**Layered authorization for `drop_interaction:` columns.** A drop into a column with a `drop_interaction` must pass **both** the board-wide `kanban_move?` **and** the interaction's own named policy predicate (`MarkLostInteraction` → `def mark_lost? = update?`). The first gates whether the card moves at all; the second gates that specific transition — no `condition:` proc needed.
 
 ### Move authorization flow
 
