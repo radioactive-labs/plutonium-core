@@ -116,6 +116,16 @@ module Plutonium
         assert col.collapsed?, "expected collapsed? to be true for :done role"
       end
 
+      def test_role_lost_sets_color_red
+        board = DSL.build { column :lost, role: :lost }
+        assert_equal :red, board.columns.first.color
+      end
+
+      def test_role_lost_sets_collapsed_true
+        board = DSL.build { column :lost, role: :lost }
+        assert board.columns.first.collapsed?, "expected collapsed? to be true for :lost role"
+      end
+
       def test_explicit_color_overrides_role_preset
         board = DSL.build { column :done, role: :done, color: :purple }
         assert_equal :purple, board.columns.first.color

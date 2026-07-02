@@ -166,7 +166,7 @@ column :key,
   add:       true,             # show "+ Add" button (requires create?)
   accepts:   true,             # true (default), false, Array of source keys, or 1-arg Proc
   locked:    false,            # reject all incoming drops (server-enforced)
-  role:      :backlog          # :backlog or :done (see presets below)
+  role:      :backlog          # :backlog, :done or :lost (see presets below)
 ```
 
 ### Column role presets
@@ -175,6 +175,11 @@ column :key,
 |---|---|
 | `:backlog` | `add: true` |
 | `:done` | `color: :green`, `collapsed: true` |
+| `:lost` | `color: :red`, `collapsed: true` |
+
+`:done` and `:lost` are the two terminal roles — collapsed by default, colour
+signalling the outcome (`:done` = positive close, `:lost` = negative close). The
+natural pair for won/lost pipelines (leads, deals, tickets).
 
 Explicit options override the preset (e.g. `role: :done, collapsed: false`).
 

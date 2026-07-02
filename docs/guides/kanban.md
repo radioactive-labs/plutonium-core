@@ -237,7 +237,7 @@ end
 | `color:` | Symbol or String | `nil` | Dot color in the column header — `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`, or a raw CSS value |
 | `scope:` | Symbol or Proc | `nil` | Filters the resource relation to this column's cards. Symbol → named scope; Proc → 0-arg lambda called with `instance_exec` on the relation (e.g. `-> { where(status: "todo") }`) |
 | `on_drop:` | Symbol or Proc | `nil` | Called when a card lands in this column. Symbol → `record.public_send(sym)`; Proc → 1-arg lambda `->(record) { … }` where `self` is the view context |
-| `role:` | `:backlog`, `:done` | `nil` | Preset shorthand (see below) |
+| `role:` | `:backlog`, `:done`, `:lost` | `nil` | Preset shorthand (see below) |
 | `collapsed:` | Boolean | `false` | Start collapsed |
 | `add:` | Boolean | `false` | Show `+ Add` quick-add button |
 | `accepts:` | `true`, `false`, Array of keys, or Proc | `true` | Which drops are accepted. `true` = all, `false` = none, `[:doing]` = only from `:doing`. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time and returns a boolean (e.g. `->(task) { task.status == "doing" }`) |
@@ -250,6 +250,11 @@ end
 |------|---------------|
 | `:backlog` | `add: true` |
 | `:done` | `color: :green, collapsed: true` |
+| `:lost` | `color: :red, collapsed: true` |
+
+`:done` and `:lost` are the two terminal roles (both collapsed by default) — the
+won/lost pair for pipelines like leads, deals, or tickets; the colour signals the
+outcome.
 
 Explicitly provided options override the preset.
 

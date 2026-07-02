@@ -5,7 +5,11 @@ module Plutonium
     class Column
       ROLE_PRESETS = {
         backlog: {add: true},
-        done: {color: :green, collapsed: true}
+        # Terminal columns: collapsed by default, colour signals the outcome.
+        # :done is the positive close (green); :lost is the negative close
+        # (red) — the natural pair for won/lost pipelines (leads, deals, tickets).
+        done: {color: :green, collapsed: true},
+        lost: {color: :red, collapsed: true}
       }.freeze
 
       attr_reader :key, :label, :color, :wip, :scope, :on_drop, :accepts, :actions

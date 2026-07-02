@@ -200,7 +200,7 @@ end
 | `color:` | Symbol or String | `nil` | Header color dot. Named colors: `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`. Raw CSS string also accepted |
 | `scope:` | Symbol or Proc | `nil` | Relation filter for this column. **Symbol** → `relation.public_send(sym)` (named AR scope). **Proc** → 0-arg lambda called via `instance_exec` on the relation, e.g. `-> { where(status: "todo") }` |
 | `on_drop:` | Symbol or Proc | `nil` | Fired when a card is dropped into this column. **Symbol** → `record.public_send(sym)`. **Proc** → 1-arg lambda `->(record) { … }` where `self` inside the block is the view context (giving access to `current_user`, helpers, etc.). The callback may assign attributes in memory (`r.status = :done`) or call `update!` directly; if the record has unsaved changes after `on_drop` returns the controller saves it automatically. |
-| `role:` | `:backlog`, `:done` | `nil` | Applies a preset (see below) |
+| `role:` | `:backlog`, `:done`, `:lost` | `nil` | Applies a preset (see below) |
 | `collapsed:` | Boolean | `false` | Column starts collapsed (a thin strip with the label rotated). The Stimulus controller persists the toggled state to `localStorage` (key: `pu-kanban:<path>:<column-key>:collapsed`) so the user preference survives page reloads; this DSL value sets the server-rendered initial state only. |
 | `add:` | Boolean | `false` | Show a `+ Add` quick-add button |
 | `accepts:` | `true`, `false`, Array, or Proc | `true` | Drop policy. `true` accepts any source column. `false` rejects all drops (display-only column). An Array of column key symbols accepts only those sources. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time (via `accepts_record?`) and returns a boolean — e.g. `->(task) { task.status == "doing" }`. The client-side drag hint treats a Proc column as permissive (`data-kanban-accepts="all"`) since the browser can't run the Proc; the server enforces it precisely on every move |
@@ -213,6 +213,11 @@ end
 |------|--------------------|
 | `:backlog` | `add: true` |
 | `:done` | `color: :green, collapsed: true` |
+| `:lost` | `color: :red, collapsed: true` |
+
+`:done` and `:lost` are the two terminal roles — both collapsed by default, the
+colour signalling the outcome (`:done` = positive close, `:lost` = negative
+close). Use them as the won/lost pair in pipelines (leads, deals, tickets).
 
 Explicitly passed options override the preset. Unknown role values raise `ArgumentError`.
 
