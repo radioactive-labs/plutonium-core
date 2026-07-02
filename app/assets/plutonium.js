@@ -28929,14 +28929,24 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.addEventListener("dragleave", this.onDragLeave);
       this.element.addEventListener("drop", this.onDrop);
       this.element.addEventListener("dragend", this.onDragEnd);
+      this.onBoardScroll = () => {
+        if (this.restoringScroll) return;
+        const el = this.element;
+        el.__kanbanScrollLeft = el.scrollLeft;
+        el.__kanbanScrollAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2;
+      };
+      this.element.addEventListener("scroll", this.onBoardScroll, { passive: true });
       this.onTurboLoad = this.#syncColumnsToUrl.bind(this);
       this.onBeforeFrameRender = this.#onBeforeFrameRender.bind(this);
       this.onFrameRender = this.#onFrameRender.bind(this);
+      this.onBeforeStreamRender = this.#onBeforeStreamRender.bind(this);
       document.addEventListener("turbo:load", this.onTurboLoad);
       document.addEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
       document.addEventListener("turbo:frame-render", this.onFrameRender);
+      document.addEventListener("turbo:before-stream-render", this.onBeforeStreamRender);
       this.#applyPersistedCollapseStates();
       this.#syncColumnsToUrl();
+      this.#restoreScrollLeft();
     }
     disconnect() {
       this.element.removeEventListener("dragstart", this.onDragStart);
@@ -28944,9 +28954,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.removeEventListener("dragleave", this.onDragLeave);
       this.element.removeEventListener("drop", this.onDrop);
       this.element.removeEventListener("dragend", this.onDragEnd);
+      this.element.removeEventListener("scroll", this.onBoardScroll);
+      clearTimeout(this.restoreScrollTimer);
       document.removeEventListener("turbo:load", this.onTurboLoad);
       document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
       document.removeEventListener("turbo:frame-render", this.onFrameRender);
+      document.removeEventListener("turbo:before-stream-render", this.onBeforeStreamRender);
     }
     // ─── Frozen-board URL sync ────────────────────────────────────────────────────
     // Reconcile every column frame's src with the current URL's board params
@@ -29002,6 +29015,50 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     #onFrameRender(event) {
       if (!this.#isColumnFrame(event.target)) return;
       this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame);
+      if (this.restoringScroll) this.#pinScroll();
+    }
+    // Apply the saved horizontal position: to the live max when the user was at
+    // the end (so it tracks late width changes), otherwise to the exact offset.
+    // No-op when nothing was ever saved (never scrolled) so it can't yank to 0.
+    #pinScroll() {
+      const el = this.element;
+      if (!el.__kanbanScrollLeft && !el.__kanbanScrollAtEnd) return;
+      el.scrollLeft = el.__kanbanScrollAtEnd ? el.scrollWidth : el.__kanbanScrollLeft;
+    }
+    // Re-apply the saved horizontal scroll across a short window, because column
+    // renders (morph on nav, replace on move) settle their width a few frames
+    // late and each settle can clamp scrollLeft back toward 0. Used by both the
+    // reattach (search/filter) and turbo-stream (move) paths.
+    #scheduleScrollRestore() {
+      this.restoringScroll = true;
+      this.#pinScroll();
+      requestAnimationFrame(() => this.#pinScroll());
+      clearTimeout(this.restoreScrollTimer);
+      this.restoreScrollTimer = setTimeout(() => {
+        this.#pinScroll();
+        this.restoringScroll = false;
+      }, 400);
+    }
+    // Put the horizontal scroll back after Turbo reattaches the board (nav). The
+    // saved value lives on the board node, so it survives the detach/reattach.
+    #restoreScrollLeft() {
+      if (!this.element.__kanbanScrollLeft && !this.element.__kanbanScrollAtEnd) return;
+      this.#scheduleScrollRestore();
+    }
+    // A move / realtime update re-renders columns via turbo-stream (replace), not
+    // the frame path — and a plain rAF re-apply races the stream (it can run
+    // before Turbo swaps the column in, so the server default sticks). Wrap the
+    // stream's own render and re-assert collapse in the SAME tick, right after the
+    // DOM is swapped and before the browser paints, so an expanded column can't
+    // flash — or stay — collapsed after a drop.
+    #onBeforeStreamRender(event) {
+      const render = event.detail.render;
+      event.detail.render = async (streamElement) => {
+        this.restoringScroll = true;
+        await render(streamElement);
+        this.#applyPersistedCollapseStates();
+        this.#scheduleScrollRestore();
+      };
     }
     #columnFrames() {
       return this.element.querySelectorAll("turbo-frame[data-kanban-col-frame]");
@@ -29088,10 +29145,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         const body = await response.text();
         if (window.Turbo) {
           Turbo.renderStreamMessage(body);
-          requestAnimationFrame(() => {
-            this.#applyPersistedCollapseState(fromColumn);
-            this.#applyPersistedCollapseState(toColumn);
-          });
         }
       } catch (error2) {
         console.error("[kanban] move request failed:", error2);

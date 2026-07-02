@@ -107,10 +107,29 @@ export default class extends Controller {
     this.element.addEventListener("drop", this.onDrop)
     this.element.addEventListener("dragend", this.onDragEnd)
 
+    // Preserve horizontal scroll across navs. Turbo detaches→reattaches the
+    // permanent board, and the browser resets a container's scrollLeft to 0 on
+    // reattach. We stash the live position on the (persistent) board NODE — not
+    // the controller instance, which is recreated on every reconnect — and
+    // restore it below after reattach. The guard stops the restore's own
+    // scroll events from overwriting the saved value with a transient 0.
+    this.onBoardScroll = () => {
+      if (this.restoringScroll) return
+      const el = this.element
+      el.__kanbanScrollLeft = el.scrollLeft
+      // Remember an at-the-end position as "end", not an absolute pixel offset:
+      // the board's width settles a beat after a render, so replaying the old
+      // max would land short of the new end and jump. Pinning to the live max
+      // self-corrects. 2px absorbs sub-pixel rounding.
+      el.__kanbanScrollAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+    }
+    this.element.addEventListener("scroll", this.onBoardScroll, { passive: true })
+
     // ── Frozen-board sync (see class header) ──
     this.onTurboLoad = this.#syncColumnsToUrl.bind(this)
     this.onBeforeFrameRender = this.#onBeforeFrameRender.bind(this)
     this.onFrameRender = this.#onFrameRender.bind(this)
+    this.onBeforeStreamRender = this.#onBeforeStreamRender.bind(this)
 
     // After each navigation, reconcile the column frames' src with the new URL.
     document.addEventListener("turbo:load", this.onTurboLoad)
@@ -120,6 +139,9 @@ export default class extends Controller {
     // Re-apply the persisted collapse state after a column frame (re)renders —
     // the server re-renders it with its default state, dropping the user toggle.
     document.addEventListener("turbo:frame-render", this.onFrameRender)
+    // A move (and realtime broadcast) re-renders columns via turbo-stream, not
+    // the frame path above — so re-assert collapse state after those renders too.
+    document.addEventListener("turbo:before-stream-render", this.onBeforeStreamRender)
 
     // Apply any persisted collapse states from localStorage so columns
     // retain the user's preference across page reloads.
@@ -130,6 +152,9 @@ export default class extends Controller {
     // nav. A stale frame (src carrying the previous URL's params) is reloaded
     // here; a fresh board (frames already matching the URL) is a no-op.
     this.#syncColumnsToUrl()
+
+    // connect() runs right after reattach — put the horizontal scroll back.
+    this.#restoreScrollLeft()
   }
 
   disconnect() {
@@ -139,9 +164,13 @@ export default class extends Controller {
     this.element.removeEventListener("drop", this.onDrop)
     this.element.removeEventListener("dragend", this.onDragEnd)
 
+    this.element.removeEventListener("scroll", this.onBoardScroll)
+    clearTimeout(this.restoreScrollTimer)
+
     document.removeEventListener("turbo:load", this.onTurboLoad)
     document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
     document.removeEventListener("turbo:frame-render", this.onFrameRender)
+    document.removeEventListener("turbo:before-stream-render", this.onBeforeStreamRender)
   }
 
   // ─── Frozen-board URL sync ────────────────────────────────────────────────────
@@ -210,6 +239,60 @@ export default class extends Controller {
   #onFrameRender(event) {
     if (!this.#isColumnFrame(event.target)) return
     this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame)
+    // A column reload can transiently change the board's width and clamp
+    // scrollLeft; keep pinning it while a restore is in flight.
+    if (this.restoringScroll) this.#pinScroll()
+  }
+
+  // Apply the saved horizontal position: to the live max when the user was at
+  // the end (so it tracks late width changes), otherwise to the exact offset.
+  // No-op when nothing was ever saved (never scrolled) so it can't yank to 0.
+  #pinScroll() {
+    const el = this.element
+    if (!el.__kanbanScrollLeft && !el.__kanbanScrollAtEnd) return
+    el.scrollLeft = el.__kanbanScrollAtEnd ? el.scrollWidth : el.__kanbanScrollLeft
+  }
+
+  // Re-apply the saved horizontal scroll across a short window, because column
+  // renders (morph on nav, replace on move) settle their width a few frames
+  // late and each settle can clamp scrollLeft back toward 0. Used by both the
+  // reattach (search/filter) and turbo-stream (move) paths.
+  #scheduleScrollRestore() {
+    this.restoringScroll = true
+    this.#pinScroll()
+    requestAnimationFrame(() => this.#pinScroll())
+    clearTimeout(this.restoreScrollTimer)
+    this.restoreScrollTimer = setTimeout(() => {
+      this.#pinScroll()
+      this.restoringScroll = false
+    }, 400)
+  }
+
+  // Put the horizontal scroll back after Turbo reattaches the board (nav). The
+  // saved value lives on the board node, so it survives the detach/reattach.
+  #restoreScrollLeft() {
+    if (!this.element.__kanbanScrollLeft && !this.element.__kanbanScrollAtEnd) return
+    this.#scheduleScrollRestore()
+  }
+
+  // A move / realtime update re-renders columns via turbo-stream (replace), not
+  // the frame path — and a plain rAF re-apply races the stream (it can run
+  // before Turbo swaps the column in, so the server default sticks). Wrap the
+  // stream's own render and re-assert collapse in the SAME tick, right after the
+  // DOM is swapped and before the browser paints, so an expanded column can't
+  // flash — or stay — collapsed after a drop.
+  #onBeforeStreamRender(event) {
+    const render = event.detail.render
+    event.detail.render = async (streamElement) => {
+      // Freeze scroll tracking BEFORE the swap: replacing a column frame briefly
+      // removes it, narrowing the board so scrollLeft clamps toward 0. Without
+      // this guard that clamp is saved as the user's new position (worst at the
+      // far end — a visible jump). Restore it once the columns are back.
+      this.restoringScroll = true
+      await render(streamElement)
+      this.#applyPersistedCollapseStates()
+      this.#scheduleScrollRestore()
+    }
   }
 
   #columnFrames() {
@@ -341,14 +424,10 @@ export default class extends Controller {
       // response body. On success this re-renders the from + to column frames;
       // on 422 it re-renders only the source frame, snapping the card back.
       if (window.Turbo) {
+        // #onBeforeStreamRender re-asserts the persisted collapse state for each
+        // column the stream re-renders (synchronously, before paint), so the
+        // move doesn't reset a column the user expanded/collapsed.
         Turbo.renderStreamMessage(body)
-        // The stream replaces the column bodies with server-default collapse
-        // state (turbo-stream doesn't fire turbo:frame-render), so re-apply the
-        // user's toggle for the affected columns after the DOM settles.
-        requestAnimationFrame(() => {
-          this.#applyPersistedCollapseState(fromColumn)
-          this.#applyPersistedCollapseState(toColumn)
-        })
       }
     } catch (error) {
       console.error("[kanban] move request failed:", error)
