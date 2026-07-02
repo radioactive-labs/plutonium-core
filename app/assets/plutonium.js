@@ -28971,7 +28971,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
       document.removeEventListener("turbo:frame-render", this.onFrameRender);
       document.removeEventListener("turbo:before-stream-render", this.onBeforeStreamRender);
-      this.#disarmDropDismiss();
     }
     // ─── Frozen-board URL sync ────────────────────────────────────────────────────
     // Reconcile every column frame's src with the current URL's board params
@@ -29120,7 +29119,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // far end), then restore once the columns are back.
     #onBeforeStreamRender(event) {
       if (!this.#streamTargetsColumn(event.target)) return;
-      this.dropResolved = true;
       const render = event.detail.render;
       event.detail.render = async (streamElement) => {
         this.restoringScroll = true;
@@ -29240,15 +29238,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // ─── drop-interaction modal ────────────────────────────────────────────────
     //
     // A cross-column drop into a drop_interaction column opens the interaction's
-    // form in the shared remote-modal frame instead of committing the move. The
-    // card stays put (pending). Resolution:
-    //   • Success — the server's turbo-stream re-renders the kanban-col-* frames
-    //     (which #onBeforeStreamRender records by setting dropResolved) and empties
-    //     the remote_modal frame. The board updates naturally; no snap-back.
-    //   • Cancel/dismiss — the remote-modal <dialog> fires `close` (Esc, backdrop,
-    //     or the X button all funnel through remote-modal#animateClose → close()).
-    //     If no column stream landed (dropResolved is still false) we reload the
-    //     SOURCE column frame so the pending card is reconciled to server truth.
+    // form in the shared remote-modal frame instead of committing the move.
+    //
+    // Native HTML5 drag-and-drop never re-parents the card's DOM node — the card
+    // physically stays in its SOURCE column throughout, so there is nothing to
+    // snap back on cancel: dismissing the modal simply leaves the board as it
+    // already is. On success the server's turbo-stream re-renders the kanban-col-*
+    // frames and empties the remote_modal frame, so the board updates naturally.
     //
     // Returns true when the modal was opened (caller should stop), false when the
     // remote-modal frame is unavailable (caller falls back to the direct POST).
@@ -29262,54 +29258,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         to_index: toIndex
       });
       const url = `${template.replace("__ID__", recordId)}?${params.toString()}`;
-      this.pendingDrop = { fromColumn };
-      this.dropResolved = false;
-      this.#armDropDismiss(frame, fromColumn);
       frame.src = url;
       return true;
-    }
-    // Arm a one-time dismiss handler on the modal frame. `close` doesn't bubble,
-    // so we listen in the CAPTURE phase on the frame — that catches the event on
-    // whichever <dialog> currently lives inside it, surviving a 422 re-render that
-    // swaps in a fresh dialog. Guarded by dropResolved so it's a no-op on success.
-    #armDropDismiss(frame, fromColumn) {
-      this.#disarmDropDismiss();
-      this.dropDismissFrame = frame;
-      this.dropDismissHandler = () => {
-        this.#disarmDropDismiss();
-        if (this.dropResolved) return;
-        if (this.pendingDrop?.fromColumn !== fromColumn) return;
-        this.#reloadColumnFrame(fromColumn);
-        this.pendingDrop = null;
-      };
-      frame.addEventListener("close", this.dropDismissHandler, true);
-    }
-    #disarmDropDismiss() {
-      if (this.dropDismissFrame && this.dropDismissHandler) {
-        this.dropDismissFrame.removeEventListener("close", this.dropDismissHandler, true);
-      }
-      this.dropDismissFrame = null;
-      this.dropDismissHandler = null;
-    }
-    // Reload a column frame from its canonical src (morphed in place via
-    // #onBeforeFrameRender). Forces a fresh fetch even when the src is unchanged —
-    // the pending card was never moved optimistically, so the src still matches;
-    // reload() re-fetches regardless so the column reflects server truth.
-    #reloadColumnFrame(key) {
-      const frame = this.#columnFrame(key);
-      if (!frame) return;
-      const desired = this.#columnFrameSrc(key);
-      const current = frame.getAttribute("src");
-      if (current && this.#canonicalUrl(current) === this.#canonicalUrl(desired)) {
-        frame.reload();
-      } else {
-        frame.src = desired;
-      }
-    }
-    #columnFrame(key) {
-      return this.element.querySelector(
-        `turbo-frame[data-kanban-col-frame="${CSS.escape(String(key))}"]`
-      );
     }
     #onDragEnd(_event) {
       this.#clearHighlights();
