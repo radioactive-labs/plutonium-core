@@ -48,4 +48,22 @@ class AdminPortal::CurrencyInputTest < ActionDispatch::IntegrationTest
     refute_includes price_input, "unit=",
       "the unit option must be consumed, not rendered as an HTML attribute"
   end
+
+  # The currency-input Stimulus controller measures the prefix and sets the
+  # input's left padding to match, so a wide unit ("GH₵") can't collide with the
+  # digits. That replaces the old fixed pl-7 guess — assert the wiring is present
+  # and the brittle fixed padding is gone.
+  test "the prefixed input is wired to the currency-input controller" do
+    get "/admin/kitchen_sinks/new"
+    assert_response :success
+
+    wrapper = response.body[/<div[^>]*data-controller="currency-input"[^>]*>.*?name="kitchen_sink\[price\]"[^>]*>/m]
+    assert wrapper, "expected a currency-input controller wrapper around the price field"
+    assert_includes wrapper, %(data-currency-input-target="prefix")
+    assert_includes wrapper, %(data-currency-input-target="field")
+
+    price_input = response.body[/<input[^>]*name="kitchen_sink\[price\]"[^>]*>/]
+    refute_includes price_input, "pl-7",
+      "the fixed left-padding guess must be gone — the controller sizes it now"
+  end
 end

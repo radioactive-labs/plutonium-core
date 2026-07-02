@@ -29184,6 +29184,24 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/currency_input_controller.js
+  var currency_input_controller_default = class extends Controller {
+    static targets = ["prefix", "field"];
+    // Space between the prefix and the first digit, in px.
+    static values = { gap: { type: Number, default: 6 } };
+    connect() {
+      this.#pad();
+      document.fonts.ready.then(() => this.#pad());
+    }
+    #pad() {
+      this.fieldTarget.style.setProperty(
+        "padding-left",
+        `${this.prefixTarget.offsetWidth + this.gapValue}px`,
+        "important"
+      );
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -29224,6 +29242,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
     application2.register("wizard", wizard_controller_default);
     application2.register("kanban", kanban_controller_default);
+    application2.register("currency-input", currency_input_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

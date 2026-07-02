@@ -37,6 +37,7 @@ import AutosubmitController from "./autosubmit_controller.js"
 import DirtyFormGuardController from "./dirty_form_guard_controller.js"
 import WizardController from "./wizard_controller.js"
 import KanbanController from "./kanban_controller.js"
+import CurrencyInputController from "./currency_input_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -78,4 +79,5 @@ export default function (application) {
   application.register("dirty-form-guard", DirtyFormGuardController)
   application.register("wizard", WizardController)
   application.register("kanban", KanbanController)
+  application.register("currency-input", CurrencyInputController)
 }

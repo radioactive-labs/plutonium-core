@@ -20,12 +20,15 @@ module Plutonium
           def view_template
             return super if @unit_prefix.blank?
 
-            # Overlay the unit at the input's left edge; the input carries extra
-            # left padding (below) so typed digits clear it.
-            div(class: "relative") do
+            # Overlay the unit at the input's left edge; the currency-input
+            # Stimulus controller measures this prefix and sets the input's
+            # left padding to match, so digits always clear it whatever the
+            # symbol's width ("$" vs "GH₵").
+            div(class: "relative", data: {controller: "currency-input"}) do
               span(
                 class: "pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-[var(--pu-text-muted)]",
-                aria_hidden: "true"
+                aria_hidden: "true",
+                data: {currency_input_target: "prefix"}
               ) { plain @unit_prefix }
               super
             end
@@ -38,10 +41,12 @@ module Plutonium
             attributes[:type] = :number
             attributes[:inputmode] = "decimal"
             attributes[:step] ||= "0.01"
+            # Mark the input so the currency-input controller can measure the
+            # prefix and set the exact left padding at connect (see the JS).
+            if @unit_prefix.present?
+              attributes[:data] = (attributes[:data] || {}).merge(currency_input_target: "field")
+            end
             super
-            # pu-input ships its px-3 padding unlayered, so a plain pl utility
-            # loses to it — the `!` variant is required to make room for the prefix.
-            attributes[:class] = [attributes[:class], "pl-7!"].compact.join(" ") if @unit_prefix.present?
           end
 
           private
