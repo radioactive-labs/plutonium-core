@@ -441,6 +441,18 @@ module Plutonium
               return_to: kanban_board_url)
           end
 
+          # Drop-interaction columns advertise the kanban_move_form member URL
+          # (with __ID__ for the dragged card's id) so the client opens the
+          # interaction modal on drop. Mirrors the board's move-url template
+          # (Kanban::Resource#kanban_move_url_template) — same collection path +
+          # __ID__ shape, only the trailing route segment differs (kanban_move_form
+          # vs kanban_move). Derived from resource_url_for (not request.path)
+          # because this method also runs under the kanban_move POST, whose
+          # request.path is the member move URL, not the collection path.
+          drop_form_url_template = if column.drop_interaction?
+            "#{resource_url_for(resource_class).delete_suffix("/")}/__ID__/kanban_move_form"
+          end
+
           component = Plutonium::UI::Kanban::Column.new(
             column:,
             cards:,
@@ -453,7 +465,8 @@ module Plutonium
             board_url: kanban_board_url,
             card_fields: board.card_fields,
             card_show_frame: kanban_card_show_frame(board),
-            collapsed: kanban_effective_collapsed(column)
+            collapsed: kanban_effective_collapsed(column),
+            drop_form_url_template:
           )
           view_context.render(component).html_safe
         end
