@@ -12,11 +12,14 @@ module Plutonium
         lost: {color: :red, collapsed: true}
       }.freeze
 
-      attr_reader :key, :label, :color, :wip, :scope, :on_drop, :accepts, :actions
+      attr_reader :key, :label, :color, :wip, :scope, :on_drop, :accepts, :actions, :drop_interaction
 
       def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_drop: nil,
-        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil)
+        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil, drop_interaction: nil)
         preset = role ? ROLE_PRESETS.fetch(role) { raise ArgumentError, "Unknown column role: #{role.inspect}. Valid: #{ROLE_PRESETS.keys.inspect}" } : {}
+        if drop_interaction && !(drop_interaction.is_a?(Class) && drop_interaction < Plutonium::Resource::Interaction)
+          raise ArgumentError, "drop_interaction: must be a Plutonium::Resource::Interaction subclass, got #{drop_interaction.inspect}"
+        end
         @key = key.to_sym
         @label = label || key.to_s.titleize
         @color = color.nil? ? preset[:color] : color
@@ -27,7 +30,20 @@ module Plutonium
         @add = add.nil? ? preset[:add] : add
         @accepts = accepts.nil? || accepts
         @locked = locked || false
+        @drop_interaction = drop_interaction
         @actions = []
+      end
+
+      # A column may run an input-collecting Interaction when a card is dropped
+      # into it (e.g. "mark lead as lost with a reason"). When set, the drop
+      # opens the interaction's form as a modal before the move is committed.
+      def drop_interaction? = !!@drop_interaction
+
+      # The conventional record-action key for the drop interaction, derived
+      # from its class name: MarkLostInteraction → :mark_lost. Nil when unset.
+      def drop_interaction_key
+        return nil unless @drop_interaction
+        @drop_interaction.name.demodulize.sub(/Interaction\z/, "").underscore.to_sym
       end
 
       def action(key, interaction:, on: :all, label: nil, icon: nil, confirmation: nil)
