@@ -51,6 +51,27 @@ class AdminPortal::KanbanColumnActionTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "ids%5B%5D=#{task.id}"
   end
 
+  # ─── Input-less interaction executes directly (no empty form modal) ──────
+
+  # ArchiveTasksInteraction has no user inputs (only the implicit :resources),
+  # so its action is `immediate`: the link must POST straight to the commit
+  # route with a confirmation, NOT GET an empty interaction form / modal.
+  test ":done column archive link posts directly with a confirmation" do
+    Task.create!(title: "Done 1", status: "done")
+    get "/admin/tasks?view=kanban&column=done"
+    assert_response :success
+
+    # The archive link opts into a POST + confirm rather than a modal frame.
+    assert_match(/data-turbo-method="post"/, response.body)
+    assert_match(/data-turbo-confirm="Archive all\?"/, response.body,
+      "immediate action should carry its default '<label>?' confirmation")
+    # It must NOT open the remote modal frame (that's for input-collecting actions).
+    archive_anchor = response.body[/<a[^>]*bulk_actions\/archive_all[^>]*>/]
+    refute_nil archive_anchor, "expected an anchor targeting the archive bulk route"
+    refute_includes archive_anchor, Plutonium::REMOTE_MODAL_FRAME,
+      "input-less action must not target the modal frame"
+  end
+
   # ─── on: :all includes ALL records, ignoring per_column cap ──────────────
 
   # The board's per_column is 25; seed 30 done tasks. The action link must

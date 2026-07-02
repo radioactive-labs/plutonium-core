@@ -243,15 +243,17 @@ module Plutonium
         # Renders bulk-action links for each column action, and the "+ Add"
         # quick-add button when column_add_url is present.
         #
-        # Each bulk-action link targets GET /resources/bulk_actions/:key?ids[]=…,
-        # which is the existing interactive_bulk_action route.  The action is only
-        # rendered when:
-        #   1. The resolved action is registered in defined_actions (auto-registered
-        #      by Definition::IndexViews.kanban at class-load time).
-        #   2. current_policy.allowed_to?(:"#{key}?") returns true.
+        # Each link targets /resources/bulk_actions/:key?ids[]=… — the same path
+        # for the GET form and the POST commit. The render mirrors ActionButton so
+        # the action's shape is honoured (see #column_action_link_data):
+        #   • an interaction with NO user inputs is `immediate` → POST + confirm,
+        #     executed directly instead of opening an empty form modal;
+        #   • one with inputs opens the interaction form in the remote modal.
         #
-        # The bulk endpoint re-authorizes each record individually, so this
-        # check is a display-only gate — not the security boundary.
+        # The action is only rendered when it's registered in defined_actions
+        # (auto-registered by Definition::IndexViews.kanban) and permitted by the
+        # policy. The bulk endpoint re-authorizes each record, so this is a
+        # display-only gate, not the security boundary.
         def render_column_actions
           div(class: "flex items-center gap-1 shrink-0") do
             render_add_button if @column_add_url
@@ -270,23 +272,41 @@ module Plutonium
 
               url = resource_url_for(resource_class, interaction: col_action.key, ids: ids)
               label = col_action.label || col_action.key.to_s.humanize
-              data_attrs = {
-                kanban_action: col_action.key.to_s,
-                kanban_column: column.key.to_s
-              }
-              data_attrs[:turbo_confirm] = col_action.confirmation if col_action.confirmation
 
               link_to(
                 url,
                 class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
                 title: label,
-                data: data_attrs
+                data: column_action_link_data(col_action, registered)
               ) do
                 render col_action.icon.new(class: "h-4 w-4") if col_action.icon
                 plain label
               end
             end
           end
+        end
+
+        # Data attributes for a column-action link, honouring the interaction's
+        # shape. `immediate` actions (no inputs) POST straight to the commit route
+        # with a confirmation, executed directly; the rest open the form in the
+        # remote modal. The confirmation prefers the DSL-supplied one, falling
+        # back to the action's own default ("<label>?" for immediate actions).
+        def column_action_link_data(col_action, registered)
+          data = {
+            kanban_action: col_action.key.to_s,
+            kanban_column: column.key.to_s
+          }
+
+          if registered.immediate
+            data[:turbo_method] = :post
+            confirmation = col_action.confirmation || registered.confirmation
+            data[:turbo_confirm] = confirmation if confirmation.present?
+          else
+            data[:turbo_frame] = Plutonium::REMOTE_MODAL_FRAME
+            data[:turbo_confirm] = col_action.confirmation if col_action.confirmation
+          end
+
+          data
         end
 
         # ---------------------------------------------------------------
