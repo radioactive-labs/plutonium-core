@@ -1,4 +1,8 @@
 class TaskDefinition < ::ResourceDefinition
+  search do |scope, query|
+    scope.where("title LIKE ?", "%#{query}%")
+  end
+
   kanban do
     per_column 25
 

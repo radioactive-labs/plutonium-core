@@ -73,6 +73,30 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     assert_match(%r{__ID__/kanban_move}, response.body)
   end
 
+  # ─── Frozen-board sync contract (search / filter / scope) ──────────────────
+  # The board is data-turbo-permanent so it survives index navigations intact;
+  # the kanban controller then reloads the column frames (found via
+  # data-kanban-col-frame) and morphs them (refresh="morph").
+
+  test "board wrapper is turbo-permanent with a resource-scoped id" do
+    get "/admin/tasks?view=kanban"
+    assert_response :success
+    assert_match(/data-turbo-permanent/, response.body)
+    # Resource-scoped so navigating between two boards doesn't cross-preserve.
+    assert_match(/id="kanban-board-task"/, response.body)
+  end
+
+  test "each column frame is morphable and tagged for the controller" do
+    get "/admin/tasks?view=kanban"
+    assert_response :success
+    # The todo column frame carries refresh=morph and its column key so the
+    # controller can rewrite its src to the current URL params and morph-reload.
+    frame = response.body[/<turbo-frame\b[^>]*\bid="kanban-col-todo"[^>]*>/]
+    assert frame, "expected the todo column frame"
+    assert_includes frame, %(refresh="morph")
+    assert_includes frame, %(data-kanban-col-frame="todo")
+  end
+
   # ─── Column body: drop zone + card attributes ──────────────────────────────
 
   test "column card list has data-kanban-target=column" do

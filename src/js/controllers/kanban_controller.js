@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { morphTurboFrameElements } from "@hotwired/turbo"
 
 // Connects to data-controller="kanban"
 //
@@ -43,9 +44,25 @@ import { Controller } from "@hotwired/stimulus"
 // The per-column state is persisted in localStorage keyed by the resource
 // path + column key so the preference survives page reloads.
 //
-// On connect() the controller reads all persisted states and applies them
-// before the first paint (wrappers are present in the DOM when the turbo-frame
-// content loads; Stimulus's MutationObserver reconnects after each frame swap).
+// On connect() the controller applies persisted states for any columns already
+// in the DOM, and re-applies a column's state whenever its body is re-rendered
+// (turbo:frame-render for lazy/search reloads; after the move turbo-stream) —
+// the server always renders a column in its default state, so the client toggle
+// must be re-asserted each time.
+//
+// ## Frozen board (search / filter / scope)
+//
+// The board wrapper is `data-turbo-permanent`, so it survives index
+// navigations intact rather than being re-rendered as empty lazy shells (which
+// blanked the columns on every search keystroke). Turbo transplants the
+// permanent element into the new page, which disconnects→reconnects this
+// controller — so connect() runs on every nav, and the frozen frames still
+// carry the PREVIOUS URL's src. #syncColumnsToUrl (called from connect() and on
+// every `turbo:load`) reconciles each frame's src with the current URL,
+// reloading only the frames that differ; `turbo:before-frame-render` upgrades
+// those reloads to a MORPH so cards diff in place instead of blanking. The sync
+// is stateless (frame-src-vs-URL, no "last synced" flag) precisely because the
+// reconnect would reset any such flag before it could be used.
 //
 // ## Drop hints
 //
@@ -90,9 +107,29 @@ export default class extends Controller {
     this.element.addEventListener("drop", this.onDrop)
     this.element.addEventListener("dragend", this.onDragEnd)
 
+    // ── Frozen-board sync (see class header) ──
+    this.onTurboLoad = this.#syncColumnsToUrl.bind(this)
+    this.onBeforeFrameRender = this.#onBeforeFrameRender.bind(this)
+    this.onFrameRender = this.#onFrameRender.bind(this)
+
+    // After each navigation, reconcile the column frames' src with the new URL.
+    document.addEventListener("turbo:load", this.onTurboLoad)
+    // Force a MORPH render on column-frame reloads (a plain src change would
+    // blank→fill; morphing diffs cards in place).
+    document.addEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
+    // Re-apply the persisted collapse state after a column frame (re)renders —
+    // the server re-renders it with its default state, dropping the user toggle.
+    document.addEventListener("turbo:frame-render", this.onFrameRender)
+
     // Apply any persisted collapse states from localStorage so columns
     // retain the user's preference across page reloads.
     this.#applyPersistedCollapseStates()
+
+    // Reconcile immediately: when Turbo transplants the permanent board it
+    // disconnects→reconnects this controller, so connect() itself runs on every
+    // nav. A stale frame (src carrying the previous URL's params) is reloaded
+    // here; a fresh board (frames already matching the URL) is a no-op.
+    this.#syncColumnsToUrl()
   }
 
   disconnect() {
@@ -101,6 +138,86 @@ export default class extends Controller {
     this.element.removeEventListener("dragleave", this.onDragLeave)
     this.element.removeEventListener("drop", this.onDrop)
     this.element.removeEventListener("dragend", this.onDragEnd)
+
+    document.removeEventListener("turbo:load", this.onTurboLoad)
+    document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender)
+    document.removeEventListener("turbo:frame-render", this.onFrameRender)
+  }
+
+  // ─── Frozen-board URL sync ────────────────────────────────────────────────────
+
+  // Reconcile every column frame's src with the current URL's board params
+  // (q / scope / sort). The board is frozen (data-turbo-permanent), so its
+  // frames keep whatever src they were last loaded with; this is what reflects a
+  // new search / filter / scope into the columns.
+  //
+  // STATELESS by design: we compare each frame's actual src against the src the
+  // current URL implies and reload only the ones that differ. We deliberately do
+  // NOT track "last synced URL" — Turbo reconnects this controller on every nav
+  // (the permanent board is transplanted), so any per-connect state would be
+  // reset to the new URL before we could diff against it, and the sync would
+  // never fire. Comparing frame-src-vs-URL has no such blind spot and is
+  // self-limiting: once a frame matches the URL, it won't reload again.
+  #syncColumnsToUrl() {
+    this.#columnFrames().forEach(frame => {
+      const desired = this.#columnFrameSrc(frame.dataset.kanbanColFrame)
+      const current = frame.getAttribute("src")
+      if (current && this.#canonicalUrl(current) === this.#canonicalUrl(desired)) return
+      // Assigning src reloads the frame; #onBeforeFrameRender upgrades that
+      // reload to a morph so the cards diff in place.
+      frame.src = desired
+    })
+  }
+
+  // The src a column frame should carry for the current URL: the page's query
+  // params with view=kanban + column=<key> forced on. Mirrors the server's
+  // Kanban::Resource#column_frame_src so a freshly-rendered board's frames
+  // already match (no spurious reload).
+  #columnFrameSrc(key) {
+    const params = new URLSearchParams(window.location.search)
+    params.set("view", "kanban")
+    params.set("column", key)
+    return `${window.location.pathname}?${params.toString()}`
+  }
+
+  // Order-independent identity for a frame src: path + alphabetically sorted
+  // query params. The server serialises params sorted (Hash#to_query) while
+  // URLSearchParams preserves insertion order, so raw string comparison would
+  // report a false difference and reload every frame on every nav.
+  #canonicalUrl(src) {
+    const url = new URL(src, window.location.origin)
+    url.searchParams.sort()
+    return `${url.pathname}?${url.searchParams.toString()}`
+  }
+
+  // Turbo fires this before a frame renders fetched content. For our column
+  // frames we swap in a morph render so the reload diffs the card list rather
+  // than replacing it (which would blank the column). Uses Turbo's own frame
+  // morph so before/after hooks (turbo:before-frame-morph) still fire.
+  #onBeforeFrameRender(event) {
+    if (!this.#isColumnFrame(event.target)) return
+    event.detail.render = (currentElement, newElement) => {
+      morphTurboFrameElements(currentElement, newElement)
+      // Re-assert the user's collapse choice in the SAME synchronous render,
+      // before the browser paints. The server always renders a column in its
+      // default collapse state, so a column the user expanded (or collapsed)
+      // would otherwise flash the server default for one frame after the morph.
+      // Doing it here (not on the later turbo:frame-render) eliminates that FOUC.
+      this.#applyPersistedCollapseState(currentElement.dataset.kanbanColFrame)
+    }
+  }
+
+  #onFrameRender(event) {
+    if (!this.#isColumnFrame(event.target)) return
+    this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame)
+  }
+
+  #columnFrames() {
+    return this.element.querySelectorAll("turbo-frame[data-kanban-col-frame]")
+  }
+
+  #isColumnFrame(el) {
+    return el?.matches?.("turbo-frame[data-kanban-col-frame]") && this.element.contains(el)
   }
 
   // ─── Collapse toggle ─────────────────────────────────────────────────────────
@@ -225,6 +342,13 @@ export default class extends Controller {
       // on 422 it re-renders only the source frame, snapping the card back.
       if (window.Turbo) {
         Turbo.renderStreamMessage(body)
+        // The stream replaces the column bodies with server-default collapse
+        // state (turbo-stream doesn't fire turbo:frame-render), so re-apply the
+        // user's toggle for the affected columns after the DOM settles.
+        requestAnimationFrame(() => {
+          this.#applyPersistedCollapseState(fromColumn)
+          this.#applyPersistedCollapseState(toColumn)
+        })
       }
     } catch (error) {
       console.error("[kanban] move request failed:", error)
@@ -277,13 +401,23 @@ export default class extends Controller {
   // because Stimulus re-connects the controller when the frame content changes.
   #applyPersistedCollapseStates() {
     this.element.querySelectorAll("[data-kanban-col]").forEach(wrapper => {
-      const key = wrapper.dataset.kanbanCol
-      const stored = localStorage.getItem(this.#storageKey(key))
-      if (stored === null) return  // No stored preference; use server-rendered initial state.
-
-      const collapsed = stored === "1"
-      wrapper.classList.toggle("pu-kanban-column-collapsed", collapsed)
+      this.#applyPersistedCollapseState(wrapper.dataset.kanbanCol)
     })
+  }
+
+  // Re-apply one column's persisted collapse state. Called after any path that
+  // re-renders a column's body — lazy load, search/filter/scope reload
+  // (turbo:frame-render), and a move (turbo-stream) — since the server always
+  // renders the column in its default state, dropping the client toggle.
+  #applyPersistedCollapseState(key) {
+    if (!key) return
+    const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`)
+    if (!wrapper) return
+
+    const stored = localStorage.getItem(this.#storageKey(key))
+    if (stored === null) return  // No stored preference; use server-rendered initial state.
+
+    wrapper.classList.toggle("pu-kanban-column-collapsed", stored === "1")
   }
 
   #saveCollapseState(key, collapsed) {

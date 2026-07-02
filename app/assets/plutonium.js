@@ -28929,7 +28929,14 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.addEventListener("dragleave", this.onDragLeave);
       this.element.addEventListener("drop", this.onDrop);
       this.element.addEventListener("dragend", this.onDragEnd);
+      this.onTurboLoad = this.#syncColumnsToUrl.bind(this);
+      this.onBeforeFrameRender = this.#onBeforeFrameRender.bind(this);
+      this.onFrameRender = this.#onFrameRender.bind(this);
+      document.addEventListener("turbo:load", this.onTurboLoad);
+      document.addEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
+      document.addEventListener("turbo:frame-render", this.onFrameRender);
       this.#applyPersistedCollapseStates();
+      this.#syncColumnsToUrl();
     }
     disconnect() {
       this.element.removeEventListener("dragstart", this.onDragStart);
@@ -28937,6 +28944,70 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.element.removeEventListener("dragleave", this.onDragLeave);
       this.element.removeEventListener("drop", this.onDrop);
       this.element.removeEventListener("dragend", this.onDragEnd);
+      document.removeEventListener("turbo:load", this.onTurboLoad);
+      document.removeEventListener("turbo:before-frame-render", this.onBeforeFrameRender);
+      document.removeEventListener("turbo:frame-render", this.onFrameRender);
+    }
+    // ─── Frozen-board URL sync ────────────────────────────────────────────────────
+    // Reconcile every column frame's src with the current URL's board params
+    // (q / scope / sort). The board is frozen (data-turbo-permanent), so its
+    // frames keep whatever src they were last loaded with; this is what reflects a
+    // new search / filter / scope into the columns.
+    //
+    // STATELESS by design: we compare each frame's actual src against the src the
+    // current URL implies and reload only the ones that differ. We deliberately do
+    // NOT track "last synced URL" — Turbo reconnects this controller on every nav
+    // (the permanent board is transplanted), so any per-connect state would be
+    // reset to the new URL before we could diff against it, and the sync would
+    // never fire. Comparing frame-src-vs-URL has no such blind spot and is
+    // self-limiting: once a frame matches the URL, it won't reload again.
+    #syncColumnsToUrl() {
+      this.#columnFrames().forEach((frame) => {
+        const desired = this.#columnFrameSrc(frame.dataset.kanbanColFrame);
+        const current = frame.getAttribute("src");
+        if (current && this.#canonicalUrl(current) === this.#canonicalUrl(desired)) return;
+        frame.src = desired;
+      });
+    }
+    // The src a column frame should carry for the current URL: the page's query
+    // params with view=kanban + column=<key> forced on. Mirrors the server's
+    // Kanban::Resource#column_frame_src so a freshly-rendered board's frames
+    // already match (no spurious reload).
+    #columnFrameSrc(key) {
+      const params = new URLSearchParams(window.location.search);
+      params.set("view", "kanban");
+      params.set("column", key);
+      return `${window.location.pathname}?${params.toString()}`;
+    }
+    // Order-independent identity for a frame src: path + alphabetically sorted
+    // query params. The server serialises params sorted (Hash#to_query) while
+    // URLSearchParams preserves insertion order, so raw string comparison would
+    // report a false difference and reload every frame on every nav.
+    #canonicalUrl(src) {
+      const url = new URL(src, window.location.origin);
+      url.searchParams.sort();
+      return `${url.pathname}?${url.searchParams.toString()}`;
+    }
+    // Turbo fires this before a frame renders fetched content. For our column
+    // frames we swap in a morph render so the reload diffs the card list rather
+    // than replacing it (which would blank the column). Uses Turbo's own frame
+    // morph so before/after hooks (turbo:before-frame-morph) still fire.
+    #onBeforeFrameRender(event) {
+      if (!this.#isColumnFrame(event.target)) return;
+      event.detail.render = (currentElement, newElement) => {
+        morphTurboFrameElements(currentElement, newElement);
+        this.#applyPersistedCollapseState(currentElement.dataset.kanbanColFrame);
+      };
+    }
+    #onFrameRender(event) {
+      if (!this.#isColumnFrame(event.target)) return;
+      this.#applyPersistedCollapseState(event.target.dataset.kanbanColFrame);
+    }
+    #columnFrames() {
+      return this.element.querySelectorAll("turbo-frame[data-kanban-col-frame]");
+    }
+    #isColumnFrame(el) {
+      return el?.matches?.("turbo-frame[data-kanban-col-frame]") && this.element.contains(el);
     }
     // ─── Collapse toggle ─────────────────────────────────────────────────────────
     // Stimulus action: data-action="click->kanban#toggleColumn"
@@ -29017,6 +29088,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         const body = await response.text();
         if (window.Turbo) {
           Turbo.renderStreamMessage(body);
+          requestAnimationFrame(() => {
+            this.#applyPersistedCollapseState(fromColumn);
+            this.#applyPersistedCollapseState(toColumn);
+          });
         }
       } catch (error2) {
         console.error("[kanban] move request failed:", error2);
@@ -29058,12 +29133,20 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // because Stimulus re-connects the controller when the frame content changes.
     #applyPersistedCollapseStates() {
       this.element.querySelectorAll("[data-kanban-col]").forEach((wrapper) => {
-        const key = wrapper.dataset.kanbanCol;
-        const stored = localStorage.getItem(this.#storageKey(key));
-        if (stored === null) return;
-        const collapsed = stored === "1";
-        wrapper.classList.toggle("pu-kanban-column-collapsed", collapsed);
+        this.#applyPersistedCollapseState(wrapper.dataset.kanbanCol);
       });
+    }
+    // Re-apply one column's persisted collapse state. Called after any path that
+    // re-renders a column's body — lazy load, search/filter/scope reload
+    // (turbo:frame-render), and a move (turbo-stream) — since the server always
+    // renders the column in its default state, dropping the client toggle.
+    #applyPersistedCollapseState(key) {
+      if (!key) return;
+      const wrapper = this.element.querySelector(`[data-kanban-col="${key}"]`);
+      if (!wrapper) return;
+      const stored = localStorage.getItem(this.#storageKey(key));
+      if (stored === null) return;
+      wrapper.classList.toggle("pu-kanban-column-collapsed", stored === "1");
     }
     #saveCollapseState(key, collapsed) {
       try {

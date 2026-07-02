@@ -120,7 +120,9 @@ module Plutonium
                 kanban_column_key: column.key.to_s
               }
             ) { plain "▶" }
-            render_column_actions if column.actions.any?
+            # No column actions here: a collapsed column is a thin strip, so its
+            # bulk actions (and "+ Add") stay hidden until it's expanded. They
+            # live only in the expanded header (render_header).
           end
         end
 

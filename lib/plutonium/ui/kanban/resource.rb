@@ -64,8 +64,17 @@ module Plutonium
             render_toolbar
 
             div(
+              # `data-turbo-permanent` freezes the loaded board across index
+              # navigations (search / filter / scope all change the URL): Turbo
+              # transplants THIS element instead of re-rendering it as empty lazy
+              # shells, so the columns never blank. The `kanban` controller then
+              # syncs the frozen frames to the new URL (morphing cards in place).
+              # The id MUST be resource-scoped — a shared id would make Turbo
+              # preserve one resource's board when navigating to another's.
+              id: "kanban-board-#{resource_class.model_name.param_key}",
               class: "pu-kanban-board flex gap-4 overflow-x-auto p-4 min-h-0",
               data: {
+                turbo_permanent: true,
                 controller: "kanban",
                 # Stimulus value consumed by the drag controller to build the
                 # per-record move URL at drop time. The collection path comes from
@@ -158,7 +167,15 @@ module Plutonium
         end
 
         def render_column_frame(column)
-          attrs = {src: column_frame_src(column)}
+          # `refresh: "morph"` marks the frame morphable; `data-kanban-col-frame`
+          # lets the `kanban` controller find each column frame and rewrite its
+          # src to the current URL params (search / filter / scope) so cards
+          # morph in place instead of the frame blanking on reload.
+          attrs = {
+            src: column_frame_src(column),
+            refresh: "morph",
+            data: {kanban_col_frame: column.key}
+          }
           attrs[:loading] = "lazy" if board.lazy?
 
           turbo_frame_tag(column_frame_id(column), **attrs) do
