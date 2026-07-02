@@ -137,13 +137,14 @@ module Plutonium
           # failure from a successful atomic commit.
           outcome = nil
 
-          # The drop_interaction represents ENTERING the column — a transition.
-          # A same-column reorder (from.key == to.key) is NOT a transition, so it
-          # must not re-prompt for a reason just to reposition a card. Skip the
-          # interaction (and the modal-close/toast streams) entirely and behave
-          # like a plain reorder. Task 6 (client) must mirror this: open no modal
-          # on a same-column reorder.
-          run_drop_interaction = to.drop_interaction? && from.key != to.key
+          # A same-column reorder (from.key == to.key) changes only rank, not
+          # membership, so it runs ONLY the positioning code — no on_drop, no
+          # drop_interaction. Both on_drop (the membership write) and
+          # drop_interaction (the transition) represent ENTERING a column; neither
+          # should fire when the card is already in it. Task 6 (client) must mirror
+          # this: a same-column drop posts a plain reposition and opens no modal.
+          cross_column = from.key != to.key
+          run_drop_interaction = to.drop_interaction? && cross_column
 
           # Authorize the transition BEFORE opening the transaction — hoisted out
           # so a denied move can't leave a throwaway on_drop write on the 403
@@ -158,22 +159,26 @@ module Plutonium
           end
 
           ActiveRecord::Base.transaction do
-            # (1) Apply on_drop:
+            # (1) Apply on_drop — the membership write, CROSS-column moves only.
+            # A same-column reorder skips this (see cross_column above) and only
+            # repositions; on_drop represents entering a new column.
             #   Symbol → record.public_send(sym) (named method on the record)
             #   Proc   → evaluated with self = kanban_context (delegates to
             #            view_context so `current_user` etc. work as bare calls)
             #            and the record as the single block arg, matching the
             #            public 1-arg DSL form: on_drop: ->(task) { task.status = … }
-            if to.on_drop.is_a?(Symbol)
-              record.public_send(to.on_drop)
-            elsif to.on_drop
-              kanban_context.instance_exec(record, &to.on_drop)
-            end
+            if cross_column
+              if to.on_drop.is_a?(Symbol)
+                record.public_send(to.on_drop)
+              elsif to.on_drop
+                kanban_context.instance_exec(record, &to.on_drop)
+              end
 
-            # Persist any in-memory attribute changes from on_drop (on_drop
-            # blocks that call update! directly are already saved; this is a
-            # safety net for blocks that only assign attributes).
-            record.save! if record.changed?
+              # Persist any in-memory attribute changes from on_drop (on_drop
+              # blocks that call update! directly are already saved; this is a
+              # safety net for blocks that only assign attributes).
+              record.save! if record.changed?
+            end
 
             # (2) Drop interaction — runs against the SAME record instance,
             # atomic with the move. Only fires on a CROSS-column move (entering a

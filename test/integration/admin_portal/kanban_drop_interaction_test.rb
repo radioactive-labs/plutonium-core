@@ -252,4 +252,51 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_equal "lost", @lost_a.status,
       "status is unchanged on a same-column reorder"
   end
+
+  # ─── Criterion 10: same-column reorder skips on_drop (positioning only) ─────
+
+  test "same-column reorder into :blocked does NOT run on_drop (positioning only)" do
+    # :blocked declares BOTH an on_drop (status=blocked + lost_reason sentinel)
+    # AND a drop_interaction. A same-column reorder must run ONLY the positioning
+    # code — neither on_drop nor the interaction fires, since both represent
+    # ENTERING the column, not repositioning inside it.
+    blocked_card = Task.create!(title: "Blocked One", status: "blocked")
+    # Set a DISTINCT reason directly so it differs from the on_drop sentinel; if
+    # on_drop ran it would clobber this with "SET_BY_ON_DROP".
+    blocked_card.update!(lost_reason: "original reason")
+    # A second blocked card so there is something to reorder relative to.
+    blocked_two = Task.create!(title: "Blocked Two", status: "blocked")
+
+    original_position = blocked_card.position
+
+    # SAME column, no interaction params: a plain reposition to index 1 (after
+    # the second card).
+    post kanban_move_url(blocked_card),
+      params: {from_column: "blocked", to_column: "blocked", to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    # A plain reposition succeeds (not a 422/modal).
+    assert_response :ok
+
+    blocked_card.reload
+    # on_drop was skipped: it never overwrote lost_reason with the sentinel.
+    assert_equal "original reason", blocked_card.lost_reason,
+      "on_drop must NOT run on a same-column reorder (sentinel must not overwrite)"
+    refute_equal "SET_BY_ON_DROP", blocked_card.lost_reason,
+      "the on_drop sentinel proves on_drop was skipped"
+    assert_equal "blocked", blocked_card.status,
+      "status is unchanged on a same-column reorder"
+
+    # Reposition still ran: the card moved after the second blocked card.
+    refute_equal original_position, blocked_card.position,
+      "the reposition must still run on a same-column reorder"
+    assert blocked_card.position > blocked_two.reload.position,
+      "index 1 must place the card after the second blocked card"
+
+    # The interaction was skipped too: no modal-close stream, no success toast.
+    refute_includes response.body, %(target="#{REMOTE_MODAL_FRAME}"),
+      "a same-column reorder must NOT emit the drop-interaction modal-close stream"
+    refute_includes response.body, "Task blocked",
+      "a same-column reorder must NOT run the interaction (no success toast)"
+  end
 end
