@@ -132,8 +132,13 @@ module Plutonium
           prev_record = (to_index > 0) ? dest_cards[to_index - 1] : nil
           next_record = dest_cards[to_index]
 
+          # Holds the drop_interaction outcome (when the destination declares
+          # one) so the post-transaction branch can distinguish a rolled-back
+          # failure from a successful atomic commit.
+          outcome = nil
+
           ActiveRecord::Base.transaction do
-            # Apply on_drop:
+            # (1) Apply on_drop:
             #   Symbol → record.public_send(sym) (named method on the record)
             #   Proc   → evaluated with self = kanban_context (delegates to
             #            view_context so `current_user` etc. work as bare calls)
@@ -150,7 +155,29 @@ module Plutonium
             # safety net for blocks that only assign attributes).
             record.save! if record.changed?
 
-            # Reposition within the destination column.
+            # (2) Drop interaction — runs against the SAME record instance,
+            # atomic with the move. Reuses the interactive-record-action build
+            # machinery for correct param extraction (structured inputs /
+            # choices) by binding the drop key exactly like kanban_move_form.
+            if to.drop_interaction?
+              # Bind current_interactive_action to the drop_interaction's
+              # auto-registered hidden record action so interaction_params /
+              # build_interactive_record_action_interaction resolve it.
+              params[:interactive_action] = to.drop_interaction_key
+              # Reuse this already-loaded record for resource_record! (param
+              # extraction subject + form URL) — no re-query, no divergent copy.
+              @resource_record = record
+
+              authorize_current! record, to: :"#{to.drop_interaction_key}?"
+              build_interactive_record_action_interaction
+              outcome = @interaction.call
+              # Interaction validation failed → undo the on_drop write (and any
+              # partial execute) so nothing persists. The re-render happens
+              # after the transaction so the rollback is fully applied first.
+              raise ActiveRecord::Rollback if outcome.failure?
+            end
+
+            # (3) Reposition within the destination column.
             # Mode A delegates to record.reposition! (calls update! for position).
             # Mode B calls the user-supplied block.
             # Mode C is a no-op (no ordering; position unchanged).
@@ -167,23 +194,41 @@ module Plutonium
             record.save! if record.changed?
           end
 
+          # Interaction failed → the transaction rolled back. Re-render the SAME
+          # modal (422) with the validation errors + the submitted hidden move
+          # fields, so the user can correct the input and resubmit the move.
+          if to.drop_interaction? && outcome&.failure?
+            return render :kanban_move_form, formats: [:html], **modal_render_options, status: :unprocessable_content
+          end
+
           respond_to do |format|
             format.turbo_stream do
-              streams = [turbo_stream.update("kanban-col-#{from.key}", render_kanban_column_html(from))]
-              streams << turbo_stream.update("kanban-col-#{to.key}", render_kanban_column_html(to)) if from.key != to.key
+              # The column-frame updates are what other viewers need to see — this
+              # is the shared, broadcastable payload.
+              column_streams = [turbo_stream.update("kanban-col-#{from.key}", render_kanban_column_html(from))]
+              column_streams << turbo_stream.update("kanban-col-#{to.key}", render_kanban_column_html(to)) if from.key != to.key
 
-              # Broadcast the same frame updates to other connected viewers of this
+              # Broadcast the frame updates to other connected viewers of this
               # board, when realtime broadcasting is enabled. The mover will also
               # receive this broadcast (they are subscribed to the stream too) — but
               # re-rendering the same frames is idempotent, so the double update is
-              # harmless.
+              # harmless. The modal-close stream is deliberately EXCLUDED: only the
+              # mover has this modal open, so closing it for everyone would blow
+              # away an unrelated modal another viewer might have open.
               if board.realtime?
                 Plutonium::Kanban::Broadcaster.broadcast(
                   resource_class: resource_class,
                   scoped_entity: scoped_to_entity? ? current_scoped_entity : nil,
-                  content: streams.join
+                  content: column_streams.join
                 )
               end
+
+              streams = column_streams
+              # When the move arrived via the drop-interaction modal, close that
+              # modal by emptying the remote-modal frame — mover-only. Plain moves
+              # aren't in a modal, so this stream is only appended on the
+              # interaction path.
+              streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")] if to.drop_interaction?
 
               render turbo_stream: streams
             end
