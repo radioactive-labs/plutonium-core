@@ -198,7 +198,8 @@ module Plutonium
         # move context as hidden fields so the interaction runs AND the card is
         # repositioned in one atomic request.
         def kanban_move_form
-          record = kanban_base_relation.find(params[:id])
+          @resource_record = kanban_base_relation.find(params[:id])
+          record = @resource_record
           to = kanban_column_for(params[:to_column])
 
           unless to&.drop_interaction?
@@ -218,11 +219,6 @@ module Plutonium
 
           @interaction = to.drop_interaction.new(view_context:)
           @interaction.resource = record
-          @kanban_move_params = {
-            from_column: params[:from_column],
-            to_column: params[:to_column],
-            to_index: params[:to_index]
-          }
 
           render :kanban_move_form, formats: [:html], **modal_render_options
         end
