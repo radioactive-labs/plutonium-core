@@ -60,6 +60,19 @@ module Plutonium
         assert resource_action.resource_action?
       end
 
+      def test_kanban_drop_defaults_to_false
+        refute Base.new(:plain).kanban_drop?
+      end
+
+      def test_kanban_drop_reads_option
+        assert Base.new(:dropped, kanban_drop: true).kanban_drop?
+      end
+
+      def test_kanban_drop_round_trips_through_with
+        action = Base.new(:dropped, kanban_drop: true)
+        assert action.with(label: "Renamed").kanban_drop?
+      end
+
       def test_frozen_instance
         assert @action.frozen?
       end

@@ -132,6 +132,19 @@ module Plutonium
                 confirmation: col_action.confirmation
               )
             end
+
+            # Register each column's drop_interaction as an interactive record
+            # action too, so its policy method (e.g. `mark_lost?`), form, and
+            # params extraction all exist and route the standard way. It is
+            # flagged `kanban_drop: true` so it is excluded from the normal
+            # show/row/index toolbars — it is reachable only by dropping a card.
+            if col.drop_interaction?
+              action(
+                col.drop_interaction_key,
+                interaction: col.drop_interaction,
+                kanban_drop: true
+              )
+            end
           end
         end
       end
