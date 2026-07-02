@@ -138,6 +138,10 @@ module Plutonium
             # params extraction all exist and route the standard way. It is
             # flagged `kanban_drop: true` so it is excluded from the normal
             # show/row/index toolbars — it is reachable only by dropping a card.
+            #
+            # NOTE: `action(name, …)` is last-writer-wins — a drop_interaction_key
+            # that collides with a column action key (above) or a previously
+            # declared CRUD/class-level action silently replaces it.
             if col.drop_interaction?
               action(
                 col.drop_interaction_key,

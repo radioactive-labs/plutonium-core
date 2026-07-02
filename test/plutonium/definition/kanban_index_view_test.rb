@@ -103,6 +103,37 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
     assert_includes definition.defined_actions.keys, :mark_lost
   end
 
+  # A single column can declare BOTH a normal column action (visible in
+  # toolbars) AND a drop_interaction (hidden, drop-only). Both must register
+  # independently — neither overwrites the other.
+  def test_column_action_and_drop_interaction_coexist
+    archive = ArchiveInteraction
+    mark_lost = MarkLostInteraction
+    definition = def_class do
+      kanban do
+        column :lost, scope: -> { all }, on_drop: ->(r) { r.status = "lost" },
+          drop_interaction: mark_lost do
+          action :archive, interaction: archive
+        end
+      end
+    end.new
+
+    column_action = definition.defined_actions[:archive]
+    assert_kind_of Plutonium::Action::Interactive, column_action
+    assert column_action.record_action?, "column action should be a record action"
+    assert_equal ArchiveInteraction, column_action.interaction
+    refute column_action.kanban_drop?, "column action stays visible in toolbars"
+
+    drop_action = definition.defined_actions[:mark_lost]
+    assert_kind_of Plutonium::Action::Interactive, drop_action
+    assert drop_action.kanban_drop?, "drop action is drop-only"
+    assert_equal MarkLostInteraction, drop_action.interaction
+
+    # Both coexist — neither registration clobbered the other.
+    assert_includes definition.defined_actions.keys, :archive
+    assert_includes definition.defined_actions.keys, :mark_lost
+  end
+
   # Dynamic boards (`columns do … end`) expose no static columns at load time,
   # so nothing is introspectable and no drop action is registered — no crash.
   def test_dynamic_board_registers_no_drop_action
