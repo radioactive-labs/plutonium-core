@@ -80,13 +80,31 @@ module Plutonium
               },
               title: attachment.filename.to_s
             ) do
-              # Hidden field to preserve the uploaded file
-              input(type: :hidden, name: input_name, multiple: attributes[:multiple], value: attachment.signed_id, autocomplete: "off", hidden: true)
+              # Hidden field to preserve the uploaded file across a re-render.
+              # Only when we actually have a signed_id — on a non-JS submit or a
+              # validation-failure re-render the blob may be unsaved, and asking
+              # for its signed_id would raise. Nothing to preserve → omit it.
+              if (signed_id = preservable_signed_id(attachment))
+                input(type: :hidden, name: input_name, multiple: attributes[:multiple], value: signed_id, autocomplete: "off", hidden: true)
+              end
 
               render_preview_content(attachment)
               render_filename(attachment)
               render_delete_button
             end
+          end
+
+          # ActiveStorage delegates signed_id to the blob, and a *new* blob raises
+          # "Cannot get a signed_id for a new record" — so skip it there. Other
+          # backends (active_shrine, the wizard's Resolved) sign the file data
+          # itself and work fine on an unsaved record, so we must NOT gate them on
+          # the parent being persisted (that would drop a still-valid token on a
+          # validation re-render). Guarding only the new-blob case covers all three.
+          def preservable_signed_id(attachment)
+            blob = attachment.try(:blob)
+            return if blob&.new_record?
+
+            attachment.signed_id
           end
 
           def render_preview_content(attachment)
