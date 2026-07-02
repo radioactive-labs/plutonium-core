@@ -90,7 +90,7 @@ class KitchenSinkDefinition < ::ResourceDefinition
   input :birthday, as: :date                                   # flatpickr
   input :meeting_at, as: :datetime                             # flatpickr
   input :alarm_time, as: :time                                 # flatpickr
-  input :phone, as: :phone                                     # intl-tel-input
+  input :phone, as: :phone, initial_country: "gh"              # intl-tel-input; default country + strictMode
   field :config, as: :json                                     # json editor
   field :prefs, as: :key_value                                 # key-value store
   field :user                                                  # association (slim-select) + link display

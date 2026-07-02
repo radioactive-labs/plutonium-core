@@ -17340,6 +17340,7 @@ ${text2}</tr>
   // src/js/controllers/intl_tel_input_controller.js
   var intl_tel_input_controller_default = class extends Controller {
     static targets = ["input"];
+    static values = { options: Object };
     connect() {
     }
     disconnect() {
@@ -17376,7 +17377,8 @@ ${text2}</tr>
       return {
         strictMode: true,
         hiddenInput: () => ({ phone: this.inputTarget.attributes.name.value }),
-        loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/utils.js"
+        loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/utils.js",
+        ...this.optionsValue
       };
     }
   };

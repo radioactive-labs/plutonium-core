@@ -47,6 +47,11 @@ module Plutonium
     #   change the default, or `false` (or `""`) for no symbol application-wide.
     attr_accessor :default_currency_unit
 
+    # @return [String, nil] the default country (ISO2 code, e.g. "gh") for phone
+    #   (`as: :phone`) inputs that don't set their own `initial_country:`. `nil`
+    #   (default) leaves it to the intl-tel-input library (no country preselected).
+    attr_accessor :default_phone_country
+
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
       1.0 => proc do |config|

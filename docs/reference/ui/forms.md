@@ -175,6 +175,28 @@ render field(:avatar).wrapped do |f|
 end
 ```
 
+### Phone fields (intl-tel-input) {#phone-fields}
+
+`as: :phone` renders an [intl-tel-input](https://github.com/jackocnr/intl-tel-input) field. Forward library options two ways:
+
+- `initial_country:` — a convenient shortcut for the library's `initialCountry` (ISO2, e.g. `"gh"`). This preselects a country so the widget doesn't show *"No country selected"* and a bare local number validates.
+- `intl_options:` — any other library option, using the library's own camelCase names. Merged over the shortcut, so it wins on conflict.
+
+```ruby
+input :phone, as: :phone, initial_country: "gh"
+input :phone, as: :phone, intl_options: {separateDialCode: true, strictMode: false}
+```
+
+When a field sets no country, it falls back to `Plutonium.configuration.default_phone_country` (an ISO2 code, or `nil` to leave it to the library):
+
+```ruby
+Plutonium.configure do |config|
+  config.default_phone_country = "gh"
+end
+```
+
+The field defaults to `strictMode: true`; override it via `intl_options: {strictMode: false}`.
+
 ### Password & secret fields {#password-fields}
 
 `password_tag` renders a masking input that **never emits the stored value** into the DOM. A stored secret renders a fixed sentinel (masking both the value and its length); on submit:

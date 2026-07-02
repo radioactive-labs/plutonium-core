@@ -3,6 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="intl-tel-input"
 export default class extends Controller {
   static targets = ["input"]
+  static values = { options: Object }
 
   connect() {
   }
@@ -49,10 +50,13 @@ export default class extends Controller {
   }
 
   #buildOptions() {
+    // Defaults first; the definition-supplied `options` value (e.g.
+    // { initialCountry: "gh", strictMode: false }) is spread last so it wins.
     return {
       strictMode: true,
       hiddenInput: () => ({ phone: this.inputTarget.attributes.name.value }),
       loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/utils.js",
+      ...this.optionsValue,
     }
   }
 }
