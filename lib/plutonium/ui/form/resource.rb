@@ -202,6 +202,18 @@ module Plutonium
             hidden: true,
             data: {controller: "capture-url"}
 
+          # Kanban quick-add: carry the column key through to the create POST so
+          # the controller can apply that column's on_enter + positioning to the
+          # new record post-create (the "+ Add" link opens this form with
+          # ?kanban_column=<key>). Only emitted when present, so it never appears
+          # on ordinary new/edit forms.
+          if request.params[:kanban_column].present?
+            input name: "kanban_column",
+              value: request.params[:kanban_column],
+              type: :hidden,
+              hidden: true
+          end
+
           if in_modal?
             div(class: "shrink-0 px-6 py-3 " \
                        "bg-[var(--pu-surface)] border-t border-[var(--pu-border)] " \

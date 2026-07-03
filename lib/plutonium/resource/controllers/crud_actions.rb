@@ -56,6 +56,7 @@ module Plutonium
               format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :new))) }
               format.html { render :new, status: :unprocessable_content }
             elsif resource_record!.save
+              after_create_persisted
               format.turbo_stream do
                 flash.notice = "#{resource_class.model_name.human} was successfully created."
                 render turbo_stream: stacked_modal_create_streams
@@ -163,6 +164,13 @@ module Plutonium
         end
 
         private
+
+        # Hook fired once, immediately after a successful create-save and BEFORE
+        # the response is built. No-op by default. KanbanActions overrides it to
+        # apply a kanban quick-add column's on_enter + positioning to the freshly
+        # created (already-persisted) record; the reload/redirect response is built
+        # after this returns, so the board reflects the placement.
+        def after_create_persisted = nil
 
         # When the create came in through the secondary (stacked) modal
         # frame — i.e. the user clicked "+" next to an association field

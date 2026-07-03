@@ -8,6 +8,12 @@ class Task < ::ResourceRecord
   # add enums above.
 
   positioned_on :position, scope: :status
+
+  # Kanban quick-add applies a column's on_enter POST-create, so a record must be
+  # creatable WITHOUT an explicit grouping value — the app author gives the
+  # grouping column a default. (Real apps typically use a DB column default; the
+  # dummy uses the model attribute API to avoid a migration.)
+  attribute :status, :string, default: "todo"
   # add model configurations above.
 
   # add belongs_to associations above.

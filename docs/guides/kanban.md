@@ -12,7 +12,7 @@ Turn any resource index into a drag-and-drop kanban board — columns, WIP limit
 
 - Drag cards between columns; the server persists the column change and the position within the column.
 - Decimal fractional positioning — cards always land exactly where you drop them without renumbering.
-- Per-column `+ Add` button opens the resource's normal new form, pre-seeded for that column.
+- Per-column `+ Add` button opens the resource's normal new form; the new card is placed in that column (`on_enter` + positioning applied post-create).
 - Column actions run an interaction against all (or visible) cards in a column.
 - WIP limits, locked columns, and cross-column drop restrictions enforced server-side.
 - Opt-in realtime: every connected viewer sees the same board state after any move.
@@ -346,7 +346,7 @@ This keeps authorization in one place: `kanban_move?` gates every move, and the 
 ### Two flows, split by intent
 
 - **Move flow (drag a card cross-column).** Dropping into the column opens the interaction's form as a **modal** to collect input (the `reason`). On submit, the membership write (`on_enter`, if any), the interaction, and the repositioning are committed in **one atomic transaction**.
-- **Seed flow (quick-add `+ Add`).** Unchanged — the `+ Add` button still uses `on_enter`'s dry-run to pre-fill the new-record form (see [Quick-add](#quick-add)). The `enter_interaction` is **not** involved in quick-add.
+- **Quick-add (`+ Add`).** The `+ Add` button creates the record, then applies `on_enter` + positioning **post-create** (see [Quick-add](#quick-add)). The `enter_interaction` is **not** involved in quick-add.
 
 ### Author contract: on_enter owns membership, the interaction owns extras
 
@@ -441,11 +441,17 @@ Each column loads at most 25 cards. When the total exceeds the limit, a `+N more
 
 ## Quick-add
 
-When `add: true` (or `role: :backlog`) is set on a column, a `+ Add` button appears in the column header. Clicking it opens the resource's normal new form in a modal, pre-filled with the values that `on_enter` would set.
+When `add: true` (or `role: :backlog`) is set on a column, a `+ Add` button appears in the column header. Clicking it opens the resource's normal new form in a modal.
+
+The record is created normally, and **then** the column's `on_enter` and positioning are applied to the **saved** record — so the new card lands in the clicked column, appended to the bottom. `on_enter` runs against a real, persisted record (exactly as it does for a drag), so `update!`-style callbacks and any side effects behave identically and fire once, on the actual create.
+
+::: warning Give your grouping column a default
+Because `on_enter` runs **after** the record is saved, the record must be creatable **without** a grouping value. Give your grouping column (e.g. `status`) a database or model default. If it is `NOT NULL` with no default, quick-add create fails validation before `on_enter` can set it.
+:::
+
+If `on_enter` (or positioning) raises after the record was created, the create is **not** rolled back: the record is kept in its default column (validly positioned there) and the failure is surfaced as a toast.
 
 Authorization: the button is only rendered when `create?` returns `true` in the current policy.
-
-The pre-seeding works by doing a dry-run of `on_enter` against a sentinel record — it intercepts `save!`/`update!` to capture the attribute changes without writing to the database. Exotic `on_enter` callbacks with external side effects (API calls, background jobs) will fire on every `+ Add` click; keep `on_enter` to attribute assignment for clean quick-add behavior.
 
 ---
 

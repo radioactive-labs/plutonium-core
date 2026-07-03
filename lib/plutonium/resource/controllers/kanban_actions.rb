@@ -61,10 +61,6 @@ module Plutonium
           # Runs BEFORE setup_index_action! so no wasteful pagination query.
           before_action :maybe_render_kanban_column, only: :index
 
-          # Pre-fill the new form with the column's seed attributes when the
-          # user clicks "+ Add" on a kanban column (kanban_column= query param).
-          before_action :apply_kanban_column_defaults!, only: :new
-
           # Exposed to views/partials so _resource_kanban.html.erb can call it.
           helper_method :build_kanban_board_shell
         end
@@ -741,73 +737,58 @@ module Plutonium
           end
         end
 
-        # Injects the column's seed attributes into params so the new form
-        # pre-fills the grouping attribute (e.g. status="todo").
+        # Kanban quick-add, POST-create. The column "+ Add" link opens the normal
+        # New form carrying kanban_column (threaded to the create POST as a hidden
+        # field). After the record is created — with the model's DEFAULT grouping
+        # value, which the app author is responsible for setting — this applies the
+        # column's on_enter to the freshly-persisted record and positions it into
+        # the column. on_enter therefore runs against a REAL record exactly as it
+        # does for a drag; there is no dry-run / no stubbing.
         #
-        # Triggered by the kanban_column= query param that the "+ Add" link
-        # carries. The seed is extracted by running a DRY-RUN of on_enter against
-        # a sentinel record whose save/update! methods are intercepted to prevent
-        # any DB write. The resulting attribute changes are merged into the
-        # resource params so maybe_apply_submitted_resource_params! sees them and
-        # pre-populates @resource_record before the form renders.
-        def apply_kanban_column_defaults!
+        # Failure policy (see after_create_persisted rescue): the create is NEVER
+        # rolled back. If on_enter/positioning raises, the record is KEPT in its
+        # default column (validly positioned there by the model's before_create
+        # hook) and the failure is logged + toasted.
+        def after_create_persisted
+          super
           return unless params[:kanban_column].present?
           return unless current_definition.defined_kanban_block
 
-          board = current_kanban_board
-          columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
-          column = columns.find { |c| c.key.to_s == params[:kanban_column].to_s }
+          column = kanban_column_for(params[:kanban_column])
           return unless column&.add?
 
-          # A raising on_enter must not 500 the new form — degrade to an unseeded
-          # form so the user can still create the record (and set the grouping
-          # field manually).
-          seed_attrs = begin
-            kanban_column_on_enter_seed(column)
-          rescue => e
-            Rails.logger.warn { "kanban quick-add seed failed for column #{column.key}: #{e.message}" }
-            return
-          end
-          return if seed_attrs.blank?
-
-          # Inject into params (indifferent access — string key is fine).
-          # Use ||= so an explicit user-provided value in the URL is preserved.
-          params[resource_param_key] ||= ActionController::Parameters.new({})
-          seed_attrs.stringify_keys.each { |k, v| params[resource_param_key][k] ||= v }
+          apply_kanban_column_enter!(resource_record!, column)
+        rescue => e
+          Rails.logger.warn { "[plutonium] kanban quick-add on_enter failed for column #{params[:kanban_column]}: #{e.message}" }
+          flash[:alert] = "Created, but couldn’t place it in “#{column&.label || params[:kanban_column]}”."
         end
 
-        # Runs on_enter against a sentinel record that intercepts save/update!
-        # calls so no row is written to the DB. Returns the attribute changes
-        # the on_enter block would have applied (e.g. {"status" => "todo"}).
-        #
-        # NOTE: this only stubs save/save!/update/update! on the sentinel record.
-        # An on_enter that has external side effects (enqueuing jobs, API calls,
-        # touching OTHER records) would fire those side effects on every "+ Add"
-        # click, since they bypass the stubbed methods. This is acceptable for
-        # the common `attr = value` / `update!(attr: value)` pattern but is a
-        # footgun for exotic on_enter callbacks.
-        def kanban_column_on_enter_seed(column)
-          return {} unless column.on_enter
-
-          seed = resource_class.new
-          seed.define_singleton_method(:update!) { |attrs = {}|
-            assign_attributes(attrs)
-            self
-          }
-          seed.define_singleton_method(:update) { |attrs = {}|
-            assign_attributes(attrs)
-            true
-          }
-          seed.define_singleton_method(:save!) { |**| true }
-          seed.define_singleton_method(:save) { |**| true }
-
+        # Applies a column's on_enter to an already-persisted record, then appends
+        # it to the END of that column. Mirrors kanban_move's on_enter + reposition
+        # steps (Symbol → record.public_send; Proc → instance_exec in kanban_context),
+        # against the real record, so update!-style callbacks behave exactly as they
+        # do on a drag.
+        def apply_kanban_column_enter!(record, column)
           if column.on_enter.is_a?(Symbol)
-            seed.public_send(column.on_enter)
-          else
-            kanban_context.instance_exec(seed, &column.on_enter)
+            record.public_send(column.on_enter)
+          elsif column.on_enter
+            kanban_context.instance_exec(record, &column.on_enter)
           end
+          record.save! if record.changed?
 
-          seed.changes.transform_values { |(_, new_val)| new_val }
+          # Append to the end of the destination column (prev = last card, next =
+          # nil), via the board's position_config — the same path a drag-drop uses.
+          board = current_kanban_board
+          dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
+          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
+          board.position_config.reposition!(
+            record:,
+            column: column.key,
+            prev_record: dest_cards.last,
+            next_record: nil,
+            index: dest_cards.size
+          )
+          record.save! if record.changed?
         end
 
         # Renders a 422 turbo stream response that re-renders the source column

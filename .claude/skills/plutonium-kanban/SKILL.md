@@ -249,7 +249,7 @@ end
 - **Auto-registered as a HIDDEN record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`) — unique by construction, so two columns can reuse the same interaction class. No button on show/table/grid; reachable only by dropping. **No policy method of its own** — authorized by `kanban_move?` (see Authorization).
 - **Move flow:** cross-column drop opens the interaction's form as a modal; on submit `on_enter` + interaction + repositioning commit in **one atomic transaction**. Validation failure rolls it all back (membership write included) and re-renders the modal with errors — nothing persists. Put side-effects on `deliver_later` so a rollback sends no stray mail.
 - **Same-column reorder = positioning only** — neither `on_enter` nor the interaction fires (both = *entering* a column).
-- **Quick-add unaffected:** `+ Add` still uses `on_enter`'s dry-run; the interaction is not involved.
+- **Quick-add (`+ Add`)** applies `on_enter` + positioning post-create; the interaction is not involved.
 - **Author contract:** with both present, `on_enter` owns the membership attribute (`status`) and the interaction owns extras. If the interaction also writes membership it must set the **same** value (idempotent). With no `on_enter`, the interaction owns everything (like `:lost`).
 - **Limitation:** custom success *responses* (`with_redirect_response`, `with_file_response`, …) are NOT honored on the drop path — board re-renders + modal closes. Use `.with_message` for feedback.
 
@@ -322,6 +322,8 @@ Moves do not pass through `permitted_attributes_for_update`. `on_enter` is trust
 ### Quick-add
 
 The `+ Add` button (column `add: true`) only renders when the policy's `create?` is true. The opened form is the standard new-resource form.
+
+The record is created normally, **then** the column's `on_enter` + positioning are applied to the **saved** record (it lands in the clicked column, appended to the bottom) — `on_enter` runs against a real record, exactly as on a drag. **Your grouping column must have a default** (DB or model), because `on_enter` runs after save; a `NOT NULL` grouping column with no default fails quick-add create. A raising `on_enter` keeps the created record in its default column and toasts the error (the create is not rolled back).
 
 ---
 
