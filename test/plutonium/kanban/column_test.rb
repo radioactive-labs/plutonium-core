@@ -75,6 +75,23 @@ module Plutonium
       end
 
       # ------------------------------------------------------------------ #
+      # on_exit — source-side callback storage                               #
+      # ------------------------------------------------------------------ #
+
+      def test_on_exit_defaults_to_nil
+        assert_nil Column.new(:todo).on_exit
+      end
+
+      def test_on_exit_stores_the_callback_verbatim
+        cb = ->(r) {}
+        assert_same cb, Column.new(:todo, on_exit: cb).on_exit
+      end
+
+      def test_on_exit_stores_a_symbol
+        assert_equal :archive!, Column.new(:todo, on_exit: :archive!).on_exit
+      end
+
+      # ------------------------------------------------------------------ #
       # on_drop: / drop_interaction: — deprecated, renamed aliases           #
       #                                                                      #
       # Dev/test raise so the rename is caught before release; deployed envs #

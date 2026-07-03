@@ -164,23 +164,35 @@ module Plutonium
           end
 
           ActiveRecord::Base.transaction do
-            # (1) Apply on_enter — the membership write, CROSS-column moves only.
-            # A same-column reorder skips this (see cross_column above) and only
-            # repositions; on_enter represents entering a new column.
+            # (1) Apply on_exit (SOURCE column) then on_enter (DESTINATION column),
+            # CROSS-column moves only. A same-column reorder skips both (see
+            # cross_column above) and only repositions; on_exit/on_enter represent
+            # LEAVING and ENTERING a column, which a reorder does not do.
+            #
+            # on_exit runs FIRST, so it sees the pre-move state (still "in" from) —
+            # the counterpart hook for source-tied side effects (stop a timer,
+            # release a slot) that the destination's on_enter can't own.
+            #
             #   Symbol → record.public_send(sym) (named method on the record)
             #   Proc   → evaluated with self = kanban_context (delegates to
             #            view_context so `current_user` etc. work as bare calls)
             #            and the record as the single block arg, matching the
             #            public 1-arg DSL form: on_enter: ->(task) { task.status = … }
             if cross_column
+              if from.on_exit.is_a?(Symbol)
+                record.public_send(from.on_exit)
+              elsif from.on_exit
+                kanban_context.instance_exec(record, &from.on_exit)
+              end
+
               if to.on_enter.is_a?(Symbol)
                 record.public_send(to.on_enter)
               elsif to.on_enter
                 kanban_context.instance_exec(record, &to.on_enter)
               end
 
-              # Persist any in-memory attribute changes from on_enter (on_enter
-              # blocks that call update! directly are already saved; this is a
+              # Persist any in-memory attribute changes from on_exit/on_enter
+              # (blocks that call update! directly are already saved; this is a
               # safety net for blocks that only assign attributes).
               record.save! if record.changed?
             end

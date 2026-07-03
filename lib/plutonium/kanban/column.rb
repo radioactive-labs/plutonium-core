@@ -12,9 +12,9 @@ module Plutonium
         lost: {color: :red, collapsed: true}
       }.freeze
 
-      attr_reader :key, :label, :color, :wip, :scope, :on_enter, :accepts, :actions, :enter_interaction
+      attr_reader :key, :label, :color, :wip, :scope, :on_enter, :on_exit, :accepts, :actions, :enter_interaction
 
-      def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_enter: nil, on_drop: nil,
+      def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_enter: nil, on_exit: nil, on_drop: nil,
         collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil, enter_interaction: nil, drop_interaction: nil)
         # on_drop:/drop_interaction: were renamed to on_enter:/enter_interaction:.
         # Resolve the deprecated aliases first (dev/test raise; deployed envs warn
@@ -33,6 +33,7 @@ module Plutonium
         @wip = wip
         @scope = scope
         @on_enter = on_enter
+        @on_exit = on_exit
         @collapsed = collapsed.nil? ? preset[:collapsed] : collapsed
         @add = add.nil? ? preset[:add] : add
         @accepts = accepts.nil? || accepts

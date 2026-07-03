@@ -17,9 +17,14 @@ class TaskDefinition < ::ResourceDefinition
     # does not declare, so the default would render header-only).
     card_fields header: :title, meta: [:status]
 
+    # :todo declares an on_exit — the SOURCE-side counterpart to on_enter. It
+    # stamps a sentinel on lost_reason when a card LEAVES :todo (cross-column
+    # only), exercising the exit hook: fires before on_enter, participates in the
+    # atomic transaction, and is skipped on same-column reorders.
     column :todo,
       scope: -> { where(status: "todo") },
       on_enter: ->(r) { r.update!(status: "todo") },
+      on_exit: ->(r) { r.lost_reason = "EXITED_TODO" },
       role: :backlog
 
     column :doing,

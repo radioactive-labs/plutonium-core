@@ -84,6 +84,48 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
       "moved card at index 0 should be positioned before the existing done card"
   end
 
+  # ─── on_exit: SOURCE-column callback ────────────────────────────────────────
+  # :todo declares on_exit: ->(r) { r.lost_reason = "EXITED_TODO" }. It fires on
+  # the SOURCE column of a CROSS-column move, before on_enter, inside the move
+  # transaction.
+
+  test "on_exit fires on the source column of a cross-column move" do
+    assert_nil @todo_a.lost_reason
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @todo_a.reload
+    assert_equal "EXITED_TODO", @todo_a.lost_reason, "leaving :todo must run its on_exit"
+    assert_equal "doing", @todo_a.status, "the destination's on_enter must also run"
+  end
+
+  test "on_exit does NOT fire on a same-column reorder" do
+    # Reorder @todo_a within :todo (from == to) — leaving nothing, so on_exit
+    # must be skipped, mirroring on_enter.
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "todo", to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @todo_a.reload
+    assert_nil @todo_a.lost_reason, "a same-column reorder must not run on_exit"
+    assert_equal "todo", @todo_a.status
+  end
+
+  test "on_exit is rolled back when the move fails (atomic with the transaction)" do
+    # todo → :lost, whose enter_interaction (MarkLostInteraction) rejects a blank
+    # reason with a 422. on_exit stamped lost_reason first, but the rollback must
+    # undo it — proving on_exit runs inside the same transaction.
+    post kanban_move_url(@todo_a),
+      params: {from_column: "todo", to_column: "lost", to_index: 0, interaction: {reason: ""}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    @todo_a.reload
+    assert_equal "todo", @todo_a.status, "a failed move must not change status"
+    assert_nil @todo_a.lost_reason, "on_exit's write must roll back with the failed transaction"
+  end
+
   # ─── Response: both frames updated on cross-column move ────────────────────
 
   test "cross-column move response replaces from and to column frames" do

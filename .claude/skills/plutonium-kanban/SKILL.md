@@ -16,7 +16,8 @@ For field-level rendering on cards (card_fields slots), see [[plutonium-resource
 - **Static column actions are auto-registered** as interactive resource actions at class-load time. Dynamic boards (`columns do…end`) cannot introspect their columns at load time — declare any column-action interactions separately with top-level `action` calls.
 - **Moves bypass `permitted_attributes_for_update`** — the `on_enter` callback runs with full model access. Gate the move itself with `kanban_move?` in the policy.
 - **Quick-add (`add: true`) only appears when `create?` is true** in the policy.
-- **Same-column drops = positioning only** — a reorder within a column fires neither `on_enter` nor an `enter_interaction`; both represent *entering* a column, so only cross-column drops trigger them.
+- **Same-column drops = positioning only** — a reorder within a column fires neither `on_exit`, `on_enter`, nor an `enter_interaction`; they represent *leaving*/*entering* a column, so only cross-column drops trigger them.
+- **`on_exit:` is the source-side hook** — fired when a card LEAVES a column (before the destination's `on_enter`, in the same transaction). Use it for source-tied side effects (stop a timer, release a slot) the destination can't own. It fires only on drag-moves via `kanban_move`, NOT on destroy/programmatic changes/quick-add — for those, use an ActiveRecord callback.
 - **Use `on_enter:` / `enter_interaction:`, NOT `on_drop:` / `drop_interaction:`.** The old names were renamed. They still exist as deprecated aliases but **raise in development/test** (and only warn-and-map in production), so a definition using them fails your test suite. Always write the new names.
 
 ---
@@ -163,7 +164,8 @@ column :key,
   color:     :green,           # Tailwind-mapped color hint
   wip:       3,                # max cross-column moves into this column
   scope:     -> { where(…) },  # 0-arg lambda or Symbol (sent to relation)
-  on_enter:   ->(r) { … },      # 1-arg lambda or Symbol → record.method!
+  on_enter:   ->(r) { … },      # 1-arg lambda or Symbol → record.method! (card ENTERS)
+  on_exit:    ->(r) { … },      # 1-arg lambda or Symbol → runs when a card LEAVES this column
   enter_interaction: MarkLostInteraction, # record-scoped interaction run on cross-column drop (see below)
   collapsed: true,             # starts collapsed (Stimulus persists toggle to localStorage)
   add:       true,             # show "+ Add" button (requires create?)
@@ -208,6 +210,21 @@ on_enter: :mark_done!                            # dispatched as record.mark_don
 ```
 
 If `on_enter` only assigns attributes without calling `save!`/`update!`, the controller calls `record.save!` automatically when the record has unsaved changes after `on_enter` returns.
+
+### `on_exit:`
+
+The source-side counterpart to `on_enter:`. Runs on the column a card **leaves** during a cross-column move, **before** the destination's `on_enter`, in the same transaction (so it sees the pre-move state and rolls back if the move fails). Same Symbol/Proc dispatch and auto-save behaviour as `on_enter`.
+
+```ruby
+column :doing,
+  scope:    -> { where(status: "doing") },
+  on_enter: ->(r) { r.start_timer! },   # entering Doing
+  on_exit:  ->(r) { r.stop_timer! }     # leaving Doing (wherever it goes)
+```
+
+Use it for side effects tied to the column being **left** — the destination's `on_enter` doesn't know where a card came from, so source concerns (stop a timer, release a WIP/lock, un-assign) belong here.
+
+⚠️ It fires **only** on a drag-move through `kanban_move` — not on `destroy`, a programmatic `status` change elsewhere, or quick-add. For "whenever this leaves, no matter how", use an ActiveRecord callback. Skipped on same-column reorders.
 
 ### `enter_interaction:`
 
