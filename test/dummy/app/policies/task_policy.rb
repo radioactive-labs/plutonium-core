@@ -34,6 +34,16 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
+  # Immediate drop interaction: archive a task (kanban :archived column
+  # drop_interaction, input-less → committed directly). Delegates to update?.
+  # Set deny_archive_task = true in integration tests to exercise the 403 path.
+  cattr_accessor :deny_archive_task, default: false
+
+  def archive_task?
+    return false if self.class.deny_archive_task
+    update?
+  end
+
   # Core actions
 
   # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.
@@ -55,7 +65,7 @@ class TaskPolicy < ::ResourcePolicy
   end
 
   def permitted_attributes_for_read
-    [:title, :status, :position]
+    [:title, :status, :position, :lost_reason]
   end
 
   # Associations

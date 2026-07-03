@@ -75,6 +75,53 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
       "response must update the destination (lost) frame"
   end
 
+  # ─── Immediate (input-less) drop interaction: direct commit, no modal ──────
+  # :archived declares ArchiveTaskInteraction (no user inputs → immediate). The
+  # client commits it via a DIRECT POST with NO interaction params; the server
+  # must run the interaction and respond with column streams (not modal HTML).
+
+  test "immediate drop onto :archived commits directly with no interaction params" do
+    post kanban_move_url(@doing),
+      params: {from_column: "doing", to_column: "archived", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @doing.reload
+    assert_equal "archived", @doing.status, "immediate interaction must run and transition the task"
+    # Response is Turbo Streams updating the column frames, NOT a modal form.
+    assert_includes response.body, 'target="kanban-col-archived"'
+    # No modal form was rendered — the modal's signature is its hidden move-context
+    # field (name="from_column"), which only kanban_move_form emits.
+    refute_includes response.body, 'name="from_column"',
+      "must not render the form modal for an immediate interaction"
+    assert_includes response.body, "Task archived", "the interaction's success message surfaces as a toast"
+  end
+
+  test "denied archive_task? returns 403 and persists nothing (immediate path)" do
+    original_status = @doing.status
+
+    TaskPolicy.deny_archive_task = true
+    begin
+      post kanban_move_url(@doing),
+        params: {from_column: "doing", to_column: "archived", to_index: 0},
+        headers: {"Accept" => TURBO_STREAM_ACCEPT}
+      assert_response :forbidden
+
+      # The rejection must come back as a Turbo Stream (snap-back + toast), NOT an
+      # HTML error page — otherwise the client feeds it to renderStreamMessage and
+      # Turbo morphs the error page into the board (the "page turns red" bug).
+      assert_equal "text/vnd.turbo-stream.html", response.media_type
+      assert_includes response.body, 'target="kanban-col-doing"', "must snap the source column back"
+      assert_includes response.body, "not authorized", "must surface a rejection toast"
+    ensure
+      TaskPolicy.deny_archive_task = false
+    end
+
+    @doing.reload
+    assert_equal original_status, @doing.status,
+      "an unauthorized immediate drop must not run the interaction or move the card"
+  end
+
   # ─── Criterion 2: interaction failure rolls back + re-renders modal ────────
 
   test "drop onto :lost with a blank reason returns 422 and rolls everything back" do

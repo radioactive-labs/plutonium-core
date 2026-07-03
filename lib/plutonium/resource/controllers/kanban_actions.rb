@@ -145,6 +145,11 @@ module Plutonium
           # this: a same-column drop posts a plain reposition and opens no modal.
           cross_column = from.key != to.key
           run_drop_interaction = to.drop_interaction? && cross_column
+          # An input-less drop interaction is `immediate` — the client commits it
+          # via a DIRECT POST (no modal), so the response must be a Turbo Stream,
+          # not modal-form HTML (see the failure branch below).
+          drop_immediate = run_drop_interaction &&
+            !!current_definition.defined_actions[to.drop_interaction_key]&.immediate
 
           # Authorize the transition BEFORE opening the transaction — hoisted out
           # so a denied move can't leave a throwaway on_drop write on the 403
@@ -222,6 +227,17 @@ module Plutonium
           # modal (422) with the validation errors + the submitted hidden move
           # fields, so the user can correct the input and resubmit the move.
           if run_drop_interaction && outcome&.failure?
+            # Immediate interactions were committed via a direct POST (no modal
+            # open), so the client is processing a Turbo Stream response — render a
+            # snap-back rejection toast rather than modal-form HTML, which the
+            # stream-expecting fetch would silently drop. Input-collecting
+            # interactions re-render their modal with the errors so the user can
+            # fix the input and resubmit.
+            if drop_immediate
+              reason = @interaction.errors.full_messages.to_sentence.presence ||
+                "“#{to.label}” could not be applied."
+              return render_kanban_rejection(from.key, reason:)
+            end
             return render :kanban_move_form, formats: [:html], **modal_render_options, status: :unprocessable_content
           end
 
@@ -266,6 +282,31 @@ module Plutonium
               render turbo_stream: streams
             end
           end
+        rescue ::ActionPolicy::Unauthorized
+          # NOTE: the leading :: is required — Plutonium::ActionPolicy exists
+          # (action_policy/sti_policy_lookup.rb), so a bare ActionPolicy would
+          # resolve to that namespace and never match the raised exception,
+          # letting it fall through to the global rescue_from (which re-raises for
+          # turbo_stream requests → the HTML error page morph this fix prevents).
+          #
+          # A denied transition — either the board-wide kanban_move? gate or a
+          # drop_interaction's own policy rule (e.g. archive_task?). Snap the
+          # source column back with a toast at 403 instead of letting the HTML
+          # error page reach the client: the drag POST expects a Turbo Stream, so
+          # a raw error page would be morphed into the board (the "page turns red"
+          # bug). Rendering a stream here keeps rejection feedback consistent with
+          # the WIP / accepts snap-backs above.
+          #
+          # authorize_count only bumps AFTER a successful authorize, so a denial
+          # raised by the board-wide gate (before any successful check) leaves the
+          # verifier unsatisfied — we've handled authorization by rejecting, so
+          # skip it explicitly.
+          skip_verify_authorize_current!
+          render_kanban_rejection(
+            params[:from_column],
+            reason: "You are not authorized to move this card there.",
+            status: :forbidden
+          )
         end
 
         # GET <member>/kanban_move_form?from_column=&to_column=&to_index=
@@ -449,8 +490,17 @@ module Plutonium
           # vs kanban_move). Derived from resource_url_for (not request.path)
           # because this method also runs under the kanban_move POST, whose
           # request.path is the member move URL, not the collection path.
-          drop_form_url_template = if column.drop_interaction?
-            "#{resource_url_for(resource_class).delete_suffix("/")}/__ID__/kanban_move_form"
+          drop_form_url_template = nil
+          drop_immediate = false
+          drop_confirm = nil
+          if column.drop_interaction?
+            drop_form_url_template = "#{resource_url_for(resource_class).delete_suffix("/")}/__ID__/kanban_move_form"
+            # Look up the auto-registered drop action to honour its shape: an
+            # input-less interaction is `immediate` (commit directly, no modal),
+            # and carries an auto "<label>?" confirmation unless one was set.
+            registered_drop = current_definition.defined_actions[column.drop_interaction_key]
+            drop_immediate = registered_drop&.immediate || false
+            drop_confirm = registered_drop&.confirmation
           end
 
           component = Plutonium::UI::Kanban::Column.new(
@@ -466,7 +516,9 @@ module Plutonium
             card_fields: board.card_fields,
             card_show_frame: kanban_card_show_frame(board),
             collapsed: kanban_effective_collapsed(column),
-            drop_form_url_template:
+            drop_form_url_template:,
+            drop_immediate:,
+            drop_confirm:
           )
           view_context.render(component).html_safe
         end
@@ -644,7 +696,7 @@ module Plutonium
         # so a stale, undisplayed flash from an earlier request can't leak into
         # the turbo_stream response — these move POSTs never render the layout
         # that would otherwise consume the flash.
-        def render_kanban_rejection(from_key, reason: nil)
+        def render_kanban_rejection(from_key, reason: nil, status: :unprocessable_content)
           streams = [
             turbo_stream.update(
               "kanban-col-#{from_key}",
@@ -660,7 +712,7 @@ module Plutonium
             )
           end
 
-          render turbo_stream: streams, status: :unprocessable_content
+          render turbo_stream: streams, status:
         end
 
         # Evaluation context for dynamic `columns do…end` blocks — delegates to

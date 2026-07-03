@@ -65,7 +65,7 @@ module Plutonium
         # advertises data-kanban-drop-interaction + data-kanban-drop-form-url-
         # template so Task 6's Stimulus controller opens the interaction modal on
         # drop instead of committing the move immediately.
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil, drop_form_url_template: nil)
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil, drop_form_url_template: nil, drop_immediate: false, drop_confirm: nil)
           @column = column
           @cards = cards
           @total = total
@@ -79,6 +79,8 @@ module Plutonium
           @card_show_frame = card_show_frame
           @collapsed = collapsed
           @drop_form_url_template = drop_form_url_template
+          @drop_immediate = drop_immediate
+          @drop_confirm = drop_confirm
         end
 
         # Effective collapse state: the caller's resolved value, or the column
@@ -122,6 +124,11 @@ module Plutonium
           if column.drop_interaction?
             data[:kanban_drop_interaction] = "true"
             data[:kanban_drop_form_url_template] = @drop_form_url_template
+            # An input-less interaction commits directly on drop (no form modal);
+            # the client reads this to skip opening an empty modal. The optional
+            # confirm message (auto "<label>?" for immediate actions) gates it.
+            data[:kanban_drop_immediate] = "true" if @drop_immediate
+            data[:kanban_drop_confirm] = @drop_confirm if @drop_confirm.present?
           end
 
           data

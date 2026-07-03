@@ -179,6 +179,28 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     refute_includes wrapper, "data-kanban-drop-form-url-template"
   end
 
+  # An IMMEDIATE (input-less) drop_interaction advertises data-kanban-drop-immediate
+  # + an auto confirm, so the client commits directly instead of opening an empty
+  # modal. :archived declares ArchiveTaskInteraction (no user inputs).
+  test "immediate drop-interaction column advertises data-kanban-drop-immediate + confirm" do
+    get "/admin/tasks?view=kanban&column=archived"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="archived"[^>]*>/]
+    assert wrapper, "expected the archived column wrapper"
+    assert_includes wrapper, 'data-kanban-drop-interaction="true"'
+    assert_includes wrapper, 'data-kanban-drop-immediate="true"'
+    assert_includes wrapper, 'data-kanban-drop-confirm="Archive?"'
+  end
+
+  # An INPUT-collecting drop_interaction (:lost → reason) is NOT immediate.
+  test "input-collecting drop-interaction column does not advertise immediate" do
+    get "/admin/tasks?view=kanban&column=lost"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="lost"[^>]*>/]
+    assert wrapper, "expected the lost column wrapper"
+    refute_includes wrapper, "data-kanban-drop-immediate"
+  end
+
   # ─── Collapse cookie (server renders the user's state) ─────────────────────
   # The board persists per-column collapse as a compact cookie of columns
   # flipped from their default; the server reads it and renders each column in

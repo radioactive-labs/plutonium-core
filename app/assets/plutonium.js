@@ -29200,7 +29200,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const toIndex = this.#computeDropIndex(event.clientY, existingCards);
       const destWrapper = column.closest("[data-kanban-col]");
       if (destWrapper?.dataset.kanbanDropInteraction === "true" && fromColumn !== toColumn) {
-        if (this.#openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex })) return;
+        if (destWrapper.dataset.kanbanDropImmediate === "true") {
+          const confirmMsg = destWrapper.dataset.kanbanDropConfirm;
+          if (confirmMsg && !window.confirm(confirmMsg)) return;
+        } else if (this.#openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex })) {
+          return;
+        }
       }
       this.#submitMove(recordId, { fromColumn, toColumn, toIndex });
     }
@@ -29227,9 +29232,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           }),
           credentials: "same-origin"
         });
-        const body = await response.text();
-        if (window.Turbo) {
+        const contentType = response.headers.get("Content-Type") || "";
+        const isTurboStream = contentType.includes("text/vnd.turbo-stream.html");
+        if (isTurboStream && window.Turbo) {
+          const body = await response.text();
           Turbo.renderStreamMessage(body);
+        } else if (!response.ok) {
+          console.error(`[kanban] move rejected (${response.status}); leaving card in place`);
         }
       } catch (error2) {
         console.error("[kanban] move request failed:", error2);

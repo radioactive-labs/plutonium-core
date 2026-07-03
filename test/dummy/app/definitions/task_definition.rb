@@ -59,5 +59,13 @@ class TaskDefinition < ::ResourceDefinition
         r.lost_reason = "SET_BY_ON_DROP"
       },
       drop_interaction: BlockTaskInteraction
+
+    # :archived declares an IMMEDIATE drop_interaction — ArchiveTaskInteraction
+    # takes no user inputs, so the framework marks it immediate. Dropping a card
+    # here commits directly (with an auto "Archive?" confirmation) instead of
+    # opening an empty form modal — the immediate drop_interaction path.
+    column :archived,
+      scope: -> { where(status: "archived") },
+      drop_interaction: ArchiveTaskInteraction
   end
 end

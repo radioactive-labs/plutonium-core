@@ -496,16 +496,27 @@ export default class extends Controller {
 
     const toIndex = this.#computeDropIndex(event.clientY, existingCards)
 
-    // Columns that declare a drop_interaction: open an interaction modal on a
-    // CROSS-column drop instead of committing the move directly. The dragged
-    // card is left in place (pending) until the modal resolves. Same-column
-    // reorders (from == toColumn) fall through to the direct POST, which the
-    // server treats as positioning-only — mirroring the server's rule.
+    // Columns that declare a drop_interaction, on a CROSS-column drop:
+    //   • immediate (input-less) interaction  → commit directly via the normal
+    //     POST (the server runs the interaction with no params); honour an
+    //     optional confirmation first. No empty modal.
+    //   • input-collecting interaction         → open the interaction modal; the
+    //     card is left in place until the modal resolves.
+    // Same-column reorders (from == toColumn) fall through to the direct POST,
+    // which the server treats as positioning-only — mirroring the server's rule.
     const destWrapper = column.closest("[data-kanban-col]")
     if (destWrapper?.dataset.kanbanDropInteraction === "true" && fromColumn !== toColumn) {
-      if (this.#openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex })) return
-      // Modal frame unavailable — fall through to the direct POST so a drop is
-      // never silently dropped.
+      if (destWrapper.dataset.kanbanDropImmediate === "true") {
+        const confirmMsg = destWrapper.dataset.kanbanDropConfirm
+        // Abort on decline — the card was never moved in the DOM, so there is
+        // nothing to restore.
+        if (confirmMsg && !window.confirm(confirmMsg)) return
+        // fall through to #submitMove (direct commit, no modal)
+      } else if (this.#openDropInteraction(destWrapper, { recordId, fromColumn, toColumn, toIndex })) {
+        return
+      }
+      // Immediate (confirmed), or the modal frame was unavailable — fall through
+      // to the direct POST so a drop is never silently dropped.
     }
 
     this.#submitMove(recordId, { fromColumn, toColumn, toIndex })
@@ -536,15 +547,24 @@ export default class extends Controller {
         credentials: "same-origin",
       })
 
-      const body = await response.text()
-      // Turbo.renderStreamMessage processes <turbo-stream> elements in the
-      // response body. On success this re-renders the from + to column frames;
-      // on 422 it re-renders only the source frame, snapping the card back.
-      if (window.Turbo) {
+      // Only feed genuine Turbo Stream responses to Turbo. A rejected move can
+      // come back as a plain HTML document — e.g. a 403 Unauthorized renders an
+      // error page, not a stream. Passing that to renderStreamMessage makes
+      // Turbo morph the error page's markup into the board (the "page turns red"
+      // bug). Native HTML5 DnD never re-parented the card, so on a non-stream
+      // rejection there is nothing to snap back — the board already shows the
+      // card in its source column.
+      const contentType = response.headers.get("Content-Type") || ""
+      const isTurboStream = contentType.includes("text/vnd.turbo-stream.html")
+
+      if (isTurboStream && window.Turbo) {
+        const body = await response.text()
         // #onBeforeStreamRender re-asserts the persisted collapse state for each
         // column the stream re-renders (synchronously, before paint), so the
         // move doesn't reset a column the user expanded/collapsed.
         Turbo.renderStreamMessage(body)
+      } else if (!response.ok) {
+        console.error(`[kanban] move rejected (${response.status}); leaving card in place`)
       }
     } catch (error) {
       console.error("[kanban] move request failed:", error)
