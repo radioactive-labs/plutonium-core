@@ -29239,6 +29239,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           Turbo.renderStreamMessage(body);
         } else if (!response.ok) {
           console.error(`[kanban] move rejected (${response.status}); leaving card in place`);
+        } else {
+          console.warn("[kanban] move returned a non-stream response (session expired?); leaving card in place");
         }
       } catch (error2) {
         console.error("[kanban] move request failed:", error2);

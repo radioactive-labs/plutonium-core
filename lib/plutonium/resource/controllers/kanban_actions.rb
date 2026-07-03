@@ -105,6 +105,20 @@ module Plutonium
           authorize_current! record, to: :kanban_move?,
             context: {kanban_from: from, kanban_to: to}
 
+          # params[:from_column] is client-supplied and is passed to the policy as
+          # kanban_from. Verify the record ACTUALLY resides in the claimed source
+          # column before the move proceeds. This (a) makes kanban_from safe to
+          # authorize on — a spoofed from can't drive a move because the membership
+          # check rejects it — and (b) snaps back a stale-board drag whose card was
+          # moved out of `from` by someone else. Skipped when from is nil (the
+          # accepts check below handles an unknown source column).
+          if from && !record_in_kanban_column?(record, from)
+            return render_kanban_rejection(
+              params[:from_column],
+              reason: "This card is no longer in “#{from.label}”."
+            )
+          end
+
           # accepts?/locked? are purely structural (source-column topology), the
           # server-side authority behind the client-side data-kanban-accepts hint.
           unless from && to&.accepts?(from.key) && !from.locked?
@@ -153,6 +167,18 @@ module Plutonium
           # this: a same-column drop posts a plain reposition and opens no modal.
           cross_column = from.key != to.key
           run_enter_interaction = to.enter_interaction? && cross_column
+
+          # A dynamic board (`columns do…end`) can't register its enter_interaction
+          # as an action at class-load time (its columns only exist per-request), so
+          # defined_actions has no entry for the column-scoped key and the interactive
+          # machinery below (build_interactive_record_action_interaction) would blow
+          # up. Reject gracefully with a clear log instead of a 500 morphing onto the
+          # board. (Static boards always register — see Definition::IndexViews.)
+          if run_enter_interaction && current_definition.defined_actions[to.enter_interaction_key].nil?
+            Rails.logger.warn { "[plutonium] kanban enter_interaction on column `#{to.key}` is not registered — enter_interaction is unsupported on dynamic (`columns do…end`) boards; rejecting the drop." }
+            return render_kanban_rejection(params[:from_column], reason: "This drop can’t be completed.")
+          end
+
           # An input-less drop interaction is `immediate` — the client commits it
           # via a DIRECT POST (no modal), so the response must be a Turbo Stream,
           # not modal-form HTML (see the failure branch below).
@@ -326,6 +352,22 @@ module Plutonium
             reason: "You are not authorized to move this card there.",
             status: :forbidden
           )
+        rescue ActiveRecord::RecordNotFound
+          # The card was destroyed (e.g. concurrently) between board render and
+          # drop, so `find` raised. Snap the source column back — re-rendering it
+          # drops the now-gone card — instead of letting Rails' 404 HTML page get
+          # morphed into the board (same class of bug as the ActionPolicy rescue).
+          # `find` raised before authorize_current!, so satisfy that verifier; the
+          # scope verifier is already satisfied by kanban_base_relation.
+          skip_verify_authorize_current!
+          render_kanban_rejection(params[:from_column], reason: "This card no longer exists.")
+        rescue ActiveRecord::RecordInvalid => e
+          # An on_exit/on_enter hook (or the interaction) left the record invalid,
+          # so save! raised and the transaction rolled back. Snap back with the
+          # validation reason rather than let a 500 HTML page morph into the board.
+          reason = e.record.errors.full_messages.to_sentence.presence ||
+            "This card could not be moved."
+          render_kanban_rejection(params[:from_column], reason:)
         end
 
         # GET <member>/kanban_move_form?from_column=&to_column=&to_index=
@@ -340,9 +382,13 @@ module Plutonium
           record = @resource_record
           to = kanban_column_for(params[:to_column])
 
-          unless to&.enter_interaction?
-            # No interaction to open a form for on this path — the drop is simply
-            # invalid — so satisfy the authorize verifier explicitly.
+          # No interaction to open a form for (invalid drop), OR the interaction is
+          # unregistered because this is a dynamic (`columns do…end`) board — which
+          # can't register enter_interactions and so can't render the modal chrome
+          # (current_interactive_action would be nil). Either way the drop is not
+          # actionable on this path — satisfy the verifier and bail cleanly instead
+          # of 500-ing in the view.
+          unless to&.enter_interaction? && current_definition.defined_actions[to.enter_interaction_key]
             skip_verify_authorize_current!
             head :unprocessable_content
             return
@@ -363,6 +409,12 @@ module Plutonium
           @interaction.resource = record
 
           render :kanban_move_form, formats: [:html], **modal_render_options
+        rescue ActiveRecord::RecordNotFound
+          # Card destroyed between board render and the modal-open request. `find`
+          # raised before authorize, so satisfy that verifier; return a plain 404
+          # (this GET only loads the modal frame — there is no board to morph).
+          skip_verify_authorize_current!
+          head :not_found
         end
 
         private
@@ -735,7 +787,28 @@ module Plutonium
             )
           end
 
+          # Close the drop-interaction modal if one is open. A rejection can arrive
+          # AFTER an enter_interaction modal submit (a non-immediate column that also
+          # has accepts:/wip:, or an auth/validation failure), and the success and
+          # interaction-failure paths close the modal but the structural rejections
+          # did not — leaving it open behind the snap-back toast. Emptying the frame
+          # is idempotent for plain drags (no modal is open during a drag, so the
+          # remote-modal frame is already empty → no-op), so it is safe to always
+          # append here.
+          streams << turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")
+
           render turbo_stream: streams, status:
+        end
+
+        # Whether `record` currently resides in `column`'s scope. Used to verify a
+        # client-claimed source column before trusting it for authorization / the
+        # move. A nil column or a scope-less column contains everything (true), so
+        # the caller's own nil/accepts handling takes over.
+        def record_in_kanban_column?(record, column)
+          return true if column.nil? || column.scope.nil?
+          Plutonium::Kanban::Grouping
+            .apply_scope(kanban_base_relation, column.scope)
+            .exists?(record.id)
         end
 
         # Evaluation context for dynamic `columns do…end` blocks — delegates to

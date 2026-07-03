@@ -565,6 +565,13 @@ export default class extends Controller {
         Turbo.renderStreamMessage(body)
       } else if (!response.ok) {
         console.error(`[kanban] move rejected (${response.status}); leaving card in place`)
+      } else {
+        // 2xx but NOT a Turbo Stream. The most common cause is an auth boundary
+        // that 302-redirected to a login page, which fetch transparently follows,
+        // yielding a 200 HTML document — so the move silently did nothing. Don't
+        // swallow it: log it so an expired session is diagnosable. The card is left
+        // in place (native DnD never re-parented it).
+        console.warn("[kanban] move returned a non-stream response (session expired?); leaving card in place")
       }
     } catch (error) {
       console.error("[kanban] move request failed:", error)
