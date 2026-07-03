@@ -252,62 +252,17 @@ module Plutonium
         refute board.columns.first.accepts?(:done)
       end
 
-      def test_accepts_proc_permits_at_column_level
-        col = Column.new(:todo, accepts: ->(card) { true })
-        # Proc/predicate is permitted at the column level; the per-card
-        # predicate is evaluated later by the move handler.
-        assert_equal true, col.accepts?(:any)
-      end
-
       # ------------------------------------------------------------------ #
-      # Column#accepts_record? — per-card Proc evaluation                   #
+      # accepts: — Proc form removed (structural topology only)             #
+      #                                                                    #
+      # Record/user conditions belong in the kanban_move? policy (which    #
+      # sees the record and the from/to columns). A Proc raises loudly     #
+      # rather than silently becoming permissive.                          #
       # ------------------------------------------------------------------ #
 
-      def test_accepts_record_proc_returns_true_when_proc_permits
-        record = Struct.new(:eligible).new(true)
-        col = Column.new(:todo, accepts: ->(card) { card.eligible })
-
-        assert col.accepts_record?(record, :other)
-      end
-
-      def test_accepts_record_proc_returns_false_when_proc_denies
-        record = Struct.new(:eligible).new(false)
-        col = Column.new(:todo, accepts: ->(card) { card.eligible })
-
-        refute col.accepts_record?(record, :other)
-      end
-
-      def test_accepts_record_true_allows_any_record
-        col = Column.new(:todo, accepts: true)
-
-        assert col.accepts_record?(Object.new, :anything)
-      end
-
-      def test_accepts_record_false_denies_any_record
-        col = Column.new(:todo, accepts: false)
-
-        refute col.accepts_record?(Object.new, :anything)
-      end
-
-      def test_accepts_record_array_includes_source_key
-        col = Column.new(:todo, accepts: [:in_progress, :backlog])
-
-        assert col.accepts_record?(Object.new, :in_progress)
-      end
-
-      def test_accepts_record_array_excludes_absent_source_key
-        col = Column.new(:todo, accepts: [:in_progress, :backlog])
-
-        refute col.accepts_record?(Object.new, :done)
-      end
-
-      def test_accepts_record_ignores_record_for_array_case
-        # record is irrelevant when accepts: is an Array; only source_key matters.
-        col = Column.new(:todo, accepts: [:doing])
-        any_record = Object.new
-
-        assert col.accepts_record?(any_record, :doing)
-        refute col.accepts_record?(any_record, :todo)
+      def test_accepts_proc_raises
+        err = assert_raises(ArgumentError) { Column.new(:todo, accepts: ->(card) { true }) }
+        assert_match(/accepts.*no longer accepts a Proc/, err.message)
       end
 
       # ------------------------------------------------------------------ #

@@ -21,7 +21,8 @@ require "test_helper"
 # The Task board fixture (TaskDefinition):
 #   :lost — enter_interaction: MarkLostInteraction (required :reason input;
 #           execute sets status="lost", lost_reason=reason)
-#   TaskPolicy#mark_lost? delegates to update? (deny_mark_lost toggle for 403).
+#   The drop is authorized by kanban_move? (the interaction has no policy of its
+#   own); deny_enter_column: :lost exercises the 403 path via the from/to context.
 class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
@@ -97,10 +98,12 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Task archived", "the interaction's success message surfaces as a toast"
   end
 
-  test "denied archive_task? returns 403 and persists nothing (immediate path)" do
+  test "kanban_move? denying entry to :archived returns 403 and persists nothing (immediate path)" do
     original_status = @doing.status
 
-    TaskPolicy.deny_archive_task = true
+    # kanban_move? reads the destination column from its authorization context; a
+    # denial there gates the immediate drop (the interaction has no policy of its own).
+    TaskPolicy.deny_enter_column = :archived
     begin
       post kanban_move_url(@doing),
         params: {from_column: "doing", to_column: "archived", to_index: 0},
@@ -114,7 +117,7 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
       assert_includes response.body, 'target="kanban-col-doing"', "must snap the source column back"
       assert_includes response.body, "not authorized", "must surface a rejection toast"
     ensure
-      TaskPolicy.deny_archive_task = false
+      TaskPolicy.deny_enter_column = nil
     end
 
     @doing.reload
@@ -172,10 +175,10 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
 
   # ─── Criterion 3: transition authorization ─────────────────────────────────
 
-  test "denied mark_lost? returns 403 and persists nothing" do
+  test "kanban_move? denying entry to :lost returns 403 and persists nothing" do
     original_status = @doing.status
 
-    TaskPolicy.deny_mark_lost = true
+    TaskPolicy.deny_enter_column = :lost
     begin
       post kanban_move_url(@doing),
         params: {from_column: "doing", to_column: "lost", to_index: 0,
@@ -183,7 +186,7 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
         headers: {"Accept" => TURBO_STREAM_ACCEPT}
       assert_response :forbidden
     ensure
-      TaskPolicy.deny_mark_lost = false
+      TaskPolicy.deny_enter_column = nil
     end
 
     @doing.reload
@@ -194,9 +197,9 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
   # ─── Criterion 4: move-guard rejection precedes the interaction ────────────
 
   test "a move-guard rejection returns 422 and never runs the interaction" do
-    # :done accepts only cards whose status is "doing" — a todo card is
-    # rejected BEFORE any transaction/interaction work. (:done has no
-    # enter_interaction, but this proves the guard path still short-circuits.)
+    # :done accepts only cards coming from :doing (accepts: [:doing]) — a card
+    # from :todo is rejected BEFORE any transaction/interaction work. (:done has
+    # no enter_interaction, but this proves the guard path still short-circuits.)
     todo = Task.create!(title: "Todo One", status: "todo")
     original_status = todo.status
 

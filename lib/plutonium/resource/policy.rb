@@ -10,6 +10,12 @@ module Plutonium
       authorize :entity_scope, allow_nil: true
       authorize :parent, optional: true
       authorize :parent_association, optional: true
+      # Supplied only during a kanban drag-move (kanban_move? authorization): the
+      # source and destination Plutonium::Kanban::Column. Optional — nil for every
+      # other authorization. Lets a policy gate a specific transition, e.g.
+      #   def kanban_move? = kanban_to&.key == :closed_won ? user.admin? : super
+      authorize :kanban_from, optional: true
+      authorize :kanban_to, optional: true
 
       relation_scope do |relation|
         default_relation_scope(relation)

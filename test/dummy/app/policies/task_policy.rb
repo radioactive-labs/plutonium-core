@@ -1,10 +1,18 @@
 class TaskPolicy < ::ResourcePolicy
-  # When set to true in an integration test, kanban_move? returns false so the
-  # 403 response path can be exercised without changing production logic.
+  # kanban_move? is the SINGLE authorization for every drag-move (plain moves and
+  # enter_interaction columns alike — the interaction has no policy of its own).
+  # The from/to columns are supplied via the authorization context, so a specific
+  # transition can be gated without a per-column method.
+  #
+  # deny_kanban_move       — deny ALL moves (board-wide 403 path).
+  # deny_enter_column      — deny entering one specific column, exercising the
+  #                          from/to context threading (e.g. :lost, :archived).
   cattr_accessor :deny_kanban_move, default: false
+  cattr_accessor :deny_enter_column, default: nil
 
   def kanban_move?
     return false if self.class.deny_kanban_move
+    return false if self.class.deny_enter_column && kanban_to&.key == self.class.deny_enter_column
     super
   end
 
@@ -15,32 +23,6 @@ class TaskPolicy < ::ResourcePolicy
 
   def archive_all?
     return false if self.class.deny_archive_all
-    update?
-  end
-
-  # Drop interaction: mark a task lost (kanban :lost column enter_interaction).
-  # Delegates to update? so any user who can edit tasks can mark one lost.
-  # Set deny_mark_lost = true in integration tests to exercise the 403 path.
-  cattr_accessor :deny_mark_lost, default: false
-
-  def mark_lost?
-    return false if self.class.deny_mark_lost
-    update?
-  end
-
-  # Drop interaction: block a task (kanban :blocked column enter_interaction,
-  # which also declares an on_enter). Delegates to update?.
-  def block_task?
-    update?
-  end
-
-  # Immediate drop interaction: archive a task (kanban :archived column
-  # enter_interaction, input-less → committed directly). Delegates to update?.
-  # Set deny_archive_task = true in integration tests to exercise the 403 path.
-  cattr_accessor :deny_archive_task, default: false
-
-  def archive_task?
-    return false if self.class.deny_archive_task
     update?
   end
 

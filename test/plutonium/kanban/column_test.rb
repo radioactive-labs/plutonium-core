@@ -46,12 +46,15 @@ module Plutonium
       end
 
       # ------------------------------------------------------------------ #
-      # enter_interaction_key — conventional action key derivation            #
+      # enter_interaction_key — column-scoped internal routing key            #
       # ------------------------------------------------------------------ #
 
-      def test_enter_interaction_key_derives_from_class_name
+      def test_enter_interaction_key_is_column_scoped
+        # Scoped to the column key (NOT the interaction class name), so it is
+        # unique by construction — two columns reusing the same interaction class
+        # can never collide.
         col = Column.new(:lost, enter_interaction: MarkLostInteraction)
-        assert_equal :mark_lost, col.enter_interaction_key
+        assert_equal :lost_enter_interaction, col.enter_interaction_key
       end
 
       def test_enter_interaction_key_is_nil_without_enter_interaction

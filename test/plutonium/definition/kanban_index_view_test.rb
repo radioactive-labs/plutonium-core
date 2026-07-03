@@ -3,9 +3,10 @@
 require "test_helper"
 
 class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
-  # A real record interaction (has `attribute :resource`) with a conventional
-  # "…Interaction" name so it registers as an interactive record action keyed
-  # `:mark_lost` (see Kanban::Column#enter_interaction_key).
+  # A real record interaction (has `attribute :resource`). Registered as an
+  # interactive record action under the COLUMN-SCOPED key `:lost_enter_interaction`
+  # (see Kanban::Column#enter_interaction_key) — derived from the column key, not
+  # this class name.
   class MarkLostInteraction < Plutonium::Resource::Interaction
     attribute :resource
     attribute :reason, :string
@@ -77,14 +78,14 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
   end
 
   def test_static_column_enter_interaction_registers_a_record_action
-    action = drop_definition.defined_actions[:mark_lost]
+    action = drop_definition.defined_actions[:lost_enter_interaction]
     assert_kind_of Plutonium::Action::Interactive, action
     assert action.record_action?, "drop interaction should be a record action"
     assert_equal MarkLostInteraction, action.interaction
   end
 
   def test_registered_drop_action_is_flagged_kanban_drop
-    assert drop_definition.defined_actions[:mark_lost].kanban_drop?
+    assert drop_definition.defined_actions[:lost_enter_interaction].kanban_drop?
   end
 
   def test_non_kanban_record_action_is_not_kanban_drop
@@ -98,9 +99,9 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
   def test_kanban_drop_action_excluded_from_displayable_record_actions
     definition = drop_definition
     displayable = definition.defined_actions.values.select { |a| a.record_action? && !a.kanban_drop? }
-    refute_includes displayable.map(&:name), :mark_lost
+    refute_includes displayable.map(&:name), :lost_enter_interaction
     # And it IS present as a registered (but hidden) action.
-    assert_includes definition.defined_actions.keys, :mark_lost
+    assert_includes definition.defined_actions.keys, :lost_enter_interaction
   end
 
   # A single column can declare BOTH a normal column action (visible in
@@ -124,14 +125,14 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
     assert_equal ArchiveInteraction, column_action.interaction
     refute column_action.kanban_drop?, "column action stays visible in toolbars"
 
-    drop_action = definition.defined_actions[:mark_lost]
+    drop_action = definition.defined_actions[:lost_enter_interaction]
     assert_kind_of Plutonium::Action::Interactive, drop_action
     assert drop_action.kanban_drop?, "drop action is drop-only"
     assert_equal MarkLostInteraction, drop_action.interaction
 
     # Both coexist — neither registration clobbered the other.
     assert_includes definition.defined_actions.keys, :archive
-    assert_includes definition.defined_actions.keys, :mark_lost
+    assert_includes definition.defined_actions.keys, :lost_enter_interaction
   end
 
   # Dynamic boards (`columns do … end`) expose no static columns at load time,

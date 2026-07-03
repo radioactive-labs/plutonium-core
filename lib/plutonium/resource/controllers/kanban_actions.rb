@@ -81,10 +81,11 @@ module Plutonium
         def kanban_move
           # Find record within authorized scope (satisfies scope verifier).
           record = kanban_base_relation.find(params[:id])
-          # Check move permission (satisfies authorize verifier).
-          authorize_current! record, to: :kanban_move?
 
           unless current_definition.defined_kanban_block
+            # Not a kanban resource — a 404, not an authorized action; satisfy the
+            # authorize verifier explicitly since we skip the authorize below.
+            skip_verify_authorize_current!
             head :not_found
             return
           end
@@ -94,12 +95,19 @@ module Plutonium
           from = columns.find { |c| c.key.to_s == params[:from_column].to_s }
           to = columns.find { |c| c.key.to_s == params[:to_column].to_s }
 
-          # accepts_record? evaluates Proc accepts: against the actual record
-          # (returning the Proc's boolean result) while delegating to accepts?
-          # semantics for true/false/Array values.  This is the server-side
-          # authority; the client-side data-kanban-accepts attribute (which
-          # treats Proc as "all") is only a drop-hint.
-          unless from && to&.accepts_record?(record, from.key) && !from.locked?
+          # Single authorization point for the whole move (satisfies the authorize
+          # verifier). kanban_move? defaults to update?; the from/to columns are
+          # supplied via the authorization context so a policy can gate specific
+          # transitions (e.g. "only admins may enter :closed_won") without a
+          # per-column method. Hoisted above the accepts/WIP checks so a denied
+          # move is a clean 403 before any structural rejection. The enter
+          # interaction (if any) rides on THIS check — it has no policy of its own.
+          authorize_current! record, to: :kanban_move?,
+            context: {kanban_from: from, kanban_to: to}
+
+          # accepts?/locked? are purely structural (source-column topology), the
+          # server-side authority behind the client-side data-kanban-accepts hint.
+          unless from && to&.accepts?(from.key) && !from.locked?
             reason =
               if from&.locked?
                 "Cards can't be moved out of “#{from.label}”."
@@ -151,16 +159,15 @@ module Plutonium
           drop_immediate = run_enter_interaction &&
             !!current_definition.defined_actions[to.enter_interaction_key]&.immediate
 
-          # Authorize the transition BEFORE opening the transaction — hoisted out
-          # so a denied move can't leave a throwaway on_enter write on the 403
-          # path. Bind the enter_interaction's auto-registered hidden record action
-          # (so interaction_params / build_interactive_record_action_interaction
+          # Bind the enter_interaction's auto-registered hidden record action (so
+          # interaction_params / build_interactive_record_action_interaction
           # resolve it) and reuse the already-loaded record as resource_record!
           # (param-extraction subject + form URL) — no re-query, no divergent copy.
+          # No authorize here: the move was already authorized by kanban_move?
+          # above, and the interaction has no policy method of its own.
           if run_enter_interaction
             params[:interactive_action] = to.enter_interaction_key
             @resource_record = record
-            authorize_current! record, to: :"#{to.enter_interaction_key}?"
           end
 
           ActiveRecord::Base.transaction do
@@ -301,9 +308,9 @@ module Plutonium
           # letting it fall through to the global rescue_from (which re-raises for
           # turbo_stream requests → the HTML error page morph this fix prevents).
           #
-          # A denied transition — either the board-wide kanban_move? gate or a
-          # enter_interaction's own policy rule (e.g. archive_task?). Snap the
-          # source column back with a toast at 403 instead of letting the HTML
+          # A denied transition — the kanban_move? gate (the single move
+          # authorization; the enter_interaction has no policy of its own). Snap
+          # the source column back with a toast at 403 instead of letting the HTML
           # error page reach the client: the drag POST expects a Turbo Stream, so
           # a raw error page would be morphed into the board (the "page turns red"
           # bug). Rendering a stream here keeps rejection feedback consistent with
@@ -334,14 +341,18 @@ module Plutonium
           to = kanban_column_for(params[:to_column])
 
           unless to&.enter_interaction?
-            # No interaction to authorize against on this path — the drop is
-            # simply invalid — so satisfy the authorize verifier explicitly.
+            # No interaction to open a form for on this path — the drop is simply
+            # invalid — so satisfy the authorize verifier explicitly.
             skip_verify_authorize_current!
             head :unprocessable_content
             return
           end
 
-          authorize_current! record, to: :"#{to.enter_interaction_key}?"
+          # Same single gate as kanban_move: authorize the move via kanban_move?
+          # with the from/to columns in context (the interaction has no policy of
+          # its own). Opening the form is authorizing the move it will commit.
+          authorize_current! record, to: :kanban_move?,
+            context: {kanban_from: kanban_column_for(params[:from_column]), kanban_to: to}
 
           # Bind the enter_interaction's auto-registered record action as the
           # current interactive action so the modal chrome (title, description,

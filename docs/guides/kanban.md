@@ -116,7 +116,7 @@ If a move is refused server-side — the destination is at its `wip:` limit, its
 
 ![A warning toast reading “Pending” is at its WIP limit (5) after a rejected drop](/images/guides/kanban-wip-toast.png)
 
-The toast is appended to a `#kanban-flash` region in the board shell (outside the per-column frames, so it survives the snap-back re-render). The client-side drag hints already grey out columns a card plainly can't enter, so the toast mainly surfaces the cases the browser can't pre-check — most commonly a WIP-full column or a per-card `accepts:` Proc.
+The toast is appended to a `#kanban-flash` region in the board shell (outside the per-column frames, so it survives the snap-back re-render). The client-side drag hints already grey out columns a card plainly can't enter, so the toast mainly surfaces the cases the browser can't pre-check — most commonly a WIP-full column or a `kanban_move?` denial.
 
 ### Opening a card
 
@@ -242,7 +242,7 @@ end
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Preset shorthand (see below) |
 | `collapsed:` | Boolean | `false` | Start collapsed |
 | `add:` | Boolean | `false` | Show `+ Add` quick-add button |
-| `accepts:` | `true`, `false`, Array of keys, or Proc | `true` | Which drops are accepted. `true` = all, `false` = none, `[:doing]` = only from `:doing`. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time and returns a boolean (e.g. `->(task) { task.status == "doing" }`) |
+| `accepts:` | `true`, `false`, or Array of keys | `true` | Which source columns may drop here (structural, client-hintable). `true` = all, `false` = none, `[:doing]` = only from `:doing`. Record/user conditions go in `kanban_move?` instead (it sees the record and `from`/`to`); a `Proc` here raises |
 | `locked:` | Boolean | `false` | Prevent dragging cards **out of** this column |
 | `wip:` | Integer | `nil` | Work-in-progress limit. Cross-column drops that would exceed this count are rejected |
 
@@ -301,7 +301,7 @@ column :lost,
 
 `enter_interaction:` takes an **Interaction class**. It must be **record-scoped** — it declares `attribute :resource` and acts on the single dropped card. A bulk (`attribute :resources`) interaction is not valid here; that shape is for [column actions](#column-actions).
 
-The interaction is **auto-registered as a hidden record action** keyed by its conventional name (`MarkLostInteraction` → `:mark_lost`). "Hidden" means it does **not** appear as an action button on the show page, table rows, or grid cards — it is reachable only by dropping a card into the column.
+The interaction is **auto-registered as a hidden record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`), so two columns can reuse the same interaction class without colliding. "Hidden" means it does **not** appear as an action button on the show page, table rows, or grid cards — it is reachable only by dropping a card into the column.
 
 ### The interaction
 
@@ -326,22 +326,20 @@ class MarkLostInteraction < ResourceInteraction
 end
 ```
 
-### Layered authorization
+### Authorization
 
-Two gates must both pass for the drop to commit:
-
-1. The board-wide **`kanban_move?`** policy predicate — can this card move at all (same as any drag).
-2. The interaction's **own policy method** — the natural predicate named after the action key. Add it to your policy:
+The drop is authorized by the single **`kanban_move?`** predicate — the interaction has **no policy method of its own**. To gate this specific transition, branch on the destination column, which `kanban_move?` reads from its authorization context (`kanban_to`):
 
 ```ruby
 class TaskPolicy < ResourcePolicy
-  def mark_lost?
-    update?          # or stricter — only who may mark a task lost
+  def kanban_move?
+    return update? if kanban_to&.key == :lost   # who may mark a task lost
+    super
   end
 end
 ```
 
-This is the clean-authorization win: the specific transition is gated by its own named predicate (`mark_lost?`), not buried in a `condition:` proc. If either gate fails the drop is refused and the card stays put.
+This keeps authorization in one place: `kanban_move?` gates every move, and the `to` (and `from`) column context lets it gate a specific transition — no per-interaction predicate, no `condition:` proc. If the check fails the drop is refused and the card stays put. See [Authorization](../reference/kanban/authorization) for the full `from`/`to` context.
 
 ### Two flows, split by intent
 

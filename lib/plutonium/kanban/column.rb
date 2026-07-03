@@ -27,6 +27,14 @@ module Plutonium
         if enter_interaction && !(enter_interaction.is_a?(Class) && enter_interaction < Plutonium::Resource::Interaction)
           raise ArgumentError, "enter_interaction: must be a Plutonium::Resource::Interaction subclass, got #{enter_interaction.inspect}"
         end
+        # accepts: is purely structural (topology + client drop hints): true/false
+        # or an Array of source keys. The Proc form was removed — record/user
+        # conditions belong in the kanban_move? policy, which sees the record and
+        # the from/to columns. Fail loud rather than silently treating a stale Proc
+        # as permissive (which would OPEN UP a column that used to restrict drops).
+        if accepts.is_a?(Proc)
+          raise ArgumentError, "kanban column `accepts:` no longer accepts a Proc; use true/false or an Array of source keys, and put record/user conditions in the kanban_move? policy."
+        end
         @key = key.to_sym
         @label = label || key.to_s.titleize
         @color = color.nil? ? preset[:color] : color
@@ -47,11 +55,18 @@ module Plutonium
       # interaction's form as a modal before the move is committed.
       def enter_interaction? = !!@enter_interaction
 
-      # The conventional record-action key for the enter interaction, derived
-      # from its class name: MarkLostInteraction → :mark_lost. Nil when unset.
+      # Internal action-registration key for the enter interaction, scoped to the
+      # column: :blocked → :blocked_enter_interaction. Nil when unset.
+      #
+      # Column-scoped (not class-name-derived) so it is unique by construction — a
+      # column has at most one enter_interaction, so two columns can never collide
+      # even if they reuse the same interaction class. This key is ONLY an internal
+      # form/param routing handle; it is NOT an authorization name. The move (and
+      # therefore the interaction) is authorized solely by kanban_move? — the
+      # interaction has no policy method of its own.
       def enter_interaction_key
         return nil unless @enter_interaction
-        @enter_interaction.name.demodulize.sub(/Interaction\z/, "").underscore.to_sym
+        :"#{key}_enter_interaction"
       end
 
       def action(key, interaction:, on: :all, label: nil, icon: nil, confirmation: nil)
@@ -62,34 +77,14 @@ module Plutonium
       def add? = !!@add
       def locked? = @locked
 
-      # Column-level accepts check — used for client-side drop hints and as the
-      # first gate in the move handler (before the record is needed).
-      # Proc accepts: is treated as permissive at the column level; call
-      # accepts_record? with the actual record to evaluate the predicate.
+      # Whether a card from `source_key` may be dropped into this column. Purely
+      # structural — @accepts is normalized to true/false or an Array of source
+      # keys (the constructor rejects a Proc). Drives both the server-side gate in
+      # the move handler and the client-side drop hint (data-kanban-accepts).
       def accepts?(source_key)
         case @accepts
         when Array then @accepts.include?(source_key)
-        when true, false then @accepts
-        # Proc/predicate case: permit at the column level here; the move handler
-        # evaluates the predicate per-card via accepts_record? with the actual record.
-        else true
-        end
-      end
-
-      # Per-card accepts check — evaluates a Proc accepts: against the actual
-      # record.  Called by the move handler after the record is loaded.
-      #
-      # Convention for Proc accepts:
-      #   accepts: ->(card) { … }   # receives the record, returns true/false
-      #
-      # For non-Proc values the behaviour matches accepts?(source_key) exactly,
-      # so the move handler can unconditionally switch to accepts_record?.
-      def accepts_record?(record, source_key)
-        case @accepts
-        when Array then @accepts.include?(source_key)
-        when true, false then @accepts
-        when Proc then @accepts.call(record)
-        else true
+        else @accepts # true or false
         end
       end
 

@@ -169,7 +169,7 @@ column :key,
   enter_interaction: MarkLostInteraction, # record-scoped interaction run on cross-column drop (see below)
   collapsed: true,             # starts collapsed (Stimulus persists toggle to localStorage)
   add:       true,             # show "+ Add" button (requires create?)
-  accepts:   true,             # true (default), false, Array of source keys, or 1-arg Proc
+  accepts:   true,             # true (default), false, or Array of source keys (Proc raises)
   locked:    false,            # reject all incoming drops (server-enforced)
   role:      :backlog          # :backlog, :done or :lost (see presets below)
 ```
@@ -190,14 +190,13 @@ Explicit options override the preset (e.g. `role: :done, collapsed: false`).
 
 ### `accepts:`
 
-Controls which source columns may drop cards here:
+Structural drop topology — which **source columns** may drop cards here:
 
 - `true` (default) — any source allowed
 - `false` — column is a drop target but refuses everything (snap-back)
 - `Array` — list of source column keys allowed: `accepts: [:doing]`
-- `Proc` (1-arg) — per-card predicate: `accepts: ->(record) { record.state == "doing" }`
 
-Checked server-side. Client-side visual hints read `data-kanban-accepts`.
+Checked server-side; client-side visual hints read `data-kanban-accepts` (so the drag UI can grey out disallowed sources). **No Proc form** — a `Proc` raises `ArgumentError`. Record- or user-conditional rules belong in `kanban_move?`, which sees the record and the `from`/`to` columns (see Authorization below).
 
 ### `on_enter:`
 
@@ -245,7 +244,7 @@ class MarkLostInteraction < ResourceInteraction
 end
 ```
 
-- **Auto-registered as a HIDDEN record action** keyed by the interaction's conventional name (`MarkLostInteraction` → `:mark_lost`) — no button on show/table/grid; reachable only by dropping.
+- **Auto-registered as a HIDDEN record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`) — unique by construction, so two columns can reuse the same interaction class. No button on show/table/grid; reachable only by dropping. **No policy method of its own** — authorized by `kanban_move?` (see Authorization).
 - **Move flow:** cross-column drop opens the interaction's form as a modal; on submit `on_enter` + interaction + repositioning commit in **one atomic transaction**. Validation failure rolls it all back (membership write included) and re-renders the modal with errors — nothing persists. Put side-effects on `deliver_later` so a rollback sends no stray mail.
 - **Same-column reorder = positioning only** — neither `on_enter` nor the interaction fires (both = *entering* a column).
 - **Quick-add unaffected:** `+ Add` still uses `on_enter`'s dry-run; the interaction is not involved.
@@ -293,12 +292,21 @@ end
 
 When `kanban_move?` returns `false`, the board renders read-only — no drag handles, no drop zones.
 
-**Layered authorization for `enter_interaction:` columns.** A drop into a column with a `enter_interaction` must pass **both** the board-wide `kanban_move?` **and** the interaction's own named policy predicate (`MarkLostInteraction` → `def mark_lost? = update?`). The first gates whether the card moves at all; the second gates that specific transition — no `condition:` proc needed.
+**`kanban_move?` is the ONLY move authorization** — plain moves and `enter_interaction:` columns alike (the interaction has no policy method of its own). To gate a *specific* transition, read the destination (and source) column from the authorization context via the optional `kanban_to` / `kanban_from` policy readers (the `Column` objects; `nil` for every non-move check):
+
+```ruby
+def kanban_move?
+  return user.manager? if kanban_to&.key == :closed_won
+  super
+end
+```
+
+Rules take no positional args in ActionPolicy — the columns arrive as declared optional context (`authorize :kanban_from/:kanban_to, optional: true` on the base policy), supplied by the controller on the move check.
 
 ### Move authorization flow
 
 1. Record loaded via current `relation_scope` (same as index).
-2. `kanban_move?` checked — HTTP 403 on failure.
+2. `kanban_move?` checked (with `kanban_from`/`kanban_to` in context) — HTTP 403 on failure. This is the sole authorization; an `enter_interaction` rides on it.
 3. Column `accepts:` / `locked:` checked — HTTP 422 + card snap-back on failure.
 4. `wip:` limit checked for cross-column moves — HTTP 422 on failure.
 5. `on_enter` fires + record repositioned, all in a transaction.
@@ -336,7 +344,7 @@ class TaskDefinition < ResourceDefinition
     column :done,
       scope:   -> { where(status: "done") },
       on_enter: :mark_done!,
-      accepts: ->(task) { task.status == "doing" },
+      accepts: [:doing],                # only cards coming from :doing
       role:    :done do                 # color: :green, collapsed: true
       action :archive_all,
         interaction: ArchiveTasksInteraction,

@@ -52,14 +52,13 @@ class AdminPortal::KanbanBehavioursTest < ActionDispatch::IntegrationTest
     assert_match(/data-kanban-accepts="all"/, response.body)
   end
 
-  test "proc accepts column carries data-kanban-accepts=all for client-side hints" do
-    # :done column uses accepts: Proc (per-card predicate).  The client-side
-    # hint is "all" — the Stimulus controller doesn't restrict drops visually
-    # because the server evaluates the Proc per-card in the move handler.
-    # This prevents a false "no drop" flash on cards that the Proc would allow.
+  test "array accepts column carries its source keys as the client-side hint" do
+    # :done column uses accepts: [:doing] (source-key topology). The client-side
+    # hint lists the allowed source columns so the Stimulus controller can grey
+    # out cards dragged from any other column.
     get "/admin/tasks?view=kanban&column=done"
     assert_response :success
-    assert_match(/data-kanban-accepts="all"/, response.body)
+    assert_match(/data-kanban-accepts="doing"/, response.body)
   end
 
   test "doing column carries data-kanban-accepts=all" do

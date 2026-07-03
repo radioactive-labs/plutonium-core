@@ -33,13 +33,13 @@ class TaskDefinition < ::ResourceDefinition
       wip: 3
 
     # :done uses a Symbol on_enter (dispatched as record.mark_done!) and only
-    # accepts cards whose current status is "doing" — todo→done drops are
-    # rejected.  Uses a Proc accepts: to exercise per-card evaluation in the
-    # move handler (GAP 2): the Proc receives the record and returns a boolean.
+    # accepts cards coming from :doing — todo→done drops are rejected. Uses the
+    # source-key Array form of accepts: (structural topology, also client-hintable
+    # via data-kanban-accepts). Record/user conditions would go in kanban_move?.
     column :done,
       scope: -> { where(status: "done") },
       on_enter: :mark_done!,
-      accepts: ->(task) { task.status == "doing" },
+      accepts: [:doing],
       role: :done do
       action :archive_all, interaction: ArchiveTasksInteraction, on: :all, label: "Archive all"
     end

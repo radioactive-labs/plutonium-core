@@ -80,13 +80,13 @@ class AdminPortal::KanbanMoveFormTest < ActionDispatch::IntegrationTest
 
   # ─── Criterion 4: policy denial → 403 ──────────────────────────────────────
 
-  test "denied mark_lost? returns 403" do
-    TaskPolicy.deny_mark_lost = true
+  test "kanban_move? denying entry to :lost returns 403" do
+    TaskPolicy.deny_enter_column = :lost
     begin
       get kanban_move_form_url(@task, from_column: "doing", to_column: "lost", to_index: 0)
       assert_response :forbidden
     ensure
-      TaskPolicy.deny_mark_lost = false
+      TaskPolicy.deny_enter_column = nil
     end
   end
 

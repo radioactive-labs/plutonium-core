@@ -5,7 +5,8 @@
 # and, on submit, transitions the task to "lost" and records the reason.
 #
 # Exercises the enter_interaction path: registered as a hidden record action
-# (`mark_lost?`), rendered by kanban_move_form, and committed by kanban_move.
+# (key :lost_enter_interaction), rendered by kanban_move_form, and committed by
+# kanban_move. Authorized by kanban_move? — it has no policy method of its own.
 class MarkLostInteraction < ::ResourceInteraction
   presents label: "Mark Lost",
     icon: Phlex::TablerIcons::X
