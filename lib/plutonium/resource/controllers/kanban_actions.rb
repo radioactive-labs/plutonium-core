@@ -294,7 +294,7 @@ module Plutonium
                 streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")]
                 outcome.messages.each do |msg, type|
                   streams += [turbo_stream.append("kanban-flash", partial: "plutonium/toast",
-                    locals: {type: (type == :notice ? :success : type), msg:})]
+                    locals: {type: ((type == :notice) ? :success : type), msg:})]
                 end
               end
 
