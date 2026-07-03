@@ -201,7 +201,7 @@ end
 | `scope:` | Symbol or Proc | `nil` | Relation filter for this column. **Symbol** → `relation.public_send(sym)` (named AR scope). **Proc** → 0-arg lambda called via `instance_exec` on the relation, e.g. `-> { where(status: "todo") }` |
 | `on_enter:` | Symbol or Proc | `nil` | Fired when a card is dropped into this column. **Symbol** → `record.public_send(sym)`. **Proc** → 1-arg lambda `->(record) { … }` where `self` inside the block is the view context (giving access to `current_user`, helpers, etc.). The callback may assign attributes in memory (`r.status = :done`) or call `update!` directly; if the record has unsaved changes after `on_enter` returns the controller saves it automatically. |
 | `on_exit:` | Symbol or Proc | `nil` | The source-side counterpart to `on_enter:`, fired when a card **leaves** this column on a cross-column move. Same dispatch (**Symbol** → `record.public_send`; **Proc** → 1-arg lambda, `self` = view context). Runs **before** the destination's `on_enter`, inside the same move transaction, so it sees the pre-move state and rolls back if the move fails. Use it for source-tied side effects the destination can't own (stop a timer, release a slot). Fires only on a drag-move through `kanban_move` — not on destroy, a programmatic status change, or quick-add. Skipped on same-column reorders. |
-| `enter_interaction:` | Class | `nil` | A **record-scoped** interaction class (declares `attribute :resource`) run when a card is dropped **into** this column from another column. Opens the interaction's form as a modal to collect input, then commits `on_enter` + the interaction + repositioning atomically. Auto-registered as a hidden record action keyed by the interaction's conventional name. See [enter_interaction](#drop-interaction) below |
+| `enter_interaction:` | Class | `nil` | A **record-scoped** interaction class (declares `attribute :resource`) run when a card is dropped **into** this column from another column. Opens the interaction's form as a modal to collect input, then commits `on_enter` + the interaction + repositioning atomically. Auto-registered as a hidden record action under a column-scoped key (`:<column>_enter_interaction`), authorized by `kanban_move?` (no policy method of its own). See [enter_interaction](#drop-interaction) below |
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Applies a preset (see below) |
 | `collapsed:` | Boolean | `false` | Column starts collapsed (a thin strip with the label rotated). The Stimulus controller persists the toggled state to `localStorage` (key: `pu-kanban:<path>:<column-key>:collapsed`) so the user preference survives page reloads; this DSL value sets the server-rendered initial state only. |
 | `add:` | Boolean | `false` | Show a `+ Add` quick-add button |
@@ -295,6 +295,8 @@ class TaskDefinition < ResourceDefinition
   end
 end
 ```
+
+**`enter_interaction:` is not supported on dynamic boards.** Unlike a column action, its hidden action can't be registered manually — the key is column-scoped and internal — and the static registration pass has no columns to see. A drop into a dynamic column that declares `enter_interaction:` is rejected with a snap-back (it does not crash). Use a static board when a column needs an `enter_interaction:`.
 :::
 
 ---

@@ -44,6 +44,8 @@ end
 
 Rules take no positional arguments in ActionPolicy — the columns arrive via context, which the controller supplies on the `kanban_move?` check (`context: { kanban_from:, kanban_to: }`). This replaces per-column policy methods: an `enter_interaction:` column is authorized by `kanban_move?` too, so there is no separate `mark_lost?`-style predicate to define.
 
+Both `kanban_from` and `kanban_to` are **trustworthy** to authorize on. `to` is where the card ends up; and although `from_column` arrives from the client, the move handler **verifies the record actually resides in the claimed source column** before it proceeds (a mismatch snaps the drag back), so a spoofed or stale `from` can never drive a move past a `kanban_from`-based rule.
+
 ## Read-only board
 
 When `kanban_move?` returns `false` for the current user, the board is rendered read-only. Cards are displayed but dragging is disabled — no drag handles appear and the Stimulus controller does not register drop zones.
@@ -54,9 +56,10 @@ When a card is dropped, the server:
 
 1. Finds the record within the current authorized scope (the same policy `relation_scope` used by the index action).
 2. Calls `authorize_current!(record, to: :kanban_move?, context: { kanban_from:, kanban_to: })` — the single authorization for the move (an `enter_interaction:` column rides on this same check, with no policy method of its own). A `false` result halts the action with HTTP 403.
-3. Validates the drop against the destination column's `accepts:` policy and `locked:` flag. A rejected drop responds with HTTP 422 and re-renders the source column (the Stimulus controller snaps the card back).
-4. Enforces the destination column's `wip:` limit (cross-column moves only). Exceeding the WIP cap also responds 422.
-5. Calls `on_enter` and repositions the record inside a transaction.
+3. Verifies the record actually resides in the claimed source column (`from_column` is client-supplied). A mismatch responds 422 and snaps the card back — this is what makes `kanban_from` safe to authorize on.
+4. Validates the drop against the destination column's `accepts:` policy and `locked:` flag. A rejected drop responds with HTTP 422 and re-renders the source column (the Stimulus controller snaps the card back).
+5. Enforces the destination column's `wip:` limit (cross-column moves only). Exceeding the WIP cap also responds 422.
+6. Calls `on_enter` and repositions the record inside a transaction.
 
 ## No permitted attributes for moves
 

@@ -227,6 +227,8 @@ class TaskDefinition < ResourceDefinition
   end
 end
 ```
+
+Note that **`enter_interaction:` is not supported on dynamic boards** — its hidden action is registered from the static column list at class-load time, and its key is internal (column-scoped) so it can't be registered manually the way a column action can. A drop into such a column snaps back rather than committing (it doesn't crash). Use a static board if a column needs an `enter_interaction:`.
 :::
 
 ### Column options

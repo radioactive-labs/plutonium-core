@@ -138,6 +138,8 @@ end
 
 Evaluates the block at request time with the view context as `self` (`current_user`, `params`, `current_scoped_entity`, helpers all available). The block must return an Array of `Plutonium::Kanban::Column` objects — `column` is a DSL method only available outside the `columns` block. Declare any column-action interactions as top-level definition `action` calls — the block is not introspectable at class-load time.
 
+> **`enter_interaction:` is NOT supported on dynamic boards.** Its hidden action is registered from the static column list at class-load time, which a `columns do…end` board doesn't have, and the key is column-scoped/internal so there's no manual-registration escape hatch (unlike column actions). A drop into such a column is rejected with a snap-back — it does not crash. Use a static board if you need `enter_interaction:`.
+
 ```ruby
 kanban do
   columns do
