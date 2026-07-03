@@ -144,11 +144,11 @@
     {
       "warning_type": "Dangerous Eval",
       "warning_code": 13,
-      "fingerprint": "ac51d516bdbc88a0a624795dad1b3efc1d2744b3f2d7be7feb67e0b5cebab763",
+      "fingerprint": "bdacd028907815ba0db0cf99e069d1ea7e94a6e527b7746efd97886c52b2f928",
       "check_name": "Evaluation",
       "message": "Dynamic string evaluated as code",
       "file": "lib/plutonium/models/has_cents.rb",
-      "line": 134,
+      "line": 162,
       "link": "https://brakemanscanner.org/docs/warning_types/dangerous_eval/",
       "code": "class_eval(\"            # Getter method for the decimal representation of the cents value.\\n            #\\n            # @return [BigDecimal, nil] The decimal value or nil if cents_name is not present.\\n            def #{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym)}\\n              #{cents_name.to_sym}.to_d / #{rate} if #{cents_name.to_sym}.present?\\n            end\\n\\n            # Setter method for the decimal representation of the cents value.\\n            #\\n            # @param value [Numeric, nil] The decimal value to be set.\\n            def #{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym)}=(value)\\n              self.#{cents_name.to_sym} = begin\\n                (BigDecimal(value.to_s) * #{rate}).to_i if value.present?\\n              rescue ArgumentError\\n                nil\\n              end\\n            end\\n\\n            # Mark decimal field as invalid if cents field is not valid\\n            after_validation do\\n              next unless errors[#{cents_name.to_sym.inspect}].present?\\n\\n              errors.add(#{(:\"#{cents_name.to_sym}_#{suffix}\" or cents_name.to_sym.to_s.gsub(/_cents$/, \"\").to_sym).inspect}, :invalid)\\n            end\\n\", \"lib/plutonium/models/has_cents.rb\", 135)",
       "render_path": null,
