@@ -635,6 +635,11 @@ select.pu-input[multiple] option {
    own pinned-right surface and intentionally does not opt in. */
 .pu-dialog {
   background-color: var(--pu-surface);
+  /* Pair the surface background with the theme text colour. The UA stylesheet
+     resets <dialog> color to CanvasText (black) and it does NOT inherit from
+     <body>, so without this any unstyled text inside a modal (e.g. a show page's
+     plain field values) renders black on the dark surface. */
+  color: var(--pu-text);
   border: 1px solid var(--pu-border);
   border-radius: var(--pu-radius-lg);
 }
