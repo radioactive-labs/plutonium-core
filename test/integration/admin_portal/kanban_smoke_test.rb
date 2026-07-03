@@ -30,12 +30,12 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_instance_of Plutonium::Kanban::Board, board
   end
 
-  test "board has exactly 6 columns" do
-    assert_equal 6, board.columns.length
+  test "board has exactly 7 columns" do
+    assert_equal 7, board.columns.length
   end
 
-  test "board column keys are :todo, :doing, :done, :lost, :blocked, :archived" do
-    assert_equal %i[todo doing done lost blocked archived], board.columns.map(&:key)
+  test "board column keys are :todo, :doing, :done, :lost, :blocked, :archived, :review" do
+    assert_equal %i[todo doing done lost blocked archived review], board.columns.map(&:key)
   end
 
   test "board per_column is 25" do

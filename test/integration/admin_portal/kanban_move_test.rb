@@ -63,6 +63,22 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_includes response.content_type, "turbo-stream"
   end
 
+  # A negative to_index must clamp to the top (index 0), NOT wrap via Ruby's
+  # negative array indexing (dest_cards[-1] would anchor the drop to the LAST
+  # card). Destination :todo holds @todo_a (pos 1.0) then @todo_b (pos 2.0); a
+  # clamped drop lands ABOVE @todo_a. Without the clamp it would land between
+  # @todo_a and @todo_b (before the last card).
+  test "a negative to_index clamps to the top instead of wrapping to the last card" do
+    post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "todo", to_index: -1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @doing_a.reload
+    assert_equal "todo", @doing_a.status
+    assert @doing_a.position < @todo_a.reload.position,
+      "a negative index must place the card at the top, not before the last card"
+  end
+
   # ─── Success: Symbol on_enter (doing → done) ────────────────────────────────
 
   test "move doing to done returns 200 and updates status via symbol on_enter" do

@@ -138,7 +138,12 @@ module Plutonium
           # (cross-column, same-column reorder, record already in destination).
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, to.scope)
           dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
-          to_index = params[:to_index].to_i
+          # to_index is client-supplied. Clamp to [0, dest_cards.size] so a negative
+          # value can't wrap via Ruby's negative array indexing (dest_cards[-1] would
+          # silently anchor the drop to the LAST card) and an over-large value simply
+          # appends. The real client only ever sends 0..dest_cards.size; this hardens
+          # the crafted-request path.
+          to_index = params[:to_index].to_i.clamp(0, dest_cards.size)
 
           # WIP limit only applies to cross-column drops (reordering within the
           # same column does not change its cardinality). This is a
@@ -380,6 +385,7 @@ module Plutonium
         def kanban_move_form
           @resource_record = kanban_base_relation.find(params[:id])
           record = @resource_record
+          from = kanban_column_for(params[:from_column])
           to = kanban_column_for(params[:to_column])
 
           # No interaction to open a form for (invalid drop), OR the interaction is
@@ -398,7 +404,32 @@ module Plutonium
           # with the from/to columns in context (the interaction has no policy of
           # its own). Opening the form is authorizing the move it will commit.
           authorize_current! record, to: :kanban_move?,
-            context: {kanban_from: kanban_column_for(params[:from_column]), kanban_to: to}
+            context: {kanban_from: from, kanban_to: to}
+
+          # Belt-and-suspenders structural gate, mirroring kanban_move (POST) in
+          # the same order (membership → accepts?/locked?). Don't open a modal for
+          # a drop the commit will inevitably reject: the user would fill in the
+          # interaction form only to eat a 422 snap-back on submit. The client's
+          # accepts hint normally blocks this before the modal opens, but a stale
+          # board or a crafted request can still reach here. On rejection we render
+          # the SAME turbo-stream snap-back the POST does (Turbo processes it from
+          # the frame.src navigation) instead of the doomed form. authorize already
+          # succeeded (counter bumped), so these returns need no skip_verify.
+          if from && !record_in_kanban_column?(record, from)
+            return render_kanban_rejection(
+              params[:from_column],
+              reason: "This card is no longer in “#{from.label}”."
+            )
+          end
+          unless from && to.accepts?(from.key) && !from.locked?
+            reason =
+              if from&.locked?
+                "Cards can't be moved out of “#{from.label}”."
+              else
+                "Cards can't be moved into “#{to.label}”."
+              end
+            return render_kanban_rejection(params[:from_column], reason:)
+          end
 
           # Bind the enter_interaction's auto-registered record action as the
           # current interactive action so the modal chrome (title, description,
@@ -409,6 +440,23 @@ module Plutonium
           @interaction.resource = record
 
           render :kanban_move_form, formats: [:html], **modal_render_options
+        rescue ::ActionPolicy::Unauthorized
+          # A denied transition into a enter_interaction column. Without this the
+          # exception reaches the global rescue_from, which RE-RAISES for html/
+          # turbo_stream (core/controller.rb) → a 403 HTML error page. The client
+          # opened this form via `frame.src`, so that error page lands in the
+          # remote-modal frame → a broken "content missing" modal. Render the same
+          # turbo-stream rejection the kanban_move POST does instead: the card was
+          # never moved (native DnD doesn't re-parent), so this just empties the
+          # modal frame, re-asserts the source column, and toasts the denial.
+          # authorize_current! raised before bumping its counter, so satisfy the
+          # verifier explicitly (mirrors the RecordNotFound branch below).
+          skip_verify_authorize_current!
+          render_kanban_rejection(
+            params[:from_column],
+            reason: "You are not authorized to move this card there.",
+            status: :forbidden
+          )
         rescue ActiveRecord::RecordNotFound
           # Card destroyed between board render and the modal-open request. `find`
           # raised before authorize, so satisfy that verifier; return a plain 404

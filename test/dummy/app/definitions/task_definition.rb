@@ -72,5 +72,16 @@ class TaskDefinition < ::ResourceDefinition
     column :archived,
       scope: -> { where(status: "archived") },
       enter_interaction: ArchiveTaskInteraction
+
+    # :review combines an accepts: restriction WITH a enter_interaction — the exact
+    # pairing the kanban_move_form (GET) structural gate guards. It accepts ONLY
+    # :doing, so a drop from any other source (e.g. :todo) must be rejected BEFORE
+    # the modal opens (belt-and-suspenders symmetry with the kanban_move POST's
+    # accepts gate). MarkLostInteraction is reused as an arbitrary input-collecting
+    # interaction — the GET tests only open/deny the modal, never commit it.
+    column :review,
+      scope: -> { where(status: "review") },
+      accepts: [:doing],
+      enter_interaction: MarkLostInteraction
   end
 end
