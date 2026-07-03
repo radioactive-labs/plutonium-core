@@ -11,7 +11,7 @@ require "test_helper"
 # The Task board fixture (TaskDefinition):
 #   :todo   — Proc on_enter, accepts all, backlog role
 #   :doing  — Proc on_enter, wip: 3, accepts all
-#   :done   — Symbol on_enter (:mark_done!), accepts: ->(task) { task.status == "doing" }
+#   :done   — Symbol on_enter (:mark_done!), accepts: [:doing] (only from :doing)
 #
 # Covered scenarios:
 #   * todo → doing success (Proc on_enter, status + position updated)
@@ -206,8 +206,8 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   # ─── Accepts restriction (todo → done rejected) ────────────────────────────
 
   test "drop rejected by accepts returns 422" do
-    # :done column declares accepts: ->(task) { task.status == "doing" }, so a
-    # todo card (status "todo") is rejected per-card by the predicate.
+    # :done declares accepts: [:doing], so a card dragged from :todo is rejected
+    # structurally (source key :todo is not in the allowed list).
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 

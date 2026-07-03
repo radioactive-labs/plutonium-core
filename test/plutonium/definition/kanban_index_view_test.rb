@@ -143,6 +143,8 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
         columns { [] }
       end
     end.new
-    assert_empty definition.defined_actions.keys.grep(/mark_lost|drop/)
+    # Match the ACTUAL registration key shape (:<column>_enter_interaction). The
+    # old /mark_lost|drop/ pattern matched neither and passed vacuously.
+    assert_empty definition.defined_actions.keys.grep(/enter_interaction/)
   end
 end

@@ -349,4 +349,53 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Task blocked",
       "a same-column reorder must NOT run the interaction (no success toast)"
   end
+
+  # ─── Security: the interaction has NO policy of its own ─────────────────────
+  #
+  # The enter_interaction is auto-registered as an interactive record action
+  # (:lost_enter_interaction, kanban_drop: true), so its standard route
+  # /record_actions/:action IS reachable. It is authorized ONLY by kanban_move?
+  # via the drop path — it has no per-interaction policy rule — so the standard
+  # route must fail closed. This is the load-bearing invariant of the single-
+  # kanban_move? model; guard it explicitly so a future change (a permissive
+  # default rule, a hand-defined :lost_enter_interaction?, or a different route
+  # exclusion) can't silently open a bypass.
+  test "enter_interaction is NOT runnable via the normal record-action route" do
+    original_status = @doing.status
+    path = "/admin/tasks/#{@doing.id}/record_actions/lost_enter_interaction"
+
+    get path
+    assert_response :forbidden, "the GET form route must fail closed (no policy rule)"
+
+    post path, params: {interaction: {reason: "backdoor"}}
+    assert_response :forbidden, "the POST commit route must fail closed (no policy rule)"
+
+    @doing.reload
+    assert_equal original_status, @doing.status,
+      "the interaction must NOT run outside the kanban_move? drop path"
+    assert_nil @doing.lost_reason
+  end
+
+  # ─── Security: the claimed source column is verified ────────────────────────
+  #
+  # params[:from_column] is client-supplied and is handed to the policy as
+  # kanban_from. The move must verify the record actually resides in the claimed
+  # source before proceeding — otherwise a from-based policy rule (or a stale
+  # board) could be bypassed by lying about where the card started.
+  test "a move claiming the wrong source column is rejected (spoofed / stale from)" do
+    # @doing really sits in :doing; claim it started in :todo.
+    post kanban_move_url(@doing),
+      params: {from_column: "todo", to_column: "lost", to_index: 0,
+               interaction: {reason: "should not run"}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    assert_includes response.body, 'target="kanban-col-todo"',
+      "must snap the claimed source column back"
+
+    @doing.reload
+    assert_equal "doing", @doing.status,
+      "a mismatched-source move must not run on_enter or the interaction"
+    assert_nil @doing.lost_reason, "the interaction must not run"
+  end
 end
