@@ -58,7 +58,7 @@ module Plutonium
         # controller). nil → fall back to the column's declared default. The
         # component still emits the DEFAULT separately (data-kanban-default-
         # collapsed) so the controller can store only deltas from it.
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil)
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil)
           @column = column
           @cards = cards
           @total = total
@@ -67,6 +67,7 @@ module Plutonium
           @resource_fields = resource_fields
           @column_action_data = column_action_data
           @column_add_url = column_add_url
+          @board_url = board_url
           @card_fields = card_fields
           @card_show_frame = card_show_frame
           @collapsed = collapsed
@@ -302,7 +303,11 @@ module Plutonium
               # if clicked. An empty column simply renders no action link.
               next if ids.empty?
 
-              url = resource_url_for(resource_class, interaction: col_action.key, ids: ids)
+              # return_to the board so the action redirects back to it (not the
+              # table index) AND the board refreshes: the board-bound redirect is
+              # tagged with kanban_reload (KanbanActions#kanban_reload_url), so the
+              # column re-fetches and the mutated cards (e.g. archived) update.
+              url = resource_url_for(resource_class, interaction: col_action.key, ids: ids, return_to: @board_url)
               label = col_action.label || col_action.key.to_s.humanize
 
               link_to(

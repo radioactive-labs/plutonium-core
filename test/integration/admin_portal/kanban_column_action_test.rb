@@ -72,6 +72,22 @@ class AdminPortal::KanbanColumnActionTest < ActionDispatch::IntegrationTest
       "input-less action must not target the modal frame"
   end
 
+  # ─── Column action link returns to the board ─────────────────────────────
+
+  # The link carries return_to=<board> so the action redirects back to the board
+  # (not the table index) AND the board refreshes — the board-bound redirect is
+  # tagged with kanban_reload, so the mutated (e.g. archived) cards update.
+  test ":done column action link carries return_to to the board" do
+    Task.create!(title: "Done 1", status: "done")
+    get "/admin/tasks?view=kanban&column=done"
+    assert_response :success
+
+    archive_anchor = response.body[/<a[^>]*bulk_actions\/archive_all[^>]*>/]
+    refute_nil archive_anchor, "expected an anchor targeting the archive bulk route"
+    assert_match(/return_to=[^"]*view%3Dkanban/, archive_anchor,
+      "the column action must return_to the board (view=kanban)")
+  end
+
   # ─── on: :all includes ALL records, ignoring per_column cap ──────────────
 
   # The board's per_column is 25; seed 30 done tasks. The action link must

@@ -29,9 +29,9 @@
     mod
   ));
 
-  // node_modules/lodash/isObject.js
+  // ../plutonium-core/node_modules/lodash/isObject.js
   var require_isObject = __commonJS({
-    "node_modules/lodash/isObject.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/isObject.js"(exports, module) {
       function isObject(value) {
         var type = typeof value;
         return value != null && (type == "object" || type == "function");
@@ -40,17 +40,17 @@
     }
   });
 
-  // node_modules/lodash/_freeGlobal.js
+  // ../plutonium-core/node_modules/lodash/_freeGlobal.js
   var require_freeGlobal = __commonJS({
-    "node_modules/lodash/_freeGlobal.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_freeGlobal.js"(exports, module) {
       var freeGlobal = typeof global == "object" && global && global.Object === Object && global;
       module.exports = freeGlobal;
     }
   });
 
-  // node_modules/lodash/_root.js
+  // ../plutonium-core/node_modules/lodash/_root.js
   var require_root = __commonJS({
-    "node_modules/lodash/_root.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_root.js"(exports, module) {
       var freeGlobal = require_freeGlobal();
       var freeSelf = typeof self == "object" && self && self.Object === Object && self;
       var root = freeGlobal || freeSelf || Function("return this")();
@@ -58,9 +58,9 @@
     }
   });
 
-  // node_modules/lodash/now.js
+  // ../plutonium-core/node_modules/lodash/now.js
   var require_now = __commonJS({
-    "node_modules/lodash/now.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/now.js"(exports, module) {
       var root = require_root();
       var now = function() {
         return root.Date.now();
@@ -69,9 +69,9 @@
     }
   });
 
-  // node_modules/lodash/_trimmedEndIndex.js
+  // ../plutonium-core/node_modules/lodash/_trimmedEndIndex.js
   var require_trimmedEndIndex = __commonJS({
-    "node_modules/lodash/_trimmedEndIndex.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_trimmedEndIndex.js"(exports, module) {
       var reWhitespace = /\s/;
       function trimmedEndIndex(string) {
         var index = string.length;
@@ -83,9 +83,9 @@
     }
   });
 
-  // node_modules/lodash/_baseTrim.js
+  // ../plutonium-core/node_modules/lodash/_baseTrim.js
   var require_baseTrim = __commonJS({
-    "node_modules/lodash/_baseTrim.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_baseTrim.js"(exports, module) {
       var trimmedEndIndex = require_trimmedEndIndex();
       var reTrimStart = /^\s+/;
       function baseTrim(string) {
@@ -95,18 +95,18 @@
     }
   });
 
-  // node_modules/lodash/_Symbol.js
+  // ../plutonium-core/node_modules/lodash/_Symbol.js
   var require_Symbol = __commonJS({
-    "node_modules/lodash/_Symbol.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_Symbol.js"(exports, module) {
       var root = require_root();
       var Symbol2 = root.Symbol;
       module.exports = Symbol2;
     }
   });
 
-  // node_modules/lodash/_getRawTag.js
+  // ../plutonium-core/node_modules/lodash/_getRawTag.js
   var require_getRawTag = __commonJS({
-    "node_modules/lodash/_getRawTag.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_getRawTag.js"(exports, module) {
       var Symbol2 = require_Symbol();
       var objectProto = Object.prototype;
       var hasOwnProperty = objectProto.hasOwnProperty;
@@ -133,9 +133,9 @@
     }
   });
 
-  // node_modules/lodash/_objectToString.js
+  // ../plutonium-core/node_modules/lodash/_objectToString.js
   var require_objectToString = __commonJS({
-    "node_modules/lodash/_objectToString.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_objectToString.js"(exports, module) {
       var objectProto = Object.prototype;
       var nativeObjectToString = objectProto.toString;
       function objectToString2(value) {
@@ -145,9 +145,9 @@
     }
   });
 
-  // node_modules/lodash/_baseGetTag.js
+  // ../plutonium-core/node_modules/lodash/_baseGetTag.js
   var require_baseGetTag = __commonJS({
-    "node_modules/lodash/_baseGetTag.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/_baseGetTag.js"(exports, module) {
       var Symbol2 = require_Symbol();
       var getRawTag = require_getRawTag();
       var objectToString2 = require_objectToString();
@@ -164,9 +164,9 @@
     }
   });
 
-  // node_modules/lodash/isObjectLike.js
+  // ../plutonium-core/node_modules/lodash/isObjectLike.js
   var require_isObjectLike = __commonJS({
-    "node_modules/lodash/isObjectLike.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/isObjectLike.js"(exports, module) {
       function isObjectLike(value) {
         return value != null && typeof value == "object";
       }
@@ -174,9 +174,9 @@
     }
   });
 
-  // node_modules/lodash/isSymbol.js
+  // ../plutonium-core/node_modules/lodash/isSymbol.js
   var require_isSymbol = __commonJS({
-    "node_modules/lodash/isSymbol.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/isSymbol.js"(exports, module) {
       var baseGetTag = require_baseGetTag();
       var isObjectLike = require_isObjectLike();
       var symbolTag = "[object Symbol]";
@@ -187,9 +187,9 @@
     }
   });
 
-  // node_modules/lodash/toNumber.js
+  // ../plutonium-core/node_modules/lodash/toNumber.js
   var require_toNumber = __commonJS({
-    "node_modules/lodash/toNumber.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/toNumber.js"(exports, module) {
       var baseTrim = require_baseTrim();
       var isObject = require_isObject();
       var isSymbol = require_isSymbol();
@@ -220,9 +220,9 @@
     }
   });
 
-  // node_modules/lodash/debounce.js
+  // ../plutonium-core/node_modules/lodash/debounce.js
   var require_debounce = __commonJS({
-    "node_modules/lodash/debounce.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/debounce.js"(exports, module) {
       var isObject = require_isObject();
       var now = require_now();
       var toNumber = require_toNumber();
@@ -314,9 +314,9 @@
     }
   });
 
-  // node_modules/lodash/throttle.js
+  // ../plutonium-core/node_modules/lodash/throttle.js
   var require_throttle = __commonJS({
-    "node_modules/lodash/throttle.js"(exports, module) {
+    "../plutonium-core/node_modules/lodash/throttle.js"(exports, module) {
       var debounce5 = require_debounce();
       var isObject = require_isObject();
       var FUNC_ERROR_TEXT = "Expected a function";
@@ -339,9 +339,9 @@
     }
   });
 
-  // node_modules/namespace-emitter/index.js
+  // ../plutonium-core/node_modules/namespace-emitter/index.js
   var require_namespace_emitter = __commonJS({
-    "node_modules/namespace-emitter/index.js"(exports, module) {
+    "../plutonium-core/node_modules/namespace-emitter/index.js"(exports, module) {
       module.exports = function createNamespaceEmitter() {
         var emitter = {};
         var _fns = emitter._fns = {};
@@ -411,9 +411,9 @@
     }
   });
 
-  // node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js
+  // ../plutonium-core/node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js
   var require_prettierBytes = __commonJS({
-    "node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js"(exports, module) {
+    "../plutonium-core/node_modules/@transloadit/prettier-bytes/dist/prettierBytes.js"(exports, module) {
       "use strict";
       module.exports = function prettierBytes4(input) {
         if (typeof input !== "number" || Number.isNaN(input)) {
@@ -436,9 +436,9 @@
     }
   });
 
-  // node_modules/wildcard/index.js
+  // ../plutonium-core/node_modules/wildcard/index.js
   var require_wildcard = __commonJS({
-    "node_modules/wildcard/index.js"(exports, module) {
+    "../plutonium-core/node_modules/wildcard/index.js"(exports, module) {
       "use strict";
       function WildcardMatcher(text2, separator2) {
         this.text = text2 = text2 || "";
@@ -495,9 +495,9 @@
     }
   });
 
-  // node_modules/mime-match/index.js
+  // ../plutonium-core/node_modules/mime-match/index.js
   var require_mime_match = __commonJS({
-    "node_modules/mime-match/index.js"(exports, module) {
+    "../plutonium-core/node_modules/mime-match/index.js"(exports, module) {
       var wildcard = require_wildcard();
       var reMimePartSplit = /[\/\+\.]/;
       module.exports = function(target, pattern) {
@@ -510,9 +510,9 @@
     }
   });
 
-  // node_modules/classnames/index.js
+  // ../plutonium-core/node_modules/classnames/index.js
   var require_classnames = __commonJS({
-    "node_modules/classnames/index.js"(exports, module) {
+    "../plutonium-core/node_modules/classnames/index.js"(exports, module) {
       (function() {
         "use strict";
         var hasOwn = {}.hasOwnProperty;
@@ -570,9 +570,9 @@
     }
   });
 
-  // node_modules/eventemitter3/index.js
+  // ../plutonium-core/node_modules/eventemitter3/index.js
   var require_eventemitter3 = __commonJS({
-    "node_modules/eventemitter3/index.js"(exports, module) {
+    "../plutonium-core/node_modules/eventemitter3/index.js"(exports, module) {
       "use strict";
       var has = Object.prototype.hasOwnProperty;
       var prefix = "~";
@@ -732,9 +732,9 @@
     }
   });
 
-  // node_modules/cropperjs/dist/cropper.js
+  // ../plutonium-core/node_modules/cropperjs/dist/cropper.js
   var require_cropper = __commonJS({
-    "node_modules/cropperjs/dist/cropper.js"(exports, module) {
+    "../plutonium-core/node_modules/cropperjs/dist/cropper.js"(exports, module) {
       (function(global2, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, global2.Cropper = factory());
       })(exports, (function() {
@@ -3471,7 +3471,7 @@
     }
   });
 
-  // node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js
+  // ../plutonium-core/node_modules/@hotwired/turbo/dist/turbo.es2017-esm.js
   var FrameLoadingStyle = {
     eager: "eager",
     lazy: "lazy"
@@ -8868,7 +8868,7 @@
   window.Turbo = { ...Turbo2, StreamActions };
   start();
 
-  // node_modules/@hotwired/stimulus/dist/stimulus.js
+  // ../plutonium-core/node_modules/@hotwired/stimulus/dist/stimulus.js
   var EventListener = class {
     constructor(eventTarget, eventName, eventOptions) {
       this.eventTarget = eventTarget;
@@ -11565,7 +11565,7 @@
     }
   };
 
-  // node_modules/@popperjs/core/lib/enums.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/enums.js
   var top = "top";
   var bottom = "bottom";
   var right = "right";
@@ -11595,12 +11595,12 @@
   var afterWrite = "afterWrite";
   var modifierPhases = [beforeRead, read, afterRead, beforeMain, main, afterMain, beforeWrite, write, afterWrite];
 
-  // node_modules/@popperjs/core/lib/dom-utils/getNodeName.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getNodeName.js
   function getNodeName(element) {
     return element ? (element.nodeName || "").toLowerCase() : null;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getWindow.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getWindow.js
   function getWindow(node) {
     if (node == null) {
       return window;
@@ -11612,7 +11612,7 @@
     return node;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/instanceOf.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/instanceOf.js
   function isElement(node) {
     var OwnElement = getWindow(node).Element;
     return node instanceof OwnElement || node instanceof Element;
@@ -11629,7 +11629,7 @@
     return node instanceof OwnElement || node instanceof ShadowRoot;
   }
 
-  // node_modules/@popperjs/core/lib/modifiers/applyStyles.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/applyStyles.js
   function applyStyles(_ref2) {
     var state = _ref2.state;
     Object.keys(state.elements).forEach(function(name) {
@@ -11697,17 +11697,17 @@
     requires: ["computeStyles"]
   };
 
-  // node_modules/@popperjs/core/lib/utils/getBasePlacement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getBasePlacement.js
   function getBasePlacement(placement) {
     return placement.split("-")[0];
   }
 
-  // node_modules/@popperjs/core/lib/utils/math.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/math.js
   var max = Math.max;
   var min = Math.min;
   var round = Math.round;
 
-  // node_modules/@popperjs/core/lib/utils/userAgent.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/userAgent.js
   function getUAString() {
     var uaData = navigator.userAgentData;
     if (uaData != null && uaData.brands && Array.isArray(uaData.brands)) {
@@ -11718,12 +11718,12 @@
     return navigator.userAgent;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/isLayoutViewport.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/isLayoutViewport.js
   function isLayoutViewport() {
     return !/^((?!chrome|android).)*safari/i.test(getUAString());
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getBoundingClientRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getBoundingClientRect.js
   function getBoundingClientRect(element, includeScale, isFixedStrategy) {
     if (includeScale === void 0) {
       includeScale = false;
@@ -11756,7 +11756,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getLayoutRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getLayoutRect.js
   function getLayoutRect(element) {
     var clientRect = getBoundingClientRect(element);
     var width = element.offsetWidth;
@@ -11775,7 +11775,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/contains.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/contains.js
   function contains(parent, child) {
     var rootNode = child.getRootNode && child.getRootNode();
     if (parent.contains(child)) {
@@ -11792,17 +11792,17 @@
     return false;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getComputedStyle.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getComputedStyle.js
   function getComputedStyle2(element) {
     return getWindow(element).getComputedStyle(element);
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/isTableElement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/isTableElement.js
   function isTableElement(element) {
     return ["table", "td", "th"].indexOf(getNodeName(element)) >= 0;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getDocumentElement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getDocumentElement.js
   function getDocumentElement(element) {
     return ((isElement(element) ? element.ownerDocument : (
       // $FlowFixMe[prop-missing]
@@ -11810,7 +11810,7 @@
     )) || window.document).documentElement;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getParentNode.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getParentNode.js
   function getParentNode(element) {
     if (getNodeName(element) === "html") {
       return element;
@@ -11827,7 +11827,7 @@
     );
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getOffsetParent.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getOffsetParent.js
   function getTrueOffsetParent(element) {
     if (!isHTMLElement(element) || // https://github.com/popperjs/popper-core/issues/837
     getComputedStyle2(element).position === "fixed") {
@@ -11870,12 +11870,12 @@
     return offsetParent || getContainingBlock(element) || window2;
   }
 
-  // node_modules/@popperjs/core/lib/utils/getMainAxisFromPlacement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getMainAxisFromPlacement.js
   function getMainAxisFromPlacement(placement) {
     return ["top", "bottom"].indexOf(placement) >= 0 ? "x" : "y";
   }
 
-  // node_modules/@popperjs/core/lib/utils/within.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/within.js
   function within(min2, value, max2) {
     return max(min2, min(value, max2));
   }
@@ -11884,7 +11884,7 @@
     return v4 > max2 ? max2 : v4;
   }
 
-  // node_modules/@popperjs/core/lib/utils/getFreshSideObject.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getFreshSideObject.js
   function getFreshSideObject() {
     return {
       top: 0,
@@ -11894,12 +11894,12 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/utils/mergePaddingObject.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/mergePaddingObject.js
   function mergePaddingObject(paddingObject) {
     return Object.assign({}, getFreshSideObject(), paddingObject);
   }
 
-  // node_modules/@popperjs/core/lib/utils/expandToHashMap.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/expandToHashMap.js
   function expandToHashMap(value, keys) {
     return keys.reduce(function(hashMap, key) {
       hashMap[key] = value;
@@ -11907,7 +11907,7 @@
     }, {});
   }
 
-  // node_modules/@popperjs/core/lib/modifiers/arrow.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/arrow.js
   var toPaddingObject = function toPaddingObject2(padding, state) {
     padding = typeof padding === "function" ? padding(Object.assign({}, state.rects, {
       placement: state.placement
@@ -11969,12 +11969,12 @@
     requiresIfExists: ["preventOverflow"]
   };
 
-  // node_modules/@popperjs/core/lib/utils/getVariation.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getVariation.js
   function getVariation(placement) {
     return placement.split("-")[1];
   }
 
-  // node_modules/@popperjs/core/lib/modifiers/computeStyles.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/computeStyles.js
   var unsetSides = {
     top: "auto",
     right: "auto",
@@ -12095,7 +12095,7 @@
     data: {}
   };
 
-  // node_modules/@popperjs/core/lib/modifiers/eventListeners.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/eventListeners.js
   var passive = {
     passive: true
   };
@@ -12133,7 +12133,7 @@
     data: {}
   };
 
-  // node_modules/@popperjs/core/lib/utils/getOppositePlacement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getOppositePlacement.js
   var hash = {
     left: "right",
     right: "left",
@@ -12146,7 +12146,7 @@
     });
   }
 
-  // node_modules/@popperjs/core/lib/utils/getOppositeVariationPlacement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getOppositeVariationPlacement.js
   var hash2 = {
     start: "end",
     end: "start"
@@ -12157,7 +12157,7 @@
     });
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getWindowScroll.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getWindowScroll.js
   function getWindowScroll(node) {
     var win = getWindow(node);
     var scrollLeft = win.pageXOffset;
@@ -12168,12 +12168,12 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getWindowScrollBarX.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getWindowScrollBarX.js
   function getWindowScrollBarX(element) {
     return getBoundingClientRect(getDocumentElement(element)).left + getWindowScroll(element).scrollLeft;
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getViewportRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getViewportRect.js
   function getViewportRect(element, strategy) {
     var win = getWindow(element);
     var html3 = getDocumentElement(element);
@@ -12199,7 +12199,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getDocumentRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getDocumentRect.js
   function getDocumentRect(element) {
     var _element$ownerDocumen;
     var html3 = getDocumentElement(element);
@@ -12220,13 +12220,13 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/isScrollParent.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/isScrollParent.js
   function isScrollParent(element) {
     var _getComputedStyle = getComputedStyle2(element), overflow = _getComputedStyle.overflow, overflowX = _getComputedStyle.overflowX, overflowY = _getComputedStyle.overflowY;
     return /auto|scroll|overlay|hidden/.test(overflow + overflowY + overflowX);
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getScrollParent.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getScrollParent.js
   function getScrollParent(node) {
     if (["html", "body", "#document"].indexOf(getNodeName(node)) >= 0) {
       return node.ownerDocument.body;
@@ -12237,7 +12237,7 @@
     return getScrollParent(getParentNode(node));
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/listScrollParents.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/listScrollParents.js
   function listScrollParents(element, list2) {
     var _element$ownerDocumen;
     if (list2 === void 0) {
@@ -12254,7 +12254,7 @@
     );
   }
 
-  // node_modules/@popperjs/core/lib/utils/rectToClientRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/rectToClientRect.js
   function rectToClientRect(rect) {
     return Object.assign({}, rect, {
       left: rect.x,
@@ -12264,7 +12264,7 @@
     });
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getClippingRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getClippingRect.js
   function getInnerBoundingClientRect(element, strategy) {
     var rect = getBoundingClientRect(element, false, strategy === "fixed");
     rect.top = rect.top + element.clientTop;
@@ -12310,7 +12310,7 @@
     return clippingRect;
   }
 
-  // node_modules/@popperjs/core/lib/utils/computeOffsets.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/computeOffsets.js
   function computeOffsets(_ref2) {
     var reference2 = _ref2.reference, element = _ref2.element, placement = _ref2.placement;
     var basePlacement = placement ? getBasePlacement(placement) : null;
@@ -12365,7 +12365,7 @@
     return offsets;
   }
 
-  // node_modules/@popperjs/core/lib/utils/detectOverflow.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/detectOverflow.js
   function detectOverflow(state, options2) {
     if (options2 === void 0) {
       options2 = {};
@@ -12403,7 +12403,7 @@
     return overflowOffsets;
   }
 
-  // node_modules/@popperjs/core/lib/utils/computeAutoPlacement.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/computeAutoPlacement.js
   function computeAutoPlacement(state, options2) {
     if (options2 === void 0) {
       options2 = {};
@@ -12433,7 +12433,7 @@
     });
   }
 
-  // node_modules/@popperjs/core/lib/modifiers/flip.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/flip.js
   function getExpandedFallbackPlacements(placement) {
     if (getBasePlacement(placement) === auto) {
       return [];
@@ -12538,7 +12538,7 @@
     }
   };
 
-  // node_modules/@popperjs/core/lib/modifiers/hide.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/hide.js
   function getSideOffsets(overflow, rect, preventedOffsets) {
     if (preventedOffsets === void 0) {
       preventedOffsets = {
@@ -12592,7 +12592,7 @@
     fn: hide
   };
 
-  // node_modules/@popperjs/core/lib/modifiers/offset.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/offset.js
   function distanceAndSkiddingToXY(placement, rects, offset2) {
     var basePlacement = getBasePlacement(placement);
     var invertDistance = [left, top].indexOf(basePlacement) >= 0 ? -1 : 1;
@@ -12631,7 +12631,7 @@
     fn: offset
   };
 
-  // node_modules/@popperjs/core/lib/modifiers/popperOffsets.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/popperOffsets.js
   function popperOffsets(_ref2) {
     var state = _ref2.state, name = _ref2.name;
     state.modifiersData[name] = computeOffsets({
@@ -12649,12 +12649,12 @@
     data: {}
   };
 
-  // node_modules/@popperjs/core/lib/utils/getAltAxis.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/getAltAxis.js
   function getAltAxis(axis) {
     return axis === "x" ? "y" : "x";
   }
 
-  // node_modules/@popperjs/core/lib/modifiers/preventOverflow.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/modifiers/preventOverflow.js
   function preventOverflow(_ref2) {
     var state = _ref2.state, options2 = _ref2.options, name = _ref2.name;
     var _options$mainAxis = options2.mainAxis, checkMainAxis = _options$mainAxis === void 0 ? true : _options$mainAxis, _options$altAxis = options2.altAxis, checkAltAxis = _options$altAxis === void 0 ? false : _options$altAxis, boundary = options2.boundary, rootBoundary = options2.rootBoundary, altBoundary = options2.altBoundary, padding = options2.padding, _options$tether = options2.tether, tether = _options$tether === void 0 ? true : _options$tether, _options$tetherOffset = options2.tetherOffset, tetherOffset = _options$tetherOffset === void 0 ? 0 : _options$tetherOffset;
@@ -12747,7 +12747,7 @@
     requiresIfExists: ["offset"]
   };
 
-  // node_modules/@popperjs/core/lib/dom-utils/getHTMLElementScroll.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getHTMLElementScroll.js
   function getHTMLElementScroll(element) {
     return {
       scrollLeft: element.scrollLeft,
@@ -12755,7 +12755,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getNodeScroll.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getNodeScroll.js
   function getNodeScroll(node) {
     if (node === getWindow(node) || !isHTMLElement(node)) {
       return getWindowScroll(node);
@@ -12764,7 +12764,7 @@
     }
   }
 
-  // node_modules/@popperjs/core/lib/dom-utils/getCompositeRect.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/dom-utils/getCompositeRect.js
   function isElementScaled(element) {
     var rect = element.getBoundingClientRect();
     var scaleX = round(rect.width) / element.offsetWidth || 1;
@@ -12808,7 +12808,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/utils/orderModifiers.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/orderModifiers.js
   function order(modifiers) {
     var map = /* @__PURE__ */ new Map();
     var visited = /* @__PURE__ */ new Set();
@@ -12845,7 +12845,7 @@
     }, []);
   }
 
-  // node_modules/@popperjs/core/lib/utils/debounce.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/debounce.js
   function debounce2(fn3) {
     var pending;
     return function() {
@@ -12861,7 +12861,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/utils/mergeByName.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/utils/mergeByName.js
   function mergeByName(modifiers) {
     var merged = modifiers.reduce(function(merged2, current) {
       var existing = merged2[current.name];
@@ -12876,7 +12876,7 @@
     });
   }
 
-  // node_modules/@popperjs/core/lib/createPopper.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/createPopper.js
   var DEFAULT_OPTIONS = {
     placement: "bottom",
     modifiers: [],
@@ -13016,7 +13016,7 @@
     };
   }
 
-  // node_modules/@popperjs/core/lib/popper.js
+  // ../plutonium-core/node_modules/@popperjs/core/lib/popper.js
   var defaultModifiers = [eventListeners_default, popperOffsets_default, computeStyles_default, applyStyles_default, offset_default, flip_default, preventOverflow_default, arrow_default, hide_default];
   var createPopper = /* @__PURE__ */ popperGenerator({
     defaultModifiers
@@ -13419,7 +13419,7 @@
     }
   };
 
-  // node_modules/dompurify/dist/purify.es.mjs
+  // ../plutonium-core/node_modules/dompurify/dist/purify.es.mjs
   function _arrayLikeToArray(r4, a4) {
     (null == a4 || a4 > r4.length) && (a4 = r4.length);
     for (var e4 = 0, n3 = Array(a4); e4 < a4; e4++) n3[e4] = r4[e4];
@@ -14866,7 +14866,7 @@
   }
   var purify = createDOMPurify();
 
-  // node_modules/marked/lib/marked.esm.js
+  // ../plutonium-core/node_modules/marked/lib/marked.esm.js
   function _getDefaults() {
     return {
       async: false,
@@ -17477,7 +17477,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/utils/lib/Translator.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/Translator.js
   function insertReplacement(source, rx, replacement) {
     const newParts = [];
     source.forEach((chunk) => {
@@ -17581,7 +17581,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/core/lib/BasePlugin.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/BasePlugin.js
   var BasePlugin = class {
     uppy;
     opts;
@@ -17646,7 +17646,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/utils/lib/getTimeStamp.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getTimeStamp.js
   function pad(number) {
     return number < 10 ? `0${number}` : number.toString();
   }
@@ -17658,7 +17658,7 @@ ${text2}</tr>
     return `${hours}:${minutes}:${seconds}`;
   }
 
-  // node_modules/@uppy/core/lib/loggers.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/loggers.js
   var justErrorsLogger = {
     debug: () => {
     },
@@ -17672,7 +17672,7 @@ ${text2}</tr>
     error: (...args) => console.error(`[Uppy] [${getTimeStamp()}]`, ...args)
   };
 
-  // node_modules/@uppy/utils/lib/isDOMElement.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/isDOMElement.js
   function isDOMElement(obj) {
     if (typeof obj !== "object" || obj === null)
       return false;
@@ -17681,7 +17681,7 @@ ${text2}</tr>
     return obj.nodeType === Node.ELEMENT_NODE;
   }
 
-  // node_modules/@uppy/utils/lib/findDOMElement.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/findDOMElement.js
   function findDOMElement(element, context = document) {
     if (typeof element === "string") {
       return context.querySelector(element);
@@ -17693,7 +17693,7 @@ ${text2}</tr>
   }
   var findDOMElement_default = findDOMElement;
 
-  // node_modules/@uppy/utils/lib/getTextDirection.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getTextDirection.js
   function getTextDirection(element) {
     while (element && !element.dir) {
       element = element.parentNode;
@@ -17702,7 +17702,7 @@ ${text2}</tr>
   }
   var getTextDirection_default = getTextDirection;
 
-  // node_modules/preact/dist/preact.module.js
+  // ../plutonium-core/node_modules/preact/dist/preact.module.js
   var n;
   var l;
   var u;
@@ -17973,7 +17973,7 @@ ${text2}</tr>
     return n3.__v.__b - l4.__v.__b;
   }, $.__r = 0, f = /(PointerCapture)$|Capture$/i, c = 0, s = F(false), a = F(true), h = 0;
 
-  // node_modules/preact/hooks/dist/hooks.module.js
+  // ../plutonium-core/node_modules/preact/hooks/dist/hooks.module.js
   var t2;
   var r2;
   var u2;
@@ -18117,7 +18117,7 @@ ${text2}</tr>
     return "function" == typeof t4 ? t4(n3) : t4;
   }
 
-  // node_modules/preact/compat/dist/compat.module.js
+  // ../plutonium-core/node_modules/preact/compat/dist/compat.module.js
   function g3(n3, t4) {
     for (var e4 in t4) n3[e4] = t4[e4];
     return n3;
@@ -18292,7 +18292,7 @@ ${text2}</tr>
     null != e4 && "textarea" === n3.type && "value" in t4 && t4.value !== e4.value && (e4.value = null == t4.value ? "" : t4.value), ln = null;
   };
 
-  // node_modules/@uppy/core/lib/UIPlugin.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/UIPlugin.js
   function debounce3(fn3) {
     let calling = null;
     let latestArgs;
@@ -18403,7 +18403,7 @@ ${text2}</tr>
   };
   var UIPlugin_default = UIPlugin;
 
-  // node_modules/@uppy/store-default/package.json
+  // ../plutonium-core/node_modules/@uppy/store-default/package.json
   var package_default = {
     name: "@uppy/store-default",
     description: "The default simple object-based store for Uppy.",
@@ -18442,7 +18442,7 @@ ${text2}</tr>
     ]
   };
 
-  // node_modules/@uppy/store-default/lib/index.js
+  // ../plutonium-core/node_modules/@uppy/store-default/lib/index.js
   var DefaultStore = class {
     static VERSION = package_default.version;
     state = {};
@@ -18470,7 +18470,7 @@ ${text2}</tr>
   };
   var lib_default = DefaultStore;
 
-  // node_modules/@uppy/utils/lib/getFileNameAndExtension.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getFileNameAndExtension.js
   function getFileNameAndExtension(fullFileName) {
     const lastDot = fullFileName.lastIndexOf(".");
     if (lastDot === -1 || lastDot === fullFileName.length - 1) {
@@ -18485,7 +18485,7 @@ ${text2}</tr>
     };
   }
 
-  // node_modules/@uppy/utils/lib/mimeTypes.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/mimeTypes.js
   var mimeTypes_default = {
     __proto__: null,
     md: "text/markdown",
@@ -18542,7 +18542,7 @@ ${text2}</tr>
     dmg: "application/x-apple-diskimage"
   };
 
-  // node_modules/@uppy/utils/lib/getFileType.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getFileType.js
   function getFileType(file) {
     if (file.type)
       return file.type;
@@ -18553,7 +18553,7 @@ ${text2}</tr>
     return "application/octet-stream";
   }
 
-  // node_modules/@uppy/utils/lib/generateFileID.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/generateFileID.js
   function encodeCharacter(character) {
     return character.charCodeAt(0).toString(32);
   }
@@ -18605,11 +18605,11 @@ ${text2}</tr>
     }, instanceId);
   }
 
-  // node_modules/@uppy/core/lib/Uppy.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/Uppy.js
   var import_throttle = __toESM(require_throttle(), 1);
   var import_namespace_emitter = __toESM(require_namespace_emitter(), 1);
 
-  // node_modules/nanoid/non-secure/index.js
+  // ../plutonium-core/node_modules/nanoid/non-secure/index.js
   var urlAlphabet = "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
   var nanoid = (size = 21) => {
     let id2 = "";
@@ -18620,7 +18620,7 @@ ${text2}</tr>
     return id2;
   };
 
-  // node_modules/@uppy/core/package.json
+  // ../plutonium-core/node_modules/@uppy/core/package.json
   var package_default2 = {
     name: "@uppy/core",
     description: "Core module for the extensible JavaScript file upload widget with support for drag&drop, resumable uploads, previews, restrictions, file processing/encoding, remote providers like Instagram, Dropbox, Google Drive, S3 and more :dog:",
@@ -18680,7 +18680,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/core/lib/getFileName.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/getFileName.js
   function getFileName(fileType, fileDescriptor) {
     if (fileDescriptor.name) {
       return fileDescriptor.name;
@@ -18691,7 +18691,7 @@ ${text2}</tr>
     return "noname";
   }
 
-  // node_modules/@uppy/core/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/locale.js
   var locale_default = {
     strings: {
       addBulkFilesFailed: {
@@ -18758,7 +18758,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/core/lib/Restricter.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/Restricter.js
   var import_prettier_bytes = __toESM(require_prettierBytes(), 1);
   var import_mime_match = __toESM(require_mime_match(), 1);
   var defaultOptions2 = {
@@ -18878,7 +18878,7 @@ ${text2}</tr>
     }
   };
 
-  // node_modules/@uppy/core/lib/supportsUploadProgress.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/supportsUploadProgress.js
   function supportsUploadProgress(userAgent) {
     if (userAgent == null && typeof navigator !== "undefined") {
       userAgent = navigator.userAgent;
@@ -18901,7 +18901,7 @@ ${text2}</tr>
     return false;
   }
 
-  // node_modules/@uppy/core/lib/Uppy.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/Uppy.js
   var defaultUploadState = {
     totalProgress: 0,
     allowNewUpload: true,
@@ -20280,7 +20280,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var Uppy_default = Uppy;
 
-  // node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
+  // ../plutonium-core/node_modules/preact/jsx-runtime/dist/jsxRuntime.module.js
   var f3 = 0;
   function u3(e4, t4, n3, o4, i4, u5) {
     t4 || (t4 = {});
@@ -20291,7 +20291,7 @@ Uppy plugins must have unique \`id\` options.`;
     return l.vnode && l.vnode(l4), l4;
   }
 
-  // node_modules/@uppy/informer/package.json
+  // ../plutonium-core/node_modules/@uppy/informer/package.json
   var package_default3 = {
     name: "@uppy/informer",
     description: "A notification and error pop-up bar for Uppy.",
@@ -20343,7 +20343,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/informer/lib/FadeIn.js
+  // ../plutonium-core/node_modules/@uppy/informer/lib/FadeIn.js
   var TRANSITION_MS = 300;
   var FadeIn = class extends x {
     ref = b();
@@ -20363,7 +20363,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/informer/lib/TransitionGroup.js
+  // ../plutonium-core/node_modules/@uppy/informer/lib/TransitionGroup.js
   function assign(obj, props) {
     return Object.assign(obj, props);
   }
@@ -20575,7 +20575,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var TransitionGroup_default = TransitionGroup;
 
-  // node_modules/@uppy/informer/lib/Informer.js
+  // ../plutonium-core/node_modules/@uppy/informer/lib/Informer.js
   var Informer = class extends UIPlugin_default {
     static VERSION = package_default3.version;
     constructor(uppy, opts) {
@@ -20598,7 +20598,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/AuthView.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/AuthView.js
   function GoogleIcon() {
     return u3("svg", { width: "26", height: "26", viewBox: "0 0 26 26", xmlns: "http://www.w3.org/2000/svg", children: u3("g", { fill: "none", "fill-rule": "evenodd", children: [u3("circle", { fill: "#FFF", cx: "13", cy: "13", r: "13" }), u3("path", { d: "M21.64 13.205c0-.639-.057-1.252-.164-1.841H13v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z", fill: "#4285F4", "fill-rule": "nonzero" }), u3("path", { d: "M13 22c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H4.957v2.332A8.997 8.997 0 0013 22z", fill: "#34A853", "fill-rule": "nonzero" }), u3("path", { d: "M7.964 14.71A5.41 5.41 0 017.682 13c0-.593.102-1.17.282-1.71V8.958H4.957A8.996 8.996 0 004 13c0 1.452.348 2.827.957 4.042l3.007-2.332z", fill: "#FBBC05", "fill-rule": "nonzero" }), u3("path", { d: "M13 7.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C17.463 4.891 15.426 4 13 4a8.997 8.997 0 00-8.043 4.958l3.007 2.332C8.672 9.163 10.656 7.58 13 7.58z", fill: "#EA4335", "fill-rule": "nonzero" }), u3("path", { d: "M4 4h18v18H4z" })] }) });
   }
@@ -20617,7 +20617,7 @@ Uppy plugins must have unique \`id\` options.`;
     }) }), renderForm({ pluginName, i18n, loading, onAuth: handleAuth })] });
   }
 
-  // node_modules/@uppy/utils/lib/remoteFileObjToLocal.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/remoteFileObjToLocal.js
   function remoteFileObjToLocal(file) {
     return {
       ...file,
@@ -20626,10 +20626,10 @@ Uppy plugins must have unique \`id\` options.`;
     };
   }
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
   var import_classnames4 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/provider-views/package.json
+  // ../plutonium-core/node_modules/@uppy/provider-views/package.json
   var package_default4 = {
     name: "@uppy/provider-views",
     description: "View library for Uppy remote provider plugins.",
@@ -20686,7 +20686,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/utils/lib/VirtualList.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/VirtualList.js
   var STYLE_INNER = {
     position: "relative",
     // Disabled for our use case: the wrapper elements around FileList already deal with overflow,
@@ -20768,10 +20768,10 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var VirtualList_default = VirtualList;
 
-  // node_modules/@uppy/provider-views/lib/Item/index.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Item/index.js
   var import_classnames = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/provider-views/lib/Item/components/ItemIcon.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Item/components/ItemIcon.js
   function FileIcon() {
     return u3("svg", { "aria-hidden": "true", focusable: "false", className: "uppy-c-icon", width: 11, height: 14.5, viewBox: "0 0 44 58", children: u3("path", { d: "M27.437.517a1 1 0 0 0-.094.03H4.25C2.037.548.217 2.368.217 4.58v48.405c0 2.212 1.82 4.03 4.03 4.03H39.03c2.21 0 4.03-1.818 4.03-4.03V15.61a1 1 0 0 0-.03-.28 1 1 0 0 0 0-.093 1 1 0 0 0-.03-.032 1 1 0 0 0 0-.03 1 1 0 0 0-.032-.063 1 1 0 0 0-.03-.063 1 1 0 0 0-.032 0 1 1 0 0 0-.03-.063 1 1 0 0 0-.032-.03 1 1 0 0 0-.03-.063 1 1 0 0 0-.063-.062l-14.593-14a1 1 0 0 0-.062-.062A1 1 0 0 0 28 .708a1 1 0 0 0-.374-.157 1 1 0 0 0-.156 0 1 1 0 0 0-.03-.03l-.003-.003zM4.25 2.547h22.218v9.97c0 2.21 1.82 4.03 4.03 4.03h10.564v36.438a2.02 2.02 0 0 1-2.032 2.032H4.25c-1.13 0-2.032-.9-2.032-2.032V4.58c0-1.13.902-2.032 2.03-2.032zm24.218 1.345l10.375 9.937.75.718H30.5c-1.13 0-2.032-.9-2.032-2.03V3.89z" }) });
   }
@@ -20797,13 +20797,13 @@ Uppy plugins must have unique \`id\` options.`;
     }
   }
 
-  // node_modules/@uppy/provider-views/lib/Item/components/GridItem.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Item/components/GridItem.js
   function GridItem({ file, toggleCheckbox, className, isDisabled, restrictionError, showTitles, children = null, i18n }) {
     return u3("li", { className, title: isDisabled && restrictionError ? restrictionError : void 0, children: [u3("input", { type: "checkbox", className: "uppy-u-reset uppy-ProviderBrowserItem-checkbox uppy-ProviderBrowserItem-checkbox--grid", onChange: toggleCheckbox, name: "listitem", id: file.id, checked: file.status === "checked", disabled: isDisabled, "data-uppy-super-focusable": true }), u3("label", { htmlFor: file.id, "aria-label": file.data.name ?? i18n("unnamed"), className: "uppy-u-reset uppy-ProviderBrowserItem-inner", children: [u3(ItemIcon, { itemIconString: file.data.thumbnail || file.data.icon }), showTitles && (file.data.name ?? i18n("unnamed")), children] })] });
   }
   var GridItem_default = GridItem;
 
-  // node_modules/@uppy/provider-views/lib/Item/components/ListItem.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Item/components/ListItem.js
   function ListItem({ file, openFolder, className, isDisabled, restrictionError, toggleCheckbox, showTitles, i18n }) {
     return u3("li", { className, title: file.status !== "checked" && restrictionError ? restrictionError : void 0, children: [u3("input", {
       type: "checkbox",
@@ -20829,7 +20829,7 @@ Uppy plugins must have unique \`id\` options.`;
     )] });
   }
 
-  // node_modules/@uppy/provider-views/lib/Item/index.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Item/index.js
   function Item(props) {
     const { viewType, toggleCheckbox, showTitles, i18n, openFolder, file, utmSource } = props;
     const restrictionError = file.type === "folder" ? null : file.restrictionError;
@@ -20858,7 +20858,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   }
 
-  // node_modules/@uppy/provider-views/lib/Browser.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Browser.js
   function Browser(props) {
     const { displayedPartialTree, viewType, toggleCheckbox, handleScroll, showTitles, i18n, isLoading, openFolder, noResultsLabel, virtualList, utmSource } = props;
     const [isShiftKeyPressed, setIsShiftKeyPressed] = d2(false);
@@ -20903,10 +20903,10 @@ Uppy plugins must have unique \`id\` options.`;
   }
   var Browser_default = Browser;
 
-  // node_modules/@uppy/provider-views/lib/FooterActions.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/FooterActions.js
   var import_classnames2 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getNumberOfSelectedFiles.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getNumberOfSelectedFiles.js
   var getNumberOfSelectedFiles = (partialTree) => {
     const checkedLeaves = partialTree.filter((item) => {
       if (item.type === "file" && item.status === "checked") {
@@ -20922,7 +20922,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var getNumberOfSelectedFiles_default = getNumberOfSelectedFiles;
 
-  // node_modules/@uppy/provider-views/lib/FooterActions.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/FooterActions.js
   function FooterActions({ cancelSelection, donePicking, i18n, partialTree, validateAggregateRestrictions }) {
     const aggregateRestrictionError = T2(() => {
       return validateAggregateRestrictions(partialTree);
@@ -20940,7 +20940,7 @@ Uppy plugins must have unique \`id\` options.`;
     }) }), u3("button", { className: "uppy-u-reset uppy-c-btn uppy-c-btn-link", onClick: cancelSelection, type: "button", children: i18n("cancel") })] }), aggregateRestrictionError && u3("div", { className: "uppy-ProviderBrowser-footer-error", children: aggregateRestrictionError })] });
   }
 
-  // node_modules/@uppy/provider-views/lib/SearchInput.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/SearchInput.js
   function SearchInput({ searchString, setSearchString, submitSearchString, wrapperClassName, inputClassName, inputLabel, clearSearchLabel = "", showButton = false, buttonLabel = "", buttonCSSClassName = "" }) {
     const onInput = (e4) => {
       setSearchString(e4.target.value);
@@ -20969,7 +20969,7 @@ Uppy plugins must have unique \`id\` options.`;
   }
   var SearchInput_default = SearchInput;
 
-  // node_modules/@uppy/provider-views/lib/utils/getTagFile.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/getTagFile.js
   var getTagFile = (file, plugin, provider) => {
     const tagFile = {
       id: file.id,
@@ -21006,7 +21006,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var getTagFile_default = getTagFile;
 
-  // node_modules/@uppy/provider-views/lib/utils/addFiles.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/addFiles.js
   var addFiles = (companionFiles, plugin, provider) => {
     const tagFiles = companionFiles.map((f5) => getTagFile_default(f5, plugin, provider));
     const filesToAdd = [];
@@ -21028,7 +21028,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var addFiles_default = addFiles;
 
-  // node_modules/@uppy/provider-views/lib/utils/getClickedRange.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/getClickedRange.js
   var getClickedRange = (clickedId, displayedPartialTree, isShiftKeyPressed, lastCheckbox) => {
     const lastCheckboxIndex = displayedPartialTree.findIndex((item) => item.id === lastCheckbox);
     if (lastCheckboxIndex !== -1 && isShiftKeyPressed) {
@@ -21040,7 +21040,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var getClickedRange_default = getClickedRange;
 
-  // node_modules/@uppy/provider-views/lib/utils/handleError.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/handleError.js
   var handleError = (uppy) => (error2) => {
     if (error2.isAuthError) {
       return;
@@ -21059,7 +21059,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var handleError_default = handleError;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getBreadcrumbs.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getBreadcrumbs.js
   var getBreadcrumbs = (partialTree, currentFolderId) => {
     let folder = partialTree.find((f5) => f5.id === currentFolderId);
     let breadcrumbs = [];
@@ -21074,7 +21074,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var getBreadcrumbs_default = getBreadcrumbs;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getCheckedFilesWithPaths.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/getCheckedFilesWithPaths.js
   var getPath = (partialTree, id2, cache2) => {
     const sId = id2 === null ? "null" : id2;
     if (cache2[sId])
@@ -21109,10 +21109,10 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var getCheckedFilesWithPaths_default = getCheckedFilesWithPaths;
 
-  // node_modules/eventemitter3/index.mjs
+  // ../plutonium-core/node_modules/eventemitter3/index.mjs
   var import_index = __toESM(require_eventemitter3(), 1);
 
-  // node_modules/p-timeout/index.js
+  // ../plutonium-core/node_modules/p-timeout/index.js
   var TimeoutError = class extends Error {
     constructor(message) {
       super(message);
@@ -21201,7 +21201,7 @@ Uppy plugins must have unique \`id\` options.`;
     return cancelablePromise;
   }
 
-  // node_modules/p-queue/dist/lower-bound.js
+  // ../plutonium-core/node_modules/p-queue/dist/lower-bound.js
   function lowerBound(array, value, comparator) {
     let first = 0;
     let count = array.length;
@@ -21218,7 +21218,7 @@ Uppy plugins must have unique \`id\` options.`;
     return first;
   }
 
-  // node_modules/p-queue/dist/priority-queue.js
+  // ../plutonium-core/node_modules/p-queue/dist/priority-queue.js
   var PriorityQueue = class {
     #queue = [];
     enqueue(run, options2) {
@@ -21258,7 +21258,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/p-queue/dist/index.js
+  // ../plutonium-core/node_modules/p-queue/dist/index.js
   var PQueue = class extends import_index.default {
     #carryoverConcurrencyCount;
     #isIntervalIgnored;
@@ -21593,13 +21593,13 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/shallowClone.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/shallowClone.js
   var shallowClone = (partialTree) => {
     return partialTree.map((item) => ({ ...item }));
   };
   var shallowClone_default = shallowClone;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterFill.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterFill.js
   var recursivelyFetch = async (queue, poorTree, poorFolder, apiList, validateSingleFile) => {
     let items = [];
     let currentPath = poorFolder.cached ? poorFolder.nextPagePath : poorFolder.id;
@@ -21654,7 +21654,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var afterFill_default = afterFill;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterOpenFolder.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterOpenFolder.js
   var afterOpenFolder = (oldPartialTree, discoveredItems, clickedFolder, currentPagePath, validateSingleFile) => {
     const discoveredFolders = discoveredItems.filter((i4) => i4.isFolder === true);
     const discoveredFiles = discoveredItems.filter((i4) => i4.isFolder === false);
@@ -21694,7 +21694,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var afterOpenFolder_default = afterOpenFolder;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterScrollFolder.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterScrollFolder.js
   var afterScrollFolder = (oldPartialTree, currentFolderId, items, nextPagePath, validateSingleFile) => {
     const currentFolder = oldPartialTree.find((i4) => i4.id === currentFolderId);
     const newFolders = items.filter((i4) => i4.isFolder === true);
@@ -21731,7 +21731,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var afterScrollFolder_default = afterScrollFolder;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterToggleCheckbox.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/afterToggleCheckbox.js
   var percolateDown = (tree, id2, shouldMarkAsChecked) => {
     const children = tree.filter((item) => item.type !== "root" && item.parentId === id2);
     children.forEach((item) => {
@@ -21784,7 +21784,7 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var afterToggleCheckbox_default = afterToggleCheckbox;
 
-  // node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/index.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/PartialTreeUtils/index.js
   var PartialTreeUtils_default = {
     afterOpenFolder: afterOpenFolder_default,
     afterScrollFolder: afterScrollFolder_default,
@@ -21792,7 +21792,7 @@ Uppy plugins must have unique \`id\` options.`;
     afterFill: afterFill_default
   };
 
-  // node_modules/@uppy/provider-views/lib/utils/shouldHandleScroll.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/utils/shouldHandleScroll.js
   var shouldHandleScroll = (event) => {
     const { scrollHeight, scrollTop, offsetHeight } = event.target;
     const scrollPosition = scrollHeight - (scrollTop + offsetHeight);
@@ -21800,26 +21800,26 @@ Uppy plugins must have unique \`id\` options.`;
   };
   var shouldHandleScroll_default = shouldHandleScroll;
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/Header.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/Header.js
   var import_classnames3 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/provider-views/lib/Breadcrumbs.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/Breadcrumbs.js
   function Breadcrumbs(props) {
     const { openFolder, title, breadcrumbsIcon, breadcrumbs, i18n } = props;
     return u3("div", { className: "uppy-Provider-breadcrumbs", children: [u3("div", { className: "uppy-Provider-breadcrumbsIcon", children: breadcrumbsIcon }), breadcrumbs.map((folder, index) => u3(k, { children: [u3("button", { type: "button", className: "uppy-u-reset uppy-c-btn", onClick: () => openFolder(folder.id), children: folder.type === "root" ? title : folder.data.name ?? i18n("unnamed") }, folder.id), breadcrumbs.length === index + 1 ? "" : " / "] }))] });
   }
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/User.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/User.js
   function User({ i18n, logout: logout2, username }) {
     return u3(k, { children: [username && u3("span", { className: "uppy-ProviderBrowser-user", children: username }, "username"), u3("button", { type: "button", onClick: logout2, className: "uppy-u-reset uppy-c-btn uppy-ProviderBrowser-userLogout", children: i18n("logOut") }, "logout")] });
   }
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/Header.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/Header.js
   function Header(props) {
     return u3("div", { className: "uppy-ProviderBrowser-header", children: u3("div", { className: (0, import_classnames3.default)("uppy-ProviderBrowser-headerBar", !props.showBreadcrumbs && "uppy-ProviderBrowser-headerBar--simple"), children: [props.showBreadcrumbs && u3(Breadcrumbs, { openFolder: props.openFolder, breadcrumbs: props.breadcrumbs, breadcrumbsIcon: props.pluginIcon?.(), title: props.title, i18n: props.i18n }), u3(User, { logout: props.logout, username: props.username, i18n: props.i18n })] }) });
   }
 
-  // node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/ProviderView/ProviderView.js
   function defaultPickerIcon() {
     return u3("svg", { "aria-hidden": "true", focusable: "false", width: "30", height: "30", viewBox: "0 0 30 30", children: u3("path", { d: "M15 30c8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15C6.716 0 0 6.716 0 15c0 8.284 6.716 15 15 15zm4.258-12.676v6.846h-8.426v-6.846H5.204l9.82-12.364 9.82 12.364H19.26z" }) });
   }
@@ -22056,7 +22056,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/provider-views/lib/SearchProviderView/SearchProviderView.js
+  // ../plutonium-core/node_modules/@uppy/provider-views/lib/SearchProviderView/SearchProviderView.js
   var import_classnames5 = __toESM(require_classnames(), 1);
   var defaultState = {
     loading: false,
@@ -22220,7 +22220,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/utils/lib/emaFilter.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/emaFilter.js
   function emaFilter(newValue, previousSmoothedValue, halfLife, dt) {
     if (halfLife === 0 || newValue === previousSmoothedValue)
       return newValue;
@@ -22229,7 +22229,7 @@ Uppy plugins must have unique \`id\` options.`;
     return newValue + (previousSmoothedValue - newValue) * 2 ** (-dt / halfLife);
   }
 
-  // node_modules/@uppy/status-bar/package.json
+  // ../plutonium-core/node_modules/@uppy/status-bar/package.json
   var package_default5 = {
     name: "@uppy/status-bar",
     description: "A progress bar for Uppy, with many bells and whistles.",
@@ -22286,7 +22286,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/status-bar/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/locale.js
   var locale_default2 = {
     strings: {
       // Shown in the status bar while files are being uploaded.
@@ -22338,7 +22338,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/status-bar/lib/StatusBarStates.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/StatusBarStates.js
   var StatusBarStates_default = {
     STATE_ERROR: "error",
     STATE_WAITING: "waiting",
@@ -22348,13 +22348,13 @@ Uppy plugins must have unique \`id\` options.`;
     STATE_COMPLETE: "complete"
   };
 
-  // node_modules/@uppy/status-bar/lib/StatusBarUI.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/StatusBarUI.js
   var import_classnames7 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/status-bar/lib/Components.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/Components.js
   var import_prettier_bytes2 = __toESM(require_prettierBytes(), 1);
 
-  // node_modules/@uppy/utils/lib/secondsToTime.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/secondsToTime.js
   function secondsToTime(rawSeconds) {
     const hours = Math.floor(rawSeconds / 3600) % 24;
     const minutes = Math.floor(rawSeconds / 60) % 60;
@@ -22362,7 +22362,7 @@ Uppy plugins must have unique \`id\` options.`;
     return { hours, minutes, seconds };
   }
 
-  // node_modules/@uppy/utils/lib/prettyETA.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/prettyETA.js
   function prettyETA(seconds) {
     const time = secondsToTime(seconds);
     const hoursStr = time.hours === 0 ? "" : `${time.hours}h`;
@@ -22371,7 +22371,7 @@ Uppy plugins must have unique \`id\` options.`;
     return `${hoursStr}${minutesStr}${secondsStr}`;
   }
 
-  // node_modules/@uppy/status-bar/lib/Components.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/Components.js
   var import_classnames6 = __toESM(require_classnames(), 1);
   var DOT = `\xB7`;
   var renderDot = () => ` ${DOT} `;
@@ -22485,7 +22485,7 @@ Uppy plugins must have unique \`id\` options.`;
     return u3("div", { className: "uppy-StatusBar-content", title: i18n("uploadFailed"), children: [u3("svg", { "aria-hidden": "true", focusable: "false", className: "uppy-StatusBar-statusIndicator uppy-c-icon", width: "11", height: "11", viewBox: "0 0 11 11", children: u3("path", { d: "M4.278 5.5L0 1.222 1.222 0 5.5 4.278 9.778 0 11 1.222 6.722 5.5 11 9.778 9.778 11 5.5 6.722 1.222 11 0 9.778z" }) }), u3("div", { className: "uppy-StatusBar-status", children: [u3("div", { className: "uppy-StatusBar-statusPrimary", children: [i18n("uploadFailed"), u3("button", { className: "uppy-u-reset uppy-StatusBar-details", "aria-label": i18n("showErrorDetails"), "data-microtip-position": "top-right", "data-microtip-size": "medium", onClick: displayErrorAlert, type: "button", children: "?" })] }), u3(FileUploadCount, { i18n, complete, numUploads })] })] });
   }
 
-  // node_modules/@uppy/status-bar/lib/calculateProcessingProgress.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/calculateProcessingProgress.js
   function calculateProcessingProgress(files) {
     const values = [];
     let mode = "indeterminate";
@@ -22511,7 +22511,7 @@ Uppy plugins must have unique \`id\` options.`;
     };
   }
 
-  // node_modules/@uppy/status-bar/lib/StatusBarUI.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/StatusBarUI.js
   var { STATE_ERROR, STATE_WAITING, STATE_PREPROCESSING, STATE_UPLOADING, STATE_POSTPROCESSING, STATE_COMPLETE } = StatusBarStates_default;
   function StatusBarUI({ newFiles, allowNewUpload, isUploadInProgress, isAllPaused, resumableUploads, error: error2, hideUploadButton = void 0, hidePauseResumeButton = false, hideCancelButton = false, hideRetryButton = false, recoveredState, uploadState, totalProgress, files, supportsUploadProgress: supportsUploadProgress2, hideAfterFinish = false, isSomeGhost, doneButtonHandler = void 0, isUploadStarted, i18n, startUpload, uppy, isAllComplete, showProgressDetails = void 0, numUploads, complete, totalSize, totalETA, totalUploadedSize }) {
     function getProgressValue() {
@@ -22589,7 +22589,7 @@ Uppy plugins must have unique \`id\` options.`;
     return u3("div", { className: statusBarClassNames, children: [u3("div", { className: progressClassNames, style: { width: `${width}%` }, role: "progressbar", "aria-label": `${width}%`, "aria-valuetext": `${width}%`, "aria-valuemin": 0, "aria-valuemax": 100, "aria-valuenow": progressValue }), progressBarStateEl, u3("div", { className: "uppy-StatusBar-actions", children: [showUploadBtn ? u3(UploadBtn, { newFiles, isUploadStarted, recoveredState, i18n, isSomeGhost, startUpload, uploadState }) : null, showRetryBtn ? u3(RetryBtn, { i18n, uppy }) : null, showPauseResumeBtn ? u3(PauseResumeButton, { isAllPaused, i18n, isAllComplete, resumableUploads, uppy }) : null, showCancelBtn ? u3(CancelBtn, { i18n, uppy }) : null, showDoneBtn ? u3(DoneBtn, { i18n, doneButtonHandler }) : null] })] });
   }
 
-  // node_modules/@uppy/status-bar/lib/StatusBar.js
+  // ../plutonium-core/node_modules/@uppy/status-bar/lib/StatusBar.js
   var speedFilterHalfLife = 2e3;
   var ETAFilterHalfLife = 2e3;
   function getUploadingState(error2, isAllComplete, recoveredState, files) {
@@ -22764,7 +22764,7 @@ Uppy plugins must have unique \`id\` options.`;
     }
   };
 
-  // node_modules/@uppy/utils/lib/dataURItoBlob.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/dataURItoBlob.js
   var DATA_URL_PATTERN = /^data:([^/]+\/[^,;]+(?:[^,]*?))(;base64)?,([\s\S]*)$/;
   function dataURItoBlob(dataURI, opts, toFile) {
     const dataURIData = DATA_URL_PATTERN.exec(dataURI);
@@ -22787,19 +22787,19 @@ Uppy plugins must have unique \`id\` options.`;
   }
   var dataURItoBlob_default = dataURItoBlob;
 
-  // node_modules/@uppy/utils/lib/isObjectURL.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/isObjectURL.js
   function isObjectURL(url) {
     return url.startsWith("blob:");
   }
 
-  // node_modules/@uppy/utils/lib/isPreviewSupported.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/isPreviewSupported.js
   function isPreviewSupported(fileType) {
     if (!fileType)
       return false;
     return /^[^/]+\/(jpe?g|gif|png|svg|svg\+xml|bmp|webp|avif)$/.test(fileType);
   }
 
-  // node_modules/exifr/dist/mini.esm.mjs
+  // ../plutonium-core/node_modules/exifr/dist/mini.esm.mjs
   function e3(e4, t4, s4) {
     return t4 in e4 ? Object.defineProperty(e4, t4, { value: s4, enumerable: true, configurable: true, writable: true }) : e4[t4] = s4, e4;
   }
@@ -23654,7 +23654,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   });
 
-  // node_modules/@uppy/thumbnail-generator/package.json
+  // ../plutonium-core/node_modules/@uppy/thumbnail-generator/package.json
   var package_default6 = {
     name: "@uppy/thumbnail-generator",
     description: "Uppy plugin that generates small previews of images to show on your upload UI.",
@@ -23704,14 +23704,14 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/thumbnail-generator/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/thumbnail-generator/lib/locale.js
   var locale_default3 = {
     strings: {
       generatingThumbnails: "Generating thumbnails..."
     }
   };
 
-  // node_modules/@uppy/thumbnail-generator/lib/index.js
+  // ../plutonium-core/node_modules/@uppy/thumbnail-generator/lib/index.js
   function canvasToBlob(canvas, type, quality) {
     try {
       canvas.getContext("2d").getImageData(0, 0, 1, 1);
@@ -24029,7 +24029,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/utils/lib/findAllDOMElements.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/findAllDOMElements.js
   function findAllDOMElements(element) {
     if (typeof element === "string") {
       const elements = document.querySelectorAll(element);
@@ -24042,16 +24042,16 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var findAllDOMElements_default = findAllDOMElements;
 
-  // node_modules/@uppy/utils/lib/toArray.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/toArray.js
   var toArray_default = Array.from;
 
-  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/fallbackApi.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getDroppedFiles/utils/fallbackApi.js
   function fallbackApi(dataTransfer) {
     const files = toArray_default(dataTransfer.files);
     return Promise.resolve(files);
   }
 
-  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/getFilesAndDirectoriesFromDirectory.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/getFilesAndDirectoriesFromDirectory.js
   function getFilesAndDirectoriesFromDirectory(directoryReader, oldEntries, logDropError, { onSuccess }) {
     directoryReader.readEntries(
       (entries2) => {
@@ -24072,7 +24072,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     );
   }
 
-  // node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/index.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getDroppedFiles/utils/webkitGetAsEntryApi/index.js
   function getAsFileSystemHandleFromEntry(entry, logDropError) {
     if (entry == null)
       return entry;
@@ -24138,7 +24138,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   }
 
-  // node_modules/@uppy/utils/lib/getDroppedFiles/index.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getDroppedFiles/index.js
   async function getDroppedFiles(dataTransfer, options2) {
     const logDropError = options2?.logDropError ?? Function.prototype;
     try {
@@ -24152,7 +24152,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   }
 
-  // node_modules/@uppy/dashboard/package.json
+  // ../plutonium-core/node_modules/@uppy/dashboard/package.json
   var package_default7 = {
     name: "@uppy/dashboard",
     description: "Universal UI plugin for Uppy.",
@@ -24223,7 +24223,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/utils/lib/isDragDropSupported.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/isDragDropSupported.js
   function isDragDropSupported() {
     const div = document.body;
     if (!("draggable" in div) || !("ondragstart" in div && "ondrop" in div)) {
@@ -24238,10 +24238,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return true;
   }
 
-  // node_modules/@uppy/dashboard/lib/components/Dashboard.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/Dashboard.js
   var import_classnames14 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/dashboard/lib/components/AddFiles.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/AddFiles.js
   var AddFiles = class extends x {
     fileInput = null;
     folderInput = null;
@@ -24379,7 +24379,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var AddFiles_default = AddFiles;
 
-  // node_modules/@uppy/dashboard/lib/components/AddFilesPanel.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/AddFilesPanel.js
   var import_classnames8 = __toESM(require_classnames(), 1);
   var AddFilesPanel = (props) => {
     return u3("div", { className: (0, import_classnames8.default)("uppy-Dashboard-AddFilesPanel", props.className), "data-uppy-panelType": "AddFiles", "aria-hidden": !props.showAddFilesPanel, children: [u3("div", { className: "uppy-DashboardContent-bar", children: [u3("div", {
@@ -24392,7 +24392,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var AddFilesPanel_default = AddFilesPanel;
 
-  // node_modules/@uppy/dashboard/lib/components/EditorPanel.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/EditorPanel.js
   var import_classnames9 = __toESM(require_classnames(), 1);
   function EditorPanel(props) {
     const file = props.files[props.fileCardFor];
@@ -24414,10 +24414,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var EditorPanel_default = EditorPanel;
 
-  // node_modules/@uppy/dashboard/lib/components/FileCard/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileCard/index.js
   var import_classnames10 = __toESM(require_classnames(), 1);
 
-  // node_modules/@uppy/dashboard/lib/utils/getFileTypeIcon.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/getFileTypeIcon.js
   function iconImage() {
     return u3("svg", { "aria-hidden": "true", focusable: "false", width: "25", height: "25", viewBox: "0 0 25 25", children: u3("g", { fill: "#686DE0", fillRule: "evenodd", children: [u3("path", { d: "M5 7v10h15V7H5zm0-1h15a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z", fillRule: "nonzero" }), u3("path", { d: "M6.35 17.172l4.994-5.026a.5.5 0 0 1 .707 0l2.16 2.16 3.505-3.505a.5.5 0 0 1 .707 0l2.336 2.31-.707.72-1.983-1.97-3.505 3.505a.5.5 0 0 1-.707 0l-2.16-2.159-3.938 3.939-1.409.026z", fillRule: "nonzero" }), u3("circle", { cx: "7.5", cy: "9.5", r: "1.5" })] }) });
   }
@@ -24496,7 +24496,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return defaultChoice;
   }
 
-  // node_modules/@uppy/dashboard/lib/utils/ignoreEvent.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/ignoreEvent.js
   function ignoreEvent(ev) {
     const { tagName } = ev.target;
     if (tagName === "INPUT" || tagName === "TEXTAREA") {
@@ -24508,7 +24508,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var ignoreEvent_default = ignoreEvent;
 
-  // node_modules/@uppy/dashboard/lib/components/FilePreview.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FilePreview.js
   function FilePreview(props) {
     const { file } = props;
     if (file.preview) {
@@ -24518,7 +24518,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return u3("div", { className: "uppy-Dashboard-Item-previewIconWrap", children: [u3("span", { className: "uppy-Dashboard-Item-previewIcon", style: { color }, children: icon }), u3("svg", { "aria-hidden": "true", focusable: "false", className: "uppy-Dashboard-Item-previewIconBg", width: "58", height: "76", viewBox: "0 0 58 76", children: u3("rect", { fill: "#FFF", width: "58", height: "76", rx: "3", fillRule: "evenodd" }) })] });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileCard/RenderMetaFields.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileCard/RenderMetaFields.js
   function RenderMetaFields(props) {
     const { computedMetaFields, requiredMetaFields, updateMeta, form, formState } = props;
     const fieldCSSClasses = {
@@ -24537,7 +24537,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileCard/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileCard/index.js
   function FileCard(props) {
     const { files, fileCardFor, toggleFileCard, saveFileCard, metaFields, requiredMetaFields, openFileEditor, i18n, i18nArray, className, canEditFile } = props;
     const getMetaFields = () => {
@@ -24602,10 +24602,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     );
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/index.js
   var import_classnames11 = __toESM(require_classnames(), 1);
 
-  // node_modules/shallow-equal/dist/index.modern.mjs
+  // ../plutonium-core/node_modules/shallow-equal/dist/index.modern.mjs
   function shallowEqualObjects(objA, objB) {
     if (objA === objB) {
       return true;
@@ -24628,7 +24628,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return true;
   }
 
-  // node_modules/@uppy/dashboard/lib/utils/copyToClipboard.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/copyToClipboard.js
   function copyToClipboard(textToCopy, fallbackString = "Copy the URL below") {
     return new Promise((resolve) => {
       const textArea = document.createElement("textarea");
@@ -24666,7 +24666,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/Buttons/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/Buttons/index.js
   function EditButton({ file, uploadInProgressOrComplete, metaFields, canEditFile, i18n, onClick }) {
     if (!uploadInProgressOrComplete && metaFields && metaFields.length > 0 || !uploadInProgressOrComplete && canEditFile(file)) {
       return u3("button", { className: "uppy-u-reset uppy-c-btn uppy-Dashboard-Item-action uppy-Dashboard-Item-action--edit", type: "button", "aria-label": i18n("editFileWithFilename", { file: file.meta.name }), title: i18n("editFileWithFilename", { file: file.meta.name }), onClick: () => onClick(), children: u3("svg", { "aria-hidden": "true", focusable: "false", className: "uppy-c-icon", width: "14", height: "14", viewBox: "0 0 14 14", children: u3("g", { fillRule: "evenodd", children: [u3("path", { d: "M1.5 10.793h2.793A1 1 0 0 0 5 10.5L11.5 4a1 1 0 0 0 0-1.414L9.707.793a1 1 0 0 0-1.414 0l-6.5 6.5A1 1 0 0 0 1.5 8v2.793zm1-1V8L9 1.5l1.793 1.793-6.5 6.5H2.5z", fillRule: "nonzero" }), u3("rect", { x: "1", y: "12.293", width: "11", height: "1", rx: ".5" }), u3("path", { fillRule: "nonzero", d: "M6.793 2.5L9.5 5.207l.707-.707L7.5 1.793z" })] }) }) });
@@ -24697,10 +24697,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return u3("div", { className: "uppy-Dashboard-Item-actionWrapper", children: [u3(EditButton, { i18n, file, uploadInProgressOrComplete, canEditFile, metaFields, onClick: editAction }), showLinkToFileUploadResult && file.uploadURL ? u3(CopyLinkButton, { file, uppy, i18n }) : null, showRemoveButton ? u3(RemoveButton, { i18n, file, onClick: () => uppy.removeFile(file.id) }) : null] });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
   var import_prettier_bytes3 = __toESM(require_prettierBytes(), 1);
 
-  // node_modules/@uppy/utils/lib/truncateString.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/truncateString.js
   var separator = "...";
   function truncateString(string, maxLength) {
     if (maxLength === 0)
@@ -24715,7 +24715,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return string.slice(0, frontChars) + separator + string.slice(-backChars);
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/MetaErrorMessage.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/MetaErrorMessage.js
   var metaFieldIdToName = (metaFieldId, metaFields) => {
     const fields = typeof metaFields === "function" ? metaFields() : metaFields;
     const field = fields.filter((f5) => f5.id === metaFieldId);
@@ -24734,7 +24734,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }), " ", u3("button", { type: "button", class: "uppy-u-reset uppy-Dashboard-Item-errorMessageBtn", onClick: () => toggleFileCard(true, file.id), children: i18n("editFile") })] });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/FileInfo/index.js
   var renderFileName = (props) => {
     const { author, name } = props.file.meta;
     function getMaxNameLength() {
@@ -24778,7 +24778,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }), u3(ErrorButton, { file, onClick: () => alert(file.error) })] }), u3("div", { className: "uppy-Dashboard-Item-status", children: [renderAuthor({ file }), renderFileSize({ file }), ReSelectButton({ file, toggleAddFilesPanel, i18n })] }), u3(MetaErrorMessage, { file, i18n, toggleFileCard, metaFields })] });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/FilePreviewAndLink/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/FilePreviewAndLink/index.js
   function FilePreviewAndLink(props) {
     const { file, i18n, toggleFileCard, metaFields, showLinkToFileUploadResult } = props;
     const white = "rgba(255, 255, 255, 0.5)";
@@ -24786,7 +24786,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return u3("div", { className: "uppy-Dashboard-Item-previewInnerWrap", style: { backgroundColor: previewBackgroundColor }, children: [showLinkToFileUploadResult && file.uploadURL && u3("a", { className: "uppy-Dashboard-Item-previewLink", href: file.uploadURL, rel: "noreferrer noopener", target: "_blank", "aria-label": file.meta.name, children: u3("span", { hidden: true, children: file.meta.name }) }), u3(FilePreview, { file }), u3(MetaErrorMessage, { file, i18n, toggleFileCard, metaFields })] });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/FileProgress/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/FileProgress/index.js
   function onPauseResumeCancelRetry(props) {
     if (props.isUploaded)
       return;
@@ -24853,7 +24853,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return u3("div", { className: "uppy-Dashboard-Item-progress", children: u3("div", { className: "uppy-Dashboard-Item-progressIndicator", children: u3(ProgressCircleContainer, { children: u3(ProgressCircle, { progress: props.file.progress.percentage }) }) }) });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/FileItem/index.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileItem/index.js
   var FileItem = class extends x {
     componentDidMount() {
       const { file } = this.props;
@@ -24904,7 +24904,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/dashboard/lib/components/FileList.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/FileList.js
   function chunks(list2, size) {
     const chunked = [];
     let currentChunk = [];
@@ -24977,7 +24977,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return u3(VirtualList_default, { class: "uppy-Dashboard-files", role: "list", data: rows, renderRow, rowHeight });
   }
 
-  // node_modules/@uppy/dashboard/lib/components/PickerPanelContent.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/PickerPanelContent.js
   var import_classnames12 = __toESM(require_classnames(), 1);
   function PickerPanelContent({ activePickerPanel, className, hideAllPanels, i18n, state, uppy }) {
     const ref = A2(null);
@@ -24991,7 +24991,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var PickerPanelContent_default = PickerPanelContent;
 
-  // node_modules/@uppy/dashboard/lib/components/PickerPanelTopBar.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/PickerPanelTopBar.js
   var uploadStates = {
     STATE_ERROR: "error",
     STATE_WAITING: "waiting",
@@ -25058,7 +25058,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var PickerPanelTopBar_default = PanelTopBar;
 
-  // node_modules/@uppy/dashboard/lib/components/Slide.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/Slide.js
   var import_classnames13 = __toESM(require_classnames(), 1);
   var transitionName = "uppy-transition-slideDownUp";
   var duration = 250;
@@ -25119,7 +25119,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var Slide_default = Slide;
 
-  // node_modules/@uppy/dashboard/lib/components/Dashboard.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/components/Dashboard.js
   var WIDTH_XL = 900;
   var WIDTH_LG = 700;
   var WIDTH_MD = 576;
@@ -25179,7 +25179,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return dashboard;
   }
 
-  // node_modules/@uppy/dashboard/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/locale.js
   var locale_default4 = {
     strings: {
       // When `inline: false`, used as the screen reader label for the button that closes the modal.
@@ -25274,7 +25274,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/utils/lib/FOCUSABLE_ELEMENTS.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/FOCUSABLE_ELEMENTS.js
   var FOCUSABLE_ELEMENTS_default = [
     'a[href]:not([tabindex^="-"]):not([inert]):not([aria-hidden])',
     'area[href]:not([tabindex^="-"]):not([inert]):not([aria-hidden])',
@@ -25289,10 +25289,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     '[tabindex]:not([tabindex^="-"]):not([inert]):not([aria-hidden])'
   ];
 
-  // node_modules/@uppy/dashboard/lib/utils/createSuperFocus.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/createSuperFocus.js
   var import_debounce2 = __toESM(require_debounce(), 1);
 
-  // node_modules/@uppy/dashboard/lib/utils/getActiveOverlayEl.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/getActiveOverlayEl.js
   function getActiveOverlayEl(dashboardEl, activeOverlayType) {
     if (activeOverlayType) {
       const overlayEl = dashboardEl.querySelector(`[data-uppy-paneltype="${activeOverlayType}"]`);
@@ -25302,7 +25302,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return dashboardEl;
   }
 
-  // node_modules/@uppy/dashboard/lib/utils/createSuperFocus.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/createSuperFocus.js
   function createSuperFocus() {
     let lastFocusWasOnSuperFocusableEl = false;
     const superFocus = (dashboardEl, activeOverlayType) => {
@@ -25325,7 +25325,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return (0, import_debounce2.default)(superFocus, 260);
   }
 
-  // node_modules/@uppy/dashboard/lib/utils/trapFocus.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/utils/trapFocus.js
   function focusOnFirstNode(event, nodes) {
     const node = nodes[0];
     if (node) {
@@ -25362,7 +25362,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   }
 
-  // node_modules/@uppy/dashboard/lib/Dashboard.js
+  // ../plutonium-core/node_modules/@uppy/dashboard/lib/Dashboard.js
   var TAB_KEY = 9;
   var ESC_KEY = 27;
   function createPromise() {
@@ -26311,7 +26311,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     };
   };
 
-  // node_modules/@uppy/image-editor/package.json
+  // ../plutonium-core/node_modules/@uppy/image-editor/package.json
   var package_default8 = {
     name: "@uppy/image-editor",
     description: "Image editor and cropping UI",
@@ -26370,10 +26370,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/image-editor/lib/Editor.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/Editor.js
   var import_cropperjs = __toESM(require_cropper(), 1);
 
-  // node_modules/@uppy/image-editor/lib/utils/getCanvasDataThatFitsPerfectlyIntoContainer.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/utils/getCanvasDataThatFitsPerfectlyIntoContainer.js
   function getCanvasDataThatFitsPerfectlyIntoContainer(containerData, canvasData) {
     const widthRatio = containerData.width / canvasData.width;
     const heightRatio = containerData.height / canvasData.height;
@@ -26391,7 +26391,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var getCanvasDataThatFitsPerfectlyIntoContainer_default = getCanvasDataThatFitsPerfectlyIntoContainer;
 
-  // node_modules/@uppy/image-editor/lib/utils/getScaleFactorThatRemovesDarkCorners.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/utils/getScaleFactorThatRemovesDarkCorners.js
   function toRadians(angle) {
     return angle * (Math.PI / 180);
   }
@@ -26402,7 +26402,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var getScaleFactorThatRemovesDarkCorners_default = getScaleFactorThatRemovesDarkCorners;
 
-  // node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnMove.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnMove.js
   function limitCropboxMovementOnMove(canvas, cropbox, prevCropbox) {
     if (cropbox.left < canvas.left) {
       return {
@@ -26432,7 +26432,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var limitCropboxMovementOnMove_default = limitCropboxMovementOnMove;
 
-  // node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnResize.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/utils/limitCropboxMovementOnResize.js
   function limitCropboxMovementOnResize(canvas, cropboxData, prevCropbox) {
     if (cropboxData.left < canvas.left) {
       return {
@@ -26462,7 +26462,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var limitCropboxMovementOnResize_default = limitCropboxMovementOnResize;
 
-  // node_modules/@uppy/image-editor/lib/Editor.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/Editor.js
   var Editor = class extends x {
     imgElement;
     cropper;
@@ -26582,7 +26582,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/image-editor/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/locale.js
   var locale_default5 = {
     strings: {
       revert: "Reset",
@@ -26596,7 +26596,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/image-editor/lib/ImageEditor.js
+  // ../plutonium-core/node_modules/@uppy/image-editor/lib/ImageEditor.js
   var defaultCropperOptions = {
     viewMode: 0,
     background: false,
@@ -26720,7 +26720,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/core/lib/EventManager.js
+  // ../plutonium-core/node_modules/@uppy/core/lib/EventManager.js
   var EventManager = class {
     #uppy;
     #events = [];
@@ -26793,7 +26793,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/utils/lib/RateLimitedQueue.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/RateLimitedQueue.js
   function createCancelError(cause) {
     return new Error("Cancelled", { cause });
   }
@@ -27020,7 +27020,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var internalRateLimitedQueue = /* @__PURE__ */ Symbol("__queue");
 
-  // node_modules/@uppy/utils/lib/NetworkError.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/NetworkError.js
   var NetworkError = class extends Error {
     cause;
     isNetworkError;
@@ -27034,7 +27034,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var NetworkError_default = NetworkError;
 
-  // node_modules/@uppy/utils/lib/isNetworkError.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/isNetworkError.js
   function isNetworkError(xhr) {
     if (!xhr) {
       return false;
@@ -27043,7 +27043,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   }
   var isNetworkError_default = isNetworkError;
 
-  // node_modules/@uppy/utils/lib/ProgressTimeout.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/ProgressTimeout.js
   var ProgressTimeout = class {
     #aliveTimer;
     #isDone = false;
@@ -27071,7 +27071,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   };
   var ProgressTimeout_default = ProgressTimeout;
 
-  // node_modules/@uppy/utils/lib/fetcher.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/fetcher.js
   var noop = () => {
   };
   function fetcher(url, options2 = {}) {
@@ -27137,7 +27137,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return requestWithRetry();
   }
 
-  // node_modules/@uppy/utils/lib/fileFilters.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/fileFilters.js
   function filterNonFailedFiles(files) {
     const hasError = (file) => "error" in file && !!file.error;
     return files.filter((file) => !hasError(file));
@@ -27146,7 +27146,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return files.filter((file) => !file.progress?.uploadStarted || !file.isRestored);
   }
 
-  // node_modules/@uppy/utils/lib/getAllowedMetaFields.js
+  // ../plutonium-core/node_modules/@uppy/utils/lib/getAllowedMetaFields.js
   function getAllowedMetaFields(fields, meta) {
     if (fields === true) {
       return Object.keys(meta);
@@ -27157,7 +27157,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     return [];
   }
 
-  // node_modules/@uppy/xhr-upload/lib/locale.js
+  // ../plutonium-core/node_modules/@uppy/xhr-upload/lib/locale.js
   var locale_default6 = {
     strings: {
       // Shown in the Informer if an upload is being canceled because it stalled for too long.
@@ -27165,7 +27165,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
-  // node_modules/@uppy/xhr-upload/lib/index.js
+  // ../plutonium-core/node_modules/@uppy/xhr-upload/lib/index.js
   function _classPrivateFieldLooseBase(e4, t4) {
     if (!{}.hasOwnProperty.call(e4, t4)) throw new TypeError("attempted to use private field on non-instance");
     return e4;
@@ -28952,6 +28952,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.addEventListener("turbo:before-stream-render", this.onBeforeStreamRender);
       this.#syncColumnsToUrl();
       this.#restoreScrollLeft();
+      this.#reloadAfterWrite();
     }
     disconnect() {
       this.element.removeEventListener("dragstart", this.onDragStart);
@@ -28984,6 +28985,20 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // reset to the new URL before we could diff against it, and the sync would
     // never fire. Comparing frame-src-vs-URL has no such blind spot and is
     // self-limiting: once a frame matches the URL, it won't reload again.
+    // A create/update/destroy that returns to the board redirects to a URL the
+    // server tagged with kanban_reload=1 (see KanbanActions#kanban_reload_url).
+    // The board is data-turbo-permanent, so its already-loaded column frames are
+    // kept as-is on arrival — stale (missing a new card, still showing a deleted
+    // one). Force every column to re-fetch, then strip the marker so a later
+    // reload / back-nav doesn't re-trigger it. The restore window opened by
+    // #restoreScrollLeft keeps the scroll pinned as the fresh frames render.
+    #reloadAfterWrite() {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("kanban_reload")) return;
+      url.searchParams.delete("kanban_reload");
+      history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`);
+      this.#columnFrames().forEach((frame) => frame.reload());
+    }
     #syncColumnsToUrl() {
       this.#columnFrames().forEach((frame) => {
         const desired = this.#columnFrameSrc(frame.dataset.kanbanColFrame);
@@ -29082,11 +29097,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     // persist it. Runs on the scroll debounce, on pagehide, and on disconnect —
     // never on the raw scroll event, so the layout read can't stutter scrolling.
     #captureScroll() {
-      if (!this.restoringScroll) {
-        const el = this.element;
+      const el = this.element;
+      if (!this.restoringScroll && el.clientWidth > 0) {
+        const maxScroll = el.scrollWidth - el.clientWidth;
         this.scrollTarget = {
           l: el.scrollLeft,
-          e: el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+          e: maxScroll > 0 && el.scrollLeft >= maxScroll - 2
         };
       }
       if (!this.scrollTarget) return;

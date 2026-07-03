@@ -32,7 +32,31 @@ module Plutonium
       module KanbanActions
         extend ActiveSupport::Concern
 
+        # Tags board-bound redirects with kanban_reload=1 so the permanent board
+        # refreshes its cached column frames on arrival (see #kanban_reload_url).
+        # Wraps ALL three redirect helpers — create/update (after_submit), destroy
+        # (after_destroy), and interactive record/resource/bulk actions
+        # (after_action_on). PREPENDED, not a plain override: after_action_on
+        # lives in InteractiveActions, which is included AFTER this concern, so a
+        # normal override here would be shadowed. Prepending wins regardless of
+        # include order, and `super` still reaches the real implementation.
+        module ReloadRedirects
+          def redirect_url_after_submit
+            kanban_reload_url(super)
+          end
+
+          def redirect_url_after_destroy
+            kanban_reload_url(super)
+          end
+
+          def redirect_url_after_action_on(*)
+            kanban_reload_url(super)
+          end
+        end
+
         included do
+          prepend ReloadRedirects
+
           # Intercept index when view=kanban + column=<key> is present.
           # Runs BEFORE setup_index_action! so no wasteful pagination query.
           before_action :maybe_render_kanban_column, only: :index
@@ -295,7 +319,8 @@ module Plutonium
           end
 
           column_add_url = if column.add? && current_policy.allowed_to?(:create?)
-            resource_url_for(resource_class, action: :new, kanban_column: column.key)
+            resource_url_for(resource_class, action: :new, kanban_column: column.key,
+              return_to: kanban_board_url)
           end
 
           component = Plutonium::UI::Kanban::Column.new(
@@ -307,11 +332,50 @@ module Plutonium
             resource_fields: permitted_attributes_for("index"),
             column_action_data:,
             column_add_url:,
+            board_url: kanban_board_url,
             card_fields: board.card_fields,
             card_show_frame: kanban_card_show_frame(board),
             collapsed: kanban_effective_collapsed(column)
           )
           view_context.render(component).html_safe
+        end
+
+        # The board's own URL — the collection path with view=kanban and any
+        # active board query (search / filter / scope), minus the per-column
+        # frame param. Used as the quick-add return_to so creating a card returns
+        # the user to the board (at their scroll + filters) instead of the new
+        # record's show page. Built from resource_url_for rather than request.path
+        # because this also runs under the kanban_move POST, whose request path is
+        # the member move URL, not the collection path.
+        def kanban_board_url
+          board_params = request.query_parameters.except("column", "format").merge("view" => "kanban")
+          "#{resource_url_for(resource_class)}?#{board_params.to_query}"
+        end
+
+        # Tags a board-bound redirect with the one-shot kanban_reload marker (and
+        # normalizes it to the FULL board) so a write/action that returns to the
+        # permanent board doesn't show stale columns (a new card missing, a
+        # deleted/archived one lingering). The kanban Stimulus controller consumes
+        # the marker on connect, re-fetches the column frames, and strips it from
+        # the URL. No-op for non-kanban resources and for redirects that don't
+        # land on the board (a show page, the table index). Called from
+        # ReloadRedirects for all three redirect helpers.
+        #
+        # Also strips column= so the redirect targets the full board rather than
+        # the bare single-column frame endpoint (maybe_render_kanban_column
+        # intercepts view=kanban + column=<key>). A card's edit/delete button
+        # rendered inside a lazy column frame defaults its return_to to that
+        # frame's URL, which carries column=<key>; without this strip the write
+        # would redirect onto that fragment instead of the board.
+        def kanban_reload_url(url)
+          return url unless current_definition.defined_kanban_board
+          uri = URI.parse(url.to_s)
+          params = Rack::Utils.parse_query(uri.query)
+          return url unless params["view"] == "kanban"
+          params.delete("column")
+          params["kanban_reload"] = "1"
+          uri.query = params.to_query
+          uri.to_s
         end
 
         # The user's persisted collapse choice for this column, resolved against

@@ -164,6 +164,9 @@ export default class extends Controller {
 
     // connect() runs right after reattach — put the horizontal scroll back.
     this.#restoreScrollLeft()
+
+    // Refresh cached columns after a write (see #reloadAfterWrite).
+    this.#reloadAfterWrite()
   }
 
   disconnect() {
@@ -203,6 +206,21 @@ export default class extends Controller {
   // reset to the new URL before we could diff against it, and the sync would
   // never fire. Comparing frame-src-vs-URL has no such blind spot and is
   // self-limiting: once a frame matches the URL, it won't reload again.
+  // A create/update/destroy that returns to the board redirects to a URL the
+  // server tagged with kanban_reload=1 (see KanbanActions#kanban_reload_url).
+  // The board is data-turbo-permanent, so its already-loaded column frames are
+  // kept as-is on arrival — stale (missing a new card, still showing a deleted
+  // one). Force every column to re-fetch, then strip the marker so a later
+  // reload / back-nav doesn't re-trigger it. The restore window opened by
+  // #restoreScrollLeft keeps the scroll pinned as the fresh frames render.
+  #reloadAfterWrite() {
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has("kanban_reload")) return
+    url.searchParams.delete("kanban_reload")
+    history.replaceState(history.state, "", `${url.pathname}${url.search}${url.hash}`)
+    this.#columnFrames().forEach(frame => frame.reload())
+  }
+
   #syncColumnsToUrl() {
     this.#columnFrames().forEach(frame => {
       const desired = this.#columnFrameSrc(frame.dataset.kanbanColFrame)
@@ -323,11 +341,17 @@ export default class extends Controller {
   // persist it. Runs on the scroll debounce, on pagehide, and on disconnect —
   // never on the raw scroll event, so the layout read can't stutter scrolling.
   #captureScroll() {
-    if (!this.restoringScroll) {
-      const el = this.element
+    const el = this.element
+    // Skip the read when the board has no layout: on a nav teardown the element
+    // is detached, so scrollLeft/scrollWidth/clientWidth all read 0 — which would
+    // compute a bogus "at-end" (0 >= -2) and pin the next restore to the far end.
+    // The last in-memory target already reflects the user's real position, so
+    // keep it. `e` also requires genuine overflow, never a zero-width board.
+    if (!this.restoringScroll && el.clientWidth > 0) {
+      const maxScroll = el.scrollWidth - el.clientWidth
       this.scrollTarget = {
         l: el.scrollLeft,
-        e: el.scrollLeft >= el.scrollWidth - el.clientWidth - 2
+        e: maxScroll > 0 && el.scrollLeft >= maxScroll - 2
       }
     }
     if (!this.scrollTarget) return
