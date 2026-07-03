@@ -27,6 +27,16 @@ module Plutonium
         if enter_interaction && !(enter_interaction.is_a?(Class) && enter_interaction < Plutonium::Resource::Interaction)
           raise ArgumentError, "enter_interaction: must be a Plutonium::Resource::Interaction subclass, got #{enter_interaction.inspect}"
         end
+        # An enter_interaction acts on the SINGLE dropped card — the move handler
+        # binds it as `resource:`. It must therefore be record-shaped (declare a
+        # `resource` attribute), never collection/bulk-shaped (`resources`). Reject
+        # anything else at definition time so a mis-shaped interaction can't (a) blow
+        # up at drop time on the `resource=` assignment, or (b) get auto-classified
+        # by Action::Interactive::Factory as a bulk action and leak into the
+        # bulk-actions bar (which does not filter kanban_drop actions).
+        if enter_interaction && !enter_interaction.attribute_names.map(&:to_sym).include?(:resource)
+          raise ArgumentError, "enter_interaction: #{enter_interaction} must operate on a single record (declare `attribute :resource`); collection/bulk interactions cannot be used as an enter_interaction."
+        end
         # accepts: is purely structural (topology + client drop hints): true/false
         # or an Array of source keys. The Proc form was removed — record/user
         # conditions belong in the kanban_move? policy, which sees the record and

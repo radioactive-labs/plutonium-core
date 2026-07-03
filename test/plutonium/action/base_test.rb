@@ -1,5 +1,3 @@
-# file: /Users/stefan/code/plutonium/starters/vulcan/gems/plutonium/test/plutonium/action/base_test.rb
-
 require "test_helper"
 
 module Plutonium

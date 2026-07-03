@@ -19,6 +19,18 @@ module Plutonium
         end
       end
 
+      # A collection/bulk-shaped interaction (declares `resources`, not `resource`)
+      # — invalid as an enter_interaction, which acts on the single dropped card.
+      class BulkShapedInteraction < Plutonium::Resource::Interaction
+        attribute :resources
+
+        private
+
+        def execute
+          succeed(resources)
+        end
+      end
+
       # ------------------------------------------------------------------ #
       # enter_interaction — storage                                           #
       # ------------------------------------------------------------------ #
@@ -75,6 +87,16 @@ module Plutonium
         assert_raises(ArgumentError) do
           Column.new(:x, enter_interaction: String)
         end
+      end
+
+      def test_enter_interaction_rejects_collection_shaped_interaction
+        # A bulk/collection interaction (declares `resources`, not `resource`)
+        # can't act on the single dropped card and would otherwise get classified
+        # as a bulk action — reject it at definition time.
+        err = assert_raises(ArgumentError) do
+          Column.new(:x, enter_interaction: BulkShapedInteraction)
+        end
+        assert_match(/single record/, err.message)
       end
 
       # ------------------------------------------------------------------ #

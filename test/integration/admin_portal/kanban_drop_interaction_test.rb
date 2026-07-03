@@ -261,12 +261,11 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     # on_enter's membership write persisted (status).
     assert_equal "blocked", @doing.status,
       "the on_enter membership write must persist"
-    # The interaction's extras persisted, overwriting on_enter's sentinel — which
-    # proves on_enter ran FIRST, then the interaction (ordering guarantee).
+    # The interaction's extras persisted with the user's reason, overwriting
+    # on_enter's "SET_BY_ON_DROP" sentinel — which proves on_enter ran FIRST, then
+    # the interaction (ordering guarantee).
     assert_equal "waiting on vendor", @doing.lost_reason,
       "the interaction extras must persist and overwrite the on_enter sentinel"
-    refute_equal "SET_BY_ON_DROP", @doing.lost_reason,
-      "the interaction must run AFTER on_enter (sentinel must be overwritten)"
 
     # Both set status → final value is the interaction's (== on_enter's here).
     assert_equal "blocked", @doing.status
@@ -329,11 +328,10 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     blocked_card.reload
-    # on_enter was skipped: it never overwrote lost_reason with the sentinel.
+    # on_enter was skipped: it never overwrote lost_reason with the "SET_BY_ON_DROP"
+    # sentinel — the reason still holds the value set directly in the test.
     assert_equal "original reason", blocked_card.lost_reason,
       "on_enter must NOT run on a same-column reorder (sentinel must not overwrite)"
-    refute_equal "SET_BY_ON_DROP", blocked_card.lost_reason,
-      "the on_enter sentinel proves on_enter was skipped"
     assert_equal "blocked", blocked_card.status,
       "status is unchanged on a same-column reorder"
 
