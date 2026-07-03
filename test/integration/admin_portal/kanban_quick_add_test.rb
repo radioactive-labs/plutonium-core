@@ -11,7 +11,7 @@ require "test_helper"
 # threaded via the `kanban_column=` query param.
 #
 # The `KanbanActions#apply_kanban_column_defaults!` before_action intercepts
-# the new action, runs an in-memory dry-run of the column's on_drop callback
+# the new action, runs an in-memory dry-run of the column's on_enter callback
 # (with save! / update! intercepted so no DB row is written), and injects the
 # resulting attribute changes into params so the form pre-fills the grouping
 # attribute (e.g. `status: "todo"`).
@@ -95,7 +95,7 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
   test "new form with kanban_column=todo pre-fills the grouping attribute" do
     get "/admin/tasks/new?kanban_column=todo"
     assert_response :success
-    # The on_drop for :todo assigns status="todo". apply_kanban_column_defaults!
+    # The on_enter for :todo assigns status="todo". apply_kanban_column_defaults!
     # injects that into params so the rendered form carries the pre-filled value.
     # Assert the actual status INPUT carries value="todo" rather than just that
     # the string "todo" appears somewhere in the page (which would pass even
@@ -174,39 +174,39 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
       "+ Add must reappear when create? is re-enabled"
   end
 
-  # ─── Symbol on_drop seed branch (fix #2) ─────────────────────────────────
+  # ─── Symbol on_enter seed branch (fix #2) ─────────────────────────────────
 
-  # The :todo column uses a Proc on_drop. The Symbol branch of the seed
+  # The :todo column uses a Proc on_enter. The Symbol branch of the seed
   # extractor (record.public_send(sym)) is exercised here by binding the
-  # private controller method against a column with a Symbol on_drop. The
+  # private controller method against a column with a Symbol on_enter. The
   # Task#mark_done! method calls update!(status: "done"); the seed extractor
   # stubs update! so the change is captured in-memory without a DB write.
-  test "kanban_column_on_drop_seed captures attrs set by a Symbol on_drop" do
-    column = Plutonium::Kanban::Column.new(:done_add, add: true, on_drop: :mark_done!)
+  test "kanban_column_on_enter_seed captures attrs set by a Symbol on_enter" do
+    column = Plutonium::Kanban::Column.new(:done_add, add: true, on_enter: :mark_done!)
 
     harness = Object.new
     harness.define_singleton_method(:resource_class) { Task }
     seed_method = Plutonium::Resource::Controllers::KanbanActions
-      .instance_method(:kanban_column_on_drop_seed)
+      .instance_method(:kanban_column_on_enter_seed)
 
     result = seed_method.bind_call(harness, column)
 
     assert_equal "done", result["status"],
-      "Symbol on_drop (:mark_done!) should seed status='done' without a DB write"
+      "Symbol on_enter (:mark_done!) should seed status='done' without a DB write"
     assert_equal 0, Task.where(status: "done").count,
       "the dry-run must not persist any record"
   end
 
-  # ─── Raising on_drop degrades gracefully (fix #1) ────────────────────────
+  # ─── Raising on_enter degrades gracefully (fix #1) ────────────────────────
 
-  # An on_drop that raises during the dry-run must NOT 500 the new form. The
+  # An on_enter that raises during the dry-run must NOT 500 the new form. The
   # controller rescues, logs a warning, and serves the form UNSEEDED so the
   # user can still create the record. We swap Grouping.resolve_columns (called
   # synchronously within the in-process request) for one returning a column
-  # whose on_drop raises, then restore it in ensure.
-  test "raising on_drop renders the new form unseeded (200), not a 500" do
+  # whose on_enter raises, then restore it in ensure.
+  test "raising on_enter renders the new form unseeded (200), not a 500" do
     boom_column = Plutonium::Kanban::Column.new(
-      :todo, add: true, on_drop: ->(_r) { raise "kaboom in on_drop" }
+      :todo, add: true, on_enter: ->(_r) { raise "kaboom in on_enter" }
     )
 
     grouping = Plutonium::Kanban::Grouping
@@ -218,9 +218,9 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
       grouping.define_singleton_method(:resolve_columns, original)
     end
 
-    assert_response :success, "a raising on_drop must degrade to a 200 form, not crash"
+    assert_response :success, "a raising on_enter must degrade to a 200 form, not crash"
     # Unseeded: the status input must NOT carry a pre-filled value="todo".
     refute_match(/name="task\[status\]"[^>]*value="todo"/, response.body,
-      "form should be unseeded when the on_drop dry-run raises")
+      "form should be unseeded when the on_enter dry-run raises")
   end
 end

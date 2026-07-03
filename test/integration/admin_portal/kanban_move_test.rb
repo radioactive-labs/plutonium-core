@@ -9,13 +9,13 @@ require "test_helper"
 # Formats: Turbo Stream (Accept: text/vnd.turbo-stream.html)
 #
 # The Task board fixture (TaskDefinition):
-#   :todo   — Proc on_drop, accepts all, backlog role
-#   :doing  — Proc on_drop, wip: 3, accepts all
-#   :done   — Symbol on_drop (:mark_done!), accepts: ->(task) { task.status == "doing" }
+#   :todo   — Proc on_enter, accepts all, backlog role
+#   :doing  — Proc on_enter, wip: 3, accepts all
+#   :done   — Symbol on_enter (:mark_done!), accepts: ->(task) { task.status == "doing" }
 #
 # Covered scenarios:
-#   * todo → doing success (Proc on_drop, status + position updated)
-#   * doing → done success (Symbol on_drop, status + position updated)
+#   * todo → doing success (Proc on_enter, status + position updated)
+#   * doing → done success (Symbol on_enter, status + position updated)
 #   * response contains turbo-stream updates for both column frames
 #   * same-column reorder: only one frame updated
 #   * unauthenticated: redirect (auth layer enforced)
@@ -41,7 +41,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
 
   teardown { Task.delete_all }
 
-  # ─── Success: Proc on_drop (todo → doing) ──────────────────────────────────
+  # ─── Success: Proc on_enter (todo → doing) ──────────────────────────────────
 
   test "move todo to doing returns 200 and updates status + position" do
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
@@ -63,9 +63,9 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_includes response.content_type, "turbo-stream"
   end
 
-  # ─── Success: Symbol on_drop (doing → done) ────────────────────────────────
+  # ─── Success: Symbol on_enter (doing → done) ────────────────────────────────
 
-  test "move doing to done returns 200 and updates status via symbol on_drop" do
+  test "move doing to done returns 200 and updates status via symbol on_enter" do
     post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
@@ -74,7 +74,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_equal "done", @doing_a.status
   end
 
-  test "symbol on_drop updates position correctly" do
+  test "symbol on_enter updates position correctly" do
     post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 

@@ -18,7 +18,7 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
-  # Drop interaction: mark a task lost (kanban :lost column drop_interaction).
+  # Drop interaction: mark a task lost (kanban :lost column enter_interaction).
   # Delegates to update? so any user who can edit tasks can mark one lost.
   # Set deny_mark_lost = true in integration tests to exercise the 403 path.
   cattr_accessor :deny_mark_lost, default: false
@@ -28,14 +28,14 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
-  # Drop interaction: block a task (kanban :blocked column drop_interaction,
-  # which also declares an on_drop). Delegates to update?.
+  # Drop interaction: block a task (kanban :blocked column enter_interaction,
+  # which also declares an on_enter). Delegates to update?.
   def block_task?
     update?
   end
 
   # Immediate drop interaction: archive a task (kanban :archived column
-  # drop_interaction, input-less → committed directly). Delegates to update?.
+  # enter_interaction, input-less → committed directly). Delegates to update?.
   # Set deny_archive_task = true in integration tests to exercise the 403 path.
   cattr_accessor :deny_archive_task, default: false
 

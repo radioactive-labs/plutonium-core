@@ -20,17 +20,17 @@ class TaskDefinition < ResourceDefinition
 
     column :todo,
       scope:   -> { where(status: "todo") },
-      on_drop: ->(r) { r.update!(status: "todo") },
+      on_enter: ->(r) { r.update!(status: "todo") },
       role: :backlog
 
     column :doing,
       scope:   -> { where(status: "doing") },
-      on_drop: ->(r) { r.update!(status: "doing") },
+      on_enter: ->(r) { r.update!(status: "doing") },
       wip: 3
 
     column :done,
       scope:   -> { where(status: "done") },
-      on_drop: :mark_done!,
+      on_enter: :mark_done!,
       accepts: [:doing],
       role: :done
   end

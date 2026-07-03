@@ -69,7 +69,7 @@ module Plutonium
       end
 
       # ------------------------------------------------------------------ #
-      # scope / on_drop — Proc or Symbol stored verbatim                     #
+      # scope / on_enter — Proc or Symbol stored verbatim                     #
       # ------------------------------------------------------------------ #
 
       def test_scope_proc_stored_verbatim
@@ -83,15 +83,15 @@ module Plutonium
         assert_equal :active, board.columns.first.scope
       end
 
-      def test_on_drop_proc_stored_verbatim
+      def test_on_enter_proc_stored_verbatim
         my_drop = ->(record, col) { record.update!(status: col) }
-        board = DSL.build { column :todo, on_drop: my_drop }
-        assert_same my_drop, board.columns.first.on_drop
+        board = DSL.build { column :todo, on_enter: my_drop }
+        assert_same my_drop, board.columns.first.on_enter
       end
 
-      def test_on_drop_symbol_stored_verbatim
-        board = DSL.build { column :todo, on_drop: :handle_drop }
-        assert_equal :handle_drop, board.columns.first.on_drop
+      def test_on_enter_symbol_stored_verbatim
+        board = DSL.build { column :todo, on_enter: :handle_drop }
+        assert_equal :handle_drop, board.columns.first.on_enter
       end
 
       # ------------------------------------------------------------------ #

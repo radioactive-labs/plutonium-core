@@ -29246,7 +29246,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     // ─── drop-interaction modal ────────────────────────────────────────────────
     //
-    // A cross-column drop into a drop_interaction column opens the interaction's
+    // A cross-column drop into an enter_interaction column opens the interaction's
     // form in the shared remote-modal frame instead of committing the move.
     //
     // Native HTML5 drag-and-drop never re-parents the card's DOM node — the card

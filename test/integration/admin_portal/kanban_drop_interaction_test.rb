@@ -2,16 +2,16 @@
 
 require "test_helper"
 
-# Integration tests for the kanban_move member action's drop_interaction path
+# Integration tests for the kanban_move member action's enter_interaction path
 # (Task 4).
 #
 # Route:   POST /admin/tasks/:id/kanban_move
 # Params:  from_column, to_column, to_index, interaction[...]
 # Formats: Turbo Stream (Accept: text/vnd.turbo-stream.html)
 #
-# When the destination column declares a `drop_interaction:`, the POST commits
+# When the destination column declares a `enter_interaction:`, the POST commits
 # the interaction AND the move in ONE transaction:
-#   (1) on_drop membership write + save
+#   (1) on_enter membership write + save
 #   (2) authorize the transition + build & run the interaction
 #   (3) reposition + save
 #
@@ -19,7 +19,7 @@ require "test_helper"
 # Success emits the column Turbo Streams PLUS a stream that closes the modal.
 #
 # The Task board fixture (TaskDefinition):
-#   :lost — drop_interaction: MarkLostInteraction (required :reason input;
+#   :lost — enter_interaction: MarkLostInteraction (required :reason input;
 #           execute sets status="lost", lost_reason=reason)
 #   TaskPolicy#mark_lost? delegates to update? (deny_mark_lost toggle for 403).
 class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
@@ -196,7 +196,7 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
   test "a move-guard rejection returns 422 and never runs the interaction" do
     # :done accepts only cards whose status is "doing" — a todo card is
     # rejected BEFORE any transaction/interaction work. (:done has no
-    # drop_interaction, but this proves the guard path still short-circuits.)
+    # enter_interaction, but this proves the guard path still short-circuits.)
     todo = Task.create!(title: "Todo One", status: "todo")
     original_status = todo.status
 
@@ -239,10 +239,10 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
       "the toast must carry the interaction's success message"
   end
 
-  # ─── Criterion 8: a column with BOTH on_drop AND drop_interaction ──────────
+  # ─── Criterion 8: a column with BOTH on_enter AND enter_interaction ──────────
 
-  test "cross-column drop into a column with on_drop AND drop_interaction persists both in order" do
-    # :blocked declares on_drop (status=blocked + lost_reason sentinel) AND
+  test "cross-column drop into a column with on_enter AND enter_interaction persists both in order" do
+    # :blocked declares on_enter (status=blocked + lost_reason sentinel) AND
     # BlockTaskInteraction (status=blocked + lost_reason=reason). An existing
     # blocked card lets the reposition be observed.
     blocked_zero = Task.create!(title: "Blocked Zero", status: "blocked")
@@ -255,27 +255,27 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     @doing.reload
-    # on_drop's membership write persisted (status).
+    # on_enter's membership write persisted (status).
     assert_equal "blocked", @doing.status,
-      "the on_drop membership write must persist"
-    # The interaction's extras persisted, overwriting on_drop's sentinel — which
-    # proves on_drop ran FIRST, then the interaction (ordering guarantee).
+      "the on_enter membership write must persist"
+    # The interaction's extras persisted, overwriting on_enter's sentinel — which
+    # proves on_enter ran FIRST, then the interaction (ordering guarantee).
     assert_equal "waiting on vendor", @doing.lost_reason,
-      "the interaction extras must persist and overwrite the on_drop sentinel"
+      "the interaction extras must persist and overwrite the on_enter sentinel"
     refute_equal "SET_BY_ON_DROP", @doing.lost_reason,
-      "the interaction must run AFTER on_drop (sentinel must be overwritten)"
+      "the interaction must run AFTER on_enter (sentinel must be overwritten)"
 
-    # Both set status → final value is the interaction's (== on_drop's here).
+    # Both set status → final value is the interaction's (== on_enter's here).
     assert_equal "blocked", @doing.status
 
     # reposition ran last: index 0 places the card before the existing one.
     assert @doing.position < blocked_zero.reload.position,
-      "reposition must run after on_drop + interaction"
+      "reposition must run after on_enter + interaction"
   end
 
-  # ─── Criterion 9: same-column reorder into a drop_interaction column ────────
+  # ─── Criterion 9: same-column reorder into a enter_interaction column ────────
 
-  test "same-column reorder into :lost does NOT run the drop_interaction" do
+  test "same-column reorder into :lost does NOT run the enter_interaction" do
     # An already-lost card with a recorded reason. Reordering WITHIN the lost
     # column must not re-prompt (the interaction represents ENTERING the column,
     # not repositioning inside it).
@@ -300,16 +300,16 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
       "status is unchanged on a same-column reorder"
   end
 
-  # ─── Criterion 10: same-column reorder skips on_drop (positioning only) ─────
+  # ─── Criterion 10: same-column reorder skips on_enter (positioning only) ─────
 
-  test "same-column reorder into :blocked does NOT run on_drop (positioning only)" do
-    # :blocked declares BOTH an on_drop (status=blocked + lost_reason sentinel)
-    # AND a drop_interaction. A same-column reorder must run ONLY the positioning
-    # code — neither on_drop nor the interaction fires, since both represent
+  test "same-column reorder into :blocked does NOT run on_enter (positioning only)" do
+    # :blocked declares BOTH an on_enter (status=blocked + lost_reason sentinel)
+    # AND a enter_interaction. A same-column reorder must run ONLY the positioning
+    # code — neither on_enter nor the interaction fires, since both represent
     # ENTERING the column, not repositioning inside it.
     blocked_card = Task.create!(title: "Blocked One", status: "blocked")
-    # Set a DISTINCT reason directly so it differs from the on_drop sentinel; if
-    # on_drop ran it would clobber this with "SET_BY_ON_DROP".
+    # Set a DISTINCT reason directly so it differs from the on_enter sentinel; if
+    # on_enter ran it would clobber this with "SET_BY_ON_DROP".
     blocked_card.update!(lost_reason: "original reason")
     # A second blocked card so there is something to reorder relative to.
     blocked_two = Task.create!(title: "Blocked Two", status: "blocked")
@@ -326,11 +326,11 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
     assert_response :ok
 
     blocked_card.reload
-    # on_drop was skipped: it never overwrote lost_reason with the sentinel.
+    # on_enter was skipped: it never overwrote lost_reason with the sentinel.
     assert_equal "original reason", blocked_card.lost_reason,
-      "on_drop must NOT run on a same-column reorder (sentinel must not overwrite)"
+      "on_enter must NOT run on a same-column reorder (sentinel must not overwrite)"
     refute_equal "SET_BY_ON_DROP", blocked_card.lost_reason,
-      "the on_drop sentinel proves on_drop was skipped"
+      "the on_enter sentinel proves on_enter was skipped"
     assert_equal "blocked", blocked_card.status,
       "status is unchanged on a same-column reorder"
 

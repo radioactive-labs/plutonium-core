@@ -39,11 +39,11 @@ When a card is dropped, the server:
 2. Calls `authorize_current!(record, to: :kanban_move?)`. A `false` result halts the action with HTTP 403.
 3. Validates the drop against the destination column's `accepts:` policy and `locked:` flag. A rejected drop responds with HTTP 422 and re-renders the source column (the Stimulus controller snaps the card back).
 4. Enforces the destination column's `wip:` limit (cross-column moves only). Exceeding the WIP cap also responds 422.
-5. Calls `on_drop` and repositions the record inside a transaction.
+5. Calls `on_enter` and repositions the record inside a transaction.
 
 ## No permitted attributes for moves
 
-Kanban moves do **not** pass through `permitted_attributes_for_update` / `permitted_attributes_for_kanban_move`. The `on_drop` callback is author code that runs with full model access — it is the responsibility of the `on_drop` implementation to assign only the attributes appropriate for a column transition. This is intentional: the callback is trusted Ruby, not user-supplied form data.
+Kanban moves do **not** pass through `permitted_attributes_for_update` / `permitted_attributes_for_kanban_move`. The `on_enter` callback is author code that runs with full model access — it is the responsibility of the `on_enter` implementation to assign only the attributes appropriate for a column transition. This is intentional: the callback is trusted Ruby, not user-supplied form data.
 
 ## Column-level drop policies
 

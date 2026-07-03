@@ -30,12 +30,12 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_instance_of Plutonium::Kanban::Board, board
   end
 
-  test "board has exactly 4 columns" do
-    assert_equal 4, board.columns.length
+  test "board has exactly 6 columns" do
+    assert_equal 6, board.columns.length
   end
 
-  test "board column keys are :todo, :doing, :done, :lost" do
-    assert_equal %i[todo doing done lost], board.columns.map(&:key)
+  test "board column keys are :todo, :doing, :done, :lost, :blocked, :archived" do
+    assert_equal %i[todo doing done lost blocked archived], board.columns.map(&:key)
   end
 
   test "board per_column is 25" do
@@ -60,8 +60,8 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert todo_col.scope.respond_to?(:call)
   end
 
-  test ":todo column has an on_drop proc" do
-    assert todo_col.on_drop.respond_to?(:call)
+  test ":todo column has an on_enter proc" do
+    assert todo_col.on_enter.respond_to?(:call)
   end
 
   # ─── Column: :doing (wip: 3) ───────────────────────────────────────────────
@@ -104,7 +104,7 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_equal "Archive all", action.label
   end
 
-  # ─── Column: :lost (drop_interaction) ──────────────────────────────────────
+  # ─── Column: :lost (enter_interaction) ──────────────────────────────────────
 
   def lost_col
     board.columns.find { |c| c.key == :lost }
@@ -114,9 +114,9 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
     assert_not_nil lost_col
   end
 
-  test ":lost column declares a drop_interaction" do
-    assert lost_col.drop_interaction?, ":lost should declare a drop_interaction"
-    assert_equal MarkLostInteraction, lost_col.drop_interaction
+  test ":lost column declares a enter_interaction" do
+    assert lost_col.enter_interaction?, ":lost should declare a enter_interaction"
+    assert_equal MarkLostInteraction, lost_col.enter_interaction
   end
 
   # ─── Positioning ───────────────────────────────────────────────────────────

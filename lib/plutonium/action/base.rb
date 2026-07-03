@@ -70,7 +70,7 @@ module Plutonium
       def resource_action? = @resource_action
 
       # True when this action was auto-registered for a kanban column's
-      # `drop_interaction`. Such actions exist only so their policy method,
+      # `enter_interaction`. Such actions exist only so their policy method,
       # form, and params machinery are wired up — they are reachable by
       # dropping a card, never rendered as a normal toolbar/row button.
       def kanban_drop? = @kanban_drop

@@ -5,7 +5,7 @@ require "test_helper"
 class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
   # A real record interaction (has `attribute :resource`) with a conventional
   # "…Interaction" name so it registers as an interactive record action keyed
-  # `:mark_lost` (see Kanban::Column#drop_interaction_key).
+  # `:mark_lost` (see Kanban::Column#enter_interaction_key).
   class MarkLostInteraction < Plutonium::Resource::Interaction
     attribute :resource
     attribute :reason, :string
@@ -63,20 +63,20 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
   end
 
   # ------------------------------------------------------------------ #
-  # drop_interaction auto-registration                                   #
+  # enter_interaction auto-registration                                   #
   # ------------------------------------------------------------------ #
 
   def drop_definition
     interaction = MarkLostInteraction
     def_class do
       kanban do
-        column :lost, scope: -> { all }, on_drop: ->(r) { r.status = "lost" },
-          drop_interaction: interaction
+        column :lost, scope: -> { all }, on_enter: ->(r) { r.status = "lost" },
+          enter_interaction: interaction
       end
     end.new
   end
 
-  def test_static_column_drop_interaction_registers_a_record_action
+  def test_static_column_enter_interaction_registers_a_record_action
     action = drop_definition.defined_actions[:mark_lost]
     assert_kind_of Plutonium::Action::Interactive, action
     assert action.record_action?, "drop interaction should be a record action"
@@ -104,15 +104,15 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
   end
 
   # A single column can declare BOTH a normal column action (visible in
-  # toolbars) AND a drop_interaction (hidden, drop-only). Both must register
+  # toolbars) AND a enter_interaction (hidden, drop-only). Both must register
   # independently — neither overwrites the other.
-  def test_column_action_and_drop_interaction_coexist
+  def test_column_action_and_enter_interaction_coexist
     archive = ArchiveInteraction
     mark_lost = MarkLostInteraction
     definition = def_class do
       kanban do
-        column :lost, scope: -> { all }, on_drop: ->(r) { r.status = "lost" },
-          drop_interaction: mark_lost do
+        column :lost, scope: -> { all }, on_enter: ->(r) { r.status = "lost" },
+          enter_interaction: mark_lost do
           action :archive, interaction: archive
         end
       end

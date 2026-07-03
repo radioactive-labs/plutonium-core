@@ -61,7 +61,7 @@ module Plutonium
         # drop_form_url_template: the kanban_move_form member URL with an __ID__
         # placeholder for the dragged card's record id (mirrors the board's
         # move-url template). Set by the controller ONLY for columns that declare
-        # a drop_interaction:; nil for plain columns. When present, the wrapper
+        # an enter_interaction:; nil for plain columns. When present, the wrapper
         # advertises data-kanban-drop-interaction + data-kanban-drop-form-url-
         # template so Task 6's Stimulus controller opens the interaction modal on
         # drop instead of committing the move immediately.
@@ -109,8 +109,8 @@ module Plutonium
 
         # Data attributes for the [data-kanban-col] wrapper. Drop-policy hints
         # (accepts/locked) and the collapse default are always present; the
-        # drop-interaction attributes are added only when the column declares a
-        # drop_interaction: (advertised via the controller-computed template).
+        # drop-interaction attributes are added only when the column declares an
+        # enter_interaction: (advertised via the controller-computed template).
         def wrapper_data
           data = {
             kanban_col: column.key.to_s,
@@ -121,7 +121,7 @@ module Plutonium
             kanban_locked: column.locked?.to_s
           }
 
-          if column.drop_interaction?
+          if column.enter_interaction?
             data[:kanban_drop_interaction] = "true"
             data[:kanban_drop_form_url_template] = @drop_form_url_template
             # An input-less interaction commits directly on drop (no form modal);

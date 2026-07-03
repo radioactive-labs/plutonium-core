@@ -5,7 +5,7 @@
 # it `immediate` — dropping a card into :archived commits directly (after the
 # auto "Archive?" confirmation) instead of opening an empty form modal.
 #
-# Exercises the immediate drop_interaction path: no kanban_move_form modal, a
+# Exercises the immediate enter_interaction path: no kanban_move_form modal, a
 # direct kanban_move POST that runs the interaction with no params.
 class ArchiveTaskInteraction < ::ResourceInteraction
   presents label: "Archive",

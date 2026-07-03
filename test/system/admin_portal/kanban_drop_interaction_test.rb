@@ -3,11 +3,11 @@
 require "application_system_test_case"
 
 # Browser-level (Task 8) validation of the kanban drop-interaction flow — the
-# CLIENT layer the server integration tests (kanban_drop_interaction_test.rb)
+# CLIENT layer the server integration tests (kanban_enter_interaction_test.rb)
 # and the DOM-contract test (kanban_dom_contract_test.rb) can't reach.
 #
 # The TaskDefinition board declares a :lost column with
-# `drop_interaction: MarkLostInteraction` (a required :reason input). Dropping a
+# `enter_interaction: MarkLostInteraction` (a required :reason input). Dropping a
 # card from another column into :lost must open the interaction's modal, and
 # submitting it must commit the interaction + the move atomically and close the
 # modal.
@@ -166,7 +166,7 @@ class AdminPortal::KanbanDropInteractionTest < ApplicationSystemTestCase
   # Drive the real kanban controller's drop path: dispatch a native dragstart on
   # the card and a native drop on the destination column's drop zone, each with
   # a real DataTransfer. The controller does the rest (opening the interaction
-  # modal for drop_interaction columns). Only the pointer gesture is synthesised.
+  # modal for enter_interaction columns). Only the pointer gesture is synthesised.
   def drop_card_into_column(card_id, to_column)
     dispatched = page.evaluate_script(<<~JS)
       (() => {

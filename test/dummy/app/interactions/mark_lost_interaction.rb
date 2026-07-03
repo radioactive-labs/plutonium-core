@@ -4,7 +4,7 @@
 # card into :lost opens this interaction's form (asking WHY the task was lost)
 # and, on submit, transitions the task to "lost" and records the reason.
 #
-# Exercises the drop_interaction path: registered as a hidden record action
+# Exercises the enter_interaction path: registered as a hidden record action
 # (`mark_lost?`), rendered by kanban_move_form, and committed by kanban_move.
 class MarkLostInteraction < ::ResourceInteraction
   presents label: "Mark Lost",

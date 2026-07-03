@@ -144,13 +144,13 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
   end
 
   # ─── Drop-interaction contract (modal-on-drop columns) ─────────────────────
-  # A column that declares drop_interaction: advertises, on its [data-kanban-col]
+  # A column that declares enter_interaction: advertises, on its [data-kanban-col]
   # wrapper, that a drop requires the interaction modal and the kanban_move_form
   # URL template (with __ID__ for the dragged card's id). Task 6's Stimulus code
   # reads these to open the modal instead of committing the move immediately.
 
   test "drop-interaction column advertises data-kanban-drop-interaction" do
-    get "/admin/tasks?view=kanban&column=lost"   # :lost declares drop_interaction
+    get "/admin/tasks?view=kanban&column=lost"   # :lost declares enter_interaction
     assert_response :success
     wrapper = response.body[/<div[^>]*data-kanban-col="lost"[^>]*>/]
     assert wrapper, "expected the lost column wrapper"
@@ -171,7 +171,7 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
   end
 
   test "a plain column renders neither drop-interaction attribute" do
-    get "/admin/tasks?view=kanban&column=todo"   # :todo has no drop_interaction
+    get "/admin/tasks?view=kanban&column=todo"   # :todo has no enter_interaction
     assert_response :success
     wrapper = response.body[/<div[^>]*data-kanban-col="todo"[^>]*>/]
     assert wrapper, "expected the todo column wrapper"
@@ -179,7 +179,7 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     refute_includes wrapper, "data-kanban-drop-form-url-template"
   end
 
-  # An IMMEDIATE (input-less) drop_interaction advertises data-kanban-drop-immediate
+  # An IMMEDIATE (input-less) enter_interaction advertises data-kanban-drop-immediate
   # + an auto confirm, so the client commits directly instead of opening an empty
   # modal. :archived declares ArchiveTaskInteraction (no user inputs).
   test "immediate drop-interaction column advertises data-kanban-drop-immediate + confirm" do
@@ -192,7 +192,7 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     assert_includes wrapper, 'data-kanban-drop-confirm="Archive?"'
   end
 
-  # An INPUT-collecting drop_interaction (:lost → reason) is NOT immediate.
+  # An INPUT-collecting enter_interaction (:lost → reason) is NOT immediate.
   test "input-collecting drop-interaction column does not advertise immediate" do
     get "/admin/tasks?view=kanban&column=lost"
     assert_response :success

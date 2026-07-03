@@ -140,7 +140,7 @@ kanban do
 end
 ```
 
-No ordering is applied (relation is returned unchanged). On drop, `on_drop` still fires; the position attribute is never touched. Cards render in the relation's default order.
+No ordering is applied (relation is returned unchanged). On drop, `on_enter` still fires; the position attribute is never touched. Cards render in the relation's default order.
 
 ---
 

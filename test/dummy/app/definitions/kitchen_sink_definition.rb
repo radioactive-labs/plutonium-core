@@ -54,15 +54,15 @@ class KitchenSinkDefinition < ::ResourceDefinition
 
     column :active, label: "Active", role: :backlog,
       scope: -> { where(status: :active) },
-      on_drop: ->(ks) { ks.status = :active }
+      on_enter: ->(ks) { ks.status = :active }
 
     column :pending, label: "Pending", color: :amber, wip: 5,
       scope: -> { where(status: :pending) },
-      on_drop: ->(ks) { ks.status = :pending }
+      on_enter: ->(ks) { ks.status = :pending }
 
     column :archived, label: "Archived", role: :done,
       scope: -> { where(status: :archived) },
-      on_drop: ->(ks) { ks.status = :archived }
+      on_enter: ->(ks) { ks.status = :archived }
 
     per_column 10
   end

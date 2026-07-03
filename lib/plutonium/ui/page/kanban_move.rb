@@ -4,8 +4,8 @@ module Plutonium
   module UI
     module Page
       # Modal page shown when a card is dropped into a column that declares a
-      # `drop_interaction:`. It reuses the interactive-action modal chrome
-      # (title/description/modal mode all come from the drop_interaction's
+      # `enter_interaction:`. It reuses the interactive-action modal chrome
+      # (title/description/modal mode all come from the enter_interaction's
       # auto-registered record action) but renders a form that POSTs to the
       # `kanban_move` member route instead of the interaction's own commit URL,
       # carrying the move context (from_column/to_column/to_index) as hidden

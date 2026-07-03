@@ -496,7 +496,7 @@ export default class extends Controller {
 
     const toIndex = this.#computeDropIndex(event.clientY, existingCards)
 
-    // Columns that declare a drop_interaction, on a CROSS-column drop:
+    // Columns that declare an enter_interaction, on a CROSS-column drop:
     //   • immediate (input-less) interaction  → commit directly via the normal
     //     POST (the server runs the interaction with no params); honour an
     //     optional confirmation first. No empty modal.
@@ -573,7 +573,7 @@ export default class extends Controller {
 
   // ─── drop-interaction modal ────────────────────────────────────────────────
   //
-  // A cross-column drop into a drop_interaction column opens the interaction's
+  // A cross-column drop into an enter_interaction column opens the interaction's
   // form in the shared remote-modal frame instead of committing the move.
   //
   // Native HTML5 drag-and-drop never re-parents the card's DOM node — the card

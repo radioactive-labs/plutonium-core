@@ -20,7 +20,7 @@ module Plutonium
       #   1. Authorizes via kanban_move? policy predicate.
       #   2. Validates the drop (accepts? + locked?).
       #   3. Enforces the destination WIP limit (cross-column drops only).
-      #   4. Applies the column's on_drop callback (Symbol or 1-arg Proc).
+      #   4. Applies the column's on_enter callback (Symbol or 1-arg Proc).
       #   5. Repositions within the destination column via position_config.
       #   6. Responds with Turbo Stream updates for the from + to column frames.
       #      On rejection responds 422 and re-renders the unchanged source frame
@@ -132,54 +132,54 @@ module Plutonium
           prev_record = (to_index > 0) ? dest_cards[to_index - 1] : nil
           next_record = dest_cards[to_index]
 
-          # Holds the drop_interaction outcome (when the destination declares
+          # Holds the enter_interaction outcome (when the destination declares
           # one) so the post-transaction branch can distinguish a rolled-back
           # failure from a successful atomic commit.
           outcome = nil
 
           # A same-column reorder (from.key == to.key) changes only rank, not
-          # membership, so it runs ONLY the positioning code — no on_drop, no
-          # drop_interaction. Both on_drop (the membership write) and
-          # drop_interaction (the transition) represent ENTERING a column; neither
+          # membership, so it runs ONLY the positioning code — no on_enter, no
+          # enter_interaction. Both on_enter (the membership write) and
+          # enter_interaction (the transition) represent ENTERING a column; neither
           # should fire when the card is already in it. Task 6 (client) must mirror
           # this: a same-column drop posts a plain reposition and opens no modal.
           cross_column = from.key != to.key
-          run_drop_interaction = to.drop_interaction? && cross_column
+          run_enter_interaction = to.enter_interaction? && cross_column
           # An input-less drop interaction is `immediate` — the client commits it
           # via a DIRECT POST (no modal), so the response must be a Turbo Stream,
           # not modal-form HTML (see the failure branch below).
-          drop_immediate = run_drop_interaction &&
-            !!current_definition.defined_actions[to.drop_interaction_key]&.immediate
+          drop_immediate = run_enter_interaction &&
+            !!current_definition.defined_actions[to.enter_interaction_key]&.immediate
 
           # Authorize the transition BEFORE opening the transaction — hoisted out
-          # so a denied move can't leave a throwaway on_drop write on the 403
-          # path. Bind the drop_interaction's auto-registered hidden record action
+          # so a denied move can't leave a throwaway on_enter write on the 403
+          # path. Bind the enter_interaction's auto-registered hidden record action
           # (so interaction_params / build_interactive_record_action_interaction
           # resolve it) and reuse the already-loaded record as resource_record!
           # (param-extraction subject + form URL) — no re-query, no divergent copy.
-          if run_drop_interaction
-            params[:interactive_action] = to.drop_interaction_key
+          if run_enter_interaction
+            params[:interactive_action] = to.enter_interaction_key
             @resource_record = record
-            authorize_current! record, to: :"#{to.drop_interaction_key}?"
+            authorize_current! record, to: :"#{to.enter_interaction_key}?"
           end
 
           ActiveRecord::Base.transaction do
-            # (1) Apply on_drop — the membership write, CROSS-column moves only.
+            # (1) Apply on_enter — the membership write, CROSS-column moves only.
             # A same-column reorder skips this (see cross_column above) and only
-            # repositions; on_drop represents entering a new column.
+            # repositions; on_enter represents entering a new column.
             #   Symbol → record.public_send(sym) (named method on the record)
             #   Proc   → evaluated with self = kanban_context (delegates to
             #            view_context so `current_user` etc. work as bare calls)
             #            and the record as the single block arg, matching the
-            #            public 1-arg DSL form: on_drop: ->(task) { task.status = … }
+            #            public 1-arg DSL form: on_enter: ->(task) { task.status = … }
             if cross_column
-              if to.on_drop.is_a?(Symbol)
-                record.public_send(to.on_drop)
-              elsif to.on_drop
-                kanban_context.instance_exec(record, &to.on_drop)
+              if to.on_enter.is_a?(Symbol)
+                record.public_send(to.on_enter)
+              elsif to.on_enter
+                kanban_context.instance_exec(record, &to.on_enter)
               end
 
-              # Persist any in-memory attribute changes from on_drop (on_drop
+              # Persist any in-memory attribute changes from on_enter (on_enter
               # blocks that call update! directly are already saved; this is a
               # safety net for blocks that only assign attributes).
               record.save! if record.changed?
@@ -188,19 +188,19 @@ module Plutonium
             # (2) Drop interaction — runs against the SAME record instance,
             # atomic with the move. Only fires on a CROSS-column move (entering a
             # new column is the transition the interaction represents); a
-            # same-column reorder skips it (see run_drop_interaction above). The
+            # same-column reorder skips it (see run_enter_interaction above). The
             # interactive_action binding + @resource_record + authorize were
             # hoisted out above the transaction.
-            if run_drop_interaction
+            if run_enter_interaction
               # build_interactive_record_action_interaction renders the action
               # form to EXTRACT its params (structured inputs / choices). It runs
               # INSIDE the transaction on purpose: so a `choices:` proc (or any
-              # form logic) sees the post-on_drop record state. Do NOT hoist this
+              # form logic) sees the post-on_enter record state. Do NOT hoist this
               # out — doing so would change the record state the form is built
               # against and silently alter param-extraction semantics.
               build_interactive_record_action_interaction
               outcome = @interaction.call
-              # Interaction validation failed → undo the on_drop write (and any
+              # Interaction validation failed → undo the on_enter write (and any
               # partial execute) so nothing persists. The re-render happens
               # after the transaction so the rollback is fully applied first.
               raise ActiveRecord::Rollback if outcome.failure?
@@ -218,7 +218,7 @@ module Plutonium
               index: to_index
             )
 
-            # Final save covers Mode C where reposition! is a no-op but on_drop
+            # Final save covers Mode C where reposition! is a no-op but on_enter
             # only assigned in memory, or any other unsaved attribute changes.
             record.save! if record.changed?
           end
@@ -226,7 +226,7 @@ module Plutonium
           # Interaction failed → the transaction rolled back. Re-render the SAME
           # modal (422) with the validation errors + the submitted hidden move
           # fields, so the user can correct the input and resubmit the move.
-          if run_drop_interaction && outcome&.failure?
+          if run_enter_interaction && outcome&.failure?
             # Immediate interactions were committed via a direct POST (no modal
             # open), so the client is processing a Turbo Stream response — render a
             # snap-back rejection toast rather than modal-form HTML, which the
@@ -271,7 +271,7 @@ module Plutonium
               # deliberately EXCLUDED from the realtime broadcast above (appended
               # to `streams`, never to `column_streams`). Plain moves and
               # same-column reorders aren't in a modal, so nothing is appended.
-              if run_drop_interaction
+              if run_enter_interaction
                 streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")]
                 outcome.messages.each do |msg, type|
                   streams += [turbo_stream.append("kanban-flash", partial: "plutonium/toast",
@@ -290,7 +290,7 @@ module Plutonium
           # turbo_stream requests → the HTML error page morph this fix prevents).
           #
           # A denied transition — either the board-wide kanban_move? gate or a
-          # drop_interaction's own policy rule (e.g. archive_task?). Snap the
+          # enter_interaction's own policy rule (e.g. archive_task?). Snap the
           # source column back with a toast at 403 instead of letting the HTML
           # error page reach the client: the drag POST expects a Turbo Stream, so
           # a raw error page would be morphed into the board (the "page turns red"
@@ -312,7 +312,7 @@ module Plutonium
         # GET <member>/kanban_move_form?from_column=&to_column=&to_index=
         #
         # Renders the drop-interaction modal for a card dropped into a column
-        # that declares a `drop_interaction:`. The modal shows the interaction's
+        # that declares a `enter_interaction:`. The modal shows the interaction's
         # normal form, but wired to POST to `kanban_move` (Task 4) carrying the
         # move context as hidden fields so the interaction runs AND the card is
         # repositioned in one atomic request.
@@ -321,7 +321,7 @@ module Plutonium
           record = @resource_record
           to = kanban_column_for(params[:to_column])
 
-          unless to&.drop_interaction?
+          unless to&.enter_interaction?
             # No interaction to authorize against on this path — the drop is
             # simply invalid — so satisfy the authorize verifier explicitly.
             skip_verify_authorize_current!
@@ -329,14 +329,14 @@ module Plutonium
             return
           end
 
-          authorize_current! record, to: :"#{to.drop_interaction_key}?"
+          authorize_current! record, to: :"#{to.enter_interaction_key}?"
 
-          # Bind the drop_interaction's auto-registered record action as the
+          # Bind the enter_interaction's auto-registered record action as the
           # current interactive action so the modal chrome (title, description,
           # modal mode/size) resolves exactly like a standard record action.
-          params[:interactive_action] = to.drop_interaction_key
+          params[:interactive_action] = to.enter_interaction_key
 
-          @interaction = to.drop_interaction.new(view_context:)
+          @interaction = to.enter_interaction.new(view_context:)
           @interaction.resource = record
 
           render :kanban_move_form, formats: [:html], **modal_render_options
@@ -493,12 +493,12 @@ module Plutonium
           drop_form_url_template = nil
           drop_immediate = false
           drop_confirm = nil
-          if column.drop_interaction?
+          if column.enter_interaction?
             drop_form_url_template = "#{resource_url_for(resource_class).delete_suffix("/")}/__ID__/kanban_move_form"
             # Look up the auto-registered drop action to honour its shape: an
             # input-less interaction is `immediate` (commit directly, no modal),
             # and carries an auto "<label>?" confirmation unless one was set.
-            registered_drop = current_definition.defined_actions[column.drop_interaction_key]
+            registered_drop = current_definition.defined_actions[column.enter_interaction_key]
             drop_immediate = registered_drop&.immediate || false
             drop_confirm = registered_drop&.confirmation
           end
@@ -622,7 +622,7 @@ module Plutonium
         # pre-fills the grouping attribute (e.g. status="todo").
         #
         # Triggered by the kanban_column= query param that the "+ Add" link
-        # carries. The seed is extracted by running a DRY-RUN of on_drop against
+        # carries. The seed is extracted by running a DRY-RUN of on_enter against
         # a sentinel record whose save/update! methods are intercepted to prevent
         # any DB write. The resulting attribute changes are merged into the
         # resource params so maybe_apply_submitted_resource_params! sees them and
@@ -636,11 +636,11 @@ module Plutonium
           column = columns.find { |c| c.key.to_s == params[:kanban_column].to_s }
           return unless column&.add?
 
-          # A raising on_drop must not 500 the new form — degrade to an unseeded
+          # A raising on_enter must not 500 the new form — degrade to an unseeded
           # form so the user can still create the record (and set the grouping
           # field manually).
           seed_attrs = begin
-            kanban_column_on_drop_seed(column)
+            kanban_column_on_enter_seed(column)
           rescue => e
             Rails.logger.warn { "kanban quick-add seed failed for column #{column.key}: #{e.message}" }
             return
@@ -653,18 +653,18 @@ module Plutonium
           seed_attrs.stringify_keys.each { |k, v| params[resource_param_key][k] ||= v }
         end
 
-        # Runs on_drop against a sentinel record that intercepts save/update!
+        # Runs on_enter against a sentinel record that intercepts save/update!
         # calls so no row is written to the DB. Returns the attribute changes
-        # the on_drop block would have applied (e.g. {"status" => "todo"}).
+        # the on_enter block would have applied (e.g. {"status" => "todo"}).
         #
         # NOTE: this only stubs save/save!/update/update! on the sentinel record.
-        # An on_drop that has external side effects (enqueuing jobs, API calls,
+        # An on_enter that has external side effects (enqueuing jobs, API calls,
         # touching OTHER records) would fire those side effects on every "+ Add"
         # click, since they bypass the stubbed methods. This is acceptable for
         # the common `attr = value` / `update!(attr: value)` pattern but is a
-        # footgun for exotic on_drop callbacks.
-        def kanban_column_on_drop_seed(column)
-          return {} unless column.on_drop
+        # footgun for exotic on_enter callbacks.
+        def kanban_column_on_enter_seed(column)
+          return {} unless column.on_enter
 
           seed = resource_class.new
           seed.define_singleton_method(:update!) { |attrs = {}|
@@ -678,10 +678,10 @@ module Plutonium
           seed.define_singleton_method(:save!) { |**| true }
           seed.define_singleton_method(:save) { |**| true }
 
-          if column.on_drop.is_a?(Symbol)
-            seed.public_send(column.on_drop)
+          if column.on_enter.is_a?(Symbol)
+            seed.public_send(column.on_enter)
           else
-            kanban_context.instance_exec(seed, &column.on_drop)
+            kanban_context.instance_exec(seed, &column.on_enter)
           end
 
           seed.changes.transform_values { |(_, new_val)| new_val }

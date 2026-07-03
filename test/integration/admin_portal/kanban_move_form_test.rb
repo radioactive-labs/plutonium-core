@@ -6,14 +6,14 @@ require "test_helper"
 #
 # Route:  GET /admin/tasks/:id/kanban_move_form?from_column=&to_column=&to_index=
 #
-# When a card is dropped into a column that declares a `drop_interaction:`, the
+# When a card is dropped into a column that declares a `enter_interaction:`, the
 # client opens this modal. It renders the drop interaction's normal form, but
 # the form POSTs to the `kanban_move` route carrying the move context
 # (from_column/to_column/to_index) as hidden fields alongside the interaction's
 # own inputs.
 #
 # The Task board fixture (TaskDefinition) declares:
-#   column :lost, drop_interaction: MarkLostInteraction
+#   column :lost, enter_interaction: MarkLostInteraction
 # and MarkLostInteraction exposes a required :reason input.
 class AdminPortal::KanbanMoveFormTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
@@ -66,7 +66,7 @@ class AdminPortal::KanbanMoveFormTest < ActionDispatch::IntegrationTest
 
   # ─── Criterion 3: non-drop column → 422 ────────────────────────────────────
 
-  test "to_column without a drop_interaction returns 422" do
+  test "to_column without a enter_interaction returns 422" do
     get kanban_move_form_url(@task, from_column: "todo", to_column: "doing", to_index: 0)
 
     assert_response :unprocessable_content
