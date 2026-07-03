@@ -48,7 +48,12 @@ module Plutonium
             size: :lg,
             open_full_url: request.path
           ) do
-            render partial("resource_details")
+            # The modal body owns no padding — content provides its own (the
+            # form uses this same padded, scrollable region). Without it the
+            # detail cards sit flush against the modal edges.
+            div(class: "flex-1 min-h-0 overflow-y-auto px-6 py-5") do
+              render partial("resource_details")
+            end
           end
         end
 
