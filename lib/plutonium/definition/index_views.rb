@@ -132,6 +132,22 @@ module Plutonium
                 confirmation: col_action.confirmation
               )
             end
+
+            # Register each column's enter_interaction as an interactive record
+            # action too, so its form and params extraction exist and route the
+            # standard way. It is flagged `kanban_drop: true` so it is excluded
+            # from the normal show/row/index toolbars — it is reachable only by
+            # dropping a card. The key is column-scoped (enter_interaction_key →
+            # :<column>_enter_interaction), so it is unique by construction and
+            # never collides with another column's interaction. It carries NO
+            # policy method of its own — the drop is authorized by kanban_move?.
+            if col.enter_interaction?
+              action(
+                col.enter_interaction_key,
+                interaction: col.enter_interaction,
+                kanban_drop: true
+              )
+            end
           end
         end
       end

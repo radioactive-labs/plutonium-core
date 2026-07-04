@@ -58,7 +58,14 @@ module Plutonium
         # controller). nil → fall back to the column's declared default. The
         # component still emits the DEFAULT separately (data-kanban-default-
         # collapsed) so the controller can store only deltas from it.
-        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil)
+        # drop_form_url_template: the kanban_move_form member URL with an __ID__
+        # placeholder for the dragged card's record id (mirrors the board's
+        # move-url template). Set by the controller ONLY for columns that declare
+        # an enter_interaction:; nil for plain columns. When present, the wrapper
+        # advertises data-kanban-drop-interaction + data-kanban-drop-form-url-
+        # template so Task 6's Stimulus controller opens the interaction modal on
+        # drop instead of committing the move immediately.
+        def initialize(column:, cards:, total:, per_column:, resource_definition:, resource_fields:, column_action_data: [], column_add_url: nil, board_url: nil, card_fields: nil, card_show_frame: "_top", collapsed: nil, drop_form_url_template: nil, drop_immediate: false, drop_confirm: nil)
           @column = column
           @cards = cards
           @total = total
@@ -71,6 +78,9 @@ module Plutonium
           @card_fields = card_fields
           @card_show_frame = card_show_frame
           @collapsed = collapsed
+          @drop_form_url_template = drop_form_url_template
+          @drop_immediate = drop_immediate
+          @drop_confirm = drop_confirm
         end
 
         # Effective collapse state: the caller's resolved value, or the column
@@ -88,14 +98,7 @@ module Plutonium
               "pu-kanban-column-wrapper",
               effective_collapsed? && "pu-kanban-column-collapsed"
             ),
-            data: {
-              kanban_col: column.key.to_s,
-              # The DEFAULT (not the effective state) so the controller can store
-              # only a delta from it in the cookie.
-              kanban_default_collapsed: column.collapsed?.to_s,
-              kanban_accepts: accepts_value,
-              kanban_locked: column.locked?.to_s
-            }
+            data: wrapper_data
           ) do
             render_collapsed_strip
             render_expanded
@@ -103,6 +106,33 @@ module Plutonium
         end
 
         private
+
+        # Data attributes for the [data-kanban-col] wrapper. Drop-policy hints
+        # (accepts/locked) and the collapse default are always present; the
+        # drop-interaction attributes are added only when the column declares an
+        # enter_interaction: (advertised via the controller-computed template).
+        def wrapper_data
+          data = {
+            kanban_col: column.key.to_s,
+            # The DEFAULT (not the effective state) so the controller can store
+            # only a delta from it in the cookie.
+            kanban_default_collapsed: column.collapsed?.to_s,
+            kanban_accepts: accepts_value,
+            kanban_locked: column.locked?.to_s
+          }
+
+          if column.enter_interaction?
+            data[:kanban_drop_interaction] = "true"
+            data[:kanban_drop_form_url_template] = @drop_form_url_template
+            # An input-less interaction commits directly on drop (no form modal);
+            # the client reads this to skip opening an empty modal. The optional
+            # confirm message (auto "<label>?" for immediate actions) gates it.
+            data[:kanban_drop_immediate] = "true" if @drop_immediate
+            data[:kanban_drop_confirm] = @drop_confirm if @drop_confirm.present?
+          end
+
+          data
+        end
 
         # ---------------------------------------------------------------
         # Collapsed strip

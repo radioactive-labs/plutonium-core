@@ -143,6 +143,64 @@ class AdminPortal::KanbanDomContractTest < ActionDispatch::IntegrationTest
     refute_match(/data-kanban-record-id="#{@doing.id}"/, response.body)
   end
 
+  # ─── Drop-interaction contract (modal-on-drop columns) ─────────────────────
+  # A column that declares enter_interaction: advertises, on its [data-kanban-col]
+  # wrapper, that a drop requires the interaction modal and the kanban_move_form
+  # URL template (with __ID__ for the dragged card's id). Task 6's Stimulus code
+  # reads these to open the modal instead of committing the move immediately.
+
+  test "drop-interaction column advertises data-kanban-drop-interaction" do
+    get "/admin/tasks?view=kanban&column=lost"   # :lost declares enter_interaction
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="lost"[^>]*>/]
+    assert wrapper, "expected the lost column wrapper"
+    assert_includes wrapper, 'data-kanban-drop-interaction="true"'
+  end
+
+  test "drop-interaction column advertises the kanban_move_form url template" do
+    get "/admin/tasks?view=kanban&column=lost"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="lost"[^>]*>/]
+    assert wrapper, "expected the lost column wrapper"
+    # Template is rooted at the collection path, carries the __ID__ placeholder,
+    # and points at the kanban_move_form member route.
+    assert_match(
+      %r{data-kanban-drop-form-url-template="/admin/tasks/__ID__/kanban_move_form"},
+      wrapper
+    )
+  end
+
+  test "a plain column renders neither drop-interaction attribute" do
+    get "/admin/tasks?view=kanban&column=todo"   # :todo has no enter_interaction
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="todo"[^>]*>/]
+    assert wrapper, "expected the todo column wrapper"
+    refute_includes wrapper, "data-kanban-drop-interaction"
+    refute_includes wrapper, "data-kanban-drop-form-url-template"
+  end
+
+  # An IMMEDIATE (input-less) enter_interaction advertises data-kanban-drop-immediate
+  # + an auto confirm, so the client commits directly instead of opening an empty
+  # modal. :archived declares ArchiveTaskInteraction (no user inputs).
+  test "immediate drop-interaction column advertises data-kanban-drop-immediate + confirm" do
+    get "/admin/tasks?view=kanban&column=archived"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="archived"[^>]*>/]
+    assert wrapper, "expected the archived column wrapper"
+    assert_includes wrapper, 'data-kanban-drop-interaction="true"'
+    assert_includes wrapper, 'data-kanban-drop-immediate="true"'
+    assert_includes wrapper, 'data-kanban-drop-confirm="Archive?"'
+  end
+
+  # An INPUT-collecting enter_interaction (:lost → reason) is NOT immediate.
+  test "input-collecting drop-interaction column does not advertise immediate" do
+    get "/admin/tasks?view=kanban&column=lost"
+    assert_response :success
+    wrapper = response.body[/<div[^>]*data-kanban-col="lost"[^>]*>/]
+    assert wrapper, "expected the lost column wrapper"
+    refute_includes wrapper, "data-kanban-drop-immediate"
+  end
+
   # ─── Collapse cookie (server renders the user's state) ─────────────────────
   # The board persists per-column collapse as a compact cookie of columns
   # flipped from their default; the server reads it and renders each column in

@@ -12,22 +12,71 @@ module Plutonium
         lost: {color: :red, collapsed: true}
       }.freeze
 
-      attr_reader :key, :label, :color, :wip, :scope, :on_drop, :accepts, :actions
+      attr_reader :key, :label, :color, :wip, :scope, :on_enter, :on_exit, :accepts, :actions, :enter_interaction
 
-      def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_drop: nil,
-        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil)
+      def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_enter: nil, on_exit: nil, on_drop: nil,
+        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil, enter_interaction: nil, drop_interaction: nil)
+        # on_drop:/drop_interaction: were renamed to on_enter:/enter_interaction:.
+        # Resolve the deprecated aliases first (dev/test raise; deployed envs warn
+        # and map — see resolve_renamed_option) so the rest of initialize only
+        # ever sees the new names.
+        on_enter = resolve_renamed_option(:on_drop, on_drop, :on_enter, on_enter)
+        enter_interaction = resolve_renamed_option(:drop_interaction, drop_interaction, :enter_interaction, enter_interaction)
+
         preset = role ? ROLE_PRESETS.fetch(role) { raise ArgumentError, "Unknown column role: #{role.inspect}. Valid: #{ROLE_PRESETS.keys.inspect}" } : {}
+        if enter_interaction && !(enter_interaction.is_a?(Class) && enter_interaction < Plutonium::Resource::Interaction)
+          raise ArgumentError, "enter_interaction: must be a Plutonium::Resource::Interaction subclass, got #{enter_interaction.inspect}"
+        end
+        # An enter_interaction acts on the SINGLE dropped card — the move handler
+        # binds it as `resource:`. It must therefore be record-shaped (declare a
+        # `resource` attribute), never collection/bulk-shaped (`resources`). Reject
+        # anything else at definition time so a mis-shaped interaction can't (a) blow
+        # up at drop time on the `resource=` assignment, or (b) get auto-classified
+        # by Action::Interactive::Factory as a bulk action and leak into the
+        # bulk-actions bar (which does not filter kanban_drop actions).
+        if enter_interaction && !enter_interaction.attribute_names.map(&:to_sym).include?(:resource)
+          raise ArgumentError, "enter_interaction: #{enter_interaction} must operate on a single record (declare `attribute :resource`); collection/bulk interactions cannot be used as an enter_interaction."
+        end
+        # accepts: is purely structural (topology + client drop hints): true/false
+        # or an Array of source keys. The Proc form was removed — record/user
+        # conditions belong in the kanban_move? policy, which sees the record and
+        # the from/to columns. Fail loud rather than silently treating a stale Proc
+        # as permissive (which would OPEN UP a column that used to restrict drops).
+        if accepts.is_a?(Proc)
+          raise ArgumentError, "kanban column `accepts:` no longer accepts a Proc; use true/false or an Array of source keys, and put record/user conditions in the kanban_move? policy."
+        end
         @key = key.to_sym
         @label = label || key.to_s.titleize
         @color = color.nil? ? preset[:color] : color
         @wip = wip
         @scope = scope
-        @on_drop = on_drop
+        @on_enter = on_enter
+        @on_exit = on_exit
         @collapsed = collapsed.nil? ? preset[:collapsed] : collapsed
         @add = add.nil? ? preset[:add] : add
         @accepts = accepts.nil? || accepts
         @locked = locked || false
+        @enter_interaction = enter_interaction
         @actions = []
+      end
+
+      # A column may run an input-collecting Interaction when a card ENTERS it
+      # (e.g. "mark lead as lost with a reason"). When set, the drop opens the
+      # interaction's form as a modal before the move is committed.
+      def enter_interaction? = !!@enter_interaction
+
+      # Internal action-registration key for the enter interaction, scoped to the
+      # column: :blocked → :blocked_enter_interaction. Nil when unset.
+      #
+      # Column-scoped (not class-name-derived) so it is unique by construction — a
+      # column has at most one enter_interaction, so two columns can never collide
+      # even if they reuse the same interaction class. This key is ONLY an internal
+      # form/param routing handle; it is NOT an authorization name. The move (and
+      # therefore the interaction) is authorized solely by kanban_move? — the
+      # interaction has no policy method of its own.
+      def enter_interaction_key
+        return nil unless @enter_interaction
+        :"#{key}_enter_interaction"
       end
 
       def action(key, interaction:, on: :all, label: nil, icon: nil, confirmation: nil)
@@ -38,35 +87,35 @@ module Plutonium
       def add? = !!@add
       def locked? = @locked
 
-      # Column-level accepts check — used for client-side drop hints and as the
-      # first gate in the move handler (before the record is needed).
-      # Proc accepts: is treated as permissive at the column level; call
-      # accepts_record? with the actual record to evaluate the predicate.
+      # Whether a card from `source_key` may be dropped into this column. Purely
+      # structural — @accepts is normalized to true/false or an Array of source
+      # keys (the constructor rejects a Proc). Drives both the server-side gate in
+      # the move handler and the client-side drop hint (data-kanban-accepts).
       def accepts?(source_key)
         case @accepts
         when Array then @accepts.include?(source_key)
-        when true, false then @accepts
-        # Proc/predicate case: permit at the column level here; the move handler
-        # evaluates the predicate per-card via accepts_record? with the actual record.
-        else true
+        else @accepts # true or false
         end
       end
 
-      # Per-card accepts check — evaluates a Proc accepts: against the actual
-      # record.  Called by the move handler after the record is loaded.
-      #
-      # Convention for Proc accepts:
-      #   accepts: ->(card) { … }   # receives the record, returns true/false
-      #
-      # For non-Proc values the behaviour matches accepts?(source_key) exactly,
-      # so the move handler can unconditionally switch to accepts_record?.
-      def accepts_record?(record, source_key)
-        case @accepts
-        when Array then @accepts.include?(source_key)
-        when true, false then @accepts
-        when Proc then @accepts.call(record)
-        else true
+      private
+
+      # Bridge a renamed column option. `on_drop:`/`drop_interaction:` became
+      # `on_enter:`/`enter_interaction:`. To avoid breaking live deployments on
+      # upgrade we DON'T hard-fail in deployed envs — we log a deprecation and map
+      # the old value onto the new name. But local envs (development/test) raise,
+      # so the rename is caught during development and can't silently ship. If
+      # both the old and new names are given, the new one wins.
+      def resolve_renamed_option(old_name, old_value, new_name, new_value)
+        return new_value if old_value.nil?
+
+        if Rails.env.local?
+          raise ArgumentError,
+            "kanban column `#{old_name}:` has been renamed to `#{new_name}:` — update your definition."
         end
+
+        Rails.logger.warn { "[plutonium] kanban column `#{old_name}:` is deprecated; rename it to `#{new_name}:`." }
+        new_value.nil? ? old_value : new_value
       end
     end
   end

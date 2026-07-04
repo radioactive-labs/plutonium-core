@@ -270,7 +270,7 @@ module Plutonium
 
         def row_actions
           @row_actions ||= resource_definition.defined_actions.values.select { |a|
-            a.collection_record_action? && a.permitted_by?(record_policy) && a.condition_met?(view_context, record:)
+            a.collection_record_action? && !a.kanban_drop? && a.permitted_by?(record_policy) && a.condition_met?(view_context, record:)
           }
         end
 

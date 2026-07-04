@@ -10,19 +10,20 @@ require "test_helper"
 # form (same Turbo modal used by the index "New" button) with the column key
 # threaded via the `kanban_column=` query param.
 #
-# The `KanbanActions#apply_kanban_column_defaults!` before_action intercepts
-# the new action, runs an in-memory dry-run of the column's on_drop callback
-# (with save! / update! intercepted so no DB row is written), and injects the
-# resulting attribute changes into params so the form pre-fills the grouping
-# attribute (e.g. `status: "todo"`).
+# There is NO pre-create seeding. The form threads kanban_column to the create
+# POST as a hidden field; the record is created normally (with the model's
+# DEFAULT grouping value), and `KanbanActions#after_create_persisted` then
+# applies the column's on_enter to the freshly-persisted record and positions it
+# into the column. on_enter runs against a REAL record — no dry-run, no stubbing.
 #
 # The acceptance criteria tested here:
 #   * :todo column (add: true via role: :backlog) renders a "+ Add" control
 #   * :doing and :done columns (no add: true) do NOT render "+ Add"
 #   * The "+ Add" link opens the new form in the Turbo modal frame
-#   * The new form, accessed with kanban_column=todo, pre-fills status="todo"
-#   * Submitting the pre-filled form creates a task that lands in the :todo
-#     column with position assigned (via the Positioning before_create hook)
+#   * The new form threads kanban_column to create as a hidden field
+#   * A quick-add create applies the column's on_enter POST-create (lands in the
+#     clicked column, positioned)
+#   * A raising on_enter KEEPS the created record in its default column + toasts
 #   * When the policy denies create?, the "+ Add" control is not rendered
 class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
@@ -92,18 +93,13 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "new form with kanban_column=todo pre-fills the grouping attribute" do
+  test "new form threads kanban_column to create as a hidden field" do
     get "/admin/tasks/new?kanban_column=todo"
     assert_response :success
-    # The on_drop for :todo assigns status="todo". apply_kanban_column_defaults!
-    # injects that into params so the rendered form carries the pre-filled value.
-    # Assert the actual status INPUT carries value="todo" rather than just that
-    # the string "todo" appears somewhere in the page (which would pass even
-    # without any pre-fill, e.g. from the column key in the + Add link).
-    # Regex (not assert_select) because the [status] brackets break Nokogiri's
-    # CSS attribute-selector parsing. [^>]* keeps the match within one tag.
-    assert_match(/name="task\[status\]"[^>]*value="todo"/, response.body,
-      "the task[status] input should be pre-filled with value=\"todo\"")
+    # No pre-fill anymore; instead the column key rides to the create POST as a
+    # hidden field so after_create_persisted can apply the column's on_enter.
+    assert_match(/<input[^>]*name="kanban_column"[^>]*value="todo"/, response.body,
+      "the new form must carry kanban_column as a hidden field")
   end
 
   # ─── Creating via the quick-add flow lands the record in the column ───────
@@ -174,53 +170,63 @@ class AdminPortal::KanbanQuickAddTest < ActionDispatch::IntegrationTest
       "+ Add must reappear when create? is re-enabled"
   end
 
-  # ─── Symbol on_drop seed branch (fix #2) ─────────────────────────────────
+  # ─── on_enter applied POST-create + positioning ───────────────────────────
 
-  # The :todo column uses a Proc on_drop. The Symbol branch of the seed
-  # extractor (record.public_send(sym)) is exercised here by binding the
-  # private controller method against a column with a Symbol on_drop. The
-  # Task#mark_done! method calls update!(status: "done"); the seed extractor
-  # stubs update! so the change is captured in-memory without a DB write.
-  test "kanban_column_on_drop_seed captures attrs set by a Symbol on_drop" do
-    column = Plutonium::Kanban::Column.new(:done_add, add: true, on_drop: :mark_done!)
+  # No pre-fill: the record is created with the model default, then on_enter runs
+  # against the REAL persisted record and it's positioned into the column. We swap
+  # resolve_columns for an addable column whose Symbol on_enter (:mark_done! →
+  # update!(status: "done")) sets a status DIFFERENT from the default ("todo"), so
+  # the assertion proves on_enter actually ran post-create (not just the default).
+  test "quick-add create applies the column's on_enter post-create and appends it" do
+    existing_done = Task.create!(title: "Existing Done", status: "done")
 
-    harness = Object.new
-    harness.define_singleton_method(:resource_class) { Task }
-    seed_method = Plutonium::Resource::Controllers::KanbanActions
-      .instance_method(:kanban_column_on_drop_seed)
-
-    result = seed_method.bind_call(harness, column)
-
-    assert_equal "done", result["status"],
-      "Symbol on_drop (:mark_done!) should seed status='done' without a DB write"
-    assert_equal 0, Task.where(status: "done").count,
-      "the dry-run must not persist any record"
-  end
-
-  # ─── Raising on_drop degrades gracefully (fix #1) ────────────────────────
-
-  # An on_drop that raises during the dry-run must NOT 500 the new form. The
-  # controller rescues, logs a warning, and serves the form UNSEEDED so the
-  # user can still create the record. We swap Grouping.resolve_columns (called
-  # synchronously within the in-process request) for one returning a column
-  # whose on_drop raises, then restore it in ensure.
-  test "raising on_drop renders the new form unseeded (200), not a 500" do
-    boom_column = Plutonium::Kanban::Column.new(
-      :todo, add: true, on_drop: ->(_r) { raise "kaboom in on_drop" }
+    sink = Plutonium::Kanban::Column.new(
+      :sink, add: true, scope: -> { where(status: "done") }, on_enter: :mark_done!
     )
-
     grouping = Plutonium::Kanban::Grouping
     original = grouping.method(:resolve_columns)
-    grouping.define_singleton_method(:resolve_columns) { |*| [boom_column] }
+    grouping.define_singleton_method(:resolve_columns) { |*| [sink] }
     begin
-      get "/admin/tasks/new?kanban_column=todo"
+      # No task[status] — relies on the model default, then on_enter overrides it.
+      post "/admin/tasks", params: {task: {title: "Sunk"}, kanban_column: "sink"}
     ensure
       grouping.define_singleton_method(:resolve_columns, original)
     end
 
-    assert_response :success, "a raising on_drop must degrade to a 200 form, not crash"
-    # Unseeded: the status input must NOT carry a pre-filled value="todo".
-    refute_match(/name="task\[status\]"[^>]*value="todo"/, response.body,
-      "form should be unseeded when the on_drop dry-run raises")
+    assert_response :redirect
+    task = Task.find_by(title: "Sunk")
+    assert_not_nil task, "the record must be created"
+    assert_equal "done", task.status,
+      "on_enter must run POST-create against the real record (status=done, not the default todo)"
+    assert task.position > existing_done.reload.position,
+      "the new card must be appended to the END of the destination column"
+  end
+
+  # ─── raising on_enter KEEPS the record + toasts (no rollback) ──────────────
+
+  # If on_enter raises after the record is already created, the create is NOT
+  # rolled back: the record stays in its DEFAULT column and the failure is
+  # toasted. Create completes independently of the enter step.
+  test "a raising on_enter keeps the created record in its default column and toasts" do
+    boom = Plutonium::Kanban::Column.new(
+      :boom, add: true, scope: -> { where(status: "done") },
+      on_enter: ->(_r) { raise "kaboom in on_enter" }
+    )
+    grouping = Plutonium::Kanban::Grouping
+    original = grouping.method(:resolve_columns)
+    grouping.define_singleton_method(:resolve_columns) { |*| [boom] }
+    begin
+      post "/admin/tasks", params: {task: {title: "Kept"}, kanban_column: "boom"}
+    ensure
+      grouping.define_singleton_method(:resolve_columns, original)
+    end
+
+    assert_response :redirect, "a raising on_enter must not 500 — the create still succeeds"
+    task = Task.find_by(title: "Kept")
+    assert_not_nil task, "the record must be KEPT (create is not rolled back)"
+    assert_equal "todo", task.status,
+      "the record stays in its default column when on_enter fails"
+    assert_match(/couldn.t place/i, flash[:alert].to_s,
+      "the on_enter failure must be surfaced as a toast")
   end
 end

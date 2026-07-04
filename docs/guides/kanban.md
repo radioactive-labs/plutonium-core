@@ -12,7 +12,7 @@ Turn any resource index into a drag-and-drop kanban board — columns, WIP limit
 
 - Drag cards between columns; the server persists the column change and the position within the column.
 - Decimal fractional positioning — cards always land exactly where you drop them without renumbering.
-- Per-column `+ Add` button opens the resource's normal new form, pre-seeded for that column.
+- Per-column `+ Add` button opens the resource's normal new form; the new card is placed in that column (`on_enter` + positioning applied post-create).
 - Column actions run an interaction against all (or visible) cards in a column.
 - WIP limits, locked columns, and cross-column drop restrictions enforced server-side.
 - Opt-in realtime: every connected viewer sees the same board state after any move.
@@ -66,17 +66,17 @@ class TaskDefinition < ResourceDefinition
 
     column :todo,
       scope: -> { where(status: "todo") },
-      on_drop: ->(r) { r.update!(status: "todo") },
+      on_enter: ->(r) { r.update!(status: "todo") },
       role: :backlog          # shorthand for add: true
 
     column :doing,
       scope: -> { where(status: "doing") },
-      on_drop: ->(r) { r.update!(status: "doing") },
+      on_enter: ->(r) { r.update!(status: "doing") },
       wip: 3
 
     column :done,
       scope: -> { where(status: "done") },
-      on_drop: :mark_done!,   # Symbol → record.mark_done!
+      on_enter: :mark_done!,   # Symbol → record.mark_done!
       accepts: [:doing],      # only cards from :doing can land here
       role: :done do          # shorthand for color: :green, collapsed: true
       action :archive_all,
@@ -116,7 +116,7 @@ If a move is refused server-side — the destination is at its `wip:` limit, its
 
 ![A warning toast reading “Pending” is at its WIP limit (5) after a rejected drop](/images/guides/kanban-wip-toast.png)
 
-The toast is appended to a `#kanban-flash` region in the board shell (outside the per-column frames, so it survives the snap-back re-render). The client-side drag hints already grey out columns a card plainly can't enter, so the toast mainly surfaces the cases the browser can't pre-check — most commonly a WIP-full column or a per-card `accepts:` Proc.
+The toast is appended to a `#kanban-flash` region in the board shell (outside the per-column frames, so it survives the snap-back re-render). The client-side drag hints already grey out columns a card plainly can't enter, so the toast mainly surfaces the cases the browser can't pre-check — most commonly a WIP-full column or a `kanban_move?` denial.
 
 ### Opening a card
 
@@ -149,15 +149,15 @@ class KitchenSinkDefinition < ResourceDefinition
   kanban do
     column :active, label: "Active", role: :backlog,
       scope:   -> { where(status: :active) },
-      on_drop: ->(ks) { ks.status = :active }
+      on_enter: ->(ks) { ks.status = :active }
 
     column :pending, label: "Pending", color: :yellow, wip: 5,
       scope:   -> { where(status: :pending) },
-      on_drop: ->(ks) { ks.status = :pending }
+      on_enter: ->(ks) { ks.status = :pending }
 
     column :archived, label: "Archived", role: :done,
       scope:   -> { where(status: :archived) },
-      on_drop: ->(ks) { ks.status = :archived }
+      on_enter: ->(ks) { ks.status = :archived }
 
     per_column 10
   end
@@ -168,7 +168,7 @@ Key points:
 - `role: :backlog` enables the `+ Add` button (equivalent to `add: true`).
 - `wip: 5` caps the Pending column; a cross-column drop that would push it past 5 is rejected server-side.
 - `role: :done` collapses the Archived column by default and shows a green header dot.
-- `on_drop` here assigns the attribute in memory (`ks.status = :active`). The framework calls `record.save!` automatically when the record has unsaved changes after `on_drop` returns — you do not need to call `update!` explicitly.
+- `on_enter` here assigns the attribute in memory (`ks.status = :active`). The framework calls `record.save!` automatically when the record has unsaved changes after `on_enter` returns — you do not need to call `update!` explicitly.
 
 ---
 
@@ -184,7 +184,7 @@ kanban do
     label: "Product Backlog",      # default: key.to_s.titleize
     color: :blue,                  # dot color in the column header
     scope: -> { where(stage: 0) }, # 0-arg lambda evaluated on the relation
-    on_drop: ->(r) { r.update!(stage: 0) }
+    on_enter: ->(r) { r.update!(stage: 0) }
 end
 ```
 
@@ -201,7 +201,7 @@ kanban do
         :"project_#{project.id}",
         label: project.name,
         scope: -> { where(project_id: project.id) },
-        on_drop: ->(r) { r.update!(project_id: project.id) }
+        on_enter: ->(r) { r.update!(project_id: project.id) }
       )
     end
   end
@@ -227,6 +227,8 @@ class TaskDefinition < ResourceDefinition
   end
 end
 ```
+
+Note that **`enter_interaction:` is not supported on dynamic boards** — its hidden action is registered from the static column list at class-load time, and its key is internal (column-scoped) so it can't be registered manually the way a column action can. A drop into such a column snaps back rather than committing (it doesn't crash). Use a static board if a column needs an `enter_interaction:`.
 :::
 
 ### Column options
@@ -236,11 +238,13 @@ end
 | `label:` | String | `key.to_s.titleize` | Column header text |
 | `color:` | Symbol or String | `nil` | Dot color in the column header — `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`, or a raw CSS value |
 | `scope:` | Symbol or Proc | `nil` | Filters the resource relation to this column's cards. Symbol → named scope; Proc → 0-arg lambda called with `instance_exec` on the relation (e.g. `-> { where(status: "todo") }`) |
-| `on_drop:` | Symbol or Proc | `nil` | Called when a card lands in this column. Symbol → `record.public_send(sym)`; Proc → 1-arg lambda `->(record) { … }` where `self` is the view context |
+| `on_enter:` | Symbol or Proc | `nil` | Called when a card lands in this column. Symbol → `record.public_send(sym)`; Proc → 1-arg lambda `->(record) { … }` where `self` is the view context |
+| `on_exit:` | Symbol or Proc | `nil` | Source-side counterpart to `on_enter:` — called when a card **leaves** this column on a cross-column move, before the destination's `on_enter`, in the same transaction. For source-tied side effects (stop a timer, release a slot). Drag-moves only (not destroy/programmatic/quick-add); skipped on same-column reorders |
+| `enter_interaction:` | Class | `nil` | Record-scoped interaction run on a cross-column drop into this column — opens a modal to collect input, then commits atomically. See [Interaction on drop](#interaction-on-drop) |
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Preset shorthand (see below) |
 | `collapsed:` | Boolean | `false` | Start collapsed |
 | `add:` | Boolean | `false` | Show `+ Add` quick-add button |
-| `accepts:` | `true`, `false`, Array of keys, or Proc | `true` | Which drops are accepted. `true` = all, `false` = none, `[:doing]` = only from `:doing`. A 1-arg Proc `->(record) { … }` is evaluated **per-card on the server** at drop time and returns a boolean (e.g. `->(task) { task.status == "doing" }`) |
+| `accepts:` | `true`, `false`, or Array of keys | `true` | Which source columns may drop here (structural, client-hintable). `true` = all, `false` = none, `[:doing]` = only from `:doing`. Record/user conditions go in `kanban_move?` instead (it sees the record and `from`/`to`); a `Proc` here raises |
 | `locked:` | Boolean | `false` | Prevent dragging cards **out of** this column |
 | `wip:` | Integer | `nil` | Work-in-progress limit. Cross-column drops that would exceed this count are rejected |
 
@@ -269,7 +273,7 @@ Declare actions inside a column block to run an interaction against that column'
 ```ruby
 column :done,
   scope: -> { where(status: "done") },
-  on_drop: :mark_done! do
+  on_enter: :mark_done! do
 
   action :archive_all,
     interaction: ArchiveTasksInteraction,   # must be a bulk interaction (has `attribute :resources`)
@@ -284,6 +288,101 @@ end
 - `on: :visible` — passes IDs of only the rendered, `per_column`-capped cards.
 
 Column actions are rendered as buttons in the column header. They open the normal interactive-action modal (with form, authorization, success/failure handling) pre-loaded with the column's card IDs.
+
+---
+
+## Interaction on drop
+
+A column can declare `enter_interaction:` to run an authorization-aware, input-collecting [Interaction](/reference/behavior/interactions) when a card is dropped **into** it from another column. Use it when entering a column needs more than a membership flip — a reason, a notification email, an audit entry.
+
+```ruby
+column :lost,
+  scope: -> { where(status: "lost") },
+  enter_interaction: MarkLostInteraction
+```
+
+`enter_interaction:` takes an **Interaction class**. It must be **record-scoped** — it declares `attribute :resource` and acts on the single dropped card. A bulk (`attribute :resources`) interaction is not valid here; that shape is for [column actions](#column-actions).
+
+The interaction is **auto-registered as a hidden record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`), so two columns can reuse the same interaction class without colliding. "Hidden" means it does **not** appear as an action button on the show page, table rows, or grid cards — it is reachable only by dropping a card into the column.
+
+### The interaction
+
+A drop interaction is an ordinary record-scoped interaction — nothing kanban-specific in the class:
+
+```ruby
+class MarkLostInteraction < ResourceInteraction
+  presents label: "Mark Lost",
+    icon: Phlex::TablerIcons::X
+
+  attribute :resource
+  attribute :reason, :string
+
+  input :reason
+
+  validates :reason, presence: true
+
+  def execute
+    resource.update!(status: "lost", lost_reason: reason)
+    succeed(resource).with_message("Marked as lost")
+  end
+end
+```
+
+### Authorization
+
+The drop is authorized by the single **`kanban_move?`** predicate — the interaction has **no policy method of its own**. To gate this specific transition, branch on the destination column, which `kanban_move?` reads from its authorization context (`kanban_to`):
+
+```ruby
+class TaskPolicy < ResourcePolicy
+  def kanban_move?
+    return update? if kanban_to&.key == :lost   # who may mark a task lost
+    super
+  end
+end
+```
+
+This keeps authorization in one place: `kanban_move?` gates every move, and the `to` (and `from`) column context lets it gate a specific transition — no per-interaction predicate, no `condition:` proc. If the check fails the drop is refused and the card stays put. See [Authorization](../reference/kanban/authorization) for the full `from`/`to` context.
+
+### Two flows, split by intent
+
+- **Move flow (drag a card cross-column).** Dropping into the column opens the interaction's form as a **modal** to collect input (the `reason`). On submit, the membership write (`on_enter`, if any), the interaction, and the repositioning are committed in **one atomic transaction**.
+- **Quick-add (`+ Add`).** The `+ Add` button creates the record, then applies `on_enter` + positioning **post-create** (see [Quick-add](#quick-add)). The `enter_interaction` is **not** involved in quick-add.
+
+### Author contract: on_enter owns membership, the interaction owns extras
+
+A column can declare `on_enter:` and `enter_interaction:` together. When it does:
+
+- `on_enter` owns the **membership attribute** (the column's grouping value, e.g. `status`).
+- `enter_interaction` owns the **extras** — the reason, the mail, the audit trail.
+
+If the interaction also writes the membership attribute it **must set the same value** `on_enter` sets (idempotent). In this dummy-app example the `:blocked` column does exactly that — `on_enter` sets `status = "blocked"` and the interaction's `execute` re-asserts `status: "blocked"` while adding the reason:
+
+```ruby
+column :blocked,
+  scope: -> { where(status: "blocked") },
+  on_enter: ->(r) { r.status = "blocked" },
+  enter_interaction: BlockTaskInteraction
+```
+
+When a column declares **only** a `enter_interaction` (no `on_enter`, like `:lost` above), the interaction owns everything — including the membership write — because there is no `on_enter` to do it.
+
+### Same-column drops run positioning only
+
+Reordering a card **within** its current column runs positioning only. Neither `on_enter` nor the `enter_interaction` fires — both represent *entering* a column, and a same-column reorder is not an entry. Only cross-column drops trigger them.
+
+### Atomicity and failure
+
+Interaction validation failure rolls the **whole transaction back** — the membership write included — and re-renders the modal with errors. The move context is preserved, so the user can fix the input and resubmit. Nothing is persisted on failure. Keep side-effects on `deliver_later` (mailers, jobs): a rolled-back failure then sends no stray mail, because the enqueue never commits.
+
+### Success feedback and the response limitation
+
+On success the board's column frames re-render and the modal closes. The interaction's success **message** (`succeed(resource).with_message("Marked as lost")`) is surfaced as a toast.
+
+::: warning Custom success responses are not honored on the drop path
+A drop interaction's custom success *response* — `with_redirect_response`, `with_file_response`, etc. — is **not** honored when it runs from a drop: the board simply re-renders and closes the modal. Keep drop interactions to simple state + extras mutations, and use `.with_message` for feedback.
+:::
+
+There is no card "snap-back" to worry about on cancel — native drag never moves the card's DOM node, so canceling the modal just closes it and the card stays where it was.
 
 ---
 
@@ -342,11 +441,17 @@ Each column loads at most 25 cards. When the total exceeds the limit, a `+N more
 
 ## Quick-add
 
-When `add: true` (or `role: :backlog`) is set on a column, a `+ Add` button appears in the column header. Clicking it opens the resource's normal new form in a modal, pre-filled with the values that `on_drop` would set.
+When `add: true` (or `role: :backlog`) is set on a column, a `+ Add` button appears in the column header. Clicking it opens the resource's normal new form in a modal.
+
+The record is created normally, and **then** the column's `on_enter` and positioning are applied to the **saved** record — so the new card lands in the clicked column, appended to the bottom. `on_enter` runs against a real, persisted record (exactly as it does for a drag), so `update!`-style callbacks and any side effects behave identically and fire once, on the actual create.
+
+::: warning Give your grouping column a default
+Because `on_enter` runs **after** the record is saved, the record must be creatable **without** a grouping value. Give your grouping column (e.g. `status`) a database or model default. If it is `NOT NULL` with no default, quick-add create fails validation before `on_enter` can set it.
+:::
+
+If `on_enter` (or positioning) raises after the record was created, the create is **not** rolled back: the record is kept in its default column (validly positioned there) and the failure is surfaced as a toast.
 
 Authorization: the button is only rendered when `create?` returns `true` in the current policy.
-
-The pre-seeding works by doing a dry-run of `on_drop` against a sentinel record — it intercepts `save!`/`update!` to capture the attribute changes without writing to the database. Exotic `on_drop` callbacks with external side effects (API calls, background jobs) will fire on every `+ Add` click; keep `on_drop` to attribute assignment for clean quick-add behavior.
 
 ---
 

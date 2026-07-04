@@ -15,7 +15,7 @@ module Plutonium
         end
 
         def page_actions
-          super || current_definition.defined_actions.values.select { |a| a.record_action? && a.permitted_by?(current_policy) && a.condition_met?(view_context, record: resource_record!) }
+          super || current_definition.defined_actions.values.select { |a| a.record_action? && !a.kanban_drop? && a.permitted_by?(current_policy) && a.condition_met?(view_context, record: resource_record!) }
         end
 
         def render_default_content
@@ -48,7 +48,12 @@ module Plutonium
             size: :lg,
             open_full_url: request.path
           ) do
-            render partial("resource_details")
+            # The modal body owns no padding — content provides its own (the
+            # form uses this same padded, scrollable region). Without it the
+            # detail cards sit flush against the modal edges.
+            div(class: "flex-1 min-h-0 overflow-y-auto px-6 py-5") do
+              render partial("resource_details")
+            end
           end
         end
 

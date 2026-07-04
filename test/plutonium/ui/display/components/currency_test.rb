@@ -21,6 +21,7 @@ class Plutonium::UI::Display::Components::CurrencyTest < ActiveSupport::TestCase
   def record_with_has_cents_unit(unit)
     Class.new do
       include Plutonium::Models::HasCents
+
       define_method(:read_attribute) { |_| nil }
       # Minimal stand-in: register the decimal accessor + unit directly.
       self.has_cents_attributes = {price_cents: {name: :price, rate: 100, unit: unit}}

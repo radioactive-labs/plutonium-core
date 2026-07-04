@@ -23,6 +23,7 @@ module Plutonium
         @collection_record_action = options[:collection_record_action] || false
         @record_action = options[:record_action] || false
         @resource_action = options[:resource_action] || false
+        @kanban_drop = options[:kanban_drop] || false
         @category = ActiveSupport::StringInquirer.new((options[:category] || :secondary).to_s)
         @position = options[:position] || 50
         @modal_mode = options[:modal]
@@ -68,6 +69,12 @@ module Plutonium
       def record_action? = @record_action
       def resource_action? = @resource_action
 
+      # True when this action was auto-registered for a kanban column's
+      # `enter_interaction`. Such actions exist only so their policy method,
+      # form, and params machinery are wired up — they are reachable by
+      # dropping a card, never rendered as a normal toolbar/row button.
+      def kanban_drop? = @kanban_drop
+
       def permitted_by?(policy)
         policy.allowed_to?(:"#{name}?")
       end
@@ -112,6 +119,7 @@ module Plutonium
           collection_record_action: @collection_record_action,
           record_action: @record_action,
           resource_action: @resource_action,
+          kanban_drop: @kanban_drop,
           category: @category.to_sym,
           position: @position,
           modal: @modal_mode,

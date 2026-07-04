@@ -110,6 +110,38 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # ─── Realtime board: mover-only streams excluded from the broadcast ────────
+
+  test "realtime broadcast excludes the mover-only modal-close and success-toast streams" do
+    # A cross-column drop into a enter_interaction column: the mover receives the
+    # column frames PLUS a modal-close and a success toast. Other viewers must
+    # receive ONLY the column frames — the modal-close/toast are mover-only.
+    with_realtime_enter_interaction_board do
+      captured = capture_turbo_stream_broadcasts(board_stream_name) do
+        post kanban_move_url(@doing_a),
+          params: {from_column: "doing", to_column: "lost", to_index: 0,
+                   interaction: {reason: "budget cut"}},
+          headers: {"Accept" => TURBO_STREAM_ACCEPT}
+        assert_response :ok
+      end
+
+      targets = captured.map { |node| node["target"] }.compact
+      # The broadcast carries only the column frames.
+      assert_includes targets, "kanban-col-doing", "doing frame must be broadcast"
+      assert_includes targets, "kanban-col-lost", "lost frame must be broadcast"
+      refute_includes targets, Plutonium::REMOTE_MODAL_FRAME,
+        "the modal-close stream must NOT be broadcast to other viewers"
+      refute_includes targets, "kanban-flash",
+        "the success-toast stream must NOT be broadcast to other viewers"
+
+      # ...but the mover DOES receive both (proves they're mover-only, not dropped).
+      assert_includes response.body, %(target="#{Plutonium::REMOTE_MODAL_FRAME}"),
+        "the mover must receive the modal-close stream"
+      assert_includes response.body, "Marked as lost",
+        "the mover must receive the interaction's success toast"
+    end
+  end
+
   # ─── Realtime board shell: subscription element present ────────────────────
 
   test "realtime board shell includes turbo-cable-stream-source element" do
@@ -133,7 +165,7 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
   end
 
   # Builds a minimal realtime version of the Task board.
-  # Columns mirror the Task fixture so on_drop / accepts constraints work.
+  # Columns mirror the Task fixture so on_enter / accepts constraints work.
   def build_realtime_task_board
     Plutonium::Kanban::DSL.build do
       realtime true
@@ -141,17 +173,17 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
 
       column :todo,
         scope: -> { where(status: "todo") },
-        on_drop: ->(r) { r.update!(status: "todo") },
+        on_enter: ->(r) { r.update!(status: "todo") },
         role: :backlog
 
       column :doing,
         scope: -> { where(status: "doing") },
-        on_drop: ->(r) { r.update!(status: "doing") },
+        on_enter: ->(r) { r.update!(status: "doing") },
         wip: 3
 
       column :done,
         scope: -> { where(status: "done") },
-        on_drop: ->(r) { r.update!(status: "done") },
+        on_enter: ->(r) { r.update!(status: "done") },
         accepts: [:doing],
         role: :done
     end
@@ -162,6 +194,31 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
   def with_realtime_board
     original_board = TaskDefinition.defined_kanban_board
     TaskDefinition.defined_kanban_board = build_realtime_task_board
+    yield
+  ensure
+    TaskDefinition.defined_kanban_board = original_board
+  end
+
+  # A realtime board whose :lost column declares a enter_interaction, so the
+  # broadcast-exclusion test can exercise the mover-only modal-close + toast.
+  def build_realtime_enter_interaction_board
+    Plutonium::Kanban::DSL.build do
+      realtime true
+      per_column 25
+
+      column :doing,
+        scope: -> { where(status: "doing") },
+        on_enter: ->(r) { r.update!(status: "doing") }
+
+      column :lost,
+        scope: -> { where(status: "lost") },
+        enter_interaction: MarkLostInteraction
+    end
+  end
+
+  def with_realtime_enter_interaction_board
+    original_board = TaskDefinition.defined_kanban_board
+    TaskDefinition.defined_kanban_board = build_realtime_enter_interaction_board
     yield
   ensure
     TaskDefinition.defined_kanban_board = original_board

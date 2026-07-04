@@ -33,7 +33,7 @@ module Plutonium
         end
 
         def page_actions
-          super || current_definition.defined_actions.values.select { |a| a.resource_action? && a.permitted_by?(current_policy) && a.condition_met?(view_context) }
+          super || current_definition.defined_actions.values.select { |a| a.resource_action? && !a.kanban_drop? && a.permitted_by?(current_policy) && a.condition_met?(view_context) }
         end
 
         def render_default_content

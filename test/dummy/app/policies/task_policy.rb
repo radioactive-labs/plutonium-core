@@ -1,10 +1,18 @@
 class TaskPolicy < ::ResourcePolicy
-  # When set to true in an integration test, kanban_move? returns false so the
-  # 403 response path can be exercised without changing production logic.
+  # kanban_move? is the SINGLE authorization for every drag-move (plain moves and
+  # enter_interaction columns alike — the interaction has no policy of its own).
+  # The from/to columns are supplied via the authorization context, so a specific
+  # transition can be gated without a per-column method.
+  #
+  # deny_kanban_move       — deny ALL moves (board-wide 403 path).
+  # deny_enter_column      — deny entering one specific column, exercising the
+  #                          from/to context threading (e.g. :lost, :archived).
   cattr_accessor :deny_kanban_move, default: false
+  cattr_accessor :deny_enter_column, default: nil
 
   def kanban_move?
     return false if self.class.deny_kanban_move
+    return false if self.class.deny_enter_column && kanban_to&.key == self.class.deny_enter_column
     super
   end
 
@@ -39,7 +47,7 @@ class TaskPolicy < ::ResourcePolicy
   end
 
   def permitted_attributes_for_read
-    [:title, :status, :position]
+    [:title, :status, :position, :lost_reason]
   end
 
   # Associations

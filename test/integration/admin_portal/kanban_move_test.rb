@@ -9,13 +9,13 @@ require "test_helper"
 # Formats: Turbo Stream (Accept: text/vnd.turbo-stream.html)
 #
 # The Task board fixture (TaskDefinition):
-#   :todo   — Proc on_drop, accepts all, backlog role
-#   :doing  — Proc on_drop, wip: 3, accepts all
-#   :done   — Symbol on_drop (:mark_done!), accepts: ->(task) { task.status == "doing" }
+#   :todo   — Proc on_enter, accepts all, backlog role
+#   :doing  — Proc on_enter, wip: 3, accepts all
+#   :done   — Symbol on_enter (:mark_done!), accepts: [:doing] (only from :doing)
 #
 # Covered scenarios:
-#   * todo → doing success (Proc on_drop, status + position updated)
-#   * doing → done success (Symbol on_drop, status + position updated)
+#   * todo → doing success (Proc on_enter, status + position updated)
+#   * doing → done success (Symbol on_enter, status + position updated)
 #   * response contains turbo-stream updates for both column frames
 #   * same-column reorder: only one frame updated
 #   * unauthenticated: redirect (auth layer enforced)
@@ -41,7 +41,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
 
   teardown { Task.delete_all }
 
-  # ─── Success: Proc on_drop (todo → doing) ──────────────────────────────────
+  # ─── Success: Proc on_enter (todo → doing) ──────────────────────────────────
 
   test "move todo to doing returns 200 and updates status + position" do
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
@@ -63,9 +63,25 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_includes response.content_type, "turbo-stream"
   end
 
-  # ─── Success: Symbol on_drop (doing → done) ────────────────────────────────
+  # A negative to_index must clamp to the top (index 0), NOT wrap via Ruby's
+  # negative array indexing (dest_cards[-1] would anchor the drop to the LAST
+  # card). Destination :todo holds @todo_a (pos 1.0) then @todo_b (pos 2.0); a
+  # clamped drop lands ABOVE @todo_a. Without the clamp it would land between
+  # @todo_a and @todo_b (before the last card).
+  test "a negative to_index clamps to the top instead of wrapping to the last card" do
+    post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "todo", to_index: -1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
-  test "move doing to done returns 200 and updates status via symbol on_drop" do
+    assert_response :ok
+    @doing_a.reload
+    assert_equal "todo", @doing_a.status
+    assert @doing_a.position < @todo_a.reload.position,
+      "a negative index must place the card at the top, not before the last card"
+  end
+
+  # ─── Success: Symbol on_enter (doing → done) ────────────────────────────────
+
+  test "move doing to done returns 200 and updates status via symbol on_enter" do
     post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
@@ -74,7 +90,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     assert_equal "done", @doing_a.status
   end
 
-  test "symbol on_drop updates position correctly" do
+  test "symbol on_enter updates position correctly" do
     post kanban_move_url(@doing_a), params: {from_column: "doing", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
@@ -82,6 +98,48 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
     @doing_a.reload
     assert @doing_a.position < @done_a.reload.position,
       "moved card at index 0 should be positioned before the existing done card"
+  end
+
+  # ─── on_exit: SOURCE-column callback ────────────────────────────────────────
+  # :todo declares on_exit: ->(r) { r.lost_reason = "EXITED_TODO" }. It fires on
+  # the SOURCE column of a CROSS-column move, before on_enter, inside the move
+  # transaction.
+
+  test "on_exit fires on the source column of a cross-column move" do
+    assert_nil @todo_a.lost_reason
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "doing", to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @todo_a.reload
+    assert_equal "EXITED_TODO", @todo_a.lost_reason, "leaving :todo must run its on_exit"
+    assert_equal "doing", @todo_a.status, "the destination's on_enter must also run"
+  end
+
+  test "on_exit does NOT fire on a same-column reorder" do
+    # Reorder @todo_a within :todo (from == to) — leaving nothing, so on_exit
+    # must be skipped, mirroring on_enter.
+    post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "todo", to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    @todo_a.reload
+    assert_nil @todo_a.lost_reason, "a same-column reorder must not run on_exit"
+    assert_equal "todo", @todo_a.status
+  end
+
+  test "on_exit is rolled back when the move fails (atomic with the transaction)" do
+    # todo → :lost, whose enter_interaction (MarkLostInteraction) rejects a blank
+    # reason with a 422. on_exit stamped lost_reason first, but the rollback must
+    # undo it — proving on_exit runs inside the same transaction.
+    post kanban_move_url(@todo_a),
+      params: {from_column: "todo", to_column: "lost", to_index: 0, interaction: {reason: ""}},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    @todo_a.reload
+    assert_equal "todo", @todo_a.status, "a failed move must not change status"
+    assert_nil @todo_a.lost_reason, "on_exit's write must roll back with the failed transaction"
   end
 
   # ─── Response: both frames updated on cross-column move ────────────────────
@@ -164,8 +222,8 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   # ─── Accepts restriction (todo → done rejected) ────────────────────────────
 
   test "drop rejected by accepts returns 422" do
-    # :done column declares accepts: ->(task) { task.status == "doing" }, so a
-    # todo card (status "todo") is rejected per-card by the predicate.
+    # :done declares accepts: [:doing], so a card dragged from :todo is rejected
+    # structurally (source key :todo is not in the allowed list).
     post kanban_move_url(@todo_a), params: {from_column: "todo", to_column: "done", to_index: 0},
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
