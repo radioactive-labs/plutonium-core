@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.62.0] - 2026-07-04
+
+### Bug Fixes
+
+- Run input-less column actions directly instead of an empty modal
+- Don't call signed_id on an unsaved ActiveStorage blob in uppy
+- Active_shrine downstream fixes — mime-types gem + resource param double-read
+- Stop the board blanking on search/filter/scope
+- Size currency input padding to its unit prefix
+- Preserve collapse + horizontal scroll across moves and refresh
+- Give the body a base text color so unstyled text stays visible
+- Give modal dialogs a base text color so unstyled text stays visible
+
+### Features
+
+- AI agent on-ramp — llms.txt, /ai quickstart, crawlable skills
+- Type-aware kanban meta badges + has_cents currency unit
+- Expose intl-tel-input options + default_phone_country config
+- Currency input + currency/choice-aware wizard review summary
+- Add :lost terminal column role
+- Keep the board fresh + scrolled across writes and actions
+- [**breaking**] Drop interactions, immediate drops, on_exit + on_drop→on_enter rename ([#67](https://github.com/radioactive-labs/plutonium-core/issues/67))
+
+### Refactoring
+
+- Server-read collapse cookie + stable frame placeholders
+
 ## [0.61.0] - 2026-06-30
 
 ### Bug Fixes
