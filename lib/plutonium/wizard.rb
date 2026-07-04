@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "wizard/errors"
 require_relative "wizard/configuration"
 
 module Plutonium
