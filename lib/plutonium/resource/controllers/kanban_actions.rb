@@ -759,8 +759,8 @@ module Plutonium
 
           apply_kanban_column_enter!(resource_record!, column)
         rescue => e
-          Rails.logger.warn { "[plutonium] kanban quick-add on_enter failed for column #{params[:kanban_column]}: #{e.message}" }
-          flash[:alert] = "Created, but couldn’t place it in “#{column&.label || params[:kanban_column]}”."
+          Rails.logger.error { "[plutonium] kanban quick-add on_enter failed for column #{params[:kanban_column].inspect}: #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}" }
+          flash[:alert] = "Couldn’t place it in “#{column&.label || params[:kanban_column]}” — it stayed in its default column."
         end
 
         # Applies a column's on_enter to an already-persisted record, then appends
