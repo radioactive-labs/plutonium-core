@@ -23,6 +23,7 @@ RELEASE_CLIFF_CONFIG = ".cliff.toml"
 RELEASE_VERSION_FILE = "lib/plutonium/version.rb"
 RELEASE_PACKAGE_JSON = "package.json"
 RELEASE_NPM_PACKAGE = "@radioactive-labs/plutonium"
+RELEASE_SECURITY_FILE = "SECURITY.md"
 
 namespace :release do
   # --- helpers --------------------------------------------------------------
@@ -88,6 +89,21 @@ namespace :release do
     pkg = File.read(RELEASE_PACKAGE_JSON)
     File.write(RELEASE_PACKAGE_JSON, pkg.gsub(/"version":\s*"[\d.]+"/, %("version": "#{version}")))
     puts "✓ #{RELEASE_PACKAGE_JSON}"
+
+    # Bump the supported-version series in SECURITY.md (e.g. `0.62.x`), so the
+    # policy always names the current release series. Skipped if the file or the
+    # expected `X.Y.x` marker is missing — a release must never fail over this.
+    if File.exist?(RELEASE_SECURITY_FILE)
+      series = "#{version.split(".").first(2).join(".")}.x"
+      security = File.read(RELEASE_SECURITY_FILE)
+      updated = security.gsub(/`\d+\.\d+\.x`/, "`#{series}`")
+      if updated == security
+        puts "• #{RELEASE_SECURITY_FILE} — no `X.Y.x` marker found, skipping"
+      else
+        File.write(RELEASE_SECURITY_FILE, updated)
+        puts "✓ #{RELEASE_SECURITY_FILE}"
+      end
+    end
 
     # Changelog — same config CI uses for release notes, so they agree.
     abort "git-cliff not found. Install with: brew install git-cliff" unless git_cliff?
