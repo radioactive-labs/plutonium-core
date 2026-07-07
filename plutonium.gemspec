@@ -15,6 +15,9 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 3.2.2"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
+  # Require multi-factor auth for privileged RubyGems actions (push, yank,
+  # owner changes). `gem push` will prompt for an OTP at release time.
+  spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.post_install_message = <<~MSG
     ℹ️  Plutonium — breaking change introduced in 0.49.0

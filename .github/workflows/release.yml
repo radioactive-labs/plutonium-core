@@ -1,9 +1,14 @@
 name: Release
 
+# CI release is DISABLED for now — the auto-trigger on tag push is commented out,
+# so pushing a `vX.Y.Z` tag will NOT cut a GitHub Release. Publishing (gem + npm)
+# happens from a laptop via `rake release:publish`. Re-enable by restoring the
+# `push.tags` trigger below. `workflow_dispatch` is kept as a manual escape hatch.
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - 'v*'
 
 permissions:
   contents: write
