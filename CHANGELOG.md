@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.62.1] - 2026-07-07
+
+### Bug Fixes
+
+- Split grouped error classes into per-constant files
+- Fall back to index when deleting from the record's own page
+
+### Documentation
+
+- Add SECURITY.md and auto-bump its version series on release
+
+### Miscellaneous Tasks
+
+- Require RubyGems MFA and disable CI auto-release
+
 ## [0.62.0] - 2026-07-04
 
 ### Bug Fixes
@@ -67,11 +82,11 @@ All notable changes to this project will be documented in this file.
 
 ## [0.60.5] - 2026-06-30
 
-### 🐛 Bug Fixes
+### Bug Fixes
 
-- *(ui)* Coerce ActiveStorage::Filename to String for HTML title attributes
+- Coerce ActiveStorage::Filename to String for HTML title attributes
 
-### ⚙️ Miscellaneous Tasks
+### Miscellaneous Tasks
 
 - Update yarn.lock and .yarnrc.yml after yarn install
 
