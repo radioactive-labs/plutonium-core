@@ -219,17 +219,22 @@ module Plutonium
           resource_url_for(resource_class)
         end
 
-        # A return_to pointing at the just-deleted record's own show/edit page
-        # would 404 on the follow-up request, so treat those as unusable and let
-        # the caller fall back to the index. We compare paths because return_to
-        # is the bare record URL while request.url still carries ?return_to=.
+        # A return_to pointing at the just-deleted record's own page — its show,
+        # edit, or any nested resource beneath it — would 404 on the follow-up
+        # request, so treat those as unusable and let the caller fall back to the
+        # index. We compare paths (return_to is the bare record URL while
+        # request.url still carries ?return_to=) and normalize both to a trailing
+        # slash so the prefix test respects segment boundaries: /posts/13/ must
+        # not match /posts/130.
         def same_resource_url?(return_to)
           return false unless resource_record?
 
-          target_path = URI.parse(return_to).path
-          record_path = URI.parse(resource_url_for(resource_record!)).path
-          target_path == record_path || target_path == "#{record_path}/edit"
+          target_path = ensure_trailing_slash URI.parse(return_to).path
+          record_path = ensure_trailing_slash URI.parse(resource_url_for(resource_record!)).path
+          target_path.start_with?(record_path)
         end
+
+        def ensure_trailing_slash(path) = "#{path.chomp("/")}/"
 
         def preferred_action_after_submit
           @preferred_action_after_submit = begin
