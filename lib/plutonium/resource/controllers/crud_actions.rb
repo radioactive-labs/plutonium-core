@@ -212,11 +212,23 @@ module Plutonium
         end
 
         def redirect_url_after_destroy
-          if (return_to = url_from(params[:return_to])) && return_to != request.url
+          if (return_to = url_from(params[:return_to])) && !same_resource_url?(return_to)
             return return_to
           end
 
           resource_url_for(resource_class)
+        end
+
+        # A return_to pointing at the just-deleted record's own show/edit page
+        # would 404 on the follow-up request, so treat those as unusable and let
+        # the caller fall back to the index. We compare paths because return_to
+        # is the bare record URL while request.url still carries ?return_to=.
+        def same_resource_url?(return_to)
+          return false unless resource_record?
+
+          target_path = URI.parse(return_to).path
+          record_path = URI.parse(resource_url_for(resource_record!)).path
+          target_path == record_path || target_path == "#{record_path}/edit"
         end
 
         def preferred_action_after_submit
