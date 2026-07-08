@@ -1,0 +1,12 @@
+name: "Plutonium CodeQL config"
+
+# Paths excluded from analysis. These directories contain either test-only
+# code or third-party build artifacts, which generate CodeQL noise (e.g.
+# clear-text test passwords, CSRF-off test controllers, vendored regex in
+# bundled JS) rather than vulnerabilities in shipped framework code.
+paths-ignore:
+  - test
+  - app/assets/plutonium.js
+  - src/dist
+  - public/plutonium-assets
+  - docs

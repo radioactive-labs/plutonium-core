@@ -1,0 +1,45 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    # Weekly, matching the previous default-setup cadence.
+    - cron: "27 4 * * 1"
+
+# CodeQL needs to write analysis results back to the Security tab; everything
+# else stays read-only.
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Mirrors the languages the default setup had enabled.
+        language:
+          - actions
+          - javascript-typescript
+          - ruby
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
