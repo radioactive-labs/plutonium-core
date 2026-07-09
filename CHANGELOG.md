@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.62.2] - 2026-07-09
+
+### Bug Fixes
+
+- Match nested paths under the deleted record on destroy redirect
+- Respect all Rails falsey values in boolean inputs
+
+### Testing
+
+- Drop hardcoded Migration[8.1] in dummy migrations
+- Repair stale kanban and show unit tests
+- Make scaffold generator test resilient to leftover state
+
+### Ci
+
+- Switch to advanced setup with paths-ignore
+- Bump actions to v4/v5 to clear deprecation warnings
+
 ## [0.62.1] - 2026-07-07
 
 ### Bug Fixes
@@ -79,16 +97,6 @@ All notable changes to this project will be documented in this file.
 ### Wizard
 
 - Docs accuracy + completeness audit, plus a per-field Shrine uploader for attachments ([#64](https://github.com/radioactive-labs/plutonium-core/issues/64))
-
-## [0.60.5] - 2026-06-30
-
-### Bug Fixes
-
-- Coerce ActiveStorage::Filename to String for HTML title attributes
-
-### Miscellaneous Tasks
-
-- Update yarn.lock and .yarnrc.yml after yarn install
 
 ## [0.60.4] - 2026-06-15
 
