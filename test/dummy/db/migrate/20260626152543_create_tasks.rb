@@ -1,4 +1,4 @@
-class CreateTasks < ActiveRecord::Migration[8.1]
+class CreateTasks < ActiveRecord::Migration[[Rails::VERSION::MAJOR, Rails::VERSION::MINOR].join(".").to_f]
   def change
     create_table :tasks do |t|
       t.string :title, null: false
