@@ -71,9 +71,11 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
   test "render_default_content renders Modal::Centered when in modal (modal_mode :slideover)" do
     page = build_show_page(turbo_frame: "remote_modal", modal_mode: :slideover)
     first_render = nil
-    page.define_singleton_method(:render) do |component, &block|
+    # Capture only which modal is chosen — the body block calls `div`, which
+    # needs a live Phlex buffer this isolated unit test doesn't provide (the
+    # rendered body is covered by the modal integration tests).
+    page.define_singleton_method(:render) do |component|
       first_render ||= component.class
-      block&.call
     end
 
     page.send(:render_default_content)
@@ -85,9 +87,11 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
   test "render_default_content renders Modal::Centered when modal_mode :centered too" do
     page = build_show_page(turbo_frame: "remote_modal", modal_mode: :centered)
     first_render = nil
-    page.define_singleton_method(:render) do |component, &block|
+    # Capture only which modal is chosen — the body block calls `div`, which
+    # needs a live Phlex buffer this isolated unit test doesn't provide (the
+    # rendered body is covered by the modal integration tests).
+    page.define_singleton_method(:render) do |component|
       first_render ||= component.class
-      block&.call
     end
 
     page.send(:render_default_content)
@@ -98,9 +102,8 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
   test "modal details carry an open-full-page URL (request.path)" do
     page = build_show_page(turbo_frame: "remote_modal", modal_mode: :slideover)
     captured = nil
-    page.define_singleton_method(:render) do |component, &block|
+    page.define_singleton_method(:render) do |component|
       captured ||= component
-      block&.call
     end
 
     page.send(:render_default_content)

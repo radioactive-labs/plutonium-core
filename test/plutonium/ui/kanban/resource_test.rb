@@ -156,10 +156,10 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     resource = build_resource(columns: [col])
     # Stub render_column_frame so no view_context calls happen; we only want
     # to check the outer wrapper element.
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     resource.define_singleton_method(:render_realtime_subscription) {}
     stub_kanban_move_url_template(resource)
-    stub_toolbar(resource)
+    stub_request(resource, path: "/tasks", query_params: {})
 
     html = resource.call
 
@@ -169,7 +169,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_wrapper_has_move_url_template_value
     col = build_col(:todo)
     resource = build_resource(columns: [col])
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
@@ -181,7 +181,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_move_url_template_contains_id_placeholder
     col = build_col(:todo)
     resource = build_resource(columns: [col])
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
@@ -194,7 +194,7 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_move_url_template_uses_request_path
     col = build_col(:todo)
     resource = build_resource(columns: [col])
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     resource.define_singleton_method(:render_realtime_subscription) {}
     stub_request(resource, path: "/admin/tasks", query_params: {})
 
@@ -236,11 +236,11 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
     assert_match(/Todo/, html, "column label should appear in header")
   end
 
-  # The shell header deliberately renders NO card-count badge: the shell has no
-  # card data, so a count would flash (e.g. "0") then disappear when
-  # Kanban::Column — which renders no count badge either — replaces the frame
-  # body. This guards that structural consistency.
-  def test_column_header_omits_card_count_badge
+  # The shell header renders the card-count badge as an INVISIBLE placeholder
+  # (opacity-0 + aria-hidden) so the column keeps a stable height, but no count
+  # actually shows — avoiding a "0" flash before Kanban::Column (which renders
+  # no count badge) replaces the frame body.
+  def test_column_header_renders_hidden_count_badge_placeholder
     col = build_col(:todo)
     resource = build_resource(columns: [col], cards: [stub_record, stub_record])
     stub_request(resource, path: "/tasks", query_params: {})
@@ -249,7 +249,10 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
 
     html = resource.call
 
-    refute_match(/pu-badge/, html, "shell header should not render a count badge")
+    badge = html[/<span class="pu-badge[^"]*"[^>]*>/]
+    assert badge, "expected a placeholder count badge in the shell header"
+    assert_match(/opacity-0/, badge, "count badge must be an invisible placeholder")
+    assert_match(/aria-hidden="true"/, badge, "count badge placeholder must be aria-hidden")
   end
 
   # ---------------------------------------------------------------------------
@@ -259,9 +262,9 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_realtime_subscription_called_when_realtime
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: true)
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     stub_kanban_move_url_template(resource)
-    stub_toolbar(resource)
+    stub_request(resource, path: "/tasks", query_params: {})
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -274,9 +277,9 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
   def test_realtime_subscription_not_called_when_not_realtime
     col = build_col(:todo)
     resource = build_resource(columns: [col], realtime: false)
-    resource.define_singleton_method(:render_column_frame) { |_col| }
+    resource.define_singleton_method(:render_column_frame) { |_col, **| }
     stub_kanban_move_url_template(resource)
-    stub_toolbar(resource)
+    stub_request(resource, path: "/tasks", query_params: {})
 
     called = false
     resource.define_singleton_method(:render_realtime_subscription) { called = true }
@@ -312,12 +315,13 @@ class Plutonium::UI::Kanban::ResourceTest < Minitest::Test
       board: board,
       grouped_data: grouped,
       resource_definition: nil,
-      resource_fields: []
+      resource_fields: [],
+      resource_class: Task
     )
   end
 
-  def stub_request(component, path:, query_params:)
-    fake_request = Struct.new(:path, :query_parameters).new(path, query_params)
+  def stub_request(component, path:, query_params:, script_name: "")
+    fake_request = Struct.new(:path, :query_parameters, :script_name).new(path, query_params, script_name)
     component.define_singleton_method(:request) { fake_request }
     stub_toolbar(component)
   end
