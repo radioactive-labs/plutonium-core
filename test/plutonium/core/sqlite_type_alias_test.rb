@@ -173,6 +173,13 @@ class Plutonium::Core::SqliteTypeAliasTest < ActiveSupport::TestCase
   # Generator tests - verify PostgreSQL types work in scaffold generator
 
   test "scaffold generator accepts PostgreSQL types" do
+    # Defensive pre-cleanup: if a previous run was interrupted before its
+    # `ensure` fired, a leftover app/models/test_network_device.rb makes the
+    # scaffold hit its name-collision guard — it then skips the model+migration
+    # but still exits 0, so `find_migration` below would find nothing. Start
+    # from a guaranteed-clean slate so this test can't inherit polluted state.
+    cleanup_generated_files("test_network_device")
+
     # Run the generator with PostgreSQL types
     generator_output = run_generator(
       "TestNetworkDevice",
