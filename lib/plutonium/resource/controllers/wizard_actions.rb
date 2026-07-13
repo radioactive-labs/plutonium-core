@@ -122,14 +122,14 @@ module Plutonium
             **wizard_token_param
           )
         end
- 
+
         def wizard_launch_url
           resource_url_for(
             wizard_url_subject,
             wizard: current_wizard_name
           )
         end
- 
+
         # The URL anchor: the scoped record for member (record) actions, the
         # resource class for collection (resource) actions.
         def wizard_url_subject
