@@ -74,9 +74,9 @@ module Plutonium
               else
                 span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { "Resume" }
               end
- 
+
               # Cancel form
-              cancel_url = entry.resume_url ? entry.resume_url.sub(/\/[^\/]+\z/, "") : nil
+              cancel_url = entry.resume_url&.sub(/\/[^\/]+\z/, "")
               if cancel_url.present?
                 # We can use helpers.form_with or direct html form.
                 # Since this is a Phlex component, we can use a direct html form helper:
