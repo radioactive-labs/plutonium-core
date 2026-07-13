@@ -68,10 +68,10 @@ module Plutonium
         when Array
           normalized = choices.map { |item|
             arr = Array(item)
-            arr.size == 1 ? [arr[0].to_s, arr[0]] : arr
+            (arr.size == 1) ? [arr[0].to_s, arr[0]] : arr
           }
           hit = normalized.find { |_label, val| val.to_s == raw_str }
-          hit ? hit[0].to_s : raw_value.to_s
+          hit ? (hit[0].to_s) : raw_value.to_s
         else
           raw_value.to_s
         end

@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.62.1)
+    plutonium (0.62.2)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -153,6 +153,7 @@ GEM
     erb (6.0.2)
     erubi (1.13.1)
     ffi (1.17.3-arm64-darwin)
+    ffi (1.17.3-x86_64-linux-gnu)
     fiber-local (1.1.0)
       fiber-storage
     fiber-storage (1.0.1)
@@ -209,6 +210,8 @@ GEM
       net-protocol
     nio4r (2.7.5)
     nokogiri (1.19.1-arm64-darwin)
+      racc (~> 1.4)
+    nokogiri (1.19.1-x86_64-linux-gnu)
       racc (~> 1.4)
     pagy (43.3.3)
       json
@@ -383,6 +386,7 @@ GEM
       down (~> 5.1)
     sin_lru_redux (2.5.2)
     sqlite3 (2.9.1-arm64-darwin)
+    sqlite3 (2.9.1-x86_64-linux-gnu)
     standard (1.54.0)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -437,6 +441,7 @@ GEM
 
 PLATFORMS
   arm64-darwin
+  x86_64-linux
 
 DEPENDENCIES
   active_shrine

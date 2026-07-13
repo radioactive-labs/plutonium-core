@@ -169,17 +169,17 @@ module Plutonium
 
         respond_to_wizard_result(runner, result)
       end
- 
+
       # DELETE (/:token) — cancel run.
       def wizard_cancel
         require_wizard_authentication!
         runner = build_wizard_runner
         deny_wizard_resume_for_other_user!(runner)
         authorize_wizard_entry!(runner)
- 
+
         runner.cancel
         clear_wizard_session_token
- 
+
         # PRG back to the bare launch path (or return_to), which will reload the chooser or start a new run.
         # But we'll redirect back to the launch url of the wizard.
         target = wizard_launch_url
@@ -674,7 +674,7 @@ module Plutonium
       def wizard_step_url(step_key)
         raise NotImplementedError
       end
- 
+
       # @return [String] the GET URL for launching this wizard.
       def wizard_launch_url
         raise NotImplementedError

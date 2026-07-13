@@ -78,16 +78,16 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{data-wizard-chooser-cancel}, response.body
     assert_includes response.body, "?new=1"
   end
- 
+
   test "cancelling a pending run calls cancel and redirects back to chooser/launch" do
     advance_through("identity")
     token = @wizard_token
     assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
- 
+
     delete "#{base}/#{token}"
     assert_response :redirect
     assert_redirected_to base
- 
+
     follow_redirect!
     assert_response :redirect # redirects to start fresh since no pending runs exist anymore!
     assert_equal 0, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count

@@ -62,7 +62,7 @@ module Plutonium
       def update
         wizard_update
       end
- 
+
       # DELETE .../:token
       def cancel
         wizard_cancel
@@ -158,11 +158,11 @@ module Plutonium
             current_engine.routes, current_wizard_class, action: "show"
           )
           raise "no register_wizard route found for #{current_wizard_class.name}" unless name
- 
+
           :"#{name}_path"
         end
       end
- 
+
       def wizard_launch_url
         url_options = {}
         if scoped_to_entity?
