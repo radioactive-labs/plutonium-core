@@ -35,7 +35,7 @@ module Plutonium
           # `Plutonium.configuration.default_phone_country`.
           def build_intl_options
             options = {}
-            if (country = attributes.delete(:initial_country) || Plutonium.configuration.default_phone_country)
+            if (country = attributes.delete(:initial_country) || Plutonium.configuration.normalized_default_phone_country)
               options[:initialCountry] = country
             end
             if (extra = attributes.delete(:intl_options))

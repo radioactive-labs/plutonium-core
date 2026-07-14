@@ -50,7 +50,19 @@ module Plutonium
     # @return [String, nil] the default country (ISO2 code, e.g. "gh") for phone
     #   (`as: :phone`) inputs that don't set their own `initial_country:`. `nil`
     #   (default) leaves it to the intl-tel-input library (no country preselected).
-    attr_accessor :default_phone_country
+    #   Stored verbatim — read it back exactly as set. Consumers that feed
+    #   intl-tel-input should use {#normalized_default_phone_country}.
+    attr_reader :default_phone_country
+
+    # @return [String, nil] {#default_phone_country} downcased to the lowercase
+    #   ISO2 form intl-tel-input expects, so callers can set "GH" or "gh"
+    #   interchangeably. `nil` stays `nil`. Computed once on assignment.
+    attr_reader :normalized_default_phone_country
+
+    def default_phone_country=(value)
+      @default_phone_country = value
+      @normalized_default_phone_country = value&.downcase
+    end
 
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
