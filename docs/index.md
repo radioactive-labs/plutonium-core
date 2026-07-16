@@ -12,6 +12,8 @@ aside: false
 
 <HomeWalkthrough />
 
+<HomeFeatureTour />
+
 <HomeAudienceSplit />
 
 <HomeInTheBox />

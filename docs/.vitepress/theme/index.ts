@@ -8,6 +8,7 @@ import HomeHero from "./components/HomeHero.vue"
 import HomeStopWriting from "./components/HomeStopWriting.vue"
 import HomePillars from "./components/HomePillars.vue"
 import HomeWalkthrough from "./components/HomeWalkthrough.vue"
+import HomeFeatureTour from "./components/HomeFeatureTour.vue"
 import HomeAudienceSplit from "./components/HomeAudienceSplit.vue"
 import HomeInTheBox from "./components/HomeInTheBox.vue"
 import HomeCta from "./components/HomeCta.vue"
@@ -20,6 +21,7 @@ export default {
     app.component("HomeStopWriting", HomeStopWriting)
     app.component("HomePillars", HomePillars)
     app.component("HomeWalkthrough", HomeWalkthrough)
+    app.component("HomeFeatureTour", HomeFeatureTour)
     app.component("HomeAudienceSplit", HomeAudienceSplit)
     app.component("HomeInTheBox", HomeInTheBox)
     app.component("HomeCta", HomeCta)
