@@ -11,7 +11,8 @@
         </p>
         <p class="home-hero-pillars">
           <b>CRUD.</b> <b>Auth.</b> <b>Authorization.</b> <b>Multi-tenancy.</b>
-          <b>Admin portals.</b> <b>Search, filters, bulk actions.</b>
+          <b>Wizards.</b> <b>Kanban.</b> <b>Admin portals.</b>
+          <b>Search, filters, bulk actions.</b>
           All generated. All customizable. All Rails.
         </p>
         <div class="home-hero-ctas">
@@ -23,7 +24,7 @@
 <span class="dim">      create  packages/admin_portal/...</span>
 <span class="prompt">$</span> rails g pu:res:scaffold Post title:string body:text published_at:datetime --dest=main_app
 <span class="dim">      create  app/models/post.rb</span>
-<span class="dim">      create  app/resource_registries/post_definition.rb</span>
+<span class="dim">      create  app/definitions/post_definition.rb</span>
 <span class="prompt">$</span> rails g pu:res:conn Post --dest=admin_portal
 <span class="dim">      ✓ Connected Post to AdminPortal</span>
 <span class="prompt">$</span> <span class="pu-term-cursor"></span></pre>

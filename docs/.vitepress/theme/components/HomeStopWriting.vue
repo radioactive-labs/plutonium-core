@@ -20,6 +20,7 @@
             <span><b>+ Search</b></span>
             <span><b>+ Filters</b></span>
             <span><b>+ Bulk actions</b></span>
+            <span><b>+ Actions</b></span>
           </div>
         </div>
       </div>

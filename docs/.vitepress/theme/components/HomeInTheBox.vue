@@ -30,6 +30,14 @@ const cats = [
     { name: "Custom & bulk actions", desc: "Resource-scoped interactions",
       link: "/plutonium-core/guides/custom-actions" },
   ]},
+  { name: "Workflows", items: [
+    { name: "Wizards", desc: "Multi-step flows with branching & resume",
+      link: "/plutonium-core/guides/wizards" },
+    { name: "Kanban boards", desc: "Drag-drop boards from one block",
+      link: "/plutonium-core/guides/kanban" },
+    { name: "Interactions", desc: "Business logic with auto-generated UI",
+      link: "/plutonium-core/guides/custom-actions" },
+  ]},
   { name: "App structure", items: [
     { name: "Portals", desc: "Themed, mountable engines",
       link: "/plutonium-core/reference/app/portals" },
