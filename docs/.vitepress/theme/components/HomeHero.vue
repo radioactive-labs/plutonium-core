@@ -10,9 +10,8 @@
           Convention over configuration, extended to everything you keep rebuilding.
         </p>
         <p class="home-hero-pillars">
-          <b>CRUD.</b> <b>Auth.</b> <b>Authorization.</b> <b>Multi-tenancy.</b>
-          <b>Wizards.</b> <b>Kanban.</b> <b>Admin portals.</b>
-          <b>Search, filters, bulk actions.</b>
+          <!-- keep the bolds on one source line: Vue drops whitespace-only nodes containing newlines -->
+          <b>CRUD.</b> <b>Auth.</b> <b>Authorization.</b> <b>Multi-tenancy.</b> <b>Wizards.</b> <b>Kanban.</b> <b>Admin portals.</b> <b>Search, filters, bulk actions.</b>
           All generated. All customizable. All Rails.
         </p>
         <div class="home-hero-ctas">
