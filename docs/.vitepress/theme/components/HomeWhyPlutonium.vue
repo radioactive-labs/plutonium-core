@@ -40,7 +40,7 @@ const pillars = [
   { icon: IconRoute, name: "Convention over configuration",
     desc: "Extended to resources, policies, portals, and tenancy — not just routes and views." },
   { icon: IconCode, name: "It's just Rails",
-    desc: 'Generated code lives in your repo. Edit it, override it, delete it. The "magic" is regular Ruby mixins you can read.' },
+    desc: 'Generated code lives in your repo. Edit it, override it, delete it. The “magic” is regular Ruby mixins you can read.' },
   { icon: IconBuildingSkyscraper, name: "Multi-tenant ready",
     desc: "Path or domain tenancy. Scoped relations. Invites and memberships out of the box." },
   { icon: IconRobot, name: "AI-readable",
