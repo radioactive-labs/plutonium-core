@@ -6,10 +6,9 @@ import "./custom.css"
 
 import HomeHero from "./components/HomeHero.vue"
 import HomeStopWriting from "./components/HomeStopWriting.vue"
-import HomePillars from "./components/HomePillars.vue"
 import HomeWalkthrough from "./components/HomeWalkthrough.vue"
 import HomeFeatureTour from "./components/HomeFeatureTour.vue"
-import HomeAudienceSplit from "./components/HomeAudienceSplit.vue"
+import HomeWhyPlutonium from "./components/HomeWhyPlutonium.vue"
 import HomeInTheBox from "./components/HomeInTheBox.vue"
 import HomeCta from "./components/HomeCta.vue"
 import SectionLanding from "./components/SectionLanding.vue"
@@ -19,10 +18,9 @@ export default {
   enhanceApp({ app }) {
     app.component("HomeHero", HomeHero)
     app.component("HomeStopWriting", HomeStopWriting)
-    app.component("HomePillars", HomePillars)
     app.component("HomeWalkthrough", HomeWalkthrough)
     app.component("HomeFeatureTour", HomeFeatureTour)
-    app.component("HomeAudienceSplit", HomeAudienceSplit)
+    app.component("HomeWhyPlutonium", HomeWhyPlutonium)
     app.component("HomeInTheBox", HomeInTheBox)
     app.component("HomeCta", HomeCta)
     app.component("SectionLanding", SectionLanding)
