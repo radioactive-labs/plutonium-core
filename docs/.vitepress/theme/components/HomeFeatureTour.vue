@@ -13,14 +13,14 @@
             class="ft-head"
             :class="{ 'ft-head--on': selected === f.id }"
             :aria-expanded="selected === f.id"
-            :aria-controls="`ft-panel-${f.id}`"
+            :aria-controls="selected === f.id ? `ft-panel-${f.id}` : undefined"
             @click="selected = f.id"
           >
             <span class="ft-head-text">
               <b>{{ f.name }}</b>
               <small>{{ f.hook }}</small>
             </span>
-            <IconChevronDown class="ft-chev" :size="16" :stroke-width="2" />
+            <IconChevronDown class="ft-chev" :size="16" :stroke-width="2" aria-hidden="true" />
           </button>
 
           <div v-if="selected === f.id" :id="`ft-panel-${f.id}`" class="ft-body">
@@ -29,7 +29,7 @@
             <img :src="withBase(f.shot)" :alt="f.alt" class="ft-shot pu-zoomable" />
             <div class="ft-foot">
               <span class="ft-policy">
-                <IconShieldCheck :size="14" :stroke-width="2" /> {{ f.policy }}
+                <IconShieldCheck :size="14" :stroke-width="2" aria-hidden="true" /> {{ f.policy }}
               </span>
               <a class="ft-link" :href="f.link">Read the guide →</a>
             </div>
@@ -50,9 +50,9 @@ const features = [
     id: "kanban",
     name: "Kanban boards",
     hook: "Drag-drop boards from one block",
-    file: "app/resource_registries/task_definition.rb",
+    file: "app/definitions/task_definition.rb",
     code: `<span class="m">kanban</span> <span class="k">do</span>
-  <span class="m">column</span> <span class="s">:todo</span>,  scope: -&gt; { where(status: <span class="s">"todo"</span>) }, role: <span class="s">:backlog</span>
+  <span class="m">column</span> <span class="s">:todo</span>,  scope: -&gt; { where(status: <span class="s">"todo"</span>) }, on_enter: -&gt;(r) { r.update!(status: <span class="s">"todo"</span>) }, role: <span class="s">:backlog</span>
   <span class="m">column</span> <span class="s">:doing</span>, on_enter: -&gt;(r) { r.update!(status: <span class="s">"doing"</span>) }, wip: <span class="n">3</span>
   <span class="m">column</span> <span class="s">:done</span>,  on_enter: <span class="s">:mark_done!</span>, role: <span class="s">:done</span>
 <span class="k">end</span>`,
@@ -94,7 +94,7 @@ const features = [
     id: "actions",
     name: "Actions & interactions",
     hook: "Business logic with auto-generated UI",
-    file: "app/resource_registries/post_definition.rb",
+    file: "app/definitions/post_definition.rb",
     code: `<span class="k">class</span> PostDefinition <span class="k">&lt;</span> ResourceDefinition
   <span class="m">action</span> <span class="s">:publish</span>, interaction: PublishPostInteraction
 <span class="k">end</span>
@@ -138,6 +138,7 @@ const selected = ref(features[0].id)
 .ft-grid {
   display: grid;
   grid-template-columns: 260px 1fr;
+  /* rows = one per feature; last row (1fr) absorbs the panel's extra height */
   grid-template-rows: repeat(3, auto) 1fr;
   column-gap: 28px;
   align-items: start;
