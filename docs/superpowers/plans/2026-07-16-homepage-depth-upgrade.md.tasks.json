@@ -1,0 +1,32 @@
+{
+  "planPath": "docs/superpowers/plans/2026-07-16-homepage-depth-upgrade.md",
+  "tasks": [
+    {
+      "id": 6,
+      "subject": "Task 1: Create HomeFeatureTour.vue and mount it",
+      "status": "completed",
+      "description": "**Goal:** New interactive tour section — desktop feature rail / mobile accordion — showing DSL code + real screenshot for Kanban, Wizards, Actions, Multi-tenancy.\n\n**Files:** Create docs/.vitepress/theme/components/HomeFeatureTour.vue; Modify docs/.vitepress/theme/index.ts, docs/index.md\n\n**Verify:** yarn docs:build\n\nFull code in plan Task 1.\n\n```json:metadata\n{\"files\": [\"docs/.vitepress/theme/components/HomeFeatureTour.vue\", \"docs/.vitepress/theme/index.ts\", \"docs/index.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"desktop rail swaps panels\", \"mobile accordion\", \"panel shows code+shot+policy+link\", \"build passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 2: Create HomeWhyPlutonium.vue, delete HomePillars + HomeAudienceSplit",
+      "status": "completed",
+      "blockedBy": [6],
+      "description": "**Goal:** One compact band replaces two sections: four pillar cards + two-audience footer row.\n\n**Files:** Create docs/.vitepress/theme/components/HomeWhyPlutonium.vue; Delete HomePillars.vue, HomeAudienceSplit.vue; Modify index.ts, docs/index.md\n\n**Verify:** yarn docs:build && ! grep -rn 'HomePillars\\|HomeAudienceSplit' docs/.vitepress/theme docs/index.md\n\nFull code in plan Task 2.\n\n```json:metadata\n{\"files\": [\"docs/.vitepress/theme/components/HomeWhyPlutonium.vue\", \"docs/.vitepress/theme/index.ts\", \"docs/index.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"merged band renders\", \"old components deleted\", \"section order correct\", \"build passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 3: Copy weaves — hero, stop-writing, in-the-box",
+      "status": "completed",
+      "description": "**Goal:** Weave Wizards/Kanban/Actions into HomeHero pillars line, HomeStopWriting stats, and a new Workflows category in HomeInTheBox.\n\n**Verify:** yarn docs:build\n\nExact before/after snippets in plan Task 3.\n\n```json:metadata\n{\"files\": [\"docs/.vitepress/theme/components/HomeHero.vue\", \"docs/.vitepress/theme/components/HomeStopWriting.vue\", \"docs/.vitepress/theme/components/HomeInTheBox.vue\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"hero mentions wizards+kanban\", \"+ Actions stat\", \"Workflows category added\", \"build passes\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 4: Full visual pass + user sign-off",
+      "status": "completed",
+      "blockedBy": [6, 7, 8],
+      "description": "**Goal:** Final desktop+mobile, light+dark visual pass; user approves via AskUserQuestion (see plan Task 4 for the exact question block).\n\n```json:metadata\n{\"files\": [], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"build passes\", \"desktop+mobile visual pass\", \"user approves\"], \"requiresUserVerification\": true, \"userVerificationPrompt\": \"Does the upgraded homepage sell the depth the way you wanted?\"}\n```"
+    }
+  ],
+  "lastUpdated": "2026-07-16"
+}
