@@ -6,7 +6,7 @@ module Plutonium
   module Action
     # Base class for all actions in the Plutonium framework.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to, :condition
+      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to, :condition, :link, :button
 
       def initialize(name, **options)
         @name = name.to_sym
@@ -29,6 +29,14 @@ module Plutonium
         @modal_mode = options[:modal]
         @modal_size = options[:size]
         @condition = options[:condition]
+        # Author-supplied HTML attributes, keyed by the element they target:
+        # `link:` merges onto every anchor rendering (the GET link and dropdown
+        # items — which are anchors even for non-GET actions), `button:` onto
+        # the button_to <form> (the non-GET toolbar rendering). Both deep-merge
+        # over the framework's attributes at render time, with the author
+        # winning.
+        @link = normalize_html_attribute_bag(options[:link], :link)
+        @button = normalize_html_attribute_bag(options[:button], :button)
         validate_modal_mode!
         validate_modal_size!
 
@@ -94,6 +102,21 @@ module Plutonium
         ConditionContext.new(view_context, record).instance_exec(&@condition)
       end
 
+      # Merge points for rendering surfaces: deep-merge the author's bag over
+      # the framework-built attributes for the element being rendered, with
+      # the author winning on every key. `link_attributes` is for anchors
+      # (the GET toolbar link, dropdown items — anchors even for non-GET
+      # actions — bulk-action links, kanban column actions, card show links);
+      # `button_attributes` is for the button_to <form> wrapper. Surfaces
+      # call these instead of merging #link/#button themselves.
+      def link_attributes(attributes)
+        merge_author_bag(@link, attributes)
+      end
+
+      def button_attributes(attributes)
+        merge_author_bag(@button, attributes)
+      end
+
       # Returns a new Action with the given options merged over this one.
       def with(**overrides)
         self.class.new(name, **to_options.merge(overrides))
@@ -124,14 +147,50 @@ module Plutonium
           position: @position,
           modal: @modal_mode,
           size: @modal_size,
-          condition: @condition
+          condition: @condition,
+          link: @link,
+          button: @button
         }
       end
 
       private
 
+      def merge_author_bag(bag, attributes)
+        bag.empty? ? attributes : attributes.deep_merge(bag)
+      end
+
       def targets_remote_modal?
         @turbo_frame == Plutonium::REMOTE_MODAL_FRAME
+      end
+
+      # Stores the action's own symbol-keyed copy of an author attribute bag.
+      # Symbolizing is load-bearing, not cosmetic: the render-time deep_merge
+      # matches keys exactly, so a string-keyed bag would sit alongside the
+      # framework's symbol keys and emit duplicate attributes instead of
+      # overriding them. Copying keeps the caller's hash untouched (no
+      # freezing objects we don't own), and the deep structural freeze makes
+      # the bag as immutable as the action itself.
+      def normalize_html_attribute_bag(bag, name)
+        return {}.freeze if bag.nil?
+        unless bag.is_a?(Hash)
+          raise ArgumentError, "#{name} must be a Hash of HTML attributes, got #{bag.inspect}"
+        end
+        deep_freeze_structure(bag.deep_symbolize_keys)
+      end
+
+      # Freezes nested hashes/arrays (fresh copies from deep_symbolize_keys)
+      # but not leaf values, which are still shared with the caller.
+      def deep_freeze_structure(value)
+        case value
+        when Hash
+          value.each_value { |v| deep_freeze_structure(v) }
+          value.freeze
+        when Array
+          value.each { |v| deep_freeze_structure(v) }
+          value.freeze
+        else
+          value
+        end
       end
 
       def validate_modal_mode!

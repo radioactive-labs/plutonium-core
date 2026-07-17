@@ -136,6 +136,31 @@ module Plutonium
         non_immediate_action = Interactive::Factory.create(:non_immediate, interaction: RecordInteraction, immediate: false)
         assert_equal :get, non_immediate_action.route_options.method
       end
+
+      def test_with_round_trips_interaction_and_immediate
+        cloned = @action.with(label: "Renamed")
+
+        assert_instance_of Interactive, cloned
+        assert_equal "Renamed", cloned.label
+        assert_equal RecordInteraction, cloned.interaction
+        assert_equal true, cloned.immediate
+      end
+
+      def test_with_can_override_immediate
+        cloned = @action.with(immediate: false)
+
+        assert_equal false, cloned.immediate
+        assert_equal RecordInteraction, cloned.interaction
+      end
+
+      def test_with_round_trips_html_attribute_bags
+        action = Interactive::Factory.create(:docs,
+          interaction: RecordInteraction,
+          link: {target: "_blank"})
+        cloned = action.with(label: "Renamed")
+
+        assert_equal({target: "_blank"}, cloned.link)
+      end
     end
   end
 end

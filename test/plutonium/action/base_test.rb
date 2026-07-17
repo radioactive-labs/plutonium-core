@@ -71,6 +71,104 @@ module Plutonium
         assert action.with(label: "Renamed").kanban_drop?
       end
 
+      def test_link_and_button_default_to_empty_hashes
+        action = Base.new(:plain)
+        assert_equal({}, action.link)
+        assert_equal({}, action.button)
+      end
+
+      def test_link_reads_option
+        action = Base.new(:docs, link: {target: "_blank", rel: "noopener"})
+        assert_equal({target: "_blank", rel: "noopener"}, action.link)
+      end
+
+      def test_button_reads_option
+        action = Base.new(:archive, button: {data: {turbo_confirm: "Sure?"}})
+        assert_equal({data: {turbo_confirm: "Sure?"}}, action.button)
+      end
+
+      def test_link_and_button_round_trip_through_with
+        action = Base.new(:docs, link: {target: "_blank"}, button: {data: {x: 1}})
+        cloned = action.with(label: "Renamed")
+        assert_equal({target: "_blank"}, cloned.link)
+        assert_equal({data: {x: 1}}, cloned.button)
+      end
+
+      def test_with_overrides_link_and_button
+        action = Base.new(:docs, link: {target: "_blank"})
+        cloned = action.with(link: {target: "_top"})
+        assert_equal({target: "_top"}, cloned.link)
+      end
+
+      def test_link_and_button_must_be_hashes
+        error = assert_raises(ArgumentError) { Base.new(:docs, link: "noopener") }
+        assert_match(/link must be a Hash/, error.message)
+
+        error = assert_raises(ArgumentError) { Base.new(:docs, button: [:target]) }
+        assert_match(/button must be a Hash/, error.message)
+
+        error = assert_raises(ArgumentError) { Base.new(:docs, link: false) }
+        assert_match(/link must be a Hash/, error.message)
+      end
+
+      def test_link_and_button_are_deeply_frozen
+        action = Base.new(:docs, link: {target: "_blank"}, button: {data: {x: 1}})
+        assert action.link.frozen?
+        assert action.button.frozen?
+        assert action.button[:data].frozen?
+      end
+
+      def test_link_and_button_do_not_freeze_or_share_the_callers_hash
+        author_bag = {target: "_blank", data: {analytics: "docs"}}
+        action = Base.new(:docs, link: author_bag)
+
+        refute author_bag.frozen?
+        refute author_bag[:data].frozen?
+
+        author_bag[:data][:analytics] = "changed"
+        assert_equal "docs", action.link[:data][:analytics]
+      end
+
+      def test_link_attributes_merges_the_bag_over_base_attributes
+        action = Base.new(:docs, link: {target: "_blank", data: {analytics: "x"}})
+        attrs = action.link_attributes({class: "pu-btn", data: {turbo_frame: "frame"}})
+
+        assert_equal "_blank", attrs[:target]
+        assert_equal "pu-btn", attrs[:class]
+        assert_equal({turbo_frame: "frame", analytics: "x"}, attrs[:data])
+      end
+
+      def test_link_attributes_author_wins_on_collision
+        action = Base.new(:docs, link: {data: {turbo_frame: "custom"}})
+        attrs = action.link_attributes({data: {turbo_frame: "frame"}})
+
+        assert_equal "custom", attrs[:data][:turbo_frame]
+      end
+
+      def test_link_attributes_with_empty_bag_returns_base_attributes
+        action = Base.new(:docs)
+        base = {class: "pu-btn"}
+
+        assert_same base, action.link_attributes(base)
+      end
+
+      def test_button_attributes_merges_the_bag_over_base_attributes
+        action = Base.new(:archive, button: {target: "_top", data: {x: 1}})
+        attrs = action.button_attributes({data: {turbo: true}})
+
+        assert_equal "_top", attrs[:target]
+        assert_equal({turbo: true, x: 1}, attrs[:data])
+      end
+
+      def test_link_and_button_deep_symbolize_keys
+        action = Base.new(:docs,
+          link: {"target" => "_blank", "data" => {"turbo_frame" => "custom"}},
+          button: {"data" => {"x" => 1}})
+
+        assert_equal({target: "_blank", data: {turbo_frame: "custom"}}, action.link)
+        assert_equal({data: {x: 1}}, action.button)
+      end
+
       def test_frozen_instance
         assert @action.frozen?
       end

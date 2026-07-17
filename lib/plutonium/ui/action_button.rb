@@ -49,8 +49,10 @@ module Plutonium
       def render_link
         link_to(
           url_with_return_to,
-          class: button_classes,
-          data: {turbo_frame: @action.turbo_frame(current_definition)}.merge(@extra_data)
+          @action.link_attributes({
+            class: button_classes,
+            data: {turbo_frame: @action.turbo_frame(current_definition)}.merge(@extra_data)
+          })
         ) do
           render_button_content
         end
@@ -63,13 +65,13 @@ module Plutonium
           name: :return_to, value: return_to_url,
           class: "inline-block",
           data: @extra_data,
-          form: {
+          form: @action.button_attributes({
             data: {
               turbo: @action.turbo,
               turbo_confirm: @action.confirmation.presence,
               turbo_frame: @action.turbo_frame(current_definition)
             }
-          }
+          })
         ) do
           span(class: button_classes) do
             render_button_content
@@ -94,7 +96,7 @@ module Plutonium
           link_attrs[:data][:turbo_confirm] = @action.confirmation if @action.confirmation
         end
 
-        a(**link_attrs) do
+        a(**@action.link_attributes(link_attrs)) do
           render @action.icon.new(class: "w-4 h-4") if @action.icon
           span { @action.label }
         end

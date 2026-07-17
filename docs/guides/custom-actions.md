@@ -187,7 +187,11 @@ action :name,
   # Behavior
   confirmation: "Are you sure?",
   modal: :slideover,                     # :slideover / :centered — overrides definition's modal mode
-  size:  :lg                             # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
+  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
+
+  # HTML attributes — author wins over the framework's on every key
+  link:   {target: "_blank", rel: "noopener"},  # every <a> rendering (toolbar GET link, dropdown items, bulk links, card show link)
+  button: {data: {analytics: "archive"}}        # the button_to <form> wrapper (non-GET toolbar rendering)
 ```
 
 Full options: [Reference › Resource › Actions › Action options](/reference/resource/actions#action-options).
@@ -201,7 +205,8 @@ action :documentation,
   label: "Docs",
   route_options: {url: "https://docs.example.com"},
   icon: Phlex::TablerIcons::Book,
-  resource_action: true
+  resource_action: true,
+  link: {target: "_blank", rel: "noopener noreferrer"}   # open in a new tab
 
 action :reports,
   route_options: {action: :reports},   # links to PostsController#reports

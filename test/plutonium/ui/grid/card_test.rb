@@ -166,3 +166,60 @@ class Plutonium::UI::Grid::CardShowLinkUrlParamsTest < Minitest::Test
     ).send(:show_link_url_params)
   end
 end
+
+# Unit tests for Grid::Card#render_show_link — the hidden anchor the row-click
+# controller navigates through. It renders the :show action, so the action's
+# author `link:` bag must merge over the framework's attributes here just like
+# on the table's Show button (author wins on collision).
+class Plutonium::UI::Grid::CardShowLinkTest < Minitest::Test
+  def test_show_link_merges_the_show_actions_link_bag
+    show = Plutonium::Action::Simple.new(:show, link: {target: "_blank", data: {analytics: "open"}})
+    attrs = capture_show_link(show)
+
+    assert_equal "_blank", attrs[:target]
+    assert_equal "open", attrs[:data][:analytics]
+    # framework-managed data survives alongside the author keys
+    assert_equal "show", attrs[:data][:row_click_target]
+  end
+
+  def test_show_link_author_wins_on_framework_key_collision
+    show = Plutonium::Action::Simple.new(:show, link: {class: "custom", data: {row_click_target: "none"}})
+    attrs = capture_show_link(show)
+
+    assert_equal "custom", attrs[:class]
+    assert_equal "none", attrs[:data][:row_click_target]
+  end
+
+  def test_show_link_without_bag_keeps_framework_attributes
+    show = Plutonium::Action::Simple.new(:show)
+    attrs = capture_show_link(show)
+
+    assert_equal "/things/1", attrs[:href]
+    assert_equal "sr-only", attrs[:class]
+    assert_equal "Open Thing", attrs[:"aria-label"]
+  end
+
+  private
+
+  # Invokes the private render with the terminal `a` helper stubbed to
+  # capture the exact attribute hash the render path passed to it.
+  def capture_show_link(show_action)
+    definition = Object.new
+    definition.define_singleton_method(:defined_actions) { {show: show_action} }
+    definition.define_singleton_method(:show_in) { :page }
+
+    card = Plutonium::UI::Grid::Card.new(
+      Struct.new(:id).new(1), resource_definition: definition
+    )
+    captured = nil
+    card.define_singleton_method(:route_options_to_url) { |*| "/things/1" }
+    card.define_singleton_method(:merge_query_params) { |url, _params| url }
+    card.define_singleton_method(:header_text) { "Thing" }
+    card.define_singleton_method(:a) do |**attrs, &_blk|
+      captured = attrs
+      nil
+    end
+    card.send(:render_show_link)
+    captured
+  end
+end

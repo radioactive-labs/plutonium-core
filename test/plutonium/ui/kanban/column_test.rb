@@ -46,6 +46,44 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   end
 
   # ---------------------------------------------------------------------------
+  # Column action link attributes — the registered action's author `link:`
+  # bag merges over the framework's attributes, author winning on collision
+  # ---------------------------------------------------------------------------
+
+  def test_column_action_link_merges_the_registered_actions_link_bag
+    component = build_component(build_column(:todo), cards: [], total: 0)
+    registered = registered_action(link: {target: "_blank", data: {analytics: "x"}}, confirmation: "Sure?")
+
+    attrs = component.send(:column_action_link_attributes, kanban_action(:archive), registered, "Archive")
+
+    assert_equal "_blank", attrs[:target]
+    assert_equal "x", attrs[:data][:analytics]
+    # framework-managed data survives alongside the author keys
+    assert_equal "archive", attrs[:data][:kanban_action]
+    assert_equal "Sure?", attrs[:data][:turbo_confirm]
+  end
+
+  def test_column_action_link_author_wins_on_framework_key_collision
+    component = build_component(build_column(:todo), cards: [], total: 0)
+    registered = registered_action(link: {data: {turbo_confirm: "Custom?"}}, confirmation: "Sure?")
+
+    attrs = component.send(:column_action_link_attributes, kanban_action(:archive), registered, "Archive")
+
+    assert_equal "Custom?", attrs[:data][:turbo_confirm]
+  end
+
+  def test_column_action_link_without_bag_keeps_framework_attributes
+    component = build_component(build_column(:todo), cards: [], total: 0)
+    registered = registered_action(immediate: false)
+
+    attrs = component.send(:column_action_link_attributes, kanban_action(:archive), registered, "Archive")
+
+    assert_includes attrs[:class], "pu-btn"
+    assert_equal "Archive", attrs[:title]
+    assert_equal Plutonium::REMOTE_MODAL_FRAME, attrs[:data][:turbo_frame]
+  end
+
+  # ---------------------------------------------------------------------------
   # Expanded column HTML — stub render_cards to avoid view_context
   # ---------------------------------------------------------------------------
 
@@ -367,6 +405,28 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
 
   def build_column(key, **opts)
     Plutonium::Kanban::Column.new(key, **opts)
+  end
+
+  def kanban_action(key)
+    Plutonium::Kanban::Action.new(key: key, interaction: nil, on: nil, label: key.to_s.humanize, icon: nil, confirmation: nil)
+  end
+
+  # Real registered action (the defined_actions entry a column action resolves
+  # to), so the tests exercise the action's own link_attributes merge.
+  FakeInteraction = Class.new do
+    def self.label = "Archive"
+
+    def self.description = nil
+
+    def self.icon = nil
+  end
+
+  def registered_action(link: {}, immediate: true, confirmation: nil)
+    Plutonium::Action::Interactive.new(:archive,
+      interaction: FakeInteraction,
+      immediate: immediate,
+      confirmation: confirmation,
+      link: link)
   end
 
   def build_component(column, cards:, total:, per_column: 10)

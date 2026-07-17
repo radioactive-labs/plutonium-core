@@ -63,13 +63,15 @@ module Plutonium
 
             link_to(
               url,
-              class: button_classes(action),
-              data: {
-                bulk_actions_target: "actionButton",
-                bulk_action_name: action.name,
-                bulk_action_url: url,
-                turbo_frame: action.turbo_frame(current_definition)
-              }
+              action.link_attributes({
+                class: button_classes(action),
+                data: {
+                  bulk_actions_target: "actionButton",
+                  bulk_action_name: action.name,
+                  bulk_action_url: url,
+                  turbo_frame: action.turbo_frame(current_definition)
+                }
+              })
             ) do
               if action.icon
                 render action.icon.new(class: "h-4 w-4")

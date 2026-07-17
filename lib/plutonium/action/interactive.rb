@@ -35,6 +35,15 @@ module Plutonium
         @immediate ? "#{label}?" : nil
       end
 
+      protected
+
+      # Extends Base's round-trip contract with the keywords this class's
+      # initialize requires — without them, #with would raise missing
+      # keywords when reconstructing the action.
+      def to_options
+        super.merge(interaction: @interaction, immediate: @immediate)
+      end
+
       # Factory for creating Interactive actions
       class Factory
         # TODO: move these into Plutonium::Action::Interactive

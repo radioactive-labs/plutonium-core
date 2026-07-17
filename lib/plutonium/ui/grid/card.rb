@@ -245,13 +245,13 @@ module Plutonium
         def render_show_link
           show = resource_definition.defined_actions[:show]
           url = merge_query_params(route_options_to_url(show.route_options, record), show_link_url_params)
-          a(
+          a(**show.link_attributes({
             href: url,
             data: {row_click_target: "show", turbo_frame: @show_turbo_frame || show.turbo_frame(resource_definition)},
             class: "sr-only",
             tabindex: "-1",
             "aria-label": "Open #{header_text}"
-          ) { plain "Open" }
+          })) { plain "Open" }
         end
 
         # ---------------------------------------------------------------

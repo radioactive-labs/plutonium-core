@@ -340,17 +340,23 @@ module Plutonium
               url = resource_url_for(resource_class, interaction: col_action.key, ids: ids, return_to: @board_url)
               label = col_action.label || col_action.key.to_s.humanize
 
-              link_to(
-                url,
-                class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
-                title: label,
-                data: column_action_link_data(col_action, registered)
-              ) do
+              link_to(url, column_action_link_attributes(col_action, registered, label)) do
                 render col_action.icon.new(class: "h-4 w-4") if col_action.icon
                 plain label
               end
             end
           end
+        end
+
+        # Full attribute hash for a column-action link, funnelling the
+        # registered action's author `link:` bag through the action's own
+        # merge point like every other action surface.
+        def column_action_link_attributes(col_action, registered, label)
+          registered.link_attributes({
+            class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
+            title: label,
+            data: column_action_link_data(col_action, registered)
+          })
         end
 
         # Data attributes for a column-action link, honouring the interaction's

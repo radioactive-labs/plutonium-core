@@ -74,8 +74,33 @@ action :name,
   return_to:    "/custom/path",
   route_options: {action: :foo},
   modal: :slideover,                     # :slideover / :centered — overrides the definition's modal mode
-  size:  :lg                             # :sm / :md / :lg / :xl / :auto / :full — overrides the definition's modal size
+  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full — overrides the definition's modal size
+
+  # HTML attributes (see below)
+  link:   {target: "_blank", rel: "noopener"},  # merged onto the action's <a> renderings
+  button: {data: {analytics: "archive"}}        # merged onto the button_to <form> (non-GET)
 ```
+
+### HTML attributes — `link:` / `button:`
+
+Two per-element attribute bags, deep-merged over the framework's own attributes at render time — **the author wins on every key**, recursively through nested `data`:
+
+- **`link:`** applies to every `<a>` rendered for the action: the toolbar link (GET), dropdown items (**any** HTTP method — dropdown items are always anchors, submitting via `data-turbo-method`), bulk-action links, kanban column action links, and the grid/kanban card's hidden show link (for `:show`).
+- **`button:`** applies to the `button_to` **`<form>`** element of the non-GET toolbar rendering (the form wrapper, not the inner `<button>`).
+
+```ruby
+action :documentation,
+  route_options: {url: "https://docs.example.com"},
+  resource_action: true,
+  link: {target: "_blank", rel: "noopener noreferrer", data: {analytics: "docs"}}
+```
+
+Because the author wins, you can override anything — `turbo_frame`, `class`, `data-*` — at your own risk. Two things to know:
+
+- `class:` **replaces** the framework's classes (no token append) — a bare `link: {class: "mt-2"}` removes the button styling entirely.
+- Pass `data:` as a **hash**. The merge only recurses when both sides are hashes, so a scalar `data:` replaces the framework's data wholesale (dropping `turbo_confirm`/`turbo_frame`).
+
+Both bags round-trip through [`with(...)`](#deriving-variants-action-with), so `defined_actions[:edit].with(link: {target: "_blank"})` works in `customize_actions`.
 
 ### Deriving variants — `Action#with(...)`
 

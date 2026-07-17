@@ -1141,8 +1141,25 @@ action :name,
   turbo_frame: "_top",
   route_options: {action: :foo},
   modal: :slideover,                # :slideover / :centered — overrides definition's modal mode
-  size:  :lg                        # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
+  size:  :lg,                       # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
+
+  # HTML attributes — deep-merged over the framework's, author wins on every key
+  link:   {target: "_blank", rel: "noopener"},  # every <a> rendering: toolbar GET link, dropdown items (any method), bulk links, card show link
+  button: {data: {analytics: "x"}}              # the button_to <form> wrapper (non-GET toolbar rendering), NOT the inner <button>
 ```
+
+### HTML Attributes (`link:` / `button:`)
+
+Per-element attribute bags for an action's rendered control. `link:` lands on every anchor the action renders as (dropdown items are anchors even for non-GET actions); `button:` lands on the `button_to` `<form>` element. The author wins on collisions — including `class:` (replaces, no token append) and `turbo_frame`. Pass `data:` as a hash: a scalar `data:` replaces the framework's data wholesale, dropping `turbo_confirm`/`turbo_frame`.
+
+```ruby
+action :documentation,
+  route_options: {url: "https://docs.example.com"},
+  resource_action: true,
+  link: {target: "_blank", rel: "noopener noreferrer"}   # open in a new tab
+```
+
+Both bags round-trip through `with(...)`: `defined_actions[:edit].with(link: {target: "_blank"})`.
 
 ### Conditional Actions (`condition:`)
 

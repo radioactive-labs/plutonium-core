@@ -53,6 +53,21 @@ class DefinitionActionsTest < Minitest::Test
     assert actions[:export].resource_action?
   end
 
+  def test_action_forwards_link_and_button_html_bags
+    definition_class = Class.new(Plutonium::Resource::Definition) do
+      action :docs,
+        route_options: {action: :docs},
+        resource_action: true,
+        link: {target: "_blank", rel: "noopener"},
+        button: {data: {turbo_confirm: "Sure?"}}
+    end
+
+    action = definition_class.defined_actions[:docs]
+
+    assert_equal({target: "_blank", rel: "noopener"}, action.link)
+    assert_equal({data: {turbo_confirm: "Sure?"}}, action.button)
+  end
+
   def test_interactive_action_with_interaction
     # Create a test interaction
     test_interaction = Class.new(Plutonium::Resource::Interaction) do
