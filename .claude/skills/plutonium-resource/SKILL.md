@@ -926,7 +926,7 @@ class UserDefinition < ResourceDefinition
     subheader: :email,
     body:      :bio,
     meta:      [:role, :status],  # rendered as small pills
-    footer:    :last_seen_at      # falls back to :created_at
+    footer:    :last_seen_at      # falls back to :created_at; `false` to omit
   )
 
   default_index_view :grid        # optional — initial view when no cookie

@@ -46,4 +46,29 @@ class AdminPortal::KanbanCardFieldsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Widget Alpha"
   end
+
+  # Unlike other slots, omitting :footer does NOT drop it — footer_field falls
+  # back to :created_at. When created_at isn't policy-permitted the fallback
+  # resolves to nil and the card renders a stray em-dash with no date, which is
+  # what TaskDefinition showed before it declared `footer: false`.
+  test "card_fields footer: false renders no footer line" do
+    get "/admin/tasks?view=kanban&column=todo"
+
+    assert_response :success
+    refute_includes response.body, FOOTER_P_CLASS,
+      "expected no footer paragraph because card_fields(footer: false) is declared"
+  end
+
+  # Pins the test above to the footer specifically: the card still renders its
+  # other slots, so a blanket "card is empty" regression can't make it pass.
+  test "footer: false leaves the other slots intact" do
+    get "/admin/tasks?view=kanban&column=todo"
+
+    assert_includes response.body, "Widget Alpha", "header slot still renders"
+    assert_includes response.body, "pu-badge", "meta slot still renders"
+  end
+
+  # render_footer_slot's paragraph class — the only footer-specific marker in the
+  # card HTML.
+  FOOTER_P_CLASS = 'class="text-xs text-[var(--pu-text-subtle)] mt-1"'
 end

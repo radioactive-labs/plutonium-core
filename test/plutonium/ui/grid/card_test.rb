@@ -66,3 +66,42 @@ class Plutonium::UI::Grid::CardSlotsTest < Minitest::Test
     Struct.new(:id).new(1)
   end
 end
+
+# Unit tests for Grid::Card#footer_field.
+#
+# The footer slot falls back to :created_at when undeclared, so — unlike every
+# other slot — omitting it does NOT remove the footer. `footer: false` is the
+# opt-out for cards that want no footer line at all.
+class Plutonium::UI::Grid::CardFooterFieldTest < Minitest::Test
+  def test_footer_falls_back_to_created_at_when_slot_undeclared
+    assert_equal :created_at, footer_field_for({header: :title})
+  end
+
+  def test_footer_uses_the_declared_slot
+    assert_equal :updated_at, footer_field_for({header: :title, footer: :updated_at})
+  end
+
+  def test_footer_false_disables_the_footer
+    assert_nil footer_field_for({header: :title, footer: false})
+  end
+
+  # nil keeps meaning "undeclared" (→ fall back); only false opts out. Guards the
+  # back-compat boundary: `footer: some_nil_var` must not silently drop the footer.
+  def test_footer_nil_still_falls_back
+    assert_equal :created_at, footer_field_for({header: :title, footer: nil})
+  end
+
+  def test_footer_is_absent_when_the_record_has_no_created_at
+    assert_nil footer_field_for({header: :title}, record: Struct.new(:id).new(1))
+  end
+
+  private
+
+  def footer_field_for(card_fields, record: Struct.new(:id, :created_at).new(1, Time.now))
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {} }
+    Plutonium::UI::Grid::Card.new(
+      record, resource_definition: definition, card_fields: card_fields
+    ).send(:footer_field)
+  end
+end

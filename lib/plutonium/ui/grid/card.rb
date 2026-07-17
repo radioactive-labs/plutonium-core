@@ -76,8 +76,16 @@ module Plutonium
         # Footer falls back to `:created_at` when the slot is unset and
         # the record has a created_at column. Gives cards a sensible
         # second line without forcing every grid_fields call to repeat it.
+        #
+        # That fallback means omitting the slot does NOT remove the footer —
+        # unlike every other slot, whose `if slots[:x]` guard collapses it. Pass
+        # `footer: false` to opt out. nil still means "unset" so a slot hash built
+        # from a nil variable keeps falling back rather than silently losing it.
         def footer_field
-          slots[:footer] || (record.respond_to?(:created_at) ? :created_at : nil)
+          footer = slots[:footer]
+          return nil if footer == false
+
+          footer || (record.respond_to?(:created_at) ? :created_at : nil)
         end
 
         # ---------------------------------------------------------------

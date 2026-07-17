@@ -103,6 +103,20 @@ Overrides the grid card layout for kanban cards. Uses the same slot keys as `gri
 card_fields header: :title, meta: [:status, :priority], footer: :due_at
 ```
 
+Every slot is optional and omitting it drops that line — **except `footer`, which
+falls back to `:created_at`**. To render no footer at all, opt out explicitly:
+
+```ruby
+card_fields header: :title, meta: [:status], footer: false
+```
+
+Omitting `footer:` is the common cause of a card ending in a stray `—`: the
+fallback lands on `:created_at`, and if that isn't in the policy's
+`permitted_attributes_for_index` the value resolves to nil and renders as the
+blank placeholder. Either permit `created_at`, point `footer:` at a permitted
+field, or pass `footer: false`. (A *declared* slot that's merely blank still
+shows `—` by design, so cards keep an even height.)
+
 ### `position_on` modes
 
 - **Mode A (default)** — delegates to `record.reposition!(prev_record:, next_record:)` from `Plutonium::Positioning`. Requires the model concern and a decimal column.

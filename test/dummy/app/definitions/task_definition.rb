@@ -13,9 +13,13 @@ class TaskDefinition < ::ResourceDefinition
     # card_fields declares the slot layout for every kanban card on this board.
     # header: :title  — show the task title in the card header.
     # meta: [:status] — show a status badge in the meta row.
+    # footer: false   — opt out of the footer entirely. Omitting the slot would
+    #   NOT do this: it falls back to :created_at, which isn't permitted here, so
+    #   the card rendered a stray em-dash and no date. KitchenSinkDefinition
+    #   exercises the opposite case (a declared footer that may be blank).
     # This overrides the resource definition's grid_fields (which TaskDefinition
     # does not declare, so the default would render header-only).
-    card_fields header: :title, meta: [:status]
+    card_fields header: :title, meta: [:status], footer: false
 
     # :todo declares an on_exit — the SOURCE-side counterpart to on_enter. It
     # stamps a sentinel on lost_reason when a card LEAVES :todo (cross-column
