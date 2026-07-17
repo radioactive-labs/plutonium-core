@@ -159,8 +159,28 @@
      declare its own color rule. Specific rules below still win. */
   color: var(--pu-text);
   box-shadow: var(--pu-shadow-md);
+  /* pu-input (copied onto the panel, see the guard below) would round all
+     four corners. Keep the panel square by default — the open-above/below
+     rules add back the rounding on the outer edge only. */
+  border-radius: 0;
   transform: scaleY(0);
   transform-origin: top;
+}
+
+/* SlimSelect copies the <select>'s classes onto both .ss-main and .ss-content.
+   pu-input / pu-input-(in)valid are trigger styling — on the panel their
+   translucent validation tints replace the surface background (worst in dark
+   mode, where `.dark .pu-input-invalid` outranks `.ss-content` and the panel
+   turns see-through). Re-assert the panel chrome at higher specificity. */
+.ss-content.pu-input,
+.ss-content.pu-input-invalid,
+.ss-content.pu-input-valid,
+.dark .ss-content.pu-input,
+.dark .ss-content.pu-input-invalid,
+.dark .ss-content.pu-input-valid {
+  background-color: var(--pu-surface);
+  border-color: var(--pu-border);
+  color: var(--pu-text);
 }
 
 .ss-content.ss-relative {
