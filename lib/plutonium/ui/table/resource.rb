@@ -125,6 +125,13 @@ module Plutonium
               display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
               column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
               tag_attributes = display_tag_attributes.merge(column_tag_attributes)
+
+              # A `formatter:` produces the cell string itself, so render it
+              # through the formatted-value component regardless of the column's
+              # type. Otherwise the Proc would be handed to a typed component
+              # (boolean pill, currency…) and leak into its HTML attributes.
+              tag = :formatted_value if tag_attributes.key?(:formatter)
+
               tag_block = if column_definition[:block]
                 # User-provided blocks receive the raw record for convenience
                 user_block = column_definition[:block]

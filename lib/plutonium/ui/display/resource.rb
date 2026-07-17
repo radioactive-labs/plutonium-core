@@ -207,6 +207,13 @@ module Plutonium
             field_options = field_options.merge(field_level_options)
 
             tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
+
+            # A `formatter:` produces the display string itself, so render it
+            # through the formatted-value component regardless of the field's
+            # type. Otherwise the Proc would be handed to a typed component
+            # (boolean pill, currency…) and leak into its HTML attributes.
+            tag = :formatted_value if tag_attributes.key?(:formatter)
+
             tag_block = display_definition[:block] || ->(f) {
               tag ||= f.inferred_field_component
               if tag.is_a?(Class)

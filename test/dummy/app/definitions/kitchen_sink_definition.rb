@@ -99,6 +99,13 @@ class KitchenSinkDefinition < ::ResourceDefinition
   display :status, as: :badge
   display :price, as: :currency, unit: "$"                     # has_cents: 123456 cents -> $1,234.56
 
+  # `column formatter:` on a boolean — the formatter receives the raw value and
+  # produces the display string. Regression guard: a formatter on a non-string
+  # column must not leak the Proc into the type component's HTML attributes.
+  column :active, formatter: ->(v) { v ? "Enabled" : "Disabled" }
+  # Same guard on the show/display side, on a non-string (integer) field.
+  display :age, formatter: ->(v) { "#{v} years" }
+
   # Hidden
   input :secret_token, as: :hidden
 end

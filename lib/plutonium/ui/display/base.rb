@@ -26,6 +26,13 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::PhlexiRender, :phlexi_render, **, &)
           end
 
+          # Themed as :string so a formatted value looks identical to any other
+          # string field (same wrapper + text-lg), just with the value passed
+          # through the `formatter:` proc.
+          def formatted_value_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::FormattedValue, :string, **, &)
+          end
+
           def boolean_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Boolean, :boolean, **, &)
           end
