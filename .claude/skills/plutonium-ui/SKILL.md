@@ -409,8 +409,27 @@ end
 | `render_fields` | All permitted fields |
 | `render_resource_field(name)` | One field |
 | `render_associations` | Association tabs (driven by `permitted_associations` — see [[plutonium-behavior]]) |
+| `render_before_fields` / `render_after_fields` | Hooks around the fields — **Details tab only** |
 | `object` | The record |
 | `resource_fields`, `resource_associations` | Permitted lists |
+
+### Details-tab-only content
+
+To add a banner or extra section that shows on the **Details** tab and not the association tabs, override `render_before_fields` / `render_after_fields` on the **Display** — not the ShowPage. The page-level `render_before_content` / `render_after_content` hooks wrap the whole content block, and the tablist lives inside it, so anything added there shows on every tab.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  class Display < Display
+    private
+
+    def render_before_fields
+      div(class: "pu-card pu-card-body mb-4") { plain "Only on the Details tab" }
+    end
+  end
+end
+```
+
+Both hooks are no-ops by default. `render_fields` is the Details tab body when the record has associations and the entire display when it doesn't, so the hooks fire in the Details context either way.
 
 ## Custom Table
 

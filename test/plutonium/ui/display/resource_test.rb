@@ -268,6 +268,54 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
+  # render_before_fields / render_after_fields hooks
+  # ---------------------------------------------------------------------------
+
+  def build_hookable(resource_fields: [:name])
+    component = Plutonium::UI::Display::Resource.new(
+      Organization.new(name: "Acme"),
+      resource_fields: resource_fields,
+      resource_associations: [],
+      resource_definition: FakeDefinition.new
+    )
+    component.define_singleton_method(:present_associations?) { true }
+    component
+  end
+
+  test "render_fields is a no-op wrapper around the fields when hooks are not overridden" do
+    component = build_hookable
+    called = []
+    component.define_singleton_method(:render_default_fields) { called << :default_fields }
+
+    component.send(:render_fields)
+
+    assert_equal [:default_fields], called
+  end
+
+  test "render_fields renders hooks around the fields in order" do
+    component = build_hookable
+    called = []
+    component.define_singleton_method(:render_before_fields) { called << :before }
+    component.define_singleton_method(:render_default_fields) { called << :default_fields }
+    component.define_singleton_method(:render_after_fields) { called << :after }
+
+    component.send(:render_fields)
+
+    assert_equal [:before, :default_fields, :after], called
+  end
+
+  test "Details tab body routes through the outer display's render_fields so hooks fire" do
+    component = build_hookable
+    called = []
+    component.define_singleton_method(:render_fields) { called << :render_fields }
+
+    details_display = component.send(:build_details_display)
+    details_display.view_template
+
+    assert_equal [:render_fields], called
+  end
+
+  # ---------------------------------------------------------------------------
   # association_src
   # ---------------------------------------------------------------------------
 

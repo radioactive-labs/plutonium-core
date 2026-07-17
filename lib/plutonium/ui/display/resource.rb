@@ -36,6 +36,24 @@ module Plutonium
         end
 
         def render_fields
+          render_before_fields
+          render_default_fields
+          render_after_fields
+        end
+
+        # Hooks for content that belongs to the Details tab alone. render_fields
+        # is the tab body when associations exist, and the whole display when
+        # they don't, so these fire in the Details context either way and never
+        # in an association tab. The page-level render_before_content /
+        # render_after_content hooks sit outside the tablist and would show
+        # regardless of the active tab.
+        def render_before_fields
+        end
+
+        def render_after_fields
+        end
+
+        def render_default_fields
           if metadata_fields.any?
             div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start") do
               div { render_main_field_card }
