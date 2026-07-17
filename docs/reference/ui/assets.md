@@ -240,6 +240,10 @@ Plutonium uses a comprehensive CSS custom-property system for consistent, themea
 }
 ```
 
+::: warning Mirror every `:root` override in `.dark`
+Your stylesheet loads after Plutonium's, and `:root` and `.dark` have equal specificity — so a token you override in `:root` beats Plutonium's `.dark` value even when dark mode is active. Any color token you customize in `:root` without re-asserting in `.dark` ships your light value into dark mode, where it's typically unreadable (e.g. a translucent dark `--pu-text-subtle` becomes invisible on a dark surface).
+:::
+
 ### Using tokens in templates
 
 ```erb

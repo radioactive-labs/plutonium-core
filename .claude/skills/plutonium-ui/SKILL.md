@@ -834,6 +834,8 @@ Plutonium uses CSS custom properties for surfaces, text, borders, forms, cards, 
 }
 ```
 
+🚨 **Mirror every `:root` override in `.dark`.** The app stylesheet loads after Plutonium's and `:root`/`.dark` have equal specificity, so a `:root`-only override beats Plutonium's `.dark` value even in dark mode — your light color ships into dark mode, often unreadably (e.g. translucent navy `--pu-text-subtle` is invisible on a dark surface). Every color token customized in `:root` MUST be re-asserted with a dark value in `.dark`.
+
 ## `.pu-*` component classes
 
 Ready-to-use styled components in `src/css/components.css`. **Prefer these over hardcoded `gray-X/dark:gray-Y` pairs.**
