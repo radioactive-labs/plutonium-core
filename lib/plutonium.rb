@@ -40,6 +40,13 @@ module Plutonium
 
   MODAL_FRAMES = [REMOTE_MODAL_FRAME, REMOTE_MODAL_SECONDARY_FRAME].freeze
 
+  # Query param a kanban card appends to its show URL when the board opens the
+  # card in the shared remote-modal frame. Since a kanban modal and a regular
+  # show modal both target REMOTE_MODAL_FRAME, `in_modal?` can't tell them apart
+  # — this flag lets `in_kanban_modal?` distinguish the two so the show page can
+  # render a compact detail (no metadata rail) for kanban cards only.
+  KANBAN_MODAL_PARAM = "kanban_modal"
+
   # Set up Zeitwerk loader for the Plutonium gem
   # @return [Zeitwerk::Loader] configured Zeitwerk loader instance
   Loader = Zeitwerk::Loader.for_gem(warn_on_extra_files: false).tap do |loader|

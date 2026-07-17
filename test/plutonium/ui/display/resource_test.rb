@@ -316,6 +316,54 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
   end
 
   # ---------------------------------------------------------------------------
+  # render_default_fields — metadata panel routing
+  # ---------------------------------------------------------------------------
+
+  # Stub the Phlex kit methods render_default_fields uses so we can exercise its
+  # branching without a live render context, and record which slots it renders.
+  def build_metadata_component(metadata_fields:, in_kanban_modal:)
+    component = build_resource
+    component.define_singleton_method(:metadata_fields) { metadata_fields }
+    component.define_singleton_method(:in_kanban_modal?) { in_kanban_modal }
+    component.define_singleton_method(:div) { |*a, **k, &b| b&.call }
+    component.define_singleton_method(:aside) { |*a, **k, &b| b&.call }
+    component
+  end
+
+  test "render_default_fields renders the metadata panel when metadata present and not in a kanban modal" do
+    component = build_metadata_component(metadata_fields: [:created_at], in_kanban_modal: false)
+    called = []
+    component.define_singleton_method(:render_main_field_card) { called << :main }
+    component.define_singleton_method(:render_metadata_panel) { called << :panel }
+
+    component.send(:render_default_fields)
+
+    assert_equal [:main, :panel], called
+  end
+
+  test "render_default_fields omits the metadata panel inside a kanban modal" do
+    component = build_metadata_component(metadata_fields: [:created_at], in_kanban_modal: true)
+    called = []
+    component.define_singleton_method(:render_main_field_card) { called << :main }
+    component.define_singleton_method(:render_metadata_panel) { called << :panel }
+
+    component.send(:render_default_fields)
+
+    assert_equal [:main], called, "metadata panel should be skipped in a kanban modal"
+  end
+
+  test "render_default_fields renders only the main card when no metadata declared" do
+    component = build_metadata_component(metadata_fields: [], in_kanban_modal: false)
+    called = []
+    component.define_singleton_method(:render_main_field_card) { called << :main }
+    component.define_singleton_method(:render_metadata_panel) { called << :panel }
+
+    component.send(:render_default_fields)
+
+    assert_equal [:main], called
+  end
+
+  # ---------------------------------------------------------------------------
   # association_src
   # ---------------------------------------------------------------------------
 

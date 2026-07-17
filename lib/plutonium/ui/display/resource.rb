@@ -54,7 +54,10 @@ module Plutonium
         end
 
         def render_default_fields
-          if metadata_fields.any?
+          # Inside a kanban card's modal we render a compact detail: no metadata
+          # rail. render_main_field_card already subtracts metadata_fields, so
+          # those fields stay hidden rather than folding into the main card.
+          if metadata_fields.any? && !in_kanban_modal?
             div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start") do
               div { render_main_field_card }
               aside { render_metadata_panel }

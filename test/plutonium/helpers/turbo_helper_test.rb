@@ -5,7 +5,11 @@ require "test_helper"
 class Plutonium::Helpers::TurboHelperTest < Minitest::Test
   include Plutonium::Helpers::TurboHelper
 
-  attr_reader :request
+  attr_reader :request, :params
+
+  def setup
+    @params = {}
+  end
 
   def stub_frame(value)
     headers = value.nil? ? {} : {"Turbo-Frame" => value}
@@ -51,6 +55,25 @@ class Plutonium::Helpers::TurboHelperTest < Minitest::Test
 
     stub_frame nil
     refute_predicate self, :in_secondary_modal?
+  end
+
+  def test_in_kanban_modal_true_when_modal_frame_and_param_present
+    stub_frame Plutonium::REMOTE_MODAL_FRAME
+    @params = {Plutonium::KANBAN_MODAL_PARAM => "1"}
+    assert_predicate self, :in_kanban_modal?
+  end
+
+  def test_in_kanban_modal_false_when_param_absent
+    stub_frame Plutonium::REMOTE_MODAL_FRAME
+    @params = {}
+    refute_predicate self, :in_kanban_modal?
+  end
+
+  def test_in_kanban_modal_false_outside_a_modal_even_with_param
+    # A full-page show that somehow carries the param must still show metadata.
+    stub_frame nil
+    @params = {Plutonium::KANBAN_MODAL_PARAM => "1"}
+    refute_predicate self, :in_kanban_modal?
   end
 
   def test_turbo_scoped_dom_id_outside_modal_returns_base

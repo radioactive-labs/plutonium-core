@@ -64,6 +64,20 @@ class Plutonium::UI::Kanban::CardTest < Minitest::Test
     assert_equal card_fields, captured.instance_variable_get(:@card_fields)
   end
 
+  # ─── show-frame threading ─────────────────────────────────────────────────
+
+  def test_render_grid_card_threads_show_turbo_frame_to_grid_card
+    # The frame is the sole discriminator Grid::Card keys the metadata-rail
+    # hiding off (modal frame ⟺ a kanban card's modal), so it must be threaded.
+    card = build_card_with_frame(record: stub_record(1), column_key: :todo, frame: Plutonium::REMOTE_MODAL_FRAME)
+
+    captured = nil
+    card.define_singleton_method(:render) { |c| captured = c }
+    card.send(:render_grid_card)
+
+    assert_equal Plutonium::REMOTE_MODAL_FRAME, captured.instance_variable_get(:@show_turbo_frame)
+  end
+
   private
 
   def build_card(record:, column_key:)
@@ -72,6 +86,16 @@ class Plutonium::UI::Kanban::CardTest < Minitest::Test
       column_key: column_key,
       resource_definition: nil,
       resource_fields: []
+    )
+  end
+
+  def build_card_with_frame(record:, column_key:, frame:)
+    Plutonium::UI::Kanban::Card.new(
+      record,
+      column_key: column_key,
+      resource_definition: nil,
+      resource_fields: [],
+      show_turbo_frame: frame
     )
   end
 

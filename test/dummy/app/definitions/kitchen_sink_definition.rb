@@ -108,4 +108,9 @@ class KitchenSinkDefinition < ::ResourceDefinition
 
   # Hidden
   input :secret_token, as: :hidden
+
+  # Metadata side panel on the show page. On a full-page (or regular modal) show
+  # `age` renders in the side rail; a kanban card's modal drops the rail entirely
+  # (see KanbanMetadataHiddenTest).
+  metadata :age
 end

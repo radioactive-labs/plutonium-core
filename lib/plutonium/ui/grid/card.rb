@@ -244,7 +244,7 @@ module Plutonium
         # action button works in the Table view.
         def render_show_link
           show = resource_definition.defined_actions[:show]
-          url = route_options_to_url(show.route_options, record)
+          url = merge_query_params(route_options_to_url(show.route_options, record), show_link_url_params)
           a(
             href: url,
             data: {row_click_target: "show", turbo_frame: @show_turbo_frame || show.turbo_frame(resource_definition)},
@@ -257,6 +257,28 @@ module Plutonium
         # ---------------------------------------------------------------
         # Helpers
         # ---------------------------------------------------------------
+
+        # Extra query params for the show link. A kanban card on a show_in :modal
+        # board is the only case a Grid::Card is handed the remote-modal frame
+        # explicitly (the grid/table reach that frame via the show action's own
+        # default, leaving @show_turbo_frame nil). Since a regular modal show and
+        # a kanban card's modal share the frame, tag the kanban one so the show
+        # page's in_kanban_modal? can tell them apart and drop the metadata rail.
+        def show_link_url_params
+          {Plutonium::KANBAN_MODAL_PARAM => "1"} if @show_turbo_frame == Plutonium::REMOTE_MODAL_FRAME
+        end
+
+        # Merges extra query params into a URL, preserving any the base URL
+        # already carries (e.g. a nested resource's parent id). Returns the URL
+        # unchanged when there's nothing to add.
+        def merge_query_params(url, extra)
+          return url if extra.blank?
+
+          uri = URI.parse(url)
+          merged = Rack::Utils.parse_nested_query(uri.query).merge(extra.stringify_keys)
+          uri.query = merged.to_query.presence
+          uri.to_s
+        end
 
         def header_text
           @header_text ||= helpers.display_name_of(field_value(slots[:header]) || record)

@@ -105,3 +105,64 @@ class Plutonium::UI::Grid::CardFooterFieldTest < Minitest::Test
     ).send(:footer_field)
   end
 end
+
+# Unit tests for Grid::Card#merge_query_params — the show-link URL builder used
+# to tag a kanban-modal card's show URL. Must append cleanly whether or not the
+# base URL already carries a query string.
+class Plutonium::UI::Grid::CardMergeQueryParamsTest < Minitest::Test
+  def test_appends_param_to_a_bare_path
+    assert_equal "/tasks/1?kanban_modal=1", merge("/tasks/1", {"kanban_modal" => "1"})
+  end
+
+  def test_merges_with_an_existing_query_string
+    result = merge("/tasks/1?parent_id=9", {"kanban_modal" => "1"})
+    uri = URI.parse(result)
+    assert_equal "/tasks/1", uri.path
+    assert_equal({"parent_id" => "9", "kanban_modal" => "1"}, Rack::Utils.parse_nested_query(uri.query))
+  end
+
+  def test_returns_url_unchanged_when_extra_is_blank
+    assert_equal "/tasks/1", merge("/tasks/1", nil)
+    assert_equal "/tasks/1", merge("/tasks/1", {})
+  end
+
+  private
+
+  def merge(url, extra)
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {} }
+    Plutonium::UI::Grid::Card.new(
+      Struct.new(:id).new(1), resource_definition: definition
+    ).send(:merge_query_params, url, extra)
+  end
+end
+
+# Unit tests for Grid::Card#show_link_url_params — a kanban card on a show_in
+# :modal board is the only Grid::Card handed the remote-modal frame explicitly,
+# so that frame is the signal to tag the show URL for metadata-rail hiding.
+class Plutonium::UI::Grid::CardShowLinkUrlParamsTest < Minitest::Test
+  def test_tags_the_url_when_show_frame_is_the_remote_modal_frame
+    assert_equal(
+      {Plutonium::KANBAN_MODAL_PARAM => "1"},
+      show_link_url_params_for(Plutonium::REMOTE_MODAL_FRAME)
+    )
+  end
+
+  def test_no_params_for_a_full_page_show_frame
+    assert_nil show_link_url_params_for("_top")
+  end
+
+  def test_no_params_when_no_show_frame_override_grid_and_table
+    assert_nil show_link_url_params_for(nil)
+  end
+
+  private
+
+  def show_link_url_params_for(frame)
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {} }
+    Plutonium::UI::Grid::Card.new(
+      Struct.new(:id).new(1), resource_definition: definition, show_turbo_frame: frame
+    ).send(:show_link_url_params)
+  end
+end

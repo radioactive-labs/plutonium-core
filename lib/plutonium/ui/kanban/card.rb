@@ -57,7 +57,8 @@ module Plutonium
             card_fields: @card_fields,
             # Escape the column's lazy turbo-frame: either "_top" (full page) or
             # the document-wide remote-modal frame, both of which resolve outside
-            # the kanban-col-<key> frame.
+            # the kanban-col-<key> frame. Grid::Card keys the metadata-rail hiding
+            # off this frame — the modal frame here means a kanban card's modal.
             show_turbo_frame: @show_turbo_frame
           )
         end
