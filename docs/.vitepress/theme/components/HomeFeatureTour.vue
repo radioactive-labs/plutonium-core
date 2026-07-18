@@ -52,12 +52,24 @@ const features = [
     hook: "Drag-drop boards from one block",
     file: "app/definitions/task_definition.rb",
     code: `<span class="m">kanban</span> <span class="k">do</span>
-  <span class="m">column</span> <span class="s">:todo</span>,  scope: -&gt; { where(status: <span class="s">"todo"</span>) }, on_enter: -&gt;(r) { r.update!(status: <span class="s">"todo"</span>) }, role: <span class="s">:backlog</span>
-  <span class="m">column</span> <span class="s">:doing</span>, on_enter: -&gt;(r) { r.update!(status: <span class="s">"doing"</span>) }, wip: <span class="n">3</span>
-  <span class="m">column</span> <span class="s">:done</span>,  on_enter: <span class="s">:mark_done!</span>, role: <span class="s">:done</span>
+  <span class="m">card_fields</span> header: <span class="s">:title</span>, meta: [<span class="s">:status</span>]
+
+  <span class="m">column</span> <span class="s">:todo</span>, role: <span class="s">:backlog</span>,
+    scope: -&gt; { where(status: <span class="s">"todo"</span>) },
+    on_enter: -&gt;(task) { task.update!(status: <span class="s">"todo"</span>) }
+
+  <span class="m">column</span> <span class="s">:doing</span>, wip: <span class="n">3</span>,
+    scope: -&gt; { where(status: <span class="s">"doing"</span>) },
+    on_enter: -&gt;(task) { task.update!(status: <span class="s">"doing"</span>) }
+
+  <span class="m">column</span> <span class="s">:done</span>, role: <span class="s">:done</span>, accepts: [<span class="s">:doing</span>],
+    scope: -&gt; { where(status: <span class="s">"done"</span>) },
+    on_enter: <span class="s">:mark_done!</span> <span class="k">do</span>
+    <span class="m">action</span> <span class="s">:archive_all</span>, interaction: ArchiveTasksInteraction, on: <span class="s">:all</span>, label: <span class="s">"Archive all"</span>
+  <span class="k">end</span>
 <span class="k">end</span>`,
-    shot: "/images/guides/kanban-board.png",
-    alt: "Kanban board with drag-and-drop columns, WIP limits, and quick-add",
+    shot: "/images/home/tour-kanban.png",
+    alt: "Kanban board with Todo, Doing, and Done columns — WIP limit on Doing, quick-add on Todo, and an Archive all column action on Done",
     policy: "Columns lock and drags are rejected server-side when kanban_move? says no.",
     link: "/plutonium-core/guides/kanban",
   },
@@ -65,28 +77,47 @@ const features = [
     id: "wizards",
     name: "Wizards",
     hook: "Multi-step flows with branching & resume",
-    file: "app/wizards/company_onboarding_wizard.rb",
-    code: `<span class="k">class</span> CompanyOnboardingWizard <span class="k">&lt;</span> Plutonium::Wizard::Base
-  <span class="m">step</span> <span class="s">:company</span>, label: <span class="s">"Company details"</span> <span class="k">do</span>
+    file: "app/wizards/onboard_organization_wizard.rb",
+    code: `<span class="k">class</span> OnboardOrganizationWizard <span class="k">&lt;</span> Plutonium::Wizard::Base
+  <span class="m">presents</span> label: <span class="s">"Onboard an organization"</span>,
+    description: <span class="s">"Set up a workspace for your team — a few quick steps and you're in."</span>
+
+  <span class="m">step</span> <span class="s">:identity</span>, description: <span class="s">"Tell us who you are — this names the workspace."</span> <span class="k">do</span>
     <span class="m">attribute</span> <span class="s">:name</span>, <span class="s">:string</span>
-    <span class="m">input</span> <span class="s">:name</span>
-    <span class="m">validates</span> <span class="s">:name</span>, presence: <span class="k">true</span>
-  <span class="k">end</span>
-
-  <span class="m">step</span> <span class="s">:plan</span>, label: <span class="s">"Plan"</span> <span class="k">do</span>
     <span class="m">attribute</span> <span class="s">:plan</span>, <span class="s">:string</span>
-    <span class="m">input</span> <span class="s">:plan</span>, as: <span class="s">:radio_buttons</span>, choices: <span class="s">%w[free pro]</span>
+    <span class="m">attribute</span> <span class="s">:budget</span>, <span class="s">:decimal</span>
+    <span class="m">input</span> <span class="s">:plan</span>, as: <span class="s">:select</span>, choices: [[<span class="s">"Free"</span>, <span class="s">"free"</span>], [<span class="s">"Pro"</span>, <span class="s">"pro"</span>], [<span class="s">"Enterprise"</span>, <span class="s">"enterprise"</span>]]
+    <span class="m">input</span> <span class="s">:budget</span>, as: <span class="s">:currency</span>, unit: <span class="s">"$"</span>
+    <span class="m">validates</span> <span class="s">:name</span>, presence: <span class="k">true</span>
+
+    <span class="m">form_layout</span> <span class="k">do</span>
+      <span class="m">section</span> <span class="s">:basics</span>, <span class="s">:name</span>, <span class="s">:plan</span>, <span class="s">:budget</span>, label: <span class="s">"The basics"</span>
+    <span class="k">end</span>
   <span class="k">end</span>
 
-  <span class="m">review</span> label: <span class="s">"Review &amp; submit"</span>
+  <span class="m">step</span> <span class="s">:details</span> <span class="k">do</span>
+    <span class="m">attribute</span> <span class="s">:note</span>, <span class="s">:string</span>
+    <span class="m">input</span> <span class="s">:note</span>, as: <span class="s">:textarea</span>
+  <span class="k">end</span>
+
+  <span class="m">step</span> <span class="s">:profile</span>, using: KitchenSink, fields: [<span class="s">:description</span>, <span class="s">:tier</span>]
+
+  <span class="m">step</span> <span class="s">:members</span> <span class="k">do</span>
+    <span class="m">structured_input</span> <span class="s">:invites</span>, repeat: <span class="n">5</span> <span class="k">do</span> |f|
+      f.<span class="m">input</span> <span class="s">:email</span>
+      f.<span class="m">input</span> <span class="s">:role</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="m">review</span> label: <span class="s">"Review"</span>
 
   <span class="k">def</span> <span class="f">execute</span>
-    company = Company.create!(name: data.company.name, plan: data.plan.plan)
-    succeed(company).with_message(<span class="s">"You're all set!"</span>)
+    org = Organization.create!(name: data.identity.name)
+    succeed(org).with_message(<span class="s">"Organization onboarded"</span>)
   <span class="k">end</span>
 <span class="k">end</span>`,
-    shot: "/images/guides/wizards-step.png",
-    alt: "Wizard step form with progress indicator",
+    shot: "/images/home/tour-wizard.png",
+    alt: "Wizard step page — numbered stepper with Identity, Details, Profile, Members, and Review stops, and a typed step form",
     policy: "Steps validate per-screen; the built-in review step gates the finish.",
     link: "/plutonium-core/guides/wizards",
   },
@@ -94,17 +125,24 @@ const features = [
     id: "actions",
     name: "Actions & interactions",
     hook: "Business logic with auto-generated UI",
-    file: "app/definitions/post_definition.rb",
-    code: `<span class="k">class</span> PostDefinition <span class="k">&lt;</span> ResourceDefinition
-  <span class="m">action</span> <span class="s">:publish</span>, interaction: PublishPostInteraction
+    file: "packages/blogging/app/definitions/blogging/post_definition.rb",
+    code: `<span class="k">class</span> Blogging::PostDefinition <span class="k">&lt;</span> Blogging::ResourceDefinition
+  <span class="m">scope</span> <span class="s">:published</span>
+  <span class="m">scope</span> <span class="s">:drafts</span>
+  <span class="m">scope</span> <span class="s">:archived</span>
+
+  <span class="m">action</span> <span class="s">:publish</span>, interaction: Blogging::PublishPost
+  <span class="m">action</span> <span class="s">:archive</span>, interaction: Blogging::ArchivePost
 <span class="k">end</span>
 
-<span class="c"># app/policies/post_policy.rb</span>
-<span class="k">class</span> PostPolicy <span class="k">&lt;</span> ResourcePolicy
-  <span class="k">def</span> <span class="f">publish?</span> = update? &amp;&amp; record.draft?
+<span class="c"># packages/blogging/app/policies/blogging/post_policy.rb</span>
+<span class="k">class</span> Blogging::PostPolicy <span class="k">&lt;</span> Blogging::ResourcePolicy
+  <span class="k">def</span> <span class="f">publish?</span>
+    record.is_a?(Blogging::Post) &amp;&amp; record.draft?
+  <span class="k">end</span>
 <span class="k">end</span>`,
-    shot: "/images/guides/custom-actions-bulk.png",
-    alt: "Bulk action running against selected table rows",
+    shot: "/images/home/tour-actions.png",
+    alt: "Blog posts table with the row actions menu open — Publish Post appears on the draft row only",
     policy: "No publish? policy method, no button — it disappears, it doesn't disable.",
     link: "/plutonium-core/guides/custom-actions",
   },
@@ -112,18 +150,20 @@ const features = [
     id: "tenancy",
     name: "Multi-tenancy & nesting",
     hook: "Scoping, invites, nested resources",
-    file: "packages/customer_portal/lib/engine.rb",
-    code: `<span class="k">class</span> CustomerPortal::Engine <span class="k">&lt;</span> Rails::Engine
-  <span class="k">include</span> Plutonium::Portal::Engine
+    file: "packages/org_portal/lib/engine.rb",
+    code: `<span class="k">module</span> OrgPortal
+  <span class="k">class</span> Engine <span class="k">&lt;</span> Rails::Engine
+    <span class="k">include</span> Plutonium::Portal::Engine
 
-  config.after_initialize <span class="k">do</span>
-    <span class="m">scope_to_entity</span> Organization, strategy: <span class="s">:path</span>
+    config.after_initialize <span class="k">do</span>
+      <span class="m">scope_to_entity</span> ::Organization, strategy: <span class="s">:path</span>
+    <span class="k">end</span>
   <span class="k">end</span>
 <span class="k">end</span>
 
-<span class="c"># → /customer/42/posts — every query scoped to org 42</span>`,
-    shot: "/images/guides/multi-tenancy-dashboard.png",
-    alt: "Tenant-scoped portal dashboard",
+<span class="c"># → /org/1 — every count on this dashboard is scoped to organization 1</span>`,
+    shot: "/images/home/tour-tenancy.png",
+    alt: "Tenant-scoped portal dashboard where every resource card counts only the current organization's records",
     policy: "Every query flows through the entity scope — no default_scope hacks.",
     link: "/plutonium-core/guides/multi-tenancy",
   },
