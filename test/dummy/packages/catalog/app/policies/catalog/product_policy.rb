@@ -1,38 +1,22 @@
 class Catalog::ProductPolicy < Catalog::ResourcePolicy
-  def publish?
-    record.is_a?(Catalog::Product) && record.draft?
-  end
+  def publish? = record.draft?
 
-  def discontinue?
-    record.is_a?(Catalog::Product) && record.active?
-  end
+  def discontinue? = record.active?
 
-  def collect_spec?
-    record.is_a?(Catalog::Product)
-  end
+  def collect_spec? = true
 
-  def collect_spec_row?
-    record.is_a?(Catalog::Product)
-  end
+  def collect_spec_row? = true
 
-  def assign_reviewer?
-    record.is_a?(Catalog::Product)
-  end
+  def assign_reviewer? = true
 
-  def conditioned_select?
-    record.is_a?(Catalog::Product)
-  end
+  def conditioned_select? = true
 
   # Always permitted by policy; visibility is governed entirely by each
   # action's `condition:` proc, exercising the separation between
   # authorization (policy) and display-only conditions.
-  def draft_only_demo?
-    record.is_a?(Catalog::Product)
-  end
+  def draft_only_demo? = true
 
-  def param_gated_demo?
-    record.is_a?(Catalog::Product)
-  end
+  def param_gated_demo? = true
 
   def permitted_attributes_for_create
     [:name, :description, :price, :status, :featured, :metadata, :category, :user, :organization, :variants, :product_detail, :tier]

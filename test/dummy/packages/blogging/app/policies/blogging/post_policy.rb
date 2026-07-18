@@ -22,14 +22,15 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
   end
 
   # Custom actions
+  #
+  # Record-action policy methods always receive a record instance, so plain
+  # state checks suffice. Core permissions are different: read? backs both
+  # show? (instance) and index? (collection routes, where `record` is the
+  # resource CLASS) — custom logic in read? must handle both.
 
-  def publish?
-    record.is_a?(Blogging::Post) && record.draft?
-  end
+  def publish? = record.draft?
 
-  def archive?
-    record.is_a?(Blogging::Post) && record.published?
-  end
+  def archive? = record.published?
 
   def touch?
     true

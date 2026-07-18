@@ -55,6 +55,8 @@ def destroy?
 end
 ```
 
+🚨 **`record` is the resource CLASS on collection routes.** `read?` backs both `show?` (called with the record) and `index?` (called with the class — there is no single record to pass). The same goes for `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates. So `def read? = record.published?` raises `NoMethodError` the moment the index renders. Keep record-state rules out of these methods: filter what the list shows in `relation_scope` (step 6 below), and gate individual records in `show?` (which always receives the record). Record-action methods like `publish?` are safe — they are always evaluated against an instance.
+
 ### 4. Declare attribute permissions
 
 ```ruby

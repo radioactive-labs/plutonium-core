@@ -423,6 +423,8 @@ end
 | `search?` | `index?` | Search-specific rules |
 | `typeahead?` | `index?` | Autocomplete-specific rules |
 
+🚨 **`record` is the resource CLASS on collection routes** (`current_policy_subject = resource_record? || resource_class`). `read?` backs both `show?` (instance) and `index?` (class); `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates (incl. kanban column actions) are class-backed too. `def read? = record.published?` raises `NoMethodError` on index — filter the list in `relation_scope`, gate individual records in `show?`. Record actions (`publish?` etc.) and bulk actions are always evaluated per record instance — no type guard needed.
+
 `export_csv?` is the exception — it defaults to `false` (not derived) so CSV export is strictly opt-in. Override it to `true` (or `index?`) to enable the built-in export. The exported column set is `permitted_attributes_for_export` (defaults to `permitted_attributes_for_index`). See [[plutonium-resource]] → CSV Export.
 
 ### Custom actions
