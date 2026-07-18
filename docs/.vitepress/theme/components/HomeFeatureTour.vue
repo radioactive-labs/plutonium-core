@@ -135,6 +135,18 @@ const features = [
   <span class="m">action</span> <span class="s">:archive</span>, interaction: Blogging::ArchivePost
 <span class="k">end</span>
 
+<span class="c"># packages/blogging/app/interactions/blogging/publish_post.rb</span>
+<span class="k">class</span> Blogging::PublishPost <span class="k">&lt;</span> Blogging::ResourceInteraction
+  <span class="m">presents</span> label: <span class="s">"Publish Post"</span>, icon: Phlex::TablerIcons::Send
+
+  <span class="m">attribute</span> <span class="s">:resource</span>
+
+  <span class="k">def</span> <span class="f">execute</span>
+    resource.update!(status: <span class="s">:published</span>)
+    succeed(resource).with_message(<span class="s">"Post published successfully!"</span>)
+  <span class="k">end</span>
+<span class="k">end</span>
+
 <span class="c"># packages/blogging/app/policies/blogging/post_policy.rb</span>
 <span class="k">class</span> Blogging::PostPolicy <span class="k">&lt;</span> Blogging::ResourcePolicy
   <span class="k">def</span> <span class="f">publish?</span>
@@ -212,6 +224,7 @@ const selected = ref(features[0].id)
   color: #8b949e; background: #161b22;
   border: 1px solid #30363d; border-bottom: 0;
   border-radius: 8px 8px 0 0; padding: 8px 14px;
+  overflow-wrap: anywhere;
 }
 .ft-code {
   background: var(--pu-bg-dark); color: var(--pu-term-text);
