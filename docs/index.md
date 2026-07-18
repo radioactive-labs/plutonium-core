@@ -8,11 +8,11 @@ aside: false
 
 <HomeStopWriting />
 
-<HomePillars />
-
 <HomeWalkthrough />
 
-<HomeAudienceSplit />
+<HomeFeatureTour />
+
+<HomeWhyPlutonium />
 
 <HomeInTheBox />
 

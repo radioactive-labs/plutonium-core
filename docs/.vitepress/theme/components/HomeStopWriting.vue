@@ -19,6 +19,7 @@
             <span><b>Full CRUD</b></span>
             <span><b>+ Search</b></span>
             <span><b>+ Filters</b></span>
+            <span><b>+ Custom actions</b></span>
             <span><b>+ Bulk actions</b></span>
           </div>
         </div>

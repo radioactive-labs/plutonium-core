@@ -37,7 +37,7 @@ Slots between `HomeWalkthrough` and the merged band.
 - **Mobile (≤768px):** the rail reflows into an accordion — all four heads always
   visible, one open at a time, same panel content inside.
 - **Panel anatomy (each feature):**
-  1. File-path caption bar (e.g. `app/resource_registries/task_definition.rb`)
+  1. File-path caption bar (e.g. `app/definitions/task_definition.rb`)
   2. DSL code snippet, dark terminal styling (`--pu-bg-dark`), syntax-highlighted
   3. Real screenshot below the code, reused from `docs/public/images/guides/`
   4. A one-line "policy-aware" callout: the button/column/step disappears when the
