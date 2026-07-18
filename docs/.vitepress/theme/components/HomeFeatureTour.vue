@@ -140,6 +140,10 @@ const features = [
   <span class="k">def</span> <span class="f">publish?</span>
     record.is_a?(Blogging::Post) &amp;&amp; record.draft?
   <span class="k">end</span>
+
+  <span class="k">def</span> <span class="f">archive?</span>
+    record.is_a?(Blogging::Post) &amp;&amp; record.published?
+  <span class="k">end</span>
 <span class="k">end</span>`,
     shot: "/images/home/tour-actions.png",
     alt: "Blog posts table with the row actions menu open — Publish Post appears on the draft row only",
