@@ -18,7 +18,7 @@ module Plutonium
       # - +completed+ — finalize ran `execute` to completion.
       # - +redirect_step+ — finalize found a completeness gap; the step to bounce to.
       # - +value+ — the successful `execute` outcome's value.
-      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value) do
+      Result = Struct.new(:ok, :errors, :completed, :redirect_step, :value, :messages) do
         def ok? = !!ok
 
         def completed? = !!completed
@@ -243,6 +243,13 @@ module Plutonium
         true
       end
 
+      # Stage a step's params for a render-only refresh (the pre_submit re-render).
+      # Unlike `advance` it never persists, so the step isn't marked submitted and
+      # an abandoned refresh leaves nothing durable.
+      def stage_inputs(step_key, params)
+        stage(step_key, params)
+      end
+
       # Move the cursor to the previous visible step. No validation; never discards
       # staged data (§6 — back is navigation, not submission).
       def back
@@ -301,7 +308,7 @@ module Plutonium
           else
             @store.clear(@instance_key)
           end
-          Result.new(ok: true, completed: true, value: outcome.value)
+          Result.new(ok: true, completed: true, value: outcome.value, messages: outcome.messages)
         else
           revert_completing!
           Result.new(ok: false, errors: wizard_errors)

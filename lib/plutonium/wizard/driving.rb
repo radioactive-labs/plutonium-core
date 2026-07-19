@@ -170,6 +170,22 @@ module Plutonium
         respond_to_wizard_result(runner, result)
       end
 
+      # DELETE (/:token) — cancel run.
+      def wizard_cancel
+        require_wizard_authentication!
+        runner = build_wizard_runner
+        deny_wizard_resume_for_other_user!(runner)
+        authorize_wizard_entry!(runner)
+
+        runner.cancel
+        clear_wizard_session_token
+
+        # PRG back to the bare launch path (or return_to), which will reload the chooser or start a new run.
+        # But we'll redirect back to the launch url of the wizard.
+        target = wizard_launch_url
+        redirect_to target, status: :see_other, allow_other_host: false
+      end
+
       # Advance the current step; if the POSTed step is the last visible step,
       # finalize. The last visible step is the terminal `review` (no fields), so
       # finalize runs directly; otherwise validate + stage + move the cursor.
@@ -214,8 +230,21 @@ module Plutonium
         # `:return_to` (the page the user was bounced FROM into a one-time wizard)
         # still wins, so they resume where they were headed.
         clear_wizard_return_to
+        if result.respond_to?(:messages)
+          result.messages.each do |message, type|
+            flash[type] = message
+          end
+        end
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
-        redirect_to target, status: :see_other, allow_other_host: false
+
+        respond_to do |format|
+          format.turbo_stream do
+            render turbo_stream: helpers.turbo_stream_redirect(target)
+          end
+          format.html do
+            redirect_to target, status: :see_other, allow_other_host: false
+          end
+        end
       end
 
       # Drop a guest run's token from the Rails session (on completion). A no-op
@@ -274,6 +303,8 @@ module Plutonium
       # the step form; otherwise re-render the whole page. Mirrors interactive
       # actions, where conditional inputs depend on sibling values.
       def render_wizard_pre_submit(runner)
+        runner.stage_inputs(runner.current_step.key, wizard_extracted_inputs(runner).stringify_keys)
+
         form = wizard_step_form(runner)
         respond_to do |format|
           format.turbo_stream do
@@ -488,12 +519,21 @@ module Plutonium
       def wizard_params(runner)
         return {} if params[:wizard].blank?
 
+        cleaned = wizard_extracted_inputs(runner)
+        stage_wizard_uploads!(runner.current_step, cleaned)
+        cleaned.stringify_keys
+      end
+
+      # Like {#wizard_params} but WITHOUT staging uploads — shared with the
+      # `pre_submit` re-render, which must not stage them, or every `change` event
+      # would push the selected file to the backend cache.
+      def wizard_extracted_inputs(runner)
+        return {} if params[:wizard].blank?
+
         step = runner.current_step
         form = wizard_step_form(runner)
         extracted = form.extract_input(params, view_context:)[:wizard] || {}
-        cleaned = clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
-        stage_wizard_uploads!(step, cleaned)
-        cleaned.stringify_keys
+        clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
       end
 
       # Replace each attachment field's value with a staged TOKEN, minting one from
@@ -632,6 +672,11 @@ module Plutonium
 
       # @return [String] the GET URL for a given step of this wizard.
       def wizard_step_url(step_key)
+        raise NotImplementedError
+      end
+
+      # @return [String] the GET URL for launching this wizard.
+      def wizard_launch_url
         raise NotImplementedError
       end
     end

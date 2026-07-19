@@ -14,10 +14,15 @@ module Plutonium
         # @param inputs [Hash] the step's input config ({name => {options:}}), so a
         #   field's declared `as:` informs the display component (e.g. a `:text`
         #   input renders via the markdown/text display tag).
-        def initialize(object, fields:, inputs: {}, **options)
+        # @param step [Plutonium::Wizard::Step] the step being summarised; used to
+        #   apply the ChoicesData decorator (label resolution for select inputs).
+        def initialize(object, fields:, inputs: {}, step: nil, **options)
           options[:key] = :wizard
           @summary_fields = fields
           @summary_inputs = inputs
+          # Resolve select/choices fields to human-readable labels so the review
+          # page shows "John Doe" instead of "42", "Cash" instead of "cash", etc.
+          object = Plutonium::Wizard::ChoicesData.wrap(object, step) if step
           super(object, **options)
         end
 
