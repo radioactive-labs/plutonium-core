@@ -55,7 +55,7 @@ module Pu
         return if file_includes?(deploy_file, "litestream:")
 
         insert_into_file deploy_file, after: /^servers:.*\n/ do
-          <<~YAML
+          <<~YAML.indent(2)
             litestream:
               hosts:
                 - <%= ENV['DEPLOY_HOST'] %>

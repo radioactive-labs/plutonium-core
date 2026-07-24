@@ -75,7 +75,7 @@ module Pu
         return if file_includes?(deploy_file, "job:")
 
         insert_into_file deploy_file, after: /^servers:.*\n/ do
-          <<~YAML
+          <<~YAML.indent(2)
             job:
               hosts:
                 - <%= ENV['DEPLOY_HOST'] %>
