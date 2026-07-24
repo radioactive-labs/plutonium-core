@@ -52,7 +52,8 @@ export default defineConfig(withMermaid({
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Guides", link: "/guides/" },
       { text: "Reference", link: "/reference/" },
-      { text: "For AI Agents", link: "/ai" }
+      { text: "For AI Agents", link: "/ai" },
+      { text: "Radioactive Labs", link: "https://radioactive-labs.github.io/" }
     ],
     sidebar: {
       '/getting-started/': [
@@ -235,7 +236,7 @@ export default defineConfig(withMermaid({
     ],
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024-present Stefan Froelich'
+      copyright: 'Copyright © 2024-present Stefan Froelich · <a href="https://radioactive-labs.github.io/" target="_blank" rel="noopener">Radioactive Labs</a>'
     }
   },
   cleanUrls: true,
