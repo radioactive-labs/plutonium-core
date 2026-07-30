@@ -64,10 +64,9 @@ class Plutonium::Core::Controllers::EntityScopingTest < ActiveSupport::TestCase
 
     # This is the picker path: policy_for(record: SomeClass) with no context:,
     # which falls back to the memoized authorization_context.
-    context = @controller.send(:policy_for, record: Object.new, with: Class.new(Plutonium::Resource::Policy))
-      .instance_variable_get(:@authorization_context)
+    policy = @controller.send(:policy_for, record: Object.new, with: Class.new(Plutonium::Resource::Policy))
 
-    assert_equal @controller.entity, context[:entity_scope]
+    assert_equal @controller.entity, policy.entity_scope
   end
 
   test "current_scoped_entity memoizes and does not re-resolve" do
@@ -86,5 +85,18 @@ class Plutonium::Core::Controllers::EntityScopingTest < ActiveSupport::TestCase
     @controller.current_user = nil
 
     assert_nil @controller.send(:current_scoped_entity)
+  end
+
+  test "a strategy that resolves nothing leaves the authorization context memo intact" do
+    @controller.entity = nil
+
+    assert_nil @controller.send(:current_scoped_entity)
+
+    # The memo built during lookup already says `entity_scope: nil`, which is
+    # correct, so it must survive. nil is not memoized into
+    # @current_scoped_entity, so an unconditional reset would re-resolve and
+    # rebuild the context on every call - and current_scoped_entity is a
+    # helper_method that views call repeatedly.
+    assert_same @controller.context_seen_during_lookup, @controller.authorization_context
   end
 end

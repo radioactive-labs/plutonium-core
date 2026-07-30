@@ -79,6 +79,8 @@ class OrgPortal::EntityScopeContextTest < ActionDispatch::IntegrationTest
 
     get "/org/#{other_org.to_param}/catalog/products"
 
-    refute_equal 200, status, "expected no access to an org the user has no membership in"
+    # fetch_entity_from_path scopes by `associated_with(current_user)` and then
+    # `first!`, so a non-member gets RecordNotFound rather than a redirect.
+    assert_response :not_found
   end
 end
