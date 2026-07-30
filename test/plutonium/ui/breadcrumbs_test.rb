@@ -72,6 +72,74 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
     assert_includes output, "m19.707 9.293"
   end
 
+  test "foldable breadcrumb items are measurable and tagged for the controller" do
+    component = Plutonium::UI::Breadcrumbs.new
+    output = render_component(component) do
+      component.send(:render_breadcrumb_item, foldable: true) { "Middle" }
+    end
+
+    # `shrink-0` so the controller measures natural widths — proportional CSS
+    # shrinking would truncate every label into a stub instead of folding.
+    li_classes = output[/<li class="([^"]*)"/, 1]
+    assert_includes li_classes, "shrink-0"
+    assert_includes output, 'data-breadcrumbs-target="item"'
+  end
+
+  test "the last breadcrumb item is never foldable but can ellipsize" do
+    component = Plutonium::UI::Breadcrumbs.new
+    output = render_component(component) do
+      component.send(:render_breadcrumb_item, foldable: false) { "Current" }
+    end
+
+    li_classes = output[/<li class="([^"]*)"/, 1]
+    refute_includes li_classes, "hidden"
+    # min-w-0 lets the controller drop shrink-0 as a last resort.
+    assert_includes li_classes, "min-w-0"
+    assert_includes output, 'data-breadcrumbs-target="last"'
+  end
+
+  test "the overflow menu starts hidden and lists every foldable segment" do
+    component = Plutonium::UI::Breadcrumbs.new
+    component.define_singleton_method(:middle_items) do
+      [component.send(:segment, "Posts", "/posts")]
+    end
+    # `segment` builds a link via Rails' link_to; stub it to the harness's <a>.
+    component.define_singleton_method(:link_to) do |url, **attrs, &blk|
+      a(href: url, class: attrs[:class], &blk)
+    end
+
+    output = render_component(component) do
+      component.send(:render_overflow_menu)
+    end
+
+    # Hidden until the controller actually folds something away.
+    assert_includes output[/<li class="([^"]*)"/, 1], "hidden"
+    assert_includes output, 'data-breadcrumbs-target="overflow"'
+    assert_includes output, 'data-breadcrumbs-target="menuItem"'
+    # Reuses the shared dropdown controller rather than a bespoke one.
+    assert_includes output, 'data-controller="resource-drop-down"'
+    assert_includes output, 'data-resource-drop-down-target="trigger"'
+    assert_includes output, 'data-resource-drop-down-target="menu"'
+    assert_includes output, "TablerIcons::Dots"
+    # The foldable segments are listed inside the popup as real links.
+    assert_includes output, 'href="/posts"'
+    assert_includes output, "Posts"
+  end
+
+  test "middle_items excludes the last segment, which is never folded" do
+    component = Plutonium::UI::Breadcrumbs.new
+    component.instance_variable_set(:@breadcrumb_items, [:a, :b, :c])
+
+    assert_equal [:a, :b], component.send(:middle_items)
+  end
+
+  test "middle_items is empty when there is only one segment" do
+    component = Plutonium::UI::Breadcrumbs.new
+    component.instance_variable_set(:@breadcrumb_items, [:only])
+
+    assert_empty component.send(:middle_items)
+  end
+
   private
 
   def render_component(component, &block)
@@ -86,11 +154,27 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
         @_output << text.to_s
       end
 
-      def li(**attrs, &block)
-        @_output << "<li class=\"#{attrs[:class]}\">"
-        yield if block
-        @_output << "</li>"
+      # Renders `data: {foo_bar: "x"}` as ` data-foo-bar="x"` so tests can
+      # assert on the Stimulus wiring the component emits.
+      def data_attrs(attrs)
+        (attrs[:data] || {}).map { |k, v| " data-#{k.to_s.tr("_", "-")}=\"#{v}\"" }.join
       end
+
+      def element(tag, attrs, &block)
+        @_output << "<#{tag} class=\"#{attrs[:class]}\"#{data_attrs(attrs)}>"
+        yield if block
+        @_output << "</#{tag}>"
+      end
+
+      def li(**attrs, &block) = element("li", attrs, &block)
+
+      def span(**attrs, &block) = element("span", attrs, &block)
+
+      def button(**attrs, &block) = element("button", attrs, &block)
+
+      def div(**attrs, &block) = element("div", attrs, &block)
+
+      def ul(**attrs, &block) = element("ul", attrs, &block)
 
       def a(**attrs, &block)
         @_output << "<a href=\"#{attrs[:href]}\" class=\"#{attrs[:class]}\">"
@@ -98,10 +182,10 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
         @_output << "</a>"
       end
 
-      def div(**attrs, &block)
-        @_output << "<div class=\"#{attrs[:class]}\">"
-        yield if block
-        @_output << "</div>"
+      # Nested Phlex components (e.g. Tabler icons) render as a marker so tests
+      # can assert which component was used without a real render context.
+      def render(component)
+        @_output << "<#{component.class.name}/>"
       end
 
       def svg(**attrs, &block)

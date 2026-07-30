@@ -102,6 +102,7 @@ module Plutonium
             button(
               type: "button",
               class: "pu-btn pu-btn-secondary px-4 py-3 text-base",
+              aria: {expanded: "false"},
               data: {resource_drop_down_target: "trigger"}
             ) do
               render Phlex::TablerIcons::Filter.new(class: "w-4 h-4 inline-block align-text-bottom")
