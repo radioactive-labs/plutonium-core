@@ -72,7 +72,7 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
     assert_includes output, "m19.707 9.293"
   end
 
-  test "collapsible breadcrumb items are hidden below md" do
+  test "foldable breadcrumb items are measurable and tagged for the controller" do
     component = Plutonium::UI::Breadcrumbs.new
     output = render_component(component) do
       component.send(:render_breadcrumb_item, foldable: true) { "Middle" }

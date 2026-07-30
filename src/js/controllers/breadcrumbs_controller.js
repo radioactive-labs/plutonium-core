@@ -4,7 +4,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Folds the middle of the trail into an overflow menu, but only as far as it
 // has to: segments are measured and dropped left-to-right until the trail fits
-// on one line. The dashboard link and the current record always survive.
+// on one line. The dashboard link and the last segment always survive.
 //
 // This is deliberately width-driven rather than breakpoint-driven — a trail
 // with one short segment fits fine on a phone, and a trail with a long record
@@ -31,14 +31,18 @@ export default class extends Controller {
   }
 
   disconnect() {
-    this.observer?.disconnect()
+    this.observer.disconnect()
   }
 
   reflow() {
-    if (!this.hasListTarget) return
+    // `fonts.ready` can resolve after a Turbo navigation has already torn this
+    // element out, where every measurement reads 0 and we would "helpfully"
+    // unfold the whole trail in a detached tree.
+    if (!this.element.isConnected || !this.hasListTarget) return
 
     // Reset to "everything inline" so we measure natural widths, not the
-    // previous pass's decisions.
+    // previous pass's decisions. Nothing paints mid-reflow, so hiding the
+    // control here is invisible even when it ends up shown again below.
     this.itemTargets.forEach((el) => this.#show(el))
     if (this.hasOverflowTarget) this.#hide(this.overflowTarget)
     if (this.hasLastTarget) this.lastTarget.classList.add("shrink-0")
@@ -56,7 +60,7 @@ export default class extends Controller {
         }
       }
 
-      // Nothing left to fold and it still doesn't fit: let the current record
+      // Nothing left to fold and it still doesn't fit: let the last segment
       // ellipsize rather than push the trail off-screen.
       if (this.#overflows() && this.hasLastTarget) {
         this.lastTarget.classList.remove("shrink-0")
@@ -66,8 +70,11 @@ export default class extends Controller {
     this.#syncMenu()
   }
 
+  // Measured on the nav rather than the <ol>, because the nav is the element
+  // that actually clips (`overflow-hidden`). A non-scrolling box reports
+  // overflow inconsistently once direction is rtl; the clipping box doesn't.
   #overflows() {
-    return this.listTarget.scrollWidth > this.listTarget.clientWidth
+    return this.element.scrollWidth > this.element.clientWidth
   }
 
   #show(el) {
@@ -90,6 +97,16 @@ export default class extends Controller {
       row.classList.toggle("hidden", !folded[i])
     })
 
-    if (!folded.some(Boolean)) this.#hide(this.overflowTarget)
+    if (!folded.some(Boolean)) this.#closeOverflowMenu()
+  }
+
+  // The trail grew back far enough that the control is gone. Its menu may
+  // still be open — and teleported to <body>, so hiding the control does not
+  // hide the menu. Popper would go on positioning it against a display:none
+  // trigger, whose rect is all zeros, parking the menu in the viewport corner.
+  #closeOverflowMenu() {
+    const host = this.overflowTarget.querySelector('[data-controller~="resource-drop-down"]')
+    const dropdown = this.application.getControllerForElementAndIdentifier(host, "resource-drop-down")
+    if (dropdown?.visible) dropdown.hide()
   }
 }

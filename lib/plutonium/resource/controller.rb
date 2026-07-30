@@ -24,7 +24,8 @@ module Plutonium
       included do
         after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }
 
-        helper_method :current_parent, :current_nested_association, :resource_record!, :resource_record?, :resource_param_key, :resource_class
+        helper_method :current_parent, :current_nested_association, :resource_record!, :resource_record?, :resource_param_key, :resource_class,
+          :singular_resource_context?
 
         # Use class_attribute for proper inheritance
         class_attribute :_resource_class, instance_accessor: false

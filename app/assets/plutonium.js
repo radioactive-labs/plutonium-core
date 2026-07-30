@@ -29375,6 +29375,72 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/breadcrumbs_controller.js
+  var breadcrumbs_controller_default = class extends Controller {
+    static targets = ["list", "item", "last", "overflow", "menuItem"];
+    connect() {
+      this.menuItems = this.menuItemTargets;
+      this.observer = new ResizeObserver(() => this.reflow());
+      this.observer.observe(this.element);
+      this.reflow();
+      document.fonts?.ready.then(() => this.reflow());
+    }
+    disconnect() {
+      this.observer.disconnect();
+    }
+    reflow() {
+      if (!this.element.isConnected || !this.hasListTarget) return;
+      this.itemTargets.forEach((el) => this.#show(el));
+      if (this.hasOverflowTarget) this.#hide(this.overflowTarget);
+      if (this.hasLastTarget) this.lastTarget.classList.add("shrink-0");
+      if (this.#overflows()) {
+        if (this.hasOverflowTarget) {
+          this.#show(this.overflowTarget);
+          for (const item of this.itemTargets) {
+            if (!this.#overflows()) break;
+            this.#hide(item);
+          }
+        }
+        if (this.#overflows() && this.hasLastTarget) {
+          this.lastTarget.classList.remove("shrink-0");
+        }
+      }
+      this.#syncMenu();
+    }
+    // Measured on the nav rather than the <ol>, because the nav is the element
+    // that actually clips (`overflow-hidden`). A non-scrolling box reports
+    // overflow inconsistently once direction is rtl; the clipping box doesn't.
+    #overflows() {
+      return this.element.scrollWidth > this.element.clientWidth;
+    }
+    #show(el) {
+      el.classList.remove("hidden");
+      el.classList.add("flex");
+    }
+    #hide(el) {
+      el.classList.remove("flex");
+      el.classList.add("hidden");
+    }
+    // A menu row is shown exactly when its inline twin has been folded away.
+    #syncMenu() {
+      if (!this.hasOverflowTarget) return;
+      const folded = this.itemTargets.map((el) => el.classList.contains("hidden"));
+      this.menuItems.forEach((row, i4) => {
+        row.classList.toggle("hidden", !folded[i4]);
+      });
+      if (!folded.some(Boolean)) this.#closeOverflowMenu();
+    }
+    // The trail grew back far enough that the control is gone. Its menu may
+    // still be open — and teleported to <body>, so hiding the control does not
+    // hide the menu. Popper would go on positioning it against a display:none
+    // trigger, whose rect is all zeros, parking the menu in the viewport corner.
+    #closeOverflowMenu() {
+      const host = this.overflowTarget.querySelector('[data-controller~="resource-drop-down"]');
+      const dropdown = this.application.getControllerForElementAndIdentifier(host, "resource-drop-down");
+      if (dropdown?.visible) dropdown.hide();
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -29416,6 +29482,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("wizard", wizard_controller_default);
     application2.register("kanban", kanban_controller_default);
     application2.register("currency-input", currency_input_controller_default);
+    application2.register("breadcrumbs", breadcrumbs_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

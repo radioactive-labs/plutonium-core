@@ -53,9 +53,11 @@ module Plutonium
       end
 
       # The segments eligible to be folded into the overflow menu. The last one
-      # — the record you are actually looking at — is never foldable.
+      # is never foldable — it is the deepest thing the trail knows about, which
+      # is the record on new/edit pages but the resource index on show pages,
+      # where the record itself is not part of the trail at all.
       def middle_items
-        breadcrumb_items[0...-1] || []
+        breadcrumb_items[0...-1]
       end
 
       def render_items
@@ -124,9 +126,11 @@ module Plutonium
       end
 
       def collect_resource_breadcrumbs(items)
-        is_singular_route = current_engine.routes.resource_route_config_lookup[resource_class.model_name.plural][:route_type] == :resource
-
-        if is_singular_route
+        # Ask the controller, not the top-level route registry: a has_one
+        # association nests as a singular route regardless of how the child was
+        # registered, and only the controller's config lookup is keyed by
+        # "parent/association" and therefore knows that.
+        if singular_resource_context?
           collect_singular_resource_breadcrumb(items)
         else
           collect_plural_resource_breadcrumbs(items)
@@ -134,11 +138,12 @@ module Plutonium
       end
 
       def collect_singular_resource_breadcrumb(items)
-        linkable = resource_record!.persisted? && action_name != "show"
-        items << segment(
-          resource_name(resource_class),
-          linkable ? resource_url_for(resource_record!) : nil
-        )
+        # A singular resource has no index, so the only segment it can add is
+        # itself — and on `show` the page title already names it, exactly as the
+        # plural branch omits the record on its own show page.
+        return unless resource_record!.persisted? && action_name != "show"
+
+        items << segment(resource_name(resource_class), resource_url_for(resource_record!))
       end
 
       def collect_plural_resource_breadcrumbs(items)
@@ -218,7 +223,8 @@ module Plutonium
       # Segments are `shrink-0` so the controller measures natural widths and
       # can detect real overflow. The last one is additionally `min-w-0` so the
       # controller can drop its `shrink-0` and let it ellipsize once there is
-      # nothing left to fold.
+      # nothing left to fold. Its `last` target must stay in lockstep with
+      # `middle_items` — the controller pairs inline twins to menu rows by index.
       def render_breadcrumb_item(foldable: false, &)
         if foldable
           li(class: "flex items-center shrink-0", data: {breadcrumbs_target: "item"}) do
