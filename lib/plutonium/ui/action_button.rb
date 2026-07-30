@@ -97,7 +97,7 @@ module Plutonium
         end
 
         a(**@action.link_attributes(link_attrs)) do
-          render @action.icon.new(class: "w-4 h-4") if @action.icon
+          render @action.icon.new(class: "w-4 h-4 shrink-0") if @action.icon
           span { @action.label }
         end
       end
