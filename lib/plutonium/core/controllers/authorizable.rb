@@ -48,6 +48,22 @@ module Plutonium
           @current_scoped_entity if scoped_to_entity?
         end
 
+        # Drops ActionPolicy's per-request authorization context memo.
+        #
+        # ActionPolicy builds the context once and memoizes it for the whole request.
+        # Our entity_scope resolves lazily, and the very first authorization of the
+        # request is the scoped entity's own read? check — which runs while
+        # @current_scoped_entity is still nil (see entity_scope_for_authorize above).
+        # That freezes `entity_scope: nil` into the memo, so every later
+        # `policy_for(record:)` / `allowed_to?` that does not pass an explicit
+        # `context:` builds its policy with no entity scope.
+        #
+        # Callers that resolve the scoped entity must invalidate the memo so the
+        # next policy build picks the entity up.
+        def reset_authorization_context!
+          @_authorization_context = nil
+        end
+
         def verify_authorized
           # we don't use action policy's inbuilt checks, so ensure they are neutered,
           # also ensures pundit checks are disabled.

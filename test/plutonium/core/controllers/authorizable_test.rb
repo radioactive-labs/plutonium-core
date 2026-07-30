@@ -145,4 +145,117 @@ class Plutonium::Core::Controllers::AuthorizableTest < ActiveSupport::TestCase
     assert_equal entity, captured_options[:context][:entity_scope]
     assert_equal "value", captured_options[:context][:custom_key]
   end
+
+  # Unlike TestController above, this one does NOT stub `authorize`, so the real
+  # ActionPolicy authorization_targets are registered and authorization_context
+  # is built for real.
+  class ContextTestController
+    def self.helper_method(*) = nil
+
+    include Plutonium::Core::Controllers::Authorizable
+
+    attr_accessor :current_user
+
+    def scoped_to_entity? = true
+
+    def set_scoped_entity(entity)
+      @current_scoped_entity = entity
+    end
+  end
+
+  test "authorization_context is memoized with a nil entity_scope while the entity resolves" do
+    controller = ContextTestController.new
+    controller.current_user = Object.new
+
+    # The window inside fetch_current_scoped_entity: the entity's own read? check
+    # builds the context before @current_scoped_entity is assigned.
+    assert_nil controller.authorization_context[:entity_scope]
+
+    controller.set_scoped_entity(Object.new)
+
+    # Still stale - ActionPolicy memoizes for the whole request.
+    assert_nil controller.authorization_context[:entity_scope]
+  end
+
+  test "reset_authorization_context! rebuilds the context with the resolved entity_scope" do
+    controller = ContextTestController.new
+    controller.current_user = Object.new
+    entity = Object.new
+
+    assert_nil controller.authorization_context[:entity_scope]
+
+    controller.set_scoped_entity(entity)
+    controller.send(:reset_authorization_context!)
+
+    assert_equal entity, controller.authorization_context[:entity_scope]
+  end
+
+  test "reset_authorization_context! preserves the rest of the context" do
+    controller = ContextTestController.new
+    user = Object.new
+    controller.current_user = user
+
+    controller.authorization_context
+    controller.send(:reset_authorization_context!)
+
+    assert_equal user, controller.authorization_context[:user]
+  end
+
+  # --- ActionPolicy contract -------------------------------------------------
+  #
+  # reset_authorization_context! works by clearing ActionPolicy's memo ivar
+  # directly - the gem exposes no public API for invalidating it. That couples us
+  # to a private internal, and the failure mode is silent: if the ivar moves, the
+  # reset becomes a no-op, entity_scope goes back to nil for every bare
+  # policy_for / allowed_to? / authorized_scope, and default_relation_scope
+  # quietly stops applying tenant scoping (it falls through to the unscoped
+  # `else` branch). No exception, no test failure elsewhere - just a leak.
+  #
+  # These tests pin the internal so a gem upgrade fails here instead.
+
+  test "ActionPolicy memoizes the context into the ivar reset_authorization_context! clears" do
+    controller = ContextTestController.new
+    controller.current_user = Object.new
+
+    before = controller.instance_variables
+    built = controller.authorization_context
+    memo_ivars = (controller.instance_variables - before).select do |ivar|
+      controller.instance_variable_get(ivar) == built
+    end
+
+    assert_equal [:@_authorization_context], memo_ivars,
+      "ActionPolicy's authorization context memo moved. reset_authorization_context! " \
+      "clears @_authorization_context and is now a silent no-op - update it to clear #{memo_ivars.inspect}."
+  end
+
+  test "authorization_context resolves to the implementation reset_authorization_context! targets" do
+    # ActionPolicy defines authorization_context twice, over *different* ivars:
+    #   ActionPolicy::Behaviour            -> @_authorization_context  (wins today)
+    #   ActionPolicy::Behaviours::PolicyFor -> @authorization_context
+    # Behaviour includes PolicyFor and then redefines the method, so Behaviour's
+    # version wins. If that ever inverts, our reset would clear the dead ivar.
+    owner = ContextTestController.instance_method(:authorization_context).owner
+
+    assert_equal ActionPolicy::Behaviour, owner,
+      "authorization_context is now served by #{owner}, which may memoize into a different ivar " \
+      "than the one reset_authorization_context! clears."
+  end
+
+  test "no instance variable retains the stale context after a reset" do
+    # Generic backstop: catches a second/duplicated memo that the reset misses,
+    # without depending on any ivar name.
+    controller = ContextTestController.new
+    controller.current_user = Object.new
+
+    stale = controller.authorization_context
+    controller.set_scoped_entity(Object.new)
+    controller.send(:reset_authorization_context!)
+
+    retained = controller.instance_variables.select do |ivar|
+      controller.instance_variable_get(ivar) == stale
+    end
+
+    assert_empty retained,
+      "#{retained.inspect} still holds the pre-reset authorization context; a bare policy_for would reuse it."
+  end
 end

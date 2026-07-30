@@ -77,8 +77,14 @@ module Plutonium
           # this method might be invoked even when not authenticated.
           # so let's guard against that.
           return unless current_user.present?
+          return @current_scoped_entity if @current_scoped_entity
 
-          @current_scoped_entity ||= fetch_current_scoped_entity
+          @current_scoped_entity = fetch_current_scoped_entity
+          # fetch_current_scoped_entity authorizes while @current_scoped_entity is
+          # still nil, which memoizes `entity_scope: nil` into ActionPolicy's
+          # per-request context. Drop it now that the entity is available.
+          reset_authorization_context!
+          @current_scoped_entity
         end
 
         # Fetches the current scoped entity based on the scoping strategy.
