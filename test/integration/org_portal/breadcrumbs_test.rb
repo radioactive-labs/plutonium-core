@@ -113,13 +113,18 @@ class OrgPortal::BreadcrumbsTest < ActionDispatch::IntegrationTest
       breadcrumb_labels_for("#{product_path}/nested_reviews/#{review.to_param}")
   end
 
-  # A top-level singular resource has no index to link back to, so on `show`
-  # there is nothing left to say — the old non-link span naming the resource was
-  # dead weight next to a heading that already says the same thing.
+  # A top-level singular resource has no index to link back to, so whenever it
+  # cannot offer a *link* — `show` (you are already there) and `new` (nothing to
+  # link to yet) — there is nothing left to say. The old non-link span naming the
+  # resource was dead weight next to a heading that already says the same thing.
   test "a top-level singular show page adds no segment of its own" do
     user_profile
 
     assert_equal ["Dashboard"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile")
+  end
+
+  test "a top-level singular new page adds no segment either" do
+    assert_equal ["Dashboard"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile/new")
   end
 
   test "a top-level singular edit page names the resource" do
