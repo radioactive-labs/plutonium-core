@@ -12,6 +12,8 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
   include Plutonium::Testing::AuthHelpers
 
+  TURBO_STREAM_ACCEPT = "text/vnd.turbo-stream.html"
+
   setup do
     @admin = create_admin!
     login_as(@admin, portal: :admin)
@@ -364,6 +366,50 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     end
     assert_response :redirect
     assert Organization.exists?(name: "Acme Inc")
+  end
+
+  # `execute`'s `with_message` must reach the page the user lands on.
+  test "an outcome message from execute is carried into the flash on completion" do
+    advance_through("identity", "details", "profile", "members")
+    post "#{tbase}/review", params: {_direction: "next"}
+
+    assert_equal "Organization onboarded", flash[:notice]
+  end
+
+  # A real browser submits the wizard through Turbo, so completion negotiates to
+  # turbo_stream, not the HTML 303 every other test here exercises. It must emit a
+  # redirect STREAM (not a plain 302/303 body Turbo would ignore), and the flash
+  # still has to survive to the page the stream sends the browser to.
+  test "completion over turbo_stream emits a redirect stream and keeps the flash" do
+    advance_through("identity", "details", "profile", "members")
+
+    assert_difference -> { Organization.count }, 1 do
+      post "#{tbase}/review",
+        params: {_direction: "next"},
+        headers: {"Accept" => TURBO_STREAM_ACCEPT}
+    end
+
+    assert_response :success
+    assert_includes response.content_type, "turbo-stream"
+    assert_match %r{<turbo-stream[^>]*action="redirect"}, response.body
+    assert_match %r{url="[^"]*/admin/organizations/}, response.body,
+      "the stream should point at the created record"
+    assert_equal "Organization onboarded", flash[:notice]
+  end
+
+  # `turbo_stream_redirect` collapses to a `refresh` action when the target equals
+  # the referer. A wizard's completion URL is a different page than the review step
+  # it was submitted from, so completion must always genuinely navigate.
+  test "completion over turbo_stream navigates even when a referer is present" do
+    advance_through("identity", "details", "profile", "members")
+    review_url = "http://www.example.com#{tbase}/review"
+
+    post "#{tbase}/review",
+      params: {_direction: "next"},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT, "Referer" => review_url}
+
+    assert_match %r{<turbo-stream[^>]*action="redirect"}, response.body
+    refute_match %r{<turbo-stream[^>]*action="refresh"}, response.body
   end
 
   # A finalize (`execute`) that fails a model validation — e.g. a uniqueness
