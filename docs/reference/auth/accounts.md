@@ -228,6 +228,25 @@ before_create_account_route do
 end
 ```
 
+### Session isolation (multiple account types)
+
+Emitted by the generators; both parts are required for concurrent portal logins.
+
+```ruby
+# app/rodauth/rodauth_plugin.rb — the shared base, once
+enable :session_isolation
+```
+
+```ruby
+# app/rodauth/<name>_rodauth_plugin.rb — once per account type
+session_key_prefix "admin_"           # namespaces EVERY key, account id included
+remember_cookie_key "_admin_remember"
+```
+
+Drop either and signing into one portal evicts the others.
+
+Do **not** also set `session_key`: explicit values bypass `convert_session_key` and so are not prefixed, leaving the account id rotating separately from every other key. Rodauth then raises on any session holding an account id with no `authenticated_by`. See [Guides › Authentication › Multiple portals in one browser](/guides/authentication#multiple-portals-in-one-browser).
+
 ## Related
 
 - [Profile](./profile) — profile resource + SecuritySection component

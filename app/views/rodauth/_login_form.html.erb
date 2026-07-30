@@ -34,6 +34,19 @@
       <% end %>
     </div>
     <%= render "password_visibility" %>
+    <%# Only rendered when the config enables `remember`. The box's value is
+        `remember_remember_param_value`, which is what the config's after_login hook
+        compares against. `include_hidden: false` keeps Rails' default "0" off the
+        wire when unticked - belt-and-braces next to that value comparison, but it
+        also keeps this form correct for a config using a bare presence check. %>
+    <% if rodauth.features.include?(:remember) %>
+      <div class="flex items-center space-x-2">
+        <%= form.check_box rodauth.remember_param,
+                       {id: "remember", class: "pu-checkbox", include_hidden: false},
+                       rodauth.remember_remember_param_value %>
+        <%= form.label "remember", rodauth.remember_remember_label, class: "text-sm text-[var(--pu-text)]" %>
+      </div>
+    <% end %>
   <% end %>
   <%= form.submit rodauth.login_button, class: "w-full pu-btn pu-btn-md pu-btn-primary" %>
 <% end %>
