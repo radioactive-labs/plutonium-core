@@ -75,10 +75,26 @@ module Plutonium
           alias_method :phone_tag, :int_tel_input_tag
 
           # The `as:` values that render through the Uppy file-upload component —
-          # the single source of truth, also consulted by
-          # {Plutonium::Wizard::Attachments.field?} so a wizard can detect an
+          # the single source of truth, reached elsewhere via {file_input?} (e.g.
+          # {Plutonium::Wizard::Attachments.field?}) so a wizard can detect an
           # attachment field model-free without re-listing the aliases.
           FILE_INPUT_TYPES = %i[uppy file attachment].freeze
+
+          # The built-in input alias an `as:` names, or nil when it names none.
+          #
+          # `as:` is a union: either a built-in alias (`:string`, `:uppy`, a
+          # String) OR a component Class rendered directly (see
+          # {Plutonium::UI::Form::Resource}) — and a Class has no `#to_sym`, so
+          # every "which alias is this?" question goes through here rather than
+          # coercing `as` itself. A component Class names no alias, so nil.
+          def self.input_alias(as)
+            as.to_sym if as.is_a?(Symbol) || as.is_a?(String)
+          end
+
+          # Whether an `as:` renders as an attachment/file input.
+          def self.file_input?(as)
+            FILE_INPUT_TYPES.include?(input_alias(as))
+          end
 
           def uppy_tag(**, &)
             create_component(Components::Uppy, :uppy, **, &)

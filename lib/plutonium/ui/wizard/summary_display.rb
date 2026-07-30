@@ -37,7 +37,7 @@ module Plutonium
           # has_cents reflection, so inference would render it as a bare number.
           # Force the currency display and thread the declared `unit:` so the
           # recap reads "$1,234.56", matching the input's prefix.
-          if input_options[:as]&.to_sym == :currency
+          if Plutonium::UI::Form::Base::Builder.input_alias(input_options[:as]) == :currency
             return render field(name, **field_options).wrapped { |f|
               render f.send(:create_component, Plutonium::UI::Display::Components::Currency, :currency, unit: input_options[:unit])
             }

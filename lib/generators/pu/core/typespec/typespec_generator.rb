@@ -242,8 +242,8 @@ module Pu
         # Use column type
         return TYPE_MAPPING[column.type] || "string" if column
 
-        # Infer from as: option
-        AS_TYPE_MAPPING[config[:as]&.to_sym] || "string"
+        # Infer from as: option (nil for a component-class as:, which maps to nothing)
+        AS_TYPE_MAPPING[Plutonium::UI::Form::Base::Builder.input_alias(config[:as])] || "string"
       end
 
       def generate_typespec_files

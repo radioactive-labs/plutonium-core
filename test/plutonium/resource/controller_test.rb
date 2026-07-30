@@ -172,6 +172,33 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     User.delete_all
   end
 
+  # Regression: attachment_input_keys inspects every declared input's `as:`, which
+  # may be a component Class (rendered directly) and not an alias Symbol. A Class
+  # has no #to_sym, so an unguarded coercion raised NoMethodError here — on EVERY
+  # create/update of a resource declaring `input :x, as: SomeComponent`.
+
+  class PickerComponent < Plutonium::UI::Component::Base
+    def view_template
+      div { "picker" }
+    end
+  end
+
+  def test_attachment_input_keys_ignores_component_class_inputs
+    picker = PickerComponent
+    definition = Class.new(CommentDefinition) do
+      input :body, as: picker
+      input :cover, as: :uppy
+    end.new
+
+    controller = SubmittedParamsTestController.new
+    controller.instance_variable_set(:@current_definition, definition)
+
+    keys = controller.send(:attachment_input_keys)
+
+    assert_includes keys, "cover", "file inputs should still be excluded from pre-assignment"
+    refute_includes keys, "body", "a component-class input is not an attachment input"
+  end
+
   # Test override_entity_scoping_params uses detected association
 
   def test_override_entity_scoping_params_uses_detected_association
