@@ -222,6 +222,39 @@ For portal wiring (`AdminPortal::Concerns::Controller`), see [[plutonium-app]] �
 
 ---
 
+## Multiple portals in one browser
+
+Each portal authenticates through its own Rodauth configuration, and a person can hold a session in several at once — sign into the admin portal and the customer portal in the same browser without either evicting the other.
+
+Two settings make that work, and the generators emit both:
+
+```ruby
+# app/rodauth/rodauth_plugin.rb — the shared base
+configure do
+  enable :session_isolation
+end
+
+# app/rodauth/<name>_rodauth_plugin.rb — once per account type
+configure do
+  session_key_prefix "admin_"
+  remember_cookie_key "_admin_remember"
+end
+```
+
+🚨 **Both are required.** `session_key_prefix` namespaces every session key a configuration touches — the account id plus `authenticated_by`, `login_redirect`, `two_factor_auth_setup`, … `session_isolation` uses that prefix to decide ownership and stops a login from clearing the other configurations' keys.
+
+🚨 **Never set `session_key` alongside it.** Explicit values bypass `convert_session_key` (`rodauth/features/base.rb:686`) so they are NOT prefixed — the account id then rotates separately from every other key. A session holding an account id with no `authenticated_by` makes Rodauth raise on every request (`logged_in_via_remember_key?` → `nil.include?`, `remember.rb:175`). A config with no prefix at all is simply not isolated: its keys are the unprefixed defaults, so nothing is carried for it.
+
+**Why:** Rodauth resets the session on every login — including the `remember` feature's `load_memory` autologin — to defend against session fixation, and rodauth-rails implements that as a full `reset_session`. Without `session_isolation`, signing into one portal wipes every other portal's session; and because `RodauthApp#route` calls `load_memory` for *every* configuration on *every* request, the evicted configuration autologins from its remember cookie on the next request and evicts the new one right back. The last `load_memory` in the route block wins permanently, so the other portal can never hold a session at all.
+
+`session_isolation` carries only the *other configurations'* session entries across the reset. The session id is still rotated and application session data is still cleared, so session fixation is still defeated.
+
+**Reading a raw Rodauth session key?** Go through its accessor, never the literal — `session.delete(login_redirect_session_key)`, not `session.delete(:login_redirect)`. With a prefix set, the literal is the wrong key.
+
+**Upgrading an app generated before this existed:** add `enable :session_isolation` once in the base plugin, add `session_key_prefix` to each account plugin, and **delete any existing `session_key "_x_session"` line**. Every key name changes together, so stale session cookies are simply ignored — the safe outcome. Keeping the old `session_key` to preserve logins is exactly what produces the crashing half-migrated session. Only *unremembered* sessions actually drop: `remember_cookie_key` is a cookie name and is not prefixed, so anyone holding a valid `_x_remember` cookie is restored by `load_memory` on their next request.
+
+---
+
 ## Common customizations
 
 All inside the Rodauth `configure do ... end` block in `app/rodauth/<name>_rodauth_plugin.rb`.
@@ -410,6 +443,9 @@ link_to("Profile", profile_url) if respond_to?(:profile_url)
 - **`pu:saas:setup` runs four other generators** — don't re-run portal, profile, welcome, or invites separately.
 - **Profile requires `pu:profile:conn`** — without it, no route, no `profile_url`, no menu link.
 - **Users need a profile row.** Add an `after_create` callback (or `find_or_create_by`) — `current_user.profile` is otherwise nil.
+- **Concurrent portal logins need `enable :session_isolation` + `session_key_prefix`.** Missing either and signing into one portal silently evicts the others — see Multiple portals in one browser.
+- **Never hardcode a Rodauth session key.** Use the accessor (`login_redirect_session_key`), since `session_key_prefix` changes the literal.
+- **"Remember me" is opt-in.** Configs use `after_login { remember_login if param_or_nil(remember_param) == remember_remember_param_value }` and the login form renders the checkbox. Compare against the value, not just presence — a bare truthiness check means `remember=disable` would remember you. Plutonium's form also passes `include_hidden: false` so an unticked box sends nothing — belt-and-braces next to the value comparison, not the thing holding it up.
 
 ---
 

@@ -9,6 +9,13 @@ class RodauthPlugin < Rodauth::Rails::Auth
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
 
+    # Keep each configuration's session state to itself, so a person can be signed
+    # into more than one portal at a time. Without this, Rodauth's session reset on
+    # login (and on the `remember` feature's autologin) wipes the whole Rails
+    # session, evicting every other configuration's login.
+    # Relies on each configuration setting `session_key_prefix`.
+    enable :session_isolation
+
     # List of authentication features that are loaded.
     # enable :create_account, :verify_account, :verify_account_grace_period,
     #   :reset_password, :change_password, :change_password_notify,

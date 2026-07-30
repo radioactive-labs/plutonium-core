@@ -50,6 +50,22 @@ class RodauthAccountGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  # `session_key_prefix` namespaces EVERY session key the configuration touches, so
+  # concurrent portal logins can be told apart. An explicit `session_key` must NOT
+  # be emitted alongside it: explicit values are not prefixed, so the account id
+  # would sit on a different name from the rest and Rodauth 500s on a session that
+  # has an account id but no `authenticated_by`.
+  # See lib/rodauth/features/session_isolation.rb.
+  test "generates plugin with namespaced session keys" do
+    run_generator ["TestAccount"]
+
+    assert_file "app/rodauth/test_account_rodauth_plugin.rb" do |content|
+      assert_match(/^\s+session_key_prefix "test_account_"/, content)
+      assert_match(/^\s+remember_cookie_key "_test_account_remember"/, content)
+      refute_match(/^\s+session_key ["']/, content)
+    end
+  end
+
   test "primary option is ignored" do
     # Even with --primary flag, account should be named
     run_generator ["TestAccount", "--primary"]
