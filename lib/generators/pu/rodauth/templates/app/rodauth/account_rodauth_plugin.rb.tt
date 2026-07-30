@@ -233,11 +233,11 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
 
     # ==> Remember Feature
 
-    # Remember all logged in users.
-    after_login { remember_login }
+    # Only remember users who ticked the "Remember Me" checkbox on the login form.
+    after_login { remember_login if param_or_nil(remember_param) == remember_remember_param_value }
 
-    # Or only remember users that have ticked a "Remember Me" checkbox on login.
-    # after_login { remember_login if param_or_nil("remember") }
+    # Or remember every user who logs in, whether they asked to be or not.
+    # after_login { remember_login }
 
     # Extend user's remember period when remembered via a cookie
     extend_remember_deadline? true
@@ -246,8 +246,17 @@ class <%= account_path.classify %>RodauthPlugin < RodauthPlugin
     remember_cookie_key "_<%= table_prefix %>_remember"
 <% end -%>
 
-    # Session security
-    session_key "_<%= table_prefix %>_session"
+    # Session security: namespace EVERY session key this configuration touches -
+    # the account id plus `authenticated_by`, `login_redirect`,
+    # `two_factor_auth_setup` and friends. Without this, configurations share those
+    # keys and clobber each other's state, and `session_isolation` cannot tell which
+    # entries belong to which configuration.
+    #
+    # Do not also set `session_key` here. An explicit `session_key` is NOT prefixed,
+    # so the account id key would rotate on a different schedule from every other
+    # key - and Rodauth crashes on a session that has an account id but no
+    # `authenticated_by` (`nil.include?` in `logged_in_via_remember_key?`).
+    session_key_prefix "<%= table_prefix %>_"
 
     # ==> Hooks
 

@@ -8,6 +8,10 @@ class RodauthPlugin < Rodauth::Rails::Auth
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
 
+    # Keep each configuration's session state independent, so a user can be
+    # signed into more than one portal at a time.
+    enable :session_isolation
+
     # List of authentication features that are loaded.
     # enable :create_account, :verify_account, :verify_account_grace_period,
     #   :reset_password, :change_password, :change_password_notify,

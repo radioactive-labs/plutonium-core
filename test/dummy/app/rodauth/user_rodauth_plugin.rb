@@ -137,11 +137,11 @@ class UserRodauthPlugin < RodauthPlugin
 
     # ==> Remember Feature
 
-    # Remember all logged in users.
-    after_login { remember_login }
+    # Only remember users who ticked the "Remember Me" checkbox on the login form.
+    after_login { remember_login if param_or_nil(remember_param) == remember_remember_param_value }
 
-    # Or only remember users that have ticked a "Remember Me" checkbox on login.
-    # after_login { remember_login if param_or_nil("remember") }
+    # Or remember every user who logs in, whether they asked to be or not.
+    # after_login { remember_login }
 
     # Extend user's remember period when remembered via a cookie
     extend_remember_deadline? true
@@ -149,8 +149,11 @@ class UserRodauthPlugin < RodauthPlugin
     # Store the user's remember cookie under a namespace
     remember_cookie_key "_user_remember"
 
-    # Session security
-    session_key "_user_session"
+    # Session security: namespace EVERY session key this configuration touches.
+    # Do not also set `session_key` - an explicit value is NOT prefixed, so the
+    # account id would rotate separately from the rest, and Rodauth crashes on a
+    # session holding an account id with no `authenticated_by`.
+    session_key_prefix "user_"
 
     # ==> Hooks
 

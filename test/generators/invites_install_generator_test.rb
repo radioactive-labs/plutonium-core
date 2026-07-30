@@ -525,7 +525,15 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     assert_file "app/rodauth/user_rodauth_plugin.rb" do |content|
       # Should add session redirect to existing after_login block
       assert_match(/after_welcome_redirect/, content)
-      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(:login_redirect\)/, content)
+      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(login_redirect_session_key\)/, content)
+      # The fixture carries the hook exactly as pu:rodauth:account emits it, and the
+      # generator rewrites that single line into a block. Pin the condition surviving
+      # verbatim: the parser is a regex (`install_generator.rb`), so a longer emitted
+      # line is a real seam.
+      assert_match(
+        /after_login do\s*\n\s*remember_login if param_or_nil\(remember_param\) == remember_remember_param_value\s*\n/,
+        content
+      )
       # Should update login_redirect to /welcome
       assert_match(/login_redirect "\/welcome"/, content)
       # Should add create_account_redirect
@@ -551,14 +559,17 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
   test "configures rodauth with multi-line after_login block" do
     rodauth_file = destination_root.join("app/rodauth/user_rodauth_plugin.rb")
 
-    # Replace single-line with multi-line block
+    # Replace the single-line hook with a multi-line block. Anchored to the start of
+    # the line so it can only hit the ACTIVE hook - a plain string match would also
+    # rewrite the commented-out alternative underneath it, un-commenting live code and
+    # closing `configure do` early. The assertion below makes a silent no-op (this test
+    # then exercising the single-line branch instead) impossible.
     content = File.read(rodauth_file)
-    content.gsub!("after_login { remember_login }", <<~RUBY.strip)
-      after_login do
-          remember_login
-          log_login_event
-        end
-    RUBY
+    replaced = content.sub!(/^([ \t]*)after_login \{ .+ \}$/) do
+      indent = $1
+      "#{indent}after_login do\n#{indent}  remember_login\n#{indent}  log_login_event\n#{indent}end"
+    end
+    refute_nil replaced, "fixture no longer contains a single-line after_login hook"
     File.write(rodauth_file, content)
 
     run_generator default_args
@@ -567,7 +578,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
       # Should preserve existing code and add our line
       assert_match(/remember_login/, content)
       assert_match(/log_login_event/, content)
-      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(:login_redirect\)/, content)
+      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(login_redirect_session_key\)/, content)
       # Should update login_redirect to /welcome
       assert_match(/login_redirect "\/welcome"/, content)
     end
@@ -576,19 +587,21 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
   test "configures rodauth when no after_login block exists" do
     rodauth_file = destination_root.join("app/rodauth/user_rodauth_plugin.rb")
 
-    # Remove all after_login references
+    # Remove every after_login reference, active and commented, so the generator has
+    # to create a fresh block. Matched loosely on purpose: pinning this to the
+    # template's exact wording makes the setup silently become a no-op whenever the
+    # template is reworded, and the assertions below then test the wrong branch.
     content = File.read(rodauth_file)
-    content.gsub!(/^\s*after_login \{ remember_login \}\n/, "")
-    content.gsub!(/^\s*# Or only remember.*\n/, "")
-    content.gsub!(/^\s*# after_login \{ remember_login if.*\n/, "")
+    content.gsub!(/^.*after_login.*\n/, "")
     File.write(rodauth_file, content)
+    refute_match(/after_login/, File.read(rodauth_file))
 
     run_generator default_args
 
     assert_file "app/rodauth/user_rodauth_plugin.rb" do |content|
       # Should create new after_login block with only our code
       assert_match(/after_login do/, content)
-      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(:login_redirect\)/, content)
+      assert_match(/session\[:after_welcome_redirect\] = session\.delete\(login_redirect_session_key\)/, content)
       # Should NOT have remember_login since it wasn't there before
       refute_match(/after_login do\s*\n\s*remember_login/, content)
       # Should update login_redirect to /welcome

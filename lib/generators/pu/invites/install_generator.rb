@@ -329,7 +329,7 @@ module Pu
           new_block = <<~RUBY.chomp
             #{indent}after_login do
             #{indent}  #{existing_code}
-            #{indent}  session[:after_welcome_redirect] = session.delete(:login_redirect)
+            #{indent}  session[:after_welcome_redirect] = session.delete(login_redirect_session_key)
             #{indent}end
           RUBY
 
@@ -345,7 +345,7 @@ module Pu
           new_block = <<~RUBY.chomp
             #{indent}after_login do
             #{block_content}
-            #{indent}  session[:after_welcome_redirect] = session.delete(:login_redirect)
+            #{indent}  session[:after_welcome_redirect] = session.delete(login_redirect_session_key)
             #{end_indent}end
           RUBY
 
@@ -357,7 +357,7 @@ module Pu
 
     # ==> User Invites - Move captured path to session for WelcomeController
     after_login do
-      session[:after_welcome_redirect] = session.delete(:login_redirect)
+      session[:after_welcome_redirect] = session.delete(login_redirect_session_key)
     end
           RUBY
 

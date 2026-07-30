@@ -613,7 +613,7 @@ configure do
   login_redirect "/welcome"
 
   after_login do
-    session[:after_welcome_redirect] = session.delete(:login_redirect)
+    session[:after_welcome_redirect] = session.delete(login_redirect_session_key)
   end
 end
 ```
