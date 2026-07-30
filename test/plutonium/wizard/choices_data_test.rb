@@ -11,7 +11,7 @@ require "test_helper"
 class Plutonium::Wizard::ChoicesDataTest < ActiveSupport::TestCase
   # A stand-in for the wizard's typed data object: plain readers per field.
   def data_for(**attrs)
-    Struct.new(*attrs.keys, keyword_init: true).new(**attrs)
+    Struct.new(*attrs.keys).new(**attrs)
   end
 
   # A stand-in for a Step: only `inputs` is consulted.
