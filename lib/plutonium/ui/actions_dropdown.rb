@@ -34,7 +34,7 @@ module Plutonium
 
       def render_dropdown_menu
         div(
-          class: "hidden absolute right-0 z-50 mt-2 w-48 origin-top-right bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)] overflow-hidden",
+          class: "hidden absolute right-0 z-50 mt-2 w-max min-w-48 max-w-[min(20rem,90vw)] origin-top-right bg-[var(--pu-surface)] border border-[var(--pu-border)] rounded-[var(--pu-radius-lg)] overflow-hidden",
           style: "box-shadow: var(--pu-shadow-lg)",
           data: {resource_drop_down_target: "menu"}
         ) do
