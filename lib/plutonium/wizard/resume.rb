@@ -36,6 +36,9 @@ module Plutonium
         :current_step_label,
         :updated_at,
         :resume_url,
+        # The DELETE target that abandons this run, resolved from the same mount as
+        # `resume_url`. nil when the mount exposes no cancel route.
+        :cancel_url,
         :resume_unresolved_reason,
         :session
       )
@@ -100,6 +103,7 @@ module Plutonium
           current_step_label: step&.label,
           updated_at: row.updated_at,
           resume_url: resolved[:url],
+          cancel_url: resolved[:cancel_url],
           resume_unresolved_reason: resolved[:reason],
           session: row
         )
@@ -111,59 +115,112 @@ module Plutonium
         wizard_class.steps.find { |s| s.key.to_s == key.to_s }
       end
 
-      # Resolves a single row to its resume URL in the current portal.
+      # Resolves a single row to its resume + cancel URLs in the current portal.
+      #
+      # Both URLs come from the SAME resolved mount, through named route helpers —
+      # the cancel target is never derived by string-surgery on the resume URL,
+      # which would drop query params and break for a run whose `current_step` is
+      # still nil (there the resume URL is the bare launch path, so lopping off its
+      # last segment yields a non-route).
       class ResumeUrl
+        # How this row's wizard is reachable in the current portal.
+        #
+        # - +:register_wizard+ — a standalone `register_wizard` mount. `subject` is
+        #   the GET route's name, resolved within `route_set`.
+        # - +:member+ — a resource-mounted ANCHORED wizard. `subject` is the anchor
+        #   record.
+        # - +:collection+ — a resource-mounted non-anchored wizard. `subject` is the
+        #   resource class whose definition registers it.
+        Mount = Struct.new(:kind, :subject, :wizard_name, :route_set)
+
         def initialize(row, wizard_class, view_context)
           @row = row
           @wizard_class = wizard_class
           @view_context = view_context
         end
 
-        # @return [Hash] {url:, reason:} — exactly one of the two is non-nil.
+        # @return [Hash] {url:, cancel_url:, reason:} — `reason` is non-nil exactly
+        #   when no resume URL could be built. The two URLs resolve INDEPENDENTLY:
+        #   a run with no `current_step` has no stepped resume URL, but is still
+        #   perfectly cancellable, and leaving the user no way to clear it would
+        #   strand the row in their chooser forever.
         def resolve
-          if (named = register_wizard_url)
-            return {url: named, reason: nil}
-          end
+          return {url: nil, cancel_url: nil, reason: unresolved_reason} if mount.nil?
 
-          if (member = resource_member_url)
-            return {url: member, reason: nil}
-          end
-
-          if (collection = resource_collection_url)
-            return {url: collection, reason: nil}
-          end
-
-          {url: nil, reason: unresolved_reason}
+          url = build_step_url(mount)
+          {url: url, cancel_url: build_cancel_url(mount), reason: url.nil? ? unresolved_reason : nil}
         end
 
         private
 
-        # A resource-mounted non-anchored (collection) wizard's URL is built using
-        # the resource class and the wizard name.
-        def resource_collection_url
+        # The first mount that claims this row, in precedence order: a standalone
+        # `register_wizard` route, then the row's anchor, then a resource definition
+        # that registers this wizard as a collection (non-anchored) mount.
+        def mount
+          return @mount if defined?(@mount)
+
+          @mount = register_wizard_mount || resource_member_mount || resource_collection_mount
+        end
+
+        # A `register_wizard` route is named and carries `defaults[:wizard_class]`.
+        def register_wizard_mount
+          return @register_wizard_mount if defined?(@register_wizard_mount)
+
+          @register_wizard_mount = route_sets.filter_map { |route_set|
+            name = Plutonium::Wizard::RouteResolution.route_name(route_set, @wizard_class, action: "show")
+            Mount.new(:register_wizard, name, nil, route_set) if name
+          }.first
+        end
+
+        # A resource-mounted ANCHORED wizard resolves against the row's anchor and
+        # the registering definition's wizard name.
+        def resource_member_mount
+          anchor = @row.anchor
+          return nil if anchor.nil?
+
+          wizard_name = registered_wizard_name_for(anchor.class)
+          return nil if wizard_name.nil?
+
+          Mount.new(:member, anchor, wizard_name, nil)
+        end
+
+        # A resource-mounted non-anchored (collection) wizard carries no resource
+        # identity on the row, so find it the other way round: scan this portal's
+        # registered resources for the definition that registers this wizard class.
+        #
+        # Rescued as a whole — `current_engine` is nil (or a plain Rails app with no
+        # resource register) outside a portal, and `resolve`'s contract is to report
+        # a reason rather than raise.
+        def resource_collection_mount
           return nil unless @row.anchor.nil?
 
-          # Scan all registered resources in the current engine to see which definition
-          # registers this wizard class.
           engine = @view_context.current_engine
-          engine.resource_register.resources.each do |resource_class|
-            wizard_name = registered_wizard_name_for(resource_class)
-            next if wizard_name.nil?
+          return nil if engine.nil?
 
-            # Found the matching resource class and wizard name!
-            url = @view_context.resource_url_for(
-              resource_class,
-              wizard: wizard_name,
-              step: @row.current_step,
-              **token_param
-            )
-            return url if url.present?
-          rescue => e
-            Rails.logger.warn { "[Plutonium::Wizard] resume collection url build failed for #{resource_class.name}: #{e.message}" }
+          candidates = engine.resource_register.resources.filter_map { |resource_class|
+            name = registered_wizard_name_for(resource_class)
+            [resource_class, name] if name
+          }.sort_by { |resource_class, _name| resource_class.name }
+          return nil if candidates.empty?
+
+          if candidates.size > 1
+            Rails.logger.warn do
+              "[Plutonium::Wizard] #{@wizard_class.name} is registered on more than one resource " \
+                "definition in #{engine.name} (#{candidates.map { |klass, _| klass.name }.join(", ")}); " \
+                "resolving its resume URL against #{candidates.first.first.name}"
+            end
           end
+
+          resource_class, wizard_name = candidates.first
+          Mount.new(:collection, resource_class, wizard_name, nil)
+        rescue => e
+          Rails.logger.warn { "[Plutonium::Wizard] collection mount lookup failed for #{@wizard_class.name}: #{e.message}" }
           nil
         end
 
+        # Reverse-lookup the `wizard`-macro name registered for this wizard class on
+        # a resource's definition. nil when the definition can't be loaded or doesn't
+        # register this wizard.
         def registered_wizard_name_for(resource_class)
           definition = "#{resource_class.name}Definition".safe_constantize
           return nil unless definition.respond_to?(:registered_wizards)
@@ -173,14 +230,37 @@ module Plutonium
           end&.first
         end
 
-        # A `register_wizard` route is named and carries `defaults[:wizard_class]`.
-        def register_wizard_url
-          route_sets.each do |route_set|
-            name = Plutonium::Wizard::RouteResolution.route_name(route_set, @wizard_class, action: "show")
-            next unless name
-
-            return build_url(route_set, name, register_wizard_params)
+        # The GET URL that resumes the run at its current step.
+        #
+        # For a resource mount this is the SAME `resource_url_for(subject, wizard:,
+        # step:)` machinery the launch button uses (§5.1) — portal- and scope-correct
+        # by construction (it resolves on the current portal's `current_engine`,
+        # threads the entity segment when the portal is path-scoped, and singularizes
+        # the member helper).
+        def build_step_url(mount)
+          if mount.kind == :register_wizard
+            build_url(mount.route_set, mount.subject, register_wizard_params)
+          else
+            resource_wizard_url(mount, step: @row.current_step)
           end
+        end
+
+        # The DELETE target that abandons the run, from the same mount's named cancel
+        # route. nil when the mount predates the cancel route (or generation fails) —
+        # the caller then renders no cancel affordance.
+        def build_cancel_url(mount)
+          if mount.kind == :register_wizard
+            name = Plutonium::Wizard::RouteResolution.route_name(mount.route_set, @wizard_class, action: "cancel")
+            name && build_url(mount.route_set, name, scope_param.merge(token_param))
+          else
+            resource_wizard_url(mount, wizard_action: :cancel)
+          end
+        end
+
+        def resource_wizard_url(mount, **extra)
+          @view_context.resource_url_for(mount.subject, wizard: mount.wizard_name, **token_param, **extra)
+        rescue => e
+          Rails.logger.warn { "[Plutonium::Wizard] url build failed for #{@wizard_class.name}: #{e.message}" }
           nil
         end
 
@@ -189,41 +269,6 @@ module Plutonium
         # tokened (no concurrency_key) run.
         def register_wizard_params
           {step: @row.current_step}.merge(scope_param).merge(token_param)
-        end
-
-        # A resource-mounted ANCHORED wizard's member URL is built by the SAME
-        # `resource_url_for(record, wizard:, step:)` machinery the launch button uses
-        # (§5.1) — so it's portal- and scope-correct by construction (it resolves on
-        # the current portal's `current_engine`, threads the entity segment when the
-        # portal is path-scoped, and singularizes the member helper). We pass the
-        # row's anchor as the record, the registering definition's wizard name, and
-        # the resumed step; a tokened (non-keyed) run also carries its run token.
-        def resource_member_url
-          anchor = @row.anchor
-          return nil if anchor.nil?
-
-          wizard_name = registered_wizard_name
-          return nil if wizard_name.nil?
-
-          @view_context.resource_url_for(anchor, wizard: wizard_name, step: @row.current_step, **token_param)
-        rescue => e
-          Rails.logger.warn { "[Plutonium::Wizard] resume url build failed for #{@wizard_class.name}: #{e.message}" }
-          nil
-        end
-
-        # Reverse-lookup the `wizard`-macro name registered for this wizard class on
-        # the anchor's resource definition. nil when not found.
-        def registered_wizard_name
-          definition = definition_for(@row.anchor)
-          return nil unless definition.respond_to?(:registered_wizards)
-
-          definition.registered_wizards.find do |_name, reg|
-            reg[:wizard_class] == @wizard_class
-          end&.first
-        end
-
-        def definition_for(record)
-          "#{record.class.name}Definition".safe_constantize
         end
 
         # The scope path segment for an entity-scoped portal, keyed by the portal
@@ -259,22 +304,16 @@ module Plutonium
         end
 
         def unresolved_reason
-          if @row.anchor && registered_wizard_name.nil?
+          if @row.anchor && registered_wizard_name_for(@row.anchor.class).nil?
             "no `wizard` macro registration found for #{@wizard_class.name} " \
               "on #{@row.anchor.class.name}Definition"
-          elsif @row.anchor.nil? && resource_mounted_candidate?
-            "non-anchored resource-mounted wizard — the row carries no resource " \
-              "identity to rebuild its collection URL"
+          elsif @row.anchor.nil? && register_wizard_mount.nil?
+            "non-anchored wizard — no `register_wizard` route in this portal, and no " \
+              "resource definition here registers #{@wizard_class.name}"
           else
             "no route found for #{@wizard_class.name} (not registered via " \
               "register_wizard or a `wizard` macro mount this resolver can reach)"
           end
-        end
-
-        # Heuristic for the reason text only: the wizard isn't a register_wizard
-        # mount (no named route) and has no anchor on the row.
-        def resource_mounted_candidate?
-          register_wizard_url.nil?
         end
 
         # The CURRENT portal's route set, plus the main app's (for `public:` mounts).

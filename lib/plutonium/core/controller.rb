@@ -140,7 +140,7 @@ module Plutonium
 
         if wizard
           raise ArgumentError, "cannot pass both `wizard:` and `action:`" if action
-          action = wizard_action_type_for(element, step: kwargs[:step])
+          action = wizard_action_type_for(element, step: kwargs[:step], wizard_action: kwargs.delete(:wizard_action))
           kwargs[:wizard_name] = wizard
         end
 
@@ -204,12 +204,24 @@ module Plutonium
       # classes/symbols/nil → collection (wizards have no bulk variant). With no
       # `step:`, target the bare LAUNCH action (which resolves the run and redirects
       # to its current step); with a `step:`, target the stepped show action.
-      def wizard_action_type_for(element, step: nil)
+      #
+      # `wizard_action: :cancel` targets the DELETE action that abandons the run.
+      # A run is cancelled as a whole, so that route carries no `:step` segment and
+      # `step:` is ignored for it.
+      def wizard_action_type_for(element, step: nil, wizard_action: nil)
         member = !(element.is_a?(Class) || element.is_a?(Symbol) || element.nil?)
-        if step.nil?
-          member ? :launch_wizard_record_action : :launch_wizard_resource_action
+
+        case wizard_action
+        when nil
+          if step.nil?
+            member ? :launch_wizard_record_action : :launch_wizard_resource_action
+          else
+            member ? :wizard_record_action : :wizard_resource_action
+          end
+        when :cancel
+          member ? :cancel_wizard_record_action : :cancel_wizard_resource_action
         else
-          member ? :wizard_record_action : :wizard_resource_action
+          raise ArgumentError, "unknown `wizard_action:` #{wizard_action.inspect} (expected :cancel or nil)"
         end
       end
 

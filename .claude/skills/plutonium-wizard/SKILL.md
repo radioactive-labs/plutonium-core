@@ -129,6 +129,24 @@ end
 
 Conditions are re-evaluated against the submission that was just staged, so a step (including `review`) may be gated on an answer from the step immediately before it — the revealed steps become reachable on that same POST. When a step's answer reveals nothing after it, that POST ends the flow and runs `execute`.
 
+### Revealing a field within a step — `pre_submit:`
+
+A step-level `condition:` branches whole steps against *stored* data. To show or hide a field as the user edits a **sibling field on the same step**, mark the deciding input `pre_submit: true` — changing it re-renders the step form from the **just-submitted** values (same mechanism as resource forms and interactive actions):
+
+```ruby
+step :details do
+  attribute :contact_pref, :string
+  input :contact_pref, as: :select, pre_submit: true,
+    choices: {none: "Don't contact me", email: "Email me"}
+
+  attribute :contact_email, :string
+  # `object` here is the step's data, seeded from what was just typed.
+  input :contact_email, condition: -> { object.contact_pref == "email" }
+end
+```
+
+A `pre_submit` is **render-only**: it never persists, never marks the step submitted, and never moves the cursor — abandon the page and nothing durable is left. **Attachment fields are exempt** from the re-render's seeding: a file input doesn't re-post on a sibling's `change`, so an already-staged upload survives untouched instead of being blanked out of the form. Uploads stage only on a real submit.
+
 ## Field reuse — `using:` a model
 
 `using:` is a **step option** (not a block method) and targets a **model only**.
@@ -267,6 +285,8 @@ Always lists invalid/unvisited steps as fix-this jump links; Finish disabled unt
 - `header:` (default true) — the step-header section (label + the "check everything over" prompt, shown only when the summary is). `false` drops it for a chromeless finish. Pair with `stepper false` for no chrome at all.
 
 The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String — Phlex renders the returned String too, double-rendering it.
+
+**The summary resolves choice labels.** A field declared with the `choices:` option summarises as the label its `<option>` carried, not the stored value — `42` reads as "Alice", `"cash"` as "Cash". Every collection shape the input accepts works (pair arrays, `{value => label}` hashes, ranges, sets, AR relations, procs returning any of those), because resolution goes through the same `Phlexi::Form::SimpleChoicesMapper` the input uses. **Caveat:** choices supplied inside a *block* (`input(:x) { |f| f.select_tag choices: … }`) are computed at render time and aren't visible to the summary — those fields still show the raw value. Use the declarative `choices:` option when you want the review page to read well.
 
 ## Per-step writes — `on_submit` / `persist` / `on_rollback`
 
@@ -448,7 +468,20 @@ The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<
 
 `Plutonium::Wizard.in_progress_for(view_context)` (→ `Resume.entries_for(view_context)`) takes the `view_context` (as interactions do) and derives the run owner (`current_user`), tenant scope, and **portal** from it — returning that user's in-progress runs **for the current portal**, newest-first, for a "continue where you left off" dashboard. A run is only ever listed (and linked) by the portal it was launched in: a non-scoped portal lists only unscoped runs, a scoped portal narrows to the current tenant. (Two portals can share an entity scope, so the launching portal — the `engine` — is recorded per-run; scope alone can't identify it.)
 
-Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a `resume_url` built through the **current portal's** routes — `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, the named route for a `register_wizard` mount; `nil` + `resume_unresolved_reason` when the row can't be resolved here (e.g. a non-anchored `wizard`-macro run). **Narrowing.** For the per-record / per-wizard resume widget ("does this record have an unfinished draft of wizard X?"), pass the optional `anchor:`/`wizard:` filters — they narrow **in the query, before enrichment**, so discarded rows are never URL-resolved or anchor-loaded (cheaper than `select`-ing the array, which enriches every row first). They compose, and the `wizard + anchor` pair is index-covered: `…in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: company).first`. Don't reach into `e.session.anchor` to filter (a polymorphic load per row). For ad-hoc post-filtering the array still works — `e.wizard_class` is already on each entry.
+Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a `resume_url` built through the **current portal's** routes — the named route for a `register_wizard` mount, `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, and for a **non-anchored** `wizard`-macro run the resource whose definition registers that wizard class; `nil` + `resume_unresolved_reason` when the row can't be resolved here.
+
+Each entry also exposes a **`cancel_url`** — the `DELETE` target that abandons the run — resolved from the *same* mount through its own named cancel route. Never derive it by string-munging `resume_url`: that drops query params and mis-resolves for a run with no `current_step` (whose resume URL is the bare launch path). The two resolve **independently**, so an unresumable row is still cancellable rather than stranded in the list. Render it as a **form**, not a link — cancelling runs every step's `on_rollback`, destroys its `persist`'d records, and deletes the row:
+
+```ruby
+form(action: entry.cancel_url, method: "post") do
+  input(type: "hidden", name: "_method", value: "delete")
+  input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
+  # `turbo_confirm`, NOT `confirm` — `data-confirm` is Rails UJS and never fires under Turbo.
+  button(type: "submit", data: {turbo_confirm: "Discard this draft? This can't be undone."}) { "Cancel" }
+end
+```
+
+**Narrowing.** For the per-record / per-wizard resume widget ("does this record have an unfinished draft of wizard X?"), pass the optional `anchor:`/`wizard:` filters — they narrow **in the query, before enrichment**, so discarded rows are never URL-resolved or anchor-loaded (cheaper than `select`-ing the array, which enriches every row first). They compose, and the `wizard + anchor` pair is index-covered: `…in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: company).first`. Don't reach into `e.session.anchor` to filter (a polymorphic load per row). For ad-hoc post-filtering the array still works — `e.wizard_class` is already on each entry.
 
 ## Storage & config
 

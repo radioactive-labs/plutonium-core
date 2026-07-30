@@ -170,7 +170,8 @@ module Plutonium
         respond_to_wizard_result(runner, result)
       end
 
-      # DELETE (/:token) — cancel run.
+      # DELETE (/:token) — abandon a run. Same entry gauntlet as every other wizard
+      # action (auth → ownership → policy) before anything is destroyed.
       def wizard_cancel
         require_wizard_authentication!
         runner = build_wizard_runner
@@ -179,11 +180,12 @@ module Plutonium
 
         runner.cancel
         clear_wizard_session_token
+        clear_wizard_return_to
 
-        # PRG back to the bare launch path (or return_to), which will reload the chooser or start a new run.
-        # But we'll redirect back to the launch url of the wizard.
-        target = wizard_launch_url
-        redirect_to target, status: :see_other, allow_other_host: false
+        # PRG to the bare launch path: with this run gone, that re-renders the
+        # chooser over the user's remaining runs, or mints a fresh one if it was
+        # their last.
+        redirect_to wizard_launch_url, status: :see_other, allow_other_host: false
       end
 
       # Advance the POSTed step, finalizing when it turns out to end the flow. The
@@ -222,11 +224,7 @@ module Plutonium
         # `:return_to` (the page the user was bounced FROM into a one-time wizard)
         # still wins, so they resume where they were headed.
         clear_wizard_return_to
-        if result.respond_to?(:messages)
-          result.messages.each do |message, type|
-            flash[type] = message
-          end
-        end
+        flash_wizard_messages(result.messages)
         target = session.delete(:return_to).presence || wizard_completion_url(result.value)
 
         respond_to do |format|
@@ -236,6 +234,15 @@ module Plutonium
           format.html do
             redirect_to target, status: :see_other, allow_other_host: false
           end
+        end
+      end
+
+      # Carry the outcome's `with_message` entries ([message, type] pairs) into the
+      # flash so the page we land on shows them. Several messages of one type are
+      # joined — writing them in a loop would leave only the last one standing.
+      def flash_wizard_messages(messages)
+        messages.group_by(&:last).each do |type, group|
+          flash[type] = group.map(&:first).join(" ")
         end
       end
 
@@ -295,7 +302,11 @@ module Plutonium
       # the step form; otherwise re-render the whole page. Mirrors interactive
       # actions, where conditional inputs depend on sibling values.
       def render_wizard_pre_submit(runner)
-        runner.stage_inputs(runner.current_step.key, wizard_extracted_inputs(runner).stringify_keys)
+        # Seed the re-render from the JUST-SUBMITTED values, so an input conditional
+        # on the changed field appears/disappears and the user's other typed values
+        # survive the swap. In-memory only — `stage_inputs` never persists, so an
+        # abandoned refresh leaves nothing durable.
+        runner.stage_inputs(runner.current_step.key, wizard_pre_submit_inputs(runner))
 
         form = wizard_step_form(runner)
         respond_to do |format|
@@ -526,6 +537,23 @@ module Plutonium
         form = wizard_step_form(runner)
         extracted = form.extract_input(params, view_context:)[:wizard] || {}
         clean_structured_inputs(Plutonium::Wizard::StepAdapter.new(step), extracted.dup)
+      end
+
+      # The submitted values a `pre_submit` re-render may seed itself from.
+      #
+      # Attachment fields are EXCLUDED. Their extracted value is a raw upload — or,
+      # far more often, nothing at all, since a file input doesn't re-post on an
+      # unrelated field's `change`. Merging either over the token already staged in
+      # `data` would blank the file out of the re-rendered form, losing an upload the
+      # user had already made. Uploads only ever stage on a real submit
+      # ({#stage_wizard_uploads!}); a pre_submit leaves them exactly as they were.
+      def wizard_pre_submit_inputs(runner)
+        step = runner.current_step
+        inputs = wizard_extracted_inputs(runner).stringify_keys
+        step.inputs.each do |name, config|
+          inputs.delete(name.to_s) if Plutonium::Wizard::Attachments.field?(config)
+        end
+        inputs
       end
 
       # Replace each attachment field's value with a staged TOKEN, minting one from

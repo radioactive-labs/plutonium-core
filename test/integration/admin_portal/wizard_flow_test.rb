@@ -74,23 +74,79 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "pu-wizard-chooser"
     assert_match %r{href="#{Regexp.escape(base)}/#{@wizard_token}/details"[^>]*data-wizard-chooser-resume}, response.body
     assert_match %r{data-wizard-chooser-start-new}, response.body
-    assert_match %r{action="#{Regexp.escape(base)}/#{@wizard_token}"[^>]*method="post"}, response.body
-    assert_match %r{data-wizard-chooser-cancel}, response.body
     assert_includes response.body, "?new=1"
   end
 
-  test "cancelling a pending run calls cancel and redirects back to chooser/launch" do
+  # --- cancel (§4.5) ----------------------------------------------------------
+
+  # The Cancel control is a DELETE form (not a link — abandoning a run destroys
+  # data) whose action is the run's STEPLESS cancel path, and it carries a CSRF
+  # token. `data-turbo-confirm` — not `data-confirm`, which is Rails UJS and would
+  # never fire under Turbo, letting one stray click discard the run silently.
+  test "the chooser renders a confirming DELETE form per pending run" do
+    advance_through("identity")
+    get base
+
+    assert_match %r{action="#{Regexp.escape(base)}/#{@wizard_token}"[^>]*method="post"}, response.body
+    assert_match %r{data-wizard-chooser-cancel}, response.body
+    assert_match %r{name="_method"[^>]*value="delete"}, response.body
+    assert_match %r{name="authenticity_token"}, response.body
+    assert_match %r{data-turbo-confirm="[^"]+"}, response.body
+    refute_match %r{data-confirm=}, response.body
+  end
+
+  test "cancelling a pending run destroys it and PRGs to the launch path" do
     advance_through("identity")
     token = @wizard_token
     assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
 
     delete "#{base}/#{token}"
-    assert_response :redirect
+    assert_response :see_other
     assert_redirected_to base
+    assert_equal 0, Plutonium::Wizard::Session.where(token: token).count
 
+    # That was the only pending run, so the launch path no longer has a chooser to
+    # show — it mints a fresh run and lands on its first step.
     follow_redirect!
-    assert_response :redirect # redirects to start fresh since no pending runs exist anymore!
-    assert_equal 0, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
+    assert_response :redirect
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
+  end
+
+  # With more than one pending run, cancelling one leaves the others alone and the
+  # chooser still lists them.
+  test "cancelling one run leaves the user's other runs untouched" do
+    advance_through("identity")
+    first = @wizard_token
+
+    # Start-new mints a second, independent run for the same user.
+    get "#{base}?new=1"
+    second = URI(response.location).path[%r{#{Regexp.escape(base)}/([A-Za-z0-9]{32})/}, 1]
+    refute_equal first, second
+    post "#{base}/#{second}/identity",
+      params: {wizard: {name: "Beta Ltd", plan: "pro", budget: "20"}, _direction: "next"}
+    assert_equal 2, Plutonium::Wizard::Session.status_in_progress.count
+
+    delete "#{base}/#{first}"
+    follow_redirect!
+
+    assert_response :success
+    assert_includes response.body, "pu-wizard-chooser"
+    assert_equal 0, Plutonium::Wizard::Session.where(token: first).count
+    assert_equal 1, Plutonium::Wizard::Session.where(token: second, status: "in_progress").count
+  end
+
+  # Cancel runs the same owner-scoping gauntlet as every other wizard action — a
+  # run id leaked in a URL is not another logged-in admin's to discard (§4.5).
+  test "cancelling another user's run is refused and leaves the run standing" do
+    advance_through("identity")
+    token = @wizard_token
+
+    sign_out(portal: :admin)
+    login_as(create_admin!, portal: :admin)
+    delete "#{base}/#{token}"
+
+    assert_response :not_found
+    assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
   end
 
   # The Start-new path (`?new=1`) bypasses the chooser and mints a fresh run, even
@@ -249,6 +305,27 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     # Finish is enabled (all steps complete).
     finish_btn = response.body[/<button[^>]*data-wizard-nav="finish"[^>]*>/]
     refute_includes finish_btn, "disabled"
+  end
+
+  # The summary resolves `choices:` labels for every collection shape the select
+  # input accepts, so a stored "email"/"2" reads as the option the user picked
+  # rather than the raw value that happens to be in the column.
+  test "review resolves choice labels for both hash and pair-list choices" do
+    advance_through("identity")
+    post "#{tbase}/details", params: {
+      wizard: {note: "hi", contact_pref: "email", contact_email: "a@example.com", referral_source: "2"},
+      _direction: "next"
+    }
+    follow_redirect!
+    get "#{tbase}/review"
+
+    card = response.body[%r{data-wizard-review-step="details".*?</section>}m]
+    assert_includes card, "Email me",
+      "a {value => label} hash choice should summarise as its label"
+    assert_includes card, "Search engine",
+      "a [label, value] pair choice should summarise as its label, not the id"
+    refute_match(/>\s*2\s*</, card,
+      "the raw pair-list value should not leak into the summary")
   end
 
   # The auto-summary is the INCOMPLETE-state (review-and-fix) view: it lists the
