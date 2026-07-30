@@ -2,9 +2,9 @@
 
 module Plutonium
   module Wizard
-    # Decorates a step's typed `data` so SELECT/CHOICE fields read as their
-    # resolved human-readable labels rather than the raw stored value (an
-    # integer ID, an enum key-string, etc.).
+    # Decorates a step's typed `data` so fields declared with `choices:` read as
+    # their human-readable label rather than the raw stored value (an integer id,
+    # an enum key-string, etc.).
     #
     # The wizard DSL lets authors write:
     #
@@ -12,21 +12,29 @@ module Plutonium
     #     choices: -> { Member.all.map { |m| [m.name, m.id] } }
     #
     #   input :payment_method, as: :slim_select,
-    #     choices: { cash: "Cash", cheque: "Cheque" }
+    #     choices: {cash: "Cash", cheque: "Cheque"}
     #
-    # On the review page the raw stored value (e.g. `42` or `"cash"`) would be
-    # shown; this decorator intercepts the getter and returns the matching label
-    # from the choices list.  Every other field delegates unchanged.
+    # On the review page the raw stored value (`42`, `"cash"`) would otherwise be
+    # shown; this decorator intercepts the getter and returns the label the form's
+    # own `<option>` carried. Every other field delegates unchanged.
     #
-    # Choices can be:
-    #   - Array of [label, value] pairs:  `[["Alice", 1], ["Bob", 2]]`
-    #   - Hash {value => label}:          `{ cash: "Cash", cheque: "Cheque" }`
-    #   - Hash {label => value}:          `{ "Cash" => :cash }` (resolved the same)
-    #   - A Proc/Lambda returning any of the above (called lazily, once per field)
+    # Resolution is delegated to `Phlexi::Form::SimpleChoicesMapper` — the SAME
+    # class the select input materialises its options with — so the review page and
+    # the form can never disagree about which label belongs to a value. That also
+    # means every collection shape the form accepts works here for free: arrays of
+    # `[label, value]` pairs, `{value => label}` hashes, ranges, sets, ActiveRecord
+    # relations and record arrays (mapped via `id`/`to_label`/`name`/`title`), and
+    # procs returning any of those. `label_method:`/`value_method:` are honoured
+    # alongside `choices:`, exactly as the input honours them.
+    #
+    # NOTE: only the declarative `choices:` OPTION is resolvable. Choices supplied
+    # inside a block (`input(:x) { |f| f.select_tag choices: ... }`) are invisible
+    # here — they're computed during form render, not stored on the step — so those
+    # fields still display their raw value.
     #
     # Read-only decoration — submitted values are unchanged.
     class ChoicesData < SimpleDelegator
-      # Wrap only when the step actually has fields with a `choices:` option.
+      # Wrap only when the step actually declares fields with a `choices:` option.
       # Returns the raw data object when there's nothing to do.
       def self.wrap(data, step)
         choice_fields = step.inputs.select { |_name, config| config.dig(:options, :choices) }
@@ -36,10 +44,9 @@ module Plutonium
       def initialize(data, choice_fields)
         super(data)
         choice_fields.each do |name, config|
-          raw_choices = config.dig(:options, :choices)
+          options = config[:options]
           define_singleton_method(name) do
-            raw_value = __getobj__.public_send(name)
-            resolve_label(raw_choices, raw_value)
+            resolve_label(options, __getobj__.public_send(name))
           end
         end
       end
@@ -52,31 +59,24 @@ module Plutonium
 
       private
 
-      # Resolve `raw_choices` to a label for `raw_value`.  Falls back to
-      # `raw_value.to_s` when the value is not found in the choices list.
-      def resolve_label(raw_choices, raw_value)
-        return raw_value.to_s if raw_value.blank?
+      # @return [String, Array<String>, nil] the label for +raw_value+, or the raw
+      #   value stringified when the choices list doesn't contain it.
+      def resolve_label(options, raw_value)
+        return raw_value if raw_value.nil?
 
-        choices = raw_choices.respond_to?(:call) ? raw_choices.call : raw_choices
+        # A multi-select stores an array; label each element so the display renders
+        # the labels rather than the inspected array.
+        return raw_value.map { |value| resolve_label(options, value) } if raw_value.is_a?(Array)
+        return raw_value.to_s if raw_value.to_s.empty?
 
-        raw_str = raw_value.to_s
-
-        case choices
-        when Hash
-          hit = choices.find { |k, _v| k.to_s == raw_str }
-          hit ? hit[1].to_s : raw_value.to_s
-        when Array
-          normalized = choices.map { |item|
-            arr = Array(item)
-            (arr.size == 1) ? [arr[0].to_s, arr[0]] : arr
-          }
-          hit = normalized.find { |_label, val| val.to_s == raw_str }
-          hit ? (hit[0].to_s) : raw_value.to_s
-        else
-          raw_value.to_s
-        end
+        mapper = Phlexi::Form::SimpleChoicesMapper.new(
+          options[:choices],
+          label_method: options[:label_method],
+          value_method: options[:value_method]
+        )
+        mapper[raw_value] || raw_value.to_s
       rescue => e
-        Rails.logger.warn { "[Plutonium::Wizard] ChoicesData resolve_label failed: #{e.message}" }
+        Rails.logger.warn { "[Plutonium::Wizard] ChoicesData could not resolve a label: #{e.message}" }
         raw_value.to_s
       end
     end

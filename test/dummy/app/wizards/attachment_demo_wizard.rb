@@ -16,6 +16,14 @@ class AttachmentDemoWizard < Plutonium::Wizard::Base
     attribute :file, :string
     input :file, as: :uppy, backend: :active_storage,
       hint: "Stored with ActiveStorage (server-side staged)."
+
+    # A `pre_submit` sibling on a step that also carries an attachment. Firing it
+    # re-renders the step from the just-submitted values — but a file input doesn't
+    # re-post on an unrelated field's `change`, so the re-render must leave the
+    # already-staged token alone rather than blanking the upload out of the form.
+    attribute :visibility, :string
+    input :visibility, as: :select, pre_submit: true,
+      choices: {internal: "Internal only", shared: "Shared with the team"}
   end
 
   # Direct upload: the browser uploads to Shrine's endpoint and posts a token.

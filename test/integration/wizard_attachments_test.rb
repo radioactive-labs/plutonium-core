@@ -130,4 +130,49 @@ class WizardAttachmentsTest < ActionDispatch::IntegrationTest
     assert ShrineDoc.last.file.attached?, "the active_shrine attachment was assigned on finish"
     assert_equal "shrine-photo.jpg", ShrineDoc.last.file.filename
   end
+
+  # --- pre_submit on a step that carries an attachment ------------------------
+
+  # A `pre_submit` re-render seeds itself from the just-submitted values so a
+  # conditional field can react. Attachment fields must be EXEMPT from that: a file
+  # input doesn't re-post on a sibling's `change`, so folding the submission over
+  # the staged token would blank the upload out of the re-rendered form and lose a
+  # file the user had already provided.
+  test "a pre_submit re-render keeps an already-staged attachment" do
+    get "/uploads"
+    base = URI(response.location).path[%r{\A/uploads/[A-Za-z0-9]{32}}]
+    follow_redirect! # → as_step
+
+    # Stage a real upload, then come back to the step so it renders from the token.
+    post "#{base}/as_step", params: {wizard: {file: multipart_png("keep-me")}, _direction: "next"}
+    follow_redirect! # → shrine_step
+    get "#{base}/as_step"
+    assert_includes response.body, "keep-me.png", "sanity: the step renders the staged file"
+
+    # Fire a pre_submit on the sibling select. The file field posts nothing.
+    post "#{base}/as_step",
+      params: {wizard: {visibility: "shared"}, pre_submit: "visibility"}
+
+    # A non-turbo pre_submit falls back to re-rendering the whole step (422, like
+    # every other wizard re-render) — what matters is what's in the body.
+    assert_includes response.body, "keep-me.png",
+      "the staged attachment must survive a pre_submit re-render"
+    assert_includes response.body, "shared",
+      "the just-picked sibling value should still seed the re-render"
+  end
+
+  # `execute`'s `with_message` should reach the page the user lands on.
+  test "an outcome message from execute is carried into the flash on completion" do
+    get "/uploads"
+    base = URI(response.location).path[%r{\A/uploads/[A-Za-z0-9]{32}}]
+    follow_redirect!
+
+    post "#{base}/as_step", params: {_direction: "next"}
+    follow_redirect!
+    post "#{base}/shrine_step", params: {_direction: "next"}
+    follow_redirect!
+    post "#{base}/review", params: {_direction: "next"}
+
+    assert_equal "Files uploaded.", flash[:notice]
+  end
 end

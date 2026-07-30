@@ -44,10 +44,21 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
 
     # pre_submit on a wizard step: contact_email is revealed only once the
     # just-picked contact_pref re-renders the form (not the stored value).
+    #
+    # The choices are a {value => label} hash whose labels differ from the stored
+    # values, so the review page has something real to resolve — a raw "email"
+    # there would mean ChoicesData isn't running.
     attribute :contact_pref, :string
-    input :contact_pref, as: :select, choices: %w[none email], pre_submit: true
+    input :contact_pref, as: :select, pre_submit: true,
+      choices: {none: "Don't contact me", email: "Email me"}
     attribute :contact_email, :string
     input :contact_email, condition: -> { object.contact_pref == "email" }
+
+    # A [label, value] pair list — the shape an id-valued select uses, where the
+    # stored value ("2") is meaningless without its label.
+    attribute :referral_source, :string
+    input :referral_source, as: :select,
+      choices: [["A friend", 1], ["Search engine", 2], ["Conference", 3]]
   end
 
   # Import a field surface from a model (KitchenSink) — its <Model>Definition
