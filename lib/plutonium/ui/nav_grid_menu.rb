@@ -66,6 +66,7 @@ module Plutonium
       def render_trigger_button
         button(
           type: "button",
+          aria: {expanded: "false"},
           data: {resource_drop_down_target: "trigger"},
           class: "p-2 text-[var(--pu-text-muted)] rounded-[var(--pu-radius-md)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] focus:ring-2 focus:ring-[var(--pu-border)] transition-colors"
         ) do

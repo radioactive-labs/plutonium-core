@@ -206,6 +206,10 @@ export default class extends Controller {
     this.menu.classList.remove('hidden')
     this.menu.classList.add('block')
     this.menu.removeAttribute('aria-hidden')
+    // Templates render aria-expanded="false" so the trigger is honest before
+    // hydration; from here on the controller owns it. Without this every
+    // dropdown in the app permanently claims to be collapsed.
+    this.triggerTarget.setAttribute('aria-expanded', 'true')
 
     // Enable popper event listeners
     this.popperInstance.setOptions((options) => ({
@@ -225,6 +229,7 @@ export default class extends Controller {
     this.menu.classList.remove('block')
     this.menu.classList.add('hidden')
     this.menu.setAttribute('aria-hidden', 'true')
+    this.triggerTarget.setAttribute('aria-expanded', 'false')
 
     // Disable popper event listeners
     this.popperInstance.setOptions((options) => ({
