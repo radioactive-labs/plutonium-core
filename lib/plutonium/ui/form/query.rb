@@ -186,10 +186,7 @@ module Plutonium
           tag = input_options[:as] || field_options[:as]
           tag_attributes = input_options.except(:wrapper, :as)
 
-          tag_block = input_definition[:block] || ->(f) {
-            tag ||= f.inferred_field_component
-            f.send(:"#{tag}_tag", **tag_attributes, class: "w-full")
-          }
+          tag_block = input_definition[:block] || ->(f) { f.component_for(tag, **tag_attributes, class: "w-full") }
 
           field_options = field_options.except(:as)
 

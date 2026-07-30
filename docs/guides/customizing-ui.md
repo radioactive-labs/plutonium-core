@@ -132,11 +132,18 @@ class PostCardComponent < Plutonium::UI::Component::Base
 end
 ```
 
-Use it directly in a page, or wire it as a field in the definition:
+Use it directly in a page, or wire it as a field in the definition. A component
+with its own constructor takes the block form — you build it, so you decide what
+it receives:
 
 ```ruby
-display :card, as: PostCardComponent
+display :card do |field|
+  PostCardComponent.new(post: field.object)
+end
 ```
+
+`as: SomeComponent` is for a *field* component, which Plutonium constructs with
+the field builder (`Phlexi::Form::Components::Base` / `Phlexi::Display::Components::Base`) — see the reference below.
 
 → See [Reference › UI › Components](/reference/ui/components).
 

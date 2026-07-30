@@ -186,7 +186,7 @@ module Plutonium
       # single-read Rack upload isn't consumed before create/update reads it.
       def attachment_input_keys
         current_definition.defined_inputs.filter_map { |name, config|
-          name.to_s if Plutonium::UI::Form::Base::Builder.file_input?(config.dig(:options, :as))
+          name.to_s if Plutonium::Definition::InputAliases.file_input?(config.dig(:options, :as))
         }
       end
 

@@ -678,11 +678,19 @@ display :priority, as: :phlexi_tag, with: ->(value, attrs) {
 
 See [[plutonium-ui]] for writing custom Phlex components.
 
-**Custom component classes** (Phlex components — see [[plutonium-ui]]):
+**Custom component classes** (Phlex components — see [[plutonium-ui]]). `as:` takes a **field component**, constructed as `YourComponent.new(field, **attributes)` — subclass `Phlexi::Form::Components::Base` (inputs) or `Phlexi::Display::Components::Base` (displays) and read the value off `field`:
 
 ```ruby
 input :color_picker, as: ColorPickerComponent
 display :chart, as: ChartComponent
+```
+
+🚨 A component with its own constructor (`PostCardComponent.new(post:)`) is NOT an `as:` candidate — it raises `ArgumentError`. Build it in a block instead:
+
+```ruby
+display :card do |field|
+  PostCardComponent.new(post: field.object)
+end
 ```
 
 ## Column Options

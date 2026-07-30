@@ -217,14 +217,7 @@ module Plutonium
             # (boolean pill, currency…) and leak into its HTML attributes.
             tag = :formatted_value if tag_attributes.key?(:formatter)
 
-            tag_block = display_definition[:block] || ->(f) {
-              tag ||= f.inferred_field_component
-              if tag.is_a?(Class)
-                f.send :create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym
-              else
-                f.send(:"#{tag}_tag", **tag_attributes)
-              end
-            }
+            tag_block = display_definition[:block] || ->(f) { f.component_for(tag, **tag_attributes) }
 
             wrapper_options = display_options[:wrapper] || {}
 

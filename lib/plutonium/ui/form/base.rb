@@ -9,6 +9,7 @@ module Plutonium
         class Builder < Builder
           include Phlexi::Field::Common::Tokens
           include Plutonium::UI::Form::Options::InferredTypes
+          include Plutonium::UI::Component::ResolvesTags
 
           # Consume `:as` here so it doesn't land in Phlexi's `@options` —
           # `:as` is a Plutonium-internal concept (it picks the tag method),
@@ -74,32 +75,16 @@ module Plutonium
           end
           alias_method :phone_tag, :int_tel_input_tag
 
-          # The `as:` values that render through the Uppy file-upload component —
-          # the single source of truth, reached elsewhere via {file_input?} (e.g.
-          # {Plutonium::Wizard::Attachments.field?}) so a wizard can detect an
-          # attachment field model-free without re-listing the aliases.
-          FILE_INPUT_TYPES = %i[uppy file attachment].freeze
-
-          # The built-in input alias an `as:` names, or nil when it names none.
-          #
-          # `as:` is a union: either a built-in alias (`:string`, `:uppy`, a
-          # String) OR a component Class rendered directly (see
-          # {Plutonium::UI::Form::Resource}) — and a Class has no `#to_sym`, so
-          # every "which alias is this?" question goes through here rather than
-          # coercing `as` itself. A component Class names no alias, so nil.
-          def self.input_alias(as)
-            as.to_sym if as.is_a?(Symbol) || as.is_a?(String)
-          end
-
-          # Whether an `as:` renders as an attachment/file input.
-          def self.file_input?(as)
-            FILE_INPUT_TYPES.include?(input_alias(as))
-          end
-
           def uppy_tag(**, &)
             create_component(Components::Uppy, :uppy, **, &)
           end
-          (FILE_INPUT_TYPES - [:uppy]).each { |name| alias_method :"#{name}_tag", :uppy_tag }
+          # Every file alias renders through Uppy. The list itself lives with the
+          # other `as:` semantics in {Plutonium::Definition::InputAliases}, which
+          # is also where non-view callers (controller, wizard, generators) ask
+          # whether an `as:` is an attachment — so the two never drift.
+          (Plutonium::Definition::InputAliases::FILE_INPUT_TYPES - [:uppy]).each do |name|
+            alias_method :"#{name}_tag", :uppy_tag
+          end
 
           def key_value_store_tag(**, &)
             create_component(Components::KeyValueStore, :key_value_store, **, &)

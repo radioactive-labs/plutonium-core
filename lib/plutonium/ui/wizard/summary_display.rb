@@ -37,7 +37,7 @@ module Plutonium
           # has_cents reflection, so inference would render it as a bare number.
           # Force the currency display and thread the declared `unit:` so the
           # recap reads "$1,234.56", matching the input's prefix.
-          if Plutonium::UI::Form::Base::Builder.input_alias(input_options[:as]) == :currency
+          if Plutonium::Definition::InputAliases.resolve(input_options[:as]) == :currency
             return render field(name, **field_options).wrapped { |f|
               render f.send(:create_component, Plutonium::UI::Display::Components::Currency, :currency, unit: input_options[:unit])
             }
@@ -78,12 +78,9 @@ module Plutonium
         # data object is decorated upstream to resolve the token to an attachment).
         def summary_tag_block(name)
           ->(f) {
-            tag = Plutonium::Wizard::Attachments.field?(@summary_inputs[name]) ? :attachment : f.inferred_field_component
-            if tag.is_a?(Class)
-              f.send(:create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym)
-            else
-              f.send(:"#{tag}_tag")
-            end
+            # nil lets the builder infer the tag from the value's type.
+            tag = :attachment if Plutonium::Wizard::Attachments.field?(@summary_inputs[name])
+            f.component_for(tag)
           }
         end
       end

@@ -139,8 +139,10 @@ module Plutonium
               else
                 ->(wrapped_object, key) {
                   f = wrapped_object.field(key)
+                  # Infer ONCE per column (this block runs per row), so every row
+                  # renders through the same tag even where values differ in type.
                   tag ||= f.inferred_field_component
-                  f.send(:"#{tag}_tag", **tag_attributes)
+                  f.component_for(tag, **tag_attributes)
                 }
               end
 

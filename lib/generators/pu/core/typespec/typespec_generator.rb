@@ -209,7 +209,9 @@ module Pu
 
           {
             name: name.to_s,
-            as: input_config[:as]&.to_s,
+            # Only an alias `as:` names a type here; a component-class `as:` says
+            # nothing about the wire format, so it contributes nothing.
+            as: Plutonium::Definition::InputAliases.resolve(input_config[:as])&.to_s,
             required: !input_config[:optional],
             type: determine_input_type(name, input_config, column, assoc, resource),
             typespec_type: determine_typespec_input_type(name, input_config, column, assoc, resource),
@@ -222,7 +224,8 @@ module Pu
       end
 
       def determine_input_type(name, config, column, assoc, resource)
-        return config[:as].to_s if config[:as]
+        input_alias = Plutonium::Definition::InputAliases.resolve(config[:as])
+        return input_alias.to_s if input_alias
         return "association" if assoc
         return "enum" if resource.defined_enums.key?(name.to_s)
         return column.type.to_s if column
@@ -243,7 +246,7 @@ module Pu
         return TYPE_MAPPING[column.type] || "string" if column
 
         # Infer from as: option (nil for a component-class as:, which maps to nothing)
-        AS_TYPE_MAPPING[Plutonium::UI::Form::Base::Builder.input_alias(config[:as])] || "string"
+        AS_TYPE_MAPPING[Plutonium::Definition::InputAliases.resolve(config[:as])] || "string"
       end
 
       def generate_typespec_files
