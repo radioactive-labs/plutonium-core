@@ -16,6 +16,16 @@ class TaskPolicy < ::ResourcePolicy
     super
   end
 
+  # reposition? gates a table/grid drag-reorder drop (the kanban board uses
+  # kanban_move? instead). Set deny_reposition = true in integration tests to
+  # exercise the 403 snap-back path.
+  cattr_accessor :deny_reposition, default: false
+
+  def reposition?
+    return false if self.class.deny_reposition
+    super
+  end
+
   # Column action: archive all done tasks.
   # Delegates to update? so any user who can edit tasks can also archive them.
   # Set deny_archive_all = true in integration tests to exercise the hidden-action path.

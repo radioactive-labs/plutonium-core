@@ -40,7 +40,8 @@ module Plutonium
 
         helper Plutonium::Helpers
         helper_method :make_page_title, :resource_url_for,
-          :resource_url_args_for, :root_path, :app_name, :route_options_to_url
+          :resource_url_args_for, :root_path, :app_name, :route_options_to_url,
+          :current_page_path, :current_page_url
 
         append_view_path File.expand_path("app/views", Plutonium.root)
         layout -> { turbo_frame_request? ? false : "resource" }
@@ -170,6 +171,24 @@ module Plutonium
         # Top-level resource: use named route helpers
         build_top_level_resource_url_args(element, action: action, **kwargs)
       end
+
+      # The path/URL of the PAGE this render belongs to.
+      #
+      # Almost always the current request — but not always. An action that
+      # answers a turbo_stream on behalf of a page the user is already looking
+      # at (the reposition drop POST, for one) renders that page's components
+      # from a DIFFERENT request path, and every URL those components build —
+      # sort links, the search form action, filter-pill removals, pagination,
+      # a row action's return_to — must point at the page, not at the POST
+      # endpoint. Reading them off `request` directly would bake the endpoint
+      # path into all of those links (a GET of the POST-only route → 404).
+      #
+      # Overriding these two is therefore the single seam for "render this
+      # collection as the index request would have rendered it"; see
+      # Plutonium::Resource::Controllers::PositionActions.
+      def current_page_path = request.path
+
+      def current_page_url = request.original_url
 
       def resource_url_for(*args, package: nil, **kwargs)
         url_args = resource_url_args_for(*args, package: package, **kwargs)

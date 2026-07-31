@@ -42,7 +42,7 @@ module Plutonium
         def render_toolbar
           TableToolbar(
             query: current_query_object,
-            search_url: request.path,
+            search_url: current_query_object.request_path,
             search_value: params.dig(:q, :search) || params[:search],
             views: resource_definition.defined_index_views,
             current_view: :grid,
@@ -124,7 +124,7 @@ module Plutonium
             render Plutonium::UI::Table::Components::FilterForm.new(
               filter_form_values,
               query_object: current_query_object,
-              search_url: request.path,
+              search_url: current_query_object.request_path,
               search_value: params.dig(:q, :search) || params[:search]
             )
           end

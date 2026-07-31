@@ -73,7 +73,7 @@ module Plutonium
         end
 
         def current_search_url
-          request.path
+          current_query_object.request_path
         end
 
         def render_bulk_actions_toolbar
