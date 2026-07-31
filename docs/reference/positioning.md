@@ -208,54 +208,79 @@ The block receives a single `Plutonium::Positioning::Move`:
 | Field | Meaning |
 |---|---|
 | `move.record` | the dropped record |
-| `move.prev` | the record immediately **before** the slot, or `nil` |
-| `move.next` | the record immediately **after** the slot, or `nil` |
-| `move.index` | 0-based insertion index among the other rows |
+| `move.prev` | the record immediately **before** the slot **on the client's page**, or `nil` |
+| `move.next` | the record immediately **after** the slot **on the client's page**, or `nil` |
+| `move.index` | 0-based insertion index among the other rows **on that page** — see [why it cannot be your anchor](#why-move-index-cannot-be-the-anchor) |
 | `move.column` | the destination kanban column key — `nil` on tables and grids, which have no columns |
 
 It is called with `call`, not `instance_exec` — `self` inside the block is wherever you wrote it.
 
 #### Worked example: `acts_as_list`
 
+::: danger Anchor off the neighbours, never off `move.index`
+`insert_at(move.index + 1)` is the obvious block to write and it is **wrong on any list that paginates or filters** — which, since Plutonium paginates every index at 20 rows by default, means wrong on any list with 21 rows in it. The numbers are in [Why `move.index` cannot be the anchor](#why-move-index-cannot-be-the-anchor). Use the block below.
+:::
+
 ```ruby
 class Task < ApplicationRecord
   include Plutonium::Resource::Record
 
-  acts_as_list scope: :status     # integer :position, 1-based, contiguous
+  # NOTE the Array. `scope: :status` does NOT work: acts_as_list runs a bare
+  # Symbol scope through its `idify` helper, which appends `_id` to anything
+  # that is neither an association nor already `*_id`. `scope: :status` becomes
+  # `scope: :status_id` and every create dies with
+  # `NoMethodError: undefined method 'status_id'`. The Array form is literal.
+  acts_as_list scope: [:status]   # integer :position, 1-based, contiguous
 end
 
 class TaskDefinition < Plutonium::Resource::Definition
   # No Plutonium::Positioning::Model, no positioned_on — acts_as_list owns
-  # both the column and the write. Plutonium only orders and routes.
+  # both the column and the write. Plutonium only orders, routes and authorizes.
   position_on :position do |move|
-    move.record.insert_at(move.index + 1)   # acts_as_list ranks start at 1
+    record = move.record
+
+    target =
+      if move.prev
+        # Land immediately after prev. When the record currently sits ABOVE
+        # prev, removing it shifts prev up one — so prev's own rank is already
+        # the slot the record should occupy.
+        (record.position > move.prev.position) ? move.prev.position + 1 : move.prev.position
+      elsif move.next
+        # Nothing visible above, but rows may still sit above off-page or behind
+        # a filter. Land immediately before next, mirrored: when the record
+        # currently sits above next, removing it shifts next up one.
+        (record.position < move.next.position) ? move.next.position - 1 : move.next.position
+      else
+        1 # the only row in the list
+      end
+
+    record.insert_at(target)
   end
 end
 ```
 
-`insert_at(n)` in `acts_as_list` means "end up at rank `n` after the move", and `move.index` is the 0-based slot the row was dropped into — so `index + 1` is the rank. `default_sort :position, :asc` is registered for you, which is exactly the order `acts_as_list` maintains.
+`insert_at(n)` in `acts_as_list` means "end up at rank `n` after the move", and every rank in the expression above is a **real** rank read off a neighbour record — never a viewport offset. `default_sort :position, :asc` is registered for you, which is exactly the order `acts_as_list` maintains.
 
-::: warning `move.index` is relative to the page the user is looking at
-Plutonium hands a Mode B block the client's neighbours **verbatim** — it does not look up the rows pagination or a filter hid, the way Mode A does. On the second page of a paginated list, `move.index` counts from the top of *that page*, not the top of the list.
+Both the `elsif move.next` branch and the `else 1` are load-bearing. A blank `prev` means "nothing above me **on my screen**"; falling straight through to rank 1 sends the row to the top of the whole list, past every row the page or the filter hid.
 
-If your list paginates or filters, anchor off the neighbours instead of the index. With `acts_as_list`'s move semantics, "land immediately after `move.prev`" is:
-
-```ruby
-position_on :position do |move|
-  target =
-    if move.prev
-      # Removing the record shifts prev up by one when it was above it.
-      (move.record.position > move.prev.position) ? move.prev.position + 1 : move.prev.position
-    else
-      1   # dropped at the top of the visible page
-    end
-
-  move.record.insert_at(target)
-end
-```
-
-Mode A has none of this to think about: it resolves hidden boundary neighbours server-side (see [Nested resources & scope groups](#nested-resources-scope-groups)). Mode B is an escape hatch, and the price of the hatch is owning the semantics.
+::: tip `insert_at` swallows a failed save
+`insert_at` calls `save`, not `save!`, so a record that fails validation mid-move silently no-ops — the drop answers `200` and the streamed collection shows the row back where it started. Use `insert_at!` if you would rather the endpoint surface the errors as a `422` with a toast — the validation-failure row of [the response table](#the-endpoint).
 :::
+
+#### Why `move.index` cannot be the anchor {#why-move-index-cannot-be-the-anchor}
+
+Plutonium hands a Mode B block the client's neighbours **verbatim** — it does not look up the rows pagination or a filter hid, the way Mode A does. So `move.index` is a claim about the **viewport**, while `insert_at` addresses the **whole scope group**. The two only agree on an unfiltered page 1.
+
+These are measured, not reasoned — `test/plutonium/resource/controllers/position_actions_acts_as_list_test.rb` drives each one through `POST <member>/reposition` against the real gem:
+
+| List | Gesture | `insert_at(move.index + 1)` | Anchored off neighbours |
+|---|---|---|---|
+| 25 rows, page 2 | drag rank 25 between ranks 21 and 22 (`to_index: 1`) | `insert_at(2)` → the row lands at **rank 2**, 20 slots away on page 1 | rank **22**, where it was dropped |
+| 25 rows, page 2 | drag rank 25 to the top of page 2 (`prev_id` blank, `to_index: 0`) | `insert_at(1)` → the row lands at **rank 1**, the head of the whole list | rank **21**, below the last row of page 1 |
+| 10 rows, filter shows ranks 1 and 10 | drag rank 1 below the filtered row at rank 10 (`to_index: 1`) | `insert_at(2)` → the row moves **one slot**, staying at the top | rank **10**, below the hidden rows |
+| 10 rows, filter shows ranks 5 and 10 | drag rank 10 above the filtered row at rank 5 (`prev_id` blank, `to_index: 0`) | `insert_at(1)` → **rank 1**, above four rows the filter hid | rank **5**, immediately above the row it was dropped on |
+
+Mode A has none of this to think about: it resolves hidden boundary neighbours server-side before the write (see [Nested resources & scope groups](#nested-resources-scope-groups)). Mode B is an escape hatch, and the price of the hatch is owning the semantics.
 
 ::: tip Mode B always streams the collection back
 A Mode B drop **never** answers `204`. The block is an opaque write — Plutonium cannot know what it touched, and gems in this space routinely renumber the entire group (`acts_as_list` does exactly that). So every Mode B drop returns the re-rendered collection, and the client replaces its optimistic DOM with the server's truth. It is a repaint per drop, and it is the only way the two can be guaranteed to agree.
@@ -339,7 +364,7 @@ A **grid** card gets a grip rather than whole-card dragging, because unlike a ka
 
 ---
 
-## The endpoint — `POST <member>/reposition`
+## The endpoint — `POST <member>/reposition` {#the-endpoint}
 
 Mounted on every resource (like the kanban move routes). Resources that declare no `position_on` answer `404`.
 

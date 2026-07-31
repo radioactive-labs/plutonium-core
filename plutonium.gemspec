@@ -93,6 +93,14 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "combustion"
   spec.add_development_dependency "capybara"
   spec.add_development_dependency "selenium-webdriver"
+  # Exercises the Mode B positioning escape hatch (position_on with a block)
+  # against a REAL third-party positioning gem, which is the only way the
+  # worked example in docs/reference/positioning.md can be kept honest.
+  # A development dependency declared here (rather than in the Gemfile) is
+  # inherited by every appraisal gemfile via `gemspec path: "../"`, so the
+  # dummy app's acts_as_list resource loads on rails-7, 8.0 and 8.1 alike —
+  # and never becomes a runtime dependency of the gem.
+  spec.add_development_dependency "acts_as_list"
 
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html

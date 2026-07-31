@@ -1011,16 +1011,40 @@ Task.backfill_positions!(order: :created_at)
 | `position_on(:rank) { \|move\| … }` | B (block) | Another gem owns the write (`acts_as_list`). No model concern needed. |
 | `position_on false` | C (disabled) | No ordering, no route — the endpoint 404s |
 
-Mode B block receives a `Plutonium::Positioning::Move`: `record`, `prev`, `next`, `index` (0-based, **relative to the visible page**), `column` (kanban only, `nil` on tables/grids). It always streams the collection back — the write is opaque, and gems like `acts_as_list` renumber the whole group.
+Mode B block receives a `Plutonium::Positioning::Move`: `record`, `prev`, `next`, `index` (0-based, **relative to the visible page**), `column` (kanban only, `nil` on tables/grids). Mode B gets the client's viewport **verbatim** — unlike Mode A, the framework does not resolve the neighbours pagination or a filter hid. It always streams the collection back — the write is opaque, and gems like `acts_as_list` renumber the whole group.
+
+🚨 **Anchor off `move.prev` / `move.next`, never off `move.index`.** `move.index` counts the visible page; a positioning gem's `insert_at` addresses the whole group. `insert_at(move.index + 1)` is wrong on any list past 20 rows (Plutonium's default page size) — measured: dragging rank 25 into the middle of page 2 lands it at **rank 2**. Same for a filtered list.
 
 ```ruby
-# Keeping acts_as_list:
+# Keeping acts_as_list. NOTE scope: [:status] — a bare Symbol scope is run
+# through acts_as_list's `idify`, which turns :status into :status_id and makes
+# every create raise NoMethodError.
+class Task < ApplicationRecord
+  acts_as_list scope: [:status]
+end
+
 class TaskDefinition < ResourceDefinition
   position_on :position do |move|
-    move.record.insert_at(move.index + 1)    # acts_as_list ranks are 1-based
+    record = move.record
+
+    target =
+      if move.prev
+        # Removing the record shifts prev up one when the record was above it.
+        (record.position > move.prev.position) ? move.prev.position + 1 : move.prev.position
+      elsif move.next
+        # Blank prev means "nothing above me ON MY SCREEN" — rows may still sit
+        # above off-page or behind a filter, so anchor off next rather than 1.
+        (record.position < move.next.position) ? move.next.position - 1 : move.next.position
+      else
+        1 # the only row in the list
+      end
+
+    record.insert_at(target)
   end
 end
 ```
+
+`insert_at` calls `save`, not `save!` — a failed move silently no-ops. Use `insert_at!` to surface it as a 422.
 
 ### 🚨 `position_on` expands to three things
 
