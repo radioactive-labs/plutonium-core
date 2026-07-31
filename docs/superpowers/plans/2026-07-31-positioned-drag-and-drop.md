@@ -1686,7 +1686,7 @@ git commit -m "test(positioning): system tests for drag and keyboard reorder"
 
 **Files:**
 - Create: `docs/reference/positioning.md`
-- Modify: `docs/reference/actions.md` (hidden actions)
+- Modify: `docs/reference/resource/actions.md` (hidden actions)
 - Modify: `.claude/skills/plutonium-resource/SKILL.md`
 - Modify: `.claude/skills/plutonium-ui/SKILL.md`
 - Modify: `docs/.vitepress/config.*` (sidebar entry)
@@ -1722,7 +1722,7 @@ Note that Mode B always reconciles, and why (`acts_as_list` renumbers the whole 
 
 - [ ] **Step 2: Document hidden actions**
 
-In `docs/reference/actions.md`, add a section on `hidden: true`: what it gives you (route, policy predicate, form/params machinery), what it withholds (every render surface), and the warning that it is a display gate, not an authorization boundary — authorization belongs in the policy.
+In `docs/reference/resource/actions.md`, add a section on `hidden: true`: what it gives you (route, policy predicate, form/params machinery), what it withholds (every render surface), and the warning that it is a display gate, not an authorization boundary — authorization belongs in the policy.
 
 - [ ] **Step 3: Update the skills**
 
