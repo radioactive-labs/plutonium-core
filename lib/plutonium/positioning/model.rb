@@ -68,10 +68,9 @@ module Plutonium
         col = self.class.positioning_column
         prev_val = prev_record&.public_send(col)
         next_val = next_record&.public_send(col)
-        rebalanced = false
-        if Plutonium::Positioning.gap_exhausted?(prev_val, next_val)
+        rebalanced = Plutonium::Positioning.gap_exhausted?(prev_val, next_val)
+        if rebalanced
           rebalance_scope_group!
-          rebalanced = true
           prev_val = prev_record&.reload&.public_send(col)
           next_val = next_record&.reload&.public_send(col)
         end

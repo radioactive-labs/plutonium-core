@@ -686,8 +686,18 @@ module Plutonium
           config
         end
 
-        # Mode A calls record.reposition!, which only exists on models that
-        # include the concern. Fail at class-load time rather than on first drag.
+        # Mode A calls record.reposition! AND reads `.rebalanced?` off its
+        # return, so it needs the real concern — not merely something that
+        # responds to reposition!. A model that hand-rolls reposition! (wrapping
+        # acts_as_list, say) would otherwise fail at drop time, mid-transaction,
+        # with `NoMethodError: undefined method 'rebalanced?' for true`.
+        #
+        # This check lives HERE rather than in Config#reposition! for two
+        # reasons: the house rule against defensive call-site guards, and
+        # config.rb's standalone-loadability invariant — naming
+        # Plutonium::Positioning::Model there would pull in the concern and
+        # break the guard test. The DSL is where the mode is chosen, so it is
+        # where the contract belongs.
         def self.validate_model_is_positioned!(attribute)
           return if model_class.include?(Plutonium::Positioning::Model)
 
@@ -975,15 +985,18 @@ module Plutonium
           prev_record, prev_ok = resolve_position_neighbour(params[:prev_id])
           next_record, next_ok = resolve_position_neighbour(params[:next_id])
 
-          rebalanced = config.reposition!(
+          # Bind the return rather than branching on the call directly:
+          # `if config.reposition!(...)` reads as a success check, which this is
+          # NOT — failure raises. The boolean means "positions other than this
+          # record's may have changed, so the client's optimistic view is stale".
+          must_reconcile = config.reposition!(
             record:,
-
             prev_record:,
             next_record:,
             index: params[:to_index].to_i
           )
 
-          if rebalanced || !prev_ok || !next_ok
+          if must_reconcile || !prev_ok || !next_ok
             render_position_reconciliation
           else
             head :no_content
