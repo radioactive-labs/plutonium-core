@@ -1,0 +1,2 @@
+class ChoresController < ::ResourceController
+end
