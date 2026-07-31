@@ -22,6 +22,40 @@ module Plutonium
           path.empty? ? "/" : path
         end
 
+        # DOM id of the wrapper around the rendered collection (table OR grid;
+        # never the kanban board, which owns its own column frames).
+        #
+        # This is the turbo-stream target the reposition endpoint updates when a
+        # drop leaves the client's optimistic view stale, and the element the
+        # drag controllers (Tasks 7/8) scope themselves to. Resource-scoped so
+        # two collections of DIFFERENT resources on one page (a nested
+        # association panel inside a show page) don't collide.
+        def self.collection_dom_id(resource_class)
+          "pu-collection-#{resource_class.model_name.plural}"
+        end
+
+        # Resolves the index view to render. Extracted to a class method because
+        # the reposition endpoint has to re-render the SAME view the user is
+        # looking at, and re-deriving that from scratch in the controller would
+        # be a second, drifting copy of this precedence.
+        #
+        # Resolution order:
+        # 1. `?view=` URL param (so a shared link can pin a view)
+        # 2. The view-preference cookie (sticky per-resource selection)
+        # 3. The resource's `default_index_view` (which itself defaults to
+        #    `index_views.first`)
+        def self.resolve_view(definition, resource_class, view_param, cookies)
+          enabled = definition.defined_index_views
+
+          requested = view_param&.to_sym
+          return requested if requested && enabled.include?(requested)
+
+          stored = cookies[view_cookie_name(resource_class)]&.to_sym
+          return stored if stored && enabled.include?(stored)
+
+          definition.default_index_view
+        end
+
         private
 
         def page_title
@@ -37,29 +71,20 @@ module Plutonium
         end
 
         def render_default_content
-          case selected_view
-          when :kanban then render partial("resource_kanban")
-          when :grid then render partial("resource_grid")
-          else render partial("resource_table")
+          # The board owns its own frames (and its own drop target), so it is
+          # rendered bare. Table and grid share one id'd wrapper: it is what the
+          # reposition endpoint streams into after a drop, so the surface the
+          # drag controller reads and the surface the server replaces are the
+          # same element in both views.
+          return render partial("resource_kanban") if selected_view == :kanban
+
+          div(id: self.class.collection_dom_id(resource_class)) do
+            render partial((selected_view == :grid) ? "resource_grid" : "resource_table")
           end
         end
 
-        # Resolution order:
-        # 1. `?view=` URL param (so a shared link can pin a view)
-        # 2. The view-preference cookie (sticky per-resource selection)
-        # 3. The resource's `default_index_view` (which itself defaults to
-        #    `index_views.first`)
         def selected_view
-          definition = current_definition
-          enabled = definition.defined_index_views
-
-          requested = params[:view]&.to_sym
-          return requested if requested && enabled.include?(requested)
-
-          stored = helpers.cookies[self.class.view_cookie_name(resource_class)]&.to_sym
-          return stored if stored && enabled.include?(stored)
-
-          definition.default_index_view
+          self.class.resolve_view(current_definition, resource_class, params[:view], helpers.cookies)
         end
 
         def page_type = :index_page

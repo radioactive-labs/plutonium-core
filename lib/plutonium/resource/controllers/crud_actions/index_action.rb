@@ -17,7 +17,23 @@ module Plutonium
             # eager-loading at the point of use also leaves an app's own
             # `filtered_resource_collection` override unaffected.
             collection = auto_eager_load(filtered_resource_collection, presentable_attributes)
-            @pagy, @resource_records = pagy(:offset, collection)
+            @pagy, @resource_records = pagy(:offset, collection, request: pagy_request_context)
+          end
+
+          # What Pagy builds its page URLs from. Pagy accepts either the real
+          # request object or a plain hash (Pagy::Request), which is the seam we
+          # need: an action that re-renders the collection on the index's behalf
+          # (the reposition drop POST) must emit page links pointing at the index
+          # page, not at its own POST-only path. current_page_path is that page —
+          # it equals request.path for a genuine index request, so the default is
+          # exactly today's behaviour.
+          def pagy_request_context
+            {
+              base_url: request.base_url,
+              path: current_page_path,
+              params: request.GET.merge(request.POST).to_h,
+              cookie: request.cookies["pagy"]
+            }
           end
 
           def filtered_resource_collection

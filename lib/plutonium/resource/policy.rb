@@ -186,6 +186,15 @@ module Plutonium
         update?
       end
 
+      # Authorizes a drag-reorder drop on a table or grid. Delegates to update?
+      # by default — override to allow (or forbid) reordering independently of
+      # full edit-form access.
+      #
+      # @return [Boolean] Delegates to update?.
+      def reposition?
+        update?
+      end
+
       # Checks if record search is permitted.
       #
       # @return [Boolean] Delegates to index?.

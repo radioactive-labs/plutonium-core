@@ -2,6 +2,15 @@ module Plutonium
   module Resource
     class QueryObject
       attr_reader :search_filter, :search_query
+
+      # The path every URL this object builds is anchored to — the collection
+      # page, which is not necessarily the current request (see
+      # Plutonium::Core::Controller#current_page_path). Exposed so the
+      # components rendering alongside these URLs — the search form's action,
+      # the filter pills' clear links — address the same page instead of each
+      # re-deriving it from `request`.
+      attr_reader :request_path
+
       attr_accessor :default_sort_config, :default_scope_name
 
       # Initializes a QueryObject with the given resource_class and parameters.
