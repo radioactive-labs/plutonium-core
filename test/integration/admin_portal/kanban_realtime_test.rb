@@ -131,7 +131,7 @@ class AdminPortal::KanbanRealtimeTest < ActionDispatch::IntegrationTest
       assert_includes targets, "kanban-col-lost", "lost frame must be broadcast"
       refute_includes targets, Plutonium::REMOTE_MODAL_FRAME,
         "the modal-close stream must NOT be broadcast to other viewers"
-      refute_includes targets, "kanban-flash",
+      refute_includes targets, Plutonium::FLASH_REGION,
         "the success-toast stream must NOT be broadcast to other viewers"
 
       # ...but the mover DOES receive both (proves they're mover-only, not dropped).

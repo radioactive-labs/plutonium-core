@@ -320,7 +320,7 @@ module Plutonium
               if run_enter_interaction
                 streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")]
                 outcome.messages.each do |msg, type|
-                  streams += [turbo_stream.append("kanban-flash", partial: "plutonium/toast",
+                  streams += [turbo_stream.append(Plutonium::FLASH_REGION, partial: "plutonium/toast",
                     locals: {type: ((type == :notice) ? :success : type), msg:})]
                 end
               end
@@ -795,7 +795,7 @@ module Plutonium
         # unchanged, allowing the Stimulus drag controller to snap the card back.
         #
         # When a reason is given, a single dismissable toast is appended to the
-        # board's #kanban-flash region so the snap-back is explained rather than
+        # page's shared toast region so the snap-back is explained rather than
         # silent. It renders the shared _toast partial directly (not via flash)
         # so a stale, undisplayed flash from an earlier request can't leak into
         # the turbo_stream response — these move POSTs never render the layout
@@ -810,7 +810,7 @@ module Plutonium
 
           if reason
             streams << turbo_stream.append(
-              "kanban-flash",
+              Plutonium::FLASH_REGION,
               partial: "plutonium/toast",
               locals: {type: :warning, msg: reason}
             )

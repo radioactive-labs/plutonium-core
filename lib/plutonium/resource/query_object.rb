@@ -213,6 +213,33 @@ module Plutonium
         }
       end
 
+      # Whether the collection is ordered by `name` ASCENDING and by nothing
+      # else — the invariant a drag-reorder depends on. Dropping a row "between
+      # the two rows either side of it" only means anything when the visual
+      # order IS the stored order: under a title sort the neighbours say nothing
+      # about position, and under a DESCENDING position sort they say the
+      # opposite of what the write assumes.
+      #
+      # An explicit selection wins; with none, the resource's default_sort is
+      # what the user is looking at (field/direction form only — a `default_sort`
+      # block is opaque, so it cannot be claimed to satisfy this).
+      #
+      # @param name [Symbol, String] the position attribute
+      # @return [Boolean]
+      def sorted_ascending_only_by?(name)
+        fields = selected_sort_fields.map(&:to_s)
+
+        if fields.any?
+          return false unless fields == [name.to_s]
+          direction = selected_sort_directions[name.to_sym] || selected_sort_directions[name.to_s] || "ASC"
+          return direction.to_s.casecmp("asc").zero?
+        end
+
+        return false unless default_sort_config.is_a?(Array)
+        field, direction = default_sort_config
+        field.to_s == name.to_s && (direction || :asc).to_s.casecmp("asc").zero?
+      end
+
       private
 
       attr_reader :resource_class, :params, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter

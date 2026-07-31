@@ -48,6 +48,15 @@ module Plutonium
         @mode == :disabled
       end
 
+      # Mode A — the framework owns the write, via Positioning::Model. Callers
+      # ask because Mode A is the only mode whose storage they may reason about:
+      # a fractional position between two neighbours, in a known scope group. A
+      # Mode B block owns both the storage and its own notion of neighbours, so
+      # nothing outside it may second-guess the drop it is handed.
+      def delegate?
+        @mode == :delegate
+      end
+
       # Apply positional ordering to a relation.
       # Mode A/B: relation.reorder(attribute)
       # Mode C:   return relation unchanged
