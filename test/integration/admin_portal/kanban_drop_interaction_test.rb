@@ -351,7 +351,7 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
   # ─── Security: the interaction has NO policy of its own ─────────────────────
   #
   # The enter_interaction is auto-registered as an interactive record action
-  # (:lost_enter_interaction, kanban_drop: true), so its standard route
+  # (:lost_enter_interaction, hidden: true), so its standard route
   # /record_actions/:action IS reachable. It is authorized ONLY by kanban_move?
   # via the drop path — it has no per-interaction policy rule — so the standard
   # route must fail closed. This is the load-bearing invariant of the single-
