@@ -59,7 +59,8 @@ Plus interactive-action routes for every action declared in the definition (`/po
 |---|---|
 | Field rendering (inputs, displays, columns) | [Definition](/reference/resource/definition) |
 | Search, filters, scopes, sorting | [Query](/reference/resource/query) |
-| Custom operations (publish, archive, import) | [Interaction](./interactions) + action on definition |
+| Custom operations (publish, archive, import) — the *button* | [Interaction](./interactions) + action on definition |
+| The operation itself, once a job/API/task also needs it | The **model** — see [Interactions › What an interaction is for](./interactions#what-an-interaction-is-for) |
 | Authorization rules | [Policy](./policies) |
 | Form / show / page chrome | Definition (custom page classes — see [UI › Pages](/reference/ui/pages)) |
 | **Custom redirect logic** | **[Controller hook](#redirect-hooks)** |
@@ -155,13 +156,15 @@ end
 
 ## Custom actions
 
-Prefer **interactive actions** (definition + interaction — see [Resource › Actions](/reference/resource/actions)) for anything with business logic. The only reasons to hand-write a controller action: unusual response shapes, external service callbacks, etc.
+Prefer **interactive actions** (definition + interaction — see [Resource › Actions](/reference/resource/actions)) for anything a user triggers from a page: you get the button, the policy check, the form, and the flash for free. The only reasons to hand-write a controller action: unusual response shapes, external service callbacks, etc.
+
+Either way the *operation* should be a named method on the model — that's what keeps it reachable from a job or an API. The controller and the interaction are two different front doors to the same `post.publish!`.
 
 ```ruby
 class PostsController < ::ResourceController
   def publish
     authorize_current!(resource_record!, to: :publish?)
-    resource_record!.update!(published: true)
+    resource_record!.publish!
     redirect_to resource_url_for(resource_record!), notice: "Published!"
   end
 end

@@ -17,6 +17,7 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 - **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detection works; production raises.
 - **`ActiveRecord::RecordInvalid` is NOT rescued automatically in interactions.** Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
 - **Return `succeed(...)` or `failed(...)`** from `execute` — the controller can't tell what happened otherwise.
+- **An interaction is a presentation object** (it can only be built with a `view_context`). Logic may *start* in `execute`; the **second caller** — a job, an API controller, a rake task, the console — is the trigger to move it onto the **model**. Don't pre-extract, and don't invent a service layer. See Part 3 › Where the logic goes.
 - **Redirect is automatic on success** — only use `with_redirect_response` for a *different* destination.
 - **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly. `super` works when extending a parent policy (e.g., a package base) that itself calls it. See [[plutonium-tenancy]].
 - **For `has_cents` fields, use the virtual name (`:price`), not `:price_cents`** in `permitted_attributes_for_*`.
@@ -32,7 +33,8 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 | The requirement (in plain words) | Goes in | **NOT** in |
 |---|---|---|
 | "only \<role/owner\> may do X" — *who is allowed* | **Policy** `def x?` | a `condition:` proc — that only hides the button; the route stays live and callable |
-| "doing X changes state / sends mail / charges a card" — *the work* | **Interaction** `execute`, registered as an action | a hand-written controller action; an override of `create`/`update` |
+| "there's a button that does X" — *the trigger* | **Interaction** (+ action in the definition) | a hand-written controller action; an override of `create`/`update` |
+| "doing X changes state / sends mail / charges a card" — *the work* | a named **model** method the interaction calls (`post.publish!`) — inline in `execute` is fine while the button is the only caller | a service-object layer; three chained interactions |
 | "after create/update go to Y" · "munge a param" · "reshape the index query" | **Controller hook** (`redirect_url_after_submit`, `resource_params`, `filtered_resource_collection`) | overriding `create`/`update`/`index` |
 | "which fields are visible / editable" | **Policy** `permitted_attributes_for_*` | the definition — that only controls *how* a field renders |
 
@@ -109,7 +111,8 @@ Plus interactive-action routes for every action declared in the definition.
 |---|---|
 | Field rendering (inputs, displays, columns) | Definition |
 | Search, filters, scopes, sorting | Definition |
-| Custom operations (publish, archive, import) | Interaction (+ action in definition) |
+| Custom operations (publish, archive, import) — the *button* | Interaction (+ action in definition) |
+| The operation itself, once a job/API/task also needs it | The **model** (`post.publish!`) — see Part 3 › Where the logic goes |
 | Authorization rules | Policy |
 | Form/show/page chrome | Definition (custom page classes) |
 | **Custom redirect logic** | **Controller hook** |
@@ -175,13 +178,15 @@ def submit_scoped_entity?   = true
 
 ## Custom actions
 
-Prefer **interactive actions** (definition + interaction) for anything with business logic. The only reason to hand-write a controller action is unusual flows (custom response shapes, external service callbacks, etc.).
+Prefer **interactive actions** (definition + interaction) for anything a user triggers from a page. The only reason to hand-write a controller action is unusual flows (custom response shapes, external service callbacks, etc.).
+
+Either way the *operation* is a named model method — the controller and the interaction are two front doors onto the same `post.publish!`.
 
 ```ruby
 class PostsController < ::ResourceController
   def publish
     authorize_current!(resource_record!, to: :publish?)
-    resource_record!.update!(published: true)
+    resource_record!.publish!
     redirect_to resource_url_for(resource_record!), notice: "Published!"
   end
 end
@@ -664,7 +669,39 @@ end
 
 # Part 3 — Interactions
 
-Interactions encapsulate business logic into testable units. They're registered as actions in definitions (see [[plutonium-resource]] › Actions) and executed by the controller.
+An interaction is the entry point from a Plutonium page into an operation: it declares the inputs, renders as a button and a form, is gated by a policy, and returns an outcome the controller turns into a flash + redirect. Registered as actions in definitions (see [[plutonium-resource]] › Actions) and executed by the controller.
+
+## Where the logic goes
+
+An interaction is a **presentation object**. Its job is the button, the form, input-shape validation, and the user-facing outcome. It is not the home of a domain operation, because of one line in the base class:
+
+```ruby
+def initialize(view_context:, **attributes)
+```
+
+`view_context:` is required. So a caller that isn't a Plutonium page has two options: duplicate the logic, or manufacture a `view_context` it has no business owning. **`view_context` is the tell.**
+
+| | |
+|---|---|
+| **Logic may start in `execute`** | A one-off with a single caller is fine inline. Don't pre-extract — Plutonium ships no service layer to put it in, and YAGNI. |
+| **The trigger to extract is the second caller** | A background job, an API controller, a rake task, the console, another interaction. |
+| **The destination is the model** | Fat models, per Rails convention. Name it in domain language — `publish!`, `archive!`, `register!` — not persistence (`update_published_at`). Never a `PublishPostService`. |
+
+```ruby
+# 🚫 Three interactions, three view_contexts. A signup API or a seeds script
+#    can supply none of them — the email and the audit row are stranded.
+CreateUserInteraction.call(view_context:, **user_params)
+  .and_then { |user| SendWelcomeEmail.call(view_context:, user:) }
+  .and_then { |user| LogActivity.call(view_context:, user:) }
+
+# ✅ One model method; the interaction presents it
+def execute
+  user = User.register!(**attributes)   # welcome email + audit row live in here
+  succeed(user).with_message("Welcome aboard!")
+end
+```
+
+Chaining three interactions is usually one model method wearing three presentation costumes.
 
 ## Structure
 
@@ -673,7 +710,14 @@ Interactions encapsulate business logic into testable units. They're registered 
 class ResourceInteraction < Plutonium::Resource::Interaction
 end
 
-# A real interaction
+# app/models/post.rb — what publishing MEANS (a scheduler job can call this too)
+class Post < ApplicationRecord
+  def publish!(on: Time.current)
+    update!(published: true, published_at: on)
+  end
+end
+
+# A real interaction — the button in front of it
 class PublishPostInteraction < ResourceInteraction
   presents label: "Publish",
            icon: Phlex::TablerIcons::Send,
@@ -689,7 +733,7 @@ class PublishPostInteraction < ResourceInteraction
   private
 
   def execute
-    resource.update!(published_at: publish_date)
+    resource.publish!(on: publish_date)
     succeed(resource).with_message("Post published!")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
@@ -786,22 +830,32 @@ failed(email: "is invalid", name: "is required")  # hash form
 failed("Invalid value", :email)                   # string + attribute
 ```
 
-### Chaining
+### Chaining — `and_then`
+
+On a `Success`, `and_then` yields **the value** (NOT the outcome — there is no `r.value` in the block) and returns whatever the block returns; on a `Failure` it short-circuits, returning the failure untouched.
+
+Use it to compose outcomes **inside one `execute`**, e.g. a guard:
 
 ```ruby
 def execute
-  CreateUserInteraction.call(view_context:, **user_params)
-    .and_then { |r| SendWelcomeEmail.call(view_context:, user: r.value) }
-    .and_then { |r| LogActivity.call(view_context:, user: r.value) }
-    .with_message("User created and welcomed!")
+  unlocked_resource.and_then do |post|
+    post.publish!(on: publish_date)
+    succeed(post).with_message("Post published!")
+  end
+end
+
+private
+
+def unlocked_resource
+  resource.locked? ? failed("This post is locked") : succeed(resource)
 end
 ```
 
-The chain short-circuits on the first failure.
+⚠️ **Don't chain interactions to sequence business operations** — see Where the logic goes above.
 
 ## Validations
 
-Standard ActiveModel — run automatically before `execute`:
+Standard ActiveModel — run automatically before `execute`; if they fail, `execute` never runs:
 
 ```ruby
 validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
@@ -816,6 +870,21 @@ def custom_check
 end
 ```
 
+### Which validation goes where
+
+| | Interaction validation | Model validation |
+|---|---|---|
+| Asks | "Can I read this input?" — present, parses, right type, plausible format | "Is this record legal?" — invariants that hold no matter who calls |
+| Exists to | render a form error next to the field | protect the data from every caller, including ones with no form |
+| Runs | before `execute`, never touching the model | inside `save!`/`update!` — i.e. inside the model method |
+
+They surface **differently**, and that should inform where a rule lives:
+
+- An interaction validation attaches to a declared attribute → the re-rendered modal shows it inline against that input **and** in the summary.
+- `failed(record.errors)` flattens `ActiveModel::Errors` to **full messages on `:base`** (`Array(errors)` → `errors.to_a` → `full_messages`) → error summary only, never against a field, phrased with the *model's* attribute names.
+
+So it's fine — often right — to **duplicate** a cheap invariant as an interaction validation purely for the better error placement, while the model keeps the authoritative copy. What must not happen is the model-side copy going missing: when a job calls `post.publish!`, the interaction's validations aren't in the picture.
+
 ## Accessing context
 
 ```ruby
@@ -825,6 +894,8 @@ def execute
   succeed(resource)
 end
 ```
+
+This write is **correctly inline**. "Who clicked the button" is context only the presentation layer holds — a job has no answer for it, so there's no second caller to extract for.
 
 A shorter `current_user` helper is conventional:
 
@@ -868,7 +939,25 @@ The same URL serves GET (form/confirmation) and POST (commit) — the HTTP verb 
 
 ## Complete example
 
+Inviting a user is a textbook second-caller case — a seats-provisioning job, an admin rake task, and a signup API all need to send the same invitation. So the operation lives on `Company`; the interaction is the button in front of it.
+
 ```ruby
+# app/models/company.rb — what inviting MEANS: the row, the mail, the audit trail
+class Company < ApplicationRecord
+  has_many :user_invites
+
+  def invite!(email:, role:, by:)
+    user_invites.create!(email: email, role: role, invited_by: by).tap do |invite|
+      UserInviteMailer.invitation(invite).deliver_later
+    end
+  end
+
+  def pending_invite_for?(email) = user_invites.exists?(email: email, state: :pending)
+end
+```
+
+```ruby
+# app/interactions/company/invite_user_interaction.rb
 class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   presents label: "Invite User",
            icon: Phlex::TablerIcons::UserPlus
@@ -880,6 +969,7 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   input :email
   input :role, as: :select, choices: -> { UserInvite.roles.keys }
 
+  # Input shape only — readable email? a role that exists?
   validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
   validates :role,  presence: true, inclusion: {in: UserInvite.roles.keys}
   validate :not_already_invited
@@ -887,21 +977,18 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   private
 
   def execute
-    invite = UserInvite.create!(
-      company: resource, email: email, role: role,
-      invited_by: current_user
-    )
-    UserInviteMailer.invitation(invite).deliver_later
+    resource.invite!(email: email, role: role, by: current_user)
     succeed(resource).with_message("Invitation sent to #{email}")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end
 
+  # Deliberately duplicated. UserInvite enforces uniqueness for real (a job calling
+  # company.invite! must hit it too); this copy exists only so the message lands on
+  # the :email field instead of in the base error summary.
   def not_already_invited
-    return unless email.present?
-    if UserInvite.exists?(company: resource, email: email, state: :pending)
-      errors.add(:email, "already has a pending invitation")
-    end
+    return if email.blank?
+    errors.add(:email, "already has a pending invitation") if resource.pending_invite_for?(email)
   end
 
   def current_user = view_context.controller.helpers.current_user

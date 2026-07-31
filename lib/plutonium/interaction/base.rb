@@ -3,22 +3,40 @@ require "active_model"
 module Plutonium
   module Interaction
     # Base class for all interactions.
-    # Provides core functionality for validations, execution, and result handling.
     #
-    # @example
-    #   class MyInteraction < Plutonium::Interaction::Base
-    #     attribute :user_id, :integer
-    #     validates :user_id, presence: true
+    # An interaction is a *presentation object*: it declares the inputs for an
+    # operation, renders as a button and a form, is gated by a policy, and
+    # returns an {Plutonium::Interaction::Outcome} the controller turns into a
+    # flash message and a redirect. It provides validations (of input *shape*),
+    # execution, and result handling.
+    #
+    # It cannot be constructed without a +view_context:+ — which is precisely
+    # the boundary it marks. Logic may *start* in +#execute+; a one-off with a
+    # single caller is fine there, and pre-extracting is YAGNI. But the moment a
+    # second caller appears — a background job, an API controller, a rake task,
+    # the console — move the behaviour onto the model, Rails-style. Otherwise
+    # that caller must either duplicate it or manufacture a +view_context+ it
+    # has no business owning.
+    #
+    # @example The model owns what "confirming" means; the interaction presents it
+    #   class ConfirmUserInteraction < Plutonium::Interaction::Base
+    #     attribute :resource
+    #     attribute :confirmed_at, :datetime, default: -> { Time.current }
+    #
+    #     validates :confirmed_at, presence: true
     #
     #     private
     #
     #     def execute
-    #       user = User.find(user_id)
-    #       success(user)
+    #       resource.confirm!(at: confirmed_at)   # User#confirm! — reachable from a job too
+    #       succeed(resource).with_message("User confirmed.")
+    #     rescue ActiveRecord::RecordInvalid => e
+    #       failed(e.record.errors)
     #     end
     #   end
     #
     # @note Subclasses must implement the #execute method.
+    # @see https://radioactive-labs.github.io/plutonium-core/reference/behavior/interactions
     class Base
       include ActiveModel::Model
       include ActiveModel::Attributes

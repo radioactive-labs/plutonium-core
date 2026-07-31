@@ -18,6 +18,7 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 - **`review` must be the LAST step.** A step declared after `review` raises at load.
 - **`using:` targets a MODEL only** — not an interaction, not a bare definition. Selectors `fields:`/`only:`/`except:`.
 - **No generator.** Author wizards by hand, like interactions. They live in `app/wizards/`.
+- **A wizard is a presentation object** — it's built with `view_context:`, so anything reachable only through `execute`/`on_submit` is reachable only from a wizard run. Logic may *start* there; the **second caller** (a job, an API, a rake task, the console) is the trigger to move it onto the **model**. See [[plutonium-behavior]] › Part 3 › Where the logic goes.
 - **Wizards are portal- *or* main-app-hosted.** A `register_wizard` mount inside a portal inherits the portal's auth/scoping/layout. A `register_wizard` mount on the **main app** runs standalone — for an **authenticated** main-app wizard you MUST define your own `::WizardsController` (include `Plutonium::Wizard::Controller` + your auth concern); the synthesized fallback is **bare (no auth)**. Resource-anchored (`wizard` macro) wizards always run embedded on the resource controller.
 - **Schedule `SweepJob`** (a periodic job/cron). It reaps abandoned/expired sessions — always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
 
@@ -96,6 +97,8 @@ end
 - `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
 - `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
 - `execute` — runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
+
+⚠️ **`execute` is a presentation boundary, same as an interaction's.** A wizard is built with `view_context:` too, so anything reachable only through `execute` is reachable only from a wizard run. Steps and `execute` own the *flow* — which screens, in what order, writing what. What the write **means** belongs on the model as soon as a second caller wants it (the API signup that skips onboarding, an admin backfill, an importer): `Company.create!(...)` inline is fine for a one-off; `Company.onboard!(...)` is what you reach for when it isn't. Same for `on_submit`/`on_rollback` — they're flow hooks, not a home for domain logic. Full rule: [[plutonium-behavior]] › Part 3 › Where the logic goes.
 
 ## Wizard-level macros
 
@@ -294,6 +297,8 @@ end
 **`persist` always cleans up.** On any rollback (Cancel, sweep, branch-prune) the engine **always** destroys every `persist`'d record via `destroy!` (respects a model's soft-delete override). `on_rollback` is **optional, additive** — it compensates side effects the engine can't see, runs **before** the destroy, and a side-effect-only step (no `persist`) still runs its `on_rollback`. To keep a partial record, make the model soft-delete or use `cleanup_after :never`.
 
 `on_submit` is not atomic across steps (HTTP), which is why `cleanup_after` + `SweepJob` exist.
+
+**Keep the hook to flow, not domain.** `on_submit`/`on_rollback` belong to one wizard step and can't be called from anywhere else, so they should say *when* and *what gets tracked* — one call to a model, as above. Once "authorize a card and record the billing row" is something the API does too, it becomes `Billing.authorize!(company:, token:)` and the hook shrinks to `persist Billing.authorize!(...)`.
 
 ## Accessors
 
