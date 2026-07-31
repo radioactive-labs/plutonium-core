@@ -22,6 +22,7 @@ aside: false
       { name: 'Definition', link: '/plutonium-core/reference/resource/definition' },
       { name: 'Query', link: '/plutonium-core/reference/resource/query' },
       { name: 'Actions', link: '/plutonium-core/reference/resource/actions' },
+      { name: 'Positioning', link: '/plutonium-core/reference/positioning' },
     ]},
     { group: 'Behavior', items: [
       { name: 'Overview', link: '/plutonium-core/reference/behavior/' },

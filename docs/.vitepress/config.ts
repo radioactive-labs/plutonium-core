@@ -156,6 +156,7 @@ export default defineConfig(withMermaid({
             { text: "Definition", link: "/reference/resource/definition" },
             { text: "Query", link: "/reference/resource/query" },
             { text: "Actions", link: "/reference/resource/actions" },
+            { text: "Positioning & drag-to-reorder", link: "/reference/positioning" },
             { text: "CSV Export", link: "/reference/resource/export" },
           ]
         },

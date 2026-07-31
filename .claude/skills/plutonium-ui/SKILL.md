@@ -466,6 +466,40 @@ end
 
 ---
 
+## Drag-to-Reorder Affordance (`position_on`)
+
+When a definition declares `position_on` (see [[plutonium-resource]]) the index **table**, the **card grid**, and **nested association tables** render a drag grip. Configuration is entirely in the definition — there is no UI-layer switch.
+
+**What renders where:**
+
+| Surface | Draggable element | Grip placement | Axis |
+|---|---|---|---|
+| Index / nested table | the **grip only**, never the `<tr>` | inside the first cell's existing left padding (content does not shift) | vertical |
+| Card grid | the **grip only** | floated over the card's top-left corner | horizontal, wrap-aware |
+| Kanban board | the **whole card** | — | both (cross-column) |
+
+🚨 **Never make a `<tr>` draggable.** Two silent regressions: `draggable="true"` disables text selection inside the element in every major browser (you lose copy-a-cell-value), and it fights `row_click_controller` — a drag that starts and ends in place still fires a click and navigates the user away. Kanban keeps whole-card dragging because neither applies to a kanban card; a **grid** card gets a grip because it *does* carry a row-click show affordance.
+
+**Enabled state.** The grip is live only while the collection is sorted **ascending, by the position attribute, and nothing else**. Otherwise "drop me between these two rows" describes nothing. Under a foreign sort the Stimulus controller isn't attached at all and the grip renders as a **link that applies the position sort** — the disabled state is the way out of the disabled state, which is why `position_on` registers `sort <attr>`. Per record, the grip also requires `reposition?`.
+
+**DOM contract** (relevant if you eject a table/grid or write a custom collection component):
+
+```
+wrapper  data-controller="positioned"
+         data-positioned-url-template-value="/things/__ID__/reposition"
+         data-positioned-axis-value="horizontal"   # grid only
+row/card data-positioned-row-id="<id>"             # single source of truth for the record id
+grip     data-positioned-grip                      # a real <button> — tabbable
+```
+
+The URL template is built off `current_page_path` (not `request.path`) so a post-rebalance re-render doesn't wire subsequent drops to `/things/5/reposition`. The controller POSTs `{prev_id, next_id, to_index}` plus `window.location.search` — the query string is load-bearing, since the endpoint re-renders through the ordinary index pipeline.
+
+**Accessibility.** Focus the grip and use <kbd>↑</kbd>/<kbd>↓</kbd> — deliberately linear even on a wrapped grid, since one position attribute stores a 1-D order. Focus is restored onto the same record's grip after a stream replaces the collection. ⚠️ Native HTML5 drag does **not** fire on touch devices (inherited from kanban); there is no automatic fallback.
+
+Components: `lib/plutonium/ui/table/components/drag_handle.rb`, `lib/plutonium/ui/component/positionable.rb`, `src/js/controllers/positioned_controller.js`. Reference: `docs/reference/positioning.md`.
+
+---
+
 # Part 4 — Component Kit & Custom Components
 
 ## Built-in shorthand kit
@@ -796,7 +830,7 @@ import CustomController from "./custom_controller"
 application.register("custom", CustomController)
 ```
 
-Bundled controllers: `color-mode`, `form` (pre-submit), `nested-resource-form-fields`, `slim-select`, `flatpickr`, `easymde`, plus various internal UI controllers.
+Bundled controllers: `color-mode`, `form` (pre-submit), `nested-resource-form-fields`, `slim-select`, `flatpickr`, `easymde`, `kanban`, `positioned` (drag-to-reorder), `row-click`, plus various internal UI controllers.
 
 Custom controller — standard Stimulus:
 
