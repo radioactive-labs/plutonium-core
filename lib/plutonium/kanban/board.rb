@@ -44,10 +44,9 @@ module Plutonium
       # later `position_on` line would silently miss it — making the declaration
       # order-dependent in the class body.
       #
-      # `definition` may be nil for callers with no definition in scope (see
-      # Grouping.call); those get the board's own config or the default.
+      # Takes the resource definition, exactly like #show_in_for above.
       def position_config_for(definition)
-        @position_config || definition&.defined_position_config ||
+        @position_config || definition.defined_position_config ||
           Plutonium::Positioning::Config.default
       end
     end

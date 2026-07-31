@@ -155,8 +155,12 @@ module Plutonium
       # A definition is frequently namespaced under a package or portal that
       # the model is NOT (`AdminPortal::Blogging::TutorialDefinition` describes
       # `Blogging::Tutorial`), so leading namespace segments are dropped one at
-      # a time until a constant resolves. Override in a definition whose name
-      # doesn't follow the convention.
+      # a time until an ActiveRecord model resolves.
+      #
+      # One case is genuinely unresolvable by name alone: `Admin::UserDefinition`
+      # where BOTH `Admin::User` and `::User` are models. Innermost wins, since a
+      # namespaced definition most often describes the namespaced model — if that
+      # is the wrong guess, override `model_class` on the definition.
       #
       # Resolved lazily and memoized: it constantizes the model, and a
       # definition class body must stay loadable without forcing that.
@@ -167,10 +171,21 @@ module Plutonium
       def self.infer_model_class
         raise NameError, "cannot infer a model class for an anonymous definition; define `model_class` on it" if name.nil?
 
-        segments = name.delete_suffix("Definition").split("::")
-        segments.size.times do |i|
-          klass = segments[i..].join("::").safe_constantize
-          return klass if klass
+        segments = name.split("::")
+        base = segments.pop.delete_suffix("Definition")
+        if base.empty?
+          raise NameError, "#{name} does not follow the `<Model>Definition` naming convention; define `model_class` on it"
+        end
+
+        # Only an ActiveRecord model can be the answer, so a namespace module, a
+        # stdlib constant (Set, Process) or a same-named PORO is skipped rather
+        # than accepted — the search continues outward to the model that
+        # actually exists. Without this the first constant that merely *resolves*
+        # wins, and `Billing::OrderDefinition` in an app with no `Billing::Order`
+        # would silently memoize something that is not a model at all.
+        segments.size.downto(0) do |i|
+          klass = (segments.last(i) + [base]).join("::").safe_constantize
+          return klass if klass.is_a?(Class) && klass < ActiveRecord::Base
         end
 
         raise NameError, "could not infer a model class from #{name}; define `model_class` on it"

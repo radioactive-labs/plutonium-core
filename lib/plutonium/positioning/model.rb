@@ -21,6 +21,12 @@ module Plutonium
       included do
         class_attribute :positioning_column, instance_accessor: false, default: :position
         class_attribute :positioning_scope_attr, instance_accessor: false, default: nil
+        # Separate from positioning_column, which has a default and so cannot
+        # answer "did this model actually call positioned_on?". Including the
+        # concern without calling it skips `before_create :assign_initial_position`
+        # entirely — every row keeps a nil position and the order is arbitrary —
+        # so the definition DSL checks this flag, not mere inclusion.
+        class_attribute :positioning_declared, instance_accessor: false, default: false
       end
 
       class_methods do
@@ -33,6 +39,7 @@ module Plutonium
         def positioned_on(column = :position, scope: nil)
           self.positioning_column = column
           self.positioning_scope_attr = scope
+          self.positioning_declared = true
           before_create :assign_initial_position
         end
 

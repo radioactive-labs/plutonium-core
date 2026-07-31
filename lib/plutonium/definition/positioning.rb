@@ -5,11 +5,11 @@ require "plutonium/positioning/config"
 module Plutonium
   module Definition
     # Declares a resource drag-orderable. The MODEL owns how positions are
-    # stored (`positioned_on :position, scope: :project_id`); this only says
+    # stored (`positioned_on :sort_order, scope: :project_id`); this only says
     # "this UI can be reordered", and never restates the column or the scope.
     #
-    #   position_on                      # Mode A, attribute :position
-    #   position_on :sort_order          # Mode A, custom attribute
+    #   position_on                      # Mode A, follows the model's column
+    #   position_on :sort_order          # Mode A, must MATCH the model's column
     #   position_on(:rank) { |move| … }  # Mode B, another gem owns the write
     #   position_on false                # Mode C, ordering off
     #
@@ -24,15 +24,19 @@ module Plutonium
       included do
         class_attribute :defined_position_config, instance_accessor: false, default: nil
 
-        def self.position_on(attribute = :position, &block)
+        # `attribute` defaults to nil, not :position — in Mode A the model has
+        # already named its column, and assuming :position here would silently
+        # order by one column while reposition! wrote another. Mode B has no
+        # model contract to read, so it keeps :position as its own default.
+        def self.position_on(attribute = nil, &block)
           config =
             if attribute == false
               Plutonium::Positioning::Config.disabled
             elsif block
-              Plutonium::Positioning::Config.with_block(attribute, block)
+              Plutonium::Positioning::Config.with_block(attribute || :position, block)
             else
               validate_model_is_positioned!(attribute)
-              Plutonium::Positioning::Config.attribute(attribute)
+              Plutonium::Positioning::Config.attribute(attribute || model_class.positioning_column)
             end
 
           self.defined_position_config = config
@@ -42,9 +46,16 @@ module Plutonium
           # when the collection is ordered by this attribute, so without a
           # permitted sort there is no way back out of the disabled state.
           sort config.attribute
-          default_sort config.attribute, :asc
 
-          # Hidden: it has a route and a `reposition?` policy predicate, but is
+          # Only claim default_sort while it is still the framework default.
+          # A `default_sort` written ABOVE position_on must survive exactly as
+          # one written below it does — this method is otherwise the single
+          # order-dependent line in a class body that is order-independent
+          # everywhere else (see Board#position_config_for).
+          default_sort config.attribute, :asc if _default_sort == Sorting::DEFAULT_SORT
+
+          # Hidden: it has a POST member route (routing/mapper_extensions.rb) and
+          # a `reposition?` policy predicate (resource/policy.rb), but is
           # reachable only by dragging — never rendered as a button.
           action :reposition, hidden: true
 
@@ -64,14 +75,38 @@ module Plutonium
         # break the guard test in test/plutonium/positioning/config_test.rb.
         # The DSL is where the mode is chosen, so it is where the contract belongs.
         def self.validate_model_is_positioned!(attribute)
-          return if model_class.include?(Plutonium::Positioning::Model)
+          declaration = attribute ? "position_on #{attribute.inspect}" : "position_on"
+
+          unless model_class.include?(Plutonium::Positioning::Model)
+            raise ArgumentError,
+              "#{name || "definition"}: `#{declaration}` requires #{model_class} to " \
+              "`include Plutonium::Positioning::Model` and declare `positioned_on`. " \
+              "If another gem owns positioning for this model, use the block form " \
+              "instead: position_on(#{(attribute || :position).inspect}) { |move| … }"
+          end
+
+          # Including the concern is not enough: without `positioned_on` there is
+          # no before_create hook, so every row is created with a nil position and
+          # the resulting order is arbitrary — the silent failure this class-load
+          # check exists to prevent. positioning_column has a default and so
+          # cannot answer this question; positioning_declared can.
+          unless model_class.positioning_declared
+            raise ArgumentError,
+              "#{name || "definition"}: `#{declaration}` requires #{model_class} to declare " \
+              "`positioned_on` — including Plutonium::Positioning::Model alone never " \
+              "assigns a position on create, so every row would sort arbitrarily."
+          end
+
+          return if attribute.nil? || attribute.to_sym == model_class.positioning_column.to_sym
 
           raise ArgumentError,
-            "#{name || "definition"}: `position_on #{attribute.inspect}` requires " \
-            "#{model_class} to `include Plutonium::Positioning::Model` and declare " \
-            "`positioned_on`. If another gem owns positioning for this model, " \
-            "use the block form instead: position_on(#{attribute.inspect}) { |move| … }"
+            "#{name || "definition"}: `#{declaration}` contradicts #{model_class}'s " \
+            "`positioned_on #{model_class.positioning_column.inspect}` — the collection would " \
+            "be ordered by one column while reposition! wrote another, so dragging would " \
+            "appear to do nothing. Drop the argument to follow the model, or use the block " \
+            "form if another gem owns the write."
         end
+        private_class_method :validate_model_is_positioned!
       end
 
       def defined_position_config = self.class.defined_position_config

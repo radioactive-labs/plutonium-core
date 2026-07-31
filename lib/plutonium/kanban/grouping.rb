@@ -2,38 +2,20 @@
 
 module Plutonium
   module Kanban
-    # Groups an already-authorized, query-applied, UN-paginated relation into
-    # ordered, per_column-capped column entries.
+    # The two primitives every kanban rendering path shares: which columns a
+    # board has, and how a column's scope narrows a relation.
+    #
+    # There is deliberately no `call` that groups a whole relation in one go.
+    # One existed and had no callers: KanbanActions renders columns
+    # independently — each is its own lazy turbo-frame with its own per_column
+    # cap and count — so a whole-board grouper only ever duplicated that logic
+    # while quietly counting and limiting every column on every request.
     module Grouping
       module_function
 
-      # Returns [{column:, cards: [records], total: Integer}, ...] in column order.
-      #
-      # `definition` is optional so a caller that only has a board can still
-      # group; pass it whenever one is in scope, since a board inherits its
-      # positioning strategy from the definition's `position_on` when its own
-      # block declares none (Board#position_config_for).
-      def call(board:, relation:, context:, definition: nil)
-        columns = resolve_columns(board, context)
-        pos = board.position_config_for(definition)
-        columns.map do |col|
-          scoped = apply_scope(relation, col.scope)
-          ordered = pos.order(scoped)
-          if board.per_column
-            total = ordered.count
-            cards = ordered.limit(board.per_column).to_a
-          else
-            cards = ordered.to_a
-            total = cards.size
-          end
-          {column: col, cards: cards, total: total}
-        end
-      end
-
       # Resolves the column list from a board. For dynamic boards, evaluates
       # the columns_block against the context (which exposes current_user,
-      # params, etc. via delegation to view_context). Public so Task 7 (move
-      # handler) can call Grouping.resolve_columns(board, context) directly.
+      # params, etc. via delegation to view_context).
       def resolve_columns(board, context)
         return board.columns unless board.dynamic?
         Array(context.instance_exec(&board.columns_block)).flatten
