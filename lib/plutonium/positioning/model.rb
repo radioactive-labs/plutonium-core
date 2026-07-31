@@ -61,16 +61,22 @@ module Plutonium
       #
       # @param prev_record [ActiveRecord::Base, nil]
       # @param next_record [ActiveRecord::Base, nil]
+      # @return [Plutonium::Positioning::Result] whose `rebalanced?` tells the
+      #   caller whether rows OTHER than this one moved — a drag-and-drop client
+      #   that optimistically reordered its own view needs to re-sync when so.
       def reposition!(prev_record:, next_record:)
         col = self.class.positioning_column
         prev_val = prev_record&.public_send(col)
         next_val = next_record&.public_send(col)
+        rebalanced = false
         if Plutonium::Positioning.gap_exhausted?(prev_val, next_val)
           rebalance_scope_group!
+          rebalanced = true
           prev_val = prev_record&.reload&.public_send(col)
           next_val = next_record&.reload&.public_send(col)
         end
         update!(col => Plutonium::Positioning.position_between(prev_val, next_val))
+        Plutonium::Positioning::Result.new(rebalanced:)
       end
 
       private

@@ -56,21 +56,28 @@ module Plutonium
         relation.reorder(@attribute)
       end
 
-      # Persist the new position for a dropped record.
-      # Mode A: delegate to record.reposition!(prev_record:, next_record:)
-      # Mode B: call the user block with a Move
-      # Mode C: no-op
+      # Persist the new position for a dropped record. Returns true when the
+      # caller must reconcile its view of the list because positions other than
+      # this record's may have changed.
+      #
+      # Mode A: delegate to record.reposition!(prev_record:, next_record:), and
+      #         report whether it had to rebalance the scope group.
+      # Mode B: call the user block with a Move; always true — the block is an
+      #         opaque write, and gems in this space routinely renumber the whole
+      #         group (acts_as_list does).
+      # Mode C: no-op; always false — nothing was written.
       #
       # `column` is the kanban column key on a board, and nil on every other
       # surface (index tables, nested tables, grids) — those have no columns.
       def reposition!(record:, prev_record:, next_record:, index:, column: nil)
         case @mode
         when :delegate
-          record.reposition!(prev_record:, next_record:)
+          record.reposition!(prev_record:, next_record:).rebalanced?
         when :block
           @block.call(Move.new(record:, column:, prev: prev_record, next: next_record, index:))
+          true
         when :disabled
-          nil
+          false
         end
       end
     end

@@ -17,6 +17,19 @@ module Plutonium
   module Positioning
     EPSILON = 1e-6
 
+    # Outcome of a Model#reposition! call. `rebalanced?` is true when the gap
+    # between the neighbours was exhausted and the whole scope group had to be
+    # renumbered — the caller needs to know because every other row's position
+    # changed, so any cached client-side view of the list is stale.
+    #
+    # It lives on the namespace, NOT inside Model, for the same reason the
+    # concern was split out of the namespace in the first place: Model is
+    # included into user models, so anything nested in it joins their constant
+    # lookup and can shadow their own constants (see the comment in model.rb).
+    Result = Data.define(:rebalanced) do
+      def rebalanced? = rebalanced
+    end
+
     # Returns the position that sits between +prev_val+ and +next_val+.
     #
     # Rules:

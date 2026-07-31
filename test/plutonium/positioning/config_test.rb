@@ -19,6 +19,26 @@ module Plutonium
         assert_nil captured.column
       end
 
+      # A Mode B block is an opaque write — the framework cannot know what it did,
+      # and gems in this space routinely renumber the whole group (acts_as_list
+      # does), so it always forces reconciliation.
+      #
+      # assert_equal true, not a bare assert: the block's own return value is
+      # whatever the author's last expression happened to be (here :ignored), and
+      # a truthiness assertion would pass on that by accident — proving only that
+      # the block ran, not that reposition! reports the reconcile signal itself.
+      def test_block_mode_always_reports_reconcile_needed
+        config = Plutonium::Positioning::Config.with_block(:position, ->(_move) { :ignored })
+        assert_equal true, config.reposition!(record: Object.new, prev_record: nil, next_record: nil, index: 0)
+      end
+
+      # Likewise assert_equal false rather than refute — nil is falsy, so a bare
+      # refute would also pass on the old no-op return.
+      def test_disabled_mode_never_reports_reconcile_needed
+        config = Plutonium::Positioning::Config.disabled
+        assert_equal false, config.reposition!(record: Object.new, prev_record: nil, next_record: nil, index: 0)
+      end
+
       # config.rb must stay loadable on its own — see the comment at its top.
       #
       # with_unbundled_env is load-bearing, not tidiness: `bundle exec` exports
