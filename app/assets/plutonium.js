@@ -28985,6 +28985,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     return items.length;
   }
+  function computeDropIndexHorizontal(clientX, items) {
+    for (let i4 = 0; i4 < items.length; i4++) {
+      const rect = items[i4].getBoundingClientRect();
+      if (clientX < rect.left + rect.width / 2) return i4;
+    }
+    return items.length;
+  }
   function beginDrag(event, element, { draggingClass, payload }) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", payload);
@@ -29431,7 +29438,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   // src/js/controllers/positioned_controller.js
   var DRAGGING_CLASS = "opacity-30";
   var positioned_controller_default = class extends Controller {
-    static values = { urlTemplate: String };
+    static values = { urlTemplate: String, axis: { type: String, default: "vertical" } };
     connect() {
       this.draggedRow = null;
       this.onDragStart = this.#onDragStart.bind(this);
@@ -29474,8 +29481,51 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       if (!this.draggedRow) return;
       const row = this.draggedRow;
       const others = this.#rows().filter((r4) => r4 !== row);
-      const index = computeDropIndex(event.clientY, others);
-      this.#applyMove(row, others, index);
+      this.#applyMove(row, others, this.#dropIndex(event, others));
+    }
+    // Where a drop at the cursor lands, in `items`' own order.
+    //
+    // A table stacks: one row per line, so the vertical midpoint test is the
+    // whole story. A grid WRAPS: cards flow left-to-right and then onto a new
+    // line, and reading that layout off clientY alone would collapse every card
+    // on a line into a single slot — the drop would land at the start of the row
+    // no matter which gap the user aimed at.
+    //
+    // But clientX alone is no better, because every visual row starts at the same
+    // left edge: x=250 is "after the third card" in row 1 and row 4 alike. So
+    // narrow to the row the cursor is over FIRST, then let the horizontal
+    // midpoint test choose the gap inside it.
+    #dropIndex(event, items) {
+      if (this.axisValue !== "horizontal") return computeDropIndex(event.clientY, items);
+      if (items.length === 0) return 0;
+      const rows = this.#visualRows(items);
+      if (event.clientY < rows[0].top) return 0;
+      const row = rows.find((r4) => event.clientY <= r4.bottom);
+      if (!row) return items.length;
+      return row.start + computeDropIndexHorizontal(event.clientX, items.slice(row.start, row.end));
+    }
+    // Groups `items` into the lines the browser actually laid them out on, as
+    // {top, bottom, start, end} spans over `items`.
+    //
+    // Recovered from geometry rather than from a column count on purpose: the
+    // grid is responsive (1/2/3/4 columns by breakpoint) and a definition may pin
+    // its own, so the only thing that reliably knows how the cards wrapped is
+    // where they ended up. A new line starts wherever an item's top edge leaves
+    // the current one's — with a pixel of slack, since equal-height cards in a
+    // row can still differ by a sub-pixel.
+    #visualRows(items) {
+      const rows = [];
+      items.forEach((item, i4) => {
+        const rect = item.getBoundingClientRect();
+        const row = rows[rows.length - 1];
+        if (row && Math.abs(rect.top - row.top) <= 1) {
+          row.end = i4 + 1;
+          row.bottom = Math.max(row.bottom, rect.bottom);
+        } else {
+          rows.push({ top: rect.top, bottom: rect.bottom, start: i4, end: i4 + 1 });
+        }
+      });
+      return rows;
     }
     #onDragEnd(_event) {
       if (!this.draggedRow) return;

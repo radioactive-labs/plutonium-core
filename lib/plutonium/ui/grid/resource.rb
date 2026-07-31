@@ -8,6 +8,8 @@ module Plutonium
       # panel, scopes pills, bulk actions, footer) so view-switching is
       # purely a render-shape change.
       class Resource < Plutonium::UI::Component::Base
+        include Plutonium::UI::Component::Positionable
+
         attr_reader :collection, :resource_fields, :resource_definition
 
         def initialize(collection, resource_fields:, resource_definition:)
@@ -71,11 +73,50 @@ module Plutonium
         end
 
         def render_grid
-          div(class: grid_class) do
+          div(class: grid_class, data: grid_data) do
             collection.each do |record|
-              render Plutonium::UI::Grid::Card.new(record, resource_definition:, resource_fields:)
+              render Plutonium::UI::Grid::Card.new(
+                record,
+                resource_definition:,
+                resource_fields:,
+                drag_handle: drag_handle_for(record)
+              )
             end
           end
+        end
+
+        # The grid div is the tightest element containing every card and nothing
+        # else the drag cares about, so it is where the controller is scoped —
+        # exactly as Table::Base scopes it to the div wrapping <table>.
+        #
+        # Only wired when a drop can actually be honoured (see
+        # Positionable#position_drag_enabled?). Under any other sort the cards
+        # still render their grip, but as the disabled link back to position
+        # order, and no controller is present to drag against.
+        def grid_data
+          return {} unless position_drag_enabled?
+
+          {
+            controller: "positioned",
+            positioned_url_template_value: position_url_template,
+            # Cards flow left-to-right and wrap, so the vertical midpoint test a
+            # table uses would collapse a whole row of cards into one slot.
+            positioned_axis_value: "horizontal"
+          }
+        end
+
+        # The grip for `record`, or nil when this resource is not reorderable /
+        # this viewer may not reorder this record. `position_grip_sort_url` is
+        # memoized on the collection's sort, so the per-record cost here is just
+        # the policy check.
+        def drag_handle_for(record)
+          return nil unless position_config
+          return nil unless repositionable?(record)
+
+          Plutonium::UI::Table::Components::DragHandle.new(
+            sort_url: position_grip_sort_url,
+            variant: :card
+          )
         end
 
         # Default responsive: 1 / 2 / 3 / 4 columns at sm/md/lg/xl. When
