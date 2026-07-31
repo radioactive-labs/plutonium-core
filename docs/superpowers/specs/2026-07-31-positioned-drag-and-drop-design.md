@@ -116,13 +116,55 @@ end
 ```
 
 It is promoted out of the kanban namespace to `Plutonium::Positioning::Config`, alongside
-`Plutonium::Positioning::Move`. Both the kanban block and the definition
-build the same Config. `Move#column` is `nil` outside a board; every other field is
-identical. `Plutonium::Kanban::Positioning` becomes a thin alias so kanban's existing
-`position_on` surface is unchanged.
+`Plutonium::Positioning::Move`. Both the kanban block and the definition build the same
+Config. `Move#column` is `nil` outside a board; every other field is identical.
+`Plutonium::Kanban::Positioning` becomes a thin alias so kanban's existing `position_on`
+surface is unchanged.
+
+`column` is defaulted on `Config#reposition!`, not on `Move` itself. `Move` has exactly one
+construction site — inside `reposition!` — so defaulting the member rather than the parameter
+would mean every caller passing an explicit `column: nil` to satisfy a required keyword,
+which is the opposite of what the default is for.
 
 This mirrors the JS drag-core extraction (§5.1) — same reasoning, same shape: one machine,
 two consumers.
+
+### 2.0 Namespace layout
+
+`Plutonium::Positioning` becomes a **pure namespace**; the ActiveRecord concern moves to
+`Plutonium::Positioning::Model`.
+
+| Constant | Kind | Notes |
+|---|---|---|
+| `Plutonium::Positioning` | namespace | `EPSILON`, `.position_between`, `.gap_exhausted?` |
+| `Plutonium::Positioning::Model` | AR concern | `positioned_on`, `reposition!`, `backfill_positions!` |
+| `Plutonium::Positioning::Config` | strategy | the three modes |
+| `Plutonium::Positioning::Move` | value object | Mode B block argument |
+| `Plutonium::Positioning::MigrationHelpers` | AR table-definition mixin | `t.position` |
+
+This is a **breaking change**: `include Plutonium::Positioning` becomes
+`include Plutonium::Positioning::Model`. The gem is pre-1.0 and the update is mechanical
+(two dummy models, two test files, four doc locations).
+
+The reason is constant leakage. A concern that users `include` into their models puts every
+constant nested inside it into those models' constant lookup — so with `Config` directly
+under the concern, a bare `Config` written inside such a model resolves to Plutonium's and
+silently shadows the application's own:
+
+```ruby
+class Task < ApplicationRecord
+  include Plutonium::Positioning          # the old shape
+  def self.thing = Config                 # => Plutonium::Positioning::Config, not ::Config
+end
+```
+
+`Config` and `Move` are both names an application is likely to own. Making the namespace pure
+means nothing Plutonium-owned enters a user's ancestor chain at all, which is why this is
+preferred over the cheaper fix of renaming the constants to something less collision-prone.
+
+`MigrationHelpers` stays on the namespace: the railtie mixes it into ActiveRecord's
+table-definition classes (`lib/plutonium/railtie.rb:77-78`), never into user models, so it
+leaks nowhere.
 
 ## 2.1 `position_on` — the definition DSL
 
@@ -132,7 +174,7 @@ class TaskDefinition < Plutonium::Resource::Definition
 end
 
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
   positioned_on :position, scope: :project_id
 end
 ```
@@ -157,7 +199,7 @@ worsen it; introducing a third verb would have.
 
 In **Mode A** the model remains the single owner of *how* positions are stored — column and
 scope. The definition restates neither; `positioned_on`'s `scope:` is never duplicated at the
-definition layer. A boot-time error fires if the model does not `include Plutonium::Positioning`.
+definition layer. A boot-time error fires if the model does not `include Plutonium::Positioning::Model`.
 
 In **Mode B** that check does not apply — the model need not include the concern at all, since
 it never calls `reposition!`. The attribute is still required, because ordering and the
