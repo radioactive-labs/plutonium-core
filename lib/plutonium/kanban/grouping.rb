@@ -8,9 +8,14 @@ module Plutonium
       module_function
 
       # Returns [{column:, cards: [records], total: Integer}, ...] in column order.
-      def call(board:, relation:, context:)
+      #
+      # `definition` is optional so a caller that only has a board can still
+      # group; pass it whenever one is in scope, since a board inherits its
+      # positioning strategy from the definition's `position_on` when its own
+      # block declares none (Board#position_config_for).
+      def call(board:, relation:, context:, definition: nil)
         columns = resolve_columns(board, context)
-        pos = board.position_config
+        pos = board.position_config_for(definition)
         columns.map do |col|
           scoped = apply_scope(relation, col.scope)
           ordered = pos.order(scoped)
