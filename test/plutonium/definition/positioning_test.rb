@@ -27,7 +27,7 @@ module Plutonium
       end
 
       def test_custom_attribute
-        definition = build_definition(::Task) { position_on :sort_order }
+        definition = build_definition(positioned_model(:sort_order)) { position_on :sort_order }
         assert_equal :sort_order, definition.new.defined_position_config.attribute
       end
 
@@ -102,9 +102,30 @@ module Plutonium
         assert_includes definition.defined_sorts.keys, :position
       end
 
+      def test_default_sort_declared_above_position_on_survives
+        definition = build_definition(::Task) do
+          default_sort :title, :desc
+          position_on
+        end
+
+        assert_equal [:title, :desc], definition._default_sort
+        assert_includes definition.defined_sorts.keys, :position
+      end
+
       # ------------------------------------------------------------------ #
       # Mode A's boot-time model contract                                    #
       # ------------------------------------------------------------------ #
+
+      # An AR model on an existing table, so include?/positioning_column/
+      # positioning_declared are all the real thing rather than a stub.
+      def positioned_model(column = nil)
+        Class.new(ActiveRecord::Base) do
+          self.table_name = "tasks"
+          include Plutonium::Positioning::Model
+
+          positioned_on column if column
+        end
+      end
 
       # Mode A delegates to record.reposition!, which only exists on models that
       # include the concern. Failing at class-load time beats a 500 on first drag.
@@ -115,6 +136,60 @@ module Plutonium
 
         assert_match(/Plutonium::Positioning::Model/, error.message)
         assert_match(/Comment/, error.message)
+      end
+
+      # Including the concern without calling positioned_on skips the
+      # before_create hook, so every row is created with a nil position.
+      def test_mode_a_requires_the_model_to_declare_positioned_on
+        model = positioned_model
+        error = assert_raises(ArgumentError) do
+          build_definition(model) { position_on }
+        end
+
+        assert_match(/declare `positioned_on`/, error.message)
+      end
+
+      # The model owns the column, so a bare position_on follows whatever it
+      # declared instead of assuming :position.
+      def test_bare_position_on_follows_the_models_column
+        definition = build_definition(positioned_model(:sort_order)) { position_on }
+        assert_equal :sort_order, definition.new.defined_position_config.attribute
+      end
+
+      # Both divergence directions order by one column while reposition! writes
+      # another — the drag would silently do nothing.
+      def test_an_attribute_that_contradicts_the_model_raises
+        error = assert_raises(ArgumentError) do
+          build_definition(::Task) { position_on :sort_order }
+        end
+
+        assert_match(/contradicts/, error.message)
+        assert_match(/positioned_on :position/, error.message)
+      end
+
+      def test_an_attribute_that_contradicts_the_model_raises_the_other_way
+        error = assert_raises(ArgumentError) do
+          build_definition(positioned_model(:sort_order)) { position_on :position }
+        end
+
+        assert_match(/contradicts/, error.message)
+      end
+
+      def test_an_attribute_that_matches_the_model_is_accepted
+        definition = build_definition(::Task) { position_on :position }
+        assert_equal :position, definition.new.defined_position_config.attribute
+      end
+
+      # Mode B's block owns the write, so its attribute answers to nothing but
+      # the ordering — no model contract to contradict.
+      def test_mode_b_attribute_is_free_form
+        definition = build_definition(::Task) { position_on(:whatever) { |move| move } }
+        assert_equal :whatever, definition.new.defined_position_config.attribute
+      end
+
+      def test_mode_b_without_an_attribute_still_defaults_to_position
+        definition = build_definition(::Comment) { position_on { |move| move } }
+        assert_equal :position, definition.new.defined_position_config.attribute
       end
 
       # Mode B never calls reposition!, so the concern is irrelevant.
@@ -141,7 +216,7 @@ module Plutonium
       end
 
       # A definition namespaced under a portal/package the model is not in
-      # drops leading segments until a constant resolves.
+      # drops leading segments until a model resolves.
       def test_model_class_skips_namespaces_the_model_does_not_share
         assert_equal ::Blogging::Tutorial, ::AdminPortal::Blogging::TutorialDefinition.model_class
       end
@@ -150,12 +225,42 @@ module Plutonium
         assert_raises(NameError) { Class.new(Plutonium::Resource::Definition).model_class }
       end
 
+      # The search accepts only ActiveRecord models. Without that, the first
+      # constant that merely resolves wins — and Ruby's const_get falls back to
+      # Object, so a definition demodulizing to a stdlib name would silently
+      # memoize it (::Set is a Class; ::Process is not even that).
+      def test_model_class_skips_a_constant_that_is_not_a_model
+        Object.const_set(:SetDefinition, Class.new(Plutonium::Resource::Definition))
+        error = assert_raises(NameError) { ::SetDefinition.model_class }
+        assert_match(/could not infer a model class/, error.message)
+      ensure
+        Object.send(:remove_const, :SetDefinition)
+      end
+
+      # `Foo::Definition` demodulizes to an empty base — without the guard,
+      # split("::") drops the empty tail and the parent NAMESPACE is returned.
+      def test_model_class_raises_for_a_definition_named_only_definition
+        Object.const_set(:PositioningNamespaceStub, Module.new)
+        ::PositioningNamespaceStub.const_set(:Definition, Class.new(Plutonium::Resource::Definition))
+
+        error = assert_raises(NameError) { ::PositioningNamespaceStub::Definition.model_class }
+        assert_match(/naming convention/, error.message)
+      ensure
+        Object.send(:remove_const, :PositioningNamespaceStub)
+      end
+
+      # The framework's own base class is exactly that shape, and memoization
+      # would have cached the Plutonium::Resource MODULE for the process.
+      def test_the_framework_base_definition_has_no_model_class
+        assert_raises(NameError) { Plutonium::Resource::Definition.model_class }
+      end
+
       # ------------------------------------------------------------------ #
       # Kanban board inheritance                                             #
       # ------------------------------------------------------------------ #
 
       def test_board_inherits_the_definitions_position_on
-        definition = build_definition(::Task) do
+        definition = build_definition(positioned_model(:sort_order)) do
           position_on :sort_order
           kanban { column :todo }
         end
@@ -165,7 +270,7 @@ module Plutonium
       end
 
       def test_a_board_block_overrides_the_definition
-        definition = build_definition(::Task) do
+        definition = build_definition(positioned_model(:sort_order)) do
           position_on :sort_order
           kanban do
             column :todo
@@ -203,7 +308,7 @@ module Plutonium
       # `kanban` compiles the board eagerly during the class body, so a board
       # built BEFORE a later position_on line would silently miss it.
       def test_resolution_is_lazy_so_declaration_order_does_not_matter
-        definition = build_definition(::Task) do
+        definition = build_definition(positioned_model(:sort_order)) do
           kanban { column :todo }
           position_on :sort_order
         end

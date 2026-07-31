@@ -3,6 +3,12 @@ module Plutonium
     module Sorting
       extend ActiveSupport::Concern
 
+      # The framework-wide default sort: newest first. Named rather than
+      # inlined so a caller can tell "nobody has chosen a sort" apart from
+      # "someone chose exactly this" — see Definition::Positioning, which only
+      # claims default_sort while it is still untouched.
+      DEFAULT_SORT = [:id, :desc].freeze
+
       included do
         defineable_props :sort
 
@@ -22,7 +28,7 @@ module Plutonium
         end
 
         # Set a sensible default: newest items first
-        default_sort :id, :desc
+        default_sort(*DEFAULT_SORT)
       end
 
       def default_sort

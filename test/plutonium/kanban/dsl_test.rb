@@ -399,9 +399,11 @@ module Plutonium
       # Board#position_config_for (see definition/positioning_test.rb).
       def test_an_undeclared_board_has_no_position_config_of_its_own
         board = DSL.build {}
+        definition = Class.new(Plutonium::Resource::Definition).new
+
         assert_nil board.position_config
-        assert_equal :position, board.position_config_for(nil).attribute
-        refute board.position_config_for(nil).disabled?
+        assert_equal :position, board.position_config_for(definition).attribute
+        refute board.position_config_for(definition).disabled?
       end
 
       def test_position_on_attribute_uses_config_attribute_factory

@@ -535,9 +535,9 @@ module Plutonium
           board = current_kanban_board
 
           # Resolve only the requested column rather than grouping the whole
-          # board: Grouping.call would scope+count+limit every column (~2 queries
-          # each) on every lazy frame request. We compare keys as strings to
-          # avoid interning arbitrary request input into symbols.
+          # board: grouping every column would scope+count+limit all of them
+          # (~2 queries each) on every lazy frame request. We compare keys as
+          # strings to avoid interning arbitrary request input into symbols.
           columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
           column = columns.find { |c| c.key.to_s == params[:column] }
 
