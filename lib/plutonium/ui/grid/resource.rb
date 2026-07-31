@@ -92,7 +92,7 @@ module Plutonium
 
         def bulk_actions
           @bulk_actions ||= resource_definition.defined_actions
-            .select { |k, a| a.bulk_action? }
+            .select { |k, a| a.bulk_action? && !a.hidden? }
             .values
         end
 
