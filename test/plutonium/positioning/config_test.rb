@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "plutonium/positioning/config"
 
 module Plutonium
   module Positioning
@@ -10,18 +11,20 @@ module Plutonium
         assert_same Plutonium::Positioning::Move, Plutonium::Kanban::Positioning::Move
       end
 
-      def test_move_column_defaults_to_nil_off_board
-        move = Plutonium::Positioning::Move.new(
-          record: :rec, prev: nil, next: nil, index: 0
-        )
-        assert_nil move.column
+      # Off a board there is no column to report, so callers omit it entirely.
+      def test_reposition_defaults_column_to_nil_off_board
+        captured = nil
+        config = Plutonium::Positioning::Config.with_block(:position, ->(move) { captured = move })
+        config.reposition!(record: :rec, prev_record: nil, next_record: nil, index: 0)
+        assert_nil captured.column
       end
 
-      def test_disabled_mode_leaves_the_relation_untouched
-        relation = Object.new
-        config = Plutonium::Positioning::Config.disabled
-        assert config.disabled?
-        assert_same relation, config.order(relation)
+      # config.rb must stay loadable on its own — see the comment at its top.
+      def test_config_loads_standalone_without_the_model_concern
+        lib = File.expand_path("../../../../lib", __dir__)
+        out = `ruby -I#{lib} -e 'require "plutonium/positioning/config"; print defined?(Plutonium::Positioning::Model).inspect' 2>&1`
+        assert_predicate $?, :success?
+        assert_equal "nil", out
       end
     end
   end

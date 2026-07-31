@@ -12,7 +12,7 @@ For field-level rendering on cards (card_fields slots), see [[plutonium-resource
 ## 🚨 Critical (read first)
 
 - **`kanban do…end` in the Definition auto-enables `:kanban`** in `defined_index_views` — exactly like `grid_fields` enables `:grid`. You do not need to call `index_views :kanban` separately unless you want to remove the table view.
-- **The model needs `include Plutonium::Positioning`** (and a decimal `position` column + `positioned_on` call) for drag ordering to work. Without it, cards render unordered and moves raise an error. Use `position_on false` to explicitly opt out.
+- **The model needs `include Plutonium::Positioning::Model`** (and a decimal `position` column + `positioned_on` call) for drag ordering to work. Without it, cards render unordered and moves raise an error. Use `position_on false` to explicitly opt out.
 - **Static column actions are auto-registered** as interactive resource actions at class-load time. Dynamic boards (`columns do…end`) cannot introspect their columns at load time — declare any column-action interactions separately with top-level `action` calls.
 - **Moves bypass `permitted_attributes_for_update`** — the `on_enter` callback runs with full model access. Gate the move itself with `kanban_move?` in the policy.
 - **Quick-add (`add: true`) only appears when `create?` is true** in the policy.
@@ -26,7 +26,7 @@ For field-level rendering on cards (card_fields slots), see [[plutonium-resource
 
 ```ruby
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   # position_on :position (default attr) scoped to the grouping column
   positioned_on :position, scope: :status
@@ -119,7 +119,7 @@ shows `—` by design, so cards keep an even height.)
 
 ### `position_on` modes
 
-- **Mode A (default)** — delegates to `record.reposition!(prev_record:, next_record:)` from `Plutonium::Positioning`. Requires the model concern and a decimal column.
+- **Mode A (default)** — delegates to `record.reposition!(prev_record:, next_record:)` from `Plutonium::Positioning::Model`. Requires the model concern and a decimal column.
 - **Mode B (block)** — you write the persistence. Plutonium still orders by the attribute; the block only persists the new value. Block receives a `Plutonium::Kanban::Positioning::Move` (fields: `record`, `column`, `prev`, `next`, `index`).
 - **Mode C (`false`)** — no ordering, no repositioning. `on_enter` still fires.
 

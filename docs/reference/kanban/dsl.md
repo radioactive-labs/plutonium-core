@@ -49,18 +49,18 @@ Default: `nil` (unlimited).
 
 Controls how card positions are persisted after a drag-and-drop. Three modes:
 
-#### Mode A — delegate to `Plutonium::Positioning` (default)
+#### Mode A — delegate to `Plutonium::Positioning::Model` (default)
 
 ```ruby
 # Default: uses :position attribute
-# (no explicit call needed if the model includes Plutonium::Positioning)
+# (no explicit call needed if the model includes Plutonium::Positioning::Model)
 
 # Custom attribute name:
 position_on :sort_order
 ```
 
 Requires the model to:
-1. `include Plutonium::Positioning`
+1. `include Plutonium::Positioning::Model`
 2. Call `positioned_on :position, scope: :grouping_attribute`
 3. Have a `decimal` column for the position attribute — add it with the `t.position` migration helper (a tuned `decimal(16,8)`) — see [Positioning › Migration](/reference/kanban/positioning#migration)
 

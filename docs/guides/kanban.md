@@ -44,7 +44,7 @@ end
 
 ```ruby
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   positioned_on :position, scope: :status
   # ^^ auto-assigns position on create; reposition! scopes to the same status
@@ -391,14 +391,14 @@ There is no card "snap-back" to worry about on cancel — native drag never move
 By default Plutonium uses decimal fractional positioning: cards always slot exactly where you drop them without ever renumbering the whole column. You need:
 
 1. A `decimal` database column (precision ≥ 10, scale ≥ 6 recommended).
-2. `include Plutonium::Positioning` in the model.
+2. `include Plutonium::Positioning::Model` in the model.
 3. `positioned_on :position, scope: :status` — the `scope:` option groups positions by the grouping attribute so cards in different columns don't compete.
 
 ### Position modes
 
 ```ruby
 kanban do
-  # Mode A (default) — delegate to Plutonium::Positioning.
+  # Mode A (default) — delegate to Plutonium::Positioning::Model.
   # Uses :position attribute, requires the model concern.
   position_on :position
 

@@ -19,7 +19,7 @@ module Plutonium
 
       @item_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_items"
-        include Plutonium::Positioning
+        include Plutonium::Positioning::Model
 
         positioned_on :position, scope: :status
       end
@@ -333,7 +333,7 @@ module Plutonium
 
       global_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_globals"
-        include Plutonium::Positioning
+        include Plutonium::Positioning::Model
 
         positioned_on :position
       end

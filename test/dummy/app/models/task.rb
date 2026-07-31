@@ -1,5 +1,5 @@
 class Task < ::ResourceRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   # add concerns above.
 

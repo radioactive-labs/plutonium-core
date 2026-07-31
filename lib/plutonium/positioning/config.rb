@@ -1,22 +1,18 @@
 # frozen_string_literal: true
 
 module Plutonium
-  # Deliberately does NOT require "plutonium/positioning" — that file requires
-  # this one, and the model concern is not needed to describe a strategy.
+  # This file is deliberately dependency-free — no ActiveSupport, no
+  # ActiveRecord, not even the rest of Plutonium::Positioning. A controller,
+  # a definition DSL and a view component all need to name a strategy, and
+  # none of them should have to drag the model concern in to do it.
   module Positioning
     # Value object passed to Mode B blocks, carrying the full drop context.
-    # `column` is the kanban column key on a board, and nil on every other
-    # surface (index tables, nested tables, grids) — those have no columns.
-    Move = Data.define(:record, :column, :prev, :next, :index) do
-      def initialize(record:, prev:, next:, index:, column: nil)
-        super
-      end
-    end
+    Move = Data.define(:record, :column, :prev, :next, :index)
 
     # Strategy configuration object created by the `position_on` DSL.
     #
     # Three modes:
-    #   Mode A (:delegate) — delegate reposition! to Plutonium::Positioning concern
+    #   Mode A (:delegate) — delegate reposition! to Plutonium::Positioning::Model
     #   Mode B (:block)    — call a user-supplied block with a Move
     #   Mode C (:disabled) — no ordering; relation returned unchanged
     class Config
@@ -64,7 +60,10 @@ module Plutonium
       # Mode A: delegate to record.reposition!(prev_record:, next_record:)
       # Mode B: call the user block with a Move
       # Mode C: no-op
-      def reposition!(record:, column:, prev_record:, next_record:, index:)
+      #
+      # `column` is the kanban column key on a board, and nil on every other
+      # surface (index tables, nested tables, grids) — those have no columns.
+      def reposition!(record:, prev_record:, next_record:, index:, column: nil)
         case @mode
         when :delegate
           record.reposition!(prev_record:, next_record:)
