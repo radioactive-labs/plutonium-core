@@ -49,6 +49,8 @@ Default: `nil` (unlimited).
 
 Controls how card positions are persisted after a drag-and-drop. Three modes:
 
+**Inherited from the definition.** `position_on` is the same verb outside `kanban do…end`, where it makes the resource's [table and grid drag-reorderable](/reference/positioning). A board with no `position_on` of its own uses the **definition's**, falling back to the historic default (`:position`, Mode A). Declaring it inside the board overrides that. Resolution is lazy, so declaration order in the class body does not matter.
+
 #### Mode A — delegate to `Plutonium::Positioning::Model` (default)
 
 ```ruby
@@ -70,7 +72,8 @@ On drop, calls `record.reposition!(prev_record:, next_record:)` which computes t
 
 ```ruby
 position_on :sort_order do |move|
-  # move is a Plutonium::Kanban::Positioning::Move value object:
+  # move is a Plutonium::Positioning::Move value object
+  # (also reachable as Plutonium::Kanban::Positioning::Move):
   #   move.record  — the dropped ActiveRecord record
   #   move.column  — destination column key (Symbol)
   #   move.prev    — record immediately before the insertion slot, or nil

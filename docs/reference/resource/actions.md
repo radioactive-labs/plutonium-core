@@ -21,6 +21,7 @@ Custom buttons that go beyond standard CRUD — publish, archive, import, send i
 | `record_action: true` | Show page — for actions on a single record (Edit, Archive, Delete) |
 | `collection_record_action: true` | Per-row in the index table — for quick actions (Edit, Show) |
 | `bulk_action: true` | Bulk-actions toolbar (shown when records are selected) |
+| `hidden: true` | **Nowhere.** Suppresses all four surfaces at once, while keeping the route and policy live — see [Hidden actions](#hidden-actions) |
 
 ### Inferred visibility (interactive actions)
 
@@ -63,6 +64,9 @@ action :name,
 
   # Conditional visibility — display-only proc, NOT authorization (see below)
   condition: -> { params[:beta] == "1" },
+
+  # Never render, anywhere — route + policy stay live (see below)
+  hidden: true,
 
   # Grouping
   category: :primary,                    # :primary, :secondary, :danger
@@ -112,7 +116,7 @@ def customize_actions
 end
 ```
 
-## Conditional visibility — `condition:`
+## Conditional visibility — `condition:` {#conditional-visibility}
 
 Like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. It's purely a toggle on whether the **button is shown** — the action (and its route) stays fully live either way.
 
@@ -162,6 +166,48 @@ end
 
 ::: tip Per-record display vs. per-record authorization
 `condition: -> { object.draft? }` is fine for **showing/hiding** a per-record button. But if the rule is about **who may run it** ("only while draft *and* nobody else has it locked"), put it in the policy — `def publish? = record.draft?` is also evaluated per record (per row), and unlike `condition:` it actually gates execution.
+:::
+
+## Hidden actions — `hidden: true` {#hidden-actions}
+
+An action declared `hidden: true` renders in **no** toolbar, row dropdown, card, or bulk bar — regardless of its visibility flags, the policy, or `condition:`. Everything else about it stays live:
+
+- the **route** is mounted;
+- the **policy predicate** (`def name?`) is defined and enforced;
+- for `interaction:`-based actions, the **form and permitted-params machinery** work exactly as they do for a visible action.
+
+```ruby
+action :reposition, hidden: true
+```
+
+The use case is an endpoint reached by **something other than a button** — a drag gesture, a custom Stimulus controller, a client-side widget you wrote yourself. The framework uses it for exactly that: [`position_on`](/reference/positioning) expands to `action :reposition, hidden: true`, and the kanban board's drop endpoint is declared the same way.
+
+### `hidden:` vs `condition: -> { false }`
+
+Both suppress the button, so pick by intent:
+
+| | `hidden: true` | `condition: -> { false }` |
+|---|---|---|
+| Decided | at **class-load**, once | at **render time**, per row/request |
+| Costs | nothing — the surfaces filter it out before any policy or condition runs | a proc evaluation per rendering |
+| Says | "this is never a button" | "this is a button, just not right now" |
+
+Use `hidden:` for an action that is *structurally* not a button. Use `condition:` when visibility genuinely depends on the record, the user, or the request.
+
+::: danger `hidden:` is a display gate, NOT an authorization boundary
+This is the same trap as [`condition:`](#conditional-visibility), and it bears repeating because "hidden" reads more absolute than it is. A hidden action has a **live route**: anyone who can construct the URL can call it.
+
+```ruby
+# 🚫 WRONG — hiding the button does not stop the request.
+action :purge_all, interaction: PurgeInteraction, hidden: true
+
+# ✅ RIGHT — authorization belongs in the policy.
+class WidgetPolicy < ResourcePolicy
+  def purge_all? = current_user.admin?
+end
+```
+
+**Rule of thumb, unchanged:** "who may run this" → **policy**. "does a button belong here" → `hidden:` / `condition:`.
 :::
 
 ## Simple actions (navigation)
