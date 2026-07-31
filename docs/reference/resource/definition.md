@@ -282,10 +282,26 @@ See [UI › Components](/reference/ui/components) for writing reusable Phlex com
 
 ### Custom component class
 
+`as:` takes a **field component** — Plutonium constructs it as
+`YourComponent.new(field, **attributes)`, so it subclasses
+`Phlexi::Form::Components::Base` (inputs) or `Phlexi::Display::Components::Base`
+(displays) and reads the value off `field`:
+
 ```ruby
 input   :color_picker, as: ColorPickerComponent
 display :chart,        as: ChartComponent
 ```
+
+A component with its own constructor (e.g. `PostCardComponent.new(post:)`) is not
+an `as:` candidate — it would raise `ArgumentError`. Build it in a block instead:
+
+```ruby
+display :card do |field|
+  PostCardComponent.new(post: field.object)
+end
+```
+
+See [UI › Components › Field components](/reference/ui/components#field-components).
 
 ## Column options
 

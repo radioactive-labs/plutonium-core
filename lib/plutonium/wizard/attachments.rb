@@ -39,7 +39,7 @@ module Plutonium
       # canonical file-input alias set, so the two never drift.
       def field?(input_options)
         as = input_options&.dig(:options, :as) || input_options&.dig(:as)
-        Plutonium::UI::Form::Base::Builder::FILE_INPUT_TYPES.include?(as&.to_sym)
+        Plutonium::Definition::InputAliases.file_input?(as)
       end
 
       # SERVER-SIDE staging: turn a submitted attachment value into a token string

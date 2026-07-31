@@ -60,7 +60,9 @@ class PostDefinition < ResourceDefinition
     end
   }
 
-  # Custom component class
+  # Field component class — built as ChartComponent.new(field, **attributes),
+  # so it subclasses Phlexi::Display::Components::Base and reads `field`.
+  # (A component with its own constructor uses the block form above.)
   display :chart, as: ChartComponent
 end
 ```

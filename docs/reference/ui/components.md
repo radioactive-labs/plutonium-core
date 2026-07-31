@@ -101,26 +101,79 @@ class PostCardComponent < Plutonium::UI::Component::Base
 end
 ```
 
-::: tip Always inherit `Plutonium::UI::Component::Base`
+::: tip Inherit `Plutonium::UI::Component::Base`
 It gives you:
 - The component kit (`PageHeader`, `Panel`, `Block`, …)
 - Resource helpers (`resource_url_for`, `current_user`, `current_record!`, `current_definition`)
 - A `helpers` proxy for Rails helpers (`helpers.link_to`, `helpers.number_to_currency`)
 - Token / class helpers (`tokens`, `classes`)
+
+A **field** component (one you pass to `as:`) inherits its Phlexi base instead —
+`include Plutonium::UI::Component::Behaviour` there to get the same helpers.
 :::
 
 ### Use in a definition
 
+A component like `PostCardComponent` above has its own constructor, so it reaches
+a field through the **block form** — you build it yourself:
+
 ```ruby
 class PostDefinition < ResourceDefinition
-  display :card, as: PostCardComponent       # custom display component
-  input   :color, as: ColorPickerComponent   # custom input component
+  display :card do |field|
+    PostCardComponent.new(post: field.object)
+  end
 
   display :metrics do |field|
     MetricsChartComponent.new(data: field.value)
   end
 end
 ```
+
+`as: SomeComponent` is the other route, and it expects a **field component** —
+Plutonium instantiates it with the field builder, not with your keyword
+arguments. See [field components](#field-components) below.
+
+::: warning `as:` does not take a keyword-argument component
+`display :card, as: PostCardComponent` raises `ArgumentError: wrong number of
+arguments` — the component is constructed as `PostCardComponent.new(field,
+**attributes)`. Use the block form for those.
+:::
+
+### Field components
+
+A field component subclasses the Phlexi component base for its surface and reads
+everything off `field` (`field.value`, `field.object`, `field.dom`, plus
+`attributes` — the themed id/name/class Plutonium already computed):
+
+```ruby
+# app/components/color_picker_component.rb
+class ColorPickerComponent < Phlexi::Form::Components::Base
+  include Phlexi::Form::Components::Concerns::HandlesInput  # name/id/value plumbing
+
+  def view_template
+    input(**attributes, type: "color", value: field.value)
+  end
+end
+
+# app/components/chart_component.rb
+class ChartComponent < Phlexi::Display::Components::Base
+  include Plutonium::UI::Component::Behaviour  # optional: kit + resource helpers
+
+  def view_template
+    div(class: "h-40", data: {controller: "chart", chart_series_value: field.value.to_json})
+  end
+end
+```
+
+```ruby
+class PostDefinition < ResourceDefinition
+  input   :color, as: ColorPickerComponent   # custom input component
+  display :chart, as: ChartComponent         # custom display component
+end
+```
+
+An `as:` component works in every surface that renders the field — form, show
+page, index column, filter panel and wizard summary alike.
 
 ### Use in a page / form / display
 
@@ -213,6 +266,6 @@ Inside any custom component, the same set of helpers as pages/forms/displays —
 ## Related
 
 - [Pages](./pages) — `render_*` hooks call your components
-- [Forms](./forms) — using custom input components via `as: MyComponent`
+- [Forms](./forms) — the built-in input tags and their `as:` aliases
 - [Displays](./displays) — using custom display components
 - [Assets](./assets) — design tokens (`var(--pu-*)`) and `.pu-*` component classes

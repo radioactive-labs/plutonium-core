@@ -302,14 +302,7 @@ module Plutonium
           if input_options[:pre_submit]
             tag_attributes["data-action"] = "change->form#preSubmit"
           end
-          tag_block = input_definition[:block] || ->(f) do
-            tag ||= f.inferred_field_component
-            if tag.is_a?(Class)
-              f.send :create_component, tag, tag.name.demodulize.underscore.sub(/component$/, "").to_sym
-            else
-              f.send(:"#{tag}_tag", **tag_attributes)
-            end
-          end
+          tag_block = input_definition[:block] || ->(f) { f.component_for(tag, **tag_attributes) }
 
           # Keep `:as` so the Builder can detect hidden fields via `options[:as]`.
           field_options = field_options.except(:condition)

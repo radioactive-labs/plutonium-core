@@ -528,15 +528,45 @@ class PostCardComponent < Plutonium::UI::Component::Base
 end
 ```
 
-Use in a definition:
+Use in a definition. A component with its **own constructor** (like the one above)
+must use the **block form** — you build it:
 
 ```ruby
-display :card, as: PostCardComponent     # custom display component
-input   :color, as: ColorPickerComponent # custom input component
+display :card do |field|
+  PostCardComponent.new(post: field.object)
+end
 
 display :metrics do |field|
   MetricsChartComponent.new(data: field.value)
 end
+```
+
+🚨 `as: SomeComponent` takes a **field component**, NOT a keyword-argument
+component: Plutonium constructs it as `SomeComponent.new(field, **attributes)`, so
+`display :card, as: PostCardComponent` raises `ArgumentError: wrong number of
+arguments`. A field component subclasses the Phlexi base for its surface and reads
+`field` (`field.value`, `field.object`, `field.dom`, `attributes`):
+
+```ruby
+class ColorPickerComponent < Phlexi::Form::Components::Base
+  include Phlexi::Form::Components::Concerns::HandlesInput  # name/id/value plumbing
+  include Plutonium::UI::Component::Behaviour               # optional: kit + resource helpers
+
+  def view_template
+    input(**attributes, type: "color", value: field.value)
+  end
+end
+
+class ChartComponent < Phlexi::Display::Components::Base
+  def view_template
+    div(class: "h-40", data: {controller: "chart", chart_series_value: field.value.to_json})
+  end
+end
+```
+
+```ruby
+input   :color, as: ColorPickerComponent  # every surface: form + filter panel
+display :chart, as: ChartComponent        # every surface: show + index column
 ```
 
 ## `DynaFrameContent` pattern

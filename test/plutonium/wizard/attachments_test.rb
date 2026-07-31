@@ -165,4 +165,12 @@ class Plutonium::Wizard::AttachmentsTest < ActiveSupport::TestCase
     refute Plutonium::Wizard::Attachments.field?({options: {as: :string}})
     refute Plutonium::Wizard::Attachments.field?(nil)
   end
+
+  # An `as:` may be a component Class rendered directly, which has no #to_sym —
+  # a step declaring one must not blow up attachment detection.
+  test "field? is false for a component-class as:" do
+    picker = Class.new(Plutonium::UI::Component::Base)
+    refute Plutonium::Wizard::Attachments.field?({options: {as: picker}})
+    refute Plutonium::Wizard::Attachments.field?({as: picker})
+  end
 end

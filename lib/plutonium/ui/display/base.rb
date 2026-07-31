@@ -8,6 +8,7 @@ module Plutonium
 
         class Builder < Builder
           include Plutonium::UI::Display::Options::InferredTypes
+          include Plutonium::UI::Component::ResolvesTags
 
           def association_tag(**, &)
             create_component(Plutonium::UI::Display::Components::Association, :association, **, &)
