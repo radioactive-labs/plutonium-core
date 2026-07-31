@@ -28977,6 +28977,23 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     };
   };
 
+  // src/js/drag/sortable.js
+  function computeDropIndex(clientY, items) {
+    for (let i4 = 0; i4 < items.length; i4++) {
+      const rect = items[i4].getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) return i4;
+    }
+    return items.length;
+  }
+  function beginDrag(event, element, { draggingClass, payload }) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", payload);
+    requestAnimationFrame(() => element.classList.add(draggingClass));
+  }
+  function endDrag(element, { draggingClass }) {
+    element.classList.remove(draggingClass);
+  }
+
   // src/js/controllers/kanban_controller.js
   var kanban_controller_default = class extends Controller {
     static values = { moveUrlTemplate: String, collapseCookie: String, collapsePath: String };
@@ -29230,9 +29247,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const card = event.target.closest("[data-kanban-record-id]");
       if (!card) return;
       this.draggedCard = card;
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", card.dataset.kanbanRecordId);
-      requestAnimationFrame(() => card.classList.add("pu-kanban-dragging"));
+      beginDrag(event, card, {
+        draggingClass: "pu-kanban-dragging",
+        payload: card.dataset.kanbanRecordId
+      });
       this.#applyDropHints(card.dataset.kanbanColumnKey);
     }
     #onDragOver(event) {
@@ -29261,7 +29279,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const fromColumn = this.draggedCard.dataset.kanbanColumnKey;
       const toColumn = column.dataset.kanbanColumnKeyValue;
       const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
-      const toIndex = this.#computeDropIndex(event.clientY, existingCards);
+      const toIndex = computeDropIndex(event.clientY, existingCards);
       const destWrapper = column.closest("[data-kanban-col]");
       if (destWrapper?.dataset.kanbanDropInteraction === "true" && fromColumn !== toColumn) {
         if (destWrapper.dataset.kanbanDropImmediate === "true") {
@@ -29340,7 +29358,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.#clearHighlights();
       this.#clearDropHints();
       if (this.draggedCard) {
-        this.draggedCard.classList.remove("pu-kanban-dragging");
+        endDrag(this.draggedCard, { draggingClass: "pu-kanban-dragging" });
         this.draggedCard = null;
       }
     }
@@ -29400,17 +29418,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.cookie = `${name}=${value}; path=${path}; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`;
     }
     // ─── helpers ─────────────────────────────────────────────────────────────────
-    // Returns the 0-based insertion index within the destination column by
-    // comparing the cursor y-position against each card's vertical midpoint.
-    // The card is inserted before the first card whose midpoint is below the
-    // cursor, or appended after all cards if the cursor is below every midpoint.
-    #computeDropIndex(clientY, cards) {
-      for (let i4 = 0; i4 < cards.length; i4++) {
-        const rect = cards[i4].getBoundingClientRect();
-        if (clientY < rect.top + rect.height / 2) return i4;
-      }
-      return cards.length;
-    }
     #highlightColumn(column) {
       this.columnTargets.forEach((c4) => {
         c4.classList.toggle("pu-kanban-drop-target", c4 === column);
