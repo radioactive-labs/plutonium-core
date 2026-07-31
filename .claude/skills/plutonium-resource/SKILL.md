@@ -1401,6 +1401,8 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+⚠️ **An interaction is the button, not the operation.** It's a presentation object — it can only be built with a `view_context`, so anything reachable only through one is reachable only from a Plutonium page. Logic may *start* in `execute` (a one-off with a single caller is fine; don't pre-extract). The **second caller** — a job, an API controller, a rake task, the console — is the trigger to move it onto the **model**, in domain language (`publish!`, `archive!`, `register!`). Not a service layer. Full rule + the validation split: [[plutonium-behavior]] › Part 3 › Where the logic goes.
+
 ### Single-record interaction
 
 ```ruby
@@ -1439,7 +1441,9 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   validates :role,  presence: true, inclusion: {in: %w[admin member viewer]}
 
   def execute
-    UserInvite.create!(company: resource, email: email, role: role, invited_by: current_user)
+    # Company#invite! creates the row AND sends the mail — a seat-provisioning
+    # job needs both, and has no view_context to build an interaction with.
+    resource.invite!(email: email, role: role, by: current_user)
     succeed(resource).with_message("Invitation sent to #{email}.")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)

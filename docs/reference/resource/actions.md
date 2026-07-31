@@ -11,7 +11,8 @@ Custom buttons that go beyond standard CRUD — publish, archive, import, send i
 - **For interactive actions, visibility is inferred from the interaction's attributes.** Don't declare `record_action: true` / `bulk_action: true` etc. by hand unless you're opting OUT.
 - **Bulk action authorization is per-record.** If any selected record fails the policy check, the entire request is rejected.
 - **Always pass `as:`** on custom routes — without it, `resource_url_for` can't generate URLs (critical for nested resources).
-- **Prefer interactive actions over hand-written controller routes.** Anything with business logic belongs in an interaction.
+- **Prefer interactive actions over hand-written controller routes.** Anything a user triggers from a page belongs behind an interaction.
+- **An interaction is the button, not the operation.** Logic may start in `execute`; once a job or an API also needs it, it moves to the model — see [Behavior › Interactions](/reference/behavior/interactions#what-an-interaction-is-for).
 
 ## Action visibility flags
 
@@ -247,6 +248,8 @@ For anything with business logic, use an **interactive action** instead.
 
 Run an [Interaction](/reference/behavior/interactions) — automatically renders a form if the interaction declares attributes beyond `:resource`/`:resources`, otherwise executes immediately with a confirmation.
 
+The interactions below call named model methods (`archive!`, `invite!`) rather than doing the work inline. That's not mandatory for a one-off — the trigger to extract is the second caller, since an interaction can only be built with a `view_context`. See [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
+
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
   action :publish, interaction: PublishInteraction
@@ -304,7 +307,7 @@ class InviteUserInteraction < Plutonium::Resource::Interaction
   validates :role,  presence: true
 
   def execute
-    UserInvite.create!(company: resource, email: email, role: role)
+    resource.invite!(email: email, role: role, by: current_user)
     succeed(resource).with_message("Invitation sent to #{email}.")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)

@@ -11,7 +11,7 @@ A button appears in the right place (show page / table row / index header / bulk
 | Flavor | Use for |
 |---|---|
 | **Simple action** — navigate to a URL | Linking to external docs, jumping to a custom page that does its own thing |
-| **Interactive action** — run an interaction class | Anything with business logic (the common case) |
+| **Interactive action** — run an interaction class | Anything that *does* something (the common case) |
 
 Prefer interactive actions. They handle authorization, form rendering, modal chrome, success/failure messaging, and automatic redirects — all for free.
 
@@ -20,7 +20,16 @@ Prefer interactive actions. They handle authorization, form rendering, modal chr
 ### 1. Write the interaction
 
 ```ruby
-# app/interactions/publish_post_interaction.rb
+# app/models/post.rb — what publishing actually means
+class Post < ApplicationRecord
+  def publish!(on: Time.current)
+    update!(published: true, published_at: on)
+  end
+end
+```
+
+```ruby
+# app/interactions/publish_post_interaction.rb — the button in front of it
 class PublishPostInteraction < ResourceInteraction
   presents label: "Publish",
            icon:  Phlex::TablerIcons::Send,
@@ -29,7 +38,7 @@ class PublishPostInteraction < ResourceInteraction
   attribute :resource
 
   def execute
-    resource.update!(published: true, published_at: Time.current)
+    resource.publish!
     succeed(resource).with_message("Post published!")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
@@ -39,6 +48,10 @@ end
 
 ::: warning Rescue `ActiveRecord::RecordInvalid`
 Plutonium doesn't rescue it automatically. Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
+:::
+
+::: tip Why `publish!` is on the model
+An interaction can only be built with a `view_context` — it's a presentation object. A two-line `update!` inline in `execute` is fine while the button is the only caller; the moment a scheduled-publishing job wants the same behaviour it has to duplicate it or fake a view context. Full rule: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
 :::
 
 ### 2. Register it in the definition
@@ -106,13 +119,15 @@ class Company::InviteUserInteraction < ResourceInteraction
   validates :role,  presence: true
 
   def execute
-    UserInvite.create!(company: resource, email: email, role: role)
+    resource.invite!(email: email, role: role, by: current_user)
     succeed(resource).with_message("Invitation sent to #{email}.")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
   end
 end
 ```
+
+`Company#invite!` creates the row *and* sends the mail. Both are things a seat-provisioning job needs to do without a browser anywhere in sight — see the [full worked example](/reference/behavior/interactions#complete-example).
 
 ## Bulk actions
 
@@ -236,18 +251,28 @@ end
 
 Every resource gets `:archive` automatically.
 
-## Chaining interactions
+## Where the logic goes
+
+Interactions are presentation objects — they need a `view_context` to exist at all. So the reflex to reach for when an operation grows:
 
 ```ruby
+# 🚫 Three interactions, three view contexts, none of it callable from a job
+CreateUserInteraction.call(view_context:, **user_params)
+  .and_then { |user| SendWelcomeEmail.call(view_context:, user:) }
+  .and_then { |user| LogActivity.call(view_context:, user:) }
+```
+
+```ruby
+# ✅ One model method; the interaction just presents it
 def execute
-  CreateUserInteraction.call(view_context:, **user_params)
-    .and_then { |r| SendWelcomeEmail.call(view_context:, user: r.value) }
-    .and_then { |r| LogActivity.call(view_context:, user: r.value) }
-    .with_message("User created and welcomed!")
+  user = User.register!(**attributes)   # welcome email + audit row live in here
+  succeed(user).with_message("Welcome aboard!")
 end
 ```
 
-The chain short-circuits on the first failure.
+Sending a welcome email and writing an audit row are exactly what a signup API endpoint or a rake task also does — and neither has a view context to hand.
+
+The rule isn't "never put logic in an interaction". A single-caller operation can stay inline in `execute`; don't pre-extract. **The second caller is the trigger** — and the destination is the model, Rails-style, not a new service layer. Chaining three interactions is usually the tell that you already crossed it. Full explanation: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
 
 ## Common issues
 
