@@ -28,10 +28,10 @@ export function computeDropIndex(clientY, items) {
 // Horizontal variant of the above, for grid / card layouts that flow in rows
 // rather than stacking in a column.
 //
-// NOT dead code: it has no consumer yet — the grid view that uses it lands in a
-// follow-up — but it ships alongside its vertical twin deliberately, because
-// the pair is the whole point of this module and splitting them across commits
-// invites the two from drifting.
+// Scoped to ONE visual row. A wrapped grid gives every row the same left edge,
+// so an X comparison across rows is meaningless — the caller narrows to a row
+// first and passes only that row's items (see positioned_controller's
+// #dropIndex, which does exactly that).
 export function computeDropIndexHorizontal(clientX, items) {
   for (let i = 0; i < items.length; i++) {
     const rect = items[i].getBoundingClientRect()

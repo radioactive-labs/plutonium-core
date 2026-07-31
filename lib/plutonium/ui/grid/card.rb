@@ -10,11 +10,18 @@ module Plutonium
       class Card < Plutonium::UI::Component::Base
         attr_reader :record, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil)
+        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil, drag_handle: nil)
           @record = record
           @resource_definition = resource_definition
           @resource_fields = resource_fields
           @card_fields = card_fields
+          # A prebuilt Table::Components::DragHandle, or nil for a card that is
+          # not reorderable. The GRID owns the decision — whether the resource
+          # declares `position_on`, whether the collection is in position order,
+          # whether this viewer passes `reposition?` — because all three are
+          # properties of the collection and its policy, not of one card. The
+          # card only knows where to put what it was handed.
+          @drag_handle = drag_handle
           # Overrides the show link's turbo-frame target. Defaults to the show
           # action's own frame (nil → normal navigation). The kanban board sets
           # "_top" so a card click escapes its column's lazy turbo-frame instead
@@ -23,11 +30,9 @@ module Plutonium
         end
 
         def view_template
-          article(
-            class: card_class,
-            data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"}
-          ) do
+          article(class: card_class, data: card_data) do
             render_show_link if can_show?
+            render_drag_handle if @drag_handle
             render_actions_dropdown
             case resource_definition.defined_grid_layout
             when :media then render_media_layout
@@ -227,6 +232,16 @@ module Plutonium
         # Card chrome — selection, actions, show
         # ---------------------------------------------------------------
 
+        # The grip positions itself (Table::Theme's :drag_handle_card floats it
+        # over the card's top-left corner), so there is no wrapper here — unlike
+        # the table, where the grip has to ride inside a specific cell.
+        #
+        # It is a <button> — or an <a> when disabled — and row_click_controller
+        # ignores both, so grabbing the grip never navigates to the show page.
+        def render_drag_handle
+          render @drag_handle
+        end
+
         def render_actions_dropdown
           # Cards have limited surface area, so all collection-record
           # actions (including primary ones like Edit) live in the
@@ -316,8 +331,26 @@ module Plutonium
         def card_class
           tokens(
             "pu-card relative overflow-hidden transition-shadow",
-            -> { can_show? } => "cursor-pointer hover:shadow-md focus-within:ring-2 focus-within:ring-primary-500"
+            -> { can_show? } => "cursor-pointer hover:shadow-md focus-within:ring-2 focus-within:ring-primary-500",
+            # `group/card` is what lets the grip reveal itself on card hover.
+            # NAMED, so a card rendered inside some other hover group (or a
+            # future group inside the card) can never reveal it by accident.
+            -> { !@drag_handle.nil? } => "group/card"
           )
+        end
+
+        # The card — never the grip — is the single source of truth for which
+        # record a drag is about. See positioned_controller.js.
+        #
+        # Carried whenever a grip is rendered, including the disabled one: with
+        # no controller wired to the grid the attribute is inert, and making it
+        # conditional on the sort would mean the card had to know about the
+        # collection's ordering for no gain.
+        def card_data
+          data = {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"}
+          return data unless @drag_handle
+
+          data.merge(positioned_row_id: record.id)
         end
       end
     end

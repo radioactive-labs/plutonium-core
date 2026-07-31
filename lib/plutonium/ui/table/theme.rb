@@ -76,7 +76,37 @@ module Plutonium
                                   "text-[var(--pu-text-subtle)] " \
                                   "opacity-0 group-hover/row:opacity-40 hover:opacity-100 focus:opacity-100 " \
                                   "transition-opacity cursor-pointer " \
-                                  "focus:outline-none focus:ring-2 focus:ring-[var(--pu-input-focus-ring)]"
+                                  "focus:outline-none focus:ring-2 focus:ring-[var(--pu-input-focus-ring)]",
+
+            # The card-grid placement of the same grip (Grid::Card).
+            #
+            # Same principle as the row grip — live in padding the card already
+            # had, cost the content nothing — but expressed as a full-height rail
+            # rather than a negative margin, because a card's content is a
+            # multi-line flex column rather than one cell. `w-4` is exactly the
+            # `p-4` left padding of both card layouts, so the rail fills the
+            # gutter and stops precisely where the text begins. A floating corner
+            # button was tried first and sat on top of the card title.
+            #
+            # It still carries a translucent surface + blur: in the :media layout
+            # the cover image runs edge to edge, so the gutter is only empty in
+            # the compact layout.
+            #
+            # `group/card`, not `group/row`: the card names its own hover group
+            # so nesting a card inside a table (or vice versa) can never have one
+            # reveal the other's grip.
+            drag_handle_card: "absolute left-0 top-0 bottom-0 z-20 w-4 inline-flex items-center justify-center " \
+                              "bg-[var(--pu-surface-alt)]/70 backdrop-blur-sm " \
+                              "text-[var(--pu-text-subtle)] hover:text-[var(--pu-text)] " \
+                              "opacity-0 group-hover/card:opacity-100 focus:opacity-100 " \
+                              "transition-opacity cursor-grab active:cursor-grabbing " \
+                              "focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--pu-input-focus-ring)]",
+            drag_handle_card_disabled: "absolute left-0 top-0 bottom-0 z-20 w-4 inline-flex items-center justify-center " \
+                                       "bg-[var(--pu-surface-alt)]/70 backdrop-blur-sm " \
+                                       "text-[var(--pu-text-subtle)] " \
+                                       "opacity-0 group-hover/card:opacity-40 hover:opacity-100 focus:opacity-100 " \
+                                       "transition-opacity cursor-pointer " \
+                                       "focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--pu-input-focus-ring)]"
           })
         end
       end

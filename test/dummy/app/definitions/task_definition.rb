@@ -9,6 +9,11 @@ class TaskDefinition < ::ResourceDefinition
   # position_on of its own).
   position_on
 
+  # Enables the :grid index view (grid_fields implies it), so Task exercises
+  # drag-reorder on BOTH index surfaces — the table's vertical drop index and
+  # the grid's row-then-column one.
+  grid_fields header: :title, meta: [:status], footer: false
+
   kanban do
     per_column 25
 

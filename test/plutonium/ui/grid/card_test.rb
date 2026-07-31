@@ -67,6 +67,53 @@ class Plutonium::UI::Grid::CardSlotsTest < Minitest::Test
   end
 end
 
+# Unit tests for Grid::Card's drag-reorder wiring.
+#
+# The card renders whatever grip the GRID handed it and tags itself with its
+# record id — every decision about whether a grip is warranted belongs to
+# Grid::Resource (see Component::Positionable), so the only thing tested here is
+# that a card carries the drag contract exactly when it has a grip to drag by.
+class Plutonium::UI::Grid::CardDragHandleTest < Minitest::Test
+  def test_a_card_without_a_grip_carries_no_row_id
+    assert_nil card.send(:card_data)[:positioned_row_id]
+  end
+
+  def test_a_card_without_a_grip_opens_no_hover_group
+    assert_not_includes card.send(:card_class), "group/card"
+  end
+
+  def test_a_card_with_a_grip_carries_its_record_id
+    data = card(drag_handle: grip).send(:card_data)
+
+    assert_equal 7, data[:positioned_row_id]
+    # row-click has to survive alongside it — the grip is a <button>, which
+    # row_click_controller ignores, so the two do not fight.
+    assert_equal "row-click", data[:controller]
+  end
+
+  def test_a_card_with_a_grip_opens_the_hover_group_the_grip_reveals_itself_from
+    assert_includes card(drag_handle: grip).send(:card_class), "group/card"
+  end
+
+  private
+
+  def grip = Plutonium::UI::Table::Components::DragHandle.new(variant: :card)
+
+  def card(drag_handle: nil)
+    definition = Object.new
+    definition.define_singleton_method(:defined_grid_fields) { {} }
+    built = Plutonium::UI::Grid::Card.new(
+      Struct.new(:id).new(7), resource_definition: definition, drag_handle: drag_handle
+    )
+    built.define_singleton_method(:can_show?) { false }
+    built
+  end
+
+  def assert_not_includes(collection, obj)
+    refute_includes collection, obj
+  end
+end
+
 # Unit tests for Grid::Card#footer_field.
 #
 # The footer slot falls back to :created_at when undeclared, so — unlike every

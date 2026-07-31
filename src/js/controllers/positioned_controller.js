@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { beginDrag, computeDropIndex, endDrag } from "../drag/sortable"
+import { beginDrag, computeDropIndex, computeDropIndexHorizontal, endDrag } from "../drag/sortable"
 
 // Applied to the row for the duration of the drag. A plain Tailwind utility
 // rather than a bespoke class, so the whole affordance needs no stylesheet of
@@ -8,25 +8,32 @@ const DRAGGING_CLASS = "opacity-30"
 
 // Connects to data-controller="positioned"
 //
-// Drag-to-reorder for an index table whose resource declares `position_on`.
-// Native HTML5 drag-and-drop, sharing its mechanics with the kanban board via
-// ../drag/sortable — no npm dependency.
+// Drag-to-reorder for an index collection whose resource declares
+// `position_on`. Native HTML5 drag-and-drop, sharing its mechanics with the
+// kanban board via ../drag/sortable — no npm dependency.
+//
+// Serves BOTH index surfaces — the table and the card grid. They differ in
+// exactly one respect (which axis a drop position is read off), so the grid is
+// a second consumer of this controller rather than a parallel one; "row" below
+// means a <tr> on a table and an <article> card on a grid.
 //
 // ## DOM contract
 //
-// Table wrapper (this element — the div around <table>):
+// Collection wrapper (this element — the div around <table>, or the grid div):
 //   data-controller="positioned"
 //   data-positioned-url-template-value="/things/__ID__/reposition"
 //     — the collection path with an __ID__ placeholder, substituted with the
 //       dragged row's record id at drop time.
+//   data-positioned-axis-value="horizontal"
+//     — grid only. See #dropIndex.
 //
-// Row (<tr>):
+// Row (<tr> or a grid <article>):
 //   data-positioned-row-id="<id>"
 //     — the SINGLE source of truth for which record a drag is about. The grip
 //       deliberately carries no id of its own: two places to read it from is
 //       two places for them to disagree.
 //
-// Grip (a <button> inside the row's first cell):
+// Grip (a <button> inside the row):
 //   data-positioned-grip
 //
 // ## Only the grip is draggable — never the <tr>
@@ -42,7 +49,9 @@ const DRAGGING_CLASS = "opacity-30"
 //      where they were.
 //
 // The kanban board keeps whole-card dragging because neither concern applies
-// to a card. The inconsistency is deliberate.
+// to a card. A GRID card, however, still gets a grip: unlike a kanban card it
+// carries a row-click show affordance, so reason 2 applies to it just as it
+// does to a table row.
 //
 // ## The wrapper only appears while the table IS in position order
 //
@@ -67,7 +76,7 @@ const DRAGGING_CLASS = "opacity-30"
 // Native HTML5 DnD is mouse-only — without this the feature is unusable by
 // keyboard, and the affordance would be a tab stop that does nothing.
 export default class extends Controller {
-  static values = { urlTemplate: String }
+  static values = { urlTemplate: String, axis: { type: String, default: "vertical" } }
 
   connect() {
     this.draggedRow = null
@@ -132,9 +141,61 @@ export default class extends Controller {
     // Exclude the dragged row: an index computed over a list that still counts
     // the row being moved is off by one for every downward move.
     const others = this.#rows().filter(r => r !== row)
-    const index = computeDropIndex(event.clientY, others)
 
-    this.#applyMove(row, others, index)
+    this.#applyMove(row, others, this.#dropIndex(event, others))
+  }
+
+  // Where a drop at the cursor lands, in `items`' own order.
+  //
+  // A table stacks: one row per line, so the vertical midpoint test is the
+  // whole story. A grid WRAPS: cards flow left-to-right and then onto a new
+  // line, and reading that layout off clientY alone would collapse every card
+  // on a line into a single slot — the drop would land at the start of the row
+  // no matter which gap the user aimed at.
+  //
+  // But clientX alone is no better, because every visual row starts at the same
+  // left edge: x=250 is "after the third card" in row 1 and row 4 alike. So
+  // narrow to the row the cursor is over FIRST, then let the horizontal
+  // midpoint test choose the gap inside it.
+  #dropIndex(event, items) {
+    if (this.axisValue !== "horizontal") return computeDropIndex(event.clientY, items)
+    if (items.length === 0) return 0
+
+    const rows = this.#visualRows(items)
+
+    // Above the grid entirely → the very first slot. Below it → the last.
+    if (event.clientY < rows[0].top) return 0
+    const row = rows.find(r => event.clientY <= r.bottom)
+    if (!row) return items.length
+
+    return row.start + computeDropIndexHorizontal(event.clientX, items.slice(row.start, row.end))
+  }
+
+  // Groups `items` into the lines the browser actually laid them out on, as
+  // {top, bottom, start, end} spans over `items`.
+  //
+  // Recovered from geometry rather than from a column count on purpose: the
+  // grid is responsive (1/2/3/4 columns by breakpoint) and a definition may pin
+  // its own, so the only thing that reliably knows how the cards wrapped is
+  // where they ended up. A new line starts wherever an item's top edge leaves
+  // the current one's — with a pixel of slack, since equal-height cards in a
+  // row can still differ by a sub-pixel.
+  #visualRows(items) {
+    const rows = []
+
+    items.forEach((item, i) => {
+      const rect = item.getBoundingClientRect()
+      const row = rows[rows.length - 1]
+
+      if (row && Math.abs(rect.top - row.top) <= 1) {
+        row.end = i + 1
+        row.bottom = Math.max(row.bottom, rect.bottom)
+      } else {
+        rows.push({ top: rect.top, bottom: rect.bottom, start: i, end: i + 1 })
+      }
+    })
+
+    return rows
   }
 
   #onDragEnd(_event) {
@@ -159,6 +220,12 @@ export default class extends Controller {
     // native meaning (scrolling the page).
     event.preventDefault()
 
+    // Deliberately LINEAR, on a grid as much as on a table: it needs no drop
+    // index, because "one slot earlier / later in document order" is exactly
+    // what a single position attribute stores. Up/Down on a wrapped grid
+    // therefore means the previous/next CARD, not the card one line above —
+    // 2D navigation would move a card by a whole row per keypress and could
+    // not express the in-between slots at all.
     const rows = this.#rows()
     const from = rows.indexOf(row)
     const to = event.key === "ArrowUp" ? from - 1 : from + 1

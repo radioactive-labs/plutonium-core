@@ -34,11 +34,29 @@ module Plutonium
         # reorderable at all, and no way to make it so — it renders as a link that
         # applies the ascending position sort. That is precisely why `position_on`
         # registers `sort <attribute>`.
+        #
+        # ## Why one component serves both the table and the card grid
+        #
+        # The behaviour — draggable button, keyboard hint, disabled-is-the-way-out
+        # link — is identical on both surfaces; only WHERE the grip sits differs.
+        # A table row has padding to hide it in, a card does not, so the placement
+        # is the one thing `variant:` switches (see Table::Theme). Two components
+        # would mean two chances for the drag contract to drift.
         class DragHandle < Phlexi::Table::HTML
+          # Placement only — never behaviour. :row tucks the grip into a table
+          # cell's existing left padding; :card floats it over the card's
+          # top-left corner, since a card has no spare gutter to hide it in.
+          VARIANTS = {
+            row: {grip: :drag_handle, disabled: :drag_handle_disabled},
+            card: {grip: :drag_handle_card, disabled: :drag_handle_card_disabled}
+          }.freeze
+
           # @param sort_url [String, nil] nil when dragging is live; otherwise the
           #   URL that puts the collection back into ascending position order.
-          def initialize(sort_url: nil)
+          # @param variant [Symbol] :row (table cell) or :card (grid card)
+          def initialize(sort_url: nil, variant: :row)
             @sort_url = sort_url
+            @variant = VARIANTS.fetch(variant)
           end
 
           def view_template
@@ -51,7 +69,7 @@ module Plutonium
             button(
               type: "button",
               draggable: "true",
-              class: themed(:drag_handle),
+              class: themed(@variant[:grip]),
               title: "Drag to reorder",
               aria: {label: "Drag to reorder. Use the up and down arrow keys to move this row."},
               data: {positioned_grip: ""}
@@ -61,7 +79,7 @@ module Plutonium
           def render_disabled
             a(
               href: @sort_url,
-              class: themed(:drag_handle_disabled),
+              class: themed(@variant[:disabled]),
               title: "Sort by position to reorder"
             ) { icon }
           end
