@@ -13,7 +13,12 @@ module Plutonium
       #   params: prev_id, next_id, to_index
       #
       # prev_id/next_id are the ids of the dropped row's VISIBLE neighbours,
-      # either nullable for a drop at an end of the list.
+      # either nullable for a drop at an end of the VIEWPORT. A blank id is a
+      # claim about the client's page, never about the positioning group: rows
+      # hidden by pagination or a filter may still sit beyond it, and Mode A
+      # looks the real boundary neighbour up rather than anchoring off nil (see
+      # #resolve_position_boundaries — this is what keeps a bottom-of-page drop
+      # from writing a duplicate position).
       #
       # The trailing query string is load-bearing, not decoration: it is the
       # index's own query (search / filters / scope / sort / page / view), and it
@@ -30,11 +35,14 @@ module Plutonium
       #
       #   clean Mode A drop, both neighbours resolved  → 204 No Content
       #   reposition! rebalanced the group             → 200 + stream
-      #   a neighbour id did not resolve (drift)       → 200 + stream
+      #   a neighbour did not resolve, or belongs to
+      #     another positioning group (drift)          → 200 + stream
       #   Mode B (opaque block write)                  → 200 + stream
-      #   policy denial                                → 403 + stream + toast
+      #   denied reposition?                           → 403 + stream + toast
+      #   denied index?                                → 403, no body
+      #   dropped under a foreign sort                 → 422 + stream + toast
       #   validation failure / record gone             → 422 + stream + toast
-      #   no position_on, or Mode C                    → 404
+      #   no position_on, Mode C, or a kanban view     → 404
       #
       # ## DOM contract (Tasks 7 & 8 depend on these)
       #
@@ -52,25 +60,57 @@ module Plutonium
         def reposition
           config = current_definition.defined_position_config
 
-          if config.nil? || config.disabled?
-            # Not a reorderable resource — a 404, not an authorization failure.
-            # Checked BEFORE the record is loaded (no point querying for a route
-            # that doesn't apply), which means neither verifier has been
-            # satisfied by the time we bail — so satisfy both explicitly.
+          # Not a reorderable surface — a 404, not an authorization failure.
+          # Either the resource declares no ordering at all (or Mode C), or the
+          # client is on the kanban board, which owns a richer endpoint of its
+          # own (kanban_move) and renders no collection wrapper for the
+          # reconciliation to target. Checked BEFORE the record is loaded (no
+          # point querying for a route that doesn't apply), which means neither
+          # verifier has been satisfied by the time we bail — so satisfy both.
+          if config.nil? || config.disabled? || position_collection_view == :kanban
             skip_verify_authorize_current!
             skip_verify_current_authorized_scope!
             head :not_found
             return
           end
 
+          # You must be able to SEE a list to reorder it. Without this, a policy
+          # with `index? == false, update? == true` would be handed the whole
+          # listing by the reconciliation render below. Checked before the
+          # record is loaded so the refusal never touches the collection.
+          authorize_current! resource_class, to: :index?
+
           record = current_authorized_scope.find(params[:id])
           authorize_current! record, to: :reposition?
+
+          # Dropping "between the two rows either side of me" only means
+          # something when the visual order IS the stored order. Task 7's client
+          # doesn't offer the drag under a foreign sort; this is the server-side
+          # authority behind that, and it rejects BEFORE any write rather than
+          # writing a position derived from neighbours that never implied one.
+          if config.delegate? && !current_query_object.sorted_ascending_only_by?(config.attribute)
+            return render_position_reconciliation(
+              reason: "Reordering is only available while the list is sorted by #{config.attribute.to_s.humanize.downcase}."
+            )
+          end
 
           # Resolve neighbours WITHIN the authorized scope. A nil here would mean
           # "drop at the end", so an id that does not resolve must be treated as
           # drift and reconciled — never silently coerced to nil.
-          prev_record, prev_ok = resolve_position_neighbour(params[:prev_id])
-          next_record, next_ok = resolve_position_neighbour(params[:next_id])
+          prev_record, prev_ok = resolve_position_neighbour(params[:prev_id], record:, config:)
+          next_record, next_ok = resolve_position_neighbour(params[:next_id], record:, config:)
+          prev_record, next_record = resolve_position_boundaries(record, config, prev_record, next_record)
+
+          # Nothing left to anchor to. In Mode A that is never a real drag — a
+          # list you can drag in has a row on one side of the drop, and the
+          # boundary lookup above supplies the other. It means the client's view
+          # is stale (both neighbours drifted), and writing anyway would send the
+          # record to position 0.0 at the head of its group on the strength of a
+          # request we've just decided not to trust. Reconcile instead: the row
+          # snaps back to where it actually is.
+          if config.delegate? && prev_record.nil? && next_record.nil?
+            return render_position_reconciliation
+          end
 
           # Bind the return rather than branching on the call directly:
           # `if config.reposition!(...)` reads as a success check, which this is
@@ -80,7 +120,12 @@ module Plutonium
             record:,
             prev_record:,
             next_record:,
-            index: params[:to_index].to_i
+            # Floor-clamped, mirroring the kanban drop (KanbanActions#kanban_move
+            # clamps to [0, size]): a negative index reaching a Mode B block
+            # would index its array from the END, silently anchoring the drop to
+            # the wrong row. There is no card list here to give it a ceiling, so
+            # the contract Move#index carries is "0 or greater".
+            index: [params[:to_index].to_i, 0].max
           )
 
           if must_reconcile || !prev_ok || !next_ok
@@ -88,7 +133,7 @@ module Plutonium
           else
             head :no_content
           end
-        rescue ::ActionPolicy::Unauthorized
+        rescue ::ActionPolicy::Unauthorized => e
           # NOTE: the leading :: is REQUIRED — Plutonium::ActionPolicy exists, so
           # a bare ActionPolicy resolves to that namespace and never matches,
           # letting the exception reach the global rescue_from, which re-raises
@@ -97,6 +142,16 @@ module Plutonium
           # authorize_count only bumps after a SUCCESSFUL authorize, so a denial
           # leaves the verifier unsatisfied; we handled authorization by rejecting.
           skip_verify_authorize_current!
+
+          # A denied index? is not a snap-back: the user may not see this listing
+          # at all, so the refusal must not carry it back to them. Only a denied
+          # reposition? gets the collection (the row has to return somewhere).
+          if e.rule.to_sym == :index?
+            skip_verify_current_authorized_scope!
+            head :forbidden
+            return
+          end
+
           render_position_reconciliation(
             reason: "You are not authorized to reorder this.",
             status: :forbidden
@@ -114,13 +169,77 @@ module Plutonium
 
         private
 
-        # Returns [record, resolved?]. A blank id is a legitimate end-of-list
-        # drop → [nil, true]. An id that does not resolve in the authorized scope
-        # is drift → [nil, false], which forces reconciliation.
-        def resolve_position_neighbour(id)
+        # Returns [neighbour, resolved?]. A blank id is a legitimate end-of-page
+        # drop → [nil, true]. Anything the client named that we cannot honour is
+        # drift → [nil, false], which forces reconciliation.
+        #
+        # Two ways to fail. The id may not resolve in the authorized scope at
+        # all; or it may resolve to a row in a DIFFERENT positioning group. The
+        # second is not exotic — a status-scoped resource lists several groups
+        # in one table, with independent and freely interleaved numberings, so
+        # anchoring off a neighbour from another group flings the record to an
+        # arbitrary point in its own. Group membership is part of "can this
+        # neighbour anchor this drop", so it belongs here rather than in a
+        # separate check the caller could forget.
+        def resolve_position_neighbour(id, record:, config:)
           return [nil, true] if id.blank?
-          record = current_authorized_scope.find_by(id: id)
-          [record, !record.nil?]
+
+          neighbour = current_authorized_scope.find_by(id: id)
+          return [nil, false] if neighbour.nil?
+
+          # Mode B owns its own storage AND its own notion of a group; only the
+          # framework's own scope attribute is ours to police.
+          group_attr = config.delegate? ? record.class.positioning_scope_attr : nil
+          return [nil, false] if group_attr && neighbour[group_attr] != record[group_attr]
+
+          [neighbour, true]
+        end
+
+        # Fills in a neighbour the CLIENT could not see.
+        #
+        # A blank neighbour id means "nothing on that side of my viewport" — it
+        # does NOT mean "nothing on that side of the group". Pagination and
+        # filters both hide rows, so the last visible row is routinely not the
+        # last row. Taken literally, position_between would compute prev + 1 (or
+        # next - 1), which on a default-spaced list is EXACTLY the position of
+        # the row the client couldn't see: a silent duplicate, reported as a
+        # clean drop, that only heals if someone later drags between the tied
+        # pair. So we look the real boundary neighbour up instead.
+        #
+        # The lookup deliberately runs against the model's own group, NOT the
+        # authorized scope: a position is a property of the group, and ignoring
+        # rows the viewer can't see is the very bug being fixed. Nothing about
+        # the hidden row reaches the client — only the dropped record's own
+        # resulting position, which had to interleave with it either way.
+        #
+        # Mode A only: a Mode B block owns its neighbour semantics, and receives
+        # the drop exactly as the client described it.
+        def resolve_position_boundaries(record, config, prev_record, next_record)
+          return [prev_record, next_record] unless config.delegate?
+          return [prev_record, next_record] if prev_record && next_record
+
+          attr = config.attribute
+          group = positioning_group_for(record)
+
+          if next_record.nil? && prev_record
+            next_record = group.where(group.table[attr].gt(prev_record[attr])).order(attr => :asc).first
+          elsif prev_record.nil? && next_record
+            prev_record = group.where(group.table[attr].lt(next_record[attr])).order(attr => :desc).first
+          end
+
+          [prev_record, next_record]
+        end
+
+        # The record's positioning group, minus the record itself (it is being
+        # moved, so its current slot must not anchor its new one). Mirrors
+        # Positioning::Model#positioning_group_relation, which is private to the
+        # model instance.
+        def positioning_group_for(record)
+          klass = record.class
+          relation = klass.all
+          group_attr = klass.positioning_scope_attr
+          relation = relation.where(group_attr => record[group_attr]) if group_attr
+          relation.where.not(klass.primary_key => record.id)
         end
 
         # Streams the collection back so the client's optimistic DOM is replaced
@@ -174,12 +293,19 @@ module Plutonium
         def render_position_collection_html
           setup_index_action!
 
-          view = Plutonium::UI::Page::Index.resolve_view(
-            current_definition, resource_class, params[:view], cookies
-          )
-          component = (view == :grid) ? build_grid_collection(action: "index") : build_collection(action: "index")
+          component = (position_collection_view == :grid) ?
+            build_grid_collection(action: "index") :
+            build_collection(action: "index")
 
           view_context.render(component).html_safe
+        end
+
+        # Which of the resource's index views the client is looking at, resolved
+        # exactly as the index page resolves it (?view= → cookie → default).
+        def position_collection_view
+          @position_collection_view ||= Plutonium::UI::Page::Index.resolve_view(
+            current_definition, resource_class, params[:view], cookies
+          )
         end
 
         # The collection path this drop belongs to — the index (or nested
@@ -194,14 +320,18 @@ module Plutonium
         # is the page it renders, and must keep the request-derived defaults.
         def current_page_path
           return super unless action_name == "reposition"
-          @position_page_path ||= URI.parse(position_collection_url).path
+          position_collection_path
         end
 
+        # Absolute, like the request.original_url it stands in for — a consumer
+        # that got a path here where every other action hands it a full URL
+        # would be a trap. request.base_url is this request's own origin, which
+        # is the page's origin too: the drop was posted from it.
         def current_page_url
           return super unless action_name == "reposition"
           @position_page_url ||= begin
             query = request.query_string
-            query.present? ? "#{position_collection_url}?#{query}" : position_collection_url
+            "#{request.base_url}#{position_collection_path}#{"?#{query}" if query.present?}"
           end
         end
 
@@ -213,8 +343,15 @@ module Plutonium
           super.merge(params: request.GET.to_h)
         end
 
-        def position_collection_url
-          @position_collection_url ||= resource_url_for(resource_class)
+        # The collection path this drop belongs to. `parent:` is what makes a
+        # nested association table work: resource_url_for ignores current_parent
+        # unless it is passed one, so without it a drop inside
+        # /posts/1/nested_comments would resolve to the TOP-LEVEL /comments and
+        # send every link in the streamed collection out of the frame, at the
+        # wrong collection. current_parent is nil off a nested route, where
+        # `parent: nil` is exactly the top-level lookup we want.
+        def position_collection_path
+          @position_collection_path ||= resource_url_for(resource_class, parent: current_parent)
         end
       end
     end

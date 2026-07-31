@@ -236,7 +236,7 @@ class AdminPortal::KanbanDropInteractionTest < ActionDispatch::IntegrationTest
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
     assert_response :ok
-    assert_includes response.body, %(target="kanban-flash"),
+    assert_includes response.body, %(target="#{Plutonium::FLASH_REGION}"),
       "the interaction's success message must be appended to the flash region"
     assert_includes response.body, "Marked as lost",
       "the toast must carry the interaction's success message"

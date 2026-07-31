@@ -16,6 +16,10 @@ require "test_helper"
 #   * rejections (403 / 422) stream the collection so the row snaps back, plus
 #     a toast — never an HTML error page morphed into the table
 #   * a resource with no `position_on` (or Mode C) is a 404
+#   * a blank neighbour id means "end of the PAGE", never "end of the group":
+#     the real boundary neighbour is looked up, so a bottom-of-page or
+#     bottom-of-filtered-list drop cannot write a duplicate position
+#   * a neighbour from another positioning group is drift, not an anchor
 #
 # TaskDefinition declares `position_on` (Mode A, :position); the Task model
 # declares `positioned_on :position, scope: :status`, so every fixture here
@@ -134,6 +138,112 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
       "the record must not be appended to the end of the list"
   end
 
+  # ─── A blank neighbour is the end of the PAGE, not of the group ────────────
+
+  test "a bottom-of-page drop interleaves with the hidden next row, never duplicating it" do
+    # 30 rows, Pagy's default limit of 20. Dragging row 1 to the bottom of page
+    # one sends prev_id = the last VISIBLE row and a blank next_id — and rows
+    # 21..30 are still there, one of them at exactly last_visible + 1. Anchoring
+    # off nil would compute that value and tie the two rows together, silently,
+    # behind a 204.
+    Task.delete_all
+    30.times { |i| Task.create!(title: "Task #{i + 1}", status: "todo") }
+    page1 = Task.where(status: "todo").order(:position).limit(20).to_a
+    dragged = page1.first
+    last_visible = page1.last
+    hidden_next = Task.where(status: "todo").order(:position).offset(20).first
+
+    reposition(dragged, prev_id: last_visible.id, next_id: "", to_index: 19)
+
+    assert_response :no_content
+    assert_no_duplicate_positions
+    assert dragged.reload.position > last_visible.reload.position
+    assert dragged.position < hidden_next.reload.position,
+      "the drop must land between the last visible row and the first hidden one"
+  end
+
+  test "a bottom-of-filtered-list drop interleaves with the filtered-out next row" do
+    # Filters hide rows just as pagination does: Hidden sits after Keep B in the
+    # group but is filtered out of the view, so "no row below Keep B" is a claim
+    # about the viewport only.
+    Task.delete_all
+    keep_a = Task.create!(title: "Keep A", status: "todo")
+    keep_b = Task.create!(title: "Keep B", status: "todo")
+    hidden = Task.create!(title: "Hidden", status: "todo")
+
+    post "/admin/tasks/#{keep_a.id}/reposition?q%5Bsearch%5D=Keep",
+      params: {prev_id: keep_b.id, next_id: "", to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :no_content
+    assert_no_duplicate_positions
+    assert keep_a.reload.position > keep_b.reload.position, "Keep A must follow Keep B"
+    assert keep_a.position < hidden.reload.position,
+      "the drop must land before the filtered-out row, not on top of it"
+  end
+
+  test "a top-of-page drop interleaves with the hidden previous row" do
+    # The mirror case: blank prev_id on page 2 would compute next - 1, which is
+    # the position of the last row of page 1.
+    Task.delete_all
+    30.times { |i| Task.create!(title: "Task #{i + 1}", status: "todo") }
+    rows = Task.where(status: "todo").order(:position).to_a
+    hidden_prev = rows[19]      # last row of page 1
+    first_visible = rows[20]    # first row of page 2
+    dragged = rows[29]          # last row of page 2
+
+    post "/admin/tasks/#{dragged.id}/reposition?page=2",
+      params: {prev_id: "", next_id: first_visible.id, to_index: 0},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :no_content
+    assert_no_duplicate_positions
+    assert dragged.reload.position < first_visible.reload.position
+    assert dragged.position > hidden_prev.reload.position,
+      "the drop must land after the last row of the previous page"
+  end
+
+  # ─── A neighbour from another positioning group is drift ───────────────────
+
+  test "a neighbour in a different positioning group is drift, not an anchor" do
+    # Task is `positioned_on :position, scope: :status`, so the index lists
+    # several groups with independent, interleaved numberings. A "done" row at
+    # 500.0 says nothing about where a "todo" row belongs.
+    done = Task.create!(title: "Done", status: "done")
+    done.update_column(:position, 500.0)
+    original = @a.position
+
+    reposition(@a, prev_id: done.id, next_id: "", to_index: 5)
+
+    assert_response :ok, "an out-of-group neighbour is stale drift — reconcile, don't 204"
+    assert_equal original, @a.reload.position,
+      "with no usable anchor the record must not be flung to the end of its own group"
+  end
+
+  test "a same-group neighbour is still accepted after the group check" do
+    reposition(@c, prev_id: @a.id, next_id: @b.id, to_index: 1)
+
+    assert_response :no_content
+    assert @a.reload.position < @c.reload.position
+    assert @c.position < @b.reload.position
+  end
+
+  # ─── The list must be ordered by position for a drop to mean anything ──────
+
+  test "a drop under a descending position sort is rejected without writing" do
+    original = @c.position
+
+    post "/admin/tasks/#{@c.id}/reposition?q%5Bsort_fields%5D%5B%5D=position&q%5Bsort_directions%5D%5Bposition%5D=DESC",
+      params: {prev_id: @a.id, next_id: @b.id, to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :unprocessable_content
+    assert_includes response.body, COLLECTION_TARGET
+    assert_includes response.body, "sorted by position"
+    assert_equal original, @c.reload.position,
+      "under a reversed sort the neighbours mean the opposite of what a write would assume"
+  end
+
   # ─── Mode B: an opaque block write always reconciles ───────────────────────
 
   test "Mode B streams the collection on every drop" do
@@ -150,6 +260,29 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
     assert_equal @a.id, moves.first.prev.id
     assert_equal @b.id, moves.first.next.id
     assert_equal 1, moves.first.index
+  end
+
+  test "Mode B receives the client's neighbours verbatim, blanks included" do
+    # A block owns its own storage AND its own notion of neighbours, so neither
+    # the boundary lookup nor the group check may rewrite what it is handed.
+    moves = []
+    with_position_config(Plutonium::Positioning::Config.with_block(:position, ->(move) { moves << move })) do
+      reposition(@a, prev_id: @c.id, next_id: "", to_index: 2)
+    end
+
+    assert_response :ok
+    assert_equal @c.id, moves.first.prev.id
+    assert_nil moves.first.next, "a blank next_id must reach the block as nil"
+  end
+
+  test "Mode B index is floor-clamped, mirroring the kanban drop" do
+    moves = []
+    with_position_config(Plutonium::Positioning::Config.with_block(:position, ->(move) { moves << move })) do
+      reposition(@c, prev_id: @a.id, next_id: @b.id, to_index: -5)
+    end
+
+    assert_equal 0, moves.first.index,
+      "a negative index would address a block author's array from the END"
   end
 
   # ─── Not a reorderable resource ────────────────────────────────────────────
@@ -173,7 +306,36 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
     assert_response :not_found
   end
 
+  test "a drop while the kanban view is selected answers 404" do
+    # The board has its own endpoint (kanban_move) and renders no collection
+    # wrapper, so a reconciliation here would be a stream Turbo silently drops.
+    original = @c.position
+
+    post "/admin/tasks/#{@c.id}/reposition?view=kanban",
+      params: {prev_id: @a.id, next_id: @b.id, to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :not_found
+    assert_equal original, @c.reload.position
+  end
+
   # ─── Rejections ────────────────────────────────────────────────────────────
+
+  test "a denied index? answers 403 WITHOUT the collection" do
+    # You must be able to see a list to reorder it. reposition? alone is not
+    # enough: the reconciliation render would hand the whole listing to a user
+    # the policy has refused it to.
+    TaskPolicy.deny_index = true
+    begin
+      reposition(@c, prev_id: @a.id, next_id: @b.id, to_index: 1)
+    ensure
+      TaskPolicy.deny_index = false
+    end
+
+    assert_response :forbidden
+    assert_predicate response.body, :empty?, "a refused listing must not be streamed back"
+    refute_includes response.body, "Alpha"
+  end
 
   test "a denied reposition? answers 403 with a stream, not an HTML error page" do
     original = @c.position
@@ -268,6 +430,49 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
       "the re-rendered collection must be the filtered list the user is looking at"
   end
 
+  # ─── Nested association tables ─────────────────────────────────────────────
+  #
+  # Catalog::Variant is `positioned_on :position, scope: :product_id` and its
+  # definition declares `position_on`, so a product's variants table — rendered
+  # in a turbo-frame on the product's show page, at
+  # /admin/catalog/products/:id/nested_variants — is drag-reorderable. That
+  # nested route is the one place resource_url_for needs `parent:` to resolve
+  # the collection the drop belongs to.
+
+  test "a nested drop reorders within the parent's collection" do
+    product, variants = create_positioned_variants
+    first, second, third = variants
+
+    post nested_variant_reposition_path(product, third),
+      params: {prev_id: first.id, next_id: second.id, to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :no_content
+    assert first.reload.position < third.reload.position
+    assert third.position < second.reload.position
+  end
+
+  test "a nested reconciliation streams links for the NESTED collection" do
+    product, variants = create_positioned_variants
+    first, second, third = variants
+    # Squeeze the gap so the drop rebalances and the collection comes back.
+    first.update_column(:position, 1.0)
+    second.update_column(:position, 1.00000001)
+
+    post nested_variant_reposition_path(product, third),
+      params: {prev_id: first.id, next_id: second.id, to_index: 1},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT}
+
+    assert_response :ok
+    nested_path = "/admin/catalog/products/#{product.id}/nested_variants"
+    assert_includes response.body, %(value="#{nested_path}?page=1"),
+      "pagination must address the nested collection, not the top-level one"
+    assert_includes response.body, CGI.escape(nested_path),
+      "a row action's return_to must come back to the nested table"
+    refute_includes response.body, "/admin/catalog/variants",
+      "a link to the top-level collection would navigate the user out of the frame"
+  end
+
   private
 
   # Swaps TaskDefinition's position config for the duration of the block. The
@@ -279,5 +484,21 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
     yield
   ensure
     TaskDefinition.defined_position_config = original
+  end
+
+  def assert_no_duplicate_positions(scope = Task.where(status: "todo"))
+    duplicates = scope.pluck(:position).tally.select { |_, count| count > 1 }
+    assert_empty duplicates,
+      "a drop must never tie two rows to the same position (#{duplicates.transform_keys(&:to_f)})"
+  end
+
+  def create_positioned_variants
+    product = create_product!
+    variants = 3.times.map { |i| create_variant!(product: product, name: "Variant #{i + 1}") }
+    [product, variants]
+  end
+
+  def nested_variant_reposition_path(product, variant)
+    "/admin/catalog/products/#{product.id}/nested_variants/#{variant.id}/reposition"
   end
 end

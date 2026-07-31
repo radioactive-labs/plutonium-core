@@ -21,6 +21,15 @@ class TaskPolicy < ::ResourcePolicy
   # exercise the 403 snap-back path.
   cattr_accessor :deny_reposition, default: false
 
+  # Set deny_index = true to prove a user who may not SEE the list is never
+  # streamed it by a reposition rejection.
+  cattr_accessor :deny_index, default: false
+
+  def index?
+    return false if self.class.deny_index
+    super
+  end
+
   def reposition?
     return false if self.class.deny_reposition
     super

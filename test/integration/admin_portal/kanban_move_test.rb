@@ -298,7 +298,7 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
   #
   # A bare snap-back with no message is confusing — the user can't tell why the
   # card refused to land. The rejection response appends a dismissable flash
-  # toast to the board's #kanban-flash region alongside the source-frame update.
+  # toast to the board's shared toast region alongside the source-frame update.
 
   test "wip rejection appends a flash toast naming the WIP limit" do
     @doing_b = Task.create!(title: "Doing Two", status: "doing")
@@ -308,8 +308,8 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
     assert_response :unprocessable_content
-    assert_includes response.body, 'target="kanban-flash"',
-      "rejection must append a toast to the persistent #kanban-flash region"
+    assert_includes response.body, %(target="#{Plutonium::FLASH_REGION}"),
+      "rejection must append a toast to the persistent shared toast region"
     assert_includes response.body, "pu-toast",
       "rejection feedback should reuse the standard flash toast markup"
     assert_includes response.body, "WIP limit (3)",
@@ -321,8 +321,8 @@ class AdminPortal::KanbanMoveTest < ActionDispatch::IntegrationTest
       headers: {"Accept" => TURBO_STREAM_ACCEPT}
 
     assert_response :unprocessable_content
-    assert_includes response.body, 'target="kanban-flash"',
-      "accepts rejection must append a toast to the #kanban-flash region"
+    assert_includes response.body, %(target="#{Plutonium::FLASH_REGION}"),
+      "accepts rejection must append a toast to the shared toast region"
     assert_includes response.body, "be moved into",
       "the toast should explain the destination column refused the card"
   end
