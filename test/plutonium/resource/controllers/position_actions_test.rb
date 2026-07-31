@@ -410,7 +410,17 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
     reposition(@c, prev_id: @a.id, next_id: @b.id, to_index: 1)
 
     assert_response :ok
-    refute_includes response.body, "reposition",
+
+    # The ONE reposition path the collection is allowed to carry: the drag
+    # controller's own template, which must be the COLLECTION's member path with
+    # an __ID__ placeholder — never this request's /admin/tasks/:id/reposition.
+    assert_includes response.body,
+      "data-positioned-url-template-value=\"/admin/tasks/__ID__/reposition\""
+
+    without_template = response.body.gsub(
+      /data-positioned-url-template-value="[^"]*"/, ""
+    )
+    refute_includes without_template, "reposition",
       "no URL in the re-rendered collection may address the reposition endpoint"
   end
 

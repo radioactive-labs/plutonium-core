@@ -29428,6 +29428,148 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/positioned_controller.js
+  var DRAGGING_CLASS = "opacity-30";
+  var positioned_controller_default = class extends Controller {
+    static values = { urlTemplate: String };
+    connect() {
+      this.draggedRow = null;
+      this.onDragStart = this.#onDragStart.bind(this);
+      this.onDragOver = this.#onDragOver.bind(this);
+      this.onDrop = this.#onDrop.bind(this);
+      this.onDragEnd = this.#onDragEnd.bind(this);
+      this.onKeyDown = this.#onKeyDown.bind(this);
+      this.element.addEventListener("dragstart", this.onDragStart);
+      this.element.addEventListener("dragover", this.onDragOver);
+      this.element.addEventListener("drop", this.onDrop);
+      this.element.addEventListener("dragend", this.onDragEnd);
+      this.element.addEventListener("keydown", this.onKeyDown);
+    }
+    disconnect() {
+      this.element.removeEventListener("dragstart", this.onDragStart);
+      this.element.removeEventListener("dragover", this.onDragOver);
+      this.element.removeEventListener("drop", this.onDrop);
+      this.element.removeEventListener("dragend", this.onDragEnd);
+      this.element.removeEventListener("keydown", this.onKeyDown);
+    }
+    // ─── drag lifecycle ─────────────────────────────────────────────────────────
+    #onDragStart(event) {
+      const grip = event.target.closest("[data-positioned-grip]");
+      if (!grip) return;
+      const row = this.#rowFor(grip);
+      if (!row) return;
+      this.draggedRow = row;
+      beginDrag(event, row, {
+        draggingClass: DRAGGING_CLASS,
+        payload: row.dataset.positionedRowId
+      });
+    }
+    #onDragOver(event) {
+      if (!this.draggedRow) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    }
+    #onDrop(event) {
+      event.preventDefault();
+      if (!this.draggedRow) return;
+      const row = this.draggedRow;
+      const others = this.#rows().filter((r4) => r4 !== row);
+      const index = computeDropIndex(event.clientY, others);
+      this.#applyMove(row, others, index);
+    }
+    #onDragEnd(_event) {
+      if (!this.draggedRow) return;
+      endDrag(this.draggedRow, { draggingClass: DRAGGING_CLASS });
+      this.draggedRow = null;
+    }
+    // ─── keyboard ───────────────────────────────────────────────────────────────
+    #onKeyDown(event) {
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      const grip = event.target.closest("[data-positioned-grip]");
+      if (!grip) return;
+      const row = this.#rowFor(grip);
+      if (!row) return;
+      event.preventDefault();
+      const rows = this.#rows();
+      const from = rows.indexOf(row);
+      const to = event.key === "ArrowUp" ? from - 1 : from + 1;
+      if (to < 0 || to >= rows.length) return;
+      const others = rows.filter((r4) => r4 !== row);
+      this.#applyMove(row, others, to);
+      grip.focus();
+    }
+    // ─── the move itself ────────────────────────────────────────────────────────
+    // Moves `row` to `index` among `others` (which must already exclude `row`),
+    // optimistically, then tells the server. Shared by drop and keyboard so the
+    // two can never compute neighbours differently.
+    #applyMove(row, others, index) {
+      const before = others[index] ?? null;
+      const after = others[index - 1] ?? null;
+      if (row.nextElementSibling === before && row.previousElementSibling === after) return;
+      row.parentElement.insertBefore(row, before);
+      this.#submit(row.dataset.positionedRowId, {
+        // The ids of the row's VISIBLE neighbours. A blank one means "nothing on
+        // that side of my page" — the server treats that as a claim about the
+        // viewport, not about the positioning group, and looks the real boundary
+        // neighbour up itself (see PositionActions#resolve_position_boundaries).
+        prevId: after?.dataset.positionedRowId ?? "",
+        nextId: before?.dataset.positionedRowId ?? "",
+        toIndex: index
+      });
+    }
+    async #submit(recordId, { prevId, nextId, toIndex }) {
+      const url = this.urlTemplateValue.replace("__ID__", recordId) + window.location.search;
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Accept": "text/vnd.turbo-stream.html",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": csrfToken
+          },
+          body: new URLSearchParams({
+            prev_id: prevId,
+            next_id: nextId,
+            to_index: toIndex
+          }),
+          credentials: "same-origin"
+        });
+        if (response.status === 204) return;
+        const contentType = response.headers.get("Content-Type") || "";
+        if (contentType.includes("text/vnd.turbo-stream.html") && window.Turbo) {
+          const focusedRowId = this.#focusedRowId();
+          window.Turbo.renderStreamMessage(await response.text());
+          if (focusedRowId) this.#restoreFocus(focusedRowId);
+        } else if (!response.ok) {
+          console.error(`[positioned] reposition rejected (${response.status}); leaving the row where it was dropped`);
+        } else {
+          console.warn("[positioned] reposition returned a non-stream response (session expired?); leaving the row where it was dropped");
+        }
+      } catch (error2) {
+        console.error("[positioned] reposition request failed:", error2);
+      }
+    }
+    // ─── helpers ────────────────────────────────────────────────────────────────
+    #rows() {
+      return [...this.element.querySelectorAll("[data-positioned-row-id]")];
+    }
+    #rowFor(element) {
+      return element.closest("[data-positioned-row-id]");
+    }
+    #focusedRowId() {
+      const grip = document.activeElement?.closest?.("[data-positioned-grip]");
+      return grip ? this.#rowFor(grip)?.dataset.positionedRowId : null;
+    }
+    // Deferred a frame: renderStreamMessage resolves its render asynchronously,
+    // so the replacement rows are not in the document yet when it returns.
+    #restoreFocus(rowId) {
+      requestAnimationFrame(() => {
+        this.element.querySelector(`[data-positioned-row-id="${CSS.escape(rowId)}"] [data-positioned-grip]`)?.focus();
+      });
+    }
+  };
+
   // src/js/controllers/currency_input_controller.js
   var currency_input_controller_default = class extends Controller {
     static targets = ["prefix", "field"];
@@ -29552,6 +29694,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
     application2.register("wizard", wizard_controller_default);
     application2.register("kanban", kanban_controller_default);
+    application2.register("positioned", positioned_controller_default);
     application2.register("currency-input", currency_input_controller_default);
     application2.register("breadcrumbs", breadcrumbs_controller_default);
   }
