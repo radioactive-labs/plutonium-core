@@ -1505,7 +1505,18 @@ and the registration (near line 82):
 
 - [ ] **Step 5: Wire the controller onto the table**
 
-The table wrapper needs `data-controller="positioned"` and `data-positioned-url-value` (the member reposition path with `__ID__`), each row needs `data-positioned-target="row"` and `data-positioned-row-id`, and there must be a `#position-flash` region for reconciliation toasts. Add these in `lib/plutonium/ui/table/resource.rb` where the table wrapper is built — mirror how the kanban board supplies `moveUrlTemplateValue` (`Kanban::Resource#kanban_move_url_template`).
+The table wrapper needs `data-controller="positioned"` and `data-positioned-url-value` (the member reposition path with `__ID__`); each row needs `data-positioned-target="row"` and `data-positioned-row-id`. Add these in `lib/plutonium/ui/table/resource.rb` where the table wrapper is built — mirror how the kanban board supplies `moveUrlTemplateValue` (`Kanban::Resource#kanban_move_url_template`).
+
+**The server contract Task 5 actually shipped** — this supersedes the ids sketched earlier in this plan, which were guesses made before the endpoint existed:
+
+| Thing | Value | Source |
+|---|---|---|
+| Turbo-stream target | `#pu-collection-<model_name.plural>` (e.g. `#pu-collection-tasks`) | `Plutonium::UI::Page::Index.collection_dom_id` (`ui/page/index.rb:33`) |
+| Toast region | `#pu-flash` | `Plutonium::FLASH_REGION` (`lib/plutonium.rb:46`) — lives in the layout, deliberately OUTSIDE the collection wrapper so a stream replacing the collection cannot destroy it |
+
+The wrapper `div` already exists (`ui/page/index.rb:81`) and wraps the rendered table **or** grid — so Task 8 needs no separate target.
+
+**The client MUST append the collection's current query string to the POST URL** (i.e. `window.location.search`). This is load-bearing, not cosmetic: the endpoint re-renders through the index's own pipeline via `setup_index_action!`, so search / filters / scope / sort / page all arrive in `params`. Without it, a drop on page 3 of a filtered list reconciles as page 1 of the unfiltered list.
 
 - [ ] **Step 6: Verify the nested-table URL**
 
@@ -1556,7 +1567,9 @@ In `lib/plutonium/ui/grid/card.rb`, render `Plutonium::UI::Table::Components::Dr
 
 - [ ] **Step 2: Wire the grid wrapper**
 
-In `lib/plutonium/ui/grid/resource.rb`, add the same `data-controller="positioned"`, `data-positioned-url-value`, per-card `data-positioned-target="row"` / `data-positioned-row-id`, and `#position-flash` region as the table (Task 7 Step 5).
+In `lib/plutonium/ui/grid/resource.rb`, add the same `data-controller="positioned"`, `data-positioned-url-value`, and per-card `data-positioned-target="row"` / `data-positioned-row-id` as the table (Task 7 Step 5).
+
+No separate turbo-stream target is needed: `#pu-collection-<plural>` (`ui/page/index.rb:81`) already wraps the rendered grid as well as the table, and `#pu-flash` is layout-level. The same query-string requirement applies.
 
 - [ ] **Step 3: Select the horizontal index computation**
 
