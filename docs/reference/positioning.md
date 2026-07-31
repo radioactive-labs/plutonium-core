@@ -13,6 +13,7 @@ The same machinery drives the [kanban board](/reference/kanban/), which is why a
 - **The model owns storage; the definition owns the UI.** `positioned_on` (model) says *how positions are stored*. `position_on` (definition) says *this list is orderable*. Never restate the column or the scope in the definition.
 - **Dragging is offered only while the collection is sorted ascending by the position attribute.** Under any other sort the grip renders as a link back to that sort, and the server rejects the drop outright.
 - **`reposition?` on the policy gates the drop.** It defaults to `update?`. Override it to let someone reorder without granting full edit access — or to forbid reordering while still allowing edits.
+- **Prefer [Mode A](#mode-a-delegate) — the framework-owned write.** A block ([Mode B](#mode-b)) is a supported escape hatch for models already ordered by a positioning gem, but it hands you semantics Mode A handles for you. Already on `acts_as_list`? [Migrating](#migrating-off-a-positioning-gem) is a column change, two lines on the model, and a backfill.
 
 ## Two verbs, one feature {#two-verbs-one-feature}
 
@@ -147,11 +148,13 @@ The arithmetic, the `EPSILON = 1e-6` rebalance threshold, and the pure `Plutoniu
 ### Four forms
 
 ```ruby
-position_on                       # Mode A — follow the model's column
+position_on                       # Mode A — follow the model's column  ← use this
 position_on :sort_order           # Mode A — must MATCH the model's column
-position_on(:rank) { |move| … }   # Mode B — another gem owns the write
+position_on(:rank) { |move| … }   # Mode B — another gem owns the write (escape hatch)
 position_on false                 # Mode C — ordering off
 ```
+
+[Mode A](#mode-a-delegate) is the one to reach for: the framework owns the write, and the bare form cannot disagree with the model. [Mode B](#mode-b) exists for models already ordered by a positioning gem — it is supported and tested, but it hands you semantics Mode A handles, so prefer [migrating off the gem](#migrating-off-a-positioning-gem) where you can.
 
 ### What `position_on` expands to {#what-position-on-expands-to}
 
@@ -201,6 +204,18 @@ That last one is why the bare form is the recommended one: it cannot disagree wi
 
 ### Mode B — bring your own positioning gem {#mode-b}
 
+::: tip Reach for Mode A first
+Mode A is one word in the definition. The *correct* `acts_as_list` block further down this page is fifteen lines of rank arithmetic, and writing it means already knowing three things neither library's README tells you:
+
+- **`move.index` is page-relative**, while a positioning gem's `insert_at` addresses the whole group;
+- **removing a record shifts its neighbours' ranks by one**, in a direction that depends on whether the record started above or below them;
+- **a blank `move.prev` means "nothing above me *on screen*"**, not "top of the list".
+
+These docs got two of those three wrong for a while — in the very section written to explain the first. That is the honest case for preferring Mode A. Not that Mode B is broken: it is supported, it is [tested against the real gem](#why-move-index-cannot-be-the-anchor), and the recipe below is correct. But its correctness lives in arithmetic you own and have to keep owning, and Mode A's does not.
+
+Choosing today? Choose Mode A. Already on a positioning gem? [Migrating](#migrating-off-a-positioning-gem) is a column change, two lines on the model, and a backfill.
+:::
+
 Give `position_on` a block and Plutonium stops writing positions. It still **orders** the collection by the attribute you name, still renders the grip, still routes and authorizes the drop — but the block persists the new value.
 
 The block receives a single `Plutonium::Positioning::Move`:
@@ -215,7 +230,61 @@ The block receives a single `Plutonium::Positioning::Move`:
 
 It is called with `call`, not `instance_exec` — `self` inside the block is wherever you wrote it.
 
-#### Worked example: `acts_as_list`
+#### What the framework stops doing {#mode-b-handover}
+
+A block is an opaque write. Plutonium cannot know what it touched, or against what notion of "neighbour" it decided, so three things Mode A does are simply not done for you:
+
+| | Mode A | Mode B |
+|---|---|---|
+| **Hidden boundary neighbours** | resolved server-side before the write, so a drop at the edge of a page anchors to the real row the client couldn't see | not resolved — `resolve_position_boundaries` returns early unless the config delegates. The block gets the client's viewport verbatim, `nil` and all |
+| **Drop under a foreign sort** | rejected `422` before any write | not checked server-side. Only the client-side gate applies; the block owns its own notion of neighbours |
+| **Response** | `204` when nothing else moved | always `200` + a turbo-stream of the collection |
+
+That last row is not a missing optimisation. Gems in this space routinely renumber the entire group on every move — `acts_as_list` does exactly that — so the client's optimistic DOM is stale by definition. A repaint per drop is the only way the two are guaranteed to agree.
+
+The first two rows are the ones to weigh before choosing Mode B: they are the semantics you are taking on, and the worked example below is what taking them on looks like.
+
+#### Migrating off a positioning gem {#migrating-off-a-positioning-gem}
+
+If nothing external depends on the gem's contiguous integer ranks, moving to Mode A is a column change, two lines on the model, and a backfill.
+
+**1. Change the column.** `acts_as_list` stores contiguous integers; Plutonium stores fractional decimals, and `t.position` emits `decimal(16, 8)` for exactly that reason — a whole-number column would round every midpoint straight back onto a neighbour. `t.position` *adds* a column, so an existing one wants `change_column`:
+
+```ruby
+class ChangeTaskPositionToDecimal < ActiveRecord::Migration[8.0]
+  def change
+    change_column :tasks, :position, :decimal, precision: 16, scale: 8
+  end
+end
+```
+
+**2. Swap the macro on the model.** Note that `scope:` takes a bare Symbol here — the [Array-form trap](#worked-example-acts-as-list) goes away with the gem:
+
+```ruby
+class Task < ApplicationRecord
+  include Plutonium::Resource::Record
+
+  acts_as_list scope: [:status]              # [!code --]
+  include Plutonium::Positioning::Model      # [!code ++]
+  positioned_on :position, scope: :status    # [!code ++]
+end
+```
+
+**3. Number the existing rows.** `backfill_positions!(order:)` walks each scope group and writes `1.0, 2.0, 3.0, …` in `order` order. Pass `order: :position` to keep the ordering the gem already produced:
+
+```ruby
+Task.backfill_positions!(order: :position)
+```
+
+Then drop the block from the definition — a bare `position_on` is the whole of Mode A.
+
+::: warning `backfill_positions!` is a one-shot
+It loads the table, groups it in Ruby, and writes every row with `update_column` — no callbacks, no validations, no `updated_at`. That is what you want for a backfill and not what you want in a request. Run it from a migration or a `rails runner`, once.
+:::
+
+#### Worked example: staying on `acts_as_list` {#worked-example-acts-as-list}
+
+For when the gem is not yours to remove — another codepath calls `move_higher`, a report reads the integer ranks, or the migration simply isn't due yet. This block is correct and stays correct; it is just longer than the one word above.
 
 ::: danger Anchor off the neighbours, never off `move.index`
 `insert_at(move.index + 1)` is the obvious block to write and it is **wrong on any list that paginates or filters** — which, since Plutonium paginates every index at 20 rows by default, means wrong on any list with 21 rows in it. The numbers are in [Why `move.index` cannot be the anchor](#why-move-index-cannot-be-the-anchor). Use the block below.
@@ -280,11 +349,7 @@ These are measured, not reasoned — `test/plutonium/resource/controllers/positi
 | 10 rows, filter shows ranks 1 and 10 | drag rank 1 below the filtered row at rank 10 (`to_index: 1`) | `insert_at(2)` → the row moves **one slot**, staying at the top | rank **10**, below the hidden rows |
 | 10 rows, filter shows ranks 5 and 10 | drag rank 10 above the filtered row at rank 5 (`prev_id` blank, `to_index: 0`) | `insert_at(1)` → **rank 1**, above four rows the filter hid | rank **5**, immediately above the row it was dropped on |
 
-Mode A has none of this to think about: it resolves hidden boundary neighbours server-side before the write (see [Nested resources & scope groups](#nested-resources-scope-groups)). Mode B is an escape hatch, and the price of the hatch is owning the semantics.
-
-::: tip Mode B always streams the collection back
-A Mode B drop **never** answers `204`. The block is an opaque write — Plutonium cannot know what it touched, and gems in this space routinely renumber the entire group (`acts_as_list` does exactly that). So every Mode B drop returns the re-rendered collection, and the client replaces its optimistic DOM with the server's truth. It is a repaint per drop, and it is the only way the two can be guaranteed to agree.
-:::
+Mode A has none of this to think about: it resolves hidden boundary neighbours server-side before the write (see [Nested resources & scope groups](#nested-resources-scope-groups)). Mode B is a real escape hatch and the block above is a correct one — the price of the hatch is simply that the semantics are yours. If nothing outside the gem depends on those integer ranks, [the migration](#migrating-off-a-positioning-gem) hands them back.
 
 ### Mode C — disabled
 

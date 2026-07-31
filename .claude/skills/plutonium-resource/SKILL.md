@@ -1018,12 +1018,33 @@ Task.backfill_positions!(order: :created_at)
 |---|---|---|
 | `position_on` | A (delegate) | Follows the model's `positioning_column`. **Prefer this** — it cannot disagree with the model. |
 | `position_on :sort_order` | A | Must **match** the model's column, else `ArgumentError` at class-load |
-| `position_on(:rank) { \|move\| … }` | B (block) | Another gem owns the write (`acts_as_list`). No model concern needed. |
+| `position_on(:rank) { \|move\| … }` | B (block) | Escape hatch — another gem owns the write (`acts_as_list`). No model concern needed. **Prefer migrating to A.** |
 | `position_on false` | C (disabled) | No ordering, no route — the endpoint 404s |
 
-Mode B block receives a `Plutonium::Positioning::Move`: `record`, `prev`, `next`, `index` (0-based, **relative to the visible page**), `column` (kanban only, `nil` on tables/grids). Mode B gets the client's viewport **verbatim** — unlike Mode A, the framework does not resolve the neighbours pagination or a filter hid. It always streams the collection back — the write is opaque, and gems like `acts_as_list` renumber the whole group.
+**Default to Mode A.** It is one word in the definition. A *correct* Mode B block is ~15 lines of rank arithmetic, and getting it right requires knowing three non-obvious things: `move.index` is page-relative; removing a record shifts its neighbours' ranks by one, in a direction that depends on where it started; and a blank `move.prev` means "nothing above me *on screen*", not "top of the list". These docs got two of the three wrong until they were tested. Mode B is legitimate and tested — it just costs you semantics Mode A handles.
 
-🚨 **Anchor off `move.prev` / `move.next`, never off `move.index`.** `move.index` counts the visible page; a positioning gem's `insert_at` addresses the whole group. `insert_at(move.index + 1)` is wrong on any list past 20 rows (Plutonium's default page size) — measured: dragging rank 25 into the middle of page 2 lands it at **rank 2**. Same for a filtered list.
+### Mode B — what the framework stops doing
+
+Mode B block receives a `Plutonium::Positioning::Move`: `record`, `prev`, `next`, `index` (0-based, **relative to the visible page**), `column` (kanban only, `nil` on tables/grids). Called with `call`, not `instance_exec`.
+
+Because the write is opaque, three Mode A behaviours are **not** provided:
+
+- **No hidden boundary resolution** — `resolve_position_boundaries` returns early unless the config delegates, so the block gets the client's viewport verbatim, `nil`s and all.
+- **No server-side foreign-sort rejection** — Mode A rejects a drop under a foreign sort with 422 before writing; Mode B relies on the client-side gate only.
+- **Always a full repaint** — never 204. Gems like `acts_as_list` renumber the whole group on every move, so the client's optimistic DOM is stale by definition.
+
+### Migrating off `acts_as_list` to Mode A
+
+1. **Change the column** — `acts_as_list` uses contiguous integers; Plutonium uses fractional decimals (`t.position` emits `decimal(16,8)`; an integer column would round every midpoint onto a neighbour). `t.position` *adds* a column, so an existing one needs `change_column :tasks, :position, :decimal, precision: 16, scale: 8`.
+2. **Swap the macro** — drop `acts_as_list scope: [:status]`, add `include Plutonium::Positioning::Model` + `positioned_on :position, scope: :status` (bare Symbol; the Array trap is gem-specific).
+3. **Backfill** — `Task.backfill_positions!(order: :position)` numbers each scope group `1.0, 2.0, …` in the gem's existing order. `update_column`, no callbacks/validations/`updated_at` — run it once from a migration or `rails runner`.
+4. Drop the block from the definition; a bare `position_on` is the whole of Mode A.
+
+### Staying on `acts_as_list` (the harder road)
+
+For when the gem is not yours to remove. This recipe is correct and tested against the real gem (`test/plutonium/resource/controllers/position_actions_acts_as_list_test.rb`).
+
+🚨 **Anchor off `move.prev` / `move.next`, never off `move.index`.** `move.index` counts the visible page; a positioning gem's `insert_at` addresses the whole group. `insert_at(move.index + 1)` is wrong on any list past 20 rows (Plutonium's default page size) — measured: dragging rank 25 into the middle of page 2 lands it at **rank 2**, and a page-2 top drop lands at **rank 1**. Same failures on a filtered list.
 
 ```ruby
 # Keeping acts_as_list. NOTE scope: [:status] — a bare Symbol scope is run
