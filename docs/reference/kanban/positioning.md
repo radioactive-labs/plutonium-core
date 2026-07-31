@@ -2,13 +2,13 @@
 
 Plutonium uses **decimal fractional positioning** for kanban card ordering. A drop writes a single decimal position (the midpoint between its neighbors), so the common case touches exactly one row — no bulk renumbering. The one exception is rare **rebalancing**: when the same slot has been subdivided ~20 times and the gap between two neighbors shrinks below `1e-6`, Plutonium renumbers that one scope group back to clean integers before inserting (see [Gap exhaustion](#rebalancing)).
 
-## `Plutonium::Positioning` concern
+## `Plutonium::Positioning::Model` concern
 
 Include this concern in any model you want to position:
 
 ```ruby
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   positioned_on :position, scope: :status
 end
@@ -113,7 +113,7 @@ kanban do
 end
 ```
 
-On drop, Plutonium calls `record.reposition!(prev_record:, next_record:)`. Requires the model to include `Plutonium::Positioning` and call `positioned_on`.
+On drop, Plutonium calls `record.reposition!(prev_record:, next_record:)`. Requires the model to include `Plutonium::Positioning::Model` and call `positioned_on`.
 
 ### Mode B — BYO block
 
