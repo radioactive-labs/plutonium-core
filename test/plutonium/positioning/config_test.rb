@@ -20,9 +20,17 @@ module Plutonium
       end
 
       # config.rb must stay loadable on its own — see the comment at its top.
+      #
+      # with_unbundled_env is load-bearing, not tidiness: `bundle exec` exports
+      # RUBYOPT=-rbundler/setup, which the backtick subshell inherits, putting
+      # every Gemfile gem's lib on the child's $LOAD_PATH. Under that, the -I
+      # below is decorative and the test would pass even if config.rb grew a
+      # dependency on ActiveSupport — asserting nothing.
       def test_config_loads_standalone_without_the_model_concern
-        lib = File.expand_path("../../../../lib", __dir__)
-        out = `ruby -I#{lib} -e 'require "plutonium/positioning/config"; print defined?(Plutonium::Positioning::Model).inspect' 2>&1`
+        lib = File.expand_path("../../../lib", __dir__)
+        out = Bundler.with_unbundled_env do
+          `ruby -I#{lib} -e 'require "plutonium/positioning/config"; print defined?(Plutonium::Positioning::Model).inspect' 2>&1`
+        end
         assert_predicate $?, :success?
         assert_equal "nil", out
       end
