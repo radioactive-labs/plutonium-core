@@ -81,6 +81,45 @@ class AdminPortal::WizardAnonymousTest < ActionDispatch::IntegrationTest
       "completion must clear the guest run's session token"
   end
 
+  # --- cancel on the PUBLIC mount ---------------------------------------------
+
+  # `register_wizard … public: true` draws its own DELETE route onto the MAIN app's
+  # route set, dispatching to the synthesized `PublicWizardsController` rather than
+  # the portal controller. A guest run carries no URL token (its id lives in the
+  # session), so the cancel path is the bare mount.
+  test "an anonymous run can be cancelled on its public mount" do
+    post "#{signup}/account", params: {wizard: {name: "Guest Co"}, _direction: "next"}
+    assert_equal 1, Plutonium::Wizard::Session.status_in_progress.count
+
+    delete signup
+    assert_response :see_other
+    assert_equal 0, Plutonium::Wizard::Session.count, "cancel destroys the guest run"
+
+    # The guest's session token goes with it, so the next visit starts clean rather
+    # than resuming a row that no longer exists.
+    bucket = session[Plutonium::Wizard::Driving::SESSION_TOKENS_KEY]
+    assert bucket.nil? || !bucket.key?(guest_session_key),
+      "cancel must clear the guest run's session token"
+
+    follow_redirect!
+    follow_redirect! if response.redirect?
+    assert_response :success
+    refute_includes response.body, %(value="Guest Co"), "the cancelled run's data is gone"
+  end
+
+  # Cancel must not reach across guests: the run is identified by the session
+  # token, so a different browser session cancels nothing.
+  test "cancelling from another guest session leaves the run standing" do
+    post "#{signup}/account", params: {wizard: {name: "Guest Co"}, _direction: "next"}
+    assert_equal 1, Plutonium::Wizard::Session.status_in_progress.count
+
+    reset! # a fresh browser session → a different guest
+    delete signup
+
+    assert_equal 1, Plutonium::Wizard::Session.status_in_progress.count,
+      "another guest's session must not be able to discard this run"
+  end
+
   # --- auth required by default -----------------------------------------------
 
   test "a non-anonymous wizard with no current_user rejects entry" do

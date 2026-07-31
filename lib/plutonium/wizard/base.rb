@@ -205,7 +205,12 @@ module Plutonium
       def failed(errors = nil, attribute = :base)
         case errors
         when Hash
-          errors.each { |attr, error| self.errors.add(attr, error) }
+          # A per-attribute value may be a single message or a list of them
+          # (`{name: ["is required", "is too short"]}`). `Array.wrap`, not `Array()`
+          # — the latter would splat a Hash value into [key, value] pairs.
+          errors.each do |attr, error|
+            Array.wrap(error).each { |err| self.errors.add(attr, err) }
+          end
         else
           Array(errors).each { |error| self.errors.add(attribute, error) }
         end
