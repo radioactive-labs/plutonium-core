@@ -91,8 +91,51 @@ module Plutonium
           }
         end
 
+        # The resource's positioning strategy, or nil when it declares none /
+        # declares `position_on false`. Everything else here hangs off this.
+        def position_config
+          return @position_config if defined?(@position_config)
+
+          config = resource_definition.defined_position_config
+          @position_config = (config && !config.disabled?) ? config : nil
+        end
+
+        # Whether a drop can be honoured RIGHT NOW.
+        #
+        # Dropping "between the two rows either side of me" only describes a
+        # position when the visual order IS the stored order. Under a title sort
+        # the neighbours say nothing; under a DESCENDING position sort they say
+        # the opposite of what the write would assume. The server rejects both
+        # (422, no write) — this is the client half of that same rule, and it
+        # deliberately reuses the server's own predicate rather than restating it.
+        def position_drag_enabled?
+          return false unless position_config
+
+          current_query_object.sorted_ascending_only_by?(position_config.attribute)
+        end
+
+        # The URL that puts the collection back into ascending position order —
+        # what the disabled grip links to. Built off the registered sort (see
+        # Definition::Positioning#position_on), which flips to ASC from a
+        # descending position sort and starts at ASC from any other sort.
+        def position_sort_url
+          current_query_object.sort_params_for(position_config.attribute)[:url]
+        end
+
+        # The member reposition path with an __ID__ placeholder for the client to
+        # substitute. Mirrors Kanban::Resource#kanban_move_url_template, but off
+        # `current_page_path` rather than `request.path`: after a rebalance the
+        # endpoint re-renders this very table from a POST to
+        # /things/5/reposition, and a template derived from THAT request would
+        # send every subsequent drop to a nested path that does not exist.
+        def position_url_template
+          "#{current_page_path.delete_suffix("/")}/__ID__/reposition"
+        end
+
         def render_table
-          render Plutonium::UI::Table::Base.new(collection) do |table|
+          table_options = position_drag_enabled? ? {positioned_url_template: position_url_template} : {}
+
+          render Plutonium::UI::Table::Base.new(collection, **table_options) do |table|
             # Selection column only renders when bulk actions exist —
             # the server already knows, so no JS toggle is needed.
             # Use :_selection as column key to avoid conflicts with field columns;
@@ -102,6 +145,11 @@ module Plutonium
                 bulk_actions:,
                 policy_resolver: ->(record) { policy_for(record:) }
             end
+
+            # The grip rides in the FIRST column that actually renders — tracked
+            # rather than indexed off @resource_fields, because a `condition:`
+            # can skip the nominal first column and the grip must not go with it.
+            grip_pending = !position_config.nil?
 
             @resource_fields.each do |name|
               field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
@@ -146,6 +194,11 @@ module Plutonium
                 }
               end
 
+              if grip_pending
+                grip_pending = false
+                tag_block = wrap_with_drag_handle(tag_block)
+              end
+
               # For table columns, only extract column-level options (label and align)
               # Field-level options like description and placeholder don't make sense in table cells
               field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
@@ -183,6 +236,30 @@ module Plutonium
               end
             end
           end
+        end
+
+        # Returns a column block that renders `inner`'s cell with the grip in
+        # front of it. Wraps rather than replaces, so a formatter, a custom
+        # column block and an inferred component all keep rendering as they did.
+        #
+        # `sort_url` is resolved ONCE, outside the per-row lambda: it depends on
+        # the collection's sort, not on the record, and building it per row would
+        # re-derive the same URL for every row of every page.
+        #
+        # The per-record `reposition?` check, by contrast, HAS to run per row —
+        # it is what keeps a viewer who may not reorder a given record from being
+        # offered a grip that can only ever answer 403. Rows that fail it render
+        # exactly as they did before, unwrapped.
+        def wrap_with_drag_handle(inner)
+          sort_url = position_drag_enabled? ? nil : position_sort_url
+
+          ->(wrapped_object, key) {
+            record = wrapped_object.unwrapped
+            cell = inner.call(wrapped_object, key)
+            next cell unless policy_for(record:).allowed_to?(:reposition?)
+
+            Plutonium::UI::Table::Components::DragHandle::Cell.new(cell, sort_url: sort_url)
+          }
         end
 
         def bulk_actions
