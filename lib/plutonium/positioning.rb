@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "plutonium/positioning/config"
+
 module Plutonium
   # Standalone decimal/fractional ordering. Kanban-independent.
   #
