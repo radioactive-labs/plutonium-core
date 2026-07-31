@@ -20,7 +20,8 @@
 
 | File | Responsibility |
 |---|---|
-| `lib/plutonium/positioning/config.rb` | The three-mode strategy machine + `Move` value object. Framework-wide. |
+| `lib/plutonium/positioning/config.rb` | The three-mode strategy machine + `Move` value object. Framework-wide, dependency-free. |
+| `lib/plutonium/positioning/model.rb` | The ActiveRecord concern, moved out of the namespace so its constants stop leaking into user models. |
 | `lib/plutonium/definition/positioning.rb` | The `position_on` definition DSL and its expansion. |
 | `lib/plutonium/resource/controllers/position_actions.rb` | The `reposition` endpoint. |
 | `lib/plutonium/ui/table/components/drag_handle.rb` | The grip Phlex component (table + grid). |
@@ -36,7 +37,8 @@
 
 | File | Change |
 |---|---|
-| `lib/plutonium/positioning.rb` | `reposition!` returns a result carrying `rebalanced?`; requires the new config file. |
+| `lib/plutonium/positioning.rb` | Becomes a pure namespace (`EPSILON`, `.position_between`, `.gap_exhausted?`, `MigrationHelpers`); requires config + model. |
+| `test/dummy/app/models/task.rb`, `kitchen_sink.rb`, `test/plutonium/positioning_test.rb`, `test/positioning_postgres_check.rb`, `docs/reference/kanban/{positioning,dsl}.md`, `docs/guides/kanban.md` | `include Plutonium::Positioning` → `::Model`. |
 | `lib/plutonium/kanban/positioning.rb` | Becomes a thin alias to the promoted constants. |
 | `lib/plutonium/action/base.rb:26,84,145` | `kanban_drop` → `hidden`. |
 | `lib/plutonium/definition/index_views.rb:148` | Passes `hidden: true`. |
@@ -138,13 +140,7 @@ Create `lib/plutonium/positioning/config.rb` containing the `Config` class and `
 module Plutonium
   module Positioning
     # Value object passed to Mode B blocks, carrying the full drop context.
-    # `column` is the kanban column key on a board, and nil on every other
-    # surface (index tables, nested tables, grids) — those have no columns.
-    Move = Data.define(:record, :column, :prev, :next, :index) do
-      def initialize(record:, prev:, next:, index:, column: nil)
-        super
-      end
-    end
+    Move = Data.define(:record, :column, :prev, :next, :index)
 
     # ... Config class verbatim from lib/plutonium/kanban/positioning.rb,
     # including .default / .attribute / .with_block / .disabled,
@@ -264,7 +260,7 @@ def test_block_mode_always_reports_rebalanced
   # so it always forces reconciliation. See spec §3.1.
   config = Plutonium::Positioning::Config.with_block(:position, ->(_move) { :ignored })
   result = config.reposition!(
-    record: Object.new, column: nil, prev_record: nil, next_record: nil, index: 0
+    record: Object.new, prev_record: nil, next_record: nil, index: 0
   )
   assert result
 end
@@ -272,7 +268,7 @@ end
 def test_disabled_mode_never_reports_rebalanced
   config = Plutonium::Positioning::Config.disabled
   result = config.reposition!(
-    record: Object.new, column: nil, prev_record: nil, next_record: nil, index: 0
+    record: Object.new, prev_record: nil, next_record: nil, index: 0
   )
   refute result
 end
@@ -693,11 +689,11 @@ module Plutonium
         # Mode A calls record.reposition!, which only exists on models that
         # include the concern. Fail at class-load time rather than on first drag.
         def self.validate_model_is_positioned!(attribute)
-          return if model_class.include?(Plutonium::Positioning)
+          return if model_class.include?(Plutonium::Positioning::Model)
 
           raise ArgumentError,
             "#{name || "definition"}: `position_on #{attribute.inspect}` requires " \
-            "#{model_class} to `include Plutonium::Positioning` and declare " \
+            "#{model_class} to `include Plutonium::Positioning::Model` and declare " \
             "`positioned_on`. If another gem owns positioning for this model, " \
             "use the block form instead: position_on(#{attribute.inspect}) { |move| … }"
         end
@@ -981,7 +977,7 @@ module Plutonium
 
           rebalanced = config.reposition!(
             record:,
-            column: nil,
+
             prev_record:,
             next_record:,
             index: params[:to_index].to_i
@@ -1689,6 +1685,7 @@ git commit -m "test(positioning): system tests for drag and keyboard reorder"
 - [ ] The implicit `default_sort` override is called out prominently
 - [ ] The deliberate table-vs-kanban affordance difference is explained
 - [ ] Hidden actions documented, including that they are NOT an authorization boundary
+- [ ] **The `include Plutonium::Positioning` → `::Model` breaking change is called out** with a one-line upgrade note, and the reason (constant leakage into user models — spec §2.0)
 - [ ] `yarn docs:build` succeeds with no broken links
 
 **Verify:** `yarn docs:build` → completes, no broken links
@@ -1697,7 +1694,7 @@ git commit -m "test(positioning): system tests for drag and keyboard reorder"
 
 - [ ] **Step 1: Write `docs/reference/positioning.md`**
 
-Cover, in order: the model layer (`include Plutonium::Positioning`, `positioned_on`, the `t.position` migration helper); the definition layer (`position_on` and its four forms); what `position_on` expands to, with the `default_sort` override called out in a warning callout; when dragging is enabled and how the disabled grip restores position order; the nested-scope contract; and a worked Mode B example:
+Cover, in order: the model layer (`include Plutonium::Positioning::Model`, `positioned_on`, the `t.position` migration helper); the definition layer (`position_on` and its four forms); what `position_on` expands to, with the `default_sort` override called out in a warning callout; when dragging is enabled and how the disabled grip restores position order; the nested-scope contract; and a worked Mode B example:
 
 ```ruby
 # Using acts_as_list instead of Plutonium::Positioning
