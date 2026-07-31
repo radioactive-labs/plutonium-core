@@ -35,6 +35,21 @@ module Plutonium
       # Resolves the board's effective show_in, falling back to the definition's
       # `show_in` when the board doesn't override it. Pass the resource definition.
       def show_in_for(definition) = @show_in || definition.show_in
+
+      # The board's positioning strategy: its own `position_on` if the block
+      # declared one, else the definition's, else the historic default.
+      #
+      # Resolved LAZILY, not at build time: `kanban` eagerly compiles the board
+      # at class-load (definition/index_views.rb), so a board built before a
+      # later `position_on` line would silently miss it — making the declaration
+      # order-dependent in the class body.
+      #
+      # `definition` may be nil for callers with no definition in scope (see
+      # Grouping.call); those get the board's own config or the default.
+      def position_config_for(definition)
+        @position_config || definition&.defined_position_config ||
+          Plutonium::Positioning::Config.default
+      end
     end
   end
 end

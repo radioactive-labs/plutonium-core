@@ -136,7 +136,7 @@ module Plutonium
           # neighbor computation and WIP count are correct in all cases
           # (cross-column, same-column reorder, record already in destination).
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, to.scope)
-          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
+          dest_cards = board.position_config_for(current_definition).order(dest_scoped).where.not(id: record.id).to_a
           # to_index is client-supplied. Clamp to [0, dest_cards.size] so a negative
           # value can't wrap via Ruby's negative array indexing (dest_cards[-1] would
           # silently anchor the drop to the LAST card) and an over-large value simply
@@ -259,7 +259,7 @@ module Plutonium
             # Mode A delegates to record.reposition! (calls update! for position).
             # Mode B calls the user-supplied block.
             # Mode C is a no-op (no ordering; position unchanged).
-            board.position_config.reposition!(
+            board.position_config_for(current_definition).reposition!(
               record:,
               column: to.key,
               prev_record:,
@@ -597,7 +597,7 @@ module Plutonium
           return "".html_safe unless column
 
           scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
-          ordered = board.position_config.order(scoped)
+          ordered = board.position_config_for(current_definition).order(scoped)
 
           if board.per_column
             total = ordered.count
@@ -748,7 +748,7 @@ module Plutonium
           case on.to_sym
           when :visible
             board = current_kanban_board
-            ordered = board.position_config.order(scoped)
+            ordered = board.position_config_for(current_definition).order(scoped)
             limited = board.per_column ? ordered.limit(board.per_column) : ordered
             limited.pluck(resource_class.primary_key)
           else # :all and any unknown value
@@ -799,8 +799,8 @@ module Plutonium
           # nil), via the board's position_config — the same path a drag-drop uses.
           board = current_kanban_board
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
-          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
-          board.position_config.reposition!(
+          dest_cards = board.position_config_for(current_definition).order(dest_scoped).where.not(id: record.id).to_a
+          board.position_config_for(current_definition).reposition!(
             record:,
             column: column.key,
             prev_record: dest_cards.last,

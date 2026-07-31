@@ -31,6 +31,9 @@ module Plutonium
       include Actions
       include Wizards
       include Sorting
+      # After Actions and Sorting: `position_on` expands into `action`,
+      # `sort` and `default_sort`, so those must already be defined.
+      include Positioning
       include Scoping
       include Search
       include NestedInputs
@@ -144,6 +147,37 @@ module Plutonium
         end
         self.show_in_config = value
       end
+
+      # The model this definition describes — the inverse of the
+      # `"#{resource_class}Definition"` lookup controllers do
+      # (Plutonium::Resource::Controller#resource_definition).
+      #
+      # A definition is frequently namespaced under a package or portal that
+      # the model is NOT (`AdminPortal::Blogging::TutorialDefinition` describes
+      # `Blogging::Tutorial`), so leading namespace segments are dropped one at
+      # a time until a constant resolves. Override in a definition whose name
+      # doesn't follow the convention.
+      #
+      # Resolved lazily and memoized: it constantizes the model, and a
+      # definition class body must stay loadable without forcing that.
+      def self.model_class
+        @model_class ||= infer_model_class
+      end
+
+      def self.infer_model_class
+        raise NameError, "cannot infer a model class for an anonymous definition; define `model_class` on it" if name.nil?
+
+        segments = name.delete_suffix("Definition").split("::")
+        segments.size.times do |i|
+          klass = segments[i..].join("::").safe_constantize
+          return klass if klass
+        end
+
+        raise NameError, "could not infer a model class from #{name}; define `model_class` on it"
+      end
+      private_class_method :infer_model_class
+
+      def model_class = self.class.model_class
 
       def initialize
         super
