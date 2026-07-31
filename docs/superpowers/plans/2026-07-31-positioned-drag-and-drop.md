@@ -207,7 +207,7 @@ git commit -m "refactor(positioning): promote Config out of the kanban namespace
 **Goal:** The controller can tell a clean drop from one that renumbered the group, without re-deriving it.
 
 **Files:**
-- Modify: `lib/plutonium/positioning.rb:84-94` (`reposition!`)
+- Modify: `lib/plutonium/positioning/model.rb:64-77` (`reposition!` — moved here in Task 1)
 - Modify: `lib/plutonium/positioning/config.rb` (`#reposition!` return value)
 - Test: `test/plutonium/positioning_test.rb`
 - Test: `test/plutonium/positioning/config_test.rb`
@@ -281,7 +281,7 @@ Expected: FAIL — `NoMethodError: undefined method 'rebalanced?'`
 
 - [ ] **Step 3: Return a result from `reposition!`**
 
-In `lib/plutonium/positioning.rb`, add the result type inside `module Positioning`:
+In `lib/plutonium/positioning.rb`, add the result type to the namespace (alongside `EPSILON` and the module functions — NOT inside `Model`, so it does not enter user models' constant lookup):
 
 ```ruby
     # Outcome of a #reposition! call. `rebalanced?` is true when the gap
@@ -293,7 +293,7 @@ In `lib/plutonium/positioning.rb`, add the result type inside `module Positionin
     end
 ```
 
-Then rewrite `reposition!` (currently lines 84-94) to track and return it:
+Then rewrite `reposition!` in `lib/plutonium/positioning/model.rb` (currently lines 64-77) to track and return it:
 
 ```ruby
     def reposition!(prev_record:, next_record:)
