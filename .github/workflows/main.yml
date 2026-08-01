@@ -86,10 +86,17 @@ jobs:
         with:
           ruby-version: "3.4"
           bundler-cache: true
+      - name: Install appraisal gemfiles
+        run: bundle exec appraisal install
+      # Under appraisal, not the root bundle: the generator tests boot the dummy
+      # app, whose initializers need gems (rodauth-rails and friends) that only
+      # the appraisal gemfiles carry. On the root Gemfile every file dies at
+      # `uninitialized constant Rodauth`.
+      #
       # Also excluded from the default task, and destructive — it git-cleans
       # test/dummy — so it gets its own job rather than sharing a checkout.
       - name: Generator tests
-        run: bundle exec rake test_generators
+        run: bundle exec appraisal rails-8.1 rake test_generators
 
   positioning-postgres:
     runs-on: ubuntu-latest
