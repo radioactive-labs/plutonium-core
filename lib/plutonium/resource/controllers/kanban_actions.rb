@@ -197,7 +197,19 @@ module Plutonium
             @resource_record = record
           end
 
-          ActiveRecord::Base.transaction do
+          # record.class.transaction, never ActiveRecord::Base.transaction — a
+          # transaction opens on the RECEIVER's connection pool, and every write
+          # below (the on_exit/on_enter save!, reposition! and any rebalance it
+          # triggers, the final save!) goes out on the RECORD's pool. For a
+          # resource on a secondary database ActiveRecord::Base would BEGIN on
+          # primary and guard nothing, leaving a failed drop half-applied.
+          #
+          # This is narrower than fully atomic, and deliberately so: a drop
+          # interaction or a user-supplied on_enter can write arbitrary models,
+          # which are covered only if they share the record's connection. Rails
+          # has no two-phase commit across pools, so a write to a model on a
+          # third database cannot be rolled back by any single receiver.
+          record.class.transaction do
             # (1) Apply on_exit (SOURCE column) then on_enter (DESTINATION column),
             # CROSS-column moves only. A same-column reorder skips both (see
             # cross_column above) and only repositions; on_exit/on_enter represent

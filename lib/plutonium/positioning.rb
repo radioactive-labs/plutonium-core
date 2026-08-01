@@ -63,7 +63,20 @@ module Plutonium
       def backfill_positions!(order: :created_at)
         groups = positioning_scope_attr ? all.group_by(&positioning_scope_attr) : {nil => all.to_a}
         groups.each_value do |rows|
-          ActiveRecord::Base.transaction do
+          # `transaction` on THIS class, never ActiveRecord::Base.transaction.
+          # A transaction is opened on the RECEIVER's connection pool, while the
+          # UPDATEs below go out on this model's pool (update_column →
+          # self.class._update_record). When the model lives on the primary
+          # database those are the same connection and either form works — but
+          # only by coincidence.
+          #
+          # On a secondary database they are different connections:
+          # ActiveRecord::Base would BEGIN on primary and do nothing else with
+          # it, while every UPDATE autocommits unprotected on the model's own
+          # connection. A crash partway leaves the group half-renumbered, with
+          # duplicate or gapped positions and nothing to roll back. Do not
+          # "simplify" this back.
+          transaction do
             rows.sort_by { |r| r.public_send(order) }.each_with_index do |row, i|
               row.update_column(positioning_column, (i + 1).to_f)
             end
@@ -110,7 +123,13 @@ module Plutonium
 
     def rebalance_scope_group!
       col = self.class.positioning_column
-      ActiveRecord::Base.transaction do
+      # self.class.transaction, never ActiveRecord::Base.transaction — the BEGIN
+      # must land on the connection the UPDATEs below actually use. See the note
+      # in backfill_positions!: on a secondary-database model the
+      # ActiveRecord::Base form opens an empty transaction on primary while every
+      # renumbering UPDATE autocommits unprotected. Rebalancing is exactly where
+      # that matters, since a half-applied renumber corrupts the ordering.
+      self.class.transaction do
         positioning_group_relation.order(col).each_with_index do |row, i|
           row.update_column(col, (i + 1).to_f)
         end
