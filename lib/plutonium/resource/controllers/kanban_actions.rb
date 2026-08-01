@@ -197,7 +197,27 @@ module Plutonium
             @resource_record = record
           end
 
-          ActiveRecord::Base.transaction do
+          # Opened on the RECORD'S OWN connection, not ActiveRecord::Base's. A
+          # transaction lives on the receiver's connection pool, and every write
+          # this block owns — the on_exit/on_enter save!, reposition!'s update!
+          # (and any rebalance it triggers), the final save! — goes out on
+          # `record`'s pool. For a resource on a secondary database
+          # ActiveRecord::Base.transaction would BEGIN on primary and leave all of
+          # those autocommitting unprotected: a failure mid-move could persist an
+          # on_enter column change with no reposition, or a half-applied
+          # rebalance. Do not "simplify" this back to ActiveRecord::Base.
+          #
+          # LIMIT — this is a single-connection guarantee, and the drop
+          # interaction (step 2) plus user-supplied on_exit/on_enter blocks may
+          # write models the framework knows nothing about. Those are covered iff
+          # they sit on the SAME connection as `record` (the overwhelmingly common
+          # case: one database, or the same secondary as the resource). Writes to
+          # a model on a DIFFERENT database are NOT rolled back by this block, and
+          # no choice of receiver can fix that — Rails has no two-phase commit
+          # across pools, and nesting a second transaction would only shrink the
+          # window, not close it. record.class is the best available receiver
+          # because it is the one whose writes this action definitely owns.
+          record.class.transaction do
             # (1) Apply on_exit (SOURCE column) then on_enter (DESTINATION column),
             # CROSS-column moves only. A same-column reorder skips both (see
             # cross_column above) and only repositions; on_exit/on_enter represent
