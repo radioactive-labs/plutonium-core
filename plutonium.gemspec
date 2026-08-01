@@ -12,12 +12,11 @@ Gem::Specification.new do |spec|
                      "definitions, and portals that make building complex apps faster. Built for the AI era with Claude Code skills."
   spec.homepage = "https://radioactive-labs.github.io/plutonium-core/"
   spec.license = "MIT"
-  # Raised from 3.2.2 for a security reason, not housekeeping: CVE-2026-54659
-  # in pagy is patched only in >= 43.5.6, and pagy dropped Ruby 3.2 in 43.5.0.
-  # There is no pagy that is both patched and installable on 3.2, so supporting
-  # 3.2 means shipping a known-vulnerable dependency. Ruby 3.2 reached EOL in
-  # March 2026.
-  spec.required_ruby_version = ">= 3.3"
+  # Ruby 3.2 is DEPRECATED and will be dropped in the next release — see the
+  # post_install_message. Held here for one more release so 3.2 users can
+  # receive the fixes in this one before support ends; raising it in the same
+  # release that ships them would strand those users on the old version.
+  spec.required_ruby_version = ">= 3.2.2"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   # Require multi-factor auth for privileged RubyGems actions (push, yank,
@@ -39,6 +38,22 @@ Gem::Specification.new do |spec|
     update them to the new names.
 
     Apps that only use `resource_url_for` are unaffected.
+
+    ────────────────────────────────────────────────────────────────
+
+    ⚠️  Ruby 3.2 support ends in the NEXT release
+
+    This is the last Plutonium release that installs on Ruby 3.2.
+
+    Why: pagy patches CVE-2026-54659 (a path-traversal in
+    `Pagy::I18n.locale=`) only in >= 43.5.6, and pagy dropped Ruby 3.2 in
+    43.5.0. No pagy version is both patched and installable on 3.2, so
+    continuing to support it means shipping a known-vulnerable dependency.
+
+    Ruby 3.2 reached end-of-life in March 2026.
+
+    Action: upgrade to Ruby 3.3 or newer before your next Plutonium bump.
+    If you stay on 3.2, `bundle update plutonium` will hold you here.
   MSG
 
   spec.metadata["homepage_uri"] = spec.homepage
@@ -61,10 +76,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 7.2.3.1"
   spec.add_dependency "csv" # CSV export; no longer a default gem on Ruby 3.4+
   spec.add_dependency "listen", "~> 3.8"
-  # >= 43.5.6 patches CVE-2026-54659 (Pagy::I18n.locale= used its argument as a
-  # path component without validation). Pinned explicitly so a host app cannot
-  # resolve back onto a vulnerable 43.x.
-  spec.add_dependency "pagy", "~> 43.0", ">= 43.5.6"
+  # NOT pinned to >= 43.5.6 (which patches CVE-2026-54659) yet: that version
+  # requires Ruby >= 3.3, so pinning it here would silently drop Ruby 3.2 a
+  # release early. `~> 43.0` already resolves to a patched 43.6.x on any fresh
+  # install under Ruby 3.3+, so the exposure is limited to apps holding an old
+  # pagy in their lockfile. Pin it in the release that drops 3.2.
+  spec.add_dependency "pagy", "~> 43.0"
   spec.add_dependency "rabl", "~> 0.17.0" # TODO: what to do with RABL
   spec.add_dependency "semantic_range", "~> 3.0"
   spec.add_dependency "tty-prompt", "~> 0.23.1"
