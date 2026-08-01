@@ -35,12 +35,29 @@ end
 task :test_generators do
   failures = []
 
+  # Between files, not just inside them. A generator that shells out — e.g.
+  # `generate "pu:pkg:package"` — goes through Rails' `generate` action, which
+  # passes abort_on_failure: true, so Thor calls `abort` in the test process
+  # when the child fails. SystemExit skips minitest's teardown, so anything the
+  # test wrote into test/dummy survives; since every generator test file boots
+  # the dummy app at require time, one aborted file would take down every file
+  # after it. Cleaning here can't be skipped by an aborting child.
+  #
+  # An at_exit hook inside the tests cannot do this job: minitest runs the whole
+  # suite from its own at_exit, and handlers fire LIFO, so a hook registered
+  # later runs before any test does.
+  restore_dummy_app = lambda do
+    system("git", "checkout", "--", "test/dummy", out: File::NULL, err: File::NULL)
+    system("git", "clean", "-fd", "test/dummy", out: File::NULL, err: File::NULL)
+  end
+
   FileList["test/generators/**/*_test.rb"].sort.each do |test_file|
     puts "\n=== #{test_file} ==="
     # in: File::NULL — prevents a stray sub-generator prompt from hanging on the inherited TTY.
     unless system(Gem.ruby, "-w", "-Ilib:test", test_file, in: File::NULL)
       failures << test_file
     end
+    restore_dummy_app.call
   end
 
   if failures.any?
