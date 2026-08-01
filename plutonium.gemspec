@@ -12,7 +12,12 @@ Gem::Specification.new do |spec|
                      "definitions, and portals that make building complex apps faster. Built for the AI era with Claude Code skills."
   spec.homepage = "https://radioactive-labs.github.io/plutonium-core/"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.2.2"
+  # Raised from 3.2.2 for a security reason, not housekeeping: CVE-2026-54659
+  # in pagy is patched only in >= 43.5.6, and pagy dropped Ruby 3.2 in 43.5.0.
+  # There is no pagy that is both patched and installable on 3.2, so supporting
+  # 3.2 means shipping a known-vulnerable dependency. Ruby 3.2 reached EOL in
+  # March 2026.
+  spec.required_ruby_version = ">= 3.3"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   # Require multi-factor auth for privileged RubyGems actions (push, yank,
@@ -56,7 +61,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency "rails", ">= 7.2"
   spec.add_dependency "csv" # CSV export; no longer a default gem on Ruby 3.4+
   spec.add_dependency "listen", "~> 3.8"
-  spec.add_dependency "pagy", "~> 43.0"
+  # >= 43.5.6 patches CVE-2026-54659 (Pagy::I18n.locale= used its argument as a
+  # path component without validation). Pinned explicitly so a host app cannot
+  # resolve back onto a vulnerable 43.x.
+  spec.add_dependency "pagy", "~> 43.0", ">= 43.5.6"
   spec.add_dependency "rabl", "~> 0.17.0" # TODO: what to do with RABL
   spec.add_dependency "semantic_range", "~> 3.0"
   spec.add_dependency "tty-prompt", "~> 0.23.1"

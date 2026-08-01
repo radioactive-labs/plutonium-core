@@ -17,9 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     name: Ruby ${{ matrix.ruby }}
     strategy:
+      # Don't cancel the whole matrix when one Ruby fails — a version-specific
+      # failure is exactly what this matrix exists to surface, and fail-fast
+      # reports the others as "canceled", which reads like a second bug.
+      fail-fast: false
       matrix:
         ruby:
-          - "3.2"
+          # 3.2 dropped alongside the gemspec's required_ruby_version bump: pagy
+          # patches CVE-2026-54659 only in >= 43.5.6, which requires Ruby >= 3.3.
           - "3.3"
           - "3.4"
 
