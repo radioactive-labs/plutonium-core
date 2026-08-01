@@ -1,7 +1,12 @@
 # frozen_string_literal: true
 
-require "plutonium/positioning/config"
-require "plutonium/positioning/model"
+# require_relative, not require: test/positioning_postgres_check.rb loads this
+# file directly with require_relative and no $LOAD_PATH setup — it is
+# deliberately framework-free, needing only activerecord + pg. A plain `require`
+# resolves against $LOAD_PATH and so fails there. Matches how lib/plutonium.rb
+# pulls in its own files.
+require_relative "positioning/config"
+require_relative "positioning/model"
 
 module Plutonium
   # Namespace for decimal/fractional ordering. Kanban-independent.
