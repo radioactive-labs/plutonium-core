@@ -58,7 +58,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "zeitwerk"
-  spec.add_dependency "rails", ">= 7.2"
+  spec.add_dependency "rails", ">= 7.2.3.1"
   spec.add_dependency "csv" # CSV export; no longer a default gem on Ruby 3.4+
   spec.add_dependency "listen", "~> 3.8"
   # >= 43.5.6 patches CVE-2026-54659 (Pagy::I18n.locale= used its argument as a

@@ -16,7 +16,7 @@ PATH
       phlexi-menu (>= 0.4.1)
       phlexi-table (>= 0.2.0)
       rabl (~> 0.17.0)
-      rails (>= 7.2)
+      rails (>= 7.2.3.1)
       redcarpet
       semantic_range (~> 3.0)
       tailwind_merge
