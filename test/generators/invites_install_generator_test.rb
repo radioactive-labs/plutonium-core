@@ -444,10 +444,16 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
   end
 
   test "skips standalone welcome route when WelcomeController exists" do
-    # Create a WelcomeController before running the generator
+    # Create a WelcomeController before running the generator.
+    #
+    # It must subclass a constant the dummy app really defines. This file lands
+    # in test/dummy/app, and the generator boots the dummy app in a subprocess
+    # (`rails generate pu:pkg:package`) — which eager loads whenever CI is set.
+    # A dangling superclass makes that boot raise, Thor aborts the test process,
+    # and the fixture survives to break every later generator test file.
     FileUtils.mkdir_p(destination_root.join("app/controllers"))
     File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
-      class WelcomeController < AuthenticatedController
+      class WelcomeController < ApplicationController
         def index
         end
       end
@@ -464,7 +470,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     # Create a WelcomeController before running the generator
     FileUtils.mkdir_p(destination_root.join("app/controllers"))
     File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
-      class WelcomeController < AuthenticatedController
+      class WelcomeController < ApplicationController
         def index
         end
       end
@@ -484,7 +490,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
   test "skips WelcomeController integration when PendingInviteCheck already present" do
     FileUtils.mkdir_p(destination_root.join("app/controllers"))
     File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
-      class WelcomeController < AuthenticatedController
+      class WelcomeController < ApplicationController
         include Plutonium::Invites::PendingInviteCheck
 
         def index
@@ -505,7 +511,7 @@ class InvitesInstallGeneratorTest < Rails::Generators::TestCase
     # Create a main WelcomeController
     FileUtils.mkdir_p(destination_root.join("app/controllers"))
     File.write(destination_root.join("app/controllers/welcome_controller.rb"), <<~RUBY)
-      class WelcomeController < AuthenticatedController
+      class WelcomeController < ApplicationController
         def index
         end
       end
