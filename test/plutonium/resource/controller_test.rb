@@ -43,37 +43,31 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     assert_equal "Metadata", "Metadata".singularize
   end
 
-  # Test current_nested_association extraction from path
-  # Uses the real Plutonium::Resource::Controller module
+  # Test current_nested_association resolution from the route registration
+  # Uses the real Plutonium::Resource::Controller module.
+  #
+  # The nesting is declared by the route (which stamps a nested key into the
+  # request defaults) rather than scraped out of the path, so these cover the
+  # lookup. The path shapes that scraping used to worry about — an action
+  # suffix, a format extension, a singular nesting — are the routing layer's
+  # concern now, covered by test/integration/org_portal/blogging_posts_test.rb.
 
-  def test_current_nested_association_extracts_from_path
-    controller = build_controller_stub("/posts/123/nested_comments/456", :blogging_post_id)
+  def test_current_nested_association_reads_the_registered_association
+    controller = build_controller_stub("posts/comments", {"posts/comments" => {association_name: :comments}})
 
     assert_equal :comments, controller.send(:current_nested_association)
   end
 
-  def test_current_nested_association_handles_singular_routes
-    controller = build_controller_stub("/posts/123/nested_post_detail", :blogging_post_id)
-
-    assert_equal :post_detail, controller.send(:current_nested_association)
-  end
-
-  def test_current_nested_association_returns_nil_without_parent_route_param
-    controller = build_controller_stub("/posts/123/nested_comments", nil)
+  def test_current_nested_association_returns_nil_without_a_nested_key
+    controller = build_controller_stub(nil, {"posts/comments" => {association_name: :comments}})
 
     assert_nil controller.send(:current_nested_association)
   end
 
-  def test_current_nested_association_extracts_nested_segment_with_action
-    controller = build_controller_stub("/posts/123/nested_comments/456/edit", :blogging_post_id)
+  def test_current_nested_association_returns_nil_for_an_unregistered_key
+    controller = build_controller_stub("posts/unknown", {"posts/comments" => {association_name: :comments}})
 
-    assert_equal :comments, controller.send(:current_nested_association)
-  end
-
-  def test_current_nested_association_strips_format_extension
-    controller = build_controller_stub("/posts/123/nested_comments.json", :blogging_post_id)
-
-    assert_equal :comments, controller.send(:current_nested_association)
+    assert_nil controller.send(:current_nested_association)
   end
 
   # Test extraction_record logic for submitted_resource_params
@@ -276,10 +270,10 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
 
   private
 
-  def build_controller_stub(path, parent_param)
+  def build_controller_stub(nested_key, route_config_lookup = {})
     controller = TestableController.new
-    controller.test_request_path = path
-    controller.test_parent_route_param = parent_param
+    controller.test_nested_key = nested_key
+    controller.test_route_config_lookup = route_config_lookup
     controller
   end
 
@@ -303,22 +297,22 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
   class TestableController < ActionController::Base
     include Plutonium::Resource::Controller
 
-    attr_accessor :test_request_path, :test_parent_route_param
+    attr_accessor :test_nested_key, :test_route_config_lookup
 
-    # Stub the dependencies that current_nested_association needs
+    # The nesting arrives as a route default, not as a path segment.
     def request
-      @request ||= Struct.new(:path).new(test_request_path)
+      @request ||= Struct.new(:path_parameters).new(
+        {Plutonium::Routing::NESTED_KEY_PARAM => test_nested_key}.compact
+      )
     end
 
-    def parent_route_param
-      test_parent_route_param
+    def current_engine
+      @current_engine ||= Struct.new(:routes).new(
+        Struct.new(:resource_route_config_lookup).new(test_route_config_lookup || {})
+      )
     end
 
     # Stub other required dependencies
-    def current_engine
-      nil
-    end
-
     def scoped_to_entity?
       false
     end
