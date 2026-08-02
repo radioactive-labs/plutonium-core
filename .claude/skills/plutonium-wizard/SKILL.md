@@ -179,6 +179,29 @@ Repeater rows rehydrate from staged `data` on GET (resume / back re-renders fill
 
 Validations drive the form's field affordances just like a resource form: `presence` → the required marker (`*`); `length`/`numericality`/`format`/`inclusion` → `maxlength`/`min`/`max`/`pattern`/auto-choices. This holds for validations imported via `using:` too. (Structured-input sub-fields are the exception — they carry no validators, so no markers there.)
 
+### Options that depend on the run
+
+The step block runs **once, when the class loads**, so a literal option is frozen for every run. A **proc-valued** field/input option is resolved on **every render**, against the **wizard** — the same receiver a step's `condition:` gets, so `anchor`, `data`, `persisted` and `current_user` read as they do anywhere else in the wizard:
+
+```ruby
+step :plan do
+  attribute :tier
+  input :tier, as: :select, choices: -> { anchor.available_tiers }
+end
+```
+
+It is also how a custom component receives per-run configuration:
+
+```ruby
+input :answers, as: MyManifestComponent, config: -> { anchor.manifest }
+```
+
+Three limits worth knowing:
+
+- The **field set** is still fixed at class load — a proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls.
+- A **step's** `condition:` runs against the wizard; a **field's** `condition:` runs against the form (`object` = that step's staged data). Only the field-level one is excluded from the resolution above.
+- **Only wizard steps resolve options this way.** On a resource or interaction form a proc option keeps its own binding — one declared in `customize_inputs` closes over the interaction, and a consumer that wants a callable calls it (Phlexi materialises `choices:` that way). A step block closes over a throwaway recorder, which is why the wizard resolves them itself.
+
 ## Attachment fields (file uploads)
 
 A step can collect a file. Declare it like any field — a **`:string`** attribute (it holds the upload **token**, not the bytes) + a file input:
@@ -277,6 +300,8 @@ end
 | `persisted[:step_key]` | Record(s) registered via `persist` in `on_submit`. Rehydrated on resume. |
 | `succeed(v)` / `failed(errs)` | Outcome helpers (alias `success`). `.with_message`, `.with_redirect_response` chainable. |
 | `fail!(msg)` / `fail!(:field, msg)` | Raise a `StepError` from `on_submit`/`execute`. |
+
+Available inside steps, `condition:`, `on_submit`, `on_rollback` and `execute` — and inside a step's **proc-valued field/input options**, which resolve against the wizard too (see **Step internals → Options that depend on the run**).
 
 ## Anchoring
 

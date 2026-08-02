@@ -16,8 +16,13 @@ module Plutonium
         # @param action  [String] the current step's POST URL.
         # @param fields  [Array<Symbol>] the step's renderable field names
         #   (scalar attributes + structured inputs).
-        def initialize(step:, data:, action:, fields:, **options, &)
+        # @param wizard  [Plutonium::Wizard::Base, nil] the run being rendered,
+        #   used to resolve a step's proc-valued options against. Optional so an
+        #   existing caller keeps working; without it those options pass through
+        #   unresolved, as they do on every other form.
+        def initialize(step:, data:, action:, fields:, wizard: nil, **options, &)
           @step = step
+          @wizard = wizard
           options[:key] = :wizard
           options[:as] = :wizard
           options[:action] = action
@@ -29,7 +34,29 @@ module Plutonium
 
         private
 
-        attr_reader :step
+        attr_reader :step, :wizard
+
+        # A step block is instance_exec'd against a FieldCapture when the wizard
+        # class loads, so a proc declared there closes over a recorder that holds
+        # nothing. Resolve it against the wizard instead, which is where the rest
+        # of the wizard DSL already points:
+        #
+        #   input :tier, as: :select, choices: -> { anchor.available_tiers }
+        #
+        # Same receiver a step's `condition:` gets (see Wizard::Runner), so
+        # `anchor`, `data`, `persisted` and `current_user` read the same in an
+        # option as they do everywhere else in the wizard.
+        #
+        # `condition:` is excluded here. A FIELD's condition is evaluated against
+        # the form, where `object` is this step's staged data; only a STEP's
+        # condition belongs to the wizard.
+        def resolve_option_procs(options)
+          return options if options.blank? || wizard.nil?
+
+          options.to_h do |key, value|
+            [key, (key != :condition && value.is_a?(Proc)) ? wizard.instance_exec(&value) : value]
+          end
+        end
 
         def form_template
           # The direction defaults to "next"; the nav buttons in the page override

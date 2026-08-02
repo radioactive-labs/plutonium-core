@@ -83,6 +83,32 @@ A step's block is the same field DSL used on definitions and interactions:
 
 See [plutonium-resource › Definition](/reference/resource/definition) for the full field/input/layout vocabulary.
 
+#### Runtime input options
+
+A step's fields are fixed when the class loads, so a **proc** is how an option depends on the run. Proc-valued field/input options are resolved on every render, **against the wizard** — the same receiver a step's `condition:` gets, so `anchor`, `data`, `persisted` and `current_user` read exactly as they do everywhere else in the wizard:
+
+```ruby
+step :plan do
+  attribute :tier
+  input :tier, as: :select, choices: -> { anchor.available_tiers }
+end
+```
+
+It is also how a custom component receives per-run configuration:
+
+```ruby
+input :answers, as: MyManifestComponent, config: -> { anchor.manifest }
+```
+
+Two limits worth knowing:
+
+- The **field set** is still fixed at class load. A proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls.
+- `condition:` is **not** resolved this way. A *step's* `condition:` runs against the wizard; a *field's* `condition:` runs against the form, where `object` is that step's staged data.
+
+::: tip Only wizard steps do this
+On a resource or interaction form a proc option keeps its own binding: one declared in `customize_inputs` closes over the interaction, and a consumer that wants a callable calls it (Phlexi materialises `choices:` that way). A step block is `instance_exec`'d against a throwaway recorder, so it closes over nothing useful — hence the wizard resolves them itself.
+:::
+
 ### `using:` a model
 
 `using:` imports field declarations from an ActiveRecord model so a step needn't re-declare them. It is a **step option**, not a block method (avoids Ruby's `Module#using` refinements clash), and it targets a **model only**.
@@ -312,6 +338,8 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 | `data.<step>.<field>` | The cast value (real Boolean/Integer/Date, not raw string). `data.<step>.<structured>` → array of typed sub-objects. An unknown step key reads as `nil`. |
 | `anchor` | The record the wizard was launched against. Raises `NotAnchoredError` if the wizard isn't `anchored`. |
 | `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Lazily rehydrated on first access (located from stored GlobalIDs the first time you read the key, memoized thereafter). |
+
+A **proc-valued field/input option** on a step resolves against the wizard too, so the same accessors apply there — see [Runtime input options](#runtime-input-options).
 
 ## Outcome helpers
 

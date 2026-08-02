@@ -289,6 +289,9 @@ module Plutonium
           input_definition = definition.defined_inputs[name] || {}
           input_options = input_definition[:options] || {}
 
+          field_options = resolve_option_procs(field_options)
+          input_options = resolve_option_procs(input_options)
+
           tag = input_options[:as] || field_options[:as]
 
           # Extract field-level options from input_options and merge into field_options
@@ -346,6 +349,21 @@ module Plutonium
             end
           end
         end
+
+        # Hook: a subclass may resolve proc-valued field/input options for this
+        # render. The base form deliberately passes them through.
+        #
+        # A proc option belongs to whatever owns the flow's data, and here that
+        # is already its own binding: an option declared in an interaction's
+        # `customize_inputs` closes over the interaction (`choices: -> {
+        # reviewer_choices }`), and a consumer that wants a callable calls it
+        # (Phlexi materialises `choices:` this way). Rebinding `self` here would
+        # break that.
+        #
+        # A wizard step is the exception, because its block is instance_exec'd
+        # against a throwaway recorder and so closes over nothing useful. See
+        # Form::Wizard.
+        def resolve_option_procs(options) = options
 
         def when_permitted(name, &)
           return unless resource_fields.include? name

@@ -12,7 +12,9 @@ class ConfigureWidgetWizard < Plutonium::Wizard::Base
 
   step :rename do
     attribute :name, :string
-    input :name
+    # A proc-valued input option resolves against the wizard on every render, so
+    # `anchor` reads here exactly as it does in `condition:` or `execute`.
+    input :name, placeholder: -> { "Currently #{anchor.name}" }
     validates :name, presence: true
   end
 
