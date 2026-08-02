@@ -5,6 +5,21 @@ module Plutonium
     # Prefix used for nested resource routes to disambiguate from user-defined routes
     NESTED_ROUTE_PREFIX = "nested_"
 
+    # Route default naming which nesting a request arrived through.
+    #
+    # The router already knows which nested route matched; without this the
+    # controller has to work it back out — reading an *_id parameter to find the
+    # parent, and scanning the path for a "nested_" segment to find the
+    # association. Neither survives a parent that contributes no id (a singular
+    # parent has none), and both are guesses about something the route could
+    # simply state.
+    #
+    # The value is the key into resource_route_config_lookup, which already
+    # holds the parent class and the association name. Carrying the key rather
+    # than the names themselves means nothing has to be looked up by string at
+    # request time.
+    NESTED_KEY_PARAM = :pu_nested_key
+
     # MapperExtensions module provides additional functionality for route mapping in Plutonium applications.
     #
     # This module extends the functionality of Rails' routing mapper to support Plutonium-specific features,
@@ -110,11 +125,14 @@ module Plutonium
           nested_config = base_config.merge(
             route_type: :resources,
             association_name: assoc_info[:name],
-            resource_class: assoc_info[:klass]
+            resource_class: assoc_info[:klass],
+            parent_class: resource
           )
           route_set.resource_route_config_lookup[nested_key] = nested_config
 
-          resources "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}", **base_config[:route_options].except(:path) do
+          resources "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}",
+            **base_config[:route_options].except(:path),
+            defaults: {NESTED_KEY_PARAM => nested_key} do
             instance_exec(&base_config[:block]) if base_config[:block]
           end
         end
@@ -129,11 +147,14 @@ module Plutonium
           nested_config = base_config.merge(
             route_type: :resource,
             association_name: assoc_info[:name],
-            resource_class: assoc_info[:klass]
+            resource_class: assoc_info[:klass],
+            parent_class: resource
           )
           route_set.resource_route_config_lookup[nested_key] = nested_config
 
-          resource "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}", **base_config[:route_options].except(:path) do
+          resource "#{NESTED_ROUTE_PREFIX}#{assoc_info[:name]}",
+            **base_config[:route_options].except(:path),
+            defaults: {NESTED_KEY_PARAM => nested_key} do
             original_collection = method(:collection)
             define_singleton_method(:collection) { |&_| } # no-op for singular resources
             instance_exec(&base_config[:block]) if base_config[:block]

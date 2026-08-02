@@ -32,6 +32,7 @@ module Plutonium
           :resource_record!,
           :resource_record?,
           :singular_resource_context?,
+          :singular_resource_route_for?,
           :resource_name,
           :resource_name_plural,
           :nestable_resource_name_plural,

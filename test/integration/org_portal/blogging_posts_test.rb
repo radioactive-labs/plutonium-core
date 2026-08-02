@@ -67,6 +67,56 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # Creation through a polymorphic nesting, resolved by inverse_of. Rails
+  # detects the inverse automatically when `as:` and the child's belongs_to
+  # share a name, so this never reaches the foreign-key scan below it — worth
+  # saying, because it passes with or without that branch working.
+  test "creates a comment on a post through the polymorphic nested route" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    assert_difference -> { Comment.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comments",
+        params: {comment: {body: "Created through the nesting", user: @user.to_sgid.to_s}}
+    end
+
+    comment = Comment.order(:id).last
+    assert_equal "Created through the nesting", comment.body
+    # Both halves of the polymorphic reference, not just the id.
+    assert_equal post_record.id, comment.commentable_id
+    assert_equal post_record.class.polymorphic_name, comment.commentable_type
+  end
+
+  # The same creation where automatic inverse detection is off, so the parent
+  # field can only come from the foreign-key scan. A polymorphic belongs_to
+  # cannot be asked for its class — that raises — so it has to be matched on the
+  # type column instead, which is what `as:` names on the parent side.
+  test "creates through a polymorphic nesting that has no inverse_of" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    assert_difference -> { Comment.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_noninverse_comments",
+        params: {comment: {body: "No inverse to lean on", user: @user.to_sgid.to_s}}
+    end
+
+    comment = Comment.order(:id).last
+    assert_equal post_record.id, comment.commentable_id
+    assert_equal post_record.class.polymorphic_name, comment.commentable_type
+  end
+
+  # "comment_series" singularizes to itself, so Rails suffixes the collection
+  # route with _index. The nested URL builder has to match that, as the
+  # top-level one already does, or every link it builds for the collection
+  # names a helper that was never generated.
+  test "renders a nesting whose name singularizes to itself" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comment_series"
+    assert_response :success
+
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comment_series/new"
+    assert_response :success
+  end
+
   test "shows post detail (has_one)" do
     post_record = create_post!(user: @user, organization: @org)
     create_post_detail!(post: post_record)

@@ -112,11 +112,15 @@ module Plutonium
       end
 
       def collect_parent_breadcrumbs(items)
-        # Parent Resource
-        items << segment(
-          resource_name_plural(current_parent.class),
-          resource_url_for(current_parent.class, parent: nil)
-        )
+        # Parent Resource — an index link, where the parent has one. A parent
+        # registered `singular: true` defines no collection route, so asking for
+        # one raises on a helper that was never generated.
+        unless singular_resource_route_for?(current_parent.class)
+          items << segment(
+            resource_name_plural(current_parent.class),
+            resource_url_for(current_parent.class, parent: nil)
+          )
+        end
 
         # Parent Itself
         items << segment(
@@ -147,16 +151,24 @@ module Plutonium
       end
 
       def collect_plural_resource_breadcrumbs(items)
+        # Nested through the parent when there is one, so the trail links back
+        # into the nesting the request arrived through rather than jumping out
+        # to the resource's top-level index.
+        parent = current_parent
+
         # Resource index link
         items << segment(
           nestable_resource_name_plural(resource_class),
-          resource_url_for(resource_class)
+          resource_url_for(resource_class, parent: parent)
         )
 
         # Record itself (for non-singular routes only)
         return unless resource_record!.persisted? && action_name != "show"
 
-        items << segment(display_name_of(resource_record!), resource_url_for(resource_record!))
+        items << segment(
+          display_name_of(resource_record!),
+          resource_url_for(resource_record!, parent: parent)
+        )
       end
 
       # Stands in for whatever the controller folded away, the way GitHub

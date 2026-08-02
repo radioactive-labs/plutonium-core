@@ -25,7 +25,7 @@ module Plutonium
         after_action { response.headers.merge!(@pagy.headers_hash) if @pagy }
 
         helper_method :current_parent, :current_nested_association, :resource_record!, :resource_record?, :resource_param_key, :resource_class,
-          :singular_resource_context?
+          :singular_resource_context?, :singular_resource_route_for?
 
         # Use class_attribute for proper inheritance
         class_attribute :_resource_class, instance_accessor: false
@@ -102,11 +102,14 @@ module Plutonium
       end
 
       def current_resource_route_config
-        @current_resource_route_config ||= if current_parent
-          current_engine.routes.resource_route_config_lookup["#{current_parent.class.model_name.plural}/#{current_nested_association}"]
-        else
+        # The nested registration when the route says it is nested, and the
+        # top-level one otherwise. Previously rebuilt the nested lookup key from
+        # the parent's class and the association — which meant resolving the
+        # parent first, and reconstructing a string the router was already
+        # carrying.
+        @current_resource_route_config ||=
+          current_nested_route_config ||
           current_engine.routes.resource_route_config_for(resource_class.model_name.plural)[0]
-        end
       end
 
       # Returns true if current resource is registered as a singular route
@@ -116,23 +119,22 @@ module Plutonium
         current_resource_route_config&.[](:route_type) == :resource
       end
 
-      # Extracts the association name from the current nested route
-      # e.g., for route /posts/:post_id/nested_comments, returns :comments
+      # The same question asked about another resource — a breadcrumb needs to
+      # know whether the parent it is linking to has an index before it builds a
+      # collection URL for one.
+      # @param resource_class [Class]
+      # @return [Boolean]
+      def singular_resource_route_for?(resource_class)
+        current_engine.routes.singular_resource_route?(resource_class.model_name.plural)
+      end
+
+      # The association this request is nested through, as declared by the
+      # route. Previously scraped out of the request path by looking for a
+      # "nested_" segment, which meant stripping format extensions and could
+      # not survive a parent that contributes no id parameter.
       # @return [Symbol, nil] The association name
       def current_nested_association
-        return unless parent_route_param
-
-        # Extract from request path: find the nested_* segment after the parent param
-        # e.g., /posts/123/nested_comments/456 => "comments"
-        # Note: Strip format extension (.json, .xml, etc.) from the segment
-        prefix = Plutonium::Routing::NESTED_ROUTE_PREFIX
-        path_segments = request.path.split("/")
-        nested_segment = path_segments.find { |seg| seg.start_with?(prefix) }
-        return unless nested_segment
-
-        # Remove prefix and any format extension (e.g., "nested_versions.json" -> "versions")
-        association_name = nested_segment.delete_prefix(prefix).sub(/\.\w+\z/, "")
-        association_name.to_sym
+        current_nested_route_config&.[](:association_name)
       end
 
       def resource_record!
@@ -237,24 +239,60 @@ module Plutonium
 
       # Returns the current parent based on path parameters
       # @return [ActiveRecord::Base, nil] The current parent
+      # The record this request is nested under, if any.
+      #
+      # The route says which parent it nests under (see
+      # Plutonium::Routing::PARENT_KEY_PARAM); all that is
+      # left is to load it. A plural parent narrows by the id in the path. A
+      # singular parent has no id to narrow by — it is whichever record the
+      # viewer's scope resolves to, the same rule resource_record_relation
+      # applies when the current resource is itself singular.
+      #
+      # Memoised through `defined?` so a genuine nil is remembered rather than
+      # re-resolved on every call.
       def current_parent
-        return unless parent_route_param
+        return @current_parent if defined?(@current_parent)
 
-        @current_parent ||= begin
-          parent_route_key = parent_route_param.to_s.gsub(/_id$/, "").to_sym
-          parent_class = current_engine.resource_register.route_key_lookup[parent_route_key]
-          parent_scope = authorized_scope(parent_class.all, context: {entity_scope: entity_scope_for_authorize})
-          parent_scope = parent_scope.from_path_param(params[parent_route_param])
-          current_parent = parent_scope.first!
-          authorize! current_parent, to: :read?
-          current_parent
+        @current_parent = begin
+          parent_class = current_parent_class
+          if parent_class
+            scope = authorized_scope(parent_class.all, context: {entity_scope: entity_scope_for_authorize})
+            parent = if singular_resource_route_for?(parent_class)
+              # A singular parent puts no id in the path, so the scope must
+              # already identify exactly one record. `sole` says so: `first!`
+              # would quietly hand back whichever row sorted first if the scope
+              # ever resolved to several, and silently nesting under the wrong
+              # parent is far worse than failing loudly.
+              scope.sole
+            else
+              # The id parameter is named by the parent's own route, so it is
+              # derived rather than discovered. Scanning path_parameters for
+              # anything ending in _id would also match an unrelated parameter
+              # an application happens to name that way.
+              scope.from_path_param(params[:"#{parent_class.model_name.singular}_id"]).first!
+            end
+            parent.tap { authorize! parent, to: :read? }
+          end
         end
       end
 
-      # Returns the parent route parameter
-      # @return [Symbol, nil] The parent route parameter
-      def parent_route_param
-        @parent_route_param ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }
+      # The parent resource class, taken from the registration rather than
+      # re-derived from a name. Registration had the class in hand; carrying the
+      # name instead would mean looking it back up by a string that two
+      # differently-namespaced resources can share.
+      # @return [Class, nil]
+      def current_parent_class
+        current_nested_route_config&.[](:parent_class)
+      end
+
+      # The registration for the nesting this request arrived through, if any.
+      # @return [Hash, nil]
+      def current_nested_route_config
+        return @current_nested_route_config if defined?(@current_nested_route_config)
+
+        nested_key = request.path_parameters[Plutonium::Routing::NESTED_KEY_PARAM]
+        @current_nested_route_config =
+          nested_key && current_engine.routes.resource_route_config_lookup[nested_key]
       end
 
       # Returns the parent input parameter (the belongs_to association name on the child)
@@ -275,10 +313,28 @@ module Plutonium
         # Try inverse_of first (if explicitly set)
         return parent_assoc.inverse_of.name.to_sym if parent_assoc.inverse_of
 
-        # Fall back to finding belongs_to by foreign key
+        # Fall back to finding belongs_to by foreign key.
+        #
+        # Polymorphic reflections are skipped rather than compared: asking a
+        # polymorphic belongs_to for its klass raises, and one sharing the
+        # parent's foreign key name would take the whole request down.
+        #
+        # The class is matched with is_a? rather than ==, so a parent that is an
+        # STI subclass still matches an association declared against its base.
         foreign_key = parent_assoc.foreign_key.to_s
         child_assoc = resource_class.reflect_on_all_associations(:belongs_to).find do |assoc|
-          assoc.foreign_key.to_s == foreign_key && assoc.klass == current_parent.class
+          next false unless assoc.foreign_key.to_s == foreign_key
+
+          if assoc.polymorphic?
+            # A polymorphic belongs_to cannot be asked for its class — that
+            # raises. Its counterpart is the type column, which is exactly what
+            # `has_many :things, as: :owner` names on the parent side, so the
+            # two are matched on that instead. Assigning the parent to the
+            # association then sets both the id and the type.
+            parent_assoc.type.present? && assoc.foreign_type.to_s == parent_assoc.type.to_s
+          else
+            current_parent.is_a?(assoc.klass)
+          end
         end
         child_assoc&.name&.to_sym
       end
