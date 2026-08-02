@@ -305,6 +305,14 @@ module Plutonium
           tag_block = input_definition[:block] || ->(f) { f.component_for(tag, **tag_attributes) }
 
           # Keep `:as` so the Builder can detect hidden fields via `options[:as]`.
+          # `as:` may be declared on either `field` or `input`, and the tag
+          # lookup above already honours both. Carry the resolved value back
+          # into field_options so the Builder sees it too: without this,
+          # `input :x, as: :hidden` renders a hidden input inside a fully
+          # chromed wrapper, label and all, while `field :x, as: :hidden`
+          # renders correctly. The Builder consumes `:as` before Phlexi sees
+          # the options, so this cannot leak into a Phlexi field option.
+          field_options = field_options.merge(as: tag) if tag
           field_options = field_options.except(:condition)
 
           condition = input_options[:condition] || field_options[:condition]

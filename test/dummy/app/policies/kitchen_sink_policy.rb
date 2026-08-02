@@ -17,7 +17,7 @@ class KitchenSinkPolicy < ::ResourcePolicy
   ATTRIBUTES = %i[
     name organization user email_address secret website favorite_color age
     balance price description bio active featured plan tier birthday meeting_at
-    alarm_time phone config prefs status secret_token
+    alarm_time phone config prefs status secret_token tracking_id
   ].freeze
 
   def permitted_attributes_for_create
