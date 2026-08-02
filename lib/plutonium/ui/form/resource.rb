@@ -289,6 +289,9 @@ module Plutonium
           input_definition = definition.defined_inputs[name] || {}
           input_options = input_definition[:options] || {}
 
+          field_options = resolve_option_procs(field_options)
+          input_options = resolve_option_procs(input_options)
+
           tag = input_options[:as] || field_options[:as]
 
           # Extract field-level options from input_options and merge into field_options
@@ -346,6 +349,37 @@ module Plutonium
             end
           end
         end
+
+        # Resolve proc-valued field/input options for THIS render, so any option
+        # can vary per request rather than being frozen when the class loads.
+        #
+        # Arity decides the receiver, matching what Phlexi already does for
+        # validators:
+        #
+        #   -> { … }       called as-is, keeping its own binding
+        #   ->(form) { … } called with this form, for `object`/`params`/helpers
+        #
+        # The binding is kept rather than rebound because on these forms it is
+        # already the useful one: an option declared in an interaction's
+        # `customize_inputs` closes over the interaction (`choices: -> {
+        # reviewer_choices }`), and `instance_exec` would throw that away. A
+        # closure can be handed context as an argument; context cannot recover a
+        # closure. Form::Wizard overrides this, because a step block closes over
+        # a throwaway recorder and so has no binding worth keeping.
+        #
+        # `condition:` is excluded: it is evaluated separately at render, and
+        # resolving it here would collapse it to a boolean first.
+        def resolve_option_procs(options)
+          return options if options.blank?
+
+          options.to_h do |key, value|
+            [key, resolvable_proc?(key, value) ? call_option_proc(value) : value]
+          end
+        end
+
+        def resolvable_proc?(key, value) = key != :condition && value.is_a?(Proc)
+
+        def call_option_proc(value) = value.arity.zero? ? value.call : value.call(self)
 
         def when_permitted(name, &)
           return unless resource_fields.include? name

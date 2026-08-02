@@ -16,8 +16,13 @@ module Plutonium
         # @param action  [String] the current step's POST URL.
         # @param fields  [Array<Symbol>] the step's renderable field names
         #   (scalar attributes + structured inputs).
-        def initialize(step:, data:, action:, fields:, **options, &)
+        # @param wizard  [Plutonium::Wizard::Base, nil] the run being rendered,
+        #   used to resolve a step's proc-valued options against. Optional so an
+        #   existing caller keeps working; without it those options pass through
+        #   unresolved, as they do on every other form.
+        def initialize(step:, data:, action:, fields:, wizard: nil, **options, &)
           @step = step
+          @wizard = wizard
           options[:key] = :wizard
           options[:as] = :wizard
           options[:action] = action
@@ -29,7 +34,28 @@ module Plutonium
 
         private
 
-        attr_reader :step
+        attr_reader :step, :wizard
+
+        # Same arity rule as every other form; only the zero-arity receiver
+        # differs. A step block is instance_exec'd against a FieldCapture when
+        # the wizard class loads, so a proc declared there closes over a recorder
+        # that holds nothing. There is no binding worth keeping, so it runs
+        # against the wizard instead — where the rest of the wizard DSL already
+        # points:
+        #
+        #   input :tier, as: :select, choices: -> { anchor.available_tiers }
+        #
+        # That is the receiver a step's `condition:` already gets (see
+        # Wizard::Runner), so `anchor`, `data`, `persisted` and `current_user`
+        # read the same in an option as they do anywhere else in the wizard.
+        #
+        # ->(form) { … } still takes the form, as it does elsewhere, for
+        # `object` (this step's staged data), `params` and helpers.
+        def call_option_proc(value)
+          return super unless value.arity.zero? && wizard
+
+          wizard.instance_exec(&value)
+        end
 
         def form_template
           # The direction defaults to "next"; the nav buttons in the page override

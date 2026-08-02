@@ -602,6 +602,21 @@ field :debug_info, condition: -> { Rails.env.development? }
 
 Use `condition` for UI state; use the policy for authorization.
 
+## Options That Vary Per Render
+
+Any field/input option may be a **proc**, resolved on every render rather than frozen at class load. Arity picks what it receives:
+
+```ruby
+input :tier,  as: :select, choices: ->(form) { form.object.account.available_tiers }
+input :notes, placeholder: -> { "Updated #{Time.current.year}" }
+```
+
+- `->(form) { … }` gets the form — `object` (the record), `params`, view helpers.
+- `-> { … }` is called as-is, keeping its own binding. That is what makes `choices: -> { reviewer_choices }` work inside an interaction's `customize_inputs`, where the proc closes over the interaction.
+- `condition:` is the exception — evaluated separately at render, always against the form.
+
+A wizard step resolves a zero-arity proc against the **wizard** instead (its block closes over a throwaway recorder). See [[plutonium-wizard]].
+
 ## Dynamic Forms (`pre_submit`)
 
 A `pre_submit: true` field triggers a server re-render on change, re-evaluating `condition:` procs. Use for cascading or context-dependent forms.
