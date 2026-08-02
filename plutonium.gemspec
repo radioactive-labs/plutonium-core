@@ -23,24 +23,9 @@ Gem::Specification.new do |spec|
   # owner changes). `gem push` will prompt for an OTP at release time.
   spec.metadata["rubygems_mfa_required"] = "true"
 
+  # Prints on EVERY install: only notices still actionable for someone
+  # installing THIS version.
   spec.post_install_message = <<~MSG
-    ℹ️  Plutonium — breaking change introduced in 0.49.0
-
-    Entity-scoped URL helpers and path params were renamed in 0.49.0 from
-    `<entity>_scope_*` to `<entity>_scoped_*`.
-
-    Examples:
-      organization_scope_widgets_path  →  organization_scoped_widgets_path
-      params[:organization_scope]      →  params[:organization_scoped]
-
-    If you are upgrading from 0.48.0 or earlier and reference these helpers or
-    params directly (e.g. in tests, custom redirects, or hand-written links),
-    update them to the new names.
-
-    Apps that only use `resource_url_for` are unaffected.
-
-    ────────────────────────────────────────────────────────────────
-
     ⚠️  Ruby 3.2 support ends in the NEXT release
 
     This is the last Plutonium release that installs on Ruby 3.2.
