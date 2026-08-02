@@ -67,10 +67,10 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  # The listing above only reads. Creating is where the parent field has to be
-  # inferred, and a polymorphic belongs_to cannot be asked for its class — so
-  # this is the path that used to raise, and then (once the reflection was
-  # skipped) silently produced a comment attached to nothing.
+  # Creation through a polymorphic nesting, resolved by inverse_of. Rails
+  # detects the inverse automatically when `as:` and the child's belongs_to
+  # share a name, so this never reaches the foreign-key scan below it — worth
+  # saying, because it passes with or without that branch working.
   test "creates a comment on a post through the polymorphic nested route" do
     post_record = create_post!(user: @user, organization: @org)
 
@@ -82,6 +82,23 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     comment = Comment.order(:id).last
     assert_equal "Created through the nesting", comment.body
     # Both halves of the polymorphic reference, not just the id.
+    assert_equal post_record.id, comment.commentable_id
+    assert_equal post_record.class.polymorphic_name, comment.commentable_type
+  end
+
+  # The same creation where automatic inverse detection is off, so the parent
+  # field can only come from the foreign-key scan. A polymorphic belongs_to
+  # cannot be asked for its class — that raises — so it has to be matched on the
+  # type column instead, which is what `as:` names on the parent side.
+  test "creates through a polymorphic nesting that has no inverse_of" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    assert_difference -> { Comment.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comments_without_inverse",
+        params: {comment: {body: "No inverse to lean on", user: @user.to_sgid.to_s}}
+    end
+
+    comment = Comment.order(:id).last
     assert_equal post_record.id, comment.commentable_id
     assert_equal post_record.class.polymorphic_name, comment.commentable_type
   end

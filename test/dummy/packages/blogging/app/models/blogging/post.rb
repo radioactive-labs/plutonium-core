@@ -20,6 +20,13 @@ class Blogging::Post < Blogging::ResourceRecord
   # add has_one associations above.
 
   has_many :comments, as: :commentable, dependent: :destroy
+  # Same polymorphic target, with automatic inverse detection switched off, and
+  # named for exactly that. `comments` above resolves through inverse_of, which
+  # short-circuits the foreign-key scan in parent_input_param — so without this
+  # the polymorphic branch of that scan is never entered by the suite, and a
+  # test against it passes whether the branch works or not.
+  has_many :comments_without_inverse, as: :commentable, class_name: "Comment",
+    inverse_of: false, dependent: :destroy
   has_many :post_tags, class_name: "Blogging::PostTag", foreign_key: :post_id, dependent: :destroy
   has_many :tags, through: :post_tags, class_name: "Blogging::Tag"
   # add has_many associations above.
