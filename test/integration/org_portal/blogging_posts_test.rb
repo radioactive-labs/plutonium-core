@@ -67,6 +67,25 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # The listing above only reads. Creating is where the parent field has to be
+  # inferred, and a polymorphic belongs_to cannot be asked for its class — so
+  # this is the path that used to raise, and then (once the reflection was
+  # skipped) silently produced a comment attached to nothing.
+  test "creates a comment on a post through the polymorphic nested route" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    assert_difference -> { Comment.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comments",
+        params: {comment: {body: "Created through the nesting", user: @user.to_sgid.to_s}}
+    end
+
+    comment = Comment.order(:id).last
+    assert_equal "Created through the nesting", comment.body
+    # Both halves of the polymorphic reference, not just the id.
+    assert_equal post_record.id, comment.commentable_id
+    assert_equal post_record.class.polymorphic_name, comment.commentable_type
+  end
+
   test "shows post detail (has_one)" do
     post_record = create_post!(user: @user, organization: @org)
     create_post_detail!(post: post_record)
