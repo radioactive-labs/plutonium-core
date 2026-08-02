@@ -257,7 +257,19 @@ module Plutonium
           "#{scoped_entity_param_key}_"
         end
 
-        helper_name = :"#{helper_suffix}#{entity_prefix}#{helper_base}_path"
+        # For association names that singularize to themselves ("comment_series",
+        # "news", anything ending in an uncountable word), the member and
+        # collection helpers above resolve to the same string. Rails breaks that
+        # tie by suffixing the collection route with _index, exactly as it does
+        # for top-level resources — without matching it here the helper named
+        # does not exist, url_for falls back to param recall, and a collection
+        # link comes back as a member action with no id.
+        uncountable_index_suffix = if is_collection_action && !is_singular &&
+            nested_resource_name.pluralize == nested_resource_name.singularize
+          "_index"
+        end
+
+        helper_name = :"#{helper_suffix}#{entity_prefix}#{helper_base}#{uncountable_index_suffix}_path"
 
         # Build the arguments for the helper
         helper_args = []

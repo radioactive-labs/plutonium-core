@@ -94,13 +94,27 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     post_record = create_post!(user: @user, organization: @org)
 
     assert_difference -> { Comment.count }, 1 do
-      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comments_without_inverse",
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_noninverse_comments",
         params: {comment: {body: "No inverse to lean on", user: @user.to_sgid.to_s}}
     end
 
     comment = Comment.order(:id).last
     assert_equal post_record.id, comment.commentable_id
     assert_equal post_record.class.polymorphic_name, comment.commentable_type
+  end
+
+  # "comment_series" singularizes to itself, so Rails suffixes the collection
+  # route with _index. The nested URL builder has to match that, as the
+  # top-level one already does, or every link it builds for the collection
+  # names a helper that was never generated.
+  test "renders a nesting whose name singularizes to itself" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comment_series"
+    assert_response :success
+
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_comment_series/new"
+    assert_response :success
   end
 
   test "shows post detail (has_one)" do

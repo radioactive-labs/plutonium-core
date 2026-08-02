@@ -25,8 +25,12 @@ class Blogging::Post < Blogging::ResourceRecord
   # short-circuits the foreign-key scan in parent_input_param — so without this
   # the polymorphic branch of that scan is never entered by the suite, and a
   # test against it passes whether the branch works or not.
-  has_many :comments_without_inverse, as: :commentable, class_name: "Comment",
+  has_many :noninverse_comments, as: :commentable, class_name: "Comment",
     inverse_of: false, dependent: :destroy
+  # A nested association whose name singularizes to itself, which is how Rails
+  # ends up naming the collection route with an _index suffix. Kept separate
+  # from the one above so each test moves a single variable.
+  has_many :comment_series, as: :commentable, class_name: "Comment", dependent: :destroy
   has_many :post_tags, class_name: "Blogging::PostTag", foreign_key: :post_id, dependent: :destroy
   has_many :tags, through: :post_tags, class_name: "Blogging::Tag"
   # add has_many associations above.
