@@ -23,11 +23,8 @@ Gem::Specification.new do |spec|
   # owner changes). `gem push` will prompt for an OTP at release time.
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  # post_install_message prints on EVERY install, so it carries only notices
-  # that are still actionable for someone installing THIS version. The 0.49.0
-  # entity-scope rename was removed once it was ~14 releases old: anyone
-  # upgrading across it had long since done so, and anyone installing fresh
-  # was being handed history they had no way to act on.
+  # Prints on EVERY install: only notices still actionable for someone
+  # installing THIS version.
   spec.post_install_message = <<~MSG
     ⚠️  Ruby 3.2 support ends in the NEXT release
 
