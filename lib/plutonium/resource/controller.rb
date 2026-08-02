@@ -257,8 +257,21 @@ module Plutonium
           parent_class = current_parent_class
           if parent_class
             scope = authorized_scope(parent_class.all, context: {entity_scope: entity_scope_for_authorize})
-            scope = scope.from_path_param(params[parent_route_param]) if parent_route_param
-            scope.first!.tap { |parent| authorize! parent, to: :read? }
+            parent = if singular_resource_route_for?(parent_class)
+              # A singular parent puts no id in the path, so the scope must
+              # already identify exactly one record. `sole` says so: `first!`
+              # would quietly hand back whichever row sorted first if the scope
+              # ever resolved to several, and silently nesting under the wrong
+              # parent is far worse than failing loudly.
+              scope.sole
+            else
+              # The id parameter is named by the parent's own route, so it is
+              # derived rather than discovered. Scanning path_parameters for
+              # anything ending in _id would also match an unrelated parameter
+              # an application happens to name that way.
+              scope.from_path_param(params[:"#{parent_class.model_name.singular}_id"]).first!
+            end
+            parent.tap { authorize! parent, to: :read? }
           end
         end
       end
@@ -282,12 +295,6 @@ module Plutonium
           nested_key && current_engine.routes.resource_route_config_lookup[nested_key]
       end
 
-      # Returns the parent route parameter
-      # @return [Symbol, nil] The parent route parameter
-      def parent_route_param
-        @parent_route_param ||= request.path_parameters.keys.reverse.find { |key| /_id$/.match? key }
-      end
-
       # Returns the parent input parameter (the belongs_to association name on the child)
       # Finds the belongs_to association on the child that matches the parent's foreign key
       # @return [Symbol, nil] The parent input parameter
@@ -306,10 +313,28 @@ module Plutonium
         # Try inverse_of first (if explicitly set)
         return parent_assoc.inverse_of.name.to_sym if parent_assoc.inverse_of
 
-        # Fall back to finding belongs_to by foreign key
+        # Fall back to finding belongs_to by foreign key.
+        #
+        # Polymorphic reflections are skipped rather than compared: asking a
+        # polymorphic belongs_to for its klass raises, and one sharing the
+        # parent's foreign key name would take the whole request down.
+        #
+        # The class is matched with is_a? rather than ==, so a parent that is an
+        # STI subclass still matches an association declared against its base.
         foreign_key = parent_assoc.foreign_key.to_s
         child_assoc = resource_class.reflect_on_all_associations(:belongs_to).find do |assoc|
-          assoc.foreign_key.to_s == foreign_key && assoc.klass == current_parent.class
+          next false unless assoc.foreign_key.to_s == foreign_key
+
+          if assoc.polymorphic?
+            # A polymorphic belongs_to cannot be asked for its class — that
+            # raises. Its counterpart is the type column, which is exactly what
+            # `has_many :things, as: :owner` names on the parent side, so the
+            # two are matched on that instead. Assigning the parent to the
+            # association then sets both the id and the type.
+            parent_assoc.type.present? && assoc.foreign_type.to_s == parent_assoc.type.to_s
+          else
+            current_parent.is_a?(assoc.klass)
+          end
         end
         child_assoc&.name&.to_sym
       end
