@@ -44,6 +44,40 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_equal "#{base}/rename", URI(response.location).path
   end
 
+  # A step's fields are fixed when the class loads, so a proc is how an option
+  # depends on the run. It resolves against the wizard, the same receiver a
+  # step's `condition:` gets, so `anchor` reads the same in both.
+  test "a proc-valued input option resolves against the wizard" do
+    get "#{base}/rename"
+
+    assert_response :success
+    assert_includes response.body, "Currently #{@widget.name}"
+  end
+
+  test "the option follows the anchor, not a value captured at class load" do
+    @widget.update!(name: "Renamed since boot")
+
+    get "#{base}/rename"
+
+    assert_includes response.body, "Currently Renamed since boot"
+  end
+
+  # The motivating case: without this a step's `choices:` proc is called with a
+  # FieldCapture as `self`, so reading `anchor` raises a NameError naming an
+  # internal the author never wrote.
+  test "choices drawn from the anchor materialise into options" do
+    get "#{base}/rename"
+
+    assert_response :success
+    assert_includes response.body, "#{@widget.name} was wrong"
+  end
+
+  test "the anchor a proc option sees is the scoped one, not another tenant's" do
+    get "#{prefix}/widgets/#{@other_widget.id}/wizards/configure/rename"
+
+    assert_response :not_found
+  end
+
   test "implicitly keyed by [widget, user]: a second launch resumes, not forks" do
     post "#{base}/rename", params: {wizard: {name: "Draft"}, _direction: "next"}
     assert_equal 1, Plutonium::Wizard::Session.where(status: "in_progress").count

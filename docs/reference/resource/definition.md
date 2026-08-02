@@ -200,6 +200,22 @@ field   :debug_info,       condition: -> { Rails.env.development? }
 `condition:` is for UI logic ("show this when published"). For "who can see this", use the policy's `permitted_attributes_for_*` — see [Behavior › Policy](/reference/behavior/policies).
 :::
 
+## Options that vary per render
+
+Any field/input option may be a **proc**, resolved on every render rather than frozen when the class loads. Arity picks what it receives:
+
+```ruby
+input :tier,  as: :select, choices: ->(form) { form.object.account.available_tiers }
+input :notes, placeholder: -> { "Updated #{Time.current.year}" }
+```
+
+- **`->(form) { … }`** is handed the form, so `object` (the record being edited), `params` and view helpers are all reachable.
+- **`-> { … }`** is called as-is, keeping whatever it closed over. That matters for an option declared inside an interaction's `customize_inputs`, which closes over the interaction: `choices: -> { reviewer_choices }` resolves against it.
+
+`condition:` is the exception — it is evaluated separately at render (above), always against the form.
+
+A wizard step resolves a zero-arity proc against the **wizard** instead, since a step block closes over a throwaway recorder rather than anything useful. See [Wizard DSL › Runtime input options](/reference/wizard/dsl#runtime-input-options).
+
 ## Dynamic forms (`pre_submit`)
 
 A field with `pre_submit: true` triggers a server re-render on change, re-evaluating `condition:` procs. Use for cascading or context-dependent forms.

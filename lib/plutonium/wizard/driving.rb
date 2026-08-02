@@ -528,6 +528,7 @@ module Plutonium
         step = runner.current_step
         Plutonium::UI::Form::Wizard.new(
           step:,
+          wizard: runner.wizard,
           data: Plutonium::Wizard::AttachmentData.wrap(runner.wizard.data[step.key], step),
           action: wizard_step_url(step&.key),
           fields: step.attribute_schema.keys.map(&:to_sym) + step.structured_inputs.keys.map(&:to_sym)
