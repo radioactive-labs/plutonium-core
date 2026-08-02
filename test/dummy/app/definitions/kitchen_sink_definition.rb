@@ -71,6 +71,12 @@ class KitchenSinkDefinition < ::ResourceDefinition
 
   # Basic scalar inputs
   input :email_address, as: :email
+  # Declared with `as: :hidden` on `input` alone, with no companion
+  # `field` declaration. That is the spelling an author reaches for first,
+  # and it must produce the same hidden wrapper that `field :x, as: :hidden`
+  # does rather than a hidden input inside a labelled wrapper.
+  input :tracking_id, as: :hidden
+
   input :secret, as: :password
   # In the 2-column :appearance section, but opts back to full width via an
   # explicit col-span — which must survive the section's `columns:` default.

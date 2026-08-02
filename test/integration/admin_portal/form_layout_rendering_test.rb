@@ -23,6 +23,19 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(name="kitchen_sink[age]")
   end
 
+  # `as: :hidden` is honoured whether it is declared on `field` or on `input`.
+  # The tag lookup reads from either, and so does the wrapper selection, so an
+  # input-only declaration gets the same hidden wrapper rather than a hidden
+  # input inside a labelled wrapper that still occupies a grid cell.
+  test "a field declared hidden via input renders without label chrome" do
+    get "/admin/kitchen_sinks/new"
+    assert_response :success
+
+    assert_includes response.body, %(name="kitchen_sink[tracking_id]")
+    assert_match(/<div hidden>\s*<input[^>]*name="kitchen_sink\[tracking_id\]"/, response.body)
+    refute_match(/<label[^>]*for="[^"]*tracking_id[^"]*"/, response.body)
+  end
+
   test "collapsible section renders a details element" do
     get "/admin/kitchen_sinks/new"
     assert_match(/<details[^>]*\bopen\b/, response.body)
