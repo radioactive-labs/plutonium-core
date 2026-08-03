@@ -74,7 +74,7 @@ module Plutonium
                 keep["q"] = cleaned
               end
             end
-            "#{request.path}?#{keep.to_query}"
+            "#{@query.request_path}?#{keep.to_query}"
           end
 
           def render_result_count

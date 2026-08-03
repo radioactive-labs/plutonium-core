@@ -19,7 +19,7 @@ module Plutonium
 
       @item_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_items"
-        include Plutonium::Positioning
+        include Plutonium::Positioning::Model
 
         positioned_on :position, scope: :status
       end
@@ -251,6 +251,34 @@ module Plutonium
     end
 
     # ------------------------------------------------------------------ #
+    # reposition! reports whether it rebalanced                            #
+    # ------------------------------------------------------------------ #
+
+    def test_reposition_reports_no_rebalance_on_a_normal_move
+      a = @item_class.create!(status: "todo")
+      b = @item_class.create!(status: "todo")
+      c = @item_class.create!(status: "todo")
+
+      result = c.reposition!(prev_record: a, next_record: b)
+
+      refute result.rebalanced?
+    end
+
+    def test_reposition_reports_a_rebalance_when_the_gap_is_exhausted
+      a = @item_class.create!(status: "todo")
+      b = @item_class.create!(status: "todo")
+      c = @item_class.create!(status: "todo")
+
+      # Collapse the gap below EPSILON (1e-6) so the midpoint would collide.
+      a.update_column(:position, 1.0)
+      b.update_column(:position, 1.0 + 1e-9)
+
+      result = c.reposition!(prev_record: a.reload, next_record: b.reload)
+
+      assert result.rebalanced?
+    end
+
+    # ------------------------------------------------------------------ #
     # Migration helper: t.position                                         #
     # ------------------------------------------------------------------ #
 
@@ -333,7 +361,7 @@ module Plutonium
 
       global_class = Class.new(ActiveRecord::Base) do
         self.table_name = "positioning_test_globals"
-        include Plutonium::Positioning
+        include Plutonium::Positioning::Model
 
         positioned_on :position
       end

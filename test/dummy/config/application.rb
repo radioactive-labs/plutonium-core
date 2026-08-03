@@ -18,6 +18,14 @@ require "action_cable/engine"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# Required explicitly rather than left to Bundler.require. Under the test suite
+# the dummy boots on an APPRAISAL gemfile, where acts_as_list arrives as a
+# gemspec development dependency and therefore lands in the :development group —
+# which Rails.groups excludes in the test environment. Chore (the Mode B
+# positioning fixture) needs the gem loaded in every environment, so the require
+# is unconditional.
+require "acts_as_list"
+
 require_relative "packages"
 
 module Dummy

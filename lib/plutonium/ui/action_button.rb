@@ -159,7 +159,10 @@ module Plutonium
         if current_turbo_frame && current_parent
           resource_url_for(current_parent, parent: nil)
         else
-          request.original_url
+          # current_page_url, not request.original_url: a button re-rendered by
+          # a stream-producing POST (the reposition drop) must return the user
+          # to the page they are on, never to that POST-only endpoint.
+          current_page_url
         end
       end
 

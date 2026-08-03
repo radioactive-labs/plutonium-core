@@ -133,7 +133,7 @@ module Plutonium
           # neighbor computation and WIP count are correct in all cases
           # (cross-column, same-column reorder, record already in destination).
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, to.scope)
-          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
+          dest_cards = board.position_config_for(current_definition).order(dest_scoped).where.not(id: record.id).to_a
           # to_index is client-supplied. Clamp to [0, dest_cards.size] so a negative
           # value can't wrap via Ruby's negative array indexing (dest_cards[-1] would
           # silently anchor the drop to the LAST card) and an over-large value simply
@@ -197,7 +197,27 @@ module Plutonium
             @resource_record = record
           end
 
-          ActiveRecord::Base.transaction do
+          # Opened on the RECORD'S OWN connection, not ActiveRecord::Base's. A
+          # transaction lives on the receiver's connection pool, and every write
+          # this block owns — the on_exit/on_enter save!, reposition!'s update!
+          # (and any rebalance it triggers), the final save! — goes out on
+          # `record`'s pool. For a resource on a secondary database
+          # ActiveRecord::Base.transaction would BEGIN on primary and leave all of
+          # those autocommitting unprotected: a failure mid-move could persist an
+          # on_enter column change with no reposition, or a half-applied
+          # rebalance. Do not "simplify" this back to ActiveRecord::Base.
+          #
+          # LIMIT — this is a single-connection guarantee, and the drop
+          # interaction (step 2) plus user-supplied on_exit/on_enter blocks may
+          # write models the framework knows nothing about. Those are covered iff
+          # they sit on the SAME connection as `record` (the overwhelmingly common
+          # case: one database, or the same secondary as the resource). Writes to
+          # a model on a DIFFERENT database are NOT rolled back by this block, and
+          # no choice of receiver can fix that — Rails has no two-phase commit
+          # across pools, and nesting a second transaction would only shrink the
+          # window, not close it. record.class is the best available receiver
+          # because it is the one whose writes this action definitely owns.
+          record.class.transaction do
             # (1) Apply on_exit (SOURCE column) then on_enter (DESTINATION column),
             # CROSS-column moves only. A same-column reorder skips both (see
             # cross_column above) and only repositions; on_exit/on_enter represent
@@ -256,7 +276,7 @@ module Plutonium
             # Mode A delegates to record.reposition! (calls update! for position).
             # Mode B calls the user-supplied block.
             # Mode C is a no-op (no ordering; position unchanged).
-            board.position_config.reposition!(
+            board.position_config_for(current_definition).reposition!(
               record:,
               column: to.key,
               prev_record:,
@@ -320,7 +340,7 @@ module Plutonium
               if run_enter_interaction
                 streams += [turbo_stream.update(Plutonium::REMOTE_MODAL_FRAME, "")]
                 outcome.messages.each do |msg, type|
-                  streams += [turbo_stream.append("kanban-flash", partial: "plutonium/toast",
+                  streams += [turbo_stream.append(Plutonium::FLASH_REGION, partial: "plutonium/toast",
                     locals: {type: ((type == :notice) ? :success : type), msg:})]
                 end
               end
@@ -535,9 +555,9 @@ module Plutonium
           board = current_kanban_board
 
           # Resolve only the requested column rather than grouping the whole
-          # board: Grouping.call would scope+count+limit every column (~2 queries
-          # each) on every lazy frame request. We compare keys as strings to
-          # avoid interning arbitrary request input into symbols.
+          # board: grouping every column would scope+count+limit all of them
+          # (~2 queries each) on every lazy frame request. We compare keys as
+          # strings to avoid interning arbitrary request input into symbols.
           columns = Plutonium::Kanban::Grouping.resolve_columns(board, kanban_context)
           column = columns.find { |c| c.key.to_s == params[:column] }
 
@@ -578,7 +598,7 @@ module Plutonium
           return "".html_safe unless column
 
           scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
-          ordered = board.position_config.order(scoped)
+          ordered = board.position_config_for(current_definition).order(scoped)
 
           if board.per_column
             total = ordered.count
@@ -729,7 +749,7 @@ module Plutonium
           case on.to_sym
           when :visible
             board = current_kanban_board
-            ordered = board.position_config.order(scoped)
+            ordered = board.position_config_for(current_definition).order(scoped)
             limited = board.per_column ? ordered.limit(board.per_column) : ordered
             limited.pluck(resource_class.primary_key)
           else # :all and any unknown value
@@ -780,8 +800,8 @@ module Plutonium
           # nil), via the board's position_config — the same path a drag-drop uses.
           board = current_kanban_board
           dest_scoped = Plutonium::Kanban::Grouping.apply_scope(kanban_base_relation, column.scope)
-          dest_cards = board.position_config.order(dest_scoped).where.not(id: record.id).to_a
-          board.position_config.reposition!(
+          dest_cards = board.position_config_for(current_definition).order(dest_scoped).where.not(id: record.id).to_a
+          board.position_config_for(current_definition).reposition!(
             record:,
             column: column.key,
             prev_record: dest_cards.last,
@@ -795,7 +815,7 @@ module Plutonium
         # unchanged, allowing the Stimulus drag controller to snap the card back.
         #
         # When a reason is given, a single dismissable toast is appended to the
-        # board's #kanban-flash region so the snap-back is explained rather than
+        # page's shared toast region so the snap-back is explained rather than
         # silent. It renders the shared _toast partial directly (not via flash)
         # so a stale, undisplayed flash from an earlier request can't leak into
         # the turbo_stream response — these move POSTs never render the layout
@@ -810,7 +830,7 @@ module Plutonium
 
           if reason
             streams << turbo_stream.append(
-              "kanban-flash",
+              Plutonium::FLASH_REGION,
               partial: "plutonium/toast",
               locals: {type: :warning, msg: reason}
             )

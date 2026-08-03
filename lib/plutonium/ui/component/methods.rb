@@ -61,6 +61,8 @@ module Plutonium
           :root_path,
           :make_page_title,
           :resource_logo_tag,
+          :current_page_path,
+          :current_page_url,
           to: :view_context
       end
     end

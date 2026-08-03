@@ -121,8 +121,8 @@ class AdminPortal::KanbanSmokeTest < ActiveSupport::TestCase
 
   # ─── Positioning ───────────────────────────────────────────────────────────
 
-  test "Task model includes Plutonium::Positioning" do
-    assert Task.include?(Plutonium::Positioning)
+  test "Task model includes Plutonium::Positioning::Model" do
+    assert Task.include?(Plutonium::Positioning::Model)
   end
 
   test "positioning_column is :position" do
