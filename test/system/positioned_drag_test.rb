@@ -232,23 +232,88 @@ class PositionedDragTest < ApplicationSystemTestCase
   test "a clean drop leaves the existing rows in place rather than re-rendering them" do
     open_task_index
 
-    page.execute_script(<<~JS)
-      document.querySelectorAll("[data-positioned-row-id]").forEach(row => {
-        row.dataset.dropWitness = "w" + row.dataset.positionedRowId
-      })
-    JS
+    stamp_row_witnesses
 
     drag_first_to_end
 
     assert_row_ids [@bravo.id, @charlie.id, @alpha.id]
     assert_persisted_titles %w[Bravo Charlie Alpha]
 
-    witnesses = page.evaluate_script(<<~JS)
-      [...document.querySelectorAll("[data-positioned-row-id]")]
-        .map(row => String(row.dataset.dropWitness))
-    JS
-    assert_equal ["w#{@bravo.id}", "w#{@charlie.id}", "w#{@alpha.id}"], witnesses,
+    assert_equal ["w#{@bravo.id}", "w#{@charlie.id}", "w#{@alpha.id}"], surviving_row_witnesses,
       "the 204 path must move the existing rows, not replace the collection"
+  end
+
+  # ─── 7. Focus survives a reconciliation ─────────────────────────────────────
+  #
+  # The 204 path leaves the DOM alone, so focus never moves. The STREAM path
+  # replaces the collection wrapper's contents — and the controller's own element
+  # (the div around the <table>) is one of the nodes discarded with it. Restoring
+  # focus therefore cannot be done through `this.element`: by the time the
+  # callback runs, that belongs to a detached tree.
+  #
+  # Provoked with a real rebalance rather than a stub: Bravo and Charlie are
+  # 1e-7 apart, inside EPSILON, so there is no midpoint to give Alpha and the
+  # whole group is renumbered — which is exactly when the server streams.
+  test "a keyboard move that forces a rebalance keeps focus on the moved row" do
+    @bravo.update_column(:position, 2.0)
+    @charlie.update_column(:position, 2.0000001)
+
+    open_task_index
+    assert_equal [@alpha.id, @bravo.id, @charlie.id], rendered_row_ids
+
+    stamp_row_witnesses
+    focus_first_grip
+    press_arrow(:arrow_down)
+
+    assert_row_ids [@bravo.id, @alpha.id, @charlie.id]
+    assert_persisted_titles %w[Bravo Alpha Charlie]
+
+    # Two independent witnesses that this went down the STREAM path, not the 204
+    # one — which is the whole premise of the focus assertion below.
+    #
+    # A row the user never touched was renumbered: Charlie sat at 2.0000001 and
+    # only a rebalance moves it.
+    assert_equal 3.0, Task.uncached { Task.find(@charlie.id).position }.to_f,
+      "the exhausted gap should have renumbered the whole group"
+    # And the collection itself was replaced: no stamped node survived. Polled,
+    # because the write landing in the database is not the stream having
+    # rendered — assert_persisted_titles above returns as soon as the POST
+    # commits, which can be a frame or two before Turbo swaps the rows in.
+    assert_no_surviving_row_witnesses
+
+    assert_focused_row @alpha.id,
+      "focus must land on the moved row's grip in the REPLACED collection"
+  end
+
+  # ─── 8. A move the server never confirms is undone ──────────────────────────
+  #
+  # The row is moved optimistically before the POST, so any outcome that is not
+  # the server's own truth has to put it back. Leaving it is what the kanban
+  # board does, correctly — native DnD never re-parents a card there — but a
+  # reorder DOES re-parent, so the same choice here leaves the user looking at an
+  # order that was never written, with nothing to hint at it but a reload.
+  #
+  # Driven by failing the request rather than the server: offline, a dropped
+  # connection and an aborted navigation are the realistic causes, and none of
+  # them can be produced from the Rails side.
+  test "a failed reposition request puts the row back" do
+    open_task_index
+    stub_reposition_failure
+
+    focus_first_grip
+    press_arrow(:arrow_down)
+
+    # Non-vacuous: the controller only POSTs after moving the row, and it skips
+    # the POST entirely when a move would be a no-op. One attempt therefore
+    # proves the optimistic move happened and the assertion below is a revert
+    # rather than a move that never occurred.
+    assert_reposition_attempted
+
+    assert_row_ids [@alpha.id, @bravo.id, @charlie.id]
+    assert_persisted_titles %w[Alpha Bravo Charlie]
+
+    assert_focused_row @alpha.id,
+      "the keyboard path leaves the user on this grip; a revert must not strand them"
   end
 
   private
@@ -478,5 +543,85 @@ class PositionedDragTest < ApplicationSystemTestCase
   # whatever actually has focus, not a synthetic event aimed at a node.
   def press_arrow(key)
     page.driver.browser.action.send_keys(key).perform
+  end
+
+  # Which record the focused grip belongs to. Polled: on the stream path focus is
+  # restored a frame after Turbo finishes rendering the replacement rows.
+  def assert_focused_row(expected_id, message)
+    deadline = Time.now + Capybara.default_max_wait_time
+    focused = nil
+    while Time.now < deadline
+      focused = page.evaluate_script(<<~JS)
+        document.activeElement?.closest?.("[data-positioned-grip]")
+          ? document.activeElement.closest("[data-positioned-row-id]")?.dataset.positionedRowId
+          : null
+      JS
+      break if focused.to_s == expected_id.to_s
+      sleep 0.1
+    end
+    assert_equal expected_id.to_s, focused.to_s, message
+  end
+
+  # "Were these exact DOM nodes replaced?" is invisible to any assertion about
+  # content — identical HTML is the expected result whether the collection was
+  # re-rendered or its rows merely moved. So stamp every row first: a witness can
+  # only survive if its node did. Used in both directions — the 204 path must
+  # keep them, a reconciliation must not.
+  def stamp_row_witnesses
+    page.execute_script(<<~JS)
+      document.querySelectorAll("[data-positioned-row-id]").forEach(row => {
+        row.dataset.dropWitness = "w" + row.dataset.positionedRowId
+      })
+    JS
+  end
+
+  def surviving_row_witnesses
+    page.evaluate_script(<<~JS).compact
+      [...document.querySelectorAll("[data-positioned-row-id]")]
+        .map(row => row.dataset.dropWitness ?? null)
+    JS
+  end
+
+  def assert_no_surviving_row_witnesses
+    deadline = Time.now + Capybara.default_max_wait_time
+    surviving = nil
+    while Time.now < deadline
+      surviving = surviving_row_witnesses
+      break if surviving.empty?
+      sleep 0.1
+    end
+    assert_empty surviving,
+      "a reconciliation must replace the collection, not move the existing rows"
+  end
+
+  # ─── failure injection ──────────────────────────────────────────────────────
+
+  # Makes every reposition POST fail at the transport, the way being offline
+  # does. Deliberately not a Rails-side rejection: the server answering at all
+  # means a turbo-stream, which is the path that reconciles rather than reverts.
+  # Other requests are left alone so the page keeps working.
+  def stub_reposition_failure
+    page.execute_script(<<~JS)
+      window.__repositionAttempts = 0;
+      const realFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        if (String(input?.url ?? input).includes("/reposition")) {
+          window.__repositionAttempts++;
+          return Promise.reject(new TypeError("simulated network failure"));
+        }
+        return realFetch(input, init);
+      };
+    JS
+  end
+
+  def assert_reposition_attempted
+    deadline = Time.now + Capybara.default_max_wait_time
+    attempts = 0
+    while Time.now < deadline
+      attempts = page.evaluate_script("window.__repositionAttempts").to_i
+      break if attempts.positive?
+      sleep 0.1
+    end
+    assert_equal 1, attempts, "the controller should have moved the row and posted exactly once"
   end
 end

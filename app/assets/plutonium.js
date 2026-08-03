@@ -29556,8 +29556,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const before = others[index] ?? null;
       const after = others[index - 1] ?? null;
       if (row.nextElementSibling === before && row.previousElementSibling === after) return;
+      const restoreAnchor = row.nextSibling;
       row.parentElement.insertBefore(row, before);
-      this.#submit(row.dataset.positionedRowId, {
+      this.#submit(row, restoreAnchor, {
         // The ids of the row's VISIBLE neighbours. A blank one means "nothing on
         // that side of my page" — the server treats that as a claim about the
         // viewport, not about the positioning group, and looks the real boundary
@@ -29567,7 +29568,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         toIndex: index
       });
     }
-    async #submit(recordId, { prevId, nextId, toIndex }) {
+    // `row` is the already-moved element and `restoreAnchor` the sibling it sat
+    // in front of beforehand, so every path that does not end in the server's own
+    // truth can undo the optimistic move rather than leave it standing.
+    async #submit(row, restoreAnchor, { prevId, nextId, toIndex }) {
+      const recordId = row.dataset.positionedRowId;
       const url = this.urlTemplateValue.replace("__ID__", recordId) + window.location.search;
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
       try {
@@ -29592,13 +29597,29 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           window.Turbo.renderStreamMessage(await response.text());
           if (focusedRowId) this.#restoreFocus(focusedRowId);
         } else if (!response.ok) {
-          console.error(`[positioned] reposition rejected (${response.status}); leaving the row where it was dropped`);
+          console.error(`[positioned] reposition rejected (${response.status}); reverting the move`);
+          this.#revertMove(row, restoreAnchor);
         } else {
-          console.warn("[positioned] reposition returned a non-stream response (session expired?); leaving the row where it was dropped");
+          console.warn("[positioned] reposition returned a non-stream response (session expired?); reverting the move");
+          this.#revertMove(row, restoreAnchor);
         }
       } catch (error2) {
         console.error("[positioned] reposition request failed:", error2);
+        this.#revertMove(row, restoreAnchor);
       }
+    }
+    // Undoes the optimistic move. Only meaningful while the row is still the node
+    // we moved: once a turbo-stream has replaced the collection the server's truth
+    // owns the DOM, and this instance's nodes are detached.
+    //
+    // A missing/relocated anchor falls back to appending, which is also what a
+    // null anchor legitimately means — the row was last before the move.
+    #revertMove(row, anchor) {
+      const parent = row.parentElement;
+      if (!parent || !row.isConnected) return;
+      const refocus = row.contains(document.activeElement);
+      parent.insertBefore(row, anchor?.parentNode === parent ? anchor : null);
+      if (refocus) row.querySelector("[data-positioned-grip]")?.focus();
     }
     // ─── helpers ────────────────────────────────────────────────────────────────
     #rows() {
@@ -29613,9 +29634,18 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     // Deferred a frame: renderStreamMessage resolves its render asynchronously,
     // so the replacement rows are not in the document yet when it returns.
+    //
+    // Queried off `document`, NOT `this.element`. The stream replaces the contents
+    // of the collection wrapper (Page::Index.collection_dom_id), and this
+    // controller's element — the div around the <table>, or the grid div — is one
+    // of the nodes it discards. By the time this callback runs `this.element` is
+    // detached, so scoping the lookup to it finds nothing and focus is silently
+    // lost on exactly the path this method exists to cover: a keyboard move that
+    // triggered a rebalance. A fresh controller is already connected to the
+    // replacement; `document` is the only handle that spans both.
     #restoreFocus(rowId) {
       requestAnimationFrame(() => {
-        this.element.querySelector(`[data-positioned-row-id="${CSS.escape(rowId)}"] [data-positioned-grip]`)?.focus();
+        document.querySelector(`[data-positioned-row-id="${CSS.escape(rowId)}"] [data-positioned-grip]`)?.focus();
       });
     }
   };
