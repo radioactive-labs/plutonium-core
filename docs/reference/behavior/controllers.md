@@ -108,13 +108,13 @@ def filtered_resource_collection
 end
 ```
 
-This is also where you eager-load associations the index renders, which is the usual cure for an N+1 on a listing — call `super` to keep scoping, search, filters and sorting, and add the `includes`:
+Also where you eager-load associations the index renders. `super` keeps scoping, search, filters and sorting:
 
 ```ruby
-def filtered_resource_collection = super.includes(:user, :organization)
+def filtered_resource_collection = super.includes(:author, :category)
 ```
 
-See [Guides › Performance (N+1)](/guides/performance).
+See [Guides › Performance](/guides/performance).
 
 ### Presentation hooks
 

@@ -123,7 +123,7 @@ export default defineConfig(withMermaid({
           text: "Quality",
           items: [
             { text: "Testing", link: "/guides/testing" },
-            { text: "Performance (N+1)", link: "/guides/performance" },
+            { text: "Performance", link: "/guides/performance" },
             { text: "Troubleshooting", link: "/guides/troubleshooting" },
           ]
         }
