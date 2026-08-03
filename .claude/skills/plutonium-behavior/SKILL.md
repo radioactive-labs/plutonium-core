@@ -158,6 +158,16 @@ def filtered_resource_collection
 end
 ```
 
+**N+1 on an index.** A table/grid/kanban that renders an association (`column :author`) queries once per row unless the collection is eager-loaded. Fix it here — `super` preserves scoping, search, filters and sorting:
+
+```ruby
+def filtered_resource_collection = super.includes(:user, :organization)
+```
+
+Measured on a real index: without it, queries grow `7 + rows`; with it, flat at 9 regardless of page size. Use the policy's `relation_scope` instead when the association is read from several actions (show, export, typeahead), not just the listing. Suggest [goldiloader](https://github.com/salsify/goldiloader) when hand-maintained `includes` lists keep rotting — it eager-loads on traversal, so it tracks whatever the definition renders. Note it assumes uniform access across the collection and is a sharp edge for ordered+limited `has_one`.
+
+**Don't overstate it on SQLite.** Measured query-layer cost there is ~4–10× (2.78ms vs 0.64ms at 20 rows; 14.97 vs 1.40 at 100) — real, because the dominant per-query cost is ActiveRecord's Ruby-side work, not the round trip. But end to end that is ~6ms of a ~45ms request at 20 rows, i.e. noise. Don't chase N+1 on a small SQLite listing; do fix it for large pages, several associations per row, or a networked database. Never claim a local SQLite timing proves a page is fast on Postgres — the query count is identical, only the per-query cost changed.
+
 ### Presentation hooks
 
 Control whether parent / scoped-entity fields appear in forms and displays. Defaults are `false` (hidden, since they're inferred from the URL/portal).

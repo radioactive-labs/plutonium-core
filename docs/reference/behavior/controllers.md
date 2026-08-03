@@ -108,6 +108,14 @@ def filtered_resource_collection
 end
 ```
 
+This is also where you eager-load associations the index renders, which is the usual cure for an N+1 on a listing — call `super` to keep scoping, search, filters and sorting, and add the `includes`:
+
+```ruby
+def filtered_resource_collection = super.includes(:user, :organization)
+```
+
+See [Guides › Performance (N+1)](/guides/performance).
+
 ### Presentation hooks
 
 Control whether parent / scoped-entity fields appear in forms and displays. Defaults are `false` (hidden, since they're inferred from the URL/portal).
