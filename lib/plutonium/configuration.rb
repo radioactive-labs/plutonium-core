@@ -47,6 +47,16 @@ module Plutonium
     #   change the default, or `false` (or `""`) for no symbol application-wide.
     attr_accessor :default_currency_unit
 
+    # @return [Boolean] whether index pages eager-load the associations and
+    #   attachments they are about to render. On by default.
+    #
+    #   The rendered column set is declared, not discovered — it is resolved from
+    #   the policy before the collection loads — so the framework already knows
+    #   which associations the page will touch and can preload exactly those.
+    #   Turn it off globally here, or per controller via
+    #   `auto_eager_load_index?`.
+    attr_accessor :auto_eager_load_index
+
     # @return [String, nil] the default country (ISO2 code, e.g. "gh") for phone
     #   (`as: :phone`) inputs that don't set their own `initial_country:`. `nil`
     #   (default) leaves it to the intl-tel-input library (no country preselected).
@@ -88,6 +98,7 @@ module Plutonium
       @enable_hotreload = Rails.env.development?
       @shell = :modern
       @navii_host_url = "https://api.navii.dev"
+      @auto_eager_load_index = true
     end
 
     # Load default configuration for a specific version

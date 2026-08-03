@@ -14,11 +14,38 @@ tail -f log/development.log
 
 The cost matters most where each query is a network round trip. On Postgres or MySQL an index page can spend most of its time waiting; on SQLite the same page is cheaper, though the query count is identical. Either way the count grows with page size, so a listing that is fine at 20 rows may not be at 200.
 
-## Eager loading
+## Index pages preload themselves
+
+Index pages already eager-load the associations and attachments their columns render. The column set comes from the policy, so the framework knows it before the collection loads and can preload exactly those. Nothing to declare, and nothing to keep in step when a column is added or removed.
+
+It covers `belongs_to` and `has_one`, and attachments on both ActiveStorage and Shrine. `has_many` is excluded: preloading one to render a count loads every child row, which loses to a counter cache.
+
+Turn it off globally:
+
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure do |config|
+  config.auto_eager_load_index = false
+end
+```
+
+Or per resource:
+
+```ruby
+class PostsController < ::ResourceController
+  private
+
+  def auto_eager_load_index? = false
+end
+```
+
+## Eager loading by hand
+
+Other actions, and anything the framework can't see — an association read inside a custom column block, or one rendered on a show page — still need declaring.
 
 ### One listing
 
-Override `filtered_resource_collection` and add the associations that page renders. `super` keeps authorization scoping, search, filters, scopes and sorting:
+Override `filtered_resource_collection`. `super` keeps authorization scoping, search, filters, scopes and sorting:
 
 ```ruby
 class PostsController < ::ResourceController
@@ -32,7 +59,7 @@ See [Behavior › Controllers](/reference/behavior/controllers#index-query-hook)
 
 ### Everywhere
 
-`filtered_resource_collection` only covers the index. When an association is also read on a show page, an export or a typeahead, put it in the policy's `relation_scope` instead:
+When an association is read on a show page, an export or a typeahead, put it in the policy's `relation_scope`:
 
 ```ruby
 class PostPolicy < ResourcePolicy
@@ -46,9 +73,7 @@ A custom `relation_scope` must still call `default_relation_scope`, or scoping i
 
 ## Automatic eager loading
 
-Which associations a page renders is decided by the definition, so a hand-written `includes` list is a guess that goes stale when a column is added.
-
-[Goldiloader](https://github.com/salsify/goldiloader) removes the bookkeeping. It hooks association traversal: reading `post.author` on a record from a collection loads that association for the whole collection in one query. No `includes` anywhere.
+For the cases above that the framework can't resolve for you, [Goldiloader](https://github.com/salsify/goldiloader) removes the bookkeeping. It hooks association traversal: reading `post.author` on a record from a collection loads that association for the whole collection in one query. No `includes` anywhere.
 
 ```ruby
 # Gemfile
