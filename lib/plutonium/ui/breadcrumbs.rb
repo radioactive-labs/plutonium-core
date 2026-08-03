@@ -151,24 +151,21 @@ module Plutonium
       end
 
       def collect_plural_resource_breadcrumbs(items)
-        # Nested through the parent when there is one, so the trail links back
-        # into the nesting the request arrived through rather than jumping out
-        # to the resource's top-level index.
-        parent = current_parent
-
-        # Resource index link
+        # No `parent:` here on purpose: Resource::Controller#resource_url_args_for
+        # already defaults it to `current_parent` (and supplies
+        # `current_nested_association` with it), so both links nest themselves
+        # when the request arrived through a nesting. Passing it explicitly reads
+        # like it changes something; it doesn't. The parent segments above pass
+        # `parent: nil` precisely to opt OUT of that default.
         items << segment(
           nestable_resource_name_plural(resource_class),
-          resource_url_for(resource_class, parent: parent)
+          resource_url_for(resource_class)
         )
 
         # Record itself (for non-singular routes only)
         return unless resource_record!.persisted? && action_name != "show"
 
-        items << segment(
-          display_name_of(resource_record!),
-          resource_url_for(resource_record!, parent: parent)
-        )
+        items << segment(display_name_of(resource_record!), resource_url_for(resource_record!))
       end
 
       # Stands in for whatever the controller folded away, the way GitHub
