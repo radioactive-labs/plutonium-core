@@ -279,9 +279,11 @@ end
 | Method | Returns |
 |---|---|
 | `current_parent` | Parent record |
+| `current_parent_class` | `User` |
 | `current_nested_association` | `:posts` |
-| `parent_route_param` | `:user_id` |
 | `parent_input_param` | `:user` |
+
+The parent class and association come from the **route** (each nested route carries its registration key), not from parsing the URL. There is no `parent_route_param`.
 
 Parent fields are excluded from forms/displays by default — toggle with the presentation hooks above. For `has_one` associations, routes are singular (no `:id`); index redirects to show (or new if no record exists). See [[plutonium-tenancy]] for the full nested-routing story.
 

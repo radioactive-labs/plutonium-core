@@ -338,10 +338,12 @@ You don't need to add hidden parent fields in forms or filter queries manually.
 
 ```ruby
 current_parent              # Parent record
+current_parent_class        # Company
 current_nested_association  # :properties
-parent_route_param          # :company_id
 parent_input_param          # :company
 ```
+
+The parent class and association are read from the **route** (each nested route carries its registration key), not inferred from the URL — which is why a `singular: true` parent works as a parent despite contributing no id segment. There is no `parent_route_param`.
 
 ## Parent vs entity scoping
 
