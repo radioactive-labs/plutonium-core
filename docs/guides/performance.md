@@ -20,14 +20,14 @@ Index pages, kanban boards and CSV exports already eager-load the associations a
 
 Each rendering passes its own field set, because they differ: the index renders its permitted attributes, an export renders `permitted_attributes_for_export`, and a kanban card renders its `card_fields`.
 
-It covers `belongs_to` and `has_one`, and attachments on both ActiveStorage and Shrine. `has_many` is excluded: preloading one to render a count loads every child row, which loses to a counter cache.
+It covers every association kind — `belongs_to`, `has_one`, `has_many` — and attachments on both ActiveStorage and Shrine.
 
 Turn it off globally:
 
 ```ruby
 # config/initializers/plutonium.rb
 Plutonium.configure do |config|
-  config.auto_eager_load_index = false
+  config.auto_eager_load_collections = false
 end
 ```
 
@@ -37,7 +37,7 @@ Or per resource:
 class PostsController < ::ResourceController
   private
 
-  def auto_eager_load_index? = false
+  def auto_eager_load_collections? = false
 end
 ```
 

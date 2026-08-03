@@ -26,15 +26,15 @@ module Plutonium
         # Whether this controller preloads what it is about to render.
         # Override to opt a single resource out (or in, against a global off).
         # @return [Boolean]
-        def auto_eager_load_index?
-          Plutonium.configuration.auto_eager_load_index
+        def auto_eager_load_collections?
+          Plutonium.configuration.auto_eager_load_collections
         end
 
         # @param collection [ActiveRecord::Relation]
         # @param fields [Array<Symbol>] the field set about to be rendered
         # @return [ActiveRecord::Relation]
         def auto_eager_load(collection, fields)
-          return collection unless auto_eager_load_index?
+          return collection unless auto_eager_load_collections?
 
           fields = Array(fields).map(&:to_sym)
 
@@ -53,13 +53,17 @@ module Plutonium
           collection
         end
 
-        # `belongs_to` and `has_one` only. `has_many` is deliberately excluded:
-        # preloading one to render a count loads every child row, which loses to a
-        # counter cache, and the row count is unbounded in a way a single parent
-        # is not.
+        # Every association kind, `has_many` included.
+        #
+        # `has_many` is preloaded because of what Plutonium actually renders: an
+        # association field renders the associated records' LABELS, not a count.
+        # The rows are read either way, so preloading only decides whether that
+        # costs one query or one per parent. (Excluding it on the usual "a count
+        # beats loading every child row" reasoning is an argument about a
+        # rendering this framework doesn't do.)
         #
         # Both lists are memoised on the model (outside dev) by
-        # Resource::Record::FieldNames. Its `has_one` list already strips the
+        # Resource::Record::FieldNames. Its association lists already strip the
         # `_attachment`/`_blob` reflections backing an attachment, so those cannot
         # be loaded twice by the two branches above. Its attachment lists go
         # through `reflect_on_all_attachments`, which — unlike
@@ -68,7 +72,8 @@ module Plutonium
         def eager_loadable_associations
           @eager_loadable_associations ||=
             resource_class.belongs_to_association_field_names +
-            resource_class.has_one_association_field_names
+            resource_class.has_one_association_field_names +
+            resource_class.has_many_association_field_names
         end
 
         def eager_loadable_attachments

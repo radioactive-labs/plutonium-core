@@ -69,6 +69,8 @@ class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
 
       def self.has_one_association_field_names = []
 
+      def self.has_many_association_field_names = []
+
       def self.has_one_attached_field_names = []
 
       def self.has_many_attached_field_names = []

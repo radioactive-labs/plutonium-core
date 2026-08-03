@@ -6,7 +6,7 @@ require "test_helper"
 # without being told which. It can, because the rendered column set is declared
 # (the policy's permitted attributes) rather than discovered by running a
 # template — so it is known before the collection loads.
-class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
+class AdminPortal::AutoEagerLoadCollectionsTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
   setup { login_as_admin(create_admin!) }
@@ -52,14 +52,14 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
   end
 
   test "without preloading, queries grow one per added row" do
-    Plutonium.configuration.auto_eager_load_index = false
+    Plutonium.configuration.auto_eager_load_collections = false
 
     # At least one query per added row — the exact multiple is however many
     # association columns the page renders, which is not the point.
     assert_operator growth_from_3_to_18, :>=, 15,
       "adding 15 rows should add at least 15 queries when preloading is off"
   ensure
-    Plutonium.configuration.auto_eager_load_index = true
+    Plutonium.configuration.auto_eager_load_collections = true
   end
 
   test "opting out per controller restores the per-row queries" do
@@ -67,26 +67,26 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
     on = count_sql { get "/admin/blogging/posts" }
 
     AdminPortal::Blogging::PostsController.class_eval do
-      private def auto_eager_load_index? = false
+      private def auto_eager_load_collections? = false
     end
     off = count_sql { get "/admin/blogging/posts" }
 
     assert_operator off, :>, on,
       "with the override off, the N+1 should come back (#{off} vs #{on})"
   ensure
-    AdminPortal::Blogging::PostsController.send(:remove_method, :auto_eager_load_index?)
+    AdminPortal::Blogging::PostsController.send(:remove_method, :auto_eager_load_collections?)
   end
 
   test "the global config switches it off" do
     seed_posts(18)
     on = count_sql { get "/admin/blogging/posts" }
 
-    Plutonium.configuration.auto_eager_load_index = false
+    Plutonium.configuration.auto_eager_load_collections = false
     off = count_sql { get "/admin/blogging/posts" }
 
     assert_operator off, :>, on, "the global config should disable preloading"
   ensure
-    Plutonium.configuration.auto_eager_load_index = true
+    Plutonium.configuration.auto_eager_load_collections = true
   end
 
   # Attachments reflect under neither their declared name nor
@@ -104,13 +104,13 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
     with_preload = count_sql { get "/admin/shrine_docs" }
     assert_response :success
 
-    Plutonium.configuration.auto_eager_load_index = false
+    Plutonium.configuration.auto_eager_load_collections = false
     without = count_sql { get "/admin/shrine_docs" }
 
     assert_operator with_preload, :<, without,
       "with_attached_* must be applied for a Shrine-backed attachment (#{with_preload} vs #{without})"
   ensure
-    Plutonium.configuration.auto_eager_load_index = true
+    Plutonium.configuration.auto_eager_load_collections = true
   end
 
   # The CSV export streams EVERY matching row, not a page, so its N+1 is
@@ -123,14 +123,14 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
     on = count_sql { get "/admin/blogging/posts/export_csv" }
     assert_response :success
 
-    Plutonium.configuration.auto_eager_load_index = false
+    Plutonium.configuration.auto_eager_load_collections = false
     off = count_sql { get "/admin/blogging/posts/export_csv" }
     assert_response :success
 
     assert_operator on, :<, off,
       "export should preload its association columns (#{on} vs #{off})"
   ensure
-    Plutonium.configuration.auto_eager_load_index = true
+    Plutonium.configuration.auto_eager_load_collections = true
   end
 
   # Kanban builds its own relation and never runs setup_index_action!, so it
@@ -153,13 +153,43 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
     on = count_sql { get column_url }
     assert_response :success
 
-    Plutonium.configuration.auto_eager_load_index = false
+    Plutonium.configuration.auto_eager_load_collections = false
     off = count_sql { get column_url }
     assert_response :success
 
     assert_operator on, :<, off,
       "kanban cards should preload their association fields (#{on} vs #{off})"
   ensure
-    Plutonium.configuration.auto_eager_load_index = true
+    Plutonium.configuration.auto_eager_load_collections = true
+  end
+
+  # A has_many column renders the associated records' labels, not a count, so
+  # the rows are read either way — preloading only decides whether that costs
+  # one query or one per parent.
+  test "a rendered has_many is preloaded like any other association" do
+    org = create_organization!
+    Blogging::Post.delete_all
+    12.times do
+      post = create_post!(user: create_user!, organization: org)
+      2.times { post.tags << Blogging::Tag.create!(name: "t#{SecureRandom.hex(3)}") }
+    end
+
+    Blogging::PostPolicy.class_eval do
+      def permitted_attributes_for_index = %i[title user tags]
+    end
+
+    get "/admin/blogging/posts" # warm
+    on = count_sql { get "/admin/blogging/posts" }
+    assert_response :success
+
+    Plutonium.configuration.auto_eager_load_collections = false
+    off = count_sql { get "/admin/blogging/posts" }
+    assert_response :success
+
+    assert_operator on, :<, off,
+      "a rendered has_many should be preloaded (#{on} vs #{off})"
+  ensure
+    Plutonium.configuration.auto_eager_load_collections = true
+    Blogging::PostPolicy.send(:remove_method, :permitted_attributes_for_index)
   end
 end
