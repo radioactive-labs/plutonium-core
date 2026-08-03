@@ -4,8 +4,8 @@ require "test_helper"
 
 # form_layout works in interaction forms too (Form::Interaction < Form::Resource),
 # including dynamic options: ReconfigureKitchenSink declares
-# `collapsed: -> { object.resource.archived? }`, resolved in the interaction form
-# context where `object` is the interaction and `object.resource` the record.
+# `collapsed: ->(form) { form.object.resource.archived? }` — on an interaction
+# form the form's `object` is the interaction and `object.resource` the record.
 class AdminPortal::FormLayoutInteractionTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
@@ -36,7 +36,7 @@ class AdminPortal::FormLayoutInteractionTest < ActionDispatch::IntegrationTest
     refute_includes response.body, "Anything else"
   end
 
-  test "dynamic collapsed: is resolved against object.resource in the interaction" do
+  test "dynamic collapsed: is resolved against form.object.resource in the interaction" do
     active = KitchenSink.create!(name: "Active", organization: @org, status: :active)
     archived = KitchenSink.create!(name: "Archived", organization: @org, status: :archived)
 

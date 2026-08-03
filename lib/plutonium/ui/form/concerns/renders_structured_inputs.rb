@@ -15,7 +15,11 @@ module Plutonium
 
           def render_structured_input(name)
             entry = resource_definition.defined_structured_inputs[name]
-            options = entry[:options] || {}
+            # Same proc resolution the inner fields already get (they render
+            # through render_simple_resource_field on this same form), so
+            # `repeat:`/`fields:` can depend on the request — or, on a wizard
+            # step, on the run: the receiver rule is the form's, not ours.
+            options = resolve_option_procs(entry[:options] || {})
             definition = structured_input_fields_definition(entry)
             fields = options[:fields] || definition.defined_inputs.keys
             repeat = options[:repeat]

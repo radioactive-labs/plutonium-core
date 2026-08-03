@@ -11,10 +11,14 @@ class KitchenSinkDefinition < ::ResourceDefinition
   form_layout do
     section :identity, :name, :email_address, label: "Identity",
       description: "Who this is"
-    # `collapsed:` is a proc resolved at render in the form/record context —
-    # existing records open collapsed, new records open expanded.
+    # `collapsed:` is a proc resolved at render — existing records open
+    # collapsed, new records open expanded. It takes the form as an argument
+    # because a `form_layout` block is instance_exec'd against the layout
+    # Builder, so a zero-arity proc would close over that and `object` would be
+    # a NameError. `condition:` below is the documented exception: it is
+    # evaluated separately and always runs against the form.
     section :appearance, :favorite_color, :active, :website,
-      collapsible: true, collapsed: -> { object.persisted? }, columns: 2
+      collapsible: true, collapsed: ->(form) { form.object.persisted? }, columns: 2
     section :secret, :secret_token, label: "Secret stuff", condition: -> { false }
     # Lists only a field that is never in the permitted set, so it resolves to
     # zero fields on every render — its chrome must not be emitted.
