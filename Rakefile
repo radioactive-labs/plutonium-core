@@ -35,6 +35,23 @@ end
 task :test_generators do
   failures = []
 
+  # This task DESTROYS uncommitted work under test/dummy — `git checkout --` plus
+  # `git clean -fd`, unconditionally, after every file. That is required (see
+  # below) but it is not something to discover afterwards, so refuse to start on
+  # a dirty tree. Set FORCE=1 to run anyway; CI checkouts are clean and never
+  # trip this.
+  dirty = `git status --porcelain -- test/dummy`.strip
+  if !dirty.empty? && ENV["FORCE"] != "1"
+    abort <<~MSG
+      test/dummy has uncommitted changes:
+
+      #{dirty.lines.map { |l| "  #{l}" }.join}
+      This task git-restores and git-cleans test/dummy between generator test
+      files, which would discard them. Commit or stash first, or re-run with
+      FORCE=1 to accept the loss.
+    MSG
+  end
+
   # Between files, not just inside them. A generator that shells out — e.g.
   # `generate "pu:pkg:package"` — goes through Rails' `generate` action, which
   # passes abort_on_failure: true, so Thor calls `abort` in the test process
