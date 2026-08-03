@@ -45,9 +45,10 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
   end
 
   # A step's fields are fixed when the class loads, so a proc is how an option
-  # depends on the run. It resolves against the wizard, the same receiver a
-  # step's `condition:` gets, so `anchor` reads the same in both.
-  test "a proc-valued input option resolves against the wizard" do
+  # depends on the run. The proc takes the form and reads the run off it
+  # (`form.wizard`) — the same shape a `form_layout` section option uses — rather
+  # than having `self` swapped to the wizard behind its back.
+  test "a proc-valued input option reaches the run through the form" do
     get "#{base}/rename"
 
     assert_response :success
@@ -62,14 +63,24 @@ class OrgPortal::AnchoredWizardTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "Currently Renamed since boot"
   end
 
-  # The motivating case: without this a step's `choices:` proc is called with a
-  # FieldCapture as `self`, so reading `anchor` raises a NameError naming an
-  # internal the author never wrote.
+  # The motivating case: choices drawn from the anchor. A zero-arity proc could
+  # not express this — a step block is instance_exec'd against a FieldCapture, so
+  # its closure holds an internal the author never wrote.
   test "choices drawn from the anchor materialise into options" do
     get "#{base}/rename"
 
     assert_response :success
     assert_includes response.body, "#{@widget.name} was wrong"
+  end
+
+  # The other half of the rule: a step is not an exception. A zero-argument proc
+  # keeps its own binding here as it does on every other form — if the wizard
+  # rebound it, `banner` would be looked up on the wizard and raise.
+  test "a zero-argument proc on a step keeps its own binding" do
+    get "#{base}/rename"
+
+    assert_response :success
+    assert_includes response.body, "declared at class load"
   end
 
   test "the anchor a proc option sees is the scoped one, not another tenant's" do

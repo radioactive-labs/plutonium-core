@@ -26,6 +26,15 @@ module Plutonium
   # Custom error class for Plutonium-specific exceptions
   class Error < StandardError; end
 
+  # Raised when a resource registered `singular: true` has an authorized scope
+  # that resolves to more than one record.
+  #
+  # A singular route carries no :id — the scope IS the identification — so the
+  # promise `singular: true` makes is "exactly one record here". A scope that
+  # returns several silently nests (or shows) an arbitrary row, so it fails
+  # instead. Always a registration/policy mismatch, never user input.
+  class SingularScopeError < Error; end
+
   # Turbo frame id used by the modal/slideover renderer. The layout wraps
   # itself in this frame, in_modal? checks against it, and Action and
   # Definition default to targeting it. Kept as a single constant so the

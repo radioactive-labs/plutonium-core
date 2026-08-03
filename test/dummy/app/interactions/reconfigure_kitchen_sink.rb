@@ -10,15 +10,17 @@ class ReconfigureKitchenSink < ::ResourceInteraction
   input :favorite_color, as: :color
   input :website, as: :url
 
-  # Exercises form_layout inside an interaction form. In this context `object`
-  # is the interaction instance and `object.resource` is the record the action
-  # runs on — so section options can be record-aware here too.
+  # Exercises form_layout inside an interaction form. On an interaction form the
+  # form's `object` is the interaction instance and `object.resource` is the
+  # record the action runs on — so section options can be record-aware here too,
+  # once the proc has been handed the form to read it from.
   form_layout do
     section :basics, :name, label: "Basics", description: "Rename it"
     section :appearance, :favorite_color, :website,
       label: "Appearance",
       collapsible: true,
-      collapsed: -> { object.resource.archived? }, # dynamic: collapsed for archived records
+      # dynamic: collapsed for archived records
+      collapsed: ->(form) { form.object.resource.archived? },
       columns: 2
     ungrouped label: "Anything else"
   end

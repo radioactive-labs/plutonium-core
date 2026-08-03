@@ -127,6 +127,8 @@ end
 
 `condition:` can also read `anchor`. Branch-hidden steps' data is pruned before `execute`. **Must be nil-safe** (see Critical).
 
+Conditions are re-evaluated against the submission that was just staged, so a step (including `review`) may be gated on an answer from the step immediately before it — the revealed steps become reachable on that same POST. When a step's answer reveals nothing after it, that POST ends the flow and runs `execute`.
+
 ## Field reuse — `using:` a model
 
 `using:` is a **step option** (not a block method) and targets a **model only**.
@@ -181,7 +183,7 @@ Validations drive the form's field affordances just like a resource form: `prese
 
 ### Options that depend on the run
 
-The step block runs **once, when the class loads**, so a literal option is frozen for every run. A **proc-valued** field/input option is resolved on **every render**, against the **wizard** — the same receiver a step's `condition:` gets, so `anchor`, `data`, `persisted` and `current_user` read as they do anywhere else in the wizard:
+The step block runs **once, when the class loads**, so a literal option is frozen for every run. A **proc-valued** field/input option is resolved on **every render**. It must **take the form**: `form.wizard` is the run (so `anchor`, `data`, `persisted`, `current_user` are all reachable) and `form.object` is that step's staged data.
 
 ```ruby
 step :plan do
@@ -202,7 +204,7 @@ Three limits worth knowing:
 
 - The **field set** is still fixed at class load — a proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup pass a **block** to `input` instead; it renders in the form's context with the field yielded.
 - A **step's** `condition:` runs against the wizard; a **field's** `condition:` runs against the form (`object` = that step's staged data). Only the field-level one is excluded from the resolution above.
-- **Proc options resolve on every form** ([[plutonium-resource]]); only the zero-arity receiver differs here. Elsewhere a zero-arity proc keeps its own binding, because that binding is already useful — one declared in `customize_inputs` closes over the interaction. A step block closes over a throwaway recorder, so the wizard takes its place.
+- **Proc options resolve on every form** ([[plutonium-resource]]), by one rule with no wizard exception: a zero-argument proc keeps its own binding, a one-argument one gets the form. A step block is `instance_exec`'d against an internal field recorder, so `-> { anchor.x }` raises `NameError` — take the form and use `form.wizard`. Same trade a `form_layout` section option makes; an `input` line keeps its meaning when moved between a definition and a step.
 
 ## Attachment fields (file uploads)
 
@@ -303,7 +305,7 @@ end
 | `succeed(v)` / `failed(errs)` | Outcome helpers (alias `success`). `.with_message`, `.with_redirect_response` chainable. |
 | `fail!(msg)` / `fail!(:field, msg)` | Raise a `StepError` from `on_submit`/`execute`. |
 
-Available inside steps, `condition:`, `on_submit`, `on_rollback` and `execute` — and inside a step's **proc-valued field/input options**, which resolve against the wizard too (see **Step internals → Options that depend on the run**).
+Available inside steps, `condition:`, `on_submit`, `on_rollback` and `execute` — and, via `form.wizard`, inside a step's **proc-valued field/input options** (see **Step internals → Options that depend on the run**).
 
 ## Anchoring
 

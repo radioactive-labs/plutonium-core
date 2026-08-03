@@ -132,10 +132,11 @@ module Plutonium
             # section's own `condition:`.
             next if resolved.fields.empty?
 
-            # `columns` stays a validated literal; everything else may be a proc.
-            options = section.options.to_h do |key, value|
-              [key, (key != :condition && value.is_a?(Proc)) ? instance_exec(&value) : value]
-            end
+            # `columns` stays a validated literal (the Builder rejects a non-Integer
+            # at declaration); `label`/`description`/`collapsible`/`collapsed` may be
+            # procs, resolved by the SAME arity rule as a field/input option so
+            # `-> { … }` means one thing across the whole form DSL.
+            options = resolve_option_procs(section.options)
             Plutonium::Definition::FormLayout::ResolvedSection.new(
               section: Plutonium::Definition::FormLayout::Section.new(
                 key: section.key, fields: section.fields, options: options.freeze
@@ -350,25 +351,39 @@ module Plutonium
           end
         end
 
-        # Resolve proc-valued field/input options for THIS render, so any option
-        # can vary per request rather than being frozen when the class loads.
+        # Resolve proc-valued options for THIS render, so any option can vary per
+        # request rather than being frozen when the class loads. One rule for the
+        # whole form DSL: `field`/`input`, `section`/`ungrouped`, `structured_input`
+        # and nested inputs all route through here.
         #
-        # Arity decides the receiver, matching what Phlexi already does for
-        # validators:
+        # Arity says whether you want the form, NOT which `self` you get:
         #
-        #   -> { … }       called as-is, keeping its own binding
-        #   ->(form) { … } called with this form, for `object`/`params`/helpers
+        #   -> { … }       a plain call — means what it reads like where it was
+        #                  written, closure and all
+        #   ->(form) { … } handed this form, for `object`/`params`/helpers
         #
-        # The binding is kept rather than rebound because on these forms it is
-        # already the useful one: an option declared in an interaction's
-        # `customize_inputs` closes over the interaction (`choices: -> {
-        # reviewer_choices }`), and `instance_exec` would throw that away. A
-        # closure can be handed context as an argument; context cannot recover a
-        # closure. Form::Wizard overrides this, because a step block closes over
-        # a throwaway recorder and so has no binding worth keeping.
+        # This is `choices:`'s rule, adopted rather than replaced. Phlexi has
+        # always resolved a `choices:` proc with a plain `.call`, so it is both
+        # the oldest of these semantics and the only one that predates Plutonium's
+        # own option layer — and it is the unsurprising one: nothing silently
+        # rebinds `self` out from under a lambda. `section :x, collapsed: -> { … }`
+        # (v0.60) followed the other convention and was migrated to `->(form)` to
+        # meet it here.
         #
-        # `condition:` is excluded: it is evaluated separately at render, and
-        # resolving it here would collapse it to a boolean first.
+        # Form::Wizard overrides the zero-arity case, because a step block is
+        # instance_exec'd against a throwaway recorder — the closure there holds
+        # nothing, so the wizard takes its place.
+        #
+        # `condition:` is excluded because it is a different kind of thing, not
+        # because it is an awkward leftover. An option asks "what value should
+        # this have?" and may not care about the render; `condition:` asks
+        # "should this render here, now?", which is a question about the render
+        # context by definition. So it is evaluated separately, always AGAINST
+        # its context — and that context is not always a form (a `column`'s is the
+        # table, a step's is the wizard, an action's is a ConditionContext), which
+        # is why it cannot take a `form` argument the way an option does.
+        # Resolving it here would also collapse it to a boolean before the render
+        # site that owns it gets to ask.
         def resolve_option_procs(options)
           return options if options.blank?
 

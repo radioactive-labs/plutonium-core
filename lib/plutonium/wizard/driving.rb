@@ -170,20 +170,12 @@ module Plutonium
         respond_to_wizard_result(runner, result)
       end
 
-      # Advance the current step; if the POSTed step is the last visible step,
-      # finalize. The last visible step is the terminal `review` (no fields), so
-      # finalize runs directly; otherwise validate + stage + move the cursor.
+      # Advance the POSTed step, finalizing when it turns out to end the flow. The
+      # advance-or-finalize decision lives in the runner because it can only be made
+      # AFTER the submission is staged — a step's `condition:` may be gated on an
+      # answer from the very step being submitted. See {Runner#submit}.
       def advance_or_finalize(runner)
-        return runner.finalize if wizard_posting_last_step?(runner)
-
-        runner.advance(params[:step], wizard_params(runner), goto: params[:_goto].presence)
-      end
-
-      # Whether the step being POSTed is the last visible step (so Next → Finish).
-      # Computed BEFORE advancing, since advance moves the cursor past it.
-      def wizard_posting_last_step?(runner)
-        last = runner.visible_path.last
-        last && last.key.to_s == params[:step].to_s
+        runner.submit(params[:step], wizard_params(runner), goto: params[:_goto].presence)
       end
 
       def respond_to_wizard_result(runner, result)

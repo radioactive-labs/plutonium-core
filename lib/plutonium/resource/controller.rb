@@ -245,8 +245,7 @@ module Plutonium
       # Plutonium::Routing::PARENT_KEY_PARAM); all that is
       # left is to load it. A plural parent narrows by the id in the path. A
       # singular parent has no id to narrow by — it is whichever record the
-      # viewer's scope resolves to, the same rule resource_record_relation
-      # applies when the current resource is itself singular.
+      # viewer's scope resolves to, which is what `singular: true` promises.
       #
       # Memoised through `defined?` so a genuine nil is remembered rather than
       # re-resolved on every call.
@@ -263,7 +262,7 @@ module Plutonium
               # would quietly hand back whichever row sorted first if the scope
               # ever resolved to several, and silently nesting under the wrong
               # parent is far worse than failing loudly.
-              scope.sole
+              resolve_singular_parent(scope, parent_class)
             else
               # The id parameter is named by the parent's own route, so it is
               # derived rather than discovered. Scanning path_parameters for
@@ -274,6 +273,26 @@ module Plutonium
             parent.tap { authorize! parent, to: :read? }
           end
         end
+      end
+
+      # `sole`, but reporting the registration mistake instead of the symptom.
+      #
+      # `SoleRecordExceeded` says "Wanted only one User" — true, and useless to
+      # the person who has to fix it, because the cause is two files away: the
+      # resource was registered `singular: true` while its policy still scopes to
+      # many. Say that, and name both halves of the fix.
+      # @raise [Plutonium::SingularScopeError]
+      def resolve_singular_parent(scope, parent_class)
+        scope.sole
+      rescue ActiveRecord::SoleRecordExceeded
+        # Deliberately says nothing about the viewer: this runs while raising, and
+        # reaching for `current_user` here would swap the useful error for a
+        # NoMethodError in any context that has no such helper.
+        raise Plutonium::SingularScopeError,
+          "#{parent_class} is registered `singular: true`, but its authorized scope " \
+          "resolved to #{scope.count} records. A singular route carries no :id, so the " \
+          "scope has to identify exactly one record. Either give #{parent_class}'s policy " \
+          "a `relation_scope` that narrows to one, or register it without `singular: true`."
       end
 
       # The parent resource class, taken from the registration rather than

@@ -23,11 +23,17 @@ module Plutonium
           class NestedFieldContext
             attr_reader :name, :definition, :options, :permitted_fields
 
-            def initialize(name:, definition:, resource_class:, resource_definition:, object_class:)
+            # @param declared_options [Hash] the nested input's own options, already
+            #   proc-resolved by the form (the context has no form to resolve
+            #   against). Everything merged in below — nested-attribute macro,
+            #   limits — is derived from the model, never authored, so this is the
+            #   only half that can carry a proc.
+            def initialize(name:, definition:, resource_class:, resource_definition:, object_class:, declared_options:)
               @name = name
               @definition = definition
               @resource_definition = resource_definition
               @resource_class = resource_class
+              @declared_options = declared_options
               @options = build_options
               @permitted_fields = build_permitted_fields
               @object_class = object_class
@@ -52,7 +58,7 @@ module Plutonium
             private
 
             def build_options
-              options = @resource_definition.defined_nested_inputs[@name][:options].dup || {}
+              options = @declared_options.dup
               merge_nested_fields_options(options)
               set_nested_fields_limits(options)
               options
@@ -97,12 +103,19 @@ module Plutonium
               return
             end
 
+            # Resolved here rather than in the context: `condition:` above needs the
+            # raw proc (resolve_option_procs deliberately leaves it alone, but it is
+            # also evaluated before this point), and the context has no form to
+            # resolve the rest against.
+            declared_options = resolve_option_procs(nested_input_definition[:options] || {})
+
             context = NestedFieldContext.new(
               name: name,
               definition: build_nested_fields_definition(name),
               resource_class: resource_class,
               resource_definition: resource_definition,
-              object_class: nested_input_definition[:options]&.fetch(:object_class, nil)
+              object_class: declared_options[:object_class],
+              declared_options: declared_options
             )
 
             render_nested_field_container(context) do

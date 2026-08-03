@@ -16,11 +16,11 @@ module Plutonium
         # @param action  [String] the current step's POST URL.
         # @param fields  [Array<Symbol>] the step's renderable field names
         #   (scalar attributes + structured inputs).
-        # @param wizard  [Plutonium::Wizard::Base, nil] the run being rendered,
-        #   used to resolve a step's proc-valued options against. Optional so an
-        #   existing caller keeps working; without it those options pass through
-        #   unresolved, as they do on every other form.
-        def initialize(step:, data:, action:, fields:, wizard: nil, **options, &)
+        # @param wizard  [Plutonium::Wizard::Base] the run being rendered. Exposed
+        #   as `form.wizard` so a step's proc-valued option can reach the run —
+        #   see {#wizard}. Required: it is read during render, so defaulting it to
+        #   nil would only defer the failure to a NoMethodError inside a proc.
+        def initialize(step:, data:, action:, fields:, wizard:, **options, &)
           @step = step
           @wizard = wizard
           options[:key] = :wizard
@@ -32,30 +32,28 @@ module Plutonium
           super(data, **options, &)
         end
 
+        # The run being rendered. Public because a step's proc-valued option is
+        # how an option depends on the run, and reaching the run is the whole
+        # point:
+        #
+        #   input :tier, as: :select,
+        #     choices: ->(form) { form.wizard.anchor.available_tiers }
+        #
+        # Deliberately NOT reached by rebinding a zero-arity proc to the wizard.
+        # A step block is instance_exec'd against a FieldCapture at class load,
+        # so its closure holds nothing useful — but that is equally true of a
+        # `form_layout` block and its Builder, and the answer there is to ask for
+        # the receiver rather than have it swapped in silently. Same answer here:
+        # `-> { … }` means what it reads like wherever it is written, and an
+        # `input` line moved between a definition and a step keeps its meaning.
+        #
+        # `form.object`, alongside this, is the step's staged data.
+        # @return [Plutonium::Wizard::Base]
+        attr_reader :wizard
+
         private
 
-        attr_reader :step, :wizard
-
-        # Same arity rule as every other form; only the zero-arity receiver
-        # differs. A step block is instance_exec'd against a FieldCapture when
-        # the wizard class loads, so a proc declared there closes over a recorder
-        # that holds nothing. There is no binding worth keeping, so it runs
-        # against the wizard instead — where the rest of the wizard DSL already
-        # points:
-        #
-        #   input :tier, as: :select, choices: -> { anchor.available_tiers }
-        #
-        # That is the receiver a step's `condition:` already gets (see
-        # Wizard::Runner), so `anchor`, `data`, `persisted` and `current_user`
-        # read the same in an option as they do anywhere else in the wizard.
-        #
-        # ->(form) { … } still takes the form, as it does elsewhere, for
-        # `object` (this step's staged data), `params` and helpers.
-        def call_option_proc(value)
-          return super unless value.arity.zero? && wizard
-
-          wizard.instance_exec(&value)
-        end
+        attr_reader :step
 
         def form_template
           # The direction defaults to "next"; the nav buttons in the page override

@@ -62,10 +62,12 @@ You don't add hidden parent fields or filter queries manually.
 
 ```ruby
 current_parent              # parent record (e.g. Company instance)
+current_parent_class        # parent class (e.g. Company)
 current_nested_association  # association name (e.g. :properties)
-parent_route_param          # URL param (e.g. :company_id)
 parent_input_param          # form param / association name (e.g. :company)
 ```
+
+Each nested route carries the key of its own registration, so the parent class and association are **read from the route** rather than reconstructed from the URL. That is what lets a resource registered `singular: true` act as a parent at all — it contributes no id parameter, so there is nothing in the path to infer from.
 
 ## Parent vs entity scoping
 

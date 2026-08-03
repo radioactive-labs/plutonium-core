@@ -43,7 +43,9 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
   end
 
   test "a dynamic collapsed: proc is resolved in the record context" do
-    # :appearance declares `collapsed: -> { object.persisted? }`.
+    # :appearance declares `collapsed: ->(form) { form.object.persisted? }` — the
+    # proc takes the form because a `form_layout` block is instance_exec'd
+    # against the layout Builder, so a zero-arity proc closes over that.
     # New record → not persisted → the Appearance <details> is open.
     get "/admin/kitchen_sinks/new"
     new_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)

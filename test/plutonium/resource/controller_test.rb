@@ -70,6 +70,48 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     assert_nil controller.send(:current_nested_association)
   end
 
+  # Resolving a SINGULAR parent — the route carries no :id, so the scope is the
+  # identification and it has to name exactly one record.
+
+  def test_singular_parent_resolves_the_sole_record_in_scope
+    controller = TestableController.new
+    only = Struct.new(:id).new(7)
+
+    assert_equal only, controller.send(:resolve_singular_parent, FakeScope.new([only]), User)
+  end
+
+  # A scope resolving to several means the resource was registered `singular:
+  # true` while its policy still scopes to many. Report THAT, not `sole`'s
+  # "Wanted only one User" — the cause is in a routes file and a policy, and the
+  # person reading the 500 has to be sent to both.
+  def test_singular_parent_reports_the_registration_mistake_not_the_symptom
+    controller = TestableController.new
+    scope = FakeScope.new([Object.new, Object.new, Object.new])
+
+    error = assert_raises(Plutonium::SingularScopeError) do
+      controller.send(:resolve_singular_parent, scope, User)
+    end
+
+    assert_match(/User is registered `singular: true`/, error.message)
+    assert_match(/resolved to 3 records/, error.message)
+    assert_match(/relation_scope/, error.message)
+    assert_match(/without `singular: true`/, error.message)
+  end
+
+  # Minimal stand-in for an ActiveRecord::Relation: `sole` raises exactly what
+  # AR raises, so the rescue under test is the real one.
+  class FakeScope
+    def initialize(records) = @records = records
+
+    def count = @records.size
+
+    def sole
+      raise ActiveRecord::SoleRecordExceeded if @records.size > 1
+      raise ActiveRecord::RecordNotFound if @records.empty?
+      @records.first
+    end
+  end
+
   # Test extraction_record logic for submitted_resource_params
 
   def test_extraction_record_preserves_context_from_existing_record

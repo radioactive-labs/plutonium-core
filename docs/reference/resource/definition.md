@@ -202,19 +202,36 @@ field   :debug_info,       condition: -> { Rails.env.development? }
 
 ## Options that vary per render
 
-Any field/input option may be a **proc**, resolved on every render rather than frozen when the class loads. Arity picks what it receives:
+Any option may be a **proc**, resolved on every render rather than frozen when the class loads. This holds across the whole form DSL — `field`, `input`, `section`/`ungrouped`, `structured_input` and nested inputs. Arity says **whether you want the form**:
 
 ```ruby
 input :tier,  as: :select, choices: ->(form) { form.object.account.available_tiers }
 input :notes, placeholder: -> { "Updated #{Time.current.year}" }
 ```
 
-- **`->(form) { … }`** is handed the form, so `object` (the record being edited), `params` and view helpers are all reachable.
-- **`-> { … }`** is called as-is, keeping whatever it closed over. That matters for an option declared inside an interaction's `customize_inputs`, which closes over the interaction: `choices: -> { reviewer_choices }` resolves against it.
+- **`-> { … }`** is called as-is, keeping whatever it closed over — it means what it reads like where you wrote it. Nothing rebinds `self`. That is what lets an option declared inside an interaction's `customize_inputs` reach the interaction, private helpers included: `choices: -> { reviewer_choices }`.
+- **`->(form) { … }`** is handed the form, so `object` (the record being edited), `params` and view helpers are reachable. Use it whenever the value depends on what is being rendered.
 
-`condition:` is the exception — it is evaluated separately at render (above), always against the form.
+The rule holds on wizard steps too — but there a zero-argument proc closes over an internal field recorder, so options must take the form and read the run off it: `->(form) { form.wizard.anchor.tiers }`. See [Wizard DSL › Runtime input options](/reference/wizard/dsl#runtime-input-options).
 
-A wizard step resolves a zero-arity proc against the **wizard** instead, since a step block closes over a throwaway recorder rather than anything useful. See [Wizard DSL › Runtime input options](/reference/wizard/dsl#runtime-input-options).
+### `condition:` is not an option
+
+`condition:` follows a different rule, and it is worth knowing why rather than memorising it as an exception. The two are different kinds of thing:
+
+| | asks | so it | receiver |
+|---|---|---|---|
+| an **option** (`choices:`, `label:`, `collapsed:`, …) | "what value should this have?" | may or may not care about the render — so it means what it reads like where you wrote it, and takes `form` when it does care | its own closure, or the form |
+| **`condition:`** | "should this render *here, now*?" | is a question about the render context by definition — there is no useful reading of it that ignores that context | always the thing doing the rendering |
+
+So `condition:` always runs **against** its context and reads it with no argument — and "its context" is whatever is rendering: the form for a field, section or nested input; the component for a `column` or `display`; the **wizard** for a step's `condition:` (evaluated in the runner to decide which steps exist, before any form is built); a condition context for an action or scope.
+
+```ruby
+input   :notes,     condition: -> { object.published? }        # form
+display :audit_log, condition: -> { current_user.admin? }      # display component
+step    :billing,   condition: -> { data.plan.tier == "pro" }  # wizard, no form exists yet
+```
+
+That is why it cannot take a `form` argument the way an option does: in several of those places there is no form.
 
 ## Dynamic forms (`pre_submit`)
 
@@ -543,14 +560,25 @@ Groups a set of fields under an optional heading.
 | `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer — any other value raises. (Literal only — not dynamic.) |
 | `condition:` | Lambda evaluated in the form instance context — same semantics as `input ..., condition:`. `object`, `current_user`, helpers etc. are all available. A falsey result hides the entire section and withholds its fields (they do not spill into `ungrouped`). |
 
-Every option except `columns:` may be either a literal **or a proc** resolved at render time in the same form instance context as `condition:` (so `object`, `current_user`, `params`, helpers are all available). This makes the layout record-aware — e.g. collapse a section by default only for existing records:
+Every option except `columns:` may be either a literal **or a proc** resolved at render time, following the same arity rule as every other option ([Options that vary per render](#options-that-vary-per-render)): take a `form` argument to read the render context. This makes the layout record-aware — e.g. collapse a section by default only for existing records:
 
 ```ruby
 section :advanced, :seo_title, :notes,
   collapsible: true,
-  collapsed: -> { object.persisted? },          # open for new, collapsed for edits
-  label: -> { object.new_record? ? "Set up" : "Advanced" }
+  collapsed: ->(form) { form.object.persisted? },          # open for new, collapsed for edits
+  label: ->(form) { form.object.new_record? ? "Set up" : "Advanced" }
 ```
+
+::: warning Breaking change in 0.63
+Section options previously took a **zero-argument** proc evaluated against the form (`collapsed: -> { object.persisted? }`). They now follow the same rule as every other option, where a zero-argument proc keeps its own binding — and a `form_layout` block is evaluated against the layout builder, so `object` there is a `NameError`.
+
+```ruby
+- collapsed: -> { object.persisted? }
++ collapsed: ->(form) { form.object.persisted? }
+```
+
+It fails loudly, never silently. `condition:` is unchanged — it is still evaluated against the form and still reads `object` with no argument.
+:::
 
 A section that resolves to **zero fields** — every declared field filtered out by the permitted set, or no field assigned — renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset). The check is purely "are there fields to render"; it does **not** evaluate per-field `condition:` procs (those run later, at field render). So if you want a whole section to appear only under some state, gate it with the section's own `condition:` rather than relying on every field inside it being hidden:
 
@@ -616,7 +644,7 @@ A `section` only renders the fields that are actually in the form's permitted se
 
 `form_layout` is also available on `Plutonium::Interaction::Base`. The same DSL groups the interaction's `attribute` declarations into sections. Interaction forms (`Plutonium::UI::Form::Interaction`) pick up the layout automatically — no extra wiring needed.
 
-Dynamic options and `condition:` work here too, with one difference: in an interaction form `object` is the **interaction instance** (not a record). For a record action, the record is `object.resource` — so e.g. `collapsed: -> { object.resource.archived? }`.
+Dynamic options and `condition:` work here too, with one difference: on an interaction form the form's `object` is the **interaction instance** (not a record). For a record action, the record is `object.resource` — so e.g. `collapsed: ->(form) { form.object.resource.archived? }`, and `condition: -> { object.resource.archived? }` (which is form-evaluated, so it needs no argument).
 
 ```ruby
 class PublishPostInteraction < Plutonium::Interaction::Base

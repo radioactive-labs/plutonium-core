@@ -252,10 +252,12 @@ Routes prefixed `nested_` automatically resolve the parent. See [Tenancy › Nes
 
 ```ruby
 current_parent              # parent record
+current_parent_class        # User
 current_nested_association  # :posts
-parent_route_param          # :user_id
 parent_input_param          # :user
 ```
+
+The nesting is declared by the route, not inferred from the URL: each nested route carries the key of its own registration, and `current_parent_class` / `current_nested_association` read it back. (There is no `parent_route_param` — the id parameter is derived from the parent's own route, and a singular parent contributes none at all.)
 
 Parent fields are excluded from forms/displays by default. Toggle with the [presentation hooks](#presentation-hooks).
 

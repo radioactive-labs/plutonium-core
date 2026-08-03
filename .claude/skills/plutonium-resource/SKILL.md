@@ -604,18 +604,27 @@ Use `condition` for UI state; use the policy for authorization.
 
 ## Options That Vary Per Render
 
-Any field/input option may be a **proc**, resolved on every render rather than frozen at class load. Arity picks what it receives:
+Any option may be a **proc**, resolved on every render rather than frozen at class load. Holds across the whole form DSL — `field`, `input`, `section`/`ungrouped`, `structured_input`, nested inputs. Arity says **whether you want the form**:
 
 ```ruby
 input :tier,  as: :select, choices: ->(form) { form.object.account.available_tiers }
 input :notes, placeholder: -> { "Updated #{Time.current.year}" }
 ```
 
+- `-> { … }` is called as-is, keeping its own binding — it means what it reads like where you wrote it; nothing rebinds `self`. That is what makes `choices: -> { reviewer_choices }` work inside an interaction's `customize_inputs` (private helpers included).
 - `->(form) { … }` gets the form — `object` (the record), `params`, view helpers.
-- `-> { … }` is called as-is, keeping its own binding. That is what makes `choices: -> { reviewer_choices }` work inside an interaction's `customize_inputs`, where the proc closes over the interaction.
-- `condition:` is the exception — evaluated separately at render, always against the form.
 
-A wizard step resolves a zero-arity proc against the **wizard** instead (its block closes over a throwaway recorder). See [[plutonium-wizard]].
+Same rule on wizard steps — but a step block closes over an internal field recorder, so options there must take the form: `->(form) { form.wizard.anchor.tiers }`. See [[plutonium-wizard]].
+
+**`condition:` is not an option — it follows a different rule, for a reason.** An option asks "what value should this have?", so it may not care about the render and defaults to meaning what it reads like. `condition:` asks "should this render *here, now*?" — a question about the render context by definition. So it always runs **against** that context and reads it with no argument, where "context" is whatever is rendering:
+
+```ruby
+input   :notes,     condition: -> { object.published? }        # the form
+display :audit_log, condition: -> { current_user.admin? }      # the display component
+step    :billing,   condition: -> { data.plan.tier == "pro" }  # the wizard — no form exists yet
+```
+
+It cannot take a `form` argument the way an option does: for a `column`/`display`, a step, or an action there is no form.
 
 ## Dynamic Forms (`pre_submit`)
 
@@ -906,7 +915,7 @@ class PostDefinition < ResourceDefinition
   form_layout do
     section :identity, :name, :email, label: "Identity", description: "Who this is"
     section :address, :street, :city,
-      collapsible: true, collapsed: -> { object.persisted? }, columns: 2,
+      collapsible: true, collapsed: ->(form) { form.object.persisted? }, columns: 2,
       condition: -> { object.requires_address? }   # hide the whole section as a unit
     ungrouped label: "Other"                        # bucket for unlisted fields; position = where it renders
   end
@@ -914,7 +923,8 @@ end
 ```
 
 - **Layout references field KEYS only** — all per-field config (`as:`, `hint:`, blocks, per-field `condition:`) stays on `input`. Never duplicated here.
-- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:` (positive Integer, literal only), `condition:`. Every option except `columns:` may be a **proc** resolved at render in the form context (`object`, `current_user`, `params`, helpers).
+- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:` (positive Integer, literal only), `condition:`. Every option except `columns:` may be a **proc**, resolved at render under the same arity rule as any other option — take a `form` argument to read the render context.
+- ⚠️ **Breaking in 0.63**: section options used to take a zero-arg proc run *against* the form. They now follow the shared rule, and a `form_layout` block is evaluated against the layout builder, so a bare `object` is a `NameError`. Migrate `collapsed: -> { object.persisted? }` → `collapsed: ->(form) { form.object.persisted? }`. `condition:` is unchanged (still form-evaluated, still reads `object` with no argument).
 - **Absent fields are skipped.** A key the section lists that isn't in the permitted set (policy, per-action, scoping, nesting, or a typo) is silently dropped — never an error. The same layout serves a richly-permitted `edit` and a minimal `new`.
 - **🚨 Zero-field sections drop entirely** — no heading, no grid. So `+ New` (fewer permitted attributes) won't sprout empty headings. This checks *field presence only*; per-field `condition:` runs later, so to hide a whole section by state, gate it with the **section's own `condition:`**, not by hiding every field inside it.
 - **Works on interactions too** (`Plutonium::Interaction::Base`) — groups `attribute` declarations. There `object` is the interaction instance; for record actions the record is `object.resource`.

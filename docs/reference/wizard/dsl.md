@@ -85,35 +85,33 @@ See [plutonium-resource › Definition](/reference/resource/definition) for the 
 
 #### Runtime input options
 
-A step's fields are fixed when the class loads, so a **proc** is how an option depends on the run. Proc-valued field/input options are resolved on every render, **against the wizard** — the same receiver a step's `condition:` gets, so `anchor`, `data`, `persisted` and `current_user` read exactly as they do everywhere else in the wizard:
+A step's fields are fixed when the class loads, so a **proc** is how an option depends on the run. Proc-valued field/input options are resolved on every render, and the proc **takes the form** — `form.wizard` is the run, `form.object` is that step's staged data:
 
 ```ruby
 step :plan do
   attribute :tier
-  input :tier, as: :select, choices: -> { anchor.available_tiers }
+  input :tier, as: :select, choices: ->(form) { form.wizard.anchor.available_tiers }
 end
 ```
+
+`form.wizard` is the same object `execute` and a step's `condition:` run against, so `anchor`, `data`, `persisted` and `current_user` are all reachable through it.
 
 It is also how a custom component receives per-run configuration:
 
 ```ruby
-input :answers, as: MyManifestComponent, config: -> { anchor.manifest }
+input :answers, as: MyManifestComponent, config: ->(form) { form.wizard.anchor.manifest }
 ```
 
-A one-argument proc still takes the form, as on any other form, for `object` (this step's staged data), `params` and helpers:
+::: warning Take the argument
+A **zero-argument** proc here will not work. It keeps its own binding — the same rule as [everywhere else](/reference/resource/definition#options-that-vary-per-render) — and a step block is `instance_exec`'d against an internal field recorder when the class loads, so `-> { anchor.available_tiers }` looks `anchor` up on that recorder and raises `NameError`.
 
-```ruby
-input :tier, as: :select, choices: ->(form) { form.object.region_tiers }
-```
+That is deliberate: it is the same trade a `form_layout` section option makes, and it means an `input` line keeps its meaning when moved between a definition and a step. Nothing silently swaps `self`.
+:::
 
 Two limits worth knowing:
 
 - The **field set** is still fixed at class load. A proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup, pass a block to `input` instead — it renders in the form's context with the field yielded.
-- `condition:` is **not** resolved this way. A *step's* `condition:` runs against the wizard; a *field's* `condition:` runs against the form, where `object` is that step's staged data.
-
-::: tip What differs from other forms
-Proc options resolve on **every** form (see [Definition › inputs](/reference/resource/definition)); only the zero-arity receiver differs. Elsewhere a zero-arity proc keeps its own binding, because that binding is already useful — one declared in an interaction's `customize_inputs` closes over the interaction. A step block is `instance_exec`'d against a throwaway recorder, so there is no binding worth keeping and the wizard takes its place.
-:::
+- `condition:` is **not** resolved this way, because it is not an option — it asks "should this render here, now?", so it always runs *against* the thing doing the rendering and reads it with no argument. A *step's* `condition:` runs against the **wizard** (it is evaluated in the runner to decide which steps exist, before any form is built — which is exactly why it can't be handed a form); a *field's* runs against the **form**, where `object` is that step's staged data. See [Definition › `condition:` is not an option](/reference/resource/definition#condition-is-not-an-option).
 
 ### `using:` a model
 
@@ -345,7 +343,7 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 | `anchor` | The record the wizard was launched against. Raises `NotAnchoredError` if the wizard isn't `anchored`. |
 | `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Lazily rehydrated on first access (located from stored GlobalIDs the first time you read the key, memoized thereafter). |
 
-A **proc-valued field/input option** on a step resolves against the wizard too, so the same accessors apply there — see [Runtime input options](#runtime-input-options).
+A **proc-valued field/input option** on a step reaches the same accessors through `form.wizard` — see [Runtime input options](#runtime-input-options).
 
 ## Outcome helpers
 

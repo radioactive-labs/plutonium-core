@@ -147,6 +147,43 @@ module Plutonium
         end
       end
 
+      # Submit the posted step: advance through it, then finalize if it turns out
+      # to be the end of the flow (§6.3). This is the driving layer's single entry
+      # point for a forward POST.
+      #
+      # "Is this the last step?" CANNOT be answered before the submission is
+      # staged. Every `condition:` is evaluated against `data`, so a step gated on
+      # an answer from the step being submitted is still hidden at POST time.
+      # Deciding first broke two shapes:
+      #
+      # - a wizard whose later steps are all revealed BY its first step saw a
+      #   visible path of just `[first]`, called it terminal, and finalized — which
+      #   found `first` unsubmitted and bounced back to it, forever. The revealed
+      #   steps were unreachable and no state was ever written.
+      # - a wizard with no `review` step finalized its last step WITHOUT staging
+      #   it, silently dropping that step's params before `execute`.
+      #
+      # So the order is stage, then look: after `advance` the cursor holds the next
+      # visible step, recomputed against the freshly staged data, and a nil cursor
+      # means nothing follows — finish. This also matches what the user sees: the
+      # nav strip renders Finish only on the review step (§7), never on a field
+      # step that merely happens to be last right now.
+      #
+      # The terminal `review` step short-circuits: it declares no fields, so there
+      # is nothing to stage and Finish runs `execute` directly.
+      def submit(step_key, params, goto: nil)
+        step = step_for(step_key)
+        return finalize if step&.review?
+
+        result = advance(step_key, params, goto:)
+        return result unless result.ok?
+        # A cursor target survives → the flow continues (including the `goto:`
+        # "Save & review" shortcut). Nil → `advance` found no next visible step.
+        return result if @state.current_step.present?
+
+        finalize
+      end
+
       # Validate + stage a step, run its `on_submit` (in a transaction), then move
       # the cursor to the next visible step. On validation/`on_submit` failure the
       # cursor does not move and the errors are returned.
