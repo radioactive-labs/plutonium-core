@@ -13,8 +13,8 @@
     <%%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
   <%% end %>
 </head>
-<body class="antialiased min-h-screen bg-[var(--pu-body)]">
-  <main class="p-4 min-h-screen flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0">
+<body class="antialiased pu-min-h-viewport bg-[var(--pu-body)]">
+  <main class="p-4 pu-min-h-viewport flex flex-col items-center justify-center gap-2 px-6 py-8 mx-auto lg:py-0">
     <%% if flash.any? %>
       <%% flash.each do |type, message| %>
         <div class="fixed z-50 top-16 inset-x-0 mx-auto flex items-center w-full max-w-md p-4 rounded-[var(--pu-radius-lg)]"
