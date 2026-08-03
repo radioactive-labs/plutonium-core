@@ -127,6 +127,8 @@ end
 
 `condition:` can also read `anchor`. Branch-hidden steps' data is pruned before `execute`. **Must be nil-safe** (see Critical).
 
+Conditions are re-evaluated against the submission that was just staged, so a step (including `review`) may be gated on an answer from the step immediately before it — the revealed steps become reachable on that same POST. When a step's answer reveals nothing after it, that POST ends the flow and runs `execute`.
+
 ## Field reuse — `using:` a model
 
 `using:` is a **step option** (not a block method) and targets a **model only**.

@@ -135,6 +135,33 @@ module Plutonium
         def execute = succeed(:done)
       end
 
+      # --- every step after the first is revealed BY the first step's answer ---
+      # Before `details` is submitted its own condition inputs are blank, so
+      # `details` is the ONLY visible step. Whether the flow is over can therefore
+      # not be decided from the pre-submission visible path.
+      class LateReveal < Plutonium::Wizard::Base
+        step(:details) do
+          attribute :template, :string
+          validates :template, presence: true
+        end
+        step(:setup, condition: -> { data.details.template == "pro" }) do
+          attribute :note, :string
+        end
+        review label: "R", condition: -> { data.details.template == "pro" }
+
+        def execute = succeed(:done)
+      end
+
+      # --- a wizard with no review step: the last step carries fields ---
+      class NoReview < Plutonium::Wizard::Base
+        step(:only) do
+          attribute :name, :string
+          validates :name, presence: true
+        end
+
+        def execute = succeed(data.only.name)
+      end
+
       # --- a branch whose hidden step persisted a real record (save-as-you-go) ---
       # Step `a` chooses a path; `b` is only visible when path == "x" and its
       # `on_submit` creates + persists an Organization; `c` is always visible.
@@ -197,6 +224,55 @@ module Plutonium
         assert_equal %i[a review], @runner.visible_path.map(&:key)
         @runner.advance(:a, {"go" => "yes"})
         assert_equal %i[a b review], build_runner(W).visible_path.map(&:key)
+      end
+
+      # ---- submit (advance-or-finalize) ----
+
+      test "submit advances a step that reveals the steps following it" do
+        result = build_runner(LateReveal).submit(:details, {"template" => "pro"})
+
+        assert_predicate result, :ok?
+        refute_predicate result, :completed?
+        assert_nil result.redirect_step
+        assert_equal :setup, build_runner(LateReveal).current_step.key
+      end
+
+      test "submit finalizes once the posted step reveals nothing after it" do
+        result = build_runner(LateReveal).submit(:details, {"template" => "basic"})
+
+        assert_predicate result, :completed?
+      end
+
+      test "submit stages the last step before finalizing when there is no review" do
+        result = build_runner(NoReview).submit(:only, {"name" => "Zed"})
+
+        assert_predicate result, :completed?
+        assert_equal "Zed", result.value
+      end
+
+      test "submit finalizes on the terminal review step" do
+        runner = build_runner(W)
+        runner.submit(:a, {"go" => "no"})
+
+        assert_predicate build_runner(W).submit(:review, {}), :completed?
+      end
+
+      test "submit returns validation errors without finalizing" do
+        result = build_runner(NoReview).submit(:only, {"name" => ""})
+
+        refute_predicate result, :ok?
+        refute_predicate result, :completed?
+        assert_includes result.errors.keys, :name
+      end
+
+      test "submit honors a goto shortcut instead of finalizing" do
+        runner = build_runner(WithSkippable)
+        runner.submit(:a, {"go" => "yes"})
+        result = build_runner(WithSkippable).submit(:b, {"note" => "n"}, goto: "review")
+
+        assert_predicate result, :ok?
+        refute_predicate result, :completed?
+        assert_equal :review, build_runner(WithSkippable).current_step.key
       end
 
       test "review is always last in the visible path" do

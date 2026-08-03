@@ -12,6 +12,11 @@ AdminPortal::Engine.routes.draw do
   # prove a POST to an unreachable (branch-hidden) step is refused before it runs.
   register_wizard ::BranchGuardWizard, at: "branch-guard"
 
+  # A wizard whose later steps are revealed by its FIRST step's answer — used to
+  # prove the first POST advances (and can finalize) correctly even though the
+  # pre-submission visible path is just that one step.
+  register_wizard ::LateRevealWizard, at: "late-reveal"
+
   # An `anonymous` (guest) wizard mounted on a PUBLIC route (pre-login). Because
   # the portal engine is mounted behind the host's auth constraint, this draws on
   # the MAIN app route set instead (outside the constraint) — see §4.5 / the
