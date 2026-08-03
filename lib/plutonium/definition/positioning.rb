@@ -47,12 +47,23 @@ module Plutonium
           # permitted sort there is no way back out of the disabled state.
           sort config.attribute
 
-          # Only claim default_sort while it is still the framework default.
-          # A `default_sort` written ABOVE position_on must survive exactly as
-          # one written below it does — this method is otherwise the single
-          # order-dependent line in a class body that is order-independent
-          # everywhere else (see Board#position_config_for).
-          default_sort config.attribute, :asc if _default_sort == Sorting::DEFAULT_SORT
+          # Only claim default_sort while nobody has chosen one. A `default_sort`
+          # written ABOVE position_on must survive exactly as one written below
+          # it does — this method is otherwise the single order-dependent line in
+          # a class body that is order-independent everywhere else (see
+          # Board#position_config_for).
+          #
+          # `equal?`, not `==`: DEFAULT_SORT is a sentinel, and `default_sort
+          # :id, :desc` builds a value-equal but distinct array. Comparing by
+          # value would read that explicit choice as "untouched" and silently
+          # overwrite it.
+          #
+          # NOTE this respects an inherited choice too: a base definition with
+          # its own `default_sort` means every resource under it renders the grip
+          # in the disabled state until the user sorts by position. That is the
+          # intended precedence — the app asked for that ordering — and it is
+          # documented in docs/reference/positioning.md.
+          default_sort config.attribute, :asc if _default_sort.equal?(Sorting::DEFAULT_SORT)
 
           # Hidden: it has a POST member route (routing/mapper_extensions.rb) and
           # a `reposition?` policy predicate (resource/policy.rb), but is

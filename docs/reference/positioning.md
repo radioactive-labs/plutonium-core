@@ -180,7 +180,30 @@ class TaskDefinition < Plutonium::Resource::Definition
 end
 ```
 
-`position_on` only claims `default_sort` while it is still the framework default, so an explicit declaration always wins regardless of where it sits in the class body. Note the consequence: with a foreign default sort, the list opens **not draggable** — the grip renders as a link that applies the position sort.
+`position_on` only claims `default_sort` while nobody has declared one, so an explicit declaration always wins regardless of where it sits in the class body. Note the consequence: with a foreign default sort, the list opens **not draggable** — the grip renders as a link that applies the position sort.
+
+"Explicit" is by declaration, not by value: `default_sort :id, :desc` wins too, even though it names the same field and direction as the framework default. Writing it means you chose it.
+
+**Inherited declarations count.** A base definition is the usual way an app applies one house ordering to every resource, and `position_on` respects it:
+
+```ruby
+class ResourceDefinition < Plutonium::Resource::Definition
+  default_sort :created_at, :desc   # house style, every resource
+end
+
+class TaskDefinition < ResourceDefinition
+  position_on                       # inherits :created_at — NOT draggable on open
+end
+```
+
+Every positioned resource under that base therefore opens in the disabled state until the user clicks the grip. If you want position order to win for a particular resource, declare it there:
+
+```ruby
+class TaskDefinition < ResourceDefinition
+  position_on
+  default_sort :position, :asc
+end
+```
 :::
 
 ### Mode A — delegate (the default) {#mode-a-delegate}

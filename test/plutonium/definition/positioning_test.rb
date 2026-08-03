@@ -112,6 +112,40 @@ module Plutonium
         assert_includes definition.defined_sorts.keys, :position
       end
 
+      # The sentinel case. `default_sort :id, :desc` is value-equal to the
+      # framework's own default, so a `==` test reads it as "nobody chose a
+      # sort" and overwrites it. An explicit choice must survive whether or not
+      # it happens to coincide with the default.
+      def test_explicitly_choosing_the_framework_default_sort_survives
+        definition = build_definition(::Task) do
+          default_sort :id, :desc
+          position_on
+        end
+
+        assert_equal [:id, :desc], definition._default_sort
+        assert_includes definition.defined_sorts.keys, :position
+      end
+
+      # …and the same choice made by a BASE definition, which is how an app
+      # applies one house ordering to every resource. Inheriting that choice is
+      # still a choice.
+      def test_a_base_definitions_default_sort_is_inherited_and_survives
+        base = build_definition(::Task) { default_sort :id, :desc }
+        definition = Class.new(base) { position_on }
+
+        assert_equal [:id, :desc], definition._default_sort
+      end
+
+      # The other half of the sentinel: an untouched definition — including one
+      # inheriting nothing but the framework default through a base class — is
+      # still claimed.
+      def test_an_untouched_inherited_default_sort_is_still_claimed
+        base = build_definition(::Task)
+        definition = Class.new(base) { position_on }
+
+        assert_equal [:position, :asc], definition._default_sort
+      end
+
       # ------------------------------------------------------------------ #
       # Mode A's boot-time model contract                                    #
       # ------------------------------------------------------------------ #
