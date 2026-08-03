@@ -803,6 +803,18 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   overscroll-behavior: contain;
 }
 
+/* Full visible viewport height.
+   100vh is the viewport as it would be with the browser's own chrome hidden,
+   so on a phone a 100vh box is taller than what the user can actually see and
+   its bottom edge sits under the URL bar or the gesture bar. dvh tracks the
+   visible area; 100vh stays as the fallback for engines without it. Same
+   reasoning as the cap on .icon-rail-flyout-inner above, which is where this
+   pattern is already in use. */
+.pu-min-h-viewport {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 @keyframes pu-rail-flyout-in {
   from { opacity: 0; transform: translateX(-4px); }
   to   { opacity: 1; transform: translateX(0); }

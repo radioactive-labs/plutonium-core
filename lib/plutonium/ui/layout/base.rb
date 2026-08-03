@@ -27,9 +27,9 @@ module Plutonium
 
         def html_attributes = {lang:, data_controller: "color-mode"}
 
-        def body_attributes = {class: "antialiased min-h-screen bg-[var(--pu-body)] text-[var(--pu-text)]"}
+        def body_attributes = {class: "antialiased pu-min-h-viewport bg-[var(--pu-body)] text-[var(--pu-text)]"}
 
-        def main_attributes = {class: "p-4 min-h-screen"}
+        def main_attributes = {class: "p-4 pu-min-h-viewport"}
 
         def render_head
           head {
