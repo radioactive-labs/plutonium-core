@@ -257,9 +257,21 @@ export default class extends Controller {
     // Mode B, run somebody else's renumbering block) for no reason at all.
     if (row.nextElementSibling === before && row.previousElementSibling === after) return
 
+    // Where to put the row back if the server never confirms the move. Captured
+    // BEFORE the optimistic insert, as a sibling reference rather than an index
+    // — the row's own index is about to change. `nextSibling`, not
+    // `nextElementSibling`, so the row lands back on the same side of the
+    // whitespace text node it came from and the markup is byte-identical.
+    //
+    // (Unlike the kanban board, which this controller shares its drag core with,
+    // a reorder DOES re-parent the node. Kanban can afford to leave a rejected
+    // drop alone because native HTML5 DnD never moved its card; here, doing
+    // nothing leaves the user looking at an order that was never written.)
+    const restoreAnchor = row.nextSibling
+
     row.parentElement.insertBefore(row, before)
 
-    this.#submit(row.dataset.positionedRowId, {
+    this.#submit(row, restoreAnchor, {
       // The ids of the row's VISIBLE neighbours. A blank one means "nothing on
       // that side of my page" — the server treats that as a claim about the
       // viewport, not about the positioning group, and looks the real boundary
@@ -270,7 +282,12 @@ export default class extends Controller {
     })
   }
 
-  async #submit(recordId, { prevId, nextId, toIndex }) {
+  // `row` is the already-moved element and `restoreAnchor` the sibling it sat
+  // in front of beforehand, so every path that does not end in the server's own
+  // truth can undo the optimistic move rather than leave it standing.
+  async #submit(row, restoreAnchor, { prevId, nextId, toIndex }) {
+    const recordId = row.dataset.positionedRowId
+
     // window.location.search is LOAD-BEARING, not decoration. The endpoint
     // re-renders through the ordinary index pipeline, so the collection's own
     // query — search, filters, scope, sort, page, view — has to arrive in
@@ -312,13 +329,42 @@ export default class extends Controller {
         // gone. Put focus back on the same record's new grip.
         if (focusedRowId) this.#restoreFocus(focusedRowId)
       } else if (!response.ok) {
-        console.error(`[positioned] reposition rejected (${response.status}); leaving the row where it was dropped`)
+        // A rejection with no collection to reconcile against — a denied
+        // `index?` answers 403 with no body on purpose, because the viewer may
+        // not see this listing at all. Nothing was written, so undo the move.
+        console.error(`[positioned] reposition rejected (${response.status}); reverting the move`)
+        this.#revertMove(row, restoreAnchor)
       } else {
-        console.warn("[positioned] reposition returned a non-stream response (session expired?); leaving the row where it was dropped")
+        // 2xx but NOT a stream. Almost always an auth boundary that
+        // 302-redirected to a login page, which fetch followed transparently —
+        // so the POST did nothing at all.
+        console.warn("[positioned] reposition returned a non-stream response (session expired?); reverting the move")
+        this.#revertMove(row, restoreAnchor)
       }
     } catch (error) {
+      // Network failure, offline, aborted. The server never saw the drop.
       console.error("[positioned] reposition request failed:", error)
+      this.#revertMove(row, restoreAnchor)
     }
+  }
+
+  // Undoes the optimistic move. Only meaningful while the row is still the node
+  // we moved: once a turbo-stream has replaced the collection the server's truth
+  // owns the DOM, and this instance's nodes are detached.
+  //
+  // A missing/relocated anchor falls back to appending, which is also what a
+  // null anchor legitimately means — the row was last before the move.
+  #revertMove(row, anchor) {
+    const parent = row.parentElement
+    if (!parent || !row.isConnected) return
+
+    // insertBefore drops focus in most browsers, and the keyboard path leaves
+    // the user tabbed to this very grip.
+    const refocus = row.contains(document.activeElement)
+
+    parent.insertBefore(row, anchor?.parentNode === parent ? anchor : null)
+
+    if (refocus) row.querySelector("[data-positioned-grip]")?.focus()
   }
 
   // ─── helpers ────────────────────────────────────────────────────────────────
@@ -338,9 +384,18 @@ export default class extends Controller {
 
   // Deferred a frame: renderStreamMessage resolves its render asynchronously,
   // so the replacement rows are not in the document yet when it returns.
+  //
+  // Queried off `document`, NOT `this.element`. The stream replaces the contents
+  // of the collection wrapper (Page::Index.collection_dom_id), and this
+  // controller's element — the div around the <table>, or the grid div — is one
+  // of the nodes it discards. By the time this callback runs `this.element` is
+  // detached, so scoping the lookup to it finds nothing and focus is silently
+  // lost on exactly the path this method exists to cover: a keyboard move that
+  // triggered a rebalance. A fresh controller is already connected to the
+  // replacement; `document` is the only handle that spans both.
   #restoreFocus(rowId) {
     requestAnimationFrame(() => {
-      this.element
+      document
         .querySelector(`[data-positioned-row-id="${CSS.escape(rowId)}"] [data-positioned-grip]`)
         ?.focus()
     })
