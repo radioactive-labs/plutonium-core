@@ -32,6 +32,9 @@ module Plutonium
       module KanbanActions
         extend ActiveSupport::Concern
 
+        # Collections rendered here preload what they are about to show.
+        include Plutonium::Resource::Controllers::EagerLoading
+
         # Tags board-bound redirects with kanban_reload=1 so the permanent board
         # refreshes its cached column frames on arrival (see #kanban_reload_url).
         # Wraps ALL three redirect helpers — create/update (after_submit), destroy
@@ -519,8 +522,24 @@ module Plutonium
               .extract_input(params, view_context:)[:q]
 
             base_query = current_authorized_scope
-            current_query_object.apply(base_query, query_params, context: self)
+            collection = current_query_object.apply(base_query, query_params, context: self)
+            # Preloaded here rather than at each `.to_a`, because every card query
+            # on the board derives from this relation — the column body, the
+            # lazy-loaded frames, the post-move re-render. The sites that `pluck`
+            # or `count` off it instantiate no records, so the preload does not
+            # run for them.
+            auto_eager_load(collection, kanban_card_field_names)
           end
+        end
+
+        # The fields a card actually renders. A board's `card_fields` is a slot
+        # layout — each slot holds one field name, several, or `false` to hide the
+        # slot — so it is flattened to names. A board that declares no layout falls
+        # back to the read attribute set, the same one the column component is
+        # handed as `resource_fields`.
+        def kanban_card_field_names
+          slots = current_kanban_board.card_fields
+          slots ? slots.values.flatten.grep(Symbol) : permitted_attributes_for("index")
         end
 
         # Intercepts the index action when view=kanban + column= is present.

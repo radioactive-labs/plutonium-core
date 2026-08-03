@@ -38,7 +38,7 @@ Loads the baseline defaults for a given framework version. Call this first; late
 | `enable_hotreload` | `true` in `development` env | Hot-reload Plutonium components on change. |
 | `shell` | `:modern` | Chrome style: `:modern` (topbar + icon rail), `:plain` (topbar, no icon rail), or `:classic` (legacy header + sidebar, only for upgrades). See [Layouts](./ui/layouts). |
 | `navii_host_url` | `"https://api.navii.dev"` | Host of the [Navii](https://navii.dev) avatar service used by [`Avatar`](./ui/components#avatar). The component appends `/avatar/:seed`. Repoint to self-host or proxy. |
-| `auto_eager_load_index` | `true` | Index pages preload the associations and attachments their columns render. Set `false` to disable globally, or override `auto_eager_load_index?` in a controller. See [Performance](/guides/performance). |
+| `auto_eager_load_index` | `true` | Index pages, kanban boards and CSV exports preload the associations and attachments they render. Set `false` to disable globally, or override `auto_eager_load_index?` in a controller. See [Performance](/guides/performance). |
 | `assets.logo` | `"plutonium.png"` | Brand logo asset. See [Assets](./ui/assets). |
 | `assets.favicon` | `"plutonium.ico"` | Favicon asset. |
 | `assets.stylesheet` | `"plutonium.css"` | Stylesheet entry. |

@@ -14,9 +14,11 @@ tail -f log/development.log
 
 The cost matters most where each query is a network round trip. On Postgres or MySQL an index page can spend most of its time waiting; on SQLite the same page is cheaper, though the query count is identical. Either way the count grows with page size, so a listing that is fine at 20 rows may not be at 200.
 
-## Index pages preload themselves
+## Collections preload themselves
 
-Index pages already eager-load the associations and attachments their columns render. The column set comes from the policy, so the framework knows it before the collection loads and can preload exactly those. Nothing to declare, and nothing to keep in step when a column is added or removed.
+Index pages, kanban boards and CSV exports already eager-load the associations and attachments they render. The field set comes from the policy, so the framework knows it before the collection loads and can preload exactly those. Nothing to declare, and nothing to keep in step when a field is added or removed.
+
+Each rendering passes its own field set, because they differ: the index renders its permitted attributes, an export renders `permitted_attributes_for_export`, and a kanban card renders its `card_fields`.
 
 It covers `belongs_to` and `has_one`, and attachments on both ActiveStorage and Shrine. `has_many` is excluded: preloading one to render a count loads every child row, which loses to a counter cache.
 
@@ -41,7 +43,7 @@ end
 
 ## Eager loading by hand
 
-Other actions, and anything the framework can't see — an association read inside a custom column block, or one rendered on a show page — still need declaring.
+Anything the framework can't see still needs declaring: an association read inside a custom column block, or one rendered on a show page.
 
 ### One listing
 

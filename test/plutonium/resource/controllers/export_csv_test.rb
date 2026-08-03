@@ -60,6 +60,18 @@ class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
     Class.new do
       def self.primary_key = "id"
       def self.model_name = OpenStruct.new(human: "Widget")
+
+      # The export preloads the associations its columns render, so it asks the
+      # resource class what those are. A real resource gets these from
+      # Plutonium::Resource::Record::FieldNames; this double has none, which is
+      # what keeps `includes` off the FakeRelation below.
+      def self.belongs_to_association_field_names = []
+
+      def self.has_one_association_field_names = []
+
+      def self.has_one_attached_field_names = []
+
+      def self.has_many_attached_field_names = []
     end
   end
 

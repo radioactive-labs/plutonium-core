@@ -12,6 +12,7 @@ module Plutonium
       include Plutonium::Resource::Controllers::Defineable
       include Plutonium::Resource::Controllers::Authorizable
       include Plutonium::Resource::Controllers::Presentable
+      include Plutonium::Resource::Controllers::EagerLoading
       include Plutonium::Resource::Controllers::Queryable
       include Plutonium::Resource::Controllers::CrudActions
       include Plutonium::Resource::Controllers::KanbanActions

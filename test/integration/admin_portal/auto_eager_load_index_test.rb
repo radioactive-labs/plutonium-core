@@ -112,4 +112,54 @@ class AdminPortal::AutoEagerLoadIndexTest < ActionDispatch::IntegrationTest
   ensure
     Plutonium.configuration.auto_eager_load_index = true
   end
+
+  # The CSV export streams EVERY matching row, not a page, so its N+1 is
+  # unbounded. It also renders its own column set
+  # (`permitted_attributes_for_export`), which is why it passes its own fields
+  # rather than reusing the index's.
+  test "the csv export preloads its own column set" do
+    seed_posts(18)
+
+    on = count_sql { get "/admin/blogging/posts/export_csv" }
+    assert_response :success
+
+    Plutonium.configuration.auto_eager_load_index = false
+    off = count_sql { get "/admin/blogging/posts/export_csv" }
+    assert_response :success
+
+    assert_operator on, :<, off,
+      "export should preload its association columns (#{on} vs #{off})"
+  ensure
+    Plutonium.configuration.auto_eager_load_index = true
+  end
+
+  # Kanban builds its own relation and never runs setup_index_action!, so it
+  # needs wiring separately. KitchenSink's board declares
+  # `card_fields ... meta: [..., :user]`, so cards render a belongs_to.
+  #
+  # Measured at the COLUMN endpoint, not `?view=kanban`: the board is lazy, so
+  # the bare view renders an empty shell and materialises no cards at all. Each
+  # column body arrives in its own turbo-frame request, and that is where the
+  # per-card association reads happen.
+  test "a kanban board preloads the associations its cards render" do
+    org = create_organization!
+    KitchenSink.delete_all
+    12.times do |i|
+      KitchenSink.create!(name: "ks #{i}", organization: org, user: create_user!, status: :active)
+    end
+
+    column_url = "/admin/kitchen_sinks?view=kanban&column=active"
+    get column_url # warm the session so auth lookups don't skew the count
+    on = count_sql { get column_url }
+    assert_response :success
+
+    Plutonium.configuration.auto_eager_load_index = false
+    off = count_sql { get column_url }
+    assert_response :success
+
+    assert_operator on, :<, off,
+      "kanban cards should preload their association fields (#{on} vs #{off})"
+  ensure
+    Plutonium.configuration.auto_eager_load_index = true
+  end
 end
