@@ -34,6 +34,9 @@ module Plutonium
       module ExportCsv
         extend ActiveSupport::Concern
 
+        # Collections rendered here preload what they are about to show.
+        include Plutonium::Resource::Controllers::EagerLoading
+
         # Placeholder written when a column is neither an `export` block nor a
         # real attribute on the record, so the export degrades to a usable file
         # instead of a mid-stream NoMethodError (which would truncate the
@@ -84,7 +87,13 @@ module Plutonium
         #   object entirely (no scope/filter/search/default-scope).
         # Both still respect tenant/parent scoping (current_authorized_scope).
         def export_csv_collection
-          export_all_requested? ? current_authorized_scope : filtered_resource_collection
+          scope = export_all_requested? ? current_authorized_scope : filtered_resource_collection
+          # Preloaded against the EXPORT's own column set, which is
+          # `permitted_attributes_for_export` and need not match the index's.
+          # This is the worst N+1 of the three collection renderings: an export
+          # streams every matching row, not a page of them, so a per-row
+          # association read is unbounded.
+          auto_eager_load(scope, exportable_attributes)
         end
 
         def export_all_requested?

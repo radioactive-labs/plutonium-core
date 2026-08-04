@@ -34,6 +34,7 @@ aside: false
     ]},
     { group: 'Quality', items: [
       { name: 'Testing', link: '/plutonium-core/guides/testing' },
+      { name: 'Performance', desc: 'N+1 queries and eager loading.', link: '/plutonium-core/guides/performance' },
       { name: 'Troubleshooting', link: '/plutonium-core/guides/troubleshooting' },
     ]},
   ]"

@@ -108,6 +108,14 @@ def filtered_resource_collection
 end
 ```
 
+Also where you eager-load associations the index renders. `super` keeps scoping, search, filters and sorting:
+
+```ruby
+def filtered_resource_collection = super.includes(:author, :category)
+```
+
+See [Guides › Performance](/guides/performance).
+
 ### Presentation hooks
 
 Control whether parent / scoped-entity fields appear in forms and displays. Defaults are `false` (hidden, since they're inferred from the URL/portal).

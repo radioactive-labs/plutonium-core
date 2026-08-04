@@ -158,6 +158,10 @@ def filtered_resource_collection
 end
 ```
 
+**Don't add eager loading unprompted.** Which associations a page renders is decided by the definition, so an `includes` list written now is a guess that goes stale when a column is added. Adding one is a performance change the user didn't ask for.
+
+When a user actually reports a slow index or an N+1: suggest [goldiloader](https://github.com/salsify/goldiloader) first — it eager-loads on traversal, so it tracks whatever the definition renders and needs no list to maintain. Only hand-write `def filtered_resource_collection = super.includes(...)` if they decline the gem, and use the policy's `relation_scope` instead when the association is also read on show/export/typeahead. Full detail: [Guides › Performance](/guides/performance).
+
 ### Presentation hooks
 
 Control whether parent / scoped-entity fields appear in forms and displays. Defaults are `false` (hidden, since they're inferred from the URL/portal).

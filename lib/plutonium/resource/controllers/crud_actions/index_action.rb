@@ -8,7 +8,16 @@ module Plutonium
           private
 
           def setup_index_action!
-            @pagy, @resource_records = pagy(:offset, filtered_resource_collection)
+            # Applied HERE, not inside filtered_resource_collection: what to
+            # preload depends on what is about to be RENDERED, and
+            # filtered_resource_collection is shared with the CSV export, which
+            # renders a different column set (`permitted_attributes_for_export`).
+            # Reading the index's fields in there resolved the wrong policy
+            # method for that action and raised. Keeping the hook to filtering and
+            # eager-loading at the point of use also leaves an app's own
+            # `filtered_resource_collection` override unaffected.
+            collection = auto_eager_load(filtered_resource_collection, presentable_attributes)
+            @pagy, @resource_records = pagy(:offset, collection)
           end
 
           def filtered_resource_collection
