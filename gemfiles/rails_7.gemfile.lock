@@ -5,7 +5,7 @@ PATH
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
-      pagy (~> 43.0)
+      pagy (~> 43.0, >= 43.5.6)
       phlex (~> 2.0)
       phlex-rails
       phlex-slotable (>= 1.0.0)
