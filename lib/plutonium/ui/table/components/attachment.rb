@@ -27,7 +27,7 @@ module Plutonium
                 attachment_preview_thumbnail_url_value: attachment_thumbnail_url(attachment),
                 attachment_preview_target: "thumbnail"
               },
-              title: attachment.filename
+              title: attachment.filename.to_s
             ) do
               a(
                 href: attachment.url,
