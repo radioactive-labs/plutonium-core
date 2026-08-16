@@ -29044,6 +29044,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       marker.style.height = "";
     }
     marker.dataset.axis = axis;
+    marker.dataset.edge = leading ? "leading" : "trailing";
     marker.style.display = "block";
   }
   function hideInsertionMarker() {

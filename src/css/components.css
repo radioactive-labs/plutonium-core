@@ -1095,13 +1095,31 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   border-radius: var(--pu-radius-full, 9999px);
 }
 
-/* Centre the line on the gap rather than letting it sit inside the next item. */
+/* The line is anchored to an item's edge, so nudge it OFF that edge by the gap:
+   `leading` sits above the item it points at, `trailing` below the last one.
+   Either way the clearance falls on the side facing the item, so the line reads
+   as sitting in the gap instead of underlining a row. Tune with
+   --pu-drag-marker-gap. */
 .pu-drag-marker[data-axis="vertical"] {
   height: 2px;
-  margin-top: -1px;
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="leading"] {
+  margin-top: calc(-1 * var(--pu-drag-marker-gap, 4px));
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="trailing"] {
+  margin-top: var(--pu-drag-marker-gap, 4px);
 }
 
 .pu-drag-marker[data-axis="horizontal"] {
   width: 2px;
-  margin-left: -1px;
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="leading"] {
+  margin-left: calc(-1 * var(--pu-drag-marker-gap, 4px));
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="trailing"] {
+  margin-left: var(--pu-drag-marker-gap, 4px);
 }

@@ -147,6 +147,9 @@ export function showInsertionMarker(items, index, { axis = "vertical", container
   }
 
   marker.dataset.axis = axis
+  // Which edge the line is anchored to, so CSS can push it OFF that edge by the
+  // gap rather than letting it sit flush against the item it points at.
+  marker.dataset.edge = leading ? "leading" : "trailing"
   marker.style.display = "block"
 }
 
