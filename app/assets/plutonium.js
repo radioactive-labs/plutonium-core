@@ -28992,13 +28992,63 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     return items.length;
   }
-  function beginDrag(event, element, { draggingClass, payload }) {
+  function beginDrag(event, element, { draggingClass, payload, dragImage = null }) {
     event.dataTransfer.effectAllowed = "move";
     event.dataTransfer.setData("text/plain", payload);
+    if (dragImage) {
+      const rect = dragImage.getBoundingClientRect();
+      event.dataTransfer.setDragImage(dragImage, event.clientX - rect.left, event.clientY - rect.top);
+    }
     requestAnimationFrame(() => element.classList.add(draggingClass));
   }
   function endDrag(element, { draggingClass }) {
     element.classList.remove(draggingClass);
+    hideInsertionMarker();
+  }
+  var MARKER_ID = "pu-drag-insertion-marker";
+  function insertionMarker() {
+    let marker = document.getElementById(MARKER_ID);
+    if (!marker) {
+      marker = document.createElement("div");
+      marker.id = MARKER_ID;
+      marker.className = "pu-drag-marker";
+      marker.setAttribute("aria-hidden", "true");
+      document.body.appendChild(marker);
+    }
+    return marker;
+  }
+  function showInsertionMarker(items, index, { axis = "vertical", container = null } = {}) {
+    const marker = insertionMarker();
+    let rect;
+    let leading;
+    if (items.length === 0) {
+      if (!container) return hideInsertionMarker();
+      rect = container.getBoundingClientRect();
+      leading = true;
+    } else if (index < items.length) {
+      rect = items[index].getBoundingClientRect();
+      leading = true;
+    } else {
+      rect = items[items.length - 1].getBoundingClientRect();
+      leading = false;
+    }
+    if (axis === "horizontal") {
+      marker.style.left = `${leading ? rect.left : rect.right}px`;
+      marker.style.top = `${rect.top}px`;
+      marker.style.height = `${rect.height}px`;
+      marker.style.width = "";
+    } else {
+      marker.style.left = `${rect.left}px`;
+      marker.style.top = `${leading ? rect.top : rect.bottom}px`;
+      marker.style.width = `${rect.width}px`;
+      marker.style.height = "";
+    }
+    marker.dataset.axis = axis;
+    marker.style.display = "block";
+  }
+  function hideInsertionMarker() {
+    const marker = document.getElementById(MARKER_ID);
+    if (marker) marker.style.display = "none";
   }
 
   // src/js/controllers/kanban_controller.js
@@ -29268,15 +29318,22 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       this.#highlightColumn(column);
+      const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
+      showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
+        axis: "vertical",
+        container: column
+      });
     }
     #onDragLeave(event) {
       if (!this.element.contains(event.relatedTarget)) {
         this.#clearHighlights();
+        hideInsertionMarker();
       }
     }
     async #onDrop(event) {
       event.preventDefault();
       this.#clearHighlights();
+      hideInsertionMarker();
       if (!this.draggedCard) return;
       const wrapper = event.target.closest("[data-kanban-col]");
       if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
@@ -29443,11 +29500,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.draggedRow = null;
       this.onDragStart = this.#onDragStart.bind(this);
       this.onDragOver = this.#onDragOver.bind(this);
+      this.onDragLeave = this.#onDragLeave.bind(this);
       this.onDrop = this.#onDrop.bind(this);
       this.onDragEnd = this.#onDragEnd.bind(this);
       this.onKeyDown = this.#onKeyDown.bind(this);
       this.element.addEventListener("dragstart", this.onDragStart);
       this.element.addEventListener("dragover", this.onDragOver);
+      this.element.addEventListener("dragleave", this.onDragLeave);
       this.element.addEventListener("drop", this.onDrop);
       this.element.addEventListener("dragend", this.onDragEnd);
       this.element.addEventListener("keydown", this.onKeyDown);
@@ -29455,9 +29514,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     disconnect() {
       this.element.removeEventListener("dragstart", this.onDragStart);
       this.element.removeEventListener("dragover", this.onDragOver);
+      this.element.removeEventListener("dragleave", this.onDragLeave);
       this.element.removeEventListener("drop", this.onDrop);
       this.element.removeEventListener("dragend", this.onDragEnd);
       this.element.removeEventListener("keydown", this.onKeyDown);
+      hideInsertionMarker();
     }
     // ─── drag lifecycle ─────────────────────────────────────────────────────────
     #onDragStart(event) {
@@ -29468,16 +29529,29 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.draggedRow = row;
       beginDrag(event, row, {
         draggingClass: DRAGGING_CLASS,
-        payload: row.dataset.positionedRowId
+        payload: row.dataset.positionedRowId,
+        // The grip carries draggable="true", so without this the browser ghosts
+        // the grip alone and the row looks like it never left.
+        dragImage: row
       });
     }
     #onDragOver(event) {
       if (!this.draggedRow) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
+      const others = this.#rows().filter((r4) => r4 !== this.draggedRow);
+      showInsertionMarker(others, this.#dropIndex(event, others), {
+        axis: this.axisValue === "horizontal" ? "horizontal" : "vertical",
+        container: this.element
+      });
+    }
+    #onDragLeave(event) {
+      if (event.relatedTarget && this.element.contains(event.relatedTarget)) return;
+      hideInsertionMarker();
     }
     #onDrop(event) {
       event.preventDefault();
+      hideInsertionMarker();
       if (!this.draggedRow) return;
       const row = this.draggedRow;
       const others = this.#rows().filter((r4) => r4 !== row);

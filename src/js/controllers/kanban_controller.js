@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { morphTurboFrameElements } from "@hotwired/turbo"
-import { beginDrag, computeDropIndex, endDrag } from "../drag/sortable"
+import { beginDrag, computeDropIndex, endDrag, hideInsertionMarker, showInsertionMarker } from "../drag/sortable"
 
 // Connects to data-controller="kanban"
 //
@@ -461,6 +461,16 @@ export default class extends Controller {
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
     this.#highlightColumn(column)
+
+    // The column outline says WHICH column; this says which SLOT within it.
+    // Same exclusion and same index function #onDrop uses, so the line marks
+    // the position the drop will actually take.
+    const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")]
+      .filter(c => c !== this.draggedCard)
+    showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
+      axis: "vertical",
+      container: column
+    })
   }
 
   #onDragLeave(event) {
@@ -469,12 +479,16 @@ export default class extends Controller {
     // the board wrapper when crossing the edge.
     if (!this.element.contains(event.relatedTarget)) {
       this.#clearHighlights()
+      hideInsertionMarker()
     }
   }
 
   async #onDrop(event) {
     event.preventDefault()
     this.#clearHighlights()
+    // On release, not on dragend: the marker should not outlive the gesture
+    // while the move is in flight.
+    hideInsertionMarker()
 
     if (!this.draggedCard) return
 

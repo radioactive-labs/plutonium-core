@@ -1080,3 +1080,28 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 .pu-kanban-no-drop {
   opacity: 0.45;
 }
+
+/* Where the drop will land. Shared by the kanban board and every positioned
+   table/grid (src/js/drag/sortable.js). Parked on <body> and positioned in
+   viewport coordinates, so it is never clipped by a scrolling column or an
+   overflow-x table wrapper. pointer-events:none keeps it out of the way of the
+   dragover hit-testing that positions it. */
+.pu-drag-marker {
+  position: fixed;
+  z-index: 60;
+  display: none;
+  pointer-events: none;
+  background: var(--color-primary-500, #3b82f6);
+  border-radius: var(--pu-radius-full, 9999px);
+}
+
+/* Centre the line on the gap rather than letting it sit inside the next item. */
+.pu-drag-marker[data-axis="vertical"] {
+  height: 2px;
+  margin-top: -1px;
+}
+
+.pu-drag-marker[data-axis="horizontal"] {
+  width: 2px;
+  margin-left: -1px;
+}

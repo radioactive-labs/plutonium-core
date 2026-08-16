@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { beginDrag, computeDropIndex, computeDropIndexHorizontal, endDrag } from "../drag/sortable"
+import { beginDrag, computeDropIndex, computeDropIndexHorizontal, endDrag, hideInsertionMarker, showInsertionMarker } from "../drag/sortable"
 
 // Applied to the row for the duration of the drag. A plain Tailwind utility
 // rather than a bespoke class, so the whole affordance needs no stylesheet of
@@ -83,12 +83,14 @@ export default class extends Controller {
 
     this.onDragStart = this.#onDragStart.bind(this)
     this.onDragOver = this.#onDragOver.bind(this)
+    this.onDragLeave = this.#onDragLeave.bind(this)
     this.onDrop = this.#onDrop.bind(this)
     this.onDragEnd = this.#onDragEnd.bind(this)
     this.onKeyDown = this.#onKeyDown.bind(this)
 
     this.element.addEventListener("dragstart", this.onDragStart)
     this.element.addEventListener("dragover", this.onDragOver)
+    this.element.addEventListener("dragleave", this.onDragLeave)
     this.element.addEventListener("drop", this.onDrop)
     this.element.addEventListener("dragend", this.onDragEnd)
     this.element.addEventListener("keydown", this.onKeyDown)
@@ -97,9 +99,12 @@ export default class extends Controller {
   disconnect() {
     this.element.removeEventListener("dragstart", this.onDragStart)
     this.element.removeEventListener("dragover", this.onDragOver)
+    this.element.removeEventListener("dragleave", this.onDragLeave)
     this.element.removeEventListener("drop", this.onDrop)
     this.element.removeEventListener("dragend", this.onDragEnd)
     this.element.removeEventListener("keydown", this.onKeyDown)
+    // A drag interrupted by a Turbo navigation never reaches dragend.
+    hideInsertionMarker()
   }
 
   // ─── drag lifecycle ─────────────────────────────────────────────────────────
@@ -119,7 +124,10 @@ export default class extends Controller {
     // at full opacity (see ../drag/sortable).
     beginDrag(event, row, {
       draggingClass: DRAGGING_CLASS,
-      payload: row.dataset.positionedRowId
+      payload: row.dataset.positionedRowId,
+      // The grip carries draggable="true", so without this the browser ghosts
+      // the grip alone and the row looks like it never left.
+      dragImage: row
     })
   }
 
@@ -131,10 +139,28 @@ export default class extends Controller {
 
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
+
+    // Same exclusion and same index function the drop uses, so the line the
+    // user aims at is the slot they get.
+    const others = this.#rows().filter(r => r !== this.draggedRow)
+    showInsertionMarker(others, this.#dropIndex(event, others), {
+      axis: this.axisValue === "horizontal" ? "horizontal" : "vertical",
+      container: this.element
+    })
+  }
+
+  #onDragLeave(event) {
+    // Only when the pointer leaves the collection entirely — dragleave also
+    // fires crossing between rows inside it, and hiding on those would strobe.
+    if (event.relatedTarget && this.element.contains(event.relatedTarget)) return
+    hideInsertionMarker()
   }
 
   #onDrop(event) {
     event.preventDefault()
+    // On release, not on dragend: the marker should not outlive the gesture
+    // while the POST is in flight.
+    hideInsertionMarker()
     if (!this.draggedRow) return
 
     const row = this.draggedRow
