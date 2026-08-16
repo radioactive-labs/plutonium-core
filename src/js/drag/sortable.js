@@ -116,11 +116,13 @@ function insertionMarker() {
 // between them) and "horizontal" for grids (a vertical rule between cards).
 // `container` is the fallback for an empty target — an empty kanban column
 // still needs to say "it lands here".
-// `gap` overrides the clearance between the line and the item it points at, for
-// consumers whose layout needs more air than the default (the board's columns
-// are roomier than a table's rows). One marker element is shared by every
-// consumer, so an unset gap must RESET the property rather than inherit
-// whichever consumer drew last.
+// BETWEEN two items the line is centred in the gap the layout already leaves,
+// so it gets equal air on both sides whatever that spacing is — a board's roomy
+// column and a table's tight rows both come out balanced with no per-consumer
+// tuning. `gap` only covers the two ENDS, where there is no facing item to
+// measure against and the clearance has to be invented. One marker element is
+// shared by every consumer, so an unset gap must RESET the property rather than
+// inherit whichever consumer drew last.
 export function showInsertionMarker(items, index, { axis = "vertical", container = null, gap = null } = {}) {
   const marker = insertionMarker()
 
@@ -130,37 +132,51 @@ export function showInsertionMarker(items, index, { axis = "vertical", container
     marker.style.removeProperty("--pu-drag-marker-gap")
   }
 
-  let rect
-  let leading
+  const vertical = axis !== "horizontal"
+  const near = rect => (vertical ? rect.top : rect.left)
+  const far = rect => (vertical ? rect.bottom : rect.right)
+
+  // `span` supplies the cross-axis extent (a row's width, a card's height);
+  // `offset` is where the line sits along the drag axis.
+  let span
+  let offset
+  let edge
   if (items.length === 0) {
     if (!container) return hideInsertionMarker()
-    rect = container.getBoundingClientRect()
-    leading = true
-  } else if (index < items.length) {
-    rect = items[index].getBoundingClientRect()
-    leading = true
+    span = container.getBoundingClientRect()
+    offset = near(span)
+    edge = "leading"
+  } else if (index <= 0) {
+    span = items[0].getBoundingClientRect()
+    offset = near(span)
+    edge = "leading"
+  } else if (index >= items.length) {
+    span = items[items.length - 1].getBoundingClientRect()
+    offset = far(span)
+    edge = "trailing"
   } else {
-    // Past the end: hug the trailing edge of the last item.
-    rect = items[items.length - 1].getBoundingClientRect()
-    leading = false
+    span = items[index].getBoundingClientRect()
+    offset = (far(items[index - 1].getBoundingClientRect()) + near(span)) / 2
+    edge = "between"
   }
 
-  if (axis === "horizontal") {
-    marker.style.left = `${leading ? rect.left : rect.right}px`
-    marker.style.top = `${rect.top}px`
-    marker.style.height = `${rect.height}px`
-    marker.style.width = ""
-  } else {
-    marker.style.left = `${rect.left}px`
-    marker.style.top = `${leading ? rect.top : rect.bottom}px`
-    marker.style.width = `${rect.width}px`
+  if (vertical) {
+    marker.style.left = `${span.left}px`
+    marker.style.top = `${offset}px`
+    marker.style.width = `${span.width}px`
     marker.style.height = ""
+  } else {
+    marker.style.left = `${offset}px`
+    marker.style.top = `${span.top}px`
+    marker.style.height = `${span.height}px`
+    marker.style.width = ""
   }
 
   marker.dataset.axis = axis
-  // Which edge the line is anchored to, so CSS can push it OFF that edge by the
-  // gap rather than letting it sit flush against the item it points at.
-  marker.dataset.edge = leading ? "leading" : "trailing"
+  // Which edge the line is anchored to. "between" is already centred in a real
+  // gap and only needs the line's own thickness taken off; the ends have to be
+  // pushed clear of the single item they touch.
+  marker.dataset.edge = edge
   marker.style.display = "block"
 }
 

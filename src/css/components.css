@@ -1071,7 +1071,7 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 
 /* Column highlighted as the current drop target */
 .pu-kanban-drop-target {
-  outline: 2px solid var(--color-primary-500, #3b82f6);
+  outline: 2px solid theme(colors.primary.500);
   outline-offset: -2px;
   border-radius: var(--pu-radius-md, 0.5rem);
 }
@@ -1091,17 +1091,20 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   z-index: 60;
   display: none;
   pointer-events: none;
-  background: var(--color-primary-500, #3b82f6);
+  background: theme(colors.primary.500);
   border-radius: var(--pu-radius-full, 9999px);
 }
 
-/* The line is anchored to an item's edge, so nudge it OFF that edge by the gap:
-   `leading` sits above the item it points at, `trailing` below the last one.
-   Either way the clearance falls on the side facing the item, so the line reads
-   as sitting in the gap instead of underlining a row. Tune with
-   --pu-drag-marker-gap. */
+/* `between` is already centred in the gap the layout leaves, so it only pulls
+   back by half the line's thickness. The two ENDS touch a single item and have
+   to be pushed clear of it — off the top of the first, below the bottom of the
+   last. Tune the end clearance with --pu-drag-marker-gap. */
 .pu-drag-marker[data-axis="vertical"] {
   height: 2px;
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="between"] {
+  margin-top: -1px;
 }
 
 .pu-drag-marker[data-axis="vertical"][data-edge="leading"] {
@@ -1114,6 +1117,10 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 
 .pu-drag-marker[data-axis="horizontal"] {
   width: 2px;
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="between"] {
+  margin-left: -1px;
 }
 
 .pu-drag-marker[data-axis="horizontal"][data-edge="leading"] {

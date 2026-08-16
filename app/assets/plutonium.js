@@ -29024,32 +29024,43 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     } else {
       marker.style.removeProperty("--pu-drag-marker-gap");
     }
-    let rect;
-    let leading;
+    const vertical = axis !== "horizontal";
+    const near = (rect) => vertical ? rect.top : rect.left;
+    const far = (rect) => vertical ? rect.bottom : rect.right;
+    let span;
+    let offset2;
+    let edge;
     if (items.length === 0) {
       if (!container) return hideInsertionMarker();
-      rect = container.getBoundingClientRect();
-      leading = true;
-    } else if (index < items.length) {
-      rect = items[index].getBoundingClientRect();
-      leading = true;
+      span = container.getBoundingClientRect();
+      offset2 = near(span);
+      edge = "leading";
+    } else if (index <= 0) {
+      span = items[0].getBoundingClientRect();
+      offset2 = near(span);
+      edge = "leading";
+    } else if (index >= items.length) {
+      span = items[items.length - 1].getBoundingClientRect();
+      offset2 = far(span);
+      edge = "trailing";
     } else {
-      rect = items[items.length - 1].getBoundingClientRect();
-      leading = false;
+      span = items[index].getBoundingClientRect();
+      offset2 = (far(items[index - 1].getBoundingClientRect()) + near(span)) / 2;
+      edge = "between";
     }
-    if (axis === "horizontal") {
-      marker.style.left = `${leading ? rect.left : rect.right}px`;
-      marker.style.top = `${rect.top}px`;
-      marker.style.height = `${rect.height}px`;
-      marker.style.width = "";
-    } else {
-      marker.style.left = `${rect.left}px`;
-      marker.style.top = `${leading ? rect.top : rect.bottom}px`;
-      marker.style.width = `${rect.width}px`;
+    if (vertical) {
+      marker.style.left = `${span.left}px`;
+      marker.style.top = `${offset2}px`;
+      marker.style.width = `${span.width}px`;
       marker.style.height = "";
+    } else {
+      marker.style.left = `${offset2}px`;
+      marker.style.top = `${span.top}px`;
+      marker.style.height = `${span.height}px`;
+      marker.style.width = "";
     }
     marker.dataset.axis = axis;
-    marker.dataset.edge = leading ? "leading" : "trailing";
+    marker.dataset.edge = edge;
     marker.style.display = "block";
   }
   function hideInsertionMarker() {
