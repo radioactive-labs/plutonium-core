@@ -220,6 +220,49 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
       "with no usable anchor the record must not be flung to the end of its own group"
   end
 
+  test "a cross-group drop explains itself instead of silently snapping back" do
+    # A collection spanning groups invites this on nearly every row, so the
+    # reconciliation alone reads as "drag is broken" — the row returns to where
+    # it was with nothing said. The toast names the scope attribute so the user
+    # learns the rule rather than the symptom.
+    done = Task.create!(title: "Done", status: "done")
+    done.update_column(:position, 500.0)
+
+    reposition(@a, prev_id: done.id, next_id: "", to_index: 5)
+
+    assert_response :ok, "the toast rides along with the reconciliation; it does not replace it"
+    assert_includes response.body, "Reordering only works within the same status",
+      "the message must name the positioning scope, not the raw column"
+    assert_includes response.body, Plutonium::FLASH_REGION,
+      "the toast must target the flash region, which sits outside the replaced collection"
+  end
+
+  test "a move that succeeds is never told reordering does not work" do
+    # One foreign neighbour is not a refusal: the surviving in-group anchor
+    # carries the drop and the boundary lookup supplies the other, so the record
+    # really does move. A warning here would contradict the reorder the user can
+    # see on screen.
+    done = Task.create!(title: "Done", status: "done")
+    done.update_column(:position, 500.0)
+    original = @c.position
+
+    reposition(@c, prev_id: done.id, next_id: @b.id, to_index: 1)
+
+    refute_equal original, @c.reload.position, "the drop was honoured via the in-group anchor"
+    refute_includes response.body, "Reordering only works within the same",
+      "a successful move must not carry a warning that it did not happen"
+  end
+
+  test "an ordinary drift reconciliation stays silent" do
+    # A neighbour that simply vanished is transient staleness — a reload fixes
+    # it, so there is no rule to teach and nothing worth interrupting for.
+    reposition(@a, prev_id: "999999", next_id: "", to_index: 1)
+
+    assert_response :ok
+    refute_includes response.body, "Reordering only works within the same",
+      "only a cross-group refusal earns a toast"
+  end
+
   test "a same-group neighbour is still accepted after the group check" do
     reposition(@c, prev_id: @a.id, next_id: @b.id, to_index: 1)
 

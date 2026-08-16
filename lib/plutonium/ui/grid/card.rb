@@ -10,8 +10,12 @@ module Plutonium
       class Card < Plutonium::UI::Component::Base
         attr_reader :record, :resource_definition, :resource_fields, :card_fields
 
-        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil, drag_handle: nil)
+        def initialize(record, resource_definition:, resource_fields: nil, card_fields: nil, show_turbo_frame: nil, drag_handle: nil, position_group: nil)
           @record = record
+          # Which positioning group this card belongs to, for a scoped resource;
+          # nil when unscoped. Same rationale as the table's row attribute — the
+          # drag refuses a drop across groups (see Positionable).
+          @position_group = position_group
           @resource_definition = resource_definition
           @resource_fields = resource_fields
           @card_fields = card_fields
@@ -350,7 +354,8 @@ module Plutonium
           data = {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"}
           return data unless @drag_handle
 
-          data.merge(positioned_row_id: record.id)
+          data = data.merge(positioned_row_id: record.id)
+          @position_group.nil? ? data : data.merge(positioned_group: @position_group)
         end
       end
     end

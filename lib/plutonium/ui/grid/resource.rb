@@ -79,7 +79,8 @@ module Plutonium
                 record,
                 resource_definition:,
                 resource_fields:,
-                drag_handle: drag_handle_for(record)
+                drag_handle: drag_handle_for(record),
+                position_group: position_group_for(record)
               )
             end
           end

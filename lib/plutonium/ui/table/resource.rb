@@ -94,7 +94,7 @@ module Plutonium
         end
 
         def render_table
-          table_options = position_drag_enabled? ? {positioned_url_template: position_url_template} : {}
+          table_options = position_drag_enabled? ? {positioned_url_template: position_url_template, positioned_group_resolver: position_group_resolver} : {}
 
           render Plutonium::UI::Table::Base.new(collection, **table_options) do |table|
             # Selection column only renders when bulk actions exist —

@@ -35,8 +35,9 @@ module Plutonium
       #
       #   clean Mode A drop, both neighbours resolved  → 204 No Content
       #   reposition! rebalanced the group             → 200 + stream
-      #   a neighbour did not resolve, or belongs to
-      #     another positioning group (drift)          → 200 + stream
+      #   a neighbour did not resolve (drift)          → 200 + stream
+      #   a neighbour belongs to another positioning
+      #     group                                      → 200 + stream + toast
       #   Mode B (opaque block write)                  → 200 + stream
       #   denied reposition?                           → 403 + stream + toast
       #   denied index?                                → 403, no body
@@ -97,8 +98,9 @@ module Plutonium
           # Resolve neighbours WITHIN the authorized scope. A nil here would mean
           # "drop at the end", so an id that does not resolve must be treated as
           # drift and reconciled — never silently coerced to nil.
-          prev_record, prev_ok = resolve_position_neighbour(params[:prev_id], record:, config:)
-          next_record, next_ok = resolve_position_neighbour(params[:next_id], record:, config:)
+          prev_record, prev_ok, prev_drift = resolve_position_neighbour(params[:prev_id], record:, config:)
+          next_record, next_ok, next_drift = resolve_position_neighbour(params[:next_id], record:, config:)
+          foreign_group = [prev_drift, next_drift].include?(:foreign_group)
           prev_record, next_record = resolve_position_boundaries(record, config, prev_record, next_record)
 
           # Nothing left to anchor to. In Mode A that is never a real drag — a
@@ -109,7 +111,14 @@ module Plutonium
           # request we've just decided not to trust. Reconcile instead: the row
           # snaps back to where it actually is.
           if config.delegate? && prev_record.nil? && next_record.nil?
-            return render_position_reconciliation
+            # A cross-group drop lands here with BOTH neighbours rejected, and is
+            # the one kind of drift worth explaining: it is a standing property
+            # of a list that spans groups, not transient staleness. Status stays
+            # :ok — the reconciliation is unchanged, this only adds the toast.
+            return render_position_reconciliation(
+              reason: foreign_group ? position_foreign_group_reason(record) : nil,
+              status: :ok
+            )
           end
 
           # Bind the return rather than branching on the call directly:
@@ -128,6 +137,12 @@ module Plutonium
             index: [params[:to_index].to_i, 0].max
           )
 
+          # No reason here, even when a neighbour was out of group: reposition!
+          # has already run, so the record DID move — the surviving anchor
+          # carried the drop and resolve_position_boundaries supplied the other.
+          # Telling the user reordering "only works within the same group" on a
+          # move that just worked contradicts what they can see. The refusal
+          # above is the only place that claim is true.
           if must_reconcile || !prev_ok || !next_ok
             render_position_reconciliation
           else
@@ -181,18 +196,34 @@ module Plutonium
         # arbitrary point in its own. Group membership is part of "can this
         # neighbour anchor this drop", so it belongs here rather than in a
         # separate check the caller could forget.
+        # Returns [neighbour, ok, drift]. `drift` names WHY a neighbour was
+        # rejected — :missing (gone, or outside this viewer's scope) versus
+        # :foreign_group (real, but in another positioning group). Both reconcile
+        # identically, but only the second has something worth telling the user:
+        # it is a standing property of the list they are looking at, not a
+        # transient staleness that a reload fixes.
         def resolve_position_neighbour(id, record:, config:)
-          return [nil, true] if id.blank?
+          return [nil, true, nil] if id.blank?
 
           neighbour = current_authorized_scope.find_by(id: id)
-          return [nil, false] if neighbour.nil?
+          return [nil, false, :missing] if neighbour.nil?
 
           # Mode B owns its own storage AND its own notion of a group; only the
           # framework's own scope attribute is ours to police.
           group_attr = config.delegate? ? record.class.positioning_scope_attr : nil
-          return [nil, false] if group_attr && neighbour[group_attr] != record[group_attr]
+          return [nil, false, :foreign_group] if group_attr && neighbour[group_attr] != record[group_attr]
 
-          [neighbour, true]
+          [neighbour, true, nil]
+        end
+
+        # What to tell the user when a drop was refused because its neighbours
+        # belong to another positioning group — the case a collection spanning
+        # groups (a top-level index of a resource scoped to its parent) invites
+        # on nearly every row. Named after the scope attribute so the message
+        # says "the same product" rather than restating the column.
+        def position_foreign_group_reason(record)
+          scope = record.class.positioning_scope_attr.to_s.delete_suffix("_id").humanize.downcase
+          "Reordering only works within the same #{scope}."
         end
 
         # Fills in a neighbour the CLIENT could not see.

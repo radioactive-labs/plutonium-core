@@ -76,6 +76,36 @@ module Plutonium
         def repositionable?(record)
           policy_for(record:).allowed_to?(:reposition?)
         end
+
+        # Which positioning GROUP a record sits in, or nil when every record on
+        # the surface shares one list.
+        #
+        # A scoped resource (`positioned_on :position, scope: :product_id`) keeps
+        # an independent 1..n sequence per group, so a top-level index that spans
+        # groups interleaves several sequences. A drop between two records from
+        # DIFFERENT groups describes no position at all, and the server refuses
+        # it (see PositionActions#resolve_position_neighbour, which rejects a
+        # neighbour whose scope attribute differs). This is the client half of
+        # that same rule — the value goes on the row so the drag can refuse
+        # before the user commits, instead of snapping back afterwards.
+        #
+        # Guarded on `delegate?` exactly as the server is: Mode B owns its own
+        # notion of a group, and nothing out here may second-guess it.
+        def position_group_for(record)
+          return nil unless position_config&.delegate?
+
+          attr = record.class.positioning_scope_attr
+          attr && record[attr]
+        end
+
+        # Passed to the collection components, which have no access to the
+        # definition and must not grow any. nil when the resource is unscoped, so
+        # the attribute is omitted entirely rather than emitted empty.
+        def position_group_resolver
+          return nil unless position_config&.delegate?
+
+          method(:position_group_for)
+        end
       end
     end
   end

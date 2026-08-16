@@ -17,7 +17,14 @@ module Plutonium
 
           # The row — never the grip — is the single source of truth for which
           # record a drag is about. See positioned_controller.js.
-          attributes.merge(data: attributes[:data].merge(positioned_row_id: wrapped_object.identifier))
+          row_data = attributes[:data].merge(positioned_row_id: wrapped_object.identifier)
+
+          # Present only for a scoped resource, where a drop across groups is
+          # meaningless and the drag must refuse it (see Positionable).
+          group = @options[:positioned_group_resolver]&.call(wrapped_object.unwrapped)
+          row_data = row_data.merge(positioned_group: group) unless group.nil?
+
+          attributes.merge(data: row_data)
         end
 
         # Scope the drag controller to the div that wraps <table>: the tightest

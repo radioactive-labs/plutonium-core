@@ -137,6 +137,15 @@ export default class extends Controller {
     // than inviting a drop we would ignore.
     if (!this.draggedRow) return
 
+    // A drop across positioning groups describes no position — the two records
+    // keep independent sequences — and the server refuses it. Withhold
+    // preventDefault so the browser shows "no entry" and the drop never fires,
+    // rather than letting the user commit to a move that silently snaps back.
+    if (!this.#sameGroupAs(event.target)) {
+      hideInsertionMarker()
+      return
+    }
+
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
 
@@ -401,6 +410,20 @@ export default class extends Controller {
 
   #rowFor(element) {
     return element.closest("[data-positioned-row-id]")
+  }
+
+  // Whether the row under the cursor shares the dragged row's positioning
+  // group. An UNSCOPED resource emits no group attribute at all, so both sides
+  // read undefined and every row matches — the guard costs nothing there.
+  //
+  // Pointing at no row (the gutter below the last one, the wrapper's padding)
+  // counts as a match: the drop resolves against the collection's own ends,
+  // which are in the dragged row's group by construction.
+  #sameGroupAs(target) {
+    const row = this.#rowFor(target)
+    if (!row) return true
+
+    return row.dataset.positionedGroup === this.draggedRow.dataset.positionedGroup
   }
 
   #focusedRowId() {

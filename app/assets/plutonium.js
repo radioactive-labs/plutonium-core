@@ -29557,6 +29557,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #onDragOver(event) {
       if (!this.draggedRow) return;
+      if (!this.#sameGroupAs(event.target)) {
+        hideInsertionMarker();
+        return;
+      }
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       const others = this.#rows().filter((r4) => r4 !== this.draggedRow);
@@ -29721,6 +29725,18 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #rowFor(element) {
       return element.closest("[data-positioned-row-id]");
+    }
+    // Whether the row under the cursor shares the dragged row's positioning
+    // group. An UNSCOPED resource emits no group attribute at all, so both sides
+    // read undefined and every row matches — the guard costs nothing there.
+    //
+    // Pointing at no row (the gutter below the last one, the wrapper's padding)
+    // counts as a match: the drop resolves against the collection's own ends,
+    // which are in the dragged row's group by construction.
+    #sameGroupAs(target) {
+      const row = this.#rowFor(target);
+      if (!row) return true;
+      return row.dataset.positionedGroup === this.draggedRow.dataset.positionedGroup;
     }
     #focusedRowId() {
       const grip = document.activeElement?.closest?.("[data-positioned-grip]");
