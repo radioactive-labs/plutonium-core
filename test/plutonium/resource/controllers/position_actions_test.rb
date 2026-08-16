@@ -475,7 +475,10 @@ class Plutonium::Resource::Controllers::PositionActionsTest < ActionDispatch::In
 
     assert_response :ok
     nested_path = "/admin/catalog/products/#{product.id}/nested_variants"
-    assert_includes response.body, %(value="#{nested_path}?page=1"),
+    # Prefix match on purpose: pagy appends its own params to the per-page
+    # option values (?page=1&limit=20), and which ones it appends is pagy's
+    # business. What this test is the authority on is the PATH they hang off.
+    assert_includes response.body, %(value="#{nested_path}?page=1),
       "pagination must address the nested collection, not the top-level one"
     assert_includes response.body, CGI.escape(nested_path),
       "a row action's return_to must come back to the nested table"
