@@ -469,7 +469,10 @@ export default class extends Controller {
       .filter(c => c !== this.draggedCard)
     showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
       axis: "vertical",
-      container: column
+      container: column,
+      // Cards sit further apart than table rows, so the table's clearance reads
+      // as cramped against a card's edge here.
+      gap: "10px"
     })
   }
 

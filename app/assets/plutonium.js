@@ -29017,8 +29017,13 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     return marker;
   }
-  function showInsertionMarker(items, index, { axis = "vertical", container = null } = {}) {
+  function showInsertionMarker(items, index, { axis = "vertical", container = null, gap = null } = {}) {
     const marker = insertionMarker();
+    if (gap) {
+      marker.style.setProperty("--pu-drag-marker-gap", gap);
+    } else {
+      marker.style.removeProperty("--pu-drag-marker-gap");
+    }
     let rect;
     let leading;
     if (items.length === 0) {
@@ -29322,7 +29327,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
       showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
         axis: "vertical",
-        container: column
+        container: column,
+        // Cards sit further apart than table rows, so the table's clearance reads
+        // as cramped against a card's edge here.
+        gap: "10px"
       });
     }
     #onDragLeave(event) {

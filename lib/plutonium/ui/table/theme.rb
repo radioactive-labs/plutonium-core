@@ -64,7 +64,7 @@ module Plutonium
             # keyboard user cannot hover, and an invisible tab stop that moves
             # rows when you press an arrow key is worse than no affordance at all.
             drag_handle_cell: "flex items-center",
-            drag_handle: "-ml-5 w-5 h-5 shrink-0 inline-flex items-center justify-center rounded " \
+            drag_handle: "-ml-5 mr-1.5 w-5 h-5 shrink-0 inline-flex items-center justify-center rounded " \
                          "text-[var(--pu-text-subtle)] hover:text-[var(--pu-text)] " \
                          "opacity-0 group-hover/row:opacity-100 focus:opacity-100 " \
                          "transition-opacity cursor-grab active:cursor-grabbing " \
@@ -72,7 +72,7 @@ module Plutonium
             # Dimmer than the live grip, and a pointer rather than a grab cursor:
             # it looks like the same control, switched off, and clicking it is
             # what switches it back on.
-            drag_handle_disabled: "-ml-5 w-5 h-5 shrink-0 inline-flex items-center justify-center rounded " \
+            drag_handle_disabled: "-ml-5 mr-1.5 w-5 h-5 shrink-0 inline-flex items-center justify-center rounded " \
                                   "text-[var(--pu-text-subtle)] " \
                                   "opacity-0 group-hover/row:opacity-40 hover:opacity-100 focus:opacity-100 " \
                                   "transition-opacity cursor-pointer " \

@@ -116,8 +116,19 @@ function insertionMarker() {
 // between them) and "horizontal" for grids (a vertical rule between cards).
 // `container` is the fallback for an empty target — an empty kanban column
 // still needs to say "it lands here".
-export function showInsertionMarker(items, index, { axis = "vertical", container = null } = {}) {
+// `gap` overrides the clearance between the line and the item it points at, for
+// consumers whose layout needs more air than the default (the board's columns
+// are roomier than a table's rows). One marker element is shared by every
+// consumer, so an unset gap must RESET the property rather than inherit
+// whichever consumer drew last.
+export function showInsertionMarker(items, index, { axis = "vertical", container = null, gap = null } = {}) {
   const marker = insertionMarker()
+
+  if (gap) {
+    marker.style.setProperty("--pu-drag-marker-gap", gap)
+  } else {
+    marker.style.removeProperty("--pu-drag-marker-gap")
+  }
 
   let rect
   let leading
