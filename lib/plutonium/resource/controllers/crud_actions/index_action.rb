@@ -7,7 +7,12 @@ module Plutonium
 
           private
 
-          def setup_index_action!
+          # `action` names the action whose field set is about to be rendered.
+          # It defaults to the current one, and the reposition drop POST passes
+          # "index" for the same reason it does when building the collection: it
+          # re-renders the index on the index's behalf, and a resource must not
+          # have to define permitted_attributes_for_reposition to be draggable.
+          def setup_index_action!(action: action_name)
             # Applied HERE, not inside filtered_resource_collection: what to
             # preload depends on what is about to be RENDERED, and
             # filtered_resource_collection is shared with the CSV export, which
@@ -16,7 +21,7 @@ module Plutonium
             # method for that action and raised. Keeping the hook to filtering and
             # eager-loading at the point of use also leaves an app's own
             # `filtered_resource_collection` override unaffected.
-            collection = auto_eager_load(filtered_resource_collection, presentable_attributes)
+            collection = auto_eager_load(filtered_resource_collection, presentable_attributes_for(action))
             @pagy, @resource_records = pagy(:offset, collection, request: pagy_request_context)
           end
 

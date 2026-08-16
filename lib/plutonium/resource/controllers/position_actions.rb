@@ -291,7 +291,7 @@ module Plutonium
         # is "reposition", and a resource must not have to define
         # permitted_attributes_for_reposition to be draggable.
         def render_position_collection_html
-          setup_index_action!
+          setup_index_action!(action: "index")
 
           component = (position_collection_view == :grid) ?
             build_grid_collection(action: "index") :
