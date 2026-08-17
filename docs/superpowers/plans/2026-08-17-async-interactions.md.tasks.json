@@ -28,7 +28,7 @@
     {
       "id": 3,
       "subject": "Task 4: Executor and failure policies",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         2
       ],
@@ -62,5 +62,5 @@
       "description": "**Goal:** A resource's index lists runs currently working on it, above the collection.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/interaction/running_banner.rb\", \"lib/plutonium/ui/page/index.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\", \"acceptanceCriteria\": [\"lists in-progress runs for this resource\", \"excludes completed and other-resource runs\", \"excludes other tenants\", \"no banner when none running\"], \"requiresUserVerification\": false}\n```"
     }
   ],
-  "lastUpdated": "2026-08-17T05:16:09.490626"
+  "lastUpdated": "2026-08-17T10:21:21.203694"
 }
