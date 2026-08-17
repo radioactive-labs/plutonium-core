@@ -152,6 +152,29 @@ module Plutonium
           @cleanup_after = (ttl == :never) ? nil : ttl
         end
 
+        # --- presentation ---
+
+        # Width of THIS wizard's step pages, one of
+        # {Plutonium::UI::PageWidth::VALID_SIZES}. Unset inherits
+        # `config.wizards.width`, and stops there — the wizard chain does NOT
+        # reach `config.default_page_width`. A wizard is a focused,
+        # self-contained flow rather than a resource detail page, so an app
+        # that widens its resource pages should not silently drag its wizards
+        # along with them.
+        #
+        # Mirrors what a resource definition gets from `page_width`: a wizard
+        # with a wide review table or a two-column step can widen itself
+        # without the app having to move every wizard.
+        #
+        #   class CheckoutWizard < Plutonium::Wizard::Base
+        #     width :lg
+        #   end
+        def width(value = UNSET)
+          return @width || Plutonium.configuration.wizards.width if value.equal?(UNSET)
+
+          @width = Plutonium::UI::PageWidth.validate!(value)
+        end
+
         # --- concurrency (§4.2) ---
 
         # Declare the run's CONCURRENCY KEY — the value(s) a run is keyed by

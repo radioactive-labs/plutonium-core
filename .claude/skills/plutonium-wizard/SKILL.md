@@ -114,6 +114,7 @@ end
 | `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). |
 | `encrypt_data` | Encrypt the staged `data` column at rest via ActiveRecord's encryption keys (PII flows). Requires `active_record.encryption` keys — first write raises (naming the wizard) if unconfigured. Unset inherits `config.wizards.encrypt_data` (global default, off); `encrypt_data false` opts out when that default is on. |
+| `width <size>` | Width of this wizard's step pages: `:sm` `:md` `:lg` `:xl` `:full` (`:full` = unconstrained). Unset inherits `config.wizards.width` (default `:md`). Independent of `config.default_page_width` — resource page width does not move wizards. |
 | `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`** — a guest's identity is its session token (already session-keyed/repeatable); whichever macro is declared last raises. |
 
 ## Branching — `condition:`
@@ -465,7 +466,7 @@ Plutonium.configure do |config|
   config.wizards.encrypt_data = false      # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.database = :primary       # reserved — v1 supports :primary only (else raises at boot)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect active_shrine/AS)
-  config.wizards.width = nil               # step page width (:sm/:md/:lg/:xl/:full); nil follows config.default_page_width
+  config.wizards.width = :md               # default step page width (:sm/:md/:lg/:xl/:full) — NOT tied to default_page_width
 end
 ```
 

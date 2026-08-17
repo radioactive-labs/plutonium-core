@@ -969,7 +969,7 @@ end
 - **Inherits** to subclasses, so a portal-specific definition keeps the parent's width unless it overrides.
 - **Modals are unaffected** — the dialog sets its own width (`modal_size`).
 - **Interactions support it too** (`Plutonium::Interaction::Base`), for interactive actions rendered as standalone pages.
-- **Wizards are configured separately**: `Plutonium.configuration.wizards.width`, defaulting to `default_page_width` — so a step carrying a `form_layout` renders those sections at the same width a resource form gives them.
+- **Wizards are on their own axis** — `Plutonium.configuration.wizards.width` (default `:md`), overridden per wizard with `width`. It does NOT follow `default_page_width`, so changing resource page width leaves wizards untouched.
 
 ## Metadata Panel (show page)
 
