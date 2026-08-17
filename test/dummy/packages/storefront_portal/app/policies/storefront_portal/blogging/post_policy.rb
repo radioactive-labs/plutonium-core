@@ -17,7 +17,7 @@ class StorefrontPortal::Blogging::PostPolicy < ::Blogging::PostPolicy
     %i[]
   end
 
-  def relation_scope(relation)
+  relation_scope do |relation|
     default_relation_scope(relation).published
   end
 end

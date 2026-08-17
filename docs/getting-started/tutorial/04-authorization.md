@@ -108,10 +108,19 @@ end
 
 Control which records appear in listings:
 
+`relation_scope` is a macro — it takes a block. Writing it as a plain instance
+method (`def relation_scope(relation)`) overrides nothing and your scoping is
+silently ignored, so Plutonium raises if you try.
+
+Always compose with `default_relation_scope(relation)`; skipping it raises too,
+because it is what applies parent and tenant scoping.
+
 ```ruby
 class Blogging::PostPolicy < Blogging::ResourcePolicy
   # Called when listing posts
-  def relation_scope(relation)
+  relation_scope do |relation|
+    relation = default_relation_scope(relation)
+
     if admin?
       relation # Admins see everything
     else
@@ -147,8 +156,8 @@ class AdminPortal::Blogging::PostPolicy < ::Blogging::PostPolicy
     true
   end
 
-  def relation_scope(relation)
-    relation # No scope restrictions for admins
+  relation_scope do |relation|
+    default_relation_scope(relation) # No extra restrictions for admins
   end
 end
 ```

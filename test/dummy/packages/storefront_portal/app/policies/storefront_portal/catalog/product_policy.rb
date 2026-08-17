@@ -17,7 +17,7 @@ class StorefrontPortal::Catalog::ProductPolicy < ::Catalog::ProductPolicy
     %i[]
   end
 
-  def relation_scope(relation)
+  relation_scope do |relation|
     default_relation_scope(relation).active
   end
 end
