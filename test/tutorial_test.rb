@@ -97,8 +97,11 @@ class TutorialTest < Minitest::Test
     draft = Blogging::Post.create!(title: "Draft", body: "Body", status: :draft, user: @user, organization: @org)
     published = Blogging::Post.create!(title: "Published", body: "Body", status: :published, user: @user, organization: @org)
 
-    policy = StorefrontPortal::Blogging::PostPolicy.new(record: Blogging::Post, user: "Guest", entity_scope: nil)
-    scoped = policy.relation_scope(Blogging::Post.all)
+    # Must go through apply_scope: that is what the framework calls, and it
+    # dispatches to the relation_scope macro's handler. Calling a `relation_scope`
+    # instance method instead is what let the missing narrowing hide here.
+    policy = StorefrontPortal::Blogging::PostPolicy.new(Blogging::Post, user: "Guest", entity_scope: nil)
+    scoped = policy.apply_scope(Blogging::Post.all, type: :active_record_relation)
 
     assert_includes scoped, published
     refute_includes scoped, draft

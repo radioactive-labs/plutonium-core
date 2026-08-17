@@ -21,6 +21,30 @@ module Plutonium
         default_relation_scope(relation)
       end
 
+      # `relation_scope` is a class-level macro: it registers a scope handler named
+      # `__scoping__active_record_relation__default`, and never defines an instance
+      # method called `relation_scope`. So `def relation_scope(relation)` overrides
+      # nothing — apply_scope keeps dispatching to the inherited handler, the author's
+      # narrowing never runs, and verify_default_relation_scope_applied! is happy
+      # because the base handler did call default_relation_scope. Fail-open and silent,
+      # so catch it the moment the method is defined rather than at request time.
+      def self.method_added(name)
+        super
+
+        return unless name == :relation_scope
+
+        raise <<~MSG
+          #{self} defines `relation_scope` as an instance method, which Plutonium never calls.
+          `relation_scope` is a macro, so this scoping silently does nothing.
+
+          Use the block form instead:
+
+            relation_scope do |relation|
+              default_relation_scope(relation).your_scope
+            end
+        MSG
+      end
+
       # Wraps apply_scope to verify default_relation_scope was called.
       # This prevents accidental multi-tenancy leaks when overriding relation_scope.
       def apply_scope(relation, type:, **options)

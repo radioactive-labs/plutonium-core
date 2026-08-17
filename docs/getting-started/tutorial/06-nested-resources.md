@@ -101,7 +101,9 @@ class Blogging::CommentPolicy < Blogging::ResourcePolicy
   end
 
   # Scope to comments on published posts (or user's own posts)
-  def relation_scope(relation)
+  relation_scope do |relation|
+    relation = default_relation_scope(relation)
+
     relation.joins(:post).where(
       blogging_posts: {published: true}
     ).or(

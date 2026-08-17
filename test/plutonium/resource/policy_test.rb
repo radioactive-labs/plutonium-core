@@ -306,6 +306,39 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
     assert_includes scoped.to_a, @other_post
   end
 
+  # relation_scope shape tests
+
+  # Named so the raise has something to identify; reopened inside the test
+  # because the guard fires while the offending `def` is being evaluated.
+  class InstanceMethodScopePolicy < Plutonium::Resource::Policy; end
+
+  def test_raises_when_relation_scope_is_defined_as_an_instance_method
+    error = assert_raises(RuntimeError) do
+      InstanceMethodScopePolicy.class_eval do
+        def relation_scope(relation)
+          default_relation_scope(relation).where(id: 1)
+        end
+      end
+    end
+
+    assert_match(/InstanceMethodScopePolicy/, error.message)
+    assert_match(/relation_scope do \|relation\|/, error.message)
+  end
+
+  def test_no_error_when_relation_scope_uses_the_macro
+    macro_policy_class = Class.new(Plutonium::Resource::Policy) do
+      relation_scope do |relation|
+        default_relation_scope(relation).where(user_id: nil)
+      end
+    end
+
+    policy = macro_policy_class.new(Blogging::Post, user: @user, entity_scope: nil)
+    scoped = policy.apply_scope(Blogging::Post.all, type: :active_record_relation)
+
+    # The macro form actually narrows, unlike the instance-method form it replaces.
+    assert_empty scoped.to_a
+  end
+
   # Typeahead permission tests
 
   def test_typeahead_defaults_to_index

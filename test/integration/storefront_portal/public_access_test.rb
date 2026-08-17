@@ -35,6 +35,32 @@ class StorefrontPortal::PublicAccessTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # The storefront policies narrow to published posts / active products. That
+  # narrowing was silently dead while it was written as a `relation_scope`
+  # instance method, and nothing above would have noticed — every case here
+  # creates an already-visible record.
+  test "public: post index excludes drafts" do
+    published = create_post!(status: :published, title: "Published Post")
+    draft = create_post!(status: :draft, title: "Draft Post")
+
+    get "/storefront/blogging/posts"
+
+    assert_response :success
+    assert_match published.title, response.body
+    refute_match draft.title, response.body
+  end
+
+  test "public: product index excludes inactive products" do
+    active = create_product!(status: :active, name: "Active Product")
+    inactive = create_product!(status: :discontinued, name: "Discontinued Product")
+
+    get "/storefront/catalog/products"
+
+    assert_response :success
+    assert_match active.name, response.body
+    refute_match inactive.name, response.body
+  end
+
   test "public: lists categories without auth" do
     create_category!
     get "/storefront/catalog/categories"

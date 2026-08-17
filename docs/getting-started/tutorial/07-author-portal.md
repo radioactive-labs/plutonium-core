@@ -84,8 +84,8 @@ Authors should only see and manage their own posts. Create a portal-specific pol
 # packages/author_portal/app/policies/author_portal/blogging/post_policy.rb
 class AuthorPortal::Blogging::PostPolicy < ::Blogging::PostPolicy
   # Authors can only see their own posts
-  def relation_scope(relation)
-    relation.where(user_id: user.id)
+  relation_scope do |relation|
+    default_relation_scope(relation).where(user_id: user.id)
   end
 
   # Authors can always create posts
