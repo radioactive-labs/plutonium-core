@@ -56,6 +56,30 @@ class AdminPortal::ModalOpenFullTest < ActionDispatch::IntegrationTest
       "an interactive action modal should offer open-full — its GET path renders standalone"
   end
 
+  # `return_to` decides where the form lands after submitting. Expanding must
+  # not silently drop it, or the expanded form submits somewhere else.
+  test "open-full link preserves return_to" do
+    get "/admin/kitchen_sinks/new?return_to=%2Fadmin%2Fkitchen_sinks", headers: MODAL
+    assert_response :success
+    link = open_full_link(response.body)
+    assert_includes link, "return_to"
+  end
+
+  # A kanban quick-add carries the column its new record should join.
+  test "open-full link preserves kanban_column" do
+    get "/admin/kitchen_sinks/new?kanban_column=active", headers: MODAL
+    assert_response :success
+    assert_includes open_full_link(response.body), "kanban_column=active"
+  end
+
+  # ...but the modal-only flag must not survive: on a full page it would keep
+  # the metadata rail hidden for no reason.
+  test "open-full link drops the kanban_modal flag" do
+    get "/admin/kitchen_sinks/#{@sink.id}?kanban_modal=1", headers: MODAL
+    assert_response :success
+    refute_includes open_full_link(response.body), "kanban_modal"
+  end
+
   # Opening in the same tab would discard unsaved input; _blank is the whole
   # reason this is safe to put on a form.
   test "the open-full link opens in a new tab" do

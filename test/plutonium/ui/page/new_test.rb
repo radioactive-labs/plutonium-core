@@ -57,14 +57,36 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
   # The form modal offers the same "open full page" affordance the show modal
   # has. It targets a new tab, so the modal — and anything already typed into
   # it — is left untouched.
-  test "modal form carries an open-full-page URL (request.path)" do
+  test "modal form carries an open-full-page URL" do
     page = build_new_page(turbo_frame: "remote_modal")
-    captured = nil
-    page.define_singleton_method(:render) { |component, &block| captured ||= component }
+    assert_equal "/admin/things/new", captured_modal(page).instance_variable_get(:@open_full_url)
+  end
 
-    page.send(:render_default_content)
+  # `return_to` decides where the form lands after submitting, and
+  # `kanban_column` decides which column a quick-add's record joins. Dropping
+  # the query string (as a bare request.path would) silently loses both.
+  test "open-full-page URL keeps params the standalone form still needs" do
+    page = build_new_page(
+      turbo_frame: "remote_modal",
+      query_params: {"return_to" => "/admin/things", "kanban_column" => "active"}
+    )
+    url = captured_modal(page).instance_variable_get(:@open_full_url)
 
-    assert_equal "/admin/things/new", captured.instance_variable_get(:@open_full_url)
+    assert_includes url, "return_to=%2Fadmin%2Fthings"
+    assert_includes url, "kanban_column=active"
+  end
+
+  # `kanban_modal` is the one param that must not survive: it marks a kanban
+  # card's modal, where the show page hides its metadata rail.
+  test "open-full-page URL drops the modal-only kanban_modal flag" do
+    page = build_new_page(
+      turbo_frame: "remote_modal",
+      query_params: {"kanban_modal" => "1", "return_to" => "/admin/things"}
+    )
+    url = captured_modal(page).instance_variable_get(:@open_full_url)
+
+    refute_includes url, "kanban_modal"
+    assert_includes url, "return_to=%2Fadmin%2Fthings"
   end
 
   test "render_default_content does not render modal when in different frame" do
@@ -101,7 +123,15 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
 
   private
 
-  def build_new_page(turbo_frame: nil, modal_mode: :slideover)
+  # Renders the modal path and returns the modal component that was built.
+  def captured_modal(page)
+    captured = nil
+    page.define_singleton_method(:render) { |component, &block| captured ||= component }
+    page.send(:render_default_content)
+    captured
+  end
+
+  def build_new_page(turbo_frame: nil, modal_mode: :slideover, query_params: {})
     page = Plutonium::UI::Page::New.new
 
     page.define_singleton_method(:current_turbo_frame) { turbo_frame }
@@ -110,7 +140,9 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     page.define_singleton_method(:partial) { |_name| :resource_form_partial }
     page.define_singleton_method(:render) { |_partial| nil }
     # The modal's "open full page" link reads request.path.
-    page.define_singleton_method(:request) { Struct.new(:path).new("/admin/things/new") }
+    page.define_singleton_method(:request) {
+      Struct.new(:path, :query_parameters).new("/admin/things/new", query_params)
+    }
 
     definition = build_definition(modal_mode)
     page.define_singleton_method(:current_definition) { definition }

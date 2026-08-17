@@ -27,12 +27,9 @@ module Plutonium
               description: page_description,
               size: current_interactive_action.modal_size(current_definition),
               # The action's own GET path renders the standalone branch below,
-              # and lands in a NEW TAB, so the modal keeps whatever has already
-              # been typed into it. Submitting from there carries no
-              # `return_to`, which is exactly the case the controller handles by
-              # computing the destination itself (see Form::Resource
-              # #render_actions).
-              open_full_url: request.path
+              # and opens in a NEW TAB, so the modal keeps whatever has already
+              # been typed into it.
+              open_full_url: open_full_page_url
             ) do
               render_interactive_action_form
             end

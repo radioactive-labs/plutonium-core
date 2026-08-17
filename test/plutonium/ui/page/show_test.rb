@@ -99,12 +99,27 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     assert_equal Plutonium::UI::Modal::Centered, first_render
   end
 
-  test "modal details carry an open-full-page URL (request.path)" do
+  test "modal details carry an open-full-page URL" do
     page = build_show_page(turbo_frame: "remote_modal", modal_mode: :slideover)
     captured = nil
-    page.define_singleton_method(:render) do |component|
-      captured ||= component
-    end
+    page.define_singleton_method(:render) { |component| captured ||= component }
+
+    page.send(:render_default_content)
+
+    assert_equal "/admin/things/7", captured.instance_variable_get(:@open_full_url)
+  end
+
+  # Expanding a kanban card out to its full page must not carry the flag that
+  # made the modal hide the metadata rail — the whole point of expanding is to
+  # see the record in full.
+  test "open-full-page URL drops kanban_modal so the expanded page regains metadata" do
+    page = build_show_page(
+      turbo_frame: "remote_modal",
+      kanban_modal: true,
+      query_params: {"kanban_modal" => "1"}
+    )
+    captured = nil
+    page.define_singleton_method(:render) { |component| captured ||= component }
 
     page.send(:render_default_content)
 
@@ -143,7 +158,7 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
 
   private
 
-  def build_show_page(turbo_frame: nil, modal_mode: :slideover, kanban_modal: false, metadata: [])
+  def build_show_page(turbo_frame: nil, modal_mode: :slideover, kanban_modal: false, metadata: [], query_params: {})
     page = Plutonium::UI::Page::Show.new
 
     # Stub frame/modal detection so unit tests can drive render_default_content
@@ -160,7 +175,9 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     page.define_singleton_method(:page_title) { "Show Resource" }
     page.define_singleton_method(:page_description) { nil }
     # render_modal_details reads request.path for the open-full link.
-    page.define_singleton_method(:request) { Struct.new(:path).new("/admin/things/7") }
+    page.define_singleton_method(:request) {
+      Struct.new(:path, :query_parameters).new("/admin/things/7", query_params)
+    }
 
     # Stub out partial rendering to avoid full Rails view context
     page.define_singleton_method(:partial) { |_name| :stubbed_partial }
