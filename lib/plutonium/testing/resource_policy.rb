@@ -24,7 +24,11 @@ module Plutonium
             matrix.each do |action, allowed_roles|
               roles.each do |role_sym, account_proc|
                 account = instance_exec(&account_proc)
-                policy = policy_klass.new(record: record, user: account, **policy_context)
+                # The record MUST be positional. ActionPolicy::Policy::Core#initialize is
+                # `def initialize(record = nil, *)`, so a `record:` keyword is swallowed by
+                # the splat and `record` stays nil — every record-dependent predicate would
+                # then be asserted against nil.
+                policy = policy_klass.new(record, user: account, **policy_context)
                 expected = allowed_roles.include?(role_sym)
                 actual = policy.public_send("#{action}?")
                 assert_equal expected, actual,
@@ -38,7 +42,7 @@ module Plutonium
             policy_klass = policy_class_for(record)
             policy_roles.each do |role_sym, account_proc|
               account = instance_exec(&account_proc)
-              policy = policy_klass.new(record: record.class, user: account, **policy_context)
+              policy = policy_klass.new(record.class, user: account, **policy_context)
               scope = policy.apply_scope(record.class.all, type: :active_record_relation)
               assert_kind_of ActiveRecord::Relation, scope, "relation_scope must return AR::Relation for #{role_sym}"
             end
