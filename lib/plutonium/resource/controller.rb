@@ -16,6 +16,10 @@ module Plutonium
       include Plutonium::Resource::Controllers::Queryable
       include Plutonium::Resource::Controllers::CrudActions
       include Plutonium::Resource::Controllers::KanbanActions
+      # After CrudActions on purpose: PositionActions overrides
+      # pagy_request_context / current_page_* so the reposition drop re-renders
+      # the collection for the INDEX page rather than for its own POST path.
+      include Plutonium::Resource::Controllers::PositionActions
       include Plutonium::Resource::Controllers::InteractiveActions
       include Plutonium::Resource::Controllers::WizardActions
       include Plutonium::Resource::Controllers::Typeahead

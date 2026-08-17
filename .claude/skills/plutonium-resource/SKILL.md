@@ -1,6 +1,6 @@
 ---
 name: plutonium-resource
-description: Use BEFORE creating, scaffolding, or editing any Plutonium resource — model, definition, field types, scaffold options, has_cents, SGID, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization. The single source for "what is a resource and how do I configure one".
+description: Use BEFORE creating, scaffolding, or editing any Plutonium resource — model, definition, field types, scaffold options, has_cents, SGID, search/filters/scopes/sorting, custom actions, bulk actions, hidden actions, index views, drag-to-reorder (positioned_on / position_on), page customization. The single source for "what is a resource and how do I configure one".
 ---
 
 # Plutonium Resources
@@ -1003,6 +1003,123 @@ All grid slots are optional; slots pointing at unpermitted fields collapse silen
 
 ---
 
+## Drag-to-Reorder (`positioned_on` + `position_on`)
+
+Manual ordering on the index table, the card grid, and nested association tables. **Two verbs, never three** — the model says how positions are stored, the definition (and a kanban board) says the UI is orderable:
+
+```ruby
+# Migration — t.position emits decimal(16,8), tuned for fractional ordering.
+create_table :tasks do |t|
+  t.string :status, null: false, default: "todo"
+  t.position
+  t.index [:status, :position]     # match the scope attribute
+end
+
+# Model — storage
+class Task < ApplicationRecord
+  include Plutonium::Positioning::Model    # NOT Plutonium::Positioning
+  positioned_on :position, scope: :status  # scope: nil = one global ordering
+end
+
+# Definition — "this UI can be reordered". Never restates the column or the scope.
+class TaskDefinition < ResourceDefinition
+  position_on
+end
+
+# Existing rows need positions:
+Task.backfill_positions!(order: :created_at)
+```
+
+- **`include Plutonium::Positioning::Model`** — the concern used to be `Plutonium::Positioning` itself. A bare `include Plutonium::Positioning` is now wrong (it's a pure namespace). Constants nested in an included concern join the model's constant lookup, so the old form let `Plutonium::Positioning::Config` shadow an app's own `::Config`.
+- **`positioned_on` is required**, not just the include — without it there's no `before_create`, so every row is created with a `NULL` position. `position_on` raises at class-load if you forget.
+
+### `position_on` forms and modes
+
+| Form | Mode | Notes |
+|---|---|---|
+| `position_on` | A (delegate) | Follows the model's `positioning_column`. **Prefer this** — it cannot disagree with the model. |
+| `position_on :sort_order` | A | Must **match** the model's column, else `ArgumentError` at class-load |
+| `position_on(:rank) { \|move\| … }` | B (block) | Escape hatch — another gem owns the write (`acts_as_list`). No model concern needed. **Prefer migrating to A.** |
+| `position_on false` | C (disabled) | No ordering, no route — the endpoint 404s |
+
+**Default to Mode A.** It is one word in the definition. A *correct* Mode B block is ~15 lines of rank arithmetic, and getting it right requires knowing three non-obvious things: `move.index` is page-relative; removing a record shifts its neighbours' ranks by one, in a direction that depends on where it started; and a blank `move.prev` means "nothing above me *on screen*", not "top of the list". These docs got two of the three wrong until they were tested. Mode B is legitimate and tested — it just costs you semantics Mode A handles.
+
+### Mode B — what the framework stops doing
+
+Mode B block receives a `Plutonium::Positioning::Move`: `record`, `prev`, `next`, `index` (0-based, **relative to the visible page**), `column` (kanban only, `nil` on tables/grids). Called with `call`, not `instance_exec`.
+
+Because the write is opaque, three Mode A behaviours are **not** provided:
+
+- **No hidden boundary resolution** — `resolve_position_boundaries` returns early unless the config delegates, so the block gets the client's viewport verbatim, `nil`s and all.
+- **No server-side foreign-sort rejection** — Mode A rejects a drop under a foreign sort with 422 before writing; Mode B relies on the client-side gate only.
+- **Always a full repaint** — never 204. Gems like `acts_as_list` renumber the whole group on every move, so the client's optimistic DOM is stale by definition.
+
+### Migrating off `acts_as_list` to Mode A
+
+1. **Change the column** — `acts_as_list` uses contiguous integers; Plutonium uses fractional decimals (`t.position` emits `decimal(16,8)`; an integer column would round every midpoint onto a neighbour). `t.position` *adds* a column, so an existing one needs `change_column :tasks, :position, :decimal, precision: 16, scale: 8`.
+2. **Swap the macro** — drop `acts_as_list scope: [:status]`, add `include Plutonium::Positioning::Model` + `positioned_on :position, scope: :status` (bare Symbol; the Array trap is gem-specific).
+3. **Backfill** — `Task.backfill_positions!(order: :position)` numbers each scope group `1.0, 2.0, …` in the gem's existing order. `update_column`, no callbacks/validations/`updated_at` — run it once from a migration or `rails runner`.
+4. Drop the block from the definition; a bare `position_on` is the whole of Mode A.
+
+### Staying on `acts_as_list` (the harder road)
+
+For when the gem is not yours to remove. This recipe is correct and tested against the real gem (`test/plutonium/resource/controllers/position_actions_acts_as_list_test.rb`).
+
+🚨 **Anchor off `move.prev` / `move.next`, never off `move.index`.** `move.index` counts the visible page; a positioning gem's `insert_at` addresses the whole group. `insert_at(move.index + 1)` is wrong on any list past 20 rows (Plutonium's default page size) — measured: dragging rank 25 into the middle of page 2 lands it at **rank 2**, and a page-2 top drop lands at **rank 1**. Same failures on a filtered list.
+
+```ruby
+# Keeping acts_as_list. NOTE scope: [:status] — a bare Symbol scope is run
+# through acts_as_list's `idify`, which turns :status into :status_id and makes
+# every create raise NoMethodError.
+class Task < ApplicationRecord
+  acts_as_list scope: [:status]
+end
+
+class TaskDefinition < ResourceDefinition
+  position_on :position do |move|
+    record = move.record
+
+    target =
+      if move.prev
+        # Removing the record shifts prev up one when the record was above it.
+        (record.position > move.prev.position) ? move.prev.position + 1 : move.prev.position
+      elsif move.next
+        # Blank prev means "nothing above me ON MY SCREEN" — rows may still sit
+        # above off-page or behind a filter, so anchor off next rather than 1.
+        (record.position < move.next.position) ? move.next.position - 1 : move.next.position
+      else
+        1 # the only row in the list
+      end
+
+    record.insert_at(target)
+  end
+end
+```
+
+`insert_at` calls `save`, not `save!` — a failed move silently no-ops. Use `insert_at!` to surface it as a 422.
+
+### 🚨 `position_on` expands to three things
+
+```ruby
+sort <attr>                      # load-bearing: the only way back to position order
+default_sort <attr>, :asc        # ⚠ ONLY when default_sort is still the framework default
+action :reposition, hidden: true # route + policy predicate, no button
+```
+
+**The `default_sort` claim is implicit.** A resource that listed newest-first will list in position order after you add `position_on`. Declare your own `default_sort` (above OR below `position_on` — resolution is order-independent) to keep it; note the list then opens **not** draggable.
+
+### Behavior notes
+
+- **Dragging is offered only while the collection is sorted ascending by the position attribute** (and nothing else). Under any other sort the grip renders as a **link that applies that sort**, and the server rejects the drop with 422 before writing.
+- **`reposition?` policy predicate**, defaulting to `update?`. Gates both the drop and whether the grip renders per row. `index?` is also required (you must be able to see a list to reorder it).
+- **A kanban board inherits the definition's `position_on`** (lazily, so order in the class body doesn't matter); a `position_on` inside `kanban do…end` overrides it.
+- **`scope:` is the model author's job.** A globally positioned model rendered under a parent still reorders correctly per parent — but a rebalance renumbers every row in the table, not just that parent's.
+- Native HTML5 drag doesn't fire on **touch** devices (same limitation as kanban). Keyboard works: focus the grip, <kbd>↑</kbd>/<kbd>↓</kbd>.
+
+Full reference: `docs/reference/positioning.md`. Kanban specifics: `docs/reference/kanban/positioning.md`.
+
+---
+
 # Part 4 — Query: Search, Filters, Scopes, Sorting
 
 ```ruby
@@ -1144,6 +1261,7 @@ default_sort { |scope| scope.order(featured: :desc, created_at: :desc) }
 | `record_action: true` | Show page | Edit, Delete, Archive |
 | `collection_record_action: true` | Table rows | Quick per-row actions |
 | `bulk_action: true` | Selected records | Bulk operations |
+| `hidden: true` | **Nowhere** | Suppresses all four; route + policy stay live (drag gestures, custom JS) |
 
 🚨 **For interactive actions (`interaction:`), all four flags are inferred from the interaction's attributes — don't declare them manually:**
 
@@ -1185,6 +1303,10 @@ action :name,
   # Conditional visibility — display-only toggle, NOT authorization (see below).
   # `-> { false }` keeps the route live but hides the button (e.g. API-only).
   condition: -> { params[:beta] == "1" },
+
+  # Never renders anywhere — route + policy stay live. For endpoints reached by
+  # a gesture rather than a button (see Hidden Actions below). NOT authorization.
+  hidden: true,
 
   # Grouping
   category: :primary,               # :primary, :secondary, :danger
@@ -1245,6 +1367,23 @@ def wipe? = current_user.admin?
 
 The two compose: an action's button shows only when the policy permits **and** the condition is truthy; execution is gated by the policy alone. Use `object` in `condition:` for per-record *display*; use the policy for per-record *authorization*.
 
+### Hidden Actions (`hidden: true`)
+
+```ruby
+action :reposition, hidden: true
+```
+
+Renders in **no** toolbar, row dropdown, card, or bulk bar — regardless of visibility flags, policy, or `condition:`. Everything else stays live: the route, the policy predicate (`def reposition?`), and (for `interaction:` actions) the form + permitted-params machinery.
+
+Use it for an endpoint reached by **something other than a button** — a drag gesture, a custom Stimulus controller. The framework uses it for exactly that: `position_on` expands to `action :reposition, hidden: true`, and the kanban drop endpoint is declared the same way.
+
+| | `hidden: true` | `condition: -> { false }` |
+|---|---|---|
+| Decided | class-load, once | render time, per row/request |
+| Says | "never a button" | "a button, just not right now" |
+
+🚨 **`hidden:` is a display gate, NOT an authorization boundary** — same trap as `condition:`. The route is live; authorization belongs in the policy.
+
 `Action#with(...)` — actions are frozen value objects; clone with overrides:
 
 ```ruby
@@ -1293,6 +1432,8 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+⚠️ **An interaction is the button, not the operation.** It's a presentation object — it can only be built with a `view_context`, so anything reachable only through one is reachable only from a Plutonium page. Logic may *start* in `execute` (a one-off with a single caller is fine; don't pre-extract). The **second caller** — a job, an API controller, a rake task, the console — is the trigger to move it onto the **model**, in domain language (`publish!`, `archive!`, `register!`). Not a service layer. Full rule + the validation split: [[plutonium-behavior]] › Part 3 › Where the logic goes.
+
 ### Single-record interaction
 
 ```ruby
@@ -1331,7 +1472,9 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   validates :role,  presence: true, inclusion: {in: %w[admin member viewer]}
 
   def execute
-    UserInvite.create!(company: resource, email: email, role: role, invited_by: current_user)
+    # Company#invite! creates the row AND sends the mail — a seat-provisioning
+    # job needs both, and has no view_context to build an interaction with.
+    resource.invite!(email: email, role: role, by: current_user)
     succeed(resource).with_message("Invitation sent to #{email}.")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)

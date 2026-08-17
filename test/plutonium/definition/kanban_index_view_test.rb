@@ -23,7 +23,7 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
     end
   end
 
-  # A non-kanban record interaction, to prove kanban_drop? defaults to false.
+  # A non-kanban record interaction, to prove hidden? defaults to false.
   class ArchiveInteraction < Plutonium::Resource::Interaction
     attribute :resource
 
@@ -84,21 +84,21 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
     assert_equal MarkLostInteraction, action.interaction
   end
 
-  def test_registered_drop_action_is_flagged_kanban_drop
-    assert drop_definition.defined_actions[:lost_enter_interaction].kanban_drop?
+  def test_registered_drop_action_is_flagged_hidden
+    assert drop_definition.defined_actions[:lost_enter_interaction].hidden?
   end
 
-  def test_non_kanban_record_action_is_not_kanban_drop
+  def test_non_kanban_record_action_is_not_hidden
     definition = def_class { action(:archive, interaction: ArchiveInteraction) }.new
-    refute definition.defined_actions[:archive].kanban_drop?
+    refute definition.defined_actions[:archive].hidden?
   end
 
   # Mirrors the filter used by the show/row/grid toolbars: displayable record
-  # actions are `record_action? && !kanban_drop?`. The drop action must be
+  # actions are `record_action? && !hidden?`. The drop action must be
   # excluded (it is reachable only by dropping a card).
   def test_kanban_drop_action_excluded_from_displayable_record_actions
     definition = drop_definition
-    displayable = definition.defined_actions.values.select { |a| a.record_action? && !a.kanban_drop? }
+    displayable = definition.defined_actions.values.select { |a| a.record_action? && !a.hidden? }
     refute_includes displayable.map(&:name), :lost_enter_interaction
     # And it IS present as a registered (but hidden) action.
     assert_includes definition.defined_actions.keys, :lost_enter_interaction
@@ -123,11 +123,11 @@ class Plutonium::Definition::KanbanIndexViewTest < Minitest::Test
     assert_kind_of Plutonium::Action::Interactive, column_action
     assert column_action.record_action?, "column action should be a record action"
     assert_equal ArchiveInteraction, column_action.interaction
-    refute column_action.kanban_drop?, "column action stays visible in toolbars"
+    refute column_action.hidden?, "column action stays visible in toolbars"
 
     drop_action = definition.defined_actions[:lost_enter_interaction]
     assert_kind_of Plutonium::Action::Interactive, drop_action
-    assert drop_action.kanban_drop?, "drop action is drop-only"
+    assert drop_action.hidden?, "drop action is drop-only"
     assert_equal MarkLostInteraction, drop_action.interaction
 
     # Both coexist — neither registration clobbered the other.

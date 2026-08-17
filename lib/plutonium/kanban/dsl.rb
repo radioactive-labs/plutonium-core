@@ -15,7 +15,10 @@ module Plutonium
         @card_fields = nil
         @per_column = nil
         @realtime = false
-        @position_config = Positioning::Config.default
+        # nil means "not declared" so the board can inherit the definition's
+        # position_on. Resolution — including the historic Config.default
+        # fallback — moves to Board#position_config_for.
+        @position_config = nil
         @lazy = true
         @show_in = nil
       end

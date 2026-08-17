@@ -79,6 +79,10 @@ end
 The engine detects failure by a **raised exception**. Non-bang `create`/`save`/`update` return `false` on failure without raising — the engine can't see that, treats the step as successful, and advances, silently losing the data. Always use `create!`/`update!`/`save!`, or call `fail!("message")`.
 :::
 
+::: tip `execute` is a presentation boundary, same as an interaction's
+A wizard is built with `view_context:` too, so everything reachable only through `execute` is reachable only from a wizard run. Steps and `execute` own the *flow* — which screens, in what order, writing what. What the write **means** belongs on the model as soon as a second caller wants it: the API signup that skips onboarding, the admin backfill, the importer. `Company.create!(...)` inline is fine for a one-off; `Company.onboard!(...)` is what you reach for when it isn't. See [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for) — the rule is identical.
+:::
+
 Each step renders as a focused card with a numbered stepper rail (the terminal `review` shows a finish flag, not a number) and a Back / Next / Cancel strip:
 
 ![A wizard step page — numbered stepper rail, a focused step card with typed inputs, and Back/Next/Cancel navigation](/images/guides/wizards-step.png)
@@ -281,6 +285,7 @@ end
 - `fail!("msg")` aborts the step with a base (form-level) error; `fail!(:field, "msg")` attaches it to a field. Both roll back the step's transaction and re-render with input intact.
 - The engine **always** destroys every `persist`'d record on rollback (Cancel, abandonment-sweep, branch-prune), in reverse order, via `destroy!` (which respects a model's own soft-delete override). `on_rollback` is an **optional, additive** compensating block for side effects the engine can't see (refund a charge, call an external API), and runs **before** the destroy, so `persisted[:key]` is still alive inside it. Don't destroy the tracked record yourself; the engine does.
 - Because `on_submit` writes mid-flow, it isn't atomic across steps — that's why `cleanup_after` + the SweepJob exist. See [Storage & config](/reference/wizard/storage-config) and the [DSL reference](/reference/wizard/dsl#per-step-hooks).
+- `on_submit` / `on_rollback` are **wizard-flow hooks**, not a home for domain logic. They belong to a single wizard step and can't be called from anywhere else, so keep them to *when* and *what gets tracked* — `persist Billing.create!(...)` above is one call to a model. Once "authorize a card and record the billing row" is something the API also does, it becomes `Billing.authorize!(company:, token:)` and the hook shrinks to `persist Billing.authorize!(...)`.
 
 ## Anchored wizards
 
@@ -325,7 +330,10 @@ class WelcomeWizard < Plutonium::Wizard::Base
   review label: "All set?"
 
   def execute
-    current_user.update!(full_name: data.profile.full_name, onboarded_at: Time.current)
+    # User#complete_onboarding! sets the name and stamps onboarded_at. It lives on
+    # the model because the gate below, an admin backfill, and the invite-accept
+    # flow all need to mark a user onboarded — and none of them is a wizard.
+    current_user.complete_onboarding!(full_name: data.profile.full_name)
     succeed.with_message("Welcome aboard!")
   end
 

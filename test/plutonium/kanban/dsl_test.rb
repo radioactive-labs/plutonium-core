@@ -394,10 +394,16 @@ module Plutonium
       # position_on — wired to Positioning::Config factories                 #
       # ------------------------------------------------------------------ #
 
-      def test_default_position_config_is_config_default
+      # An undeclared board leaves position_config nil so it can INHERIT the
+      # definition's `position_on`; the Config.default fallback moved to
+      # Board#position_config_for (see definition/positioning_test.rb).
+      def test_an_undeclared_board_has_no_position_config_of_its_own
         board = DSL.build {}
-        assert_equal :position, board.position_config.attribute
-        refute board.position_config.disabled?
+        definition = Class.new(Plutonium::Resource::Definition).new
+
+        assert_nil board.position_config
+        assert_equal :position, board.position_config_for(definition).attribute
+        refute board.position_config_for(definition).disabled?
       end
 
       def test_position_on_attribute_uses_config_attribute_factory

@@ -1,6 +1,8 @@
 require_relative "../catalog"
 
 class Catalog::Variant < Catalog::ResourceRecord
+  include Plutonium::Positioning::Model
+
   # add concerns above.
 
   # add constants above.
@@ -8,6 +10,10 @@ class Catalog::Variant < Catalog::ResourceRecord
   # add enums above.
 
   has_cents :price_cents
+
+  # Variants are displayed in a product-scoped, hand-ordered list — the nested
+  # association table under a product is drag-reorderable (see VariantDefinition).
+  positioned_on :position, scope: :product_id
   # add model configurations above.
 
   belongs_to :product, class_name: "Catalog::Product"

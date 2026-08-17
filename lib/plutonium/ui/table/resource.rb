@@ -4,6 +4,8 @@ module Plutonium
   module UI
     module Table
       class Resource < Plutonium::UI::Component::Base
+        include Plutonium::UI::Component::Positionable
+
         attr_reader :collection, :resource_fields, :resource_definition
 
         def initialize(collection, resource_fields:, resource_definition:)
@@ -73,7 +75,7 @@ module Plutonium
         end
 
         def current_search_url
-          request.path
+          current_query_object.request_path
         end
 
         def render_bulk_actions_toolbar
@@ -92,7 +94,9 @@ module Plutonium
         end
 
         def render_table
-          render Plutonium::UI::Table::Base.new(collection) do |table|
+          table_options = position_drag_enabled? ? {positioned_url_template: position_url_template, positioned_group_resolver: position_group_resolver} : {}
+
+          render Plutonium::UI::Table::Base.new(collection, **table_options) do |table|
             # Selection column only renders when bulk actions exist —
             # the server already knows, so no JS toggle is needed.
             # Use :_selection as column key to avoid conflicts with field columns;
@@ -102,6 +106,11 @@ module Plutonium
                 bulk_actions:,
                 policy_resolver: ->(record) { policy_for(record:) }
             end
+
+            # The grip rides in the FIRST column that actually renders — tracked
+            # rather than indexed off @resource_fields, because a `condition:`
+            # can skip the nominal first column and the grip must not go with it.
+            grip_pending = !position_config.nil?
 
             @resource_fields.each do |name|
               field_options = resource_definition.defined_fields[name] ? resource_definition.defined_fields[name][:options].dup : {}
@@ -146,6 +155,11 @@ module Plutonium
                 }
               end
 
+              if grip_pending
+                grip_pending = false
+                tag_block = wrap_with_drag_handle(tag_block)
+              end
+
               # For table columns, only extract column-level options (label and align)
               # Field-level options like description and placeholder don't make sense in table cells
               field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
@@ -160,7 +174,7 @@ module Plutonium
               policy = policy_for(record:)
 
               actions = resource_definition.defined_actions
-                .select { |k, a| a.collection_record_action? && !a.kanban_drop? && policy.allowed_to?(:"#{k}?") && a.condition_met?(view_context, record:) }
+                .select { |k, a| a.collection_record_action? && !a.hidden? && policy.allowed_to?(:"#{k}?") && a.condition_met?(view_context, record:) }
                 .values
 
               primary_actions = actions.select { |a| a.category.primary? }.sort_by(&:position)
@@ -185,9 +199,31 @@ module Plutonium
           end
         end
 
+        # Returns a column block that renders `inner`'s cell with the grip in
+        # front of it. Wraps rather than replaces, so a formatter, a custom
+        # column block and an inferred component all keep rendering as they did.
+        #
+        # `sort_url` is resolved ONCE, outside the per-row lambda: it depends on
+        # the collection's sort, not on the record, and building it per row would
+        # re-derive the same URL for every row of every page.
+        #
+        # The per-record `reposition?` check, by contrast, HAS to run per row.
+        # Rows that fail it render exactly as they did before, unwrapped.
+        def wrap_with_drag_handle(inner)
+          sort_url = position_grip_sort_url
+
+          ->(wrapped_object, key) {
+            record = wrapped_object.unwrapped
+            cell = inner.call(wrapped_object, key)
+            next cell unless repositionable?(record)
+
+            Plutonium::UI::Table::Components::DragHandle::Cell.new(cell, sort_url: sort_url)
+          }
+        end
+
         def bulk_actions
           @bulk_actions ||= resource_definition.defined_actions
-            .select { |k, a| a.bulk_action? && a.condition_met?(view_context) }
+            .select { |k, a| a.bulk_action? && !a.hidden? && a.condition_met?(view_context) }
             .values
         end
 

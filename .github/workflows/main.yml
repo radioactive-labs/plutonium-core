@@ -48,6 +48,56 @@ jobs:
       - name: Audit bundle
         run: bundle exec bundle-audit ${{ matrix.ruby == '3.2' && '--ignore CVE-2026-54659' || '' }}
 
+  test:
+    runs-on: ubuntu-latest
+    name: Tests (Rails ${{ matrix.rails }})
+    strategy:
+      fail-fast: false
+      matrix:
+        rails:
+          - "rails-7"
+          - "rails-8.0"
+          - "rails-8.1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install appraisal gemfiles
+        run: bundle exec appraisal install
+      - name: Unit tests
+        run: bundle exec appraisal ${{ matrix.rails }} rake test
+      # System tests are a SEPARATE task: the Rakefile's default `test` task
+      # excludes test/system/**, so a green `rake test` says nothing about the
+      # browser-driven suite. They are the only gate on the Stimulus controllers
+      # (drag-to-reorder, kanban drops) — the Ruby suite never executes that JS.
+      - name: System tests
+        run: bundle exec appraisal ${{ matrix.rails }} rake test:system
+
+  generators:
+    runs-on: ubuntu-latest
+    name: Generators
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+      - name: Install appraisal gemfiles
+        run: bundle exec appraisal install
+      # Under appraisal, not the root bundle: the generator tests boot the dummy
+      # app, whose initializers need gems (rodauth-rails and friends) that only
+      # the appraisal gemfiles carry. On the root Gemfile every file dies at
+      # `uninitialized constant Rodauth`.
+      #
+      # Also excluded from the default task, and destructive — it git-cleans
+      # test/dummy — so it gets its own job rather than sharing a checkout.
+      - name: Generator tests
+        run: bundle exec appraisal rails-8.1 rake test_generators
+
   positioning-postgres:
     runs-on: ubuntu-latest
     name: Positioning on PostgreSQL

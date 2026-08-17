@@ -106,8 +106,15 @@ module Plutonium
           }
         end
 
+        # The page's toast region. The id makes it a stable turbo_stream append
+        # target, so any action that answers a stream (rather than rendering a
+        # layout that would consume `flash`) can surface a message without
+        # inventing a region of its own — the reposition drop's rejection toasts
+        # land here. Toasts are position:fixed, so the wrapper has no layout
+        # effect. Rendered once per full page load, outside every collection
+        # frame, so a stream that replaces a collection cannot blow it away.
         def render_flash
-          render partial("flash")
+          div(id: Plutonium::FLASH_REGION) { render partial("flash") }
         end
 
         def render_before_content

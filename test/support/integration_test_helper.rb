@@ -30,9 +30,19 @@ module IntegrationTestHelper
       Catalog::Variant.delete_all
       Catalog::Product.delete_all
       Catalog::Category.delete_all
+      # Before Organization — KitchenSink belongs_to :organization. Left behind,
+      # these silently break any later test that counts the cards on a board
+      # (KanbanShowFrameTest boards KitchenSink) or the rows in a collection.
+      KitchenSink.delete_all
       OrganizationUser.delete_all
       Organization.delete_all
       NetworkDevice.delete_all
+      # Board/reorder fixtures. Every test that makes these cleans up after
+      # itself today, but that is a convention one new test can forget, and the
+      # symptom — a count assertion failing in an unrelated file, only under
+      # some random orders — is expensive to trace back.
+      Task.delete_all
+      Chore.delete_all
 
       # Clean Rodauth session/auth tables
       connection.execute("DELETE FROM user_remember_keys")

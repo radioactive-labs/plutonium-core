@@ -50,6 +50,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::Widget
   register_resource ::Task
   register_resource ::ShrineDoc
+  register_resource ::Chore
   # register resources above.
 end
 

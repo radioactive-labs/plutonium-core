@@ -11,16 +11,22 @@ module Plutonium
         private
 
         def presentable_attributes
-          @presentable_attributes ||= begin
-            presentable_attributes = permitted_attributes
-            if current_parent && !present_parent?
-              presentable_attributes -= [parent_input_param, :"#{parent_input_param}_id"]
-            end
-            if scoped_to_entity? && !present_scoped_entity?
-              presentable_attributes -= scoped_entity_field_names
-            end
-            presentable_attributes
+          @presentable_attributes ||= presentable_attributes_for(action_name)
+        end
+
+        # The presentable set for a NAMED action rather than the current one.
+        # An action that re-renders a collection on the index's behalf (the
+        # reposition drop POST) has no permitted_attributes_for_reposition of
+        # its own and must not need one — it asks for the index's set.
+        def presentable_attributes_for(action)
+          attributes = permitted_attributes_for(action)
+          if current_parent && !present_parent?
+            attributes -= [parent_input_param, :"#{parent_input_param}_id"]
           end
+          if scoped_to_entity? && !present_scoped_entity?
+            attributes -= scoped_entity_field_names
+          end
+          attributes
         end
 
         def submittable_attributes
@@ -78,12 +84,12 @@ module Plutonium
           @scoped_entity_association = matching_assocs.first&.name
         end
 
-        def build_collection
-          current_definition.collection_class.new(@resource_records, resource_fields: presentable_attributes, resource_definition: current_definition)
+        def build_collection(action: action_name)
+          current_definition.collection_class.new(@resource_records, resource_fields: presentable_attributes_for(action), resource_definition: current_definition)
         end
 
-        def build_grid_collection
-          current_definition.grid_class.new(@resource_records, resource_fields: presentable_attributes, resource_definition: current_definition)
+        def build_grid_collection(action: action_name)
+          current_definition.grid_class.new(@resource_records, resource_fields: presentable_attributes_for(action), resource_definition: current_definition)
         end
 
         def build_detail

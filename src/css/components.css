@@ -1071,7 +1071,7 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 
 /* Column highlighted as the current drop target */
 .pu-kanban-drop-target {
-  outline: 2px solid var(--color-primary-500, #3b82f6);
+  outline: 2px solid theme(colors.primary.500);
   outline-offset: -2px;
   border-radius: var(--pu-radius-md, 0.5rem);
 }
@@ -1079,4 +1079,54 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 /* Column that would reject a drop: dimmed so the user sees valid targets */
 .pu-kanban-no-drop {
   opacity: 0.45;
+}
+
+/* Where the drop will land. Shared by the kanban board and every positioned
+   table/grid (src/js/drag/sortable.js). Parked on <body> and positioned in
+   viewport coordinates, so it is never clipped by a scrolling column or an
+   overflow-x table wrapper. pointer-events:none keeps it out of the way of the
+   dragover hit-testing that positions it. */
+.pu-drag-marker {
+  position: fixed;
+  z-index: 60;
+  display: none;
+  pointer-events: none;
+  background: theme(colors.primary.500);
+  border-radius: var(--pu-radius-full, 9999px);
+}
+
+/* `between` is already centred in the gap the layout leaves, so it only pulls
+   back by half the line's thickness. The two ENDS touch a single item and have
+   to be pushed clear of it — off the top of the first, below the bottom of the
+   last. Tune the end clearance with --pu-drag-marker-gap. */
+.pu-drag-marker[data-axis="vertical"] {
+  height: 2px;
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="between"] {
+  margin-top: -1px;
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="leading"] {
+  margin-top: calc(-1 * var(--pu-drag-marker-gap, 4px));
+}
+
+.pu-drag-marker[data-axis="vertical"][data-edge="trailing"] {
+  margin-top: var(--pu-drag-marker-gap, 4px);
+}
+
+.pu-drag-marker[data-axis="horizontal"] {
+  width: 2px;
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="between"] {
+  margin-left: -1px;
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="leading"] {
+  margin-left: calc(-1 * var(--pu-drag-marker-gap, 4px));
+}
+
+.pu-drag-marker[data-axis="horizontal"][data-edge="trailing"] {
+  margin-left: var(--pu-drag-marker-gap, 4px);
 }

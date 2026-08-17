@@ -63,10 +63,13 @@ module Plutonium
         assert_same relation, result
       end
 
+      # Mode C writes nothing, so it reports `false` — "the caller has nothing to
+      # reconcile". It returns an explicit false rather than nil because the
+      # return value is a boolean signal the reposition endpoint branches on.
       def test_disabled_reposition_is_noop
         record = Object.new
         result = Positioning::Config.disabled.reposition!(record:, column: :todo, prev_record: nil, next_record: nil, index: 0)
-        assert_nil result
+        assert_equal false, result
       end
 
       # ------------------------------------------------------------------ #
@@ -149,10 +152,13 @@ module Plutonium
         Class.new do
           attr_reader :prev_record_received, :next_record_received
 
+          # Returns a Result because Mode A now reads `.rebalanced?` off it — a
+          # record standing in for a Positioning::Model must honour that contract.
           def reposition!(prev_record:, next_record:)
             @reposition_called = true
             @prev_record_received = prev_record
             @next_record_received = next_record
+            Plutonium::Positioning::Result.new(rebalanced: false)
           end
 
           def reposition_called?

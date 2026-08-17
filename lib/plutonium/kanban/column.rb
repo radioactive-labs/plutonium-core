@@ -32,8 +32,10 @@ module Plutonium
         # `resource` attribute), never collection/bulk-shaped (`resources`). Reject
         # anything else at definition time so a mis-shaped interaction can't (a) blow
         # up at drop time on the `resource=` assignment, or (b) get auto-classified
-        # by Action::Interactive::Factory as a bulk action and leak into the
-        # bulk-actions bar (which does not filter kanban_drop actions).
+        # by Action::Interactive::Factory as a bulk action. The bulk bars now
+        # filter `hidden?` themselves, so (b) is defence-in-depth — but keep the
+        # guard: failing at definition time with a message that names the fix
+        # beats failing at drop time on the `resource=` assignment.
         if enter_interaction && !enter_interaction.attribute_names.map(&:to_sym).include?(:resource)
           raise ArgumentError, "enter_interaction: #{enter_interaction} must operate on a single record (declare `attribute :resource`); collection/bulk interactions cannot be used as an enter_interaction."
         end

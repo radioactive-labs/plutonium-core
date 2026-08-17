@@ -14,24 +14,29 @@
 
 ## Introduction
 
-Interactions allows us to leverage an architectural approach that focuses on organizing code around business actions or user interactions.
-It builds upon the traditional MVC pattern by introducing additional layers that encapsulate business logic and improve separation of concerns.
+Interactions organize code around the actions a user can take. Each one is the entry point from a page into a single, well-defined operation: it declares the inputs, renders as a button and a form, is gated by a policy, and hands back an outcome the controller turns into a message and a redirect.
 
 ### Key Benefits
 
-- Clear separation of business logic from controllers
-- Improved testability of business operations
+- A uniform surface for custom operations: button, form, authorization, messaging, redirect
+- Clear separation of the *request* from the controller
 - Consistent handling of success and failure cases
-- Flexible and expressive way to chain operations
-- Enhanced maintainability and readability of complex business processes
-- Improved code organization and discoverability of business logic
+- Input validation that renders as form errors
+- Improved discoverability — every custom operation is a named class in `app/interactions/`
 
 ## Key Concepts
 
 ### Interactions
 
-Interactions are the core of this pattern. They represent specific use cases or business operations in your application. Each interaction is responsible for a single, well-defined task.
-Interactions encapsulate the business logic, input validation, and outcome handling, providing a clean interface between the controller and the application's core functionality.
+An interaction is a **presentation object**. It owns the button, the form, the input-shape validation, and the user-facing outcome.
+
+It is *not* where a domain operation should end up living. An interaction cannot be constructed without a `view_context:`, so anything reachable only through one is reachable only from a page. Logic may **start** in `execute` — a one-off with a single caller is fine there, and pre-extracting is YAGNI. The trigger to extract is the **second caller**: a background job, an API controller, a rake task, the console, or another interaction. At that point the behaviour moves onto the **model** (fat models, per Rails convention — not a new service layer), and the interaction shrinks to a call to a well-named method.
+
+`view_context` is the tell: if a caller would need one purely to reach some behaviour, that behaviour is on the wrong side of the boundary.
+
+Validations split along the same line. **Interaction validations check input shape** — is it present, does it parse, is it the right type — and exist to render form errors. **Model validations are business invariants** and must hold regardless of who is calling.
+
+Full explanation: [Reference › Behavior › Interactions](https://radioactive-labs.github.io/plutonium-core/reference/behavior/interactions).
 
 ### Outcomes
 
@@ -99,7 +104,7 @@ We ship with these out of the box:
              .with_response(Response::Redirect.new(user_path(user)))
              .with_message("User was successfully created.")
          else
-           failure(user.errors)
+           failed(user.errors)
          end
        end
      end
@@ -159,25 +164,54 @@ else
 end
 ```
 
-Or within another interaction:
+### Composing outcomes — `and_then`
+
+`and_then` composes `Outcome`s. On a `Success` it yields **the value** (not the outcome) and returns whatever the block returns; on a `Failure` it short-circuits, returning the failure untouched. It's useful for expressing a guard as an outcome inside one `execute`:
 
 ```ruby
 def execute
-  MyInteraction.call(some_input: "value")
-    .and_then { |result| do_something_with(result) }
-    .with_response(Response::Redirect.new(some_path(final_result)))
-    .with_message("Operation completed successfully")
+  unlocked_resource.and_then do |post|
+    post.publish!
+    succeed(post).with_message("Published")
+  end
+end
+
+private
+
+def unlocked_resource
+  resource.locked? ? failed("This post is locked") : succeed(resource)
 end
 ```
+
+> **Don't use `and_then` to sequence business operations.** A chain of three interactions is a chain of three things that each demand a `view_context` — none of which a job or an API controller can supply. That's one model method wearing three costumes; see [Best Practices](#best-practices) below.
 
 ## Best Practices
 
 1. Keep interactions focused on a single responsibility
 2. Use meaningful names for interactions that describe the action being performed
-3. Leverage the `and_then` method for clean and expressive operation chaining
-4. Prefer small, composable interactions over large, monolithic ones
+3. **Put the operation on the model as soon as a second caller needs it.** Logic may start in `execute`; a job, API controller, rake task, or console session wanting the same behaviour is the trigger to extract. Name the model method in domain language (`publish!`, `archive!`, `register!`), not persistence terms (`update_published_at`)
+4. **Interaction validations check input shape; model validations enforce invariants.** The interaction's exist to render form errors — they don't run for any other caller
 5. Use `with_response` to explicitly set the desired response type
 6. Keep the interaction's core logic separate from response handling
+
+### The chaining anti-pattern
+
+```ruby
+# 🚫 Each link demands a view_context that has nothing to do with the work
+CreateUserInteraction.call(view_context:, **user_params)
+  .and_then { |user| SendWelcomeEmail.call(view_context:, user:) }
+  .and_then { |user| LogActivity.call(view_context:, user:) }
+```
+
+Sending a welcome email and writing an audit row are exactly what a signup API endpoint or a seeds script also has to do — and neither has a view context. Give the model the operation instead:
+
+```ruby
+# ✅
+def execute
+  user = User.register!(**attributes)   # welcome email + audit row live in here
+  succeed(user).with_message("Welcome aboard!")
+end
+```
 
 ## Testing
 
@@ -314,7 +348,7 @@ module Users
         if user.save
           success(user).with_message("User created successfully")
         else
-          failure(user.errors)
+          failed(user.errors)
         end
       end
     end
@@ -345,25 +379,28 @@ module Orders
 
     def find_user(user_id)
       user = User.find_by(id: user_id)
-      user ? success(user) : failure(["User not found"])
+      user ? success(user) : failed(["User not found"])
     end
 
     def find_products(user, product_ids)
       products = Product.where(id: product_ids.split(','))
-      products.empty? ? failure(["No valid products found"]) : success([user, products])
+      products.empty? ? failed(["No valid products found"]) : success([user, products])
     end
 
     def create_order(user, products)
-      order = Order.create(user: user, products: products)
-      order.persisted? ? success(order) : failure(order.errors.full_messages)
+      # Order.place! owns the domain work — inventory, totals, confirmation mail.
+      # The interaction only resolves the inputs and shapes the outcome.
+      success(Order.place!(user: user, products: products))
+    rescue ActiveRecord::RecordInvalid => e
+      failed(e.record.errors)
     end
   end
 end
 ```
 
-This example demonstrates how to chain multiple operations, handle potential failures at each step, and return an appropriate outcome with a specific response type. Note how the `with_response` and `with_message` methods are used to set the response and add a message to the outcome.
+Every link here is a **private method of this one interaction** resolving an input, not a separate interaction — so nothing in the chain needs a `view_context` of its own, and `Order.place!` stays callable from a job or an API. That's the shape `and_then` is for: composing outcomes inside a single `execute`, not sequencing business operations across interactions.
 
-By following these guidelines and examples, you can effectively implement and use the Interaction pattern in your Rails applications, leading to more maintainable and testable code.
+Note also how `with_response` and `with_message` set the response and attach a message to the outcome.
 
 <!--
 

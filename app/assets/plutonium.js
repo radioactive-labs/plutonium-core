@@ -28977,6 +28977,97 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     };
   };
 
+  // src/js/drag/sortable.js
+  function computeDropIndex(clientY, items) {
+    for (let i4 = 0; i4 < items.length; i4++) {
+      const rect = items[i4].getBoundingClientRect();
+      if (clientY < rect.top + rect.height / 2) return i4;
+    }
+    return items.length;
+  }
+  function computeDropIndexHorizontal(clientX, items) {
+    for (let i4 = 0; i4 < items.length; i4++) {
+      const rect = items[i4].getBoundingClientRect();
+      if (clientX < rect.left + rect.width / 2) return i4;
+    }
+    return items.length;
+  }
+  function beginDrag(event, element, { draggingClass, payload, dragImage = null }) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", payload);
+    if (dragImage) {
+      const rect = dragImage.getBoundingClientRect();
+      event.dataTransfer.setDragImage(dragImage, event.clientX - rect.left, event.clientY - rect.top);
+    }
+    requestAnimationFrame(() => element.classList.add(draggingClass));
+  }
+  function endDrag(element, { draggingClass }) {
+    element.classList.remove(draggingClass);
+    hideInsertionMarker();
+  }
+  var MARKER_ID = "pu-drag-insertion-marker";
+  function insertionMarker() {
+    let marker = document.getElementById(MARKER_ID);
+    if (!marker) {
+      marker = document.createElement("div");
+      marker.id = MARKER_ID;
+      marker.className = "pu-drag-marker";
+      marker.setAttribute("aria-hidden", "true");
+      document.body.appendChild(marker);
+    }
+    return marker;
+  }
+  function showInsertionMarker(items, index, { axis = "vertical", container = null, gap = null } = {}) {
+    const marker = insertionMarker();
+    if (gap) {
+      marker.style.setProperty("--pu-drag-marker-gap", gap);
+    } else {
+      marker.style.removeProperty("--pu-drag-marker-gap");
+    }
+    const vertical = axis !== "horizontal";
+    const near = (rect) => vertical ? rect.top : rect.left;
+    const far = (rect) => vertical ? rect.bottom : rect.right;
+    let span;
+    let offset2;
+    let edge;
+    if (items.length === 0) {
+      if (!container) return hideInsertionMarker();
+      span = container.getBoundingClientRect();
+      offset2 = near(span);
+      edge = "leading";
+    } else if (index <= 0) {
+      span = items[0].getBoundingClientRect();
+      offset2 = near(span);
+      edge = "leading";
+    } else if (index >= items.length) {
+      span = items[items.length - 1].getBoundingClientRect();
+      offset2 = far(span);
+      edge = "trailing";
+    } else {
+      span = items[index].getBoundingClientRect();
+      offset2 = (far(items[index - 1].getBoundingClientRect()) + near(span)) / 2;
+      edge = "between";
+    }
+    if (vertical) {
+      marker.style.left = `${span.left}px`;
+      marker.style.top = `${offset2}px`;
+      marker.style.width = `${span.width}px`;
+      marker.style.height = "";
+    } else {
+      marker.style.left = `${offset2}px`;
+      marker.style.top = `${span.top}px`;
+      marker.style.height = `${span.height}px`;
+      marker.style.width = "";
+    }
+    marker.dataset.axis = axis;
+    marker.dataset.edge = edge;
+    marker.style.display = "block";
+  }
+  function hideInsertionMarker() {
+    const marker = document.getElementById(MARKER_ID);
+    if (marker) marker.style.display = "none";
+  }
+
   // src/js/controllers/kanban_controller.js
   var kanban_controller_default = class extends Controller {
     static values = { moveUrlTemplate: String, collapseCookie: String, collapsePath: String };
@@ -29230,9 +29321,10 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const card = event.target.closest("[data-kanban-record-id]");
       if (!card) return;
       this.draggedCard = card;
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", card.dataset.kanbanRecordId);
-      requestAnimationFrame(() => card.classList.add("pu-kanban-dragging"));
+      beginDrag(event, card, {
+        draggingClass: "pu-kanban-dragging",
+        payload: card.dataset.kanbanRecordId
+      });
       this.#applyDropHints(card.dataset.kanbanColumnKey);
     }
     #onDragOver(event) {
@@ -29243,15 +29335,25 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       event.preventDefault();
       event.dataTransfer.dropEffect = "move";
       this.#highlightColumn(column);
+      const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
+      showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
+        axis: "vertical",
+        container: column,
+        // Cards sit further apart than table rows, so the table's clearance reads
+        // as cramped against a card's edge here.
+        gap: "10px"
+      });
     }
     #onDragLeave(event) {
       if (!this.element.contains(event.relatedTarget)) {
         this.#clearHighlights();
+        hideInsertionMarker();
       }
     }
     async #onDrop(event) {
       event.preventDefault();
       this.#clearHighlights();
+      hideInsertionMarker();
       if (!this.draggedCard) return;
       const wrapper = event.target.closest("[data-kanban-col]");
       if (wrapper?.classList.contains("pu-kanban-no-drop")) return;
@@ -29261,7 +29363,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       const fromColumn = this.draggedCard.dataset.kanbanColumnKey;
       const toColumn = column.dataset.kanbanColumnKeyValue;
       const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")].filter((c4) => c4 !== this.draggedCard);
-      const toIndex = this.#computeDropIndex(event.clientY, existingCards);
+      const toIndex = computeDropIndex(event.clientY, existingCards);
       const destWrapper = column.closest("[data-kanban-col]");
       if (destWrapper?.dataset.kanbanDropInteraction === "true" && fromColumn !== toColumn) {
         if (destWrapper.dataset.kanbanDropImmediate === "true") {
@@ -29340,7 +29442,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       this.#clearHighlights();
       this.#clearDropHints();
       if (this.draggedCard) {
-        this.draggedCard.classList.remove("pu-kanban-dragging");
+        endDrag(this.draggedCard, { draggingClass: "pu-kanban-dragging" });
         this.draggedCard = null;
       }
     }
@@ -29400,17 +29502,6 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.cookie = `${name}=${value}; path=${path}; max-age=${60 * 60 * 24 * 180}; SameSite=Lax`;
     }
     // ─── helpers ─────────────────────────────────────────────────────────────────
-    // Returns the 0-based insertion index within the destination column by
-    // comparing the cursor y-position against each card's vertical midpoint.
-    // The card is inserted before the first card whose midpoint is below the
-    // cursor, or appended after all cards if the cursor is below every midpoint.
-    #computeDropIndex(clientY, cards) {
-      for (let i4 = 0; i4 < cards.length; i4++) {
-        const rect = cards[i4].getBoundingClientRect();
-        if (clientY < rect.top + rect.height / 2) return i4;
-      }
-      return cards.length;
-    }
     #highlightColumn(column) {
       this.columnTargets.forEach((c4) => {
         c4.classList.toggle("pu-kanban-drop-target", c4 === column);
@@ -29418,6 +29509,254 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     #clearHighlights() {
       this.columnTargets.forEach((c4) => c4.classList.remove("pu-kanban-drop-target"));
+    }
+  };
+
+  // src/js/controllers/positioned_controller.js
+  var DRAGGING_CLASS = "opacity-30";
+  var positioned_controller_default = class extends Controller {
+    static values = { urlTemplate: String, axis: { type: String, default: "vertical" } };
+    connect() {
+      this.draggedRow = null;
+      this.onDragStart = this.#onDragStart.bind(this);
+      this.onDragOver = this.#onDragOver.bind(this);
+      this.onDragLeave = this.#onDragLeave.bind(this);
+      this.onDrop = this.#onDrop.bind(this);
+      this.onDragEnd = this.#onDragEnd.bind(this);
+      this.onKeyDown = this.#onKeyDown.bind(this);
+      this.element.addEventListener("dragstart", this.onDragStart);
+      this.element.addEventListener("dragover", this.onDragOver);
+      this.element.addEventListener("dragleave", this.onDragLeave);
+      this.element.addEventListener("drop", this.onDrop);
+      this.element.addEventListener("dragend", this.onDragEnd);
+      this.element.addEventListener("keydown", this.onKeyDown);
+    }
+    disconnect() {
+      this.element.removeEventListener("dragstart", this.onDragStart);
+      this.element.removeEventListener("dragover", this.onDragOver);
+      this.element.removeEventListener("dragleave", this.onDragLeave);
+      this.element.removeEventListener("drop", this.onDrop);
+      this.element.removeEventListener("dragend", this.onDragEnd);
+      this.element.removeEventListener("keydown", this.onKeyDown);
+      hideInsertionMarker();
+    }
+    // ─── drag lifecycle ─────────────────────────────────────────────────────────
+    #onDragStart(event) {
+      const grip = event.target.closest("[data-positioned-grip]");
+      if (!grip) return;
+      const row = this.#rowFor(grip);
+      if (!row) return;
+      this.draggedRow = row;
+      beginDrag(event, row, {
+        draggingClass: DRAGGING_CLASS,
+        payload: row.dataset.positionedRowId,
+        // The grip carries draggable="true", so without this the browser ghosts
+        // the grip alone and the row looks like it never left.
+        dragImage: row
+      });
+    }
+    #onDragOver(event) {
+      if (!this.draggedRow) return;
+      if (!this.#sameGroupAs(event.target)) {
+        hideInsertionMarker();
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      const others = this.#rows().filter((r4) => r4 !== this.draggedRow);
+      showInsertionMarker(others, this.#dropIndex(event, others), {
+        axis: this.axisValue === "horizontal" ? "horizontal" : "vertical",
+        container: this.element
+      });
+    }
+    #onDragLeave(event) {
+      if (event.relatedTarget && this.element.contains(event.relatedTarget)) return;
+      hideInsertionMarker();
+    }
+    #onDrop(event) {
+      event.preventDefault();
+      hideInsertionMarker();
+      if (!this.draggedRow) return;
+      const row = this.draggedRow;
+      const others = this.#rows().filter((r4) => r4 !== row);
+      this.#applyMove(row, others, this.#dropIndex(event, others));
+    }
+    // Where a drop at the cursor lands, in `items`' own order.
+    //
+    // A table stacks: one row per line, so the vertical midpoint test is the
+    // whole story. A grid WRAPS: cards flow left-to-right and then onto a new
+    // line, and reading that layout off clientY alone would collapse every card
+    // on a line into a single slot — the drop would land at the start of the row
+    // no matter which gap the user aimed at.
+    //
+    // But clientX alone is no better, because every visual row starts at the same
+    // left edge: x=250 is "after the third card" in row 1 and row 4 alike. So
+    // narrow to the row the cursor is over FIRST, then let the horizontal
+    // midpoint test choose the gap inside it.
+    #dropIndex(event, items) {
+      if (this.axisValue !== "horizontal") return computeDropIndex(event.clientY, items);
+      if (items.length === 0) return 0;
+      const rows = this.#visualRows(items);
+      if (event.clientY < rows[0].top) return 0;
+      const row = rows.find((r4) => event.clientY <= r4.bottom);
+      if (!row) return items.length;
+      return row.start + computeDropIndexHorizontal(event.clientX, items.slice(row.start, row.end));
+    }
+    // Groups `items` into the lines the browser actually laid them out on, as
+    // {top, bottom, start, end} spans over `items`.
+    //
+    // Recovered from geometry rather than from a column count on purpose: the
+    // grid is responsive (1/2/3/4 columns by breakpoint) and a definition may pin
+    // its own, so the only thing that reliably knows how the cards wrapped is
+    // where they ended up. A new line starts wherever an item's top edge leaves
+    // the current one's — with a pixel of slack, since equal-height cards in a
+    // row can still differ by a sub-pixel.
+    #visualRows(items) {
+      const rows = [];
+      items.forEach((item, i4) => {
+        const rect = item.getBoundingClientRect();
+        const row = rows[rows.length - 1];
+        if (row && Math.abs(rect.top - row.top) <= 1) {
+          row.end = i4 + 1;
+          row.bottom = Math.max(row.bottom, rect.bottom);
+        } else {
+          rows.push({ top: rect.top, bottom: rect.bottom, start: i4, end: i4 + 1 });
+        }
+      });
+      return rows;
+    }
+    #onDragEnd(_event) {
+      if (!this.draggedRow) return;
+      endDrag(this.draggedRow, { draggingClass: DRAGGING_CLASS });
+      this.draggedRow = null;
+    }
+    // ─── keyboard ───────────────────────────────────────────────────────────────
+    #onKeyDown(event) {
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      const grip = event.target.closest("[data-positioned-grip]");
+      if (!grip) return;
+      const row = this.#rowFor(grip);
+      if (!row) return;
+      event.preventDefault();
+      const rows = this.#rows();
+      const from = rows.indexOf(row);
+      const to = event.key === "ArrowUp" ? from - 1 : from + 1;
+      if (to < 0 || to >= rows.length) return;
+      const others = rows.filter((r4) => r4 !== row);
+      this.#applyMove(row, others, to);
+      grip.focus();
+    }
+    // ─── the move itself ────────────────────────────────────────────────────────
+    // Moves `row` to `index` among `others` (which must already exclude `row`),
+    // optimistically, then tells the server. Shared by drop and keyboard so the
+    // two can never compute neighbours differently.
+    #applyMove(row, others, index) {
+      const before = others[index] ?? null;
+      const after = others[index - 1] ?? null;
+      if (row.nextElementSibling === before && row.previousElementSibling === after) return;
+      const restoreAnchor = row.nextSibling;
+      row.parentElement.insertBefore(row, before);
+      this.#submit(row, restoreAnchor, {
+        // The ids of the row's VISIBLE neighbours. A blank one means "nothing on
+        // that side of my page" — the server treats that as a claim about the
+        // viewport, not about the positioning group, and looks the real boundary
+        // neighbour up itself (see PositionActions#resolve_position_boundaries).
+        prevId: after?.dataset.positionedRowId ?? "",
+        nextId: before?.dataset.positionedRowId ?? "",
+        toIndex: index
+      });
+    }
+    // `row` is the already-moved element and `restoreAnchor` the sibling it sat
+    // in front of beforehand, so every path that does not end in the server's own
+    // truth can undo the optimistic move rather than leave it standing.
+    async #submit(row, restoreAnchor, { prevId, nextId, toIndex }) {
+      const recordId = row.dataset.positionedRowId;
+      const url = this.urlTemplateValue.replace("__ID__", recordId) + window.location.search;
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? "";
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Accept": "text/vnd.turbo-stream.html",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": csrfToken
+          },
+          body: new URLSearchParams({
+            prev_id: prevId,
+            next_id: nextId,
+            to_index: toIndex
+          }),
+          credentials: "same-origin"
+        });
+        if (response.status === 204) return;
+        const contentType = response.headers.get("Content-Type") || "";
+        if (contentType.includes("text/vnd.turbo-stream.html") && window.Turbo) {
+          const focusedRowId = this.#focusedRowId();
+          window.Turbo.renderStreamMessage(await response.text());
+          if (focusedRowId) this.#restoreFocus(focusedRowId);
+        } else if (!response.ok) {
+          console.error(`[positioned] reposition rejected (${response.status}); reverting the move`);
+          this.#revertMove(row, restoreAnchor);
+        } else {
+          console.warn("[positioned] reposition returned a non-stream response (session expired?); reverting the move");
+          this.#revertMove(row, restoreAnchor);
+        }
+      } catch (error2) {
+        console.error("[positioned] reposition request failed:", error2);
+        this.#revertMove(row, restoreAnchor);
+      }
+    }
+    // Undoes the optimistic move. Only meaningful while the row is still the node
+    // we moved: once a turbo-stream has replaced the collection the server's truth
+    // owns the DOM, and this instance's nodes are detached.
+    //
+    // A missing/relocated anchor falls back to appending, which is also what a
+    // null anchor legitimately means — the row was last before the move.
+    #revertMove(row, anchor) {
+      const parent = row.parentElement;
+      if (!parent || !row.isConnected) return;
+      const refocus = row.contains(document.activeElement);
+      parent.insertBefore(row, anchor?.parentNode === parent ? anchor : null);
+      if (refocus) row.querySelector("[data-positioned-grip]")?.focus();
+    }
+    // ─── helpers ────────────────────────────────────────────────────────────────
+    #rows() {
+      return [...this.element.querySelectorAll("[data-positioned-row-id]")];
+    }
+    #rowFor(element) {
+      return element.closest("[data-positioned-row-id]");
+    }
+    // Whether the row under the cursor shares the dragged row's positioning
+    // group. An UNSCOPED resource emits no group attribute at all, so both sides
+    // read undefined and every row matches — the guard costs nothing there.
+    //
+    // Pointing at no row (the gutter below the last one, the wrapper's padding)
+    // counts as a match: the drop resolves against the collection's own ends,
+    // which are in the dragged row's group by construction.
+    #sameGroupAs(target) {
+      const row = this.#rowFor(target);
+      if (!row) return true;
+      return row.dataset.positionedGroup === this.draggedRow.dataset.positionedGroup;
+    }
+    #focusedRowId() {
+      const grip = document.activeElement?.closest?.("[data-positioned-grip]");
+      return grip ? this.#rowFor(grip)?.dataset.positionedRowId : null;
+    }
+    // Deferred a frame: renderStreamMessage resolves its render asynchronously,
+    // so the replacement rows are not in the document yet when it returns.
+    //
+    // Queried off `document`, NOT `this.element`. The stream replaces the contents
+    // of the collection wrapper (Page::Index.collection_dom_id), and this
+    // controller's element — the div around the <table>, or the grid div — is one
+    // of the nodes it discards. By the time this callback runs `this.element` is
+    // detached, so scoping the lookup to it finds nothing and focus is silently
+    // lost on exactly the path this method exists to cover: a keyboard move that
+    // triggered a rebalance. A fresh controller is already connected to the
+    // replacement; `document` is the only handle that spans both.
+    #restoreFocus(rowId) {
+      requestAnimationFrame(() => {
+        document.querySelector(`[data-positioned-row-id="${CSS.escape(rowId)}"] [data-positioned-grip]`)?.focus();
+      });
     }
   };
 
@@ -29545,6 +29884,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("dirty-form-guard", dirty_form_guard_controller_default);
     application2.register("wizard", wizard_controller_default);
     application2.register("kanban", kanban_controller_default);
+    application2.register("positioned", positioned_controller_default);
     application2.register("currency-input", currency_input_controller_default);
     application2.register("breadcrumbs", breadcrumbs_controller_default);
   }
