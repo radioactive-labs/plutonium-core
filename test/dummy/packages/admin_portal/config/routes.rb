@@ -51,6 +51,11 @@ AdminPortal::Engine.routes.draw do
   register_resource ::Task
   register_resource ::ShrineDoc
   register_resource ::Chore
+  # The framework's own resource. `controller:` is required here: the derived
+  # path would be "plutonium/interaction/runs", which puts an
+  # `AdminPortal::Plutonium` module in the way of every `Plutonium::` constant
+  # this package resolves.
+  register_resource ::Plutonium::Interaction::Run, controller: "interaction_runs"
   # register resources above.
 end
 

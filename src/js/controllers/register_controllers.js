@@ -40,6 +40,7 @@ import KanbanController from "./kanban_controller.js"
 import PositionedController from "./positioned_controller.js"
 import CurrencyInputController from "./currency_input_controller.js"
 import BreadcrumbsController from "./breadcrumbs_controller.js"
+import RunProgressController from "./run_progress_controller.js"
 
 export default function (application) {
   // Register controllers here
@@ -84,4 +85,5 @@ export default function (application) {
   application.register("positioned", PositionedController)
   application.register("currency-input", CurrencyInputController)
   application.register("breadcrumbs", BreadcrumbsController)
+  application.register("run-progress", RunProgressController)
 }

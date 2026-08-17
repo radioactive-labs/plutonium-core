@@ -29844,6 +29844,33 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/run_progress_controller.js
+  var run_progress_controller_default = class extends Controller {
+    static values = {
+      url: String,
+      interval: { type: Number, default: 2e3 }
+    };
+    connect() {
+      this.schedule();
+    }
+    disconnect() {
+      if (this.timer) clearTimeout(this.timer);
+      this.timer = null;
+    }
+    schedule() {
+      this.timer = setTimeout(() => this.refresh(), this.intervalValue);
+    }
+    refresh() {
+      const frame = this.element.closest("turbo-frame");
+      if (!frame) return;
+      if (frame.src) {
+        frame.reload();
+      } else {
+        frame.src = this.urlValue;
+      }
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -29887,6 +29914,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("positioned", positioned_controller_default);
     application2.register("currency-input", currency_input_controller_default);
     application2.register("breadcrumbs", breadcrumbs_controller_default);
+    application2.register("run-progress", run_progress_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
