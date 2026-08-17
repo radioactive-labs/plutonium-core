@@ -54,11 +54,15 @@ module Plutonium
         # stop being one — otherwise every section is a card nested inside a
         # card, doubling borders and padding. The sections' own container
         # supplies the spacing that :base's padding used to.
+        #
+        # Width comes from configuration rather than the theme (`page_width` /
+        # `form_width` on the definition), so it is appended here. A modal form
+        # gets none of this: the dialog already sets its own width.
         def form_class
           return "flex-1 flex flex-col min-h-0" if in_modal?
-          return super unless resource_definition.defined_form_layout
 
-          themed(:sectioned_base, nil)
+          base = resource_definition.defined_form_layout ? themed(:sectioned_base, nil) : super
+          tokens(base, resource_definition.form_width_classes)
         end
 
         private

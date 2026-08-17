@@ -950,6 +950,27 @@ end
 - **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — the same set as `form_layout` minus `columns:`. `collapsible: true, collapsed: true` works exactly as it does on forms. Every option except `condition:` may be a **proc**, resolved at render under the same arity rule as the form: take a `display` argument to read `object`.
 - **Each section renders as its own card**, so the sectioned show page has no single outer card. Fields declared in `metadata` are excluded (they render in the metadata panel) — see below.
 
+## Page Width (`page_width`)
+
+Detail-style pages — the show page and resource forms — are width-constrained by default. Inputs and values stretch to their container, so at full content width you get ~1200px-long lines. Index/table pages are NOT affected.
+
+```ruby
+Plutonium.configure { |c| c.default_page_width = :md }   # global default (:md)
+
+class PostDefinition < ResourceDefinition
+  page_width    :lg      # form AND show page
+  display_width :full    # ...but the show page opts out
+  form_width    :sm      # ...and the form goes narrow
+end
+```
+
+- **Sizes**: `:sm` `:md` `:lg` `:xl` `:full` — same vocabulary as modal sizes. `:full` means no constraint. An unknown value **raises** at declaration.
+- **Resolution**: surface-specific (`form_width` / `display_width`) → `page_width` → `Plutonium.configuration.default_page_width`. An explicit `:full` is honoured, not treated as unset.
+- **Inherits** to subclasses, so a portal-specific definition keeps the parent's width unless it overrides.
+- **Modals are unaffected** — the dialog sets its own width (`modal_size`).
+- **Interactions support it too** (`Plutonium::Interaction::Base`), for interactive actions rendered as standalone pages.
+- **Wizards are configured separately**: `Plutonium.configuration.wizards.width`, defaulting to `default_page_width` — so a step carrying a `form_layout` renders those sections at the same width a resource form gives them.
+
 ## Metadata Panel (show page)
 
 Declares fields rendered in the show page's right-side aside as label/value rows.

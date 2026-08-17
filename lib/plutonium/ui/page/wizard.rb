@@ -26,7 +26,7 @@ module Plutonium
 
         def view_template(&)
           DynaFrameContent() do
-            article(class: "pu-wizard mx-auto max-w-3xl", data: {controller: "wizard"}) do
+            article(class: tokens("pu-wizard", wizard_width_classes), data: {controller: "wizard"}) do
               render_header
               render_stepper
               render_body
@@ -43,6 +43,17 @@ module Plutonium
 
         # Centered wizard header: the title and the wizard-level description
         # (`presents description:`). The per-step heading lives on the step card.
+        # Wizard step width. Configured separately from resource pages
+        # (`Plutonium.configuration.wizards.width`) but falling back to the
+        # shared default, so a step carrying a `form_layout` renders those
+        # sections at the same width a resource form gives them.
+        def wizard_width_classes
+          Plutonium::UI::PageWidth.classes_for(
+            Plutonium.configuration.wizards.width ||
+              Plutonium.configuration.default_page_width
+          )
+        end
+
         def render_header
           div(class: "pu-wizard-header mb-7 text-center") do
             h1(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") do

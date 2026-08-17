@@ -45,6 +45,12 @@ module Plutonium
       include Plutonium::Definition::Presentable
       include Plutonium::Definition::StructuredInputs
       include Plutonium::Definition::FormLayout
+      include Plutonium::Definition::InheritableConfigAttr
+      # An interaction renders through the same Form::Resource a resource does,
+      # so it needs the same width knobs — `page_width` / `form_width`, falling
+      # back to `Plutonium.configuration.default_page_width`. Without this an
+      # interactive action rendered as a standalone page has no width at all.
+      include Plutonium::Definition::PageWidths
 
       # On interactions, declaring a structured input also declares the backing
       # ActiveModel attribute so the value survives `attributes=` and appears in
