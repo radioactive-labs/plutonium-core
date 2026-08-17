@@ -26,6 +26,26 @@ class KitchenSinkDefinition < ::ResourceDefinition
     ungrouped label: "Everything else"
   end
 
+  # The show-page counterpart to form_layout above. Same DSL, same resolution
+  # (first-section-wins, leftovers to `ungrouped`), applied to the display grid
+  # instead of the form. Deliberately groups fields DIFFERENTLY from the form
+  # layout, so a regression that crosses the two wires is visible.
+  display_layout do
+    section :profile, :name, :user, :email_address, label: "Profile",
+      description: "Identity and owner"
+    # Collapsible on the display side. No `columns:` — display sections all
+    # share one responsive grid; a field that needs to be wider sets its own
+    # `wrapper: {class: "col-span-…"}`.
+    section :presentation, :favorite_color, :active, :description, :bio,
+      label: "Presentation", collapsible: true
+    # Never rendered — the section's own condition gates it.
+    section :display_secret, :status, label: "Display Secret", condition: -> { false }
+    # Lists only a field that is never in the permitted set, so it resolves to
+    # zero fields on every render — its chrome must not be emitted.
+    section :display_absent, :never_permitted, label: "Display Absent Section"
+    ungrouped label: "Other details"
+  end
+
   # A deliberate "kitchen sink" exercising every available input and display
   # type — especially the JS widgets that mutate the DOM after connect
   # (intl-tel-input, flatpickr, slim-select, easymde, key-value, json), which

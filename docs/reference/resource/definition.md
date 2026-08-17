@@ -662,6 +662,54 @@ class PublishPostInteraction < Plutonium::Interaction::Base
 end
 ```
 
+## Display layout
+
+The show page's counterpart to [`form_layout`](#form-layout). Same DSL and the same resolution rules — first-section-wins ownership, unlisted permitted fields collected into `ungrouped`, absent fields skipped, zero-field sections dropped entirely — applied to the show page instead of the form.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  display_layout do
+    section :profile, :name, :author, label: "Profile", description: "Identity and owner"
+    section :presentation, :cover, :body,
+      collapsible: true,
+      condition: -> { object.published? }
+    ungrouped label: "Other details"
+  end
+end
+```
+
+With no `display_layout` declared the show page renders unchanged as a single card holding one responsive grid — fully backwards-compatible.
+
+### Independent of `form_layout`
+
+The two are separate registries. A resource may declare either, both, or neither, and grouping its form one way has no effect on its show page. Both inherit to subclasses and are replaced as a unit when re-declared.
+
+### No `columns:`
+
+Unlike `form_layout`, `display_layout` **raises** on `columns:`:
+
+```ruby
+display_layout do
+  section :a, :x, columns: 2   # ArgumentError
+end
+```
+
+Every display section renders into the same responsive grid. Field width is a per-field concern, set the same way inside a section as outside one:
+
+```ruby
+display :body, wrapper: {class: "col-span-2"}
+```
+
+Raising rather than ignoring the option means a `form_layout` block copied across fails immediately, instead of silently having no effect.
+
+### Section options
+
+`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — as documented for [`section(key, *fields, **opts)`](#section-key-fields-opts). `condition:` is evaluated against the display, where `object` is the record.
+
+### Rendering
+
+Each section renders as its own card, stacked by a `sections_wrapper` container — so a sectioned show page has **no single outer card**. Fields declared via [`metadata`](#metadata-panel-show-page) are excluded from the sections and render in the metadata panel instead. Section chrome is themeable; see [UI › Displays › Theming](/reference/ui/displays#theming).
+
 ## File uploads
 
 ```ruby

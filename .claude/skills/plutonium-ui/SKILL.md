@@ -220,9 +220,11 @@ end
 
 ## Custom layouts
 
-### Sectioned — prefer the `form_layout` DSL
+### Sectioned — prefer the `form_layout` / `display_layout` DSL
 
-**For grouping fields into sections, don't hand-roll a `Form` subclass — declare `form_layout` in the definition.** It handles headings, descriptions, collapsible `<details>`, per-section `columns:`, `condition:`-based visibility, and **auto-drops sections that resolve to zero fields** (so `+ New` doesn't sprout empty headings). See [[plutonium-resource]] › Form Layout.
+**For grouping fields into sections, don't hand-roll a `Form` or `Display` subclass — declare `form_layout` (forms) or `display_layout` (show page) in the definition.** They handle headings, descriptions, collapsible `<details>`, `condition:`-based visibility, and **auto-drop sections that resolve to zero fields** (so `+ New` doesn't sprout empty headings). `columns:` is form-only — `display_layout` raises on it. See [[plutonium-resource]] › Form Layout / Display Layout.
+
+**Each section renders as its own card** (`Plutonium::UI::Block`), so a sectioned form or show page has **no single outer card** — the form drops its own `pu-card` and the sections supply it. Don't add a card wrapper of your own around them.
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -387,13 +389,15 @@ class PostDefinition < ResourceDefinition
         p(class: "mt-2 opacity-90") { object.excerpt }
       end
 
-      Block do
-        fields_wrapper do
-          render_resource_field :author
-          render_resource_field :published_at
-        end
+      # `fields_wrapper` is ALREADY a card (it renders a Block internally),
+      # so do not wrap it in another one — that stacks two cards and doubles
+      # the border and shadow.
+      fields_wrapper do
+        render_resource_field :author
+        render_resource_field :published_at
       end
 
+      # `Block` is the card primitive: use it for your own content.
       Block do
         div(class: "prose max-w-none") { raw object.content }
       end
@@ -1013,7 +1017,9 @@ end
 
 ### Form theme keys
 
-`base`, `fields_wrapper`, `actions_wrapper`, `wrapper`, `inner_wrapper`, `label`, `invalid_label`, `valid_label`, `neutral_label`, `input`, `invalid_input`, `valid_input`, `neutral_input`, `hint`, `error`, `button`, `checkbox`, `select`.
+`base`, `sectioned_base`, `fields_wrapper`, `sections_wrapper`, `actions_wrapper`, `wrapper`, `inner_wrapper`, `label`, `invalid_label`, `valid_label`, `neutral_label`, `input`, `invalid_input`, `valid_input`, `neutral_input`, `hint`, `error`, `button`, `checkbox`, `select`, plus the shared section keys below.
+
+`sectioned_base` replaces `base` when the definition declares a `form_layout` — the sections are cards, so the form itself stops being one.
 
 ## Display theme
 
@@ -1022,7 +1028,7 @@ class Display < Display
   class Theme < Plutonium::UI::Display::Theme
     def self.theme
       super.merge(
-        fields_wrapper: "grid grid-cols-3 gap-8",
+        fields_inner:   "pu-card-body grid grid-cols-3 gap-8",   # the GRID
         label:          "text-sm font-bold text-[var(--pu-text-muted)] mb-1",
         string:         "text-lg text-[var(--pu-text)]",
         markdown:       "prose dark:prose-invert max-w-none"
@@ -1034,7 +1040,15 @@ end
 
 ### Display theme keys
 
-`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
+`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
+
+⚠️ **`fields_wrapper` is the CARD, `fields_inner` is the grid.** `fields_wrapper` is merged into a `Plutonium::UI::Block` (which supplies `pu-card` itself), so putting grid classes there styles the card, not the fields. Override `fields_inner` to change the unsectioned grid, and `section_grid` to change the grid inside a `display_layout` section.
+
+### Section theme keys (forms *and* displays)
+
+Section chrome is shared: `Plutonium::UI::Component::Section::DEFAULT_THEME` is merged into **both** `Form::Theme` and `Display::Theme`, so the two read identically by default while staying independently overridable.
+
+`section_wrapper` (merged into the section's Block — Block already supplies `pu-card`), `section_header`, `section_summary` (the collapsible header row), `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`, plus `sections_wrapper` (the container that stacks sections).
 
 ## Table theme
 

@@ -127,6 +127,25 @@ module Plutonium
         def render_after_footer
         end
 
+        # Where a modal's "open full page" affordance points: THIS request,
+        # minus the params that only mean something inside a modal.
+        #
+        # Deliberately not bare `request.path`. That drops the whole query
+        # string, and some of it is load-bearing on the standalone page too —
+        # `return_to` (where to go after submitting) and `kanban_column`
+        # (which column a quick-add's new record belongs to) would both be
+        # silently lost, so the expanded form would submit to the wrong place
+        # or into no column.
+        #
+        # `kanban_modal` is the one param that must NOT survive: it marks a
+        # kanban card's modal, where the show page suppresses the metadata
+        # rail. Carried onto a full page it would keep metadata hidden there
+        # for no reason.
+        def open_full_page_url
+          query = request.query_parameters.except(Plutonium::KANBAN_MODAL_PARAM)
+          query.empty? ? request.path : "#{request.path}?#{query.to_query}"
+        end
+
         def page_type = raise NotImplementedError, "#{self.class}#page_type"
       end
     end

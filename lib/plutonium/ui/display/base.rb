@@ -61,8 +61,12 @@ module Plutonium
 
         private
 
+        # A card (the shared {Plutonium::UI::Block} primitive) around the field
+        # grid. Block owns what a card IS — surface, border, radius, shadow —
+        # so callers just ask for a fields_wrapper and cannot end up with a
+        # card that disagrees with the ones beside it.
         def fields_wrapper(&)
-          div(class: themed(:fields_wrapper)) {
+          render Plutonium::UI::Block.new(class: themed(:fields_wrapper)) {
             div(class: themed(:fields_inner)) {
               yield
             }

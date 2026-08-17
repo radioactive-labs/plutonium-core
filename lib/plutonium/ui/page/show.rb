@@ -39,14 +39,15 @@ module Plutonium
         # deliberately not the definition's modal_mode (which styles :new/:edit
         # as a slideover by default). A centered dialog reads as a focused
         # "detail card" and leaves a launching board/table visible around it.
-        # `open_full_url` is the current show URL (request.path is the show
-        # route here), letting the user pop the record out to its full page.
+        # `open_full_url` lets the user pop the record out to its full page —
+        # notably dropping `kanban_modal`, so a card expanded out of a board
+        # regains the metadata rail that the modal hides.
         def render_modal_details
           render Plutonium::UI::Modal::Centered.new(
             title: page_title,
             description: page_description,
             size: :lg,
-            open_full_url: request.path
+            open_full_url: open_full_page_url
           ) do
             # The modal body owns no padding — content provides its own (the
             # form uses this same padded, scrollable region). Without it the

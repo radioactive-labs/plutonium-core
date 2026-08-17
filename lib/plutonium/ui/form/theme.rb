@@ -8,7 +8,19 @@ module Plutonium
           super.merge({
             # Form structure
             base: "pu-card my-4 p-8 space-y-8",
+            # :base for a form whose sections are cards — no card, no padding
+            # of its own, since the section cards provide both.
+            sectioned_base: "my-4 space-y-4",
             fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 grid-flow-row-dense",
+
+            # Sections are their OWN cards (see Component::Section), so this
+            # only has to stack them.
+            sections_wrapper: "space-y-4",
+
+            # Section chrome (heading, accent, divider, collapsible caret).
+            # Shared defaults with the show page so both read the same;
+            # override any key here to restyle form sections alone.
+            **Plutonium::UI::Component::Section::DEFAULT_THEME,
             actions_wrapper: "flex justify-end gap-3 pt-4 border-t border-[var(--pu-border-muted)]",
             wrapper: nil,
             inner_wrapper: "w-full",

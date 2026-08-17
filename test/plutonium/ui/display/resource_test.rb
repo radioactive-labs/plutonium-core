@@ -321,12 +321,16 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
 
   # Stub the Phlex kit methods render_default_fields uses so we can exercise its
   # branching without a live render context, and record which slots it renders.
-  def build_metadata_component(metadata_fields:, in_kanban_modal:)
+  def build_metadata_component(metadata_fields:, in_kanban_modal:, in_modal: false, asides: nil)
     component = build_resource
     component.define_singleton_method(:metadata_fields) { metadata_fields }
     component.define_singleton_method(:in_kanban_modal?) { in_kanban_modal }
+    component.define_singleton_method(:in_modal?) { in_modal }
     component.define_singleton_method(:div) { |*a, **k, &b| b&.call }
-    component.define_singleton_method(:aside) { |*a, **k, &b| b&.call }
+    component.define_singleton_method(:aside) do |*a, **k, &b|
+      asides << :aside if asides
+      b&.call
+    end
     component
   end
 
@@ -350,6 +354,38 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
     component.send(:render_default_fields)
 
     assert_equal [:main], called, "metadata panel should be skipped in a kanban modal"
+  end
+
+  # Outside a modal the metadata sits in a real <aside> beside the details.
+  test "render_default_fields uses an aside rail on a full-page show" do
+    asides = []
+    component = build_metadata_component(
+      metadata_fields: [:created_at], in_kanban_modal: false, in_modal: false, asides:
+    )
+    component.define_singleton_method(:render_main_field_card) {}
+    component.define_singleton_method(:render_metadata_panel) {}
+
+    component.send(:render_default_fields)
+
+    assert_equal [:aside], asides, "a full-page show should render the rail as an <aside>"
+  end
+
+  # In a modal the rail would be a fixed 320px column splitting on a VIEWPORT
+  # breakpoint, so it would crush the main column no matter how wide the dialog
+  # is. Stacked below, it needs no <aside> and no dialog resizing.
+  test "render_default_fields stacks metadata below the details in a modal" do
+    asides = []
+    component = build_metadata_component(
+      metadata_fields: [:created_at], in_kanban_modal: false, in_modal: true, asides:
+    )
+    called = []
+    component.define_singleton_method(:render_main_field_card) { called << :main }
+    component.define_singleton_method(:render_metadata_panel) { called << :panel }
+
+    component.send(:render_default_fields)
+
+    assert_equal [:main, :panel], called, "metadata should still render, after the details"
+    assert_empty asides, "a modal should stack the metadata, not put it in a side rail"
   end
 
   test "render_default_fields renders only the main card when no metadata declared" do

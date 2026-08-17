@@ -49,8 +49,16 @@ module Plutonium
           end
         end
 
+        # The form is normally a card (theme :base). When a form_layout is
+        # declared each section becomes a card of its own, so the form must
+        # stop being one — otherwise every section is a card nested inside a
+        # card, doubling borders and padding. The sections' own container
+        # supplies the spacing that :base's padding used to.
         def form_class
-          in_modal? ? "flex-1 flex flex-col min-h-0" : super
+          return "flex-1 flex flex-col min-h-0" if in_modal?
+          return super unless resource_definition.defined_form_layout
+
+          themed(:sectioned_base, nil)
         end
 
         private
@@ -104,7 +112,15 @@ module Plutonium
               resource_fields.each { |name| render_resource_field name }
             }
           else
-            sections.each { |rs| render_form_section(rs) }
+            # Sections live in their own stacking container rather than being
+            # emitted straight into the form body. They are cards in their own
+            # right, and the container is what spaces them; without it they
+            # would also share a parent with the errors block, so any
+            # `:first-child` styling in the section chrome would silently
+            # target the wrong element.
+            div(class: themed(:sections_wrapper, nil)) do
+              sections.each { |rs| render_form_section(rs) }
+            end
           end
         end
 

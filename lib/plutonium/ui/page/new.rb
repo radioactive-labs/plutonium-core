@@ -27,7 +27,10 @@ module Plutonium
           render modal_class.new(
             title: page_title,
             description: page_description,
-            size: current_definition.modal_size
+            size: current_definition.modal_size,
+            # Opens this form standalone in a NEW TAB (target=_blank), so the
+            # modal — and anything already typed into it — stays put.
+            open_full_url: open_full_page_url
           ) do
             render partial("resource_form")
           end

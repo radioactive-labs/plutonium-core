@@ -931,6 +931,25 @@ end
 
 Full DSL reference: [Resource › Definition › Form layout](/reference/resource/definition#form-layout).
 
+## Display Layout (`display_layout`)
+
+The show page's counterpart to `form_layout`. Same DSL, same resolution (first-section-wins, unlisted permitted fields fall into `ungrouped`, absent fields skipped, zero-field sections dropped) — applied to the show page's fields instead of the form's.
+
+```ruby
+class PostDefinition < ResourceDefinition
+  display_layout do
+    section :profile, :name, :author, label: "Profile", description: "Identity and owner"
+    section :presentation, :cover, :body, collapsible: true
+    ungrouped label: "Other details"
+  end
+end
+```
+
+- **Declare both independently.** `form_layout` and `display_layout` are separate registries — a resource can group its form one way and its show page another, or declare only one. Neither inherits from the other.
+- **🚨 No `columns:`** — unlike `form_layout`, it **raises**. Every display section shares one responsive grid; field width is a per-field concern: `display :x, wrapper: {class: "col-span-2"}` (works identically inside a section and outside one). Raising rather than ignoring means a copied `form_layout` block fails loudly instead of silently doing nothing.
+- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `condition:`.
+- **Each section renders as its own card**, so the sectioned show page has no single outer card. Fields declared in `metadata` are excluded (they render in the metadata panel) — see below.
+
 ## Metadata Panel (show page)
 
 Declares fields rendered in the show page's right-side aside as label/value rows.
@@ -941,8 +960,10 @@ metadata :author, :state, :created_at, :updated_at
 
 - **Opt-in** — no call → show page is full-width with no aside.
 - **Policy-aware** — fields the user can't see disappear; panel auto-hides if nothing's permitted.
-- **Deduplicated** — listed fields are removed from the main details card.
+- **Deduplicated** — listed fields are removed from the main details card (and from any `display_layout` section).
 - **Responsive** — side-by-side at `lg+`, stacked below.
+- **In a modal it stacks below the details**, not beside them: the rail is a fixed-width column on a *viewport* breakpoint, so in a dialog it would split regardless of how narrow the dialog is and crush the main column.
+- **A kanban card's modal drops metadata entirely** — the fields are hidden, not folded into the main card.
 
 Use for chrome (timestamps, ownership, system flags), keeping the main card focused on substance.
 

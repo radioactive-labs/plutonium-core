@@ -25,7 +25,11 @@ module Plutonium
             render modal_class.new(
               title: page_title,
               description: page_description,
-              size: current_interactive_action.modal_size(current_definition)
+              size: current_interactive_action.modal_size(current_definition),
+              # The action's own GET path renders the standalone branch below,
+              # and opens in a NEW TAB, so the modal keeps whatever has already
+              # been typed into it.
+              open_full_url: open_full_page_url
             ) do
               render_interactive_action_form
             end

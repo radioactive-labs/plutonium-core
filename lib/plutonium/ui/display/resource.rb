@@ -55,27 +55,82 @@ module Plutonium
 
         def render_default_fields
           # Inside a kanban card's modal we render a compact detail: no metadata
-          # rail. render_main_field_card already subtracts metadata_fields, so
+          # at all. render_main_field_card already subtracts metadata_fields, so
           # those fields stay hidden rather than folding into the main card.
-          if metadata_fields.any? && !in_kanban_modal?
-            div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start") do
-              div { render_main_field_card }
-              aside { render_metadata_panel }
-            end
-          else
-            render_main_field_card
+          return render_main_field_card if metadata_fields.none? || in_kanban_modal?
+
+          # In a (non-kanban) modal the metadata stacks BELOW the details
+          # instead of beside them. The rail is a fixed 320px column and its
+          # `lg:` breakpoint is a viewport query, so it would split inside the
+          # dialog no matter how narrow the dialog is — leaving the main column
+          # crushed against it. Stacking sidesteps that entirely, and means the
+          # dialog does not have to grow just to hold a rail.
+          if in_modal?
+            # A stacking container, not two bare siblings: the cards carry no
+            # margin of their own, so without it they butt straight up against
+            # each other with no seam between the details and the metadata.
+            return div(class: themed(:sections_wrapper)) {
+              render_main_field_card
+              render_metadata_panel
+            }
+          end
+
+          div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start") do
+            div { render_main_field_card }
+            aside { render_metadata_panel }
           end
         end
 
         def render_main_field_card
-          Block do
-            fields_wrapper do
-              # Skip fields claimed by the metadata panel — rendering
-              # them in both places duplicates information.
-              (resource_fields - metadata_fields).each do |name|
-                render_resource_field name
-              end
+          # Skip fields claimed by the metadata panel — rendering them in both
+          # places duplicates information.
+          fields = resource_fields - metadata_fields
+          sections = resolve_display_layout(fields)
+
+          # Unsectioned: one card holding one grid. fields_wrapper is itself a
+          # Block now, so this is the same card primitive the sections and the
+          # metadata panel use.
+          if sections.nil?
+            return fields_wrapper do
+              fields.each { |name| render_resource_field name }
             end
+          end
+
+          # Sectioned: each section is its own card, so there is deliberately
+          # no Block/card wrapper here — one would nest cards inside a card.
+          div(class: themed(:sections_wrapper)) do
+            sections.each { |rs| render_display_section(rs) }
+          end
+        end
+
+        # Resolve the whole display layout for THIS render: drop
+        # condition-hidden sections and sections left with no fields (e.g.
+        # every declared field was filtered out by the permitted set).
+        # Returns nil when no display_layout is declared (caller falls back
+        # to a single grid).
+        def resolve_display_layout(fields)
+          sections = resource_definition.resolve_display_sections(fields)
+          return nil if sections.nil?
+
+          sections.reject do |resolved|
+            condition = resolved.section.condition
+            (condition && !instance_exec(&condition)) || resolved.fields.empty?
+          end
+        end
+
+        # Pure presentation — the section is already resolved (visible) by
+        # resolve_display_layout.
+        # Every section renders into the SAME responsive grid (themed
+        # :section_grid, which matches the unsectioned path's :fields_inner
+        # minus the padding its wrapper now owns). display_layout groups
+        # fields; it does not resize them — that stays a per-field concern,
+        # via `display :x, wrapper: {class: "col-span-2"}`, which works
+        # identically inside a section and outside one.
+        def render_display_section(resolved)
+          render Plutonium::UI::Display::Components::Section.new(
+            resolved, grid_class: themed(:section_grid)
+          ) do
+            resolved.fields.each { |name| render_resource_field name }
           end
         end
 
@@ -85,6 +140,9 @@ module Plutonium
         # only difference from the main card is the wrapper — a single
         # column of fields instead of the form's multi-column grid.
         def render_metadata_panel
+          # Same card primitive as the details card(s) beside it, so the two
+          # sit on one surface — this panel used to be a borderless,
+          # heavier-shadowed Block and read as a different kind of thing.
           Block do
             div(class: "pu-card-body flex flex-col gap-6") do
               metadata_fields.each { |name| render_resource_field(name) }
