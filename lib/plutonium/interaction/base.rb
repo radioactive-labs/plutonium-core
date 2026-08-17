@@ -51,6 +51,9 @@ module Plutonium
       # back to `Plutonium.configuration.default_page_width`. Without this an
       # interactive action rendered as a standalone page has no width at all.
       include Plutonium::Definition::PageWidths
+      # `dispatches_to SomeRun` — the interaction persists a run and enqueues it
+      # instead of doing the work inline. Inert until an interaction declares it.
+      include Plutonium::Interaction::Concerns::Dispatchable
 
       # On interactions, declaring a structured input also declares the backing
       # ActiveModel attribute so the value survives `attributes=` and appears in
