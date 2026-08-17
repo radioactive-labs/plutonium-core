@@ -956,6 +956,42 @@ git commit -m "feat(runs): dispatches_to — interactions enqueue a run and redi
 
 ### Task 6: The run as a resource, and its progress page
 
+> **AS BUILT — the steps below are the original draft and are wrong in five
+> places.** Recorded here because the plan is a record, not a spec, once a task
+> has landed. Implemented in `0615ef3d`; each delta was verified as forced by a
+> framework constraint, not chosen:
+>
+> - **`RunDefinition` / `RunPolicy`, not `Runs::Definition` / `Runs::Policy`.**
+>   Definition lookup is hard-coded: `"#{resource_class}Definition".constantize`
+>   (`controllers/defineable.rb:14`, `resource/controller.rb:233`). A namespaced
+>   definition is never found, and `Definition::Base.model_class` infers the
+>   model back out of that same name.
+> - **`Run` must `include Plutonium::Resource::Record`**, above the `belongs_to`s.
+>   `Resource::Register#register` raises otherwise (`register.rb:25`).
+> - **`Run` needs a `model_name` override.** The default spells
+>   `/admin/plutonium/interaction/runs` into every URL. Pinned to the base class
+>   so an STI subclass resolves the one registered route.
+> - **`associated_with` had to be written by hand.** The generic one matches
+>   `assoc.klass.name == record.class.name unless assoc.polymorphic?`
+>   (`record/associated_with.rb:49`), so it cannot see `scoped_entity` and raises
+>   for every host tenant model. Replaced with `where(scoped_entity: entity)`.
+> - **Registration needs `controller:`** — `register_resource
+>   ::Plutonium::Interaction::Run, controller: "interaction_runs"`. Without it the
+>   path derives to `plutonium/interaction/runs`, so the host must define
+>   `MyPortal::Plutonium::Interaction::RunsController`, and `MyPortal::Plutonium`
+>   then shadows the gem's `::Plutonium` for every constant looked up lexically
+>   inside `module MyPortal` — breaking the portal's own
+>   `include Plutonium::Portal::Controller`. One additive line in
+>   `routing/route_set_extensions.rb` supports it.
+>
+> Also: **no `relation_scope` is declared at all.** Tenancy lives on the model's
+> `associated_with`, which the base policy's macro already routes through
+> `default_relation_scope` — so the rule is in one place rather than restated
+> where it could drift. And the `turbo_poll_interval` data attribute below does
+> not exist; polling is a Stimulus controller rendered *inside* the frame, which
+> the server only emits while `run.in_progress?`, so the timer stops when the
+> replacement markup arrives without it.
+
 **Goal:** A portal can register runs; the show page is the progress page and refreshes itself.
 
 **Files:**
