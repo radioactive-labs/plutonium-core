@@ -37,7 +37,7 @@
     {
       "id": 4,
       "subject": "Task 5: Interactions dispatch",
-      "status": "pending",
+      "status": "completed",
       "blockedBy": [
         3
       ],
@@ -62,5 +62,5 @@
       "description": "**Goal:** A resource's index lists runs currently working on it, above the collection.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/interaction/running_banner.rb\", \"lib/plutonium/ui/page/index.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\", \"acceptanceCriteria\": [\"lists in-progress runs for this resource\", \"excludes completed and other-resource runs\", \"excludes other tenants\", \"no banner when none running\"], \"requiresUserVerification\": false}\n```"
     }
   ],
-  "lastUpdated": "2026-08-17T10:21:21.203694"
+  "lastUpdated": "2026-08-17T11:21:03.835653"
 }
