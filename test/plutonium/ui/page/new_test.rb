@@ -54,6 +54,19 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     assert_equal Plutonium::UI::Modal::Centered, first_render
   end
 
+  # The form modal offers the same "open full page" affordance the show modal
+  # has. It targets a new tab, so the modal — and anything already typed into
+  # it — is left untouched.
+  test "modal form carries an open-full-page URL (request.path)" do
+    page = build_new_page(turbo_frame: "remote_modal")
+    captured = nil
+    page.define_singleton_method(:render) { |component, &block| captured ||= component }
+
+    page.send(:render_default_content)
+
+    assert_equal "/admin/things/new", captured.instance_variable_get(:@open_full_url)
+  end
+
   test "render_default_content does not render modal when in different frame" do
     page = build_new_page(turbo_frame: "some_other_frame")
     output = render_default_content(page)
@@ -96,6 +109,8 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     page.define_singleton_method(:in_modal?) { turbo_frame == Plutonium::REMOTE_MODAL_FRAME }
     page.define_singleton_method(:partial) { |_name| :resource_form_partial }
     page.define_singleton_method(:render) { |_partial| nil }
+    # The modal's "open full page" link reads request.path.
+    page.define_singleton_method(:request) { Struct.new(:path).new("/admin/things/new") }
 
     definition = build_definition(modal_mode)
     page.define_singleton_method(:current_definition) { definition }
