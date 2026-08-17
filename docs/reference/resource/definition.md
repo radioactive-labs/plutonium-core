@@ -735,7 +735,21 @@ end
 
 ### Sizes
 
-`:sm` `:md` `:lg` `:xl` `:full` — the same vocabulary as [modal sizes](#modals), so the framework has one width language. `:full` opts out of any constraint. An unknown value raises `ArgumentError` at declaration rather than silently rendering at some other width.
+`:sm` `:md` `:lg` `:xl` `:full`. `:full` opts out of any constraint. An unknown value raises `ArgumentError` at declaration rather than silently rendering at some other width.
+
+::: warning Size tokens are relative to their surface
+These are the same token *names* [modal sizes](#modals) use, but **not the same widths**. Each surface has its own scale, because the surfaces aren't comparable — a "small page" is reasonably larger than a "small dialog":
+
+| Token | Page width | Centered modal | Slideover |
+|---|---|---|---|
+| `:sm` | 672px | 448px | 400px |
+| `:md` | 896px | 576px | 480px |
+| `:lg` | 1152px | 672px | 640px |
+| `:xl` | 1280px | 896px | 800px |
+| `:full` | unconstrained | 95vw | 95vw |
+
+Modals additionally support `:auto` (hug the content); a page has nothing to hug, so it does not.
+:::
 
 ### Per-surface overrides
 
@@ -840,6 +854,8 @@ class PostDefinition < ResourceDefinition
   #   :centered              — centered dialog
   #   false                  — full standalone pages (no modal)
   # size: optional, one of :sm, :md (default), :lg, :xl, :auto, :full
+  #       (widths are per-surface — see Page width; a slideover's :md is 480px,
+  #        a centered dialog's is 576px, a page's is 896px)
   modal :centered, size: :lg
 end
 ```

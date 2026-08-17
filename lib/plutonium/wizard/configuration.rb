@@ -29,17 +29,20 @@ module Plutonium
       #   arrive as a token and ignore this.
       attr_accessor :attachment_backend
 
-      # @return [Symbol, nil] width for wizard step pages, one of
-      #   {Plutonium::UI::PageWidth::VALID_SIZES}. Configured separately from
-      #   resource pages because a wizard is its own kind of page — but it
-      #   defaults to `Plutonium.configuration.default_page_width` (via `nil`)
-      #   so a step carrying a `form_layout` renders its sections at the same
-      #   width the identical sections get on a resource form.
+      # @return [Symbol] width for wizard step pages, one of
+      #   {Plutonium::UI::PageWidth::VALID_SIZES}.
+      #
+      #   Deliberately INDEPENDENT of `config.default_page_width`. A wizard is
+      #   its own kind of page — a focused, self-contained flow, not a resource
+      #   detail page — so an app that widens (or unconstrains) its resource
+      #   pages should not silently drag its wizards along. The default here
+      #   happens to match the resource default, but nothing ties them: change
+      #   one and the other stays put.
       attr_accessor :width
 
       # Initialize a new wizard Configuration instance with default values.
       def initialize
-        @width = nil
+        @width = :md
         @enabled = false
         @cleanup_after = 14.days
         @database = :primary

@@ -43,15 +43,12 @@ module Plutonium
 
         # Centered wizard header: the title and the wizard-level description
         # (`presents description:`). The per-step heading lives on the step card.
-        # Wizard step width. Configured separately from resource pages
-        # (`Plutonium.configuration.wizards.width`) but falling back to the
-        # shared default, so a step carrying a `form_layout` renders those
-        # sections at the same width a resource form gives them.
+        # Wizard step width. The wizard class resolves it: its own `width`,
+        # else `config.wizards.width`. Deliberately does NOT fall through to
+        # `config.default_page_width` — wizard widths are configured on their
+        # own axis, so moving resource pages leaves wizards where they are.
         def wizard_width_classes
-          Plutonium::UI::PageWidth.classes_for(
-            Plutonium.configuration.wizards.width ||
-              Plutonium.configuration.default_page_width
-          )
+          Plutonium::UI::PageWidth.classes_for(@runner.wizard.class.width)
         end
 
         def render_header

@@ -964,12 +964,13 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-- **Sizes**: `:sm` `:md` `:lg` `:xl` `:full` — same vocabulary as modal sizes. `:full` means no constraint. An unknown value **raises** at declaration.
+- **Sizes**: `:sm` `:md` `:lg` `:xl` `:full`. `:full` means no constraint. An unknown value **raises** at declaration.
+- **🚨 Tokens are relative to their surface** — the same *names* modals use, but NOT the same widths. Page `:md` is 896px; a centered modal's `:md` is 576px and a slideover's is 480px. A "small page" is deliberately larger than a "small dialog". Modals also have `:auto`; pages don't (nothing to hug).
 - **Resolution**: surface-specific (`form_width` / `display_width`) → `page_width` → `Plutonium.configuration.default_page_width`. An explicit `:full` is honoured, not treated as unset.
 - **Inherits** to subclasses, so a portal-specific definition keeps the parent's width unless it overrides.
 - **Modals are unaffected** — the dialog sets its own width (`modal_size`).
 - **Interactions support it too** (`Plutonium::Interaction::Base`), for interactive actions rendered as standalone pages.
-- **Wizards are configured separately**: `Plutonium.configuration.wizards.width`, defaulting to `default_page_width` — so a step carrying a `form_layout` renders those sections at the same width a resource form gives them.
+- **Wizards are on their own axis** — `Plutonium.configuration.wizards.width` (default `:md`), overridden per wizard with `width`. It does NOT follow `default_page_width`, so changing resource page width leaves wizards untouched.
 
 ## Metadata Panel (show page)
 
