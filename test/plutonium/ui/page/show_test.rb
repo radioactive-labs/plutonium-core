@@ -158,7 +158,7 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
 
   private
 
-  def build_show_page(turbo_frame: nil, modal_mode: :slideover, kanban_modal: false, metadata: [], query_params: {})
+  def build_show_page(turbo_frame: nil, modal_mode: :slideover, kanban_modal: false, metadata: [], query_params: {}, display_width_classes: nil)
     page = Plutonium::UI::Page::Show.new
 
     # Stub frame/modal detection so unit tests can drive render_default_content
@@ -170,7 +170,7 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     # actually render (a kanban modal drops it entirely).
     page.define_singleton_method(:in_kanban_modal?) { kanban_modal }
 
-    definition = build_definition(modal_mode, metadata:)
+    definition = build_definition(modal_mode, metadata:, display_width_classes:)
     page.define_singleton_method(:current_definition) { definition }
     page.define_singleton_method(:page_title) { "Show Resource" }
     page.define_singleton_method(:page_description) { nil }
@@ -186,13 +186,15 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     page
   end
 
-  def build_definition(modal_mode, metadata: [])
+  def build_definition(modal_mode, metadata: [], display_width_classes: nil)
     definition = Object.new
     definition.define_singleton_method(:modal_mode) { modal_mode }
     definition.define_singleton_method(:modal_size) { :md }
     definition.define_singleton_method(:show_page_title) { nil }
     definition.define_singleton_method(:show_page_description) { nil }
     definition.define_singleton_method(:defined_metadata_fields) { metadata }
+    # render_default_content constrains the page to the configured width.
+    definition.define_singleton_method(:display_width_classes) { display_width_classes }
     definition
   end
 

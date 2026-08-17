@@ -13,6 +13,7 @@ Plutonium.configure do |config|
   config.wizards.cleanup_after = 14.days   # global default idle TTL for the sweep
   config.wizards.encrypt_data = true       # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect)
+  config.wizards.width = nil               # step page width; nil follows config.default_page_width
 end
 ```
 

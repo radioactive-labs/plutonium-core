@@ -40,6 +40,7 @@ module Plutonium
       include StructuredInputs
       include FormLayout
       include DisplayLayout
+      include PageWidths
       include IndexViews
       include Metadata
 

@@ -704,11 +704,59 @@ Raising rather than ignoring the option means a `form_layout` block copied acros
 
 ### Section options
 
-`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — as documented for [`section(key, *fields, **opts)`](#section-key-fields-opts). `condition:` is evaluated against the display, where `object` is the record.
+`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — the same set as [`section(key, *fields, **opts)`](#section-key-fields-opts) minus `columns:`. A collapsible display section behaves exactly as a form one does, `collapsed:` included.
+
+Every option except `condition:` may be a proc, resolved at render under the same arity rule the form uses — a zero-arity proc keeps its own binding, a one-arity proc is handed the display:
+
+```ruby
+section :audit, :created_at, collapsible: true, collapsed: ->(display) { display.object.active? }
+```
+
+`condition:` is evaluated separately and against the display, where `object` is the record.
 
 ### Rendering
 
 Each section renders as its own card, stacked by a `sections_wrapper` container — so a sectioned show page has **no single outer card**. Fields declared via [`metadata`](#metadata-panel-show-page) are excluded from the sections and render in the metadata panel instead. Section chrome is themeable; see [UI › Displays › Theming](/reference/ui/displays#theming).
+
+## Page width
+
+Detail-style pages — the show page and resource forms — are constrained to a readable column by default. Inputs and values stretch to their container, so at full content width they become ~1200px-wide text boxes: past a comfortable measure, and a long eye-travel between a label and the value beside it.
+
+Index and table pages are deliberately **not** affected; a table wants every pixel.
+
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure { |config| config.default_page_width = :md }
+
+class PostDefinition < ResourceDefinition
+  page_width :lg          # this resource's form AND show page
+end
+```
+
+### Sizes
+
+`:sm` `:md` `:lg` `:xl` `:full` — the same vocabulary as [modal sizes](#modals), so the framework has one width language. `:full` opts out of any constraint. An unknown value raises `ArgumentError` at declaration rather than silently rendering at some other width.
+
+### Per-surface overrides
+
+`form_width` and `display_width` override `page_width` for one surface only:
+
+```ruby
+class PostDefinition < ResourceDefinition
+  page_width    :lg
+  display_width :full     # the show page runs full width; the form stays :lg
+end
+```
+
+Resolution, most specific first: the surface-specific setting → `page_width` → `Plutonium.configuration.default_page_width`. An explicit `:full` is a real choice and is honoured, not treated as "unset".
+
+All three inherit to subclasses, so a portal-specific definition keeps its parent's width unless it says otherwise.
+
+### Scope
+
+- **Modals are unaffected** — a dialog sizes itself via `modal_size`.
+- **Interactions** (`Plutonium::Interaction::Base`) support the same settings, for interactive actions rendered as standalone pages.
+- **Wizards are configured separately**, via `Plutonium.configuration.wizards.width`. It defaults to `default_page_width`, so a wizard step carrying a `form_layout` renders those sections at the same width the identical sections get on a resource form.
 
 ## File uploads
 

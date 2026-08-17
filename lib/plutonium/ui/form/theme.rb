@@ -7,6 +7,11 @@ module Plutonium
         def self.theme
           super.merge({
             # Form structure
+            # Width is NOT baked in here — it is configuration, not theme
+            # (`page_width` / `form_width` on the definition, defaulting to
+            # `Plutonium.configuration.default_page_width`), so Form::Resource
+            # appends it. Overriding these keys therefore restyles the form
+            # without silently pinning its width.
             base: "pu-card my-4 p-8 space-y-8",
             # :base for a form whose sections are cards — no card, no padding
             # of its own, since the section cards provide both.

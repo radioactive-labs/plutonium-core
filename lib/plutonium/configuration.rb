@@ -47,6 +47,15 @@ module Plutonium
     #   change the default, or `false` (or `""`) for no symbol application-wide.
     attr_accessor :default_currency_unit
 
+    # @return [Symbol] the default width for detail-style pages — the show
+    #   page, resource forms and wizard steps. One of
+    #   {Plutonium::UI::PageWidth::VALID_SIZES}; `:full` opts out of any
+    #   constraint. Definitions override per-resource via `page_width`
+    #   (and `form_width` / `display_width` for one surface only).
+    #
+    #   Index and table pages are NOT affected — they want every pixel.
+    attr_accessor :default_page_width
+
     # @return [Boolean] whether a rendered collection — an index page, a kanban
     #   board, a CSV export — eager-loads the associations and attachments it is
     #   about to show. On by default.
@@ -99,6 +108,7 @@ module Plutonium
       @shell = :modern
       @navii_host_url = "https://api.navii.dev"
       @auto_eager_load_collections = true
+      @default_page_width = :md
     end
 
     # Load default configuration for a specific version

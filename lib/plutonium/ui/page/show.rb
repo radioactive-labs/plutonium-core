@@ -25,14 +25,30 @@ module Plutonium
           # modal: a slideover/centered dialog has no room for a side rail.
           return render_modal_details if in_modal?
 
-          if aside_present?
-            div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-6") do
-              div { render partial("resource_details") }
-              aside(class: "hidden lg:block") { render_aside }
+          # Width comes from configuration (`page_width` / `display_width` on
+          # the definition). A modal is excluded above — the dialog sizes
+          # itself — and `:full` resolves to no classes, leaving the markup
+          # exactly as it was before widths were configurable.
+          constrain_width do
+            if aside_present?
+              div(class: "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-6") do
+                div { render partial("resource_details") }
+                aside(class: "hidden lg:block") { render_aside }
+              end
+            else
+              render partial("resource_details")
             end
-          else
-            render partial("resource_details")
           end
+        end
+
+        # Wraps the content in the configured width, or yields bare when the
+        # resolved width is `:full` — so an unconstrained page gains no
+        # pointless wrapper div.
+        def constrain_width(&block)
+          classes = current_definition.display_width_classes
+          return yield if classes.nil?
+
+          div(class: classes, &block)
         end
 
         # The show page is ALWAYS a centered dialog when shown in a modal —
