@@ -81,12 +81,40 @@ module Plutonium
       # (see {#fail!}), not one target's. Readers grouping the log by target
       # must treat nil as its own bucket rather than a target id.
       def record_target_failure!(id:, message:)
-        update!(errors_log: errors_log + [{"target_id" => id, "message" => message}])
+        record_target_failures!([{id: id, message: message}])
+      end
+
+      # Appends several failures in ONE write.
+      #
+      # The singular form persists on every call, so a loop over M ids is M
+      # writes, each rewriting the whole errors_log JSON — O(M²) bytes. The
+      # executor resolves every unavailable target in one pass before it performs
+      # anything (see Runs::Executor#record_unresolved), and that batch is what
+      # this exists for.
+      #
+      # @param entries [Array<Hash>] +{id:, message:}+ pairs
+      def record_target_failures!(entries)
+        return if entries.empty?
+
+        appended = entries.map { |entry| {"target_id" => entry[:id], "message" => entry[:message]} }
+        update!(errors_log: errors_log + appended)
       end
 
       # Which shape of work this is, decided by what the subclass implements
       # rather than a mode flag — one less thing for an author to keep in sync.
       def targeted? = respond_to?(:perform_on)
+
+      # Opaque (untargeted) work. Subclasses override this, or +perform_on+ for
+      # per-target work.
+      #
+      # Defined here so a subclass that implements NEITHER is diagnosed by name
+      # rather than surfacing as a NoMethodError from inside the executor's loop,
+      # where nothing in the message says which class is at fault.
+      def perform
+        raise NotImplementedError,
+          "#{self.class} implements neither #perform nor #perform_on: define " \
+          "#perform_on(record) for work over targets, or #perform for opaque work"
+      end
     end
   end
 end

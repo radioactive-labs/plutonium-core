@@ -83,9 +83,23 @@ module Plutonium
 
         attr_reader :run
 
+        # When the two authorization subjects were last read from the database.
+        #
+        # Exposed because the subjects go stale (see the class comment) and only
+        # the caller knows how stale is too stale — so the caller needs to be able
+        # to ASK, without keeping a shadow copy of this object's state that can
+        # drift from it. The cadence policy stays with the caller; the clock stays
+        # with the state it describes.
+        #
+        # @return [Time]
+        attr_reader :subjects_read_at
+
         def initialize(run)
           @run = run
           verify_resolvable!
+          # verify_resolvable! is what loads both subjects, so the clock starts
+          # once they are known good — not before.
+          @subjects_read_at = Time.current
         end
 
         # @return [ActiveRecord::Base] the user the run authorizes as
@@ -267,6 +281,9 @@ module Plutonium
           run.reload_initiator
           run.reload_scoped_entity if run.scoped_entity_type
           verify_subjects!
+          # Stamped only after the check passes: a refresh that raised did not
+          # produce a usable answer, so nothing may treat it as a fresh read.
+          @subjects_read_at = Time.current
           self
         end
 

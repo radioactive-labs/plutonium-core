@@ -4,6 +4,7 @@ require "test_helper"
 
 class Plutonium::Interaction::Runs::ContextTest < ActiveSupport::TestCase
   include DataHelpers
+  include ActiveSupport::Testing::TimeHelpers
 
   Context = Plutonium::Interaction::Runs::Context
 
@@ -134,6 +135,37 @@ class Plutonium::Interaction::Runs::ContextTest < ActiveSupport::TestCase
 
     refute_equal original_email, context.initiator.email
     assert_equal User.find(@user.id).email, context.initiator.email
+  end
+
+  # The executor decides HOW OFTEN to refresh, so it has to be able to ask when
+  # the subjects were last read. It asks this object rather than keeping its own
+  # copy of the answer, which could only drift from the state it describes.
+  test "subjects_read_at stamps the constructor read and moves with each refresh" do
+    context = Context.new(create_run!(target_ids: [@post.id]))
+    built_at = context.subjects_read_at
+
+    assert_in_delta Time.current.to_f, built_at.to_f, 5
+
+    travel 1.minute do
+      context.refresh_subjects!
+      assert_operator context.subjects_read_at, :>, built_at
+    end
+  end
+
+  test "a refresh that raises does not stamp subjects_read_at" do
+    run = create_run!(target_ids: [@post.id])
+    context = Context.new(run)
+    built_at = context.subjects_read_at
+
+    run.update_columns(initiator_id: "999999999")
+
+    travel 1.minute do
+      assert_raises(Context::UnresolvableError) { context.refresh_subjects! }
+      # A refresh that produced no usable answer must not read as a fresh one,
+      # or a caller polling on this clock would wait out another whole interval
+      # before trying again.
+      assert_equal built_at, context.subjects_read_at
+    end
   end
 
   test "refresh_subjects! refuses to continue when the initiator is deleted mid-run" do
