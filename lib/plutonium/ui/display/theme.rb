@@ -8,8 +8,27 @@ module Plutonium
           super.merge({
             base: "",
             value_wrapper: "max-h-[300px] overflow-y-auto",
-            fields_wrapper: "pu-card",
+            # Merged into the fields_wrapper's Block, which supplies `pu-card`
+            # itself — this is only for anything a caller wants to add on top.
+            fields_wrapper: nil,
             fields_inner: "pu-card-body grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-x-8 gap-y-6 grid-flow-row-dense",
+
+            # display_layout sectioning. `sections_wrapper` replaces
+            # `fields_inner` as the card's inner padding box when a layout is
+            # declared (it stacks sections instead of fields directly), and
+            # each section's field grid uses `section_grid` — the same grid as
+            # `fields_inner` without the padding, which the wrapper now owns.
+            # Split into their own keys so overriding one path doesn't
+            # silently reshape the other.
+            # Sections are their OWN cards (see Component::Section), so this
+            # only has to stack them — no card, no padding of its own.
+            sections_wrapper: "space-y-4",
+            section_grid: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-x-8 gap-y-6 grid-flow-row-dense",
+
+            # Section chrome (heading, accent, divider, collapsible caret).
+            # Shared defaults with the form so both read the same; override any
+            # key here to restyle show-page sections alone.
+            **Plutonium::UI::Component::Section::DEFAULT_THEME,
 
             # Labels and descriptions
             label: "text-sm font-semibold uppercase tracking-wide text-[var(--pu-text-muted)] mb-2",

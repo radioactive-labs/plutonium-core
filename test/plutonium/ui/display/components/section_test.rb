@@ -2,10 +2,10 @@
 
 require "test_helper"
 
-class Plutonium::UI::Form::Components::SectionTest < Minitest::Test
+class Plutonium::UI::Display::Components::SectionTest < Minitest::Test
   Section = Plutonium::Definition::FormLayout::Section
   ResolvedSection = Plutonium::Definition::FormLayout::ResolvedSection
-  Component = Plutonium::UI::Form::Components::Section
+  Component = Plutonium::UI::Display::Components::Section
 
   def render_section(section, fields: %i[a])
     resolved = ResolvedSection.new(section:, fields:)
@@ -13,8 +13,9 @@ class Plutonium::UI::Form::Components::SectionTest < Minitest::Test
 
     # Stub Phlex DSL methods directly on the component instance, matching the
     # pattern used throughout test/plutonium/ui/ (e.g. page_header_test.rb,
-    # breadcrumbs_test.rb). No view context is needed because the component
-    # itself is not fully called through Phlex's rendering pipeline.
+    # breadcrumbs_test.rb, form/components/section_test.rb). No view context
+    # is needed because the component itself is not fully called through
+    # Phlex's rendering pipeline.
     output = []
 
     component.define_singleton_method(:div) do |**attrs, &block|
@@ -66,8 +67,6 @@ class Plutonium::UI::Form::Components::SectionTest < Minitest::Test
       output << text.to_s
     end
 
-    # The collapsible caret. Stubbed to record its class and yield a tiny
-    # builder so the <path> is exercised too.
     component.define_singleton_method(:svg) do |**attrs, &block|
       output << %(<svg class="#{attrs[:class]}">)
       block&.call(Struct.new(:out).new(output).tap { |s|
@@ -109,45 +108,30 @@ class Plutonium::UI::Form::Components::SectionTest < Minitest::Test
     assert_includes html, "Identity"
   end
 
-  # The native marker sits at the left of the <summary>, where it collides with
-  # the accent rule. It is suppressed and a caret drawn on the right instead —
-  # so the caret must come AFTER the heading in source order, and the summary
-  # must carry the marker resets.
   def test_collapsible_renders_a_caret_after_the_heading
     html = render_section(Section.new(key: :address, fields: %i[a],
       options: {collapsible: true, label: "Address"}))
 
-    assert_includes html, "<svg", "a collapsible section should render a caret"
+    assert_includes html, "<svg"
     assert_operator html.index("Address"), :<, html.index("<svg"),
       "the caret belongs after the heading (right-hand side), not before it"
-    summary = html[/<summary class="([^"]*)"/, 1]
-    assert_includes summary, "list-none"
-    assert_includes summary, "webkit-details-marker"
-    # The heading block takes the free space, which is what pushes the caret
-    # to the far right of the row.
-    assert_includes html, "flex-1"
   end
 
-  def test_non_collapsible_renders_no_caret
+  # This subclass must resolve against the DISPLAY theme — that is the whole
+  # reason the shared base defers the theme to its subclasses.
+  def test_chrome_resolves_against_the_display_theme
     html = render_section(Section.new(key: :identity, fields: %i[a], options: {}))
-    refute_includes html, "<svg", "a non-collapsible section has nothing to toggle"
-  end
-
-  # The caret rotates off the parent <details>'s [open] state, which requires
-  # the `group` class on the details element.
-  def test_collapsible_details_carries_the_group_class_for_caret_rotation
-    html = render_section(Section.new(key: :address, fields: %i[a],
-      options: {collapsible: true}))
-    details_class = html[/<details class="([^"]*)"/, 1]
-    assert_includes details_class, "group"
-    assert_includes html[/<svg class="([^"]*)"/, 1], "group-open:rotate-180"
-  end
-
-  # Chrome comes from the theme, not hardcoded constants, so an app can
-  # restyle sections the same way it restyles any other themed element.
-  def test_chrome_classes_come_from_the_theme
-    html = render_section(Section.new(key: :identity, fields: %i[a], options: {}))
-    expected = Plutonium::UI::Form::Theme.instance.resolve_theme(:section_heading)
+    expected = Plutonium::UI::Display::Theme.instance.resolve_theme(:section_heading)
     assert_includes html, %(<h3 class="#{expected}">)
+  end
+
+  # The form and show page ship the same section chrome. If someone edits one
+  # theme's defaults without the other, this catches the drift.
+  def test_default_chrome_matches_the_form_section
+    Plutonium::UI::Component::Section::DEFAULT_THEME.each_key do |key|
+      assert_equal Plutonium::UI::Form::Theme.instance.resolve_theme(key),
+        Plutonium::UI::Display::Theme.instance.resolve_theme(key),
+        "section chrome #{key} drifted between the form and display themes"
+    end
   end
 end

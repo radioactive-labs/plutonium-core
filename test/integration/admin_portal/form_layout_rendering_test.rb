@@ -48,7 +48,7 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     # against the layout Builder, so a zero-arity proc closes over that.
     # New record → not persisted → the Appearance <details> is open.
     get "/admin/kitchen_sinks/new"
-    new_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)
+    new_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>(?:(?!<\/summary>).)*?Appearance/m)
     assert new_tag, "expected a collapsible Appearance <details>"
     assert_includes new_tag[1], "open", "Appearance should be open for a new record"
 
@@ -57,7 +57,7 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     sink = KitchenSink.create!(name: "Sink", organization: org)
     get "/admin/kitchen_sinks/#{sink.id}/edit"
     assert_response :success
-    edit_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)
+    edit_tag = response.body.match(/(<details[^>]*>)\s*<summary[^>]*>(?:(?!<\/summary>).)*?Appearance/m)
     assert edit_tag, "expected a collapsible Appearance <details>"
     refute_includes edit_tag[1], "open", "Appearance should be collapsed for a persisted record"
   end

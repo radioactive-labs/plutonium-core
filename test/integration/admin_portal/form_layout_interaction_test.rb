@@ -21,7 +21,7 @@ class AdminPortal::FormLayoutInteractionTest < ActionDispatch::IntegrationTest
   end
 
   def appearance_details_tag
-    response.body.match(/(<details[^>]*>)\s*<summary[^>]*>\s*Appearance/m)&.[](1)
+    response.body.match(/(<details[^>]*>)\s*<summary[^>]*>(?:(?!<\/summary>).)*?Appearance/m)&.[](1)
   end
 
   test "interaction form renders form_layout sections" do

@@ -128,9 +128,22 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     assert_equal :show_page, page.send(:page_type)
   end
 
+  # The show modal is a fixed :lg regardless of metadata: rather than growing
+  # the dialog to fit a side rail, Display::Resource stacks the metadata below
+  # the details when rendering in a modal (see its render_default_fields).
+  test "show modal renders at a fixed :lg size" do
+    page = build_show_page(turbo_frame: Plutonium::REMOTE_MODAL_FRAME, metadata: [:age])
+    captured = nil
+    page.define_singleton_method(:render) { |component| captured = component }
+    page.send(:render_default_content)
+
+    assert_instance_of Plutonium::UI::Modal::Centered, captured
+    assert_equal :lg, captured.instance_variable_get(:@size)
+  end
+
   private
 
-  def build_show_page(turbo_frame: nil, modal_mode: :slideover)
+  def build_show_page(turbo_frame: nil, modal_mode: :slideover, kanban_modal: false, metadata: [])
     page = Plutonium::UI::Page::Show.new
 
     # Stub frame/modal detection so unit tests can drive render_default_content
@@ -138,8 +151,11 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     page.define_singleton_method(:current_turbo_frame) { turbo_frame }
     page.define_singleton_method(:in_frame?) { !turbo_frame.nil? }
     page.define_singleton_method(:in_modal?) { turbo_frame == Plutonium::REMOTE_MODAL_FRAME }
+    # modal_details_size consults this to decide whether a metadata rail will
+    # actually render (a kanban modal drops it entirely).
+    page.define_singleton_method(:in_kanban_modal?) { kanban_modal }
 
-    definition = build_definition(modal_mode)
+    definition = build_definition(modal_mode, metadata:)
     page.define_singleton_method(:current_definition) { definition }
     page.define_singleton_method(:page_title) { "Show Resource" }
     page.define_singleton_method(:page_description) { nil }
@@ -153,12 +169,13 @@ class Plutonium::UI::Page::ShowTest < ActiveSupport::TestCase
     page
   end
 
-  def build_definition(modal_mode)
+  def build_definition(modal_mode, metadata: [])
     definition = Object.new
     definition.define_singleton_method(:modal_mode) { modal_mode }
     definition.define_singleton_method(:modal_size) { :md }
     definition.define_singleton_method(:show_page_title) { nil }
     definition.define_singleton_method(:show_page_description) { nil }
+    definition.define_singleton_method(:defined_metadata_fields) { metadata }
     definition
   end
 

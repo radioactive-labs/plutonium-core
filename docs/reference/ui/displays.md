@@ -13,13 +13,15 @@ class PostDefinition < ResourceDefinition
         p(class: "mt-2 opacity-90") { object.excerpt }
       end
 
-      Block do
-        fields_wrapper do
-          render_resource_field :author
-          render_resource_field :published_at
-        end
+      # `fields_wrapper` is ALREADY a card (it renders a Block internally),
+      # so do not wrap it in another one — that stacks two cards and doubles
+      # the border and shadow.
+      fields_wrapper do
+        render_resource_field :author
+        render_resource_field :published_at
       end
 
+      # `Block` is the card primitive: use it for your own content.
       Block do
         div(class: "prose max-w-none") { raw object.content }
       end
@@ -103,7 +105,7 @@ class PostDefinition < ResourceDefinition
     class Theme < Plutonium::UI::Display::Theme
       def self.theme
         super.merge(
-          fields_wrapper: "grid grid-cols-3 gap-8",
+          fields_inner:   "pu-card-body grid grid-cols-3 gap-8",
           label:          "text-sm font-bold text-[var(--pu-text-muted)] mb-1",
           string:         "text-lg text-[var(--pu-text)]",
           markdown:       "prose dark:prose-invert max-w-none"
@@ -116,7 +118,13 @@ end
 
 ### Theme keys
 
-`fields_wrapper`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`.
+`fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`, plus the shared section-chrome keys (`section_wrapper`, `section_header`, `section_summary`, `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`).
+
+::: warning `fields_wrapper` is the card, `fields_inner` is the grid
+`fields_wrapper` is merged into a `Plutonium::UI::Block`, which supplies `pu-card` itself — grid classes put there style the card, not the fields. Override **`fields_inner`** for the unsectioned grid, and **`section_grid`** for the grid inside a [`display_layout`](/reference/resource/definition#display-layout) section.
+:::
+
+Section chrome comes from `Plutonium::UI::Component::Section::DEFAULT_THEME`, merged into **both** `Form::Theme` and `Display::Theme`, so form sections and show-page sections read identically by default while staying independently overridable.
 
 (`boolean` and `badge` apply their pill variant in the component, so their theme value stays empty — restyle the pills via the `.pu-badge*` classes instead.)
 
