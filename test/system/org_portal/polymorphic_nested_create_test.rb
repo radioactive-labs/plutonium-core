@@ -45,7 +45,20 @@ class OrgPortal::PolymorphicNestedCreateTest < ApplicationSystemTestCase
     # option is matched on the user's `to_label` ("User #1"), which is what the
     # widget renders — the email only exists on the model.
     find(".ss-main").click
-    find(".ss-option", text: @user.to_label, match: :first, wait: 10).click
+    # exact_text, because Capybara matches substrings: once ids reach double
+    # digits, "User #1" also matches "User #10" and match: :first would pick
+    # whichever the widget rendered first.
+    find(".ss-option", text: @user.to_label, exact_text: true, match: :first, wait: 10).click
+
+    # Confirm the selection LANDED before submitting. slim-select re-renders its
+    # option list, so the node found above can go stale between find and click —
+    # the click then hits nothing, the form submits with no user, and the failure
+    # surfaces as "User must exist" (or, when the driver notices the stale node
+    # first, "Node with given id does not belong to the document"). Both are the
+    # same bug. This assertion retries until the widget shows the choice, so a
+    # lost click is waited out rather than silently submitted.
+    assert_selector ".ss-main", text: @user.to_label, wait: 10
+
     click_button "Create Comment"
 
     # Wait on the flash, not on the body text: the body is also on screen in the
