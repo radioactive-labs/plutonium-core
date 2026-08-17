@@ -44,7 +44,7 @@ end
 
 ```ruby
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   positioned_on :position, scope: :status
   # ^^ auto-assigns position on create; reposition! scopes to the same status
@@ -390,15 +390,17 @@ There is no card "snap-back" to worry about on cancel — native drag never move
 
 By default Plutonium uses decimal fractional positioning: cards always slot exactly where you drop them without ever renumbering the whole column. You need:
 
-1. A `decimal` database column (precision ≥ 10, scale ≥ 6 recommended).
-2. `include Plutonium::Positioning` in the model.
+1. A `decimal` database column — use the `t.position` helper (`precision: 16, scale: 8`). Hand-rolling it, keep `scale` at **8 or more**: `scale: 6` exactly matches the `1e-6` rebalance threshold and the last subdivision can round into a neighbour.
+2. `include Plutonium::Positioning::Model` in the model.
 3. `positioned_on :position, scope: :status` — the `scope:` option groups positions by the grouping attribute so cards in different columns don't compete.
 
 ### Position modes
 
+`position_on` is the same verb inside and outside `kanban do…end`. Declared on the **definition** it makes the resource's index table and card grid [drag-reorderable](/reference/positioning); declared inside the board it configures the board. A board that declares none **inherits the definition's** (falling back to `:position`, Mode A), so a resource that already reorders in its table needs nothing extra here. Declaration order in the class body doesn't matter — the board resolves this lazily.
+
 ```ruby
 kanban do
-  # Mode A (default) — delegate to Plutonium::Positioning.
+  # Mode A (default) — delegate to Plutonium::Positioning::Model.
   # Uses :position attribute, requires the model concern.
   position_on :position
 
@@ -422,7 +424,7 @@ kanban do
 end
 ```
 
-See [Positioning reference](/reference/kanban/positioning) for the full API and the rebalancing behavior when the decimal gap is exhausted.
+See [Positioning reference](/reference/kanban/positioning) for the full API and the rebalancing behavior when the decimal gap is exhausted, and [Positioning & drag-to-reorder](/reference/positioning) for the table/grid side of the same feature.
 
 ---
 

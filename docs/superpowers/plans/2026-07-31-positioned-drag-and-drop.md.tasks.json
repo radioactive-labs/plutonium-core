@@ -1,0 +1,91 @@
+{
+  "planPath": "docs/superpowers/plans/2026-07-31-positioned-drag-and-drop.md",
+  "specPath": "docs/superpowers/specs/2026-07-31-positioned-drag-and-drop-design.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Promote Positioning::Config out of the kanban namespace",
+      "status": "completed",
+      "description": "**Goal:** One strategy machine, in `Plutonium::Positioning`, with kanban's public surface unchanged.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/kanban/positioning_test.rb` (file must be UNMODIFIED)\n\n```json:metadata\n{\"files\": [\"lib/plutonium/positioning/config.rb\", \"lib/plutonium/kanban/positioning.rb\", \"lib/plutonium/positioning.rb\", \"test/plutonium/positioning/config_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/kanban/positioning_test.rb\", \"acceptanceCriteria\": [\"promoted constants exist\", \"kanban namespace aliases them\", \"Move#column defaults nil\", \"kanban positioning test passes unmodified\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: reposition! reports whether it rebalanced",
+      "status": "completed",
+      "blockedBy": [
+        1
+      ],
+      "description": "**Goal:** The controller can tell a clean drop from one that renumbered the group.\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/positioning_test.rb`\n\n```json:metadata\n{\"files\": [\"lib/plutonium/positioning.rb\", \"lib/plutonium/positioning/config.rb\", \"test/plutonium/positioning_test.rb\", \"test/plutonium/positioning/config_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/positioning_test.rb\", \"acceptanceCriteria\": [\"reposition! returns rebalanced?\", \"true only on exhausted gap\", \"Config surfaces per-mode reconcile signal\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Hidden actions",
+      "status": "completed",
+      "description": "**Goal:** `hidden: true` is a general action flag; `kanban_drop` disappears; both bulk-action selectors stop leaking hidden actions.\n\n**Verify:** `rg -n \"kanban_drop\\b\" lib app test` \u2192 no output; then `bundle exec appraisal rails-8.1 rake test`\n\n```json:metadata\n{\"files\": [\"lib/plutonium/action/base.rb\", \"lib/plutonium/definition/index_views.rb\", \"lib/plutonium/ui/page/index.rb\", \"lib/plutonium/ui/page/show.rb\", \"lib/plutonium/ui/table/resource.rb\", \"lib/plutonium/ui/grid/card.rb\", \"lib/plutonium/ui/grid/resource.rb\", \"lib/plutonium/kanban/column.rb\", \"test/plutonium/action/hidden_action_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 rake test\", \"acceptanceCriteria\": [\"hidden? replaces kanban_drop?\", \"survives with() round-trip\", \"all six selectors filter\", \"both bulk bars filter\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: The position_on definition DSL + board inheritance",
+      "status": "completed",
+      "blockedBy": [
+        1,
+        3
+      ],
+      "description": "**Goal:** `position_on` declares a resource drag-orderable and expands to sort + default_sort + a hidden reposition action. Kanban boards inherit it.\n\n**Naming:** `position_on` deliberately reuses kanban's verb rather than adding a third (`positioned_on` on the model, `position_on` in the definition layer).\n\n**Board inheritance:** `dsl.rb:18` must stop seeding `Config.default` (nil = not declared); `Board#position_config_for(definition)` resolves LAZILY, mirroring `show_in_for` (board.rb:37). Lazy because `kanban` compiles the board eagerly at class-load (index_views.rb:121), so eager resolution would make declaration order matter. Update the 5 call sites in kanban_actions.rb (136, 259, 581, 733, 784).\n\n**Check:** `rg -n \"position_config\\b\" lib/plutonium/resource/controllers/kanban_actions.rb` \u2192 every hit must be `position_config_for(current_definition)`.\n\n**Verify:** `bundle exec appraisal rails-8.1 rake test`\n\n```json:metadata\n{\"files\": [\"lib/plutonium/definition/positioning.rb\", \"lib/plutonium/definition/base.rb\", \"lib/plutonium/kanban/dsl.rb\", \"lib/plutonium/kanban/board.rb\", \"lib/plutonium/resource/controllers/kanban_actions.rb\", \"test/plutonium/definition/positioning_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 rake test\", \"acceptanceCriteria\": [\"four DSL forms\", \"Mode A boot check\", \"Mode B skips check\", \"expansion correct\", \"Mode C inert\", \"board inherits definition\", \"board block overrides\", \"lazy resolution\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: The reposition endpoint",
+      "status": "completed",
+      "blockedBy": [
+        2,
+        4
+      ],
+      "description": "**Goal:** `POST <member>/reposition` moves a record between two neighbours, authorized and scoped.\n\n**OPEN POINT:** `position_collection_frame_id` / `render_position_collection_html` must reuse CrudActions' existing collection-rendering path. Read `lib/plutonium/resource/controllers/crud_actions.rb`; model on `KanbanActions#render_kanban_column_html` (kanban_actions.rb:568).\n\n**Verify:** `bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/resource/controllers/position_actions_test.rb`\n\n```json:metadata\n{\"files\": [\"lib/plutonium/resource/controllers/position_actions.rb\", \"lib/plutonium/routing/mapper_extensions.rb\", \"lib/plutonium/resource/policy.rb\", \"lib/plutonium/resource/controller.rb\", \"test/plutonium/resource/controllers/position_actions_test.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/resource/controllers/position_actions_test.rb\", \"acceptanceCriteria\": [\"reposition? defaults to update?\", \"neighbours scope-resolved\", \"204 on clean drop\", \"reconcile on rebalance/drift/ModeB\", \"rescues stream not error pages\", \"404 when not positioned\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Extract the shared drag core",
+      "status": "completed",
+      "description": "**Goal:** One native-DnD implementation in `src/js/drag/sortable.js`, kanban behaviour unchanged.\n\n**RISK:** Riskiest task in the plan. Behaviour-preserving extraction ONLY. Can be abandoned without losing Tasks 1-5.\n\n**Verify:** `yarn build && bundle exec appraisal rails-8.1 rake test` + manual kanban drag\n\n```json:metadata\n{\"files\": [\"src/js/drag/sortable.js\", \"src/js/controllers/kanban_controller.js\"], \"verifyCommand\": \"yarn build && bundle exec appraisal rails-8.1 rake test\", \"acceptanceCriteria\": [\"shared module has no kanban knowledge\", \"kanban consumes it\", \"board-specific methods stay put\", \"kanban suite passes\", \"manual drag unchanged\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: The positioned Stimulus controller and table grip",
+      "status": "completed",
+      "blockedBy": [
+        5,
+        6
+      ],
+      "description": "**Goal:** A hover grip in each row's first cell drags to reorder; disabled and offering a sort when the table is not in position order.\n\n**OPEN POINTS:** (1) active-sort accessor on `query_object.rb`; (2) where the table wrapper's attributes are built; (3) whether `<tr>` carries `group/row`. Read each file.\n\n**Verify:** `yarn build` + manual drag on `/tasks` + nested collection\n\n```json:metadata\n{\"files\": [\"src/js/controllers/positioned_controller.js\", \"lib/plutonium/ui/table/components/drag_handle.rb\", \"src/js/controllers/register_controllers.js\", \"lib/plutonium/ui/table/resource.rb\", \"lib/plutonium/ui/table/theme.rb\", \"lib/plutonium/ui/table/base.rb\"], \"verifyCommand\": \"yarn build\", \"acceptanceCriteria\": [\"only grip draggable\", \"hover + focus visibility\", \"disabled grip sorts\", \"posts and applies response\", \"keyboard reorder\", \"nested URL correct\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Grid/card surface",
+      "status": "completed",
+      "blockedBy": [
+        7
+      ],
+      "description": "**Goal:** The same grip and controller on grid/card index views.\n\n**Verify:** `yarn build` + manual drag on a grid index\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/grid/card.rb\", \"lib/plutonium/ui/grid/resource.rb\", \"src/js/controllers/positioned_controller.js\"], \"verifyCommand\": \"yarn build\", \"acceptanceCriteria\": [\"reuses DragHandle\", \"grid wiring matches table\", \"horizontal axis honoured\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: System test",
+      "status": "completed",
+      "blockedBy": [
+        7
+      ],
+      "description": "**Goal:** End-to-end proof that a real drag and a real keyboard reorder both persist.\n\n**HAZARD:** `test/dummy` is git-cleaned by the generator tests. STAGE the task_definition.rb change before running the suite.\n\n**Verify:** `bundle exec appraisal rake test`\n\n```json:metadata\n{\"files\": [\"test/system/positioned_drag_test.rb\", \"test/dummy/app/definitions/task_definition.rb\"], \"verifyCommand\": \"bundle exec appraisal rake test\", \"acceptanceCriteria\": [\"drag persists\", \"keyboard reorder persists\", \"foreign sort disables grip\", \"all Rails versions pass\"], \"requiresUserVerification\": false}\n```"
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Documentation and skills",
+      "status": "completed",
+      "blockedBy": [
+        9
+      ],
+      "description": "**Goal:** The feature is discoverable, and the Mode B escape hatch is documented with a worked third-party example.\n\n**Verify:** `yarn docs:build`\n\n```json:metadata\n{\"files\": [\"docs/reference/positioning.md\", \"docs/reference/actions.md\", \".claude/skills/plutonium-resource/SKILL.md\", \".claude/skills/plutonium-ui/SKILL.md\"], \"verifyCommand\": \"yarn docs:build\", \"acceptanceCriteria\": [\"model/definition split\", \"three modes + acts_as_list example\", \"default_sort warning\", \"affordance difference\", \"hidden actions not an auth boundary\"], \"requiresUserVerification\": false}\n```"
+    }
+  ],
+  "lastUpdated": "2026-07-31"
+}

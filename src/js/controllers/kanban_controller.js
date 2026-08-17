@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import { morphTurboFrameElements } from "@hotwired/turbo"
+import { beginDrag, computeDropIndex, endDrag, hideInsertionMarker, showInsertionMarker } from "../drag/sortable"
 
 // Connects to data-controller="kanban"
 //
@@ -435,13 +436,14 @@ export default class extends Controller {
     if (!card) return
 
     this.draggedCard = card
-    event.dataTransfer.effectAllowed = "move"
-    // Store the id so native DnD still carries data if the card is dropped
-    // outside the board (where we won't handle it, but no error).
-    event.dataTransfer.setData("text/plain", card.dataset.kanbanRecordId)
-
-    // Defer the opacity change so the drag ghost image is captured first.
-    requestAnimationFrame(() => card.classList.add("pu-kanban-dragging"))
+    // Generic mechanics (payload + deferred dragging class) live in
+    // ../drag/sortable so the table/grid reorder controller shares them.
+    // The payload is the record id, so a card dropped outside the board still
+    // carries data natively (we won't handle it, but no error).
+    beginDrag(event, card, {
+      draggingClass: "pu-kanban-dragging",
+      payload: card.dataset.kanbanRecordId
+    })
 
     // Mark columns that would reject a drop from this card's source column.
     this.#applyDropHints(card.dataset.kanbanColumnKey)
@@ -459,6 +461,19 @@ export default class extends Controller {
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
     this.#highlightColumn(column)
+
+    // The column outline says WHICH column; this says which SLOT within it.
+    // Same exclusion and same index function #onDrop uses, so the line marks
+    // the position the drop will actually take.
+    const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")]
+      .filter(c => c !== this.draggedCard)
+    showInsertionMarker(existingCards, computeDropIndex(event.clientY, existingCards), {
+      axis: "vertical",
+      container: column,
+      // Cards sit further apart than table rows, so the table's clearance reads
+      // as cramped against a card's edge here.
+      gap: "10px"
+    })
   }
 
   #onDragLeave(event) {
@@ -467,12 +482,16 @@ export default class extends Controller {
     // the board wrapper when crossing the edge.
     if (!this.element.contains(event.relatedTarget)) {
       this.#clearHighlights()
+      hideInsertionMarker()
     }
   }
 
   async #onDrop(event) {
     event.preventDefault()
     this.#clearHighlights()
+    // On release, not on dragend: the marker should not outlive the gesture
+    // while the move is in flight.
+    hideInsertionMarker()
 
     if (!this.draggedCard) return
 
@@ -494,7 +513,9 @@ export default class extends Controller {
     const existingCards = [...column.querySelectorAll("[data-kanban-record-id]")]
       .filter(c => c !== this.draggedCard)
 
-    const toIndex = this.#computeDropIndex(event.clientY, existingCards)
+    // 0-based insertion index from the cursor's y-position against each card's
+    // vertical midpoint (shared geometry — see ../drag/sortable).
+    const toIndex = computeDropIndex(event.clientY, existingCards)
 
     // Columns that declare an enter_interaction, on a CROSS-column drop:
     //   • immediate (input-less) interaction  → commit directly via the normal
@@ -616,7 +637,7 @@ export default class extends Controller {
     this.#clearHighlights()
     this.#clearDropHints()
     if (this.draggedCard) {
-      this.draggedCard.classList.remove("pu-kanban-dragging")
+      endDrag(this.draggedCard, { draggingClass: "pu-kanban-dragging" })
       this.draggedCard = null
     }
   }
@@ -692,18 +713,6 @@ export default class extends Controller {
   }
 
   // ─── helpers ─────────────────────────────────────────────────────────────────
-
-  // Returns the 0-based insertion index within the destination column by
-  // comparing the cursor y-position against each card's vertical midpoint.
-  // The card is inserted before the first card whose midpoint is below the
-  // cursor, or appended after all cards if the cursor is below every midpoint.
-  #computeDropIndex(clientY, cards) {
-    for (let i = 0; i < cards.length; i++) {
-      const rect = cards[i].getBoundingClientRect()
-      if (clientY < rect.top + rect.height / 2) return i
-    }
-    return cards.length
-  }
 
   #highlightColumn(column) {
     this.columnTargets.forEach(c => {

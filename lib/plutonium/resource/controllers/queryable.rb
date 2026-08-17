@@ -10,7 +10,11 @@ module Plutonium
 
         def current_query_object
           @current_query_object ||=
-            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params, request.path) do |query_object|
+            # current_page_path, not request.path: every URL this object builds
+            # (sort headers, scope pills, filter links) belongs to the page being
+            # rendered, which is not the request path when a stream-producing
+            # POST re-renders a collection on the index's behalf.
+            Plutonium::Resource::QueryObject.new(resource_class, raw_resource_query_params, current_page_path) do |query_object|
               if current_definition.search_definition
                 query_object.define_search proc { |scope, search:|
                   current_definition.search_definition.call(scope, search)

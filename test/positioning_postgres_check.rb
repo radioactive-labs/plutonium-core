@@ -88,7 +88,7 @@ end
 
 klass = Class.new(ActiveRecord::Base) do
   self.table_name = "pu_pos_items"
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   positioned_on :position, scope: :status
 end

@@ -12,6 +12,11 @@ module GeneratorTestHelper
 
   # Restores the test/dummy app to its git state
   # This cleans up all generated files and reverts any modifications
+  #
+  # NOTE: teardown does not run when a generator shells out and the child fails
+  # — Rails' `generate` action passes abort_on_failure: true, so Thor calls
+  # `abort` in this process. The `test_generators` rake task repeats this
+  # restore between files to cover that case; see the comment there.
   def git_restore_dummy_app
     repo_root = File.expand_path("../..", __dir__)
     dummy_path = "test/dummy"

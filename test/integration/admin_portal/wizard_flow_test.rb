@@ -289,12 +289,17 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   end
 
   test "advance with invalid input re-renders with errors and does not advance" do
-    post "#{base}/identity", params: {wizard: {name: ""}, _direction: "next"}
+    # A DELTA, not `assert_equal 0, Organization.count`: the claim is that THIS
+    # request persisted nothing, which is true regardless of what other tests
+    # left lying around. The absolute form silently depended on every earlier
+    # test having cleaned up, and failed under orders where one had not.
+    assert_no_difference -> { Organization.count } do
+      post "#{base}/identity", params: {wizard: {name: ""}, _direction: "next"}
+    end
     assert_response :unprocessable_content
     # The validation MESSAGE must actually render — not just the field label. (A
     # `data` memo reset between seed_errors! and the form read once swallowed it.)
     assert_match(/can.{0,6}t be blank/i, response.body) # HTML-escaped apostrophe (&#39;)
-    assert_equal 0, Organization.count
   end
 
   test "a validation error keeps the submitted sibling values, not stale ones" do

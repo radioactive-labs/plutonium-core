@@ -174,6 +174,10 @@ module Plutonium
             as: :commit_interactive_record_action
           get "kanban_move_form", action: :kanban_move_form, as: :kanban_move_form
           post "kanban_move", action: :kanban_move, as: :kanban_move
+          # Drag-reorder drop target for table/grid surfaces. Mounted on every
+          # resource (like the kanban routes above); resources whose definition
+          # declares no `position_on` answer it with a 404.
+          post "reposition", action: :reposition, as: :reposition
         end
       end
 

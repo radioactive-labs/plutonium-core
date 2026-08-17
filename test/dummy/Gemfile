@@ -74,3 +74,8 @@ gem "rqrcode", "~> 3.2"
 # Exercises the Shrine attachment backend (alongside ActiveStorage) for wizard
 # attachment fields — the Shrine-backed alternative to ActiveStorage.
 gem "active_shrine"
+
+# Backs the Chore resource, the Mode B positioning fixture: a third-party gem
+# owning the position column so `position_on … do |move|` is exercised against
+# something other than Plutonium's own storage.
+gem "acts_as_list"

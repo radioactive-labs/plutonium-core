@@ -12,7 +12,40 @@ module Plutonium
         # button). Rows without such a target become a no-op — no
         # special-casing needed in this layer.
         def table_body_row_attributes(wrapped_object)
-          super.merge(data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"})
+          attributes = super.merge(data: {controller: "row-click", action: "click->row-click#click auxclick->row-click#click"})
+          return attributes unless positioned?
+
+          # The row — never the grip — is the single source of truth for which
+          # record a drag is about. See positioned_controller.js.
+          row_data = attributes[:data].merge(positioned_row_id: wrapped_object.identifier)
+
+          # Present only for a scoped resource, where a drop across groups is
+          # meaningless and the drag must refuse it (see Positionable).
+          group = @options[:positioned_group_resolver]&.call(wrapped_object.unwrapped)
+          row_data = row_data.merge(positioned_group: group) unless group.nil?
+
+          attributes.merge(data: row_data)
+        end
+
+        # Scope the drag controller to the div that wraps <table>: the tightest
+        # element that contains every row, and nothing else the drag cares about.
+        def table_wrapper_attributes
+          return super unless positioned?
+
+          super.merge(
+            data: {
+              controller: "positioned",
+              positioned_url_template_value: @options[:positioned_url_template]
+            }
+          )
+        end
+
+        # Reorderable AND currently orderable. Table::Resource passes the
+        # template only when the collection is in ascending position order — a
+        # drop under any other sort is rejected by the server, so the client must
+        # not offer it (the grip still renders, disabled, to say so).
+        def positioned?
+          @options[:positioned_url_template].present?
         end
 
         # Use custom SelectionColumn with Stimulus data attributes

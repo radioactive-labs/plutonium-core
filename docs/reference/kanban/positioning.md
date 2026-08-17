@@ -1,14 +1,18 @@
 # Kanban Positioning
 
+::: tip Positioning is not kanban-only
+The model concern, the arithmetic and the `position_on` modes on this page are shared with **table and grid drag-to-reorder** — see [Positioning & drag-to-reorder](/reference/positioning) for the index-surface half of the feature (the grip, the `reposition` endpoint, `reposition?`, and board inheritance).
+:::
+
 Plutonium uses **decimal fractional positioning** for kanban card ordering. A drop writes a single decimal position (the midpoint between its neighbors), so the common case touches exactly one row — no bulk renumbering. The one exception is rare **rebalancing**: when the same slot has been subdivided ~20 times and the gap between two neighbors shrinks below `1e-6`, Plutonium renumbers that one scope group back to clean integers before inserting (see [Gap exhaustion](#rebalancing)).
 
-## `Plutonium::Positioning` concern
+## `Plutonium::Positioning::Model` concern
 
 Include this concern in any model you want to position:
 
 ```ruby
 class Task < ApplicationRecord
-  include Plutonium::Positioning
+  include Plutonium::Positioning::Model
 
   positioned_on :position, scope: :status
 end
@@ -103,6 +107,22 @@ Task.backfill_positions!(order: :created_at)
 
 The `position_on` call inside `kanban do…end` controls how Plutonium persists positions after a drag-and-drop. Three modes are available:
 
+::: tip A board inherits the definition's `position_on`
+`position_on` is the **same verb** at both levels. A board resolves its strategy as: its own `position_on`, else the **definition's**, else the historic default (`:position`, Mode A). So a resource whose definition already declares `position_on` for its table and grid needs nothing inside `kanban do…end` — the board picks up the same attribute and the same mode.
+
+Resolution is lazy, so a `kanban do…end` written **above** `position_on` in the class body still sees it.
+
+```ruby
+class TaskDefinition < Plutonium::Resource::Definition
+  position_on :sort_order       # table, grid AND board
+
+  kanban do
+    position_on :board_rank     # …unless the board overrides it
+  end
+end
+```
+:::
+
 ### Mode A — delegate (default)
 
 ```ruby
@@ -113,7 +133,7 @@ kanban do
 end
 ```
 
-On drop, Plutonium calls `record.reposition!(prev_record:, next_record:)`. Requires the model to include `Plutonium::Positioning` and call `positioned_on`.
+On drop, Plutonium calls `record.reposition!(prev_record:, next_record:)`. Requires the model to include `Plutonium::Positioning::Model` and call `positioned_on`.
 
 ### Mode B — BYO block
 
@@ -130,7 +150,9 @@ kanban do
 end
 ```
 
-Plutonium orders the column by `sort_order` for display; your block is responsible only for persisting the new value. The block is called with a single `Plutonium::Kanban::Positioning::Move` argument — it is NOT `instance_exec`'d, so `self` is the proc's original binding.
+Plutonium orders the column by `sort_order` for display; your block is responsible only for persisting the new value. The block is called with a single `Plutonium::Positioning::Move` argument (still reachable under its original name, `Plutonium::Kanban::Positioning::Move`) — it is NOT `instance_exec`'d, so `self` is the proc's original binding.
+
+On a table or grid the same block runs with `move.column` set to `nil`, since those surfaces have no columns. See [Mode B](/reference/positioning#mode-b) for a worked `acts_as_list` example.
 
 ### Mode C — disabled
 

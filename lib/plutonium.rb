@@ -49,6 +49,11 @@ module Plutonium
 
   MODAL_FRAMES = [REMOTE_MODAL_FRAME, REMOTE_MODAL_SECONDARY_FRAME].freeze
 
+  # DOM id of the page's toast region (Layout::Base#render_flash). An action
+  # that answers a turbo_stream never renders the layout, so it never gets to
+  # consume `flash` — it appends a rendered toast to this region instead.
+  FLASH_REGION = "pu-flash"
+
   # Query param a kanban card appends to its show URL when the board opens the
   # card in the shared remote-modal frame. Since a kanban modal and a regular
   # show modal both target REMOTE_MODAL_FRAME, `in_modal?` can't tell them apart

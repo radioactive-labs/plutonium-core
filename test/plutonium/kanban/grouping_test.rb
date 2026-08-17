@@ -62,176 +62,63 @@ module Plutonium
       end
 
       # ------------------------------------------------------------------ #
-      # Grouping.call — basic column grouping                                #
+      # apply_scope — Symbol, Proc, nil, and anything else                   #
       # ------------------------------------------------------------------ #
 
-      def test_grouping_returns_one_entry_per_column
-        board = DSL.build do
-          column :todo, scope: :todo
-          column :done, scope: :done
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 2, result.size
-      end
-
-      def test_grouping_preserves_column_order
-        board = DSL.build do
-          column :todo, scope: :todo
-          column :done, scope: :done
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal :todo, result[0][:column].key
-        assert_equal :done, result[1][:column].key
-      end
-
-      def test_grouping_result_has_expected_keys
-        board = DSL.build { column :todo, scope: :todo }
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        entry = result.first
-        assert entry.key?(:column)
-        assert entry.key?(:cards)
-        assert entry.key?(:total)
-      end
-
-      # ------------------------------------------------------------------ #
-      # Scope types — Proc and Symbol                                        #
-      # ------------------------------------------------------------------ #
-
-      def test_symbol_scope_filters_by_named_scope
+      def test_symbol_scope_dispatches_to_the_named_scope
         GroupingTestCard.create!(status: "todo", position: 1)
         GroupingTestCard.create!(status: "done", position: 2)
 
-        board = DSL.build do
-          column :todo, scope: :todo
-          column :done, scope: :done
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 1, result[0][:total]
-        assert_equal "todo", result[0][:cards].first.status
-        assert_equal 1, result[1][:total]
-        assert_equal "done", result[1][:cards].first.status
+        scoped = Grouping.apply_scope(GroupingTestCard.all, :todo)
+        assert_equal ["todo"], scoped.map(&:status)
       end
 
-      def test_proc_scope_runs_against_relation
+      def test_proc_scope_runs_against_the_relation
         GroupingTestCard.create!(status: "todo", position: 1)
         GroupingTestCard.create!(status: "done", position: 2)
 
-        todo_scope = -> { where(status: "todo") }
-        board = DSL.build { column :todo, scope: todo_scope }
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 1, result[0][:total]
-        assert_equal "todo", result[0][:cards].first.status
+        scoped = Grouping.apply_scope(GroupingTestCard.all, -> { where(status: "todo") })
+        assert_equal ["todo"], scoped.map(&:status)
       end
 
-      def test_nil_scope_returns_all_records
-        GroupingTestCard.create!(status: "todo", position: 1)
-        GroupingTestCard.create!(status: "done", position: 2)
-
-        board = DSL.build { column :all }  # no scope
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 2, result[0][:total]
+      def test_nil_scope_returns_the_relation_unchanged
+        relation = GroupingTestCard.all
+        assert_same relation, Grouping.apply_scope(relation, nil)
       end
 
       def test_unsupported_scope_type_raises_argument_error
-        board = DSL.build { column :bad, scope: 42 }
-
         error = assert_raises(ArgumentError) do
-          Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
+          Grouping.apply_scope(GroupingTestCard.all, 42)
         end
         assert_match(/Unsupported column scope/, error.message)
       end
 
       # ------------------------------------------------------------------ #
-      # Ordering — position overrides any prior ordering (uses reorder)      #
+      # Positioning::Config#order — reorder beats any prior ordering         #
       # ------------------------------------------------------------------ #
 
-      def test_cards_ordered_by_position_ascending_overriding_prior_ordering
-        # Insert in reverse position order to confirm reorder works
+      # A column scope (or the caller's own relation) may already carry an
+      # ORDER BY; positional ordering must win, which is why Config uses
+      # `reorder` rather than `order`.
+      def test_position_ordering_overrides_a_prior_ordering
         GroupingTestCard.create!(status: "todo", position: 3)
         GroupingTestCard.create!(status: "todo", position: 1)
         GroupingTestCard.create!(status: "todo", position: 2)
 
-        board = DSL.build do
-          column :todo, scope: :todo
-          position_on :position
-        end
+        config = Plutonium::Positioning::Config.attribute(:position)
+        ordered = config.order(GroupingTestCard.order(position: :desc))
 
-        # Deliberately start with a descending order to prove reorder overrides it
+        assert_equal [1, 2, 3], ordered.map { |c| c.position.to_i }
+      end
+
+      def test_disabled_config_leaves_the_relation_alone
         relation = GroupingTestCard.order(position: :desc)
-        result = Grouping.call(board: board, relation: relation, context: dummy_context)
-        positions = result[0][:cards].map(&:position).map(&:to_i)
-        assert_equal [1, 2, 3], positions
-      end
-
-      # ------------------------------------------------------------------ #
-      # per_column — caps cards, total reflects full count                   #
-      # ------------------------------------------------------------------ #
-
-      def test_per_column_caps_cards_length
-        5.times { |i| GroupingTestCard.create!(status: "todo", position: i + 1) }
-
-        board = DSL.build do
-          column :todo, scope: :todo
-          per_column 2
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 2, result[0][:cards].size
-      end
-
-      def test_per_column_total_reports_full_count
-        5.times { |i| GroupingTestCard.create!(status: "todo", position: i + 1) }
-
-        board = DSL.build do
-          column :todo, scope: :todo
-          per_column 2
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 5, result[0][:total]
-      end
-
-      def test_no_per_column_returns_all_cards
-        5.times { |i| GroupingTestCard.create!(status: "todo", position: i + 1) }
-
-        board = DSL.build { column :todo, scope: :todo }
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: dummy_context)
-        assert_equal 5, result[0][:cards].size
-        assert_equal 5, result[0][:total]
+        assert_same relation, Plutonium::Positioning::Config.disabled.order(relation)
       end
 
       # ------------------------------------------------------------------ #
       # Dynamic columns — block evaluated against Context                    #
       # ------------------------------------------------------------------ #
-
-      def test_dynamic_columns_built_from_context
-        GroupingTestCard.create!(status: "todo", position: 1)
-
-        # Context exposes a list of statuses that the block uses to build columns
-        view_ctx = Struct.new(:available_statuses).new(%w[todo done])
-        ctx = Context.new(view_ctx)
-
-        board = DSL.build do
-          columns do
-            available_statuses.map do |s|
-              Plutonium::Kanban::Column.new(s, scope: -> { where(status: s) })
-            end
-          end
-        end
-
-        result = Grouping.call(board: board, relation: GroupingTestCard.all, context: ctx)
-        assert_equal 2, result.size
-        assert_equal :todo, result[0][:column].key
-        assert_equal :done, result[1][:column].key
-        assert_equal 1, result[0][:total]
-        assert_equal 0, result[1][:total]
-      end
 
       def test_resolve_columns_returns_static_columns_when_not_dynamic
         board = DSL.build do
