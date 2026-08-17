@@ -316,6 +316,91 @@ class PositionedDragTest < ApplicationSystemTestCase
       "the keyboard path leaves the user on this grip; a revert must not strand them"
   end
 
+  # ─── 9. The drag ghost is the row, not the grip ─────────────────────────────
+  #
+  # The browser ghosts whatever carries draggable="true" — here the grip — so
+  # without an explicit setDragImage the user drags a picture of a 20px handle
+  # and the row appears not to move at all. Asserted by spying on the real
+  # DataTransfer method, because the ghost is a compositor artefact: it exists
+  # in no DOM this test could read.
+  test "the drag ghost is the whole row, not the grip that started it" do
+    open_task_index
+    spy_set_drag_image
+
+    dispatch_dragstart_on_first_grip
+
+    ghost = page.evaluate_script("window.__puGhost")
+    refute_nil ghost, "the controller must name a drag image; the default ghost is the grip alone"
+    assert_equal "TR", ghost["tag"],
+      "the ghost must be the row being moved, not the grip or an ancestor"
+    assert_equal @alpha.id.to_s, ghost["rowId"], "and specifically the row that was grabbed"
+  end
+
+  # ─── 10. The insertion marker ───────────────────────────────────────────────
+  #
+  # Without it the only feedback mid-drag is the ghost under the cursor, which
+  # says WHAT is moving but never WHERE it will land — the user aims blind until
+  # release. The marker must also agree with the drop: it is drawn from the same
+  # index the drop uses, so a line that disagrees with the resulting order is a
+  # regression this asserts against directly.
+  test "a marker shows where the drop will land, and clears when the drag ends" do
+    open_task_index
+
+    # Index 2 of the rows OTHER than the dragged one — i.e. the gap between
+    # Bravo and Charlie. Index 1 would be the leading edge, which has no row
+    # above it and so no gap to centre in.
+    marker = marker_state_over_row(2)
+
+    assert marker["present"], "a drag with no insertion marker gives the user nothing to aim at"
+    assert_equal "block", marker["display"]
+    assert_equal "between", marker["edge"],
+      "a drop between two rows must centre in their gap, not hug one row's edge"
+    # SYMMETRY is the claim, not clearance: the line centres on the gap the
+    # layout leaves, so it gets equal air above and below whatever that gap is.
+    # Table rows are adjacent, so the gap is zero and a 2px line straddles the
+    # boundary 1px into each row — which is the correct rendering, and the same
+    # rule that gives a board's roomier columns real space on both sides.
+    assert_in_delta marker["spaceAbove"], marker["spaceBelow"], 1,
+      "the marker must sit centred between the two rows, not biased toward one"
+
+    end_drag
+    refute page.evaluate_script(
+      "(() => { const m = document.getElementById('pu-drag-insertion-marker'); return !!m && m.style.display === 'block' })()"
+    ), "the marker must not outlive the gesture that drew it"
+  end
+
+  # ─── 11. A drop across positioning groups is refused by the drag itself ─────
+  #
+  # Task is scoped by status, so each status keeps an independent sequence and a
+  # drop between two rows of different statuses describes no position at all.
+  # The server refuses it either way; the point of the client half is that the
+  # user finds out BEFORE committing, instead of watching the row snap back.
+  test "dragging across positioning groups is refused, with no marker and no write" do
+    # A second group on the same page. Its position is irrelevant — what matters
+    # is that it is a different status from the rows created in setup.
+    other = Task.create!(title: "Zulu", status: "doing")
+    open_task_index
+
+    groups = page.evaluate_script(
+      "[...document.querySelectorAll('[data-positioned-row-id]')].map(r => r.dataset.positionedGroup)"
+    )
+    assert_includes groups, "todo", "the row's positioning group must reach the DOM"
+    assert_includes groups, "doing", "both groups must be on the page for this to test anything"
+
+    before = rendered_row_ids
+    refused = dragover_across_groups(from_id: @alpha.id, to_id: other.id)
+
+    refute refused["dropAllowed"],
+      "withholding preventDefault is what makes the browser show 'no entry' and suppress the drop"
+    refute refused["markerVisible"],
+      "a marker would promise a drop that cannot happen"
+
+    end_drag
+    assert_equal before, rendered_row_ids, "nothing may move on a refused drag"
+    assert_equal "doing", other.reload.status
+    assert_persisted_titles %w[Alpha Bravo Charlie]
+  end
+
   private
 
   # ─── navigation ─────────────────────────────────────────────────────────────
@@ -451,6 +536,103 @@ class PositionedDragTest < ApplicationSystemTestCase
     JS
 
     assert dispatched, "could not find a draggable row and a drop target to drag between"
+  end
+
+  # Replaces DataTransfer's own setDragImage with a recorder, before any drag
+  # starts. The ghost is drawn by the compositor and appears in no DOM, so what
+  # the controller ASKED for is the only observable fact about it.
+  def spy_set_drag_image
+    page.execute_script(<<~JS)
+      window.__puGhost = null;
+      const original = DataTransfer.prototype.setDragImage;
+      DataTransfer.prototype.setDragImage = function (el, x, y) {
+        window.__puGhost = { tag: el.tagName, rowId: el.dataset ? el.dataset.positionedRowId : null, x, y };
+        return original.call(this, el, x, y);
+      };
+    JS
+  end
+
+  # Opens a drag on the first row's grip and leaves it open, so a caller can
+  # observe mid-gesture state. Dispatched on the grip because that is where the
+  # browser would raise it — the grip is the draggable node.
+  def dispatch_dragstart_on_first_grip
+    page.execute_script(<<~JS)
+      window.__puDrag = new DataTransfer();
+      const grip = document.querySelector("[data-positioned-grip]");
+      grip.dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: window.__puDrag }));
+    JS
+  end
+
+  # Starts a drag on the first row, hovers the TOP edge of row `index`, and
+  # reports what the marker did. The measurements are taken against the rows
+  # either side so the assertions describe the gap, not absolute pixels.
+  def marker_state_over_row(index)
+    dispatch_dragstart_on_first_grip
+    page.evaluate_script(<<~JS)
+      (() => {
+        const rows = [...document.querySelectorAll("[data-positioned-row-id]")];
+        const dragged = rows[0];
+        const others = rows.filter(r => r !== dragged);
+        const target = others[#{index} - 1];
+        const rect = target.getBoundingClientRect();
+        document.querySelector('[data-controller~="positioned"]').dispatchEvent(new DragEvent("dragover", {
+          bubbles: true, cancelable: true, dataTransfer: window.__puDrag,
+          clientX: rect.left + 40, clientY: rect.top + 2
+        }));
+
+        const m = document.getElementById("pu-drag-insertion-marker");
+        if (!m) return { present: false };
+        const mr = m.getBoundingClientRect();
+        const prev = others[#{index} - 2];
+        return {
+          present: true,
+          display: m.style.display,
+          edge: m.dataset.edge,
+          spaceAbove: prev ? Math.round(mr.top - prev.getBoundingClientRect().bottom) : 0,
+          spaceBelow: Math.round(rect.top - mr.bottom)
+        };
+      })()
+    JS
+  end
+
+  # Drags `from_id` over `to_id` and reports whether the controller allowed it.
+  # `dropAllowed` is the event's own defaultPrevented — the exact signal the
+  # browser reads to decide between a move cursor and "no entry".
+  def dragover_across_groups(from_id:, to_id:)
+    page.evaluate_script(<<~JS)
+      (() => {
+        const byId = id => document.querySelector(`[data-positioned-row-id="${id}"]`);
+        const source = byId(#{from_id});
+        const target = byId(#{to_id});
+        window.__puDrag = new DataTransfer();
+        source.querySelector("[data-positioned-grip]")
+          .dispatchEvent(new DragEvent("dragstart", { bubbles: true, cancelable: true, dataTransfer: window.__puDrag }));
+
+        const rect = target.getBoundingClientRect();
+        const ev = new DragEvent("dragover", {
+          bubbles: true, cancelable: true, dataTransfer: window.__puDrag,
+          clientX: rect.left + 40, clientY: rect.top + 4
+        });
+        target.dispatchEvent(ev);
+        // A refused drop must ALSO be inert if the browser somehow delivered it.
+        target.dispatchEvent(new DragEvent("drop", {
+          bubbles: true, cancelable: true, dataTransfer: window.__puDrag,
+          clientX: rect.left + 40, clientY: rect.top + 4
+        }));
+
+        const m = document.getElementById("pu-drag-insertion-marker");
+        return { dropAllowed: ev.defaultPrevented, markerVisible: !!m && m.style.display === "block" };
+      })()
+    JS
+  end
+
+  # Closes whatever drag is open, so a test's teardown state is a page with no
+  # gesture in flight.
+  def end_drag
+    page.execute_script(<<~JS)
+      const row = document.querySelector("[data-positioned-row-id]");
+      if (row) row.dispatchEvent(new DragEvent("dragend", { bubbles: true, cancelable: true, dataTransfer: window.__puDrag || new DataTransfer() }));
+    JS
   end
 
   # ─── the native pointer half ────────────────────────────────────────────────
