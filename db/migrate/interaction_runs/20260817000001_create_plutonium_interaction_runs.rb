@@ -43,6 +43,52 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       t.string :scoped_entity_type
       t.string :scoped_entity_id
 
+      # The third half of the policy context: WHICH policy applied.
+      #
+      # Policy lookup in a controller passes the controller's own module nesting
+      # as the namespace (ActionPolicy::Behaviours::Namespaced), which is how a
+      # portal gets its own policy — StorefrontPortal::Blogging::PostPolicy
+      # rather than Blogging::PostPolicy. A job has no controller and therefore
+      # no namespace to derive, so without this the lookup falls back to the base
+      # policy and every narrowing the portal applied is silently lost. Nullable
+      # because a top-level dispatch legitimately has no namespace; nil here
+      # means "top level", NOT "namespace unknown".
+      #
+      # Stored as the module's NAME (e.g. "StorefrontPortal"), constantized at
+      # perform time — ActionPolicy.lookup requires a Module and raises on a
+      # String.
+      t.string :authorization_namespace
+
+      # The policy actually resolved AT DISPATCH, e.g.
+      # "StorefrontPortal::Blogging::PostPolicy". An ASSERTION, not an input: at
+      # perform time the policy is resolved from the namespace above and then
+      # checked against this. The namespace fixes today's lookup, but a policy
+      # renamed, deleted or re-parented between enqueue and perform would resolve
+      # to something else — the same silent widening, just moved later in time.
+      # Recording what we expected turns that into a loud failure.
+      #
+      # NOT named `policy_class`: ActionPolicy's lookup chain probes
+      # `record.policy_class` before inferring from the class name, so a column
+      # of that name would make ActionPolicy.lookup(run) return this String
+      # instead of a policy — breaking authorization of run records themselves.
+      t.string :policy_class_name
+
+      # The policy PREDICATE dispatch checked, e.g. "archive?".
+      #
+      # The class above says which policy; this says which question to ask it.
+      # Without it a run re-checks only VISIBILITY (the relation scope) and not
+      # PERMISSION: an initiator whose archive? flipped to false after enqueue
+      # would still resolve every target and the work would proceed. Dispatch
+      # derives this from the action name and checks it PER RECORD — see
+      # Plutonium::Resource::Controllers::InteractiveActions#authorize_interactive_bulk_action!
+      # — and perform must reproduce exactly that.
+      #
+      # Nullable ONLY because opaque (untargeted) work has no per-record
+      # predicate to check. nil means "no per-target predicate", and for a
+      # TARGETED run that is refused rather than read as "allow everything" —
+      # the fail-open shape again.
+      t.string :policy_action
+
       # Counts. Both nil for opaque (untargeted) work — the progress UI reads
       # nil as "indeterminate" rather than 0%.
       t.integer :progress_total
