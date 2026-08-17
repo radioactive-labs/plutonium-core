@@ -76,11 +76,33 @@ module Plutonium
           # reposition endpoint streams into after a drop, so the surface the
           # drag controller reads and the surface the server replaces are the
           # same element in both views.
+          render_running_banner
+
           return render partial("resource_kanban") if selected_view == :kanban
 
           div(id: self.class.collection_dom_id(resource_class)) do
             render partial((selected_view == :grid) ? "resource_grid" : "resource_table")
           end
+        end
+
+        # Runs currently working on this resource, above the collection.
+        #
+        # Rendered OUTSIDE the collection wrapper on purpose: that div is what
+        # the reposition endpoint streams into after a drag, so anything inside
+        # it is destroyed on the next drop.
+        #
+        # Scoped through authorized_resource_scope, the same door every other
+        # cross-resource read goes through, so a run dispatched in another tenant
+        # can never appear here — the banner cannot be a way around the policy.
+        def render_running_banner
+          return unless Plutonium.configuration.interaction_runs.enabled
+
+          runs = authorized_resource_scope(
+            Plutonium::Interaction::Run,
+            relation: Plutonium::Interaction::Run.for_target(resource_class).in_progress
+          ).to_a
+
+          render Plutonium::UI::Interaction::RunningBanner.new(runs: runs)
         end
 
         def selected_view
