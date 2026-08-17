@@ -1021,6 +1021,8 @@ end
 
 `sectioned_base` replaces `base` when the definition declares a `form_layout` — the sections are cards, so the form itself stops being one.
 
+⚠️ **Width is NOT a theme key.** It's configuration (`page_width` / `form_width` on the definition, `Plutonium.configuration.default_page_width` globally) and is appended by `Form::Resource`/`Page::Show`, so overriding `base` or `fields_wrapper` restyles a surface without silently pinning its width. See [[plutonium-resource]] › Page Width.
+
 ## Display theme
 
 ```ruby

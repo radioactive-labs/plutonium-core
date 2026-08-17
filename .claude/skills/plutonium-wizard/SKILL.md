@@ -465,6 +465,7 @@ Plutonium.configure do |config|
   config.wizards.encrypt_data = false      # encrypt every wizard's data at rest (needs AR encryption keys)
   config.wizards.database = :primary       # reserved — v1 supports :primary only (else raises at boot)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect active_shrine/AS)
+  config.wizards.width = nil               # step page width (:sm/:md/:lg/:xl/:full); nil follows config.default_page_width
 end
 ```
 
