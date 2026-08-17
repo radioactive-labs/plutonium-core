@@ -1036,9 +1036,19 @@ module Plutonium
 
         def destroy? = false
 
-        def relation_scope(relation)
-          scope = super
-          return scope unless entity_scope
+        # The MACRO form, not `def relation_scope`. An instance method of that
+        # name overrides nothing — apply_scope dispatches to the macro-generated
+        # __scoping__active_record_relation__default — so the narrowing would
+        # silently never run. Since PR #96 that mistake raises at class load
+        # rather than failing open.
+        #
+        # Consequences of being a block rather than a method: `super` is not
+        # available (call default_relation_scope, which also satisfies the
+        # multi-tenancy guard), and `return` would return from the enclosing
+        # method, so use `next`.
+        relation_scope do |relation|
+          scope = default_relation_scope(relation)
+          next scope unless entity_scope
 
           scope.where(scoped_entity_type: entity_scope.class.name, scoped_entity_id: entity_scope.id.to_s)
         end
