@@ -112,9 +112,43 @@ module Plutonium
           sections = resource_definition.resolve_display_sections(fields)
           return nil if sections.nil?
 
-          sections.reject do |resolved|
-            condition = resolved.section.condition
-            (condition && !instance_exec(&condition)) || resolved.fields.empty?
+          sections.filter_map do |resolved|
+            section = resolved.section
+            condition = section.condition
+            next if condition && !instance_exec(&condition)
+            next if resolved.fields.empty?
+
+            Plutonium::Definition::FormLayout::ResolvedSection.new(
+              section: Plutonium::Definition::FormLayout::Section.new(
+                key: section.key,
+                fields: section.fields,
+                options: resolve_section_option_procs(section.options).freeze
+              ),
+              fields: resolved.fields
+            )
+          end
+        end
+
+        # Resolve proc-valued section options for THIS render, by the same
+        # arity rule the form uses (Form::Resource#resolve_option_procs): a
+        # zero-arity proc is called plainly and keeps its own binding, while a
+        # one-arity proc is handed this display for `object`/`params`/helpers.
+        #
+        # Without this a `collapsed: -> { ... }` would reach the component as
+        # the Proc itself, and `collapsed?` — a plain `!!` — would be true no
+        # matter what the proc returns, silently pinning the section shut.
+        #
+        # `condition:` is excluded for the same reason it is on the form: it
+        # asks "should this render here, now?", which is resolved separately
+        # and against this display, not turned into a value up front.
+        def resolve_section_option_procs(options)
+          return options if options.blank?
+
+          options.to_h do |key, value|
+            resolvable = key != :condition && value.is_a?(Proc)
+            next [key, value] unless resolvable
+
+            [key, value.arity.zero? ? value.call : value.call(self)]
           end
         end
 

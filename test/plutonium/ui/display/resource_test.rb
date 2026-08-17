@@ -17,9 +17,10 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
   # Build a Resource instance without requiring a full Phlexi render context.
   # We stub out everything that touches rendering so tests can interrogate
   # the private routing logic directly.
-  def build_resource(resource_associations: [], present_associations: true, registered: [])
+  def build_resource(resource_associations: [], present_associations: true, registered: [],
+    resource_definition: nil)
     obj = Organization.new(name: "Acme")
-    definition = FakeDefinition.new
+    definition = resource_definition || FakeDefinition.new
 
     component = Plutonium::UI::Display::Resource.new(
       obj,
@@ -397,6 +398,41 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
     component.send(:render_default_fields)
 
     assert_equal [:main], called
+  end
+
+  # ---------------------------------------------------------------------------
+  # resolve_display_layout — section option procs
+  # ---------------------------------------------------------------------------
+
+  # `collapsed?` is a plain `!!`, so an unresolved Proc would be truthy no
+  # matter what it returns — pinning the section shut on every render.
+  test "a proc-valued section option is resolved, not passed through as a Proc" do
+    definition = Class.new(Plutonium::Definition::Base) do
+      display_layout do
+        section :a, :name, collapsible: true, collapsed: -> { false }
+      end
+    end.new
+    component = build_resource(resource_definition: definition)
+
+    resolved = component.send(:resolve_display_layout, [:name])
+
+    refute resolved.first.section.collapsed?,
+      "a `collapsed: -> { false }` must resolve to false, not to a truthy Proc"
+  end
+
+  # Same arity rule as the form: a one-arity proc is handed the display, so it
+  # can read `object`.
+  test "a one-arity section option proc receives the display" do
+    definition = Class.new(Plutonium::Definition::Base) do
+      display_layout do
+        section :a, :name, label: ->(display) { "For #{display.object.class.name}" }
+      end
+    end.new
+    component = build_resource(resource_definition: definition)
+
+    resolved = component.send(:resolve_display_layout, [:name])
+
+    assert_equal "For #{component.object.class.name}", resolved.first.section.label
   end
 
   # ---------------------------------------------------------------------------

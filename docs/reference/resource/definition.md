@@ -704,7 +704,15 @@ Raising rather than ignoring the option means a `form_layout` block copied acros
 
 ### Section options
 
-`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — as documented for [`section(key, *fields, **opts)`](#section-key-fields-opts). `condition:` is evaluated against the display, where `object` is the record.
+`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — the same set as [`section(key, *fields, **opts)`](#section-key-fields-opts) minus `columns:`. A collapsible display section behaves exactly as a form one does, `collapsed:` included.
+
+Every option except `condition:` may be a proc, resolved at render under the same arity rule the form uses — a zero-arity proc keeps its own binding, a one-arity proc is handed the display:
+
+```ruby
+section :audit, :created_at, collapsible: true, collapsed: ->(display) { display.object.active? }
+```
+
+`condition:` is evaluated separately and against the display, where `object` is the record.
 
 ### Rendering
 

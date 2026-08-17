@@ -947,7 +947,7 @@ end
 
 - **Declare both independently.** `form_layout` and `display_layout` are separate registries — a resource can group its form one way and its show page another, or declare only one. Neither inherits from the other.
 - **🚨 No `columns:`** — unlike `form_layout`, it **raises**. Every display section shares one responsive grid; field width is a per-field concern: `display :x, wrapper: {class: "col-span-2"}` (works identically inside a section and outside one). Raising rather than ignoring means a copied `form_layout` block fails loudly instead of silently doing nothing.
-- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `condition:`.
+- **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — the same set as `form_layout` minus `columns:`. `collapsible: true, collapsed: true` works exactly as it does on forms. Every option except `condition:` may be a **proc**, resolved at render under the same arity rule as the form: take a `display` argument to read `object`.
 - **Each section renders as its own card**, so the sectioned show page has no single outer card. Fields declared in `metadata` are excluded (they render in the metadata panel) — see below.
 
 ## Metadata Panel (show page)

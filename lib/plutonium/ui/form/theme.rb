@@ -7,10 +7,20 @@ module Plutonium
         def self.theme
           super.merge({
             # Form structure
-            base: "pu-card my-4 p-8 space-y-8",
+            # A standalone form is constrained and centred rather than run out
+            # to the full content width. Inputs stretch to their container, so
+            # an unconstrained form on a wide screen gives you a single column
+            # of ~1200px-wide text boxes — long past a comfortable line length.
+            # Centred to match the wizard pages, which have always been
+            # `mx-auto max-w-*` (a touch wider here, since resource forms can
+            # lay out in two columns where a wizard step does not).
+            #
+            # Modal forms are unaffected: the dialog sets its own width, and
+            # Form::Resource#form_class returns before consulting these.
+            base: "pu-card my-4 p-8 space-y-8 mx-auto max-w-4xl",
             # :base for a form whose sections are cards — no card, no padding
             # of its own, since the section cards provide both.
-            sectioned_base: "my-4 space-y-4",
+            sectioned_base: "my-4 space-y-4 mx-auto max-w-4xl",
             fields_wrapper: "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6 grid-flow-row-dense",
 
             # Sections are their OWN cards (see Component::Section), so this

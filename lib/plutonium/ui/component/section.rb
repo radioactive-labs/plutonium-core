@@ -74,8 +74,12 @@ module Plutonium
             "shrink-0 w-3 h-3 text-[var(--pu-text-muted)] " \
             "transition-transform duration-200 group-open:rotate-180",
 
-          # Padding box between the card edge and the field grid.
-          section_body: "pu-card-body"
+          # Padding box between the card edge and the field grid. Roomier than
+          # the stock `pu-card-body` (16px): a section card holds inputs, not
+          # the dense label/value rows a card body is sized for, and the form
+          # this replaced was a single `p-8` card — at 16px the fields sit
+          # noticeably tighter against the edge than they used to.
+          section_body: "p-6"
         }.freeze
 
         # The theme this section's chrome resolves against. Subclasses name
