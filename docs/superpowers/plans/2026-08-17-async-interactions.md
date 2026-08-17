@@ -161,11 +161,19 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       t.string :target_type
       t.public_send(:jsonb, :target_ids, null: false, default: [])
 
-      # Who started it, and in which tenant. BOTH are required to rebuild the
-      # policy context: Plutonium authorizes on (user, entity_scope), so the
-      # user alone would re-resolve targets under the wrong tenant — and that
-      # fails OPEN. *_id is string-typed to accommodate bigint or uuid host
-      # primary keys, matching plutonium_wizard_sessions.
+      # Who started it, and in which tenant.
+      #
+      # The initiator is ALWAYS required: a nullable initiator would drift into
+      # meaning "unscoped", which is the fail-open case this design guards.
+      #
+      # The scoped entity is nullable BY DESIGN — only entity-scoped portals
+      # have one, mirroring plutonium_wizard_sessions.scope_type/scope_id. nil
+      # means "no tenant", NOT "tenant unknown", and code rebuilding the policy
+      # context must handle nil explicitly rather than assume a tenant is
+      # present. This schema offers no non-null guarantee to lean on.
+      #
+      # *_id is string-typed to accommodate bigint or uuid host primary keys,
+      # matching plutonium_wizard_sessions.
       t.string :initiator_type, null: false
       t.string :initiator_id, null: false
       t.string :scoped_entity_type

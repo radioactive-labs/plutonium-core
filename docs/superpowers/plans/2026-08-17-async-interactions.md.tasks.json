@@ -4,51 +4,63 @@
     {
       "id": 0,
       "subject": "Task 1: Config, migration and registration",
-      "status": "pending",
+      "status": "completed",
       "description": "**Goal:** The plutonium_interaction_runs table exists in a host app when the feature is enabled, following the wizard subsystem's pattern.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/configuration_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/runs/configuration.rb\", \"db/migrate/interaction_runs/20260817000001_create_plutonium_interaction_runs.rb\", \"lib/plutonium/railtie.rb\", \"lib/plutonium/configuration.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/configuration_test.rb\", \"acceptanceCriteria\": [\"enabled defaults to false\", \"migration path surfaced only when enabled\", \"polymorphic *_id columns are string\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 1,
       "subject": "Task 2: The Run model",
       "status": "pending",
-      "blockedBy": [0],
+      "blockedBy": [
+        0
+      ],
       "description": "**Goal:** STI base with state transitions, progress accounting and typed options.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/run_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/run.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/run_test.rb\", \"acceptanceCriteria\": [\"start!/finish!/fail! move state\", \"progress_fraction nil for opaque work\", \"record_target_failure! accumulates\", \"targeted? reflects perform_on\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 2,
       "subject": "Task 3: Authorization context and target resolution",
       "status": "pending",
-      "blockedBy": [1],
-      "description": "**Goal:** Rebuild (initiator, scoped_entity) in the job and resolve targets through the policy scope. SECURITY CORE — both failure modes fail open.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/context_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/runs/context.rb\", \"test/dummy/app/runs/test_post_run.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/context_test.rb\", \"acceptanceCriteria\": [\"targets resolve through the policy scope\", \"cross-tenant target not returned\", \"vanished target reported not dropped\", \"single query\"], \"requiresUserVerification\": false}\n```"
+      "blockedBy": [
+        1
+      ],
+      "description": "**Goal:** Rebuild (initiator, scoped_entity) in the job and resolve targets through the policy scope. SECURITY CORE \u2014 both failure modes fail open.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/context_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/runs/context.rb\", \"test/dummy/app/runs/test_post_run.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/context_test.rb\", \"acceptanceCriteria\": [\"targets resolve through the policy scope\", \"cross-tenant target not returned\", \"vanished target reported not dropped\", \"single query\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 3,
       "subject": "Task 4: Executor and failure policies",
       "status": "pending",
-      "blockedBy": [2],
+      "blockedBy": [
+        2
+      ],
       "description": "**Goal:** Run the work, honour on_failure (continue/halt/transactional), keep progress current.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/executor_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/runs/executor.rb\", \"lib/plutonium/interaction/runs/job.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/executor_test.rb\", \"acceptanceCriteria\": [\"continue records and proceeds\", \"halt stops at first error\", \"transactional rolls back\", \"missing targets recorded\", \"opaque run performs once\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 4,
       "subject": "Task 5: Interactions dispatch",
       "status": "pending",
-      "blockedBy": [3],
+      "blockedBy": [
+        3
+      ],
       "description": "**Goal:** dispatches_to creates and enqueues a run, then redirects. Outcome stays synchronous.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/dispatchable_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/concerns/dispatchable.rb\", \"lib/plutonium/interaction/base.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/dispatchable_test.rb\", \"acceptanceCriteria\": [\"run created with validated options\", \"initiator and scoped_entity persisted\", \"success outcome redirects to run\", \"invalid interaction enqueues nothing\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 5,
       "subject": "Task 6: The run as a resource, and its progress page",
       "status": "pending",
-      "blockedBy": [4],
+      "blockedBy": [
+        4
+      ],
       "description": "**Goal:** Portal-registerable run resource whose show page is the progress page and refreshes itself while in progress.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/policy_test.rb test/integration/admin_portal/interaction_run_progress_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/interaction/runs/definition.rb\", \"lib/plutonium/interaction/runs/policy.rb\", \"lib/plutonium/ui/interaction/run_progress.rb\", \"test/dummy/packages/admin_portal/config/routes.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/plutonium/interaction/runs/policy_test.rb test/integration/admin_portal/interaction_run_progress_test.rb\", \"acceptanceCriteria\": [\"relation_scope limits to entity scope\", \"cross-tenant run not visible\", \"in-progress page polls, finished does not\", \"indeterminate progress renders a spinner\"], \"requiresUserVerification\": false}\n```"
     },
     {
       "id": 6,
       "subject": "Task 7: In-progress runs on the target index",
       "status": "pending",
-      "blockedBy": [5],
+      "blockedBy": [
+        5
+      ],
       "description": "**Goal:** A resource's index lists runs currently working on it, above the collection.\n\n**Verify:** bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\n\n```json:metadata\n{\"files\": [\"lib/plutonium/ui/interaction/running_banner.rb\", \"lib/plutonium/ui/page/index.rb\"], \"verifyCommand\": \"bundle exec appraisal rails-8.1 ruby -Itest test/integration/admin_portal/interaction_run_banner_test.rb\", \"acceptanceCriteria\": [\"lists in-progress runs for this resource\", \"excludes completed and other-resource runs\", \"excludes other tenants\", \"no banner when none running\"], \"requiresUserVerification\": false}\n```"
     }
   ],
-  "lastUpdated": "2026-08-17"
+  "lastUpdated": "2026-08-17T03:58:20.822834"
 }
