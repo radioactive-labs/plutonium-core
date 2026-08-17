@@ -145,15 +145,21 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       t.string :type, null: false
       t.string :state, null: false, default: "pending" # pending | running | completed | failed
 
+      # JSON payloads are jsonb, matching plutonium_wizard_sessions: Postgres
+      # hosts get equality and GIN indexing (plain json has neither), and SQLite
+      # hosts get the type via PLUTONIUM_SQLITE_TYPE_ALIASES, which aliases
+      # jsonb -> json. Changing a column type post-release costs every host app a
+      # migration, so pick the queryable one now.
+      #
       # The dispatching interaction's validated inputs.
-      t.json :options, null: false, default: {}
+      t.public_send(:jsonb, :options, null: false, default: {})
 
       # Targets. target_type is a REAL column, not JSON: the index feature
       # queries "runs for this resource", which cannot be indexed out of a
       # JSON array. Ids are stored as given and re-resolved through the policy
       # scope at perform time (see Runs::Context).
       t.string :target_type
-      t.json :target_ids, null: false, default: []
+      t.public_send(:jsonb, :target_ids, null: false, default: [])
 
       # Who started it, and in which tenant. BOTH are required to rebuild the
       # policy context: Plutonium authorizes on (user, entity_scope), so the
@@ -170,7 +176,7 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       t.integer :progress_total
       t.integer :progress_done, null: false, default: 0
 
-      t.json :errors_log, null: false, default: []
+      t.public_send(:jsonb, :errors_log, null: false, default: [])
 
       t.datetime :started_at
       t.datetime :finished_at
