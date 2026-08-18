@@ -153,6 +153,9 @@ module Plutonium
         # ArticlePolicy for those rows, which correctly differs from the run's
         # PostPolicy.
         #
+        # Not a silent hole: a subtype policy missing +policy_action+ entirely
+        # raises via +send_with_report+ (see {#permitted?}), not "permitted".
+        #
         # @param record [ActiveRecord::Base, Class]
         # @return [Plutonium::Resource::Policy]
         def policy_for(record)
