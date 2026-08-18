@@ -48,6 +48,11 @@ module Plutonium
 
       validates :state, inclusion: {in: STATES}
 
+      # Guarantees its own job gets enqueued once this row is durably visible
+      # (same shape as InviteToken#send_invitation_email) — not done by the
+      # caller, which would race a fast/inline job adapter against the commit.
+      after_commit :enqueue_job, on: :create
+
       scope :in_progress, -> { where(state: IN_PROGRESS_STATES) }
       scope :for_target, ->(klass) { where(target_type: klass.to_s) }
 
@@ -140,8 +145,10 @@ module Plutonium
       # A nil +id+ is the RUN-LEVEL sentinel: the failure is the whole run's
       # (see {#fail!}), not one target's. Readers grouping the log by target
       # must treat nil as its own bucket rather than a target id.
-      def record_target_failure!(id:, message:)
-        record_target_failures!([{id: id, message: message}])
+      #
+      # @param advance_by [Integer] see {#record_target_failures!}
+      def record_target_failure!(id:, message:, advance_by: 0)
+        record_target_failures!([{id: id, message: message}], advance_by: advance_by)
       end
 
       # Appends several failures in ONE write.
@@ -152,12 +159,19 @@ module Plutonium
       # anything (see Runs::Executor#record_unresolved), and that batch is what
       # this exists for.
       #
+      # +advance_by+ folds the progress bump into the SAME write instead of a
+      # second one right after — a crash between two writes would leave
+      # errors_log and progress_done out of sync. Default 0 because {#fail!}
+      # records a run-level failure with nothing to advance.
+      #
       # @param entries [Array<Hash>] +{id:, message:}+ pairs
-      def record_target_failures!(entries)
-        return if entries.empty?
+      # @param advance_by [Integer] how much to add to +progress_done+ in this
+      #   same write
+      def record_target_failures!(entries, advance_by: 0)
+        return if entries.empty? && advance_by.zero?
 
         appended = entries.map { |entry| {"target_id" => entry[:id], "message" => entry[:message]} }
-        update!(errors_log: errors_log + appended)
+        update!(errors_log: errors_log + appended, progress_done: progress_done + advance_by)
       end
 
       # Which shape of work this is, decided by what the subclass implements
@@ -174,6 +188,18 @@ module Plutonium
         raise NotImplementedError,
           "#{self.class} implements neither #perform nor #perform_on: define " \
           "#perform_on(record) for work over targets, or #perform for opaque work"
+      end
+
+      private
+
+      # Not swallowed: after_commit runs synchronously, so re-raising here
+      # still surfaces to the dispatching request rather than leaving a
+      # permanently invisible, un-enqueued ghost.
+      def enqueue_job
+        Plutonium::Interaction::Runs::Job.perform_later(id)
+      rescue
+        fail!("could not be enqueued for execution")
+        raise
       end
     end
   end

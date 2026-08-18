@@ -68,7 +68,8 @@ module Plutonium
 
         # @return [void]
         def call
-          run.start!
+          return unless claim!
+
           @context = build_context
 
           run.targeted? ? perform_targets : perform_opaque
@@ -88,6 +89,29 @@ module Plutonium
         private
 
         attr_reader :context
+
+        # Atomically claims a PENDING run so two concurrent deliveries (retry
+        # after a crash, duplicate enqueue) can't both process it. A run
+        # already "running" is left alone rather than replayed — that would
+        # re-invoke perform_on on targets already applied. A stalled
+        # "running" row surfaces to an operator instead of silently
+        # double-applying; real resume needs per-target completion tracking,
+        # which does not exist yet.
+        #
+        # @return [Boolean]
+        def claim!
+          now = Time.current
+          claimed = run.class.where(id: run.id, state: "pending")
+            .update_all(state: "running", started_at: now) == 1
+
+          unless claimed
+            Rails.logger.warn { "plutonium: interaction run #{run.id} is #{run.state}; refusing to (re)start" }
+            return false
+          end
+
+          run.assign_attributes(state: "running", started_at: now)
+          true
+        end
 
         def build_context = Context.new(run)
 
@@ -170,8 +194,7 @@ module Plutonium
         rescue => e
           raise BatchAbortedError, "target #{record.id} failed (#{e.message}); no targets were applied" if transactional?
 
-          run.record_target_failure!(id: record.id, message: e.message)
-          advance!
+          run.record_target_failure!(id: record.id, message: e.message, advance_by: 1)
           halt? ? :halt : nil
         end
 
@@ -216,17 +239,15 @@ module Plutonium
         # record_target_failure! self-persists, so a loop over M ids is M writes,
         # each rewriting the whole errors_log JSON — O(M²) bytes for a bulk run
         # whose targets have mostly disappeared. The plural form appends the
-        # batch in a single update!.
+        # batch in a single update!, folding in the progress advance too:
+        # unresolved targets still count as dispositioned, so the bar reaches
+        # the end.
         def record_unresolved(resolved)
           entries = resolved.missing_ids.map { |id| {id: id, message: missing_message(id)} } +
             resolved.unauthorized_ids.map { |id| {id: id, message: unauthorized_message(id)} }
           return if entries.empty?
 
-          run.record_target_failures!(entries)
-          # Unresolved targets advance progress because no further work will
-          # happen on them: a bar that stops at 70% on a run that has finished
-          # reads as stuck.
-          advance!(entries.size)
+          run.record_target_failures!(entries, advance_by: entries.size)
         end
 
         def unresolved?(resolved) = resolved.missing_ids.any? || resolved.unauthorized_ids.any?

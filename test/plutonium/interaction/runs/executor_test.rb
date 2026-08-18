@@ -280,6 +280,30 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal "completed", run.reload.state
   end
 
+  # --- re-entrancy ----------------------------------------------------------
+
+  test "a run already running is not reprocessed" do
+    good = create_post!(user: @user, organization: @org, title: "good")
+    run = create_run!(ContinuingScriptedRun, target_ids: [good.id])
+    run.start!
+
+    Executor.new(run).call
+
+    assert_empty ScriptedRun.performed, "a running run must not be replayed from scratch"
+    assert_equal "running", run.reload.state, "a stalled run is left for an operator, not silently redone"
+  end
+
+  test "two concurrent deliveries of the same pending run only one of them performs the work" do
+    good = create_post!(user: @user, organization: @org, title: "good")
+    run = create_run!(ContinuingScriptedRun, target_ids: [good.id])
+
+    Executor.new(Plutonium::Interaction::Run.find(run.id)).call
+    Executor.new(Plutonium::Interaction::Run.find(run.id)).call
+
+    assert_equal [good.id], ScriptedRun.performed, "the second delivery must not repeat the first's work"
+    assert_equal "completed", run.reload.state
+  end
+
   test "a run implementing neither perform nor perform_on fails naming the class" do
     run = execute!(create_run!(UndefinedWorkRun, target_ids: []))
 

@@ -61,6 +61,17 @@ module Plutonium
           class_attribute :run_class, instance_accessor: false
         end
 
+        # Prepended, rather than defined via +define_method+, so a `def
+        # execute` written BELOW `dispatches_to` can't silently shadow it —
+        # a prepended module sits ahead of the class in the ancestor chain
+        # regardless of source order. (A subclass's own #execute still wins,
+        # same as any override — this only closes same-class ordering.)
+        module ExecuteOverride
+          private
+
+          def execute = dispatch
+        end
+
         class_methods do
           # Declares that this interaction dispatches its work to +run_class+.
           #
@@ -68,15 +79,9 @@ module Plutonium
           # @raise [ArgumentError] if this class already defines its own #execute
           # @return [void]
           def dispatches_to(run_class)
-            # A declaration-time consistency check, in the spirit of Run.on_failure:
-            # everything else here fails loudly, and overwriting an author's own
-            # #execute would not. It catches the `def execute` / `dispatches_to`
-            # order only — written the other way round, the author's definition
-            # simply wins by ordinary Ruby override semantics, which is at least
-            # the language's own rule and shows up the first time the action is
-            # exercised. Closing that direction too would need a method_added
-            # hook on every interaction class, which is a lot of machinery for a
-            # mistake that announces itself.
+            # Catches the OTHER ordering: #execute already defined before
+            # dispatches_to runs is two conflicting declarations, not an
+            # ordering accident, and the prepend below does not resolve it.
             if !@execute_defined_by_dispatch &&
                 (method_defined?(:execute, false) || private_method_defined?(:execute, false))
               raise ArgumentError,
@@ -87,20 +92,19 @@ module Plutonium
 
             self.run_class = run_class
 
-            # Defined on the DECLARING class rather than in this module: the
-            # concern is included into Interaction::Base, so an #execute defined
-            # here would sit behind Base#execute (the "must implement" raiser)
-            # in the ancestor chain and never be reached.
-            define_method(:execute) { dispatch }
-            private :execute
+            prepend(ExecuteOverride) unless @execute_defined_by_dispatch
             @execute_defined_by_dispatch = true
           end
         end
 
         private
 
-        # Persists the run, enqueues it, and returns the outcome that sends the
-        # user to it.
+        # Persists the run and returns the outcome that sends the user to it.
+        #
+        # The run enqueues ITS OWN job, via an +after_commit+ on
+        # {Plutonium::Interaction::Run} — not from here, which would race a
+        # fast/inline job adapter against the very commit the row needs to
+        # be visible.
         #
         # @return [Plutonium::Interaction::Outcome::Success]
         def dispatch
@@ -110,22 +114,6 @@ module Plutonium
             options: dispatch_options,
             **dispatch_target_attributes
           )
-          # No queue to set here: Runs::Job declares `queue_as` as a block, so it
-          # reads Plutonium.configuration at enqueue time.
-          #
-          # Create-then-enqueue is not atomic. The other direction is already
-          # safe — an enqueue that outlives a rolled-back transaction finds no
-          # row, and Job#perform returns rather than raising. This is the
-          # direction that is not: the row is committed and the enqueue failed,
-          # so nothing will ever pick it up. Recording that on the row turns a
-          # permanently `pending` ghost into a failed run with a reason. It does
-          # not swallow — the error still surfaces to the dispatching request.
-          begin
-            Plutonium::Interaction::Runs::Job.perform_later(run.id)
-          rescue
-            run.fail!("could not be enqueued for execution")
-            raise
-          end
 
           succeed(run).with_redirect_response(dispatch_redirect_target(run))
         end

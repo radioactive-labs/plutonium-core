@@ -354,6 +354,23 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_match(/does the work inline or dispatches it to a run/, error.message)
   end
 
+  # The reverse ordering: def execute written below dispatches_to used to
+  # win silently via ordinary Ruby override semantics.
+  test "an execute defined after dispatches_to does not silently override it" do
+    klass = Class.new(Plutonium::Resource::Interaction) do
+      dispatches_to TestPostRun
+
+      attribute :resource
+
+      def execute = succeed(:inline)
+    end
+
+    run = klass.call(view_context: @view_context, resource: @post).value
+
+    assert_kind_of Plutonium::Interaction::Run, run,
+      "dispatches_to's #execute must still win over a same-class #execute defined afterwards"
+  end
+
   # The row is committed before the enqueue, so a queue that refuses the job
   # leaves a run nothing will ever pick up. It has to stop looking pending.
   test "a run whose enqueue fails is marked failed rather than left pending" do
