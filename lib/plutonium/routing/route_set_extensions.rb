@@ -152,17 +152,16 @@ module Plutonium
           route_name: route_name,
           concern_name: concern_name,
           route_options: {
-            # `controller:` overrides the derived path for resources whose class
-            # name would put a namespace inside the portal that must not be
-            # there. Registering Plutonium::Interaction::Run derives
-            # "plutonium/interaction/runs", so the controller has to live at
-            # MyPortal::Plutonium::Interaction::RunsController — and defining
-            # `MyPortal::Plutonium` shadows the gem's own ::Plutonium for every
-            # constant lookup lexically inside `module MyPortal`, breaking the
-            # portal's own `include Plutonium::Portal::Controller`. A controller
-            # named without the shadowing segment cannot derive its resource
-            # from its own name, so it declares `controller_for`.
-            controller: options[:controller] || resource.to_s.pluralize.underscore,
+            # model_name.collection, not resource.to_s.pluralize.underscore:
+            # the latter reads the RAW class name, ignoring a model that pins
+            # its own model_name to escape it — which is exactly what
+            # Plutonium::Interaction::Run does, precisely so a namespace this
+            # deep inside the gem's own module doesn't leak into every URL and
+            # controller path. For every resource that does NOT override
+            # model_name, .collection derives the identical path .pluralize.underscore
+            # would have (verified: both give "blogging/posts" for Blogging::Post).
+            # `controller:` remains available to override either way.
+            controller: options[:controller] || resource.model_name.collection,
             path: options[:singular] ? resource.model_name.singular : resource.model_name.collection,
             concerns: %i[interactive_resource_actions]
           },
