@@ -8,6 +8,7 @@ class Plutonium::Interaction::Runs::ConfigurationTest < ActiveSupport::TestCase
 
     assert_equal false, config.enabled
     assert_equal :default, config.queue
+    assert_equal 1.hour, config.stall_after
   end
 
   test "migration path is surfaced only when enabled" do

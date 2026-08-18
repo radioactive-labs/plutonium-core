@@ -304,6 +304,28 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal "completed", run.reload.state
   end
 
+  test "a resumed run skips targets it already handled before an interruption" do
+    good = create_post!(user: @user, organization: @org, title: "good")
+    remaining = create_post!(user: @user, organization: @org, title: "remaining")
+    run = create_run!(ContinuingScriptedRun, target_ids: [good.id, remaining.id])
+
+    # Simulate a crash right after `good` was applied and recorded, but
+    # before `remaining` was ever touched.
+    Executor.new(run).send(:advance!, good.id)
+    run.update!(state: "running")
+
+    assert_equal [remaining.id], run.reload.unhandled_target_ids.map(&:to_i)
+
+    # Resume: reset to pending (what an operator/reaper would do) and re-run.
+    run.update!(state: "pending")
+    Executor.new(run).call
+
+    assert_equal [remaining.id], ScriptedRun.performed,
+      "a resumed run must not redo a target it already handled"
+    assert_equal "completed", run.reload.state
+    assert_equal 2, run.progress_done
+  end
+
   test "a run implementing neither perform nor perform_on fails naming the class" do
     run = execute!(create_run!(UndefinedWorkRun, target_ids: []))
 

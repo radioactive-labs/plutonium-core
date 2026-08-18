@@ -167,6 +167,17 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     assert_equal [wanted.id], scoped.pluck(:id)
   end
 
+  test "stalled scope selects in-progress rows with no activity since the threshold" do
+    stale = build(state: "running", last_activity_at: 2.hours.ago)
+    fresh = build(state: "running", last_activity_at: 10.minutes.ago)
+    stale_but_done = build(state: "completed", last_activity_at: 2.hours.ago)
+    [stale, fresh, stale_but_done].each(&:save!)
+
+    selected = Plutonium::Interaction::Run.stalled(before: 1.hour.ago).pluck(:id)
+
+    assert_equal [stale.id], selected
+  end
+
   test "state must be one of STATES" do
     run = build(state: "nonsense")
     assert run.invalid?

@@ -208,7 +208,10 @@ module Plutonium
           end
 
           key = target_class.primary_key
-          ids = run.target_ids
+          # unhandled_target_ids, not target_ids: a run resumed after an
+          # interruption (see Runs::ReapJob) must not redo — or re-record as
+          # missing/unauthorized — targets it already dispositioned.
+          ids = run.unhandled_target_ids
           found = authorized_scope.where(key => ids).index_by { |record| record.public_send(key).to_s }
 
           # Compared as strings because the two sides cross a type boundary:

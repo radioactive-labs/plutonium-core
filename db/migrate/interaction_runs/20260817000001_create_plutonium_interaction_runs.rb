@@ -14,13 +14,13 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       # migration, so pick the queryable one now.
       #
       # The dispatching interaction's validated inputs.
-      t.public_send(:jsonb, :options, null: false, default: {})
+      t.jsonb :options, null: false, default: {}
 
       # Targets. target_type is a REAL column, not JSON: the index feature
       # queries "runs for this resource", which cannot be indexed out of a
       # JSON array. Ids are re-resolved through the policy scope at perform time.
       t.string :target_type
-      t.public_send(:jsonb, :target_ids, null: false, default: [])
+      t.jsonb :target_ids, null: false, default: []
 
       # Who started it, and in which tenant — the two halves of the policy
       # context, which Plutonium authorizes on as (user, entity_scope).
@@ -96,10 +96,22 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
 
       # Per-target execution failures, appended as the run proceeds — hence an
       # array default. A run may fail on some targets and still complete.
-      t.public_send(:jsonb, :errors_log, null: false, default: [])
+      t.jsonb :errors_log, null: false, default: []
 
       t.datetime :started_at
       t.datetime :finished_at
+
+      # Set only once a job actually picks the run up (Runs::Executor#claim!)
+      # and bumped on every write that represents real progress thereafter —
+      # NOT at create time, and not the same thing as updated_at, which bumps
+      # on any write to the row. nil means "never picked up"; Runs::ReapJob
+      # falls back to created_at for that case.
+      t.datetime :last_activity_at
+
+      # Target ids already dispositioned (succeeded or failed), so a run
+      # resumed after an interruption can skip work it already did instead of
+      # either replaying it or refusing to resume at all. See Runs::Executor.
+      t.jsonb :handled_target_ids, null: false, default: []
 
       t.timestamps
 

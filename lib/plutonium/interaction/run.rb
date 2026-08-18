@@ -56,6 +56,15 @@ module Plutonium
       scope :in_progress, -> { where(state: IN_PROGRESS_STATES) }
       scope :for_target, ->(klass) { where(target_type: klass.to_s) }
 
+      # In progress with no recorded activity since +before+ — see
+      # Runs::ReapJob. +last_activity_at+ is nil until a job actually claims
+      # the run (see Runs::Executor#claim!), so a run never picked up at all
+      # falls back to +created_at+ — otherwise it would never match and a
+      # dropped enqueue would sit "pending" forever, unreapable.
+      scope :stalled, ->(before:) {
+        in_progress.where("COALESCE(last_activity_at, created_at) < ?", before)
+      }
+
       # Overrides the generic scope Record::AssociatedWith installs, which
       # resolves a tenant by walking reflections. Both of this table's links to
       # a tenant are POLYMORPHIC, and that walk skips polymorphic associations
@@ -88,13 +97,13 @@ module Plutonium
         self.failure_policy = policy
       end
 
-      def start! = update!(state: "running", started_at: Time.current)
+      def start! = update!(state: "running", started_at: Time.current, last_activity_at: Time.current)
 
-      def finish! = update!(state: "completed", finished_at: Time.current)
+      def finish! = update!(state: "completed", finished_at: Time.current, last_activity_at: Time.current)
 
       def fail!(message = nil)
         record_target_failure!(id: nil, message: message) if message
-        update!(state: "failed", finished_at: Time.current)
+        update!(state: "failed", finished_at: Time.current, last_activity_at: Time.current)
       end
 
       def in_progress? = IN_PROGRESS_STATES.include?(state)
@@ -143,35 +152,46 @@ module Plutonium
       # clean run, which is the one thing an operator must never be told.
       #
       # A nil +id+ is the RUN-LEVEL sentinel: the failure is the whole run's
-      # (see {#fail!}), not one target's. Readers grouping the log by target
-      # must treat nil as its own bucket rather than a target id.
-      #
-      # @param advance_by [Integer] see {#record_target_failures!}
-      def record_target_failure!(id:, message:, advance_by: 0)
-        record_target_failures!([{id: id, message: message}], advance_by: advance_by)
+      # (see {#fail!}), not one target's — it advances neither progress_done
+      # nor handled_target_ids. Readers grouping the log by target must treat
+      # nil as its own bucket rather than a target id.
+      def record_target_failure!(id:, message:)
+        record_target_failures!([{id: id, message: message}])
       end
 
-      # Appends several failures in ONE write.
+      # Appends several failures in ONE write — folding in the progress bump
+      # and handled_target_ids for every entry that names a real target, so a
+      # crash between separate writes can't leave them out of sync with each
+      # other.
       #
       # The singular form persists on every call, so a loop over M ids is M
       # writes, each rewriting the whole errors_log JSON — O(M²) bytes. The
-      # executor resolves every unavailable target in one pass before it performs
-      # anything (see Runs::Executor#record_unresolved), and that batch is what
-      # this exists for.
-      #
-      # +advance_by+ folds the progress bump into the SAME write instead of a
-      # second one right after — a crash between two writes would leave
-      # errors_log and progress_done out of sync. Default 0 because {#fail!}
-      # records a run-level failure with nothing to advance.
+      # executor resolves every unavailable target in one pass before it
+      # performs anything (see Runs::Executor#record_unresolved), and that
+      # batch is what this exists for.
       #
       # @param entries [Array<Hash>] +{id:, message:}+ pairs
-      # @param advance_by [Integer] how much to add to +progress_done+ in this
-      #   same write
-      def record_target_failures!(entries, advance_by: 0)
-        return if entries.empty? && advance_by.zero?
+      def record_target_failures!(entries)
+        return if entries.empty?
 
+        target_entries = entries.reject { |entry| entry[:id].nil? }
         appended = entries.map { |entry| {"target_id" => entry[:id], "message" => entry[:message]} }
-        update!(errors_log: errors_log + appended, progress_done: progress_done + advance_by)
+        update!(
+          errors_log: errors_log + appended,
+          progress_done: progress_done + target_entries.size,
+          handled_target_ids: handled_target_ids + target_entries.map { |entry| entry[:id].to_s },
+          last_activity_at: Time.current
+        )
+      end
+
+      # Target ids not yet dispositioned — what a resumed run still has to
+      # do. See {#record_target_failures!} and Runs::Executor#advance!, which
+      # are what populate handled_target_ids.
+      #
+      # @return [Array]
+      def unhandled_target_ids
+        handled = handled_target_ids.map(&:to_s).to_set
+        target_ids.reject { |id| handled.include?(id.to_s) }
       end
 
       # Which shape of work this is, decided by what the subclass implements

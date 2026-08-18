@@ -29,6 +29,16 @@ module Plutonium
       # A target that fails the re-check is RECORDED as a failure, never silently
       # skipped: "you may no longer act on 3 of these" is exactly what tells an
       # operator the run under-applied.
+      #
+      # == Resuming after an interruption
+      #
+      # #call only ever STARTS from "pending" (see #claim!) — a run already
+      # "running" is left alone, since two concurrent executors on the same
+      # row would race. A run interrupted mid-batch (crash, dropped job) can
+      # still be resumed safely: reset it to "pending" (see Runs::ReapJob)
+      # and re-enqueue. Context#targets resolves only Run#unhandled_target_ids,
+      # so a target already dispositioned before the interruption is not
+      # redone.
       class Executor
         # How long a resolved (initiator, tenant) pair is trusted before
         # {Context#refresh_subjects!} re-reads it.
@@ -102,14 +112,14 @@ module Plutonium
         def claim!
           now = Time.current
           claimed = run.class.where(id: run.id, state: "pending")
-            .update_all(state: "running", started_at: now) == 1
+            .update_all(state: "running", started_at: now, last_activity_at: now) == 1
 
           unless claimed
             Rails.logger.warn { "plutonium: interaction run #{run.id} is #{run.state}; refusing to (re)start" }
             return false
           end
 
-          run.assign_attributes(state: "running", started_at: now)
+          run.assign_attributes(state: "running", started_at: now, last_activity_at: now)
           true
         end
 
@@ -129,11 +139,11 @@ module Plutonium
           if transactional?
             perform_all_or_nothing(resolved.records)
             run.finish!
-          elsif perform_each(resolved.records) == :halt
+          elsif (remaining = perform_each(resolved.records))
             # The loop stopped, so the remaining targets were never attempted.
             # A run that did not do its job must not read as completed.
             run.fail!("stopped at the first target failure (#{run.failure_policy} policy); " \
-                      "#{resolved.records.size - run.progress_done} target(s) were not attempted")
+                      "#{remaining} target(s) were not attempted")
           else
             # Partial failure under :continue is COMPLETED, not failed. The author
             # declared partial application acceptable, the executor ran to the
@@ -144,10 +154,11 @@ module Plutonium
           end
         end
 
-        # @return [Symbol, nil] :halt when the failure policy stopped the loop
+        # @return [Integer, nil] how many records were never attempted, if the
+        #   failure policy stopped the loop early — nil if it ran to the end
         def perform_each(records)
-          records.each do |record|
-            return :halt if perform_one(record) == :halt
+          records.each_with_index do |record, index|
+            return records.size - index - 1 if perform_one(record) == :halt
           end
           nil
         end
@@ -185,7 +196,7 @@ module Plutonium
         # * Context::UnresolvableError IS one, so it is let through explicitly.
         def perform_one(record)
           run.perform_on(reauthorized(record))
-          advance!
+          advance!(record.id)
           nil
         rescue Context::UnresolvableError
           # The initiator or the tenant was deleted while the run was working.
@@ -194,7 +205,7 @@ module Plutonium
         rescue => e
           raise BatchAbortedError, "target #{record.id} failed (#{e.message}); no targets were applied" if transactional?
 
-          run.record_target_failure!(id: record.id, message: e.message, advance_by: 1)
+          run.record_target_failure!(id: record.id, message: e.message)
           halt? ? :halt : nil
         end
 
@@ -247,7 +258,7 @@ module Plutonium
             resolved.unauthorized_ids.map { |id| {id: id, message: unauthorized_message(id)} }
           return if entries.empty?
 
-          run.record_target_failures!(entries, advance_by: entries.size)
+          run.record_target_failures!(entries)
         end
 
         def unresolved?(resolved) = resolved.missing_ids.any? || resolved.unauthorized_ids.any?
@@ -270,8 +281,13 @@ module Plutonium
                     "a #{run.failure_policy} run does not apply a partial batch")
         end
 
-        def advance!(count = 1)
-          run.progress_done += count
+        # Advances progress and records +id+ as dispositioned, in one write —
+        # see Run#unhandled_target_ids, which is what lets a resumed run skip
+        # it instead of reapplying it.
+        def advance!(id)
+          run.progress_done += 1
+          run.handled_target_ids += [id.to_s]
+          run.last_activity_at = Time.current
           run.save!
         end
 
