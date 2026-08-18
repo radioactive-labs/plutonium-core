@@ -25,9 +25,8 @@ OrgPortal::Engine.routes.draw do
   register_resource ::KitchenSink
   register_resource ::UserProfile, singular: true
   # Registered in a `:path` entity-scoped portal too, so the tenant filter and
-  # the entity-prefixed URL are exercised against a live route. See
-  # AdminPortal's registration for why `controller:` is needed.
-  register_resource ::Plutonium::Interaction::Run, controller: "interaction_runs"
+  # the entity-prefixed URL are exercised against a live route.
+  register_resource ::Plutonium::Interaction::Run
   # register resources above.
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

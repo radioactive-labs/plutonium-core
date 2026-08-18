@@ -32,7 +32,7 @@ module Plutonium
       # (plutonium_interaction_run_path). Pinned to the BASE class rather than
       # +self+ so every STI subclass routes to the one registered resource:
       # resource_url_for(a TestPostRun) has to find the Run's route config.
-      MODEL_NAME = ActiveModel::Name.new(self, nil, "InteractionRun")
+      MODEL_NAME = ActiveModel::Name.new(self, nil, "Run")
 
       def self.model_name = MODEL_NAME
 
