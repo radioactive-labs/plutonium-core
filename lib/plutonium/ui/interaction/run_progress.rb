@@ -53,7 +53,9 @@ module Plutonium
         def view_template
           return render_panel if answering_own_frame?
 
-          turbo_frame_tag(frame_id) { render_panel }
+          # `turbo-frame` defaults to `display: inline`, which swallows the
+          # margin `sections_wrapper` needs to separate it from the card below.
+          turbo_frame_tag(frame_id, class: "block") { render_panel }
         end
 
         private

@@ -52,7 +52,7 @@ class AdminPortal::InteractionRunProgressTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match(/data-controller="run-progress"/, response.body,
       "an in-progress run must refresh itself")
-    assert_match(/turbo-frame id="pu_run_progress_#{run.id}"/, response.body,
+    assert_match(/<turbo-frame[^>]*\bid="pu_run_progress_#{run.id}"/, response.body,
       "the panel must sit in a frame the poll can re-fetch")
 
     run.finish!
