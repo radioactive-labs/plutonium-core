@@ -63,7 +63,7 @@ module Plutonium
       def permitted_attributes_for_read
         %i[
           type outcome progress_done progress_total
-          target_type initiator started_at finished_at created_at
+          target_label initiator started_at finished_at created_at
         ]
       end
     end

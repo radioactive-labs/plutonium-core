@@ -83,6 +83,15 @@ class Plutonium::Interaction::RunPolicyTest < ActiveSupport::TestCase
     assert_includes readable, :outcome
   end
 
+  # target_label humanizes the raw class name (see Run#target_label) — the
+  # column itself is not what the show page/table should render.
+  test "target_label is readable in place of the raw target_type column" do
+    readable = policy_for(entity_scope: @org).permitted_attributes_for_read
+
+    assert_includes readable, :target_label
+    refute_includes readable, :target_type
+  end
+
   # The raw column reads "completed" for a run that failed some of its targets.
   # Only #outcome distinguishes the two, so only #outcome is readable.
   test "the raw state column is not readable on its own" do

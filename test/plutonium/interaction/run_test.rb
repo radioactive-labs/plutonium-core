@@ -75,6 +75,14 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     refute build(TestOpaqueRun).targeted?
   end
 
+  test "target_label humanizes the target class, falls back on a stale one, and is nil for opaque work" do
+    assert_equal "Post", build(TestArchiveRun, target_type: "Blogging::Post").target_label
+    assert_nil build(TestOpaqueRun).target_label
+
+    stale = build(TestArchiveRun, target_type: "NoLongerAClass")
+    assert_equal "NoLongerAClass", stale.target_label
+  end
+
   test "options round-trip through JSON" do
     run = build(options: {"title" => "hi", "count" => 2, "flags" => ["a"]})
     run.save!

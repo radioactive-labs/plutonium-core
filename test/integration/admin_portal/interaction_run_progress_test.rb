@@ -164,6 +164,15 @@ class AdminPortal::InteractionRunProgressTest < ActionDispatch::IntegrationTest
     refute_match(/SECRET-REASON-SENTINEL/, response.body)
   end
 
+  test "the target type renders as its humanized name, not the raw class string" do
+    run = create_run!(state: "completed", target_type: "Blogging::Post")
+
+    get run_path(run)
+    assert_response :success
+    assert_match(/Post/, response.body)
+    refute_match(/Blogging::Post/, response.body)
+  end
+
   test "a run offers no write actions" do
     run = create_run!(state: "completed")
 

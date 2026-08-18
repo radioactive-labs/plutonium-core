@@ -37,6 +37,8 @@ module Plutonium
       column :outcome, as: :badge,
         colors: {running: :info, completed_with_errors: :warning}
 
+      field :target_label, label: "Target type"
+
       # The details tab, with the live panel above the fields.
       #
       # On the Display rather than the ShowPage: page-level

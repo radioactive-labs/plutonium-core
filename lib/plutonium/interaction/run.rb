@@ -126,6 +126,21 @@ module Plutonium
       # @return [Integer] recorded target failures, run-level entries included
       def error_count = errors_log.size
 
+      # Human, I18n-aware name of the target resource class — "Post", not
+      # "Blogging::Post" — for display (see RunDefinition). Falls back to the
+      # raw string for a target_type renamed/removed since this run was
+      # dispatched, rather than raising on an old row. nil for opaque
+      # (untargeted) work.
+      #
+      # @return [String, nil]
+      def target_label
+        return nil if target_type.nil?
+
+        target_type.constantize.model_name.human
+      rescue NameError
+        target_type
+      end
+
       # Runs have no name or title, so Labeling would fall back to
       # "Interaction run #12" — true but silent about the only thing that
       # distinguishes one row from the next.
