@@ -285,8 +285,21 @@ module Plutonium
 
         # Applies the failure policy to one target's failure.
         #
+        # Reloads a DIRTY run first. #advance! bumps progress_done and appends to
+        # handled_target_ids in memory BEFORE its save!, and a failed save leaves
+        # those values on the object without ever having written them. Recording
+        # the failure then reads them back as though they had landed, and
+        # Run#record_target_failures! adds its own increment on top — a
+        # one-target run finishes at progress_done 2 of 1, with the id twice in
+        # handled_target_ids.
+        #
+        # Costs nothing on the ordinary path: a run whose perform_on raised is
+        # clean, because the previous advance! saved it.
+        #
         # @return [Symbol, nil] :halt when the failure policy says to stop
         def fail_target(record, error)
+          run.reload if run.changed?
+
           raise BatchAbortedError, "target #{record.id} failed (#{error.message}); no targets were applied" if transactional?
 
           run.record_target_failure!(id: record.id, message: error.message)

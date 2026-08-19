@@ -439,6 +439,30 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal 2, run.progress_done
   end
 
+  test "a failed advance! does not get counted twice by the failure it causes" do
+    post = create_post!(user: @user, organization: @org)
+    run = create_run!(ContinuingScriptedRun, target_ids: [post.id])
+    ScriptedRun.script = nil
+
+    # advance! mutates progress_done/handled_target_ids in memory and THEN
+    # saves. When that save is what fails, the values never reached the row —
+    # so recording the failure must not read them back as though they had.
+    run.instance_variable_set(:@blown, false)
+    run.define_singleton_method(:save!) do |*args, **kw|
+      unless @blown
+        @blown = true
+        raise ActiveRecord::StatementInvalid, "connection lost"
+      end
+      super(*args, **kw)
+    end
+
+    run = execute!(run)
+
+    assert_equal 1, run.progress_done, "a one-target run cannot finish 2 of 1 done"
+    assert_equal [post.id.to_s], run.handled_target_ids
+    assert_equal 1, run.errors_log.size
+  end
+
   test "a run whose failure cannot be recorded does not escape into a job retry" do
     bad = create_post!(user: @user, organization: @org, title: "bad")
     run = create_run!(ScriptedRun, target_ids: [bad.id])
