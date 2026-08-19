@@ -50,6 +50,15 @@ class TypedDispatchInteraction < Plutonium::Resource::Interaction
   async { def perform = :ok }
 end
 
+# A file field carrying the SAME per-input options a wizard step reads —
+# LimitedUploader rejects anything over 1 KB.
+class UploaderDispatchInteraction < Plutonium::Resource::Interaction
+  attribute :import_file
+  input :import_file, as: :uppy, uploader: LimitedUploader
+
+  async { def perform = :ok }
+end
+
 class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveJob::TestHelper
@@ -278,6 +287,35 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     # Named where the author declared it, rather than surviving into a row whose
     # work fails deep in a job.
     assert_match(/cannot carry one of its attributes/, error.message)
+  end
+
+  def uploaded(bytes, name: "import.csv", type: "text/csv")
+    Rack::Test::UploadedFile.new(StringIO.new(bytes), type, original_filename: name)
+  end
+
+  test "a file field's uploader validations fail the form, not the run" do
+    interaction = UploaderDispatchInteraction.new(
+      view_context: @view_context, import_file: uploaded("x" * 2048)
+    )
+
+    refute interaction.valid?
+    assert_match(/too large/, Array(interaction.errors[:import_file]).join)
+    refute UploaderDispatchInteraction.call(
+      view_context: @view_context, import_file: uploaded("x" * 2048)
+    ).success?
+    # The point of validating here: without it the interaction validates clean,
+    # dispatches, and the author's rule surfaces as a run failure the submitter
+    # never sees, on a page they have already left.
+    assert_equal 0, Plutonium::Interaction::Async::Run.count
+  end
+
+  test "a file within the uploader's rules dispatches, staged through that uploader" do
+    outcome = UploaderDispatchInteraction.call(
+      view_context: @view_context, import_file: uploaded("small")
+    )
+
+    assert outcome.success?
+    assert_equal "small", outcome.value.reload.attachment(:import_file).download
   end
 
   test "the validated attributes land in options, without the records" do

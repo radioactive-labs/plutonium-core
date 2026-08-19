@@ -69,6 +69,12 @@ module Plutonium
           # A class_attribute rather than a class ivar so a subclass of a
           # dispatching interaction inherits the declaration.
           class_attribute :run_class, instance_accessor: false
+
+          # Guarded on run_class: an interaction that executes inline hands its
+          # uploads straight to a model, whose own attachment validations run as
+          # normal. Only a dispatched one stages, and only a staged token can be
+          # validated ahead of the work.
+          validate :validate_dispatch_attachments, if: -> { self.class.run_class }
         end
 
         # Prepended, rather than defined via +define_method+, so a `def
@@ -261,12 +267,32 @@ module Plutonium
         # reviving happens wherever the value is read, which may be a job.
         #
         # @return [Hash]
+        # Memoized, because #validate_dispatch_attachments needs the token too and
+        # staging twice would upload the file twice. Shrine validates an assigned
+        # CACHED file, so there is no validating an upload without first staging
+        # it — the wizard makes the same trade on every step submit.
         def stage_dispatch_attachments(options)
-          options.transform_values do |value|
-            next value unless dispatch_attachment?(value)
+          @stage_dispatch_attachments ||= options.to_h do |name, value|
+            next [name, value] unless dispatch_attachment?(value)
 
-            Plutonium::Attachments.stage_upload(value, backend: dispatch_attachment_backend)
+            [name, Plutonium::Attachments.stage_upload(value, **dispatch_attachment_options(name))]
           end
+        end
+
+        # A file field's +backend:+ and +uploader:+, read off the interaction's own
+        # +input+ declaration — the same options, in the same place, that a wizard
+        # step reads them from:
+        #
+        #   attribute :import_file
+        #   input :import_file, as: :uppy, uploader: Catalog::ImportUploader
+        #
+        # An interaction that declares no input for the attribute gets the
+        # configured backend and base Shrine, which is what it would have got
+        # before either option existed.
+        def dispatch_attachment_options(name)
+          options = self.class.defined_inputs.dig(name.to_sym, :options) || {}
+
+          {backend: options[:backend] || dispatch_attachment_backend, uploader: options[:uploader]}
         end
 
         # An uploaded file, or a collection of them. Detected by behaviour rather
@@ -283,6 +309,28 @@ module Plutonium
         def dispatch_attachment_backend
           Plutonium.configuration.async_interactions.attachment_backend ||
             Plutonium::Attachments.default_backend
+        end
+
+        # Runs each file attribute's uploader validations, so a file that breaks
+        # them fails the FORM.
+        #
+        # Without this the interaction validates clean, dispatches, and the run
+        # fails in a job — the author's `validate_max_size` reported as a run
+        # failure the submitter never sees, on a page they have already left.
+        # Wizards reject at the step for the same reason; this is the interaction's
+        # equivalent of that.
+        #
+        # No-op for ActiveStorage fields, and for uploaders declaring no rules.
+        def validate_dispatch_attachments
+          attributes.except("resource", "resources").each do |name, value|
+            next unless dispatch_attachment?(value)
+
+            messages = Plutonium::Attachments.validation_errors(
+              stage_dispatch_attachments(attributes.except("resource", "resources"))[name],
+              **dispatch_attachment_options(name)
+            )
+            messages.each { |message| errors.add(name, message) }
+          end
         end
 
         # Whether this interaction has a SUBJECT at all, decided by what it

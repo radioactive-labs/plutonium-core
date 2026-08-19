@@ -110,7 +110,9 @@ async do
 end
 ```
 
-`attachment(:key)` / `attachments(:key)` give `filename`, `content_type`, `url`, `open`, `download`. Backend: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
+`attachment(:key)` / `attachments(:key)` give `filename`, `content_type`, `url`, `open`, `download`.
+
+`backend:` and `uploader:` come off the attribute's `input` declaration, exactly as in a wizard step — `input :import_file, as: :uppy, uploader: Catalog::ImportUploader`. The uploader's `Attacher.validate` rules run when the interaction validates, so a bad file **fails the form** rather than surfacing as a run failure the submitter never sees. Where no `backend:` is declared: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
 
 ## Registering the Run resource
 

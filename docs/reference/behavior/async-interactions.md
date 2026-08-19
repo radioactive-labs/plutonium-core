@@ -104,7 +104,20 @@ end
 
 `attachment(:key)` returns one, `attachments(:key)` all of them for a multiple-file attribute, each exposing `filename`, `content_type`, `url`, `open` and `download`. Reviving reaches storage, which is why it isn't folded into `options` — the progress page reads options without wanting to.
 
-The backend is `config.async_interactions.attachment_backend`, falling back to `config.attachment_backend` and then to auto-detection (active_shrine loaded → Shrine, else ActiveStorage). Same layering wizards use.
+#### Per-field backend and uploader
+
+`backend:` and `uploader:` are read off the attribute's own `input` declaration — the same options, in the same place, a wizard step reads them from:
+
+```ruby
+attribute :import_file
+input :import_file, as: :uppy, uploader: Catalog::ImportUploader
+```
+
+The uploader's `Attacher.validate` rules run when the interaction validates, so a file that breaks them **fails the form** — the submitter sees a field error and nothing is dispatched. Without that the interaction would validate clean, dispatch, and the author's `validate_max_size` would surface as a run failure on a page the submitter has already left. A no-op for ActiveStorage fields and for uploaders declaring no rules.
+
+Validating means staging first, since Shrine validates an assigned cached file — so an upload that fails validation has still been written to the cache, and is reaped by the backend's own unattached-cache cleanup. Wizards make the same trade on every step submit.
+
+Where no `backend:` is declared: `config.async_interactions.attachment_backend`, then `config.attachment_backend`, then auto-detection (active_shrine loaded → Shrine, else ActiveStorage). Same layering wizards use.
 
 ### Sharing one run across interactions
 
