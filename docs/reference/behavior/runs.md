@@ -155,6 +155,19 @@ A 15 to 30 minute cadence is reasonable against the default 1-hour `stall_after`
 Resuming is based on elapsed time, not a true distributed lock. A run that is merely slow (not dead) and happens to cross `stall_after` gets resumed too.
 
 What bounds that is `lock_version`. Both the reaper's resume and the executor's claim bump it, so the worker that is still alive holds a version the row no longer has: its very next write raises `ActiveRecord::StaleObjectError`, and the executor treats that as "no longer mine" — it abandons the pass without marking the run failed and without overwriting the new worker's progress. Two things it deliberately does not do: it cannot interrupt a `perform_on` already in flight, so one target may be applied twice (once by each side), and it cannot roll back what the superseded worker already committed. Set `stall_after` well above this app's slowest legitimate run — the fence bounds the damage of a bad value, it does not make one free.
+
+### Queue-level concurrency
+
+On a queue that provides ActiveJob concurrency controls — Solid Queue does, whenever it is in the bundle — the run job also declares a per-run semaphore, and the reaper a global one:
+
+| Job | Key | Limit | Duration |
+|---|---|---|---|
+| `Runs::Job` | the run's id | 1 | `config.interaction_runs.stall_after` |
+| `Runs::ReapJob` | constant | 1 | Solid Queue's default |
+
+This is declared only when the method exists; Plutonium depends on no queue backend, and nothing above requires one.
+
+It is not a second copy of the claim. `claim!` can only *refuse* a duplicate delivery, and only once a worker is already running it — by which point a reaper's resume has re-entered `perform_on` for one target. The semaphore removes the race a step earlier: the second delivery waits instead of racing, so on a queue that supports it the double-applied target does not happen at all. Keying the run job on `stall_after` matters here — Solid Queue's 3-minute default would expire the semaphore mid-batch on any run big enough to be worth dispatching.
 :::
 
 ## Related

@@ -142,6 +142,8 @@ end
 
 15 to 30 minutes is a reasonable cadence against the default 1-hour `stall_after`. This is a time heuristic, not a true lease: a merely-slow (not dead) run that crosses `stall_after` gets resumed too. `lock_version` bounds what that costs — the resumed row's version no longer matches the still-live worker's, so that worker stops at its next write instead of racing the new one. It does **not** interrupt an in-flight `perform_on` (one target can be applied twice, once by each side), and it does not roll back what the superseded worker already committed. Set `stall_after` well above the app's slowest legitimate run.
 
+On Solid Queue (or any queue providing ActiveJob concurrency controls) this is tightened further, automatically and with no configuration: `Runs::Job` declares a semaphore of 1 keyed on the run id, held for `stall_after`, and `ReapJob` one global sweep at a time. A second delivery of the same run then waits rather than racing, so the one target the fence cannot save from a double apply is not applied twice either. Nothing declares it when the queue does not support it.
+
 ## Full reference
 
 `docs/reference/behavior/runs.md` has the complete write-up: authorization re-derivation in detail, outcome-vs-state, everything above with more context.

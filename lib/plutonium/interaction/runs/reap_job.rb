@@ -23,6 +23,19 @@ module Plutonium
       # Hosts must schedule this themselves (a periodic job / cron task),
       # same as Wizard::SweepJob.
       class ReapJob < ActiveJob::Base
+        # One sweep at a time, when the host's queue offers a semaphore (see
+        # Runs::Job, which explains the conditional and why only +key+/+to+ are
+        # passed). A scheduled sweep that outlives its own interval would
+        # otherwise overlap the next tick and rescan the same rows; the atomic
+        # UPDATE in #reap keeps that CORRECT, but it is still two workers doing
+        # one job's work.
+        #
+        # A constant key: every sweep is the same sweep, so they queue behind
+        # each other globally rather than per row.
+        if respond_to?(:limits_concurrency)
+          limits_concurrency to: 1, key: ->(*) { "sweep" }
+        end
+
         def perform(stall_after: Plutonium.configuration.interaction_runs.stall_after)
           threshold = stall_after.ago
 
