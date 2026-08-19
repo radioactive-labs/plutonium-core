@@ -110,6 +110,15 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     def enqueue(*) = raise "queue is down"
 
     def enqueue_at(*) = raise "queue is down"
+
+    # Part of the adapter contract since Rails 7.2, and ActiveJob calls it
+    # before enqueuing. Without it the double raises NoMethodError instead of
+    # the "queue is down" this test is about — which passed on Rails 8, where
+    # the call is guarded, and failed only on Rails 7.
+    #
+    # false, not true: true defers the enqueue to after the transaction commits,
+    # and the failure this test asserts is the one raised at the call site.
+    def enqueue_after_transaction_commit? = false
   end
 
   class MockViewContext
