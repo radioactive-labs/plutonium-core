@@ -4,7 +4,7 @@ require "test_helper"
 require "rails/generators/test_case"
 require "generators/pu/async_interactions/install_generator"
 
-class RunsInstallGeneratorTest < Rails::Generators::TestCase
+class AsyncInteractionsInstallGeneratorTest < Rails::Generators::TestCase
   include GeneratorTestHelper
 
   tests Pu::AsyncInteractions::InstallGenerator
@@ -100,18 +100,49 @@ end
 # app's own config/routes.rb — a TRACKED file every other test in the suite
 # shares. available_portals always offers "main_app" regardless of
 # destination_root (it reads Rails.root), so --dest=main_app still resolves.
-class RunsInstallMainAppGeneratorTest < Rails::Generators::TestCase
+class AsyncInteractionsInstallMainAppGeneratorTest < Rails::Generators::TestCase
   tests Pu::AsyncInteractions::InstallGenerator
   destination File.expand_path("../../tmp/pu_runs_install_main_app", __dir__)
   setup :prepare_destination
 
   setup do
-    FileUtils.mkdir_p(File.join(destination_root, "config"))
+    FileUtils.mkdir_p(File.join(destination_root, "config/initializers"))
     File.write(File.join(destination_root, "config/routes.rb"), <<~RUBY)
       Rails.application.routes.draw do
         # register resources above.
       end
     RUBY
+    # Every real app has one — pu:core:install writes it — and the generator
+    # flips config.async_interactions.enabled in it.
+    File.write(File.join(destination_root, "config/initializers/plutonium.rb"), <<~RUBY)
+      Plutonium.configure do |config|
+        # Configure plutonium above.
+      end
+    RUBY
+  end
+
+  test "enables the subsystem" do
+    run_generator ["--dest=main_app"]
+
+    # The flag gates the MIGRATION as well as the behaviour, so an install that
+    # only wired the portal left the table uncreated and every dispatch raising.
+    assert_file "config/initializers/plutonium.rb" do |content|
+      assert_match(/config\.async_interactions\.enabled = true/, content)
+    end
+  end
+
+  test "--skip-portal enables without connecting a portal" do
+    run_generator ["--skip-portal"]
+
+    assert_file "config/initializers/plutonium.rb" do |content|
+      assert_match(/config\.async_interactions\.enabled = true/, content)
+    end
+    # A fresh app has no portal worth naming yet; main_app is the wrong home for
+    # a run resource in an app about to grow portals.
+    assert_no_file "app/controllers/async_runs_controller.rb"
+    assert_file "config/routes.rb" do |content|
+      refute_match(/register_resource/, content)
+    end
   end
 
   test "supports --dest=main_app" do

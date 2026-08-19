@@ -11,7 +11,7 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 
 ## 🚨 Critical (read first)
 
-- **Enable the subsystem first.** `config.wizards.enabled = true` in `config/initializers/plutonium.rb`, then `rails db:migrate`. It's `false` by default — without it there's no `plutonium_wizard_sessions` table.
+- **Enable the subsystem first.** `rails g pu:wizards:install` flips `config.wizards.enabled = true` and schedules `SweepJob`; then `rails db:migrate`. (By hand: the flag in `config/initializers/plutonium.rb`.) It's `false` by default — without it there's no `plutonium_wizard_sessions` table.
 - **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a **raised exception** — a non-bang `false` advances the wizard and silently loses data. Or call `fail!("msg")`.
 - **`data` is step-keyed:** `data.<step>.<field>` (e.g. `data.company.name`, `data.plan.plan`). Each step has its own typed sub-object, so two steps may share a field name without colliding. Read a field through its owning step everywhere (`condition:`/`on_submit`/`execute`).
 - **`condition:` lambdas must be nil-safe.** They run against `data` at every transition, including before their deciding step is filled (value is `nil`). `-> { data.plan.plan == "pro" }` ✓; `-> { data.plan.plan.upcase == "PRO" }` raises on nil ✗.
@@ -20,7 +20,7 @@ For the field/input vocabulary used inside a step, load [[plutonium-resource]]. 
 - **No generator.** Author wizards by hand, like interactions. They live in `app/wizards/`.
 - **A wizard is a presentation object** — it's built with `view_context:`, so anything reachable only through `execute`/`on_submit` is reachable only from a wizard run. Logic may *start* there; the **second caller** (a job, an API, a rake task, the console) is the trigger to move it onto the **model**. See [[plutonium-behavior]] › Part 3 › Where the logic goes.
 - **Wizards are portal- *or* main-app-hosted.** A `register_wizard` mount inside a portal inherits the portal's auth/scoping/layout. A `register_wizard` mount on the **main app** runs standalone — for an **authenticated** main-app wizard you MUST define your own `::WizardsController` (include `Plutonium::Wizard::Controller` + your auth concern); the synthesized fallback is **bare (no auth)**. Resource-anchored (`wizard` macro) wizards always run embedded on the resource controller.
-- **Schedule `SweepJob`** (a periodic job/cron). It reaps abandoned/expired sessions — always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
+- **Schedule `SweepJob`** — `pu:wizards:install` does it for you when Solid Queue is in the bundle; otherwise add a periodic job/cron yourself. It reaps abandoned/expired sessions — always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
 
 ---
 
@@ -54,7 +54,7 @@ The ASK gate resolves the *design*; this confirms the app can actually *run* it.
 | Anchor model exists & reachable | Read the model an `anchored` wizard runs against | Missing/unreadable anchor ⇒ 404 / `NotAnchoredError` |
 | Host portal exists & its scoping | Read the portal engine (`scope_to_entity`?) + its real module name | Tenant folds into run identity; a guessed portal name breaks `register_wizard` |
 | Guest-flow prereqs | AR encryption keys if `encrypt_data`; no `concurrency_key`/`one_time` with `anonymous` | First write raises otherwise |
-| `on_submit` ⇒ SweepJob scheduled | The recurring-job config | Abandoned mid-flow records pile up forever |
+| `on_submit` ⇒ SweepJob scheduled | grep `config/recurring.yml` for `sweep_abandoned_wizards` | Abandoned mid-flow records pile up forever |
 
 **Don't author the class until `config.wizards.enabled` is confirmed and the anchor/target model + portal are read.** Until then, any class you show is provisional — say so; don't present a guessed field/column mapping as final.
 
