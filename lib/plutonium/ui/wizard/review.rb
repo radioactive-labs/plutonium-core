@@ -120,7 +120,7 @@ module Plutonium
               if fields.any?
                 render SummaryDisplay.new(
                   Plutonium::Wizard::AttachmentData.wrap(step_data(step), step),
-                  fields:, inputs: step.inputs
+                  fields:, inputs: step.inputs, wizard: @runner.wizard
                 )
               end
               render_structured(step) if structured.any?

@@ -14,9 +14,12 @@ class Plutonium::UI::Wizard::SummaryDisplayTest < ActiveSupport::TestCase
 
   # Build a component far enough to call resolve_choice_label: it only reads
   # `object` and the passed input_options.
-  def label_for(value, options)
+  # `**options` rather than a positional hash plus a `wizard:` kwarg: with both,
+  # Ruby binds a caller's bare `choices:` to the keywords instead of the hash.
+  def label_for(value, **options)
     component = Component.allocate
     component.instance_variable_set(:@object, Struct.new(:sex).new(value))
+    component.instance_variable_set(:@wizard, options.delete(:wizard))
     component.send(:resolve_choice_label, :sex, options)
   end
 
@@ -70,18 +73,6 @@ class Plutonium::UI::Wizard::SummaryDisplayTest < ActiveSupport::TestCase
     assert_equal "Admin, Member", label_for(%w[admin member], choices: choices)
   end
 
-  # `choices:` is author-supplied and materialising it runs their code. The
-  # run-dependent arity-1 proc the wizard DSL documents raises ArgumentError under
-  # the mapper's bare `call` — that must degrade this ONE field to its raw value,
-  # not 500 the review page, which is the user's only way out of the flow.
-  test "a raising choices proc degrades to the raw value instead of 500ing" do
-    assert_equal "gold", label_for("gold", choices: ->(form) { form.available_tiers })
-  end
-
-  test "a raising choices proc degrades every element of a multi-select" do
-    assert_equal "gold, silver", label_for(%w[gold silver], choices: -> { raise "boom" })
-  end
-
   # A proc'd collection is materialised ONCE per field. Building the mapper per
   # value would re-run the author's query for every element of a multi-select.
   test "the choices collection is materialised once, not once per value" do
@@ -93,5 +84,31 @@ class Plutonium::UI::Wizard::SummaryDisplayTest < ActiveSupport::TestCase
 
     assert_equal "Admin, Member", label_for(%w[admin member], choices: choices)
     assert_equal 1, calls, "the choices proc must run once per field, not once per selected value"
+  end
+
+  # --- proc arity, matching the form -----------------------------------------
+
+  # The form resolves every proc'd input option by arity
+  # (Form::Resource#call_option_proc), and Form::Wizard documents
+  # `choices: ->(form) { form.wizard… }` as a supported declaration. The summary
+  # must apply the same rule — handing the raw proc to the mapper bare-`call`s it,
+  # which raises ArgumentError on a declaration the step form renders happily.
+  test "an arity-1 choices proc is handed the summary, which stands in for the form" do
+    wizard = Struct.new(:tiers).new([["Gold", "gold"], ["Silver", "silver"]])
+    choices = ->(form) { form.wizard.tiers }
+
+    assert_equal "Gold", label_for("gold", choices: choices, wizard: wizard)
+  end
+
+  test "an arity-1 choices proc can read the staged data off the summary" do
+    choices = ->(form) { [[form.object.sex.upcase, "gold"]] }
+
+    assert_equal "GOLD", label_for("gold", choices: choices)
+  end
+
+  # A genuinely broken `choices:` is an application error and must surface as one,
+  # not degrade to a raw value with a log line nobody reads.
+  test "a raising choices proc propagates" do
+    assert_raises(RuntimeError) { label_for("gold", choices: -> { raise "boom" }) }
   end
 end

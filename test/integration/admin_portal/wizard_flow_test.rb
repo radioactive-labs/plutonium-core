@@ -349,7 +349,8 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   test "review resolves choice labels for both hash and pair-list choices" do
     advance_through("identity")
     post "#{tbase}/details", params: {
-      wizard: {note: "hi", contact_pref: "email", contact_email: "a@example.com", referral_source: "2"},
+      wizard: {note: "hi", contact_pref: "email", contact_email: "a@example.com", referral_source: "2",
+               contact_window: "am"},
       _direction: "next"
     }
     follow_redirect!
@@ -362,6 +363,10 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
       "a [label, value] pair choice should summarise as its label, not the id"
     refute_match(/>\s*2\s*</, card,
       "the raw pair-list value should not leak into the summary")
+    # An `->(form) { … }` choices proc resolves here too — the summary stands in
+    # for the form, exactly as the step form's own arity rule does.
+    assert_includes card, "Mornings",
+      "an arity-1 choices proc should resolve on the review page, not raise"
   end
 
   # The auto-summary is the INCOMPLETE-state (review-and-fix) view: it lists the

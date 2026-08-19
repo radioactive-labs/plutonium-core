@@ -74,7 +74,17 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     attribute :referral_source, :string
     input :referral_source, as: :select,
       choices: [["A friend", 1], ["Search engine", 2], ["Conference", 3]]
+
+    # An arity-1 `choices:` — the "hand me the form" shape Form::Wizard documents
+    # (`->(form) { form.wizard… }`). The step form resolves it by arity; the review
+    # summary must apply the SAME rule, or a declaration that renders fine on the
+    # form raises the moment the user reaches review.
+    attribute :contact_window, :string
+    input :contact_window, as: :select, choices: ->(form) { form.wizard.contact_windows }
   end
+
+  # Read by the arity-1 `choices:` above, on the form and on the review summary.
+  def contact_windows = [["Mornings", "am"], ["Afternoons", "pm"]]
 
   # Import a field surface from a model (KitchenSink) — its <Model>Definition
   # overlays input styling (a :text/textarea and a :select), so we can assert the
