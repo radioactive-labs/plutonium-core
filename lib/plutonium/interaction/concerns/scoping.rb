@@ -88,6 +88,19 @@ module Plutonium
           view_context.controller.helpers.current_parent
         end
 
+        # The association a nested child hangs off its parent, e.g. :comments for
+        # /posts/5/comments.
+        #
+        # Reached through +helpers+ and unrescued for the same reasons as
+        # #current_parent above, and always answered together with it: a policy
+        # needs both halves or neither (Policy#default_relation_scope raises on
+        # one alone).
+        #
+        # @return [Symbol, nil] nil on a non-nested route
+        def current_nested_association
+          view_context.controller.helpers.current_nested_association
+        end
+
         # Returns the entity record from the controller (portal multi-tenancy).
         #
         # nil means the portal has NO tenant, never that one could not be found.

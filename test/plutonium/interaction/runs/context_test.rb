@@ -335,11 +335,43 @@ class Plutonium::Interaction::Runs::ContextTest < ActiveSupport::TestCase
     assert_match(/no initiator/, error.message)
   end
 
-  test "rebuilds the (user, entity_scope) pair Plutonium authorizes on" do
+  test "rebuilds everything Plutonium authorizes on, parent included" do
     context = Context.new(create_run!(target_ids: [@post.id]))
 
-    assert_equal({user: @user, entity_scope: @org}, context.policy_context)
+    assert_equal({user: @user, entity_scope: @org, parent: nil, parent_association: nil},
+      context.policy_context)
     assert_equal Blogging::Post, context.target_class
+  end
+
+  test "a nested run rebuilds the parent pair its scope depends on" do
+    run = create_run!(target_ids: [@post.id], parent: @org, parent_association: "posts")
+
+    context = Context.new(run)
+
+    assert_equal @org, context.policy_context[:parent]
+    # Symbolized: the column is a string, but Policy#default_relation_scope
+    # hands it to reflect_on_association, which wants the symbol.
+    assert_equal :posts, context.policy_context[:parent_association],
+      "Policy#default_relation_scope cannot take its parent branch without both halves, " \
+      "and falls through to the WIDER entity scope instead"
+  end
+
+  test "a parent deleted since dispatch refuses the run rather than widening it" do
+    # A dangling reference, matching the deleted-tenant test above: it is the
+    # state a hard delete leaves behind, and it avoids the parent's FK graph.
+    run = create_run!(target_ids: [@post.id], parent: @org, parent_association: "posts")
+    run.update_columns(parent_type: "Organization", parent_id: "999999999")
+    run.reload
+
+    assert_nil run.parent, "precondition: the association must resolve to nil"
+
+    error = assert_raises(Context::UnresolvableError) { Context.new(run) }
+
+    # nil parent reads as "not a nested dispatch", which silently hands the run
+    # entity scoping in place of parent scoping — the same fail-open shape the
+    # deleted-tenant check exists for.
+    assert_match(/was nested under/, error.message)
+    assert_match(/refusing to resolve targets without its parent/, error.message)
   end
 
   test "builds the target's policy with the rebuilt context" do

@@ -108,6 +108,13 @@ module Plutonium
         # @return [ActiveRecord::Base, nil] the tenant, or nil for an unscoped portal
         def scoped_entity = run.scoped_entity
 
+        # @return [ActiveRecord::Base, nil] the nested-route parent, nil if the
+        #   dispatch was not nested
+        def parent = run.parent
+
+        # @return [Symbol, nil] the association the child hangs off {#parent}
+        def parent_association = run.parent_association&.to_sym
+
         # @return [Class, nil]
         def target_class = resolve_constant(run.target_type, "target_type")
 
@@ -132,10 +139,26 @@ module Plutonium
         # @return [Symbol, nil] nil only for opaque (untargeted) work
         def policy_action = run.policy_action&.to_sym
 
-        # The pair Plutonium authorizes on, shaped for a policy constructor.
+        # What Plutonium authorizes on, shaped for a policy constructor.
+        #
+        # The parent pair is included for the same reason the tenant is. Omitting
+        # it does not merely lose a filter: Policy#default_relation_scope picks
+        # ONE branch, parent or entity, so a nested run without its parent
+        # re-derives targets under the TENANT where dispatch used the parent.
+        # Wider, and not the scope the initiator was shown. It also leaves a host
+        # predicate reading +parent+ looking at nil — legal, since the policy
+        # declares it optional, so instead of raising it quietly answers false
+        # and every target is refused for a reason that names the predicate
+        # rather than the missing context.
+        #
+        # Both halves or neither: Policy#default_relation_scope raises on one
+        # without the other, and the migration records them together.
         #
         # @return [Hash]
-        def policy_context = {user: initiator, entity_scope: scoped_entity}
+        def policy_context
+          {user: initiator, entity_scope: scoped_entity,
+           parent: parent, parent_association: parent_association}
+        end
 
         # Builds the policy for a record or resource class, under the run's
         # namespace.
@@ -286,6 +309,7 @@ module Plutonium
         def refresh_subjects!
           run.reload_initiator
           run.reload_scoped_entity if run.scoped_entity_type
+          run.reload_parent if run.parent_type
           verify_subjects!
           # Stamped only after the check passes: a refresh that raised did not
           # produce a usable answer, so nothing may treat it as a fresh read.
@@ -341,6 +365,16 @@ module Plutonium
             raise UnresolvableError,
               "run #{run.id} was scoped to #{run.scoped_entity_type}##{run.scoped_entity_id}, " \
               "which no longer exists; refusing to resolve targets without a tenant"
+          end
+
+          # Same distinction one more time, and the same direction of failure. A
+          # deleted parent nils the association, which reads as "not a nested
+          # dispatch" — and that hands the run entity scoping instead of parent
+          # scoping, which is wider.
+          if run.parent_type.present? && run.parent.nil?
+            raise UnresolvableError,
+              "run #{run.id} was nested under #{run.parent_type}##{run.parent_id}, " \
+              "which no longer exists; refusing to resolve targets without its parent"
           end
         end
 

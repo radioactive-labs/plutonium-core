@@ -59,6 +59,28 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       # String.
       t.string :authorization_namespace
 
+      # The nested-route PARENT, and the association the child hangs off it —
+      # /orgs/1/posts/5/comments dispatches with (Post#5, :comments).
+      #
+      # Both halves or neither: Policy#default_relation_scope raises on one
+      # without the other, and it is the pair that names a scope.
+      #
+      # The third input the policy authorizes on, alongside the initiator and the
+      # tenant. Without it, Policy#default_relation_scope cannot take its parent
+      # branch and falls through to entity scoping — so perform time re-derives
+      # targets under the TENANT where dispatch used the parent, a wider answer
+      # than the one the initiator was shown. It also leaves any host predicate
+      # reading +parent+ looking at nil, which refuses every target with a reason
+      # that names the wrong thing.
+      #
+      # Nullable, like scoped_entity and for the same reason: most routes are not
+      # nested. nil means "not a nested dispatch", NOT "parent unknown" — see
+      # Runs::Context#verify_subjects!, which tells those apart by the _type
+      # column exactly as it does for the tenant.
+      t.string :parent_type
+      t.string :parent_id
+      t.string :parent_association
+
       # The policy actually resolved AT DISPATCH, e.g.
       # "StorefrontPortal::Blogging::PostPolicy". An ASSERTION, not an input: at
       # perform time the policy is resolved from the namespace above and then

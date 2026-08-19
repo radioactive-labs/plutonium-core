@@ -48,10 +48,11 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   class MockController
     HELPER_METHODS = %i[
       current_user current_scoped_entity resource_class current_interactive_action resource_url_for
+      current_parent current_nested_association
     ].freeze
 
     attr_writer :current_user, :current_scoped_entity, :resource_class, :current_interactive_action,
-      :scoped_to_entity
+      :scoped_to_entity, :current_parent, :current_nested_association
     attr_accessor :authorization_namespace
 
     def initialize
@@ -64,7 +65,8 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     private
 
-    attr_reader :current_user, :resource_class, :current_interactive_action
+    attr_reader :current_user, :resource_class, :current_interactive_action,
+      :current_parent, :current_nested_association
 
     # Stands in for the real helper, whose entity-prefixed output is pinned by
     # OrgPortal::DispatchRedirectTest against a live controller — the assertion
@@ -185,6 +187,24 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_equal({"notify_users" => true}, run.options,
       "the targets are re-resolved through the policy scope at perform time; " \
       "a serialized copy in options would be both stale and unauthorized")
+  end
+
+  test "a nested dispatch records the parent and the association it hangs off" do
+    @controller.current_parent = @post
+    @controller.current_nested_association = :comments
+
+    run = dispatch_bulk.value
+
+    assert_equal @post, run.parent
+    # A string, because the column is one — Context symbolizes it back.
+    assert_equal "comments", run.parent_association
+  end
+
+  test "a dispatch from a non-nested route records no parent" do
+    run = dispatch_bulk.value
+
+    assert_nil run.parent_type, "nil means NOT NESTED, and must not read as a lost parent"
+    assert_nil run.parent_association
   end
 
   test "dispatch records the policy it actually resolved, not an inferred name" do

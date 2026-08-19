@@ -48,6 +48,9 @@ module Plutonium
       class_attribute :failure_policy, instance_writer: false, default: :halt
 
       belongs_to :initiator, polymorphic: true
+      # The nested-route parent, present only for a dispatch from a nested
+      # route. Paired with +parent_association+; see the migration.
+      belongs_to :parent, polymorphic: true, optional: true
       # Nullable by design: only entity-scoped portals have a tenant. nil means
       # "no tenant", NOT "tenant unknown".
       belongs_to :scoped_entity, polymorphic: true, optional: true

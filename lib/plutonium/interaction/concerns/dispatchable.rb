@@ -130,6 +130,11 @@ module Plutonium
           run = self.class.run_class.create!(
             initiator: current_user,
             scoped_entity: current_scoped_entity,
+            # The third policy input. Recorded here rather than re-derived at
+            # perform time, where there is no controller to ask — same reason
+            # the tenant and the namespace are on the row.
+            parent: current_parent,
+            parent_association: current_nested_association&.to_s,
             options: dispatch_options,
             **dispatch_target_attributes
           )
