@@ -7,9 +7,9 @@ require "test_helper"
 class StorefrontPortal::AsyncRunBannerTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
-  setup { Plutonium::Interaction::AsyncRun.delete_all }
+  setup { Plutonium::Interaction::Async::Run.delete_all }
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   test "an in-progress run targeting a shared resource does not break an index in a portal without Run registered" do
     post_record = create_post!(status: :published)

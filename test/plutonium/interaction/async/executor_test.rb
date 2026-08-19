@@ -7,7 +7,7 @@ require "test_helper"
 # branch, and a script hook lets a single test say exactly what perform_on does.
 # The dummy app's runs (TestPostRun and friends) are deliberately inert, which is
 # what the context tests needed and what these tests cannot use.
-class ScriptedRun < Plutonium::Interaction::AsyncRun
+class ScriptedRun < Plutonium::Interaction::Async::Run
   # Shared with the subclasses below — a class variable, which is what we want:
   # only one of them is exercised per test, and assertions can always read
   # ScriptedRun.
@@ -30,7 +30,7 @@ class TransactionalScriptedRun < ScriptedRun
   on_failure :transactional
 end
 
-class OpaqueScriptedRun < Plutonium::Interaction::AsyncRun
+class OpaqueScriptedRun < Plutonium::Interaction::Async::Run
   cattr_accessor :calls
 
   def perform = self.class.calls += 1
@@ -38,7 +38,7 @@ end
 
 # perform_on declared PRIVATE — a natural idiom for work only the executor is
 # meant to invoke. It must be detected and performed exactly like a public one.
-class PrivateWorkRun < Plutonium::Interaction::AsyncRun
+class PrivateWorkRun < Plutonium::Interaction::Async::Run
   cattr_accessor :performed
 
   private
@@ -46,9 +46,9 @@ class PrivateWorkRun < Plutonium::Interaction::AsyncRun
   def perform_on(record) = self.class.performed << record.id
 end
 
-# Long opaque work that beats while it runs — the shape AsyncRun#heartbeat! exists
+# Long opaque work that beats while it runs — the shape Run#heartbeat! exists
 # for, since the executor writes nothing between the claim and finish!.
-class BeatingOpaqueRun < Plutonium::Interaction::AsyncRun
+class BeatingOpaqueRun < Plutonium::Interaction::Async::Run
   cattr_accessor :beats
   cattr_accessor :before_beat
 
@@ -62,20 +62,20 @@ end
 
 # Implements NEITHER perform nor perform_on: an author error that must surface
 # as a diagnosis, not a NoMethodError from inside the loop.
-class UndefinedWorkRun < Plutonium::Interaction::AsyncRun
+class UndefinedWorkRun < Plutonium::Interaction::Async::Run
 end
 
-class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
+class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveSupport::Testing::TimeHelpers
 
-  Executor = Plutonium::Interaction::AsyncRuns::Executor
-  Job = Plutonium::Interaction::AsyncRuns::Job
+  Executor = Plutonium::Interaction::Async::Executor
+  Job = Plutonium::Interaction::Async::Job
 
   # No transactional rollback in this suite (test_helper never loads
   # rails/test_help), so rows and class-level state persist between tests.
   setup do
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     ScriptedRun.script = nil
     ScriptedRun.performed = []
@@ -86,7 +86,7 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
     @other_org = create_organization!
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   # touch? is unconditionally true in Blogging::PostPolicy, so tests that are not
   # about permission do not accidentally depend on one.
@@ -319,7 +319,7 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
     assert_equal "completed", run.state
     # Mid-perform the run was three hours past its claim. Without the beats it
     # would have been reaped and — having no handled_target_ids — re-run whole.
-    assert_empty Plutonium::Interaction::AsyncRun.stalled(before: 2.hours.from_now).to_a
+    assert_empty Plutonium::Interaction::Async::Run.stalled(before: 2.hours.from_now).to_a
   end
 
   test "a superseded opaque run abandons at its heartbeat, not after the work" do
@@ -329,7 +329,7 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
     # after #claim!, which reloads and would otherwise hand this executor the
     # new version.
     BeatingOpaqueRun.before_beat = lambda do |r|
-      Plutonium::Interaction::AsyncRun.where(id: r.id).update_all("lock_version = lock_version + 1")
+      Plutonium::Interaction::Async::Run.where(id: r.id).update_all("lock_version = lock_version + 1")
     end
 
     run = execute!(run)
@@ -365,8 +365,8 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
     good = create_post!(user: @user, organization: @org, title: "good")
     run = create_run!(ContinuingScriptedRun, target_ids: [good.id])
 
-    Executor.new(Plutonium::Interaction::AsyncRun.find(run.id)).call
-    Executor.new(Plutonium::Interaction::AsyncRun.find(run.id)).call
+    Executor.new(Plutonium::Interaction::Async::Run.find(run.id)).call
+    Executor.new(Plutonium::Interaction::Async::Run.find(run.id)).call
 
     assert_equal [good.id], ScriptedRun.performed, "the second delivery must not repeat the first's work"
     assert_equal "completed", run.reload.state
@@ -401,9 +401,9 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
 
     # A reaper judged this run stalled and a second executor claimed it while the
     # first target was in flight — which is exactly what bumping lock_version
-    # looks like from in here (see AsyncRuns::ReapJob#reap and Executor#claim!).
+    # looks like from in here (see Async::ReapJob#reap and Executor#claim!).
     ScriptedRun.script = lambda do |_|
-      Plutonium::Interaction::AsyncRun.where(id: run.id).update_all("lock_version = lock_version + 1")
+      Plutonium::Interaction::Async::Run.where(id: run.id).update_all("lock_version = lock_version + 1")
     end
 
     execute!(run)
@@ -572,10 +572,10 @@ class Plutonium::Interaction::AsyncRuns::ExecutorTest < ActiveSupport::TestCase
   end
 
   test "the job takes its queue from configuration" do
-    Plutonium.configuration.async_runs.queue = :low
+    Plutonium.configuration.async_interactions.queue = :low
     assert_equal "low", Job.new.queue_name
   ensure
-    Plutonium.configuration.async_runs.queue = :default
+    Plutonium.configuration.async_interactions.queue = :default
   end
 
   private

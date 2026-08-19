@@ -13,7 +13,7 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
   setup do
     # No transactional rollback in this suite, and runs are not in
     # IntegrationTestHelper#cleanup_test_data.
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @admin = create_admin!
     login_as_admin(@admin)
@@ -21,7 +21,7 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     @user = create_user!
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   def run_path(run) = "/admin/async_runs/#{run.to_param}"
 
@@ -94,7 +94,7 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
 
   # progress_done counts targets DISPOSITIONED, not applied: a refused
   # :halt/:transactional batch finishes with progress_done > 0 having performed
-  # nothing (AsyncRuns::Executor#refuse_partial_batch). Rendered alone it reads as
+  # nothing (Async::Executor#refuse_partial_batch). Rendered alone it reads as
   # work done, so it is only ever rendered next to the state.
   test "progress is rendered paired with the run's state" do
     run = create_run!(state: "failed", progress_total: 3, progress_done: 3)
@@ -108,7 +108,7 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
   end
 
   # A :continue run that could not apply some of its targets ends as
-  # `completed` by design (AsyncRuns::Executor#perform_targets). If the page shows
+  # `completed` by design (Async::Executor#perform_targets). If the page shows
   # that as a clean success, a run that under-applied becomes indistinguishable
   # from one that did everything.
   test "a completed run with recorded failures does not render as a clean success" do

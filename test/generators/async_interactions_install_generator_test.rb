@@ -7,7 +7,7 @@ require "generators/pu/runs/install_generator"
 class RunsInstallGeneratorTest < Rails::Generators::TestCase
   include GeneratorTestHelper
 
-  tests Pu::AsyncRuns::InstallGenerator
+  tests Pu::AsyncInteractions::InstallGenerator
   destination Rails.root
 
   def setup
@@ -36,16 +36,16 @@ class RunsInstallGeneratorTest < Rails::Generators::TestCase
     FileUtils.rm_rf(@portal_dir) if @portal_dir&.exist?
   end
 
-  test "registers Plutonium::Interaction::AsyncRun and generates a controller with controller_for" do
+  test "registers Plutonium::Interaction::Async::Run and generates a controller with controller_for" do
     run_generator ["--dest=test_portal"]
 
     assert_file "packages/test_portal/config/routes.rb" do |content|
-      assert_match(/register_resource ::Plutonium::Interaction::AsyncRun$/, content)
+      assert_match(/register_resource ::Plutonium::Interaction::Async::Run$/, content)
     end
 
     assert_file "packages/test_portal/app/controllers/test_portal/async_runs_controller.rb" do |content|
       assert_match(/class TestPortal::AsyncRunsController/, content)
-      assert_match(/controller_for ::Plutonium::Interaction::AsyncRun/, content)
+      assert_match(/controller_for ::Plutonium::Interaction::Async::Run/, content)
     end
   end
 
@@ -54,7 +54,7 @@ class RunsInstallGeneratorTest < Rails::Generators::TestCase
     run_generator ["--dest=test_portal"]
 
     assert_file "packages/test_portal/config/routes.rb" do |content|
-      assert_equal 1, content.scan("register_resource ::Plutonium::Interaction::AsyncRun").size
+      assert_equal 1, content.scan("register_resource ::Plutonium::Interaction::Async::Run").size
     end
   end
 
@@ -67,7 +67,7 @@ class RunsInstallGeneratorTest < Rails::Generators::TestCase
 
     assert_file "config/recurring.yml" do |content|
       assert_match(/reap_stalled_async_runs:/, content)
-      assert_match(/class: Plutonium::Interaction::AsyncRuns::ReapJob/, content)
+      assert_match(/class: Plutonium::Interaction::Async::ReapJob/, content)
       assert_match(/schedule: "every 15 minutes"/, content)
     end
   end
@@ -101,7 +101,7 @@ end
 # shares. available_portals always offers "main_app" regardless of
 # destination_root (it reads Rails.root), so --dest=main_app still resolves.
 class RunsInstallMainAppGeneratorTest < Rails::Generators::TestCase
-  tests Pu::AsyncRuns::InstallGenerator
+  tests Pu::AsyncInteractions::InstallGenerator
   destination File.expand_path("../../tmp/pu_runs_install_main_app", __dir__)
   setup :prepare_destination
 
@@ -118,12 +118,12 @@ class RunsInstallMainAppGeneratorTest < Rails::Generators::TestCase
     run_generator ["--dest=main_app"]
 
     assert_file "config/routes.rb" do |content|
-      assert_match(/register_resource ::Plutonium::Interaction::AsyncRun$/, content)
+      assert_match(/register_resource ::Plutonium::Interaction::Async::Run$/, content)
     end
 
     assert_file "app/controllers/async_runs_controller.rb" do |content|
       assert_match(/class AsyncRunsController < ::ResourceController/, content)
-      assert_match(/controller_for ::Plutonium::Interaction::AsyncRun/, content)
+      assert_match(/controller_for ::Plutonium::Interaction::Async::Run/, content)
       refute_match(/Concerns::Controller/, content)
     end
 

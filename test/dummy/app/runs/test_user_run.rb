@@ -6,6 +6,6 @@
 # through the `relation_scope do |relation|` MACRO, which is the form ActionPolicy
 # actually dispatches to. A policy that defines `def relation_scope(relation)` as
 # a plain instance method never has it called, so it cannot demonstrate anything.
-class TestUserRun < Plutonium::Interaction::AsyncRun
+class TestUserRun < Plutonium::Interaction::Async::Run
   def perform_on(record) = record
 end

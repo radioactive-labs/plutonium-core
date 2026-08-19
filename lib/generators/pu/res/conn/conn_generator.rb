@@ -84,7 +84,7 @@ module Pu
         expected_parent_controller || "#{app_namespace}::ResourceController"
       end
 
-      # A gem-provided resource (e.g. Plutonium::Interaction::AsyncRun) already has
+      # A gem-provided resource (e.g. Plutonium::Interaction::Async::Run) already has
       # a working policy that subclasses Plutonium::Resource::Policy directly
       # rather than through this host's ::ResourcePolicy — so the `< ::ResourcePolicy`
       # check alone misses it and would regenerate a redundant, shadowing-prone

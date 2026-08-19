@@ -2,7 +2,7 @@
 
 module Plutonium
   module Interaction
-    module AsyncRuns
+    module Async
       # Rebuilds the authorization context a run was dispatched under, and
       # resolves the run's targets through it.
       #
@@ -232,7 +232,7 @@ module Plutonium
 
           key = target_class.primary_key
           # unhandled_target_ids, not target_ids: a run resumed after an
-          # interruption (see AsyncRuns::ReapJob) must not redo — or re-record as
+          # interruption (see Async::ReapJob) must not redo — or re-record as
           # missing/unauthorized — targets it already dispositioned.
           ids = run.unhandled_target_ids
           found = authorized_scope.where(key => ids).index_by { |record| record.public_send(key).to_s }
@@ -266,7 +266,7 @@ module Plutonium
         # acting on a record. {#targets} answers this once, up front, which makes
         # a good operator report but is only true as of that moment; a run over
         # thousands of records acts long after it. Re-asking per record right
-        # before {AsyncRun#perform_on} is the caller's decision, and this is the
+        # before {Run#perform_on} is the caller's decision, and this is the
         # sanctioned way to do it — reimplementing it would duplicate the
         # +send_with_report+ behaviour below rather than share it.
         #

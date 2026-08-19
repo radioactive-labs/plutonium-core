@@ -14,7 +14,7 @@ class AdminPortal::AsyncRunBannerTest < ActionDispatch::IntegrationTest
   setup do
     # No transactional rollback in this suite, and runs are not in
     # IntegrationTestHelper#cleanup_test_data.
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @admin = create_admin!
     login_as_admin(@admin)
@@ -22,7 +22,7 @@ class AdminPortal::AsyncRunBannerTest < ActionDispatch::IntegrationTest
     @user = create_user!
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   POSTS_INDEX = "/admin/blogging/posts"
 

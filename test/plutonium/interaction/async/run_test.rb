@@ -2,21 +2,21 @@
 
 require "test_helper"
 
-class TestArchiveRun < Plutonium::Interaction::AsyncRun
+class TestArchiveRun < Plutonium::Interaction::Async::Run
   def perform_on(record) = record
 end
 
-class TestOpaqueRun < Plutonium::Interaction::AsyncRun
+class TestOpaqueRun < Plutonium::Interaction::Async::Run
   def perform = :done
 end
 
-class TestPrivateWorkRun < Plutonium::Interaction::AsyncRun
+class TestPrivateWorkRun < Plutonium::Interaction::Async::Run
   private
 
   def perform_on(record) = record
 end
 
-class TestContinuingRun < Plutonium::Interaction::AsyncRun
+class TestContinuingRun < Plutonium::Interaction::Async::Run
   on_failure :continue
 end
 
@@ -30,7 +30,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
   # This suite has no transactional rollback (test_helper doesn't load
   # rails/test_help), so rows persist across tests — the scope assertions below
   # count rows globally and would see everything an earlier test left behind.
-  setup { Plutonium::Interaction::AsyncRun.delete_all }
+  setup { Plutonium::Interaction::Async::Run.delete_all }
 
   def build(klass = TestArchiveRun, **attrs)
     klass.new(initiator: (@initiator ||= create_user!), **attrs)
@@ -71,7 +71,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
 
     # Re-read through a fresh instance: nothing may depend on a caller
     # remembering to flush.
-    reloaded = Plutonium::Interaction::AsyncRun.find(run.id)
+    reloaded = Plutonium::Interaction::Async::Run.find(run.id)
     assert_equal ["boom", "bang"], reloaded.errors_log.map { |e| e["message"] }
     assert_equal [1, 2], reloaded.errors_log.map { |e| e["target_id"] }
   end
@@ -93,7 +93,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     assert_equal version, run.lock_version,
       "touch and update! both bump the lock column; that would invalidate the " \
       "executor's own record and make its next save! raise against a row nobody took"
-    assert_empty Plutonium::Interaction::AsyncRun.stalled(before: 1.hour.ago).to_a,
+    assert_empty Plutonium::Interaction::Async::Run.stalled(before: 1.hour.ago).to_a,
       "the whole point: a beating run is no longer stalled"
   end
 
@@ -103,12 +103,12 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     # A reaper judged this run stalled and a second executor claimed it, while
     # this worker was still inside a long perform. For opaque work this beat is
     # the ONLY place it can find out before finish!.
-    Plutonium::Interaction::AsyncRun.where(id: run.id).update_all("lock_version = lock_version + 1")
+    Plutonium::Interaction::Async::Run.where(id: run.id).update_all("lock_version = lock_version + 1")
 
     error = assert_raises(ActiveRecord::StaleObjectError) { run.heartbeat! }
 
     assert_equal run.id, error.record.id,
-      "AsyncRuns::Executor#superseded? reads the errored record to tell this apart " \
+      "Async::Executor#superseded? reads the errored record to tell this apart " \
       "from an author's own lost update"
   end
 
@@ -132,7 +132,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     run = build(options: {"title" => "hi", "count" => 2, "flags" => ["a"]})
     run.save!
 
-    reloaded = Plutonium::Interaction::AsyncRun.find(run.id)
+    reloaded = Plutonium::Interaction::Async::Run.find(run.id)
     assert_equal({"title" => "hi", "count" => 2, "flags" => ["a"]}, reloaded.options)
     assert_equal [], reloaded.errors_log
     assert_instance_of TestArchiveRun, reloaded
@@ -152,7 +152,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     assert_equal :continue, TestDeepContinuingRun.failure_policy
     assert_equal :continue, build(TestDeepContinuingRun).failure_policy
     # A subclass declaring a policy must not leak it back onto the base.
-    assert_equal :halt, Plutonium::Interaction::AsyncRun.failure_policy
+    assert_equal :halt, Plutonium::Interaction::Async::Run.failure_policy
   end
 
   test "fail! records the message and stamps finished_at" do
@@ -193,7 +193,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     failed = build(state: "failed")
     [pending, running, completed, failed].each(&:save!)
 
-    selected = Plutonium::Interaction::AsyncRun.in_progress.pluck(:id)
+    selected = Plutonium::Interaction::Async::Run.in_progress.pluck(:id)
     assert_equal [pending.id, running.id].sort, selected.sort
     refute_includes selected, completed.id
     refute_includes selected, failed.id
@@ -205,9 +205,9 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     untargeted = build
     [posts, tags, untargeted].each(&:save!)
 
-    assert_equal [posts.id], Plutonium::Interaction::AsyncRun.for_target(Blogging::Post).pluck(:id)
-    assert_equal [posts.id], Plutonium::Interaction::AsyncRun.for_target("Blogging::Post").pluck(:id)
-    assert_equal [tags.id], Plutonium::Interaction::AsyncRun.for_target(Blogging::Tag).pluck(:id)
+    assert_equal [posts.id], Plutonium::Interaction::Async::Run.for_target(Blogging::Post).pluck(:id)
+    assert_equal [posts.id], Plutonium::Interaction::Async::Run.for_target("Blogging::Post").pluck(:id)
+    assert_equal [tags.id], Plutonium::Interaction::Async::Run.for_target(Blogging::Tag).pluck(:id)
   end
 
   test "for_target composes with in_progress, as the index banner uses it" do
@@ -216,7 +216,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     other = build(target_type: "Blogging::Tag", state: "running")
     [wanted, done, other].each(&:save!)
 
-    scoped = Plutonium::Interaction::AsyncRun.for_target(Blogging::Post).in_progress
+    scoped = Plutonium::Interaction::Async::Run.for_target(Blogging::Post).in_progress
     assert_equal [wanted.id], scoped.pluck(:id)
   end
 
@@ -226,7 +226,7 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     stale_but_done = build(state: "completed", last_activity_at: 2.hours.ago)
     [stale, fresh, stale_but_done].each(&:save!)
 
-    selected = Plutonium::Interaction::AsyncRun.stalled(before: 1.hour.ago).pluck(:id)
+    selected = Plutonium::Interaction::Async::Run.stalled(before: 1.hour.ago).pluck(:id)
 
     assert_equal [stale.id], selected
   end
@@ -236,20 +236,20 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     assert run.invalid?
     assert_includes run.errors[:state], "is not included in the list"
 
-    Plutonium::Interaction::AsyncRun::STATES.each do |state|
+    Plutonium::Interaction::Async::Run::STATES.each do |state|
       assert build(state: state).valid?, "expected #{state} to be a valid state"
     end
   end
 
   test "on_failure rejects an unknown policy at class-definition time" do
     error = assert_raises(ArgumentError) do
-      Class.new(Plutonium::Interaction::AsyncRun) { on_failure :continu }
+      Class.new(Plutonium::Interaction::Async::Run) { on_failure :continu }
     end
     assert_match(/unknown failure policy/, error.message)
 
     # All three policies the executor implements must be accepted.
-    Plutonium::Interaction::AsyncRun::FAILURE_POLICIES.each do |policy|
-      klass = Class.new(Plutonium::Interaction::AsyncRun) { on_failure policy }
+    Plutonium::Interaction::Async::Run::FAILURE_POLICIES.each do |policy|
+      klass = Class.new(Plutonium::Interaction::Async::Run) { on_failure policy }
       assert_equal policy, klass.failure_policy
     end
   end

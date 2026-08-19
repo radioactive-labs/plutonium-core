@@ -8,20 +8,20 @@ Async interactions are experimental — the DSL and behavior may change in a fut
 
 ## 🚨 Critical
 
-- **Opt-in and migrated.** `config.async_runs.enabled = true` + `rails db:migrate` (off by default).
+- **Opt-in and migrated.** `config.async_interactions.enabled = true` + `rails db:migrate` (off by default).
 - **`dispatches_to` replaces `execute` entirely.** The interaction still validates, authorizes and renders its form exactly as before; only what happens on submit changes.
 - **Permissions are re-derived at perform time, never replayed from dispatch.** A run created a job, not a snapshot of "what the initiator could do then." See [Authorization](#authorization-is-re-derived-not-replayed).
-- **The run itself is a resource.** Register it once per portal (`rails g pu:async_runs:install --dest=your_portal`); its show page IS its progress page.
-- **A stalled run does not silently replay.** `pu:async_runs:install` schedules `AsyncRuns::ReapJob` when Solid Queue is in the bundle; on any other scheduler you must add it yourself, or a crash mid-batch leaves the row `"running"` forever. See [Stalled runs](#stalled-runs-and-reapjob).
+- **The run itself is a resource.** Register it once per portal (`rails g pu:async_interactions:install --dest=your_portal`); its show page IS its progress page.
+- **A stalled run does not silently replay.** `pu:async_interactions:install` schedules `Async::ReapJob` when Solid Queue is in the bundle; on any other scheduler you must add it yourself, or a crash mid-batch leaves the row `"running"` forever. See [Stalled runs](#stalled-runs-and-reapjob).
 
 ## Enabling
 
 ```ruby
 # config/initializers/plutonium.rb
 Plutonium.configure do |config|
-  config.async_runs.enabled = true
-  config.async_runs.queue = :default        # ActiveJob queue for run jobs
-  config.async_runs.stall_after = 1.hour     # see Stalled runs, below
+  config.async_interactions.enabled = true
+  config.async_interactions.queue = :default        # ActiveJob queue for run jobs
+  config.async_interactions.stall_after = 1.hour     # see Stalled runs, below
 end
 ```
 
@@ -33,10 +33,10 @@ The flag gates the migration, not just the behaviour: while it is off the runs m
 
 ## Declaring a run
 
-A run is an STI subclass of `Plutonium::Interaction::AsyncRun`. Define `perform_on(record)` for **targeted** work (bulk/record actions, one call per target) or `perform` for **opaque** work (resource actions with no subject):
+A run is an STI subclass of `Plutonium::Interaction::Async::Run`. Define `perform_on(record)` for **targeted** work (bulk/record actions, one call per target) or `perform` for **opaque** work (resource actions with no subject):
 
 ```ruby
-class Blogging::ArchivePostsRun < Plutonium::Interaction::AsyncRun
+class Blogging::ArchivePostsRun < Plutonium::Interaction::Async::Run
   on_failure :continue   # :halt (default) | :continue | :transactional
 
   def perform_on(post)
@@ -77,7 +77,7 @@ An opaque (untargeted) run records none of the target/policy columns: there's no
 
 ## Authorization is re-derived, not replayed
 
-The job has no controller, no request, no `current_user`. `AsyncRuns::Context` rebuilds the authorization triple from the row and re-checks it from scratch. It does not trust anything the dispatching request already decided:
+The job has no controller, no request, no `current_user`. `Async::Context` rebuilds the authorization triple from the row and re-checks it from scratch. It does not trust anything the dispatching request already decided:
 
 - The **scope** check re-runs `Post.associated_with(tenant)` style filtering — or, for a nested dispatch, the parent's association. A target that left the tenant or the parent, or was deleted, between dispatch and perform is reported `missing`/`unauthorized`, never silently skipped.
 - The **predicate** check re-asks the policy the same question dispatch asked (`policy_action`), per target, immediately before `perform_on`, not once up front. An initiator whose permission was revoked mid-run stops applying to the remaining targets.
@@ -102,26 +102,26 @@ The progress page, the table's `outcome` column, and the running banner all rend
 Register it once per portal so its show page becomes routable:
 
 ```bash
-rails g pu:async_runs:install --dest=admin_portal
+rails g pu:async_interactions:install --dest=admin_portal
 ```
 
 ```ruby
 # packages/admin_portal/config/routes.rb
-register_resource ::Plutonium::Interaction::AsyncRun
+register_resource ::Plutonium::Interaction::Async::Run
 ```
 
 ```ruby
 # packages/admin_portal/app/controllers/admin_portal/async_runs_controller.rb
 class AdminPortal::AsyncRunsController < AdminPortal::ResourceController
-  controller_for ::Plutonium::Interaction::AsyncRun
+  controller_for ::Plutonium::Interaction::Async::Run
 
   include AdminPortal::Concerns::Controller
 end
 ```
 
-`controller_for` is required: the controller's name doesn't match `Run`'s real, namespaced class, so inference can't find it on its own. No policy/definition files are generated: `Plutonium::Interaction::AsyncRunPolicy`/`AsyncRunDefinition` already resolve automatically (Rails matches `Plutonium::Interaction::AsyncRunDefinition` by the exact class name, and ActionPolicy's own lookup finds `AsyncRunPolicy` the same way).
+`controller_for` is required: the controller's name doesn't match `Run`'s real, namespaced class, so inference can't find it on its own. No policy/definition files are generated: `Plutonium::Interaction::Async::RunPolicy`/`Async::RunDefinition` already resolve automatically (Rails matches `Plutonium::Interaction::Async::RunDefinition` by the exact class name, and ActionPolicy's own lookup finds `AsyncRunPolicy` the same way).
 
-If Solid Queue is in the bundle, this also schedules `AsyncRuns::ReapJob` in `config/recurring.yml` (`--schedule` to override the default `every 15 minutes`) — see [Stalled runs and ReapJob](#stalled-runs-and-reapjob). Idempotent, so running the generator against a second portal doesn't duplicate the entry.
+If Solid Queue is in the bundle, this also schedules `Async::ReapJob` in `config/recurring.yml` (`--schedule` to override the default `every 15 minutes`) — see [Stalled runs and ReapJob](#stalled-runs-and-reapjob). Idempotent, so running the generator against a second portal doesn't duplicate the entry.
 
 A registered run resource gets, for free:
 
@@ -132,17 +132,17 @@ A registered run resource gets, for free:
 
 ## Stalled runs and ReapJob
 
-A worker crash mid-batch (or a job the queue silently drops) leaves a run `"running"` (or `"pending"`) forever; nothing else ever revisits it on its own. `Plutonium::Interaction::AsyncRuns::ReapJob` finds runs with no recorded activity (`last_activity_at`, falling back to `created_at` for a run never even picked up) past `config.async_runs.stall_after`, and resumes them: resets to `"pending"` and re-enqueues.
+A worker crash mid-batch (or a job the queue silently drops) leaves a run `"running"` (or `"pending"`) forever; nothing else ever revisits it on its own. `Plutonium::Interaction::Async::ReapJob` finds runs with no recorded activity (`last_activity_at`, falling back to `created_at` for a run never even picked up) past `config.async_interactions.stall_after`, and resumes them: resets to `"pending"` and re-enqueues.
 
 This is safe, not a replay. The executor tracks `handled_target_ids` (every target already dispositioned, success or failure) and resumes only the remainder, so a target already applied before the interruption is not redone.
 
-`rails g pu:async_runs:install` schedules this for you when Solid Queue is in the bundle:
+`rails g pu:async_interactions:install` schedules this for you when Solid Queue is in the bundle:
 
 ```yaml
 # config/recurring.yml (Solid Queue)
 production:
   reap_stalled_async_runs:
-    class: Plutonium::Interaction::AsyncRuns::ReapJob
+    class: Plutonium::Interaction::Async::ReapJob
     schedule: every 15 minutes
 ```
 
@@ -151,7 +151,7 @@ Without Solid Queue — or for another scheduler like `whenever` — add it your
 ```ruby
 # whenever gem
 every 15.minutes do
-  runner "Plutonium::Interaction::AsyncRuns::ReapJob.perform_later"
+  runner "Plutonium::Interaction::Async::ReapJob.perform_later"
 end
 ```
 
@@ -172,7 +172,7 @@ What bounds that is `lock_version`. Both the reaper's resume and the executor's 
 Call `heartbeat!` from inside such work:
 
 ```ruby
-class Billing::ReissueInvoicesRun < Plutonium::Interaction::AsyncRun
+class Billing::ReissueInvoicesRun < Plutonium::Interaction::Async::Run
   def perform
     invoices.each_slice(500) do |slice|
       reissue(slice)
@@ -192,8 +192,8 @@ On a queue that provides ActiveJob concurrency controls — Solid Queue does, wh
 
 | Job | Key | Limit | Duration |
 |---|---|---|---|
-| `AsyncRuns::Job` | the run's id | 1 | `config.async_runs.stall_after` |
-| `AsyncRuns::ReapJob` | constant | 1 | Solid Queue's default |
+| `Async::Job` | the run's id | 1 | `config.async_interactions.stall_after` |
+| `Async::ReapJob` | constant | 1 | Solid Queue's default |
 
 This is declared only when the method exists; Plutonium depends on no queue backend, and nothing above requires one.
 

@@ -27,9 +27,9 @@ module Plutonium
     # @return [Plutonium::Wizard::Configuration] wizard subsystem configuration
     attr_reader :wizards
 
-    # @return [Plutonium::Interaction::AsyncRuns::Configuration] persisted interaction
+    # @return [Plutonium::Interaction::Async::Configuration] persisted interaction
     #   runs configuration — gates the runs subsystem and its migrations
-    attr_reader :async_runs
+    attr_reader :async_interactions
 
     # @return [Float] the current defaults version
     attr_reader :defaults_version
@@ -105,7 +105,7 @@ module Plutonium
       @defaults_version = nil
       @assets = AssetConfiguration.new
       @wizards = Plutonium::Wizard::Configuration.new
-      @async_runs = Plutonium::Interaction::AsyncRuns::Configuration.new
+      @async_interactions = Plutonium::Interaction::Async::Configuration.new
 
       @development = parse_boolean_env("PLUTONIUM_DEV")
       @cache_discovery = !Rails.env.development?

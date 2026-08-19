@@ -2,13 +2,13 @@
 
 module Plutonium
   module Interaction
-    module AsyncRuns
+    module Async
       # Resumes runs stuck pending/running long past their last recorded
       # activity — a worker crash mid-batch, or a job the queue silently
       # dropped.
       #
       # Resetting to "pending" and re-enqueuing is safe, not a replay: the
-      # executor resumes from AsyncRun#unhandled_target_ids, so a target already
+      # executor resumes from Run#unhandled_target_ids, so a target already
       # dispositioned before the interruption is not redone.
       #
       # This is still a heuristic on TIME, not a true lease: a run that is merely
@@ -24,7 +24,7 @@ module Plutonium
       # same as Wizard::SweepJob.
       class ReapJob < ActiveJob::Base
         # One sweep at a time, when the host's queue offers a semaphore (see
-        # AsyncRuns::Job, which explains the conditional and why only +key+/+to+ are
+        # Async::Job, which explains the conditional and why only +key+/+to+ are
         # passed). A scheduled sweep that outlives its own interval would
         # otherwise overlap the next tick and rescan the same rows; the atomic
         # UPDATE in #reap keeps that CORRECT, but it is still two workers doing
@@ -36,10 +36,10 @@ module Plutonium
           limits_concurrency to: 1, key: ->(*) { "sweep" }
         end
 
-        def perform(stall_after: Plutonium.configuration.async_runs.stall_after)
+        def perform(stall_after: Plutonium.configuration.async_interactions.stall_after)
           threshold = stall_after.ago
 
-          AsyncRun.stalled(before: threshold).find_each { |run| reap(run, threshold) }
+          Run.stalled(before: threshold).find_each { |run| reap(run, threshold) }
         end
 
         private
@@ -51,11 +51,11 @@ module Plutonium
         # Bumping lock_version is what makes resuming a merely-SLOW run safe
         # rather than merely unlikely. The executor that is still alive holds the
         # old value, so its very next write raises ActiveRecord::StaleObjectError
-        # and it abandons the pass (see AsyncRuns::Executor#call) instead of racing
+        # and it abandons the pass (see Async::Executor#call) instead of racing
         # the new one and silently losing whichever progress write landed second.
         # It does not un-apply work already committed — this bounds the damage of
         # a bad stall_after, it does not make one free.
-        # last_activity_at is stamped because AsyncRun.stalled matches on it: leaving
+        # last_activity_at is stamped because Run.stalled matches on it: leaving
         # it at its old value means the row this sweep just resumed is STILL
         # stalled, so the next sweep reaps it again, and the one after that —
         # bumping lock_version and re-enqueuing every interval until a worker
@@ -67,7 +67,7 @@ module Plutonium
         # here lately. It buys the resumed job a full stall_after to be picked
         # up before this sweep concludes anything again.
         def reap(run, threshold)
-          resumed = AsyncRun.stalled(before: threshold).where(id: run.id)
+          resumed = Run.stalled(before: threshold).where(id: run.id)
             .update_all(["state = ?, last_activity_at = ?, lock_version = lock_version + 1",
               "pending", Time.current]) == 1
           return unless resumed

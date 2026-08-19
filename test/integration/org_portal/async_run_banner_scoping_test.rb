@@ -10,7 +10,7 @@ class OrgPortal::AsyncRunBannerScopingTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
   setup do
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @org = create_organization!
     @other_org = create_organization!
@@ -20,7 +20,7 @@ class OrgPortal::AsyncRunBannerScopingTest < ActionDispatch::IntegrationTest
     login_as_user(@user)
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   def posts_index = "/org/#{@org.to_param}/blogging/posts"
 

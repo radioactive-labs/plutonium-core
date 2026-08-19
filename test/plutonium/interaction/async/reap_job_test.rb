@@ -2,20 +2,20 @@
 
 require "test_helper"
 
-class Plutonium::Interaction::AsyncRuns::ReapJobTest < ActiveSupport::TestCase
+class Plutonium::Interaction::Async::ReapJobTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveJob::TestHelper
 
-  ReapJob = Plutonium::Interaction::AsyncRuns::ReapJob
-  Job = Plutonium::Interaction::AsyncRuns::Job
+  ReapJob = Plutonium::Interaction::Async::ReapJob
+  Job = Plutonium::Interaction::Async::Job
 
   setup do
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
     @user = create_user!
     @org = create_organization!
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   def create_run!(**attrs)
     TestPostRun.create!(initiator: @user, scoped_entity: @org, **attrs)
@@ -62,7 +62,7 @@ class Plutonium::Interaction::AsyncRuns::ReapJobTest < ActiveSupport::TestCase
   test "reaping bumps lock_version so the still-live worker cannot keep writing" do
     run = create_run!(state: "running", started_at: 2.hours.ago, last_activity_at: 2.hours.ago)
     # The worker that is still alive holds the row as it was before the reap.
-    live_worker_copy = Plutonium::Interaction::AsyncRun.find(run.id)
+    live_worker_copy = Plutonium::Interaction::Async::Run.find(run.id)
 
     ReapJob.perform_now(stall_after: 1.hour)
 
@@ -79,7 +79,7 @@ class Plutonium::Interaction::AsyncRuns::ReapJobTest < ActiveSupport::TestCase
     ReapJob.perform_now(stall_after: 1.hour)
     version_after_first = run.reload.lock_version
 
-    refute Plutonium::Interaction::AsyncRun.stalled(before: 1.hour.ago).exists?(id: run.id),
+    refute Plutonium::Interaction::Async::Run.stalled(before: 1.hour.ago).exists?(id: run.id),
       "a run the sweep just resumed is not still stalled"
 
     ReapJob.perform_now(stall_after: 1.hour)

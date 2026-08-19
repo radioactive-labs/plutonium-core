@@ -2,18 +2,18 @@
 
 require "test_helper"
 
-class Plutonium::Interaction::AsyncRuns::ContextTest < ActiveSupport::TestCase
+class Plutonium::Interaction::Async::ContextTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveSupport::Testing::TimeHelpers
 
-  Context = Plutonium::Interaction::AsyncRuns::Context
+  Context = Plutonium::Interaction::Async::Context
 
   # This suite has NO transactional rollback — test_helper.rb never loads
   # rails/test_help — so rows persist across tests. Every assertion below is
   # pinned to ids this test created, which is what makes that survivable; the
   # runs table is still cleared because other suites leave rows in it.
   setup do
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @user = create_user!
     @org = create_organization!
@@ -22,7 +22,7 @@ class Plutonium::Interaction::AsyncRuns::ContextTest < ActiveSupport::TestCase
     @other_post = create_post!(user: @user, organization: @other_org, title: "Other tenant")
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   # touch? is the default predicate because Blogging::PostPolicy#touch? is
   # unconditionally true — it keeps every test that is NOT about permission from

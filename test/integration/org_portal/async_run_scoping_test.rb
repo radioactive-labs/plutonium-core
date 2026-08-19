@@ -14,7 +14,7 @@ class OrgPortal::AsyncRunScopingTest < ActionDispatch::IntegrationTest
   include Plutonium::Testing::AuthHelpers
 
   setup do
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @org = create_organization!
     @other = create_organization!
@@ -26,7 +26,7 @@ class OrgPortal::AsyncRunScopingTest < ActionDispatch::IntegrationTest
     @theirs = TestPostRun.create!(initiator: @user, scoped_entity: @other, state: "running")
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   def prefix = "/org/#{@org.to_param}"
 

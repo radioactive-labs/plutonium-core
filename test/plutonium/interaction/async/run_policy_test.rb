@@ -6,13 +6,13 @@ require "test_helper"
 #
 # Two questions, both of which fail OPEN if they are wrong: which runs a user
 # may see, and what they may do to one.
-class Plutonium::Interaction::AsyncRunPolicyTest < ActiveSupport::TestCase
+class Plutonium::Interaction::Async::RunPolicyTest < ActiveSupport::TestCase
   include IntegrationTestHelper
 
   setup do
     # No transactional rollback in this suite, and the runs table is not in
     # IntegrationTestHelper#cleanup_test_data, so clear it explicitly.
-    Plutonium::Interaction::AsyncRun.delete_all
+    Plutonium::Interaction::Async::Run.delete_all
 
     @org = create_organization!
     @other = create_organization!
@@ -24,15 +24,15 @@ class Plutonium::Interaction::AsyncRunPolicyTest < ActiveSupport::TestCase
     @unscoped = TestPostRun.create!(initiator: @user)
   end
 
-  teardown { Plutonium::Interaction::AsyncRun.delete_all }
+  teardown { Plutonium::Interaction::Async::Run.delete_all }
 
   def policy_for(entity_scope:)
-    Plutonium::Interaction::AsyncRunPolicy.new(Plutonium::Interaction::AsyncRun, user: @user, entity_scope: entity_scope)
+    Plutonium::Interaction::Async::RunPolicy.new(Plutonium::Interaction::Async::Run, user: @user, entity_scope: entity_scope)
   end
 
   def scope_for(entity_scope:)
     policy_for(entity_scope: entity_scope)
-      .apply_scope(Plutonium::Interaction::AsyncRun.all, type: :active_record_relation)
+      .apply_scope(Plutonium::Interaction::Async::Run.all, type: :active_record_relation)
   end
 
   test "a run is visible only inside its own entity scope" do
@@ -83,7 +83,7 @@ class Plutonium::Interaction::AsyncRunPolicyTest < ActiveSupport::TestCase
     assert_includes readable, :outcome
   end
 
-  # target_label humanizes the raw class name (see AsyncRun#target_label) — the
+  # target_label humanizes the raw class name (see Run#target_label) — the
   # column itself is not what the show page/table should render.
   test "target_label is readable in place of the raw target_type column" do
     readable = policy_for(entity_scope: @org).permitted_attributes_for_read

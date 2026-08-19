@@ -51,7 +51,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::Task
   register_resource ::ShrineDoc
   register_resource ::Chore
-  register_resource ::Plutonium::Interaction::AsyncRun
+  register_resource ::Plutonium::Interaction::Async::Run
   # register resources above.
 end
 

@@ -3,7 +3,7 @@
 require_relative "../lib/plutonium_generators"
 
 module Pu
-  module AsyncRuns
+  module AsyncInteractions
     class InstallGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
       include PlutoniumGenerators::Concerns::ResourceRegistration
@@ -12,8 +12,8 @@ module Pu
       source_root File.expand_path("templates", __dir__)
 
       desc(
-        "Connect Plutonium::Interaction::AsyncRun to a portal, so its show page becomes routable\n\n" \
-        "e.g. rails g pu:async_runs:install --dest=admin_portal"
+        "Connect Plutonium::Interaction::Async::Run to a portal, so its show page becomes routable\n\n" \
+        "e.g. rails g pu:async_interactions:install --dest=admin_portal"
       )
 
       class_option :schedule, type: :string, default: "every 15 minutes",
@@ -24,7 +24,7 @@ module Pu
 
         template "app/controllers/async_runs_controller.rb", controller_path
 
-        register_resource_in_routes(routes_path, "Plutonium::Interaction::AsyncRun")
+        register_resource_in_routes(routes_path, "Plutonium::Interaction::Async::Run")
 
         schedule_reap_job
       rescue => e
@@ -63,14 +63,14 @@ module Pu
             log :skip, "ReapJob not scheduled (config/recurring.yml missing or already scheduled)"
           end
         else
-          log :info, "solid_queue not found — schedule Plutonium::Interaction::AsyncRuns::ReapJob yourself (see docs)"
+          log :info, "solid_queue not found — schedule Plutonium::Interaction::Async::ReapJob yourself (see docs)"
         end
       end
 
       def reap_job_task_yaml
         <<~YAML
           reap_stalled_async_runs:
-            class: Plutonium::Interaction::AsyncRuns::ReapJob
+            class: Plutonium::Interaction::Async::ReapJob
             schedule: "#{options[:schedule]}"
         YAML
       end

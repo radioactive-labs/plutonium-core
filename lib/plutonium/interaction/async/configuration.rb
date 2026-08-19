@@ -2,8 +2,8 @@
 
 module Plutonium
   module Interaction
-    module AsyncRuns
-      # Configuration for persisted interaction runs. Mirrors
+    module Async
+      # Configuration for async interactions. Mirrors
       # Plutonium::Wizard::Configuration: `enabled` gates both the subsystem and
       # its migrations (see Plutonium::Migrations).
       class Configuration

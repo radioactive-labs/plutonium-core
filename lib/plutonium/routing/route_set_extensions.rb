@@ -155,7 +155,7 @@ module Plutonium
             # model_name.collection, not resource.to_s.pluralize.underscore:
             # the latter reads the RAW class name, ignoring a model that pins
             # its own model_name to escape it — which is exactly what
-            # Plutonium::Interaction::AsyncRun does, precisely so a namespace this
+            # Plutonium::Interaction::Async::Run does, precisely so a namespace this
             # deep inside the gem's own module doesn't leak into every URL and
             # controller path. For every resource that does NOT override
             # model_name, .collection derives the identical path .pluralize.underscore

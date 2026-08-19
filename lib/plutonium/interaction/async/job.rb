@@ -2,7 +2,7 @@
 
 module Plutonium
   module Interaction
-    module AsyncRuns
+    module Async
       # The ActiveJob entry point for a run.
       #
       # The only thing that crosses the process boundary is the run's id. Every
@@ -13,7 +13,7 @@ module Plutonium
       class Job < ActiveJob::Base
         # A block, not a value: the queue is read at enqueue time, so a host that
         # configures it in an initializer is not racing this class's load order.
-        queue_as { Plutonium.configuration.async_runs.queue }
+        queue_as { Plutonium.configuration.async_interactions.queue }
 
         # A per-run semaphore, when the host's queue offers one. Solid Queue
         # mixes ActiveJob::ConcurrencyControls into ActiveJob::Base whenever it
@@ -24,7 +24,7 @@ module Plutonium
         # duplicate delivery, and only once it is already running: the queue has
         # spent a worker slot to find out, and — worse — a resume that the reaper
         # started while the original worker is still mid-batch has by then
-        # already re-entered perform_on for one target (see AsyncRuns::ReapJob, and
+        # already re-entered perform_on for one target (see Async::ReapJob, and
         # the lock_version fence that bounds but cannot prevent that). A
         # semaphore removes the race one step earlier: the second delivery waits
         # rather than racing, so on a queue that supports this the double-applied
@@ -53,11 +53,11 @@ module Plutonium
           # resume the run anyway. Solid Queue's 3-minute default would expire
           # mid-batch on any run big enough to be worth dispatching, handing the
           # exclusivity away while the work is still going.
-          def self.concurrency_duration = Plutonium.configuration.async_runs.stall_after
+          def self.concurrency_duration = Plutonium.configuration.async_interactions.stall_after
         end
 
         def perform(run_id)
-          run = Plutonium::Interaction::AsyncRun.find_by(id: run_id)
+          run = Plutonium::Interaction::Async::Run.find_by(id: run_id)
 
           # A run deleted between enqueue and perform is not an error — there is
           # simply nothing to do, and raising would only retry until the queue

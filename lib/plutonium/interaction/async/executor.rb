@@ -2,11 +2,11 @@
 
 module Plutonium
   module Interaction
-    module AsyncRuns
+    module Async
       # Performs a run: resolves its targets, calls the subclass's work, keeps
       # progress current, and applies the declared failure policy.
       #
-      # Separate from {Plutonium::Interaction::AsyncRun} so the record stays a record,
+      # Separate from {Plutonium::Interaction::Async::Run} so the record stays a record,
       # and separate from {Job} so the whole thing can be driven synchronously in
       # a test or a console.
       #
@@ -35,8 +35,8 @@ module Plutonium
       # #call only ever STARTS from "pending" (see #claim!) — a run already
       # "running" is left alone, since two concurrent executors on the same
       # row would race. A run interrupted mid-batch (crash, dropped job) can
-      # still be resumed safely: reset it to "pending" (see AsyncRuns::ReapJob)
-      # and re-enqueue. Context#targets resolves only AsyncRun#unhandled_target_ids,
+      # still be resumed safely: reset it to "pending" (see Async::ReapJob)
+      # and re-enqueue. Context#targets resolves only Run#unhandled_target_ids,
       # so a target already dispositioned before the interruption is not
       # redone.
       class Executor
@@ -86,7 +86,7 @@ module Plutonium
         rescue StandardError, NotImplementedError => e
           # Another executor owns this run now: ReapJob judged it stalled, reset
           # it to pending, and a second job claimed it — bumping lock_version out
-          # from under us (see AsyncRuns::ReapJob, #claim! and #superseded?).
+          # from under us (see Async::ReapJob, #claim! and #superseded?).
           #
           # Returning without touching the row is the whole point. Every write
           # this executor still holds is stale by definition, so recording a
@@ -158,7 +158,7 @@ module Plutonium
         # form of update_all whenever the model locks (see
         # ActiveRecord::Relation#update_all) — a hash here would still work, but
         # by an invisible rule that the string form does not follow, and
-        # AsyncRun#heartbeat! depends on knowing which form does what.
+        # Run#heartbeat! depends on knowing which form does what.
         #
         # Reloaded rather than assign_attributes'd: the row now holds a
         # lock_version this instance never saw, and every later write depends on
@@ -184,7 +184,7 @@ module Plutonium
 
         def build_context = Context.new(run)
 
-        # send, not a plain call: AsyncRun#targeted? detects a non-public perform_on,
+        # send, not a plain call: Run#targeted? detects a non-public perform_on,
         # so the two shapes of work must be INVOKED the same way they are
         # detected. `private def perform` is a natural idiom for a method only
         # the framework is meant to call, and it must not change what the
@@ -289,7 +289,7 @@ module Plutonium
         # handled_target_ids in memory BEFORE its save!, and a failed save leaves
         # those values on the object without ever having written them. Recording
         # the failure then reads them back as though they had landed, and
-        # AsyncRun#record_target_failures! adds its own increment on top — a
+        # Run#record_target_failures! adds its own increment on top — a
         # one-target run finishes at progress_done 2 of 1, with the id twice in
         # handled_target_ids.
         #
@@ -322,7 +322,7 @@ module Plutonium
         def superseded?(error)
           return false unless error.is_a?(ActiveRecord::StaleObjectError)
 
-          error.record.is_a?(AsyncRun) && error.record.id == run.id
+          error.record.is_a?(Run) && error.record.id == run.id
         end
 
         # Re-resolves a target through the policy scope and re-asks the predicate,
@@ -398,7 +398,7 @@ module Plutonium
         end
 
         # Advances progress and records +id+ as dispositioned, in one write —
-        # see AsyncRun#unhandled_target_ids, which is what lets a resumed run skip
+        # see Run#unhandled_target_ids, which is what lets a resumed run skip
         # it instead of reapplying it.
         def advance!(id)
           run.progress_done += 1
