@@ -46,7 +46,7 @@ module Plutonium
               # is doing. Progress is deliberately NOT shown bare here: after a
               # refused partial batch progress_done counts targets DISPOSITIONED
               # rather than attempted, so a number without its state is
-              # misleading (see Runs::Executor#refuse_partial_batch). The run's
+              # misleading (see AsyncRuns::Executor#refuse_partial_batch). The run's
               # own page renders the pair.
               span(class: "font-medium text-[var(--pu-text)]") { plain run.to_label }
               plain " "

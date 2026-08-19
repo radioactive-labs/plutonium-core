@@ -671,7 +671,7 @@ end
 
 An interaction is the entry point from a Plutonium page into an operation: it declares the inputs, renders as a button and a form, is gated by a policy, and returns an outcome the controller turns into a flash + redirect. Registered as actions in definitions (see [[plutonium-resource]] › Actions) and executed by the controller.
 
-For a bulk operation, a long-running one, or anything that needs an audit trail, `dispatches_to` a persisted, resumable run instead of executing inline — see [[plutonium-interaction-runs]].
+For a bulk operation, a long-running one, or anything that needs an audit trail, `dispatches_to` a persisted, resumable run instead of executing inline — see [[plutonium-async-interactions]].
 
 ## Where the logic goes
 

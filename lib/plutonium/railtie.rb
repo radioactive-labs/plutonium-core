@@ -41,7 +41,7 @@ module Plutonium
 
     initializer "plutonium.register_migrations" do
       Plutonium::Migrations.register(:wizards, Plutonium.root.join("db/migrate/wizard").to_s)
-      Plutonium::Migrations.register(:interaction_runs, Plutonium.root.join("db/migrate/interaction_runs").to_s)
+      Plutonium::Migrations.register(:async_runs, Plutonium.root.join("db/migrate/async_runs").to_s)
     end
 
     # Runs after the host's config/initializers/plutonium.rb (load_config_initializers)

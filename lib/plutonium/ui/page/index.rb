@@ -95,15 +95,15 @@ module Plutonium
         # cross-resource read goes through, so a run dispatched in another tenant
         # can never appear here — the banner cannot be a way around the policy.
         def render_running_banner
-          return unless Plutonium.configuration.interaction_runs.enabled
+          return unless Plutonium.configuration.async_runs.enabled
           # A shared resource_class can be registered in a portal that never
           # registered Run — its "View progress" link would then 500 building
           # a URL for a route that doesn't exist here.
-          return unless registered_resources.include?(Plutonium::Interaction::Run)
+          return unless registered_resources.include?(Plutonium::Interaction::AsyncRun)
 
           runs = authorized_resource_scope(
-            Plutonium::Interaction::Run,
-            relation: Plutonium::Interaction::Run.for_target(resource_class).in_progress
+            Plutonium::Interaction::AsyncRun,
+            relation: Plutonium::Interaction::AsyncRun.for_target(resource_class).in_progress
           ).to_a
 
           render Plutonium::UI::Interaction::RunningBanner.new(runs: runs)

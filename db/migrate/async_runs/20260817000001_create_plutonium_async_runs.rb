@@ -1,0 +1,170 @@
+# frozen_string_literal: true
+
+class CreatePlutoniumAsyncRuns < ActiveRecord::Migration[7.2]
+  def change
+    create_table :plutonium_async_runs do |t|
+      # STI discriminator — the author's Run subclass.
+      t.string :type, null: false
+      t.string :state, null: false, default: "pending" # pending | running | completed | failed
+
+      # JSON payloads are jsonb, matching plutonium_wizard_sessions: Postgres
+      # hosts get equality and GIN indexing (plain json has neither), and SQLite
+      # hosts get the type via PLUTONIUM_SQLITE_TYPE_ALIASES, which aliases
+      # jsonb -> json. Changing a column type post-release costs every host app a
+      # migration, so pick the queryable one now.
+      #
+      # The dispatching interaction's validated inputs.
+      t.jsonb :options, null: false, default: {}
+
+      # Targets. target_type is a REAL column, not JSON: the index feature
+      # queries "runs for this resource", which cannot be indexed out of a
+      # JSON array. Ids are re-resolved through the policy scope at perform time.
+      t.string :target_type
+      t.jsonb :target_ids, null: false, default: []
+
+      # Who started it, and in which tenant — the two halves of the policy
+      # context, which Plutonium authorizes on as (user, entity_scope).
+      #
+      # The initiator is ALWAYS required. There is no such thing as a run with
+      # no user to authorize as, and a nullable initiator would inevitably come
+      # to mean "unauthenticated/unscoped" — the fail-OPEN case.
+      #
+      # The scoped entity is nullable BY DESIGN: it is present only when the
+      # run was launched in an entity-scoped portal, and nil for an un-scoped
+      # one (same as plutonium_wizard_sessions.scope_type/scope_id). nil here
+      # means "no tenant", NOT "tenant unknown". Code rebuilding the policy
+      # context must handle nil explicitly rather than assume a tenant is
+      # present — this schema offers no non-null guarantee to lean on.
+      #
+      # *_id is string-typed to accommodate bigint or uuid host primary keys,
+      # matching plutonium_wizard_sessions.
+      t.string :initiator_type, null: false
+      t.string :initiator_id, null: false
+      t.string :scoped_entity_type
+      t.string :scoped_entity_id
+
+      # The third half of the policy context: WHICH policy applied.
+      #
+      # Policy lookup in a controller passes the controller's own module nesting
+      # as the namespace (ActionPolicy::Behaviours::Namespaced), which is how a
+      # portal gets its own policy — StorefrontPortal::Blogging::PostPolicy
+      # rather than Blogging::PostPolicy. A job has no controller and therefore
+      # no namespace to derive, so without this the lookup falls back to the base
+      # policy and every narrowing the portal applied is silently lost. Nullable
+      # because a top-level dispatch legitimately has no namespace; nil here
+      # means "top level", NOT "namespace unknown".
+      #
+      # Stored as the module's NAME (e.g. "StorefrontPortal"), constantized at
+      # perform time — ActionPolicy.lookup requires a Module and raises on a
+      # String.
+      t.string :authorization_namespace
+
+      # The nested-route PARENT, and the association the child hangs off it —
+      # /orgs/1/posts/5/comments dispatches with (Post#5, :comments).
+      #
+      # Both halves or neither: Policy#default_relation_scope raises on one
+      # without the other, and it is the pair that names a scope.
+      #
+      # The third input the policy authorizes on, alongside the initiator and the
+      # tenant. Without it, Policy#default_relation_scope cannot take its parent
+      # branch and falls through to entity scoping — so perform time re-derives
+      # targets under the TENANT where dispatch used the parent, a wider answer
+      # than the one the initiator was shown. It also leaves any host predicate
+      # reading +parent+ looking at nil, which refuses every target with a reason
+      # that names the wrong thing.
+      #
+      # Nullable, like scoped_entity and for the same reason: most routes are not
+      # nested. nil means "not a nested dispatch", NOT "parent unknown" — see
+      # AsyncRuns::Context#verify_subjects!, which tells those apart by the _type
+      # column exactly as it does for the tenant.
+      t.string :parent_type
+      t.string :parent_id
+      t.string :parent_association
+
+      # The policy actually resolved AT DISPATCH, e.g.
+      # "StorefrontPortal::Blogging::PostPolicy". An ASSERTION, not an input: at
+      # perform time the policy is resolved from the namespace above and then
+      # checked against this. The namespace fixes today's lookup, but a policy
+      # renamed, deleted or re-parented between enqueue and perform would resolve
+      # to something else — the same silent widening, just moved later in time.
+      # Recording what we expected turns that into a loud failure.
+      #
+      # NOT named `policy_class`: ActionPolicy's lookup chain probes
+      # `record.policy_class` before inferring from the class name, so a column
+      # of that name would make ActionPolicy.lookup(run) return this String
+      # instead of a policy — breaking authorization of run records themselves.
+      t.string :policy_class_name
+
+      # The policy PREDICATE dispatch checked, e.g. "archive?".
+      #
+      # The class above says which policy; this says which question to ask it.
+      # Without it a run re-checks only VISIBILITY (the relation scope) and not
+      # PERMISSION: an initiator whose archive? flipped to false after enqueue
+      # would still resolve every target and the work would proceed. Dispatch
+      # derives this from the action name and checks it PER RECORD — see
+      # Plutonium::Resource::Controllers::InteractiveActions#authorize_interactive_bulk_action!
+      # — and perform must reproduce exactly that.
+      #
+      # Nullable ONLY because opaque (untargeted) work has no per-record
+      # predicate to check. nil means "no per-target predicate", and for a
+      # TARGETED run that is refused rather than read as "allow everything" —
+      # the fail-open shape again.
+      t.string :policy_action
+
+      # Counts. Both nil for opaque (untargeted) work — the progress UI reads
+      # nil as "indeterminate" rather than 0%.
+      t.integer :progress_total
+      t.integer :progress_done, null: false, default: 0
+
+      # Per-target execution failures, appended as the run proceeds — hence an
+      # array default. A run may fail on some targets and still complete.
+      t.jsonb :errors_log, null: false, default: []
+
+      t.datetime :started_at
+      t.datetime :finished_at
+
+      # Set only once a job actually picks the run up (AsyncRuns::Executor#claim!)
+      # and bumped on every write that represents real progress thereafter —
+      # NOT at create time, and not the same thing as updated_at, which bumps
+      # on any write to the row. nil means "never picked up"; AsyncRuns::ReapJob
+      # falls back to created_at for that case.
+      t.datetime :last_activity_at
+
+      # Target ids already dispositioned (succeeded or failed), so a run
+      # resumed after an interruption can skip work it already did instead of
+      # either replaying it or refusing to resume at all. See AsyncRuns::Executor.
+      t.jsonb :handled_target_ids, null: false, default: []
+
+      # Rails' standard optimistic-locking column (same convention as
+      # plutonium_wizard_sessions.lock_version) — bumped by AsyncRuns::Executor#claim!
+      # on every successful claim, on top of the ordinary automatic bump every
+      # +save!+/+update!+ already gets. ReapJob's resume is a TIME heuristic, not
+      # a true lease (see AsyncRuns::ReapJob): it can hand a run to a second executor
+      # while the first is still mid-batch. Without this column that race
+      # silently double-applies AND can lose one side's progress write; with it,
+      # the superseded executor's next write raises ActiveRecord::StaleObjectError
+      # (see AsyncRuns::Executor#call), which is treated as "no longer mine" rather
+      # than a target or run failure.
+      t.integer :lock_version, null: false, default: 0
+
+      t.timestamps
+
+      t.index [:target_type, :state], name: "idx_pu_runs_on_target_and_state"
+      t.index [:initiator_type, :initiator_id], name: "idx_pu_runs_on_initiator"
+      t.index [:scoped_entity_type, :scoped_entity_id], name: "idx_pu_runs_on_scoped_entity"
+      # AsyncRuns::ReapJob's stalled scan filters on state with no target_type
+      # predicate, so it cannot use idx_pu_runs_on_target_and_state above (wrong
+      # leading column) — without this, the scan degrades to a full-table scan as
+      # completed/failed history accumulates. Low-cardinality but selective for
+      # this query: the in-progress rows are a vanishing fraction of a mature
+      # table, which is exactly the case that needs the index.
+      #
+      # state ALONE, deliberately. The scan's other predicate is
+      # COALESCE(last_activity_at, created_at) < ? (see Run.stalled) — an
+      # expression, so a trailing last_activity_at column could not be used for
+      # the range at all, and created_at is not in the index either, so it buys
+      # no index-only scan. It would be write cost for nothing.
+      t.index :state, name: "idx_pu_runs_on_state"
+    end
+  end
+end

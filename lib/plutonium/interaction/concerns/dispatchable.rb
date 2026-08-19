@@ -4,7 +4,7 @@ module Plutonium
   module Interaction
     module Concerns
       # Turns an interaction into a dispatcher: instead of doing the work
-      # inline, it persists a {Plutonium::Interaction::Run}, enqueues it, and
+      # inline, it persists a {Plutonium::Interaction::AsyncRun}, enqueues it, and
       # sends the user to it.
       #
       # The interaction keeps everything else it already was — it declares
@@ -35,7 +35,7 @@ module Plutonium
       #
       # == What dispatch records, and why it is exactly this
       #
-      # The job has no controller, so {Plutonium::Interaction::Runs::Context}
+      # The job has no controller, so {Plutonium::Interaction::AsyncRuns::Context}
       # rebuilds the authorization context from the row. Three of the columns
       # exist purely so that rebuild cannot silently widen:
       #
@@ -55,7 +55,7 @@ module Plutonium
         # switched off. Named rather than a bare RuntimeError so a host can tell
         # it apart from anything the interaction itself raised — and so it reads
         # the same way as the interaction layer's other typed failures
-        # (Runs::Context::UnresolvableError, Runs::Executor::TargetRefusedError).
+        # (AsyncRuns::Context::UnresolvableError, AsyncRuns::Executor::TargetRefusedError).
         class NotEnabledError < StandardError; end
 
         # The tenant is half of what the policy scope filters on, and this is
@@ -82,7 +82,7 @@ module Plutonium
         class_methods do
           # Declares that this interaction dispatches its work to +run_class+.
           #
-          # @param run_class [Class<Plutonium::Interaction::Run>]
+          # @param run_class [Class<Plutonium::Interaction::AsyncRun>]
           # @raise [ArgumentError] if this class already defines its own #execute
           # @return [void]
           def dispatches_to(run_class)
@@ -109,7 +109,7 @@ module Plutonium
         # Persists the run and returns the outcome that sends the user to it.
         #
         # The run enqueues ITS OWN job, via an +after_commit+ on
-        # {Plutonium::Interaction::Run} — not from here, which would race a
+        # {Plutonium::Interaction::AsyncRun} — not from here, which would race a
         # fast/inline job adapter against the very commit the row needs to
         # be visible.
         #
@@ -117,13 +117,13 @@ module Plutonium
         def dispatch
           # The flag gates the MIGRATION, not just the behaviour: while it is off
           # the runs migration path is never registered (see Plutonium::Railtie),
-          # so plutonium_interaction_runs does not exist. Without this the create!
+          # so plutonium_async_runs does not exist. Without this the create!
           # below surfaces as a raw "no such table" from inside ActiveRecord,
           # which says nothing about the switch that has to be flipped.
-          unless Plutonium.configuration.interaction_runs.enabled
+          unless Plutonium.configuration.async_runs.enabled
             raise NotEnabledError,
               "#{self.class} dispatches to #{self.class.run_class}, but interaction runs are not " \
-              "enabled. Set `config.interaction_runs.enabled = true` in your Plutonium " \
+              "enabled. Set `config.async_runs.enabled = true` in your Plutonium " \
               "initializer, then run the migration."
           end
 
@@ -160,7 +160,7 @@ module Plutonium
         # resolved to nothing produces an empty +resources+, and reading that as
         # "no targets" would dispatch a run indistinguishable from genuinely
         # opaque work — no target_type, no policy assertion, nothing for
-        # Runs::Context to check. Asking what the class DECLARED separates the
+        # AsyncRuns::Context to check. Asking what the class DECLARED separates the
         # two cases exactly.
         #
         # @return [Boolean]
@@ -219,7 +219,7 @@ module Plutonium
         # The RESOURCE class, not the class of the records.
         #
         # A bulk selection of STI rows resolves its policy per record when it
-        # performs (Runs::Context#policy_for), but the SCOPE the run resolves
+        # performs (AsyncRuns::Context#policy_for), but the SCOPE the run resolves
         # targets through has to be the one dispatch authorized against. Reading
         # it off the first record would narrow a mixed Post/Article selection to
         # whichever type happened to come first, and silently report the rest as
@@ -248,7 +248,7 @@ module Plutonium
         # @return [Symbol]
         def dispatch_policy_action
           action = view_context.controller.helpers.current_interactive_action
-          # Refused here rather than at perform time: Runs::Context will reject a
+          # Refused here rather than at perform time: AsyncRuns::Context will reject a
           # targeted run with no predicate, but by then the diagnosis is a row in
           # a failed job, hours from the code that wrote it.
           unless action

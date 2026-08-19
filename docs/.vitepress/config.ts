@@ -168,7 +168,7 @@ export default defineConfig(withMermaid({
             { text: "Controllers", link: "/reference/behavior/controllers" },
             { text: "Policies", link: "/reference/behavior/policies" },
             { text: "Interactions", link: "/reference/behavior/interactions" },
-            { text: "Interaction Runs", link: "/reference/behavior/interaction-runs" },
+            { text: "Async Interactions", link: "/reference/behavior/async-interactions" },
           ]
         },
         {

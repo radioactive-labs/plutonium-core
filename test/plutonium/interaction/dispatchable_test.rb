@@ -31,8 +31,8 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveJob::TestHelper
 
-  Job = Plutonium::Interaction::Runs::Job
-  Context = Plutonium::Interaction::Runs::Context
+  Job = Plutonium::Interaction::AsyncRuns::Job
+  Context = Plutonium::Interaction::AsyncRuns::Context
   Redirect = Plutonium::Interaction::Response::Redirect
 
   # Mirrors the controller surface an interaction reaches, INCLUDING its
@@ -112,7 +112,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   # rails/test_help — so rows persist across tests. The runs table is cleared
   # explicitly; every other assertion is pinned to records this test created.
   setup do
-    Plutonium::Interaction::Run.delete_all
+    Plutonium::Interaction::AsyncRun.delete_all
 
     @user = create_user!
     @org = create_organization!
@@ -130,7 +130,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     @view_context = MockViewContext.new(@controller)
   end
 
-  teardown { Plutonium::Interaction::Run.delete_all }
+  teardown { Plutonium::Interaction::AsyncRun.delete_all }
 
   def interactive_action(name, interaction: DispatchBulkInteraction)
     Plutonium::Action::Interactive.new(name, interaction: interaction, immediate: false)
@@ -149,7 +149,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
   test "a bulk dispatch persists the run, its options and its targets" do
     outcome = nil
-    assert_difference -> { Plutonium::Interaction::Run.count }, 1 do
+    assert_difference -> { Plutonium::Interaction::AsyncRun.count }, 1 do
       outcome = dispatch_bulk
     end
 
@@ -166,7 +166,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   end
 
   test "dispatching while runs are disabled names the switch instead of the missing table" do
-    Plutonium.configuration.interaction_runs.enabled = false
+    Plutonium.configuration.async_runs.enabled = false
 
     error = assert_raises(Plutonium::Interaction::Concerns::Dispatchable::NotEnabledError) { dispatch_bulk }
 
@@ -175,10 +175,10 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     # ActiveRecord::StatementInvalid "no such table", which says nothing about
     # the one line of configuration that fixes it.
     assert_match(/interaction runs are not enabled/, error.message)
-    assert_match(/interaction_runs\.enabled = true/, error.message)
-    assert_equal 0, Plutonium::Interaction::Run.count
+    assert_match(/async_runs\.enabled = true/, error.message)
+    assert_equal 0, Plutonium::Interaction::AsyncRun.count
   ensure
-    Plutonium.configuration.interaction_runs.enabled = true
+    Plutonium.configuration.async_runs.enabled = true
   end
 
   test "the validated attributes land in options, without the records" do
@@ -220,7 +220,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     run = dispatch_bulk.value
 
-    # The module's NAME — the column is a string, and Runs::Context
+    # The module's NAME — the column is a string, and AsyncRuns::Context
     # constantizes it back.
     assert_equal "OrgPortal", run.authorization_namespace
     assert_equal "OrgPortal::Blogging::PostPolicy", run.policy_class_name
@@ -258,7 +258,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     assert_nil run.scoped_entity_type,
       "nil must mean NO tenant, so the type column has to be empty too — a " \
-      "populated type with a nil association is how Runs::Context detects a " \
+      "populated type with a nil association is how AsyncRuns::Context detects a " \
       "DELETED tenant and refuses to run"
     assert_nil run.scoped_entity
   end
@@ -289,16 +289,16 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   end
 
   test "the job is enqueued on the configured queue" do
-    Plutonium.configuration.interaction_runs.queue = :low
+    Plutonium.configuration.async_runs.queue = :low
 
     assert_enqueued_with(job: Job, queue: "low") { dispatch_bulk }
   ensure
-    Plutonium.configuration.interaction_runs.queue = :default
+    Plutonium.configuration.async_runs.queue = :default
   end
 
   test "a validation failure persists nothing and enqueues nothing" do
     outcome = nil
-    assert_no_difference -> { Plutonium::Interaction::Run.count } do
+    assert_no_difference -> { Plutonium::Interaction::AsyncRun.count } do
       assert_no_enqueued_jobs do
         outcome = dispatch_bulk(notify_users: nil)
       end
@@ -307,9 +307,9 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert outcome.failure?
   end
 
-  # --- the seam with Runs::Context -----------------------------------------
+  # --- the seam with AsyncRuns::Context -----------------------------------------
 
-  # The whole point of the recorded triple. Runs::Context refuses a row whose
+  # The whole point of the recorded triple. AsyncRuns::Context refuses a row whose
   # policy disagrees with today's lookup, whose namespace no longer resolves, or
   # whose subjects cannot be rebuilt — so simply CONSTRUCTING one over a
   # dispatched row is the assertion that Task 5 and Task 3 agree.
@@ -351,7 +351,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   # --- refusals ------------------------------------------------------------
 
   # The predicate is what lets perform re-check PERMISSION rather than mere
-  # visibility, so a targeted run cannot be written without one. Runs::Context
+  # visibility, so a targeted run cannot be written without one. AsyncRuns::Context
   # would refuse the row later anyway, but by then the diagnosis is a line in a
   # failed job, hours from the code that wrote it.
   test "dispatch refuses to write a targeted run with no policy predicate" do
@@ -362,7 +362,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_match(/no interactive action is in flight/, error.message)
     assert_match(/DispatchBulkInteraction dispatches TestPostRun/, error.message)
     assert_match(/cannot re-check permission/, error.message)
-    assert_equal 0, Plutonium::Interaction::Run.count, "nothing may be persisted"
+    assert_equal 0, Plutonium::Interaction::AsyncRun.count, "nothing may be persisted"
   end
 
   # A bulk submission whose ids have all been deleted or left the tenant since
@@ -374,7 +374,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     assert_match(/declares a subject but resolved no records/, error.message)
     assert_match(/must not be silently downgraded to opaque work/, error.message)
-    assert_equal 0, Plutonium::Interaction::Run.count
+    assert_equal 0, Plutonium::Interaction::AsyncRun.count
   end
 
   test "dispatches_to refuses to overwrite an interaction's own execute" do
@@ -403,23 +403,23 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     run = klass.call(view_context: @view_context, resource: @post).value
 
-    assert_kind_of Plutonium::Interaction::Run, run,
+    assert_kind_of Plutonium::Interaction::AsyncRun, run,
       "dispatches_to's #execute must still win over a same-class #execute defined afterwards"
   end
 
   # The row is committed before the enqueue, so a queue that refuses the job
   # leaves a run nothing will ever pick up. It has to stop looking pending.
   test "a run whose enqueue fails is marked failed rather than left pending" do
-    run_count_before = Plutonium::Interaction::Run.count
+    run_count_before = Plutonium::Interaction::AsyncRun.count
     original_adapter = Job.queue_adapter
     Job.queue_adapter = RaisingQueueAdapter.new
 
     error = assert_raises(RuntimeError) { dispatch_bulk }
 
     assert_equal "queue is down", error.message, "the failure must still surface"
-    assert_equal run_count_before + 1, Plutonium::Interaction::Run.count
+    assert_equal run_count_before + 1, Plutonium::Interaction::AsyncRun.count
 
-    run = Plutonium::Interaction::Run.last
+    run = Plutonium::Interaction::AsyncRun.last
     assert_equal "failed", run.state
     assert_match(/could not be enqueued/, run.errors_log.first["message"])
   ensure

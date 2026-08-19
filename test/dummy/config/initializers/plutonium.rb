@@ -7,7 +7,7 @@ Plutonium.configure do |config|
   config.wizards.enabled = true
 
   # Enable persisted interaction runs so their migration runs in the test DB.
-  config.interaction_runs.enabled = true
+  config.async_runs.enabled = true
 
   # Configure plutonium above.
 end

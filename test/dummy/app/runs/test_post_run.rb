@@ -7,7 +7,7 @@
 # the same Zeitwerk round-trip a host app's run makes. A run class defined at
 # the top of a test file would exercise a different loading path than the one
 # that actually ships.
-class TestPostRun < Plutonium::Interaction::Run
+class TestPostRun < Plutonium::Interaction::AsyncRun
   # Presence of perform_on is what marks a run as targeted (see Run#targeted?),
   # so this has to exist even though the context never calls it.
   def perform_on(record) = record

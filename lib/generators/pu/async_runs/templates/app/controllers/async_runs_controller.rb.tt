@@ -1,0 +1,15 @@
+<%- if main_app? -%>
+class AsyncRunsController < ::ResourceController
+  # The controller's name doesn't match Run's real, namespaced class
+  # (Plutonium::Interaction::AsyncRun), so inference can't find it on its own.
+  controller_for ::Plutonium::Interaction::AsyncRun
+end
+<%- else -%>
+class <%= app_namespace %>::AsyncRunsController < ::<%= app_namespace %>::ResourceController
+  # The controller's name doesn't match Run's real, namespaced class
+  # (Plutonium::Interaction::AsyncRun), so inference can't find it on its own.
+  controller_for ::Plutonium::Interaction::AsyncRun
+
+  include <%= app_namespace %>::Concerns::Controller
+end
+<%- end -%>

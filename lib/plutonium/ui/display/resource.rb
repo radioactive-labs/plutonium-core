@@ -37,7 +37,7 @@ module Plutonium
 
         # Stacked in `sections_wrapper` — the hooks and the fields card each
         # own their own card with no margin, so an override that renders one
-        # (e.g. RunDefinition's progress panel) would otherwise butt flush
+        # (e.g. AsyncRunDefinition's progress panel) would otherwise butt flush
         # against the fields card.
         def render_fields
           div(class: themed(:sections_wrapper)) do
