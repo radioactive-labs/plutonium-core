@@ -29863,6 +29863,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     refresh() {
       const frame = this.element.closest("turbo-frame");
       if (!frame) return;
+      this.schedule();
       if (frame.src) {
         frame.reload();
       } else {
