@@ -5,10 +5,10 @@ module Plutonium
     module Page
       # The "resume or start new" chooser (§4.5), shown at the bare launch URL when
       # a tokened wizard opts in with `on_relaunch :prompt` and the user already has
-      # pending (in-progress) runs. Lists each pending run with a Resume link and
-      # offers a Start-new button. Keyed/one-time/anchored wizards never reach here
-      # (they auto-resume their single keyed run); only tokened wizards can have
-      # several concurrent runs to choose between.
+      # pending (in-progress) runs. Lists each pending run with a Resume link and a
+      # Cancel button, and offers a Start-new button. Keyed/one-time/anchored
+      # wizards never reach here (they auto-resume their single keyed run); only
+      # tokened wizards can have several concurrent runs to choose between.
       class WizardChooser < Plutonium::UI::Page::Base
         # @param wizard_class  [Class] the wizard being launched.
         # @param entries       [Array<Plutonium::Wizard::Resume::Entry>] pending runs.
@@ -57,9 +57,9 @@ module Plutonium
           end
         end
 
-        # One pending run: its current step + when it was last touched, and a Resume
-        # link. A run whose mount can't be resolved (no `resume_url`) is shown as a
-        # disabled row rather than a dead link.
+        # One pending run: its current step + when it was last touched, a Resume link
+        # and a Cancel button. A run whose mount can't be resolved (no `resume_url`)
+        # is shown as a disabled row rather than a dead link.
         def render_entry(entry)
           li(class: "flex items-center justify-between gap-4 px-5 py-4", data: {wizard_chooser_entry: entry.current_step}) do
             div(class: "min-w-0") do
@@ -68,11 +68,36 @@ module Plutonium
               end
               p(class: "mt-0.5 text-xs text-[var(--pu-text-muted)]") { "Updated #{updated_ago(entry)} ago" }
             end
-            if entry.resume_url.present?
-              a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline shrink-0", data: {wizard_chooser_resume: true}) { "Resume" }
-            else
-              span(class: "pu-btn pu-btn-sm pu-btn-outline shrink-0 opacity-50 cursor-not-allowed") { "Resume" }
+            div(class: "flex items-center gap-2 shrink-0") do
+              if entry.resume_url.present?
+                a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline", data: {wizard_chooser_resume: true}) { "Resume" }
+              else
+                span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { "Resume" }
+              end
+
+              render_cancel_form(entry) if entry.cancel_url.present?
             end
+          end
+        end
+
+        # Abandoning a run is destructive and irreversible — cancelling runs every
+        # step's `on_rollback`, destroys the records it persisted, then deletes the
+        # row. So it goes through a DELETE form (never a link) behind a
+        # `data-turbo-confirm` prompt. Turbo reads `turbo_confirm`; plain
+        # `data-confirm` is Rails UJS and would silently never fire here.
+        def render_cancel_form(entry)
+          form(action: entry.cancel_url, method: "post", class: "inline-block") do
+            input(type: "hidden", name: "_method", value: "delete")
+            input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
+            button(
+              type: "submit",
+              class: "pu-btn pu-btn-sm pu-btn-soft-danger",
+              aria_label: "Cancel this #{@wizard_class.label} draft",
+              data: {
+                wizard_chooser_cancel: true,
+                turbo_confirm: "Discard this in-progress #{@wizard_class.label}? This can't be undone."
+              }
+            ) { "Cancel" }
           end
         end
 

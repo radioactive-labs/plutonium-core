@@ -14,12 +14,19 @@ module Plutonium
         # @param inputs [Hash] the step's input config ({name => {options:}}), so a
         #   field's declared `as:` informs the display component (e.g. a `:text`
         #   input renders via the markdown/text display tag).
-        def initialize(object, fields:, inputs: {}, **options)
+        def initialize(object, fields:, inputs: {}, wizard: nil, **options)
           options[:key] = :wizard
           @summary_fields = fields
           @summary_inputs = inputs
+          @wizard = wizard
           super(object, **options)
         end
+
+        # The wizard driving this run. Present for the same reason the step form
+        # exposes it: an `->(form) { form.wizard… }` option asks the form for it,
+        # and on the review page this component stands in for the form.
+        # @return [Plutonium::Wizard::Base, nil]
+        attr_reader :wizard
 
         def display_template
           dl(class: "grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3") do
@@ -58,17 +65,41 @@ module Plutonium
         end
 
         # Map the raw value(s) to their choice label(s) using the SAME mapper the
-        # form's select uses, so summary labels always match the form. Falls back
-        # to the raw value for anything not in `choices:`; nil for an empty field
-        # (so the display renders its placeholder).
+        # form's select uses, so summary labels always match the form. Falls back to
+        # the raw value for anything not in `choices:`; nil for an empty field (so
+        # the display renders its placeholder).
+        #
+        # The mapper is built ONCE per field, not once per value: `choices:` is
+        # routinely a proc (`-> { Member.all.map { |m| [m.name, m.id] } }`), and a
+        # per-value mapper would re-run that query for every element of a
+        # multi-select.
+        #
         def resolve_choice_label(name, input_options)
+          values = Array(Phlexi::Field::Support::Value.from(object, name))
+          return if values.empty?
+
           mapper = Phlexi::Form::SimpleChoicesMapper.new(
-            input_options[:choices],
+            resolved_choices(input_options[:choices]),
             label_method: input_options[:label_method],
             value_method: input_options[:value_method]
           )
-          raw = Phlexi::Field::Support::Value.from(object, name)
-          Array(raw).map { |value| mapper[value] || value }.join(", ").presence
+          values.map { |value| mapper[value] || value }.join(", ").presence
+        end
+
+        # Resolve a proc'd `choices:` by the SAME arity rule the form applies to
+        # every input option (see Form::Resource#call_option_proc): zero-arity means
+        # what it reads like where it was written; `->(form) { … }` is asking for
+        # the form, and on the review page this component stands in for it — it
+        # answers `object` (the step's staged data) and `wizard`.
+        #
+        # Without this the summary hands the raw proc to the mapper, which bare-
+        # `call`s it — so `choices: ->(form) { form.wizard.anchor.available_tiers }`,
+        # a declaration Form::Wizard documents and the step form renders happily,
+        # would raise ArgumentError the moment the user reached review.
+        def resolved_choices(choices)
+          return choices unless choices.is_a?(Proc)
+
+          choices.arity.zero? ? choices.call : choices.call(self)
         end
 
         # Pick the display component the same way a resource display does — infer it

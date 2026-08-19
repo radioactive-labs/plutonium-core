@@ -109,6 +109,8 @@ module Plutonium
             as: :"#{helper_name}_wizard", defaults: defaults
           post "(/:token)/:step", to: "#{WIZARD_CONTROLLER_NAME}#update",
             defaults: defaults
+          delete "(/:token)", to: "#{WIZARD_CONTROLLER_NAME}#cancel",
+            as: :"#{helper_name}_wizard_cancel", defaults: defaults
         end
       end
 
@@ -174,6 +176,8 @@ module Plutonium
               as: :"#{helper_name}_wizard", defaults: defaults
             post "(/:token)/:step", to: "public_wizards#update",
               defaults: defaults
+            delete "(/:token)", to: "public_wizards#cancel",
+              as: :"#{helper_name}_wizard_cancel", defaults: defaults
           end
         end
       end

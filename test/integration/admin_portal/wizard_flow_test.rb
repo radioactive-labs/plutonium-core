@@ -12,10 +12,13 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
   include Plutonium::Testing::AuthHelpers
 
+  TURBO_STREAM_ACCEPT = "text/vnd.turbo-stream.html"
+
   setup do
     @admin = create_admin!
     login_as(@admin, portal: :admin)
     Plutonium::Wizard::Session.delete_all
+    OnboardOrganizationWizard.rollbacks.clear
   end
 
   def base = "/admin/onboarding"
@@ -75,6 +78,111 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{href="#{Regexp.escape(base)}/#{@wizard_token}/details"[^>]*data-wizard-chooser-resume}, response.body
     assert_match %r{data-wizard-chooser-start-new}, response.body
     assert_includes response.body, "?new=1"
+  end
+
+  # --- cancel (§4.5) ----------------------------------------------------------
+
+  # The Cancel control is a DELETE form (not a link — abandoning a run destroys
+  # data) whose action is the run's STEPLESS cancel path, and it carries a CSRF
+  # token. `data-turbo-confirm` — not `data-confirm`, which is Rails UJS and would
+  # never fire under Turbo, letting one stray click discard the run silently.
+  test "the chooser renders a confirming DELETE form per pending run" do
+    advance_through("identity")
+    get base
+
+    assert_match %r{action="#{Regexp.escape(base)}/#{@wizard_token}"[^>]*method="post"}, response.body
+    assert_match %r{data-wizard-chooser-cancel}, response.body
+    assert_match %r{name="_method"[^>]*value="delete"}, response.body
+    assert_match %r{name="authenticity_token"}, response.body
+    assert_match %r{data-turbo-confirm="[^"]+"}, response.body
+    refute_match %r{data-confirm=}, response.body
+  end
+
+  test "cancelling a pending run destroys it and PRGs to the launch path" do
+    advance_through("identity")
+    token = @wizard_token
+    assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
+
+    delete "#{base}/#{token}"
+    assert_response :see_other
+    assert_redirected_to base
+    assert_equal 0, Plutonium::Wizard::Session.where(token: token).count
+
+    # That was the only pending run, so the launch path no longer has a chooser to
+    # show — it mints a fresh run and lands on its first step.
+    follow_redirect!
+    assert_response :redirect
+    assert_match %r{\A#{Regexp.escape(base)}/[A-Za-z0-9]{32}/identity\z}, URI(response.location).path
+  end
+
+  # With more than one pending run, cancelling one leaves the others alone and the
+  # chooser still lists them.
+  test "cancelling one run leaves the user's other runs untouched" do
+    advance_through("identity")
+    first = @wizard_token
+
+    # Start-new mints a second, independent run for the same user.
+    get "#{base}?new=1"
+    second = URI(response.location).path[%r{#{Regexp.escape(base)}/([A-Za-z0-9]{32})/}, 1]
+    refute_equal first, second
+    post "#{base}/#{second}/identity",
+      params: {wizard: {name: "Beta Ltd", plan: "pro", budget: "20"}, _direction: "next"}
+    assert_equal 2, Plutonium::Wizard::Session.status_in_progress.count
+
+    delete "#{base}/#{first}"
+    follow_redirect!
+
+    assert_response :success
+    assert_includes response.body, "pu-wizard-chooser"
+    assert_equal 0, Plutonium::Wizard::Session.where(token: first).count
+    assert_equal 1, Plutonium::Wizard::Session.where(token: second, status: "in_progress").count
+  end
+
+  # Cancelling a REAL run must still compensate: `on_rollback` is the hook for
+  # undoing untracked side effects, and abandoning the run is exactly when it is
+  # owed. Pinned so the stale-token guard below can't be tightened into blocking
+  # legitimate cleanup.
+  test "cancelling a pending run runs its steps' on_rollback compensators" do
+    advance_through("identity")
+
+    delete "#{base}/#{@wizard_token}"
+
+    assert_response :see_other
+    assert_equal [:identity], OnboardOrganizationWizard.rollbacks
+  end
+
+  # A DELETE carrying a stale or forged token has no row at its key, so
+  # `build_wizard_runner` mints an EMPTY runner. `cancel` on that runner is NOT a
+  # harmless no-op: `rollback_step` only skips a step when it tracked nothing AND
+  # declares no `on_rollback`, so a side-effect-only compensator (refund the
+  # charge, call the external API) fires for a run that never existed — and it is
+  # unauthenticated-adjacent, reachable by anyone who may launch the wizard, with
+  # a token they can simply make up. Bail before `cancel`.
+  test "cancelling an unknown token compensates nothing and destroys nothing" do
+    advance_through("identity")
+    standing = @wizard_token
+
+    delete "#{base}/#{"f" * 32}"
+
+    assert_response :see_other
+    assert_redirected_to base
+    assert_empty OnboardOrganizationWizard.rollbacks,
+      "a cancel that resolves to no run must not fire any step's on_rollback"
+    assert_equal 1, Plutonium::Wizard::Session.where(token: standing, status: "in_progress").count
+  end
+
+  # Cancel runs the same owner-scoping gauntlet as every other wizard action — a
+  # run id leaked in a URL is not another logged-in admin's to discard (§4.5).
+  test "cancelling another user's run is refused and leaves the run standing" do
+    advance_through("identity")
+    token = @wizard_token
+
+    sign_out(portal: :admin)
+    login_as(create_admin!, portal: :admin)
+    delete "#{base}/#{token}"
+
+    assert_response :not_found
+    assert_equal 1, Plutonium::Wizard::Session.where(token: token, status: "in_progress").count
   end
 
   # The Start-new path (`?new=1`) bypasses the chooser and mints a fresh run, even
@@ -235,6 +343,32 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     refute_includes finish_btn, "disabled"
   end
 
+  # The summary resolves `choices:` labels for every collection shape the select
+  # input accepts, so a stored "email"/"2" reads as the option the user picked
+  # rather than the raw value that happens to be in the column.
+  test "review resolves choice labels for both hash and pair-list choices" do
+    advance_through("identity")
+    post "#{tbase}/details", params: {
+      wizard: {note: "hi", contact_pref: "email", contact_email: "a@example.com", referral_source: "2",
+               contact_window: "am"},
+      _direction: "next"
+    }
+    follow_redirect!
+    get "#{tbase}/review"
+
+    card = response.body[%r{data-wizard-review-step="details".*?</section>}m]
+    assert_includes card, "Email me",
+      "a {value => label} hash choice should summarise as its label"
+    assert_includes card, "Search engine",
+      "a [label, value] pair choice should summarise as its label, not the id"
+    refute_match(/>\s*2\s*</, card,
+      "the raw pair-list value should not leak into the summary")
+    # An `->(form) { … }` choices proc resolves here too — the summary stands in
+    # for the form, exactly as the step form's own arity rule does.
+    assert_includes card, "Mornings",
+      "an arity-1 choices proc should resolve on the review page, not raise"
+  end
+
   # The auto-summary is the INCOMPLETE-state (review-and-fix) view: it lists the
   # entered data alongside the outstanding-steps banner.
   test "an incomplete review shows outstanding steps and the entered-data summary" do
@@ -271,6 +405,50 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     end
     assert_response :redirect
     assert Organization.exists?(name: "Acme Inc")
+  end
+
+  # `execute`'s `with_message` must reach the page the user lands on.
+  test "an outcome message from execute is carried into the flash on completion" do
+    advance_through("identity", "details", "profile", "members")
+    post "#{tbase}/review", params: {_direction: "next"}
+
+    assert_equal "Organization onboarded", flash[:notice]
+  end
+
+  # A real browser submits the wizard through Turbo, so completion negotiates to
+  # turbo_stream, not the HTML 303 every other test here exercises. It must emit a
+  # redirect STREAM (not a plain 302/303 body Turbo would ignore), and the flash
+  # still has to survive to the page the stream sends the browser to.
+  test "completion over turbo_stream emits a redirect stream and keeps the flash" do
+    advance_through("identity", "details", "profile", "members")
+
+    assert_difference -> { Organization.count }, 1 do
+      post "#{tbase}/review",
+        params: {_direction: "next"},
+        headers: {"Accept" => TURBO_STREAM_ACCEPT}
+    end
+
+    assert_response :success
+    assert_includes response.content_type, "turbo-stream"
+    assert_match %r{<turbo-stream[^>]*action="redirect"}, response.body
+    assert_match %r{url="[^"]*/admin/organizations/}, response.body,
+      "the stream should point at the created record"
+    assert_equal "Organization onboarded", flash[:notice]
+  end
+
+  # `turbo_stream_redirect` collapses to a `refresh` action when the target equals
+  # the referer. A wizard's completion URL is a different page than the review step
+  # it was submitted from, so completion must always genuinely navigate.
+  test "completion over turbo_stream navigates even when a referer is present" do
+    advance_through("identity", "details", "profile", "members")
+    review_url = "http://www.example.com#{tbase}/review"
+
+    post "#{tbase}/review",
+      params: {_direction: "next"},
+      headers: {"Accept" => TURBO_STREAM_ACCEPT, "Referer" => review_url}
+
+    assert_match %r{<turbo-stream[^>]*action="redirect"}, response.body
+    refute_match %r{<turbo-stream[^>]*action="refresh"}, response.body
   end
 
   # A finalize (`execute`) that fails a model validation — e.g. a uniqueness
@@ -342,6 +520,45 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     # And the identity slice didn't pick up a foreign field (e.g. details' `note`).
     get "#{tbase}/identity"
     assert_includes response.body, %(value="Renamed Co")
+  end
+
+  # --- pre_submit (dynamic conditional re-render) ----------------------------
+
+  # A `pre_submit: true` input fires a form re-render on change. The re-rendered
+  # step form must reflect the JUST-SUBMITTED values — exactly like the resource /
+  # interaction pre_submit path — so a conditional input dependent on the changed
+  # field appears/disappears. Seeding the re-render from STORED data only (the bug)
+  # kept the conditional field hidden no matter what the user picked.
+  test "pre_submit re-render reflects submitted values so a conditional field appears" do
+    advance_through("identity") # now on details
+    # `contact_email` is conditional on contact_pref == "email"; hidden initially.
+    refute_includes response.body, %(name="wizard[contact_email]")
+
+    post "#{tbase}/details",
+      params: {wizard: {note: "hi", contact_pref: "email"}, pre_submit: "contact_pref"}
+    assert_includes response.body, %(name="wizard[contact_email]"),
+      "the conditional field should appear once pre_submit reflects the chosen value"
+  end
+
+  # The pre_submit re-render also keeps the OTHER just-typed values (so the user
+  # doesn't lose what they entered when the form swaps).
+  test "pre_submit re-render keeps the other submitted values" do
+    advance_through("identity") # now on details
+    post "#{tbase}/details",
+      params: {wizard: {note: "keep me", contact_pref: "email"}, pre_submit: "contact_pref"}
+    assert_includes response.body, "keep me",
+      "sibling values typed before the pre_submit must survive the re-render"
+  end
+
+  # A pre_submit is render-only: it must NOT persist the step or move the cursor,
+  # so the step stays outstanding on review until really submitted.
+  test "pre_submit does not persist the step" do
+    advance_through("identity") # on details (never submitted)
+    post "#{tbase}/details",
+      params: {wizard: {note: "hi", contact_pref: "email"}, pre_submit: "contact_pref"}
+    get "#{tbase}/review"
+    assert_includes response.body, %(data-wizard-review-fix="details"),
+      "a pre_submit must not mark the step submitted"
   end
 
   # --- forward button labels + Save & review shortcut (§7) -------------------

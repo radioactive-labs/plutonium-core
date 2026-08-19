@@ -13,6 +13,15 @@
 #
 # `execute` creates an Organization atomically.
 class OnboardOrganizationWizard < Plutonium::Wizard::Base
+  # A cleanup sink. `on_rollback` is the hook for compensating UNTRACKED side
+  # effects (refund a charge, call an external API), so unlike a `persist`ed
+  # record it leaves no trace in the database — integration tests need somewhere
+  # to observe that it fired. Tests clear this in `setup`.
+  @rollbacks = []
+  class << self
+    attr_reader :rollbacks
+  end
+
   presents label: "Onboard an organization",
     description: "Set up a workspace for your team — a few quick steps and you're in."
 
@@ -33,6 +42,12 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     input :budget, as: :currency, unit: "$"
     validates :name, presence: true
 
+    # A side-effect-only compensator: this step persists no records, so the engine
+    # has nothing of its own to destroy — `rollback_step` runs this and nothing
+    # else. That makes it the exact shape that must NOT fire when a cancel
+    # resolves to no run at all.
+    on_rollback { OnboardOrganizationWizard.rollbacks << :identity }
+
     form_layout do
       section :basics, :name, :plan, :budget, label: "The basics"
     end
@@ -41,7 +56,35 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
   step :details, description: "Anything we should know? This is optional." do
     attribute :note, :string
     input :note, as: :textarea
+
+    # pre_submit on a wizard step: contact_email is revealed only once the
+    # just-picked contact_pref re-renders the form (not the stored value).
+    #
+    # The choices are a {value => label} hash whose labels differ from the stored
+    # values, so the review page has something real to resolve — a raw "email"
+    # there would mean the summary's choice-label resolution isn't running.
+    attribute :contact_pref, :string
+    input :contact_pref, as: :select, pre_submit: true,
+      choices: {none: "Don't contact me", email: "Email me"}
+    attribute :contact_email, :string
+    input :contact_email, condition: -> { object.contact_pref == "email" }
+
+    # A [label, value] pair list — the shape an id-valued select uses, where the
+    # stored value ("2") is meaningless without its label.
+    attribute :referral_source, :string
+    input :referral_source, as: :select,
+      choices: [["A friend", 1], ["Search engine", 2], ["Conference", 3]]
+
+    # An arity-1 `choices:` — the "hand me the form" shape Form::Wizard documents
+    # (`->(form) { form.wizard… }`). The step form resolves it by arity; the review
+    # summary must apply the SAME rule, or a declaration that renders fine on the
+    # form raises the moment the user reaches review.
+    attribute :contact_window, :string
+    input :contact_window, as: :select, choices: ->(form) { form.wizard.contact_windows }
   end
+
+  # Read by the arity-1 `choices:` above, on the form and on the review summary.
+  def contact_windows = [["Mornings", "am"], ["Afternoons", "pm"]]
 
   # Import a field surface from a model (KitchenSink) — its <Model>Definition
   # overlays input styling (a :text/textarea and a :select), so we can assert the

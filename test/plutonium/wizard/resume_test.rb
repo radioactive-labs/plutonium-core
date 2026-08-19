@@ -171,6 +171,37 @@ class Plutonium::Wizard::ResumeTest < ActiveSupport::TestCase
     session!(wizard: "ConfigureWidgetWizard", current_step: "rename", owner: @owner)
     entry = Plutonium::Wizard::Resume.entries_for(view_context_for(@owner)).first
     assert_nil entry.resume_url
+    assert_nil entry.cancel_url
     assert_match(/no .*route|resource identity/i, entry.resume_unresolved_reason)
+  end
+
+  # --- cancel_url resolution --------------------------------------------------
+
+  # The chooser's Cancel button DELETEs to this URL. It comes from the mount's own
+  # named cancel route — NOT from lopping the last segment off `resume_url`, which
+  # drops query params and mis-resolves whenever the resume URL isn't a stepped one.
+
+  test "a register_wizard tokened run resolves a stepless, token-carrying cancel URL" do
+    session!(wizard: "OnboardOrganizationWizard", current_step: "details", owner: @owner, token: "tok-xyz")
+    entry = Plutonium::Wizard::Resume.entries_for(view_context_for(@owner)).first
+    assert_equal "/admin/onboarding/tok-xyz", entry.cancel_url
+  end
+
+  test "a register_wizard entity-scoped keyed run resolves a scoped cancel URL (no token)" do
+    session!(wizard: "ConfigureOrgWizard", current_step: "rename", owner: @owner, scope: @org, engine: ORG)
+    vc = view_context_for(@owner, scoped_to_entity: true, scope: @org, engine: OrgPortal::Engine)
+    entry = Plutonium::Wizard::Resume.entries_for(vc).first
+    assert_equal "/org/#{@org.to_param}/configure", entry.cancel_url
+  end
+
+  # A run with no `current_step` has no stepped resume URL (the `register_wizard`
+  # show helper requires a `:step`), but it is still cancellable — the two URLs
+  # resolve independently, so an unresumable row can always be cleared out of the
+  # chooser instead of being stranded there.
+  test "a stepless run is still cancellable even though it can't be resumed" do
+    session!(wizard: "OnboardOrganizationWizard", current_step: nil, owner: @owner, token: "tok-fresh")
+    entry = Plutonium::Wizard::Resume.entries_for(view_context_for(@owner)).first
+    assert_nil entry.resume_url
+    assert_equal "/admin/onboarding/tok-fresh", entry.cancel_url
   end
 end
