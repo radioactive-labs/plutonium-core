@@ -395,7 +395,7 @@ module Plutonium
         #
         # @return [Hash]
         def dispatch_target_attributes
-          return {} unless dispatch_targeted?
+          return dispatch_untargeted_attributes unless dispatch_targeted?
 
           records = dispatch_targets
           namespace = dispatch_authorization_namespace
@@ -409,6 +409,30 @@ module Plutonium
             policy_class_name: ::ActionPolicy.lookup(target_class, namespace: namespace).name,
             policy_action: dispatch_policy_action.to_s
           }
+        end
+
+        # What an OPAQUE run still records: which resource it concerns.
+        #
+        # It has no targets, so it carries no ids, no total and no policy to pin
+        # — there is nothing to re-resolve at perform time, which is the only
+        # thing those exist for.
+        #
+        # But target_type is not only about targets. Its stated job is the index
+        # feature, "runs for this resource" — Run.for_target is
+        # +where(target_type:)+, and it is what puts a run in the running banner.
+        # Left nil, an opaque run dispatched from a resource's index vanished the
+        # moment the user was sent back to that index: nothing on the page
+        # mentioned it, and the only way to find it was the Async Runs list.
+        #
+        # nil stays possible, and still means "no resource": an interaction
+        # dispatched outside a resource controller has none to name.
+        #
+        # @return [Hash]
+        def dispatch_untargeted_attributes
+          resource_class = dispatch_target_class
+          return {} unless resource_class
+
+          {target_type: resource_class.name}
         end
 
         # The RESOURCE class, not the class of the records.

@@ -31,6 +31,11 @@ module Plutonium
           # enough that a short run does not look stuck.
           POLL_INTERVAL_MS = 2_000
 
+          # Must match the animation in components.css. Ruby needs it because the
+          # poll restarts the animation and only the server knows how far into
+          # the sweep the bar should be — see #sweep_phase_ms.
+          SWEEP_DURATION_MS = 1_400
+
           # Semantic colour per outcome. +completed_with_errors+ is deliberately
           # NOT success: see Plutonium::Interaction::Async::Run#outcome.
           BADGE_VARIANTS = {
@@ -163,13 +168,37 @@ module Plutonium
             div(class: "space-y-1") do
               if run.in_progress?
                 div(class: "w-full h-2 rounded-full bg-[var(--pu-surface-alt)] overflow-hidden") do
-                  div(class: "h-2 rounded-full bg-primary-600 pu-run-progress-indeterminate")
+                  div(
+                    class: "h-2 rounded-full bg-primary-600 pu-run-progress-indeterminate",
+                    style: "animation-delay: -#{sweep_phase_ms}ms"
+                  )
                 end
               end
               div(class: "text-xs text-[var(--pu-text-muted)]") do
                 plain(run.in_progress? ? "Working…" : "No progress total was recorded")
               end
             end
+          end
+
+          # How far into the sweep the bar should already be, as a NEGATIVE
+          # animation-delay.
+          #
+          # The poll re-renders this panel every POLL_INTERVAL_MS, and an element
+          # re-inserted into the DOM restarts its CSS animation from zero —
+          # marking it turbo-permanent does not help, because Turbo MOVES it and
+          # a move is a re-insertion. So a 1.4s sweep chopped every 2s snapped
+          # back to the left mid-pass, forever, making the one signal that says
+          # "this run is alive" look like a stutter.
+          #
+          # Restarting is therefore unavoidable; restarting at the WRONG PLACE is
+          # not. Anchoring the phase to the run's own clock means each restart
+          # picks up where the last render left off, and the sweep reads as
+          # continuous across every poll.
+          def sweep_phase_ms
+            started = run.started_at || run.created_at
+            return 0 unless started
+
+            ((Time.current - started) * 1000).to_i % SWEEP_DURATION_MS
           end
 
           def render_failures

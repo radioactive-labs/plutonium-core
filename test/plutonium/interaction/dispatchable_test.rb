@@ -452,7 +452,6 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
 
     assert_instance_of TestReportRun, run
-    assert_nil run.target_type
     assert_empty run.target_ids
     assert_nil run.progress_total, "nil is INDETERMINATE; opaque work has no denominator"
     assert_nil run.policy_class_name
@@ -462,6 +461,27 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     # in a tenant.
     assert_equal @user, run.initiator
     assert_equal @org, run.scoped_entity
+  end
+
+  test "an opaque run still records which resource it concerns" do
+    run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
+
+    # Not a target — it has none. Run.for_target is where(target_type:), and it
+    # is what puts a run in a resource index's running banner. Left nil, an
+    # opaque run vanished the moment dispatch sent the user back to that index.
+    assert_equal "Blogging::Post", run.target_type
+    assert_empty run.target_ids
+    assert_nil run.policy_class_name, "no targets to re-resolve, so no policy to pin"
+  end
+
+  test "a dispatch with no resource in scope records no target type" do
+    @controller.resource_class = nil
+
+    run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
+
+    # nil still means "no resource" — an interaction dispatched outside a
+    # resource controller has none to name.
+    assert_nil run.target_type
   end
 
   test "a portal with no tenant dispatches a run with no scoped entity" do

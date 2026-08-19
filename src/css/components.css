@@ -1136,6 +1136,9 @@ html.pu-rail-pinned .icon-rail-pin-expand {
    static bar at any width cannot, and a full-width bar would misread as done. */
 .pu-run-progress-indeterminate {
   width: 33%;
+  /* 1.4s must match AsyncRunProgress::SWEEP_DURATION_MS, which the server uses
+     to compute the negative animation-delay that keeps the sweep continuous
+     across polls. */
   animation: pu-run-progress-sweep 1.4s ease-in-out infinite;
 }
 
