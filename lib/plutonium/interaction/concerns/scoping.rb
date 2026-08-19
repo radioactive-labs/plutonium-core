@@ -43,8 +43,26 @@ module Plutonium
         #
         # @param klass [Class] the expected model class
         # @return [Object, nil] the scoped record if found and type matches, nil otherwise
+        # Asks for the parent only if the entity did not already answer.
+        #
+        # "Prefers entity over parent" has to mean the parent is not consulted at
+        # all when the entity matches, or the preference is only about which
+        # answer wins rather than which questions get asked. The array form
+        # evaluated both before looking at either, so a caller that wanted the
+        # TENANT still walked view_context.controller.helpers for a parent whose
+        # answer it then discarded.
+        #
+        # It also keeps the precondition above honest. #current_parent no longer
+        # rescues, so it raises wherever Plutonium::Resource::Controller is not
+        # in play — and every caller today is an interaction, which always runs
+        # under one. Nothing reaches that raise now; asking lazily is what stops
+        # a tenant-only caller from being the one that finds it.
         def scoped_record_of_type(klass)
-          [current_scoped_entity, current_parent].find { |record| record.is_a?(klass) }
+          entity = current_scoped_entity
+          return entity if entity.is_a?(klass)
+
+          parent = current_parent
+          parent if parent.is_a?(klass)
         end
 
         # Returns the parent record from the controller (nested routes).
