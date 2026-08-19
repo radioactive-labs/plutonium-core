@@ -79,7 +79,7 @@ module Plutonium
         # gone" and "you may no longer archive that record" call for different
         # responses. Silence in either is how bulk operations quietly
         # under-apply — the run reports success having touched half the records.
-        Targets = Struct.new(:records, :missing_ids, :unauthorized_ids, keyword_init: true)
+        Targets = Struct.new(:records, :missing_ids, :unauthorized_ids)
 
         attr_reader :run
 

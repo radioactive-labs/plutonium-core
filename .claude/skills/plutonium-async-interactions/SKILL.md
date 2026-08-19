@@ -1,11 +1,11 @@
 ---
 name: plutonium-async-interactions
-description: Use BEFORE building any bulk operation, long-running interaction, or anything needing an audit trail. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
+description: Use BEFORE building any bulk operation or long-running interaction — work that does not fit in a request. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
 ---
 
 # Plutonium Async Interactions
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when a synchronous interaction would time out (hundreds/thousands of records), take longer than a request budget (report generation, a third-party API call), or needs to leave an audit trail nothing currently records.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when the work does not fit in a request: hundreds or thousands of records, or a single call that outlasts a request budget (report generation, a third-party API, a slow import).
 
 For everything about the interaction itself (inputs, validation, outcomes, `execute`), load [[plutonium-behavior]] first. `async` only replaces what `execute` does, not the rest of the interaction's shape.
 

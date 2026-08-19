@@ -4,7 +4,7 @@
 Async interactions are experimental — the DSL and behavior may change in a future release.
 :::
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Use it for bulk operations over many records, single long-running work, or anything that needs an audit trail. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when the work does not fit in a request: a bulk operation over hundreds or thousands of records, or a single call that outlasts a request budget — report generation, a third-party API, a slow import. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 
 ## 🚨 Critical
 
