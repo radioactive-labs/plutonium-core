@@ -93,12 +93,31 @@ module Plutonium
           # retry re-applies every target the run already committed. The row is
           # the report, and it now reads failed, with the reason.
           Rails.logger.warn { "plutonium: interaction run #{run.id} (#{run.class}) failed: #{e.message}" }
-          run.fail!(e.message)
+          record_failure(e)
         end
 
         private
 
         attr_reader :context
+
+        # Records the run's failure, and refuses to let a SECOND failure escape.
+        #
+        # #call swallows the original deliberately — a re-raise would have
+        # ActiveJob retry, re-applying every target already committed. That
+        # promise is only kept if the write recording it cannot raise either.
+        #
+        # An escaping fail! is worse than the failure it was reporting: the row
+        # is already "running" from #claim!, so every retry's claim! matches zero
+        # rows and no-ops, silently burning the queue's retry budget while the
+        # run sits wedged at "running" until ReapJob eventually resets it.
+        def record_failure(error)
+          run.fail!(error.message)
+        rescue => e
+          Rails.logger.error {
+            "plutonium: interaction run #{run.id} could not record its failure " \
+            "(#{e.class}: #{e.message}); the failure it was recording: #{error.message}"
+          }
+        end
 
         # Atomically claims a PENDING run so two concurrent deliveries (retry
         # after a crash, duplicate enqueue) can't both process it. A run

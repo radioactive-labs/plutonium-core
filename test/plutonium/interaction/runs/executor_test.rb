@@ -347,6 +347,21 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal 2, run.progress_done
   end
 
+  test "a run whose failure cannot be recorded does not escape into a job retry" do
+    bad = create_post!(user: @user, organization: @org, title: "bad")
+    run = create_run!(ScriptedRun, target_ids: [bad.id])
+    ScriptedRun.script = ->(_) { raise "boom" }
+
+    # The run fails, and then recording that failure fails too — a dropped
+    # connection, a statement timeout. Nothing may escape: the row is already
+    # "running", so every ActiveJob retry's claim! would match zero rows and
+    # silently no-op while burning the queue's retry budget.
+    executor = Executor.new(run)
+    def run.fail!(*) = raise(ActiveRecord::StatementInvalid, "connection lost")
+
+    assert_nothing_raised { executor.call }
+  end
+
   test "a run implementing neither perform nor perform_on fails naming the class" do
     run = execute!(create_run!(UndefinedWorkRun, target_ids: []))
 
