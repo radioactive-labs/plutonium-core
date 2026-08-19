@@ -199,6 +199,8 @@ const features = [
 <span class="k">end</span>
 
 <span class="c"># → persists a run, enqueues it, redirects to its live progress page</span>`,
+    shot: "/images/home/tour-async.png",
+    alt: "The run's progress page mid-flight — a Running badge, a progress bar reading 34 of 50 targets, and the run's type, target type and initiator",
     policy: "Permissions are re-derived when the job runs, never replayed from dispatch.",
     link: "/plutonium-core/reference/behavior/async-interactions",
   },
