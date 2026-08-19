@@ -130,6 +130,19 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       t.index [:target_type, :state], name: "idx_pu_runs_on_target_and_state"
       t.index [:initiator_type, :initiator_id], name: "idx_pu_runs_on_initiator"
       t.index [:scoped_entity_type, :scoped_entity_id], name: "idx_pu_runs_on_scoped_entity"
+      # Runs::ReapJob's stalled scan filters on state with no target_type
+      # predicate, so it cannot use idx_pu_runs_on_target_and_state above (wrong
+      # leading column) — without this, the scan degrades to a full-table scan as
+      # completed/failed history accumulates. Low-cardinality but selective for
+      # this query: the in-progress rows are a vanishing fraction of a mature
+      # table, which is exactly the case that needs the index.
+      #
+      # state ALONE, deliberately. The scan's other predicate is
+      # COALESCE(last_activity_at, created_at) < ? (see Run.stalled) — an
+      # expression, so a trailing last_activity_at column could not be used for
+      # the range at all, and created_at is not in the index either, so it buys
+      # no index-only scan. It would be write cost for nothing.
+      t.index :state, name: "idx_pu_runs_on_state"
     end
   end
 end
