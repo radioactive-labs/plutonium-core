@@ -12,6 +12,8 @@ import HomeWhyPlutonium from "./components/HomeWhyPlutonium.vue"
 import HomeInTheBox from "./components/HomeInTheBox.vue"
 import HomeCta from "./components/HomeCta.vue"
 import SectionLanding from "./components/SectionLanding.vue"
+import BlogIndex from "./components/BlogIndex.vue"
+import BlogMeta from "./components/BlogMeta.vue"
 
 export default {
   extends: DefaultTheme,
@@ -24,6 +26,8 @@ export default {
     app.component("HomeInTheBox", HomeInTheBox)
     app.component("HomeCta", HomeCta)
     app.component("SectionLanding", SectionLanding)
+    app.component("BlogIndex", BlogIndex)
+    app.component("BlogMeta", BlogMeta)
   },
   setup() {
     const route = useRoute()
