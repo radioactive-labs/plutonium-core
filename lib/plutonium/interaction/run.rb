@@ -217,7 +217,14 @@ module Plutonium
 
       # Which shape of work this is, decided by what the subclass implements
       # rather than a mode flag — one less thing for an author to keep in sync.
-      def targeted? = respond_to?(:perform_on)
+      #
+      # Non-public methods count. `private def perform_on(record)` is a natural
+      # idiom for work only the executor is meant to invoke, and Ruby's
+      # public-only respond_to? default would read that as opaque work — routing
+      # it to #perform, which the base class raises NotImplementedError for. The
+      # author would see every dispatch fail on a run whose perform_on is right
+      # there. Runs::Executor invokes both through send to match.
+      def targeted? = respond_to?(:perform_on, true)
 
       # Opaque (untargeted) work. Subclasses override this, or +perform_on+ for
       # per-target work.

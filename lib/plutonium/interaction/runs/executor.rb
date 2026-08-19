@@ -125,8 +125,13 @@ module Plutonium
 
         def build_context = Context.new(run)
 
+        # send, not a plain call: Run#targeted? detects a non-public perform_on,
+        # so the two shapes of work must be INVOKED the same way they are
+        # detected. `private def perform` is a natural idiom for a method only
+        # the framework is meant to call, and it must not change what the
+        # executor does with it.
         def perform_opaque
-          run.perform
+          run.send(:perform)
           run.finish!
         end
 
@@ -195,7 +200,8 @@ module Plutonium
         #   blanket rescue below already lets it through.
         # * Context::UnresolvableError IS one, so it is let through explicitly.
         def perform_one(record)
-          run.perform_on(reauthorized(record))
+          # send: see #perform_opaque.
+          run.send(:perform_on, reauthorized(record))
           advance!(record.id)
           nil
         rescue Context::UnresolvableError

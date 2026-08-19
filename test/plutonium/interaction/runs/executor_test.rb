@@ -36,6 +36,16 @@ class OpaqueScriptedRun < Plutonium::Interaction::Run
   def perform = self.class.calls += 1
 end
 
+# perform_on declared PRIVATE — a natural idiom for work only the executor is
+# meant to invoke. It must be detected and performed exactly like a public one.
+class PrivateWorkRun < Plutonium::Interaction::Run
+  cattr_accessor :performed
+
+  private
+
+  def perform_on(record) = self.class.performed << record.id
+end
+
 # Implements NEITHER perform nor perform_on: an author error that must surface
 # as a diagnosis, not a NoMethodError from inside the loop.
 class UndefinedWorkRun < Plutonium::Interaction::Run
@@ -270,6 +280,17 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
   end
 
   # --- shapes of work ------------------------------------------------------
+
+  test "a run whose perform_on is private is performed, not misread as opaque work" do
+    PrivateWorkRun.performed = []
+    post = create_post!(user: @user, organization: @org)
+
+    run = execute!(create_run!(PrivateWorkRun, target_ids: [post.id]))
+
+    assert_equal [post.id], PrivateWorkRun.performed,
+      "visibility must not decide whether the framework can invoke declared work"
+    assert_equal "completed", run.state
+  end
 
   test "an opaque run performs once and needs no targets" do
     run = OpaqueScriptedRun.create!(initiator: @user, scoped_entity: @org)

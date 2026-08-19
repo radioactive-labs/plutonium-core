@@ -10,6 +10,12 @@ class TestOpaqueRun < Plutonium::Interaction::Run
   def perform = :done
 end
 
+class TestPrivateWorkRun < Plutonium::Interaction::Run
+  private
+
+  def perform_on(record) = record
+end
+
 class TestContinuingRun < Plutonium::Interaction::Run
   on_failure :continue
 end
@@ -73,6 +79,14 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
   test "targeted? reflects what the subclass implements" do
     assert build(TestArchiveRun).targeted?
     refute build(TestOpaqueRun).targeted?
+  end
+
+  test "targeted? counts a non-public perform_on" do
+    # `private def perform_on` is a natural idiom for work only the executor is
+    # meant to invoke. Ruby's public-only respond_to? default would read it as
+    # opaque work and route it to #perform, failing every dispatch of a run whose
+    # perform_on is right there.
+    assert build(TestPrivateWorkRun).targeted?
   end
 
   test "target_label humanizes the target class, falls back on a stale one, and is nil for opaque work" do
