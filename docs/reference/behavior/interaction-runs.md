@@ -1,5 +1,9 @@
 # Interaction Runs
 
+::: warning Experimental
+Interaction runs are experimental — the DSL and behavior may change in a future release.
+:::
+
 `dispatches_to` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Use it for bulk operations over many records, single long-running work, or anything that needs an audit trail. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 
 ## 🚨 Critical
@@ -64,7 +68,8 @@ end
 Nothing is passed in explicitly. Everything the run needs is already reachable from the interaction's own state:
 
 - **Targets.** `attribute :resource` / `attribute :resources`, already narrowed by the controller's policy scope, stored as ids (`target_ids`) and re-resolved at perform time, never serialized as records.
-- **Initiator + tenant.** `current_user` / `current_scoped_entity`, the pair every Plutonium policy authorizes on.
+- **Initiator + tenant.** `current_user` / `current_scoped_entity`, two of the things every Plutonium policy authorizes on.
+- **Nested-route parent.** `current_parent` and `current_nested_association` — `/orgs/1/posts/5/comments` records `(Post#5, :comments)`. Both halves or neither, since `Policy#default_relation_scope` raises on one alone. This is the third policy input, and it is not optional detail: that method picks **one** branch, parent *or* entity, so a nested run without its parent re-derives targets under the tenant where dispatch used the parent — wider than the scope the initiator was shown. It also leaves a host predicate reading `parent` looking at `nil`, which (being declared `optional: true`) answers false rather than raising, refusing every target for a reason that names the predicate instead of the missing context.
 - **The policy actually resolved.** `policy_class_name`, not an inferred `"#{Model}Policy"` (a namespaced portal or an STI fallback would make that guess wrong), plus `policy_action`, the predicate dispatch checked (e.g. `"archive?"`).
 - **`authorization_namespace`.** The portal's module name, so perform-time policy lookup finds the same narrowed policy dispatch did.
 
@@ -74,9 +79,10 @@ An opaque (untargeted) run records none of the target/policy columns: there's no
 
 The job has no controller, no request, no `current_user`. `Runs::Context` rebuilds the authorization triple from the row and re-checks it from scratch. It does not trust anything the dispatching request already decided:
 
-- The **scope** check re-runs `Post.associated_with(tenant)` style filtering. A target that left the tenant, or was deleted, between dispatch and perform is reported `missing`/`unauthorized`, never silently skipped.
+- The **scope** check re-runs `Post.associated_with(tenant)` style filtering — or, for a nested dispatch, the parent's association. A target that left the tenant or the parent, or was deleted, between dispatch and perform is reported `missing`/`unauthorized`, never silently skipped.
 - The **predicate** check re-asks the policy the same question dispatch asked (`policy_action`), per target, immediately before `perform_on`, not once up front. An initiator whose permission was revoked mid-run stops applying to the remaining targets.
 - A **policy mismatch** (the class renamed/re-parented/re-namespaced since dispatch) refuses to run at all, rather than silently authorizing under a different policy than the initiator was ever subject to.
+- A **deleted subject** — initiator, tenant or parent — refuses the run. In each case the association nils out, and nil reads as "there was never one": no tenant, or not a nested dispatch. Both of those drop a filter rather than narrowing, so the `*_type` column is what tells "carries none" apart from "carries one that is gone".
 
 This is deliberate and asymmetric: a resolution failure always fails **closed** (refuse / report missing), never open (never "assume permitted").
 

@@ -11,9 +11,11 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 
 ## 🚨 Critical (read first)
 
+- **Experimental.** The DSL and behavior may change in a future release — same status as [[plutonium-wizard]] and [[plutonium-kanban]]. Fine to build on; expect to revisit it on upgrade.
 - **Enable the subsystem first.** `config.interaction_runs.enabled = true` in `config/initializers/plutonium.rb`, then `rails db:migrate`. Off by default, so no `plutonium_interaction_runs` table otherwise.
 - **`dispatches_to` fully replaces `#execute`.** Declaring it on a class that already defines its own `execute` raises `ArgumentError` at load. Do the work inline, or dispatch it, never both.
 - **Define `perform_on(record)` for targeted work, `perform` for opaque work.** A run class implementing neither fails loudly (naming the class) the first time it's performed, rather than a bare `NoMethodError`.
+- **A nested dispatch records its parent.** `parent_type`/`parent_id`/`parent_association` join initiator and tenant on the row, because `Policy#default_relation_scope` picks parent scoping **or** entity scoping, not both — a nested run missing its parent re-derives targets under the wider tenant scope, and any predicate reading `parent` silently answers false. A parent deleted mid-run refuses the run, exactly like a deleted tenant.
 - **Permissions are re-derived at perform time, never replayed from dispatch.** The job rebuilds `(initiator, tenant)` from the row and re-checks the policy scope and predicate per target, immediately before each `perform_on`. A permission revoked mid-run stops applying to what's left. Both failure directions (scope, predicate) fail closed (refuse/report), never open.
 - **Register `Run` as a resource per portal.** Its show page IS the progress page, and other resources' index pages get a "runs in progress" banner for free. Nothing renders without registration.
 - **Read `outcome`, never bare `state`, when displaying a run's result.** A `:continue` run that under-applied still has `state == "completed"`; only `outcome` says `"completed_with_errors"`.
