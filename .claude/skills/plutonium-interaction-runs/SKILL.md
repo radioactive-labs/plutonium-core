@@ -1,9 +1,9 @@
 ---
-name: plutonium-runs
-description: Use BEFORE building any bulk operation, long-running interaction, or anything needing an audit trail. Covers dispatches_to, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering Run as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
+name: plutonium-interaction-runs
+description: Use BEFORE building any bulk operation, long-running interaction, or anything needing an audit trail. Covers dispatches_to, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering InteractionRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
 ---
 
-# Plutonium Async Interactions (Runs)
+# Plutonium Interaction Runs
 
 `dispatches_to` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when a synchronous interaction would time out (hundreds/thousands of records), take longer than a request budget (report generation, a third-party API call), or needs to leave an audit trail nothing currently records.
 
@@ -149,7 +149,7 @@ On Solid Queue (or any queue providing ActiveJob concurrency controls) this is t
 
 ## Full reference
 
-`docs/reference/behavior/runs.md` has the complete write-up: authorization re-derivation in detail, outcome-vs-state, everything above with more context.
+`docs/reference/behavior/interaction-runs.md` has the complete write-up: authorization re-derivation in detail, outcome-vs-state, everything above with more context.
 
 ## Related Skills
 

@@ -1,4 +1,4 @@
-# Async Interactions (Runs)
+# Interaction Runs
 
 `dispatches_to` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Use it for bulk operations over many records, single long-running work, or anything that needs an audit trail. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 

@@ -5,7 +5,7 @@ The behavior layer is intentionally thin:
 - **[Controllers](./controllers) route** — handle requests, redirect after submit, transform params.
 - **[Policies](./policies) authorize** — decide who can do what, which fields they can see, which records they can access.
 - **[Interactions](./interactions) present** — declare the inputs for a custom operation (publish, archive, import, send invitation), render as a button and a form, and hand back an outcome.
-- **[Async Interactions (Runs)](./runs)** — `dispatches_to` a persisted, resumable run instead of executing inline, for bulk operations, long-running work, or anything that needs an audit trail.
+- **[Interaction Runs](./interaction-runs)** — run an interaction asynchronously: `dispatches_to` a persisted, resumable run instead of executing inline, for bulk operations, long-running work, or anything that needs an audit trail.
 
 Registering an action and rendering it lives in [Resource › Definition](/reference/resource/definition) and [Resource › Actions](/reference/resource/actions). This section covers **writing** the controller hook, policy method, or interaction class behind it.
 
@@ -21,7 +21,7 @@ For multi-tenant `relation_scope` and entity scoping, see [Tenancy › Entity sc
 |---|---|
 | Field rendering (inputs, displays, columns, search/filters) | [Definition](/reference/resource/definition) |
 | Custom operations (publish, archive, import) | [Interaction](./interactions) + [Action](/reference/resource/actions) on the definition |
-| Bulk/long-running operations, audit trail | [Async Interactions (Runs)](./runs) |
+| Bulk/long-running operations, audit trail | [Interaction Runs](./interaction-runs) |
 | Authorization rules | [Policy](./policies) |
 | Tenant scoping (`relation_scope`) | [Policy](./policies) + [Tenancy](/reference/tenancy/entity-scoping) |
 | Custom redirect logic, param munging, custom index query shape | [Controller hook](./controllers) |
