@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "rails/generators/test_case"
-require "generators/pu/runs/install_generator"
+require "generators/pu/async_interactions/install_generator"
 
 class RunsInstallGeneratorTest < Rails::Generators::TestCase
   include GeneratorTestHelper
