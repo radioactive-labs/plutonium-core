@@ -81,6 +81,37 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     refute build(TestOpaqueRun).targeted?
   end
 
+  test "heartbeat! refreshes the stall clock without bumping lock_version" do
+    run = build(TestOpaqueRun, state: "running", last_activity_at: 3.hours.ago)
+    run.save!
+    # The executor's own in-memory copy, exactly as it holds it mid-perform.
+    version = run.lock_version
+
+    beat = run.heartbeat!
+
+    assert_in_delta beat, run.reload.last_activity_at, 1
+    assert_equal version, run.lock_version,
+      "touch and update! both bump the lock column; that would invalidate the " \
+      "executor's own record and make its next save! raise against a row nobody took"
+    assert_empty Plutonium::Interaction::Run.stalled(before: 1.hour.ago).to_a,
+      "the whole point: a beating run is no longer stalled"
+  end
+
+  test "heartbeat! tells a superseded worker that the run is no longer its own" do
+    run = build(TestOpaqueRun, state: "running")
+    run.save!
+    # A reaper judged this run stalled and a second executor claimed it, while
+    # this worker was still inside a long perform. For opaque work this beat is
+    # the ONLY place it can find out before finish!.
+    Plutonium::Interaction::Run.where(id: run.id).update_all("lock_version = lock_version + 1")
+
+    error = assert_raises(ActiveRecord::StaleObjectError) { run.heartbeat! }
+
+    assert_equal run.id, error.record.id,
+      "Runs::Executor#superseded? reads the errored record to tell this apart " \
+      "from an author's own lost update"
+  end
+
   test "targeted? counts a non-public perform_on" do
     # `private def perform_on` is a natural idiom for work only the executor is
     # meant to invoke. Ruby's public-only respond_to? default would read it as

@@ -46,6 +46,20 @@ class PrivateWorkRun < Plutonium::Interaction::Run
   def perform_on(record) = self.class.performed << record.id
 end
 
+# Long opaque work that beats while it runs — the shape Run#heartbeat! exists
+# for, since the executor writes nothing between the claim and finish!.
+class BeatingOpaqueRun < Plutonium::Interaction::Run
+  cattr_accessor :beats
+  cattr_accessor :before_beat
+
+  def perform
+    2.times do
+      self.class.before_beat&.call(self)
+      self.class.beats << heartbeat!
+    end
+  end
+end
+
 # Implements NEITHER perform nor perform_on: an author error that must surface
 # as a diagnosis, not a NoMethodError from inside the loop.
 class UndefinedWorkRun < Plutonium::Interaction::Run
@@ -290,6 +304,39 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal [post.id], PrivateWorkRun.performed,
       "visibility must not decide whether the framework can invoke declared work"
     assert_equal "completed", run.state
+  end
+
+  test "an opaque run that heartbeats stays out of the reaper's reach" do
+    BeatingOpaqueRun.beats = []
+    BeatingOpaqueRun.before_beat = nil
+    run = BeatingOpaqueRun.create!(initiator: @user, scoped_entity: @org)
+
+    travel_to 3.hours.from_now do
+      run = execute!(run)
+    end
+
+    assert_equal 2, BeatingOpaqueRun.beats.size
+    assert_equal "completed", run.state
+    # Mid-perform the run was three hours past its claim. Without the beats it
+    # would have been reaped and — having no handled_target_ids — re-run whole.
+    assert_empty Plutonium::Interaction::Run.stalled(before: 2.hours.from_now).to_a
+  end
+
+  test "a superseded opaque run abandons at its heartbeat, not after the work" do
+    BeatingOpaqueRun.beats = []
+    run = create_run!(BeatingOpaqueRun)
+    # Claimed away by a second executor once the work is already under way —
+    # after #claim!, which reloads and would otherwise hand this executor the
+    # new version.
+    BeatingOpaqueRun.before_beat = lambda do |r|
+      Plutonium::Interaction::Run.where(id: r.id).update_all("lock_version = lock_version + 1")
+    end
+
+    run = execute!(run)
+
+    assert_empty BeatingOpaqueRun.beats, "the first beat must be the one that raises"
+    assert_equal "running", run.state, "a superseded worker must not settle the run"
+    assert_empty run.errors_log
   end
 
   test "an opaque run performs once and needs no targets" do

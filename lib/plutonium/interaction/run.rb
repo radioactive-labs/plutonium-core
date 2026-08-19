@@ -215,6 +215,76 @@ module Plutonium
         target_ids.reject { |id| handled.include?(id.to_s) }
       end
 
+      # Says "still working" — for work the executor cannot see inside.
+      #
+      # Runs::ReapJob treats a run silent past +stall_after+ as dead and resumes
+      # it. Every write the executor makes refreshes that clock, so a targeted
+      # run whose targets are quick heartbeats once per target for free. Two
+      # shapes of work get nothing:
+      #
+      # * OPAQUE work. Between the claim and {#finish!} the executor writes
+      #   nothing at all, because there is nothing to count. An opaque +perform+
+      #   that outlives stall_after is reaped mid-flight, and — having no
+      #   handled_target_ids to resume from — is re-run FROM SCRATCH.
+      # * A single +perform_on+ that outlives stall_after on its own.
+      #
+      # So a run that does either must say so itself. This is deliberately not
+      # automatic: a background thread would have to guess how often to write,
+      # and would keep reporting a wedged worker as healthy. Only the work knows
+      # it is making progress.
+      #
+      #   def perform
+      #     invoices.each_slice(500) do |slice|
+      #       reissue(slice)
+      #       heartbeat!
+      #     end
+      #   end
+      #
+      # It also ANSWERS: the write is conditional on this instance still holding
+      # the row's lock_version, so a worker superseded while inside a long
+      # +perform+ learns at its next beat rather than at the end — see
+      # Runs::Executor#superseded?, which turns that into "no longer mine"
+      # instead of a failure. That is the only place a long opaque run can find
+      # out at all.
+      #
+      # The beat must NOT bump lock_version — that is the executor's own record
+      # it would be invalidating, making its next save! raise against a row
+      # nobody else touched. Which rules out more than it looks like:
+      #
+      # * +touch+ and +update!+ both bump it (Locking::Optimistic hooks
+      #   _touch_row as well as _update_record).
+      # * so does +update_all+ GIVEN A HASH. Rails silently adds the increment
+      #   when the model locks and the hash does not mention the column — see
+      #   ActiveRecord::Relation#update_all. Only the string/array form escapes
+      #   it, going through sanitize_sql_for_assignment untouched, which is why
+      #   this and Runs::Executor#claim! both spell their SQL out.
+      #
+      # The in-memory attribute is left alone for a related reason: nothing
+      # reads it, and assigning it would put a change on the record that the
+      # caller never asked to save.
+      #
+      # Call it on SELF, which is what +perform+/+perform_on+ already hand the
+      # author. The conditional reads this instance's lock_version, and the
+      # executor's own writes keep that current; a separately loaded copy
+      # (Run.find(id)) goes stale at the first advance! and would raise here
+      # having been superseded by nobody.
+      #
+      # Under the +:transactional+ policy the beat is inside the batch's
+      # transaction like everything else, so it is invisible to the reaper until
+      # the batch commits. An all-or-nothing batch longer than stall_after is
+      # reapable no matter what this does.
+      #
+      # @raise [ActiveRecord::StaleObjectError] if another executor owns the run
+      # @return [Time] the recorded activity time
+      def heartbeat!
+        now = Time.current
+        written = self.class.where(id: id, lock_version: lock_version)
+          .update_all(["last_activity_at = ?", now])
+        raise ActiveRecord::StaleObjectError.new(self, "heartbeat") if written.zero?
+
+        now
+      end
+
       # Which shape of work this is, decided by what the subclass implements
       # rather than a mode flag — one less thing for an author to keep in sync.
       #

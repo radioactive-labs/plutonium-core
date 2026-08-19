@@ -156,6 +156,30 @@ Resuming is based on elapsed time, not a true distributed lock. A run that is me
 
 What bounds that is `lock_version`. Both the reaper's resume and the executor's claim bump it, so the worker that is still alive holds a version the row no longer has: its very next write raises `ActiveRecord::StaleObjectError`, and the executor treats that as "no longer mine" — it abandons the pass without marking the run failed and without overwriting the new worker's progress. Two things it deliberately does not do: it cannot interrupt a `perform_on` already in flight, so one target may be applied twice (once by each side), and it cannot roll back what the superseded worker already committed. Set `stall_after` well above this app's slowest legitimate run — the fence bounds the damage of a bad value, it does not make one free.
 
+### Long work must say it is alive
+
+`stall_after` is a **silence** threshold, not a runtime limit. Every write the executor makes refreshes the clock, so a targeted run with quick targets heartbeats once per target for free. Two shapes get nothing, and both are exactly the "long-running task" case:
+
+- **Opaque work.** Between the claim and `finish!` the executor writes nothing, because there is nothing to count. A `perform` that outlives `stall_after` is reaped mid-flight and — having no `handled_target_ids` to resume from — re-runs **from scratch**.
+- **A single `perform_on`** that outlives `stall_after` on its own.
+
+Call `heartbeat!` from inside such work:
+
+```ruby
+class Billing::ReissueInvoicesRun < Plutonium::Interaction::Run
+  def perform
+    invoices.each_slice(500) do |slice|
+      reissue(slice)
+      heartbeat!        # "still working" — resets the stall clock
+    end
+  end
+end
+```
+
+This is deliberately not automatic. A background thread would have to guess a cadence, and would go on reporting a wedged worker as healthy; only the work itself knows it is making progress.
+
+`heartbeat!` also **answers**. The write is conditional on this worker still holding the row's `lock_version`, so one that was superseded inside a long `perform` raises `ActiveRecord::StaleObjectError` at its next beat and abandons the pass — for opaque work that is the only place it can find out before `finish!`. Under `:transactional` the beat is inside the batch transaction like everything else, so it stays invisible to the reaper until the batch commits.
+
 ### Queue-level concurrency
 
 On a queue that provides ActiveJob concurrency controls — Solid Queue does, whenever it is in the bundle — the run job also declares a per-run semaphore, and the reaper a global one:

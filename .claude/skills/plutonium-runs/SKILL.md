@@ -17,6 +17,7 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 - **Permissions are re-derived at perform time, never replayed from dispatch.** The job rebuilds `(initiator, tenant)` from the row and re-checks the policy scope and predicate per target, immediately before each `perform_on`. A permission revoked mid-run stops applying to what's left. Both failure directions (scope, predicate) fail closed (refuse/report), never open.
 - **Register `Run` as a resource per portal.** Its show page IS the progress page, and other resources' index pages get a "runs in progress" banner for free. Nothing renders without registration.
 - **Read `outcome`, never bare `state`, when displaying a run's result.** A `:continue` run that under-applied still has `state == "completed"`; only `outcome` says `"completed_with_errors"`.
+- **Long work must call `heartbeat!`.** `stall_after` measures SILENCE, and the executor only writes per target — so opaque `perform` writes nothing at all between claim and finish. An opaque run longer than `stall_after` is reaped and, having no `handled_target_ids`, re-run from scratch. Call `heartbeat!` inside the loop. It also raises `StaleObjectError` if another worker took the run over, which for opaque work is the only way to find out.
 - **A crashed/stalled run does not auto-heal.** Nothing revisits a `"running"` row on its own. `pu:runs:install` schedules `Plutonium::Interaction::Runs::ReapJob` for you when Solid Queue is in the bundle; otherwise (or on another scheduler) you must schedule it yourself. Unscheduled, a crash mid-batch leaves that row stuck forever.
 
 ---
@@ -120,6 +121,8 @@ Registering gets you, for free:
 A worker crash mid-batch, or a job the queue silently drops, leaves a run `"running"`/`"pending"` forever. Nothing else revisits it. `ReapJob` finds runs with no activity (`last_activity_at`, or `created_at` if never picked up) past `config.interaction_runs.stall_after` (default `1.hour`), and resumes them: resets to `"pending"`, re-enqueues.
 
 This is safe, not a blind replay. The executor tracks `handled_target_ids` and only re-attempts what's left.
+
+Safe *given a heartbeat*: `handled_target_ids` only exists for targeted work, so opaque work resumes by re-running `perform` whole. Long opaque work must call `heartbeat!` (see Critical, above) so it is never judged stalled in the first place.
 
 `rails g pu:runs:install` schedules it automatically when Solid Queue is in the bundle:
 
