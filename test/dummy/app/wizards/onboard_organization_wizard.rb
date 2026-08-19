@@ -47,7 +47,7 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     #
     # The choices are a {value => label} hash whose labels differ from the stored
     # values, so the review page has something real to resolve — a raw "email"
-    # there would mean ChoicesData isn't running.
+    # there would mean the summary's choice-label resolution isn't running.
     attribute :contact_pref, :string
     input :contact_pref, as: :select, pre_submit: true,
       choices: {none: "Don't contact me", email: "Email me"}

@@ -114,13 +114,13 @@ module Plutonium
             div(class: "px-5 py-4") do
               # Decorate so attachment fields resolve to displayable attachments —
               # the SummaryDisplay then renders them through the normal attachment
-              # display component, not the raw token string.
-              # Also pass `step:` so ChoicesData can resolve select labels (e.g.
-              # a stored member_id renders as "John Doe", not "42").
+              # display component, not the raw token string. (Choice fields need no
+              # decorator: the summary resolves their labels per field from the
+              # `inputs` it is already handed.)
               if fields.any?
                 render SummaryDisplay.new(
                   Plutonium::Wizard::AttachmentData.wrap(step_data(step), step),
-                  fields:, inputs: step.inputs, step: step
+                  fields:, inputs: step.inputs
                 )
               end
               render_structured(step) if structured.any?

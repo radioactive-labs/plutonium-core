@@ -14,15 +14,10 @@ module Plutonium
         # @param inputs [Hash] the step's input config ({name => {options:}}), so a
         #   field's declared `as:` informs the display component (e.g. a `:text`
         #   input renders via the markdown/text display tag).
-        # @param step [Plutonium::Wizard::Step] the step being summarised; used to
-        #   apply the ChoicesData decorator (label resolution for select inputs).
-        def initialize(object, fields:, inputs: {}, step: nil, **options)
+        def initialize(object, fields:, inputs: {}, **options)
           options[:key] = :wizard
           @summary_fields = fields
           @summary_inputs = inputs
-          # Resolve select/choices fields to human-readable labels so the review
-          # page shows "John Doe" instead of "42", "Cash" instead of "cash", etc.
-          object = Plutonium::Wizard::ChoicesData.wrap(object, step) if step
           super(object, **options)
         end
 
@@ -63,17 +58,34 @@ module Plutonium
         end
 
         # Map the raw value(s) to their choice label(s) using the SAME mapper the
-        # form's select uses, so summary labels always match the form. Falls back
-        # to the raw value for anything not in `choices:`; nil for an empty field
-        # (so the display renders its placeholder).
+        # form's select uses, so summary labels always match the form. Falls back to
+        # the raw value for anything not in `choices:`; nil for an empty field (so
+        # the display renders its placeholder).
+        #
+        # The mapper is built ONCE per field, not once per value: `choices:` is
+        # routinely a proc (`-> { Member.all.map { |m| [m.name, m.id] } }`), and a
+        # per-value mapper would re-run that query for every element of a
+        # multi-select.
+        #
+        # Guarded, because `choices:` is author-supplied and materialising it runs
+        # their code — an arity-1 proc (the run-dependent form the wizard DSL
+        # documents) raises under the mapper's bare `call`. A raising collection
+        # degrades that ONE field to its raw value; it must not 500 the whole review
+        # page, which is the user's only way out of the flow.
         def resolve_choice_label(name, input_options)
+          raw = Phlexi::Field::Support::Value.from(object, name)
+          values = Array(raw)
+          return if values.empty?
+
           mapper = Phlexi::Form::SimpleChoicesMapper.new(
             input_options[:choices],
             label_method: input_options[:label_method],
             value_method: input_options[:value_method]
           )
-          raw = Phlexi::Field::Support::Value.from(object, name)
-          Array(raw).map { |value| mapper[value] || value }.join(", ").presence
+          values.map { |value| mapper[value] || value }.join(", ").presence
+        rescue => e
+          Rails.logger.warn { "[Plutonium::Wizard] could not resolve a choice label for #{name}: #{e.message}" }
+          Array(raw).join(", ").presence
         end
 
         # Pick the display component the same way a resource display does — infer it
