@@ -45,6 +45,13 @@ class TaskPolicy < ::ResourcePolicy
     update?
   end
 
+  # Bulk action: the same work dispatched to a run instead of executed inline.
+  # Gated like archive_all? — an undeclared action is denied, so a bulk action
+  # with no predicate here simply never renders.
+  def archive_all_async?
+    update?
+  end
+
   # Core actions
 
   # Set deny_create = true in integration tests to exercise the "+ Add" hidden path.

@@ -158,6 +158,25 @@ module Plutonium
           assert_equal 1, controller.redirect_calls.size
         end
 
+        test "a fully-formed URL survives a non-html request" do
+          controller = MockController.new
+          controller.request.format_symbol = :turbo_stream
+          # Real arity. The mock above takes *args, which is why appending a
+          # format hash to a String target went unnoticed here while raising
+          # ArgumentError against Rails' own url_for(options = nil).
+          def controller.url_for(options = nil) = options.is_a?(String) ? options : "/generated/url"
+
+          response = Redirect.new("http://example.test/admin/async_runs/1")
+
+          response.process(controller)
+          controller.simulate_any
+
+          # Taken as given: there is nothing to merge a format into, and the
+          # caller has already decided what the URL points at.
+          assert_equal "http://example.test/admin/async_runs/1",
+            controller.redirect_calls.first[:url]
+        end
+
         test "does not override explicitly specified format" do
           controller = MockController.new
           controller.request.format_symbol = :json
