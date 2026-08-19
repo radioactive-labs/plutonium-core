@@ -152,12 +152,25 @@ module Plutonium
         end
 
         # Runs have no name or title, so Labeling would fall back to
-        # "Interaction run #12" — true but silent about the only thing that
+        # "Async run #12" — true but silent about the only thing that
         # distinguishes one row from the next.
+        #
         # Demodulized: a host's run class is as likely to be
         # Billing::ReissueInvoicesRun as a top-level one, and the namespace adds
         # nothing to a label that already sits under the run's own breadcrumb.
-        def to_label = "#{self.class.name.demodulize.titleize} ##{to_param}"
+        #
+        # Except when demodulizing is what throws the name away. A run declared
+        # by Dispatchable#async is Blogging::ArchivePosts::Run, and every
+        # one of them would render "Run #12" — the failure mode this method
+        # exists to avoid, reintroduced for the shape most authors will write.
+        # For those, the enclosing segment IS the name, so it is folded back in.
+        #
+        # @return [String]
+        def to_label
+          parts = self.class.name.split("::")
+          name = (parts.last == "Run" && parts.size > 1) ? "#{parts[-2]}Run" : parts.last
+          "#{name.titleize} ##{to_param}"
+        end
 
         # nil means INDETERMINATE, not zero: opaque work has no denominator, and
         # the progress UI renders a spinner rather than a 0% bar.

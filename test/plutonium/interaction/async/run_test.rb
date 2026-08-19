@@ -120,6 +120,20 @@ class Plutonium::Interaction::RunTest < ActiveSupport::TestCase
     assert build(TestPrivateWorkRun).targeted?
   end
 
+  test "to_label names the run, including one nested in its interaction" do
+    assert_equal "Test Archive Run #1", build(TestArchiveRun, id: 1).to_label
+
+    # A run declared by Dispatchable#async is <Interaction>::Run, and
+    # demodulizing it throws away the only part that says which run this is —
+    # every one of them would render "Run #1".
+    nested = Class.new(Plutonium::Interaction::Async::Run)
+    Object.const_set(:LabelProbeInteraction, Class.new { const_set(:Run, nested) })
+    assert_equal "Label Probe Interaction Run #1",
+      nested.new(initiator: @initiator ||= create_user!, id: 1).to_label
+  ensure
+    Object.send(:remove_const, :LabelProbeInteraction) if defined?(LabelProbeInteraction)
+  end
+
   test "target_label humanizes the target class, falls back on a stale one, and is nil for opaque work" do
     assert_equal "Post", build(TestArchiveRun, target_type: "Blogging::Post").target_label
     assert_nil build(TestOpaqueRun).target_label

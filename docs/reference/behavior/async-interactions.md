@@ -4,12 +4,12 @@
 Async interactions are experimental — the DSL and behavior may change in a future release.
 :::
 
-`dispatches_to` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Use it for bulk operations over many records, single long-running work, or anything that needs an audit trail. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Use it for bulk operations over many records, single long-running work, or anything that needs an audit trail. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 
 ## 🚨 Critical
 
 - **Opt-in and migrated.** `config.async_interactions.enabled = true` + `rails db:migrate` (off by default).
-- **`dispatches_to` replaces `execute` entirely.** The interaction still validates, authorizes and renders its form exactly as before; only what happens on submit changes.
+- **`async` replaces `execute` entirely.** The interaction still validates, authorizes and renders its form exactly as before; only what happens on submit changes.
 - **Permissions are re-derived at perform time, never replayed from dispatch.** A run created a job, not a snapshot of "what the initiator could do then." See [Authorization](#authorization-is-re-derived-not-replayed).
 - **The run itself is a resource.** Register it once per portal (`rails g pu:async_interactions:install --dest=your_portal`); its show page IS its progress page.
 - **A stalled run does not silently replay.** `pu:async_interactions:install` schedules `Async::ReapJob` when Solid Queue is in the bundle; on any other scheduler you must add it yourself, or a crash mid-batch leaves the row `"running"` forever. See [Stalled runs](#stalled-runs-and-reapjob).
@@ -29,21 +29,37 @@ end
 rails db:migrate   # creates plutonium_async_runs
 ```
 
-The flag gates the migration, not just the behaviour: while it is off the runs migration path is never registered, so the table does not exist. A `dispatches_to` interaction that runs anyway raises `Plutonium::Interaction::Concerns::Dispatchable::NotEnabledError` naming the flag, rather than a raw "no such table" from inside ActiveRecord.
+The flag gates the migration, not just the behaviour: while it is off the runs migration path is never registered, so the table does not exist. A `async` interaction that runs anyway raises `Plutonium::Interaction::Concerns::Dispatchable::NotEnabledError` naming the flag, rather than a raw "no such table" from inside ActiveRecord.
 
-## Declaring a run
+## Declaring the work
 
-A run is an STI subclass of `Plutonium::Interaction::Async::Run`. Define `perform_on(record)` for **targeted** work (bulk/record actions, one call per target) or `perform` for **opaque** work (resource actions with no subject):
+`async` takes a block, and the block is the run's class body. Define `perform_on(record)` for **targeted** work (bulk/record actions, one call per target) or `perform` for **opaque** work (resource actions with no subject):
 
 ```ruby
-class Blogging::ArchivePostsRun < Plutonium::Interaction::Async::Run
-  on_failure :continue   # :halt (default) | :continue | :transactional
+class Blogging::ArchivePosts < ResourceInteraction
+  presents label: "Archive", icon: Phlex::TablerIcons::Archive
+  attribute :resources          # bulk — perform_on runs once per record
+  attribute :reason, :string
 
-  def perform_on(post)
-    post.archive!
+  async do
+    on_failure :continue        # :halt (default) | :continue | :transactional
+
+    def perform_on(post)
+      post.archive!(reason: options["reason"])
+    end
   end
 end
 ```
+
+That is the whole thing — one class, no second file, no name to invent for the run.
+
+### Why the block declares `perform_on` rather than executing
+
+The block is **not** the body of `#execute`. The work happens later, in a job, in a process with no controller, no request and no `view_context` — it cannot be a closure over anything in the interaction, which is the same reason the row records the initiator and tenant instead of serialising them. So the block declares a `Plutonium::Interaction::Async::Run` subclass with exactly the API a standalone run has, and the validated attributes arrive through `options`.
+
+`def` opens a fresh scope, so those method bodies cannot accidentally capture the interaction's locals — the one thing that would make writing them here misleading.
+
+The generated class is named `<Interaction>::Run` rather than left anonymous. That is load-bearing rather than cosmetic: the class name is persisted in the run's `type` column and constantized in another process, so an anonymous class would write a row nothing could read back.
 
 | `on_failure` | Behavior when a target raises |
 |---|---|
@@ -51,17 +67,25 @@ end
 | `:continue` | Records the failure, keeps going; the run ends `"completed"` (see [Outcome vs state](#outcome-vs-state) for why that's not the same as a clean success) |
 | `:transactional` | Wraps the whole batch in one DB transaction; any failure rolls back everything applied so far |
 
-Wire the interaction to it with `dispatches_to`:
+### Sharing one run across interactions
+
+Pass a class instead of a block when several interactions do the same kind of work:
 
 ```ruby
-class Blogging::ArchivePosts < Plutonium::Resource::Interaction
-  dispatches_to Blogging::ArchivePostsRun
+class Blogging::ArchivePostsRun < Plutonium::Interaction::Async::Run
+  on_failure :continue
+  def perform_on(post) = post.archive!
+end
 
-  attribute :resources   # bulk — perform_on runs once per record
+class Blogging::ArchivePosts < ResourceInteraction
+  async Blogging::ArchivePostsRun
+  attribute :resources
 end
 ```
 
-`dispatches_to` must be the only thing that defines `#execute` on the class. Declaring it on a class that already has its own `execute` raises `ArgumentError` at load time (do the work inline, or dispatch it, not both).
+Passing both a class and a block raises `ArgumentError` — the block *is* a run class, so there is nothing to combine.
+
+`async` must be the only thing that defines `#execute` on the class. Declaring it on a class that already has its own `execute` raises `ArgumentError` at load time (an interaction either executes inline or runs async, never both).
 
 ## What gets recorded at dispatch
 
@@ -202,5 +226,5 @@ It is not a second copy of the claim. `claim!` can only *refuse* a duplicate del
 
 ## Related
 
-- [Interactions](/reference/behavior/interactions) — `dispatches_to` is declared inside `Plutonium::Resource::Interaction`; everything else about inputs, validation and outcomes is unchanged.
+- [Interactions](/reference/behavior/interactions) — `async` is declared inside `Plutonium::Resource::Interaction`; everything else about inputs, validation and outcomes is unchanged.
 - [Policies](/reference/behavior/policies) — the policy dispatch checks and the job re-checks are the same predicate.

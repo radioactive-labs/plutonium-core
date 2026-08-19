@@ -51,7 +51,7 @@ module Plutonium
       # back to `Plutonium.configuration.default_page_width`. Without this an
       # interactive action rendered as a standalone page has no width at all.
       include Plutonium::Definition::PageWidths
-      # `dispatches_to SomeRun` — the interaction persists a run and enqueues it
+      # `async SomeRun` — the interaction persists a run and enqueues it
       # instead of doing the work inline. Inert until an interaction declares it.
       include Plutonium::Interaction::Concerns::Dispatchable
 

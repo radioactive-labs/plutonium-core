@@ -39,7 +39,7 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     resolved = @controller.helpers.resource_url_for(run)
 
     assert_equal run_path(run), resolved,
-      "dispatches_to redirects through resource_url_for; this is the URL it produces"
+      "async redirects through resource_url_for; this is the URL it produces"
 
     get resolved
     assert_response :success

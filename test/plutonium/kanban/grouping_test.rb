@@ -65,7 +65,7 @@ module Plutonium
       # apply_scope — Symbol, Proc, nil, and anything else                   #
       # ------------------------------------------------------------------ #
 
-      def test_symbol_scope_dispatches_to_the_named_scope
+      def test_symbol_scope_async_the_named_scope
         GroupingTestCard.create!(status: "todo", position: 1)
         GroupingTestCard.create!(status: "done", position: 2)
 

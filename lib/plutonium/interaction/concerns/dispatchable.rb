@@ -13,10 +13,13 @@ module Plutonium
       #
       # @example
       #   class Blogging::ArchivePosts < Plutonium::Resource::Interaction
-      #     dispatches_to Blogging::ArchivePostsRun
-      #
       #     attribute :resources
       #     attribute :reason, :string
+      #
+      #     async do
+      #       on_failure :continue
+      #       def perform_on(post) = post.archive!(reason: options["reason"])
+      #     end
       #   end
       #
       # == The outcome stays synchronous
@@ -69,7 +72,7 @@ module Plutonium
         end
 
         # Prepended, rather than defined via +define_method+, so a `def
-        # execute` written BELOW `dispatches_to` can't silently shadow it —
+        # execute` written BELOW `async` can't silently shadow it —
         # a prepended module sits ahead of the class in the ancestor chain
         # regardless of source order. (A subclass's own #execute still wins,
         # same as any override — this only closes same-class ordering.)
@@ -80,27 +83,99 @@ module Plutonium
         end
 
         class_methods do
-          # Declares that this interaction dispatches its work to +run_class+.
+          # Declares that this interaction executes OUT OF BAND, in a job,
+          # instead of inline in the request.
           #
-          # @param run_class [Class<Plutonium::Interaction::Async::Run>]
-          # @raise [ArgumentError] if this class already defines its own #execute
+          # An interaction has exactly two ways to do its work, and this is the
+          # fork between them:
+          #
+          #   def execute      # inline, in the request
+          #   async do ...     # out of band, in a job
+          #
+          # == The block is the run's class body
+          #
+          # Not the body of #execute — the work happens later, in a process with
+          # no controller and no view_context, so it cannot be a closure over
+          # anything here. What the block declares is a
+          # {Plutonium::Interaction::Async::Run} subclass, with exactly the API a
+          # standalone run has: +on_failure+, and +perform_on(record)+ or
+          # +perform+.
+          #
+          #   async do
+          #     on_failure :continue
+          #     def perform_on(post) = post.archive!(reason: options["reason"])
+          #   end
+          #
+          # +def+ opens a fresh scope, so those bodies cannot accidentally close
+          # over the interaction's locals — which is what makes the block safe to
+          # write here rather than misleading.
+          #
+          # The generated class is NAMED, as +self::Run+, not left anonymous.
+          # That is load-bearing: the class name is persisted in the run's +type+
+          # column and constantized in another process, so an anonymous class
+          # would produce a row nothing can read back.
+          #
+          # == Passing a class instead
+          #
+          # A run shared by several interactions that do the same kind of work is
+          # declared once and named here:
+          #
+          #   async Blogging::ArchivePostsRun
+          #
+          # @param run_class [Class<Plutonium::Interaction::Async::Run>, nil]
+          # @yield the run's class body, when no class is given
+          # @raise [ArgumentError] if given both a class and a block, or neither,
+          #   or if this class already defines +#execute+ or its own +Run+
           # @return [void]
-          def dispatches_to(run_class)
+          def async(run_class = nil, &block)
+            if run_class && block
+              raise ArgumentError,
+                "#{self} declares async with both a run class and a block. The block IS " \
+                "a run class — pass one or the other."
+            end
+            unless run_class || block
+              raise ArgumentError,
+                "#{self} declares async with nothing to run. Pass a run class, or a block " \
+                "declaring one."
+            end
+
             # Catches the OTHER ordering: #execute already defined before
-            # dispatches_to runs is two conflicting declarations, not an
+            # async runs is two conflicting declarations, not an
             # ordering accident, and the prepend below does not resolve it.
             if !@execute_defined_by_dispatch &&
                 (method_defined?(:execute, false) || private_method_defined?(:execute, false))
               raise ArgumentError,
-                "#{self} defines its own #execute, which dispatches_to would overwrite. " \
-                "An interaction either does the work inline or dispatches it to a run — " \
+                "#{self} declares async but also defines its own #execute, which async " \
+                "would overwrite. An interaction either executes inline or runs async — " \
                 "remove one of the two."
             end
 
+            run_class ||= build_run_class(&block)
             self.run_class = run_class
 
             prepend(ExecuteOverride) unless @execute_defined_by_dispatch
             @execute_defined_by_dispatch = true
+          end
+
+          private
+
+          # Defines +self::Run+ from the block.
+          #
+          # +const_set+ rather than an anonymous class: see #async. The
+          # collision check refuses to clobber a Run the author declared
+          # themselves, because silently replacing it would lose their work with
+          # no diagnostic — and because the two ways of declaring a run are meant
+          # to be alternatives, not layers.
+          def build_run_class(&block)
+            if const_defined?(:Run, false)
+              raise ArgumentError,
+                "#{self} already defines #{self}::Run, which async's block would replace. " \
+                "Either drop the block and pass the class, or remove the class."
+            end
+
+            const_set(:Run, Class.new(Plutonium::Interaction::Async::Run)).tap do |klass|
+              klass.class_eval(&block)
+            end
           end
         end
 

@@ -1,19 +1,19 @@
 ---
 name: plutonium-async-interactions
-description: Use BEFORE building any bulk operation, long-running interaction, or anything needing an audit trail. Covers dispatches_to, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
+description: Use BEFORE building any bulk operation, long-running interaction, or anything needing an audit trail. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
 ---
 
 # Plutonium Async Interactions
 
-`dispatches_to` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when a synchronous interaction would time out (hundreds/thousands of records), take longer than a request budget (report generation, a third-party API call), or needs to leave an audit trail nothing currently records.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when a synchronous interaction would time out (hundreds/thousands of records), take longer than a request budget (report generation, a third-party API call), or needs to leave an audit trail nothing currently records.
 
-For everything about the interaction itself (inputs, validation, outcomes, `execute`), load [[plutonium-behavior]] first. `dispatches_to` only replaces what `execute` does, not the rest of the interaction's shape.
+For everything about the interaction itself (inputs, validation, outcomes, `execute`), load [[plutonium-behavior]] first. `async` only replaces what `execute` does, not the rest of the interaction's shape.
 
 ## 🚨 Critical (read first)
 
 - **Experimental.** The DSL and behavior may change in a future release — same status as [[plutonium-wizard]] and [[plutonium-kanban]]. Fine to build on; expect to revisit it on upgrade.
 - **Enable the subsystem first.** `config.async_interactions.enabled = true` in `config/initializers/plutonium.rb`, then `rails db:migrate`. Off by default, so no `plutonium_async_runs` table otherwise.
-- **`dispatches_to` fully replaces `#execute`.** Declaring it on a class that already defines its own `execute` raises `ArgumentError` at load. Do the work inline, or dispatch it, never both.
+- **`async` fully replaces `#execute`.** An interaction either executes inline or runs async — declaring both raises `ArgumentError` at load.
 - **Define `perform_on(record)` for targeted work, `perform` for opaque work.** A run class implementing neither fails loudly (naming the class) the first time it's performed, rather than a bare `NoMethodError`.
 - **A nested dispatch records its parent.** `parent_type`/`parent_id`/`parent_association` join initiator and tenant on the row, because `Policy#default_relation_scope` picks parent scoping **or** entity scoping, not both — a nested run missing its parent re-derives targets under the wider tenant scope, and any predicate reading `parent` silently answers false. A parent deleted mid-run refuses the run, exactly like a deleted tenant.
 - **Permissions are re-derived at perform time, never replayed from dispatch.** The job rebuilds `(initiator, tenant)` from the row and re-checks the policy scope and predicate per target, immediately before each `perform_on`. A permission revoked mid-run stops applying to what's left. Both failure directions (scope, predicate) fail closed (refuse/report), never open.
@@ -28,31 +28,50 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 
 | Check | How | Why it matters |
 |---|---|---|
-| Subsystem enabled | grep `config/initializers/plutonium.rb` for `async_runs.enabled` | Not enabled means no table; `dispatches_to` raises `Dispatchable::NotEnabledError` the moment it dispatches, naming the flag |
+| Subsystem enabled | grep `config/initializers/plutonium.rb` for `async_runs.enabled` | Not enabled means no table; `async` raises `Dispatchable::NotEnabledError` the moment it dispatches, naming the flag |
 | Run registered in the target portal | grep the portal's `config/routes.rb` for `register_resource ::Plutonium::Interaction::Async::Run` | Unregistered means dispatch redirects to a 404; the running banner silently skips that portal (by design, see below) |
 | Existing run classes for the pattern | `ls app/runs/` or grep `< Plutonium::Interaction::Async::Run` | Match the host's existing `on_failure` conventions rather than guessing |
 | ReapJob scheduled | grep `config/recurring.yml` / `config/schedule.rb` for `ReapJob` | An `on_submit`-shaped bulk workflow with no reaper leaves crashed runs stuck |
 
 ---
 
-## Declaring a run
+## Declaring the work
 
-STI subclass of `Plutonium::Interaction::Async::Run`. One run class per interaction (or reuse one across several interactions that do the same kind of work):
+`async` with a block. One file — the run is declared inline and needs no name:
 
 ```ruby
-class Blogging::ArchivePostsRun < Plutonium::Interaction::Async::Run
-  on_failure :continue   # :halt (default) | :continue | :transactional
+class Blogging::ArchivePosts < ResourceInteraction
+  presents label: "Archive", icon: Phlex::TablerIcons::Archive
+  attribute :resources          # bulk: perform_on runs once per record
+  attribute :reason, :string
 
-  def perform_on(post)   # targeted: called once per resolved target
-    post.archive!
+  async do
+    on_failure :continue        # :halt (default) | :continue | :transactional
+    def perform_on(post)        # targeted: called once per resolved target
+      post.archive!(reason: options["reason"])
+    end
   end
 end
 
-class Reports::GenerateMonthlyRun < Plutonium::Interaction::Async::Run
-  def perform             # opaque: no target, called once
-    Reports::Monthly.generate!(options["period"])
+class Reports::GenerateMonthly < ResourceInteraction
+  attribute :period, :string
+
+  async do
+    def perform                 # opaque: no target, called once
+      Reports::Monthly.generate!(options["period"])
+    end
   end
 end
+```
+
+**The block is the run's class body, not the body of `#execute`.** The work happens later, in a process with no controller and no `view_context`, so it cannot close over anything in the interaction — which is why it declares `perform_on`/`perform` rather than executing directly. Validated attributes arrive through `options`, and `def` opens a fresh scope, so those bodies can't accidentally capture the interaction's locals.
+
+The block defines `<Interaction>::Run` — a real, named constant, because the class name is persisted in `type` and constantized in the job process.
+
+**Pass a class instead** to share one run across several interactions that do the same kind of work:
+
+```ruby
+async Blogging::ArchivePostsRun
 ```
 
 | `on_failure` | One target raises |
@@ -60,16 +79,6 @@ end
 | `:halt` (default) | Stop immediately; run ends `"failed"`; remaining targets never attempted |
 | `:continue` | Record the failure (`errors_log`), keep going; run ends `"completed"`. Check `outcome`, not `state`, to see it under-applied |
 | `:transactional` | Whole batch in one DB transaction; any failure rolls back everything, including targets already applied |
-
-Wire the interaction to it:
-
-```ruby
-class Blogging::ArchivePosts < Plutonium::Resource::Interaction
-  dispatches_to Blogging::ArchivePostsRun
-
-  attribute :resources   # bulk: perform_on runs once per record
-end
-```
 
 `attribute :resource` (singular) means a one-target run; `attribute :resources` (plural) means bulk; neither means opaque. Same inference rule ordinary interactive actions use, see [[plutonium-resource]] › Actions.
 

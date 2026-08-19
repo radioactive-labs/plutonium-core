@@ -3,9 +3,9 @@
 require "test_helper"
 
 # Dispatching interactions. Declared at the top level, the way a host app's
-# would be — `dispatches_to` has to work in an ordinary class body.
+# would be — `async` has to work in an ordinary class body.
 class DispatchBulkInteraction < Plutonium::Resource::Interaction
-  dispatches_to TestPostRun
+  async TestPostRun
 
   attribute :resources
   attribute :notify_users, :boolean
@@ -14,7 +14,7 @@ class DispatchBulkInteraction < Plutonium::Resource::Interaction
 end
 
 class DispatchRecordInteraction < Plutonium::Resource::Interaction
-  dispatches_to TestPostRun
+  async TestPostRun
 
   attribute :resource
 end
@@ -22,9 +22,21 @@ end
 # No resource/resources at all: opaque work, which carries no targets and
 # therefore no policy assertion.
 class DispatchOpaqueInteraction < Plutonium::Resource::Interaction
-  dispatches_to TestReportRun
+  async TestReportRun
 
   attribute :report_period, :string
+end
+
+# The block form: run declared inline, no second file and no name to choose.
+class InlineArchiveInteraction < Plutonium::Resource::Interaction
+  attribute :resources
+  attribute :reason, :string
+
+  async do
+    on_failure :continue
+    cattr_accessor :performed
+    def perform_on(post) = self.class.performed << "#{post.id}/#{options["reason"]}"
+  end
 end
 
 class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
@@ -377,24 +389,87 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_equal 0, Plutonium::Interaction::Async::Run.count
   end
 
-  test "dispatches_to refuses to overwrite an interaction's own execute" do
+  test "a block declares a run class, named so its type can be read back" do
+    run_class = InlineArchiveInteraction.run_class
+
+    assert_equal InlineArchiveInteraction::Run, run_class
+    assert_operator run_class, :<, Plutonium::Interaction::Async::Run
+    # NAMED, not anonymous: the class name is persisted in `type` and
+    # constantized in the job process, so an anonymous class would write a row
+    # nothing could read back.
+    assert_equal "InlineArchiveInteraction::Run", run_class.name
+    assert_equal :continue, run_class.failure_policy, "macros inside the block apply to the run"
+  end
+
+  test "a run declared by a block performs like any other" do
+    InlineArchiveInteraction::Run.performed = []
+    run = InlineArchiveInteraction.call(
+      view_context: @view_context, resources: [@post], reason: "spam"
+    ).value
+
+    assert_equal "InlineArchiveInteraction::Run", run.reload.type
+    assert_equal InlineArchiveInteraction::Run, Plutonium::Interaction::Async::Run.find(run.id).class
+
+    Plutonium::Interaction::Async::Executor.new(run).call
+
+    assert_equal ["#{@post.id}/spam"], InlineArchiveInteraction::Run.performed,
+      "the block's perform_on reaches the validated attributes through options"
+    assert_equal "completed", run.reload.state
+  end
+
+  test "async refuses a run class and a block together" do
+    error = assert_raises(ArgumentError) do
+      Class.new(Plutonium::Resource::Interaction) do
+        def self.name = "BothFormsInteraction"
+        async(TestPostRun) { def perform_on(r) = r }
+      end
+    end
+
+    assert_match(/both a run class and a block/, error.message)
+  end
+
+  test "async refuses to declare nothing to run" do
+    error = assert_raises(ArgumentError) do
+      Class.new(Plutonium::Resource::Interaction) do
+        def self.name = "EmptyAsyncInteraction"
+        async
+      end
+    end
+
+    assert_match(/nothing to run/, error.message)
+  end
+
+  test "async's block refuses to clobber a Run the author declared" do
+    error = assert_raises(ArgumentError) do
+      Class.new(Plutonium::Resource::Interaction) do
+        def self.name = "OwnRunInteraction"
+        const_set(:Run, Class.new(Plutonium::Interaction::Async::Run))
+        async { def perform_on(r) = r }
+      end
+    end
+
+    # Replacing it silently would lose the author's work with no diagnostic.
+    assert_match(/already defines/, error.message)
+  end
+
+  test "async refuses to overwrite an interaction's own execute" do
     error = assert_raises(ArgumentError) do
       Class.new(Plutonium::Resource::Interaction) do
         def execute = succeed(:inline)
 
-        dispatches_to TestPostRun
+        async TestPostRun
       end
     end
 
     assert_match(/defines its own #execute/, error.message)
-    assert_match(/does the work inline or dispatches it to a run/, error.message)
+    assert_match(/executes inline or runs async/, error.message)
   end
 
-  # The reverse ordering: def execute written below dispatches_to used to
+  # The reverse ordering: def execute written below async used to
   # win silently via ordinary Ruby override semantics.
-  test "an execute defined after dispatches_to does not silently override it" do
+  test "an execute defined after async does not silently override it" do
     klass = Class.new(Plutonium::Resource::Interaction) do
-      dispatches_to TestPostRun
+      async TestPostRun
 
       attribute :resource
 
@@ -404,7 +479,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     run = klass.call(view_context: @view_context, resource: @post).value
 
     assert_kind_of Plutonium::Interaction::Async::Run, run,
-      "dispatches_to's #execute must still win over a same-class #execute defined afterwards"
+      "async's #execute must still win over a same-class #execute defined afterwards"
   end
 
   # The row is committed before the enqueue, so a queue that refuses the job

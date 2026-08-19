@@ -21,7 +21,7 @@ class OrgPortal::DispatchRedirectTest < ActionDispatch::IntegrationTest
   # Only #dispatch_redirect_target is under test, so this declares no subject
   # and never reaches the rest of dispatch.
   class RedirectProbeInteraction < Plutonium::Resource::Interaction
-    dispatches_to TestReportRun
+    async TestReportRun
   end
 
   setup do
