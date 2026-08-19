@@ -25,7 +25,7 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 
 | Check | How | Why it matters |
 |---|---|---|
-| Subsystem enabled | grep `config/initializers/plutonium.rb` for `interaction_runs.enabled` | Not enabled means no table; `dispatches_to` blows up at perform time |
+| Subsystem enabled | grep `config/initializers/plutonium.rb` for `interaction_runs.enabled` | Not enabled means no table; `dispatches_to` raises `Dispatchable::NotEnabledError` the moment it dispatches, naming the flag |
 | Run registered in the target portal | grep the portal's `config/routes.rb` for `register_resource ::Plutonium::Interaction::Run` | Unregistered means dispatch redirects to a 404; the running banner silently skips that portal (by design, see below) |
 | Existing run classes for the pattern | `ls app/runs/` or grep `< Plutonium::Interaction::Run` | Match the host's existing `on_failure` conventions rather than guessing |
 | ReapJob scheduled | grep `config/recurring.yml` / `config/schedule.rb` for `ReapJob` | An `on_submit`-shaped bulk workflow with no reaper leaves crashed runs stuck |

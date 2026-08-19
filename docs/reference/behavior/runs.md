@@ -25,6 +25,8 @@ end
 rails db:migrate   # creates plutonium_interaction_runs
 ```
 
+The flag gates the migration, not just the behaviour: while it is off the runs migration path is never registered, so the table does not exist. A `dispatches_to` interaction that runs anyway raises `Plutonium::Interaction::Concerns::Dispatchable::NotEnabledError` naming the flag, rather than a raw "no such table" from inside ActiveRecord.
+
 ## Declaring a run
 
 A run is an STI subclass of `Plutonium::Interaction::Run`. Define `perform_on(record)` for **targeted** work (bulk/record actions, one call per target) or `perform` for **opaque** work (resource actions with no subject):

@@ -51,6 +51,13 @@ module Plutonium
       module Dispatchable
         extend ActiveSupport::Concern
 
+        # Raised when a dispatching interaction runs while the runs subsystem is
+        # switched off. Named rather than a bare RuntimeError so a host can tell
+        # it apart from anything the interaction itself raised — and so it reads
+        # the same way as the interaction layer's other typed failures
+        # (Runs::Context::UnresolvableError, Runs::Executor::TargetRefusedError).
+        class NotEnabledError < StandardError; end
+
         # The tenant is half of what the policy scope filters on, and this is
         # where it comes from.
         include Plutonium::Interaction::Concerns::Scoping
@@ -108,6 +115,18 @@ module Plutonium
         #
         # @return [Plutonium::Interaction::Outcome::Success]
         def dispatch
+          # The flag gates the MIGRATION, not just the behaviour: while it is off
+          # the runs migration path is never registered (see Plutonium::Railtie),
+          # so plutonium_interaction_runs does not exist. Without this the create!
+          # below surfaces as a raw "no such table" from inside ActiveRecord,
+          # which says nothing about the switch that has to be flipped.
+          unless Plutonium.configuration.interaction_runs.enabled
+            raise NotEnabledError,
+              "#{self.class} dispatches to #{self.class.run_class}, but interaction runs are not " \
+              "enabled. Set `config.interaction_runs.enabled = true` in your Plutonium " \
+              "initializer, then run the migration."
+          end
+
           run = self.class.run_class.create!(
             initiator: current_user,
             scoped_entity: current_scoped_entity,

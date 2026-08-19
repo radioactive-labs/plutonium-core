@@ -163,6 +163,22 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_equal 2, run.progress_total
   end
 
+  test "dispatching while runs are disabled names the switch instead of the missing table" do
+    Plutonium.configuration.interaction_runs.enabled = false
+
+    error = assert_raises(Plutonium::Interaction::Concerns::Dispatchable::NotEnabledError) { dispatch_bulk }
+
+    # The flag gates the MIGRATION as well as the behaviour, so with it off the
+    # table does not exist. Left unguarded this surfaces as a raw
+    # ActiveRecord::StatementInvalid "no such table", which says nothing about
+    # the one line of configuration that fixes it.
+    assert_match(/interaction runs are not enabled/, error.message)
+    assert_match(/interaction_runs\.enabled = true/, error.message)
+    assert_equal 0, Plutonium::Interaction::Run.count
+  ensure
+    Plutonium.configuration.interaction_runs.enabled = true
+  end
+
   test "the validated attributes land in options, without the records" do
     run = dispatch_bulk.value
 
