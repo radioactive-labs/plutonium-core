@@ -10,10 +10,7 @@ class TutorialTest < Minitest::Test
   end
 
   def teardown
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Chapter 2: First Resource

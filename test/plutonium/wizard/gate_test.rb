@@ -78,8 +78,7 @@ module Plutonium
       end
 
       setup do
-        Plutonium::Wizard::Session.delete_all
-        Organization.delete_all
+        purge_data!
         @store = Plutonium::Wizard::Store::ActiveRecord.new
         @user = Organization.create!(name: "User-#{SecureRandom.hex(4)}") # any GlobalID-able owner
         @ctrl = FakeController.new

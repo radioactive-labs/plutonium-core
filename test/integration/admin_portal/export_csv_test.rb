@@ -17,9 +17,7 @@ class AdminPortal::ExportCsvTest < ActionDispatch::IntegrationTest
   end
 
   teardown do
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Authorization — export_csv? defaults to false, so the auto-mounted route

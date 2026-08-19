@@ -12,12 +12,7 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def teardown
-    Widget.delete_all
-    Blogging::PostDetail.delete_all
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Test associated_with scope - the core of nested resource scoping

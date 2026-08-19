@@ -206,7 +206,7 @@ module Plutonium
 
       setup do
         Plutonium::Wizard::Session.delete_all
-        Organization.delete_all if defined?(Organization)
+        purge_data!
         RollbackCustom.side_effects.clear
         BranchPersistRollback.side_effects.clear
         SideEffectOnly.rolled_back = false
@@ -407,8 +407,7 @@ module Plutonium
       # tracked record becomes untracked (orphaned). Needs the AR store — its
       # unique index is what raises RecordNotUnique.
       test "carry-forward on a RecordNotUnique race unions persisted, not replaces" do
-        Plutonium::Wizard::Session.delete_all
-        Organization.delete_all
+        purge_data!
         ar = Plutonium::Wizard::Store::ActiveRecord.new
         loser = build_runner(Persisting, store: ar, key: "race") # reads: no row → fresh
 
