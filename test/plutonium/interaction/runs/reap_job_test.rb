@@ -73,6 +73,22 @@ class Plutonium::Interaction::Runs::ReapJobTest < ActiveSupport::TestCase
     end
   end
 
+  test "a reaped run leaves the stalled scope instead of being reaped again" do
+    run = create_run!(state: "running", started_at: 3.hours.ago, last_activity_at: 3.hours.ago)
+
+    ReapJob.perform_now(stall_after: 1.hour)
+    version_after_first = run.reload.lock_version
+
+    refute Plutonium::Interaction::Run.stalled(before: 1.hour.ago).exists?(id: run.id),
+      "a run the sweep just resumed is not still stalled"
+
+    ReapJob.perform_now(stall_after: 1.hour)
+
+    assert_equal version_after_first, run.reload.lock_version,
+      "the next sweep must not reap it again — on a backed-up queue that is an " \
+      "unbounded pile of duplicate deliveries for one run"
+  end
+
   test "a run whose activity advanced just before the reap is left alone" do
     run = create_run!(state: "running", last_activity_at: 3.hours.ago)
     threshold = 1.hour.ago

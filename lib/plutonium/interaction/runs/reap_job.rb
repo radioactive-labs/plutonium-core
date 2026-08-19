@@ -55,9 +55,21 @@ module Plutonium
         # the new one and silently losing whichever progress write landed second.
         # It does not un-apply work already committed — this bounds the damage of
         # a bad stall_after, it does not make one free.
+        # last_activity_at is stamped because Run.stalled matches on it: leaving
+        # it at its old value means the row this sweep just resumed is STILL
+        # stalled, so the next sweep reaps it again, and the one after that —
+        # bumping lock_version and re-enqueuing every interval until a worker
+        # finally claims it. On a backed-up queue that is an unbounded pile of
+        # duplicate deliveries for one run.
+        #
+        # Resuming is not the run's own activity, but it is activity ON the run,
+        # which is what the scope is really asking about: has anything happened
+        # here lately. It buys the resumed job a full stall_after to be picked
+        # up before this sweep concludes anything again.
         def reap(run, threshold)
           resumed = Run.stalled(before: threshold).where(id: run.id)
-            .update_all(["state = ?, lock_version = lock_version + 1", "pending"]) == 1
+            .update_all(["state = ?, last_activity_at = ?, lock_version = lock_version + 1",
+              "pending", Time.current]) == 1
           return unless resumed
 
           Rails.logger.info { "plutonium: resuming stalled interaction run #{run.id} (#{run.class})" }
