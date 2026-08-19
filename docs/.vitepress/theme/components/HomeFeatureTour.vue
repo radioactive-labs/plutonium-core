@@ -7,7 +7,7 @@
         All declarative. All policy-aware.
       </p>
 
-      <div class="ft-grid">
+      <div class="ft-grid" :style="gridStyle">
         <template v-for="f in features" :key="f.id">
           <button
             class="ft-head"
@@ -200,13 +200,18 @@ const features = [
 
 <span class="c"># → persists a run, enqueues it, redirects to its live progress page</span>`,
     shot: "/images/home/tour-async.png",
-    alt: "The run's progress page mid-flight — a Running badge, a progress bar reading 34 of 50 targets, and the run's type, target type and initiator",
+    alt: "The run's progress page mid-flight — a Running badge, a progress bar at 27 of 50 targets, and the run's type, target type and initiator",
     policy: "Permissions are re-derived when the job runs, never replayed from dispatch.",
     link: "/plutonium-core/reference/behavior/async-interactions",
   },
 ]
 
 const selected = ref(features[0].id)
+
+// One explicit row per feature head, with the last absorbing the panel's extra
+// height. Derived from features.length — a hardcoded count silently drops any
+// head past it into an implicit row below the grid.
+const gridStyle = { gridTemplateRows: `repeat(${features.length - 1}, auto) 1fr` }
 </script>
 
 <style scoped>
@@ -215,8 +220,7 @@ const selected = ref(features[0].id)
 .ft-grid {
   display: grid;
   grid-template-columns: 260px 1fr;
-  /* rows = one per feature; last row (1fr) absorbs the panel's extra height */
-  grid-template-rows: repeat(3, auto) 1fr;
+  /* grid-template-rows is set inline from features.length — see gridStyle */
   column-gap: 28px;
   align-items: start;
 }

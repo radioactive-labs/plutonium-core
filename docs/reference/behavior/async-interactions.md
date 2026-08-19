@@ -212,11 +212,11 @@ A registered run resource gets, for free:
 
 The progress page, mid-run:
 
-![A run's progress page showing a Running badge, a progress bar at 34 of 50 targets, and the run's type, target type, initiator and timestamps](/images/reference/async-progress-page.png)
+![A run's progress page showing a Running badge, a progress bar at 27 of 50 targets, and the run's type, target type, initiator and timestamps](/images/reference/async-progress-page.png)
 
 And the banner it leaves on the target resource's index while it is still going:
 
-![A Task index with a banner above the collection reading "Archive Tasks Async Interaction Run #18 Running", with a View progress link](/images/reference/async-running-banner.png)
+![A Task index with a banner above the collection reading "Archive Tasks Async Interaction Run #19 Running", with a View progress link](/images/reference/async-running-banner.png)
 
 ## Stalled runs and ReapJob
 
