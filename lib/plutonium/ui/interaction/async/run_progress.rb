@@ -151,9 +151,24 @@ module Plutonium
             end
           end
 
+          # Opaque work still gets a BAR, just one that admits it cannot say how
+          # far along it is. "Working…" as bare text read as a stalled page —
+          # nothing on it moved, so nothing said the run was alive. The animation
+          # is the part that carries that, and it is the only difference from the
+          # determinate bar above: same height, same track, same radius.
+          #
+          # A settled run with no total gets no bar, because there is no motion
+          # left to convey.
           def render_indeterminate
-            div(class: "text-xs text-[var(--pu-text-muted)] pu-run-progress-indeterminate") do
-              plain(run.in_progress? ? "Working…" : "No progress total was recorded")
+            div(class: "space-y-1") do
+              if run.in_progress?
+                div(class: "w-full h-2 rounded-full bg-[var(--pu-surface-alt)] overflow-hidden") do
+                  div(class: "h-2 rounded-full bg-primary-600 pu-run-progress-indeterminate")
+                end
+              end
+              div(class: "text-xs text-[var(--pu-text-muted)]") do
+                plain(run.in_progress? ? "Working…" : "No progress total was recorded")
+              end
             end
           end
 
