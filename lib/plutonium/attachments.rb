@@ -22,6 +22,15 @@ module Plutonium
   # `original_filename`/`mime_type`), so a resolved token is wrapped in
   # {Resolved}, a uniform view over both.
   module Attachments
+    # Options on a file input that are consumed SERVER-SIDE to stage the upload,
+    # and are never form or HTML concerns.
+    #
+    # They have to be kept out of what the form renders: Phlex rejects a
+    # Class-valued +uploader:+ as an attribute outright, and +backend:+ would
+    # leak as a stray one. Both the wizard (Wizard::StepAdapter) and an
+    # interaction's form read this list, so the two cannot drift.
+    STAGING_ONLY_INPUT_OPTIONS = %i[backend uploader].freeze
+
     module_function
 
     # Resolve a staged attachment token (or array of them) into uniform

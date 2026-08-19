@@ -75,6 +75,32 @@ class Plutonium::UI::Table::Components::BulkActionsToolbarTest < Minitest::Test
     assert_match(/text-primary-700[^"]*"[^>]*>.*?Clear selection|Clear selection.*?text-primary-700/m, html)
   end
 
+  # ==================== return_to ====================
+
+  # A bulk action had nowhere to send the user back to: the toolbar built its
+  # URLs from route options alone, while ActionButton has always carried
+  # return_to for row and page actions. Invisible for an action that redirects
+  # to what it changed; very visible for one that DISPATCHES, since async
+  # interactions honour return_to.
+  def test_bulk_action_url_carries_the_current_page
+    component = build_toolbar(bulk_actions: [])
+    def component.current_page_url = "/admin/tasks?view=table"
+
+    url = component.send(:with_return_to, "/admin/tasks/bulk_actions/archive_all")
+
+    assert_equal "/admin/tasks/bulk_actions/archive_all?return_to=%2Fadmin%2Ftasks%3Fview%3Dtable", url
+  end
+
+  def test_bulk_action_url_keeps_its_existing_query
+    component = build_toolbar(bulk_actions: [])
+    def component.current_page_url = "/admin/tasks"
+
+    url = component.send(:with_return_to, "/admin/tasks/bulk_actions/archive_all?foo=bar")
+
+    assert_match(/foo=bar/, url, "the action's own params must survive")
+    assert_match(/return_to=%2Fadmin%2Ftasks/, url)
+  end
+
   private
 
   def build_toolbar(bulk_actions:)

@@ -81,6 +81,35 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
       "the page chrome must not come back inside the progress frame")
   end
 
+  test "the poll that finds the run finished tells the page to reload" do
+    run = create_run!(state: "running", progress_total: 4, progress_done: 4)
+    frame_id = "pu_run_progress_#{run.id}"
+    run.finish!
+
+    get run_path(run), headers: {"Turbo-Frame" => frame_id}
+    assert_response :success
+
+    # Only this panel is in the polled frame; the fields beside it were rendered
+    # when the run was dispatched. Without this the page is left showing a green
+    # "Completed, 4 of 4" above a list still reading "Running" and "0 done".
+    assert_match(/data-run-progress-finished-value="true"/, response.body)
+    refute_match(/data-run-progress-url-value/, response.body,
+      "there is nothing left to poll for")
+  end
+
+  test "a full page render of a finished run carries no reload flag" do
+    run = create_run!(state: "running", progress_total: 4, progress_done: 4)
+    run.finish!
+
+    get run_path(run)
+    assert_response :success
+
+    # The flag is what the reload acts on, so emitting it on the page the reload
+    # lands on is an infinite refresh.
+    refute_match(/data-run-progress-finished-value/, response.body)
+    refute_match(/data-controller="run-progress"/, response.body)
+  end
+
   test "progress renders as indeterminate, not 0%, when no total was recorded" do
     run = create_run!(state: "running", progress_total: nil)
 

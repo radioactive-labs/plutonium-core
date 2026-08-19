@@ -54,9 +54,20 @@ module Plutonium
 
           private
 
+          # Previews for what is ALREADY attached.
+          #
+          # A model-backed field holds attachment objects, which answer +url+. An
+          # interaction's field does not: between submit and re-render it holds
+          # whatever the user posted — an ActionDispatch::Http::UploadedFile, or
+          # the token staging replaced it with. Neither answers +url+, and
+          # calling it took the whole form down with a NoMethodError on any
+          # validation failure, including one on an unrelated attribute.
+          #
+          # A value that cannot answer +url+ is not an existing attachment, so
+          # there is nothing here to preview for it.
           def render_existing_attachments
             Array(field.value).each do |attachment|
-              next unless attachment&.url.present?
+              next unless attachment.respond_to?(:url) && attachment.url.present?
 
               render_attachment_preview(attachment)
             end

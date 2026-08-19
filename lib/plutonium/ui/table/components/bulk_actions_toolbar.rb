@@ -59,7 +59,7 @@ module Plutonium
           end
 
           def render_action_button(action)
-            url = route_options_to_url(action.route_options, resource_class)
+            url = with_return_to(route_options_to_url(action.route_options, resource_class))
 
             link_to(
               url,
@@ -78,6 +78,28 @@ module Plutonium
               end
               span { action.label }
             end
+          end
+
+          # Carries the index the user is on into the action, the same way
+          # ActionButton does for row and page actions.
+          #
+          # Without it a bulk action has nowhere to send the user back to. That
+          # is invisible for an action that redirects to the record it changed,
+          # and very visible for one that DISPATCHES: async interactions honour
+          # return_to (see Dispatchable#dispatch_redirect_target), so a user who
+          # archived the rows they had selected was landed on a progress page
+          # with their list two clicks behind them.
+          #
+          # current_page_url, not request.original_url, for the reason
+          # ActionButton#default_return_to gives: a toolbar re-rendered by a
+          # stream-producing POST must return the user to the page they are on,
+          # never to that POST-only endpoint.
+          def with_return_to(url)
+            uri = URI.parse(url)
+            params = Rack::Utils.parse_nested_query(uri.query)
+            params["return_to"] = current_page_url
+            uri.query = params.to_query
+            uri.to_s
           end
 
           def button_classes(action)

@@ -247,8 +247,9 @@ module Plutonium
         #
         # @return [Hash]
         def dispatch_options
-          staged = stage_dispatch_attachments(attributes.except("resource", "resources"))
-          ::ActiveJob::Arguments.serialize([staged]).first
+          # Staged during validation; this is a no-op for a caller that skipped it.
+          stage_dispatch_attachments!
+          ::ActiveJob::Arguments.serialize([attributes.except("resource", "resources")]).first
         rescue ::ActiveJob::SerializationError => e
           # Raised HERE, where the author can see which attribute they declared,
           # rather than surviving into a row whose work fails deep in a job.
@@ -267,16 +268,30 @@ module Plutonium
         # reviving happens wherever the value is read, which may be a job.
         #
         # @return [Hash]
-        # Memoized, because #validate_dispatch_attachments needs the token too and
-        # staging twice would upload the file twice. Shrine validates an assigned
-        # CACHED file, so there is no validating an upload without first staging
-        # it — the wizard makes the same trade on every step submit.
-        def stage_dispatch_attachments(options)
-          @stage_dispatch_attachments ||= options.to_h do |name, value|
-            next [name, value] unless dispatch_attachment?(value)
+        # Stages every uploaded file and WRITES THE TOKEN BACK onto the attribute.
+        #
+        # Writing back is what makes the form survive a re-render. An attribute
+        # still holding an ActionDispatch::Http::UploadedFile blows up the moment
+        # the form redraws — the file input renders previously-attached files and
+        # calls +url+ on the value, which an uploaded file does not answer. So any
+        # validation failure on ANY attribute took the whole page down with a
+        # NoMethodError. A staged token is a plain String, which is exactly what
+        # the input already knows how to redraw, and what a wizard holds for the
+        # same reason.
+        #
+        # Idempotent: a token is already a String, so a re-submit stages nothing
+        # a second time.
+        def stage_dispatch_attachments!
+          return if @dispatch_attachments_staged
 
-            [name, Plutonium::Attachments.stage_upload(value, **dispatch_attachment_options(name))]
+          attributes.except("resource", "resources").each do |name, value|
+            next unless dispatch_attachment?(value)
+
+            token = Plutonium::Attachments.stage_upload(value, **dispatch_attachment_options(name))
+            public_send(:"#{name}=", token)
           end
+
+          @dispatch_attachments_staged = true
         end
 
         # A file field's +backend:+ and +uploader:+, read off the interaction's own
@@ -322,12 +337,12 @@ module Plutonium
         #
         # No-op for ActiveStorage fields, and for uploaders declaring no rules.
         def validate_dispatch_attachments
-          attributes.except("resource", "resources").each do |name, value|
-            next unless dispatch_attachment?(value)
+          staged = attributes.except("resource", "resources").select { |_, v| dispatch_attachment?(v) }.keys
+          stage_dispatch_attachments!
 
+          staged.each do |name|
             messages = Plutonium::Attachments.validation_errors(
-              stage_dispatch_attachments(attributes.except("resource", "resources"))[name],
-              **dispatch_attachment_options(name)
+              public_send(name), **dispatch_attachment_options(name)
             )
             messages.each { |message| errors.add(name, message) }
           end
@@ -440,22 +455,38 @@ module Plutonium
           :"#{action.name}?"
         end
 
-        # Where dispatch sends the user: the run's own page.
+        # Where dispatch sends the user: back where they came from, else the
+        # run's own page.
         #
-        # Resolved with +resource_url_for+, which is how every resource URL in
-        # this framework is built, and NOT by handing the record to
-        # Response::Redirect for a plain +url_for+. Under +:path+ entity scoping
-        # the route helper is entity-prefixed and takes the tenant as its first
-        # argument — +org_runs_path(org, run)+, not +runs_path(run)+ — and
-        # +url_for(record)+ derives the helper from the record's own route_key,
-        # so it cannot know about the prefix. Passing the bare record would
-        # therefore raise for the common entity-scoped case.
+        # +return_to+ wins because dispatching is not a destination. The user
+        # asked to archive the rows they had selected; landing them on a progress
+        # page means the list they were working is now two clicks away, and every
+        # index already surfaces its in-progress runs in a banner — so going back
+        # loses them nothing. A dispatch with no +return_to+ (a direct link, an
+        # API-ish caller) still needs somewhere to go, and the run's page is the
+        # only page that is about what just happened.
+        #
+        # Through +url_from+, which is what makes the parameter safe to honour:
+        # it returns nil for anything not same-origin, so a forged +return_to+
+        # cannot turn a bulk action into an open redirect.
+        #
+        # The fallback is resolved with +resource_url_for+, which is how every
+        # resource URL in this framework is built, and NOT by handing the record
+        # to Response::Redirect for a plain +url_for+. Under +:path+ entity
+        # scoping the route helper is entity-prefixed and takes the tenant as its
+        # first argument — +org_runs_path(org, run)+, not +runs_path(run)+ — and
+        # +url_for(record)+ derives the helper from the record's own route_key, so
+        # it cannot know about the prefix. Passing the bare record would therefore
+        # raise for the common entity-scoped case.
         #
         # Override to send them somewhere else.
         #
         # @return [String]
         def dispatch_redirect_target(run)
-          view_context.controller.helpers.resource_url_for(run)
+          controller = view_context.controller
+
+          controller.url_from(controller.params[:return_to]) ||
+            controller.helpers.resource_url_for(run)
         end
       end
     end

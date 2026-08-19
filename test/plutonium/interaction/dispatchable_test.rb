@@ -87,8 +87,22 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
       :scoped_to_entity, :current_parent, :current_nested_association
     attr_accessor :authorization_namespace
 
+    attr_accessor :params
+
     def initialize
       @scoped_to_entity = true
+      @params = {}
+    end
+
+    # Mirrors ActionController::Redirecting#url_from closely enough to matter:
+    # a relative path or a same-origin absolute URL passes, anything else is
+    # nil. That nil is the open-redirect guard, so a mock that waved every
+    # string through would let a forged return_to look safe here.
+    def url_from(location)
+      return nil if location.blank?
+      return location if location.start_with?("/")
+
+      location if location.start_with?("http://test.host")
     end
 
     def scoped_to_entity? = @scoped_to_entity
@@ -293,6 +307,38 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     Rack::Test::UploadedFile.new(StringIO.new(bytes), type, original_filename: name)
   end
 
+  test "a staged file leaves the attribute holding a token, not the upload" do
+    interaction = TypedDispatchInteraction.new(
+      view_context: @view_context, import_file: uploaded("a,b\n")
+    )
+
+    assert interaction.valid?
+
+    # The form redraws on any validation failure, and its file input calls #url
+    # on the value to render what is already attached. An
+    # ActionDispatch::Http::UploadedFile does not answer that, so leaving it in
+    # place took the whole page down with a NoMethodError — for a failure on some
+    # entirely unrelated attribute.
+    assert_kind_of String, interaction.import_file
+    refute_match(/UploadedFile/, interaction.import_file)
+  end
+
+  test "a file field's staging options never reach the rendered form" do
+    options = UploaderDispatchInteraction.defined_inputs.dig(:import_file, :options)
+
+    assert_equal LimitedUploader, options[:uploader], "dispatch reads it from here"
+
+    # And the form must not: Phlex refuses a Class-valued attribute outright, so
+    # a declared `uploader:` took the whole modal down with
+    # "Invalid attribute value for uploader:" — the feature was unusable exactly
+    # as documented. Unit tests missed it because none of them RENDERED.
+    rendered = options.except(*Plutonium::Attachments::STAGING_ONLY_INPUT_OPTIONS)
+
+    refute rendered.key?(:uploader)
+    refute rendered.key?(:backend)
+    assert_equal :uppy, rendered[:as], "everything else still reaches the form"
+  end
+
   test "a file field's uploader validations fail the form, not the run" do
     interaction = UploaderDispatchInteraction.new(
       view_context: @view_context, import_file: uploaded("x" * 2048)
@@ -316,6 +362,36 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
     assert outcome.success?
     assert_equal "small", outcome.value.reload.attachment(:import_file).download
+  end
+
+  test "dispatch returns the user where they came from" do
+    @controller.params = {return_to: "/admin/tasks?view=table"}
+
+    outcome = dispatch_bulk
+
+    # Dispatching is not a destination. The user asked to act on the rows they
+    # had selected; the index they were working already surfaces its in-progress
+    # runs in a banner, so going back costs them nothing.
+    assert_equal ["/admin/tasks?view=table"], outcome.to_response.instance_variable_get(:@args)
+  end
+
+  test "dispatch falls back to the run's own page with no return_to" do
+    run = (outcome = dispatch_bulk).value
+
+    assert_equal ["/mock/runs/#{run.id}"], outcome.to_response.instance_variable_get(:@args),
+      "a direct link still needs somewhere to go, and the run's page is the " \
+      "only page about what just happened"
+  end
+
+  test "a return_to pointing off-origin is refused, not followed" do
+    @controller.params = {return_to: "https://evil.test/steal"}
+
+    run = (outcome = dispatch_bulk).value
+
+    # url_from returns nil for anything not same-origin, which is what makes the
+    # parameter safe to honour at all — otherwise a bulk action link is an open
+    # redirect anyone can mint.
+    assert_equal ["/mock/runs/#{run.id}"], outcome.to_response.instance_variable_get(:@args)
   end
 
   test "the validated attributes land in options, without the records" do
@@ -402,7 +478,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
   # --- the outcome ---------------------------------------------------------
 
-  test "the outcome is a success that redirects to the run" do
+  test "the outcome is a success that redirects, resolved not bare" do
     outcome = dispatch_bulk
 
     assert outcome.success?

@@ -14,6 +14,10 @@ class TaskDefinition < ::ResourceDefinition
   # the grid's row-then-column one.
   grid_fields header: :title, meta: [:status], footer: false
 
+  # Bulk action over selected rows, dispatched to a run rather than executed
+  # inline — the async counterpart of the kanban column's :archive_all.
+  action :archive_all_async, interaction: ArchiveTasksAsyncInteraction
+
   kanban do
     per_column 25
 

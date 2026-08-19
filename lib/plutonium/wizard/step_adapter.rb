@@ -26,7 +26,7 @@ module Plutonium
       # `uploader:` as an attribute, and `backend:` would otherwise leak as a stray
       # attribute. Driving reads them off `step.inputs` directly, so removing them
       # here is invisible to staging.
-      STAGING_ONLY_INPUT_OPTIONS = %i[backend uploader].freeze
+      STAGING_ONLY_INPUT_OPTIONS = Plutonium::Attachments::STAGING_ONLY_INPUT_OPTIONS
 
       def initialize(step)
         @step = step

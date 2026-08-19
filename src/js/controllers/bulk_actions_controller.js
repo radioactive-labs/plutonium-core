@@ -56,9 +56,17 @@ export default class extends Controller {
       const baseUrl = button.dataset.bulkActionUrl
       const actionName = button.dataset.bulkActionName
 
-      // Update URL with selected IDs
+      // Update URL with selected IDs.
+      //
+      // Merged into whatever query the server already put on the URL, not
+      // appended with a bare "?" — that discarded every existing param (and
+      // produced a malformed second "?" when there was one). The toolbar carries
+      // return_to there, which is what sends the user back to this index rather
+      // than stranding them on whatever the action redirects to.
       if (baseUrl) {
-        button.href = idsParam ? `${baseUrl}?${idsParam}` : baseUrl
+        const [path, query] = baseUrl.split("?")
+        const merged = [query, idsParam].filter(Boolean).join("&")
+        button.href = merged ? `${path}?${merged}` : path
       }
 
       // Show/hide button based on whether action is allowed for all selected records

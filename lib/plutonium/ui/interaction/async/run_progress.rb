@@ -66,6 +66,14 @@ module Plutonium
           # True when this render IS the response to the frame's own poll.
           def answering_own_frame? = current_turbo_frame == frame_id
 
+          # Reload once, so the fields outside this frame stop disagreeing with it.
+          def finished_attributes
+            # The STRING, not true: Phlex renders a boolean attribute bare, and a
+            # valueless data attribute is exactly the shape Stimulus's Boolean
+            # coercion is least clear about.
+            {data: {controller: "run-progress", run_progress_finished_value: "true"}}
+          end
+
           def render_panel
             div(class: "pu-card pu-run-progress", **poll_attributes) do
               div(class: "pu-card-body space-y-4") do
@@ -78,7 +86,19 @@ module Plutonium
 
           # Only an in-progress run carries the poll. Absent here, nothing on the
           # page has a timer — which is how the refresh stops.
+          #
+          # Except on the LAST poll, which needs one more instruction. Only this
+          # panel lives in the polled frame; the fields beside it were rendered
+          # once, when the run was dispatched. So a run that finishes leaves the
+          # page showing two contradicting truths — a green "Completed, 5 of 5"
+          # above a list still reading "Running", "0 done", "finished at -" — and
+          # the stale half is the more detailed one. Telling the page to reload
+          # itself once is what lets those fields catch up.
+          #
+          # It cannot loop. The flag is emitted only while ANSWERING A POLL, and
+          # the reload it triggers is a full page render, where that is false.
           def poll_attributes
+            return finished_attributes if !run.in_progress? && answering_own_frame?
             return {} unless run.in_progress?
 
             {
