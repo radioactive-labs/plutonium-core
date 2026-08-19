@@ -178,6 +178,24 @@ module Plutonium
         deny_wizard_resume_for_other_user!(runner)
         authorize_wizard_entry!(runner)
 
+        # No stored row at this key — nothing to abandon, so bail BEFORE `cancel`,
+        # which is destructive: `run_cleanup` fires every declared `on_rollback`,
+        # then `clear` deletes the row.
+        #
+        # A DELETE carrying a stale or forged token mints an EMPTY runner, and
+        # `rollback_step` only no-ops when the step ALSO declares no `on_rollback` —
+        # so a side-effect-only compensator (refund the charge, call the external
+        # API) runs for a run that never existed. The token is the only thing
+        # identifying a run and a caller can simply make one up, which puts this in
+        # reach of anyone allowed to LAUNCH the wizard.
+        #
+        # PRG to the launch path: the chooser over any runs the user still has, or
+        # a fresh run. A finished one-time run lands here too (it resumes no row)
+        # and gets its completed page.
+        unless runner.resumed?
+          return redirect_to wizard_launch_url, status: :see_other, allow_other_host: false
+        end
+
         runner.cancel
         clear_wizard_session_token
         clear_wizard_return_to

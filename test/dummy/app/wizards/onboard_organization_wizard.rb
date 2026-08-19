@@ -13,6 +13,15 @@
 #
 # `execute` creates an Organization atomically.
 class OnboardOrganizationWizard < Plutonium::Wizard::Base
+  # A cleanup sink. `on_rollback` is the hook for compensating UNTRACKED side
+  # effects (refund a charge, call an external API), so unlike a `persist`ed
+  # record it leaves no trace in the database — integration tests need somewhere
+  # to observe that it fired. Tests clear this in `setup`.
+  @rollbacks = []
+  class << self
+    attr_reader :rollbacks
+  end
+
   presents label: "Onboard an organization",
     description: "Set up a workspace for your team — a few quick steps and you're in."
 
@@ -32,6 +41,12 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     # data snapshot carries no has_cents reflection.
     input :budget, as: :currency, unit: "$"
     validates :name, presence: true
+
+    # A side-effect-only compensator: this step persists no records, so the engine
+    # has nothing of its own to destroy — `rollback_step` runs this and nothing
+    # else. That makes it the exact shape that must NOT fire when a cancel
+    # resolves to no run at all.
+    on_rollback { OnboardOrganizationWizard.rollbacks << :identity }
 
     form_layout do
       section :basics, :name, :plan, :budget, label: "The basics"

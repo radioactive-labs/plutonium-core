@@ -18,6 +18,7 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     @admin = create_admin!
     login_as(@admin, portal: :admin)
     Plutonium::Wizard::Session.delete_all
+    OnboardOrganizationWizard.rollbacks.clear
   end
 
   def base = "/admin/onboarding"
@@ -135,6 +136,39 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_includes response.body, "pu-wizard-chooser"
     assert_equal 0, Plutonium::Wizard::Session.where(token: first).count
     assert_equal 1, Plutonium::Wizard::Session.where(token: second, status: "in_progress").count
+  end
+
+  # Cancelling a REAL run must still compensate: `on_rollback` is the hook for
+  # undoing untracked side effects, and abandoning the run is exactly when it is
+  # owed. Pinned so the stale-token guard below can't be tightened into blocking
+  # legitimate cleanup.
+  test "cancelling a pending run runs its steps' on_rollback compensators" do
+    advance_through("identity")
+
+    delete "#{base}/#{@wizard_token}"
+
+    assert_response :see_other
+    assert_equal [:identity], OnboardOrganizationWizard.rollbacks
+  end
+
+  # A DELETE carrying a stale or forged token has no row at its key, so
+  # `build_wizard_runner` mints an EMPTY runner. `cancel` on that runner is NOT a
+  # harmless no-op: `rollback_step` only skips a step when it tracked nothing AND
+  # declares no `on_rollback`, so a side-effect-only compensator (refund the
+  # charge, call the external API) fires for a run that never existed — and it is
+  # unauthenticated-adjacent, reachable by anyone who may launch the wizard, with
+  # a token they can simply make up. Bail before `cancel`.
+  test "cancelling an unknown token compensates nothing and destroys nothing" do
+    advance_through("identity")
+    standing = @wizard_token
+
+    delete "#{base}/#{"f" * 32}"
+
+    assert_response :see_other
+    assert_redirected_to base
+    assert_empty OnboardOrganizationWizard.rollbacks,
+      "a cancel that resolves to no run must not fire any step's on_rollback"
+    assert_equal 1, Plutonium::Wizard::Session.where(token: standing, status: "in_progress").count
   end
 
   # Cancel runs the same owner-scoping gauntlet as every other wizard action — a
