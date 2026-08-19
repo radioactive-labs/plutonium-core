@@ -31,7 +31,7 @@ class OrgPortal::InteractionRunScopingTest < ActionDispatch::IntegrationTest
   def prefix = "/org/#{@org.to_param}"
 
   test "the run's URL is entity-prefixed, and that is where dispatch redirects" do
-    get "#{prefix}/runs"
+    get "#{prefix}/interaction_runs"
     assert_response :success
 
     # Exactly the call Dispatchable#dispatch_redirect_target makes. `url_for`
@@ -39,22 +39,22 @@ class OrgPortal::InteractionRunScopingTest < ActionDispatch::IntegrationTest
     # takes the tenant as its first argument.
     resolved = @controller.helpers.resource_url_for(@mine)
 
-    assert_equal "#{prefix}/runs/#{@mine.to_param}", resolved
+    assert_equal "#{prefix}/interaction_runs/#{@mine.to_param}", resolved
     get resolved
     assert_response :success
   end
 
   test "a run dispatched in another tenant is not readable" do
-    get "#{prefix}/runs/#{@theirs.to_param}"
+    get "#{prefix}/interaction_runs/#{@theirs.to_param}"
     assert_response :not_found
   end
 
   test "the index lists only this tenant's runs" do
-    get "#{prefix}/runs"
+    get "#{prefix}/interaction_runs"
     assert_response :success
 
-    assert_match(/#{prefix}\/runs\/#{@mine.to_param}/, response.body)
-    refute_match(/#{prefix}\/runs\/#{@theirs.to_param}/, response.body,
+    assert_match(/#{prefix}\/interaction_runs\/#{@mine.to_param}/, response.body)
+    refute_match(/#{prefix}\/interaction_runs\/#{@theirs.to_param}/, response.body,
       "another tenant's run must never be listed")
   end
 end

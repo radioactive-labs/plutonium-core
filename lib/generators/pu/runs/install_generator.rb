@@ -22,7 +22,7 @@ module Pu
       def start
         @app_namespace = portal_option(:dest, prompt: "Select destination portal").camelize
 
-        template "app/controllers/runs_controller.rb", controller_path
+        template "app/controllers/interaction_runs_controller.rb", controller_path
 
         register_resource_in_routes(routes_path, "Plutonium::Interaction::Run")
 
@@ -40,9 +40,9 @@ module Pu
       def main_app? = app_namespace == "MainApp"
 
       def controller_path
-        return "app/controllers/runs_controller.rb" if main_app?
+        return "app/controllers/interaction_runs_controller.rb" if main_app?
 
-        "packages/#{package_namespace}/app/controllers/#{package_namespace}/runs_controller.rb"
+        "packages/#{package_namespace}/app/controllers/#{package_namespace}/interaction_runs_controller.rb"
       end
 
       def routes_path

@@ -23,7 +23,7 @@ class AdminPortal::InteractionRunProgressTest < ActionDispatch::IntegrationTest
 
   teardown { Plutonium::Interaction::Run.delete_all }
 
-  def run_path(run) = "/admin/runs/#{run.to_param}"
+  def run_path(run) = "/admin/interaction_runs/#{run.to_param}"
 
   def create_run!(**attributes)
     TestPostRun.create!(initiator: @user, scoped_entity: @org, **attributes)
@@ -32,7 +32,7 @@ class AdminPortal::InteractionRunProgressTest < ActionDispatch::IntegrationTest
   test "the run is routable and resource_url_for resolves its show URL" do
     run = create_run!(state: "running")
 
-    get "/admin/runs"
+    get "/admin/interaction_runs"
     assert_response :success
 
     # Exactly the call Dispatchable#dispatch_redirect_target makes.
@@ -137,7 +137,7 @@ class AdminPortal::InteractionRunProgressTest < ActionDispatch::IntegrationTest
     run = create_run!(state: "completed", progress_total: 3, progress_done: 3)
     run.record_target_failure!(id: 41, message: "Target 41 is no longer available")
 
-    get "/admin/runs"
+    get "/admin/interaction_runs"
     assert_response :success
 
     assert_match(/Completed with errors/, response.body)

@@ -1,11 +1,11 @@
 <%- if main_app? -%>
-class RunsController < ::ResourceController
+class InteractionRunsController < ::ResourceController
   # The controller's name doesn't match Run's real, namespaced class
   # (Plutonium::Interaction::Run), so inference can't find it on its own.
   controller_for ::Plutonium::Interaction::Run
 end
 <%- else -%>
-class <%= app_namespace %>::RunsController < ::<%= app_namespace %>::ResourceController
+class <%= app_namespace %>::InteractionRunsController < ::<%= app_namespace %>::ResourceController
   # The controller's name doesn't match Run's real, namespaced class
   # (Plutonium::Interaction::Run), so inference can't find it on its own.
   controller_for ::Plutonium::Interaction::Run

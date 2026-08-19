@@ -103,8 +103,8 @@ register_resource ::Plutonium::Interaction::Run
 ```
 
 ```ruby
-# packages/admin_portal/app/controllers/admin_portal/runs_controller.rb
-class AdminPortal::RunsController < AdminPortal::ResourceController
+# packages/admin_portal/app/controllers/admin_portal/interaction_runs_controller.rb
+class AdminPortal::InteractionRunsController < AdminPortal::ResourceController
   controller_for ::Plutonium::Interaction::Run
 
   include AdminPortal::Concerns::Controller

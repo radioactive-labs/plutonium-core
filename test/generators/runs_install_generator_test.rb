@@ -43,8 +43,8 @@ class RunsInstallGeneratorTest < Rails::Generators::TestCase
       assert_match(/register_resource ::Plutonium::Interaction::Run$/, content)
     end
 
-    assert_file "packages/test_portal/app/controllers/test_portal/runs_controller.rb" do |content|
-      assert_match(/class TestPortal::RunsController/, content)
+    assert_file "packages/test_portal/app/controllers/test_portal/interaction_runs_controller.rb" do |content|
+      assert_match(/class TestPortal::InteractionRunsController/, content)
       assert_match(/controller_for ::Plutonium::Interaction::Run/, content)
     end
   end
@@ -121,12 +121,12 @@ class RunsInstallMainAppGeneratorTest < Rails::Generators::TestCase
       assert_match(/register_resource ::Plutonium::Interaction::Run$/, content)
     end
 
-    assert_file "app/controllers/runs_controller.rb" do |content|
-      assert_match(/class RunsController < ::ResourceController/, content)
+    assert_file "app/controllers/interaction_runs_controller.rb" do |content|
+      assert_match(/class InteractionRunsController < ::ResourceController/, content)
       assert_match(/controller_for ::Plutonium::Interaction::Run/, content)
       refute_match(/Concerns::Controller/, content)
     end
 
-    assert_no_file "packages/main_app/app/controllers/main_app/runs_controller.rb"
+    assert_no_file "packages/main_app/app/controllers/main_app/interaction_runs_controller.rb"
   end
 end
