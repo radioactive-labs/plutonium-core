@@ -25,6 +25,15 @@ module Plutonium
     attr_reader :assets
 
     # @return [Plutonium::Wizard::Configuration] wizard subsystem configuration
+    # @return [Symbol, nil] the storage backend used to stage an attachment that
+    #   travels as a plain string — `:active_storage` or `:shrine`. `nil`
+    #   auto-detects (active_shrine loaded → `:shrine`, else `:active_storage`).
+    #
+    #   The shared default. Wizards and async interactions each layer their own
+    #   override on top, so setting this once covers both, and setting one of
+    #   theirs narrows it to that subsystem.
+    attr_accessor :attachment_backend
+
     attr_reader :wizards
 
     # @return [Plutonium::Interaction::Async::Configuration] persisted interaction
