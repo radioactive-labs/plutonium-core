@@ -91,7 +91,14 @@ It works without per-model configuration. Before adding it:
 
 [`ar_lazy_preload`](https://github.com/DmitryTsepelev/ar_lazy_preload) takes the same idea from the other end, preloading lazily on first access, with `ArLazyPreload.config.auto_preload = true` for automatic behaviour everywhere. Its docs warn that enabling it on an existing app can surface edge cases.
 
+## Work that does not belong in a request at all
+
+Eager loading fixes a page that is slow because of how it queries. It does nothing for a page that is slow because of how much it *does* — a bulk action over thousands of records, a report, a third-party call.
+
+Those need to leave the request rather than be optimised inside it. An interaction declares `async` and dispatches a background run, and the user gets a progress page instead of a spinner they cannot leave: [Async Interactions](/reference/behavior/async-interactions).
+
 ## Related
 
 - **Search fallback.** A resource with no `search` block falls back to a leading-wildcard `LIKE`, which cannot use a b-tree index. Write an explicit `search` block for large tables — see [Resource › Query](/reference/resource/query#search).
 - **Page size.** Query cost scales with rows per page.
+- [Async Interactions](/reference/behavior/async-interactions) — moving slow work out of the request

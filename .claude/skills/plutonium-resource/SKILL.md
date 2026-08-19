@@ -1532,6 +1532,17 @@ end
 
 The UI only shows bulk action buttons that ALL selected records support. Records are fetched via `current_authorized_scope`.
 
+**Bulk over more than a screenful runs in the request and will time out.** Swap `execute` for `async` and the same interaction dispatches a background run instead — same declaration, same policy, same form:
+
+```ruby
+async do
+  on_failure :continue   # :halt (default) | :continue | :transactional
+  def perform_on(record) = record.archived!
+end
+```
+
+The block is the run's class body, not `execute`: it runs later in a job with no controller, so its inputs arrive through `options`. Load [[plutonium-async-interactions]] before building one.
+
 ### Resource action (no record)
 
 ```ruby
