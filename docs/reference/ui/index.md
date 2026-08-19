@@ -6,7 +6,7 @@ Plutonium uses [Phlex](https://www.phlex.fun/) for all view components and Tailw
 
 - [Pages](./pages) — `IndexPage`, `ShowPage`, `NewPage`, `EditPage`, render hooks, custom ERB views, context detection
 - [Forms](./forms) — `Form` class, field builder, association inputs (typeahead + inline add), themes
-- [Displays](./displays) — `Display` class, custom rendering, `phlexi_tag`
+- [Displays](./displays) — `Display` class, custom rendering, `phlexi_render`
 - [Tables](./tables) — `Table` class, custom rendering, search/scopes bar
 - [Components](./components) — built-in component kit, custom Phlex components, `DynaFrameContent` pattern, modals & tabs
 - [Layouts](./layouts) — shell config, ejecting chrome, custom `ResourceLayout` class

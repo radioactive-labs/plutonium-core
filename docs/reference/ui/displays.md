@@ -53,8 +53,8 @@ class PostDefinition < ResourceDefinition
     StatusBadgeComponent.new(value: field.value, class: field.dom.css_class)
   end
 
-  # phlexi_tag — proc whose body is rendered inside a Phlex context
-  display :priority, as: :phlexi_tag, with: ->(value, attrs) {
+  # phlexi_render — proc whose body is rendered inside a Phlex context
+  display :priority, as: :phlexi_render, with: ->(value, attrs) {
     case value
     when 'high'   then span(class: "badge badge-danger")  { "High" }
     when 'medium' then span(class: "badge badge-warning") { "Medium" }

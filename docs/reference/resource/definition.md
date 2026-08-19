@@ -42,8 +42,8 @@ end
 
 # packages/admin_portal/app/definitions/admin_portal/post_definition.rb (per-portal)
 class AdminPortal::PostDefinition < ::PostDefinition
-  input :internal_notes, as: :text     # admins see this; customers don't
   scope :pending_review
+  input :internal_notes, hint: "Not shown to the author"
 end
 ```
 
@@ -293,16 +293,16 @@ input :birth_date do |f|
 end
 ```
 
-### `phlexi_tag` for declarative custom display
+### `phlexi_render` for declarative custom display
 
-`with:` takes either a Phlex component class OR a proc whose body is **rendered inside a Phlex context** — HTML tag methods (`span`, `div`, `a`) and Tailwind classes are first-class. The proc receives `(value, attrs)`.
+`as: :phlexi_render` (or its shorthand `as: :phlexi`). `with:` takes either a Phlex component class OR a proc whose body is **rendered inside a Phlex context** — HTML tag methods (`span`, `div`, `a`) and Tailwind classes are first-class. The proc receives `(value, attrs)`.
 
 ```ruby
 # Component — preferred for anything reusable
-display :status, as: :phlexi_tag, with: StatusBadgeComponent
+display :status, as: :phlexi_render, with: StatusBadgeComponent
 
 # Inline proc — `span` here is a Phlex tag method, not a Rails helper
-display :priority, as: :phlexi_tag, with: ->(value, attrs) {
+display :priority, as: :phlexi_render, with: ->(value, attrs) {
   case value
   when 'high'   then span(class: "badge badge-danger")  { "High" }
   when 'medium' then span(class: "badge badge-warning") { "Medium" }
