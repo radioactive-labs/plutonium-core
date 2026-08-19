@@ -217,15 +217,72 @@ module Plutonium
           succeed(run).with_redirect_response(dispatch_redirect_target(run))
         end
 
-        # Everything the interaction validated, minus the records themselves.
+        # Everything the interaction validated, minus the records themselves,
+        # in a shape that survives the trip to a job.
         #
         # The records are the TARGETS: they are stored as ids and re-resolved
         # through the policy scope when the run performs. A serialized copy in
         # options would be both stale and unauthorized.
         #
+        # Two things have to happen to the rest, because options is a JSON column
+        # and JSON has neither files nor types:
+        #
+        # * An UPLOADED FILE is staged to its backend's cache and carried as the
+        #   token — see {#stage_dispatch_attachments}. Left alone it serializes to
+        #   a hash naming a tempfile the request deletes on its way out, so the
+        #   run would receive the right filename and no bytes, with nothing
+        #   raised anywhere.
+        # * TYPED VALUES go through ActiveJob::Arguments, which is Rails' own
+        #   answer to this exact problem. Without it a Date arrives as "2026-08-19"
+        #   and a BigDecimal as "12.34", so `options["amount"] * 2` quietly
+        #   produces "12.3412.34". Primitives pass through verbatim, so the common
+        #   case stays readable in the column and only what needs an envelope gets
+        #   one — and a host can register its own serializers.
+        #
         # @return [Hash]
         def dispatch_options
-          attributes.except("resource", "resources")
+          staged = stage_dispatch_attachments(attributes.except("resource", "resources"))
+          ::ActiveJob::Arguments.serialize([staged]).first
+        rescue ::ActiveJob::SerializationError => e
+          # Raised HERE, where the author can see which attribute they declared,
+          # rather than surviving into a row whose work fails deep in a job.
+          raise ArgumentError,
+            "#{self.class} cannot carry one of its attributes to a run: #{e.message}. " \
+            "A run's options are JSON, so every attribute has to be JSON-safe, an " \
+            "uploaded file, or a type ActiveJob knows how to serialize."
+        end
+
+        # Replaces uploaded files with the token their backend mints for them.
+        #
+        # The token IS what gets stored, verbatim — not wrapped in an envelope —
+        # so the column stays readable and the run's own +attachment+ reader is
+        # the one place that knows how to turn it back into a file. That split is
+        # deliberate: staging happens here, in the request, where the file is;
+        # reviving happens wherever the value is read, which may be a job.
+        #
+        # @return [Hash]
+        def stage_dispatch_attachments(options)
+          options.transform_values do |value|
+            next value unless dispatch_attachment?(value)
+
+            Plutonium::Attachments.stage_upload(value, backend: dispatch_attachment_backend)
+          end
+        end
+
+        # An uploaded file, or a collection of them. Detected by behaviour rather
+        # than by class so it covers ActionDispatch::Http::UploadedFile, Rack's
+        # multipart shape, and a bare IO an author assigned themselves.
+        def dispatch_attachment?(value)
+          return value.any? { |v| dispatch_attachment?(v) } if value.is_a?(Array)
+
+          value.respond_to?(:read) && value.respond_to?(:original_filename)
+        end
+
+        # Runs override the shared default, so an app can point runs at one
+        # backend without moving its wizards.
+        def dispatch_attachment_backend
+          Plutonium.configuration.async_interactions.attachment_backend ||
+            Plutonium::Attachments.default_backend
         end
 
         # Whether this interaction has a SUBJECT at all, decided by what it

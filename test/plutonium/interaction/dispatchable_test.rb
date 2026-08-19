@@ -39,6 +39,17 @@ class InlineArchiveInteraction < Plutonium::Resource::Interaction
   end
 end
 
+# Typed and file-valued attributes — neither survives a JSON column untouched.
+class TypedDispatchInteraction < Plutonium::Resource::Interaction
+  attribute :note, :string
+  attribute :count, :integer
+  attribute :starts_on, :date
+  attribute :amount, :decimal
+  attribute :import_file
+
+  async { def perform = :ok }
+end
+
 class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveJob::TestHelper
@@ -200,6 +211,73 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_equal 0, Plutonium::Interaction::Async::Run.count
   ensure
     Plutonium.configuration.async_interactions.enabled = true
+  end
+
+  test "typed attributes keep their types across the options column" do
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, note: "x", count: 3,
+      starts_on: "2026-08-19", amount: "12.34"
+    ).value
+
+    options = Plutonium::Interaction::Async::Run.find(run.id).options
+
+    assert_equal "x", options["note"]
+    assert_equal 3, options["count"]
+    # Raw JSON hands both of these back as Strings, and `options["amount"] * 2`
+    # then quietly produces "12.3412.34".
+    assert_equal Date.new(2026, 8, 19), options["starts_on"]
+    assert_equal BigDecimal("12.34"), options["amount"]
+  end
+
+  test "primitives are stored verbatim, not wrapped in a serializer envelope" do
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, note: "x", count: 3
+    ).value
+
+    raw = Plutonium::Interaction::Async::Run.where(id: run.id).pick(:options)
+    raw = JSON.parse(raw) if raw.is_a?(String)
+
+    assert_equal "x", raw["note"], "a String must stay readable in the column"
+    assert_equal 3, raw["count"]
+  end
+
+  test "an uploaded file is staged to a token and revived at perform time" do
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("a,b\n1,2\n"), "text/csv", original_filename: "import.csv"
+    )
+
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, import_file: file
+    ).value
+    run = Plutonium::Interaction::Async::Run.find(run.id)
+
+    # The tempfile is gone once the request ends, so what is stored has to be a
+    # token the backend can revive — never the file itself.
+    assert_kind_of String, run.options["import_file"]
+    refute_match(/tempfile/, run.options["import_file"])
+
+    revived = run.attachment(:import_file)
+    assert_equal "import.csv", revived.filename
+    # The bytes are the point — a run that gets the filename and nothing to read
+    # is exactly the failure staging exists to prevent.
+    assert_equal "a,b\n1,2\n", revived.download
+    revived.open { |f| assert_equal "a,b\n1,2\n", f.read }
+  end
+
+  test "an attribute that cannot be carried is refused at dispatch" do
+    interaction = Class.new(Plutonium::Resource::Interaction) do
+      def self.name = "UncarryableInteraction"
+      attribute :thing
+      async { def perform = :ok }
+    end
+
+    error = assert_raises(ArgumentError) do
+      interaction.call(view_context: @view_context, thing: Object.new)
+    end
+
+    # Named where the author declared it, rather than surviving into a row whose
+    # work fails deep in a job.
+    assert_match(/cannot carry one of its attributes/, error.message)
   end
 
   test "the validated attributes land in options, without the records" do

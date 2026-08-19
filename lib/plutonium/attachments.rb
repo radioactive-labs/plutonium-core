@@ -216,6 +216,29 @@ module Plutonium
 
       def extension = @source.try(:extension).presence || File.extname(filename).delete(".").presence
 
+      # Yields the attachment as an open file, cleaned up afterwards.
+      #
+      # {url} is enough for a wizard, which only ever renders a staged
+      # attachment. Work that RUNS on one — an import parsing the rows, a job
+      # promoting the file onto a model — has to read it, and in a job there is
+      # no request to build a URL against anyway.
+      #
+      # @yieldparam [File, Tempfile] an IO positioned at the start
+      # @return the block's value
+      def open(&) = @source.open(&)
+
+      # The bytes, as a String.
+      #
+      # Routed through {open} rather than the backends' own +download+, because
+      # that is one of the names they disagree on: ActiveStorage's returns the
+      # bytes, Shrine's returns a Tempfile. Papering over exactly that kind of
+      # divergence is what this class is for, so a caller can read a staged file
+      # without knowing which backend minted its token.
+      # Explicit receiver: a bare `open` here is indistinguishable from
+      # `Kernel#open` to a reader (and to the linter), which is a very different
+      # and much more dangerous method.
+      def download = self.open(&:read)
+
       def present? = true
     end
   end

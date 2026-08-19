@@ -232,6 +232,58 @@ module Plutonium
           target_ids.reject { |id| handled.include?(id.to_s) }
         end
 
+        # The interaction's validated inputs, with the types dispatch put in.
+        #
+        # The column is JSON, so Dispatchable#dispatch_options writes it through
+        # ActiveJob::Arguments; this is the other half. Without it a Date comes
+        # back a String and a BigDecimal comes back a String, which is the kind of
+        # bug that survives every test written against a run whose options happen
+        # to be strings anyway.
+        #
+        # Falls back to the raw hash for a row written before this existed, and
+        # for one an operator edited by hand — neither carries the envelope keys
+        # deserialize expects, and refusing to read them would take out the
+        # progress page as well as the work.
+        #
+        # @return [Hash]
+        def options
+          raw = super
+          return raw unless raw.is_a?(Hash)
+
+          ::ActiveJob::Arguments.deserialize([raw]).first
+        rescue ::ActiveJob::DeserializationError
+          raw
+        end
+
+        # An attachment attribute, revived from the token dispatch staged.
+        #
+        # A file cannot ride the options column, so dispatch uploads it to the
+        # backend's cache and stores the token (see
+        # Dispatchable#stage_dispatch_attachments). +options["file"]+ is therefore
+        # that token — a String — and this is what turns it back into something
+        # with a filename and bytes.
+        #
+        #   async do
+        #     def perform
+        #       CSV.foreach(attachment(:import_file).url) { |row| ... }
+        #     end
+        #   end
+        #
+        # Deliberately not folded into +options+. The token is what is actually
+        # stored, and reviving it reaches storage — which the progress page reads
+        # options without wanting to do.
+        #
+        # @param key [Symbol, String] the attribute name
+        # @return [Plutonium::Attachments::Resolved, nil] nil if nothing was
+        #   staged, or the token no longer resolves
+        def attachment(key) = attachments(key).first
+
+        # Every attachment staged under +key+, for a multiple-file attribute.
+        #
+        # @param key [Symbol, String]
+        # @return [Array<Plutonium::Attachments::Resolved>]
+        def attachments(key) = Plutonium::Attachments.resolve(options[key.to_s])
+
         # Says "still working" — for work the executor cannot see inside.
         #
         # Async::ReapJob treats a run silent past +stall_after+ as dead and resumes

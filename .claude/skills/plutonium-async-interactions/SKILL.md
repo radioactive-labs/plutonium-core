@@ -94,6 +94,24 @@ Nothing is passed explicitly. Dispatch reads it off the interaction/controller i
 
 An opaque run records none of the target/policy columns. Nothing to re-verify without a subject.
 
+## Attributes and files
+
+Validated attributes reach the run through `options`, a JSON column written via `ActiveJob::Arguments` — primitives verbatim, `Date`/`BigDecimal`/`Time` round-tripped with their types. An attribute that can't be carried is refused at dispatch.
+
+Files can't ride a JSON column, and the request's tempfile is gone by the time the job runs, so an uploaded file is staged to its backend's cache and carried as a token. Read it back with `attachment`:
+
+```ruby
+attribute :import_file
+
+async do
+  def perform
+    attachment(:import_file).open { |f| CSV.foreach(f, headers: true) { |row| ... } }
+  end
+end
+```
+
+`attachment(:key)` / `attachments(:key)` give `filename`, `content_type`, `url`, `open`, `download`. Backend: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
+
 ## Registering the Run resource
 
 Use the generator, per portal. Never hand-write the route/controller:

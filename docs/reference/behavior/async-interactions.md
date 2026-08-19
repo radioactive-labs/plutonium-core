@@ -67,6 +67,45 @@ The generated class is named `<Interaction>::Run` rather than left anonymous. Th
 | `:continue` | Records the failure, keeps going; the run ends `"completed"` (see [Outcome vs state](#outcome-vs-state) for why that's not the same as a clean success) |
 | `:transactional` | Wraps the whole batch in one DB transaction; any failure rolls back everything applied so far |
 
+### Attributes reach the run through `options`
+
+Everything the interaction validated, except the targets, is written to the run's `options` and read back in the job:
+
+```ruby
+attribute :reason, :string
+async do
+  def perform_on(post) = post.archive!(reason: options["reason"])
+end
+```
+
+`options` is a JSON column, so dispatch writes it through `ActiveJob::Arguments`. Primitives are stored verbatim — a String stays a String in the column — and only values needing one get a serializer envelope, so a `Date` arrives as a `Date` and a `BigDecimal` as a `BigDecimal` rather than as strings. Hosts can register their own serializers.
+
+An attribute that can't be carried at all is refused at dispatch, naming the interaction, rather than being written to a row whose work then fails deep in a job.
+
+### Files
+
+A file can't ride the options column: JSON has no files, and the request's tempfile is deleted on the way out. So an uploaded file is staged to its backend's cache at dispatch and carried as the token — `options["import_file"]` is that token, a String.
+
+Use `attachment` to read it back:
+
+```ruby
+class Catalog::ImportProducts < ResourceInteraction
+  attribute :import_file
+
+  async do
+    def perform
+      attachment(:import_file).open do |file|
+        CSV.foreach(file, headers: true) { |row| Catalog::Product.create!(row.to_h) }
+      end
+    end
+  end
+end
+```
+
+`attachment(:key)` returns one, `attachments(:key)` all of them for a multiple-file attribute, each exposing `filename`, `content_type`, `url`, `open` and `download`. Reviving reaches storage, which is why it isn't folded into `options` — the progress page reads options without wanting to.
+
+The backend is `config.async_interactions.attachment_backend`, falling back to `config.attachment_backend` and then to auto-detection (active_shrine loaded → Shrine, else ActiveStorage). Same layering wizards use.
+
 ### Sharing one run across interactions
 
 Pass a class instead of a block when several interactions do the same kind of work:
