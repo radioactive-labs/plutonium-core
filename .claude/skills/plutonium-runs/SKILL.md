@@ -140,7 +140,7 @@ every 15.minutes do
 end
 ```
 
-15 to 30 minutes is a reasonable cadence against the default 1-hour `stall_after`. This is a time heuristic, not a true lease: set `stall_after` well above the app's slowest legitimate run, or a merely-slow (not dead) run can get resumed too and briefly race its own still-live worker.
+15 to 30 minutes is a reasonable cadence against the default 1-hour `stall_after`. This is a time heuristic, not a true lease: a merely-slow (not dead) run that crosses `stall_after` gets resumed too. `lock_version` bounds what that costs — the resumed row's version no longer matches the still-live worker's, so that worker stops at its next write instead of racing the new one. It does **not** interrupt an in-flight `perform_on` (one target can be applied twice, once by each side), and it does not roll back what the superseded worker already committed. Set `stall_after` well above the app's slowest legitimate run.
 
 ## Full reference
 

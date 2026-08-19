@@ -9,11 +9,16 @@ module Plutonium
       #
       # Resetting to "pending" and re-enqueuing is safe, not a replay: the
       # executor resumes from Run#unhandled_target_ids, so a target already
-      # dispositioned before the interruption is not redone. This is a
-      # heuristic on TIME, not a true lease — a run that is merely slow (not
-      # dead) and happens to cross stall_after gets resumed too, and briefly
-      # races its still-live worker. Set stall_after well above this app's
-      # slowest legitimate run to keep that rare.
+      # dispositioned before the interruption is not redone.
+      #
+      # This is still a heuristic on TIME, not a true lease: a run that is merely
+      # slow (not dead) and crosses stall_after gets resumed too. What bounds
+      # that is lock_version — see #reap. The resumed row's version no longer
+      # matches the live worker's, so the live worker stops at its next write
+      # rather than racing. Two things that does NOT do: it cannot interrupt an
+      # in-flight perform_on (a target may be applied twice, once by each side),
+      # and it cannot roll back what the superseded worker already committed. Set
+      # stall_after well above this app's slowest legitimate run.
       #
       # Hosts must schedule this themselves (a periodic job / cron task),
       # same as Wizard::SweepJob.
@@ -29,8 +34,17 @@ module Plutonium
         # The conditional UPDATE re-checks "still stalled" and claims the row
         # in one atomic statement, so a run that progressed (or finished)
         # between the query above and now is left alone.
+        #
+        # Bumping lock_version is what makes resuming a merely-SLOW run safe
+        # rather than merely unlikely. The executor that is still alive holds the
+        # old value, so its very next write raises ActiveRecord::StaleObjectError
+        # and it abandons the pass (see Runs::Executor#call) instead of racing
+        # the new one and silently losing whichever progress write landed second.
+        # It does not un-apply work already committed — this bounds the damage of
+        # a bad stall_after, it does not make one free.
         def reap(run, threshold)
-          resumed = Run.stalled(before: threshold).where(id: run.id).update_all(state: "pending") == 1
+          resumed = Run.stalled(before: threshold).where(id: run.id)
+            .update_all(["state = ?, lock_version = lock_version + 1", "pending"]) == 1
           return unless resumed
 
           Rails.logger.info { "plutonium: resuming stalled interaction run #{run.id} (#{run.class})" }

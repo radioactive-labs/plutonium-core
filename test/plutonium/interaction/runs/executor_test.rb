@@ -347,6 +347,51 @@ class Plutonium::Interaction::Runs::ExecutorTest < ActiveSupport::TestCase
     assert_equal 2, run.progress_done
   end
 
+  test "an executor superseded mid-run abandons the pass instead of failing the run" do
+    first = create_post!(user: @user, organization: @org, title: "first")
+    second = create_post!(user: @user, organization: @org, title: "second")
+    run = create_run!(ContinuingScriptedRun, target_ids: [first.id, second.id])
+
+    # A reaper judged this run stalled and a second executor claimed it while the
+    # first target was in flight — which is exactly what bumping lock_version
+    # looks like from in here (see Runs::ReapJob#reap and Executor#claim!).
+    ScriptedRun.script = lambda do |_|
+      Plutonium::Interaction::Run.where(id: run.id).update_all("lock_version = lock_version + 1")
+    end
+
+    execute!(run)
+
+    assert_equal [first.id], ScriptedRun.performed,
+      "the superseded executor must stop at its first write, not work the rest of the batch"
+    assert_equal "running", run.state,
+      "the run belongs to whoever claimed it; a superseded executor must not mark it failed"
+    assert_empty run.errors_log,
+      "being superseded is not a failure of the run — it must not land in the operator's log"
+  end
+
+  test "the author's own StaleObjectError is a target failure, not a supersession" do
+    first = create_post!(user: @user, organization: @org, title: "first")
+    second = create_post!(user: @user, organization: @org, title: "second")
+    run = create_run!(ContinuingScriptedRun, target_ids: [first.id, second.id])
+
+    # perform_on touching a record that carries its own lock_version and losing
+    # the race — nothing to do with THIS run's row. Told apart by the errored
+    # record, not the exception class (see Executor#superseded?): keying off the
+    # class alone abandons the whole batch with an empty errors_log and leaves
+    # the run wedged at "running" for ReapJob to resume, and re-apply, forever.
+    ScriptedRun.script = lambda do |record|
+      raise ActiveRecord::StaleObjectError.new(record, "update") if record.id == first.id
+    end
+
+    execute!(run)
+
+    assert_equal [first.id, second.id], ScriptedRun.performed,
+      "a :continue run must carry on to the remaining targets"
+    assert_equal "completed", run.state
+    assert_equal [first.id], failed_ids(run)
+    assert_equal 2, run.progress_done
+  end
+
   test "a run whose failure cannot be recorded does not escape into a job retry" do
     bad = create_post!(user: @user, organization: @org, title: "bad")
     run = create_run!(ScriptedRun, target_ids: [bad.id])

@@ -84,6 +84,26 @@ module Plutonium
 
           run.targeted? ? perform_targets : perform_opaque
         rescue StandardError, NotImplementedError => e
+          # Another executor owns this run now: ReapJob judged it stalled, reset
+          # it to pending, and a second job claimed it — bumping lock_version out
+          # from under us (see Runs::ReapJob, #claim! and #superseded?).
+          #
+          # Returning without touching the row is the whole point. Every write
+          # this executor still holds is stale by definition, so recording a
+          # failure here would either raise again or overwrite the live
+          # executor's progress with our older copy. The run is not failed; it is
+          # simply no longer ours.
+          #
+          # Checked ahead of the failure path rather than in a rescue clause of
+          # its own, because the two are told apart by the errored RECORD, not by
+          # the exception class — see #superseded?.
+          if superseded?(e)
+            Rails.logger.warn {
+              "plutonium: interaction run #{run.id} was reclaimed by another executor; abandoning this pass"
+            }
+            return
+          end
+
           # NotImplementedError is NOT a StandardError, and two things here raise
           # it: a run subclass that implements no work at all, and a policy
           # predicate that has been renamed since enqueue (Policy#send_with_report).
@@ -122,23 +142,43 @@ module Plutonium
         # Atomically claims a PENDING run so two concurrent deliveries (retry
         # after a crash, duplicate enqueue) can't both process it. A run
         # already "running" is left alone rather than replayed — that would
-        # re-invoke perform_on on targets already applied. A stalled
-        # "running" row surfaces to an operator instead of silently
-        # double-applying; real resume needs per-target completion tracking,
-        # which does not exist yet.
+        # re-invoke perform_on on targets already applied.
+        #
+        # The claim also BUMPS lock_version, which is what turns ReapJob's
+        # time-based resume into a real fence: without it an executor superseded
+        # mid-batch would keep writing happily until it happened to collide with
+        # the new one — losing whichever progress write landed second. Bumping
+        # here means the superseded executor's very next save! finds its
+        # lock_version stale and raises, and #call treats that as "no longer
+        # mine". update_all never CHECKS the column, so nothing here can fail on
+        # it; the claim is arbitrated by the state predicate alone.
+        #
+        # Spelled out as SQL rather than passed as a hash because the increment
+        # has to be deliberate and visible. Rails adds one of its own to the HASH
+        # form of update_all whenever the model locks (see
+        # ActiveRecord::Relation#update_all) — a hash here would still work, but
+        # by an invisible rule that the string form does not follow, and
+        # Run#heartbeat! depends on knowing which form does what.
+        #
+        # Reloaded rather than assign_attributes'd: the row now holds a
+        # lock_version this instance never saw, and every later write depends on
+        # carrying the current one. One query per RUN (not per target).
         #
         # @return [Boolean]
         def claim!
           now = Time.current
           claimed = run.class.where(id: run.id, state: "pending")
-            .update_all(state: "running", started_at: now, last_activity_at: now) == 1
+            .update_all([
+              "state = ?, started_at = ?, last_activity_at = ?, lock_version = lock_version + 1",
+              "running", now, now
+            ]) == 1
 
           unless claimed
             Rails.logger.warn { "plutonium: interaction run #{run.id} is #{run.state}; refusing to (re)start" }
             return false
           end
 
-          run.assign_attributes(state: "running", started_at: now, last_activity_at: now)
+          run.reload
           true
         end
 
@@ -218,6 +258,10 @@ module Plutonium
         #   predicate renamed since enqueue) is not a StandardError, so the
         #   blanket rescue below already lets it through.
         # * Context::UnresolvableError IS one, so it is let through explicitly.
+        # * A StaleObjectError raised over THIS RUN's row likewise — and for it
+        #   "systemic" is an understatement: this executor no longer owns the row
+        #   at all. One over any OTHER record is an ordinary target failure; see
+        #   {#superseded?}, which is what tells the two apart.
         def perform_one(record)
           # send: see #perform_opaque.
           run.send(:perform_on, reauthorized(record))
@@ -227,11 +271,45 @@ module Plutonium
           # The initiator or the tenant was deleted while the run was working.
           # See the note above: this is the RUN's failure, not this target's.
           raise
-        rescue => e
-          raise BatchAbortedError, "target #{record.id} failed (#{e.message}); no targets were applied" if transactional?
+        rescue ActiveRecord::StaleObjectError => e
+          # Another executor claimed the run out from under us (see #call).
+          # Recording this as a target failure would be doubly wrong: it is not
+          # the target's fault, and the write recording it would raise anyway
+          # against the same stale lock_version.
+          raise if superseded?(e)
 
-          run.record_target_failure!(id: record.id, message: e.message)
+          fail_target(record, e)
+        rescue => e
+          fail_target(record, e)
+        end
+
+        # Applies the failure policy to one target's failure.
+        #
+        # @return [Symbol, nil] :halt when the failure policy says to stop
+        def fail_target(record, error)
+          raise BatchAbortedError, "target #{record.id} failed (#{error.message}); no targets were applied" if transactional?
+
+          run.record_target_failure!(id: record.id, message: error.message)
           halt? ? :halt : nil
+        end
+
+        # Does this error mean the run's own row moved out from under this
+        # executor — or is it the author's own optimistic-locking failure, from a
+        # record their +perform_on+ happened to touch?
+        #
+        # The errored RECORD is the whole distinction, and StaleObjectError
+        # carries it. Reading only the exception class instead swallows an
+        # author's lost update whole: the run is abandoned mid-batch with an
+        # empty errors_log, wedged at "running", and — because the target was
+        # never added to handled_target_ids — ReapJob resumes it every
+        # stall_after forever, re-applying that target's side effects each round.
+        # The failure policy the author declared never gets consulted at all.
+        #
+        # @return [Boolean]
+        def superseded?(error)
+          return false unless error.is_a?(ActiveRecord::StaleObjectError)
+
+          error.record.is_a?(Run) && error.record.id == run.id
         end
 
         # Re-resolves a target through the policy scope and re-asks the predicate,

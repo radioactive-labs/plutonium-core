@@ -59,6 +59,20 @@ class Plutonium::Interaction::Runs::ReapJobTest < ActiveSupport::TestCase
     assert_equal "failed", failed.reload.state
   end
 
+  test "reaping bumps lock_version so the still-live worker cannot keep writing" do
+    run = create_run!(state: "running", started_at: 2.hours.ago, last_activity_at: 2.hours.ago)
+    # The worker that is still alive holds the row as it was before the reap.
+    live_worker_copy = Plutonium::Interaction::Run.find(run.id)
+
+    ReapJob.perform_now(stall_after: 1.hour)
+
+    assert_operator run.reload.lock_version, :>, live_worker_copy.lock_version,
+      "without a bump the superseded worker keeps writing and one side's progress is lost"
+    assert_raises(ActiveRecord::StaleObjectError) do
+      live_worker_copy.update!(progress_done: 99)
+    end
+  end
+
   test "a run whose activity advanced just before the reap is left alone" do
     run = create_run!(state: "running", last_activity_at: 3.hours.ago)
     threshold = 1.hour.ago

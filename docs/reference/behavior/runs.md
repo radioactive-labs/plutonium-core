@@ -150,7 +150,9 @@ end
 A 15 to 30 minute cadence is reasonable against the default 1-hour `stall_after`: frequent enough that a stalled run doesn't sit for long, with enough margin that clock jitter doesn't matter.
 
 ::: warning This is a time heuristic, not a lease
-Resuming is based on elapsed time, not a true distributed lock. A run that is merely slow (not dead) and happens to cross `stall_after` gets resumed too, briefly racing its still-live worker. Set `stall_after` well above this app's slowest legitimate run to keep that rare.
+Resuming is based on elapsed time, not a true distributed lock. A run that is merely slow (not dead) and happens to cross `stall_after` gets resumed too.
+
+What bounds that is `lock_version`. Both the reaper's resume and the executor's claim bump it, so the worker that is still alive holds a version the row no longer has: its very next write raises `ActiveRecord::StaleObjectError`, and the executor treats that as "no longer mine" — it abandons the pass without marking the run failed and without overwriting the new worker's progress. Two things it deliberately does not do: it cannot interrupt a `perform_on` already in flight, so one target may be applied twice (once by each side), and it cannot roll back what the superseded worker already committed. Set `stall_after` well above this app's slowest legitimate run — the fence bounds the damage of a bad value, it does not make one free.
 :::
 
 ## Related

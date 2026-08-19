@@ -113,6 +113,18 @@ class CreatePlutoniumInteractionRuns < ActiveRecord::Migration[7.2]
       # either replaying it or refusing to resume at all. See Runs::Executor.
       t.jsonb :handled_target_ids, null: false, default: []
 
+      # Rails' standard optimistic-locking column (same convention as
+      # plutonium_wizard_sessions.lock_version) — bumped by Runs::Executor#claim!
+      # on every successful claim, on top of the ordinary automatic bump every
+      # +save!+/+update!+ already gets. ReapJob's resume is a TIME heuristic, not
+      # a true lease (see Runs::ReapJob): it can hand a run to a second executor
+      # while the first is still mid-batch. Without this column that race
+      # silently double-applies AND can lose one side's progress write; with it,
+      # the superseded executor's next write raises ActiveRecord::StaleObjectError
+      # (see Runs::Executor#call), which is treated as "no longer mine" rather
+      # than a target or run failure.
+      t.integer :lock_version, null: false, default: 0
+
       t.timestamps
 
       t.index [:target_type, :state], name: "idx_pu_runs_on_target_and_state"
