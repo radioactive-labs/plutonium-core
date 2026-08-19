@@ -181,9 +181,9 @@ class BulkArchiveInteraction < ResourceInteraction
 end
 ```
 
-Everything else about the action is unchanged — same declaration in the definition, same policy method, same form. Only where the work happens moves.
+Nothing else about the action changes — the definition, the policy method and the form are the same. Only the work moves.
 
-Three things to know before you reach for it:
+Three things worth knowing:
 
 - **The block is the run's class body, not `execute`.** The work runs later, in a job with no controller, so it cannot close over anything in the interaction. Its inputs arrive through `options`.
 - **The user is sent back where they were**, and the index they land on shows a banner for the run with a link to its progress page.

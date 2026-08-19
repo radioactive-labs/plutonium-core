@@ -6,7 +6,9 @@ Async interactions are experimental — the DSL and behavior may change in a fut
 
 For the task-oriented walkthrough — declaring the action, its policy, and where it appears — start with the [Custom actions guide](/guides/custom-actions). This page is the reference.
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when the work does not fit in a request: a bulk operation over hundreds or thousands of records, or a single call that outlasts a request budget — report generation, a third-party API, a slow import. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it."
+
+Reach for it once the work stops being something a user can reasonably wait on: archiving ten thousand records, generating a report, calling a third party that takes its time. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 
 ## 🚨 Critical
 
@@ -53,15 +55,15 @@ class Blogging::ArchivePosts < ResourceInteraction
 end
 ```
 
-That is the whole thing — one class, no second file, no name to invent for the run.
+One class. There is no second file, and no name to invent for the run.
 
 ### Why the block declares `perform_on` rather than executing
 
 The block is **not** the body of `#execute`. The work happens later, in a job, in a process with no controller, no request and no `view_context` — it cannot be a closure over anything in the interaction, which is the same reason the row records the initiator and tenant instead of serialising them. So the block declares a `Plutonium::Interaction::Async::Run` subclass with exactly the API a standalone run has, and the validated attributes arrive through `options`.
 
-`def` opens a fresh scope, so those method bodies cannot accidentally capture the interaction's locals — the one thing that would make writing them here misleading.
+`def` opens a fresh scope, so those method bodies cannot accidentally capture the interaction's locals.
 
-The generated class is named `<Interaction>::Run` rather than left anonymous. That is load-bearing rather than cosmetic: the class name is persisted in the run's `type` column and constantized in another process, so an anonymous class would write a row nothing could read back.
+The generated class is named `<Interaction>::Run` rather than left anonymous, because the class name is persisted in the run's `type` column and constantized in another process. An anonymous class would write a row nothing could read back.
 
 | `on_failure` | Behavior when a target raises |
 |---|---|
@@ -104,7 +106,7 @@ class Catalog::ImportProducts < ResourceInteraction
 end
 ```
 
-`attachment(:key)` returns one, `attachments(:key)` all of them for a multiple-file attribute, each exposing `filename`, `content_type`, `url`, `open` and `download`. Reviving reaches storage, which is why it isn't folded into `options` — the progress page reads options without wanting to.
+`attachment(:key)` returns one, `attachments(:key)` all of them for a multiple-file attribute, each exposing `filename`, `content_type`, `url`, `open` and `download`. Reviving reaches storage, so it is not folded into `options`: the progress page reads options on every poll and has no need of the file.
 
 #### Per-field backend and uploader
 

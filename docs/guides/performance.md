@@ -93,7 +93,7 @@ It works without per-model configuration. Before adding it:
 
 ## Work that does not belong in a request at all
 
-Eager loading fixes a page that is slow because of how it queries. It does nothing for a page that is slow because of how much it *does* — a bulk action over thousands of records, a report, a third-party call.
+Eager loading fixes a page whose queries are wasteful. It does nothing for one that is simply doing too much work: archiving thousands of records, building a report, waiting on a third party.
 
 Those need to leave the request rather than be optimised inside it. An interaction declares `async` and dispatches a background run, and the user gets a progress page instead of a spinner they cannot leave: [Async Interactions](/reference/behavior/async-interactions).
 

@@ -484,8 +484,8 @@ end
 
 # Portal override (per-portal customization)
 class AdminPortal::PostDefinition < ::PostDefinition
-  input :internal_notes, as: :text
   scope :pending_review
+  input :internal_notes, hint: "Not shown to the author"
 end
 ```
 
@@ -1532,7 +1532,7 @@ end
 
 The UI only shows bulk action buttons that ALL selected records support. Records are fetched via `current_authorized_scope`.
 
-**Bulk over more than a screenful runs in the request and will time out.** Swap `execute` for `async` and the same interaction dispatches a background run instead — same declaration, same policy, same form:
+**Bulk over more than a screenful runs in the request and will time out.** Swap `execute` for `async` and the same interaction dispatches a background run instead, with its declaration and policy unchanged:
 
 ```ruby
 async do
