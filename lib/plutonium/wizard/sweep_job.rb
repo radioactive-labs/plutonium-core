@@ -19,6 +19,22 @@ module Plutonium
     # and an unconstantizable wizard class is skipped while the row is still reaped.
     # +completed+ rows are never touched (the +sweepable+ scope excludes them).
     class SweepJob < ActiveJob::Base
+      # One sweep at a time, when the host's queue offers a semaphore.
+      #
+      # A sweep that outlives its own interval would otherwise overlap the next
+      # tick and walk the same rows. That is not merely wasteful here: two
+      # sweepers can pick up the same session and both build a Runner for it, so
+      # a step's on_rollback compensator — refund the charge, call the external
+      # API — runs twice for one abandoned run.
+      #
+      # A constant key: every sweep is the same sweep, so they queue behind each
+      # other globally rather than per row. Only +key+ and +to+ are passed;
+      # +on_conflict+ arrived in Solid Queue 1.2 and passing it would turn an
+      # older host's boot into an ArgumentError.
+      if respond_to?(:limits_concurrency)
+        limits_concurrency to: 1, key: ->(*) { "sweep" }
+      end
+
       def perform(now: Time.current)
         store = Store::ActiveRecord.new
 
