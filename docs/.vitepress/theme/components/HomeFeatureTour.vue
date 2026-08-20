@@ -3,11 +3,11 @@
     <div class="pu-section-inner">
       <h2 class="pu-section-title">More than CRUD.</h2>
       <p class="ft-sub">
-        Four features other frameworks make you build yourself.
+        Five features other frameworks make you build yourself.
         All declarative. All policy-aware.
       </p>
 
-      <div class="ft-grid">
+      <div class="ft-grid" :style="gridStyle">
         <template v-for="f in features" :key="f.id">
           <button
             class="ft-head"
@@ -26,7 +26,7 @@
           <div v-if="selected === f.id" :id="`ft-panel-${f.id}`" class="ft-body">
             <div class="ft-caption">{{ f.file }}</div>
             <pre class="ft-code" v-html="f.code"></pre>
-            <img :src="withBase(f.shot)" :alt="f.alt" class="ft-shot pu-zoomable" />
+            <img v-if="f.shot" :src="withBase(f.shot)" :alt="f.alt" class="ft-shot pu-zoomable" />
             <div class="ft-foot">
               <span class="ft-policy">
                 <IconShieldCheck :size="14" :stroke-width="2" aria-hidden="true" /> {{ f.policy }}
@@ -46,81 +46,6 @@ import { withBase } from "vitepress"
 import { IconChevronDown, IconShieldCheck } from "@tabler/icons-vue"
 
 const features = [
-  {
-    id: "kanban",
-    name: "Kanban boards",
-    hook: "Drag-drop boards from one block",
-    file: "app/definitions/task_definition.rb",
-    code: `<span class="m">kanban</span> <span class="k">do</span>
-  <span class="m">card_fields</span> header: <span class="s">:title</span>, meta: [<span class="s">:status</span>]
-
-  <span class="m">column</span> <span class="s">:todo</span>, role: <span class="s">:backlog</span>,
-    scope: -&gt; { where(status: <span class="s">"todo"</span>) },
-    on_enter: -&gt;(task) { task.update!(status: <span class="s">"todo"</span>) }
-
-  <span class="m">column</span> <span class="s">:doing</span>, wip: <span class="n">3</span>,
-    scope: -&gt; { where(status: <span class="s">"doing"</span>) },
-    on_enter: -&gt;(task) { task.update!(status: <span class="s">"doing"</span>) }
-
-  <span class="m">column</span> <span class="s">:done</span>, role: <span class="s">:done</span>, accepts: [<span class="s">:doing</span>],
-    scope: -&gt; { where(status: <span class="s">"done"</span>) },
-    on_enter: <span class="s">:mark_done!</span> <span class="k">do</span>
-    <span class="m">action</span> <span class="s">:archive_all</span>, interaction: ArchiveTasksInteraction, on: <span class="s">:all</span>, label: <span class="s">"Archive all"</span>
-  <span class="k">end</span>
-<span class="k">end</span>`,
-    shot: "/images/home/tour-kanban.png",
-    alt: "Kanban board with Todo, Doing, and Done columns — WIP limit on Doing, quick-add on Todo, and an Archive all column action on Done",
-    policy: "Columns lock and drags are rejected server-side when kanban_move? says no.",
-    link: "/plutonium-core/guides/kanban",
-  },
-  {
-    id: "wizards",
-    name: "Wizards",
-    hook: "Multi-step flows with branching & resume",
-    file: "app/wizards/onboard_organization_wizard.rb",
-    code: `<span class="k">class</span> OnboardOrganizationWizard <span class="k">&lt;</span> Plutonium::Wizard::Base
-  <span class="m">presents</span> label: <span class="s">"Onboard an organization"</span>,
-    description: <span class="s">"Set up a workspace for your team — a few quick steps and you're in."</span>
-
-  <span class="m">step</span> <span class="s">:identity</span>, description: <span class="s">"Tell us who you are — this names the workspace."</span> <span class="k">do</span>
-    <span class="m">attribute</span> <span class="s">:name</span>, <span class="s">:string</span>
-    <span class="m">attribute</span> <span class="s">:plan</span>, <span class="s">:string</span>
-    <span class="m">attribute</span> <span class="s">:budget</span>, <span class="s">:decimal</span>
-    <span class="m">input</span> <span class="s">:plan</span>, as: <span class="s">:select</span>, choices: [[<span class="s">"Free"</span>, <span class="s">"free"</span>], [<span class="s">"Pro"</span>, <span class="s">"pro"</span>], [<span class="s">"Enterprise"</span>, <span class="s">"enterprise"</span>]]
-    <span class="m">input</span> <span class="s">:budget</span>, as: <span class="s">:currency</span>, unit: <span class="s">"$"</span>
-    <span class="m">validates</span> <span class="s">:name</span>, presence: <span class="k">true</span>
-
-    <span class="m">form_layout</span> <span class="k">do</span>
-      <span class="m">section</span> <span class="s">:basics</span>, <span class="s">:name</span>, <span class="s">:plan</span>, <span class="s">:budget</span>, label: <span class="s">"The basics"</span>
-    <span class="k">end</span>
-  <span class="k">end</span>
-
-  <span class="m">step</span> <span class="s">:details</span> <span class="k">do</span>
-    <span class="m">attribute</span> <span class="s">:note</span>, <span class="s">:string</span>
-    <span class="m">input</span> <span class="s">:note</span>, as: <span class="s">:textarea</span>
-  <span class="k">end</span>
-
-  <span class="m">step</span> <span class="s">:profile</span>, using: KitchenSink, fields: [<span class="s">:description</span>, <span class="s">:tier</span>]
-
-  <span class="m">step</span> <span class="s">:members</span> <span class="k">do</span>
-    <span class="m">structured_input</span> <span class="s">:invites</span>, repeat: <span class="n">5</span> <span class="k">do</span> |f|
-      f.<span class="m">input</span> <span class="s">:email</span>
-      f.<span class="m">input</span> <span class="s">:role</span>
-    <span class="k">end</span>
-  <span class="k">end</span>
-
-  <span class="m">review</span> label: <span class="s">"Review"</span>
-
-  <span class="k">def</span> <span class="f">execute</span>
-    org = Organization.create!(name: data.identity.name)
-    succeed(org).with_message(<span class="s">"Organization onboarded"</span>)
-  <span class="k">end</span>
-<span class="k">end</span>`,
-    shot: "/images/home/tour-wizard.png",
-    alt: "Wizard step page — numbered stepper with Identity, Details, Profile, Members, and Review stops, and a typed step form",
-    policy: "Steps validate per-screen; the built-in review step gates the finish.",
-    link: "/plutonium-core/guides/wizards",
-  },
   {
     id: "actions",
     name: "Actions & interactions",
@@ -178,9 +103,115 @@ const features = [
     policy: "Every query flows through the entity scope — no default_scope hacks.",
     link: "/plutonium-core/guides/multi-tenancy",
   },
+  {
+    id: "wizards",
+    name: "Wizards",
+    hook: "Multi-step flows with branching & resume",
+    file: "app/wizards/onboard_organization_wizard.rb",
+    code: `<span class="k">class</span> OnboardOrganizationWizard <span class="k">&lt;</span> Plutonium::Wizard::Base
+  <span class="m">presents</span> label: <span class="s">"Onboard an organization"</span>,
+    description: <span class="s">"Set up a workspace for your team — a few quick steps and you're in."</span>
+
+  <span class="m">step</span> <span class="s">:identity</span>, description: <span class="s">"Tell us who you are — this names the workspace."</span> <span class="k">do</span>
+    <span class="m">attribute</span> <span class="s">:name</span>, <span class="s">:string</span>
+    <span class="m">attribute</span> <span class="s">:plan</span>, <span class="s">:string</span>
+    <span class="m">attribute</span> <span class="s">:budget</span>, <span class="s">:decimal</span>
+    <span class="m">input</span> <span class="s">:plan</span>, as: <span class="s">:select</span>, choices: [[<span class="s">"Free"</span>, <span class="s">"free"</span>], [<span class="s">"Pro"</span>, <span class="s">"pro"</span>], [<span class="s">"Enterprise"</span>, <span class="s">"enterprise"</span>]]
+    <span class="m">input</span> <span class="s">:budget</span>, as: <span class="s">:currency</span>, unit: <span class="s">"$"</span>
+    <span class="m">validates</span> <span class="s">:name</span>, presence: <span class="k">true</span>
+
+    <span class="m">form_layout</span> <span class="k">do</span>
+      <span class="m">section</span> <span class="s">:basics</span>, <span class="s">:name</span>, <span class="s">:plan</span>, <span class="s">:budget</span>, label: <span class="s">"The basics"</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="m">step</span> <span class="s">:details</span> <span class="k">do</span>
+    <span class="m">attribute</span> <span class="s">:note</span>, <span class="s">:string</span>
+    <span class="m">input</span> <span class="s">:note</span>, as: <span class="s">:textarea</span>
+  <span class="k">end</span>
+
+  <span class="m">step</span> <span class="s">:profile</span>, using: KitchenSink, fields: [<span class="s">:description</span>, <span class="s">:tier</span>]
+
+  <span class="m">step</span> <span class="s">:members</span> <span class="k">do</span>
+    <span class="m">structured_input</span> <span class="s">:invites</span>, repeat: <span class="n">5</span> <span class="k">do</span> |f|
+      f.<span class="m">input</span> <span class="s">:email</span>
+      f.<span class="m">input</span> <span class="s">:role</span>
+    <span class="k">end</span>
+  <span class="k">end</span>
+
+  <span class="m">review</span> label: <span class="s">"Review"</span>
+
+  <span class="k">def</span> <span class="f">execute</span>
+    org = Organization.create!(name: data.identity.name)
+    succeed(org).with_message(<span class="s">"Organization onboarded"</span>)
+  <span class="k">end</span>
+<span class="k">end</span>`,
+    shot: "/images/home/tour-wizard.png",
+    alt: "Wizard step page — numbered stepper with Identity, Details, Profile, Members, and Review stops, and a typed step form",
+    policy: "Steps validate per-screen; the built-in review step gates the finish.",
+    link: "/plutonium-core/guides/wizards",
+  },
+  {
+    id: "kanban",
+    name: "Kanban boards",
+    hook: "Drag-drop boards from one block",
+    file: "app/definitions/task_definition.rb",
+    code: `<span class="m">kanban</span> <span class="k">do</span>
+  <span class="m">card_fields</span> header: <span class="s">:title</span>, meta: [<span class="s">:status</span>]
+
+  <span class="m">column</span> <span class="s">:todo</span>, role: <span class="s">:backlog</span>,
+    scope: -&gt; { where(status: <span class="s">"todo"</span>) },
+    on_enter: -&gt;(task) { task.update!(status: <span class="s">"todo"</span>) }
+
+  <span class="m">column</span> <span class="s">:doing</span>, wip: <span class="n">3</span>,
+    scope: -&gt; { where(status: <span class="s">"doing"</span>) },
+    on_enter: -&gt;(task) { task.update!(status: <span class="s">"doing"</span>) }
+
+  <span class="m">column</span> <span class="s">:done</span>, role: <span class="s">:done</span>, accepts: [<span class="s">:doing</span>],
+    scope: -&gt; { where(status: <span class="s">"done"</span>) },
+    on_enter: <span class="s">:mark_done!</span> <span class="k">do</span>
+    <span class="m">action</span> <span class="s">:archive_all</span>, interaction: ArchiveTasksInteraction, on: <span class="s">:all</span>, label: <span class="s">"Archive all"</span>
+  <span class="k">end</span>
+<span class="k">end</span>`,
+    shot: "/images/home/tour-kanban.png",
+    alt: "Kanban board with Todo, Doing, and Done columns — WIP limit on Doing, quick-add on Todo, and an Archive all column action on Done",
+    policy: "Columns lock and drags are rejected server-side when kanban_move? says no.",
+    link: "/plutonium-core/guides/kanban",
+  },
+  {
+    id: "async",
+    name: "Async interactions",
+    hook: "Bulk work that outlives the request",
+    file: "packages/blogging/app/interactions/blogging/archive_posts.rb",
+    code: `<span class="k">class</span> Blogging::ArchivePosts <span class="k">&lt;</span> Blogging::ResourceInteraction
+  <span class="m">presents</span> label: <span class="s">"Archive"</span>, icon: Phlex::TablerIcons::Archive
+
+  <span class="m">attribute</span> <span class="s">:resources</span>        <span class="c"># bulk — perform_on runs once per record</span>
+  <span class="m">attribute</span> <span class="s">:reason</span>, <span class="s">:string</span>
+
+  <span class="m">async</span> <span class="k">do</span>
+    <span class="m">on_failure</span> <span class="s">:continue</span>      <span class="c"># :halt (default) | :continue | :transactional</span>
+
+    <span class="k">def</span> <span class="f">perform_on</span>(post)
+      post.archive!(reason: options[<span class="s">"reason"</span>])
+    <span class="k">end</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+
+<span class="c"># → persists a run, enqueues it, redirects to its live progress page</span>`,
+    shot: "/images/home/tour-async.png",
+    alt: "The run's progress page mid-flight — a Running badge, a progress bar at 27 of 50 targets, and the run's type, target type and initiator",
+    policy: "Permissions are re-derived when the job runs, never replayed from dispatch.",
+    link: "/plutonium-core/reference/behavior/async-interactions",
+  },
 ]
 
 const selected = ref(features[0].id)
+
+// One explicit row per feature head, with the last absorbing the panel's extra
+// height. Derived from features.length — a hardcoded count silently drops any
+// head past it into an implicit row below the grid.
+const gridStyle = { gridTemplateRows: `repeat(${features.length - 1}, auto) 1fr` }
 </script>
 
 <style scoped>
@@ -189,8 +220,7 @@ const selected = ref(features[0].id)
 .ft-grid {
   display: grid;
   grid-template-columns: 260px 1fr;
-  /* rows = one per feature; last row (1fr) absorbs the panel's extra height */
-  grid-template-rows: repeat(3, auto) 1fr;
+  /* grid-template-rows is set inline from features.length — see gridStyle */
   column-gap: 28px;
   align-items: start;
 }

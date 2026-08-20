@@ -1,8 +1,28 @@
-import { defineConfig } from "vitepress"
+import { defineConfig, createContentLoader, type SiteConfig, type HeadConfig } from "vitepress"
 import { withMermaid } from "vitepress-plugin-mermaid";
 import llmstxt from "vitepress-plugin-llms";
+import { Feed } from "feed";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const base = "/plutonium-core/"
+// Origin + base, with no trailing slash — content-loader URLs already start with one.
+const hostname = "https://radioactive-labs.github.io/plutonium-core"
+
+// Whether the blog has anything a reader could actually open: a post that is not
+// a draft and whose date has arrived. Same rule the loader and the feed apply, so
+// the nav entry and the RSS advert never point at an empty page.
+const hasPublishedPost = fs
+  .readdirSync(fileURLToPath(new URL("../blog", import.meta.url)))
+  .filter((f) => f.endsWith(".md") && f !== "index.md")
+  .some((f) => {
+    const raw = fs.readFileSync(fileURLToPath(new URL(`../blog/${f}`, import.meta.url)), "utf8")
+    const frontmatter = raw.split("---")[1] ?? ""
+    if (/^draft:\s*true\s*$/m.test(frontmatter)) return false
+    const date = frontmatter.match(/^date:\s*(.+)$/m)?.[1]?.trim()
+    return !!date && +new Date(date) <= Date.now()
+  })
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig(withMermaid({
@@ -20,6 +40,9 @@ export default defineConfig(withMermaid({
     ["meta", { name: "twitter:title", content: "Plutonium - Build Production-Ready Rails Apps in Minutes" }],
     ["meta", { name: "twitter:description", content: "Build production-ready Rails applications in minutes, not days. Convention-driven, fully customizable. Built for the AI era." }],
     ["meta", { name: "twitter:image", content: "https://radioactive-labs.github.io/plutonium-core/og-image.png" }],
+    ...(hasPublishedPost
+      ? ([["link", { rel: "alternate", type: "application/rss+xml", title: "Plutonium Blog", href: `${hostname}/blog/feed.rss` }]] as HeadConfig[])
+      : []),
   ],
   ignoreDeadLinks: 'localhostLinks',
   srcExclude: ['superpowers/**'],
@@ -37,6 +60,7 @@ export default defineConfig(withMermaid({
           "getting-started/index.md",
           "guides/index.md",
           "reference/index.md",
+          "blog/index.md",
         ],
       }),
     ],
@@ -52,6 +76,7 @@ export default defineConfig(withMermaid({
       { text: "Getting Started", link: "/getting-started/" },
       { text: "Guides", link: "/guides/" },
       { text: "Reference", link: "/reference/" },
+      ...(hasPublishedPost ? [{ text: "Blog", link: "/blog/" }] : []),
       { text: "For AI Agents", link: "/ai" },
       { text: "Radioactive Labs", link: "https://radioactive-labs.github.io/" }
     ],
@@ -244,4 +269,52 @@ export default defineConfig(withMermaid({
     }
   },
   cleanUrls: true,
+  async buildEnd(config: SiteConfig) {
+    const feed = new Feed({
+      title: "Plutonium",
+      description: "Release notes, design notes, and what's new in Plutonium.",
+      id: `${hostname}/blog/`,
+      link: `${hostname}/blog/`,
+      language: "en",
+      image: `${hostname}/og-image.png`,
+      favicon: `${hostname}/favicon.ico`,
+      copyright: "Copyright © 2024-present Stefan Froelich · Radioactive Labs",
+    })
+
+    const posts = await createContentLoader("blog/*.md", { render: true }).load()
+
+    posts
+      // Build-time cutoff: a feed cannot re-filter itself later, so a post dated
+      // ahead stays out until the next build after its date.
+      .filter(({ frontmatter }) => frontmatter.date && !frontmatter.draft)
+      .filter(({ frontmatter }) => +new Date(frontmatter.date) <= Date.now())
+      .sort((a, b) => +new Date(b.frontmatter.date) - +new Date(a.frontmatter.date))
+      .forEach(({ url, html, frontmatter }) => {
+        const link = `${hostname}${url}`
+        feed.addItem({
+          title: frontmatter.title,
+          id: link,
+          link,
+          description: frontmatter.description,
+          content: absolutize(html ?? "", link),
+          author: frontmatter.author ? [{ name: frontmatter.author }] : undefined,
+          category: frontmatter.tags?.map((name: string) => ({ name })),
+          date: new Date(frontmatter.date),
+        })
+      })
+
+    fs.mkdirSync(path.join(config.outDir, "blog"), { recursive: true })
+    fs.writeFileSync(path.join(config.outDir, "blog", "feed.rss"), feed.rss2())
+  },
 }))
+
+// A feed reader has no page to resolve links against, so everything the renderer
+// left relative has to be made absolute before it ships.
+function absolutize(html: string, link: string): string {
+  return html
+    // The renderer emits .html even though the site serves clean URLs.
+    .replace(new RegExp(`(="${base}[^"]*?)\\.html(?=["#])`, "g"), "$1")
+    .replaceAll(`="${base}`, `="${hostname}/`)
+    // Bare fragments would point at whatever page the reader happens to be showing.
+    .replaceAll('href="#', `href="${link}#`)
+}

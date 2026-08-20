@@ -210,6 +210,14 @@ A registered run resource gets, for free:
 - **Tenant scoping.** A run's `associated_with` scope filters on the tenant it was dispatched in (recorded on the row), not on walking the object graph, since the two polymorphic tenant columns make the generic scope unusable.
 - **A humanized target label.** `run.target_label` reads the target class through `model_name.human` ("Post", not "Blogging::Post"), falling back to the raw string if that class has since been renamed or removed.
 
+The progress page, mid-run:
+
+![A run's progress page showing a Running badge, a progress bar at 27 of 50 targets, and the run's type, target type, initiator and timestamps](/images/reference/async-progress-page.png)
+
+And the banner it leaves on the target resource's index while it is still going:
+
+![A Task index with a banner above the collection reading "Archive Tasks Async Interaction Run #19 Running", with a View progress link](/images/reference/async-running-banner.png)
+
 ## Stalled runs and ReapJob
 
 A worker crash mid-batch (or a job the queue silently drops) leaves a run `"running"` (or `"pending"`) forever; nothing else ever revisits it on its own. `Plutonium::Interaction::Async::ReapJob` finds runs with no recorded activity (`last_activity_at`, falling back to `created_at` for a run never even picked up) past `config.async_interactions.stall_after`, and resumes them: resets to `"pending"` and re-enqueues.

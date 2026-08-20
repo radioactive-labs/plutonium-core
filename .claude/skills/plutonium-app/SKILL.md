@@ -402,13 +402,13 @@ end
 ## Per-portal overrides
 
 ```ruby
-# Definition
+# Definition — how fields render (NOT whether they appear)
 class AdminPortal::PostDefinition < ::PostDefinition
-  input :internal_notes, as: :text     # admins see this; customers don't
   scope :pending_review
+  input :internal_notes, hint: "Not shown to the author"
 end
 
-# Policy
+# Policy — whether a field appears at all
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
   def destroy? = true

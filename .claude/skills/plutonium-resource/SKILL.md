@@ -684,14 +684,14 @@ input :birth_date do |f|
 end
 ```
 
-**`phlexi_tag` for declarative custom display.** The `with:` option takes either a Phlex component class, or a proc whose body is **rendered inside a Phlex context** — so HTML tags (`span`, `div`, `a`, …) and Tailwind classes are first-class. The proc receives `(value, attrs)` where `value` is the field value and `attrs` are wrapper attributes.
+**`phlexi_render` for declarative custom display.** The `with:` option takes either a Phlex component class, or a proc whose body is **rendered inside a Phlex context** — so HTML tags (`span`, `div`, `a`, …) and Tailwind classes are first-class. The proc receives `(value, attrs)` where `value` is the field value and `attrs` are wrapper attributes.
 
 ```ruby
 # Component class — preferred for anything reusable
-display :status, as: :phlexi_tag, with: StatusBadgeComponent
+display :status, as: :phlexi_render, with: StatusBadgeComponent
 
 # Inline Phlex proc — `span` here is a Phlex tag method, not Ruby/Rails
-display :priority, as: :phlexi_tag, with: ->(value, attrs) {
+display :priority, as: :phlexi_render, with: ->(value, attrs) {
   case value
   when 'high'   then span(class: "badge badge-danger")  { "High" }
   when 'medium' then span(class: "badge badge-warning") { "Medium" }

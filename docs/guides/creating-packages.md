@@ -147,13 +147,15 @@ Loaded from `config/application.rb`. Migrations from all packages are picked up 
 ## Per-portal overrides
 
 ```ruby
-# Definition — different fields per portal
+# Definition — how fields render per portal
 class AdminPortal::PostDefinition < ::PostDefinition
-  input :internal_notes, as: :text     # admins see this; customers don't
   scope :pending_review
+  input :internal_notes, hint: "Not shown to the author"
 end
 
-# Policy — different rules per portal
+# Policy — which fields exist, and who may act
+#          `internal_notes` appears for admins because THIS permits it,
+#          not because the definition above mentions it.
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
 

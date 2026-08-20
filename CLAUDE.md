@@ -159,6 +159,93 @@ yarn docs:build    # Build for production
 2. Add helper method in `Plutonium::Interaction::Outcome::Success`
 3. Document usage
 
+## Writing Docs and Blog Posts
+
+Docs and posts in this repo are read by two audiences: developers, and AI assistants
+(the skills in `.claude/skills/` are synced to `docs/public/skills/` and shipped).
+A wrong example does not just mislead a reader. It gets reproduced as code.
+
+### Verify every code sample
+
+**Never publish a snippet you have not checked against this codebase.** Reading the
+docs is not enough; the docs have been wrong. Two real cases:
+
+- `as: :phlexi_tag` was in three docs and a skill. `ResolvesTags#component_for`
+  dispatches via `send(:"#{tag}_tag")`, so it resolved to `phlexi_tag_tag` and
+  raised `NoMethodError`. The working values are `:phlexi_render` and `:phlexi`.
+- A per-portal override example declared `as: :text` on a text column (dead code)
+  and commented that the definition decides which fields admins see (it does not).
+
+When a claim is mechanical, prove it at runtime rather than by reading:
+
+```bash
+cd test/dummy && RAILS_ENV=test bin/rails runner 'puts SomeClass.instance_methods.grep(/x/)'
+```
+
+### Invariants a sample must not violate
+
+- **Don't declare what is auto-detected.** `field :title` matching the detected type
+  is dead code (`reference/resource/definition.md`).
+- **Definition = how a field renders. Policy = whether it appears.** "Only admins see
+  this" is `permitted_attributes_for_*`, never a definition line or a `condition:`.
+- **Pages expose the record as `object`**, not `resource`.
+- **Interactions:** `attribute :resource` (no `class:`); rescue
+  `ActiveRecord::RecordInvalid` around any `create!`/`update!`/`save!`.
+- **Policies:** never put `*_attributes` hashes in `permitted_attributes_for_*`.
+
+### Voice
+
+Match the reference docs: direct, concrete, no throat-clearing. Specifically avoid
+the tells that make writing read as machine-generated:
+
+- **No em dashes.** Use commas, colons, parentheses, or two sentences.
+- No "It's not X, it's Y" or "The pitch isn't… The pitch is…" constructions.
+- No tidy-summary line after every example ("That's the Rails bargain in miniature").
+- No stacked negation before the real claim, no "critically", no "genuinely".
+- Cut a sentence that restates the one before it.
+
+Deliberate parallelism and a stated opinion are fine. The tell is *unearned*
+rhetoric, not rhetoric itself.
+
+### Blog mechanics
+
+Posts are markdown in `docs/blog/`. Frontmatter:
+
+```yaml
+---
+title: "Introducing Plutonium: Rails conventions, past CRUD"   # must read cold
+titleTemplate: "Plutonium Blog"
+date: 2026-08-19
+description: One sentence. Becomes the RSS description and the index subtitle.
+author: Stefan Froelich
+tags: [announcement, rails]
+draft: true        # omit to publish
+---
+```
+
+- Put `<BlogMeta />` directly under the `# ` heading; it renders date, author and
+  the back link from frontmatter.
+- **A title must be legible with no context.** It travels via RSS, social and pasted
+  links, where the site name is absent, so include both "Plutonium" and "Rails".
+  "Plutonium" alone collides with the element and other projects.
+- **The slug must match the title.** Renaming the title means renaming the file;
+  URLs are permanent once published.
+- A post is distinguished from the section index by having a `date`. `draft: true`
+  hides it from the index and the feed.
+- `yarn docs:build` must pass. Dead internal links fail the build.
+
+### Screenshots
+
+Match the existing ones or they look foreign next to each other:
+
+- **2480px wide** (1240 CSS at `deviceScaleFactor: 2`); height varies with content.
+- **Light mode, icon rail collapsed.** In `test/dummy`, set
+  `localStorage.theme = 'light'` and `localStorage.pu_rail_pinned = 'false'`.
+- Capture from the running dummy app with realistic, **distinct** data. Generated
+  titles that repeat across rows read as broken data.
+- Crop dead space: `magick shot.png -crop 2480x1290+0+0 +repage shot.png`.
+- Live under `docs/public/images/<section>/`.
+
 ## Skills System
 
 The `.claude/skills/` directory contains documentation for AI assistants:
