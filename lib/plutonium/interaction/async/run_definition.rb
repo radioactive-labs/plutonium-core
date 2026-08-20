@@ -77,6 +77,78 @@ module Plutonium
             current_turbo_frame == Plutonium::UI::Interaction::Async::RunProgress.frame_id(resource_record!)
           end
         end
+
+        # The index refreshes itself while any run is still working.
+        #
+        # ONE frame around the collection, not one per row. A +turbo-frame+ is
+        # not in the content model of +tr+, so a frame wrapping a row is hoisted
+        # out of the table by the HTML parser before Turbo ever sees it. A frame
+        # per CELL parses, but buys one poller per row for a single page.
+        #
+        # The Stimulus controller sits INSIDE the frame, exactly as
+        # {Plutonium::UI::Interaction::Async::RunProgress} places it: a frame
+        # navigation replaces the frame's CONTENTS, not the frame element, so a
+        # controller on the tag itself could never be removed and the timer
+        # would never stop.
+        class IndexPage < IndexPage
+          include Phlex::Rails::Helpers::TurboFrameTag
+
+          FRAME_ID = "pu_async_runs_index"
+
+          # Answers the frame's poll with the collection ALONE, for the reason
+          # spelled out on {ShowPage}: DynaFrameContent already wraps every
+          # response in a frame named by the inbound header, so emitting the
+          # page would nest the whole thing inside its own frame, and again on
+          # the next poll.
+          def view_template(&)
+            return super unless answering_own_frame?
+
+            DynaFrameContent() do
+              render_default_content
+            end
+          end
+
+          private
+
+          def answering_own_frame? = current_turbo_frame == FRAME_ID
+
+          def render_default_content
+            body = proc { div(**poll_attributes) { super() } }
+            return body.call if answering_own_frame?
+
+            # `turbo-frame` defaults to `display: inline`.
+            turbo_frame_tag(FRAME_ID, class: "block", &body)
+          end
+
+          # Absent once nothing is working: the refreshed markup no longer
+          # carries the controller, and the timer stops of its own accord. The
+          # index needs no equivalent of RunProgress's +finished+ reload — the
+          # whole collection is inside this frame, so there are no stale fields
+          # beside it to catch up.
+          #
+          # The URL is the CURRENT one, filters, sort and page included. Polling
+          # the bare index would answer page 1 unfiltered and swap that into a
+          # frame the operator had scoped to something else.
+          def poll_attributes
+            return {} unless any_run_in_progress?
+
+            {
+              data: {
+                controller: "run-progress",
+                run_progress_url_value: current_page_url,
+                run_progress_interval_value: Plutonium::UI::Interaction::Async::RunProgress::POLL_INTERVAL_MS
+              }
+            }
+          end
+
+          # Asked of the SCOPE rather than the rendered page, through the same
+          # door render_running_banner uses. It can only over-poll (an operator
+          # reading last month's finished runs while something works elsewhere),
+          # never under-poll: a run visible and in progress makes this true.
+          def any_run_in_progress?
+            authorized_resource_scope(Run, relation: Run.in_progress).exists?
+          end
+        end
       end
     end
   end

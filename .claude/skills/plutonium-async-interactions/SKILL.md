@@ -143,6 +143,7 @@ If Solid Queue is in the bundle, this also schedules `Async::ReapJob` in `config
 Registering gets you, for free:
 
 - **Progress page.** The show page IS the progress page, self-polling while `pending`/`running`, and stops carrying the poll once settled (a finished run is a static page, not an eternal background request per viewer).
+- **Self-refreshing index.** The runs index polls on the same terms, one frame around the whole collection, armed only while some run is still working. One request per interval whatever the page size, and it re-fetches the current URL so filters, sort and page survive. No action needed on your part.
 - **Running banner.** Any OTHER registered resource's index lists in-progress runs targeting it, above the collection, scoped through the same `authorized_resource_scope` every cross-resource read uses (a run in another tenant can't surface). If a `resource_class` is registered in a portal that never registered `Run`, the banner is skipped there instead of raising while building a link to a nonexistent route. No action needed on your part.
 - **`target_label`.** The show page/table read `run.target_label` (`model_name.human`, e.g. `"Post"`) rather than the raw `target_type` string (`"Blogging::Post"`).
 - **Tenant scoping via `associated_with`.** Filters on the tenant the run was dispatched in (recorded on the row), because the two tenant columns are polymorphic and the generic object-graph scope can't walk them.

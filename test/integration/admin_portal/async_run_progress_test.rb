@@ -257,4 +257,57 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     get "#{run_path(run)}/edit"
     assert_response :forbidden
   end
+
+  # === the index refreshes itself while work is outstanding ===
+
+  test "the index arms a poll while a run is working" do
+    create_run!(state: "running")
+
+    get "/admin/async_runs"
+    assert_response :success
+
+    assert_match(/<turbo-frame[^>]*\bid="pu_async_runs_index"/, response.body,
+      "the collection must sit in a frame the poll can re-fetch")
+    assert_match(/data-controller="run-progress"/, response.body)
+  end
+
+  test "the index carries no poll once nothing is working" do
+    run = create_run!(state: "running")
+    run.finish!
+
+    get "/admin/async_runs"
+    assert_response :success
+
+    # The frame stays; only the timer goes. The controller lives INSIDE the
+    # frame precisely so a swap can drop it — an attribute on the frame element
+    # itself survives every navigation and would poll forever.
+    assert_match(/<turbo-frame[^>]*\bid="pu_async_runs_index"/, response.body)
+    refute_match(/data-controller="run-progress"/, response.body,
+      "a settled index is static; a poll that never stops is a request per viewer, forever")
+  end
+
+  test "a poll of the index frame answers with the collection alone" do
+    create_run!(state: "running")
+
+    get "/admin/async_runs", headers: {"Turbo-Frame" => "pu_async_runs_index"}
+    assert_response :success
+
+    assert_equal 1, response.body.scan("<turbo-frame").size,
+      "exactly one frame: the wrapper DynaFrameContent emits for the inbound header"
+    assert_match(/data-controller="run-progress"/, response.body,
+      "the refreshed markup must re-arm, or the second poll never happens")
+    refute_match(/pu-page-header|breadcrumb/i, response.body,
+      "the page chrome must not come back inside the frame")
+  end
+
+  test "the poll re-fetches the URL the operator is actually looking at" do
+    create_run!(state: "running")
+
+    get "/admin/async_runs?page=1"
+    assert_response :success
+
+    # Polling the bare index would answer page 1 unfiltered and swap THAT into
+    # a frame the operator had scoped to something else.
+    assert_match(/data-run-progress-url-value="[^"]*\/admin\/async_runs\?page=1"/, response.body)
+  end
 end
