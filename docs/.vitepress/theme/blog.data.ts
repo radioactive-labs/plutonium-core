@@ -15,8 +15,11 @@ export { data }
 export default createContentLoader("blog/*.md", {
   transform(raw): Post[] {
     return raw
-      // The section index has no date — that's what separates it from a post.
+      // The section index has no date: that's what separates it from a post.
       .filter(({ frontmatter }) => frontmatter.date && !frontmatter.draft)
+      // Dated ahead means unpublished. The cutoff is applied at BUILD time, so a
+      // post goes live on the first build after its date, not on the date itself.
+      .filter(({ frontmatter }) => +new Date(frontmatter.date) <= Date.now())
       .map(({ url, frontmatter }) => ({
         title: frontmatter.title,
         url,
