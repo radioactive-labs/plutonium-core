@@ -1,3 +1,7 @@
 class <%= app_namespace %>::<%= resource_class.pluralize %>Controller < ::<%= parent_controller %>
+<%- if options[:controller_for] -%>
+  controller_for ::<%= options[:controller_for] %>
+
+<%- end -%>
   include <%= app_namespace %>::Concerns::Controller
 end

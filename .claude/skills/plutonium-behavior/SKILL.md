@@ -671,6 +671,8 @@ end
 
 An interaction is the entry point from a Plutonium page into an operation: it declares the inputs, renders as a button and a form, is gated by a policy, and returns an outcome the controller turns into a flash + redirect. Registered as actions in definitions (see [[plutonium-resource]] › Actions) and executed by the controller.
 
+When the work does not fit in a request — a bulk operation over many records, or a single call that outlasts a request budget — `async` declares a persisted, resumable run instead of executing inline. See [[plutonium-async-interactions]].
+
 ## Where the logic goes
 
 An interaction is a **presentation object**. Its job is the button, the form, input-shape validation, and the user-facing outcome. It is not the home of a domain operation, because of one line in the base class:

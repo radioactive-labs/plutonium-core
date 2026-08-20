@@ -43,7 +43,7 @@ class Plutonium::Wizard::ComputeInstanceKeyTest < ActiveSupport::TestCase
   end
 
   setup do
-    Organization.delete_all
+    purge_data!
     @user = Organization.create!(name: "User-#{SecureRandom.hex(4)}")
   end
 

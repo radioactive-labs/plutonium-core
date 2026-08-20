@@ -61,8 +61,7 @@ module Plutonium
       end
 
       setup do
-        Plutonium::Wizard::Session.delete_all
-        Organization.delete_all
+        purge_data!
         CustomRollback.side_effects.clear
         ScopedRollback.seen_scope = nil
         @store = Plutonium::Wizard::Store::ActiveRecord.new

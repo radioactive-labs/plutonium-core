@@ -10,9 +10,7 @@ class Plutonium::Resource::Controllers::PresentableTest < Minitest::Test
   end
 
   def teardown
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Test permitted_attributes_for returns correct attributes for specific actions

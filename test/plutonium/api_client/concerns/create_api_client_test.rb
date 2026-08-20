@@ -80,6 +80,12 @@ module Plutonium
 
         class MockController
           attr_accessor :current_scoped_entity, :current_parent
+
+          # Scoping requires both — missing them used to be masked by a
+          # rescue Scoping no longer has.
+          def scoped_to_entity? = true
+
+          def helpers = self
         end
 
         class MockViewContext
@@ -316,8 +322,9 @@ module Plutonium
             api_client_class: @api_client_class
           )
 
-          interaction.execute
+          result = interaction.execute
 
+          assert_kind_of MockOutcome, result
           assert_equal 1, @rodauth_instance.create_account_calls.size
           call = @rodauth_instance.create_account_calls.first
           assert_equal "test-app", call[:login]
@@ -393,8 +400,9 @@ module Plutonium
             api_client_class: @api_client_class
           )
 
-          interaction.execute
+          result = interaction.execute
 
+          assert_kind_of MockOutcome, result
           assert_nil MockMembership.created_attrs
         end
 

@@ -11,10 +11,7 @@ class Plutonium::Core::AssociationResolverTest < Minitest::Test
   end
 
   def teardown
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Symbol passthrough

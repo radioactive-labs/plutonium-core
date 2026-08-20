@@ -15,11 +15,7 @@ class Plutonium::Resource::PolicyTest < Minitest::Test
   end
 
   def teardown
-    Blogging::PostDetail.delete_all
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Parent scoping tests (nested routes)

@@ -8,7 +8,7 @@ class Plutonium::Resource::KanbanPolicyTest < Minitest::Test
   end
 
   def teardown
-    User.delete_all
+    purge_data!
   end
 
   def make_policy(policy_class = Plutonium::Resource::Policy)

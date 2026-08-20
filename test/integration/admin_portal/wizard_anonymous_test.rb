@@ -16,8 +16,7 @@ class AdminPortal::WizardAnonymousTest < ActionDispatch::IntegrationTest
   include Plutonium::Testing::AuthHelpers
 
   setup do
-    Plutonium::Wizard::Session.delete_all
-    Organization.delete_all
+    purge_data!
   end
 
   # --- anonymous (guest) wizard on a public route -----------------------------

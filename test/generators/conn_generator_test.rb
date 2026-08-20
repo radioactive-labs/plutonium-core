@@ -84,7 +84,28 @@ class ConnGeneratorTest < Rails::Generators::TestCase
 
     assert_file "packages/test_portal/app/controllers/test_portal/users_controller.rb" do |content|
       assert_match(/class TestPortal::UsersController/, content)
+      refute_match(/controller_for/, content)
     end
+  end
+
+  test "controller_for option adds an explicit controller_for override" do
+    run_generator ["User", "--dest=test_portal", "--controller-for=User"]
+
+    assert_file "packages/test_portal/app/controllers/test_portal/users_controller.rb" do |content|
+      assert_match(/controller_for ::User/, content)
+    end
+  end
+
+  # A gem-provided resource (e.g. Plutonium::Interaction::Async::Run) can have a
+  # working policy/definition that subclasses Plutonium::Resource::Policy/Definition
+  # directly, not through this host's ::ResourcePolicy/::ResourceDefinition —
+  # so the `< ::ResourcePolicy` ancestry check alone would miss it.
+  test "expected_parent_policy/definition recognize a base outside ::ResourcePolicy/::ResourceDefinition" do
+    generator = Pu::Res::ConnGenerator.new([], {dest: "test_portal"}, destination_root: Rails.root)
+    generator.instance_variable_set(:@resource_class, "Plutonium::Interaction::Async::Run")
+
+    assert_equal Plutonium::Interaction::Async::RunPolicy, generator.send(:expected_parent_policy)
+    assert_equal Plutonium::Interaction::Async::RunDefinition, generator.send(:expected_parent_definition)
   end
 
   test "singular option adds singular: true to register_resource" do

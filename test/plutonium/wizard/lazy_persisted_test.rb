@@ -6,7 +6,7 @@ module Plutonium
   module Wizard
     class LazyPersistedTest < ActiveSupport::TestCase
       setup do
-        Organization.delete_all if defined?(Organization)
+        purge_data!
         @org = Organization.create!(name: "Lazy")
         @gid = @org.to_global_id.to_s
       end

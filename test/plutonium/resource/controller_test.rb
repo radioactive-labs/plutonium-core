@@ -167,10 +167,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     # Verify build_form was called with form_action: false
     assert_equal false, form_action_received, "build_form should be called with form_action: false"
   ensure
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   def test_submitted_resource_params_clones_record_for_extraction
@@ -202,10 +199,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     # Original record should be unchanged
     assert_equal comment.id, comment.reload.id, "Original record id should be unchanged"
   ensure
-    Comment.delete_all
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # Regression: attachment_input_keys inspects every declared input's `as:`, which
@@ -256,7 +250,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     # param_key should NOT be set (we use detected association)
     refute input_params.key?(:author)
   ensure
-    User.delete_all
+    purge_data!
   end
 
   def test_override_entity_scoping_params_sets_id_when_key_exists
@@ -278,7 +272,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     assert_equal user, input_params[:user]
     assert_equal user.id, input_params[:user_id]
   ensure
-    User.delete_all
+    purge_data!
   end
 
   def test_override_entity_scoping_params_falls_back_to_param_key_when_no_association
@@ -307,7 +301,7 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     assert_equal org, input_params[:org]
     assert_equal org.id, input_params[:org_id]
   ensure
-    Organization.delete_all
+    purge_data!
   end
 
   private

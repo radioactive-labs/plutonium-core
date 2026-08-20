@@ -280,6 +280,8 @@ class Plutonium::UI::Display::ResourceTest < ActiveSupport::TestCase
       resource_definition: FakeDefinition.new
     )
     component.define_singleton_method(:present_associations?) { true }
+    # render_fields now wraps the hooks in a div — stub it like build_metadata_component below.
+    component.define_singleton_method(:div) { |*a, **k, &b| b&.call }
     component
   end
 

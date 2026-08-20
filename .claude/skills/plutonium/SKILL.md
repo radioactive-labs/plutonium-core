@@ -40,6 +40,7 @@ This is the global "look before you leap"; each targeted skill carries its own A
 | **[[plutonium-app]]** | Installation, packages (feature + portal), portal engines, mounting, `register_resource` (including singular and custom routes), `pu:res:conn` |
 | **[[plutonium-resource]]** | The resource itself — `pu:res:scaffold`, field types, model layer (`Plutonium::Resource::Record`, `has_cents`, SGID, routing), definition layer (fields/inputs/displays/columns, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization) |
 | **[[plutonium-behavior]]** | Controllers (hooks, key methods, presentation), policies (action methods, `permitted_attributes_for_*`, `permitted_associations`), interactions (structure, outcomes, chaining, URL generation) |
+| **[[plutonium-async-interactions]]** | Async interactions — `async`, the Run STI model, failure policies (`halt`/`continue`/`transactional`), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), scheduling `ReapJob` |
 | **[[plutonium-ui]]** | Page classes, forms, displays, tables, custom Phlex components, layouts, modals & tabs, Tailwind config, Stimulus, design tokens, `.pu-*` classes, Phlexi themes |
 | **[[plutonium-kanban]]** | `kanban do…end` DSL in a Definition — columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy, quick-add, static vs dynamic boards |
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
@@ -74,6 +75,7 @@ Add when relevant:
 | Override a controller action, hook, redirect, or `resource_params` | **[[plutonium-behavior]]** |
 | Write `relation_scope`, `permitted_attributes_for_*`, `permitted_associations`, action methods, or any policy override | **[[plutonium-behavior]]** (+ **[[plutonium-tenancy]]** if scoping) |
 | Write an interaction class for business logic | **[[plutonium-behavior]]** |
+| Make a bulk/long-running interaction async (`async`), or schedule the stalled-run reaper | **[[plutonium-async-interactions]]** |
 | Scope a model to a tenant, write `associated_with`, set portal entity strategy | **[[plutonium-tenancy]]** |
 | Configure parent/child nested routes, custom parent resolution | **[[plutonium-tenancy]]** |
 | Set up user invitations or entity membership | **[[plutonium-tenancy]]** |

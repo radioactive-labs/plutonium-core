@@ -7,6 +7,7 @@ module Pu
     class ConnGenerator < Rails::Generators::Base
       include PlutoniumGenerators::Generator
       include PlutoniumGenerators::Concerns::ResourceSelector
+      include PlutoniumGenerators::Concerns::ResourceRegistration
 
       source_root File.expand_path("templates", __dir__)
 
@@ -26,6 +27,9 @@ module Pu
       class_option :definition, type: :boolean, default: false,
         desc: "Create portal-specific definition even if base definition exists"
 
+      class_option :controller_for, type: :string, default: nil,
+        desc: "Explicit controller_for target, when the controller's name won't infer the resource on its own"
+
       def start
         selected_resources = resources_selection
         @app_namespace = portal_option(:dest, prompt: "Select destination portal").camelize
@@ -36,7 +40,7 @@ module Pu
           @resource_class = resource
 
           if app_namespace == "MainApp"
-            register_resource_in_routes("config/routes.rb", resource)
+            register_resource_in_routes("config/routes.rb", resource, singular: options[:singular])
           else
             if options[:policy] || !expected_parent_policy
               template "app/policies/resource_policy.rb",
@@ -51,7 +55,8 @@ module Pu
             template "app/controllers/resource_controller.rb",
               "packages/#{package_namespace}/app/controllers/#{package_namespace}/#{resource.pluralize.underscore}_controller.rb"
 
-            register_resource_in_routes("packages/#{package_namespace}/config/routes.rb", resource)
+            register_resource_in_routes("packages/#{package_namespace}/config/routes.rb", resource,
+              singular: options[:singular])
           end
         end
       rescue => e
@@ -62,43 +67,8 @@ module Pu
 
       attr_reader :app_namespace, :resource_class
 
-      # Insert `register_resource ::<Klass>` into a routes file. Idempotent:
-      # skips if already present. Falls back when the conventional
-      # `# register resources above.` marker is missing.
-      def register_resource_in_routes(routes_path, resource)
-        line = "register_resource ::#{resource}#{singular_option}"
-        content = File.read(File.join(destination_root, routes_path))
-
-        if /^\s*#{Regexp.escape(line)}\b/.match?(content)
-          say_status :identical, "#{routes_path} already registers #{resource}", :blue
-          return
-        end
-
-        if /^\s*#\s*register resources above\b/.match?(content)
-          insert_into_file routes_path,
-            indent("#{line}\n", 2),
-            before: /^\s*#\s*register resources above\b.*/
-        elsif /^\s*Rails\.application\.routes\.draw do\b/.match?(content)
-          insert_into_file routes_path,
-            indent("#{line}\n", 2),
-            after: /^\s*Rails\.application\.routes\.draw do.*\n/
-        elsif (match = content.match(/^(\w+::Engine)\.routes\.draw do.*\n/))
-          insert_into_file routes_path,
-            indent("#{line}\n", 2),
-            after: /^\s*#{Regexp.escape(match[1])}\.routes\.draw do.*\n/
-        else
-          say_status :warn,
-            "Could not locate routes block in #{routes_path}; add manually: #{line}",
-            :yellow
-        end
-      end
-
       def package_namespace
         app_namespace.underscore
-      end
-
-      def singular_option
-        options[:singular] ? ", singular: true" : ""
       end
 
       def resource_namespace
@@ -114,18 +84,28 @@ module Pu
         expected_parent_controller || "#{app_namespace}::ResourceController"
       end
 
+      # A gem-provided resource (e.g. Plutonium::Interaction::Async::Run) already has
+      # a working policy that subclasses Plutonium::Resource::Policy directly
+      # rather than through this host's ::ResourcePolicy — so the `< ::ResourcePolicy`
+      # check alone misses it and would regenerate a redundant, shadowing-prone
+      # override by default.
       def expected_parent_policy
         expected_parent_policy = "::#{resource_class.classify}Policy".safe_constantize
-        expected_parent_policy if expected_parent_policy.present? && expected_parent_policy < ::ResourcePolicy
+        return unless expected_parent_policy.present?
+
+        expected_parent_policy if expected_parent_policy < ::ResourcePolicy || expected_parent_policy < Plutonium::Resource::Policy
       end
 
       def parent_policy
         expected_parent_policy || "ResourcePolicy"
       end
 
+      # See expected_parent_policy — same reasoning for definitions.
       def expected_parent_definition
         expected_parent_definition = "::#{resource_class.classify}Definition".safe_constantize
-        expected_parent_definition if expected_parent_definition.present? && expected_parent_definition < ::ResourceDefinition
+        return unless expected_parent_definition.present?
+
+        expected_parent_definition if expected_parent_definition < ::ResourceDefinition || expected_parent_definition < Plutonium::Resource::Definition
       end
 
       def parent_definition

@@ -22,8 +22,44 @@ module Plutonium
           end
         end
 
+        # Mirrors the real controller, INCLUDING its visibility: both readers are
+        # PRIVATE controller methods published with `helper_method`, so an
+        # interaction can only reach them through `helpers`. A mock that exposed
+        # them publicly would pass whether or not the concern goes through the
+        # right door — and the wrong door returns nil for the tenant, which reads
+        # as "no tenant" rather than as a failure.
         class MockController
-          attr_accessor :current_scoped_entity, :current_parent
+          attr_writer :current_scoped_entity, :current_parent, :scoped_to_entity
+
+          def initialize
+            @scoped_to_entity = true
+          end
+
+          def scoped_to_entity? = @scoped_to_entity
+
+          def helpers = @helpers ||= HelperProxy.new(self)
+
+          private
+
+          attr_reader :current_parent
+
+          # Mirrors EntityScoping#current_scoped_entity, which RAISES on an
+          # un-scoped portal rather than returning nil.
+          def current_scoped_entity
+            raise NotImplementedError, "this request is not scoped to an entity" unless scoped_to_entity?
+
+            @current_scoped_entity
+          end
+
+          class HelperProxy
+            def initialize(controller)
+              @controller = controller
+            end
+
+            def current_scoped_entity = @controller.send(:current_scoped_entity)
+
+            def current_parent = @controller.send(:current_parent)
+          end
         end
 
         class MockViewContext
@@ -62,6 +98,13 @@ module Plutonium
 
         test "current_scoped_entity returns nil when controller has no entity" do
           @controller.current_scoped_entity = nil
+
+          assert_nil @interaction.current_scoped_entity
+        end
+
+        test "current_scoped_entity returns nil when the portal is not entity-scoped" do
+          @controller.scoped_to_entity = false
+          @controller.current_scoped_entity = MockEntity.new(1)
 
           assert_nil @interaction.current_scoped_entity
         end
@@ -144,20 +187,20 @@ module Plutonium
           assert_nil @interaction.scoped_parent
         end
 
-        test "handles controller without current_scoped_entity method" do
-          controller_without_entity = Object.new
-          view_context = MockViewContext.new(controller_without_entity)
-          interaction = TestInteraction.new(view_context)
+        # The concern states a precondition — it reads a Plutonium controller —
+        # and a caller that does not meet it must find out. Answering nil would
+        # be indistinguishable from "this portal has no tenant", which is how a
+        # broken call silently drops the entity filter.
+        test "a controller that cannot answer raises rather than reporting no tenant" do
+          interaction = TestInteraction.new(MockViewContext.new(Object.new))
 
-          assert_nil interaction.current_scoped_entity
+          assert_raises(NoMethodError) { interaction.current_scoped_entity }
         end
 
-        test "handles controller without current_parent method" do
-          controller_without_parent = Object.new
-          view_context = MockViewContext.new(controller_without_parent)
-          interaction = TestInteraction.new(view_context)
+        test "a controller that cannot answer raises rather than reporting no parent" do
+          interaction = TestInteraction.new(MockViewContext.new(Object.new))
 
-          assert_nil interaction.current_parent
+          assert_raises(NoMethodError) { interaction.current_parent }
         end
       end
     end

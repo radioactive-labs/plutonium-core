@@ -28,6 +28,11 @@ test/dummy/log/*.log
 test/dummy/storage/*
 test/dummy/tmp
 test/dummy/public/uploads/*
+# Built from migrations, never committed (dropped in 62d23940). It reappears
+# every time anyone runs db:migrate, so without this a stray `git add -A` puts
+# it back — and a committed schema then fights whichever migrations a branch
+# happens to add.
+test/dummy/db/schema.rb
 
 .yarn
 

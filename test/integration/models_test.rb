@@ -6,19 +6,7 @@ class ModelsTest < ActiveSupport::TestCase
   include DataHelpers
 
   teardown do
-    Comment.delete_all
-    Blogging::PostTag.delete_all
-    Blogging::PostDetail.delete_all
-    Blogging::Post.delete_all
-    Blogging::Tag.delete_all
-    Catalog::Review.delete_all
-    Catalog::ProductDetail.delete_all
-    Catalog::Variant.delete_all
-    Catalog::Product.delete_all
-    Catalog::Category.delete_all
-    OrganizationUser.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   # STI

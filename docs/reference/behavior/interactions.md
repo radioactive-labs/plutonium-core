@@ -464,6 +464,7 @@ See [Testing](/reference/testing/) for Plutonium's built-in testing helpers — 
 
 ## Related
 
+- [Async Interactions](./async-interactions) — `async` a persisted run instead of running `execute` inline
 - [Resource › Actions](/reference/resource/actions) — registering interactions, inferred visibility, immediate vs form
 - [Policies](./policies) — `def <action>?` authorization methods
 - [Controllers](./controllers) — `resource_url_for(..., interaction: …)` URL generation

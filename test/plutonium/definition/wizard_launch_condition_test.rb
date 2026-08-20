@@ -76,8 +76,7 @@ class Plutonium::Definition::WizardLaunchConditionTest < ActiveSupport::TestCase
   end
 
   setup do
-    Plutonium::Wizard::Session.delete_all
-    Organization.delete_all
+    purge_data!
     @user = Organization.create!(name: "User-#{SecureRandom.hex(4)}")
   end
 

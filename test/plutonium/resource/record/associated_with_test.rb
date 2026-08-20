@@ -9,9 +9,7 @@ class Plutonium::Resource::Record::AssociatedWithTest < ActiveSupport::TestCase
   end
 
   teardown do
-    Blogging::Post.delete_all
-    Organization.delete_all
-    User.delete_all
+    purge_data!
   end
 
   test "associated_with same class returns matching record by primary key" do

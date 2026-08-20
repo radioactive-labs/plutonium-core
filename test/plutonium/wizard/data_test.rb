@@ -170,7 +170,7 @@ module Plutonium
 
       # --- container (step-keyed dispatch) ------------------------------------
 
-      def test_container_dispatches_to_step_sub_objects
+      def test_container_async_step_sub_objects
         w = WithStructured.new
         w.data_attributes = {"details" => {"note" => "hi"}}
 
