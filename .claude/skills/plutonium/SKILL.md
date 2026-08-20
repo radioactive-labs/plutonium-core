@@ -20,6 +20,48 @@ Entry point for all Plutonium work. Does three things:
 - **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
 - **Inspect before you act.** Every targeted skill now opens with a CHECK gate — read the relevant files yourself before scaffolding or editing. Don't ask the user to describe their app when you can read it.
 
+## The mental model (read once — it decides what you should write)
+
+Plutonium applies Rails' bargain — follow the convention and the framework carries you; reach for an escape hatch when you need one — to the layer **above CRUD**: auth, authorization, multi-tenancy, admin UI, business operations. Four consequences change what you should actually type.
+
+### 1. Everything is derived from something you already declared
+
+Not "defaults someone picked for you" — **computed from existing declarations**:
+
+| Derived | From |
+|---|---|
+| Field types, required markers, select choices | model columns, associations, attachments, enums, **and validations** (`presence: true` → required; `inclusion:` → select choices) |
+| A collection's preloads (index, kanban, export) | the policy's permitted field set — there is **no `includes` list to write or maintain** |
+| Tenant scope | your associations — direct `belongs_to`, then `has_one`/`has_one :through`, then reverse `has_many` |
+| Action type (record / bulk / resource) | whether the interaction declares `:resource`, `:resources`, or neither |
+| An association input's typeahead | the **target resource's own `search` block** |
+| CRUD, nested and action routes | one `register_resource` line |
+
+⇒ **Declare only what differs.** A `field :title` matching the detected type is dead code — and one more line to fall out of step when the column changes. This is the single most common way generated-looking code goes wrong.
+
+### 2. Definition and policy answer different questions
+
+- **Definition** = *how* a field renders.
+- **Policy** = *whether it appears at all*.
+
+"Only admins see this field" is `permitted_attributes_for_*`. Never a definition declaration, and never a `condition:` (that only hides UI — the route stays live).
+
+### 3. Overrides are plain Ruby inheritance
+
+`AdminPortal::PostDefinition < ::PostDefinition`, and the same for policies and controllers. App-level default, portal-level subclass. No registry of overrides, no precedence DSL, no merge semantics — so "why does this field show here but not there" is always readable as a class hierarchy.
+
+### 4. Climb the escape-hatch ladder only as far as the problem requires
+
+1. **Change an option** — `input :content, as: :markdown`
+2. **Render inline** — `display :priority, as: :phlexi_render, with: ->(value, attrs) do … end`
+3. **Write a component** — a *field* component (subclasses the Phlexi base) plugs into `as:`; anything with its own constructor goes through a block (`display :card do |field| … end`)
+4. **Implement a hook** — controller hooks instead of reopening `create`/`update`; page `render_before_*` / `render_after_*` instead of `view_template`
+5. **Replace the page** — `view_template` on the nested class, or an ERB view at the controller path (ERB wins when both exist)
+
+Reaching for rung 5 on a rung-1 problem is how you end up owning breadcrumbs, the header and turbo frame wiring you never meant to touch.
+
+**Underneath all of it, it stays Rails.** Models are plain ActiveRecord, controllers inherit from Rails controllers, views resolve through Rails view paths. A Plutonium resource and a hand-written controller coexist in one app.
+
 ## ✅ Orient before you route (CHECK — read the app, don't assume)
 
 A one-line request rarely says whether this is a new app, a half-built one, or a multi-tenant one — and those change which path you take. Spend 30 seconds reading the app **before** loading a bundle or running anything:

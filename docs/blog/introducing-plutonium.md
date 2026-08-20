@@ -5,6 +5,7 @@ date: 2026-08-19
 description: Rails made a bargain. Follow the conventions and the framework carries you. Plutonium makes the same bargain about the layer Rails deliberately left alone.
 author: Stefan Froelich
 tags: [announcement, rails, architecture]
+draft: true
 ---
 
 # Introducing Plutonium: Rails conventions, past CRUD
