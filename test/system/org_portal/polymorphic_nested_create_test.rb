@@ -39,25 +39,14 @@ class OrgPortal::PolymorphicNestedCreateTest < ApplicationSystemTestCase
     # validation re-render still shows the typed body, which would make a naive
     # text assertion pass on a comment that was never created.
     #
-    # The select is driven through its slim-select widget rather than by name:
-    # the native element is display:none and aria-hidden, so Capybara cannot
-    # reach it, and reaching past the widget would not be what a user does. The
-    # option is matched on the user's `to_label` ("User #1"), which is what the
-    # widget renders — the email only exists on the model.
-    find(".ss-main").click
-    # exact_text, because Capybara matches substrings: once ids reach double
-    # digits, "User #1" also matches "User #10" and match: :first would pick
-    # whichever the widget rendered first.
-    find(".ss-option", text: @user.to_label, exact_text: true, match: :first, wait: 10).click
-
-    # Confirm the selection LANDED before submitting. slim-select re-renders its
-    # option list, so the node found above can go stale between find and click —
-    # the click then hits nothing, the form submits with no user, and the failure
-    # surfaces as "User must exist" (or, when the driver notices the stale node
-    # first, "Node with given id does not belong to the document"). Both are the
-    # same bug. This assertion retries until the widget shows the choice, so a
-    # lost click is waited out rather than silently submitted.
-    assert_selector ".ss-main", text: @user.to_label, wait: 10
+    # select_association drives the slim-select widget the way a user does and
+    # RETRIES the whole open-narrow-click until the widget reflects the choice.
+    # Doing it inline here is what made this test flaky: a lost click cannot be
+    # waited out, only redone. See test/support/slim_select_helpers.rb.
+    #
+    # Matched on the user's `to_label` ("User #1"), which is what the widget
+    # renders — the email only exists on the model.
+    select_association @user.to_label, from: "comment[user]"
 
     click_button "Create Comment"
 
