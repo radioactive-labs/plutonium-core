@@ -322,7 +322,14 @@ module Plutonium
           field_level_options = input_options.slice(*field_level_keys)
           field_options = field_options.merge(field_level_options)
 
-          tag_attributes = input_options.except(:wrapper, :as, :pre_submit, :condition, *field_level_keys)
+          # Staging options are stripped here as well as in Wizard::StepAdapter,
+          # because an interaction's inputs reach this method directly. A
+          # Class-valued `uploader:` is not an HTML attribute and Phlex refuses
+          # it, so leaving it in raises rather than rendering.
+          tag_attributes = input_options.except(
+            :wrapper, :as, :pre_submit, :condition, *field_level_keys,
+            *Plutonium::Attachments::STAGING_ONLY_INPUT_OPTIONS
+          )
           if input_options[:pre_submit]
             tag_attributes["data-action"] = "change->form#preSubmit"
           end

@@ -5,7 +5,7 @@ The behavior layer is intentionally thin:
 - **[Controllers](./controllers) route** — handle requests, redirect after submit, transform params.
 - **[Policies](./policies) authorize** — decide who can do what, which fields they can see, which records they can access.
 - **[Interactions](./interactions) present** — declare the inputs for a custom operation (publish, archive, import, send invitation), render as a button and a form, and hand back an outcome.
-- **[Async Interactions](./async-interactions)** — run an interaction asynchronously when the work does not fit in a request: `async` declares a persisted, resumable run instead of executing inline. Bulk operations over many records, or a single call that outlasts a request budget.
+- **[Async Interactions](./async-interactions)** — `async` declares a persisted, resumable run instead of executing inline, for bulk operations and anything else too slow to hold a request open.
 
 Registering an action and rendering it lives in [Resource › Definition](/reference/resource/definition) and [Resource › Actions](/reference/resource/actions). This section covers **writing** the controller hook, policy method, or interaction class behind it.
 

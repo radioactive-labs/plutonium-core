@@ -1,11 +1,11 @@
 ---
 name: plutonium-async-interactions
-description: Use BEFORE building any bulk operation or long-running interaction — work that does not fit in a request. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
+description: Use BEFORE building any bulk operation or long-running interaction. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
 ---
 
 # Plutonium Async Interactions
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when the work does not fit in a request: hundreds or thousands of records, or a single call that outlasts a request budget (report generation, a third-party API, a slow import).
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it once the work is too slow to hold a request open — thousands of records, report generation, a third-party call.
 
 For everything about the interaction itself (inputs, validation, outcomes, `execute`), load [[plutonium-behavior]] first. `async` only replaces what `execute` does, not the rest of the interaction's shape.
 
@@ -93,6 +93,26 @@ Nothing is passed explicitly. Dispatch reads it off the interaction/controller i
 - **`authorization_namespace`**, the portal's module name, so perform-time lookup finds the same policy dispatch did.
 
 An opaque run records none of the target/policy columns. Nothing to re-verify without a subject.
+
+## Attributes and files
+
+Validated attributes reach the run through `options`, a JSON column written via `ActiveJob::Arguments` — primitives verbatim, `Date`/`BigDecimal`/`Time` round-tripped with their types. An attribute that can't be carried is refused at dispatch.
+
+Files can't ride a JSON column, and the request's tempfile is gone by the time the job runs, so an uploaded file is staged to its backend's cache and carried as a token. Read it back with `attachment`:
+
+```ruby
+attribute :import_file
+
+async do
+  def perform
+    attachment(:import_file).open { |f| CSV.foreach(f, headers: true) { |row| ... } }
+  end
+end
+```
+
+`attachment(:key)` / `attachments(:key)` give `filename`, `content_type`, `url`, `open`, `download`.
+
+`backend:` and `uploader:` come off the attribute's `input` declaration, exactly as in a wizard step — `input :import_file, as: :uppy, uploader: Catalog::ImportUploader`. The uploader's `Attacher.validate` rules run when the interaction validates, so a bad file **fails the form** rather than surfacing as a run failure the submitter never sees. Where no `backend:` is declared: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
 
 ## Registering the Run resource
 

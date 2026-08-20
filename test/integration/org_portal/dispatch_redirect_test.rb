@@ -49,6 +49,31 @@ class OrgPortal::DispatchRedirectTest < ActionDispatch::IntegrationTest
       "a resolved URL, not the record — Response::Redirect would url_for the record"
   end
 
+  test "a same-origin return_to wins over the run's own page" do
+    get "#{prefix}/blogging/posts", params: {return_to: "#{prefix}/blogging/posts?view=table"}
+    assert_response :success
+
+    interaction = RedirectProbeInteraction.new(view_context: @controller.view_context)
+
+    # Dispatching is not a destination: the index the user was working already
+    # surfaces its in-progress runs in a banner, so sending them back costs
+    # nothing and keeps their place.
+    assert_equal "#{prefix}/blogging/posts?view=table",
+      interaction.send(:dispatch_redirect_target, @post)
+  end
+
+  test "a return_to pointing off-origin is refused, not followed" do
+    get "#{prefix}/blogging/posts", params: {return_to: "https://evil.test/steal"}
+    assert_response :success
+
+    interaction = RedirectProbeInteraction.new(view_context: @controller.view_context)
+
+    # url_from answers nil for anything not same-origin. Without it, every bulk
+    # action link is an open redirect anyone can mint.
+    assert_equal "#{prefix}/blogging/posts/#{@post.to_param}",
+      interaction.send(:dispatch_redirect_target, @post)
+  end
+
   # The mirror image, and the reason the default cannot simply pass the record:
   # the helper `url_for(record)` would reach for does not exist in this portal.
   test "a plain url_for on the record cannot build that URL" do

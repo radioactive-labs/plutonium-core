@@ -22,9 +22,17 @@ export default class extends Controller {
   static values = {
     url: String,
     interval: { type: Number, default: 2000 },
+    // Set by the server on the LAST poll only — see AsyncRunProgress#poll_attributes.
+    finished: Boolean,
   }
 
   connect() {
+    // The run settled. Only this panel is inside the polled frame, so the fields
+    // beside it still show what they showed at dispatch; one reload catches them
+    // up. Not a poll — there is nothing left to watch, and the reloaded page
+    // carries no controller at all.
+    if (this.finishedValue) return this.reloadPage()
+
     this.schedule()
   }
 
@@ -35,6 +43,12 @@ export default class extends Controller {
 
   schedule() {
     this.timer = setTimeout(() => this.refresh(), this.intervalValue)
+  }
+
+  reloadPage() {
+    // visit() rather than location.reload(), so Turbo treats it as a navigation
+    // and keeps the scroll position and cache behaviour of every other one.
+    window.Turbo?.visit(window.location.href, { action: "replace" })
   }
 
   refresh() {

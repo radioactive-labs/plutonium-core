@@ -51,6 +51,9 @@ class Plutonium::UI::BulkActionsToolbarTest < ActiveSupport::TestCase
     toolbar.define_singleton_method(:route_options_to_url) { |*| "/bulk" }
     toolbar.define_singleton_method(:resource_class) { nil }
     toolbar.define_singleton_method(:current_definition) { nil }
+    # The render path carries the current page into the action as return_to; it
+    # is a Rails view helper, so it needs stubbing like the rest.
+    toolbar.define_singleton_method(:current_page_url) { "/index" }
     toolbar.define_singleton_method(:link_to) do |_url, attrs, &_blk|
       captured = attrs
       nil

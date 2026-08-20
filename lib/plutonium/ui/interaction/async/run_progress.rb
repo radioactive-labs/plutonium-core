@@ -31,6 +31,11 @@ module Plutonium
           # enough that a short run does not look stuck.
           POLL_INTERVAL_MS = 2_000
 
+          # Must match the animation in components.css. Ruby needs it because the
+          # poll restarts the animation and only the server knows how far into
+          # the sweep the bar should be — see #sweep_phase_ms.
+          SWEEP_DURATION_MS = 1_400
+
           # Semantic colour per outcome. +completed_with_errors+ is deliberately
           # NOT success: see Plutonium::Interaction::Async::Run#outcome.
           BADGE_VARIANTS = {
@@ -66,6 +71,14 @@ module Plutonium
           # True when this render IS the response to the frame's own poll.
           def answering_own_frame? = current_turbo_frame == frame_id
 
+          # Reload once, so the fields outside this frame stop disagreeing with it.
+          def finished_attributes
+            # The STRING, not true: Phlex renders a boolean attribute bare, and a
+            # valueless data attribute is exactly the shape Stimulus's Boolean
+            # coercion is least clear about.
+            {data: {controller: "run-progress", run_progress_finished_value: "true"}}
+          end
+
           def render_panel
             div(class: "pu-card pu-run-progress", **poll_attributes) do
               div(class: "pu-card-body space-y-4") do
@@ -78,7 +91,19 @@ module Plutonium
 
           # Only an in-progress run carries the poll. Absent here, nothing on the
           # page has a timer — which is how the refresh stops.
+          #
+          # Except on the LAST poll, which needs one more instruction. Only this
+          # panel lives in the polled frame; the fields beside it were rendered
+          # once, when the run was dispatched. So a run that finishes leaves the
+          # page showing two contradicting truths — a green "Completed, 5 of 5"
+          # above a list still reading "Running", "0 done", "finished at -" — and
+          # the stale half is the more detailed one. Telling the page to reload
+          # itself once is what lets those fields catch up.
+          #
+          # It cannot loop. The flag is emitted only while ANSWERING A POLL, and
+          # the reload it triggers is a full page render, where that is false.
           def poll_attributes
+            return finished_attributes if !run.in_progress? && answering_own_frame?
             return {} unless run.in_progress?
 
             {
@@ -131,10 +156,49 @@ module Plutonium
             end
           end
 
+          # Opaque work still gets a BAR, just one that admits it cannot say how
+          # far along it is. "Working…" as bare text read as a stalled page —
+          # nothing on it moved, so nothing said the run was alive. The animation
+          # is the part that carries that, and it is the only difference from the
+          # determinate bar above: same height, same track, same radius.
+          #
+          # A settled run with no total gets no bar, because there is no motion
+          # left to convey.
           def render_indeterminate
-            div(class: "text-xs text-[var(--pu-text-muted)] pu-run-progress-indeterminate") do
-              plain(run.in_progress? ? "Working…" : "No progress total was recorded")
+            div(class: "space-y-1") do
+              if run.in_progress?
+                div(class: "w-full h-2 rounded-full bg-[var(--pu-surface-alt)] overflow-hidden") do
+                  div(
+                    class: "h-2 rounded-full bg-primary-600 pu-run-progress-indeterminate",
+                    style: "animation-delay: -#{sweep_phase_ms}ms"
+                  )
+                end
+              end
+              div(class: "text-xs text-[var(--pu-text-muted)]") do
+                plain(run.in_progress? ? "Working…" : "No progress total was recorded")
+              end
             end
+          end
+
+          # How far into the sweep the bar should already be, as a NEGATIVE
+          # animation-delay.
+          #
+          # The poll re-renders this panel every POLL_INTERVAL_MS, and an element
+          # re-inserted into the DOM restarts its CSS animation from zero —
+          # marking it turbo-permanent does not help, because Turbo MOVES it and
+          # a move is a re-insertion. So a 1.4s sweep chopped every 2s snapped
+          # back to the left mid-pass, forever, making the one signal that says
+          # "this run is alive" look like a stutter.
+          #
+          # Restarting is therefore unavoidable; restarting at the WRONG PLACE is
+          # not. Anchoring the phase to the run's own clock means each restart
+          # picks up where the last render left off, and the sweep reads as
+          # continuous across every poll.
+          def sweep_phase_ms
+            started = run.started_at || run.created_at
+            return 0 unless started
+
+            ((Time.current - started) * 1000).to_i % SWEEP_DURATION_MS
           end
 
           def render_failures

@@ -17,15 +17,23 @@ module Plutonium
           redirect_options = @options
 
           controller.instance_eval do
-            # Preserve the request format unless explicitly specified
+            # Preserve the request format unless explicitly specified.
+            #
+            # Skipped for a target that is ALREADY A URL. There is nothing to
+            # merge a format into, and url_for takes exactly one argument — so
+            # appending the options hash raises ArgumentError rather than
+            # producing a formatted URL. A caller handing over a complete URL has
+            # already decided what it points at.
+            fully_formed_url = redirect_args.size == 1 && redirect_args.first.is_a?(String)
+
             url_options = redirect_args.last.is_a?(Hash) ? redirect_args.last : {}
-            if !url_options.key?(:format) && request.format.symbol != :html
+            if !fully_formed_url && !url_options.key?(:format) && request.format.symbol != :html
               url_options = url_options.merge(format: request.format.symbol)
               redirect_args = [*redirect_args[0...-1], url_options] if redirect_args.last.is_a?(Hash)
               redirect_args = [*redirect_args, url_options] unless redirect_args.last.is_a?(Hash)
             end
 
-            url = url_for(*redirect_args)
+            url = fully_formed_url ? redirect_args.first : url_for(*redirect_args)
 
             respond_to do |format|
               format.turbo_stream do

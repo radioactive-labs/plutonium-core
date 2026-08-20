@@ -373,6 +373,25 @@ end
 action :import, interaction: ImportInteraction
 ```
 
+## Running the work in the background
+
+An interactive action executes inside the request. When that is too slow — a bulk action over thousands of records, or a single call to something slow — replace `execute` with `async` and the interaction dispatches a persisted, resumable run instead:
+
+```ruby
+class BulkArchiveInteraction < ResourceInteraction
+  attribute :resources
+
+  async do
+    on_failure :continue
+    def perform_on(record) = record.archive!
+  end
+end
+```
+
+Nothing else about the action changes: same `action` declaration, same policy method, same form. The user is returned where they were, and that index shows a banner linking to the run's progress page.
+
+See [Async Interactions](/reference/behavior/async-interactions) for failure policies, file attributes, and what happens when a run crashes mid-batch.
+
 ## Immediate vs form
 
 | Interaction shape | Behavior |

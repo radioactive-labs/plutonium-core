@@ -81,6 +81,80 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
       "the page chrome must not come back inside the progress frame")
   end
 
+  test "the show page leaves the progress counters to the panel" do
+    run = create_run!(state: "running", progress_total: 4, progress_done: 1)
+
+    get run_path(run)
+    assert_response :success
+
+    # The panel already says "1 of 4 targets (25%)" over a bar. Rendering the
+    # same two numbers again as fields is one report twice — and only the panel
+    # is inside the polled frame, so the two drift apart the moment it advances.
+    assert_match(/1 of 4 targets/, response.body, "the panel still reports progress")
+    refute_match(/Progress done/i, response.body)
+    refute_match(/Progress total/i, response.body)
+  end
+
+  test "the index still shows the counters, having no bar to show instead" do
+    create_run!(state: "running", progress_total: 4, progress_done: 1)
+
+    get "/admin/async_runs"
+    assert_response :success
+
+    assert_match(/Progress done/i, response.body)
+  end
+
+  test "the poll that finds the run finished tells the page to reload" do
+    run = create_run!(state: "running", progress_total: 4, progress_done: 4)
+    frame_id = "pu_run_progress_#{run.id}"
+    run.finish!
+
+    get run_path(run), headers: {"Turbo-Frame" => frame_id}
+    assert_response :success
+
+    # Only this panel is in the polled frame; the fields beside it were rendered
+    # when the run was dispatched. Without this the page is left showing a green
+    # "Completed, 4 of 4" above a list still reading "Running" and "0 done".
+    assert_match(/data-run-progress-finished-value="true"/, response.body)
+    refute_match(/data-run-progress-url-value/, response.body,
+      "there is nothing left to poll for")
+  end
+
+  test "a full page render of a finished run carries no reload flag" do
+    run = create_run!(state: "running", progress_total: 4, progress_done: 4)
+    run.finish!
+
+    get run_path(run)
+    assert_response :success
+
+    # The flag is what the reload acts on, so emitting it on the page the reload
+    # lands on is an infinite refresh.
+    refute_match(/data-run-progress-finished-value/, response.body)
+    refute_match(/data-controller="run-progress"/, response.body)
+  end
+
+  test "an in-progress run with no total gets a moving bar, not just text" do
+    run = create_run!(state: "running", progress_total: nil)
+
+    get run_path(run)
+    assert_response :success
+
+    # "Working…" as bare text read as a stalled page: nothing on it moved, so
+    # nothing said the run was alive.
+    assert_match(/pu-run-progress-indeterminate/, response.body)
+    assert_match(/Working/, response.body)
+  end
+
+  test "a settled run with no total gets no bar, having no motion to convey" do
+    run = create_run!(state: "running", progress_total: nil)
+    run.finish!
+
+    get run_path(run)
+    assert_response :success
+
+    refute_match(/pu-run-progress-indeterminate/, response.body)
+  end
+
   test "progress renders as indeterminate, not 0%, when no total was recorded" do
     run = create_run!(state: "running", progress_total: nil)
 

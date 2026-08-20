@@ -39,6 +39,26 @@ class InlineArchiveInteraction < Plutonium::Resource::Interaction
   end
 end
 
+# Typed and file-valued attributes — neither survives a JSON column untouched.
+class TypedDispatchInteraction < Plutonium::Resource::Interaction
+  attribute :note, :string
+  attribute :count, :integer
+  attribute :starts_on, :date
+  attribute :amount, :decimal
+  attribute :import_file
+
+  async { def perform = :ok }
+end
+
+# A file field carrying the SAME per-input options a wizard step reads —
+# LimitedUploader rejects anything over 1 KB.
+class UploaderDispatchInteraction < Plutonium::Resource::Interaction
+  attribute :import_file
+  input :import_file, as: :uppy, uploader: LimitedUploader
+
+  async { def perform = :ok }
+end
+
 class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
   include DataHelpers
   include ActiveJob::TestHelper
@@ -67,8 +87,22 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
       :scoped_to_entity, :current_parent, :current_nested_association
     attr_accessor :authorization_namespace
 
+    attr_accessor :params
+
     def initialize
       @scoped_to_entity = true
+      @params = {}
+    end
+
+    # Mirrors ActionController::Redirecting#url_from closely enough to matter:
+    # a relative path or a same-origin absolute URL passes, anything else is
+    # nil. That nil is the open-redirect guard, so a mock that waved every
+    # string through would let a forged return_to look safe here.
+    def url_from(location)
+      return nil if location.blank?
+      return location if location.start_with?("/")
+
+      location if location.start_with?("http://test.host")
     end
 
     def scoped_to_entity? = @scoped_to_entity
@@ -202,6 +236,164 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     Plutonium.configuration.async_interactions.enabled = true
   end
 
+  test "typed attributes keep their types across the options column" do
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, note: "x", count: 3,
+      starts_on: "2026-08-19", amount: "12.34"
+    ).value
+
+    options = Plutonium::Interaction::Async::Run.find(run.id).options
+
+    assert_equal "x", options["note"]
+    assert_equal 3, options["count"]
+    # Raw JSON hands both of these back as Strings, and `options["amount"] * 2`
+    # then quietly produces "12.3412.34".
+    assert_equal Date.new(2026, 8, 19), options["starts_on"]
+    assert_equal BigDecimal("12.34"), options["amount"]
+  end
+
+  test "primitives are stored verbatim, not wrapped in a serializer envelope" do
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, note: "x", count: 3
+    ).value
+
+    raw = Plutonium::Interaction::Async::Run.where(id: run.id).pick(:options)
+    raw = JSON.parse(raw) if raw.is_a?(String)
+
+    assert_equal "x", raw["note"], "a String must stay readable in the column"
+    assert_equal 3, raw["count"]
+  end
+
+  test "an uploaded file is staged to a token and revived at perform time" do
+    file = Rack::Test::UploadedFile.new(
+      StringIO.new("a,b\n1,2\n"), "text/csv", original_filename: "import.csv"
+    )
+
+    run = TypedDispatchInteraction.call(
+      view_context: @view_context, import_file: file
+    ).value
+    run = Plutonium::Interaction::Async::Run.find(run.id)
+
+    # The tempfile is gone once the request ends, so what is stored has to be a
+    # token the backend can revive — never the file itself.
+    assert_kind_of String, run.options["import_file"]
+    refute_match(/tempfile/, run.options["import_file"])
+
+    revived = run.attachment(:import_file)
+    assert_equal "import.csv", revived.filename
+    # The bytes are the point — a run that gets the filename and nothing to read
+    # is exactly the failure staging exists to prevent.
+    assert_equal "a,b\n1,2\n", revived.download
+    revived.open { |f| assert_equal "a,b\n1,2\n", f.read }
+  end
+
+  test "an attribute that cannot be carried is refused at dispatch" do
+    interaction = Class.new(Plutonium::Resource::Interaction) do
+      def self.name = "UncarryableInteraction"
+      attribute :thing
+      async { def perform = :ok }
+    end
+
+    error = assert_raises(ArgumentError) do
+      interaction.call(view_context: @view_context, thing: Object.new)
+    end
+
+    # Named where the author declared it, rather than surviving into a row whose
+    # work fails deep in a job.
+    assert_match(/cannot carry one of its attributes/, error.message)
+  end
+
+  def uploaded(bytes, name: "import.csv", type: "text/csv")
+    Rack::Test::UploadedFile.new(StringIO.new(bytes), type, original_filename: name)
+  end
+
+  test "a staged file leaves the attribute holding a token, not the upload" do
+    interaction = TypedDispatchInteraction.new(
+      view_context: @view_context, import_file: uploaded("a,b\n")
+    )
+
+    assert interaction.valid?
+
+    # The form redraws on any validation failure, and its file input calls #url
+    # on the value to render what is already attached. An
+    # ActionDispatch::Http::UploadedFile does not answer that, so leaving it in
+    # place took the whole page down with a NoMethodError — for a failure on some
+    # entirely unrelated attribute.
+    assert_kind_of String, interaction.import_file
+    refute_match(/UploadedFile/, interaction.import_file)
+  end
+
+  test "a file field's staging options never reach the rendered form" do
+    options = UploaderDispatchInteraction.defined_inputs.dig(:import_file, :options)
+
+    assert_equal LimitedUploader, options[:uploader], "dispatch reads it from here"
+
+    # And the form must not: Phlex refuses a Class-valued attribute outright, so
+    # a declared `uploader:` took the whole modal down with
+    # "Invalid attribute value for uploader:" — the feature was unusable exactly
+    # as documented. Unit tests missed it because none of them RENDERED.
+    rendered = options.except(*Plutonium::Attachments::STAGING_ONLY_INPUT_OPTIONS)
+
+    refute rendered.key?(:uploader)
+    refute rendered.key?(:backend)
+    assert_equal :uppy, rendered[:as], "everything else still reaches the form"
+  end
+
+  test "a file field's uploader validations fail the form, not the run" do
+    interaction = UploaderDispatchInteraction.new(
+      view_context: @view_context, import_file: uploaded("x" * 2048)
+    )
+
+    refute interaction.valid?
+    assert_match(/too large/, Array(interaction.errors[:import_file]).join)
+    refute UploaderDispatchInteraction.call(
+      view_context: @view_context, import_file: uploaded("x" * 2048)
+    ).success?
+    # The point of validating here: without it the interaction validates clean,
+    # dispatches, and the author's rule surfaces as a run failure the submitter
+    # never sees, on a page they have already left.
+    assert_equal 0, Plutonium::Interaction::Async::Run.count
+  end
+
+  test "a file within the uploader's rules dispatches, staged through that uploader" do
+    outcome = UploaderDispatchInteraction.call(
+      view_context: @view_context, import_file: uploaded("small")
+    )
+
+    assert outcome.success?
+    assert_equal "small", outcome.value.reload.attachment(:import_file).download
+  end
+
+  test "dispatch returns the user where they came from" do
+    @controller.params = {return_to: "/admin/tasks?view=table"}
+
+    outcome = dispatch_bulk
+
+    # Dispatching is not a destination. The user asked to act on the rows they
+    # had selected; the index they were working already surfaces its in-progress
+    # runs in a banner, so going back costs them nothing.
+    assert_equal ["/admin/tasks?view=table"], outcome.to_response.instance_variable_get(:@args)
+  end
+
+  test "dispatch falls back to the run's own page with no return_to" do
+    run = (outcome = dispatch_bulk).value
+
+    assert_equal ["/mock/runs/#{run.id}"], outcome.to_response.instance_variable_get(:@args),
+      "a direct link still needs somewhere to go, and the run's page is the " \
+      "only page about what just happened"
+  end
+
+  test "a return_to pointing off-origin is refused, not followed" do
+    @controller.params = {return_to: "https://evil.test/steal"}
+
+    run = (outcome = dispatch_bulk).value
+
+    # url_from returns nil for anything not same-origin, which is what makes the
+    # parameter safe to honour at all — otherwise a bulk action link is an open
+    # redirect anyone can mint.
+    assert_equal ["/mock/runs/#{run.id}"], outcome.to_response.instance_variable_get(:@args)
+  end
+
   test "the validated attributes land in options, without the records" do
     run = dispatch_bulk.value
 
@@ -260,7 +452,6 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
 
     assert_instance_of TestReportRun, run
-    assert_nil run.target_type
     assert_empty run.target_ids
     assert_nil run.progress_total, "nil is INDETERMINATE; opaque work has no denominator"
     assert_nil run.policy_class_name
@@ -270,6 +461,27 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     # in a tenant.
     assert_equal @user, run.initiator
     assert_equal @org, run.scoped_entity
+  end
+
+  test "an opaque run still records which resource it concerns" do
+    run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
+
+    # Not a target — it has none. Run.for_target is where(target_type:), and it
+    # is what puts a run in a resource index's running banner. Left nil, an
+    # opaque run vanished the moment dispatch sent the user back to that index.
+    assert_equal "Blogging::Post", run.target_type
+    assert_empty run.target_ids
+    assert_nil run.policy_class_name, "no targets to re-resolve, so no policy to pin"
+  end
+
+  test "a dispatch with no resource in scope records no target type" do
+    @controller.resource_class = nil
+
+    run = DispatchOpaqueInteraction.call(view_context: @view_context, report_period: "monthly").value
+
+    # nil still means "no resource" — an interaction dispatched outside a
+    # resource controller has none to name.
+    assert_nil run.target_type
   end
 
   test "a portal with no tenant dispatches a run with no scoped entity" do
@@ -286,7 +498,7 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
 
   # --- the outcome ---------------------------------------------------------
 
-  test "the outcome is a success that redirects to the run" do
+  test "the outcome is a success that redirects, resolved not bare" do
     outcome = dispatch_bulk
 
     assert outcome.success?

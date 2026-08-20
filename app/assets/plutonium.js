@@ -28280,7 +28280,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
         const baseUrl = button.dataset.bulkActionUrl;
         const actionName = button.dataset.bulkActionName;
         if (baseUrl) {
-          button.href = idsParam ? `${baseUrl}?${idsParam}` : baseUrl;
+          const [path, query] = baseUrl.split("?");
+          const merged = [query, idsParam].filter(Boolean).join("&");
+          button.href = merged ? `${path}?${merged}` : path;
         }
         button.style.display = allowedActions.has(actionName) ? "" : "none";
       });
@@ -29848,9 +29850,12 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
   var run_progress_controller_default = class extends Controller {
     static values = {
       url: String,
-      interval: { type: Number, default: 2e3 }
+      interval: { type: Number, default: 2e3 },
+      // Set by the server on the LAST poll only — see AsyncRunProgress#poll_attributes.
+      finished: Boolean
     };
     connect() {
+      if (this.finishedValue) return this.reloadPage();
       this.schedule();
     }
     disconnect() {
@@ -29859,6 +29864,9 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
     schedule() {
       this.timer = setTimeout(() => this.refresh(), this.intervalValue);
+    }
+    reloadPage() {
+      window.Turbo?.visit(window.location.href, { action: "replace" });
     }
     refresh() {
       const frame = this.element.closest("turbo-frame");

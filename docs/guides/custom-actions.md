@@ -161,6 +161,36 @@ Two related behaviors:
 
 ![Bulk action toolbar with selected drafts](/images/guides/custom-actions-bulk.png)
 
+## When the work is too slow for a request
+
+The bulk action above updates every selected record inside the request. That is fine for a screenful; it is not fine for a few thousand, or for anything that calls a slow third party. Swap `execute` for `async`, and the same interaction dispatches the work to a background run instead:
+
+```ruby
+class BulkArchiveInteraction < ResourceInteraction
+  presents label: "Archive Selected", icon: Phlex::TablerIcons::Archive
+
+  attribute :resources
+  attribute :reason, :string
+
+  async do
+    on_failure :continue          # :halt (default) | :continue | :transactional
+    def perform_on(record)
+      record.archive!(reason: options["reason"])
+    end
+  end
+end
+```
+
+Nothing else about the action changes — the definition, the policy method and the form are the same. Only the work moves.
+
+Three things worth knowing:
+
+- **The block is the run's class body, not `execute`.** The work runs later, in a job with no controller, so it cannot close over anything in the interaction. Its inputs arrive through `options`.
+- **The user is sent back where they were**, and the index they land on shows a banner for the run with a link to its progress page.
+- **Permissions are re-checked per record, at perform time** — not replayed from dispatch. A permission revoked while the run is working stops applying to the rest of it.
+
+Full detail, including file attributes, failure policies and resuming a crashed run: [Async Interactions](/reference/behavior/async-interactions).
+
 ## Resource action (no specific record)
 
 Neither `:resource` nor `:resources` → resource action on the index page:
@@ -280,10 +310,12 @@ The rule isn't "never put logic in an interaction". A single-caller operation ca
 - **`ActiveRecord::RecordInvalid` crashes the action** — not rescued automatically. Wrap with `rescue`, return `failed(e.record.errors)`.
 - **Bulk action fails on some records** — that's by design. Bulk policy is checked per-record; if any fails, the whole request is rejected. Either fix authorization or pre-filter the selection.
 - **Confirmation prompt shows when you don't want one** — pass `confirmation: false` on the action.
+- **The action times out on a large selection** — the work is running inside the request. Move it to a background run with `async`, above.
 
 ## Related
 
 - [Reference › Resource › Actions](/reference/resource/actions) — full action options and bulk patterns
 - [Reference › Behavior › Interactions](/reference/behavior/interactions) — interaction class anatomy
+- [Reference › Behavior › Async Interactions](/reference/behavior/async-interactions) — `async`, progress pages, resuming a crashed run
 - [Reference › Behavior › Policies](/reference/behavior/policies) — `def <action>?` methods
 - [Authorization](./authorization) — policy patterns

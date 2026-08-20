@@ -4,7 +4,11 @@
 Async interactions are experimental — the DSL and behavior may change in a future release.
 :::
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it when the work does not fit in a request: a bulk operation over hundreds or thousands of records, or a single call that outlasts a request budget — report generation, a third-party API, a slow import. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
+For the task-oriented walkthrough — declaring the action, its policy, and where it appears — start with the [Custom actions guide](/guides/custom-actions). This page is the reference.
+
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it."
+
+Reach for it once the work stops being something a user can reasonably wait on: archiving ten thousand records, generating a report, calling a third party that takes its time. The run outlives the request, gets a progress page for free, and stays queryable after the fact.
 
 ## 🚨 Critical
 
@@ -51,21 +55,73 @@ class Blogging::ArchivePosts < ResourceInteraction
 end
 ```
 
-That is the whole thing — one class, no second file, no name to invent for the run.
+One class. There is no second file, and no name to invent for the run.
 
 ### Why the block declares `perform_on` rather than executing
 
 The block is **not** the body of `#execute`. The work happens later, in a job, in a process with no controller, no request and no `view_context` — it cannot be a closure over anything in the interaction, which is the same reason the row records the initiator and tenant instead of serialising them. So the block declares a `Plutonium::Interaction::Async::Run` subclass with exactly the API a standalone run has, and the validated attributes arrive through `options`.
 
-`def` opens a fresh scope, so those method bodies cannot accidentally capture the interaction's locals — the one thing that would make writing them here misleading.
+`def` opens a fresh scope, so those method bodies cannot accidentally capture the interaction's locals.
 
-The generated class is named `<Interaction>::Run` rather than left anonymous. That is load-bearing rather than cosmetic: the class name is persisted in the run's `type` column and constantized in another process, so an anonymous class would write a row nothing could read back.
+The generated class is named `<Interaction>::Run` rather than left anonymous, because the class name is persisted in the run's `type` column and constantized in another process. An anonymous class would write a row nothing could read back.
 
 | `on_failure` | Behavior when a target raises |
 |---|---|
 | `:halt` (default) | Stops at the first failure; the run ends `"failed"`, targets after the failure point are never attempted |
 | `:continue` | Records the failure, keeps going; the run ends `"completed"` (see [Outcome vs state](#outcome-vs-state) for why that's not the same as a clean success) |
 | `:transactional` | Wraps the whole batch in one DB transaction; any failure rolls back everything applied so far |
+
+### Attributes reach the run through `options`
+
+Everything the interaction validated, except the targets, is written to the run's `options` and read back in the job:
+
+```ruby
+attribute :reason, :string
+async do
+  def perform_on(post) = post.archive!(reason: options["reason"])
+end
+```
+
+`options` is a JSON column, so dispatch writes it through `ActiveJob::Arguments`. Primitives are stored verbatim — a String stays a String in the column — and only values needing one get a serializer envelope, so a `Date` arrives as a `Date` and a `BigDecimal` as a `BigDecimal` rather than as strings. Hosts can register their own serializers.
+
+An attribute that can't be carried at all is refused at dispatch, naming the interaction, rather than being written to a row whose work then fails deep in a job.
+
+### Files
+
+A file can't ride the options column: JSON has no files, and the request's tempfile is deleted on the way out. So an uploaded file is staged to its backend's cache at dispatch and carried as the token — `options["import_file"]` is that token, a String.
+
+Use `attachment` to read it back:
+
+```ruby
+class Catalog::ImportProducts < ResourceInteraction
+  attribute :import_file
+
+  async do
+    def perform
+      attachment(:import_file).open do |file|
+        CSV.foreach(file, headers: true) { |row| Catalog::Product.create!(row.to_h) }
+      end
+    end
+  end
+end
+```
+
+`attachment(:key)` returns one, `attachments(:key)` all of them for a multiple-file attribute, each exposing `filename`, `content_type`, `url`, `open` and `download`. Reviving reaches storage, so it is not folded into `options`: the progress page reads options on every poll and has no need of the file.
+
+#### Per-field backend and uploader
+
+`backend:` and `uploader:` are read off the attribute's own `input` declaration — the same options, in the same place, a wizard step reads them from:
+
+```ruby
+attribute :import_file
+input :import_file, as: :uppy, uploader: Catalog::ImportUploader
+```
+
+The uploader's `Attacher.validate` rules run when the interaction validates, so a file that breaks them **fails the form** — the submitter sees a field error and nothing is dispatched. Without that the interaction would validate clean, dispatch, and the author's `validate_max_size` would surface as a run failure on a page the submitter has already left. A no-op for ActiveStorage fields and for uploaders declaring no rules.
+
+Validating means staging first, since Shrine validates an assigned cached file — so an upload that fails validation has still been written to the cache, and is reaped by the backend's own unattached-cache cleanup. Wizards make the same trade on every step submit.
+
+Where no `backend:` is declared: `config.async_interactions.attachment_backend`, then `config.attachment_backend`, then auto-detection (active_shrine loaded → Shrine, else ActiveStorage). Same layering wizards use.
 
 ### Sharing one run across interactions
 
