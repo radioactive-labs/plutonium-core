@@ -53,7 +53,8 @@ When the controller is hit via a nested route, Plutonium automatically:
 2. **Scopes queries** via the parent association:
    - `has_many` → `parent.send(parent_association)` (e.g. `company.properties`)
    - `has_one` → `relation.where(foreign_key => parent.id)` with limit
-3. **Assigns the parent** on create (injected into `resource_params`).
+3. **Assigns the parent** on create (injected into `resource_params`), building the
+   record on the parent's association so a scoped association supplies its defaults.
 4. **Hides the parent field** in forms and displays (already determined by URL).
 
 You don't add hidden parent fields or filter queries manually.
@@ -164,6 +165,27 @@ resource_params
 ```
 
 No hidden parent fields needed in forms.
+
+### Scoped associations
+
+The record is built on the parent's association (`company.properties.new`), so an
+association that carries a scope contributes its equality conditions as defaults:
+
+```ruby
+class Company < ResourceRecord
+  has_many :published_properties, -> { where(published: true) },
+    class_name: "Property"
+end
+```
+
+Creating through `/companies/123/nested_published_properties` sets `published: true`.
+It has to: the index honours the same scope, so a record created without it is
+filtered out of the list it was created from.
+
+Only equality conditions become attributes. A scope like
+`-> { where("expires_at > ?", Time.current) }` cannot supply one, so an association
+scoped that way still creates records its own index will not list. Prefer an
+equality scope for any association you expose as a nested route.
 
 ## Presentation hooks
 

@@ -103,6 +103,37 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     assert_equal post_record.class.polymorphic_name, comment.commentable_type
   end
 
+  # Creating through an association that carries a scope. The list side merges
+  # the relation into `parent.flagged_comments`, so a record built without the
+  # scope's attributes is filtered out of the very list it was created from:
+  # the create reports success and the row never appears.
+  test "creates through a scoped nesting with the scope's attributes applied" do
+    post_record = create_post!(user: @user, organization: @org)
+    body = "Created through the scoped nesting"
+
+    assert_difference -> { Comment.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_flagged_comments",
+        params: {comment: {body: body, user: @user.to_sgid.to_s}}
+    end
+
+    comment = Comment.order(:id).last
+    assert comment.flagged, "expected the association's scope to supply flagged: true"
+
+    # The symptom a user actually sees: it has to come back in that list.
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_flagged_comments"
+    assert_response :success
+    assert_match body, response.body
+  end
+
+  # The form for a scoped nesting is built from the same association, so the
+  # scope's attributes are already applied before anything is typed.
+  test "renders a new form through a scoped nesting" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_flagged_comments/new"
+    assert_response :success
+  end
+
   # "comment_series" singularizes to itself, so Rails suffixes the collection
   # route with _index. The nested URL builder has to match that, as the
   # top-level one already does, or every link it builds for the collection
@@ -122,6 +153,20 @@ class OrgPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
     create_post_detail!(post: post_record)
     get "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_post_detail"
     assert_response :success
+  end
+
+  # The singular counterpart of the nested create above: a has_one is built with
+  # `build_post_detail` rather than on a collection, so it takes the other branch.
+  test "creates through a has_one nesting" do
+    post_record = create_post!(user: @user, organization: @org)
+
+    assert_difference -> { Blogging::PostDetail.count }, 1 do
+      post "#{current_path_prefix}/blogging/posts/#{post_record.id}/nested_post_detail",
+        params: {blogging_post_detail: {seo_title: "Built through the has_one"}}
+    end
+
+    detail = Blogging::PostDetail.order(:id).last
+    assert_equal post_record.id, detail.post_id
   end
 
   test "lists post tags (has_many through)" do

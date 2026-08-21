@@ -329,10 +329,17 @@ When the controller is hit through a nested route:
 
 1. **Resolves the parent** via `current_parent`, authorized for `:read?`.
 2. **Scopes queries** via parent association (e.g. `parent.properties` for `has_many`, `where(foreign_key => parent.id)` for `has_one`).
-3. **Assigns parent** on create (injected into `resource_params`).
+3. **Assigns parent** on create (injected into `resource_params`). The record is built
+   on the parent's association (`parent.properties.new`), so a scoped association
+   contributes its equality conditions as defaults.
 4. **Hides parent field** in forms (already determined by URL).
 
 You don't need to add hidden parent fields in forms or filter queries manually.
+
+Expose a scoped association as a nested route only when its scope is equality-based
+(`-> { where(published: true) }`). Rails derives create attributes from equality
+conditions alone, so `-> { where("expires_at > ?", Time.current) }` creates records
+that its own index, which honours the scope, will not list.
 
 ## Controller methods
 

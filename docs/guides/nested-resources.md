@@ -71,7 +71,8 @@ Plutonium prefixes nested routes with `nested_` so they don't conflict with top-
 
 1. **Resolves the parent** via `current_parent`, authorized for `:read?`.
 2. **Scopes queries** via the parent association (`company.properties` for `has_many`; `where(company_id: ...)` for `has_one`).
-3. **Assigns the parent** on create (injected into `resource_params`).
+3. **Assigns the parent** on create (injected into `resource_params`), building the
+   record on the parent's association so a scoped association supplies its defaults.
 4. **Hides the parent field** in forms and displays.
 
 No hidden fields. No manual scoping.
