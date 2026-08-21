@@ -58,6 +58,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   self.use_transactional_tests = false
 
   include IntegrationTestHelper
+  include SlimSelectHelpers
 
   driven_by :headless_chrome
 
