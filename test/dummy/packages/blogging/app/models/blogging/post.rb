@@ -31,6 +31,12 @@ class Blogging::Post < Blogging::ResourceRecord
   # ends up naming the collection route with an _index suffix. Kept separate
   # from the one above so each test moves a single variable.
   has_many :comment_series, as: :commentable, class_name: "Comment", dependent: :destroy
+  # A nested association carrying a scope. The list side honours it (the policy
+  # merges the relation into `parent.flagged_comments`), so a record created
+  # through the route without the scope's attributes is filtered straight back
+  # out of the list it was created from.
+  has_many :flagged_comments, -> { where(flagged: true) }, as: :commentable,
+    class_name: "Comment", dependent: :destroy
   has_many :post_tags, class_name: "Blogging::PostTag", foreign_key: :post_id, dependent: :destroy
   has_many :tags, through: :post_tags, class_name: "Blogging::Tag"
   # add has_many associations above.

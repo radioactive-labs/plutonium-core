@@ -38,7 +38,7 @@ module Plutonium
           authorize_current! resource_class
           set_page_title "Create #{resource_class.model_name.human.titleize}"
 
-          @resource_record = resource_class.new
+          @resource_record = build_resource_record
           maybe_apply_submitted_resource_params!
 
           render :new, formats: [:html]
@@ -49,7 +49,7 @@ module Plutonium
           authorize_current! resource_class
           set_page_title "Create #{resource_class.model_name.human.titleize}"
 
-          @resource_record = resource_class.new resource_params
+          @resource_record = build_resource_record resource_params
 
           respond_to do |format|
             if params[:pre_submit]
@@ -164,6 +164,34 @@ module Plutonium
         end
 
         private
+
+        # Builds the record that :new renders a form for and :create saves.
+        #
+        # Through a nested route it is built on the parent's association rather
+        # than on the class, so an association carrying a scope supplies that
+        # scope's attributes as defaults — exactly what `parent.things.new` does
+        # in Rails. The list side already honours the scope (the policy merges
+        # the relation into that same association), so building on the class
+        # instead produces a record the list filters straight back out: the
+        # create reports success and the row never appears.
+        #
+        # Only equality conditions carry over. `where(published: true)` becomes
+        # an attribute; `where("expires_at > ?", Time.current)` cannot, because
+        # that is all Rails derives create attributes from.
+        #
+        # The foreign key is still injected as an attribute by
+        # override_parent_params, which stays the authority for the value. This
+        # only adds what the association declares beyond it.
+        def build_resource_record(attributes = {})
+          return resource_class.new(attributes) unless current_parent
+
+          association = current_parent.class.reflect_on_association(current_nested_association)
+          if association.collection?
+            current_parent.public_send(current_nested_association).new(attributes)
+          else
+            current_parent.public_send(:"build_#{current_nested_association}", attributes)
+          end
+        end
 
         # Hook fired once, immediately after a successful create-save and BEFORE
         # the response is built. No-op by default. KanbanActions overrides it to
