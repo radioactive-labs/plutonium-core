@@ -31,8 +31,9 @@ module SlimSelectHelpers
   #   Defaults to +option_text+. Pass it when the searchable value differs from
   #   the rendered label (a typeahead matching on email while the option shows
   #   +to_label+).
-  # @param wait [Numeric] total seconds to keep retrying the interaction
-  def select_association(option_text, from: nil, search: nil, wait: 10)
+  # @param wait [Numeric] total seconds to keep retrying the interaction.
+  #   Governs ATTEMPTS, not one wait: each is open -> narrow -> click -> verify.
+  def select_association(option_text, from: nil, search: nil, wait: 15)
     deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + wait
 
     loop do
@@ -70,7 +71,10 @@ module SlimSelectHelpers
     # option at all.
     box&.set(search)
 
-    content.find(".ss-option", text: option_text, exact_text: true, match: :first, wait: 5).click
+    # Short wait on purpose: the list was just narrowed, so the option is there
+    # or it never will be, and a long wait here buys fewer attempts from the
+    # same budget — attempts are what recover a lost click.
+    content.find(".ss-option", text: option_text, exact_text: true, match: :first, wait: 2).click
   rescue Capybara::ElementNotFound, Selenium::WebDriver::Error::StaleElementReferenceError
     nil
   end
