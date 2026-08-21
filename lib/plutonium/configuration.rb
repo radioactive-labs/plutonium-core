@@ -96,6 +96,39 @@ module Plutonium
       @normalized_default_phone_country = value&.downcase
     end
 
+    # Valid values for {#nested_association_routes}.
+    NESTED_ASSOCIATION_ROUTE_MODES = %i[detected declared].freeze
+
+    # @return [Symbol] where a resource's nested routes come from.
+    #
+    #   `:detected` (default) draws one for every `has_many` and `has_one` whose
+    #   child is a registered resource, which is how Plutonium has always behaved.
+    #
+    #   `:declared` draws only what `register_resource` names:
+    #
+    #     register_resource ::Post, associations: %i[comments post_detail]
+    #
+    #   A resource that names none then gets no nested routes at all. Naming
+    #   associations works in either mode; the mode only decides what silence means.
+    #
+    #   Note that a policy's `permitted_associations` renders a panel on the show
+    #   page that links to the nested route, so an association permitted there and
+    #   omitted here has a panel with nowhere to point.
+    attr_reader :nested_association_routes
+
+    # @param value [Symbol] one of {NESTED_ASSOCIATION_ROUTE_MODES}
+    # @raise [ArgumentError] on any other value, rather than silently drawing
+    #   the wrong route table for a typo.
+    def nested_association_routes=(value)
+      value = value.to_sym
+      unless NESTED_ASSOCIATION_ROUTE_MODES.include?(value)
+        raise ArgumentError, "unknown nested_association_routes #{value.inspect}. " \
+          "Valid modes: #{NESTED_ASSOCIATION_ROUTE_MODES.map(&:inspect).join(", ")}"
+      end
+
+      @nested_association_routes = value
+    end
+
     # Map of version numbers to their default configurations
     VERSION_DEFAULTS = {
       1.0 => proc do |config|
@@ -123,6 +156,7 @@ module Plutonium
       @navii_host_url = "https://api.navii.dev"
       @auto_eager_load_collections = true
       @default_page_width = :md
+      @nested_association_routes = :detected
     end
 
     # Load default configuration for a specific version

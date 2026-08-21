@@ -45,6 +45,40 @@ For `has_one`:
 - Only one record can exist per parent.
 - Forms don't show the parent field (determined by URL).
 
+## Declaring which associations get routes
+
+By default every `has_many` and `has_one` whose child is a registered resource gets
+a nested route. Name the ones you want and the rest are not drawn:
+
+```ruby
+register_resource ::Company, associations: %i[properties company_profile]
+```
+
+`associations: []` draws none. Naming an association that is not a `has_many` or
+`has_one`, or whose child is not registered in that portal, fails the boot rather
+than quietly drawing one route fewer.
+
+To make declaring them the rule rather than the exception, flip the default so that
+a resource naming none gets none:
+
+```ruby
+# config/initializers/plutonium.rb
+Plutonium.configure do |config|
+  config.nested_association_routes = :declared   # default: :detected
+end
+```
+
+The mode only decides what silence means. `associations:` works the same either way,
+and top-level routes are untouched by both.
+
+Two things to know before turning it on:
+
+- It applies to every portal at once, and every resource that names nothing loses its
+  nested routes. On an existing app, expect to add `associations:` in several places.
+- A policy's `permitted_associations` renders a panel on the show page that links to
+  the nested route. An association permitted there but omitted here leaves that panel
+  pointing at a route that does not exist. The two lists have to agree.
+
 ## Automatic behavior on nested routes
 
 When the controller is hit via a nested route, Plutonium automatically:

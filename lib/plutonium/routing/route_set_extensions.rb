@@ -151,6 +151,11 @@ module Plutonium
           route_type: options[:singular] ? :resource : :resources,
           route_name: route_name,
           concern_name: concern_name,
+          # The associations this resource draws nested routes for, or nil when
+          # the registration named none. nil is not "no associations": what
+          # silence means is decided by
+          # Plutonium.configuration.nested_association_routes.
+          associations: options[:associations]&.map(&:to_sym),
           route_options: {
             # model_name.collection, not resource.to_s.pluralize.underscore:
             # the latter reads the RAW class name, ignoring a model that pins
