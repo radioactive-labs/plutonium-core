@@ -67,6 +67,15 @@ Plutonium prefixes nested routes with `nested_` so they don't conflict with top-
 
 `has_one` associations get singular routes — index redirects to show (or new if no record exists).
 
+Every routable association gets one by default. To draw only some of them:
+
+```ruby
+register_resource ::Company, associations: %i[properties company_profile]
+```
+
+Set `config.nested_association_routes = :declared` to make that the rule, so a
+resource naming none gets none. See [Reference › Tenancy › Nested resources](/reference/tenancy/nested-resources#declaring-which-associations-get-routes).
+
 ## What Plutonium does automatically
 
 1. **Resolves the parent** via `current_parent`, authorized for `:read?`.

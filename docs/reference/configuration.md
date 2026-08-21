@@ -41,6 +41,7 @@ Loads the baseline defaults for a given framework version. Call this first; late
 | `auto_eager_load_collections` | `true` | Index pages, kanban boards and CSV exports preload the associations and attachments they render. Set `false` to disable globally, or override `auto_eager_load_collections?` in a controller. See [Performance](/guides/performance). |
 | `default_page_width` | `:md` | Width of detail-style pages — the show page and resource forms. One of `:sm :md :lg :xl :full` (`:full` = unconstrained). Index and table pages are unaffected. Override per-resource with `page_width` / `form_width` / `display_width`; see [Definition › Page width](./resource/definition#page-width). |
 | `wizards.width` | `:md` | Default width of wizard step pages. **Independent of `default_page_width`** — a wizard is a self-contained flow, so widening resource pages leaves wizards alone. Override per wizard with `width`. Same size tokens. |
+| `nested_association_routes` | `:detected` | Where a resource's nested routes come from. `:detected` draws one for every `has_many` / `has_one` whose child is registered. `:declared` draws only what `register_resource ..., associations:` names, so a resource that names none gets none. See [Nested resources › Declaring which associations get routes](./tenancy/nested-resources#declaring-which-associations-get-routes). |
 | `assets.logo` | `"plutonium.png"` | Brand logo asset. See [Assets](./ui/assets). |
 | `assets.favicon` | `"plutonium.ico"` | Favicon asset. |
 | `assets.stylesheet` | `"plutonium.css"` | Stylesheet entry. |

@@ -34,6 +34,10 @@ module Plutonium
       #
       # @param resource [Class] The resource class to be registered.
       # @param options [Hash] Additional options for resource registration.
+      # @option options [Array<Symbol>] :associations the associations to draw
+      #   nested routes for. Omit to draw one for every routable association, or
+      #   set +Plutonium.configuration.nested_association_routes = :declared+ to
+      #   make omitting it mean none.
       # @yield An optional block for additional resource configuration.
       # @return [void]
       def register_resource(resource, options = {}, &)
@@ -101,7 +105,7 @@ module Plutonium
         concern route_config[:concern_name] do
           send route_config[:route_type], route_config[:route_name], **route_config[:route_options] do
             instance_exec(&route_config[:block]) if route_config[:block]
-            define_nested_resource_routes(resource)
+            define_nested_resource_routes(resource, route_config[:associations])
           end
         end
       end
@@ -109,12 +113,21 @@ module Plutonium
       # Defines nested resource routes for a given resource.
       #
       # @param resource [Class] The parent resource class.
+      # @param declared [Array<Symbol>, nil] the associations named by
+      #   register_resource, or nil when it named none.
       # @return [void]
-      def define_nested_resource_routes(resource)
+      def define_nested_resource_routes(resource, declared = nil)
+        allowed = nested_route_associations(resource, declared)
+
         # has_many associations use plural routes
         resource.routable_has_many_associations.each do |assoc_info|
+          next if allowed && !allowed.include?(assoc_info[:name])
+
           base_config = route_set.resource_route_config_for(assoc_info[:plural])[0]
-          next unless base_config
+          unless base_config
+            raise_unregistered_nested_association(resource, assoc_info) if declared
+            next
+          end
 
           # Register with association-based key: "parent_plural/association_name"
           # Force route_type: :resources — has_many associations always nest as a
@@ -139,8 +152,13 @@ module Plutonium
 
         # has_one associations use singular routes
         resource.routable_has_one_associations.each do |assoc_info|
+          next if allowed && !allowed.include?(assoc_info[:name])
+
           base_config = route_set.resource_route_config_for(assoc_info[:plural])[0]
-          next unless base_config
+          unless base_config
+            raise_unregistered_nested_association(resource, assoc_info) if declared
+            next
+          end
 
           # Register with association-based key and singular route type
           nested_key = "#{resource.model_name.plural}/#{assoc_info[:name]}"
@@ -161,6 +179,51 @@ module Plutonium
             define_singleton_method(:collection, original_collection)
           end
         end
+      end
+
+      # The associations a parent may draw nested routes for.
+      #
+      # nil means every routable association, which is what `:detected` does for
+      # a registration that named none. An array is a closed list, and an empty
+      # one is a real answer: `:declared` with nothing named draws nothing.
+      #
+      # A declared name that is not a routable association fails the boot. The
+      # whole point of naming them is to stop guessing which routes exist, so a
+      # typo that silently draws one route fewer would defeat it.
+      #
+      # @param resource [Class] The parent resource class.
+      # @param declared [Array<Symbol>, nil] the associations named at registration.
+      # @return [Array<Symbol>, nil]
+      # @raise [ArgumentError] if a declared name is not a routable association.
+      def nested_route_associations(resource, declared)
+        if declared.nil?
+          return nil if Plutonium.configuration.nested_association_routes == :detected
+
+          return []
+        end
+
+        routable = (resource.routable_has_many_associations +
+                    resource.routable_has_one_associations).map { |info| info[:name] }
+        unknown = declared - routable
+        if unknown.any?
+          raise ArgumentError,
+            "#{resource} is registered with `associations: #{declared.inspect}`, but " \
+            "#{unknown.map(&:inspect).join(", ")} #{(unknown.size == 1) ? "is not a" : "are not"} " \
+            "routable #{"association".pluralize(unknown.size)} on it. " \
+            "Available: #{routable.empty? ? "(none)" : routable.map(&:inspect).join(", ")}. " \
+            "Nested routes are drawn for has_many and has_one only."
+        end
+
+        declared
+      end
+
+      # @raise [ArgumentError] always
+      def raise_unregistered_nested_association(resource, assoc_info)
+        raise ArgumentError,
+          "#{resource} declares `associations: [:#{assoc_info[:name]}]`, but " \
+          "#{assoc_info[:klass]} is not registered in this portal, so there is no " \
+          "route to nest under it. Add `register_resource #{assoc_info[:klass]}` " \
+          "alongside it, or drop :#{assoc_info[:name]} from the list."
       end
 
       # Defines member-level interactive actions.

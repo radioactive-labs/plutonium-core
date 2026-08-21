@@ -128,6 +128,16 @@ For each call, Plutonium auto-generates:
 
 You list every resource the portal exposes. If a resource isn't registered, it has no URLs in that portal — `resource_url_for` will fail.
 
+### Choosing nested associations
+
+Name the associations that get nested routes, and the rest are not drawn:
+
+```ruby
+register_resource ::Post, associations: %i[comments post_detail]
+```
+
+`associations: []` draws none, and a name that is not a routable association fails the boot. Set `config.nested_association_routes = :declared` to make naming them the rule — see [Tenancy › Nested resources](../tenancy/nested-resources#declaring-which-associations-get-routes).
+
 ### Singular (singleton) resources
 
 For resources with no collection — a single per-user `Profile`, app-wide `Settings`, etc.:

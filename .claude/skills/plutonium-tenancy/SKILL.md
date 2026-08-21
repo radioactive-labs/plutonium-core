@@ -323,6 +323,26 @@ Plutonium prefixes nested routes with `nested_` to avoid conflicts with the top-
 
 For `has_one`: index redirects to show (or new if no record exists); only one record per parent.
 
+### Choosing which associations get routes
+
+Every routable association gets a nested route unless the registration narrows it:
+
+```ruby
+register_resource ::Company, associations: %i[properties company_profile]
+```
+
+`associations: []` draws none. A name that is not a `has_many`/`has_one`, or whose
+child is not registered in that portal, raises at boot.
+
+`config.nested_association_routes = :declared` (default `:detected`) makes a resource
+that names none get none. The mode only changes what silence means; `associations:`
+behaves the same either way, and top-level routes are unaffected.
+
+**Before turning `:declared` on:** it is global, so every resource naming nothing
+loses its nested routes, and a policy's `permitted_associations` panel links to the
+nested route — permit an association there without declaring it here and the panel
+points nowhere.
+
 ## Automatic behavior in nested routes
 
 When the controller is hit through a nested route:
