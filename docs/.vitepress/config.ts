@@ -45,6 +45,28 @@ export default defineConfig(withMermaid({
       : []),
   ],
   ignoreDeadLinks: 'localhostLinks',
+  // A blog post shared as a link is its own thing, not the homepage. Give each
+  // one an og card built from the frontmatter it already declares; every other
+  // page keeps the site-wide card from `head` above.
+  //
+  // `mergeHead` keys on the FIRST attribute of each meta tag, so `property` and
+  // `name` have to lead here exactly as they do in `head`, or these append
+  // alongside the site tags instead of replacing them.
+  transformHead({ pageData }) {
+    const { relativePath, frontmatter } = pageData
+    // Same date test the loader and the feed use to tell a post from the index.
+    if (!relativePath.startsWith("blog/") || !frontmatter.date) return []
+
+    const url = `${hostname}/${relativePath.replace(/\.md$/, "")}`
+    return [
+      ["meta", { property: "og:type", content: "article" }],
+      ["meta", { property: "og:title", content: frontmatter.title }],
+      ["meta", { property: "og:description", content: frontmatter.description }],
+      ["meta", { property: "og:url", content: url }],
+      ["meta", { name: "twitter:title", content: frontmatter.title }],
+      ["meta", { name: "twitter:description", content: frontmatter.description }],
+    ] as HeadConfig[]
+  },
   srcExclude: ['superpowers/**'],
   vite: {
     plugins: [
