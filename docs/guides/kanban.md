@@ -396,7 +396,7 @@ By default Plutonium uses decimal fractional positioning: cards always slot exac
 
 ### Position modes
 
-`position_on` is the same verb inside and outside `kanban do…end`. Declared on the **definition** it makes the resource's index table and card grid [drag-reorderable](/reference/positioning); declared inside the board it configures the board. A board that declares none **inherits the definition's** (falling back to `:position`, Mode A), so a resource that already reorders in its table needs nothing extra here. Declaration order in the class body doesn't matter — the board resolves this lazily.
+`position_on` is the same verb inside and outside `kanban do…end`. Declared on the **definition** it makes the resource's index table and card grid [drag-reorderable](/reference/resource/positioning); declared inside the board it configures the board. A board that declares none **inherits the definition's** (falling back to `:position`, Mode A), so a resource that already reorders in its table needs nothing extra here. Declaration order in the class body doesn't matter — the board resolves this lazily.
 
 ```ruby
 kanban do
@@ -424,7 +424,7 @@ kanban do
 end
 ```
 
-See [Positioning reference](/reference/kanban/positioning) for the full API and the rebalancing behavior when the decimal gap is exhausted, and [Positioning & drag-to-reorder](/reference/positioning) for the table/grid side of the same feature.
+See [Positioning reference](/reference/kanban/positioning) for the full API and the rebalancing behavior when the decimal gap is exhausted, and [Positioning & drag-to-reorder](/reference/resource/positioning) for the table/grid side of the same feature.
 
 ---
 

@@ -500,7 +500,7 @@ The URL template is built off `current_page_path` (not `request.path`) so a post
 
 **Accessibility.** Focus the grip and use <kbd>↑</kbd>/<kbd>↓</kbd> — deliberately linear even on a wrapped grid, since one position attribute stores a 1-D order. Focus is restored onto the same record's grip after a stream replaces the collection. ⚠️ Native HTML5 drag does **not** fire on touch devices (inherited from kanban); there is no automatic fallback.
 
-Components: `lib/plutonium/ui/table/components/drag_handle.rb`, `lib/plutonium/ui/component/positionable.rb`, `src/js/controllers/positioned_controller.js`. Reference: `docs/reference/positioning.md`.
+Components: `lib/plutonium/ui/table/components/drag_handle.rb`, `lib/plutonium/ui/component/positionable.rb`, `src/js/controllers/positioned_controller.js`. Reference: `docs/reference/resource/positioning.md`.
 
 ---
 

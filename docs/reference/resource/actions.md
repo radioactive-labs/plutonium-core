@@ -181,7 +181,7 @@ An action declared `hidden: true` renders in **no** toolbar, row dropdown, card,
 action :reposition, hidden: true
 ```
 
-The use case is an endpoint reached by **something other than a button** — a drag gesture, a custom Stimulus controller, a client-side widget you wrote yourself. The framework uses it for exactly that: [`position_on`](/reference/positioning) expands to `action :reposition, hidden: true`, and the kanban board's drop endpoint is declared the same way.
+The use case is an endpoint reached by **something other than a button** — a drag gesture, a custom Stimulus controller, a client-side widget you wrote yourself. The framework uses it for exactly that: [`position_on`](/reference/resource/positioning) expands to `action :reposition, hidden: true`, and the kanban board's drop endpoint is declared the same way.
 
 ### `hidden:` vs `condition: -> { false }`
 

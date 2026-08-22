@@ -7,7 +7,7 @@ require "test_helper"
 # position_actions_test.rb covers Mode B's plumbing with stub blocks (what the
 # Move carries, that a block write always streams). This file covers the thing
 # a stub cannot: whether the acts_as_list recipe published in
-# docs/reference/positioning.md and .claude/skills/plutonium-resource/SKILL.md
+# docs/reference/resource/positioning.md and .claude/skills/plutonium-resource/SKILL.md
 # actually lands rows where it claims to, driven through the real endpoint.
 #
 # The fixture is Chore — `acts_as_list scope: [:status]`, an INTEGER position,
