@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.64.0] - 2026-08-22
+
+### Miscellaneous Tasks
+
+- [**breaking**] Drop Ruby 3.2, pin pagy past CVE-2026-54659 ([#79](https://github.com/radioactive-labs/plutonium-core/issues/79))
+
 ## [0.63.0] - 2026-08-22
 
 ### Bug Fixes
