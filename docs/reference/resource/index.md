@@ -42,6 +42,8 @@ A `field :title` with no options that matches what Plutonium would auto-detect i
 - [Definition](./definition) — fields, inputs, displays, columns, page chrome, metadata panel, index views
 - [Query](./query) — search, filters, scopes, sorting
 - [Actions](./actions) — custom actions, bulk actions, interaction integration
+- [Positioning & drag-to-reorder](./positioning) — `positioned_on`, `position_on`, the drag grip, `reposition?`
+- [CSV Export](./export) — streamed export, opt-in through the policy
 
 ## Related
 

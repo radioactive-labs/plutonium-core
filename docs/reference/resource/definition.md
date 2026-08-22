@@ -770,7 +770,7 @@ All three inherit to subclasses, so a portal-specific definition keeps its paren
 
 - **Modals are unaffected** — a dialog sizes itself via `modal_size`.
 - **Interactions** (`Plutonium::Interaction::Base`) support the same settings, for interactive actions rendered as standalone pages.
-- **Wizards are configured separately**, via `Plutonium.configuration.wizards.width`. It defaults to `default_page_width`, so a wizard step carrying a `form_layout` renders those sections at the same width the identical sections get on a resource form.
+- **Wizards are configured separately**, via `Plutonium.configuration.wizards.width`. It defaults to `:md` independently of `default_page_width`, so widening resource pages leaves wizard steps where they are. Set both if you want them to match.
 
 ## File uploads
 

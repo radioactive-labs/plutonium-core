@@ -6,7 +6,7 @@ class ChoreDefinition < ::ResourceDefinition
     scope.where("title LIKE ?", "%#{query}%")
   end
 
-  # ── Mode B, verbatim from docs/reference/positioning.md ────────────────────
+  # ── Mode B, verbatim from docs/reference/resource/positioning.md ───────────
   #
   # The model owns nothing of Plutonium's positioning: no
   # Plutonium::Positioning::Model, no positioned_on. acts_as_list owns both the

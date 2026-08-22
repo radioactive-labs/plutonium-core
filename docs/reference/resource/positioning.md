@@ -469,7 +469,8 @@ The client moves the row **optimistically**, so the response is deliberately qui
 |---|---|
 | Clean Mode A drop, both neighbours resolved | `204 No Content` — nothing repaints |
 | `reposition!` had to rebalance the group | `200` + turbo-stream of the collection |
-| A neighbour did not resolve, or belongs to another positioning group | `200` + stream |
+| A neighbour did not resolve, or belongs to another positioning group, but the other one anchored the drop | `200` + stream — the record **did** move, so there is nothing to explain |
+| Both neighbours rejected | `200` + stream, **no write** — plus a toast when the cause was a foreign group rather than transient drift |
 | Mode B (opaque block write) | `200` + stream |
 | `reposition?` denied | `403` + stream + toast (the row snaps back) |
 | `index?` denied | `403`, **no body** — you may not see the list, so the refusal must not carry it to you |

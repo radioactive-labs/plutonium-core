@@ -1138,7 +1138,7 @@ action :reposition, hidden: true # route + policy predicate, no button
 - **`scope:` is the model author's job.** A globally positioned model rendered under a parent still reorders correctly per parent — but a rebalance renumbers every row in the table, not just that parent's.
 - Native HTML5 drag doesn't fire on **touch** devices (same limitation as kanban). Keyboard works: focus the grip, <kbd>↑</kbd>/<kbd>↓</kbd>.
 
-Full reference: `docs/reference/positioning.md`. Kanban specifics: `docs/reference/kanban/positioning.md`.
+Full reference: `docs/reference/resource/positioning.md`. Kanban specifics: `docs/reference/kanban/positioning.md`.
 
 ---
 

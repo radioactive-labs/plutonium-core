@@ -119,7 +119,7 @@ See [Wizards](/guides/wizards) for the full DSL, including per-step writes, resu
 
 ## The thing underneath the board
 
-Kanban did not invent its ordering. It uses the same fractional positioning that powers [drag-to-reorder](/reference/positioning) on ordinary index tables, card grids and nested association tables. `positioned_on` on the model says how positions are stored, `position_on` in the definition says the list is orderable, and a drop writes exactly one decimal, the midpoint between its two neighbours. No renumbering sweep across the table.
+Kanban did not invent its ordering. It uses the same fractional positioning that powers [drag-to-reorder](/reference/resource/positioning) on ordinary index tables, card grids and nested association tables. `positioned_on` on the model says how positions are stored, `position_on` in the definition says the list is orderable, and a drop writes exactly one decimal, the midpoint between its two neighbours. No renumbering sweep across the table.
 
 A board and a sortable table are the same feature wearing different clothes, which is why they share a vocabulary. Positioning itself is stable, not experimental.
 

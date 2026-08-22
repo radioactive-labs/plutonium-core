@@ -49,7 +49,7 @@ Default: `nil` (unlimited).
 
 Controls how card positions are persisted after a drag-and-drop. Three modes:
 
-**Inherited from the definition.** `position_on` is the same verb outside `kanban do…end`, where it makes the resource's [table and grid drag-reorderable](/reference/positioning). A board with no `position_on` of its own uses the **definition's**, falling back to the historic default (`:position`, Mode A). Declaring it inside the board overrides that. Resolution is lazy, so declaration order in the class body does not matter.
+**Inherited from the definition.** `position_on` is the same verb outside `kanban do…end`, where it makes the resource's [table and grid drag-reorderable](/reference/resource/positioning). A board with no `position_on` of its own uses the **definition's**, falling back to the historic default (`:position`, Mode A). Declaring it inside the board overrides that. Resolution is lazy, so declaration order in the class body does not matter.
 
 #### Mode A — delegate to `Plutonium::Positioning::Model` (default)
 

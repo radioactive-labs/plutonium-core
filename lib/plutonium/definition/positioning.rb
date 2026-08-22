@@ -62,7 +62,7 @@ module Plutonium
           # its own `default_sort` means every resource under it renders the grip
           # in the disabled state until the user sorts by position. That is the
           # intended precedence — the app asked for that ordering — and it is
-          # documented in docs/reference/positioning.md.
+          # documented in docs/reference/resource/positioning.md.
           default_sort config.attribute, :asc if _default_sort.equal?(Sorting::DEFAULT_SORT)
 
           # Hidden: it has a POST member route (routing/mapper_extensions.rb) and

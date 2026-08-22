@@ -8,7 +8,7 @@
 # fractional decimals) covers the framework-owned half.
 #
 # The pairing is what keeps the worked acts_as_list example in
-# docs/reference/positioning.md honest: the definition runs the documented
+# docs/reference/resource/positioning.md honest: the definition runs the documented
 # snippet verbatim, against the real gem, through the real endpoint.
 class Chore < ::ResourceRecord
   # add concerns above.
