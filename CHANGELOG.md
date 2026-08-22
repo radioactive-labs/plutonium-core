@@ -2,6 +2,73 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.63.0] - 2026-08-22
+
+### Bug Fixes
+
+- Normalize default_phone_country to lowercase ISO2
+- Stop formatter: leaking into typed display components
+- Stop copied input classes from restyling the slim select panel
+- Explain the draft-only Publish menu with both action policies
+- Show the PublishPost interaction and unclip long file captions
+- Drop the redundant is_a? guard from the tour policy snippet
+- Nest litestream and job roles under servers: in generated deploy.yml
+- Let action dropdowns size to their longest label ([#70](https://github.com/radioactive-labs/plutonium-core/issues/70))
+- [**breaking**] Isolate Rodauth session state per configuration ([#73](https://github.com/radioactive-labs/plutonium-core/issues/73))
+- Stop a nil entity_scope persisting in the policy context ([#74](https://github.com/radioactive-labs/plutonium-core/issues/74))
+- Stop a component-class `as:` crashing on `to_sym` ([#75](https://github.com/radioactive-labs/plutonium-core/issues/75))
+- Honour `as: :hidden` when declared on input ([#83](https://github.com/radioactive-labs/plutonium-core/issues/83))
+- Resolve the parent on routes nested under a singular resource ([#81](https://github.com/radioactive-labs/plutonium-core/issues/81))
+- [**breaking**] Decide wizard finalize after staging the submission ([#89](https://github.com/radioactive-labs/plutonium-core/issues/89))
+- Size layouts to the visible viewport, not 100vh ([#90](https://github.com/radioactive-labs/plutonium-core/issues/90))
+- Call to_s on attachment filename before Phlex title attribute ([#92](https://github.com/radioactive-labs/plutonium-core/issues/92))
+- Relation_scope written as an instance method silently does nothing ([#96](https://github.com/radioactive-labs/plutonium-core/issues/96))
+- Stop Turbo's cross-document node swap failing system tests ([#98](https://github.com/radioactive-labs/plutonium-core/issues/98))
+- Retry slim-select instead of waiting on it ([#105](https://github.com/radioactive-labs/plutonium-core/issues/105))
+- Apply an association's scope when creating through a nested route ([#106](https://github.com/radioactive-labs/plutonium-core/issues/106))
+
+### Documentation
+
+- Add homepage depth & proof upgrade design spec
+- Warn that :root token overrides must be mirrored in .dark
+
+### Features
+
+- Allow opting out of the grid card footer with `footer: false`
+- Add render_before_fields/render_after_fields display hooks
+- Hide show-page metadata rail in a kanban card's modal
+- Add link:/button: HTML attribute bags to actions
+- Homepage depth & proof upgrade ([#69](https://github.com/radioactive-labs/plutonium-core/issues/69))
+- Collapse overflowing breadcrumbs, fix singular-route segments ([#72](https://github.com/radioactive-labs/plutonium-core/issues/72))
+- Generate a Rodauth ManagementConstraint when an admin account exists
+- Resolve proc-valued input options on every form ([#87](https://github.com/radioactive-labs/plutonium-core/issues/87))
+- Eager-load what a collection is about to render ([#91](https://github.com/radioactive-labs/plutonium-core/issues/91))
+- Native drag-and-drop reordering for tables, nested tables and grids ([#77](https://github.com/radioactive-labs/plutonium-core/issues/77))
+- Add display_layout and render sections as cards ([#93](https://github.com/radioactive-labs/plutonium-core/issues/93))
+- Constrain standalone form width ([#94](https://github.com/radioactive-labs/plutonium-core/issues/94))
+- Per-wizard width override, independent of resource pages ([#97](https://github.com/radioactive-labs/plutonium-core/issues/97))
+- Resume/cancel flow, pre_submit, and Turbo Stream completion ([#68](https://github.com/radioactive-labs/plutonium-core/issues/68))
+- Run interactions out of band on a persisted, resumable run ([#99](https://github.com/radioactive-labs/plutonium-core/issues/99))
+- Carry files and typed attributes into the run ([#100](https://github.com/radioactive-labs/plutonium-core/issues/100))
+- Install generator, sweep concurrency, and an experimental template ([#101](https://github.com/radioactive-labs/plutonium-core/issues/101))
+- Add a blog with RSS and the Plutonium launch post ([#102](https://github.com/radioactive-labs/plutonium-core/issues/102))
+- Refresh the runs index while work is outstanding ([#104](https://github.com/radioactive-labs/plutonium-core/issues/104))
+- Declare which associations get nested routes ([#107](https://github.com/radioactive-labs/plutonium-core/issues/107))
+
+### Miscellaneous Tasks
+
+- Patch pagy CVE, five npm advisories, refresh appraisal locks ([#78](https://github.com/radioactive-labs/plutonium-core/issues/78))
+- Prune the 0.49.0 notice from post_install_message ([#80](https://github.com/radioactive-labs/plutonium-core/issues/80))
+- Clear 11 npm advisories via lockfile updates
+
+### Refactoring
+
+- Drop is_a? guards from record-action policy methods
+
+### Testing
+
+- Update the nested-association tests to the route-config lookup ([#88](https://github.com/radioactive-labs/plutonium-core/issues/88))
+
 ## [0.62.2] - 2026-07-09
 
 ### Bug Fixes
