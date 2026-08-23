@@ -185,3 +185,37 @@ img.pu-zoomable { cursor: zoom-in; }
 }
 .pu-zoom-close:hover { background: var(--vp-c-bg-mute); transform: scale(1.05); }
 .pu-zoom-close:focus-visible { outline: 2px solid var(--vp-c-brand-1); outline-offset: 2px; }
+
+/* ===== Nav bar fits before it unfolds ===== */
+
+/* VitePress swaps the hamburger for the full nav menu at exactly 768px. This
+   site's nav is seven items wide (~673px), which together with the logo, search
+   and appearance toggle needs about 1000px — so from 768 to 999 the bar did not
+   fit and the PAGE scrolled horizontally, squeezing the content column and
+   everything in it. Keep the hamburger until the menu actually fits.
+
+   These declarations reproduce the state VitePress itself renders below 768px,
+   so the hamburger opens the same nav screen it always did.
+
+   `!important` is load-bearing: the theme's own rule is `.VPNavBarMenu[data-v-…]`,
+   a scoped selector that outranks a plain class whatever the source order. The
+   `data-v` hash is regenerated per VitePress build, so matching its specificity
+   by copying it would break on the next upgrade. */
+@media (min-width: 768px) and (max-width: 999px) {
+  .VPNavBarMenu { display: none !important; }
+  .VPNavBarHamburger { display: flex !important; }
+  .VPNavBarExtra { display: none !important; }
+  .VPNavScreen { display: block !important; }
+}
+
+/* ===== Tables scroll instead of crushing ===== */
+
+/* `.vp-doc table` is `display: block; overflow-x: auto`, so a table CAN scroll —
+   but only once its content is wider than the container. A table whose cells are
+   all prose has no unbreakable token to force that, so instead of scrolling it
+   wraps down to whatever it is given: on a phone that meant columns of 59-89px,
+   a few characters per line. Giving each cell a floor makes the table exceed the
+   container, which is what turns the existing overflow-x into an actual scroll. */
+@media (max-width: 640px) {
+  .vp-doc :is(th, td) { min-width: 7rem; }
+}
