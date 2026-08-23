@@ -12,9 +12,11 @@ aside: false
   :rail="[
     { group: 'App', items: [
       { name: 'Overview', link: '/plutonium-core/reference/app/' },
+      { name: 'Configuration', link: '/plutonium-core/reference/configuration' },
       { name: 'Packages', link: '/plutonium-core/reference/app/packages' },
       { name: 'Portals', link: '/plutonium-core/reference/app/portals' },
       { name: 'Generators', link: '/plutonium-core/reference/app/generators' },
+      { name: 'Lite (SQLite) generators', link: '/plutonium-core/reference/generators/lite' },
     ]},
     { group: 'Resource', items: [
       { name: 'Overview', link: '/plutonium-core/reference/resource/' },
@@ -23,12 +25,14 @@ aside: false
       { name: 'Query', link: '/plutonium-core/reference/resource/query' },
       { name: 'Actions', link: '/plutonium-core/reference/resource/actions' },
       { name: 'Positioning', link: '/plutonium-core/reference/resource/positioning' },
+      { name: 'CSV Export', link: '/plutonium-core/reference/resource/export' },
     ]},
     { group: 'Behavior', items: [
       { name: 'Overview', link: '/plutonium-core/reference/behavior/' },
       { name: 'Controllers', link: '/plutonium-core/reference/behavior/controllers' },
       { name: 'Policies', link: '/plutonium-core/reference/behavior/policies' },
       { name: 'Interactions', link: '/plutonium-core/reference/behavior/interactions' },
+      { name: 'Async interactions', link: '/plutonium-core/reference/behavior/async-interactions' },
     ]},
     { group: 'UI', items: [
       { name: 'Overview', link: '/plutonium-core/reference/ui/' },
