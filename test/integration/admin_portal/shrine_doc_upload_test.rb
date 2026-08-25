@@ -41,4 +41,32 @@ class AdminPortal::ShrineDocUploadTest < ActionDispatch::IntegrationTest
     assert_equal "Report", doc.title
     assert doc.file.present?, "expected the uploaded file to be attached (not consumed during extraction)"
   end
+
+  # Regression for #113: attachment_input_keys only covered inputs explicitly
+  # declared with a file `as:` (:file/:uppy/:attachment). An AUTO-DETECTED
+  # attachment (ShrineDoc's :banner — `has_one_attached` with no `input`
+  # declaration in the definition) was invisible to the guard, got assigned to
+  # the throwaway extraction record, and its single-read upload was consumed —
+  # so the real assignment in create/update raised "IOError: closed stream".
+  test "an upload for an auto-detected (undeclared) attachment survives param extraction" do
+    assert_difference -> { ShrineDoc.count }, 1 do
+      post "/admin/shrine_docs", params: {shrine_doc: {title: "Auto", banner: multipart_png("banner")}}
+    end
+    assert_response :redirect
+
+    doc = ShrineDoc.order(:id).last
+    assert_equal "Auto", doc.title
+    assert doc.banner.present?, "expected the auto-detected attachment to attach (not consumed during extraction)"
+  end
+
+  test "an upload for an auto-detected attachment survives param extraction on update" do
+    doc = ShrineDoc.create!(title: "Before")
+
+    patch "/admin/shrine_docs/#{doc.id}", params: {shrine_doc: {title: "After", banner: multipart_png("banner")}}
+    assert_response :redirect
+
+    doc.reload
+    assert_equal "After", doc.title
+    assert doc.banner.present?, "expected the auto-detected attachment to attach (not consumed during extraction)"
+  end
 end

@@ -188,14 +188,19 @@ module Plutonium
         end
       end
 
-      # Attachment/file input names (as Strings) declared on the current
-      # definition — inputs whose `as:` is a file type (`:file`/`:uppy`/
-      # `:attachment`). Excluded from the extraction-record pre-assignment so a
-      # single-read Rack upload isn't consumed before create/update reads it.
+      # Attachment/file input names (as Strings) for the current resource —
+      # inputs declared with a file `as:` (`:file`/`:uppy`/`:attachment`)
+      # unioned with the attachments reflected on the model, so auto-detected
+      # attachments (no `input` declaration) are covered too. Excluded from the
+      # extraction-record pre-assignment so a single-read Rack upload isn't
+      # consumed before create/update reads it.
       def attachment_input_keys
-        current_definition.defined_inputs.filter_map { |name, config|
+        declared = current_definition.defined_inputs.filter_map { |name, config|
           name.to_s if Plutonium::Definition::InputAliases.file_input?(config.dig(:options, :as))
         }
+        reflected = (resource_class.has_one_attached_field_names + resource_class.has_many_attached_field_names)
+          .map(&:to_s)
+        declared | reflected
       end
 
       # Returns the resource parameters, including scoped and parent parameters

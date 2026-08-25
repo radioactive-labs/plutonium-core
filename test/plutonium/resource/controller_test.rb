@@ -229,6 +229,25 @@ class Plutonium::Resource::ControllerTest < Minitest::Test
     refute_includes keys, "body", "a component-class input is not an attachment input"
   end
 
+  # Regression (#113): attachment_input_keys only covered inputs explicitly
+  # declared with a file `as:`. An auto-detected attachment (reflected on the
+  # model, no `input` declaration in the definition) was invisible, so the
+  # extraction record consumed its single-read upload and the real
+  # create/update assignment raised "IOError: closed stream".
+
+  def test_attachment_input_keys_includes_reflected_model_attachments
+    definition = Class.new(CommentDefinition).new # declares no file inputs
+
+    controller = SubmittedParamsTestController.new
+    controller.instance_variable_set(:@current_definition, definition)
+    controller.define_singleton_method(:resource_class) { ShrineDoc }
+
+    keys = controller.send(:attachment_input_keys)
+
+    assert_includes keys, "file", "reflected attachments should be excluded from pre-assignment"
+    assert_includes keys, "banner", "auto-detected (undeclared) attachments should be excluded from pre-assignment"
+  end
+
   # Test override_entity_scoping_params uses detected association
 
   def test_override_entity_scoping_params_uses_detected_association
