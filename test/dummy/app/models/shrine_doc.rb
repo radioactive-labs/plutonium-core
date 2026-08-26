@@ -8,4 +8,7 @@ class ShrineDoc < ApplicationRecord
   include ActiveShrine::Model
 
   has_one_attached :file
+  # Deliberately NOT declared as an input in any definition — exercises the
+  # auto-detected attachment path in resource param extraction.
+  has_one_attached :banner
 end
