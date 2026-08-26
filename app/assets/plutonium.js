@@ -28440,10 +28440,19 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
       document.body.style.overflow = this._previousBodyOverflow;
       this._previousBodyOverflow = null;
     }
-    // Reset every input under this controller's scope, then submit so the
-    // table reflects the cleared filters immediately.
+    // Reset every input in the FILTER form, then submit it so the collection
+    // reflects the cleared filters immediately.
+    //
+    // Scoped to #filter-form, NOT the whole controller element: the toolbar's
+    // search box is a separate <form> that lives in the same scope but before
+    // this one. Submitting that bare form (or clearing its inputs) would drop the
+    // view / sort / scope state the filter form preserves via hidden inputs —
+    // which on the kanban board bounced the user back to the table (the dropped
+    // ?view=kanban fell through to the default view).
     clear() {
-      this.element.querySelectorAll("input, select, textarea").forEach((input) => {
+      const form = this.element.querySelector("#filter-form");
+      if (!form) return;
+      form.querySelectorAll("input, select, textarea").forEach((input) => {
         if (input.type === "checkbox" || input.type === "radio") {
           input.checked = false;
         } else if (input.tagName === "SELECT") {
@@ -28454,12 +28463,11 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
           input.value = "";
         }
       });
-      this.element.querySelectorAll('[data-controller="flatpickr"]').forEach((input) => {
+      form.querySelectorAll('[data-controller="flatpickr"]').forEach((input) => {
         const controller = this.application.getControllerForElementAndIdentifier(input, "flatpickr");
         if (controller?.picker) controller.picker.clear();
       });
-      const form = this.element.querySelector("form");
-      if (form) form.requestSubmit();
+      form.requestSubmit();
     }
     get isOpen() {
       return this.hasPanelTarget && this.panelTarget.hasAttribute("data-open");

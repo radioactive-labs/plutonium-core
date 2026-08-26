@@ -3,6 +3,8 @@ class TaskDefinition < ::ResourceDefinition
     scope.where("title LIKE ?", "%#{query}%")
   end
 
+  filter :status, with: :select, choices: %w[todo doing done lost blocked archived review]
+
   # Mode A drag-reorder on the table/grid surfaces. The MODEL already declares
   # `positioned_on :position, scope: :status`; this only says the UI can be
   # reordered. The kanban board below inherits this config (it declares no
