@@ -66,4 +66,24 @@ class Plutonium::Wizard::WidthTest < Minitest::Test
       assert_equal :xl, klass.width, "reading must not reset the configured width"
     end
   end
+
+  # A shared base class is the normal way to give a family of wizards one look
+  # (`class IntakeWizard < Plutonium::Wizard::Base; width :xl; end`). Without
+  # this the subclass silently fell back to the configured default.
+  def test_width_is_inherited
+    with_config(wizards: :md) do
+      base = wizard { width :xl }
+      assert_equal :xl, Class.new(base).width, "subclass inherits the declared width"
+      assert_equal :xl, Class.new(Class.new(base)).width, "and down the chain"
+    end
+  end
+
+  def test_subclass_can_override_the_inherited_width
+    with_config(wizards: :md) do
+      base = wizard { width :xl }
+      sub = Class.new(base) { width :sm }
+      assert_equal :sm, sub.width
+      assert_equal :xl, base.width, "the subclass must not mutate its parent"
+    end
+  end
 end
