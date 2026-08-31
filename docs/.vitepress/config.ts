@@ -192,6 +192,7 @@ export default defineConfig(withMermaid({
             { text: "Portals", link: "/reference/app/portals" },
             { text: "Generators", link: "/reference/app/generators" },
             { text: "Lite (SQLite) Generators", link: "/reference/generators/lite" },
+            { text: "Doctor", link: "/reference/app/doctor" },
           ]
         },
         {

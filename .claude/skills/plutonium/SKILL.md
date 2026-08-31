@@ -169,7 +169,25 @@ Every Plutonium generator is discoverable via `rails g pu:<tab>`. Always pass `-
 | `pu:eject:shell` | Eject topbar/sidebar partials | `plutonium-ui` |
 | `pu:test:install` | Install `Plutonium::Testing` scaffolding | `plutonium-testing` |
 | `pu:test:scaffold NAME --portals=...` | Scaffold integration tests | `plutonium-testing` |
+| `pu:core:doctor` | Check the app for mistakes that fail silently | (this skill) |
 | `pu:skills:sync` | Sync Plutonium Claude skills into the project | (this skill) |
+
+## Checking your work — `pu:core:doctor`
+
+```bash
+bin/rails g pu:core:doctor            # --strict to fail on warnings too, for CI
+```
+
+Writes nothing. Boots the app, walks every portal's resources, and reports the mistakes Plutonium cannot raise on — the ones that are legal, run, and quietly do nothing:
+
+| Check | What it catches |
+|---|---|
+| `missing_policy_rule` (error) | An action with no `<action>?` on the policy. ActionPolicy answers `false` for a rule that doesn't exist, so the button silently never renders. |
+| `autodetected_permitted_attributes` (error) | A policy that never declares `permitted_attributes_for_create` / `_read`. Logs a warning in development, **raises in production**. |
+| `condition_as_authorization` (warning) | A `condition:` doing the user check while the policy predicate doesn't. Hides the button; the route stays live. |
+| `redundant_field_declaration` (warning) | A `field` / `display` / `column` carrying no options and no block. Dead code, per §1 above. |
+
+**Run it after generating or editing definitions and policies.** These are the exact rules this skill teaches, and the doctor is the only thing that checks whether you followed them. A finding you believe is wrong goes in `.plutonium-doctor.yml` (`disable:` a check, or `ignore:` the key the report prints) — don't leave it unexplained.
 
 ## Unattended execution
 
@@ -192,4 +210,5 @@ Meta-generators (`pu:saas:setup`) propagate flags to the generators they chain. 
 3. **Migrate** — `rails db:prepare`.
 4. **Connect** — `rails g pu:res:conn Model --dest=portal_name`.
 5. **Customize** — edit definition / policy as needed.
-6. **Verify** — hit the route in the browser.
+6. **Check** — `rails g pu:core:doctor`.
+7. **Verify** — hit the route in the browser.

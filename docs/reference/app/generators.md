@@ -31,6 +31,7 @@ Plutonium's `pu:*` CLI generators. Discoverable via `rails g pu:<tab>`. Always p
 | [`pu:eject:shell`](#pu-eject-shell) | Eject topbar/sidebar partials |
 | [`pu:test:install`](#pu-test-install) | Install `Plutonium::Testing` scaffolding |
 | [`pu:test:scaffold`](#pu-test-scaffold) | Scaffold integration tests per (resource × portal) |
+| [`pu:core:doctor`](#pu-core-doctor) | Check the app for mistakes that fail silently |
 | [`pu:core:update`](#pu-core-update) | Update plutonium gem + npm package |
 | [`pu:skills:sync`](#pu-skills-sync) | Sync Plutonium Claude skills into the project |
 
@@ -351,6 +352,18 @@ rails g pu:core:assets
 ```
 
 See [UI › Assets](/reference/ui/assets) for what gets configured.
+
+### `pu:core:doctor`
+
+Check the application for Plutonium mistakes that fail silently: an action with no policy predicate, a policy that never declares its permitted attributes, a `condition:` standing in for authorization, a field declaration that repeats what was already inferred.
+
+```bash
+rails g pu:core:doctor
+rails g pu:core:doctor --strict           # warnings fail too, for CI
+rails g pu:core:doctor --portal=admin_portal
+```
+
+Writes nothing. Exits non-zero on errors, or on anything at all with `--strict`. See [App › Doctor](./doctor) for each check and for `.plutonium-doctor.yml`.
 
 ### `pu:core:update`
 

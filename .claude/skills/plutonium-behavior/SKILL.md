@@ -46,6 +46,8 @@ Then resolve the specifics:
 4. **`has_cents`** ⇒ permit `:price`, never `:price_cents`.
 5. **New vs editing** — never re-scaffold a controller/policy/interaction that's been customized.
 
+**Check yourself with `bin/rails g pu:core:doctor`** after editing a policy or a definition's actions. It reports exactly rules 1 and 2 above — an action with no policy predicate (`missing_policy_rule`), a `condition:` doing the user check the policy doesn't (`condition_as_authorization`), and a policy that never declares `permitted_attributes_for_create` / `_read` (`autodetected_permitted_attributes`, which raises in production and only logs in development). See [[plutonium]] › Checking your work.
+
 **Never ship a guessed role method, column, enum value, or association as applied code.** `user.finance?`, `record.status_approved?`, `expense.submitted_by` either exist in the app or they don't — confirm them before writing, don't assume. Fall back to `AskUserQuestion` only for genuine product choices (what the rule *should* be), never for facts you can read.
 
 ## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
