@@ -975,6 +975,9 @@ html.pu-rail-pinned .icon-rail-pin-expand {
 }
 .pu-wizard-steps .pu-step-label {
   @apply block mt-2 font-bold; font-size: .8rem; color: var(--pu-text-muted);
+  /* A 13+ step wizard gives each label a narrow column; without this a single
+     long word ("organisation") overflows and collides with its neighbours. */
+  overflow-wrap: anywhere; hyphens: auto;
 }
 .pu-wizard-steps a.pu-step-link:hover .pu-step-label { @apply underline; }
 

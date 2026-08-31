@@ -344,6 +344,7 @@ module Plutonium
           subclass.instance_variable_set(:@anchor_resolver, @anchor_resolver)
           subclass.instance_variable_set(:@navigation, @navigation)
           subclass.instance_variable_set(:@stepper, @stepper)
+          subclass.instance_variable_set(:@width, @width)
           subclass.instance_variable_set(:@on_relaunch, @on_relaunch)
           subclass.instance_variable_set(:@cleanup_after, @cleanup_after)
           subclass.instance_variable_set(:@cleanup_after_set, @cleanup_after_set)
