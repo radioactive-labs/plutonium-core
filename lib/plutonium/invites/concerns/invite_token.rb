@@ -115,16 +115,26 @@ module Plutonium
         #
         # This method:
         # 1. Validates email constraints
-        # 2. Marks the invite as accepted
-        # 3. Creates the entity membership
-        # 4. Notifies the invitable (if present)
+        # 2. Acquires a row lock and re-checks the pending state to serialize
+        #    concurrent acceptances (prevents a TOCTOU race from creating
+        #    memberships for multiple users from a single invite when
+        #    `enforce_email?` is false)
+        # 3. Marks the invite as accepted
+        # 4. Creates the entity membership
+        # 5. Notifies the invitable (if present)
         #
         # @param user [Object] the user accepting the invitation
-        # @raise [ActiveRecord::RecordInvalid] if acceptance fails
+        # @raise [ActiveRecord::RecordInvalid] if acceptance fails (e.g. the
+        #   invite was already accepted by a concurrent request)
         def accept_for_user!(user)
           validate_email_constraints!(user.email)
 
-          transaction do
+          with_lock do
+            unless pending?
+              errors.add(:base, "This invitation has already been accepted")
+              raise ActiveRecord::RecordInvalid.new(self)
+            end
+
             update!(
               :state => :accepted,
               :accepted_at => Time.current,
