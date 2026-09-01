@@ -142,6 +142,60 @@ class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
     assert_equal "'+1", row[2]
   end
 
+  # Full-width (double-byte) variants of the formula initiators — ＝ ＋ － ＠
+  # (U+FF1D/FF0B/FF0D/FF20) — are interpreted as formulas in East Asian
+  # locales (e.g. Japanese Excel; see OWASP CSV Injection guidance). They must
+  # be neutralized just like their ASCII counterparts, but the *original*
+  # (un-normalized) value is what carries the quote prefix so legitimate
+  # full-width content is preserved verbatim.
+  def test_neutralizes_full_width_formula_characters
+    controller = build_controller(rows: [], exportable: [:name])
+
+    %w[＝ ＋ － ＠].each do |char|
+      payload = "#{char}1+1"
+      assert_equal "'#{payload}", controller.send(:neutralize_csv_formula, payload),
+        "full-width #{char} should be neutralized like its ASCII counterpart"
+    end
+  end
+
+  # The quote is prefixed to the original string, NOT the NFKC-normalized one,
+  # so full-width content is preserved verbatim (only a defensive `'` is added).
+  def test_neutralize_preserves_original_full_width_content_verbatim
+    controller = build_controller(rows: [], exportable: [:name])
+    payload = "＝cmd|' /C calc'!A0"
+    neutralized = controller.send(:neutralize_csv_formula, payload)
+
+    assert_equal "'#{payload}", neutralized
+    refute_equal "'=cmd|' /C calc'!A0", neutralized,
+      "must not replace the full-width char with its ASCII form in the output"
+  end
+
+  # No regression: ASCII initiators and leading tab/CR are still neutralized,
+  # and non-string / empty values are still handled without raising.
+  def test_still_neutralizes_ascii_and_handles_non_string_values
+    controller = build_controller(rows: [], exportable: [:name])
+
+    ["=", "+", "-", "@", "\t", "\r"].each do |char|
+      payload = "#{char}1"
+      assert_equal "'#{payload}", controller.send(:neutralize_csv_formula, payload),
+        "ASCII #{char.inspect} should still be neutralized"
+    end
+    assert_equal "", controller.send(:neutralize_csv_formula, "")
+    assert_equal "'-5", controller.send(:neutralize_csv_formula, -5)
+    assert_equal "", controller.send(:neutralize_csv_formula, nil)
+  end
+
+  # No false positives: ordinary ASCII and legitimate full-width Japanese
+  # content (katakana, full-width digits/letters) are left untouched.
+  def test_leaves_legitimate_full_width_and_plain_content_untouched
+    controller = build_controller(rows: [], exportable: [:name])
+
+    ["Alpha", "100", "hello world", "ア", "１２３", "カタカナ", "Ａｌｐｈａ"].each do |value|
+      assert_equal value, controller.send(:neutralize_csv_formula, value),
+        "#{value.inspect} should not gain a spurious quote prefix"
+    end
+  end
+
   def test_leaves_ordinary_values_untouched
     controller = build_controller(rows: [Row.new(1, "Alpha", "active")], exportable: [:name])
     assert_equal ["1", "Alpha"], export_table(controller)[1]
