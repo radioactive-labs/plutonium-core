@@ -191,6 +191,14 @@ module Plutonium
               endpoint: attributes[:endpoint] || "/upload"
             }.each do |key, default_value|
               value = attributes.key?(key) ? attributes.delete(key) : default_value
+              # The attachment-input controller declares Array/Object value types,
+              # which Stimulus reads with JSON.parse. Phlex would otherwise render an
+              # array attribute space-joined (its class-list behaviour), so
+              # allowed_file_types: [".csv", "text/csv"] reached the controller as
+              # ".csv text/csv" and JSON.parse threw on connect — after the native
+              # file input was already hidden, leaving no usable file picker. Emit
+              # structured values as JSON, matching intl_tel_input's options.
+              value = value.to_json if value.is_a?(Array) || value.is_a?(Hash)
               direct_upload_options[:data][:"attachment_input_#{key}_value"] = value
             end
 
