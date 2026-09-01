@@ -69,10 +69,15 @@ module Plutonium
           ::Invites::UserInvite
         end
 
-        # Override to specify the membership model class
+        # Override to specify the membership model class. There is no default
+        # because the membership join model is app-specific (e.g. OrganizationUser).
+        # Omitting the override raises NotImplementedError so the failure is
+        # actionable instead of a confusing NameError on a non-existent constant.
         # @return [Class]
         def membership_class
-          EntityMembership
+          raise NotImplementedError,
+            "#{self.class}#membership_class must return the membership model class. " \
+            "Specify --membership-model when generating, or override this method."
         end
 
         # Override to specify the user model class

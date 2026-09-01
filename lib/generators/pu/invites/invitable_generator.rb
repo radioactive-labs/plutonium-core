@@ -22,7 +22,7 @@ module Pu
         desc: "The user model name"
 
       class_option :membership_model, type: :string,
-        desc: "The membership model name (defaults to EntityUser)"
+        desc: "The membership model name (e.g. OrganizationUser). When omitted, the generated interaction has no membership_class override and you must implement it yourself"
 
       class_option :dest, type: :string, default: "main_app",
         desc: "Destination package for the interaction"
@@ -49,6 +49,23 @@ module Pu
           errors.each { |e| say_status :error, e, :red }
           raise Thor::Error, "Required files missing. Ensure #{model_class} resource exists."
         end
+      end
+
+      def warn_membership_model_default
+        return if behavior == :revoke
+        return if options[:membership_model].present?
+
+        say_status :warning,
+          "No --membership-model specified — generated interaction will not include a membership_class override.",
+          :yellow
+        say <<~MSG.indent(2)
+
+          The generated #{model_class}::InviteUserInteraction raises
+          NotImplementedError from #membership_class at runtime until you either:
+            - re-run with --membership-model=NAME (e.g. --membership-model=OrganizationUser), or
+            - manually override #membership_class to return your membership join model.
+
+        MSG
       end
 
       def create_interaction
