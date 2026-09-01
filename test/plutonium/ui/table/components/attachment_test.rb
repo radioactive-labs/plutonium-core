@@ -46,6 +46,29 @@ class Plutonium::UI::Table::Components::AttachmentTest < ActiveSupport::TestCase
     titles
   end
 
+  # Renders render_value with the Phlex DSL stubbed, capturing the text each
+  # element's block evaluates to. Only String return values are returned — the
+  # only String that survives is the extension fallback `div` block
+  # `".#{attachment_extension}"`.
+  def rendered_text(attachment)
+    component = Component.allocate
+    texts = []
+
+    component.define_singleton_method(:attributes) { {} }
+
+    %i[div a span img].each do |tag|
+      component.define_singleton_method(tag) do |*_args, **attrs, &block|
+        texts << block&.call if block
+        nil
+      end
+    end
+    component.define_singleton_method(:plain) { |_text| nil }
+    component.define_singleton_method(:phlexi_render) { |_value, &block| block&.call }
+
+    component.send(:render_value, attachment)
+    texts.grep(String)
+  end
+
   test "title attribute is a plain String, not an ActiveStorage::Filename" do
     titles = render_value(fake_attachment)
 
@@ -55,5 +78,50 @@ class Plutonium::UI::Table::Components::AttachmentTest < ActiveSupport::TestCase
         "title must be a String for Phlex 2.4 attribute validation, got #{title.class}"
     end
     assert_includes titles, "example.jpg"
+  end
+
+  # Regression (commit 08317d68): same double-dot bug as the Display component
+  # (see test/plutonium/ui/display/components/attachment_test.rb), on the table
+  # column renderer. A non-representable ActiveStorage attachment has no
+  # `extension` method, so the helper falls back to `File.extname` (dot-prefixed)
+  # and the render path then prepended another dot → `..pdf`. The fallback must
+  # strip the dot so the result is `.pdf`.
+  test "extension fallback shows a single dot for non-representable ActiveStorage attachments" do
+    att = Object.new
+    att.define_singleton_method(:url) { "/blob/report.pdf" }
+    att.define_singleton_method(:filename) { ActiveStorage::Filename.new("report.pdf") }
+    att.define_singleton_method(:content_type) { "application/pdf" }
+    att.define_singleton_method(:representable?) { false }
+    att.define_singleton_method(:try) { |_m| nil }
+
+    texts = rendered_text(att)
+
+    assert_includes texts, ".pdf",
+      "fallback thumbnail should render '.pdf' (single dot), got #{texts.inspect}"
+    texts.each do |text|
+      refute text.start_with?(".."),
+        "double-dot extension regression: rendered #{text.inspect}"
+    end
+  end
+
+  # `Plutonium::Attachments::Resolved` and Shrine UploadedFile expose
+  # `extension` WITHOUT a leading dot; `try(:extension)` returns that bare value
+  # and the render path must still prepend exactly one dot.
+  test "attachment answering #extension (no dot) still renders a single dot" do
+    att = Object.new
+    att.define_singleton_method(:url) { "/blob/report.pdf" }
+    att.define_singleton_method(:filename) { ActiveStorage::Filename.new("report.pdf") }
+    att.define_singleton_method(:content_type) { "application/pdf" }
+    att.define_singleton_method(:representable?) { false }
+    att.define_singleton_method(:try) { |m| (m == :extension) ? "pdf" : nil }
+
+    texts = rendered_text(att)
+
+    assert_includes texts, ".pdf",
+      "when #extension returns 'pdf' the render must show '.pdf', got #{texts.inspect}"
+    texts.each do |text|
+      refute text.start_with?(".."),
+        "double-dot extension regression: rendered #{text.inspect}"
+    end
   end
 end
