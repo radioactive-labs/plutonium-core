@@ -19,7 +19,7 @@ module Pu
 
           copy_file "config/initializers/001_ensure_required_env.rb"
 
-          gitignore "!/.env", "!/.env.template", "!/.env.local.template", "!/.env.test.local"
+          gitignore "!/.env", "!/.env.template", "!/.env.local.template"
 
           insert_into_file "Gemfile", "\ngem \"dotenv\", groups: %i[development test]\n", after: /^gem ["']rails["'].*\n/
           bundle!
