@@ -115,4 +115,40 @@ class Plutonium::UI::Form::Components::UppyTest < ActiveSupport::TestCase
     assert_includes hidden, "shrine-token",
       "shrine's signed_id must be preserved (it works without persistence)"
   end
+
+  # Builds the direct-upload data options for a component with the given attributes.
+  # `size:` is passed so the loop never touches `field` (unset here).
+  def build_options(attrs)
+    component = Component.allocate
+    component.instance_variable_set(:@attributes, {direct_upload: true, size: 1}.merge(attrs))
+    component.instance_variable_set(:@input_class, "post_image_input")
+    component.send(:build_direct_upload_options)
+  end
+
+  # Regression: the attachment-input controller declares allowedFileTypes as a
+  # Stimulus Array value, read with JSON.parse. Phlex space-joins an array
+  # attribute value (its class-list behaviour), so [".csv", "text/csv"] reached
+  # the controller as ".csv text/csv" and JSON.parse threw on connect — after the
+  # native file input was hidden, leaving the ops user with no file picker at all.
+  test "allowed_file_types is emitted as JSON, not a space-joined string" do
+    value = build_options(allowed_file_types: [".csv", "text/csv"])
+      .dig(:data, :attachment_input_allowed_file_types_value)
+
+    assert_equal [".csv", "text/csv"], JSON.parse(value),
+      "an Array value must round-trip through Stimulus's JSON.parse"
+  end
+
+  test "required_meta_fields (also an Array value type) is emitted as JSON" do
+    value = build_options(required_meta_fields: ["caption"])
+      .dig(:data, :attachment_input_required_meta_fields_value)
+
+    assert_equal ["caption"], JSON.parse(value)
+  end
+
+  test "scalar upload options are left untouched" do
+    data = build_options(endpoint: "/upload")[:data]
+
+    assert_equal "/upload", data[:attachment_input_endpoint_value]
+    assert_equal 1, data[:attachment_input_max_file_num_value]
+  end
 end
