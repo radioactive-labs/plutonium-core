@@ -34,11 +34,35 @@ module Plutonium
           # capped at `limit`. Shared by `choices` (with the limit) and
           # `normalize_simple_input` (without — so typeahead picks beyond the
           # rendered subset still validate).
+          #
+          # The custom `scope:` (set on the Association filter) narrows the
+          # relation BEFORE authorization, so policy can only further reduce —
+          # never widen — what the scope allows. Mirrors the kanban/positioning
+          # scope pattern.
           def authorized_relation(limit: nil)
             relation = @association_class.all
+            relation = apply_scope(relation, @scope)
             relation = relation.limit(limit) if limit && relation.respond_to?(:limit)
             return relation if @skip_authorization
             authorized_resource_scope(@association_class, relation: relation)
+          end
+
+          # Applies an optional association scope to a relation.
+          #   Symbol → relation.public_send(sym)   (named scope, e.g. :verified)
+          #   Proc   → arity 0  → relation.instance_exec(&scope) (kanban form: -> { where(...) })
+          #          → arity ≥1 → scope.call(relation)             (documented form: ->(s) { s.verified })
+          #   nil    → relation unchanged
+          # The arity dispatch matches call_option_proc (Form::Resource) so the
+          # documented `->(s) { s.active }` signature works AND the zero-arg
+          # kanban form works. Unsupported types fail loud rather than silently
+          # doing nothing (the original bug).
+          def apply_scope(relation, scope)
+            case scope
+            when Symbol then relation.public_send(scope)
+            when Proc then scope.arity.zero? ? relation.instance_exec(&scope) : scope.call(relation)
+            when nil then relation
+            else raise ArgumentError, "Unsupported association scope: #{scope.inspect} (expected Symbol, Proc, or nil)"
+            end
           end
 
           def build_attributes
@@ -52,6 +76,7 @@ module Plutonium
 
             @association_class = attributes.delete(:association_class)
             @skip_authorization = attributes.delete(:skip_authorization)
+            @scope = attributes.delete(:scope)
             @choice_limit = attributes.fetch(:choice_limit) { DEFAULT_CHOICE_LIMIT }
             attributes.delete(:choice_limit)
             # Stash the typeahead option; the URL helper needs view_context

@@ -107,7 +107,144 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     assert_equal [:filter, :status], component.send(:detect_typeahead_kind_and_name)
   end
 
+  # ==================== apply_scope dispatch ====================
+  # Regression for the silent-no-op bug: @scope was never consumed. These
+  # prove ResourceSelect applies a scope (Symbol/Proc/nil), mirroring the
+  # kanban Grouping.apply_scope pattern, with arity-based Proc dispatch so
+  # BOTH the documented `->(s) { s.verified }` form AND the zero-arg kanban
+  # form `-> { where(...) }` work.
+
+  def test_apply_scope_with_symbol_calls_named_scope
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User)
+
+    scoped = component.send(:apply_scope, User.all, :verified).where(id: [verified.id, unverified.id])
+
+    assert_includes scoped, verified
+    refute_includes scoped, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_apply_scope_with_proc_taking_relation_arg
+    # Documented form: ->(s) { s.verified }
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User)
+
+    scoped = component.send(:apply_scope, User.all, ->(s) { s.verified }).where(id: [verified.id, unverified.id])
+
+    assert_includes scoped, verified
+    refute_includes scoped, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_apply_scope_with_zero_arity_proc_uses_instance_exec
+    # Kanban form: -> { where(status: <value>) } (self is the relation)
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User)
+
+    scoped = component.send(:apply_scope, User.all, -> { where(status: :verified) }).where(id: [verified.id, unverified.id])
+
+    assert_includes scoped, verified
+    refute_includes scoped, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_apply_scope_with_nil_returns_relation_unchanged
+    relation = User.all
+    component = build_component(association_class: User)
+
+    assert_same relation, component.send(:apply_scope, relation, nil)
+  end
+
+  def test_apply_scope_with_unsupported_type_raises_argument_error
+    component = build_component(association_class: User)
+
+    error = assert_raises(ArgumentError) do
+      component.send(:apply_scope, User.all, 42)
+    end
+    assert_match(/Unsupported association scope/, error.message)
+  end
+
+  # ==================== authorized_relation applies the scope ====================
+  # Proves the scope narrows the dropdown's candidate set BEFORE
+  # authorization, and that omitting a scope keeps the ( capped ) .all set —
+  # i.e. no regression for the no-scope happy path.
+
+  def test_authorized_relation_applies_proc_scope_to_choices
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User, scope: ->(s) { s.verified })
+
+    relation = component.send(:authorized_relation)
+
+    assert_includes relation, verified
+    refute_includes relation, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_authorized_relation_applies_symbol_scope_to_choices
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User, scope: :verified)
+
+    relation = component.send(:authorized_relation)
+
+    assert_includes relation, verified
+    refute_includes relation, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_authorized_relation_without_scope_returns_unscoped_all
+    verified = create_scoped_user(status: :verified)
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User, scope: nil)
+
+    relation = component.send(:authorized_relation)
+
+    assert_includes relation, verified
+    assert_includes relation, unverified
+  ensure
+    [verified, unverified].each { |u| u&.destroy }
+  end
+
+  def test_authorized_relation_applies_scope_before_limit
+    # Scope narrows BEFORE the choice_limit cap, so the cap applies to the
+    # scoped set, not the broader .all. With 4 verified + 1 unverified and a
+    # limit of 3, the result is 3 verified records (capped from the 4
+    # verified) — never 3 records drawn from .all that could include
+    # unverified rows. Proves BOTH that the scope is honoured AND that the
+    # limit runs after it (a no-scope limit-3 would surface unverified rows).
+    verified = 4.times.map { create_scoped_user(status: :verified) }
+    unverified = create_scoped_user(status: :unverified)
+    component = build_component(association_class: User, scope: :verified)
+    limit = 3
+    component.instance_variable_set(:@choice_limit, limit)
+
+    relation = component.send(:authorized_relation, limit: limit)
+
+    rows = relation.to_a
+    assert_equal limit, rows.length
+    assert(rows.all? { |r| r.status == "verified" }, "expected only verified rows; got statuses: #{rows.map(&:status).inspect}")
+    refute_includes rows, unverified
+    assert_equal verified.sort_by(&:id).first(limit), rows.sort_by(&:id)
+  ensure
+    verified&.each { |u| u&.destroy }
+    unverified&.destroy
+  end
+
   private
+
+  def create_scoped_user(status:)
+    User.create!(email: "rs-scope-#{SecureRandom.hex(4)}@example.com", password: "password123", status: status)
+  end
 
   def stub_node(key)
     node = Object.new
@@ -124,13 +261,14 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     field
   end
 
-  def build_component(raw_choices: nil, association_class: nil)
+  def build_component(raw_choices: nil, association_class: nil, scope: nil)
     component = Plutonium::UI::Form::Components::ResourceSelect.allocate
     component.instance_variable_set(:@raw_choices, raw_choices)
     component.instance_variable_set(:@association_class, association_class)
     # Skip the authorized_resource_scope path — it calls view_context,
     # which is unavailable outside a render cycle.
     component.instance_variable_set(:@skip_authorization, true)
+    component.instance_variable_set(:@scope, scope)
     component.instance_variable_set(:@choice_limit, nil)
     # Stub resource_definition for the typeahead_searchable? path; in a
     # real render this resolves through view_context.controller.

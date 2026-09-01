@@ -117,6 +117,10 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
 
   def test_filter_association_uses_fallback_column_when_no_search_block
     associated = Class.new {
+      # filter_association now calls klass.all explicitly (then threads the
+      # scoped relation into authorized_resource_scope); the relation value
+      # here is discarded by the stubbed authorized_resource_scope below.
+      def self.all = Object.new
       def self.column_names = ["name"]
       def self.connection = Class.new { def quote_column_name(c) = "\"#{c}\"" }.new
     }
@@ -146,6 +150,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
 
   def test_filter_association_respects_label_method_override
     associated = Class.new {
+      def self.all = Object.new
       def self.column_names = %w[id name email]
       def self.connection = Class.new { def quote_column_name(c) = "\"#{c}\"" }.new
     }
@@ -175,6 +180,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
 
   def test_filter_association_returns_unfiltered_when_no_search_and_no_fallback_column
     associated = Class.new {
+      def self.all = Object.new
       def self.column_names = %w[id created_at updated_at]
     }
     where_called = false
@@ -200,6 +206,7 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
 
   def test_typeahead_input_resolves_association_via_reflection
     associated = Class.new {
+      def self.all = Object.new
       def self.column_names = ["name"]
       def self.connection = Class.new { def quote_column_name(c) = "\"#{c}\"" }.new
     }
@@ -246,5 +253,151 @@ class Plutonium::Resource::Controllers::TypeaheadTest < Minitest::Test
     assert_equal associated, captured_klass
     assert_kind_of Hash, controller.rendered[:json]
     assert_equal [], controller.rendered[:json][:results]
+  end
+
+  # ==================== association scope application ====================
+  # Regression: the Association filter's `scope:` was forwarded in the
+  # input options (see association_test) but the typeahead endpoint never
+  # applied it, so dropdown and typeahead diverged. These prove scope is
+  # applied to the relation BEFORE authorization (policy can only further
+  # narrow, never widen), that the two documented Proc forms and Symbol
+  # all work, nil is a no-op, unsupported types fail loud, AND the filter
+  # typeahead endpoint carries the scope through (not just the input one).
+
+  # Shared helper: builds a controller whose authorized_resource_scope
+  # captures the relation it receives, returning `auth_result` for the
+  # downstream limit/to_a chain.
+  def scope_capturing_controller(associated, scope:, auth_result:, via_filter: false)
+    captured_relation = nil
+    controller = if via_filter
+      build_controller(
+        filter_def: {name: :author, value: {options: {association_class: associated, scope: scope}}},
+        resource_class: Class.new { def self.reflect_on_association(_) = nil }
+      )
+    else
+      build_controller(
+        input_def: {name: :author, value: {options: {association_class: associated, scope: scope}}},
+        resource_class: Class.new { def self.reflect_on_association(_) = nil }
+      )
+    end
+    controller.define_singleton_method(:authorized_resource_scope) do |_klass, relation: nil, **|
+      captured_relation = relation
+      auth_result
+    end
+    controller.define_singleton_method(:captured_relation) { captured_relation }
+    controller
+  end
+
+  def limitable_relation
+    Object.new.tap do |rel|
+      rel.define_singleton_method(:limit) { |*| self }
+      rel.define_singleton_method(:to_a) { [] }
+    end
+  end
+
+  # An anonymous class whose `.all` closes over `relation` (Class.new { def
+  # self.all = x } would NOT close — `def` opens a fresh scope).
+  def class_with_all(relation)
+    Class.new.tap { |c| c.define_singleton_method(:all) { relation } }
+  end
+
+  def test_filter_association_applies_symbol_scope_before_authorization
+    scoped_rel = limitable_relation
+    all_rel = Object.new
+    all_rel.define_singleton_method(:verified) { scoped_rel }
+    associated = class_with_all(all_rel)
+
+    controller = scope_capturing_controller(associated, scope: :verified, auth_result: scoped_rel)
+    controller.params = {name: "author", q: ""}
+    controller.typeahead_input
+
+    assert_same scoped_rel, controller.captured_relation
+  end
+
+  def test_filter_association_applies_proc_scope_taking_relation_arg
+    # Documented form: ->(s) { s.verified }
+    scoped_rel = limitable_relation
+    all_rel = Object.new
+    all_rel.define_singleton_method(:verified) { scoped_rel }
+    associated = class_with_all(all_rel)
+
+    controller = scope_capturing_controller(associated, scope: ->(s) { s.verified }, auth_result: scoped_rel)
+    controller.params = {name: "author", q: ""}
+    controller.typeahead_input
+
+    assert_same scoped_rel, controller.captured_relation
+  end
+
+  def test_filter_association_applies_zero_arity_proc_scope
+    # Kanban form: -> { where(status: :verified) } — self is the relation.
+    scoped_rel = limitable_relation
+    all_rel = Object.new
+    all_rel.define_singleton_method(:where) { |*| scoped_rel }
+    associated = class_with_all(all_rel)
+
+    controller = scope_capturing_controller(associated, scope: -> { where(status: :verified) }, auth_result: scoped_rel)
+    controller.params = {name: "author", q: ""}
+    controller.typeahead_input
+
+    assert_same scoped_rel, controller.captured_relation
+  end
+
+  def test_filter_association_nil_scope_passes_all_to_authorization
+    all_rel = limitable_relation
+    associated = class_with_all(all_rel)
+
+    controller = scope_capturing_controller(associated, scope: nil, auth_result: all_rel)
+    controller.params = {name: "author", q: ""}
+    controller.typeahead_input
+
+    assert_same all_rel, controller.captured_relation
+  end
+
+  def test_filter_association_unsupported_scope_raises_argument_error
+    associated = class_with_all(Object.new)
+    controller = scope_capturing_controller(associated, scope: 42, auth_result: Object.new)
+    controller.params = {name: "author", q: ""}
+
+    error = assert_raises(ArgumentError) { controller.typeahead_input }
+    assert_match(/Unsupported association scope/, error.message)
+  end
+
+  def test_typeahead_filter_endpoint_carries_scope_through
+    # The filter typeahead endpoint (not the input one) threads scope too.
+    scoped_rel = limitable_relation
+    all_rel = Object.new
+    all_rel.define_singleton_method(:verified) { scoped_rel }
+    associated = class_with_all(all_rel)
+
+    controller = scope_capturing_controller(associated, scope: :verified, auth_result: scoped_rel, via_filter: true)
+    controller.params = {name: "author", q: ""}
+    controller.typeahead_filter
+
+    assert_same scoped_rel, controller.captured_relation
+  end
+
+  def test_filter_association_applies_scope_then_search
+    # With a non-blank query, search narrows the SCOPED+authorized
+    # relation — proves order: scope → authorize → search, not search on .all.
+    scoped_rel = Object.new
+    all_rel = Object.new
+    all_rel.define_singleton_method(:verified) { scoped_rel }
+    associated = class_with_all(all_rel)
+
+    # search_block: assert it receives the scoped+authorized relation
+    search_received = nil
+    search_block = ->(relation, _query) do
+      search_received = relation
+      relation
+    end
+    scoped_rel.define_singleton_method(:limit) { |*| self }
+    scoped_rel.define_singleton_method(:to_a) { [] }
+
+    controller = scope_capturing_controller(associated, scope: :verified, auth_result: scoped_rel)
+    controller.define_singleton_method(:associated_definition_search_block) { |_klass| search_block }
+    controller.params = {name: "author", q: "ali"}
+    controller.typeahead_input
+
+    assert_same scoped_rel, search_received
   end
 end

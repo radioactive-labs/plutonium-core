@@ -421,14 +421,20 @@ class DefinitionQueryTest < Minitest::Test
   end
 
   def test_association_filter_with_scope_proc
+    scope_proc = ->(scope) { scope.verified }
     filter = Plutonium::Query::Filters::Association.new(
       key: :user,
       class_name: User,
-      scope: ->(scope) { scope.verified }
+      scope: scope_proc
     )
 
-    # The scope proc is stored
+    # The scope proc is stored...
     assert filter.instance_variable_get(:@scope_proc).is_a?(Proc)
+    # ...AND forwarded into the resource_select input so it actually takes
+    # effect. Regression for the silent-no-op bug where `scope:` was stored
+    # but never passed downstream.
+    input_options = filter.defined_inputs[:value][:options]
+    assert_same scope_proc, input_options[:scope]
   end
 
   def test_search_definition_can_be_executed
