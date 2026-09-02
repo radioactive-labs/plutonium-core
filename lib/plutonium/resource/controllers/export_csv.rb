@@ -121,9 +121,17 @@ module Plutonium
         # A cell beginning with = + - @ (or a leading tab/CR) is executed as a
         # formula by Excel/Sheets. Prefix it with a single quote so the value
         # imports as literal text (CSV/formula injection).
+        #
+        # The leading-character check runs against the NFKC-normalized string so
+        # that full-width (double-byte) variants — ＝ ＋ － ＠ (U+FF1D/FF0B/FF0D/FF20) —
+        # which East Asian locales (e.g. Japanese Excel) treat as formula
+        # initiators, are also neutralized. The *original* string is prefixed
+        # (not the normalized one), so legitimate full-width content is preserved
+        # verbatim and only gains a defensive leading quote.
         def neutralize_csv_formula(value)
           string = value.to_s
-          /\A[=+\-@\t\r]/.match?(string) ? "'#{string}" : string
+          normalized = string.unicode_normalize(:nfkc)
+          /\A[=+\-@\t\r]/.match?(normalized) ? "'#{string}" : string
         end
 
         # The primary key is always the first column, followed by the
