@@ -209,6 +209,38 @@ module Plutonium
         assert_nil @model.price_cents
         assert_nil @model.price
       end
+
+      # The setter rescues both ArgumentError (malformed numeric strings like
+      # "abc") and FloatDomainError (BigDecimal("Infinity").to_i et al.), so
+      # every invalid monetary input degrades to nil instead of crashing the
+      # request. FloatDomainError is a RangeError, not an ArgumentError, so
+      # the explicit listing is required.
+      def test_setter_with_infinity_string_returns_nil
+        @model.price = "Infinity"
+        assert_nil @model.price_cents
+      end
+
+      def test_setter_with_nan_string_returns_nil
+        @model.price = "NaN"
+        assert_nil @model.price_cents
+      end
+
+      def test_setter_with_malformed_string_returns_nil
+        # Regression guard for the ArgumentError branch: malformed numeric
+        # strings that never reach the FloatDomainError path still degrade
+        # to nil.
+        @model.price = "abc"
+        assert_nil @model.price_cents
+      end
+
+      def test_setter_with_special_value_resets_cents_to_nil
+        # Footgun guard: an invalid value must reset cents to nil, not
+        # silently keep the previous value.
+        @model.price = 10.99
+        assert_equal 1099, @model.price_cents
+        @model.price = "Infinity"
+        assert_nil @model.price_cents
+      end
     end
   end
 end

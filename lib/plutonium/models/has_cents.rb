@@ -173,7 +173,7 @@ module Plutonium
             def #{name}=(value)
               self.#{cents_name} = begin
                 (BigDecimal(value.to_s) * #{rate}).to_i if value.present?
-              rescue ArgumentError
+              rescue ArgumentError, FloatDomainError
                 nil
               end
             end
