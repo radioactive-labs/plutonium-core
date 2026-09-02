@@ -140,8 +140,14 @@ module Plutonium
         # gets useful typeahead without declaring `search`). If neither
         # search block nor fallback column is available, the relation is
         # returned unfiltered (capped).
+        #
+        # The input's `scope:` (set on the Association filter) narrows the
+        # relation BEFORE authorization — mirroring ResourceSelect so the
+        # dropdown and typeahead present the same candidate set (a
+        # filtered subset rather than all policy-permitted records).
         def filter_association(klass, query, options)
-          relation = options[:skip_authorization] ? klass.all : authorized_resource_scope(klass)
+          relation = apply_scope(klass.all, options[:scope])
+          relation = options[:skip_authorization] ? relation : authorized_resource_scope(klass, relation: relation)
           if query.present?
             if (search_block = associated_definition_search_block(klass))
               relation = search_block.call(relation, query)
@@ -152,6 +158,23 @@ module Plutonium
             end
           end
           relation.limit(Typeahead::TYPEAHEAD_LIMIT + 1).to_a
+        end
+
+        # Applies an optional association scope to a relation. Identical to
+        # ResourceSelect#apply_scope so dropdown and typeahead agree.
+        #   Symbol → relation.public_send(sym)   (named scope, e.g. :verified)
+        #   Proc   → arity 0  → relation.instance_exec(&scope) (kanban form: -> { where(...) })
+        #          → arity ≥1 → scope.call(relation)             (documented form: ->(s) { s.verified })
+        #   nil    → relation unchanged
+        # The arity dispatch matches call_option_proc (Form::Resource). Unsupported
+        # types fail loud rather than silently doing nothing.
+        def apply_scope(relation, scope)
+          case scope
+          when Symbol then relation.public_send(scope)
+          when Proc then scope.arity.zero? ? relation.instance_exec(&scope) : scope.call(relation)
+          when nil then relation
+          else raise ArgumentError, "Unsupported association scope: #{scope.inspect} (expected Symbol, Proc, or nil)"
+          end
         end
 
         # Resolves the associated resource's `search` block, if declared.

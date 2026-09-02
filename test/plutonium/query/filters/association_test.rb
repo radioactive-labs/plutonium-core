@@ -209,6 +209,34 @@ module Plutonium
 
           assert_equal false, input_options[:include_blank]
         end
+
+        # ==================== Scope Forwarding Tests ====================
+        # Regression: the `scope:` parameter was stored on @scope_proc but
+        # never forwarded to the resource_select input, so the documented
+        # feature silently did nothing. These prove the proc now reaches
+        # the input that ResourceSelect consumes.
+
+        def test_customize_inputs_forwards_scope_proc_to_input
+          scope_proc = ->(s) { s.verified }
+          filter = Association.new(key: :user, class_name: MockCategory, scope: scope_proc)
+          input_options = filter.defined_inputs[:value][:options]
+
+          assert_same scope_proc, input_options[:scope]
+        end
+
+        def test_customize_inputs_forwards_symbol_scope_to_input
+          filter = Association.new(key: :user, class_name: MockCategory, scope: :verified)
+          input_options = filter.defined_inputs[:value][:options]
+
+          assert_equal :verified, input_options[:scope]
+        end
+
+        def test_customize_inputs_scope_defaults_to_nil_when_omitted
+          filter = Association.new(key: :user, class_name: MockCategory)
+          input_options = filter.defined_inputs[:value][:options]
+
+          assert_nil input_options[:scope]
+        end
       end
     end
   end
