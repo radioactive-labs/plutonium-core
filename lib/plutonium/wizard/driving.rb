@@ -33,6 +33,8 @@ module Plutonium
       # other.
       WIZARD_RETURN_TO_KEY = "plutonium_wizard_return_to"
 
+      AuthorizationDeniedResult = Struct.new(:message)
+
       # The per-wizard key under {SESSION_TOKENS_KEY} for a guest run's token.
       def self.session_token_key(wizard_class)
         wizard_class.name.underscore.tr("/", "_")
@@ -528,7 +530,11 @@ module Plutonium
         wizard = runner.wizard
         return if wizard.authorize?
 
-        raise ActionPolicy::Unauthorized.new(wizard.class, :authorize?)
+        raise ::ActionPolicy::Unauthorized.new(
+          wizard,
+          :authorize?,
+          AuthorizationDeniedResult.new("Wizard authorization denied")
+        )
       end
 
       # --- params ---
