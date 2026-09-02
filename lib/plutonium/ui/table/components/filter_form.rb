@@ -115,14 +115,15 @@ module Plutonium
           end
 
           def render_sort_fields
-            field :sort_fields do |name|
+            field :sort_fields, value: helpers.params.dig(search_param, :sort_fields) do |name|
               render name.input_array_tag do |array|
                 render array.input_tag(type: :hidden, hidden: true)
               end
             end
             nest_one :sort_directions do |nested|
               query_object.sort_definitions.each do |filter_name, _|
-                nested.field(filter_name) do |f|
+                direction_value = helpers.params.dig(search_param, :sort_directions, filter_name)
+                nested.field(filter_name, value: direction_value) do |f|
                   render f.input_tag(type: :hidden, hidden: true)
                 end
               end
@@ -131,7 +132,7 @@ module Plutonium
 
           def render_scope_fields
             return if query_object.scope_definitions.blank?
-            render field(:scope).input_tag(type: :hidden, hidden: true)
+            render field(:scope, value: helpers.params.dig(search_param, :scope)).input_tag(type: :hidden, hidden: true)
           end
 
           def render_filter_field(nested, resource_definition, name, filter_label: nil)
