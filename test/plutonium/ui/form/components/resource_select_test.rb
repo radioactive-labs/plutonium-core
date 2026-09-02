@@ -46,6 +46,23 @@ class Plutonium::UI::Form::Components::ResourceSelectTest < Minitest::Test
     assert_nil component.send(:normalize_simple_input, org.to_signed_global_id.to_s)
   end
 
+  # An SGID whose model class has since been removed from the codebase
+  # (e.g. a deprecated model dropped during a refactor) still parses —
+  # SignedGlobalID signatures don't expire by default — but
+  # `sgid.model_class` raises NameError when constantizing. Must return
+  # nil instead of crashing the request with a 500.
+  def test_normalize_simple_input_rejects_sgid_for_removed_class
+    temp_class = Class.new(ApplicationRecord) { self.table_name = "users" }
+    Object.const_set(:TempRemovedModel, temp_class)
+    user = User.create!(email: "rs-removed-#{SecureRandom.hex(4)}@example.com", password: "password123")
+    sgid = temp_class.new(id: user.id).to_signed_global_id.to_s
+    Object.send(:remove_const, :TempRemovedModel)
+
+    component = build_component(association_class: User)
+
+    assert_nil component.send(:normalize_simple_input, sgid)
+  end
+
   def test_normalize_simple_input_returns_nil_for_blank_or_garbage
     component = build_component(association_class: User)
 

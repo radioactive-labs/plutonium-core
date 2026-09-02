@@ -173,6 +173,8 @@ module Plutonium
 
             return nil unless sgid.model_class <= association_reflection.klass
             authorized_relation.exists?(id: sgid.model_id) ? sgid : nil
+          rescue
+            nil
           end
 
           def selected?(option)
