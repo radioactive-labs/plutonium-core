@@ -5,7 +5,6 @@ require "tty-prompt"
 
 module PlutoniumGenerators
   module Generator
-    include Concerns::Config
     include Concerns::Logger
     include Concerns::Serializer
     include Concerns::Actions
@@ -66,12 +65,5 @@ module PlutoniumGenerators
     # def app_name
     #   appname.underscore
     # end
-
-    def pug_installed?(feature, version: nil)
-      installed_version = read_config(:installed, feature)
-      return false unless installed_version.present?
-
-      version.present? ? SemanticRange.satisfies?(installed_version, ">=#{version}") : true
-    end
   end
 end
