@@ -20,7 +20,7 @@ module Plutonium
         # Use this instead of authorized_scope directly
         def authorized_resource_scope(resource, relation: nil, **options)
           unless resource.instance_of?(Class) && resource < ActiveRecord::Base
-            raise ArgumentError("Expected resource to be a class inheriting ActiveRecord::Base")
+            raise ArgumentError, "Expected resource to be a class inheriting ActiveRecord::Base"
           end
 
           options[:with] ||= ::ActionPolicy.lookup(resource, namespace: authorization_namespace)

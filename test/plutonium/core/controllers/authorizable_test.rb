@@ -146,6 +146,45 @@ class Plutonium::Core::Controllers::AuthorizableTest < ActiveSupport::TestCase
     assert_equal "value", captured_options[:context][:custom_key]
   end
 
+  test "authorized_resource_scope raises ArgumentError when resource is not a class" do
+    # e.g. a developer passes a class name string: authorized_resource_scope("User")
+    error = assert_raises(ArgumentError) do
+      @controller.send(:authorized_resource_scope, "User")
+    end
+
+    assert_equal "Expected resource to be a class inheriting ActiveRecord::Base", error.message
+  end
+
+  test "authorized_resource_scope raises ArgumentError when resource is a class that does not inherit from ActiveRecord::Base" do
+    # e.g. a developer passes a PORO or service object by mistake
+    poro = Class.new
+    error = assert_raises(ArgumentError) do
+      @controller.send(:authorized_resource_scope, poro)
+    end
+
+    assert_equal "Expected resource to be a class inheriting ActiveRecord::Base", error.message
+  end
+
+  test "authorized_resource_scope validates the resource before calling ActionPolicy or authorized_scope" do
+    # The validation must fail fast: none of the downstream collaborators should be
+    # touched for an invalid resource.
+    touched = []
+    @controller.define_singleton_method(:authorization_namespace) do
+      touched << :namespace
+      nil
+    end
+    @controller.define_singleton_method(:authorized_scope) do |*, **|
+      touched << :scope
+      nil
+    end
+
+    assert_raises(ArgumentError) do
+      @controller.send(:authorized_resource_scope, "User")
+    end
+
+    assert_empty touched, "validation should fail before reaching authorization_namespace/authorized_scope"
+  end
+
   # Unlike TestController above, this one does NOT stub `authorize`, so the real
   # ActionPolicy authorization_targets are registered and authorization_context
   # is built for real.
