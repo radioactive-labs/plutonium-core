@@ -36,7 +36,7 @@ module Plutonium
       # @return [void]
       # @yield Executes the given block in the context of route drawing.
       def draw(&block)
-        if self.class.supported_engine?(engine)
+        if engine && self.class.supported_engine?(engine)
           scope_params = entity_scope_params_for_path_strategy
           ActiveSupport::Notifications.instrument("plutonium.resource_routes.draw", app: engine.to_s) do
             super do
