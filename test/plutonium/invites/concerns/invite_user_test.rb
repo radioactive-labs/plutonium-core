@@ -22,4 +22,20 @@ class Plutonium::Invites::Concerns::InviteUserTest < ActiveSupport::TestCase
 
     assert_nil interaction.email
   end
+
+  # Regression guard: membership_class previously returned the non-existent
+  # EntityMembership constant, so the user_not_already_member validation raised
+  # a confusing NameError on the first invite. It must now raise an actionable
+  # NotImplementedError until the host app supplies a membership model.
+  test "membership_class raises NotImplementedError when not overridden" do
+    interaction = TestInviteUser.new(view_context: nil, email: "foo@bar.com")
+
+    error = assert_raises(NotImplementedError) do
+      interaction.send(:membership_class)
+    end
+
+    assert_match(/TestInviteUser#membership_class/, error.message)
+    assert_match(/membership model class/, error.message)
+    assert_match(/--membership-model/, error.message)
+  end
 end
