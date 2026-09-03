@@ -262,6 +262,35 @@ module Plutonium
         assert_equal filter, query_object.filter_definitions[:title]
       end
 
+      def test_define_filter_rejects_reserved_control_names
+        Plutonium::Resource::QueryObject::RESERVED_FILTER_NAMES.each do |reserved|
+          error = assert_raises(ArgumentError) do
+            QueryObject.new(MockResource, {}, @request_path) do |qo|
+              qo.define_filter(reserved, ->(scope, value:) { scope })
+            end
+          end
+          assert_match(/reserved/, error.message)
+          assert_match(/q\[#{reserved}\]/, error.message)
+        end
+      end
+
+      def test_define_filter_rejects_reserved_name_given_as_string
+        error = assert_raises(ArgumentError) do
+          QueryObject.new(MockResource, {}, @request_path) do |qo|
+            qo.define_filter("scope", ->(scope, value:) { scope })
+          end
+        end
+        assert_match(/reserved/, error.message)
+      end
+
+      def test_define_filter_allows_non_reserved_names
+        query_object = QueryObject.new(MockResource, {}, @request_path) do |qo|
+          qo.define_filter(:status, ->(scope, value:) { scope.where(status: value) })
+        end
+
+        assert query_object.filter_definitions.key?(:status)
+      end
+
       # ==================== Sorter Definition Tests ====================
 
       def test_define_sorter_with_symbol
