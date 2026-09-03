@@ -344,10 +344,15 @@ module Plutonium
           # renders correctly. The Builder consumes `:as` before Phlexi sees
           # the options, so this cannot leak into a Phlexi field option.
           field_options = field_options.merge(as: tag) if tag
-          field_options = field_options.except(:condition)
 
+          # Check for conditional rendering — read `:condition` from
+          # `field_options` BEFORE stripping it, so a `field :name,
+          # condition: -> {...}` declaration is honoured, not just
+          # `input :name, condition: -> {...}`. Mirrors the display
+          # renderer, which reads then removes (see display/resource.rb).
           condition = input_options[:condition] || field_options[:condition]
           conditionally_hidden = condition && !instance_exec(&condition)
+          field_options = field_options.except(:condition)
           if conditionally_hidden
             # Do not render the field, but still create field
             # Phlexi form will record it without rendering it, allowing us to extract its value
