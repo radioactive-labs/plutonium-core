@@ -13,6 +13,12 @@ module Plutonium
 
       attr_accessor :default_sort_config, :default_scope_name
 
+      # Keys the query object reserves under the `q` namespace for built-in
+      # controls (e.g. `q[scope]`, `q[sort_fields]`). A filter sharing one of
+      # these names would collide with the control in the URL and in the filter
+      # form's hidden state, so defining one is rejected — see #define_filter.
+      RESERVED_FILTER_NAMES = %i[search scope sort_fields sort_directions].freeze
+
       # Initializes a QueryObject with the given resource_class and parameters.
       #
       # @param resource_class [Object] The resource class.
@@ -32,7 +38,13 @@ module Plutonium
       #
       # @param name [Symbol] The name of the filter.
       # @param body [Proc, nil] The body of the filter.
+      # @raise [ArgumentError] if the name collides with a reserved query control.
       def define_filter(name, body, &)
+        if RESERVED_FILTER_NAMES.include?(name.to_sym)
+          raise ArgumentError,
+            "filter name :#{name} is reserved — the query string uses q[#{name}] as a " \
+            "built-in control (one of: #{RESERVED_FILTER_NAMES.join(", ")}). Rename the filter."
+        end
         filter_definitions[name] = build_query(body, &)
       end
 
