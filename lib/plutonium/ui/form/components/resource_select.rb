@@ -128,6 +128,8 @@ module Plutonium
             end
 
             choices.values.find { |opt| same_record?(input_value, opt) } && input_value
+          rescue
+            nil
           end
 
           # Two values point at the same record when both decode to the
