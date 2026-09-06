@@ -91,6 +91,42 @@ class AdminPortal::ExportCsvTest < ActionDispatch::IntegrationTest
     refute_includes titles, "=HYPERLINK(\"http://evil\")"
   end
 
+  # Full-width (double-byte) formula initiators (＝ ＋ － ＠) are interpreted as
+  # formulas in East Asian locales (e.g. Japanese Excel; OWASP CSV Injection
+  # guidance). CSV.generate_line does not quote full-width cells, so per-cell
+  # neutralization is the only defense — they must be prefixed with a quote,
+  # and the original full-width content must be preserved verbatim.
+  test "export neutralizes full-width formula characters" do
+    payloads = {
+      "＝" => "＝cmd|' /C calc'!A0",
+      "＋" => "＋1+1",
+      "－" => "－1+1",
+      "＠" => "＠SUM(A1:A2)"
+    }
+    payloads.each_value do |title|
+      Blogging::Post.create!(user: @user, organization: @org, title: title, body: "x", status: :draft)
+    end
+    get "/admin/blogging/posts/export_csv"
+
+    assert_response :success
+    titles = CSV.parse(response.body)[1..].map { |row| row[1] }
+    payloads.each_value do |title|
+      assert_includes titles, "'#{title}", "full-width payload #{title.inspect} was not neutralized"
+      refute_includes titles, title, "un-neutralized full-width payload #{title.inspect} appeared in export"
+    end
+  end
+
+  # Legitimate full-width Japanese content must not gain a spurious quote
+  # prefix — the NFKC check must only fire on actual formula initiators.
+  test "export leaves legitimate full-width content untouched" do
+    Blogging::Post.create!(user: @user, organization: @org, title: "カタカナのタイトル", body: "x", status: :draft)
+    get "/admin/blogging/posts/export_csv"
+
+    titles = CSV.parse(response.body)[1..].map { |row| row[1] }
+    assert_includes titles, "カタカナのタイトル"
+    refute_includes titles, "'カタカナのタイトル"
+  end
+
   # Query respect — the export reuses the index's filtered collection, so
   # the same `?q[search]=` that narrows the table narrows the file.
   test "export respects the current search query" do

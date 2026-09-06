@@ -90,5 +90,9 @@ For a column **without** an `export` block, the value is read straight off the r
   intercepting the streamed download.
 - **CSV/formula injection** is neutralized: any cell whose value begins with `=`, `+`,
   `-`, `@`, or a leading tab/CR is prefixed with a single quote so spreadsheet apps import
-  it as literal text instead of executing it as a formula.
+  it as literal text instead of executing it as a formula. The check is run against the
+  NFKC-normalized value, so full-width (double-byte) variants (`＝`, `＋`, `－`, `＠`) that
+  East Asian locales treat as formula initiators are neutralized too; the original
+  (un-normalized) value is what gets the quote prefix, so legitimate full-width content
+  is preserved verbatim.
 - `csv` is a runtime dependency of Plutonium (it is no longer a Ruby default gem on 3.4+).
