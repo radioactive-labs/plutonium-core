@@ -165,7 +165,7 @@ module Plutonium
           end
 
           def attachment_extension(attachment)
-            attachment.try(:extension) || File.extname(attachment.filename.to_s)
+            attachment.try(:extension).presence || File.extname(attachment.filename.to_s).delete(".")
           end
 
           def build_direct_upload_options
