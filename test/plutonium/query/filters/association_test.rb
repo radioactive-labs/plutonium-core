@@ -237,6 +237,120 @@ module Plutonium
 
           assert_nil input_options[:scope]
         end
+
+        # ==================== scoped_relation Dispatch Tests ====================
+        # `humanize_value` (the active-filter pill label resolver) routes its
+        # label lookups through a `scoped_relation` helper that mirrors the
+        # arity-aware `apply_scope` shared by ResourceSelect#authorized_relation
+        # and Typeahead#filter_association. The dispatch (Symbol / arity-0 Proc
+        # / arity-1 Proc / nil) and the loud ArgumentError for unsupported types
+        # must stay in lock-step with those two sites — any divergence re-opens
+        # the leak this method closes. These tests verify the dispatch wiring
+        # without requiring a database.
+
+        # A spy that imitates the sufficient surface of an ActiveRecord relation
+        # for scope dispatch: `.all`, chainable `.where`, named-scope capture
+        # (via method_missing), and `#map` so `humanize_value` can iterate.
+        class ScopeSpyRelation
+          attr_reader :named_scope_calls, :where_clauses
+          attr_accessor :records
+
+          def initialize(records: [])
+            @named_scope_calls = []
+            @where_clauses = []
+            @records = records
+          end
+
+          def all
+            self
+          end
+
+          # ActiveRecord relations chain — `where` returns a relation. Returning
+          # `self` keeps the spy observable across chained calls; the arguments
+          # of every `where` accumulate in `where_clauses`.
+          def where(*args, **kwargs)
+            @where_clauses << {args: args, kwargs: kwargs}
+            self
+          end
+
+          def map(&) = @records.map(&)
+
+          # Captures any Symbol-named scope invocation (`relation.verified`),
+          # returning `self` so further chaining also works.
+          def method_missing(name, *args, **kwargs, &block)
+            @named_scope_calls << name
+            self
+          end
+
+          def respond_to_missing?(name, include_private = false)
+            true
+          end
+        end
+
+        class ScopeSpyClass
+          def self.all
+            ScopeSpyRelation.new
+          end
+        end
+
+        def test_scoped_relation_returns_relation_unchanged_when_scope_is_nil
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: nil)
+          relation = filter.send(:scoped_relation)
+
+          assert_kind_of ScopeSpyRelation, relation
+          assert_empty relation.named_scope_calls
+          assert_empty relation.where_clauses
+        end
+
+        def test_scoped_relation_dispatches_symbol_scope_via_public_send
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: :verified)
+          relation = filter.send(:scoped_relation)
+
+          assert_includes relation.named_scope_calls, :verified
+          assert_empty relation.where_clauses
+        end
+
+        def test_scoped_relation_dispatches_zero_arity_proc_via_instance_exec
+          scope = -> { where(id: [1]) }
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: scope)
+          relation = filter.send(:scoped_relation)
+
+          # The kanban form runs the proc in the relation's context, so its
+          # `where` lands on the spy.
+          assert relation.where_clauses.any? { |c| c[:kwargs] == {id: [1]} }
+        end
+
+        def test_scoped_relation_dispatches_one_arity_proc_passing_the_relation
+          passed = nil
+          scope = ->(r) do
+            passed = r
+            r.where(id: [2])
+          end
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: scope)
+          relation = filter.send(:scoped_relation)
+
+          refute_nil passed
+          assert_kind_of ScopeSpyRelation, passed
+          assert relation.where_clauses.any? { |c| c[:kwargs] == {id: [2]} }
+        end
+
+        def test_scoped_relation_raises_argument_error_for_unsupported_scope_type
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: "active")
+
+          assert_raises(ArgumentError) { filter.send(:scoped_relation) }
+        end
+
+        def test_humanize_value_falls_back_to_raw_value_when_scope_raises
+          # `scoped_relation` raises ArgumentError for an unsupported scope
+          # type; `humanize_value`'s broad rescue swallows it and returns the
+          # raw id the caller supplied rather than the hidden record's label
+          # (so an attacker who controls the URL only ever sees their own
+          # input echoed back). This pins the safe-fallback behaviour so
+          # future narrowing of the rescue can't silently regress to a leak.
+          filter = Association.new(key: :category, class_name: ScopeSpyClass, scope: "active")
+
+          assert_equal "42", filter.humanize_value("42")
+        end
       end
     end
   end
