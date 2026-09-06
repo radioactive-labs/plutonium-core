@@ -27,7 +27,14 @@ module Plutonium
           return "" if value.blank?
           ids = decode_ids(value)
           return "" if ids.empty?
-          records = association_class.where(id: ids)
+          # Resolve labels through the same scope-honouring relation that the
+          # dropdown (ResourceSelect#authorized_relation) and the typeahead
+          # (Typeahead#filter_association) already enforce. A bare
+          # `association_class.where(id: ids)` here would widen past the
+          # configured `scope:` and let a crafted `?q[<key>][value]=<out-of-scope
+          # id>` render the hidden record's `to_label` into the active-filter
+          # pill even though the matching filter was dropped at submission.
+          records = scoped_relation.where(id: ids)
           records.map { |r| r.respond_to?(:to_label) ? r.to_label : r.to_s }.join(", ")
         rescue
           Array(value).reject(&:blank?).join(", ")
@@ -86,6 +93,23 @@ module Plutonium
 
         def infer_class_from_key
           key.to_s.classify.constantize
+        end
+
+        # The relation used to resolve `humanize_value` labels, narrowed by the
+        # configured `scope:` exactly like ResourceSelect#apply_scope and
+        # Typeahead#apply_scope. The arity dispatch — Symbol, zero-arg Proc
+        # (kanban form `-> { ... }`), one-arg Proc (documented form
+        # `->(s) { s.active }`), nil — must stay in lock-step with those two
+        # sites; any divergence re-opens the leak this method closes. Unsupported
+        # scope types raise ArgumentError loudly rather than silently widening.
+        def scoped_relation
+          relation = association_class.all
+          case @scope_proc
+          when Symbol then relation.public_send(@scope_proc)
+          when Proc then @scope_proc.arity.zero? ? relation.instance_exec(&@scope_proc) : @scope_proc.call(relation)
+          when nil then relation
+          else raise ArgumentError, "Unsupported association scope: #{@scope_proc.inspect} (expected Symbol, Proc, or nil)"
+          end
         end
       end
     end
