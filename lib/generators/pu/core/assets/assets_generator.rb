@@ -25,15 +25,23 @@ module Pu
 
       private
 
-      # The asset pipeline assumes the app was generated with esbuild + Tailwind.
-      # Without those, `application.tailwind.css` doesn't exist and the generator
-      # later crashes with a cryptic inject_into_file error. Fail early with a fix.
+      # The asset pipeline assumes the app was generated with esbuild + Tailwind + Stimulus.
+      # Without those, `application.tailwind.css` (Tailwind) and/or
+      # `app/javascript/controllers/index.js` (Stimulus) don't exist, and the generator
+      # later crashes with a cryptic inject_into_file error. Fail early listing every
+      # missing file with a fix.
       def verify_prerequisites
-        return if File.exist?("app/assets/stylesheets/application.tailwind.css")
+        required = [
+          "app/assets/stylesheets/application.tailwind.css",
+          "app/javascript/controllers/index.js"
+        ]
+        missing = required.reject { |path| File.exist?(path) }
+        return if missing.empty?
 
         error <<~MSG
-          Plutonium assets require a Rails app generated with esbuild and Tailwind.
-          Expected app/assets/stylesheets/application.tailwind.css, but it is missing.
+          Plutonium assets require a Rails app generated with esbuild, Tailwind, and Stimulus.
+          Missing files:
+            - #{missing.join("\n  - ")}
 
           Re-create the app with the required flags:
             rails new myapp -a propshaft -j esbuild -c tailwind \\
