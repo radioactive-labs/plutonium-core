@@ -26,6 +26,26 @@ class InvitesInvitableGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "omits membership_class override when --membership-model is not specified" do
+    run_generator ["OrganizationUser"]
+
+    assert_file "app/interactions/organization_user/invite_user_interaction.rb" do |content|
+      refute_match(/def membership_class/, content,
+        "invitable_generator must not generate a membership_class override when " \
+        "using the default (sentinel) — it would fall back to the concern's " \
+        "NotImplementedError safety net")
+    end
+  end
+
+  test "generates membership_class override when --membership-model is specified" do
+    run_generator ["OrganizationUser", "--membership-model=OrganizationUser"]
+
+    assert_file "app/interactions/organization_user/invite_user_interaction.rb" do |content|
+      assert_match(/def membership_class/, content)
+      assert_match(/OrganizationUser/, content)
+    end
+  end
+
   test "generates interaction with custom role" do
     run_generator ["OrganizationUser", "--role=admin"]
 
