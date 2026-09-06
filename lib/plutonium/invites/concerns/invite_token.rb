@@ -131,7 +131,15 @@ module Plutonium
 
           with_lock do
             unless pending?
-              errors.add(:base, "This invitation has already been accepted")
+              message =
+                if accepted?
+                  "This invitation has already been accepted"
+                elsif cancelled?
+                  "This invitation has been cancelled"
+                else
+                  "This invitation has expired"
+                end
+              errors.add(:base, message)
               raise ActiveRecord::RecordInvalid.new(self)
             end
 
