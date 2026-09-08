@@ -36,14 +36,7 @@ module Plutonium
       FORM_VALIDATOR_KINDS = %i[presence length numericality format inclusion].freeze
 
       # The resolved import surface for one `using:` declaration.
-      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, :form_validators) do
-        # Run the imported validation over a staged data slice, returning a hash of
-        # {attribute => [messages]} for the imported fields + :base. Empty when
-        # `validate: false`.
-        def validate(data_slice)
-          validate_fn ? validate_fn.call(data_slice) : {}
-        end
-      end
+      Spec = Struct.new(:attribute_schema, :inputs, :form_layout, :validate_fn, :form_validators)
 
       class << self
         # @param using [Class] an ActiveRecord model class

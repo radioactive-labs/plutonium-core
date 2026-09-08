@@ -70,7 +70,7 @@ module Plutonium
 
       def test_validation_runs_and_keeps_imported_field_errors
         spec = resolve(KitchenSink, fields: %i[name])
-        errors = spec.validate({"name" => ""})
+        errors = spec.validate_fn.call({"name" => ""})
         assert errors.key?(:name), "imported presence error should surface"
       end
 
@@ -78,30 +78,29 @@ module Plutonium
         # organization is a required belongs_to NOT imported here; its presence
         # error must be filtered out so it never blocks the step.
         spec = resolve(KitchenSink, fields: %i[name])
-        errors = spec.validate({"name" => "Acme"})
+        errors = spec.validate_fn.call({"name" => "Acme"})
         refute errors.key?(:organization), "non-imported required belongs_to must be dropped"
         assert_empty errors
       end
 
       def test_validation_keeps_base_errors
         spec = resolve(model_with_base_rule, fields: %i[name])
-        errors = spec.validate({"name" => "x"})
+        errors = spec.validate_fn.call({"name" => "x"})
         assert errors.key?(:base), ":base errors must be kept"
       end
 
       def test_validate_false_skips_validation
         spec = resolve(KitchenSink, fields: %i[name], validate: false)
         assert_nil spec.validate_fn
-        assert_empty spec.validate({"name" => ""})
       end
 
       def test_validation_context_passed_through
         model = model_with_context_rule
         # No errors without the context (rule is on: :strict).
-        assert_empty resolve(model, fields: %i[description]).validate({"description" => ""})
+        assert_empty resolve(model, fields: %i[description]).validate_fn.call({"description" => ""})
 
         ctx_spec = resolve(model, fields: %i[description], validation_context: :strict)
-        assert ctx_spec.validate({"description" => ""}).key?(:description)
+        assert ctx_spec.validate_fn.call({"description" => ""}).key?(:description)
       end
 
       # ---- form_layout inheritance + leftover handling ------------------------
