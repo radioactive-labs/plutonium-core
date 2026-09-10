@@ -53,7 +53,7 @@ Not "defaults someone picked for you" — **computed from existing declarations*
 ### 4. Climb the escape-hatch ladder only as far as the problem requires
 
 1. **Change an option** — `input :content, as: :markdown`
-2. **Render inline** — `display :priority, as: :phlexi_render, with: ->(value, attrs) do … end`
+2. **Render inline** — `display :priority do |f| … end` (a block, `instance_exec`ed in Phlex, emits markup directly and gives you `f.object`)
 3. **Write a component** — a *field* component (subclasses the Phlexi base) plugs into `as:`; anything with its own constructor goes through a block (`display :card do |field| … end`)
 4. **Implement a hook** — controller hooks instead of reopening `create`/`update`; page `render_before_*` / `render_after_*` instead of `view_template`
 5. **Replace the page** — `view_template` on the nested class, or an ERB view at the controller path (ERB wins when both exist)

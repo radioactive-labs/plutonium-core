@@ -196,6 +196,13 @@ display :rejection_reason, condition: -> { object.rejected? }
 field   :debug_info,       condition: -> { Rails.env.development? }
 ```
 
+A surface's own `condition:` wins. Otherwise the form, the show page and the table
+each fall back to the `field` condition, so it runs everywhere. The table has no
+`object`, which means a `field` condition must not reference the record:
+`-> { object.published? }` works on the form and show page and raises on the index.
+Keep a `field` condition to context that exists on every surface (`Rails.env`, a
+feature flag, `current_user`) and put record checks on `input`, `display` or `column`.
+
 ::: warning UI state, not authorization
 `condition:` is for UI logic ("show this when published"). For "who can see this", use the policy's `permitted_attributes_for_*` — see [Behavior › Policy](/reference/behavior/policies).
 :::
@@ -293,23 +300,40 @@ input :birth_date do |f|
 end
 ```
 
-### `phlexi_render` for declarative custom display
+### Inline markup in a display
 
-`as: :phlexi_render` (or its shorthand `as: :phlexi`). `with:` takes either a Phlex component class OR a proc whose body is **rendered inside a Phlex context** — HTML tag methods (`span`, `div`, `a`) and Tailwind classes are first-class. The proc receives `(value, attrs)`.
+A `display` block is evaluated in the display component's Phlex context, so HTML tag
+methods (`span`, `div`, `a`) and Tailwind classes are first-class, and `field.object`
+is the record. It renders once, even for a `has_many` field.
 
 ```ruby
-# Component — preferred for anything reusable
-display :status, as: :phlexi_render, with: StatusBadgeComponent
+display :priority do |field|
+  variant = {"high" => "danger", "medium" => "warning"}.fetch(field.value.to_s, "info")
+  span(class: "pu-badge pu-badge-#{variant}") { field.value.to_s.humanize }
+end
 
-# Inline proc — `span` here is a Phlex tag method, not a Rails helper
-display :priority, as: :phlexi_render, with: ->(value, attrs) {
-  case value
-  when 'high'   then span(class: "badge badge-danger")  { "High" }
-  when 'medium' then span(class: "badge badge-warning") { "Medium" }
-  else span(class: "badge badge-info") { "Low" }
+# Reaches the record; renders once for a collection
+display :tags do |field|
+  div(class: "flex flex-wrap gap-1.5") do
+    field.object.tags.each { |tag| span(class: "pu-badge") { tag.name } }
   end
-}
+end
 ```
+
+Phlex also renders whatever the block returns, so a block that emits markup must end
+with a tag call (or `nil`). The `div` wrapper above does that. A bare
+`tags.each { span … }` as the last line returns the collection, which renders a
+second time as text.
+
+::: warning `as: :phlexi_render` is deprecated
+`display :x, as: :phlexi_render, with: ...` emits a deprecation warning and will be
+removed. Use the block form above instead. The old `with:` proc did not run in a
+Phlex context (its `self` was the definition, so `span`/`div` in the body raised), it
+received the value already stringified so it could not reach the record, and it fired
+once per element for a `has_many` field. The block form has none of those limits. This
+deprecation applies only to the `as: :phlexi_render` display option; the internal
+`phlexi_render` helper is unaffected.
+:::
 
 See [UI › Components](/reference/ui/components) for writing reusable Phlex components.
 
@@ -338,26 +362,64 @@ See [UI › Components › Field components](/reference/ui/components#field-comp
 
 ## Column options
 
+`align:` and `label:` configure the column header. They can be declared on `field`,
+`display` or `column`; the most specific wins.
+
 ```ruby
+field  :amount, align: :end      # every surface that has a notion of alignment
 column :title,  align: :start    # default
 column :status, align: :center
-column :amount, align: :end
+column :amount, label: "Total"
+```
+
+### What a column inherits from the display
+
+With no `column` declared, the table column renders exactly as the display does: the
+display's `as:` and its attributes flow to the cell, so `display :status, as: :badge,
+colors: {…}` colors the badge on the show page and in the table.
+
+A `column` that only touches the header (`align:`, `label:`, `condition:`) keeps that
+inheritance. A `column` that says anything about rendering (an `as:`, a component
+attribute, or a block) renders alone: its own `as:` and attributes, nothing from the
+display.
+
+A `condition:` on `field` or `column` hides the column. A `condition:` on `display`
+applies to the show page only, because it may reference the record and the table has
+no single one.
+
+```ruby
+display :status, as: :badge, colors: {published: :accent}
+column  :status, align: :center                  # still a badge, still colored
+column  :status, as: :badge                      # a badge, but with default colors
+column  :status, formatter: ->(v) { v.upcase }   # plain text; the display is out
 ```
 
 ### Value formatting
 
 `formatter:` receives just the value. Use a block when you need the full record.
+A column block runs in the table page's Phlex context, the same way a display block
+runs in the show page's: it can emit markup directly, or return a String, a number
+or a component. `self` is the table page, so `current_user`, `helpers` and
+`resource_definition` are available, but methods defined on the definition class are
+not; reach through the record you are passed instead.
 
 ```ruby
 column :description, formatter: ->(value) { value&.truncate(30) }
 column :price,       formatter: ->(value) { "$%.2f" % value if value }
-column :status,      formatter: ->(value) { value&.humanize&.upcase }
 
-# Block — full record access
+# Block with full record access: emit markup...
+column :status do |record|
+  span(class: "pu-badge") { record.status.humanize }
+end
+
+# ...or return a String
 column :full_name do |record|
   "#{record.first_name} #{record.last_name}"
 end
 ```
+
+As with display blocks, a block that emits markup must end with a tag call (or
+`nil`), because Phlex renders the return value too.
 
 ## Nested inputs
 

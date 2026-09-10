@@ -121,19 +121,29 @@ module Plutonium
               column_definition = resource_definition.defined_columns[name] || {}
               column_options = column_definition[:options] || {}
 
-              # Check for conditional rendering
-              condition = column_options[:condition]
+              # A `column` condition or a surface-neutral `field` condition hides
+              # the column. A `display` condition stays show-only: it may reference
+              # `object`, and the table has no single record to evaluate it against.
+              condition = column_options[:condition] || field_options[:condition]
               conditionally_hidden = condition && !instance_exec(&condition)
               next if conditionally_hidden
 
-              tag = column_options[:as] || display_definition[:as] || field_options[:as]
+              # A column that says anything about RENDERING (`as:`, a component
+              # attribute, or a block) renders alone: its own `as:` and attributes,
+              # no display inheritance. A column that only touches the header
+              # (align/label/condition) layers on whatever the display renders, so
+              # `display :x, as: :badge` + `column :x, align: :end` keeps the badge.
+              # Only attributes are inherited, never the display's block.
+              column_render_options = column_options.except(:wrapper, :condition, *COLUMN_FIELD_LEVEL_KEYS)
+              renders_alone = column_definition[:block] || column_render_options.present?
+              source_options = renders_alone ? column_options : display_options
 
-              # Extract field-level options from display_options and column_options
-              # These are Phlexi field options that should NOT be passed to the tag builder
-              field_level_keys = [:label, :description, :placeholder]
-              display_tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
-              column_tag_attributes = column_options.except(:wrapper, :as, :align, :condition, *field_level_keys)
-              tag_attributes = display_tag_attributes.merge(column_tag_attributes)
+              tag = source_options[:as] || field_options[:as]
+
+              # Strip the field-level help keys and the header keys: they configure
+              # the field or the column, not the tag, and would otherwise leak as an
+              # HTML attribute.
+              tag_attributes = source_options.except(:wrapper, :as, :condition, *FIELD_LEVEL_KEYS, *COLUMN_FIELD_LEVEL_KEYS)
 
               # A `formatter:` produces the cell string itself, so render it
               # through the formatted-value component regardless of the column's
@@ -142,9 +152,17 @@ module Plutonium
               tag = :formatted_value if tag_attributes.key?(:formatter)
 
               tag_block = if column_definition[:block]
-                # User-provided blocks receive the raw record for convenience
+                # User blocks receive the raw record and are instance_exec'd against
+                # this table page, exactly as display blocks are against the show
+                # page: `self` has resource_definition/current_user/helpers and the
+                # tag methods, so the body can emit markup directly. The cell is a
+                # zero-arity proc; Phlex `render`s it in the <td>, sharing this
+                # component's buffer.
                 user_block = column_definition[:block]
-                ->(wrapped_object, _key) { user_block.call(wrapped_object.unwrapped) }
+                ->(wrapped_object, _key) {
+                  record = wrapped_object.unwrapped
+                  -> { render_column_block_result(instance_exec(record, &user_block)) }
+                }
               else
                 ->(wrapped_object, key) {
                   f = wrapped_object.field(key)
@@ -160,9 +178,11 @@ module Plutonium
                 tag_block = wrap_with_drag_handle(tag_block)
               end
 
-              # For table columns, only extract column-level options (label and align)
-              # Field-level options like description and placeholder don't make sense in table cells
-              field_options = field_options.except(:condition).merge(**column_options.slice(:align, :label))
+              # Header options (label/align) come from field, then display, then
+              # column, the most specific winning. Field-level help keys like
+              # description and placeholder have no place in a table cell.
+              header_options = display_options.slice(*COLUMN_FIELD_LEVEL_KEYS).merge(column_options.slice(*COLUMN_FIELD_LEVEL_KEYS))
+              field_options = field_options.except(:condition).merge(header_options)
               table.column name,
                 **field_options,
                 sort_params: current_query_object.sort_params_for(name),
@@ -209,6 +229,18 @@ module Plutonium
         #
         # The per-record `reposition?` check, by contrast, HAS to run per row.
         # Rows that fail it render exactly as they did before, unwrapped.
+        # A block that emitted markup returns nil (a no-op render); a String,
+        # component or proc renders as Phlex normally would; anything else
+        # (a count, a date…) reads as text instead of raising.
+        def render_column_block_result(result)
+          case result
+          when nil, String, Phlex::SGML, Proc, Enumerable
+            render result
+          else
+            plain result.to_s
+          end
+        end
+
         def wrap_with_drag_handle(inner)
           sort_url = position_grip_sort_url
 

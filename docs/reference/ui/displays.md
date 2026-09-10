@@ -53,14 +53,11 @@ class PostDefinition < ResourceDefinition
     StatusBadgeComponent.new(value: field.value, class: field.dom.css_class)
   end
 
-  # phlexi_render — proc whose body is rendered inside a Phlex context
-  display :priority, as: :phlexi_render, with: ->(value, attrs) {
-    case value
-    when 'high'   then span(class: "badge badge-danger")  { "High" }
-    when 'medium' then span(class: "badge badge-warning") { "Medium" }
-    else span(class: "badge badge-info") { "Low" }
-    end
-  }
+  # Block that emits markup directly (evaluated in the display's Phlex context)
+  display :priority do |field|
+    variant = {"high" => "danger", "medium" => "warning"}.fetch(field.value.to_s, "info")
+    span(class: "pu-badge pu-badge-#{variant}") { field.value.to_s.humanize }
+  end
 
   # Field component class — built as ChartComponent.new(field, **attributes),
   # so it subclasses Phlexi::Display::Components::Base and reads `field`.
