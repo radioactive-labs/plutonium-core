@@ -10,6 +10,20 @@ module Plutonium
         include Kit
         include Tokens
 
+        # Phlexi field-builder options that configure the field itself, not the
+        # rendered tag. Each surface routes its OWN keys to `field()` (displays
+        # say :description, forms say :hint) and strips the UNION from the tag
+        # attributes, so a key declared on the wrong surface is dropped rather
+        # than leaked as an HTML attribute.
+        DISPLAY_FIELD_LEVEL_KEYS = %i[label description placeholder].freeze
+        FORM_FIELD_LEVEL_KEYS = %i[hint label placeholder].freeze
+        FIELD_LEVEL_KEYS = (DISPLAY_FIELD_LEVEL_KEYS | FORM_FIELD_LEVEL_KEYS).freeze
+
+        # Table-column options that configure the header, not the cell. They may
+        # be declared on `field`, `display` or `column` and flow to the column
+        # without making the column "render alone" (see Table::Resource).
+        COLUMN_FIELD_LEVEL_KEYS = %i[label align].freeze
+
         if Rails.env.development?
           def around_template(&)
             comment { "open:#{self.class.name}" }

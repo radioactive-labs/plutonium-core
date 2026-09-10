@@ -1,7 +1,7 @@
 PATH
   remote: ..
   specs:
-    plutonium (0.62.2)
+    plutonium (0.64.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -601,7 +601,7 @@ CHECKSUMS
   phlexi-form (0.14.3) sha256=47d69c4a49ba22279ba541b9b110e81d62acc4602513f21bb5c3d29fa9c8d5ca
   phlexi-menu (0.4.1) sha256=f6eeb1eb9597caadeee33a53f1520b3613a6ac616cf1e395e9d734a412895fb2
   phlexi-table (0.2.0) sha256=73bee135adbe73fcdb6fdd2672444373556dd9e6bba61e7b5b20ca8b7a1f822c
-  plutonium (0.62.2)
+  plutonium (0.64.0)
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85

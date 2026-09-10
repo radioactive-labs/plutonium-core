@@ -301,13 +301,13 @@ module Plutonium
 
             tag = display_options[:as] || field_options[:as]
 
-            # Extract field-level options from display_options and merge into field_options
-            # These are Phlexi field options that should be passed to field(), not to the tag builder
-            field_level_keys = [:label, :description, :placeholder]
-            field_level_options = display_options.slice(*field_level_keys)
+            # Route the display's own field-level options to field(); strip the
+            # full union from the tag attributes so a form-only key (e.g. :hint)
+            # declared here is dropped rather than leaked as an HTML attribute.
+            field_level_options = display_options.slice(*DISPLAY_FIELD_LEVEL_KEYS)
             field_options = field_options.merge(field_level_options)
 
-            tag_attributes = display_options.except(:wrapper, :as, :condition, *field_level_keys)
+            tag_attributes = display_options.except(:wrapper, :as, :condition, *FIELD_LEVEL_KEYS)
 
             # A `formatter:` produces the display string itself, so render it
             # through the formatted-value component regardless of the field's

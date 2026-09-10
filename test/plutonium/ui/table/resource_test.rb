@@ -41,7 +41,8 @@ class Plutonium::UI::Table::ResourceTest < ActiveSupport::TestCase
   # table-building block a recorder, then invoke the captured column block with a
   # field builder from the table's real display builder.
   #
-  # Returns [column blocks by name, the Table::Base that was built].
+  # Returns [column blocks by name, the Table::Base that was built, the
+  # Table::Resource component, column options by name].
   def build_table(definition, fields: [:email], query_object: nil, repositionable: true)
     component = Plutonium::UI::Table::Resource.new(
       [User.new(email: "test@example.com")],
@@ -50,10 +51,14 @@ class Plutonium::UI::Table::ResourceTest < ActiveSupport::TestCase
     )
 
     blocks = {}
+    options = {}
     recorder = Object.new
     recorder.define_singleton_method(:selection_column) { |*, **| }
     recorder.define_singleton_method(:actions) { |&_block| }
-    recorder.define_singleton_method(:column) { |name, **, &block| blocks[name] = block }
+    recorder.define_singleton_method(:column) { |name, **opts, &block|
+      blocks[name] = block
+      options[name] = opts
+    }
 
     query_object ||= fake_query_object
     component.define_singleton_method(:current_query_object) { query_object }
@@ -70,11 +75,28 @@ class Plutonium::UI::Table::ResourceTest < ActiveSupport::TestCase
     }
 
     component.send(:render_table)
-    [blocks, table]
+    [blocks, table, component, options]
   end
 
   def column_blocks_for(definition, **)
     build_table(definition, **).first
+  end
+
+  def column_options_for(definition, **)
+    build_table(definition, **).last
+  end
+
+  # A column block's cell is a zero-arity proc that renders against the
+  # Table::Resource (its lexical self), so rendering it needs that component to
+  # be mid-render: swap the stubbed `render` back out and run a real render pass
+  # with the cell as the whole template.
+  def render_cell_html(definition, name = :email, **)
+    blocks, _table, component = build_table(definition, **)
+    cell = render_cell(blocks[name], name)
+
+    component.singleton_class.remove_method(:render)
+    component.define_singleton_method(:view_template) { render cell }
+    component.call
   end
 
   def render_cell(block, name = :email)
@@ -117,10 +139,214 @@ class Plutonium::UI::Table::ResourceTest < ActiveSupport::TestCase
     assert_instance_of Plutonium::UI::Display::Components::FormattedValue, cell
   end
 
+  # Regression: `display :x, as: :badge` (or a component class) must reach the
+  # table column when no `column` is declared. The table read the type from the
+  # wrong key (`display_definition[:as]`, always nil) instead of
+  # `display_definition[:options][:as]`, so display-only `as:` silently fell back
+  # to the inferred component — while the show page rendered it correctly.
+  test "a column inherits an alias as: declared on the display" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {as: :formatted_value}}})
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of Plutonium::UI::Display::Components::FormattedValue, cell
+  end
+
+  test "a column inherits a component-class as: declared on the display" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {as: CardComponent}}})
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of CardComponent, cell
+  end
+
   test "a column with no as: infers its tag" do
     cell = render_cell(column_blocks_for(FakeDefinition.new)[:email])
 
     assert_kind_of Phlexi::Display::Components::Base, cell
+  end
+
+  # Uses an unconsumed key (`data_probe`): a component's build_attributes deletes
+  # the options it knows (badge eats :colors), so a stray key is what survives to
+  # prove where attributes flow.
+  test "a column inheriting the display's type also inherits its attributes" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {as: :badge, data_probe: "x"}}})
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of Plutonium::UI::Display::Components::Badge, cell
+    assert_equal "x", cell.attributes[:data_probe]
+  end
+
+  # A column that says anything about RENDERING (as:, a component attribute, or
+  # a block) renders alone: its own type and attributes, no display inheritance,
+  # even when the types match.
+  test "a column with its own as: does not inherit the display's attributes" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {as: :badge, data_probe: "x"}}},
+      defined_columns: {email: {options: {as: :badge}}}
+    )
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of Plutonium::UI::Display::Components::Badge, cell
+    refute cell.attributes.key?(:data_probe), "a column that renders alone must not inherit the display's attributes"
+  end
+
+  test "a column with its own attributes does not inherit the display's type" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {as: :badge}}},
+      defined_columns: {email: {options: {class: "x"}}}
+    )
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    refute_instance_of Plutonium::UI::Display::Components::Badge, cell
+  end
+
+  # A column that only touches the HEADER (align:, label:, condition:) layers
+  # on top of whatever the display renders, so `column :price, align: :end`
+  # keeps the display's badge.
+  test "a column that only sets align keeps the display's type and attributes" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {as: :badge, data_probe: "x"}}},
+      defined_columns: {email: {options: {align: :end}}}
+    )
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of Plutonium::UI::Display::Components::Badge, cell
+    assert_equal "x", cell.attributes[:data_probe]
+  end
+
+  test "a column that only sets label keeps the display's type" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {as: :badge}}},
+      defined_columns: {email: {options: {label: "Login"}}}
+    )
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    assert_instance_of Plutonium::UI::Display::Components::Badge, cell
+  end
+
+  # ─── header options: label, align, condition ─────────────────────────────────
+
+  test "a display's label reaches the column header" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {label: "Login"}}})
+
+    assert_equal "Login", column_options_for(definition)[:email][:label]
+  end
+
+  test "a column's label wins over the display's label" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {label: "Login"}}},
+      defined_columns: {email: {options: {label: "Sign-in"}}}
+    )
+
+    assert_equal "Sign-in", column_options_for(definition)[:email][:label]
+  end
+
+  test "align declared on the field reaches the column header" do
+    definition = FakeDefinition.new(defined_fields: {email: {options: {align: :end}}})
+
+    assert_equal :end, column_options_for(definition)[:email][:align]
+  end
+
+  test "a column's align wins over the field's align" do
+    definition = FakeDefinition.new(
+      defined_fields: {email: {options: {align: :end}}},
+      defined_columns: {email: {options: {align: :center}}}
+    )
+
+    assert_equal :center, column_options_for(definition)[:email][:align]
+  end
+
+  test "align never reaches the cell component as an attribute" do
+    definition = FakeDefinition.new(
+      defined_displays: {email: {options: {as: :badge}}},
+      defined_columns: {email: {options: {align: :end}}}
+    )
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    refute cell.attributes.key?(:align)
+  end
+
+  # A `field` condition is surface-neutral (the form and show page both honour
+  # it), so the table must too. A `display` condition stays show-only: it may
+  # reference `object`, and the table has no single record.
+  test "a field condition hides the column" do
+    definition = FakeDefinition.new(defined_fields: {email: {options: {condition: -> { false }}}})
+
+    assert_nil column_blocks_for(definition)[:email]
+  end
+
+  test "a display condition does not hide the column" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {condition: -> { false }}}})
+
+    assert_not_nil column_blocks_for(definition)[:email]
+  end
+
+  test "a form-only field-level key on a display is stripped, not leaked as an attribute" do
+    definition = FakeDefinition.new(defined_displays: {email: {options: {hint: "help"}}})
+
+    cell = render_cell(column_blocks_for(definition)[:email])
+
+    refute cell.attributes.key?(:hint), ":hint is a form key; on a display it must be stripped, not rendered as an attribute"
+  end
+
+  # ─── column blocks render in the table page's Phlex context ─────────────────
+  #
+  # Parity with `display` blocks, which are instance_exec'd by Display::Resource:
+  # a column block is instance_exec'd by Table::Resource, so `self` has
+  # `resource_definition`, `current_user`, `helpers` and the tag methods.
+
+  test "a column block can emit markup directly" do
+    definition = FakeDefinition.new(defined_columns: {email: {block: ->(record) { span(class: "x") { record.email } }}})
+
+    assert_equal '<span class="x">test@example.com</span>', render_cell_html(definition)
+  end
+
+  test "a column block that returns a String renders it as escaped text" do
+    definition = FakeDefinition.new(defined_columns: {email: {block: ->(record) { "<b>#{record.email}</b>" }}})
+
+    assert_equal "&lt;b&gt;test@example.com&lt;/b&gt;", render_cell_html(definition)
+  end
+
+  class PlainChip < Plutonium::UI::Component::Base
+    def initialize(text) = (@text = text)
+    def view_template = strong { @text }
+  end
+
+  test "a column block that returns a component renders the component" do
+    definition = FakeDefinition.new(defined_columns: {email: {block: ->(record) { PlainChip.new(record.email) }}})
+
+    assert_equal "<strong>test@example.com</strong>", render_cell_html(definition)
+  end
+
+  test "a column block that returns a number renders it as text" do
+    definition = FakeDefinition.new(defined_columns: {email: {block: ->(record) { record.email.size }}})
+
+    assert_equal "16", render_cell_html(definition)
+  end
+
+  test "a column block runs with the table page as self" do
+    definition = FakeDefinition.new(
+      defined_fields: {email: {options: {label: "Login"}}},
+      defined_columns: {email: {block: ->(_record) { resource_definition.defined_fields[:email][:options][:label] }}}
+    )
+
+    assert_equal "Login", render_cell_html(definition)
+  end
+
+  test "a column block renders inside the drag-handle cell" do
+    definition = positioned_definition(defined_columns: {email: {block: ->(record) { span { record.email } }}})
+
+    html = render_cell_html(definition, query_object: fake_query_object(sorted_by: :position))
+
+    assert_includes html, "<span>test@example.com</span>"
+    assert_includes html, "data-positioned-grip"
   end
 
   # ─── drag grip ───────────────────────────────────────────────────────────────

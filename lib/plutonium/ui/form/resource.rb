@@ -315,11 +315,11 @@ module Plutonium
 
           tag = input_options[:as] || field_options[:as]
 
-          # Extract field-level options from input_options and merge into field_options
-          # These are Phlexi field options that should be passed to form.field(), not to the tag builder
-          # Note: forms use :hint, displays use :description
-          field_level_keys = [:hint, :label, :placeholder]
-          field_level_options = input_options.slice(*field_level_keys)
+          # Route the input's own field-level options to form.field(); strip the
+          # full union from the tag attributes so a display-only key (e.g.
+          # :description) declared here is dropped rather than leaked as an HTML
+          # attribute.
+          field_level_options = input_options.slice(*FORM_FIELD_LEVEL_KEYS)
           field_options = field_options.merge(field_level_options)
 
           # Staging options are stripped here as well as in Wizard::StepAdapter,
@@ -327,7 +327,7 @@ module Plutonium
           # Class-valued `uploader:` is not an HTML attribute and Phlex refuses
           # it, so leaving it in raises rather than rendering.
           tag_attributes = input_options.except(
-            :wrapper, :as, :pre_submit, :condition, *field_level_keys,
+            :wrapper, :as, :pre_submit, :condition, *FIELD_LEVEL_KEYS,
             *Plutonium::Attachments::STAGING_ONLY_INPUT_OPTIONS
           )
           if input_options[:pre_submit]

@@ -145,11 +145,11 @@ input :content, as: :markdown
 display :status, as: :badge, colors: {published: :accent, draft: :neutral}
 ```
 
-**Render it inline.** A display takes a block, or a proc that runs inside a Phlex context, so tag methods and Tailwind classes are available without defining a class:
+**Render it inline.** A display takes a block that runs inside a Phlex context, so tag methods and Tailwind classes are available without defining a class:
 
 ```ruby
-display :priority, as: :phlexi_render, with: ->(value, attrs) do
-  span(class: "pu-badge") { value.humanize }
+display :priority do |field|
+  span(class: "pu-badge") { field.value.to_s.humanize }
 end
 ```
 

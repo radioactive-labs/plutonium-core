@@ -69,6 +69,28 @@ module Plutonium
       # fields
       defineable_props :field, :input, :display, :column
 
+      # `as: :phlexi_render, with:` is deprecated in favour of the block form.
+      # Warn here, at declaration, rather than in the component: it fires once
+      # per declaration with the definition's own file and line, instead of
+      # once per rendered cell.
+      module PhlexiRenderDeprecation
+        PHLEXI_RENDER_TAGS = %i[phlexi_render phlexi].freeze
+
+        def display(name, **options, &block)
+          if PHLEXI_RENDER_TAGS.include?(options[:as])
+            Plutonium.deprecator.warn(
+              "`display :#{name}, as: :#{options[:as]}, with:` is deprecated; use a block-form display " \
+              "instead: `display :#{name} do |f| ... end`. It renders in a Phlex context once and gives " \
+              "you `f.object`.",
+              caller_locations(1)
+            )
+          end
+          super
+        end
+      end
+      singleton_class.prepend PhlexiRenderDeprecation
+      prepend PhlexiRenderDeprecation
+
       # export
       defineable_prop :export
 
