@@ -84,6 +84,8 @@ For large tables, write an explicit `search` block backed by a trigram or full-t
 
 Six built-in filter types. Use the shorthand symbol or the full class name.
 
+`search`, `scope`, `sort_fields`, and `sort_directions` are reserved filter names — they're built-in controls in the `q[<name>]` namespace, so `filter :scope` raises `ArgumentError`.
+
 | Type | Symbol | Params in URL | Options |
 |---|---|---|---|
 | Text | `:text` | `query` | `predicate:` |
