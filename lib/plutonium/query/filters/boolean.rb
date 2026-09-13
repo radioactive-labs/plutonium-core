@@ -10,10 +10,10 @@ module Plutonium
       #   filter :published, with: :boolean, true_label: "Published", false_label: "Draft"
       #
       class Boolean < Filter
-        def initialize(true_label: "Yes", false_label: "No", **)
+        def initialize(true_label: nil, false_label: nil, **)
           super(**)
-          @true_label = true_label
-          @false_label = false_label
+          @true_label = true_label || Plutonium::Translation.t("plutonium.boolean.true")
+          @false_label = false_label || Plutonium::Translation.t("plutonium.boolean.false")
         end
 
         def humanize_value(value)
@@ -32,7 +32,7 @@ module Plutonium
           input :value,
             as: :select,
             choices: [[@true_label, "true"], [@false_label, "false"]],
-            include_blank: "All"
+            include_blank: Plutonium::Translation.t("plutonium.query.all")
         end
       end
     end

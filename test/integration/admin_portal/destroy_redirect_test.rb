@@ -17,6 +17,7 @@ class AdminPortal::DestroyRedirectTest < ActionDispatch::IntegrationTest
     delete show_path, params: {return_to: show_path}
 
     assert_redirected_to "/admin/blogging/posts"
+    assert_equal "Post was successfully deleted.", flash[:notice]
   end
 
   test "delete from the edit page falls back to the index instead of the deleted record" do

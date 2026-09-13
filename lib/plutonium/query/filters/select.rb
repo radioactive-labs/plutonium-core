@@ -34,7 +34,7 @@ module Plutonium
             as: :select,
             choices: resolved_choices,
             multiple: @multiple,
-            include_blank: @multiple ? false : "All"
+            include_blank: @multiple ? false : Plutonium::Translation.t("plutonium.query.all")
         end
 
         private

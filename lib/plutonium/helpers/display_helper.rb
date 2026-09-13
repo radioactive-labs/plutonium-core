@@ -1,8 +1,16 @@
 module Plutonium
   module Helpers
     module DisplayHelper
+      # The model's human name, pluralised for `count`. A locale that defines
+      # `activerecord.models.<model>.one/other` supplies the plural; when it
+      # only defines a single string (or nothing), `human(count:)` hands back
+      # the singular and the English inflector pluralises it as before.
       def resource_name(resource_class, count = 1)
-        resource_class.model_name.human.pluralize(count)
+        model_name = resource_class.model_name
+        human = model_name.human(count: count)
+        return human if count == 1 || human != model_name.human(count: 1)
+
+        human.pluralize(count)
       end
 
       def resource_name_plural(resource_class)
@@ -44,7 +52,7 @@ module Plutonium
         end
 
         # Maybe this is a record?
-        return "#{resource_name(obj.class)} ##{obj.id}" if obj.respond_to?(:id)
+        return t("plutonium.resource.record_label", resource: resource_name(obj.class), id: obj.id) if obj.respond_to?(:id)
 
         # Oh well. Just convert it to a string.
         obj.to_s

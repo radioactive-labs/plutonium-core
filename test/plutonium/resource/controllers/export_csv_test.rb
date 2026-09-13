@@ -59,7 +59,7 @@ class Plutonium::Resource::Controllers::ExportCsvTest < Minitest::Test
   def build_resource_class
     Class.new do
       def self.primary_key = "id"
-      def self.model_name = OpenStruct.new(human: "Widget")
+      def self.model_name = ActiveModel::Name.new(self, nil, "Widget")
 
       # The export preloads the associations its columns render, so it asks the
       # resource class what those are. A real resource gets these from
