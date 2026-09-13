@@ -2,6 +2,24 @@
 
 require "test_helper"
 
+class Plutonium::Helpers::DisplayHelperPluralTest < ActiveSupport::TestCase
+  include Plutonium::Helpers::DisplayHelper
+  include I18nTestHelper
+
+  teardown { I18n.backend.reload! }
+
+  test "identical one/other forms are used as-is rather than inflected" do
+    store_translations(activerecord: {models: {"blogging/article": {one: "Sheep", other: "Sheep"}}})
+
+    assert_equal "Sheep", resource_name(Blogging::Article, 2)
+  end
+
+  test "without locale plurals the English inflector applies" do
+    assert_equal "Articles", resource_name(Blogging::Article, 2)
+    assert_equal "Article", resource_name(Blogging::Article, 1)
+  end
+end
+
 class Plutonium::Helpers::DisplayHelperTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 
@@ -59,5 +77,29 @@ class Plutonium::Helpers::DisplayHelperTest < ActionDispatch::IntegrationTest
 
     # Should default to plural (count 2) when config is nil
     assert_equal "Unregistered resources", label
+  end
+
+  test "resource_name uses the locale's plural when the model defines one" do
+    get "/admin/blogging/posts"
+    I18n.backend.store_translations(:en, activerecord: {models: {"blogging/post": {one: "Article", other: "Articles"}}})
+
+    assert_equal "Article", controller.view_context.resource_name(Blogging::Post)
+    assert_equal "Articles", controller.view_context.resource_name_plural(Blogging::Post)
+  ensure
+    I18n.backend.reload!
+  end
+
+  test "resource_name falls back to English inflection when the locale has no plural" do
+    get "/admin/blogging/posts"
+
+    assert_equal "Post", controller.view_context.resource_name(Blogging::Post)
+    assert_equal "Posts", controller.view_context.resource_name_plural(Blogging::Post)
+  end
+
+  test "display_name_of falls back to the resource name and id" do
+    get "/admin/blogging/posts"
+    record = Struct.new(:id) { def self.model_name = ActiveModel::Name.new(self, nil, "Widget") }.new(9)
+
+    assert_equal "Widget #9", controller.view_context.display_name_of(record)
   end
 end

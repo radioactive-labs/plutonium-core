@@ -96,6 +96,13 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_match %r{name="authenticity_token"}, response.body
     assert_match %r{data-turbo-confirm="[^"]+"}, response.body
     refute_match %r{data-confirm=}, response.body
+    # The interpolated chooser copy: the wizard label lands in the aria-label and
+    # the confirm prompt; the timestamp lands in the "Updated … ago" line.
+    assert_includes response.body, %(aria-label="Cancel this Onboard an organization draft")
+    assert_match %r{data-turbo-confirm="Discard this in-progress Onboard an organization\? This can.t be undone\."}, response.body
+    assert_match %r{Updated (less than a minute|\d+ \w+) ago}, response.body
+    assert_includes response.body, "Pick up where you left off, or start a new one."
+    assert_includes response.body, "Start new"
   end
 
   test "cancelling a pending run destroys it and PRGs to the launch path" do
@@ -378,6 +385,8 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "wizard-review-outstanding"
     assert_includes response.body, %(data-wizard-review-fix="details")
+    assert_includes response.body, "Some steps still need attention before you can finish:"
+    assert_includes response.body, "Fix Details"
     # The summary of what's entered so far renders too.
     assert_includes response.body, %(data-wizard-review-step="identity")
     assert_includes response.body, "Acme Inc"

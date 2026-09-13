@@ -31,7 +31,7 @@ module Plutonium
         end
 
         def view_template
-          nav(class: "pu-wizard-stepper mb-7", aria_label: "Progress") do
+          nav(class: "pu-wizard-stepper mb-7", aria_label: t("plutonium.wizard.stepper.progress")) do
             ol(class: "pu-wizard-steps") do
               @steps.each_with_index do |step, index|
                 render_step(step, index)

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { t } from "../i18n.js"
 
 // Connects to data-controller="intl-tel-input"
 export default class extends Controller {
@@ -52,7 +53,11 @@ export default class extends Controller {
   #buildOptions() {
     // Defaults first; the definition-supplied `options` value (e.g.
     // { initialCountry: "gh", strictMode: false }) is spread last so it wins.
+    // Optional locale passthrough: plutonium.js.libraries.intl_tel_input is
+    // the intl-tel-input `i18n` option (an object of strings).
+    const i18n = t("plutonium.js.libraries.intl_tel_input")
     return {
+      ...(i18n && typeof i18n === "object" ? { i18n } : {}),
       strictMode: true,
       hiddenInput: () => ({ phone: this.inputTarget.attributes.name.value }),
       loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.8.1/build/js/utils.js",

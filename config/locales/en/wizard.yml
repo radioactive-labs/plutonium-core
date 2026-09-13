@@ -1,0 +1,46 @@
+# Plutonium wizard strings: the step page, the review body, the stepper, the
+# resume-or-new chooser, the one-time "already completed" page and the driving
+# concern's flash / error text. Loaded at the lowest precedence, so a package,
+# portal or the host application can override any key.
+en:
+  plutonium:
+    wizard:
+      cancel: "Cancel"
+      authorization_denied: "Wizard authorization denied"
+      run_not_found: "wizard run not found"
+      page:
+        title: "%{wizard} — %{step}"
+        fallback_title: "Wizard"
+        step_position: "Step %{position} of %{total}"
+        review_prompt: "Check everything over before you finish."
+      nav:
+        back: "Back"
+        finish: "Finish"
+        next: "Next"
+        save_and_continue: "Save & continue"
+        save_and_review: "Save & review"
+        unsaved_back: "You have unsaved changes on this step. Go back and lose them?"
+        unsaved_cancel: "You have unsaved changes. Cancel the wizard and lose them?"
+      stepper:
+        progress: "Progress"
+      review:
+        label: "Review"
+        outstanding: "Some steps still need attention before you can finish:"
+        fix_step: "Fix %{step}"
+        edit: "Edit"
+        none: "None"
+        row_label: "%{label}: "
+        ready_title: "You're all set"
+        ready_message: "Everything looks good. Click Finish to complete."
+      chooser:
+        prompt: "Pick up where you left off, or start a new one."
+        in_progress: "In progress"
+        updated_ago: "Updated %{time} ago"
+        a_while: "a while"
+        resume: "Resume"
+        cancel_draft: "Cancel this %{wizard} draft"
+        discard_confirm: "Discard this in-progress %{wizard}? This can't be undone."
+        start_new: "Start new"
+      completed:
+        message: "You've already completed this — there's nothing more to do here."
+        continue: "Continue"

@@ -38,7 +38,7 @@ module Plutonium
         column :outcome, as: :badge,
           colors: {running: :info, completed_with_errors: :warning}
 
-        field :target_label, label: "Target type"
+        field :target_label, label: t("plutonium.async.run.target_type")
 
         # The details tab, with the live panel above the fields.
         #

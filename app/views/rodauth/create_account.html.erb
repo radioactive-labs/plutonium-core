@@ -6,7 +6,7 @@
                      id: "login",
                      autocomplete: "email",
                      required: true,
-                     placeholder: "jane@acme.inc",
+                     placeholder: t("plutonium.resource.auth.login_placeholder"),
                      class: "pu-input #{rodauth.field_error(rodauth.login_param) ? 'pu-input-invalid' : ''}",
                      aria: (rodauth.field_error(rodauth.login_param) ? { invalid: true, describedby: "login_error_message" } : nil) %>
     <% if rodauth.field_error(rodauth.login_param) %>
@@ -22,7 +22,7 @@
                        id: "login-confirm",
                        autocomplete: "email",
                        required: true,
-                       placeholder: "jane@acme.inc",
+                       placeholder: t("plutonium.resource.auth.login_placeholder"),
                        class: "pu-input #{rodauth.field_error(rodauth.login_confirm_param) ? 'pu-input-invalid' : ''}",
                        aria: (rodauth.field_error(rodauth.login_confirm_param) ? { invalid: true, describedby: "login-confirm_error_message" } : nil) %>
       <% if rodauth.field_error(rodauth.login_confirm_param) %>
@@ -70,6 +70,6 @@
 <% end %>
 
 <p class="text-sm font-medium text-[var(--pu-text-muted)]">
-  Already have an account?
-  <%= link_to "Login", rodauth.login_path, class: "font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" %>
+  <%= t("plutonium.resource.auth.already_have_account") %>
+  <%= link_to t("plutonium.resource.auth.login"), rodauth.login_path, class: "font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" %>
 </p>

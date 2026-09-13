@@ -6,7 +6,7 @@
                      id: "login",
                      autocomplete: "email",
                      required: true,
-                     placeholder: "jane@acme.inc",
+                     placeholder: t("plutonium.resource.auth.login_placeholder"),
                      class: "pu-input #{rodauth.field_error(rodauth.login_param) ? 'pu-input-invalid' : ''}",
                      aria: (rodauth.field_error(rodauth.login_param) ? { invalid: true, describedby: "login_error_message" } : nil) %>
     <% if rodauth.field_error(rodauth.login_param) %>
@@ -22,7 +22,7 @@
                        id: "login-confirm",
                        autocomplete: "email",
                        required: true,
-                       placeholder: "jane@acme.inc",
+                       placeholder: t("plutonium.resource.auth.login_placeholder"),
                        class: "pu-input #{rodauth.field_error(rodauth.login_confirm_param) ? 'pu-input-invalid' : ''}",
                        aria: (rodauth.field_error(rodauth.login_confirm_param) ? { invalid: true, describedby: "login-confirm_error_message" } : nil) %>
       <% if rodauth.field_error(rodauth.login_confirm_param) %>

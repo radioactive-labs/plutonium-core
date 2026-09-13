@@ -204,6 +204,51 @@ class Plutonium::UI::Kanban::ColumnTest < Minitest::Test
   end
 
   # ---------------------------------------------------------------------------
+  # Translated titles (interpolated / pluralised strings from config/locales)
+  # ---------------------------------------------------------------------------
+
+  def test_wip_badge_title_names_the_limit
+    col = build_column(:doing, wip: 3)
+    component = build_component(col, cards: stub_records(2), total: 2)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_includes html, 'title="WIP limit: 3"'
+  end
+
+  def test_wip_badge_title_when_over_limit
+    col = build_column(:doing, wip: 3)
+    component = build_component(col, cards: stub_records(4), total: 4)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_includes html, 'title="WIP limit exceeded"'
+  end
+
+  def test_toggle_titles_name_the_column
+    col = build_column(:doing)
+    component = build_component(col, cards: [], total: 0)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_includes html, 'title="Collapse Doing"'
+    assert_includes html, 'title="Expand Doing"'
+  end
+
+  def test_more_footer_singular
+    col = build_column(:todo)
+    component = build_component(col, cards: stub_records(3), total: 4, per_column: 3)
+    component.define_singleton_method(:render_cards) {}
+
+    html = component.call
+
+    assert_match(/\+1 more/, html)
+  end
+
+  # ---------------------------------------------------------------------------
   # Collapsed strip variant
   # ---------------------------------------------------------------------------
 

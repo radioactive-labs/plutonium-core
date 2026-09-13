@@ -37,8 +37,13 @@ module Plutonium
         private
 
         def wizard_title
-          step = @runner.current_step
-          [@runner.wizard.class.label, step&.label].compact.join(" — ").presence || "Wizard"
+          wizard = @runner.wizard.class.label.presence
+          step = @runner.current_step&.label.presence
+          if wizard && step
+            t("plutonium.wizard.page.title", wizard:, step:)
+          else
+            wizard || step || t("plutonium.wizard.page.fallback_title")
+          end
         end
 
         # Centered wizard header: the title and the wizard-level description
@@ -103,7 +108,7 @@ module Plutonium
           div(class: "mb-6") do
             unless step.review?
               span(class: "text-xs font-bold uppercase tracking-wide text-primary-600 dark:text-primary-400") do
-                "Step #{step_position(step)} of #{visible_step_count}"
+                t("plutonium.wizard.page.step_position", position: step_position(step), total: visible_step_count)
               end
             end
             h2(class: "mt-1 text-xl font-semibold tracking-tight text-[var(--pu-text)]") { step.label.to_s }
@@ -112,7 +117,7 @@ module Plutonium
             # shown — when summary is off (the ready panel / custom-only body), that
             # prompt would contradict the body, so we omit it.
             desc = step.description.presence
-            desc ||= "Check everything over before you finish." if step.review? && step.summary?
+            desc ||= t("plutonium.wizard.page.review_prompt") if step.review? && step.summary?
             if desc
               p(class: "mt-1.5 text-sm text-[var(--pu-text-muted)]") { desc }
             end
@@ -182,12 +187,12 @@ module Plutonium
 
           div(class: "pu-wizard-nav flex items-center justify-between gap-3 border-t border-[var(--pu-border)] bg-[var(--pu-surface-alt)] px-6 py-4 sm:px-8") do
             div(class: "flex items-center gap-2") do
-              nav_button("Back", direction: "back", style: "pu-btn-outline", embedded:) if show_back?
-              nav_button("Cancel", direction: "cancel", style: "pu-btn-ghost", embedded:)
+              nav_button(t("plutonium.wizard.nav.back"), direction: "back", style: "pu-btn-outline", embedded:) if show_back?
+              nav_button(t("plutonium.wizard.cancel"), direction: "cancel", style: "pu-btn-ghost", embedded:)
             end
             div(class: "flex items-center gap-2") do
               if finish
-                nav_button("Finish", direction: "next", style: "pu-btn-primary", embedded:, disabled: finish_disabled, name: "finish")
+                nav_button(t("plutonium.wizard.nav.finish"), direction: "next", style: "pu-btn-primary", embedded:, disabled: finish_disabled, name: "finish")
               else
                 render_forward_buttons(embedded:)
               end
@@ -209,11 +214,11 @@ module Plutonium
           # nothing was persisted, so this isn't a re-edit. Keep "Next" there; the
           # presence of `@errors` is the error-render signal.
           revisiting = @runner.submitted?(step) && @errors.blank?
-          continue_label = revisiting ? "Save & continue" : "Next"
+          continue_label = revisiting ? t("plutonium.wizard.nav.save_and_continue") : t("plutonium.wizard.nav.next")
 
           if review_shortcut?(step)
             nav_button(continue_label, direction: "next", style: "pu-btn-outline", embedded:, name: "next")
-            nav_button("Save & review", direction: "next", style: "pu-btn-primary", embedded:, name: "save_review", goto: "review")
+            nav_button(t("plutonium.wizard.nav.save_and_review"), direction: "next", style: "pu-btn-primary", embedded:, name: "save_review", goto: "review")
           else
             nav_button(continue_label, direction: "next", style: "pu-btn-primary", embedded:, name: "next")
           end
@@ -305,8 +310,8 @@ module Plutonium
         # unsaved edits and the user clicks a control that abandons them.
         def leave_warning(direction)
           case direction
-          when "back" then "You have unsaved changes on this step. Go back and lose them?"
-          when "cancel" then "You have unsaved changes. Cancel the wizard and lose them?"
+          when "back" then t("plutonium.wizard.nav.unsaved_back")
+          when "cancel" then t("plutonium.wizard.nav.unsaved_cancel")
           end
         end
 
@@ -350,14 +355,15 @@ module Plutonium
           end
         end
 
-        # Every finalize error as a full sentence: a `:base` error renders verbatim;
-        # a field error is prefixed with its humanized attribute, mirroring Rails'
-        # `full_messages` — so {name: ["has already been taken"]} → "Name has
+        # Every finalize error as a full sentence, built by the wizard's own
+        # `errors.full_message` so it follows Rails' `errors.format` and attribute
+        # translations: a `:base` error renders verbatim; a field error is prefixed
+        # with its attribute name — {name: ["has already been taken"]} → "Name has
         # already been taken".
         def review_error_messages
+          errors = @runner.wizard.errors
           @errors.flat_map do |attr, msgs|
-            base = attr.to_s == "base"
-            Array(msgs).map { |m| base ? m : "#{attr.to_s.humanize} #{m}" }
+            Array(msgs).map { |m| errors.full_message(attr.to_sym, m) }
           end
         end
 

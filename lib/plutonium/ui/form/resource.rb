@@ -88,10 +88,10 @@ module Plutonium
           ) do
             div(class: "px-6 pt-5 pb-4 border-b border-[var(--pu-border)]") do
               h2(id: "pu-dirty-guard-title", class: "text-lg font-semibold text-[var(--pu-text)]") do
-                "Discard changes?"
+                t("plutonium.ui.form.discard_title")
               end
               p(id: "pu-dirty-guard-desc", class: "mt-1 text-sm text-[var(--pu-text-muted)]") do
-                "You have unsaved changes. Closing this form now will lose them."
+                t("plutonium.ui.form.discard_description")
               end
             end
             div(class: "flex items-center justify-end gap-2 px-6 py-4") do
@@ -99,12 +99,12 @@ module Plutonium
                 type: "button",
                 class: "pu-btn pu-btn-md pu-btn-outline",
                 data: {action: "dirty-form-guard#keepEditing"}
-              ) { "Keep editing" }
+              ) { t("plutonium.ui.form.keep_editing") }
               button(
                 type: "button",
                 class: "pu-btn pu-btn-md pu-btn-danger",
                 data: {action: "dirty-form-guard#discard"}
-              ) { "Discard changes" }
+              ) { t("plutonium.ui.form.discard_changes") }
             end
           end
         end
@@ -268,7 +268,7 @@ module Plutonium
         end
 
         def render_submit_and_continue_button
-          label = object.new_record? ? "Create and add another" : "Update and continue editing"
+          label = object.new_record? ? t("plutonium.ui.form.create_and_add_another") : t("plutonium.ui.form.update_and_continue_editing")
 
           button(
             type: :submit,
@@ -321,6 +321,9 @@ module Plutonium
           # attribute.
           field_level_options = input_options.slice(*FORM_FIELD_LEVEL_KEYS)
           field_options = field_options.merge(field_level_options)
+          # Slots the definition left blank fall back to the locale convention
+          # (plutonium.fields.<model>.<attr>.placeholder / .hint).
+          field_options = Plutonium::Translation.fill_field_text(field_options, form.object.class, name, :placeholder, :hint)
 
           # Staging options are stripped here as well as in Wizard::StepAdapter,
           # because an interaction's inputs reach this method directly. A
@@ -416,18 +419,6 @@ module Plutonium
         # is why it cannot take a `form` argument the way an option does.
         # Resolving it here would also collapse it to a boolean before the render
         # site that owns it gets to ask.
-        def resolve_option_procs(options)
-          return options if options.blank?
-
-          options.to_h do |key, value|
-            [key, resolvable_proc?(key, value) ? call_option_proc(value) : value]
-          end
-        end
-
-        def resolvable_proc?(key, value) = key != :condition && value.is_a?(Proc)
-
-        def call_option_proc(value) = value.arity.zero? ? value.call : value.call(self)
-
         def when_permitted(name, &)
           return unless resource_fields.include? name
 

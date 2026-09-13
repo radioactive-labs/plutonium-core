@@ -27,11 +27,18 @@ module Plutonium
 
       attr_reader :block, :summary, :header
 
-      def initialize(key: :review, label: "Review", description: nil, condition: nil, summary: true, header: true, block: nil)
+      def initialize(key: :review, label: nil, description: nil, condition: nil, summary: true, header: true, block: nil)
         super(key:, label:, description:, condition:, fields: EmptyFields.new)
+        @explicit_label = label
         @summary = summary
         @header = header
         @block = block
+      end
+
+      # The author's `label:` when given; otherwise the translated default,
+      # looked up per call so it follows the request's locale.
+      def label
+        Plutonium::Translation.resolve(@explicit_label) || I18n.t("plutonium.wizard.review.label")
       end
 
       def review? = true

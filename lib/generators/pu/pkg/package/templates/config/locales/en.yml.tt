@@ -1,0 +1,28 @@
+# Wording for the <%= package_name %> package's resources.
+#
+# This file is loaded automatically (the package is a Rails engine) ahead of
+# the host app's config/locales, so the app can still override anything here.
+#
+# Model and attribute names follow the Rails convention; placeholders, hints
+# and derived labels follow Plutonium's:
+#
+#   en:
+#     activerecord:
+#       models:
+#         <%= package_namespace %>/post:
+#           one: "Post"
+#           other: "Posts"
+#       attributes:
+#         <%= package_namespace %>/post:
+#           title: "Title"
+#     plutonium:
+#       fields:
+#         <%= package_namespace %>/post:
+#           title:
+#             placeholder: "A short, descriptive title"
+#       actions:
+#         <%= package_namespace %>/post:
+#           publish: "Publish now"
+#
+# See https://radioactive-labs.github.io/plutonium-core/reference/i18n
+en: {}

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { t } from "../i18n.js"
 
 export default class extends Controller {
   static targets = ["source"]
@@ -9,7 +10,7 @@ export default class extends Controller {
     const originalText = button.textContent
 
     navigator.clipboard.writeText(text).then(() => {
-      button.textContent = "Copied!"
+      button.textContent = t("plutonium.js.clipboard.copied")
       setTimeout(() => {
         button.textContent = originalText
       }, 2000)
@@ -17,7 +18,7 @@ export default class extends Controller {
       // Fallback for browsers that don't support clipboard API
       console.warn("Clipboard API failed, using fallback:", err)
       this.fallbackCopy(text)
-      button.textContent = "Copied!"
+      button.textContent = t("plutonium.js.clipboard.copied")
       setTimeout(() => {
         button.textContent = originalText
       }, 2000)

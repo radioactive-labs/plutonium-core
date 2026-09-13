@@ -27,6 +27,8 @@ module Plutonium
     #     end
     #   end
     class Base
+      extend Plutonium::Translation::Lazy
+
       include ActiveModel::Model
       include Plutonium::Definition::Presentable
       include DSL

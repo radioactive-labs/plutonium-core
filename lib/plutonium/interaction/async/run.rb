@@ -169,7 +169,7 @@ module Plutonium
         def to_label
           parts = self.class.name.split("::")
           name = (parts.last == "Run" && parts.size > 1) ? "#{parts[-2]}Run" : parts.last
-          "#{name.titleize} ##{to_param}"
+          I18n.t("plutonium.async.run.label", name: name.titleize, id: to_param)
         end
 
         # nil means INDETERMINATE, not zero: opaque work has no denominator, and
@@ -385,7 +385,7 @@ module Plutonium
         def enqueue_job
           Plutonium::Interaction::Async::Job.perform_later(id)
         rescue
-          fail!("could not be enqueued for execution")
+          fail!(I18n.t("plutonium.async.run.enqueue_failed"))
           raise
         end
       end

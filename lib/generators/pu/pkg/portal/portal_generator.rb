@@ -25,6 +25,7 @@ module Pu
 
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
         template "config/routes.rb", "packages/#{package_namespace}/config/routes.rb"
+        template "config/locales/en.yml", "packages/#{package_namespace}/config/locales/en.yml"
 
         template "app/controllers/concerns/controller.rb",
           "packages/#{package_namespace}/app/controllers/#{package_namespace}/concerns/controller.rb"

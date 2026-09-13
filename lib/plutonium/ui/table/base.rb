@@ -134,7 +134,7 @@ module Plutonium
                 type: "button",
                 class: themed(:column_menu_trigger),
                 data: {action: "click->table-column-menu#toggle"},
-                aria: {label: "Column options"}
+                aria: {label: Plutonium::Translation.t("plutonium.ui.table.column_options")}
               ) do
                 render Phlex::TablerIcons::Dots.new(class: "w-3 h-3")
               end
@@ -143,7 +143,7 @@ module Plutonium
                 class: themed(:column_menu_panel),
                 data: {"table-column-menu-target": "panel"}
               ) do
-                render_menu_item("Clear sort", sort_params[:reset_url], icon: Phlex::TablerIcons::X)
+                render_menu_item(Plutonium::Translation.t("plutonium.ui.table.clear_sort"), sort_params[:reset_url], icon: Phlex::TablerIcons::X)
               end
             end
           end

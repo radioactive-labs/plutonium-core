@@ -9,7 +9,7 @@
                      id: "login",
                      autocomplete: rodauth.login_field_autocomplete_value,
                      required: true,
-                     placeholder: "jane@acme.inc",
+                     placeholder: t("plutonium.resource.auth.login_placeholder"),
                      class: "pu-input #{rodauth.field_error(rodauth.login_param) ? 'pu-input-invalid' : ''}",
                      aria: (rodauth.field_error(rodauth.login_param) ? { invalid: true, describedby: "login_error_message" } : nil) %>
     <% unless rodauth.skip_login_field_on_login? %>

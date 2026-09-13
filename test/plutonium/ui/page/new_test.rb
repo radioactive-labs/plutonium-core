@@ -8,6 +8,16 @@ class Plutonium::UI::Page::NewTest < ActiveSupport::TestCase
     assert_equal :new_page, page.send(:page_type)
   end
 
+  test "default page_title interpolates the singular resource name" do
+    page = Plutonium::UI::Page::New.new
+    definition = build_definition(:slideover)
+    page.define_singleton_method(:current_definition) { definition }
+    page.define_singleton_method(:resource_class) { User }
+    page.define_singleton_method(:resource_name) { |klass, _count| klass.model_name.human }
+
+    assert_equal "New User", page.send(:page_title)
+  end
+
   test "render_default_content wraps form in pb-20 div when not in modal" do
     page = build_new_page(turbo_frame: nil)
     output = render_default_content(page)

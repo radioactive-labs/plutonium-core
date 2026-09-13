@@ -1,0 +1,37 @@
+# Strings rendered by Plutonium::Invites (invitation acceptance controller and
+# the invite / resend / cancel interactions). Validation messages the invite
+# model adds by symbol live under errors.messages so ActiveModel resolves them.
+en:
+  plutonium:
+    invites:
+      controller:
+        email_validation_error: "Email Validation Error"
+        sign_in_to_accept: "Please sign in to accept this invitation"
+        accepted: "Invitation accepted! Welcome to %{entity}!"
+        acceptance_error: "Acceptance Error"
+        invalid_or_expired: "Invalid or Expired Invitation"
+        no_longer_valid: "This invitation link is no longer valid. It may have expired or already been used."
+        passwords_dont_match: "Passwords don't match"
+        account_exists: "An account with this email already exists. Please sign in instead."
+        create_account_failed: "Failed to create account"
+        create_account_failed_with_error: "Failed to create account: %{error}"
+      invite_user:
+        sent: "Invitation sent to %{email}"
+      resend_invite:
+        label: "Resend Invitation"
+        not_pending: "Can only resend pending invitations"
+        failed: "Failed to resend: %{error}"
+        resent: "Invitation resent to %{email}"
+      cancel_invite:
+        label: "Cancel Invitation"
+        not_pending: "Can only cancel pending invitations"
+        cancelled: "Invitation cancelled"
+  errors:
+    messages:
+      invite_email_mismatch: "This invitation is for %{email}. You must use an account with that email address."
+      invite_domain_mismatch: "This invitation requires an email from the %{domain} domain."
+      invite_already_accepted: "This invitation has already been accepted"
+      invite_cancelled: "This invitation has been cancelled"
+      invite_expired: "This invitation has expired"
+      already_a_member: "is already a member"
+      already_has_pending_invitation: "already has a pending invitation"

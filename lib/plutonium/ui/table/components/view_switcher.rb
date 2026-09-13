@@ -12,10 +12,12 @@ module Plutonium
         # through. The Stimulus controller sets the cookie on click,
         # then reloads.
         class ViewSwitcher < Plutonium::UI::Component::Base
+          # Labels are translation keys, resolved at render time so the
+          # switcher follows the request's locale.
           SEGMENT_LABELS = {
-            table: {label: "Table", icon: Phlex::TablerIcons::Table},
-            grid: {label: "Grid", icon: Phlex::TablerIcons::LayoutGrid},
-            kanban: {label: "Board", icon: Phlex::TablerIcons::LayoutKanban}
+            table: {label: "plutonium.ui.table.views.table", icon: Phlex::TablerIcons::Table},
+            grid: {label: "plutonium.ui.table.views.grid", icon: Phlex::TablerIcons::LayoutGrid},
+            kanban: {label: "plutonium.ui.table.views.kanban", icon: Phlex::TablerIcons::LayoutKanban}
           }.freeze
 
           def initialize(views:, current:, cookie_name:, cookie_path: "/")
@@ -32,7 +34,7 @@ module Plutonium
           def view_template
             div(
               role: "tablist",
-              aria: {label: "View"},
+              aria: {label: t("plutonium.ui.table.view")},
               class: "inline-flex h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden",
               data: {
                 controller: "view-switcher",
@@ -49,7 +51,9 @@ module Plutonium
           private
 
           def render_segment(key, last:)
-            meta = SEGMENT_LABELS.fetch(key) { {label: key.to_s.titleize, icon: Phlex::TablerIcons::LayoutGrid} }
+            meta = SEGMENT_LABELS[key]
+            label = meta ? t(meta[:label]) : key.to_s.titleize
+            icon = meta ? meta[:icon] : Phlex::TablerIcons::LayoutGrid
             active = key == @current
 
             classes = ["px-2.5 inline-flex items-center gap-1.5 text-sm transition-colors"]
@@ -64,15 +68,15 @@ module Plutonium
               type: "button",
               role: "tab",
               class: classes.join(" "),
-              title: meta[:label],
+              title: label,
               aria: {selected: active.to_s},
               data: {
                 action: "click->view-switcher#select",
                 view_switcher_view_param: key.to_s
               }
             ) do
-              render meta[:icon].new(class: "w-4 h-4 shrink-0")
-              span { meta[:label] }
+              render icon.new(class: "w-4 h-4 shrink-0")
+              span { label }
             end
           end
         end

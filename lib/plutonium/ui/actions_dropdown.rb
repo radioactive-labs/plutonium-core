@@ -26,8 +26,8 @@ module Plutonium
           aria: {expanded: "false", haspopup: "true"},
           data: {resource_drop_down_target: "trigger"}
         ) do
-          span(class: "sr-only") { "Open actions menu" }
-          plain "Actions"
+          span(class: "sr-only") { t("plutonium.ui.actions_dropdown.open_menu") }
+          plain t("plutonium.ui.actions_dropdown.actions")
           render Phlex::TablerIcons::ChevronDown.new(class: "w-4 h-4 ml-1")
         end
       end

@@ -55,7 +55,7 @@ module Plutonium
             type: "button",
             data_action: "resource-header#toggleDrawer",
             aria_controls: "#sidebar-navigation",
-            aria_label: "Toggle sidebar",
+            aria_label: t("plutonium.ui.layout.toggle_sidebar"),
             class: "p-1.5 -ml-1.5 text-[var(--pu-text-muted)] rounded-md " \
                    "hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] " \
                    "lg:hidden transition-colors"
@@ -71,7 +71,7 @@ module Plutonium
           span(data_resource_header_target: "closeIcon", class: "hidden", aria_hidden: "true") do
             render Phlex::TablerIcons::X.new(class: "w-5 h-5")
           end
-          span(class: "sr-only") { "Toggle sidebar" }
+          span(class: "sr-only") { t("plutonium.ui.layout.toggle_sidebar") }
         end
 
         def render_breadcrumbs_section

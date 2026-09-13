@@ -263,6 +263,16 @@ end
 
 This is loaded from `config/application.rb`. Migrations from all packages are picked up by `rails db:migrate` automatically.
 
+## Locale files
+
+Packages and portals are Rails engines, so `packages/<name>/config/locales/*.yml` loads automatically, ahead of the app's own `config/locales` (app wins, then packages, then the gem's defaults). Both generators scaffold `config/locales/en.yml`.
+
+- Feature package: model/attribute names (`activerecord.models`, `activerecord.attributes`) and field text (`plutonium.fields.<model>.<attr>.{placeholder,hint,description}`).
+- Portal: portal-specific wording under `plutonium.portals.<portal_namespace>.…` (same tree as the global keys: `fields`, `actions`, `scopes`, `filters`, `kanban_columns`, `values`). Wins over the global key only inside that portal.
+- Any of Plutonium's own strings (`plutonium.*` in the gem's `config/locales/en/*.yml`) can be overridden from either place. Pagination text comes from Pagy's dictionaries instead.
+
+Switch locale with a normal Rails `around_action` in the portal's controller concern; Plutonium reads `I18n.locale` and never sets it. See `docs/reference/i18n.md`.
+
 ## When to use which
 
 **Feature packages** — domain logic that:

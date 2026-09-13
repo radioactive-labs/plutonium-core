@@ -351,8 +351,8 @@ module Plutonium
           # user row is gone. Refusing is the whole point: a run whose initiator
           # no longer exists has no one left to authorize as.
           if run.initiator.nil?
-            raise UnresolvableError,
-              "run #{run.id} has no initiator (#{run.initiator_type}##{run.initiator_id} no longer exists)"
+            raise UnresolvableError, I18n.t("plutonium.async.context.initiator_missing",
+              run: run.id, type: run.initiator_type, id: run.initiator_id)
           end
 
           # nil scoped_entity is LEGITIMATE — an unscoped portal has no tenant,
@@ -362,9 +362,8 @@ module Plutonium
           # drops the entity filter entirely, returning records from EVERY tenant.
           # That is precisely the fail-open case this class exists to prevent.
           if run.scoped_entity_type.present? && run.scoped_entity.nil?
-            raise UnresolvableError,
-              "run #{run.id} was scoped to #{run.scoped_entity_type}##{run.scoped_entity_id}, " \
-              "which no longer exists; refusing to resolve targets without a tenant"
+            raise UnresolvableError, I18n.t("plutonium.async.context.tenant_missing",
+              run: run.id, type: run.scoped_entity_type, id: run.scoped_entity_id)
           end
 
           # Same distinction one more time, and the same direction of failure. A
@@ -372,9 +371,8 @@ module Plutonium
           # dispatch" — and that hands the run entity scoping instead of parent
           # scoping, which is wider.
           if run.parent_type.present? && run.parent.nil?
-            raise UnresolvableError,
-              "run #{run.id} was nested under #{run.parent_type}##{run.parent_id}, " \
-              "which no longer exists; refusing to resolve targets without its parent"
+            raise UnresolvableError, I18n.t("plutonium.async.context.parent_missing",
+              run: run.id, type: run.parent_type, id: run.parent_id)
           end
         end
 

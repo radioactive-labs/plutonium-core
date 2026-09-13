@@ -76,8 +76,8 @@ module Plutonium
           id: "user-nav-dropdown-toggle",
           data: {resource_drop_down_target: "trigger"}
         ) do
-          span(class: "sr-only") { "Open user menu" }
-          Avatar(@record, src: @avatar_url, size: :sm, alt: "avatar", class: "ring-2 ring-[var(--pu-border)]")
+          span(class: "sr-only") { t("plutonium.ui.nav_user.open_menu") }
+          Avatar(@record, src: @avatar_url, size: :sm, alt: t("plutonium.ui.nav_user.avatar_alt"), class: "ring-2 ring-[var(--pu-border)]")
         end
       end
 

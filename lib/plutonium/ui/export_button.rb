@@ -45,7 +45,7 @@ module Plutonium
           style: PRIMARY_STYLE
         ) do
           render Phlex::TablerIcons::Download.new(class: "w-4 h-4 shrink-0")
-          span { "Export" }
+          span { t("plutonium.ui.export.export") }
         end
       end
 
@@ -54,7 +54,7 @@ module Plutonium
           type: "button",
           class: "pu-btn pu-btn-outline pu-btn-sm",
           style: CARET_STYLE,
-          aria: {expanded: "false", haspopup: "menu", label: "More export options"},
+          aria: {expanded: "false", haspopup: "menu", label: t("plutonium.ui.export.more_options")},
           data: {resource_drop_down_target: "trigger"}
         ) do
           render Phlex::TablerIcons::ChevronDown.new(class: "w-4 h-4")
@@ -76,7 +76,7 @@ module Plutonium
               class: "flex items-center gap-2 px-4 py-2 text-sm text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] transition-colors"
             ) do
               render Phlex::TablerIcons::Download.new(class: "w-4 h-4")
-              span { "Export all" }
+              span { t("plutonium.ui.export.export_all") }
             end
           end
         end

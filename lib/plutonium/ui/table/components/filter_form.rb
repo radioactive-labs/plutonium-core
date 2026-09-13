@@ -49,18 +49,18 @@ module Plutonium
           def render_header
             div(class: "shrink-0 flex items-center justify-between gap-4 px-6 pt-5 pb-4 " \
                        "border-b border-[var(--pu-border)]") do
-              h2(class: "text-lg font-semibold text-[var(--pu-text)]") { "Filters" }
+              h2(class: "text-lg font-semibold text-[var(--pu-text)]") { t("plutonium.ui.table.filters") }
               div(class: "flex items-center gap-1") do
                 button(
                   type: "button",
                   class: "text-sm text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] px-2 py-1 rounded transition-colors",
                   data: {action: "filter-panel#clear"}
-                ) { "Clear" }
+                ) { t("plutonium.ui.table.clear") }
                 button(
                   type: "button",
                   class: "p-1.5 -m-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
                   data: {action: "filter-panel#close"},
-                  "aria-label": "Close filters"
+                  "aria-label": t("plutonium.ui.table.close_filters")
                 ) do
                   render Phlex::TablerIcons::X.new(class: "w-5 h-5")
                 end
@@ -76,9 +76,9 @@ module Plutonium
                   has_multiple_inputs = inputs.size > 1
                   inputs.each do |input_name, _|
                     label = if has_multiple_inputs
-                      "#{filter_name.to_s.humanize} (#{input_name.to_s.humanize.downcase})"
+                      t("plutonium.query.filter_input_label", label: query_object.filter_label(filter_name), input: input_name.to_s.humanize.downcase)
                     else
-                      filter_name.to_s.humanize
+                      query_object.filter_label(filter_name)
                     end
                     render_filter_field(nested, definition, input_name, filter_label: label)
                   end
@@ -93,7 +93,7 @@ module Plutonium
               render field(:submit).submit_button_tag(
                 name: nil,
                 class!: "pu-btn pu-btn-md pu-btn-primary"
-              ) { "Apply" }
+              ) { t("plutonium.ui.table.apply") }
             end
           end
 
@@ -157,7 +157,7 @@ module Plutonium
             div(class: "space-y-1.5") do
               label(class: "text-sm font-medium text-[var(--pu-text)]") { filter_label }
               nested.field(name, value: current_value, **field_options) do |f|
-                f.placeholder(input_options[:include_blank] || "All") if input_options[:include_blank]
+                f.placeholder(input_options[:include_blank] || t("plutonium.ui.table.all")) if input_options[:include_blank]
                 render instance_exec(f, &tag_block)
               end
             end

@@ -114,7 +114,7 @@ module Plutonium
 
         # Override to customize success message
         def success_message
-          "Invitation sent to #{email}"
+          I18n.t("plutonium.invites.invite_user.sent", email: email)
         end
 
         # Override to specify the entity association name on membership
@@ -146,7 +146,7 @@ module Plutonium
             membership_entity_attribute => entity,
             user_association => existing_user
           )
-          errors.add(:email, "is already a member") if membership
+          errors.add(:email, :already_a_member) if membership
         end
 
         def no_pending_invitation
@@ -157,7 +157,7 @@ module Plutonium
             :email => email,
             :state => :pending
           )
-          errors.add(:email, "already has a pending invitation") if pending
+          errors.add(:email, :already_has_pending_invitation) if pending
         end
 
         # Override if user association has a different name

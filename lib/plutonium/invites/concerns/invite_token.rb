@@ -97,7 +97,7 @@ module Plutonium
         # @raise [ActiveRecord::RecordInvalid] if constraints are violated
         def validate_email_constraints!(user_email)
           if enforce_email? && user_email.downcase != email.downcase
-            errors.add(:base, "This invitation is for #{email}. You must use an account with that email address.")
+            errors.add(:base, :invite_email_mismatch, email: email)
             raise ActiveRecord::RecordInvalid.new(self)
           end
 
@@ -105,7 +105,7 @@ module Plutonium
             user_domain = extract_domain(user_email)
 
             if user_domain != required_domain
-              errors.add(:base, "This invitation requires an email from the #{required_domain} domain.")
+              errors.add(:base, :invite_domain_mismatch, domain: required_domain)
               raise ActiveRecord::RecordInvalid.new(self)
             end
           end
@@ -131,15 +131,15 @@ module Plutonium
 
           with_lock do
             unless pending?
-              message =
+              error =
                 if accepted?
-                  "This invitation has already been accepted"
+                  :invite_already_accepted
                 elsif cancelled?
-                  "This invitation has been cancelled"
+                  :invite_cancelled
                 else
-                  "This invitation has expired"
+                  :invite_expired
                 end
-              errors.add(:base, message)
+              errors.add(:base, error)
               raise ActiveRecord::RecordInvalid.new(self)
             end
 

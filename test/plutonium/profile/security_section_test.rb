@@ -17,8 +17,8 @@ class Plutonium::Profile::SecuritySectionTest < ActiveSupport::TestCase
 
   test "each feature has required keys" do
     Plutonium::Profile::SecuritySection::FEATURES.each do |name, config|
-      assert config[:label].present?, "Feature #{name} missing :label"
-      assert config[:description].present?, "Feature #{name} missing :description"
+      assert I18n.t("plutonium.profile.security_section.features.#{name}.label").present?, "Feature #{name} missing label translation"
+      assert I18n.t("plutonium.profile.security_section.features.#{name}.description").present?, "Feature #{name} missing description translation"
       assert config[:icon].present?, "Feature #{name} missing :icon"
       assert config[:path_method].present?, "Feature #{name} missing :path_method"
     end
@@ -122,6 +122,8 @@ class Plutonium::Profile::SecuritySectionTest < ActiveSupport::TestCase
 
     # Verify the link href is present
     assert_includes output, "/auth/change-password"
+    assert_includes output, "Change Password"
+    assert_includes output, "Update your account password"
   end
 
   test "enabled_features only returns configured features" do

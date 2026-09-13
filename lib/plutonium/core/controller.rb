@@ -32,6 +32,12 @@ module Plutonium
           end
         end
 
+        # Convention lookups (field placeholders, action labels...) layer a
+        # portal-specific key over the global one. Publish the portal once per
+        # request so lookups made outside a view (query object, kanban flash)
+        # resolve the same way the view does.
+        before_action { Plutonium::Translation::Current.portal = current_package }
+
         before_action do
           next unless defined?(ActiveStorage)
 

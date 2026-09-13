@@ -1,6 +1,8 @@
 // Themed replacement for Turbo's default window.confirm. The dialog is
 // built lazily and reused so per-call cost is just a textContent swap.
 
+import { t } from "../i18n.js";
+
 let dialog;
 let messageEl;
 let confirmButton;
@@ -55,12 +57,12 @@ function ensureDialog() {
   cancelButton = document.createElement("button");
   cancelButton.type = "button";
   cancelButton.className = "pu-btn pu-btn-md pu-btn-outline";
-  cancelButton.textContent = "Cancel";
+  cancelButton.textContent = t("plutonium.js.turbo_confirm.cancel");
 
   confirmButton = document.createElement("button");
   confirmButton.type = "button";
   confirmButton.className = "pu-btn pu-btn-md pu-btn-primary";
-  confirmButton.textContent = "Confirm";
+  confirmButton.textContent = t("plutonium.js.turbo_confirm.confirm");
 
   footer.appendChild(cancelButton);
   footer.appendChild(confirmButton);
@@ -79,7 +81,7 @@ async function animateClose() {
 
 function themedConfirm(message) {
   ensureDialog();
-  messageEl.textContent = message || "Are you sure?";
+  messageEl.textContent = message || t("plutonium.js.are_you_sure");
 
   return new Promise((resolve) => {
     let settled = false;

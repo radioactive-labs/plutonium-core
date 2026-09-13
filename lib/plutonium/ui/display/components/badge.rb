@@ -62,8 +62,14 @@ module Plutonium
           def render_value(value)
             variant = self.class.variant_for(value, colors: @colors)
             span(**attributes, class: tokens("pu-badge", "pu-badge-#{variant}")) do
-              plain self.class.humanize(value)
+              plain value_label(value)
             end
+          end
+
+          # plutonium.values.<model>.<attr>.<value> or the Rails enum key
+          # activerecord.attributes.<model>.<attr>/<value>, else humanized.
+          def value_label(value)
+            Plutonium::Translation.value_label(field.object.class, field.key, value) || self.class.humanize(value)
           end
 
           protected

@@ -74,9 +74,9 @@ module Plutonium
           def apply_default_hint(value)
             return if field.has_hint?
             if value == SENTINEL
-              field.hint("Leave blank to keep the current value.")
+              field.hint(Plutonium::Translation.t("plutonium.ui.form.password.keep_current_hint"))
             elsif reentry_required?
-              field.hint("Re-enter the new value to save it.")
+              field.hint(Plutonium::Translation.t("plutonium.ui.form.password.reenter_hint"))
             end
           end
 

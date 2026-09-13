@@ -27,7 +27,7 @@ module Plutonium
         include Plutonium::Interaction::Concerns::Scoping
 
         included do
-          presents label: "Create API Client", icon: Phlex::TablerIcons::Key
+          presents label: t("plutonium.api_client.create.label"), icon: Phlex::TablerIcons::Key
 
           attribute :login, :string
 
@@ -55,7 +55,7 @@ module Plutonium
             )
           )
         rescue ActiveRecord::RecordNotFound => e
-          failed(login: "Failed to create account: #{e.message}")
+          failed(login: I18n.t("plutonium.api_client.create.failed", error: e.message))
         rescue => e
           failed(login: e.message)
         end
@@ -173,16 +173,17 @@ module Plutonium
               end
 
               p(class: "text-green-700 dark:text-green-300") do
-                strong { "Important: " }
-                plain "Save these credentials now. The password cannot be retrieved later."
+                strong { t("plutonium.api_client.create.credentials.important_label") }
+                whitespace
+                plain t("plutonium.api_client.create.credentials.important_text")
               end
             end
           end
 
           def render_credentials_card
             div(class: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 space-y-4") do
-              render_credential_field("Login", @login)
-              render_credential_field("Password", @password)
+              render_credential_field(t("plutonium.api_client.create.credentials.login"), @login)
+              render_credential_field(t("plutonium.api_client.create.credentials.password"), @password)
             end
           end
 
@@ -201,13 +202,13 @@ module Plutonium
                   type: "button",
                   data: {action: "clipboard#copy"},
                   class: "px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors"
-                ) { "Copy" }
+                ) { t("plutonium.api_client.create.credentials.copy") }
               end
             end
           end
 
           def render_action_buttons
-            credentials_text = "Login: #{@login}\nPassword: #{@password}"
+            credentials_text = t("plutonium.api_client.create.credentials.credentials_text", login: @login, password: @password)
 
             div(class: "mt-6 flex gap-4", data: {controller: "clipboard"}) do
               input(type: "hidden", value: credentials_text, data: {clipboard_target: "source"})
@@ -215,12 +216,12 @@ module Plutonium
                 type: "button",
                 data: {action: "clipboard#copy"},
                 class: "px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors"
-              ) { "Copy All" }
+              ) { t("plutonium.api_client.create.credentials.copy_all") }
 
               a(
                 href: done_url,
                 class: "px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-md transition-colors"
-              ) { "Done" }
+              ) { t("plutonium.api_client.create.credentials.done") }
             end
           end
 
@@ -242,7 +243,7 @@ module Plutonium
 
           # Override in subclass to customize
           def success_title
-            "API Client Created Successfully"
+            t("plutonium.api_client.create.credentials.success_title")
           end
 
           # Override in subclass to customize the done URL
