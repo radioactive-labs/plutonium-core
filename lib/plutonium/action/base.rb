@@ -6,7 +6,16 @@ module Plutonium
   module Action
     # Base class for all actions in the Plutonium framework.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to, :condition, :link, :button
+      attr_reader :name, :icon, :route_options, :turbo, :color, :category, :position, :return_to, :condition, :link, :button
+
+      # `label:`, `description:` and `confirmation:` may be lazy translations
+      # (`t(...)` in a definition) or any zero-arity proc: resolve per read so
+      # the text follows the request locale rather than the class load.
+      def label = Plutonium::Translation.resolve(@label)
+
+      def description = Plutonium::Translation.resolve(@description)
+
+      def confirmation = Plutonium::Translation.resolve(@confirmation)
 
       def initialize(name, **options)
         @name = name.to_sym

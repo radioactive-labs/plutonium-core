@@ -31,8 +31,8 @@ module Plutonium
       #
       # @return [String, nil] The confirmation message or nil if not applicable
       def confirmation
-        return @confirmation unless @confirmation.nil?
-        @immediate ? "#{label}?" : nil
+        return Plutonium::Translation.resolve(@confirmation) unless @confirmation.nil?
+        @immediate ? Plutonium::Translation.t("plutonium.actions.confirm_default", label: label) : nil
       end
 
       protected
