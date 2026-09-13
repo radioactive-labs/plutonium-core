@@ -36,7 +36,7 @@ module Plutonium
         # GET /resources/new
         def new
           authorize_current! resource_class
-          set_page_title "Create #{resource_class.model_name.human.titleize}"
+          set_page_title t("plutonium.resource.titles.new", resource: resource_class.model_name.human)
 
           @resource_record = build_resource_record
           maybe_apply_submitted_resource_params!
@@ -47,7 +47,7 @@ module Plutonium
         # POST /resources(.{format})
         def create
           authorize_current! resource_class
-          set_page_title "Create #{resource_class.model_name.human.titleize}"
+          set_page_title t("plutonium.resource.titles.new", resource: resource_class.model_name.human)
 
           @resource_record = build_resource_record resource_params
 
@@ -57,13 +57,13 @@ module Plutonium
               format.html { render :new, status: :unprocessable_content }
             elsif resource_record!.save
               after_create_persisted
+              notice = t("plutonium.resource.created", resource: resource_class.model_name.human)
               format.turbo_stream do
-                flash.notice = "#{resource_class.model_name.human} was successfully created."
+                flash.notice = notice
                 render turbo_stream: stacked_modal_create_streams
               end
               format.html do
-                redirect_to redirect_url_after_submit,
-                  notice: "#{resource_class.model_name.human} was successfully created."
+                redirect_to redirect_url_after_submit, notice:
               end
               format.any do
                 @current_policy = nil # Reset cached policy so it uses the instance instead of class
@@ -85,7 +85,7 @@ module Plutonium
         # GET /resources/1/edit
         def edit
           authorize_current! resource_record!
-          set_page_title "Update #{resource_record!.to_label.titleize}"
+          set_page_title t("plutonium.resource.titles.edit", record: resource_record!.to_label.titleize)
 
           maybe_apply_submitted_resource_params!
 
@@ -95,7 +95,7 @@ module Plutonium
         # PATCH/PUT /resources/1(.{format})
         def update
           authorize_current! resource_record!
-          set_page_title "Update #{resource_record!.to_label.titleize}"
+          set_page_title t("plutonium.resource.titles.edit", record: resource_record!.to_label.titleize)
 
           resource_record!.attributes = resource_params
 
@@ -104,14 +104,13 @@ module Plutonium
               format.turbo_stream { render turbo_stream: turbo_stream.replace(helpers.turbo_scoped_dom_id("resource-form"), view_context.render(build_form(action: :edit))) }
               format.html { render :edit, status: :unprocessable_content }
             elsif resource_record!.save
+              notice = t("plutonium.resource.updated", resource: resource_class.model_name.human)
               format.turbo_stream do
-                flash.notice = "#{resource_class.model_name.human} was successfully updated."
+                flash.notice = notice
                 render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_submit)
               end
               format.html do
-                redirect_to redirect_url_after_submit,
-                  notice: "#{resource_class.model_name.human} was successfully updated.",
-                  status: :see_other
+                redirect_to redirect_url_after_submit, notice:, status: :see_other
               end
               format.any do
                 render :show, status: :ok, location: redirect_url_after_submit
@@ -134,29 +133,27 @@ module Plutonium
           respond_to do |format|
             resource_record!.destroy
 
+            notice = t("plutonium.resource.deleted", resource: resource_class.model_name.human)
             format.turbo_stream do
-              flash.notice = "#{resource_class.model_name.human} was successfully deleted."
+              flash.notice = notice
               render turbo_stream: helpers.turbo_stream_redirect(redirect_url_after_destroy)
             end
             format.html do
-              redirect_to redirect_url_after_destroy,
-                notice: "#{resource_class.model_name.human} was successfully deleted."
+              redirect_to redirect_url_after_destroy, notice:
             end
             format.json { head :no_content }
           rescue ActiveRecord::InvalidForeignKey, ActiveRecord::DeleteRestrictionError
+            alert = t("plutonium.resource.referenced", resource: resource_class.model_name.human)
             format.turbo_stream do
-              flash.alert = "#{resource_class.model_name.human} is referenced by other records."
+              flash.alert = alert
               render turbo_stream: helpers.turbo_stream_redirect(resource_url_for(resource_record!))
             end
             format.html do
-              redirect_to resource_url_for(resource_record!),
-                alert: "#{resource_class.model_name.human} is referenced by other records."
+              redirect_to resource_url_for(resource_record!), alert:
             end
             format.any do
               @errors = ActiveModel::Errors.new resource_record!
-              @errors.add :base,
-                :existing_references,
-                message: "is referenced by other records"
+              @errors.add :base, :existing_references
 
               render "errors", status: :unprocessable_content
             end

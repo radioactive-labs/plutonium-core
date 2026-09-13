@@ -53,18 +53,15 @@ module Plutonium
 
         def generate_placeholder
           base = key.to_s.humanize
-          case @predicate
-          when :matches, :not_matches
-            "#{base} (use * as wildcard)"
-          when :starts_with
-            "#{base} starts with..."
-          when :ends_with
-            "#{base} ends with..."
-          when :contains, :not_contains
-            "#{base} contains..."
-          else
-            base
+          phrase = case @predicate
+          when :matches, :not_matches then :matches
+          when :starts_with then :starts_with
+          when :ends_with then :ends_with
+          when :contains, :not_contains then :contains
           end
+          return base unless phrase
+
+          Plutonium::Translation.t("plutonium.query.filters.text.#{phrase}", label: base)
         end
 
         def sanitize_like(string)

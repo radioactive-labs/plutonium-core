@@ -52,7 +52,7 @@ module ActiveModel
         errors = record.errors.delete attribute
         return if errors.nil?
 
-        @existing_errors += errors.map { |e| "item #{index + 1} #{e}" }
+        @existing_errors += errors.map { |e| I18n.t("errors.messages.array_item", index: index + 1, message: e) }
       end
 
       def skip?(value, validator_options)

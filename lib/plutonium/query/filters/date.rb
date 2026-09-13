@@ -74,22 +74,9 @@ module Plutonium
 
         def generate_placeholder
           base = key.to_s.humanize
-          case @predicate
-          when :eq
-            base
-          when :not_eq
-            "#{base} not on..."
-          when :lt
-            "#{base} before..."
-          when :lteq
-            "#{base} on or before..."
-          when :gt
-            "#{base} after..."
-          when :gteq
-            "#{base} on or after..."
-          else
-            base
-          end
+          return base if @predicate == :eq
+
+          Plutonium::Translation.t("plutonium.query.filters.date.#{@predicate}", label: base)
         end
       end
     end

@@ -1,0 +1,57 @@
+# Resource CRUD, query/filter and authentication-view strings.
+# Loaded at the lowest precedence: a package, portal or host app locale
+# with the same key wins (see config/locales/en/plutonium.yml).
+en:
+  plutonium:
+    resource:
+      created: "%{resource} was successfully created."
+      updated: "%{resource} was successfully updated."
+      deleted: "%{resource} was successfully deleted."
+      referenced: "%{resource} is referenced by other records."
+      titles:
+        new: "Create %{resource}"
+        edit: "Update %{record}"
+      record_label: "%{resource} #%{id}"
+      export_csv:
+        invalid_column: "<<invalid column>>"
+      nav:
+        dashboard: "Dashboard"
+        resources: "Resources"
+        profile: "Profile"
+        sign_out: "Sign out"
+      flash:
+        close: "Close"
+      auth:
+        login_placeholder: "jane@acme.inc"
+        show_password: "Show Password"
+        recovery_codes: "Recovery Codes"
+        no_recovery_codes: "You have no recovery codes"
+        already_have_account: "Already have an account?"
+        login: "Login"
+        last_use: "Last use: %{time}"
+    query:
+      all: "All"
+      active_filter:
+        input_value: "%{input} %{value}"
+      filters:
+        text:
+          matches: "%{label} (use * as wildcard)"
+          starts_with: "%{label} starts with..."
+          ends_with: "%{label} ends with..."
+          contains: "%{label} contains..."
+        date:
+          not_eq: "%{label} not on..."
+          lt: "%{label} before..."
+          lteq: "%{label} on or before..."
+          gt: "%{label} after..."
+          gteq: "%{label} on or after..."
+        date_range:
+          from: "%{label} from..."
+          to: "%{label} to..."
+  errors:
+    messages:
+      existing_references: "is referenced by other records"
+      invalid_url: "is not a valid URL"
+      invalid_image_url: "is not a valid image URL"
+      not_attached: "must be attached"
+      array_item: "item %{index} %{message}"

@@ -20,7 +20,7 @@
       <div class="flex items-center space-x-2">
         <% last_use = last_use.strftime(rodauth.strftime_format) if last_use.is_a?(Time) %>
         <%= form.radio_button rodauth.webauthn_remove_param, id, id: "webauthn-remove-#{id}", class: "pu-checkbox" %>
-        <%= form.label "webauthn-remove-#{id}", "Last use: #{last_use}", class: "text-sm text-[var(--pu-text)]" %>
+        <%= form.label "webauthn-remove-#{id}", t("plutonium.resource.auth.last_use", time: last_use), class: "text-sm text-[var(--pu-text)]" %>
       </div>
     <% end %>
     <% if rodauth.field_error(rodauth.webauthn_remove_param) %>

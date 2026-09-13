@@ -182,7 +182,9 @@ module Plutonium
               next if humanized.blank?
               humanized
             else
-              entries.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+              entries.map { |k, v|
+                Plutonium::Translation.t("plutonium.query.active_filter.input_value", input: k.to_s.humanize.downcase, value: v)
+              }.join(", ")
             end
           when Array
             entries = filter_params.reject(&:blank?)

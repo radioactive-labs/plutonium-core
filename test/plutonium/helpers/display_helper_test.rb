@@ -60,4 +60,28 @@ class Plutonium::Helpers::DisplayHelperTest < ActionDispatch::IntegrationTest
     # Should default to plural (count 2) when config is nil
     assert_equal "Unregistered resources", label
   end
+
+  test "resource_name uses the locale's plural when the model defines one" do
+    get "/admin/blogging/posts"
+    I18n.backend.store_translations(:en, activerecord: {models: {"blogging/post": {one: "Article", other: "Articles"}}})
+
+    assert_equal "Article", controller.view_context.resource_name(Blogging::Post)
+    assert_equal "Articles", controller.view_context.resource_name_plural(Blogging::Post)
+  ensure
+    I18n.backend.reload!
+  end
+
+  test "resource_name falls back to English inflection when the locale has no plural" do
+    get "/admin/blogging/posts"
+
+    assert_equal "Post", controller.view_context.resource_name(Blogging::Post)
+    assert_equal "Posts", controller.view_context.resource_name_plural(Blogging::Post)
+  end
+
+  test "display_name_of falls back to the resource name and id" do
+    get "/admin/blogging/posts"
+    record = Struct.new(:id) { def self.model_name = ActiveModel::Name.new(self, nil, "Widget") }.new(9)
+
+    assert_equal "Widget #9", controller.view_context.display_name_of(record)
+  end
 end

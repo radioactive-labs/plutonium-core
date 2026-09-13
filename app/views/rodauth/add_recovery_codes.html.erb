@@ -1,5 +1,5 @@
 <div>
-  <h4 class="text-2xl font-bold text-[var(--pu-text)] mb-4">Recovery Codes</h4>
+  <h4 class="text-2xl font-bold text-[var(--pu-text)] mb-4"><%= t("plutonium.resource.auth.recovery_codes") %></h4>
 
   <div class="mb-4 text-sm grid grid-cols-1 gap-y-2 gap-x-4 text-[var(--pu-text-muted)]">
     <% if rodauth.recovery_codes.any? %>
@@ -7,7 +7,7 @@
         <div class="font-mono"><%= code %></div>
       <% end %>
     <% else %>
-        <div class="font-mono">You have no recovery codes</div>
+        <div class="font-mono"><%= t("plutonium.resource.auth.no_recovery_codes") %></div>
     <% end %>
   </div>
 

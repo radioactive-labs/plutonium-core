@@ -37,12 +37,6 @@ module Plutonium
         # Collections rendered here preload what they are about to show.
         include Plutonium::Resource::Controllers::EagerLoading
 
-        # Placeholder written when a column is neither an `export` block nor a
-        # real attribute on the record, so the export degrades to a usable file
-        # instead of a mid-stream NoMethodError (which would truncate the
-        # already-committed download).
-        INVALID_COLUMN = "<<invalid column>>"
-
         included do
           before_action :authorize_export_csv!, only: :export_csv
           # Row-level authorization is the scope itself
@@ -151,7 +145,7 @@ module Plutonium
         # Associations render as their display label — the same as the index —
         # instead of "#<User:0x…>"; scalars pass through untouched. A name that
         # is neither an `export` block nor a real attribute renders the
-        # INVALID_COLUMN placeholder rather than aborting the stream.
+        # invalid-column placeholder rather than aborting the stream.
         def export_csv_value(record, name)
           definition = current_definition.defined_exports[name]
           return definition[:block].call(record) if definition && definition[:block]
@@ -159,7 +153,7 @@ module Plutonium
           begin
             value = record.public_send(name)
           rescue NoMethodError
-            return INVALID_COLUMN
+            return invalid_column_placeholder
           end
 
           case value
@@ -172,6 +166,14 @@ module Plutonium
         def export_csv_header(name)
           definition = current_definition.defined_exports[name]
           definition&.dig(:options, :label) || name.to_s.humanize
+        end
+
+        # Placeholder written when a column is neither an `export` block nor a
+        # real attribute on the record, so the export degrades to a usable file
+        # instead of a mid-stream NoMethodError (which would truncate the
+        # already-committed download).
+        def invalid_column_placeholder
+          @invalid_column_placeholder ||= I18n.t("plutonium.resource.export_csv.invalid_column")
         end
       end
     end
