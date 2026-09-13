@@ -17,3 +17,6 @@ en:
     boolean:
       "true": "Yes"
       "false": "No"
+    actions:
+      # Confirmation prompt for an immediate action that declares none.
+      confirm_default: "%{label}?"

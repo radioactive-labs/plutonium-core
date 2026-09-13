@@ -37,7 +37,7 @@ module Plutonium
         #
         # @return [String] The label defined in the presentation metadata or a default generated from the class name.
         def label
-          presentation_metadata[:label] || name.demodulize.titleize
+          Plutonium::Translation.resolve(presentation_metadata[:label]) || name.demodulize.titleize
         end
 
         # Returns the icon for the interaction.
@@ -51,7 +51,7 @@ module Plutonium
         #
         # @return [String, nil] The description defined in the presentation metadata.
         def description
-          presentation_metadata[:description]
+          Plutonium::Translation.resolve(presentation_metadata[:description])
         end
       end
 
