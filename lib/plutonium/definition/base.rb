@@ -25,6 +25,10 @@ module Plutonium
     # @note This class is not thread-safe. Ensure proper synchronization
     #   if used in a multi-threaded environment.
     class Base
+      # `input :email, placeholder: t("forms.email_placeholder")` — a lazy
+      # translation, resolved on every render in the request's locale.
+      extend Plutonium::Translation::Lazy
+
       include DefineableProps
       include ConfigAttr
       include InheritableConfigAttr

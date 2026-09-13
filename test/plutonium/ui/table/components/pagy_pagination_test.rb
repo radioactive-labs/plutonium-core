@@ -12,7 +12,7 @@ class Plutonium::UI::Table::Components::PagyPaginationTest < Minitest::Test
     html = render_component(pagy)
 
     assert_match(/<nav/, html)
-    assert_match(/aria-label="Page navigation"/, html)
+    assert_match(/aria-label="Pages"/, html)
   end
 
   def test_renders_page_numbers

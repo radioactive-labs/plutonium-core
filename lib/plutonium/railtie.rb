@@ -39,6 +39,19 @@ module Plutonium
       load_plutonium_initializers
     end
 
+    # Plutonium is a Railtie, not an Engine, so it gets no config/locales path
+    # for free. Register it the way Rails::Engine#add_locales does: through
+    # railties_load_path, which the I18n railtie unshifts ahead of the app's
+    # own locales in registration order. Registering before every engine's
+    # add_locales puts the gem's strings at the lowest precedence: a package or
+    # portal engine's config/locales overrides them, and the host app overrides
+    # both.
+    initializer "plutonium.i18n", before: :add_locales do
+      locales = Rails::Paths::Root.new(Plutonium.root.to_s)
+      locales.add "config/locales", glob: "**/*.{rb,yml}"
+      config.i18n.railties_load_path << locales["config/locales"]
+    end
+
     initializer "plutonium.register_migrations" do
       Plutonium::Migrations.register(:wizards, Plutonium.root.join("db/migrate/wizard").to_s)
       Plutonium::Migrations.register(:async_interactions, Plutonium.root.join("db/migrate/async_interactions").to_s)
