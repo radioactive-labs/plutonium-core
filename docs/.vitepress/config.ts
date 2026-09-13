@@ -181,6 +181,7 @@ export default defineConfig(withMermaid({
           items: [
             { text: "Overview", link: "/reference/" },
             { text: "Configuration", link: "/reference/configuration" },
+            { text: "Internationalization", link: "/reference/i18n" },
           ]
         },
         {

@@ -548,6 +548,21 @@ Avatar(src: avatar_url)           # bare image, no subject/fallback
 
 🚨 Ejected shells: `Avatar` only shows a Navii avatar when `NavUser` is passed `record:`. The gem's `_resource_header.html.erb` passes `record: (current_user if current_user.respond_to?(:id))`; portals that **ejected** the header before this must re-eject (`rails g pu:eject:shell --dest=<portal>`) or add the `record:` line, otherwise they keep the icon fallback. Pass a record only — a String `current_user` (e.g. a guest) would otherwise be seeded as a literal identity.
 
+## Translating component text
+
+Every `Plutonium::UI::Component::Base` subclass (pages included) has a protected `t(key, **opts)` that reads Rails I18n with a full key; components that subclass Phlexi classes call `Plutonium::Translation.t`. Put new user-facing text in a locale file, never a literal:
+
+```ruby
+def view_template
+  button { t("my_app.cards.expand") }
+  span { t("my_app.cards.more", count: hidden_count) }   # one:/other: in YAML
+end
+```
+
+Rules: one key per sentence with `%{name}` placeholders (never concatenate fragments around a value), `count:` for plurals, no `.downcase`/`.pluralize` on translated nouns. The gem's own keys live under `plutonium.*` in its `config/locales/en/*.yml` and any can be overridden from the app.
+
+Stimulus controllers bundled with Plutonium read `plutonium.js.*` from a `<script type="application/json" id="pu-i18n">` blob the layout renders; host JS can call `window.Plutonium.t("plutonium.js.turbo_confirm.confirm")`. Library locales (Slim Select, flatpickr, Uppy, intl-tel-input) pass through `plutonium.js.libraries.*`. See `docs/reference/i18n.md`.
+
 ## Custom Phlex components
 
 ```ruby

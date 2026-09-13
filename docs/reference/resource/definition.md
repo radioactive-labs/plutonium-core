@@ -159,6 +159,8 @@ input :title,
   wrapper: {class: "col-span-full"}
 ```
 
+Label, hint, placeholder and description need no declaration to be translatable: leave them out and Plutonium looks them up under `activerecord.attributes` and `plutonium.fields.<model>.<attr>` respectively. An explicit value can be a translation too, via the class-level `t`. See [Internationalization](../i18n#fields-placeholder-hint-description).
+
 ## Select / choices
 
 ### Static
