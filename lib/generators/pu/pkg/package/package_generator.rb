@@ -17,6 +17,7 @@ module Pu
         validate_package_name package_name
 
         template "lib/engine.rb", "packages/#{package_namespace}/lib/engine.rb"
+        template "config/locales/en.yml", "packages/#{package_namespace}/config/locales/en.yml"
 
         %w[controllers interactions models policies definitions].each do |dir|
           directory "app/#{dir}", "packages/#{package_namespace}/app/#{dir}/#{package_namespace}"
