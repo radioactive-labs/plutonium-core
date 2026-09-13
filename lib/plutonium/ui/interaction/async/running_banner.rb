@@ -54,7 +54,7 @@ module Plutonium
                 span(class: "text-[var(--pu-text-muted)]") { plain run.state.humanize }
               end
               a(href: resource_url_for(run), class: "pu-btn pu-btn-xs pu-btn-soft-primary shrink-0") do
-                plain "View progress"
+                plain t("plutonium.async.banner.view_progress")
               end
             end
           end

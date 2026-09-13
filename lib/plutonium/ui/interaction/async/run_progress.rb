@@ -126,7 +126,7 @@ module Plutonium
               # do everything it was asked to.
               if run.error_count.positive?
                 span(class: "text-xs font-medium text-[var(--pu-text-danger)]") do
-                  plain "#{run.error_count} #{"error".pluralize(run.error_count)}"
+                  plain t("plutonium.async.progress.error_count", count: run.error_count)
                 end
               end
             end
@@ -151,7 +151,7 @@ module Plutonium
                 div(class: "h-2 rounded-full bg-primary-600", style: "width: #{percent}%")
               end
               div(class: "text-xs text-[var(--pu-text-muted)]") do
-                plain "#{run.progress_done} of #{run.progress_total} targets (#{percent}%)"
+                plain t("plutonium.async.progress.targets", done: run.progress_done, total: run.progress_total, percent: percent)
               end
             end
           end
@@ -175,7 +175,7 @@ module Plutonium
                 end
               end
               div(class: "text-xs text-[var(--pu-text-muted)]") do
-                plain(run.in_progress? ? "Working…" : "No progress total was recorded")
+                plain(run.in_progress? ? t("plutonium.async.progress.working") : t("plutonium.async.progress.no_total"))
               end
             end
           end
@@ -204,7 +204,7 @@ module Plutonium
           def render_failures
             div(class: "space-y-1") do
               div(class: "text-[10px] font-semibold uppercase tracking-wider text-[var(--pu-text-muted)]") do
-                plain "Failures"
+                plain t("plutonium.async.progress.failures")
               end
               ul(class: "pu-run-progress-failures text-xs space-y-1") do
                 run.errors_log.each do |entry|
@@ -218,7 +218,7 @@ module Plutonium
           # not a target whose id happens to be blank.
           def failure_text(entry)
             target_id = entry["target_id"]
-            target_id.nil? ? entry["message"].to_s : "##{target_id}: #{entry["message"]}"
+            target_id.nil? ? entry["message"].to_s : t("plutonium.async.progress.target_failure", target_id: target_id, message: entry["message"])
           end
         end
       end

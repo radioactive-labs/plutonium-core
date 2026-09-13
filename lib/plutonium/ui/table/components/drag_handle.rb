@@ -70,8 +70,8 @@ module Plutonium
               type: "button",
               draggable: "true",
               class: themed(@variant[:grip]),
-              title: "Drag to reorder",
-              aria: {label: "Drag to reorder. Use the up and down arrow keys to move this row."},
+              title: Plutonium::Translation.t("plutonium.positioning.drag_handle.title"),
+              aria: {label: Plutonium::Translation.t("plutonium.positioning.drag_handle.aria_label")},
               data: {positioned_grip: ""}
             ) { icon }
           end
@@ -80,7 +80,7 @@ module Plutonium
             a(
               href: @sort_url,
               class: themed(@variant[:disabled]),
-              title: "Sort by position to reorder"
+              title: Plutonium::Translation.t("plutonium.positioning.drag_handle.disabled_title")
             ) { icon }
           end
 

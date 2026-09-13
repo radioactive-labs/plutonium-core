@@ -205,6 +205,18 @@ class AdminPortal::AsyncRunProgressTest < ActionDispatch::IntegrationTest
     assert_match(/Target 42 is no longer permitted by archive\?/, response.body)
   end
 
+  test "a single failure is counted in the singular and prefixed with its target id" do
+    run = create_run!(state: "completed", progress_total: 2, progress_done: 2)
+    run.record_target_failure!(id: 41, message: "Target 41 is no longer available")
+
+    get run_path(run)
+    assert_response :success
+
+    assert_match(/1 error\b/, response.body)
+    refute_match(/1 errors/, response.body)
+    assert_match(/#41: Target 41 is no longer available/, response.body)
+  end
+
   # The same requirement on the other surface: the index is where an operator
   # scans a list of runs looking for the one that under-applied.
   test "the index does not list a completed-with-errors run as a success" do

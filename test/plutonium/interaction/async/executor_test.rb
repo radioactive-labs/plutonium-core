@@ -152,6 +152,8 @@ class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
     assert_equal [bad.id], ScriptedRun.performed, "halt must not attempt the remaining targets"
     assert_equal "failed", run.state
     assert_includes messages(run), "boom"
+    assert_includes messages(run),
+      "stopped at the first target failure (halt policy); 1 target was not attempted"
     assert_equal 1, run.progress_done
     assert_equal "later", later.reload.title, "the untouched target must be untouched"
   end
@@ -237,7 +239,8 @@ class Plutonium::Interaction::Async::ExecutorTest < ActiveSupport::TestCase
       assert_equal "failed", run.state
       assert_equal "good", good.reload.title
       assert_match(/no longer available/i, messages(run).first)
-      assert_match(/#{run.failure_policy}/, messages(run).last)
+      assert_equal "1 of 2 targets could not be resolved; a #{run.failure_policy} run does not apply a partial batch",
+        messages(run).last
     end
   end
 

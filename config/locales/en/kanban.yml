@@ -1,0 +1,28 @@
+# Kanban board strings. Column LABELS are not here: they resolve by convention
+# (plutonium.kanban_columns.<model>.<column>, see config/locales/en/plutonium.yml).
+en:
+  plutonium:
+    kanban:
+      column:
+        expand: "Expand %{column}"
+        collapse: "Collapse %{column}"
+        wip_limit_exceeded: "WIP limit exceeded"
+        wip_limit: "WIP limit: %{limit}"
+        more:
+          one: "+%{count} more"
+          other: "+%{count} more"
+        add_to: "Add to %{column}"
+        add: "+ Add"
+      move:
+        not_in_column: "This card is no longer in “%{column}”."
+        locked_source: "Cards can't be moved out of “%{column}”."
+        not_accepted: "Cards can't be moved into “%{column}”."
+        not_allowed: "This card can't be moved there."
+        wip_limit_reached: "“%{column}” is at its WIP limit (%{wip})."
+        drop_incomplete: "This drop can’t be completed."
+        enter_interaction_failed: "“%{column}” could not be applied."
+        unauthorized: "You are not authorized to move this card there."
+        record_missing: "This card no longer exists."
+        record_invalid: "This card could not be moved."
+      quick_add:
+        default_column_fallback: "Couldn’t place it in “%{column}” — it stayed in its default column."
