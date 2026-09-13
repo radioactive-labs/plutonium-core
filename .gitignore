@@ -40,3 +40,7 @@ test/dummy/db/schema.rb
 
 *.sqlite*
 docs/public/skills
+
+# Local bundle for the appraisal gemfiles (bundle config set --local path vendor/bundle)
+gemfiles/.bundle/
+gemfiles/vendor/
