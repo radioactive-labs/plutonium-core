@@ -3,6 +3,9 @@ import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 
 // Connects to data-controller="easymde"
+//
+// Not translated: EasyMDE has no locale option (its toolbar titles are
+// per-button config), so there is no clean plutonium.js.libraries hook.
 export default class extends Controller {
   static targets = ["textarea"]
   

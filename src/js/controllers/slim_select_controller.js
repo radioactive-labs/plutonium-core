@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { t } from "../i18n.js";
 
 // Connects to data-controller="slim-select"
 //
@@ -33,6 +34,16 @@ export default class extends Controller {
 
   #setupSlimSelect() {
     const settings = {};
+
+    // Optional locale passthrough: plutonium.js.libraries.slim_select may
+    // define placeholderText, searchText, searchPlaceholder and searchingText.
+    const strings = t("plutonium.js.libraries.slim_select");
+    if (strings && typeof strings === "object") {
+      const { placeholderText, searchText, searchPlaceholder, searchingText } = strings;
+      Object.assign(settings, { placeholderText, searchText, searchPlaceholder, searchingText });
+      Object.keys(settings).forEach((k) => settings[k] === undefined && delete settings[k]);
+    }
+
     this.modal = this.element.closest('[data-controller="remote-modal"]');
 
     if (this.modal) {
@@ -152,7 +163,7 @@ export default class extends Controller {
         headers: { Accept: "application/json" },
         signal: signal,
       });
-      if (!res.ok) return "Search failed";
+      if (!res.ok) return t("plutonium.js.slim_select.search_failed");
       const json = await res.json();
       const results = Array.isArray(json.results) ? json.results : [];
       return results.map((row) => ({
@@ -162,7 +173,7 @@ export default class extends Controller {
     } catch (e) {
       if (e.name === "AbortError") return [];
       console.warn("[slim-select] typeahead error", e);
-      return "Search failed";
+      return t("plutonium.js.slim_select.search_failed");
     }
   }
 

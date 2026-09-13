@@ -5,6 +5,7 @@ import Dashboard from '@uppy/dashboard'
 import ImageEditor from '@uppy/image-editor'
 import XHRUpload from '@uppy/xhr-upload'
 import DomElement from "../support/dom_element"
+import { t } from "../i18n.js"
 
 // Connects to data-controller="attachment-input"
 export default class extends Controller {
@@ -109,7 +110,7 @@ export default class extends Controller {
     const dialog = this.element.closest("dialog")
     if (dialog) dashboardOptions.target = dialog
 
-    this.uppy = new Uppy({
+    const uppyOptions = {
       restrictions: {
         maxFileSize: this.maxFileSizeValue,
         minFileSize: this.minFileSizeValue,
@@ -119,7 +120,14 @@ export default class extends Controller {
         allowedFileTypes: this.allowedFileTypesValue,
         requiredMetaFields: this.requiredMetaFieldsValue,
       }
-    })
+    }
+
+    // Optional locale passthrough: plutonium.js.libraries.uppy.strings holds
+    // Uppy locale strings (core and Dashboard), merged over the English defaults.
+    const strings = t("plutonium.js.libraries.uppy.strings")
+    if (strings && typeof strings === "object") uppyOptions.locale = { strings }
+
+    this.uppy = new Uppy(uppyOptions)
       .use(Dashboard, dashboardOptions)
       .use(ImageEditor, { target: Dashboard })
 
@@ -176,7 +184,7 @@ export default class extends Controller {
     const len = this.attachmentPreviewOutlets.length
     if (len > 1) {
       this.deleteAllTrigger.style["display"] = 'initial'
-      this.deleteAllTrigger.textContent = `Delete ${this.attachmentPreviewOutlets.length}`
+      this.deleteAllTrigger.textContent = t("plutonium.js.attachment_input.delete_all", { count: this.attachmentPreviewOutlets.length })
     } else {
       this.deleteAllTrigger.style["display"] = 'none'
     }
@@ -198,7 +206,8 @@ export default class extends Controller {
   }
 
   #buildUploadTrigger() {
-    const triggerPrompt = this.multiple ? "Choose files" : "Choose file"
+    // One plural-keyed string: `one` for a single attachment, `other` for multiple.
+    const triggerPrompt = t("plutonium.js.attachment_input.choose_file", { count: this.multiple ? 2 : 1 })
     this.uploadTrigger = DomElement.fromTemplate(
       `<button type="button" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 inline-flex items-center">
         <svg class="w-4 h-4 mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
@@ -214,12 +223,12 @@ export default class extends Controller {
   #buildDeleteAllTrigger() {
     this.deleteAllTrigger = DomElement.fromTemplate(
       `<button type="button" class="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm         px-5 py-2.5 dark:bg-red-600 dark:hover:bg-red-700 focus:outline-none dark:focus:ring-red-800 inline-flex items-center">
-        Delete ${this.attachmentPreviewOutlets.length}
+        ${t("plutonium.js.attachment_input.delete_all", { count: this.attachmentPreviewOutlets.length })}
       </button>`,
       false
     )
     this.deleteAllTrigger.addEventListener('click', () => {
-      if (confirm('Are you sure?')) this.attachmentPreviewContainerOutlet.clear()
+      if (confirm(t("plutonium.js.are_you_sure"))) this.attachmentPreviewContainerOutlet.clear()
     })
   }
 
