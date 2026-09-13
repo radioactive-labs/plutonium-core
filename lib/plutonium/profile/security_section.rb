@@ -4,46 +4,34 @@ module Plutonium
   module Profile
     # Renders security settings links based on enabled Rodauth features.
     class SecuritySection < Plutonium::UI::Component::Base
+      # Labels and descriptions come from
+      # plutonium.profile.security_section.features.<feature>.{label,description}.
       FEATURES = {
         change_password: {
-          label: "Change Password",
-          description: "Update your account password",
           icon: Phlex::TablerIcons::Key,
           path_method: :change_password_path
         },
         change_login: {
-          label: "Change Email",
-          description: "Update your email address",
           icon: Phlex::TablerIcons::Mail,
           path_method: :change_login_path
         },
         otp: {
-          label: "Two-Factor Authentication",
-          description: "Add an extra layer of security",
           icon: Phlex::TablerIcons::DeviceMobile,
           path_method: :otp_setup_path
         },
         recovery_codes: {
-          label: "Recovery Codes",
-          description: "View or regenerate backup codes",
           icon: Phlex::TablerIcons::FileCode,
           path_method: :recovery_codes_path
         },
         webauthn: {
-          label: "Security Keys",
-          description: "Manage passkeys and security keys",
           icon: Phlex::TablerIcons::Fingerprint,
           path_method: :webauthn_setup_path
         },
         active_sessions: {
-          label: "Active Sessions",
-          description: "View and manage your sessions",
           icon: Phlex::TablerIcons::DevicesCheck,
           path_method: :active_sessions_path
         },
         close_account: {
-          label: "Close Account",
-          description: "Permanently delete your account",
           icon: Phlex::TablerIcons::Trash,
           path_method: :close_account_path,
           danger: true
@@ -61,8 +49,8 @@ module Plutonium
 
       def render_section_header
         div(class: "mb-4") do
-          h2(class: "text-lg font-semibold text-[var(--pu-text)]") { "Security Settings" }
-          p(class: "text-sm text-[var(--pu-text-muted)]") { "Manage your account security" }
+          h2(class: "text-lg font-semibold text-[var(--pu-text)]") { t("plutonium.profile.security_section.title") }
+          p(class: "text-sm text-[var(--pu-text-muted)]") { t("plutonium.profile.security_section.description") }
         end
       end
 
@@ -95,8 +83,8 @@ module Plutonium
 
           # Content
           div(class: "flex-grow") do
-            div(class: "font-medium") { config[:label] }
-            div(class: "text-sm text-[var(--pu-text-muted)]") { config[:description] }
+            div(class: "font-medium") { feature_text(feature, :label) }
+            div(class: "text-sm text-[var(--pu-text-muted)]") { feature_text(feature, :description) }
           end
 
           # Arrow
@@ -104,6 +92,10 @@ module Plutonium
             render Phlex::TablerIcons::ChevronRight.new(class: "w-5 h-5")
           end
         end
+      end
+
+      def feature_text(feature, slot)
+        t("plutonium.profile.security_section.features.#{feature}.#{slot}")
       end
 
       def enabled_features

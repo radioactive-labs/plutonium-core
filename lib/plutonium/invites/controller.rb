@@ -57,7 +57,7 @@ module Plutonium
             @invite.validate_email_constraints!(current_user.email)
             render :show
           rescue ActiveRecord::RecordInvalid => e
-            @error_title = "Email Validation Error"
+            @error_title = t("plutonium.invites.controller.email_validation_error")
             @error_message = e.record.errors.full_messages.join(", ")
             render :error, status: :forbidden
           end
@@ -74,7 +74,7 @@ module Plutonium
 
         unless current_user
           redirect_to invitation_path_for(params[:token]),
-            alert: "Please sign in to accept this invitation"
+            alert: t("plutonium.invites.controller.sign_in_to_accept")
           return
         end
 
@@ -82,9 +82,9 @@ module Plutonium
         cookies.delete(:pending_invitation)
 
         redirect_to after_accept_path,
-          notice: "Invitation accepted! Welcome to #{@invite.entity.to_label}!"
+          notice: t("plutonium.invites.controller.accepted", entity: @invite.entity.to_label)
       rescue ActiveRecord::RecordInvalid => e
-        @error_title = "Acceptance Error"
+        @error_title = t("plutonium.invites.controller.acceptance_error")
         @error_message = e.record.errors.full_messages.join(", ")
         render :error, status: :forbidden
       end
@@ -112,8 +112,8 @@ module Plutonium
         invite = invite_class.find_for_acceptance(token)
 
         unless invite
-          @error_title = "Invalid or Expired Invitation"
-          @error_message = "This invitation link is no longer valid. It may have expired or already been used."
+          @error_title = t("plutonium.invites.controller.invalid_or_expired")
+          @error_message = t("plutonium.invites.controller.no_longer_valid")
           render :error, status: :not_found
           return nil
         end
@@ -131,7 +131,7 @@ module Plutonium
         password_confirmation = params[:password_confirmation]
 
         if password != password_confirmation
-          flash.now[:alert] = "Passwords don't match"
+          flash.now[:alert] = t("plutonium.invites.controller.passwords_dont_match")
           render :signup
           return
         end
@@ -140,7 +140,7 @@ module Plutonium
           ActiveRecord::Base.transaction do
             existing_user = user_class.find_by(email: email)
             if existing_user
-              flash.now[:alert] = "An account with this email already exists. Please sign in instead."
+              flash.now[:alert] = t("plutonium.invites.controller.account_exists")
               render :signup
               return
             end
@@ -153,7 +153,7 @@ module Plutonium
               sign_in_user(user)
               redirect_to after_accept_path
             else
-              flash.now[:alert] = "Failed to create account"
+              flash.now[:alert] = t("plutonium.invites.controller.create_account_failed")
               render :signup
             end
           end
@@ -161,11 +161,11 @@ module Plutonium
           flash.now[:alert] = if e.record.is_a?(invite_class)
             e.record.errors.full_messages.join(", ")
           else
-            "Failed to create account: #{e.record.errors.full_messages.join(", ")}"
+            t("plutonium.invites.controller.create_account_failed_with_error", error: e.record.errors.full_messages.join(", "))
           end
           render :signup
         rescue => e
-          flash.now[:alert] = "Failed to create account: #{e.message}"
+          flash.now[:alert] = t("plutonium.invites.controller.create_account_failed_with_error", error: e.message)
           render :signup
         end
       end

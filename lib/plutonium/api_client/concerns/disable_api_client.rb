@@ -20,8 +20,8 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          presents label: "Disable",
-            description: "Disable this API client (cannot be undone)",
+          presents label: t("plutonium.api_client.disable.label"),
+            description: t("plutonium.api_client.disable.description"),
             icon: Phlex::TablerIcons::Ban,
             color: :danger
 
@@ -52,7 +52,7 @@ module Plutonium
         # @param login [String] the login of the disabled API client
         # @return [String]
         def success_message(login)
-          "API client '#{login}' has been disabled"
+          I18n.t("plutonium.api_client.disable.disabled", login: login)
         end
 
         def rodauth_instance

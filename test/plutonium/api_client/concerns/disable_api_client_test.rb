@@ -17,6 +17,12 @@ module Plutonium
               # no-op for testing
             end
 
+            # Interaction::Base extends Plutonium::Translation::Lazy; presents
+            # calls t at class level.
+            def t(key, **options)
+              -> { I18n.t(key, **options) }
+            end
+
             def attribute(*args, **kwargs)
               # no-op for testing
             end

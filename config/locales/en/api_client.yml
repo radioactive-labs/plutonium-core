@@ -1,0 +1,22 @@
+# Strings rendered by Plutonium::ApiClient (the create / disable interactions
+# and the credentials page shown once after an API client is created).
+en:
+  plutonium:
+    api_client:
+      create:
+        label: "Create API Client"
+        failed: "Failed to create account: %{error}"
+        credentials:
+          success_title: "API Client Created Successfully"
+          important_label: "Important:"
+          important_text: "Save these credentials now. The password cannot be retrieved later."
+          login: "Login"
+          password: "Password"
+          copy: "Copy"
+          copy_all: "Copy All"
+          done: "Done"
+          credentials_text: "Login: %{login}\nPassword: %{password}"
+      disable:
+        label: "Disable"
+        description: "Disable this API client (cannot be undone)"
+        disabled: "API client '%{login}' has been disabled"
