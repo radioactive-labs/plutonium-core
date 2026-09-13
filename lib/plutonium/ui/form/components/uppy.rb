@@ -156,7 +156,7 @@ module Plutonium
               data: {action: "click->attachment-preview#remove"}
             ) do
               span(class: "bi bi-trash")
-              plain "Delete"
+              plain Plutonium::Translation.t("plutonium.ui.form.attachment.delete")
             end
           end
 

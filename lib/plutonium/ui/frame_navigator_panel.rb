@@ -66,10 +66,10 @@ module Plutonium
         div(data: {controller: %w[frame-navigator]}) do
           Panel do |panel|
             panel.with_title @title
-            panel.with_item PanelItem.new(label: "Home", icon: Phlex::TablerIcons::Home2, data_frame_navigator_target: "homeButton")
-            panel.with_item PanelItem.new(label: "Back", icon: Phlex::TablerIcons::ChevronLeft, data_frame_navigator_target: "backButton")
-            panel.with_item PanelItem.new(label: "Refresh", icon: Phlex::TablerIcons::RefreshDot, data_frame_navigator_target: "refreshButton")
-            panel.with_item PanelLink.new(label: "Maximize", icon: Phlex::TablerIcons::WindowMaximize, href: @src, data_frame_navigator_target: "maximizeLink")
+            panel.with_item PanelItem.new(label: t("plutonium.ui.home"), icon: Phlex::TablerIcons::Home2, data_frame_navigator_target: "homeButton")
+            panel.with_item PanelItem.new(label: t("plutonium.ui.frame_navigator.back"), icon: Phlex::TablerIcons::ChevronLeft, data_frame_navigator_target: "backButton")
+            panel.with_item PanelItem.new(label: t("plutonium.ui.frame_navigator.refresh"), icon: Phlex::TablerIcons::RefreshDot, data_frame_navigator_target: "refreshButton")
+            panel.with_item PanelLink.new(label: t("plutonium.ui.frame_navigator.maximize"), icon: Phlex::TablerIcons::WindowMaximize, href: @src, data_frame_navigator_target: "maximizeLink")
             panel.with_content PanelContent.new(id: @panel_id, src: @src)
           end
         end

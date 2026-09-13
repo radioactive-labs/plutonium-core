@@ -9,7 +9,7 @@ module Plutonium
             return if scopes.empty?
 
             nav(role: "tablist",
-              aria: {label: "Scope"},
+              aria: {label: t("plutonium.ui.table.scope")},
               class: "flex flex-nowrap items-center gap-1 px-4 py-2 border-b border-[var(--pu-border)] " \
                      "overflow-x-auto whitespace-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden") do
               render_all_pill
@@ -27,7 +27,7 @@ module Plutonium
               role: "tab",
               aria: {selected: active},
               class: pill_classes(active)
-            ) { "All" }
+            ) { t("plutonium.ui.table.all") }
           end
 
           def render_pill(key)

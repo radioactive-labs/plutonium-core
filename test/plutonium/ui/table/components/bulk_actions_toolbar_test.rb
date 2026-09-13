@@ -40,6 +40,11 @@ class Plutonium::UI::Table::Components::BulkActionsToolbarTest < Minitest::Test
     assert_match(/data-bulk-actions-target="selectedCount"[^>]*>\s*0\s*</, html)
   end
 
+  def test_selected_count_sentence_wraps_live_count
+    html = build_toolbar(bulk_actions: []).call
+    assert_match(/data-bulk-actions-target="selectedCount"[^>]*>0<\/span> selected/, html)
+  end
+
   def test_renders_selected_text
     html = build_toolbar(bulk_actions: []).call
     assert_includes html, "selected"

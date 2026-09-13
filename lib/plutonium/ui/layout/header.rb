@@ -109,7 +109,7 @@ module Plutonium
             render Phlex::TablerIcons::X.new(class: "w-6 h-6")
           end
 
-          span(class: "sr-only") { "Toggle sidebar" }
+          span(class: "sr-only") { t("plutonium.ui.layout.toggle_sidebar") }
         end
 
         # Renders the action buttons section

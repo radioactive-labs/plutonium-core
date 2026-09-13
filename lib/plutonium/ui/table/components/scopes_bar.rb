@@ -29,7 +29,7 @@ module Plutonium
               id: "all-scope",
               href: current_query_object.build_url(scope: nil),
               class: active ? active_scope_class : inactive_scope_class
-            ) { "All" }
+            ) { t("plutonium.ui.table.all") }
           end
 
           def render_scope_button(name)

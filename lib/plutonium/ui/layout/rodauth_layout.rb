@@ -45,7 +45,7 @@ module Plutonium
         def render_links
           link_to root_path, class: "mt-4 inline-flex items-center gap-1.5 font-medium text-secondary-600 dark:text-secondary-400 hover:underline transition-colors" do
             render Phlex::TablerIcons::Home2.new(class: "size-5")
-            plain "Home"
+            plain t("plutonium.ui.home")
           end
         end
       end

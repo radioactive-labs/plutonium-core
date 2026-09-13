@@ -7,7 +7,7 @@ module Plutonium
         private
 
         def page_title
-          current_definition.edit_page_title || super || "Edit #{resource_name(resource_class, 1)}"
+          current_definition.edit_page_title || super || t("plutonium.ui.page.edit_title", resource: resource_name(resource_class, 1))
         end
 
         def page_description

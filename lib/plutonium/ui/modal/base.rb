@@ -60,7 +60,7 @@ module Plutonium
           if @title
             attrs[:"aria-labelledby"] = title_id
           else
-            attrs[:"aria-label"] = "Dialog"
+            attrs[:"aria-label"] = t("plutonium.ui.modal.dialog")
           end
           attrs[:"aria-describedby"] = description_id if @description.present?
           attrs
@@ -130,8 +130,8 @@ module Plutonium
             target: "_blank",
             rel: "noopener",
             class: "p-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
-            "aria-label": "Open full page in a new tab",
-            title: "Open full page"
+            "aria-label": t("plutonium.ui.modal.open_full_page_new_tab"),
+            title: t("plutonium.ui.modal.open_full_page")
           ) do
             render Phlex::TablerIcons::ArrowsDiagonal.new(class: "w-5 h-5")
           end
@@ -145,7 +145,7 @@ module Plutonium
               type: "button",
               class: "p-1.5 text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] rounded-md transition-colors",
               data: {action: "remote-modal#close"},
-              "aria-label": "Close dialog"
+              "aria-label": t("plutonium.ui.modal.close")
             ) do
               render Phlex::TablerIcons::X.new(class: "w-5 h-5")
             end
