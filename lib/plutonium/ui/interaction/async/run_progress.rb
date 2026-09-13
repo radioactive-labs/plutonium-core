@@ -118,7 +118,7 @@ module Plutonium
           def render_status
             div(class: "flex items-center gap-2 flex-wrap") do
               span(class: "pu-badge pu-badge-#{BADGE_VARIANTS.fetch(run.outcome, "neutral")}") do
-                plain run.outcome.humanize
+                plain(Plutonium::Translation.value_label(run.class, :outcome, run.outcome) || run.outcome.humanize)
               end
               # The count rides alongside the badge rather than only in the list
               # below: a partially-applied :continue run ends as "completed", and

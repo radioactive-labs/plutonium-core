@@ -51,7 +51,7 @@ module Plutonium
                 # own page renders the pair.
                 span(class: "font-medium text-[var(--pu-text)]") { plain run.to_label }
                 plain " "
-                span(class: "text-[var(--pu-text-muted)]") { plain run.state.humanize }
+                span(class: "text-[var(--pu-text-muted)]") { plain(Plutonium::Translation.value_label(run.class, :state, run.state) || run.state.humanize) }
               end
               a(href: resource_url_for(run), class: "pu-btn pu-btn-xs pu-btn-soft-primary shrink-0") do
                 plain t("plutonium.async.banner.view_progress")
