@@ -206,7 +206,7 @@ module Plutonium
 
             tablist.with_tab(
               identifier: "details",
-              title: -> { plain "Details" }
+              title: -> { plain t("plutonium.ui.details") }
             ) do
               render details_display
             end

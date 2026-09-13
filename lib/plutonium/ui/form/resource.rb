@@ -88,10 +88,10 @@ module Plutonium
           ) do
             div(class: "px-6 pt-5 pb-4 border-b border-[var(--pu-border)]") do
               h2(id: "pu-dirty-guard-title", class: "text-lg font-semibold text-[var(--pu-text)]") do
-                "Discard changes?"
+                t("plutonium.ui.form.discard_title")
               end
               p(id: "pu-dirty-guard-desc", class: "mt-1 text-sm text-[var(--pu-text-muted)]") do
-                "You have unsaved changes. Closing this form now will lose them."
+                t("plutonium.ui.form.discard_description")
               end
             end
             div(class: "flex items-center justify-end gap-2 px-6 py-4") do
@@ -99,12 +99,12 @@ module Plutonium
                 type: "button",
                 class: "pu-btn pu-btn-md pu-btn-outline",
                 data: {action: "dirty-form-guard#keepEditing"}
-              ) { "Keep editing" }
+              ) { t("plutonium.ui.form.keep_editing") }
               button(
                 type: "button",
                 class: "pu-btn pu-btn-md pu-btn-danger",
                 data: {action: "dirty-form-guard#discard"}
-              ) { "Discard changes" }
+              ) { t("plutonium.ui.form.discard_changes") }
             end
           end
         end
@@ -268,7 +268,7 @@ module Plutonium
         end
 
         def render_submit_and_continue_button
-          label = object.new_record? ? "Create and add another" : "Update and continue editing"
+          label = object.new_record? ? t("plutonium.ui.form.create_and_add_another") : t("plutonium.ui.form.update_and_continue_editing")
 
           button(
             type: :submit,

@@ -269,8 +269,8 @@ module Plutonium
             data: {row_click_target: "show", turbo_frame: @show_turbo_frame || show.turbo_frame(resource_definition)},
             class: "sr-only",
             tabindex: "-1",
-            "aria-label": "Open #{header_text}"
-          })) { plain "Open" }
+            "aria-label": t("plutonium.ui.grid.open_record", name: header_text)
+          })) { plain t("plutonium.ui.grid.open") }
         end
 
         # ---------------------------------------------------------------

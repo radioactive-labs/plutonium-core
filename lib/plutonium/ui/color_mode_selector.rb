@@ -16,7 +16,7 @@ module Plutonium
           class: BUTTON_CLASSES,
           data_controller: "color-mode",
           data_action: "click->color-mode#toggleMode",
-          title: "Toggle color mode"
+          title: t("plutonium.ui.color_mode.toggle")
         ) do
           render Phlex::TablerIcons::DeviceDesktop.new(size: ICON_SIZE, stroke: ICON_STROKE, class: "color-mode-icon-auto")
           render Phlex::TablerIcons::Sun.new(size: ICON_SIZE, stroke: ICON_STROKE, class: "color-mode-icon-light hidden")

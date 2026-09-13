@@ -25,7 +25,7 @@ module Plutonium
             button(
               type: "button",
               class: "p-1.5 rounded-[var(--pu-radius-md)] border border-[var(--pu-border)] bg-[var(--pu-surface)] text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] hover:border-[var(--pu-border-strong)] transition-colors",
-              aria: {expanded: "false", haspopup: "true", label: "More actions"},
+              aria: {expanded: "false", haspopup: "true", label: t("plutonium.ui.table.more_actions")},
               data: {resource_drop_down_target: "trigger"}
             ) do
               render Phlex::TablerIcons::DotsVertical.new(class: "w-4 h-4")

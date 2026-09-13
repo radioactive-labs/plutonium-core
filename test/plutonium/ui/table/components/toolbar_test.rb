@@ -31,6 +31,13 @@ class Plutonium::UI::Table::Components::ViewSwitcherTest < Minitest::Test
     assert_equal 2, html.scan('role="tab"').length
   end
 
+  def test_renders_translated_segment_labels
+    html = render_switcher(views: [:table, :grid, :kanban], current: :table)
+    assert_includes html, "<span>Table</span>"
+    assert_includes html, "<span>Grid</span>"
+    assert_includes html, "<span>Board</span>"
+  end
+
   def test_does_not_render_when_only_one_view
     component = build_switcher(views: [:table], current: :table)
     refute component.render?

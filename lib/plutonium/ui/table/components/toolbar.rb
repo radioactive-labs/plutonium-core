@@ -69,7 +69,7 @@ module Plutonium
               data: {action: "click->filter-panel#toggle"}
             ) do
               render Phlex::TablerIcons::AdjustmentsHorizontal.new(class: "w-4 h-4 shrink-0")
-              span { "Filter" }
+              span { t("plutonium.ui.table.filter") }
               if count > 0
                 span(class: "ml-1 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 " \
                             "rounded-full bg-primary-600 text-white text-[10px] font-semibold leading-none") do
@@ -90,7 +90,7 @@ module Plutonium
                   type: "search",
                   name: "#{@search_param}[search]",
                   value: @search_value,
-                  placeholder: "Search...",
+                  placeholder: t("plutonium.ui.table.search_placeholder"),
                   class: "pu-input pu-input-toolbar pu-input-icon-left w-[220px]",
                   # turbo-permanent + a stable id keep the DOM node
                   # across Turbo morphs so focus / caret / IME state

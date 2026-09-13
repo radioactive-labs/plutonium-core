@@ -81,7 +81,7 @@ module Plutonium
               # Key input
               input(
                 type: :text,
-                placeholder: "Key",
+                placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.key_placeholder"),
                 value: key,
                 name: "#{field_name}[#{index}][key]",
                 id: "#{field.dom.id}_#{index}_key",
@@ -92,7 +92,7 @@ module Plutonium
               # Value input
               input(
                 type: :text,
-                placeholder: "Value",
+                placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.value_placeholder"),
                 value: value,
                 name: "#{field_name}[#{index}][value]",
                 id: "#{field.dom.id}_#{index}_value",
@@ -122,7 +122,7 @@ module Plutonium
                   key_value_store_target: "addButton"
                 }
               ) do
-                plain "+ Add Pair"
+                plain Plutonium::Translation.t("plutonium.ui.form.key_value_store.add_pair")
               end
             end
           end
@@ -135,7 +135,7 @@ module Plutonium
               ) do
                 input(
                   type: :text,
-                  placeholder: "Key",
+                  placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.key_placeholder"),
                   name: "#{field_name}[__INDEX__][key]",
                   id: "#{field.dom.id}___INDEX___key",
                   class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",
@@ -144,7 +144,7 @@ module Plutonium
 
                 input(
                   type: :text,
-                  placeholder: "Value",
+                  placeholder: Plutonium::Translation.t("plutonium.ui.form.key_value_store.value_placeholder"),
                   name: "#{field_name}[__INDEX__][value]",
                   id: "#{field.dom.id}___INDEX___value",
                   class: "flex-1 px-3 py-1 text-sm border border-[var(--pu-border)] rounded-[var(--pu-radius-sm)] focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-[var(--pu-surface)] text-[var(--pu-text)]",

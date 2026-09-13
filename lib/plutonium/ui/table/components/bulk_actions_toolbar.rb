@@ -37,8 +37,16 @@ module Plutonium
 
           def render_selected_count
             div(class: "text-sm font-medium text-primary-700 dark:text-primary-300") do
-              span(data: {bulk_actions_target: "selectedCount"}) { "0" }
-              plain " selected"
+              # The count is live-updated by the Stimulus controller, so the
+              # sentence is translated with its placeholder left in and split
+              # around it (same pattern as PagyInfo#render_template).
+              t("plutonium.ui.table.selected_count", count: "%{count}").split(/(%\{count\})/).each do |part|
+                if part == "%{count}"
+                  span(data: {bulk_actions_target: "selectedCount"}) { "0" }
+                else
+                  plain part
+                end
+              end
             end
           end
 
@@ -55,7 +63,7 @@ module Plutonium
               type: "button",
               data: {action: "click->bulk-actions#clearSelection"},
               class: "ml-auto text-xs text-primary-700 dark:text-primary-300 hover:underline"
-            ) { "Clear selection" }
+            ) { t("plutonium.ui.table.clear_selection") }
           end
 
           def render_action_button(action)

@@ -29,7 +29,7 @@ module Plutonium
             div(class: "flex items-center justify-end") do
               button(type: :button, class: REMOVE_BUTTON_CLASS, data_action: action) do
                 render Phlex::TablerIcons::Trash.new(class: "w-4 h-4")
-                span { "Remove" }
+                span { t("plutonium.ui.form.repeater.remove") }
               end
             end
           end
@@ -39,10 +39,11 @@ module Plutonium
           # a left danger stripe + struck-through label read as "pending delete".
           #
           # @param restore_action [String] Stimulus action for the Restore button
-          # @param label [String] text shown beside the trash icon
+          # @param label [String, nil] text shown beside the trash icon; defaults to "Removed"
           # @param bar_data [Hash] extra data attributes (Stimulus target/marker)
           #   the controller uses to find and toggle this bar
-          def render_repeater_removed_bar(restore_action:, label: "Removed", **bar_data)
+          def render_repeater_removed_bar(restore_action:, label: nil, **bar_data)
+            label ||= t("plutonium.ui.form.repeater.removed")
             div(
               hidden: true,
               class: "-m-4 flex items-center justify-between gap-3 px-4 py-2.5 " \
@@ -56,7 +57,7 @@ module Plutonium
               end
               button(type: :button, class: RESTORE_BUTTON_CLASS, data_action: restore_action) do
                 render Phlex::TablerIcons::ArrowBackUp.new(class: "w-4 h-4")
-                span { "Restore" }
+                span { t("plutonium.ui.form.repeater.restore") }
               end
             end
           end

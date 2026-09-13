@@ -82,7 +82,7 @@ module Plutonium
               render Phlex::TablerIcons::Search.new(class: "w-5 h-5 text-[var(--pu-text-muted)]")
             end
             render field(:search, value: search_query)
-              .placeholder("Search...")
+              .placeholder(t("plutonium.ui.table.search_placeholder"))
               .input_tag(
                 value: search_query,
                 class: "pu-input pu-input-icon-left w-full",
@@ -106,7 +106,7 @@ module Plutonium
               data: {resource_drop_down_target: "trigger"}
             ) do
               render Phlex::TablerIcons::Filter.new(class: "w-4 h-4 inline-block align-text-bottom")
-              plain " Filters"
+              plain " #{t("plutonium.ui.table.filters")}"
               if active_count > 0
                 plain " "
                 span(class: "inline-flex items-center justify-center w-5 h-5 text-xs font-semibold rounded-full text-gray-800 bg-white") do
@@ -142,13 +142,13 @@ module Plutonium
               ) do
                 render Phlex::TablerIcons::X.new(class: "w-5 h-5")
               end
-              span(class: "text-sm font-semibold text-[var(--pu-text)]") { "Filters" }
+              span(class: "text-sm font-semibold text-[var(--pu-text)]") { t("plutonium.ui.table.filters") }
             end
             button(
               type: "button",
               class: "text-sm text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] transition-colors",
               data: {action: "filter-panel#clear"}
-            ) { "Clear all" }
+            ) { t("plutonium.ui.table.clear_all") }
           end
 
           # Scrollable filter fields
@@ -175,7 +175,7 @@ module Plutonium
             render field(:submit).submit_button_tag(
               name: nil,
               class!: "pu-btn pu-btn-md pu-btn-primary w-full"
-            ) { "Apply Filters" }
+            ) { t("plutonium.ui.table.apply_filters") }
           end
         end
 
@@ -196,7 +196,7 @@ module Plutonium
             label(class: "text-sm font-medium text-[var(--pu-text)]") { filter_label }
             nested.field(name, **field_options) do |f|
               # Set placeholder for blank option text in selects
-              f.placeholder(input_options[:include_blank] || "All") if input_options[:include_blank]
+              f.placeholder(input_options[:include_blank] || t("plutonium.ui.table.all")) if input_options[:include_blank]
               render instance_exec(f, &tag_block)
             end
           end

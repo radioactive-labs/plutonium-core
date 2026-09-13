@@ -70,7 +70,7 @@ module Plutonium
           data: {resource_drop_down_target: "trigger"},
           class: "p-2 text-[var(--pu-text-muted)] rounded-[var(--pu-radius-md)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)] focus:ring-2 focus:ring-[var(--pu-border)] transition-colors"
         ) do
-          span(class: "sr-only") { "View #{@label}" }
+          span(class: "sr-only") { t("plutonium.ui.nav_grid_menu.view", label: @label) }
           render @icon.new(class: "w-6 h-6")
         end
       end
