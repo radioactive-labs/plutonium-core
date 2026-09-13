@@ -53,12 +53,12 @@ module Plutonium
             @wizard.class.label
           end
           p(class: "mx-auto mt-2 max-w-prose text-[var(--pu-text-muted)]") do
-            "You've already completed this — there's nothing more to do here."
+            t("plutonium.wizard.completed.message")
           end
           div(class: "mt-7") do
             # Exits the wizard to a different page; opt out of Turbo morph (which
             # would otherwise nest the destination into this page — see Page::Wizard).
-            a(href: @exit_url, class: "pu-btn pu-btn-md pu-btn-primary", data: {wizard_completed: "exit", turbo: "false"}) { "Continue" }
+            a(href: @exit_url, class: "pu-btn pu-btn-md pu-btn-primary", data: {wizard_completed: "exit", turbo: "false"}) { t("plutonium.wizard.completed.continue") }
           end
         end
 

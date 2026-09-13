@@ -38,7 +38,7 @@ module Plutonium
           div(class: "pu-wizard-header mb-7 text-center") do
             h1(class: "text-2xl font-bold tracking-tight text-[var(--pu-text)]") { @wizard_class.label }
             p(class: "mx-auto mt-1.5 max-w-prose text-[var(--pu-text-muted)]") do
-              "Pick up where you left off, or start a new one."
+              t("plutonium.wizard.chooser.prompt")
             end
           end
         end
@@ -64,15 +64,15 @@ module Plutonium
           li(class: "flex items-center justify-between gap-4 px-5 py-4", data: {wizard_chooser_entry: entry.current_step}) do
             div(class: "min-w-0") do
               p(class: "truncate text-sm font-semibold text-[var(--pu-text)]") do
-                entry.current_step_label.presence || "In progress"
+                entry.current_step_label.presence || t("plutonium.wizard.chooser.in_progress")
               end
-              p(class: "mt-0.5 text-xs text-[var(--pu-text-muted)]") { "Updated #{updated_ago(entry)} ago" }
+              p(class: "mt-0.5 text-xs text-[var(--pu-text-muted)]") { t("plutonium.wizard.chooser.updated_ago", time: updated_ago(entry)) }
             end
             div(class: "flex items-center gap-2 shrink-0") do
               if entry.resume_url.present?
-                a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline", data: {wizard_chooser_resume: true}) { "Resume" }
+                a(href: entry.resume_url, class: "pu-btn pu-btn-sm pu-btn-outline", data: {wizard_chooser_resume: true}) { t("plutonium.wizard.chooser.resume") }
               else
-                span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { "Resume" }
+                span(class: "pu-btn pu-btn-sm pu-btn-outline opacity-50 cursor-not-allowed") { t("plutonium.wizard.chooser.resume") }
               end
 
               render_cancel_form(entry) if entry.cancel_url.present?
@@ -92,19 +92,19 @@ module Plutonium
             button(
               type: "submit",
               class: "pu-btn pu-btn-sm pu-btn-soft-danger",
-              aria_label: "Cancel this #{@wizard_class.label} draft",
+              aria_label: t("plutonium.wizard.chooser.cancel_draft", wizard: @wizard_class.label),
               data: {
                 wizard_chooser_cancel: true,
-                turbo_confirm: "Discard this in-progress #{@wizard_class.label}? This can't be undone."
+                turbo_confirm: t("plutonium.wizard.chooser.discard_confirm", wizard: @wizard_class.label)
               }
-            ) { "Cancel" }
+            ) { t("plutonium.wizard.cancel") }
           end
         end
 
         def render_start_new
           div(class: "border-t border-[var(--pu-border)] bg-[var(--pu-surface-alt)] px-5 py-4") do
             a(href: @start_new_url, class: "pu-btn pu-btn-md pu-btn-primary w-full justify-center", data: {wizard_chooser_start_new: true}) do
-              "Start new"
+              t("plutonium.wizard.chooser.start_new")
             end
           end
         end
@@ -112,7 +112,7 @@ module Plutonium
         def updated_ago(entry)
           helpers.time_ago_in_words(entry.updated_at)
         rescue
-          "a while"
+          t("plutonium.wizard.chooser.a_while")
         end
 
         def page_type = :wizard_chooser_page
