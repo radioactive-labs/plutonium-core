@@ -73,7 +73,7 @@ module Plutonium
         end
 
         def generate_placeholder
-          base = key.to_s.humanize
+          base = label
           return base if @predicate == :eq
 
           Plutonium::Translation.t("plutonium.query.filters.date.#{@predicate}", label: base)

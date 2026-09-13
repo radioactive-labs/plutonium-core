@@ -3,13 +3,16 @@
 module Plutonium
   module Kanban
     class DSL
-      def self.build(&block)
-        dsl = new
+      # `resource_class:` lets column labels resolve through the
+      # plutonium.kanban_columns.<model>.<key> convention.
+      def self.build(resource_class: nil, &block)
+        dsl = new(resource_class:)
         dsl.instance_eval(&block) if block
         dsl.to_board
       end
 
-      def initialize
+      def initialize(resource_class: nil)
+        @resource_class = resource_class
         @columns = []
         @columns_block = nil
         @card_fields = nil
@@ -24,7 +27,7 @@ module Plutonium
       end
 
       def column(key, **opts, &blk)
-        col = Column.new(key, **opts)
+        col = Column.new(key, resource_class: @resource_class, **opts)
         col.instance_eval(&blk) if blk
         @columns << col
       end

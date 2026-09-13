@@ -88,6 +88,7 @@ class Plutonium::TranslationTest < ActiveSupport::TestCase
     assert_equal "Draft (rails)", Plutonium::Translation.value_label(Blogging::Article, :status, :draft)
 
     store(plutonium: {values: {"blogging/article": {status: {draft: "Draft (plutonium)"}}}})
+    Plutonium::Translation::Current.reset
     assert_equal "Draft (plutonium)", Plutonium::Translation.value_label(Blogging::Article, :status, "draft")
 
     assert_nil Plutonium::Translation.value_label(Blogging::Article, :status, :nope)
@@ -103,6 +104,48 @@ class Plutonium::TranslationTest < ActiveSupport::TestCase
   test "pagy translates through Pagy's dictionary in the current locale" do
     assert_equal "Show %{limit_input} items per page",
       Plutonium::Translation.pagy("pagy.limit_tag_js", count: 10, item_name: "items")
+  end
+
+  test "wizard steps and kanban columns resolve their labels by convention" do
+    wizard = Class.new(Plutonium::Wizard::Base) do
+      def self.name = "OnboardingWizard"
+      step :billing do
+        attribute :plan, :string
+        input :plan
+      end
+    end
+    assert_equal "Billing", wizard.steps.first.label
+
+    store(plutonium: {wizard_steps: {onboarding_wizard: {billing: "Billing details"}}})
+    assert_equal "Billing details", wizard.steps.first.label
+
+    column = Plutonium::Kanban::Column.new(:in_review, resource_class: Blogging::Article)
+    assert_equal "In Review", column.label
+    store(plutonium: {kanban_columns: {"blogging/post": {in_review: "Under review"}}})
+    assert_equal "Under review", column.label
+    assert_equal "Fixed", Plutonium::Kanban::Column.new(:in_review, label: "Fixed", resource_class: Blogging::Article).label
+  end
+
+  test "actions bound to a definition's model resolve their labels by convention" do
+    action = Plutonium::Action::Simple.new(:publish)
+    assert_equal "Publish", action.label
+
+    bound = action.for_resource(Blogging::Article)
+    store(plutonium: {actions: {"blogging/article": {publish: "Publish now"}}})
+    assert_equal "Publish now", bound.label
+    assert_equal "Publish", action.label
+    assert_same bound, bound.for_resource(Blogging::Post)
+  end
+
+  test "value_label memoises per request" do
+    store(plutonium: {values: {"blogging/article": {status: {draft: "Draft"}}}})
+    assert_equal "Draft", Plutonium::Translation.value_label(Blogging::Article, :status, :draft)
+
+    store(plutonium: {values: {"blogging/article": {status: {draft: "Changed"}}}})
+    assert_equal "Draft", Plutonium::Translation.value_label(Blogging::Article, :status, :draft)
+
+    Plutonium::Translation::Current.reset
+    assert_equal "Changed", Plutonium::Translation.value_label(Blogging::Article, :status, :draft)
   end
 
   private

@@ -19,10 +19,19 @@ module Plutonium
 
       attr_reader :resource_class
 
-      def initialize(key:, resource_class: nil)
+      def initialize(key:, resource_class: nil, label: nil)
         super()
         @key = key
         @resource_class = resource_class
+        @label = label
+      end
+
+      # The filter's display label: `label:` if given, else the
+      # plutonium.filters.<model>.<key> convention, else the humanized key.
+      def label
+        Plutonium::Translation.resolve(@label) ||
+          Plutonium::Translation.label_for(:filter, resource_class, key) ||
+          key.to_s.humanize
       end
     end
   end

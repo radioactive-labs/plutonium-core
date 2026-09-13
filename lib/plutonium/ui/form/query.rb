@@ -160,9 +160,9 @@ module Plutonium
                 inputs.each do |input_name, _|
                   # For multi-input filters (like date range), include the input name in the label
                   label = if has_multiple_inputs
-                    "#{filter_name.to_s.humanize} (#{input_name.to_s.humanize.downcase})"
+                    t("plutonium.query.filter_input_label", label: query_object.filter_label(filter_name), input: input_name.to_s.humanize.downcase)
                   else
-                    filter_name.to_s.humanize
+                    query_object.filter_label(filter_name)
                   end
                   render_filter_field nested, definition, input_name, filter_label: label
                 end

@@ -121,6 +121,10 @@ module Plutonium
               column_definition = resource_definition.defined_columns[name] || {}
               column_options = column_definition[:options] || {}
 
+              field_options = resolve_field_level_procs(field_options)
+              display_options = resolve_field_level_procs(display_options)
+              column_options = resolve_field_level_procs(column_options)
+
               # A `column` condition or a surface-neutral `field` condition hides
               # the column. A `display` condition stays show-only: it may reference
               # `object`, and the table has no single record to evaluate it against.

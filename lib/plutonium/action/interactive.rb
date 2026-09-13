@@ -19,12 +19,25 @@ module Plutonium
         @interaction = interaction
         @immediate = immediate
 
-        options[:label] ||= interaction.label
-        options[:description] ||= interaction.description
         options[:icon] ||= interaction.icon
         options[:turbo_frame] = Plutonium::REMOTE_MODAL_FRAME unless options.key?(:turbo_frame)
 
         super(name, **options)
+      end
+
+      # `label:` on the action, then the interaction's explicit `presents
+      # label:`, then plutonium.actions.<model>.<action>, then the
+      # interaction's class-name default. Resolved per read so lazy
+      # translations follow the request locale.
+      def label
+        Plutonium::Translation.resolve(@label) ||
+          Plutonium::Translation.resolve(interaction.presentation_metadata[:label]) ||
+          Plutonium::Translation.label_for(:action, @resource_class, @name) ||
+          interaction.label
+      end
+
+      def description
+        Plutonium::Translation.resolve(@description) || interaction.description
       end
 
       # Get the confirmation message for the action

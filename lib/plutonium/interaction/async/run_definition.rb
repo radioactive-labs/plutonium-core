@@ -38,9 +38,7 @@ module Plutonium
         column :outcome, as: :badge,
           colors: {running: :info, completed_with_errors: :warning}
 
-        # Eager I18n.t rather than the lazy class-level t(): a proc-valued field
-        # label is not resolved by the display pipeline yet and renders empty.
-        field :target_label, label: I18n.t("plutonium.async.run.target_type")
+        field :target_label, label: t("plutonium.async.run.target_type")
 
         # The details tab, with the live panel above the fields.
         #

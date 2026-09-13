@@ -30,6 +30,8 @@ en:
         login: "Login"
         last_use: "Last use: %{time}"
     query:
+      # One input of a multi-input filter, e.g. "Created at (from)".
+      filter_input_label: "%{label} (%{input})"
       all: "All"
       active_filter:
         input_value: "%{input} %{value}"

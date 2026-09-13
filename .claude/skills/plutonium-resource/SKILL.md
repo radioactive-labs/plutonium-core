@@ -665,7 +665,7 @@ en:
     values:         { blogging/post: { status: { archived: "Archived" } } }   # or activerecord.attributes.<model>.status/archived
 ```
 
-Resolution for every slot: explicit option → `plutonium.portals.<portal>.…` → `plutonium.…` → (placeholder only) `helpers.placeholder.<model>.<attr>` → nothing. The model segment is `model_name.i18n_key` (`blogging/post`), walked up STI ancestors.
+Resolution for every slot: explicit option → `plutonium.portals.<portal>.…` → `plutonium.…` → (placeholder only) `helpers.placeholder.<model>.<attr>` → nothing. For actions, an interaction's explicit `presents label:` counts as declared (beats the convention); its class-name default does not. The model segment is `model_name.i18n_key` (`blogging/post`), walked up STI ancestors.
 
 When an explicit value must be translated, use the definition's class-level `t`, which is lazy (resolved per render, in the request locale):
 
