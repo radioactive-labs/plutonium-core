@@ -34,6 +34,12 @@ module Plutonium
 
         protected
 
+        # Translate one of Plutonium's own strings. Full keys only
+        # (`t("plutonium.ui.table.filters")`), so every call site is greppable.
+        def t(key, **options)
+          Plutonium::Translation.t(key, **options)
+        end
+
         def phlexi_render(arg, &)
           return unless arg
           raise ArgumentError, "phlexi_render requires a default render block" unless block_given?

@@ -38,6 +38,8 @@ module Plutonium
     # @note Subclasses must implement the #execute method.
     # @see https://radioactive-labs.github.io/plutonium-core/reference/behavior/interactions
     class Base
+      extend Plutonium::Translation::Lazy
+
       include ActiveModel::Model
       include ActiveModel::Attributes
       include Plutonium::Definition::DefineableProps

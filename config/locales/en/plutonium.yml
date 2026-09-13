@@ -1,0 +1,19 @@
+# Plutonium's own strings. Loaded at the lowest precedence: a package or
+# portal engine's config/locales and the host app's config/locales both win.
+#
+# Convention keys the framework resolves on its own (never declared here):
+#
+#   plutonium.fields.<model>.<attr>.{placeholder,hint,description}
+#   plutonium.actions.<model>.<action>
+#   plutonium.scopes.<model>.<scope>
+#   plutonium.filters.<model>.<filter>
+#   plutonium.kanban_columns.<model>.<column>
+#   plutonium.wizard_steps.<wizard>.<step>
+#   plutonium.values.<model>.<attr>.<value>
+#
+# each also under plutonium.portals.<portal>.* for a portal-specific override.
+en:
+  plutonium:
+    boolean:
+      "true": "Yes"
+      "false": "No"
