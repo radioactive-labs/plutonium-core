@@ -162,7 +162,7 @@ module Plutonium
             button(
               class: "p-0.5 rounded text-[var(--pu-text-muted)] " \
                      "hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]",
-              title: "Expand #{column.label}",
+              title: t("plutonium.kanban.column.expand", column: column.label),
               type: "button",
               data: {
                 action: "click->kanban#toggleColumn",
@@ -214,7 +214,7 @@ module Plutonium
             button(
               class: "shrink-0 p-0.5 rounded text-[var(--pu-text-muted)] " \
                      "hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]",
-              title: "Collapse #{column.label}",
+              title: t("plutonium.kanban.column.collapse", column: column.label),
               type: "button",
               data: {
                 action: "click->kanban#toggleColumn",
@@ -237,7 +237,7 @@ module Plutonium
               "pu-badge text-xs font-mono",
               over ? "pu-badge-danger" : "pu-badge-neutral"
             ),
-            title: over ? "WIP limit exceeded" : "WIP limit: #{column.wip}"
+            title: over ? t("plutonium.kanban.column.wip_limit_exceeded") : t("plutonium.kanban.column.wip_limit", limit: column.wip)
           ) do
             plain "#{cards.size}/#{column.wip}"
           end
@@ -281,7 +281,7 @@ module Plutonium
         def render_more_footer
           div(class: "px-3 py-2 border-t border-[var(--pu-border)] bg-[var(--pu-surface)]") do
             span(class: "text-xs text-[var(--pu-text-muted)]") do
-              plain "+#{more_count} more"
+              plain t("plutonium.kanban.column.more", count: more_count)
             end
           end
         end
@@ -296,10 +296,10 @@ module Plutonium
           link_to(
             @column_add_url,
             class: "pu-btn pu-btn-ghost pu-btn-xs text-[var(--pu-text-muted)]",
-            title: "Add to #{column.label}",
+            title: t("plutonium.kanban.column.add_to", column: column.label),
             data: {turbo_frame: Plutonium::REMOTE_MODAL_FRAME}
           ) do
-            plain "+ Add"
+            plain t("plutonium.kanban.column.add")
           end
         end
 
