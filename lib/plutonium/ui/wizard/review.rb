@@ -69,7 +69,7 @@ module Plutonium
 
           div(class: "pu-wizard-review-outstanding rounded-lg border border-warning-300 bg-warning-50 dark:border-warning-800 dark:bg-warning-950/30 p-4 mb-6", role: "alert") do
             p(class: "text-sm font-medium text-[var(--pu-text)] mb-2") do
-              "Some steps still need attention before you can finish:"
+              t("plutonium.wizard.review.outstanding")
             end
             ul(class: "space-y-1") do
               incomplete.each do |step|
@@ -78,7 +78,7 @@ module Plutonium
                     href: @step_url.call(step.key),
                     class: "text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline",
                     data: {wizard_review_fix: step.key}
-                  ) { "Fix #{step.label}" }
+                  ) { t("plutonium.wizard.review.fix_step", step: step.label) }
                 end
               end
             end
@@ -109,7 +109,7 @@ module Plutonium
               a(
                 href: @step_url.call(step.key),
                 class: "shrink-0 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-              ) { "Edit" }
+              ) { t("plutonium.wizard.review.edit") }
             end
             div(class: "px-5 py-4") do
               # Decorate so attachment fields resolve to displayable attachments —
@@ -147,14 +147,14 @@ module Plutonium
                 name.to_s.humanize
               end
               if rows.empty?
-                p(class: "text-sm text-[var(--pu-text-subtle)]") { "None" }
+                p(class: "text-sm text-[var(--pu-text-subtle)]") { t("plutonium.wizard.review.none") }
               else
                 ul(class: "space-y-1.5") do
                   rows.each do |row|
                     li(class: "flex flex-wrap items-center gap-x-2 gap-y-0.5 rounded-[var(--pu-radius-md)] bg-[var(--pu-surface-alt)] px-3 py-2 text-sm text-[var(--pu-text)]") do
                       row.each do |key, value|
                         span do
-                          span(class: "text-[var(--pu-text-muted)]") { "#{key.to_s.humanize}: " }
+                          span(class: "text-[var(--pu-text-muted)]") { t("plutonium.wizard.review.row_label", label: key.to_s.humanize) }
                           plain value.to_s
                         end
                       end
@@ -186,9 +186,9 @@ module Plutonium
             div(class: "mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-100 text-success-600 dark:bg-success-900/30 dark:text-success-400") do
               render Phlex::TablerIcons::Check.new(class: "h-7 w-7")
             end
-            h3(class: "text-lg font-semibold tracking-tight text-[var(--pu-text)]") { "You're all set" }
+            h3(class: "text-lg font-semibold tracking-tight text-[var(--pu-text)]") { t("plutonium.wizard.review.ready_title") }
             p(class: "mt-1.5 max-w-prose text-sm text-[var(--pu-text-muted)]") do
-              "Everything looks good. Click Finish to complete."
+              t("plutonium.wizard.review.ready_message")
             end
           end
         end

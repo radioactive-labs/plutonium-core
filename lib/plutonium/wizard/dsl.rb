@@ -60,7 +60,7 @@ module Plutonium
         # `header:` (default true) controls the step-header section (the label +
         # the "check everything over" prompt). `header: false` drops it entirely,
         # leaving just the review body in the card — for a chromeless finish.
-        def review(label: "Review", description: nil, condition: nil, summary: true, header: true, &block)
+        def review(label: nil, description: nil, condition: nil, summary: true, header: true, &block)
           assert_not_after_review!(:review)
           steps << ReviewStep.new(label:, description:, condition:, summary:, header:, block:)
         end
