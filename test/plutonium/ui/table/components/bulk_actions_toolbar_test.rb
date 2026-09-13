@@ -1,6 +1,19 @@
 # frozen_string_literal: true
 
 require "test_helper"
+
+class Plutonium::UI::Table::Components::BulkActionsToolbarPluralTemplateTest < ActiveSupport::TestCase
+  include I18nTestHelper
+
+  teardown { I18n.backend.reload! }
+
+  test "a pluralised selected_count key contributes its other form without running a plural rule" do
+    store_translations(plutonium: {ui: {table: {selected_count: {one: "%{count} row", other: "%{count} rows"}}}})
+    toolbar = Plutonium::UI::Table::Components::BulkActionsToolbar.new(bulk_actions: [])
+
+    assert_equal "%{count} rows", toolbar.send(:selected_count_template)
+  end
+end
 require "plutonium/ui/table/components/bulk_actions_toolbar"
 
 class Plutonium::UI::Table::Components::BulkActionsToolbarTest < Minitest::Test

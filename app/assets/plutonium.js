@@ -17203,16 +17203,16 @@ ${text2}</tr>
 
   // src/js/i18n.js
   var PREFIX = "plutonium.js.";
-  var BLOB_ID = "pu-i18n";
+  var BLOB_SELECTOR = 'meta[name="pu-i18n"]';
   var dictionary = null;
   function load() {
     if (typeof document === "undefined") return {};
-    const el = document.getElementById(BLOB_ID);
+    const el = document.querySelector(BLOB_SELECTOR);
     if (!el) return {};
     try {
-      return JSON.parse(el.textContent) || {};
+      return JSON.parse(el.content) || {};
     } catch (e4) {
-      console.warn("[plutonium] could not parse #pu-i18n", e4);
+      console.warn("[plutonium] could not parse the pu-i18n locale blob", e4);
       return {};
     }
   }

@@ -2,6 +2,24 @@
 
 require "test_helper"
 
+class Plutonium::Helpers::DisplayHelperPluralTest < ActiveSupport::TestCase
+  include Plutonium::Helpers::DisplayHelper
+  include I18nTestHelper
+
+  teardown { I18n.backend.reload! }
+
+  test "identical one/other forms are used as-is rather than inflected" do
+    store_translations(activerecord: {models: {"blogging/article": {one: "Sheep", other: "Sheep"}}})
+
+    assert_equal "Sheep", resource_name(Blogging::Article, 2)
+  end
+
+  test "without locale plurals the English inflector applies" do
+    assert_equal "Articles", resource_name(Blogging::Article, 2)
+    assert_equal "Article", resource_name(Blogging::Article, 1)
+  end
+end
+
 class Plutonium::Helpers::DisplayHelperTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
 

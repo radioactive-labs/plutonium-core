@@ -40,7 +40,7 @@ module Plutonium
               # The count is live-updated by the Stimulus controller, so the
               # sentence is translated with its placeholder left in and split
               # around it (same pattern as PagyInfo#render_template).
-              t("plutonium.ui.table.selected_count", count: "%{count}").split(/(%\{count\})/).each do |part|
+              selected_count_template.split(/(%\{count\})/).each do |part|
                 if part == "%{count}"
                   span(data: {bulk_actions_target: "selectedCount"}) { "0" }
                 else
@@ -48,6 +48,14 @@ module Plutonium
                 end
               end
             end
+          end
+
+          # The raw template, placeholder intact. Fetched without `count:` so
+          # no pluralisation rule runs on a placeholder; a locale that defines
+          # one/other forms contributes its `other` form.
+          def selected_count_template
+            template = t("plutonium.ui.table.selected_count")
+            template.is_a?(Hash) ? template[:other] : template
           end
 
           def render_action_buttons
