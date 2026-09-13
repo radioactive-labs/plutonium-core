@@ -1,7 +1,7 @@
 // Translations for Plutonium's bundled JavaScript.
 //
 // Rails serialises the `plutonium.js` subtree of the current locale into
-// `<script type="application/json" id="pu-i18n">` in the layout head (see
+// `<meta name="pu-i18n" content="...">` in the layout head (see
 // Plutonium::UI::Layout::Base#render_i18n). This module reads that blob
 // lazily, so host apps override any string by defining the key in their own
 // config/locales, exactly as they do for Plutonium's Ruby-side strings.
@@ -15,18 +15,18 @@
 // is a plural object; a missing key falls back to the key itself.
 
 const PREFIX = "plutonium.js."
-const BLOB_ID = "pu-i18n"
+const BLOB_SELECTOR = 'meta[name="pu-i18n"]'
 
 let dictionary = null
 
 function load() {
   if (typeof document === "undefined") return {}
-  const el = document.getElementById(BLOB_ID)
+  const el = document.querySelector(BLOB_SELECTOR)
   if (!el) return {}
   try {
-    return JSON.parse(el.textContent) || {}
+    return JSON.parse(el.content) || {}
   } catch (e) {
-    console.warn("[plutonium] could not parse #pu-i18n", e)
+    console.warn("[plutonium] could not parse the pu-i18n locale blob", e)
     return {}
   }
 }
@@ -58,8 +58,8 @@ export function t(key, params = {}) {
   return value === undefined ? key : value
 }
 
-// Turbo Drive merges the head's id'd elements on navigation and swaps the
-// locale blob when the locale changes, so drop the cache after each render.
+// Turbo Drive replaces the head's <meta> elements on navigation, so the blob
+// changes when the locale does; drop the cache after each render.
 if (typeof document !== "undefined") {
   const reset = () => { dictionary = null }
   document.addEventListener("turbo:load", reset)

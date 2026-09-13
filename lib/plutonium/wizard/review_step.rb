@@ -38,7 +38,7 @@ module Plutonium
       # The author's `label:` when given; otherwise the translated default,
       # looked up per call so it follows the request's locale.
       def label
-        @explicit_label || I18n.t("plutonium.wizard.review.label")
+        Plutonium::Translation.resolve(@explicit_label) || I18n.t("plutonium.wizard.review.label")
       end
 
       def review? = true

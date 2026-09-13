@@ -96,6 +96,14 @@ module Plutonium
       nil
     end
 
+    # Whether the locale defines one/other forms for the model's name
+    # (`activerecord.models.<model>: {one:, other:}`), on it or an ancestor.
+    def locale_plural?(klass)
+      return false unless klass.respond_to?(:i18n_scope)
+
+      model_keys_for(klass).any? { |key| ::I18n.t("#{klass.i18n_scope}.models.#{key}", default: nil).is_a?(Hash) }
+    end
+
     # Fill the convention text into `options` for each slot the definition
     # left blank, e.g. `fill_field_text(opts, Blogging::Post, :title, :placeholder, :hint)`.
     def fill_field_text(options, klass, attribute, *slots)

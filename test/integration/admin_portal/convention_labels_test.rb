@@ -7,6 +7,7 @@ require "test_helper"
 # locale keys by convention, with a portal-specific layer on top.
 class AdminPortal::ConventionLabelsTest < ActionDispatch::IntegrationTest
   include IntegrationTestHelper
+  include I18nTestHelper
 
   setup do
     @admin = create_admin!
@@ -138,6 +139,6 @@ class AdminPortal::ConventionLabelsTest < ActionDispatch::IntegrationTest
   end
 
   def store(translations)
-    I18n.backend.store_translations(:en, translations)
+    store_translations(translations)
   end
 end

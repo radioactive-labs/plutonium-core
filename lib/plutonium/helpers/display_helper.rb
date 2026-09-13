@@ -3,14 +3,14 @@ module Plutonium
     module DisplayHelper
       # The model's human name, pluralised for `count`. A locale that defines
       # `activerecord.models.<model>.one/other` supplies the plural; when it
-      # only defines a single string (or nothing), `human(count:)` hands back
-      # the singular and the English inflector pluralises it as before.
+      # only defines a single string (or nothing), the English inflector
+      # pluralises the singular as before.
       def resource_name(resource_class, count = 1)
         model_name = resource_class.model_name
-        human = model_name.human(count: count)
-        return human if count == 1 || human != model_name.human(count: 1)
+        return model_name.human if count == 1
+        return model_name.human(count: count) if Plutonium::Translation.locale_plural?(resource_class)
 
-        human.pluralize(count)
+        model_name.human.pluralize(count)
       end
 
       def resource_name_plural(resource_class)

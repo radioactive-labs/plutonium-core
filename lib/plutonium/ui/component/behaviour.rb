@@ -47,15 +47,24 @@ module Plutonium
         # callback, not a value. Same arity rule as Form::Resource: a zero-arity
         # proc keeps its own binding, a one-arity proc receives this component.
         def resolve_field_level_procs(options)
+          resolvable_keys = FIELD_LEVEL_KEYS | COLUMN_FIELD_LEVEL_KEYS
+          resolve_option_procs(options) { |key| resolvable_keys.include?(key) }
+        end
+
+        # Resolve every proc-valued option the block admits (all but
+        # `condition:` by default), by the one arity rule: a zero-arity proc is
+        # called plainly and keeps its own binding, a one-arity proc receives
+        # this component for `object` / `params` / helpers.
+        def resolve_option_procs(options)
           return options if options.blank?
 
-          resolvable_keys = FIELD_LEVEL_KEYS | COLUMN_FIELD_LEVEL_KEYS
           options.to_h do |key, value|
-            next [key, value] unless value.is_a?(Proc) && resolvable_keys.include?(key)
-
-            [key, value.arity.zero? ? value.call : value.call(self)]
+            resolvable = value.is_a?(Proc) && (block_given? ? yield(key) : key != :condition)
+            [key, resolvable ? call_option_proc(value) : value]
           end
         end
+
+        def call_option_proc(value) = value.arity.zero? ? value.call : value.call(self)
 
         def phlexi_render(arg, &)
           return unless arg

@@ -419,18 +419,6 @@ module Plutonium
         # is why it cannot take a `form` argument the way an option does.
         # Resolving it here would also collapse it to a boolean before the render
         # site that owns it gets to ask.
-        def resolve_option_procs(options)
-          return options if options.blank?
-
-          options.to_h do |key, value|
-            [key, resolvable_proc?(key, value) ? call_option_proc(value) : value]
-          end
-        end
-
-        def resolvable_proc?(key, value) = key != :condition && value.is_a?(Proc)
-
-        def call_option_proc(value) = value.arity.zero? ? value.call : value.call(self)
-
         def when_permitted(name, &)
           return unless resource_fields.include? name
 

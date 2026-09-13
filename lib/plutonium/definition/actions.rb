@@ -54,7 +54,7 @@ module Plutonium
         action(:destroy, route_options: {method: :delete},
           record_action: true, collection_record_action: true, category: :danger,
           icon: Phlex::TablerIcons::Trash, position: 100,
-          confirmation: "Are you sure?", turbo_frame: "_top")
+          confirmation: t("plutonium.actions.confirm_destroy"), turbo_frame: "_top")
 
         # Example of dynamic route options using custom url_resolver:
         #

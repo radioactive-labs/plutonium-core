@@ -20,3 +20,5 @@ en:
     actions:
       # Confirmation prompt for an immediate action that declares none.
       confirm_default: "%{label}?"
+      # Confirmation prompt on the standard destroy action.
+      confirm_destroy: "Are you sure?"

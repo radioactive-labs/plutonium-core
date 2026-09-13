@@ -175,7 +175,8 @@ module Plutonium
           size: @modal_size,
           condition: @condition,
           link: @link,
-          button: @button
+          button: @button,
+          resource_class: @resource_class
         }
       end
 

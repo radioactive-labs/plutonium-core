@@ -3,6 +3,8 @@
 require "test_helper"
 
 class Plutonium::TranslationTest < ActiveSupport::TestCase
+  include I18nTestHelper
+
   def teardown
     Plutonium::Translation::Current.reset
     I18n.backend.reload!
@@ -137,6 +139,41 @@ class Plutonium::TranslationTest < ActiveSupport::TestCase
     assert_same bound, bound.for_resource(Blogging::Post)
   end
 
+  test "locale_plural? reports whether the model name has one/other forms" do
+    refute Plutonium::Translation.locale_plural?(Blogging::Article)
+
+    store(activerecord: {models: {"blogging/post": {one: "Sheep", other: "Sheep"}}})
+    assert Plutonium::Translation.locale_plural?(Blogging::Article)
+    refute Plutonium::Translation.locale_plural?(Class.new)
+  end
+
+  test "an action keeps its model binding through with()" do
+    store(plutonium: {actions: {"blogging/article": {publish: "Publish now"}}})
+    bound = Plutonium::Action::Simple.new(:publish).for_resource(Blogging::Article)
+
+    assert_equal "Publish now", bound.with(color: :primary).label
+  end
+
+  test "the standard destroy action's confirmation comes from the locale" do
+    store(plutonium: {actions: {confirm_destroy: "Really delete?"}})
+    assert_equal "Really delete?", Blogging::PostDefinition.new.defined_actions[:destroy].confirmation
+  end
+
+  test "a review step resolves a lazy label" do
+    step = Plutonium::Wizard::ReviewStep.new(label: -> { "Lazy review" })
+    assert_equal "Lazy review", step.label
+  end
+
+  test "select filter pills resolve values through the value convention" do
+    filter = Plutonium::Query::Filters::Select.new(key: :status, resource_class: Blogging::Article, choices: %w[draft published])
+    assert_equal "draft", filter.humanize_value("draft")
+
+    store(activerecord: {attributes: {"blogging/post": {"status/draft": "Unpublished"}}})
+    Plutonium::Translation::Current.reset
+    assert_equal "Unpublished", filter.humanize_value("draft")
+    assert_equal "Unpublished, published", filter.humanize_value(["draft", "published", ""])
+  end
+
   test "value_label memoises per request" do
     store(plutonium: {values: {"blogging/article": {status: {draft: "Draft"}}}})
     assert_equal "Draft", Plutonium::Translation.value_label(Blogging::Article, :status, :draft)
@@ -151,6 +188,6 @@ class Plutonium::TranslationTest < ActiveSupport::TestCase
   private
 
   def store(translations)
-    I18n.backend.store_translations(:en, translations)
+    store_translations(translations)
   end
 end

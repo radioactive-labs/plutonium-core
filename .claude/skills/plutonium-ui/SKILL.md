@@ -561,7 +561,7 @@ end
 
 Rules: one key per sentence with `%{name}` placeholders (never concatenate fragments around a value), `count:` for plurals, no `.downcase`/`.pluralize` on translated nouns. The gem's own keys live under `plutonium.*` in its `config/locales/en/*.yml` and any can be overridden from the app.
 
-Stimulus controllers bundled with Plutonium read `plutonium.js.*` from a `<script type="application/json" id="pu-i18n">` blob the layout renders; host JS can call `window.Plutonium.t("plutonium.js.turbo_confirm.confirm")`. Library locales (Slim Select, flatpickr, Uppy, intl-tel-input) pass through `plutonium.js.libraries.*`. See `docs/reference/i18n.md`.
+Stimulus controllers bundled with Plutonium read `plutonium.js.*` from a `<meta name="pu-i18n">` JSON blob the layout renders; host JS can call `window.Plutonium.t("plutonium.js.turbo_confirm.confirm")`. Library locales (Slim Select, flatpickr, Uppy, intl-tel-input) pass through `plutonium.js.libraries.*`. See `docs/reference/i18n.md`.
 
 ## Custom Phlex components
 
