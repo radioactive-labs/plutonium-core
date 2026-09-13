@@ -51,5 +51,17 @@ class Plutonium::Invites::SignupSubmissionTest < Minitest::Test
     host.send(:handle_signup_submission)
 
     assert_equal "foo@bar.com", spy.captured_email
+    assert_equal "An account with this email already exists. Please sign in instead.", host.flash.now[:alert]
+  end
+
+  def test_unexpected_errors_are_reported_in_the_flash
+    host = Host.new
+    host.instance_variable_set(:@invite, build_invite(enforce_email: false))
+    host.stub_params = {email: "foo@bar.com", password: "pw", password_confirmation: "pw"}
+    host.stub_user_class = Class.new { def self.find_by(**) = raise("boom") }
+
+    host.send(:handle_signup_submission)
+
+    assert_equal "Failed to create account: boom", host.flash.now[:alert]
   end
 end

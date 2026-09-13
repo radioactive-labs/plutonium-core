@@ -26,14 +26,14 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          presents label: "Resend Invitation", icon: Phlex::TablerIcons::MailForward
+          presents label: t("plutonium.invites.resend_invite.label"), icon: Phlex::TablerIcons::MailForward
 
           attribute :resource
         end
 
         def execute
           unless resource.pending?
-            return failed("Can only resend pending invitations")
+            return failed(I18n.t("plutonium.invites.resend_invite.not_pending"))
           end
 
           resource.update!(expires_at: new_expiry)
@@ -41,7 +41,7 @@ module Plutonium
 
           succeed(resource).with_message(success_message)
         rescue => error
-          failed("Failed to resend: #{error.message}")
+          failed(I18n.t("plutonium.invites.resend_invite.failed", error: error.message))
         end
 
         private
@@ -58,7 +58,7 @@ module Plutonium
 
         # Override to customize success message
         def success_message
-          "Invitation resent to #{resource.email}"
+          I18n.t("plutonium.invites.resend_invite.resent", email: resource.email)
         end
       end
     end

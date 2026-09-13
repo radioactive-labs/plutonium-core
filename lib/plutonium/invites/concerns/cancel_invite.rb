@@ -17,7 +17,7 @@ module Plutonium
         extend ActiveSupport::Concern
 
         included do
-          presents label: "Cancel Invitation", icon: Phlex::TablerIcons::CircleX
+          presents label: t("plutonium.invites.cancel_invite.label"), icon: Phlex::TablerIcons::CircleX
 
           attribute :resource
         end
@@ -34,11 +34,11 @@ module Plutonium
         private
 
         def success_message
-          "Invitation cancelled"
+          I18n.t("plutonium.invites.cancel_invite.cancelled")
         end
 
         def not_pending_message
-          "Can only cancel pending invitations"
+          I18n.t("plutonium.invites.cancel_invite.not_pending")
         end
       end
     end

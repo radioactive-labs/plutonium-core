@@ -1,0 +1,29 @@
+# Strings rendered by Plutonium::Profile (the account security section).
+en:
+  plutonium:
+    profile:
+      security_section:
+        title: "Security Settings"
+        description: "Manage your account security"
+        features:
+          change_password:
+            label: "Change Password"
+            description: "Update your account password"
+          change_login:
+            label: "Change Email"
+            description: "Update your email address"
+          otp:
+            label: "Two-Factor Authentication"
+            description: "Add an extra layer of security"
+          recovery_codes:
+            label: "Recovery Codes"
+            description: "View or regenerate backup codes"
+          webauthn:
+            label: "Security Keys"
+            description: "Manage passkeys and security keys"
+          active_sessions:
+            label: "Active Sessions"
+            description: "View and manage your sessions"
+          close_account:
+            label: "Close Account"
+            description: "Permanently delete your account"
