@@ -27,6 +27,7 @@ aside: false
       { name: 'Search & filtering', link: '/plutonium-core/guides/search-filtering' },
       { name: 'Wizards', desc: 'Multi-step flows — onboarding, checkout, branching create.', link: '/plutonium-core/guides/wizards' },
       { name: 'Kanban boards', desc: 'Drag-and-drop board view — columns, moves, positioning, WIP limits.', link: '/plutonium-core/guides/kanban' },
+      { name: 'Dashboards', desc: 'Metric, chart and free-form cards, each loaded in its own lazy turbo frame.', link: '/plutonium-core/guides/dashboards' },
     ]},
     { group: 'Customization', items: [
       { name: 'Customizing the UI', desc: 'A map of the override surface — pages, forms, displays, tables, components, layouts.', link: '/plutonium-core/guides/customizing-ui' },
