@@ -6,7 +6,8 @@ if (process.argv.includes("--dev")) {
   _context({
     outdir: "src/build",
     entryPoints: [
-      "src/js/plutonium.js"
+      "src/js/plutonium.js",
+      "src/js/plutonium-charts.js"
     ],
     plugins: [
       manifestPlugin({
@@ -24,6 +25,7 @@ else {
       outdir: "src/dist/js",
       entryPoints: [
         "src/js/plutonium.js",
+        "src/js/plutonium-charts.js"
       ],
       minify,
       sourcemap: true,
@@ -34,7 +36,8 @@ else {
     _build({
       outdir: "app/assets",
       entryPoints: [
-        "src/js/plutonium.js"
+        "src/js/plutonium.js",
+        "src/js/plutonium-charts.js"
       ],
       minify,
       sourcemap: true,

@@ -51,7 +51,7 @@ module Plutonium
 
         append_view_path File.expand_path("app/views", Plutonium.root)
         layout -> { turbo_frame_request? ? false : "resource" }
-        helper_method :registered_resources
+        helper_method :registered_resources, :registered_dashboards, :dashboard_path_for
 
         class_attribute :_rail_enabled, instance_writer: false, default: nil
         class_attribute :_shell, instance_writer: false, default: nil
@@ -406,6 +406,24 @@ module Plutonium
 
       def registered_resources
         current_engine.resource_register.resources
+      end
+
+      # Dashboards mounted on the current engine with `register_dashboard`,
+      # in registration order.
+      def registered_dashboards
+        current_engine.dashboard_register.dashboards
+      end
+
+      # The page path of a registered dashboard, threading the entity scope
+      # segment through on a `:path`-scoped portal. Nil when the dashboard is
+      # not registered on the current engine.
+      def dashboard_path_for(dashboard_class)
+        name = Plutonium::Dashboard::RouteResolution.route_name(current_engine.routes, dashboard_class, action: "show")
+        return if name.nil?
+
+        options = {}
+        options[scoped_entity_param_key] = params[scoped_entity_param_key] if scoped_to_entity?
+        current_engine.routes.url_helpers.public_send(:"#{name}_path", **options)
       end
 
       # Converts RouteOptions into a URL using the appropriate URL resolver.

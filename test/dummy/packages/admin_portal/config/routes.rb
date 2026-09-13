@@ -26,6 +26,10 @@ AdminPortal::Engine.routes.draw do
   # A page gated behind the one-time WelcomeWizard (see GatedController).
   get "gated", to: "gated#index"
 
+  # A dashboard of metric, chart and free-form cards, each served in its own
+  # lazy turbo frame from `/admin/overview/cards/:card`.
+  register_dashboard ::OverviewDashboard, at: "overview"
+
   register_resource ::User
   register_resource ::Organization
   register_resource ::OrganizationUser

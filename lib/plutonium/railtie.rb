@@ -16,6 +16,7 @@ module Plutonium
     # end
     PRECOMPILE_ASSETS = %w[
       plutonium.js plutonium.js.map plutonium.min.js plutonium.min.js.map
+      plutonium-charts.js plutonium-charts.js.map plutonium-charts.min.js plutonium-charts.min.js.map
       plutonium.css plutonium.png plutonium.ico
     ].freeze
 
@@ -25,6 +26,8 @@ module Plutonium
 
     initializer "plutonium.rescue_responses", before: "action_dispatch.configure" do |app|
       app.config.action_dispatch.rescue_responses["ActionPolicy::Unauthorized"] = :forbidden
+      app.config.action_dispatch.rescue_responses["Plutonium::Dashboard::UnknownCardError"] = :not_found
+      app.config.action_dispatch.rescue_responses["Plutonium::Dashboard::UnknownDashboardError"] = :not_found
     end
 
     initializer "plutonium.deprecator" do |app|
@@ -144,6 +147,7 @@ module Plutonium
     def extend_action_dispatch
       ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::MapperExtensions
       ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::WizardRegistration
+      ActionDispatch::Routing::Mapper.prepend Plutonium::Routing::DashboardRegistration
       ActionDispatch::Routing::RouteSet.prepend Plutonium::Routing::RouteSetExtensions
       Rails::Engine.include Plutonium::Routing::ResourceRegistration
     end

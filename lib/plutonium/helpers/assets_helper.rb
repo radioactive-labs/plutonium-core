@@ -33,6 +33,19 @@ module Plutonium
         Plutonium.configuration.assets.script
       end
 
+      # URL of the on-demand charts bundle. Chart cards carry it in a data
+      # attribute and the `chart` Stimulus controller injects it once, so pages
+      # without a chart never pay for Chart.js.
+      #
+      # @return [String] the charts bundle URL
+      def resource_charts_script_url
+        if Plutonium.configuration.development?
+          resource_development_asset_url(:js, "plutonium-charts.js")
+        else
+          asset_path(Plutonium.configuration.assets.charts_script)
+        end
+      end
+
       private
 
       # Generate the appropriate asset URL based on the environment
@@ -52,9 +65,9 @@ module Plutonium
       #
       # @param type [Symbol] asset type (:css or :js)
       # @return [String] asset URL for development
-      def resource_development_asset_url(type)
+      def resource_development_asset_url(type, asset_key = nil)
         manifest_file = (type == :css) ? "css.manifest" : "js.manifest"
-        asset_key = (type == :css) ? "plutonium.css" : "plutonium.js"
+        asset_key ||= (type == :css) ? "plutonium.css" : "plutonium.js"
 
         filename = JSON.parse(File.read(Plutonium.root.join("src", "build", manifest_file)))[asset_key]
         "/build/#{filename}"
