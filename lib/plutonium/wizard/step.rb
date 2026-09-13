@@ -6,13 +6,14 @@ module Plutonium
     # field surface, per-step hooks, and the `using:` import marker (resolved in
     # Task 3). A value object — holds no runtime state.
     class Step
-      attr_reader :key, :label, :description, :condition, :fields,
+      attr_reader :key, :condition, :fields,
         :on_submit, :on_rollback, :using_spec
 
       def initialize(key:, fields:, label: nil, description: nil, condition: nil,
-        on_submit: nil, on_rollback: nil, using_spec: nil)
+        on_submit: nil, on_rollback: nil, using_spec: nil, wizard_class: nil)
         @key = key
-        @label = label || key.to_s.humanize
+        @label = label
+        @wizard_class = wizard_class
         @description = description
         @condition = condition
         @fields = fields
@@ -20,6 +21,16 @@ module Plutonium
         @on_rollback = on_rollback
         @using_spec = using_spec
       end
+
+      # `label:` if given, else plutonium.wizard_steps.<wizard>.<key>, else the
+      # humanized key. Resolved on every read so it follows the request locale.
+      def label
+        Plutonium::Translation.resolve(@label) ||
+          Plutonium::Translation.label_for(:wizard_step, @wizard_class, key) ||
+          key.to_s.humanize
+      end
+
+      def description = Plutonium::Translation.resolve(@description)
 
       def review? = false
 

@@ -527,7 +527,7 @@ module Plutonium
         # from the block for safety and dynamic edge cases.
         def current_kanban_board
           @current_kanban_board ||= current_definition.defined_kanban_board ||
-            Plutonium::Kanban::DSL.build(&current_definition.defined_kanban_block)
+            Plutonium::Kanban::DSL.build(resource_class: resource_class, &current_definition.defined_kanban_block)
         end
 
         # Authorized + query-applied UN-paginated relation.

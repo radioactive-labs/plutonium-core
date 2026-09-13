@@ -27,7 +27,7 @@ module Plutonium
     # Request-local portal, set by the controller so lookups deep in the query
     # layer (filter labels, kanban rejections) see the same portal the view does.
     class Current < ActiveSupport::CurrentAttributes
-      attribute :portal
+      attribute :portal, :value_labels
     end
 
     # Kinds of derived labels resolved by convention. The value is the key
@@ -96,6 +96,18 @@ module Plutonium
       nil
     end
 
+    # Fill the convention text into `options` for each slot the definition
+    # left blank, e.g. `fill_field_text(opts, Blogging::Post, :title, :placeholder, :hint)`.
+    def fill_field_text(options, klass, attribute, *slots)
+      slots.each do |slot|
+        next if options.key?(slot)
+
+        text = field_text(klass, attribute, slot)
+        options = options.merge(slot => text) if text
+      end
+      options
+    end
+
     # Label for a derived key (an action, scope, filter, kanban column or
     # wizard step) resolved by convention. Returns nil when no key is defined,
     # so callers keep their `humanize` fallback.
@@ -121,9 +133,18 @@ module Plutonium
     #
     #   activerecord.attributes.<model>.<attribute>/<value>   (Rails convention)
     #   plutonium.values.<model>.<attribute>.<value>
+    #
+    # Badges render once per cell, so the answer is memoised for the request.
     def value_label(klass, attribute, value, portal: Current.portal)
       return if value.nil? || klass.nil?
 
+      cache = (Current.value_labels ||= {})
+      cache.fetch([::I18n.locale, portal_key(portal), klass, attribute, value.to_s]) do |cache_key|
+        cache[cache_key] = uncached_value_label(klass, attribute, value, portal)
+      end
+    end
+
+    def uncached_value_label(klass, attribute, value, portal)
       model_keys_for(klass).each do |model_key|
         [portal_scope(portal, "values"), "plutonium.values"].compact.each do |scope|
           found = probe("#{scope}.#{model_key}.#{attribute}.#{value}")
@@ -150,6 +171,8 @@ module Plutonium
         -> { ::I18n.t(key, **options) }
       end
     end
+
+    private :uncached_value_label
 
     private
 

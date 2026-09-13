@@ -294,6 +294,9 @@ module Plutonium
             display_definition = resource_definition.defined_displays[name] || {}
             display_options = display_definition[:options] || {}
 
+            field_options = resolve_field_level_procs(field_options)
+            display_options = resolve_field_level_procs(display_options)
+
             # Check for conditional rendering
             condition = display_options[:condition] || field_options[:condition]
             conditionally_hidden = condition && !instance_exec(&condition)
@@ -306,6 +309,8 @@ module Plutonium
             # declared here is dropped rather than leaked as an HTML attribute.
             field_level_options = display_options.slice(*DISPLAY_FIELD_LEVEL_KEYS)
             field_options = field_options.merge(field_level_options)
+            # A blank description falls back to plutonium.fields.<model>.<attr>.description.
+            field_options = Plutonium::Translation.fill_field_text(field_options, object.class, name, :description)
 
             tag_attributes = display_options.except(:wrapper, :as, :condition, *FIELD_LEVEL_KEYS)
 

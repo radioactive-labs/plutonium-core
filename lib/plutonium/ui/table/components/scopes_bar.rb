@@ -38,7 +38,11 @@ module Plutonium
               id: "#{name}-scope",
               href: current_query_object.build_url(scope: name),
               class: active ? active_scope_class : inactive_scope_class
-            ) { name.to_s.humanize }
+            ) { scope_label(name) }
+          end
+
+          def scope_label(name)
+            Plutonium::Translation.label_for(:scope, current_query_object.resource_class, name) || name.to_s.humanize
           end
 
           def current_scope

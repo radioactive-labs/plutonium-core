@@ -200,7 +200,7 @@ module Plutonium
             label = helpers.display_name_of(value)
             variant = badge.variant_for(label)
           else
-            label = badge.humanize(value)
+            label = Plutonium::Translation.value_label(@record.class, name, value) || badge.humanize(value)
             variant = badge.variant_for(value)
           end
 

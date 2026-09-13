@@ -321,6 +321,9 @@ module Plutonium
           # attribute.
           field_level_options = input_options.slice(*FORM_FIELD_LEVEL_KEYS)
           field_options = field_options.merge(field_level_options)
+          # Slots the definition left blank fall back to the locale convention
+          # (plutonium.fields.<model>.<attr>.placeholder / .hint).
+          field_options = Plutonium::Translation.fill_field_text(field_options, form.object.class, name, :placeholder, :hint)
 
           # Staging options are stripped here as well as in Wizard::StepAdapter,
           # because an interaction's inputs reach this method directly. A

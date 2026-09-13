@@ -52,7 +52,7 @@ module Plutonium
         private
 
         def generate_placeholder
-          base = key.to_s.humanize
+          base = label
           phrase = case @predicate
           when :matches, :not_matches then :matches
           when :starts_with then :starts_with

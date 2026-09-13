@@ -32,7 +32,7 @@ module Plutonium
 
           def render_pill(key)
             active = current_query_object.selected_scope.to_s == key.to_s
-            label = key.to_s.humanize
+            label = Plutonium::Translation.label_for(:scope, current_query_object.resource_class, key) || key.to_s.humanize
 
             a(
               id: "#{key}-scope",

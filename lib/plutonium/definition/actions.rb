@@ -26,6 +26,11 @@ module Plutonium
           @merged_defined_actions ||= begin
             customize_actions
             merged = self.class.defined_actions.merge(instance_defined_actions)
+            # The standard actions are declared on Base, so bind each action to
+            # THIS definition's model here, where it is known, for the
+            # plutonium.actions.<model>.<action> label convention.
+            model = self.class.model_class_or_nil
+            merged = merged.transform_values { |action| action.for_resource(model) } if model
             merged.sort_by { |k, v| v.position }.to_h
           end
         end
