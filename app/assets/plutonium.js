@@ -981,7 +981,7 @@
           return _typeof(value) === "object" && value !== null;
         }
         var hasOwnProperty = Object.prototype.hasOwnProperty;
-        function isPlainObject(value) {
+        function isPlainObject2(value) {
           if (!isObject(value)) {
             return false;
           }
@@ -2731,7 +2731,7 @@
                 };
                 canvasData.left -= (newWidth - width) * ((center.pageX - offset2.left - canvasData.left) / width);
                 canvasData.top -= (newHeight - height) * ((center.pageY - offset2.top - canvasData.top) / height);
-              } else if (isPlainObject(pivot) && isNumber(pivot.x) && isNumber(pivot.y)) {
+              } else if (isPlainObject2(pivot) && isNumber(pivot.x) && isNumber(pivot.y)) {
                 canvasData.left -= (newWidth - width) * ((pivot.x - canvasData.left) / width);
                 canvasData.top -= (newHeight - height) * ((pivot.y - canvasData.top) / height);
               } else {
@@ -2863,7 +2863,7 @@
           setData: function setData2(data) {
             var options2 = this.options, imageData = this.imageData, canvasData = this.canvasData;
             var cropBoxData = {};
-            if (this.ready && !this.disabled && isPlainObject(data)) {
+            if (this.ready && !this.disabled && isPlainObject2(data)) {
               var transformed = false;
               if (options2.rotatable) {
                 if (isNumber(data.rotate) && data.rotate !== imageData.rotate) {
@@ -2937,7 +2937,7 @@
           setCanvasData: function setCanvasData(data) {
             var canvasData = this.canvasData;
             var aspectRatio = canvasData.aspectRatio;
-            if (this.ready && !this.disabled && isPlainObject(data)) {
+            if (this.ready && !this.disabled && isPlainObject2(data)) {
               if (isNumber(data.left)) {
                 canvasData.left = data.left;
               }
@@ -2982,7 +2982,7 @@
             var aspectRatio = this.options.aspectRatio;
             var widthChanged;
             var heightChanged;
-            if (this.ready && this.cropped && !this.disabled && isPlainObject(data)) {
+            if (this.ready && this.cropped && !this.disabled && isPlainObject2(data)) {
               if (isNumber(data.left)) {
                 cropBoxData.left = data.left;
               }
@@ -3161,7 +3161,7 @@
               throw new Error("The first argument is required and must be an <img> or <canvas> element.");
             }
             this.element = element;
-            this.options = assign2({}, DEFAULTS, isPlainObject(options2) && options2);
+            this.options = assign2({}, DEFAULTS, isPlainObject2(options2) && options2);
             this.cropped = false;
             this.disabled = false;
             this.pointers = {};
@@ -3461,7 +3461,7 @@
           }, {
             key: "setDefaults",
             value: function setDefaults(options2) {
-              assign2(DEFAULTS, isPlainObject(options2) && options2);
+              assign2(DEFAULTS, isPlainObject2(options2) && options2);
             }
           }]);
         })();
@@ -30021,6 +30021,176 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/chart_controller.js
+  var PALETTE_SIZE = 8;
+  var libraryPromise = null;
+  function loadLibrary(src) {
+    if (window.Chartkick && window.Chartkick.adapters.length > 0) return Promise.resolve(window.Chartkick);
+    if (libraryPromise) return libraryPromise;
+    libraryPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${src}"]`);
+      const script = existing || document.createElement("script");
+      const settle = () => {
+        if (window.Chartkick) resolve(window.Chartkick);
+        else reject(new Error("[plutonium] the charts bundle loaded but defined no Chartkick"));
+      };
+      script.addEventListener("load", settle, { once: true });
+      script.addEventListener("error", () => {
+        libraryPromise = null;
+        reject(new Error(`[plutonium] could not load the charts bundle from ${src}`));
+      }, { once: true });
+      if (!existing) {
+        script.src = src;
+        script.async = true;
+        script.dataset.turboTrack = "reload";
+        document.head.appendChild(script);
+      }
+    });
+    return libraryPromise;
+  }
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function themeColors() {
+    const colors = [];
+    for (let i4 = 1; i4 <= PALETTE_SIZE; i4++) {
+      const color = cssVar(`--pu-chart-${i4}`);
+      if (color) colors.push(color);
+    }
+    return colors;
+  }
+  function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+  function deepMerge(base, extra) {
+    const out = { ...base };
+    for (const [key, value] of Object.entries(extra || {})) {
+      out[key] = isPlainObject(value) && isPlainObject(out[key]) ? deepMerge(out[key], value) : value;
+    }
+    return out;
+  }
+  var chart_controller_default = class extends Controller {
+    static values = {
+      type: { type: String, default: "LineChart" },
+      data: String,
+      options: Object,
+      script: String
+    };
+    connect() {
+      this.render = this.render.bind(this);
+      this.observer = new MutationObserver((mutations) => {
+        if (mutations.some((m4) => m4.attributeName === "class")) this.render();
+      });
+      this.observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      this.element.addEventListener("turbo:morph-element", this.render);
+      loadLibrary(this.scriptValue).then(() => this.render()).catch((error2) => {
+        console.error(error2);
+        this.element.textContent = t("plutonium.js.charts.failed");
+      });
+    }
+    disconnect() {
+      this.observer?.disconnect();
+      this.element.removeEventListener("turbo:morph-element", this.render);
+      this.#destroy();
+    }
+    dataValueChanged() {
+      this.render();
+    }
+    optionsValueChanged() {
+      this.render();
+    }
+    render() {
+      const Chartkick = window.Chartkick;
+      if (!Chartkick || !this.element.isConnected) return;
+      const Klass = Chartkick[this.typeValue];
+      if (!Klass) {
+        console.error(`[plutonium] unknown chart type ${this.typeValue}`);
+        return;
+      }
+      this.#destroy();
+      this.element.replaceChildren();
+      this.chart = new Klass(this.element, this.#data(), this.#options());
+    }
+    #destroy() {
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
+      }
+    }
+    #data() {
+      try {
+        return JSON.parse(this.dataValue || "[]");
+      } catch (error2) {
+        console.error("[plutonium] chart data is not valid JSON", error2);
+        return [];
+      }
+    }
+    // Plutonium's defaults, with the card's own options merged over them.
+    // Axis styling only applies to cartesian charts: handing a pie chart
+    // `scales` makes Chart.js draw axes around it.
+    #options() {
+      const text2 = cssVar("--pu-text-muted");
+      const grid = cssVar("--pu-border");
+      const surface = cssVar("--pu-card-bg");
+      const library = { color: text2 };
+      if (this.typeValue === "PieChart") {
+        library.elements = { arc: { borderColor: surface } };
+      } else {
+        library.scales = {
+          x: { ticks: { color: text2 }, grid: { color: grid }, border: { color: grid } },
+          y: { ticks: { color: text2 }, grid: { color: grid }, border: { color: grid } }
+        };
+      }
+      const defaults = { colors: themeColors(), empty: t("plutonium.js.charts.empty"), library };
+      return deepMerge(defaults, this.optionsValue);
+    }
+  };
+
+  // src/js/controllers/frame_refresh_controller.js
+  var frame_refresh_controller_default = class extends Controller {
+    static values = { interval: Number };
+    connect() {
+      this.tick = this.tick.bind(this);
+      this.onVisibility = this.onVisibility.bind(this);
+      document.addEventListener("visibilitychange", this.onVisibility);
+      this.#start();
+    }
+    disconnect() {
+      document.removeEventListener("visibilitychange", this.onVisibility);
+      this.#stop();
+    }
+    intervalValueChanged() {
+      this.#stop();
+      this.#start();
+    }
+    tick() {
+      if (document.hidden) {
+        this.missed = true;
+        return;
+      }
+      this.reload();
+    }
+    reload() {
+      this.missed = false;
+      if (typeof this.element.reload === "function" && this.element.getAttribute("src")) {
+        this.element.reload();
+      }
+    }
+    onVisibility() {
+      if (!document.hidden && this.missed) this.reload();
+    }
+    #start() {
+      if (!(this.intervalValue > 0)) return;
+      this.timer = setInterval(this.tick, this.intervalValue * 1e3);
+    }
+    #stop() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -30065,6 +30235,8 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("currency-input", currency_input_controller_default);
     application2.register("breadcrumbs", breadcrumbs_controller_default);
     application2.register("run-progress", run_progress_controller_default);
+    application2.register("chart", chart_controller_default);
+    application2.register("frame-refresh", frame_refresh_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js

@@ -24,6 +24,10 @@ en:
       turbo_confirm:
         cancel: "Cancel"
         confirm: "Confirm"
+      charts:
+        empty: "No data"
+        loading: "Loading..."
+        failed: "The chart could not be loaded."
       libraries:
         # SlimSelect `settings` (https://slimselectjs.com/settings)
         slim_select:

@@ -69,6 +69,11 @@ aside: false
       { name: 'Positioning', link: '/plutonium-core/reference/kanban/positioning' },
       { name: 'Authorization', link: '/plutonium-core/reference/kanban/authorization' },
     ]},
+    { group: 'Dashboard', items: [
+      { name: 'Overview', link: '/plutonium-core/reference/dashboard/' },
+      { name: 'DSL', link: '/plutonium-core/reference/dashboard/dsl' },
+      { name: 'Registration', link: '/plutonium-core/reference/dashboard/registration' },
+    ]},
     { group: 'Testing', items: [
       { name: 'Overview', link: '/plutonium-core/reference/testing/' },
     ]},

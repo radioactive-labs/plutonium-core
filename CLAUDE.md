@@ -14,6 +14,7 @@ plutonium-core/
 │   ├── resource/               # Resource system (controllers, policies, definitions)
 │   ├── portal/                 # Portal engines and multi-tenancy
 │   ├── interaction/            # Business logic encapsulation
+│   ├── dashboard/              # Dashboard definitions (metric / chart / card DSL)
 │   ├── ui/                     # Phlex view components
 │   ├── definition/             # Definition DSL and field types
 │   ├── query/                  # Search, filters, scopes
@@ -55,6 +56,7 @@ Located in `lib/plutonium/ui/` - Phlex-based components:
 - `form/` - Form builders and field components
 - `table/` - Data tables with sorting, pagination
 - `display/` - Field display components
+- `dashboard/` - Dashboard page, board and card components (metric, chart, custom)
 
 ## Development Workflow
 

@@ -1,0 +1,25 @@
+# Fixed strings rendered by dashboards (lib/plutonium/dashboard,
+# lib/plutonium/ui/dashboard). Dashboard and card titles resolve by convention
+# instead, layered per portal like every other derived label:
+#
+#   plutonium.dashboards.<dashboard>.label
+#   plutonium.dashboards.<dashboard>.description
+#   plutonium.dashboards.<dashboard>.cards.<card>.label
+#   plutonium.dashboards.<dashboard>.cards.<card>.description
+#   plutonium.portals.<portal>.dashboards.<dashboard>...
+#
+# `<dashboard>` is the class name underscored without the "Dashboard" suffix
+# (`AdminPortal::SalesDashboard` → `admin_portal/sales`).
+en:
+  plutonium:
+    dashboard:
+      authorization_denied: "You are not allowed to view this dashboard."
+      no_cards: "There is nothing to show on this dashboard yet."
+      card_error: "This card could not be loaded."
+      loading_card: "Loading %{card}..."
+      open: "Open"
+      metric:
+        empty: "—"
+        increase: "Up %{change}"
+        decrease: "Down %{change}"
+        unchanged: "No change"

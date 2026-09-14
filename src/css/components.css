@@ -613,6 +613,94 @@ select.pu-input[multiple] option {
 }
 
 /* ===================
+   DASHBOARD CARDS
+   =================== */
+
+.pu-dashboard-card {
+  @apply p-4;
+}
+
+.pu-dashboard-card-header {
+  @apply flex items-start gap-3;
+}
+
+.pu-dashboard-card-icon {
+  background-color: var(--pu-surface-alt);
+  color: var(--pu-text-muted);
+  border-radius: var(--pu-radius-md);
+  @apply flex size-9 shrink-0 items-center justify-center;
+}
+
+.pu-dashboard-card-title {
+  color: var(--pu-text-muted);
+  @apply text-sm font-medium leading-5 truncate;
+}
+
+.pu-dashboard-card-description {
+  color: var(--pu-text-subtle);
+  @apply mt-0.5 text-xs;
+}
+
+.pu-dashboard-card-link {
+  color: var(--pu-text-subtle);
+  @apply shrink-0 -mr-1 -mt-1 rounded-[var(--pu-radius-md)] p-1 transition-colors hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)];
+}
+
+.pu-dashboard-card-body {
+  @apply mt-3 flex-1 min-w-0;
+}
+
+.pu-dashboard-card-error {
+  color: var(--pu-text-danger);
+  @apply flex items-center gap-2 text-sm;
+}
+
+.pu-dashboard-skeleton {
+  @apply p-4;
+}
+
+.pu-metric-value {
+  color: var(--pu-text);
+  @apply text-3xl font-semibold leading-none tracking-tight tabular-nums truncate;
+}
+
+.pu-metric-change {
+  @apply mt-3 flex items-center gap-1.5 text-sm;
+}
+
+.pu-metric-change-label {
+  color: var(--pu-text-muted);
+  @apply font-normal;
+}
+
+.pu-metric-change-positive {
+  @apply text-success-600;
+}
+.dark .pu-metric-change-positive {
+  @apply text-success-400;
+}
+
+.pu-metric-change-negative {
+  @apply text-danger-600;
+}
+.dark .pu-metric-change-negative {
+  @apply text-danger-400;
+}
+
+.pu-metric-change-neutral {
+  color: var(--pu-text-muted);
+}
+
+.pu-chart {
+  @apply relative w-full;
+}
+
+.pu-chart-loading {
+  color: var(--pu-text-subtle);
+  @apply absolute inset-0 flex items-center justify-center text-sm;
+}
+
+/* ===================
    SELECTION CELL
    =================== */
 

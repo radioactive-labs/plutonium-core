@@ -158,6 +158,7 @@ export default defineConfig(withMermaid({
             { text: "User Invites", link: "/guides/user-invites" },
             { text: "Wizards", link: "/guides/wizards" },
             { text: "Kanban Boards", link: "/guides/kanban" },
+            { text: "Dashboards", link: "/guides/dashboards" },
           ]
         },
         {
@@ -272,6 +273,15 @@ export default defineConfig(withMermaid({
             { text: "DSL", link: "/reference/kanban/dsl" },
             { text: "Positioning", link: "/reference/kanban/positioning" },
             { text: "Authorization", link: "/reference/kanban/authorization" },
+          ]
+        },
+        {
+          text: "Dashboard",
+          collapsed: false,
+          items: [
+            { text: "Overview", link: "/reference/dashboard/" },
+            { text: "DSL", link: "/reference/dashboard/dsl" },
+            { text: "Registration", link: "/reference/dashboard/registration" },
           ]
         },
         {
