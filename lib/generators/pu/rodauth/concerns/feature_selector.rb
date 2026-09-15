@@ -64,24 +64,6 @@ module Pu
           options[feature]
         end
 
-        # Creates a hash of options to pass down options to an invoked sub generator
-        def invoke_options
-          # These are custom options we want to track.
-          extra_options = %i[argon2 mails kitchen_sink defaults]
-          # Append them to all the available options from our configuration
-          valid_options = configuration.keys.map(&:to_sym).concat extra_options
-          # Index map the list with the selection value
-          opts = valid_options.map { |opt| [opt, send(:"#{opt}?")] }.to_h.compact
-          # True only options. We don't care if they are false.
-          %i[api_only force skip pretend quiet].each do |key|
-            next unless options[key]
-
-            opts[key] = options[key]
-          end
-
-          opts
-        end
-
         def all_selected
           @all_selected ||= configuration.keys.select { |feature| send(:"#{feature}?") }
         end
