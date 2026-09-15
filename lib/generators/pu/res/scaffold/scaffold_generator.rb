@@ -49,14 +49,6 @@ module Pu
         template "definition.rb", File.join("app/definitions", class_path, "#{file_name}_definition.rb")
       end
 
-      # def create_presenter
-      #   template "presenter.rb", File.join("app/presenters", class_path, "#{file_name}_presenter.rb")
-      # end
-
-      # def create_query_object
-      #   template "query_object.rb", File.join("app/query_objects", class_path, "#{file_name}_query_object.rb")
-      # end
-
       private
 
       def default_policy_attributes
