@@ -6,7 +6,6 @@ require "tty-prompt"
 module PlutoniumGenerators
   module Generator
     include Concerns::Logger
-    include Concerns::Serializer
     include Concerns::Actions
 
     # Finds the shared namespace prefix between two model names.
@@ -57,13 +56,5 @@ module PlutoniumGenerators
         TTY::Prompt.new
       end
     end
-
-    # def appname
-    #   defined?(Rails.application) ? Rails.application.class.module_parent.name : "PlutoniumGenerators"
-    # end
-
-    # def app_name
-    #   appname.underscore
-    # end
   end
 end
