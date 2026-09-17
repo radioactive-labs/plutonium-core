@@ -119,8 +119,9 @@ class DefinitionFieldsTest < Minitest::Test
     assert Blogging::PostDefinition.defined_columns.key?(:user)
     assert_equal "Author", Blogging::PostDefinition.defined_columns[:user][:options][:label]
 
-    # Test page titles
-    assert_equal "Blog Posts", Blogging::PostDefinition.index_page_title
-    assert_equal "Manage your blog content", Blogging::PostDefinition.index_page_description
+    # Test page titles. They are lazy translations (a proc built by the
+    # definition's `t`), resolved in the request locale at render.
+    assert_equal "Blog Posts", Plutonium::Translation.resolve(Blogging::PostDefinition.index_page_title)
+    assert_equal "Manage your blog content", Plutonium::Translation.resolve(Blogging::PostDefinition.index_page_description)
   end
 end

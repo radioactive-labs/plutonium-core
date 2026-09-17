@@ -29,3 +29,7 @@
 
 en:
   hello: "Hello world"
+  blog:
+    index:
+      title: "Blog Posts"
+      description: "Manage your blog content"

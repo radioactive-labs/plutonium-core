@@ -21,6 +21,7 @@ class AdminPortal::LocaleSwitchTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_includes response.body, "Search..."
+    assert_includes response.body, "Blog Posts"         # lazy page title, en
     refute_includes response.body, "Buscar..."
   end
 
@@ -30,7 +31,10 @@ class AdminPortal::LocaleSwitchTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_includes response.body, "Buscar..."          # table search placeholder
     assert_includes response.body, "Cerrar sesión"      # user menu, via nav.sign_out
+    assert_includes response.body, "Entradas del blog"  # lazy page title, es
+    assert_includes response.body, "Borradores"         # scope tab, via plutonium.scopes
     refute_includes response.body, "Search..."
+    refute_includes response.body, "Blog Posts"
   end
 
   test "the chosen locale persists across later requests" do

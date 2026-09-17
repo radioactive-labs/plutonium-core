@@ -70,7 +70,7 @@ def switch_locale(&)
 end
 ```
 
-Pick ES and the portal answers in Spanish: the search box, the filters, the page titles, the CRUD flashes, the user menu.
+Pick ES and the portal answers in Spanish: the heading, the search box, the filters and scopes, the column headers, the row and page actions, the status badges, the pager and the CRUD flashes. The heading translates because the definition sets it with the same lazy `t`, `index_page_title t("blog.index.title")`, that inputs and labels use. Two things stay English by design: the record data, because it is yours and not the framework's, and any label a definition hardcodes as a plain string, like the `column :user, label: "Author"` you can see in the shot sitting next to the translated `Autor`.
 
 ![The dummy admin portal rendered in Spanish, with the EN | ES switch in the top bar](/images/blog/i18n-es-admin.png)
 
@@ -82,7 +82,7 @@ The Stimulus controllers bundled with the gem read their strings from a JSON blo
 
 ## Ship a half-translated locale
 
-You do not have to finish a language before you use it. The dummy demo translates only a visible slice of the strings and lets everything else fall back to English through `config.i18n.fallbacks`. That matters more than it sounds: the test environment turns on `raise_on_missing_translations`, so a page under a half-done locale would otherwise blow up on the first key you had not reached yet. With fallbacks on, a found-via-fallback string is not missing. Translate what your users see first, ship it, and fill in the rest as you go.
+You do not have to finish a language before you use it. The dummy demo translates the blog-posts screen and leaves the rest of the app, the dates, and Rodauth's own flashes to fall back to English through `config.i18n.fallbacks`. That matters more than it sounds: the test environment turns on `raise_on_missing_translations`, so a page under a half-done locale would otherwise blow up on the first key you had not reached yet. With fallbacks on, a found-via-fallback string is not missing. Translate the screens your users live on first, ship it, and fill in the rest as you go.
 
 ## Adding a language
 

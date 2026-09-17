@@ -1,25 +1,75 @@
-# Spanish overrides for the admin portal's locale-switch demo. Only a visible
-# slice of the Plutonium chrome is translated here; every other key falls back
-# to English (config.i18n.fallbacks in config/application.rb). This is enough
-# to see the top bar, search box, table controls, page titles and CRUD flashes
-# flip to Spanish when you pick ES.
+# Spanish overrides for the admin portal's locale-switch demo. This covers the
+# framework chrome the admin blog-posts screen renders: the top-bar nav, table
+# controls, scopes, column headers (attribute names), status values, row and
+# page actions, pagination and CRUD flashes. Anything not translated here (and
+# every other screen) falls back to English through config.i18n.fallbacks, so a
+# partial locale never trips the test env's raise_on_missing_translations.
+#
+# Record data (post titles, bodies, organization names) is never translated by
+# i18n. Neither are the literal strings a definition hardcodes, e.g.
+# `index_page_title "Blog Posts"` or `column :user, label: "Author"`.
 es:
   hello: "Hola mundo"
+  blog:
+    index:
+      title: "Entradas del blog"
+      description: "Gestiona el contenido de tu blog"
+  activerecord:
+    models:
+      blogging/post:
+        one: "Entrada"
+        other: "Entradas"
+    attributes:
+      blogging/post:
+        title: "Título"
+        body: "Contenido"
+        author: "Autor"
+        editor: "Editor"
+        organization: "Organización"
+        status: "Estado"
+        created_at: "Creado el"
+        status/draft: "Borrador"
+        status/published: "Publicado"
+        status/archived: "Archivado"
   plutonium:
     resource:
       created: "%{resource} se creó correctamente."
       updated: "%{resource} se actualizó correctamente."
       deleted: "%{resource} se eliminó correctamente."
       nav:
+        dashboard: "Panel"
         resources: "Recursos"
         profile: "Perfil"
         sign_out: "Cerrar sesión"
+    scopes:
+      blogging/post:
+        published: "Publicados"
+        drafts: "Borradores"
+        archived: "Archivados"
+    actions:
+      blogging/post:
+        new: "Nueva"
+        show: "Ver"
+        edit: "Editar"
+        destroy: "Eliminar"
+        touch: "Tocar"
+        publish: "Publicar"
+        archive: "Archivar"
     ui:
+      breadcrumbs:
+        dashboard: "Panel"
       empty_state:
         none_available: "No hay %{resources} disponibles"
       page:
-        new_title: "Nuevo %{resource}"
+        new_title: "Nueva %{resource}"
         edit_title: "Editar %{resource}"
+      export:
+        export: "Exportar"
+        export_all: "Exportar todo"
+        more_options: "Más opciones de exportación"
+      actions_dropdown:
+        actions: "Acciones"
+        open_menu: "Abrir menú de acciones"
       table:
         search_placeholder: "Buscar..."
         filters: "Filtros"
@@ -28,3 +78,12 @@ es:
         apply_filters: "Aplicar filtros"
         clear: "Limpiar"
         clear_all: "Limpiar todo"
+        all: "Todos"
+        scope: "Ámbito"
+        actions: "Acciones"
+        more_actions: "Más acciones"
+        selected_count: "%{count} seleccionados"
+        clear_selection: "Limpiar selección"
+        result_count:
+          one: "%{count} resultado"
+          other: "%{count} resultados"
