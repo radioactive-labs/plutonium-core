@@ -1,5 +1,5 @@
 StorefrontPortal::Engine.routes.draw do
-  root to: "dashboard#index"
+  register_dashboard StorefrontPortal::HomeDashboard, at: "/"
 
   register_resource ::Blogging::Post
   register_resource ::Catalog::Product

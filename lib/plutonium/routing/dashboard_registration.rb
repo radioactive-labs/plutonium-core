@@ -66,13 +66,13 @@ module Plutonium
 
       private
 
-      # Resolve (creating if needed) the controller the routes dispatch to:
       # Possessive quantifiers (`/++`) so stripping the slashes can't backtrack:
       # a plain `/+\z` is O(n²) on a string of many slashes (rb/polynomial-redos).
       def strip_slashes(path)
         path.to_s.sub(%r{\A/++}, "").sub(%r{/++\z}, "")
       end
 
+      # Resolve (creating if needed) the controller the routes dispatch to:
       # `<Portal>::DashboardsController` on a portal, `::DashboardsController`
       # on the main app. An app-defined class of that name wins.
       def ensure_dashboard_controller!(engine)
@@ -107,6 +107,13 @@ module Plutonium
         end
         klass.instance_variable_set(:@plutonium_synthesized, true)
         namespace.const_set(const_name, klass)
+
+        # `Class.new(parent)` fires Rails' `inherited` hook while the class is
+        # still anonymous, so `module_parents` finds no engine and the hook
+        # includes the *application's* URL helpers over the portal's. Include
+        # the portal's again, last, so bare helpers (`root_path` in the
+        # sidebar) resolve against the engine like a source-defined controller.
+        klass.include(namespace.railtie_routes_url_helpers) if namespace != Object
 
         if concern_name && (concern = concern_name.safe_constantize)
           klass.include concern
