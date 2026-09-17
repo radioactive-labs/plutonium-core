@@ -4,12 +4,10 @@
 class OverviewDashboard < Plutonium::Dashboard::Base
   presents label: "Overview", description: "Everything at a glance", icon: Phlex::TablerIcons::ChartBar
 
-  columns 4
-
-  cattr_accessor :break_inline, default: false
-  cattr_accessor :inline_secret_runs, default: 0
   # Flipped by tests to exercise the `condition:` gate on the card endpoint.
   cattr_accessor :show_secret, default: false
+  cattr_accessor :break_inline, default: false
+  cattr_accessor :inline_secret_runs, default: 0
 
   metric(:users, icon: Phlex::TablerIcons::Users, href: -> { resource_url_for(User, parent: nil) }) do
     authorized_resource_scope(User).count
@@ -27,6 +25,8 @@ class OverviewDashboard < Plutonium::Dashboard::Base
     {value: 1.2, change: "+0.4%", trend: :up}
   end
 
+  metric(:secret, condition: -> { OverviewDashboard.show_secret }) { 42 }
+
   # Inline (non-lazy) twins, both hidden until a test flips their switch: a
   # conditional card whose block counts its own runs, and a card that raises.
   metric(:inline_secret, lazy: false, condition: -> { OverviewDashboard.show_secret }) do
@@ -34,17 +34,15 @@ class OverviewDashboard < Plutonium::Dashboard::Base
     7
   end
 
-  metric(:fragile, lazy: false, condition: -> { OverviewDashboard.break_inline }) do
+  metric(:fragile, span: :full, lazy: false, condition: -> { OverviewDashboard.break_inline }) do
     raise ArgumentError, "inline boom"
   end
 
-  metric(:secret, condition: -> { OverviewDashboard.show_secret }) { 42 }
-
-  chart(:signups, type: :area, span: 2, description: "New organizations per day") do
+  chart(:signups, type: :area, span: 8, description: "New organizations per day") do
     Organization.pluck(:created_at).map(&:to_date).tally.sort.to_h
   end
 
-  chart(:by_kind, type: :donut, span: 2, height: "200px") do
+  chart(:by_kind, type: :donut, span: 4, height: "200px") do
     {"Users" => User.count, "Organizations" => Organization.count}
   end
 

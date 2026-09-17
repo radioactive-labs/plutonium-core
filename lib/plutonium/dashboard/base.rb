@@ -6,11 +6,10 @@ module Plutonium
     #
     #   class SalesDashboard < Plutonium::Dashboard::Base
     #     presents label: "Sales", description: "Orders and revenue at a glance"
-    #     columns 4
     #     refresh 60
     #
     #     metric(:orders, icon: Phlex::TablerIcons::ShoppingCart) { orders.count }
-    #     chart(:revenue, type: :area, span: 2) { orders.group_by_day(:created_at).sum(:total) }
+    #     chart(:revenue, type: :area, span: 8) { orders.group_by_day(:created_at).sum(:total) }
     #
     #     private
     #

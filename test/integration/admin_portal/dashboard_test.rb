@@ -46,7 +46,7 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     assert_match(/<title>Overview \| /, response.body)
     assert_match(/<h1[^>]*>Overview<\/h1>/, response.body)
     assert_match(/Everything at a glance/, response.body)
-    assert_match(/class="pu-dashboard grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"/, response.body)
+    assert_match(/class="pu-dashboard grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12"/, response.body)
 
     %w[users organizations churn signups by-kind welcome].each do |key|
       frame = frame_tag("pu-dashboard-card-#{key}")
@@ -67,9 +67,10 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
 
   test "spans and refresh ride the frame" do
     get base
-    assert_includes frame_tag("pu-dashboard-card-signups"), %(class="block md:col-span-2 lg:col-span-2")
-    assert_includes frame_tag("pu-dashboard-card-welcome"), %(class="block md:col-span-full lg:col-span-full")
-    assert_includes frame_tag("pu-dashboard-card-users"), %(class="block")
+    assert_includes frame_tag("pu-dashboard-card-users"), %(class="block lg:col-span-3")
+    assert_includes frame_tag("pu-dashboard-card-signups"), %(class="block md:col-span-2 lg:col-span-8")
+    assert_includes frame_tag("pu-dashboard-card-by-kind"), %(class="block lg:col-span-4")
+    assert_includes frame_tag("pu-dashboard-card-welcome"), %(class="block md:col-span-2 lg:col-span-12")
 
     churn = frame_tag("pu-dashboard-card-churn")
     assert_includes churn, %(data-controller="frame-refresh")

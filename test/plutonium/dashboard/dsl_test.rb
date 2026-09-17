@@ -20,12 +20,11 @@ module Plutonium
 
       class SalesDashboard < Plutonium::Dashboard::Base
         presents label: "Sales", description: "Money in"
-        columns 4
         refresh 120
 
         metric(:orders) { 10 }
         metric(:revenue, format: :currency, unit: "€", precision: 0, refresh: 30) { {value: 1200, previous: 1000} }
-        chart(:trend, type: :area, span: 2, colors: ["#000"], stacked: true) { {"a" => 1} }
+        chart(:trend, type: :area, span: 8, colors: ["#000"], stacked: true) { {"a" => 1} }
         chart(:split, type: :donut, refresh: false) { {} }
         card(:notes, span: :full, lazy: false, condition: -> { current_user.present? }) { p { "hi" } }
         metric(:admin_only, condition: :admin?) { 1 }
@@ -34,7 +33,7 @@ module Plutonium
       end
 
       class NarrowDashboard < SalesDashboard
-        columns 2
+        refresh 15
         metric(:extra) { 0 }
       end
 
@@ -63,41 +62,72 @@ module Plutonium
         assert_nil klass.description
       end
 
-      def test_columns_refresh_and_width_defaults
+      def test_refresh_and_width_defaults
         klass = Class.new(Plutonium::Dashboard::Base)
-        assert_equal 3, klass.columns
         assert_nil klass.refresh
         assert_equal :full, klass.width
 
-        assert_equal 4, SalesDashboard.columns
         assert_equal 120, SalesDashboard.refresh
       end
 
-      def test_columns_rejects_out_of_range
+      def test_refresh_and_width_reject_bad_values
         klass = Class.new(Plutonium::Dashboard::Base)
-        assert_raises(ArgumentError) { klass.columns 0 }
-        assert_raises(ArgumentError) { klass.columns 7 }
         assert_raises(ArgumentError) { klass.refresh(-1) }
         assert_raises(ArgumentError) { klass.width(:huge) }
       end
 
       def test_subclass_gets_its_own_copy_of_the_configuration
         assert_equal %i[orders revenue trend split notes admin_only extra], NarrowDashboard.cards.map(&:key)
-        assert_equal 2, NarrowDashboard.columns
-        assert_equal 120, NarrowDashboard.refresh
+        assert_equal 15, NarrowDashboard.refresh
         refute_includes SalesDashboard.cards.map(&:key), :extra
-        assert_equal 4, SalesDashboard.columns
+        assert_equal 120, SalesDashboard.refresh
       end
 
       def test_card_defaults
         card = SalesDashboard.find_card(:orders)
-        assert_equal 1, card.span
+        assert_equal 3, card.span
         assert card.lazy?
         assert_nil card.refresh
         assert_nil card.condition
         assert_equal "Orders", card.label
         assert_nil card.description
         assert_equal "pu-dashboard-card-orders", card.frame_id
+      end
+
+      # The grid is 12 columns wide. A kind's default span is the width it
+      # reads well at: four metrics, two charts or two custom cards to a row.
+      def test_each_kind_has_its_own_default_span
+        klass = Class.new(Plutonium::Dashboard::Base)
+        klass.metric(:m) { 1 }
+        klass.chart(:c, type: :line) { {} }
+        klass.card(:k) { nil }
+
+        assert_equal 3, klass.find_card(:m).span
+        assert_equal 6, klass.find_card(:c).span
+        assert_equal 6, klass.find_card(:k).span
+      end
+
+      def test_span_is_one_to_twelve_columns_or_full
+        klass = Class.new(Plutonium::Dashboard::Base)
+        klass.metric(:narrow, span: 1) { 1 }
+        klass.metric(:wide, span: 12) { 1 }
+        klass.metric(:full, span: :full) { 1 }
+
+        assert_equal 1, klass.find_card(:narrow).span
+        assert_equal 12, klass.find_card(:wide).span
+        assert_equal 12, klass.find_card(:full).span
+        assert klass.find_card(:full).full_width?
+        refute klass.find_card(:narrow).full_width?
+
+        assert_raises(ArgumentError) { klass.metric(:a, span: 0) { 1 } }
+        assert_raises(ArgumentError) { klass.metric(:a, span: 13) { 1 } }
+        assert_raises(ArgumentError) { klass.metric(:a, span: 2.5) { 1 } }
+        assert_raises(ArgumentError) { klass.metric(:a, span: :half) { 1 } }
+      end
+
+      def test_columns_is_gone
+        klass = Class.new(Plutonium::Dashboard::Base)
+        assert_raises(NoMethodError) { klass.columns 4 }
       end
 
       def test_duplicate_card_keys_raise
@@ -117,7 +147,6 @@ module Plutonium
         assert_raises(ArgumentError) { klass.metric(:a, format: :bogus) { 1 } }
         assert_raises(ArgumentError) { klass.metric(:a, positive: :sideways) { 1 } }
         assert_raises(ArgumentError) { klass.metric(:a, colors: []) { 1 } }
-        assert_raises(ArgumentError) { klass.metric(:a, span: 9) { 1 } }
         assert_raises(ArgumentError) { klass.metric(:a, refresh: 0) { 1 } }
         assert_raises(ArgumentError) { klass.metric(:a, refresh: 10, lazy: false) { 1 } }
 
@@ -131,7 +160,7 @@ module Plutonium
         assert_equal "AreaChart", card.chart_class
         assert_equal({colors: ["#000"], stacked: true}, card.chart_options)
         assert_equal "240px", card.options[:height]
-        assert_equal 2, card.span
+        assert_equal 8, card.span
 
         donut = SalesDashboard.find_card(:split)
         assert_equal "PieChart", donut.chart_class
@@ -146,7 +175,7 @@ module Plutonium
         assert_raises(ArgumentError) { klass.card(:a, format: :number) { nil } }
 
         card = SalesDashboard.find_card(:notes)
-        assert_equal :full, card.span
+        assert_equal 12, card.span
         assert card.full_width?
         refute card.lazy?
       end
@@ -201,19 +230,6 @@ module Plutonium
         assert_equal 120, dashboard.refresh_for(SalesDashboard.find_card(:orders))
       end
 
-      def test_authorize_defaults_to_true
-        assert dashboard.authorize?
-      end
-
-      def test_lazy_translation_labels_resolve_per_render
-        klass = Class.new(Plutonium::Dashboard::Base) do
-          metric(:yes, label: t("plutonium.boolean.true")) { 1 }
-        end
-        assert_equal "Yes", klass.find_card(:yes).label
-      end
-    end
-  end
-end
       def test_refresh_false_opts_a_card_out_of_the_dashboard_default
         card = SalesDashboard.find_card(:split)
 
@@ -228,3 +244,16 @@ end
         assert_equal false, klass.find_card(:a).refresh
       end
 
+      def test_authorize_defaults_to_true
+        assert dashboard.authorize?
+      end
+
+      def test_lazy_translation_labels_resolve_per_render
+        klass = Class.new(Plutonium::Dashboard::Base) do
+          metric(:yes, label: t("plutonium.boolean.true")) { 1 }
+        end
+        assert_equal "Yes", klass.find_card(:yes).label
+      end
+    end
+  end
+end

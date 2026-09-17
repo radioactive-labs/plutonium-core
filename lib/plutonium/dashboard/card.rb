@@ -11,8 +11,13 @@ module Plutonium
     class Card
       KINDS = %i[metric chart custom].freeze
 
-      # Grid columns a card may span. `:full` always spans the whole row.
-      SPANS = [1, 2, 3, 4, 5, 6, :full].freeze
+      # The dashboard grid is 12 columns wide, so halves, thirds and quarters
+      # all divide evenly. A card spans 1 to 12 of them; `:full` is 12.
+      GRID_COLUMNS = 12
+
+      # The width each kind reads well at when no `span:` is given: four
+      # metrics, two charts or two custom cards to a row.
+      DEFAULT_SPANS = {metric: 3, chart: 6, custom: 6}.freeze
 
       METRIC_FORMATS = %i[number currency percentage human].freeze
       METRIC_POSITIVE = %i[up down].freeze
@@ -40,7 +45,7 @@ module Plutonium
         @label = common[:label]
         @description = common[:description]
         @icon = common[:icon]
-        @span = validate_span!(common.fetch(:span, 1))
+        @span = validate_span!(common.fetch(:span) { DEFAULT_SPANS.fetch(kind) })
         @lazy = common.fetch(:lazy, true) ? true : false
         @refresh = validate_refresh!(common[:refresh])
         @condition = common[:condition]
@@ -59,7 +64,7 @@ module Plutonium
       def metric? = kind == :metric
       def chart? = kind == :chart
       def custom? = kind == :custom
-      def full_width? = span == :full
+      def full_width? = span == GRID_COLUMNS
 
       # The card title, resolved per request: an explicit `label:` (lazy `t`
       # procs included), then the `plutonium.dashboards.<dashboard>.cards.<key>.label`
@@ -135,19 +140,20 @@ module Plutonium
       end
 
       def validate_span!(span)
-        return span if SPANS.include?(span)
+        return GRID_COLUMNS if span == :full
+        return span if span.is_a?(Integer) && span.between?(1, GRID_COLUMNS)
 
-        raise ArgumentError, "card #{key.inspect}: span must be one of #{SPANS.inspect}, got #{span.inspect}"
+        raise ArgumentError, "card #{key.inspect}: span must be an integer from 1 to #{GRID_COLUMNS}, or :full, got #{span.inspect}"
       end
 
+      # `false` is kept distinct from nil: nil inherits the dashboard's
+      # `refresh`, false opts this card out of it.
       def validate_refresh!(refresh)
         return refresh if refresh.nil? || refresh == false
         return refresh.to_i if refresh.respond_to?(:to_i) && refresh.to_i.positive?
 
         raise ArgumentError, "card #{key.inspect}: refresh must be a positive number of seconds or false, got #{refresh.inspect}"
       end
-      # `false` is kept distinct from nil: nil inherits the dashboard's
-      # `refresh`, false opts this card out of it.
 
       def validate_options!(specific)
         case kind

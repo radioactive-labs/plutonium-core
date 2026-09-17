@@ -12,7 +12,7 @@ module Plutonium
   #     presents label: "Sales", icon: Phlex::TablerIcons::ChartBar
   #
   #     metric(:orders) { Order.count }
-  #     chart(:revenue, type: :line, span: 2) { Order.group_by_day(:created_at).sum(:total) }
+  #     chart(:revenue, type: :line, span: 8) { Order.group_by_day(:created_at).sum(:total) }
   #   end
   #
   #   AdminPortal::Engine.routes.draw do

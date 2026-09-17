@@ -10,25 +10,24 @@ module Plutonium
       class Board < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::TurboFrameTag
 
-        # Written out in full so Tailwind's scanner sees every class it must
-        # emit; the grid columns and spans are picked from these tables, never
-        # interpolated.
-        COLUMN_CLASSES = {
-          1 => "lg:grid-cols-1",
-          2 => "lg:grid-cols-2",
-          3 => "lg:grid-cols-3",
-          4 => "lg:grid-cols-4",
-          5 => "lg:grid-cols-5",
-          6 => "lg:grid-cols-6"
-        }.freeze
+        # The grid is 12 columns on large screens, 2 on tablets and 1 on
+        # phones. Written out in full so Tailwind's scanner sees every class it
+        # must emit; a span is picked from this table, never interpolated.
+        GRID_CLASSES = "pu-dashboard grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-12"
 
         SPAN_CLASSES = {
-          2 => "md:col-span-2 lg:col-span-2",
-          3 => "md:col-span-2 lg:col-span-3",
-          4 => "md:col-span-2 lg:col-span-4",
-          5 => "md:col-span-2 lg:col-span-5",
+          1 => "lg:col-span-1",
+          2 => "lg:col-span-2",
+          3 => "lg:col-span-3",
+          4 => "lg:col-span-4",
+          5 => "lg:col-span-5",
           6 => "md:col-span-2 lg:col-span-6",
-          :full => "md:col-span-full lg:col-span-full"
+          7 => "md:col-span-2 lg:col-span-7",
+          8 => "md:col-span-2 lg:col-span-8",
+          9 => "md:col-span-2 lg:col-span-9",
+          10 => "md:col-span-2 lg:col-span-10",
+          11 => "md:col-span-2 lg:col-span-11",
+          12 => "md:col-span-2 lg:col-span-12"
         }.freeze
 
         def initialize(dashboard:)
@@ -39,7 +38,7 @@ module Plutonium
           cards = dashboard.visible_cards
           return EmptyCard(t("plutonium.dashboard.no_cards")) if cards.empty?
 
-          div(class: grid_classes, data: {dashboard: dashboard.class.i18n_key}) do
+          div(class: GRID_CLASSES, data: {dashboard: dashboard.class.i18n_key}) do
             cards.each { |card| render_slot(card) }
           end
         end
@@ -63,21 +62,9 @@ module Plutonium
           end
         end
 
-        def grid_classes
-          columns = dashboard.class.columns
-          tokens("pu-dashboard grid grid-cols-1 gap-4", (columns > 1) ? "md:grid-cols-2" : nil, COLUMN_CLASSES.fetch(columns))
-        end
-
-        # A span wider than the grid collapses to the full row rather than
-        # overflowing it.
-        def span_classes(card)
-          columns = dashboard.class.columns
-          span = card.span
-          return nil if span == 1 || columns == 1
-          return SPAN_CLASSES.fetch(:full) if span == :full || span >= columns
-
-          SPAN_CLASSES.fetch(span)
-        end
+        # On a tablet's two columns a card half the desktop row or wider takes
+        # the full row; anything narrower takes one column.
+        def span_classes(card) = SPAN_CLASSES.fetch(card.span)
 
         # `refresh` wires the `frame-refresh` controller, which reloads the
         # frame every N seconds while the tab is visible.

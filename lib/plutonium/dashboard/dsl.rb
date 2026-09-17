@@ -2,16 +2,13 @@
 
 module Plutonium
   module Dashboard
-    # The author-facing class macros: `metric`, `chart`, `card`, `columns`,
-    # `refresh` and `width`. Mixed into {Base}.
+    # The author-facing class macros: `metric`, `chart`, `card`, `refresh`
+    # and `width`. Mixed into {Base}.
     module DSL
       extend ActiveSupport::Concern
 
       UNSET = Object.new
       private_constant :UNSET
-
-      DEFAULT_COLUMNS = 3
-      MAX_COLUMNS = 6
 
       class_methods do
         # The declared cards, in declaration order.
@@ -35,7 +32,7 @@ module Plutonium
         # other than `type:` / `height:` and the common card options are passed
         # straight through to Chartkick (`colors:`, `stacked:`, `suffix:`, ...).
         #
-        #   chart(:signups, type: :line, span: 2) { User.group_by_day(:created_at, last: 30).count }
+        #   chart(:signups, type: :line, span: 8) { User.group_by_day(:created_at, last: 30).count }
         def chart(key, **options, &block)
           add_card(key, kind: :chart, options:, block:)
         end
@@ -48,18 +45,6 @@ module Plutonium
         #   end
         def card(key, **options, &block)
           add_card(key, kind: :custom, options:, block:)
-        end
-
-        # Grid columns on large screens (1..6, default 3). Cards `span:` up to
-        # this many columns.
-        def columns(count = UNSET)
-          return @columns || DEFAULT_COLUMNS if count.equal?(UNSET)
-
-          unless count.is_a?(Integer) && count.between?(1, MAX_COLUMNS)
-            raise ArgumentError, "columns must be an integer between 1 and #{MAX_COLUMNS}, got #{count.inspect}"
-          end
-
-          @columns = count
         end
 
         # Default refresh interval (seconds) for every lazy card. A card's own
@@ -110,7 +95,6 @@ module Plutonium
         def inherited(subclass)
           super
           subclass.instance_variable_set(:@cards, cards.dup)
-          subclass.instance_variable_set(:@columns, @columns)
           subclass.instance_variable_set(:@refresh, @refresh)
           subclass.instance_variable_set(:@width, @width)
         end
