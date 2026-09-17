@@ -63,7 +63,7 @@ module Plutonium
         end
 
         # Default refresh interval (seconds) for every lazy card. A card's own
-        # `refresh:` overrides it; `refresh false` on a card opts out.
+        # `refresh:` overrides it; `refresh: false` on a card opts out.
         def refresh(seconds = UNSET)
           return @refresh if seconds.equal?(UNSET)
 

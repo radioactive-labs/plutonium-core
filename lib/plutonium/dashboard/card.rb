@@ -141,11 +141,13 @@ module Plutonium
       end
 
       def validate_refresh!(refresh)
-        return nil if refresh.nil?
+        return refresh if refresh.nil? || refresh == false
         return refresh.to_i if refresh.respond_to?(:to_i) && refresh.to_i.positive?
 
-        raise ArgumentError, "card #{key.inspect}: refresh must be a positive number of seconds, got #{refresh.inspect}"
+        raise ArgumentError, "card #{key.inspect}: refresh must be a positive number of seconds or false, got #{refresh.inspect}"
       end
+      # `false` is kept distinct from nil: nil inherits the dashboard's
+      # `refresh`, false opts this card out of it.
 
       def validate_options!(specific)
         case kind

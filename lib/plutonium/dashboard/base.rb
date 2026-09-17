@@ -94,7 +94,10 @@ module Plutonium
       end
 
       # The refresh interval for a card: its own, else the dashboard default.
+      # A card declared `refresh: false` never refreshes.
       def refresh_for(card)
+        return nil if card.refresh == false
+
         card.refresh || self.class.refresh
       end
 

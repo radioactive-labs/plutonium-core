@@ -26,7 +26,7 @@ module Plutonium
         metric(:orders) { 10 }
         metric(:revenue, format: :currency, unit: "€", precision: 0, refresh: 30) { {value: 1200, previous: 1000} }
         chart(:trend, type: :area, span: 2, colors: ["#000"], stacked: true) { {"a" => 1} }
-        chart(:split, type: :donut) { {} }
+        chart(:split, type: :donut, refresh: false) { {} }
         card(:notes, span: :full, lazy: false, condition: -> { current_user.present? }) { p { "hi" } }
         metric(:admin_only, condition: :admin?) { 1 }
 
@@ -214,3 +214,17 @@ module Plutonium
     end
   end
 end
+      def test_refresh_false_opts_a_card_out_of_the_dashboard_default
+        card = SalesDashboard.find_card(:split)
+
+        assert_equal false, card.refresh
+        assert_nil dashboard.refresh_for(card)
+      end
+
+      def test_refresh_false_is_allowed_on_an_inline_card
+        klass = Class.new(Plutonium::Dashboard::Base)
+        klass.metric(:a, refresh: false, lazy: false) { 1 }
+
+        assert_equal false, klass.find_card(:a).refresh
+      end
+
