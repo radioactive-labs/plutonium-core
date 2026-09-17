@@ -2,11 +2,13 @@
       menu: Phlexi::Menu::Builder.new do |m|
         m.item t("plutonium.resource.nav.dashboard"), url: root_path, icon: Phlex::TablerIcons::Home
 
-        registered_dashboards.each do |dashboard|
-          url = dashboard_path_for(dashboard)
-          next if url == root_path
-
-          m.item dashboard.label, url: url, icon: dashboard.icon
+        dashboards = registered_dashboards.reject { |dashboard| dashboard_path_for(dashboard) == root_path }
+        if dashboards.any?
+          m.item t("plutonium.resource.nav.dashboards"), icon: Phlex::TablerIcons::LayoutDashboard do |n|
+            dashboards.each do |dashboard|
+              n.item dashboard.label, url: dashboard_path_for(dashboard), icon: dashboard.icon
+            end
+          end
         end
 
         m.item t("plutonium.resource.nav.resources"), icon: Phlex::TablerIcons::GridDots do |n|

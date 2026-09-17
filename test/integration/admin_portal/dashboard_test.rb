@@ -162,9 +162,12 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     OverviewDashboard.remove_method(:__denied_authorize__)
   end
 
-  test "the sidebar lists the dashboard" do
+  test "the sidebar groups the dashboards under a Dashboards parent" do
     get "/admin/users"
-    assert_match(%r{href="/admin/dashboards/overview"[^>]*>.*?Overview}m, response.body)
+
+    flyout = response.body[%r{<div[^>]*class="icon-rail-flyout-inner".*?</div>\s*</div>}m]
+    assert_match(%r{icon-rail-flyout-label[^>]*>Dashboards<}, flyout)
+    assert_match(%r{href="/admin/dashboards/overview"[^>]*>Overview<}, flyout)
   end
 
   test "the page and cards require a signed-in admin" do
