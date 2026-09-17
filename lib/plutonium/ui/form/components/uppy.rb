@@ -184,7 +184,7 @@ module Plutonium
               max_file_size: nil,
               min_file_size: nil,
               max_total_size: nil,
-              max_file_num: attributes.fetch(:size, field.multiple? ? field.limit : 1),
+              max_file_num: attributes.fetch(:size) { field.multiple? ? field.limit : 1 },
               min_file_num: nil,
               allowed_file_types: nil,
               required_meta_fields: nil,
