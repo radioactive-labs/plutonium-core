@@ -8,8 +8,8 @@ module Plutonium
       # description, and a body the subclass fills in.
       #
       # The body is rendered under a guard: outside local-request mode a
-      # card whose block raises reports the error and renders a short notice
-      # in place, so one broken query never takes the whole dashboard down.
+      # card whose block raises logs and reports the error and renders a short
+      # notice in place, so one broken query never takes the whole dashboard down.
       class Card < Plutonium::UI::Component::Base
         include Phlex::Rails::Helpers::LinkTo
 
@@ -91,8 +91,24 @@ module Plutonium
         rescue => e
           raise if raise_card_errors?
 
-          Rails.error.report(e, handled: true, source: "plutonium.dashboard")
+          report_error(e)
           render_error
+        end
+
+        # Logged as well as reported: `Rails.error.report` writes nothing to
+        # the log, so with no error subscriber (Sentry, Honeybadger, ...) a
+        # swallowed card failure would otherwise leave no trace at all.
+        def report_error(error)
+          Rails.logger.error do
+            "[plutonium.dashboard] #{dashboard.class.name}##{card.key} failed to load: " \
+              "#{error.class}: #{error.message}\n#{error.backtrace&.first(10)&.join("\n")}"
+          end
+          Rails.error.report(
+            error,
+            handled: true,
+            source: "plutonium.dashboard",
+            context: {dashboard: dashboard.class.name, card: card.key.to_s}
+          )
         end
 
         def raise_card_errors?
