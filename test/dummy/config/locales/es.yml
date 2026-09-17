@@ -37,7 +37,8 @@ es:
       updated: "%{resource} se actualizó correctamente."
       deleted: "%{resource} se eliminó correctamente."
       nav:
-        dashboard: "Panel"
+        home: "Inicio"
+        dashboards: "Paneles"
         resources: "Recursos"
         profile: "Perfil"
         sign_out: "Cerrar sesión"
@@ -57,7 +58,7 @@ es:
         archive: "Archivar"
     ui:
       breadcrumbs:
-        dashboard: "Panel"
+        home: "Inicio"
       empty_state:
         none_available: "No hay %{resources} disponibles"
       page:

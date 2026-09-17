@@ -15,7 +15,7 @@ en:
       export_csv:
         invalid_column: "<<invalid column>>"
       nav:
-        dashboard: "Dashboard"
+        home: "Home"
         dashboards: "Dashboards"
         resources: "Resources"
         profile: "Profile"

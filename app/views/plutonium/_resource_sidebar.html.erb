@@ -1,6 +1,6 @@
 <%= render Plutonium::UI::Layout::IconRail.new(
       menu: Phlexi::Menu::Builder.new do |m|
-        m.item t("plutonium.resource.nav.dashboard"), url: root_path, icon: Phlex::TablerIcons::Home
+        m.item t("plutonium.resource.nav.home"), url: root_path, icon: Phlex::TablerIcons::Home
 
         dashboards = registered_dashboards.reject { |dashboard| dashboard_path_for(dashboard) == root_path }
         if dashboards.any?

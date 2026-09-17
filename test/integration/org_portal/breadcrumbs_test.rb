@@ -89,19 +89,19 @@ class OrgPortal::BreadcrumbsTest < ActionDispatch::IntegrationTest
   # to read that from the *nested* route config — the top-level registration
   # can't see it.
   test "a plural show page ends at the index — the record is left to the page title" do
-    assert_equal ["Dashboard", "Products"], breadcrumb_labels_for(product_path)
+    assert_equal ["Home", "Products"], breadcrumb_labels_for(product_path)
   end
 
   test "a nested has_one show page ends at the parent, mirroring the plural case" do
     # No trailing "Product detail": the heading already names it.
-    assert_equal ["Dashboard", "Products", product.to_label],
+    assert_equal ["Home", "Products", product.to_label],
       breadcrumb_labels_for("#{product_path}/nested_product_detail")
   end
 
   test "a nested has_one edit page names the resource and links to its show page" do
     path = "#{product_path}/nested_product_detail/edit"
 
-    assert_equal ["Dashboard", "Products", product.to_label, "Product detail"],
+    assert_equal ["Home", "Products", product.to_label, "Product detail"],
       breadcrumb_labels_for(path)
     assert_includes breadcrumb_nav, %(href="#{product_path}/nested_product_detail")
   end
@@ -109,7 +109,7 @@ class OrgPortal::BreadcrumbsTest < ActionDispatch::IntegrationTest
   test "a nested has_many show page still ends at the nested index" do
     review = create_review!(product: product, user: @user)
 
-    assert_equal ["Dashboard", "Products", product.to_label, "Reviews"],
+    assert_equal ["Home", "Products", product.to_label, "Reviews"],
       breadcrumb_labels_for("#{product_path}/nested_reviews/#{review.to_param}")
   end
 
@@ -120,17 +120,17 @@ class OrgPortal::BreadcrumbsTest < ActionDispatch::IntegrationTest
   test "a top-level singular show page adds no segment of its own" do
     user_profile
 
-    assert_equal ["Dashboard"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile")
+    assert_equal ["Home"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile")
   end
 
   test "a top-level singular new page adds no segment either" do
-    assert_equal ["Dashboard"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile/new")
+    assert_equal ["Home"], breadcrumb_labels_for("/org/#{@org.to_param}/user_profile/new")
   end
 
   test "a top-level singular edit page names the resource" do
     user_profile
 
-    assert_equal ["Dashboard", "User profile"],
+    assert_equal ["Home", "User profile"],
       breadcrumb_labels_for("/org/#{@org.to_param}/user_profile/edit")
   end
 
