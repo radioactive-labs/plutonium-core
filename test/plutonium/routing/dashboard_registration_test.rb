@@ -70,7 +70,7 @@ class Plutonium::Routing::DashboardRegistrationTest < Minitest::Test
   end
 
   def test_records_the_dashboard_on_the_engine_register
-    assert_equal [OverviewDashboard], AdminPortal::Engine.dashboard_register.dashboards
+    assert_equal [OverviewDashboard, AdminPortal::ContentDashboard], AdminPortal::Engine.dashboard_register.dashboards
     assert_equal [TeamDashboard], OrgPortal::Engine.dashboard_register.dashboards
   end
 end

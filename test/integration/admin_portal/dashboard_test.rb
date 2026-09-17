@@ -217,6 +217,18 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     flyout = response.body[%r{<div[^>]*class="icon-rail-flyout-inner".*?</div>\s*</div>}m]
     assert_match(%r{icon-rail-flyout-label[^>]*>Dashboards<}, flyout)
     assert_match(%r{href="/admin/dashboards/overview"[^>]*>Overview<}, flyout)
+    assert_match(%r{href="/admin/dashboards/content"[^>]*>Content<}, flyout)
+  end
+
+  test "a second, portal-namespaced dashboard serves its page and every card" do
+    get "/admin/dashboards/content"
+    assert_response :success
+    assert_match(%r{<h1[^>]*>.*Content}m, response.body)
+
+    AdminPortal::ContentDashboard.cards.each do |card|
+      get_frame "/admin/dashboards/content/cards/#{card.key}", card.frame_id
+      assert_response :success, "card #{card.key}"
+    end
   end
 
   test "the page and cards require a signed-in admin" do

@@ -56,6 +56,7 @@ AdminPortal::Engine.routes.draw do
   register_resource ::ShrineDoc
   register_resource ::Chore
   register_resource ::Plutonium::Interaction::Async::Run
+  register_dashboard AdminPortal::ContentDashboard, at: "content"
   # register resources above.
 end
 
