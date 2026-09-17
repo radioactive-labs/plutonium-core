@@ -146,7 +146,7 @@ module Plutonium
     #   # => plutonium.portals.<portal>.dashboards.sales.cards.orders.label
     #   #    plutonium.dashboards.sales.cards.orders.label
     def dashboard_text(dashboard_class, *path, portal: Current.portal)
-      return if dashboard_class.nil? || !dashboard_class.respond_to?(:i18n_key)
+      return if dashboard_class.nil?
 
       suffix = [dashboard_class.i18n_key, *path].join(".")
       [portal_scope(portal, "dashboards"), "plutonium.dashboards"].compact.each do |scope|

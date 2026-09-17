@@ -10,9 +10,11 @@ class Plutonium::Routing::DashboardRegistrationTest < Minitest::Test
   def mapper = Object.new.extend(Plutonium::Routing::DashboardRegistration)
 
   # The synthesized controllers and the engine registers only exist once the
-  # routes have been drawn, which the test environment does lazily.
+  # routes have been drawn, which the test environment does lazily. Draw them
+  # with `reload_routes!`, which every supported Rails version answers
+  # (`routes_reloader.execute_unless_loaded` is Rails 8.0+).
   def setup
-    Rails.application.routes_reloader.execute_unless_loaded
+    Rails.application.reload_routes!
   end
 
   def test_rejects_a_class_that_is_not_a_dashboard

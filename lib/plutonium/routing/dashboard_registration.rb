@@ -34,7 +34,9 @@ module Plutonium
         engine = dashboard_route_engine
         raise ArgumentError, "register_dashboard: routes must be drawn on a Plutonium engine or the application" if engine.nil?
 
-        mount_path = at.to_s.sub(%r{\A/+}, "").sub(%r{/+\z}, "")
+        # Possessive quantifiers (`/++`) so stripping the slashes can't backtrack:
+        # a plain `/+\z` is O(n²) on a string of many slashes (rb/polynomial-redos).
+        mount_path = at.to_s.sub(%r{\A/++}, "").sub(%r{/++\z}, "")
         root = mount_path.empty?
         helper_name = (as || mount_path.presence || dashboard_class.route_name).to_s.tr("/", "_")
         defaults = {dashboard_class: dashboard_class.name}
