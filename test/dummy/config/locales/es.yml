@@ -1,0 +1,30 @@
+# Spanish overrides for the admin portal's locale-switch demo. Only a visible
+# slice of the Plutonium chrome is translated here; every other key falls back
+# to English (config.i18n.fallbacks in config/application.rb). This is enough
+# to see the top bar, search box, table controls, page titles and CRUD flashes
+# flip to Spanish when you pick ES.
+es:
+  hello: "Hola mundo"
+  plutonium:
+    resource:
+      created: "%{resource} se creó correctamente."
+      updated: "%{resource} se actualizó correctamente."
+      deleted: "%{resource} se eliminó correctamente."
+      nav:
+        resources: "Recursos"
+        profile: "Perfil"
+        sign_out: "Cerrar sesión"
+    ui:
+      empty_state:
+        none_available: "No hay %{resources} disponibles"
+      page:
+        new_title: "Nuevo %{resource}"
+        edit_title: "Editar %{resource}"
+      table:
+        search_placeholder: "Buscar..."
+        filters: "Filtros"
+        filter: "Filtro"
+        apply: "Aplicar"
+        apply_filters: "Aplicar filtros"
+        clear: "Limpiar"
+        clear_all: "Limpiar todo"
