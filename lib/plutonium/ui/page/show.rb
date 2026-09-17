@@ -60,8 +60,8 @@ module Plutonium
         # regains the metadata rail that the modal hides.
         def render_modal_details
           render Plutonium::UI::Modal::Centered.new(
-            title: page_title,
-            description: page_description,
+            title: resolved_page_title,
+            description: resolved_page_description,
             size: :lg,
             open_full_url: open_full_page_url
           ) do
