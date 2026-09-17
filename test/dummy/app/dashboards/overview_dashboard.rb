@@ -6,6 +6,8 @@ class OverviewDashboard < Plutonium::Dashboard::Base
 
   columns 4
 
+  cattr_accessor :break_inline, default: false
+  cattr_accessor :inline_secret_runs, default: 0
   # Flipped by tests to exercise the `condition:` gate on the card endpoint.
   cattr_accessor :show_secret, default: false
 
@@ -23,6 +25,17 @@ class OverviewDashboard < Plutonium::Dashboard::Base
 
   metric(:churn, format: :percentage, positive: :down, refresh: 30) do
     {value: 1.2, change: "+0.4%", trend: :up}
+  end
+
+  # Inline (non-lazy) twins, both hidden until a test flips their switch: a
+  # conditional card whose block counts its own runs, and a card that raises.
+  metric(:inline_secret, lazy: false, condition: -> { OverviewDashboard.show_secret }) do
+    OverviewDashboard.inline_secret_runs += 1
+    7
+  end
+
+  metric(:fragile, lazy: false, condition: -> { OverviewDashboard.break_inline }) do
+    raise ArgumentError, "inline boom"
   end
 
   metric(:secret, condition: -> { OverviewDashboard.show_secret }) { 42 }

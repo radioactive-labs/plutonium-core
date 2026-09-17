@@ -13,11 +13,19 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
   setup do
     @admin = create_admin!
     login_as(@admin, portal: :admin)
-    OverviewDashboard.show_secret = false
+    reset_switches
+    @local = Rails.application.config.consider_all_requests_local
   end
 
   teardown do
+    reset_switches
+    Rails.application.config.consider_all_requests_local = @local
+  end
+
+  def reset_switches
     OverviewDashboard.show_secret = false
+    OverviewDashboard.break_inline = false
+    OverviewDashboard.inline_secret_runs = 0
   end
 
   def base = "/admin/dashboards/overview"
@@ -80,6 +88,46 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     assert_match(/pu-dashboard-card-title[^>]*>Conversion</, response.body)
     assert_match(/pu-metric-value[^>]*>12\.5%</, response.body)
     assert_match(/>\+2\.3%</, response.body)
+  end
+
+  test "a hidden inline card is left out of the page and its block never runs" do
+    get base
+    assert_response :success
+    refute_match(/Inline Secret/, response.body)
+    assert_equal 0, OverviewDashboard.inline_secret_runs
+
+    get_frame "#{base}/cards/inline_secret", "pu-dashboard-card-inline_secret"
+    assert_response :not_found
+
+    OverviewDashboard.show_secret = true
+    get base
+    assert_match(/pu-dashboard-card-title[^>]*>Inline Secret</, response.body)
+    assert_match(/pu-metric-value[^>]*>7</, response.body)
+    assert_equal 1, OverviewDashboard.inline_secret_runs
+  end
+
+  # An inline card renders with the page, under the same guard as a lazy one:
+  # outside local-request mode its failure costs that card and nothing else.
+  test "a failing inline card renders the notice and the rest of the page survives" do
+    OverviewDashboard.break_inline = true
+    Rails.application.config.consider_all_requests_local = false
+
+    get base
+    assert_response :success
+    assert_match(/pu-dashboard-card-title[^>]*>Fragile</, response.body)
+    assert_includes response.body, I18n.t("plutonium.dashboard.card_error")
+    assert_match(/pu-metric-value[^>]*>12\.5%</, response.body)
+    assert frame_tag("pu-dashboard-card-users")
+  end
+
+  # In local-request mode (development, test) the error is raised, and because
+  # an inline card renders with the page it takes the whole page with it.
+  test "in local-request mode a failing inline card fails the page" do
+    OverviewDashboard.break_inline = true
+    Rails.application.config.consider_all_requests_local = true
+
+    error = assert_raises(ArgumentError) { get base }
+    assert_equal "inline boom", error.message
   end
 
   test "a custom card renders its block with the dashboard's methods in scope" do
