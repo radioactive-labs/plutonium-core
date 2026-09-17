@@ -33,7 +33,7 @@ export default class extends Controller {
 
   #setupSlimSelect() {
     const settings = {};
-    this.modal = document.querySelector('[data-controller="remote-modal"]');
+    this.modal = this.element.closest('[data-controller="remote-modal"]');
 
     if (this.modal) {
       // Inside a <dialog> opened via showModal(), the dialog lives in the
