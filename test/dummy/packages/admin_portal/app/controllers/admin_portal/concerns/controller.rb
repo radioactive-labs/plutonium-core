@@ -4,6 +4,7 @@ module AdminPortal
       extend ActiveSupport::Concern
       include Plutonium::Portal::Controller
       include Plutonium::Auth::Rodauth(:admin)
+
       # add concerns above.
 
       included do
