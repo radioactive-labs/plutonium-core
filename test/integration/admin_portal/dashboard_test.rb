@@ -20,7 +20,7 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     OverviewDashboard.show_secret = false
   end
 
-  def base = "/admin/overview"
+  def base = "/admin/dashboards/overview"
 
   def get_frame(path, frame)
     get path, headers: {"Turbo-Frame" => frame}
@@ -43,7 +43,7 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
     %w[users organizations churn signups by-kind welcome].each do |key|
       frame = frame_tag("pu-dashboard-card-#{key}")
       assert frame, "expected a frame for #{key}"
-      assert_includes frame, %(src="/admin/overview/cards/#{key.tr("-", "_")}")
+      assert_includes frame, %(src="/admin/dashboards/overview/cards/#{key.tr("-", "_")}")
       assert_includes frame, %(loading="lazy")
       assert_includes frame, %(refresh="morph")
     end
@@ -164,7 +164,7 @@ class AdminPortal::DashboardTest < ActionDispatch::IntegrationTest
 
   test "the sidebar lists the dashboard" do
     get "/admin/users"
-    assert_match(%r{href="/admin/overview"[^>]*>.*?Overview}m, response.body)
+    assert_match(%r{href="/admin/dashboards/overview"[^>]*>.*?Overview}m, response.body)
   end
 
   test "the page and cards require a signed-in admin" do

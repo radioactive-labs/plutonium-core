@@ -23,7 +23,7 @@ module Pu
     )
 
     class_option :at, type: :string, default: nil,
-      desc: "Mount path inside the portal (default: the dashboard name; \"/\" mounts at the root)"
+      desc: "Mount path under the portal's dashboards/ segment (default: the dashboard name; \"/\" mounts at the root)"
 
     def start
       @app_namespace = portal_option(:dest, prompt: "Select destination portal").camelize

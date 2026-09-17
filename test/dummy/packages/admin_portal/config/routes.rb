@@ -27,7 +27,7 @@ AdminPortal::Engine.routes.draw do
   get "gated", to: "gated#index"
 
   # A dashboard of metric, chart and free-form cards, each served in its own
-  # lazy turbo frame from `/admin/overview/cards/:card`.
+  # lazy turbo frame from `/admin/dashboards/overview/cards/:card`.
   register_dashboard ::OverviewDashboard, at: "overview"
 
   register_resource ::User

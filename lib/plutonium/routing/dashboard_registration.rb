@@ -11,22 +11,32 @@ module Plutonium
     # @example inside a portal engine's routes
     #   AdminPortal::Engine.routes.draw do
     #     register_dashboard HomeDashboard, at: "/"        # the portal root
-    #     register_dashboard SalesDashboard, at: "sales"   # /sales
+    #     register_dashboard SalesDashboard, at: "sales"   # /dashboards/sales
     #   end
     #
     # Draws (portal-relative):
-    #   GET /sales             → DashboardsController#show   (sales_dashboard_path)
-    #   GET /sales/cards/:card → DashboardsController#card   (sales_dashboard_card_path)
+    #   GET /dashboards/sales             → DashboardsController#show   (sales_dashboard_path)
+    #   GET /dashboards/sales/cards/:card → DashboardsController#card   (sales_dashboard_card_path)
     #
-    # A root mount draws `root` for the page and `/<name>/cards/:card` for the
-    # cards, where `<name>` is `as:` or the class slug (`HomeDashboard` → `home`).
+    # Every path sits under the `dashboards/` segment, so a dashboard can never
+    # shadow (or be shadowed by) a `register_resource` route of the same name:
+    # `at: "sales"` and a `Sale` resource would otherwise both claim `/sales`.
+    # `prefix: nil` turns the segment off for a mount (`/sales`), and a string
+    # swaps it (`prefix: "reports"` → `/reports/sales`).
+    #
+    # A root mount draws `root` for the page and `/dashboards/<name>/cards/:card`
+    # for the cards, where `<name>` is `as:` or the class slug
+    # (`HomeDashboard` → `home`).
     module DashboardRegistration
       DASHBOARD_CONTROLLER_NAME = "dashboards"
+      DASHBOARD_PATH_SEGMENT = "dashboards"
 
       # @param dashboard_class [Class] a Plutonium::Dashboard::Base subclass
-      # @param at [String] the portal-relative path; "/" (or "") mounts at the root
+      # @param at [String] the path under the prefix; "/" (or "") mounts at the root
       # @param as [String, Symbol, nil] override the route helper prefix
-      def register_dashboard(dashboard_class, at:, as: nil)
+      # @param prefix [String, nil] the leading path segment, "dashboards" by
+      #   default; nil (or "") draws the mount at the bare `at:` path
+      def register_dashboard(dashboard_class, at:, as: nil, prefix: DASHBOARD_PATH_SEGMENT)
         unless dashboard_class.is_a?(Class) && dashboard_class < Plutonium::Dashboard::Base
           raise ArgumentError, "register_dashboard: #{dashboard_class.inspect} must subclass Plutonium::Dashboard::Base"
         end
@@ -34,9 +44,8 @@ module Plutonium
         engine = dashboard_route_engine
         raise ArgumentError, "register_dashboard: routes must be drawn on a Plutonium engine or the application" if engine.nil?
 
-        # Possessive quantifiers (`/++`) so stripping the slashes can't backtrack:
-        # a plain `/+\z` is O(n²) on a string of many slashes (rb/polynomial-redos).
-        mount_path = at.to_s.sub(%r{\A/++}, "").sub(%r{/++\z}, "")
+        mount_path = strip_slashes(at)
+        prefix = strip_slashes(prefix)
         root = mount_path.empty?
         helper_name = (as || mount_path.presence || dashboard_class.route_name).to_s.tr("/", "_")
         defaults = {dashboard_class: dashboard_class.name}
@@ -48,16 +57,22 @@ module Plutonium
         if root
           get "/", to: "#{controller}#show", as: :root, defaults: defaults
         else
-          get mount_path, to: "#{controller}#show", as: :"#{helper_name}_dashboard", defaults: defaults
+          get File.join(prefix, mount_path), to: "#{controller}#show", as: :"#{helper_name}_dashboard", defaults: defaults
         end
 
-        cards_path = File.join(root ? helper_name : mount_path, "cards/:card")
+        cards_path = File.join(prefix, root ? helper_name : mount_path, "cards/:card")
         get cards_path, to: "#{controller}#card", as: :"#{helper_name}_dashboard_card", defaults: defaults
       end
 
       private
 
       # Resolve (creating if needed) the controller the routes dispatch to:
+      # Possessive quantifiers (`/++`) so stripping the slashes can't backtrack:
+      # a plain `/+\z` is O(n²) on a string of many slashes (rb/polynomial-redos).
+      def strip_slashes(path)
+        path.to_s.sub(%r{\A/++}, "").sub(%r{/++\z}, "")
+      end
+
       # `<Portal>::DashboardsController` on a portal, `::DashboardsController`
       # on the main app. An app-defined class of that name wins.
       def ensure_dashboard_controller!(engine)

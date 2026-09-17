@@ -6,8 +6,9 @@ OrgPortal::Engine.routes.draw do
   register_wizard ::ConfigureOrgWizard, at: "configure"
 
   # A dashboard inside the tenant scope: its page and card URLs carry the
-  # `:organization_scoped` segment.
-  register_dashboard ::TeamDashboard, at: "team"
+  # `:organization_scoped` segment. `prefix: nil` drops the default
+  # `dashboards/` segment, so it is served from `/org/:organization/team`.
+  register_dashboard ::TeamDashboard, at: "team", prefix: nil
 
   # Organization is registered as singular to test URL generation when the entity scope model
   # is also a registered resource (creates nested routes that can shadow top-level routes).

@@ -40,6 +40,28 @@ class Plutonium::Routing::DashboardRegistrationTest < Minitest::Test
     assert_equal :organization_scoped_team_dashboard_card, Plutonium::Dashboard::RouteResolution.route_name(org, TeamDashboard, action: "card")
   end
 
+  # Every non-root mount is drawn under `dashboards/`, so a dashboard can never
+  # shadow (or be shadowed by) a `register_resource` route of the same name.
+  def test_draws_the_mount_under_the_dashboards_segment
+    paths = AdminPortal::Engine.routes.routes
+      .select { |r| r.defaults[:dashboard_class] == "OverviewDashboard" }
+      .to_h { |r| [r.defaults[:action], r.path.spec.to_s] }
+
+    assert_equal "/dashboards/overview(.:format)", paths["show"]
+    assert_equal "/dashboards/overview/cards/:card(.:format)", paths["card"]
+  end
+
+  # `prefix: nil` opts a mount out of the segment; the org portal's dashboard
+  # is registered that way.
+  def test_prefix_nil_draws_the_mount_at_the_bare_path
+    paths = OrgPortal::Engine.routes.routes
+      .select { |r| r.defaults[:dashboard_class] == "TeamDashboard" }
+      .to_h { |r| [r.defaults[:action], r.path.spec.to_s] }
+
+    assert_equal "/:organization_scoped/team(.:format)", paths["show"]
+    assert_equal "/:organization_scoped/team/cards/:card(.:format)", paths["card"]
+  end
+
   def test_synthesizes_a_portal_namespaced_controller
     controller = AdminPortal::DashboardsController
     assert_operator controller, :<, AdminPortal::PlutoniumController
