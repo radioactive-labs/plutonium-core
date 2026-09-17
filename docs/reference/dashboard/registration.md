@@ -1,28 +1,37 @@
 # Dashboard Registration
 
+::: warning Experimental
+Dashboards are experimental: the DSL and behavior may change in a future release.
+:::
+
 ## register_dashboard
 
 ```ruby
 AdminPortal::Engine.routes.draw do
   register_dashboard AdminPortal::HomeDashboard, at: "/"       # the portal root
-  register_dashboard AdminPortal::SalesDashboard, at: "sales"  # /admin/sales
+  register_dashboard AdminPortal::SalesDashboard, at: "sales"  # /admin/dashboards/sales
   register_dashboard Reports::WeeklyDashboard, at: "reports/weekly", as: "weekly"
 end
 ```
 
 | Argument | Meaning |
 |---|---|
-| `at:` | Portal-relative path. `"/"` or `""` mounts at the engine root |
+| `at:` | Path under the portal's `dashboards/` segment. `"/"` or `""` mounts at the engine root |
+| `prefix:` | Leading path segment, `"dashboards"` by default. `nil` draws the mount at the bare `at:` path (`/admin/sales`); a string swaps the segment (`prefix: "reports"` → `/admin/reports/sales`). Does not affect helper names |
 | `as:` | Route helper prefix. Defaults to `at:` with slashes replaced, or the class slug for a root mount |
 
 ### Routes drawn
 
 ```
-GET /sales             → DashboardsController#show   sales_dashboard_path
-GET /sales/cards/:card → DashboardsController#card   sales_dashboard_card_path
+GET /dashboards/sales             → DashboardsController#show   sales_dashboard_path
+GET /dashboards/sales/cards/:card → DashboardsController#card   sales_dashboard_card_path
 ```
 
-A root mount draws `root` for the page and `/<as>/cards/:card` for the cards. Replace the portal's generated `root to: "dashboard#index"` line with the registration; two root routes clash.
+Every path is drawn under `dashboards/`, so a dashboard never shadows a `register_resource` route of the same name (`at: "sales"` next to a `Sale` resource). The route helpers carry no prefix.
+
+With `prefix: nil` nothing reserves the path, so keep `at:` clear of your resource routes yourself.
+
+A root mount draws `root` for the page and `/dashboards/<as>/cards/:card` for the cards (`/<as>/cards/:card` with `prefix: nil`). Replace the portal's generated `root to: "dashboard#index"` line with the registration; two root routes clash. The generated `DashboardController` and its view are then unrouted and can be deleted. The [guide](/guides/dashboards#replacing-the-portal-s-default-page) walks through it.
 
 On a `:path` entity-scoped portal the routes sit inside the scope segment and the helpers are prefixed (`organization_scoped_sales_dashboard_path`). URLs built by the framework thread the current tenant through; when building your own use `dashboard_path_for(SalesDashboard)`, available in controllers, views and components.
 
@@ -50,12 +59,12 @@ The concern provides `show` and `card`, `current_dashboard`, `current_dashboard_
 
 ## Sidebar
 
-`registered_dashboards` (a controller helper, also available in components) lists the dashboards mounted on the current engine, and `dashboard_path_for(klass)` builds each page path. The gem's `_resource_sidebar.html.erb` lists them after the Dashboard link, skipping the one mounted at the root.
+`registered_dashboards` (a controller helper, also available in components) lists the dashboards mounted on the current engine, and `dashboard_path_for(klass)` builds each page path. The gem's `_resource_sidebar.html.erb` groups them under a Dashboards item (`plutonium.resource.nav.dashboards`) after the Home link (`plutonium.resource.nav.home`), skipping the one mounted at the root, which the Home link already opens.
 
 ## Generator
 
 ```bash
-rails g pu:dashboard Sales --dest=admin_portal            # /admin/sales
+rails g pu:dashboard Sales --dest=admin_portal            # /admin/dashboards/sales
 rails g pu:dashboard Home --dest=admin_portal --at=/      # portal root
 rails g pu:dashboard Reporting --dest=main_app --at=reports
 ```

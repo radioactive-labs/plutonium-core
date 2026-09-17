@@ -327,6 +327,8 @@ For the full multi-tenancy story, see [Tenancy › Entity scoping](/reference/te
 
 ## Dashboard / non-resource pages
 
+The generated `dashboard#index` is a plain page listing the registered resources. To replace it with a [dashboard](/guides/dashboards) of metric and chart cards, run `rails g pu:dashboard Home --dest=<portal> --at=/`, which swaps the `root to:` line for a `register_dashboard ... at: "/"` registration.
+
 ```ruby
 # config/routes.rb
 AdminPortal::Engine.routes.draw do

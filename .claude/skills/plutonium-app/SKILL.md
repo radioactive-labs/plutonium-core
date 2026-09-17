@@ -487,7 +487,7 @@ rails g pu:res:conn Profile --dest=customer_portal --singular
 
 ## Dashboards
 
-`register_dashboard SomeDashboard, at: "overview"` mounts a `Plutonium::Dashboard::Base` subclass (metric / chart / free-form cards, each in its own lazy turbo frame) on the portal; `at: "/"` makes it the portal root in place of `root to: "dashboard#index"`. Generate one with `rails g pu:dashboard Overview --dest=<portal>`. See [[plutonium-dashboard]].
+`register_dashboard SomeDashboard, at: "overview"` mounts a `Plutonium::Dashboard::Base` subclass (metric / chart / free-form cards, each in its own lazy turbo frame) on the portal at `/dashboards/overview`; `at: "/"` (generator: `--at=/`) makes it the portal root in place of `root to: "dashboard#index"`; delete the generated `DashboardController` and view afterwards. Generate one with `rails g pu:dashboard Overview --dest=<portal>`. See [[plutonium-dashboard]].
 
 ## Custom member / collection routes
 

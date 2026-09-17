@@ -1,5 +1,9 @@
 # Dashboard DSL Reference
 
+::: warning Experimental
+Dashboards are experimental: the DSL and behavior may change in a future release.
+:::
+
 A dashboard is a subclass of `Plutonium::Dashboard::Base`. Everything is declared at class level; an instance is built per request with the view context and is the receiver of every card block.
 
 ## Presentation
@@ -17,10 +21,6 @@ presents label: "Sales", description: "Orders and revenue", icon: Phlex::TablerI
 `<key>` is `Class.i18n_key`: the class name underscored without the suffix (`AdminPortal::SalesDashboard` → `admin_portal/sales`). `label` and `description` accept the class-level lazy `t("...")`.
 
 ## Board-level options
-
-### columns(n)
-
-Grid columns on large screens, `1` to `6`. Default `3`. Narrower screens get two columns, then one.
 
 ### refresh(seconds)
 
@@ -47,9 +47,9 @@ Keys are unique per dashboard; a duplicate raises at class load. Cards render in
 | `label:` | String, lazy `t` | convention, then key titleized | Title |
 | `description:` | String, lazy `t` | convention | Caption |
 | `icon:` | Phlex icon class | none | Shown beside the title |
-| `span:` | `1`..`6`, `:full` | `1` | Grid columns to span; clamps to the full row |
-| `lazy:` | Boolean | `true` | Own turbo frame (`true`) or inline (`false`) |
-| `refresh:` | Integer seconds | dashboard `refresh` | Reload interval; requires `lazy: true` |
+| `span:` | `1`..`12`, `:full` | metric `3`, chart `6`, card `6` | Columns of the 12-column grid. `:full` is `12`. On tablets (2 columns) a span of `6` or more takes the row; phones are one column |
+| `lazy:` | Boolean | `true` | `true`: own lazy turbo frame, block runs in a separate request. `false`: inline, block runs in the page request; no frame, never refreshes. See the [guide](/guides/dashboards#lazy-and-inline-cards) |
+| `refresh:` | Integer seconds, or `false` | dashboard `refresh` | Reload interval; requires `lazy: true`. `false` opts the card out of the dashboard's `refresh` |
 | `condition:` | Proc, Symbol | none | Hides the card and 404s its endpoint when false |
 | `href:` | String, Proc | none | Links the title |
 
@@ -107,7 +107,7 @@ No kind-specific options. The block is `instance_exec`ed in `Plutonium::UI::Dash
 | `authorize?` | Override to gate the page and every card. Default `true` |
 | `visible_cards` | Cards whose `condition:` passes |
 | `visible_card!(key)` | The card, or `Plutonium::Dashboard::UnknownCardError` (404) |
-| `refresh_for(card)` | The card's interval, else the dashboard's |
+| `refresh_for(card)` | The card's interval, else the dashboard's; `nil` for a card declared `refresh: false` |
 | `view_context` / `helpers` | The Rails view context |
 | `current_user`, `current_scoped_entity`, `scoped_to_entity?`, `params`, `request`, `controller`, `current_engine`, `resource_url_for`, `authorized_resource_scope`, `allowed_to?`, `policy_for`, `registered_resources`, `root_path` | Delegated to the view context |
 
