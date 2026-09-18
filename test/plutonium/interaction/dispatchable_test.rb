@@ -355,6 +355,28 @@ class Plutonium::Interaction::DispatchableTest < ActiveSupport::TestCase
     assert_equal 0, Plutonium::Interaction::Async::Run.count
   end
 
+  test "a cached token for an oversized file fails the form, like a fresh upload" do
+    # A direct upload reaches the interaction as an ALREADY-STAGED token (a
+    # String), not an IO. Detecting file inputs by value shape skipped these
+    # entirely, so an oversized direct upload validated clean and dispatched —
+    # the author's rule surfacing as a run failure the submitter never sees.
+    token = Plutonium::Attachments.stage_upload(
+      uploaded("x" * 2048), backend: :shrine, uploader: LimitedUploader
+    )
+    assert_kind_of String, token, "a direct upload arrives pre-staged"
+
+    interaction = UploaderDispatchInteraction.new(
+      view_context: @view_context, import_file: token
+    )
+
+    refute interaction.valid?
+    assert_match(/too large/, Array(interaction.errors[:import_file]).join)
+    refute UploaderDispatchInteraction.call(
+      view_context: @view_context, import_file: token
+    ).success?
+    assert_equal 0, Plutonium::Interaction::Async::Run.count
+  end
+
   test "a file within the uploader's rules dispatches, staged through that uploader" do
     outcome = UploaderDispatchInteraction.call(
       view_context: @view_context, import_file: uploaded("small")
