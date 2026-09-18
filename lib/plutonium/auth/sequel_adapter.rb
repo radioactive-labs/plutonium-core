@@ -14,7 +14,7 @@ module Plutonium
         "mysql2" => (RUBY_ENGINE == "jruby") ? "mysql" : "mysql2",
         "sqlite3" => "sqlite",
         "oracle_enhanced" => "oracle",
-        "sqlserver" => (RUBY_ENGINE == "jruby") ? "mssql" : "tinytds"
+        "sqlserver" => (RUBY_ENGINE == "jruby") ? "sqlserver" : "tinytds"
       }.freeze
 
       class << self
