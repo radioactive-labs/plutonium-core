@@ -336,13 +336,25 @@ module Plutonium
         # equivalent of that.
         #
         # No-op for ActiveStorage fields, and for uploaders declaring no rules.
+        #
+        # Which attributes are files is decided by their INPUT DECLARATION (an
+        # `as:` file alias), not by the shape of the value they currently hold.
+        # A direct upload arrives already staged, as a token String, so keying
+        # off IO-shape (respond_to?(:read)) skipped exactly those — an oversized
+        # cached token validated clean and dispatched, the rule surfacing as a
+        # run failure the submitter never sees. This is how a wizard decides the
+        # same question (Plutonium::Wizard::Attachments.field?).
         def validate_dispatch_attachments
-          staged = attributes.except("resource", "resources").select { |_, v| dispatch_attachment?(v) }.keys
           stage_dispatch_attachments!
 
-          staged.each do |name|
+          self.class.defined_inputs.each do |name, config|
+            next unless Plutonium::Definition::InputAliases.file_input?(config.dig(:options, :as))
+
+            value = public_send(name)
+            next if value.blank?
+
             messages = Plutonium::Attachments.validation_errors(
-              public_send(name), **dispatch_attachment_options(name)
+              value, **dispatch_attachment_options(name)
             )
             messages.each { |message| errors.add(name, message) }
           end
