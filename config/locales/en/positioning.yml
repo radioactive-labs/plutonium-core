@@ -1,0 +1,14 @@
+# Drag-to-reorder: the reposition endpoint's refusal toasts and the row grip.
+en:
+  plutonium:
+    positioning:
+      reposition:
+        foreign_sort: "Reordering is only available while the list is sorted by %{attribute}."
+        foreign_group: "Reordering only works within the same %{group}."
+        unauthorized: "You are not authorized to reorder this."
+        record_missing: "This record no longer exists."
+        record_invalid: "This record could not be moved."
+      drag_handle:
+        title: "Drag to reorder"
+        aria_label: "Drag to reorder. Use the up and down arrow keys to move this row."
+        disabled_title: "Sort by position to reorder"

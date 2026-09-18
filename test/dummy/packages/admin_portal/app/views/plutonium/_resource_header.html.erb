@@ -1,5 +1,22 @@
 <%= render Plutonium::UI::Layout::Topbar.new do |bar| %>
   <% bar.with_action do %>
+    <%# Locale switch demo: hits the current page with ?locale=, which
+        AdminPortal::Concerns::Controller#switch_locale remembers per session. %>
+    <nav class="flex items-center gap-1 text-sm font-medium" aria-label="Language">
+      <% {en: "EN", es: "ES"}.each do |code, label| %>
+        <% active = I18n.locale == code %>
+        <a href="<%= "#{request.path}?locale=#{code}" %>"
+           lang="<%= code %>"
+           aria-current="<%= "true" if active %>"
+           class="<%= active ? "text-primary-600 dark:text-primary-400 underline" : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" %>">
+          <%= label %>
+        </a>
+        <% unless code == :es %><span class="text-gray-300 dark:text-gray-600">|</span><% end %>
+      <% end %>
+    </nav>
+  <% end %>
+
+  <% bar.with_action do %>
     <%= render Plutonium::UI::ColorModeSelector.new %>
   <% end %>
 
@@ -12,7 +29,7 @@
       ) do |nav|
         if try(:profile_url)
           nav.with_section do |section|
-            section.with_link(label: "Profile", href: profile_url) do |link|
+            section.with_link(label: t("plutonium.resource.nav.profile"), href: profile_url) do |link|
               link.with_leading do
                 render Phlex::TablerIcons::User.new(class: "mr-2 text-gray-400 w-4 h-4")
               end
@@ -21,7 +38,7 @@
         end
 
         nav.with_section do |section|
-          section.with_link(label: "Sign out", href: try(:logout_url) || "#", class: "rounded-b-lg", data: {turbo: false})
+          section.with_link(label: t("plutonium.resource.nav.sign_out"), href: try(:logout_url) || "#", class: "rounded-b-lg", data: {turbo: false})
         end
       end
     %>

@@ -137,7 +137,7 @@ module Plutonium
               ) do
                 span(class: "bg-secondary-700 text-white flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-lg") do
                   render Phlex::TablerIcons::Plus.new(class: "w-4 h-4 mr-1")
-                  span { "Add #{name.to_s.singularize.humanize}" }
+                  span { t("plutonium.ui.form.repeater.add", name: name.to_s.singularize.humanize) }
                 end
               end
             end

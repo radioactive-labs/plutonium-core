@@ -1,7 +1,8 @@
 class Blogging::PostDefinition < Blogging::ResourceDefinition
-  # Page titles
-  index_page_title "Blog Posts"
-  index_page_description "Manage your blog content"
+  # Page titles. Lazy translations (the definition's `t`) so they follow the
+  # request locale; the keys live in the app's config/locales/{en,es}.yml.
+  index_page_title t("blog.index.title")
+  index_page_description t("blog.index.description")
 
   # Field customizations
   field :body, as: :text

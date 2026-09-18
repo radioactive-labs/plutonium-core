@@ -1,4 +1,5 @@
-import { Controller } from "@hotwired/stimulus";
+import { Controller } from "@hotwired/stimulus"
+import { t } from "../i18n.js";
 
 // Connects to data-controller="dirty-form-guard"
 // Prompts before discarding a form's unsaved changes. Two guard surfaces,
@@ -220,7 +221,7 @@ export default class extends Controller {
 
     const message =
       trigger.getAttribute("data-dirty-form-guard-leave") ||
-      "You have unsaved changes that will be lost. Continue?";
+      t("plutonium.js.dirty_form_guard.unsaved_changes");
     const confirmed = await this.#confirm(message);
     if (!confirmed) return;
 
@@ -339,7 +340,7 @@ export default class extends Controller {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => d.setAttribute("data-open", ""));
       });
-    } else if (window.confirm("Discard your changes?")) {
+    } else if (window.confirm(t("plutonium.js.dirty_form_guard.discard_changes"))) {
       this.forceClose = true;
       this.dialog.dispatchEvent(new CustomEvent("modal:request-close"));
     }

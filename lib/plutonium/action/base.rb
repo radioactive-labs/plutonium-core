@@ -6,11 +6,34 @@ module Plutonium
   module Action
     # Base class for all actions in the Plutonium framework.
     class Base
-      attr_reader :name, :label, :description, :icon, :route_options, :confirmation, :turbo, :color, :category, :position, :return_to, :condition, :link, :button
+      attr_reader :name, :icon, :route_options, :turbo, :color, :category, :position, :return_to, :condition, :link, :button
+
+      # `label:`, `description:` and `confirmation:` may be lazy translations
+      # (`t(...)` in a definition) or any zero-arity proc: resolve per read so
+      # the text follows the request locale rather than the class load.
+      def label
+        Plutonium::Translation.resolve(@label) ||
+          Plutonium::Translation.label_for(:action, @resource_class, @name) ||
+          @name.to_s.titleize
+      end
+
+      def description = Plutonium::Translation.resolve(@description)
+
+      # A copy of this action bound to `resource_class`, so its default label
+      # resolves through plutonium.actions.<model>.<action>. Returns self when
+      # already bound.
+      def for_resource(resource_class)
+        return self if @resource_class || resource_class.nil?
+
+        dup.tap { |copy| copy.instance_variable_set(:@resource_class, resource_class) }
+      end
+
+      def confirmation = Plutonium::Translation.resolve(@confirmation)
 
       def initialize(name, **options)
         @name = name.to_sym
-        @label = options[:label] || @name.to_s.titleize
+        @label = options[:label]
+        @resource_class = options[:resource_class]
         @description = options[:description]
         @icon = options[:icon] || Phlex::TablerIcons::ChevronRight
         @color = options[:color]
@@ -152,7 +175,8 @@ module Plutonium
           size: @modal_size,
           condition: @condition,
           link: @link,
-          button: @button
+          button: @button,
+          resource_class: @resource_class
         }
       end
 

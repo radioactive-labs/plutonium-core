@@ -29,12 +29,21 @@ module Plutonium
           end
         end
 
+        # Active-filter pill text: each chosen value through the enum-value
+        # convention (activerecord.attributes.<model>.<key>/<value> or
+        # plutonium.values.<model>.<key>.<value>), else the raw value.
+        def humanize_value(value)
+          Array(value).reject(&:blank?).map do |choice|
+            Plutonium::Translation.value_label(resource_class, key, choice) || choice.to_s
+          end.join(", ")
+        end
+
         def customize_inputs
           input :value,
             as: :select,
             choices: resolved_choices,
             multiple: @multiple,
-            include_blank: @multiple ? false : "All"
+            include_blank: @multiple ? false : Plutonium::Translation.t("plutonium.query.all")
         end
 
         private

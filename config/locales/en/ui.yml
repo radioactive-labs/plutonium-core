@@ -1,0 +1,93 @@
+# Fixed strings rendered by the components under lib/plutonium/ui.
+en:
+  plutonium:
+    ui:
+      loading: "Loading..."
+      details: "Details"
+      home: "Home"
+      actions_dropdown:
+        actions: "Actions"
+        open_menu: "Open actions menu"
+      breadcrumbs:
+        label: "Breadcrumb"
+        dashboard: "Dashboard"
+        show_collapsed: "Show collapsed breadcrumbs"
+      color_mode:
+        toggle: "Toggle color mode"
+      empty_state:
+        none_available: "No %{resources} available"
+      export:
+        export: "Export"
+        export_all: "Export all"
+        more_options: "More export options"
+      frame_navigator:
+        back: "Back"
+        refresh: "Refresh"
+        maximize: "Maximize"
+      grid:
+        open: "Open"
+        open_record: "Open %{name}"
+      layout:
+        sidebar_navigation: "Sidebar Navigation"
+        toggle_sidebar: "Toggle sidebar"
+        toggle_sidebar_pin: "Toggle sidebar pin"
+      modal:
+        dialog: "Dialog"
+        open_full_page: "Open full page"
+        open_full_page_new_tab: "Open full page in a new tab"
+        close: "Close dialog"
+      nav_user:
+        open_menu: "Open user menu"
+        avatar_alt: "avatar"
+      nav_grid_menu:
+        view: "View %{label}"
+      page:
+        new_title: "New %{resource}"
+        edit_title: "Edit %{resource}"
+      table:
+        column_options: "Column options"
+        clear_sort: "Clear sort"
+        filters: "Filters"
+        filter: "Filter"
+        clear: "Clear"
+        clear_all: "Clear all"
+        apply: "Apply"
+        apply_filters: "Apply Filters"
+        close_filters: "Close filters"
+        search_placeholder: "Search..."
+        all: "All"
+        scope: "Scope"
+        view: "View"
+        views:
+          table: "Table"
+          grid: "Grid"
+          kanban: "Board"
+        remove_filter: "Remove %{filter} filter"
+        result_count:
+          one: "%{count} result"
+          other: "%{count} results"
+        selected_count: "%{count} selected"
+        clear_selection: "Clear selection"
+        no_bulk_actions: "No bulk actions available"
+        more_actions: "More actions"
+      form:
+        discard_title: "Discard changes?"
+        discard_description: "You have unsaved changes. Closing this form now will lose them."
+        keep_editing: "Keep editing"
+        discard_changes: "Discard changes"
+        create_and_add_another: "Create and add another"
+        update_and_continue_editing: "Update and continue editing"
+        repeater:
+          add: "Add %{name}"
+          remove: "Remove"
+          removed: "Removed"
+          restore: "Restore"
+        key_value_store:
+          key_placeholder: "Key"
+          value_placeholder: "Value"
+          add_pair: "+ Add Pair"
+        password:
+          keep_current_hint: "Leave blank to keep the current value."
+          reenter_hint: "Re-enter the new value to save it."
+        attachment:
+          delete: "Delete"

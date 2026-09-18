@@ -1,0 +1,34 @@
+# Async interaction runs: the progress page, the running banner, and the
+# messages an executor writes into a run's errors_log. Run state / outcome
+# VALUES ("Completed with errors") are enum-like and resolve by convention
+# (plutonium.values.*), not here.
+en:
+  plutonium:
+    async:
+      run:
+        label: "%{name} #%{id}"
+        target_type: "Target type"
+        enqueue_failed: "could not be enqueued for execution"
+      executor:
+        target_missing: "Target %{id} is no longer available"
+        target_unauthorized: "Target %{id} is no longer permitted by %{action}"
+        batch_aborted: "target %{id} failed (%{error}); no targets were applied"
+        halted:
+          one: "stopped at the first target failure (%{policy} policy); %{count} target was not attempted"
+          other: "stopped at the first target failure (%{policy} policy); %{count} targets were not attempted"
+        partial_batch_refused: "%{unresolved} of %{total} targets could not be resolved; a %{policy} run does not apply a partial batch"
+      context:
+        initiator_missing: "run %{run} has no initiator (%{type}#%{id} no longer exists)"
+        tenant_missing: "run %{run} was scoped to %{type}#%{id}, which no longer exists; refusing to resolve targets without a tenant"
+        parent_missing: "run %{run} was nested under %{type}#%{id}, which no longer exists; refusing to resolve targets without its parent"
+      progress:
+        targets: "%{done} of %{total} targets (%{percent}%)"
+        working: "Working…"
+        no_total: "No progress total was recorded"
+        failures: "Failures"
+        error_count:
+          one: "%{count} error"
+          other: "%{count} errors"
+        target_failure: "#%{target_id}: %{message}"
+      banner:
+        view_progress: "View progress"

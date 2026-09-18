@@ -34,6 +34,38 @@ module Plutonium
 
         protected
 
+        # Translate one of Plutonium's own strings. Full keys only
+        # (`t("plutonium.ui.table.filters")`), so every call site is greppable.
+        def t(key, **options)
+          Plutonium::Translation.t(key, **options)
+        end
+
+        # Resolve proc-valued help / header options (label, hint, description,
+        # placeholder, align) for this render, so `label: t("...")` and other
+        # lazy values work on displays, tables and forms alike. Other option
+        # keys are left alone: a `formatter:` or `condition:` proc is a
+        # callback, not a value. Same arity rule as Form::Resource: a zero-arity
+        # proc keeps its own binding, a one-arity proc receives this component.
+        def resolve_field_level_procs(options)
+          resolvable_keys = FIELD_LEVEL_KEYS | COLUMN_FIELD_LEVEL_KEYS
+          resolve_option_procs(options) { |key| resolvable_keys.include?(key) }
+        end
+
+        # Resolve every proc-valued option the block admits (all but
+        # `condition:` by default), by the one arity rule: a zero-arity proc is
+        # called plainly and keeps its own binding, a one-arity proc receives
+        # this component for `object` / `params` / helpers.
+        def resolve_option_procs(options)
+          return options if options.blank?
+
+          options.to_h do |key, value|
+            resolvable = value.is_a?(Proc) && (block_given? ? yield(key) : key != :condition)
+            [key, resolvable ? call_option_proc(value) : value]
+          end
+        end
+
+        def call_option_proc(value) = value.arity.zero? ? value.call : value.call(self)
+
         def phlexi_render(arg, &)
           return unless arg
           raise ArgumentError, "phlexi_render requires a default render block" unless block_given?

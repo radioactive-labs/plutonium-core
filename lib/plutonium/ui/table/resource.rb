@@ -84,7 +84,7 @@ module Plutonium
         end
 
         def render_empty_card
-          EmptyCard("No #{resource_name_plural(resource_class).downcase} available") {
+          EmptyCard(t("plutonium.ui.empty_state.none_available", resources: resource_name_plural(resource_class).downcase)) {
             action = resource_definition.defined_actions[:new]
             if action&.permitted_by?(current_policy)
               url = route_options_to_url(action.route_options, resource_class)
@@ -120,6 +120,10 @@ module Plutonium
 
               column_definition = resource_definition.defined_columns[name] || {}
               column_options = column_definition[:options] || {}
+
+              field_options = resolve_field_level_procs(field_options)
+              display_options = resolve_field_level_procs(display_options)
+              column_options = resolve_field_level_procs(column_options)
 
               # A `column` condition or a surface-neutral `field` condition hides
               # the column. A `display` condition stays show-only: it may reference
@@ -293,7 +297,7 @@ module Plutonium
                    "data-[open]:translate-x-0 " \
                    "flex flex-col",
             role: "dialog",
-            aria: {label: "Filters", hidden: "true", modal: "true"},
+            aria: {label: t("plutonium.ui.table.filters"), hidden: "true", modal: "true"},
             data: {filter_panel_target: "panel"}
           ) do
             render Plutonium::UI::Table::Components::FilterForm.new(
@@ -311,7 +315,7 @@ module Plutonium
 
         def render_footer
           div(class: "lg:sticky bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-[var(--pu-body)]") {
-            TableInfo(pagy_instance)
+            TableInfo(pagy_instance, item_name: resource_name(resource_class, pagy_instance.count))
             TablePagination(pagy_instance)
           }
         end

@@ -25,9 +25,9 @@ module Plutonium
             end
           end
 
-          def true_label = @true_label || "Yes"
+          def true_label = @true_label || Plutonium::Translation.t("plutonium.boolean.true")
 
-          def false_label = @false_label || "No"
+          def false_label = @false_label || Plutonium::Translation.t("plutonium.boolean.false")
 
           def build_attributes
             @true_label = attributes.delete(:true_label)

@@ -118,7 +118,7 @@ module Plutonium
           #     interaction that references the definition at its own load time
           #     would deadlock the autoloader. In practice interactions depend only
           #     on their model, so this constraint is naturally satisfied.
-          board = Plutonium::Kanban::DSL.build(&block)
+          board = Plutonium::Kanban::DSL.build(resource_class: model_class_or_nil, &block)
           # Cache the compiled board so the controller can reuse it instead of
           # recompiling per request (see KanbanActions#current_kanban_board).
           self.defined_kanban_board = board

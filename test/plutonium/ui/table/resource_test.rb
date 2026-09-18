@@ -115,6 +115,18 @@ class Plutonium::UI::Table::ResourceTest < ActiveSupport::TestCase
     )
   end
 
+  test "the empty state interpolates the lower-cased plural resource name" do
+    component = Plutonium::UI::Table::Resource.new([], resource_fields: [:email], resource_definition: nil)
+    captured = nil
+    component.define_singleton_method(:resource_class) { User }
+    component.define_singleton_method(:resource_name_plural) { |klass| klass.model_name.human.pluralize }
+    component.define_singleton_method(:EmptyCard) { |message, &_block| captured = message }
+
+    component.send(:render_empty_card)
+
+    assert_equal "No users available", captured
+  end
+
   test "a column renders a component-class as: declared on the field" do
     definition = FakeDefinition.new(defined_fields: {email: {options: {as: CardComponent}}})
 

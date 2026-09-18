@@ -646,6 +646,38 @@ step    :billing,   condition: -> { data.plan.tier == "pro" }  # the wizard — 
 
 It cannot take a `form` argument the way an option does: for a `column`/`display`, a step, or an action there is no form.
 
+## Internationalization (labels, placeholders, hints)
+
+**Never hard-code display text a locale file can supply.** Labels come from `activerecord.attributes.<model>.<attr>` already. Placeholders, hints and descriptions are looked up by convention when the definition leaves them blank, so the translatable default is to declare nothing:
+
+```yaml
+en:
+  plutonium:
+    fields:
+      blogging/post:
+        title: { placeholder: "A short, descriptive title", hint: "Shown in search" }
+        body:  { description: "Rendered as Markdown" }
+    actions:        { blogging/post: { publish: "Publish now" } }
+    scopes:         { blogging/post: { drafts: "Drafts" } }
+    filters:        { blogging/post: { author: "Written by" } }
+    kanban_columns: { blogging/post: { in_review: "In review" } }
+    wizard_steps:   { onboarding_wizard: { billing: "Billing details" } }
+    values:         { blogging/post: { status: { archived: "Archived" } } }   # or activerecord.attributes.<model>.status/archived
+```
+
+Resolution for every slot: explicit option → `plutonium.portals.<portal>.…` → `plutonium.…` → (placeholder only) `helpers.placeholder.<model>.<attr>` → nothing. For actions, an interaction's explicit `presents label:` counts as declared (beats the convention); its class-name default does not. The model segment is `model_name.i18n_key` (`blogging/post`), walked up STI ancestors.
+
+When an explicit value must be translated, use the definition's class-level `t`, which is lazy (resolved per render, in the request locale):
+
+```ruby
+input  :email,   placeholder: t("forms.shared.email_placeholder")
+action :publish, label: t("plutonium.actions.blogging/post.publish")
+```
+
+🚨 Never `I18n.t(...)` in a class body: it freezes the string in whatever locale was active at load. Use `t(...)` or a `-> { I18n.t(...) }` proc.
+
+Full reference: `docs/reference/i18n.md`.
+
 ## Dynamic Forms (`pre_submit`)
 
 A `pre_submit: true` field triggers a server re-render on change, re-evaluating `condition:` procs. Use for cascading or context-dependent forms.

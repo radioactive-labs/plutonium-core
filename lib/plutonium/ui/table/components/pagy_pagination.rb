@@ -10,7 +10,7 @@ module Plutonium
           end
 
           def view_template
-            nav(aria_label: "Page navigation", class: "flex justify-center mt-6") do
+            nav(aria_label: Plutonium::Translation.pagy("pagy.aria_label.nav", count: @pagy.last), class: "flex justify-center mt-6") do
               ul(class: "inline-flex items-center gap-1 text-sm") do
                 prev_link
                 page_links
@@ -24,11 +24,11 @@ module Plutonium
           def prev_link
             li do
               if @pagy.previous
-                a(href: page_url(@pagy.previous), class: link_classes(true)) {
+                a(href: page_url(@pagy.previous), class: link_classes(true), aria_label: previous_label) {
                   render Phlex::TablerIcons::ChevronLeft.new
                 }
               else
-                button(class: disabled_link_classes(true), aria_disabled: "true") {
+                button(class: disabled_link_classes(true), aria_disabled: "true", aria_label: previous_label) {
                   render Phlex::TablerIcons::ChevronLeft.new
                 }
               end
@@ -38,16 +38,20 @@ module Plutonium
           def next_link
             li do
               if @pagy.next
-                a(href: page_url(@pagy.next), class: link_classes(false, true)) {
+                a(href: page_url(@pagy.next), class: link_classes(false, true), aria_label: next_label) {
                   render Phlex::TablerIcons::ChevronRight.new
                 }
               else
-                button(class: disabled_link_classes(false, true), aria_disabled: "true") {
+                button(class: disabled_link_classes(false, true), aria_disabled: "true", aria_label: next_label) {
                   render Phlex::TablerIcons::ChevronRight.new
                 }
               end
             end
           end
+
+          def previous_label = Plutonium::Translation.pagy("pagy.aria_label.previous")
+
+          def next_label = Plutonium::Translation.pagy("pagy.aria_label.next")
 
           def page_links
             @pagy.send(:series).each do |item|

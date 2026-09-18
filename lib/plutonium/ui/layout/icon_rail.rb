@@ -38,7 +38,7 @@ module Plutonium
           aside(
             id: "sidebar-navigation",
             data: {controller: "sidebar icon-rail"},
-            aria: {label: "Sidebar Navigation"},
+            aria: {label: t("plutonium.ui.layout.sidebar_navigation")},
             class: "fixed top-0 left-0 z-40 h-dvh " \
                    "bg-[var(--pu-surface)] border-r border-[var(--pu-border)] " \
                    "flex flex-col transition-[width] duration-200 overflow-x-hidden " \
@@ -56,7 +56,7 @@ module Plutonium
           div(class: "h-12 flex items-center justify-center border-b border-[var(--pu-border)] shrink-0") do
             next unless brand_slot?
 
-            a(href: root_path, aria: {label: "Home"}, class: "flex items-center justify-center") do
+            a(href: root_path, aria: {label: t("plutonium.ui.home")}, class: "flex items-center justify-center") do
               render brand_slot
             end
           end
@@ -81,8 +81,8 @@ module Plutonium
         def render_pin_button
           button(
             type: "button",
-            title: "Toggle sidebar",
-            aria: {label: "Toggle sidebar pin"},
+            title: t("plutonium.ui.layout.toggle_sidebar"),
+            aria: {label: t("plutonium.ui.layout.toggle_sidebar_pin")},
             data: {action: "icon-rail#togglePin"},
             class: "flex items-center justify-center w-10 h-10 rounded-md transition-colors " \
                    "text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:bg-[var(--pu-surface-alt)]"

@@ -54,6 +54,14 @@ const cats = [
     { name: "Invites & memberships", desc: "Token lifecycle, mailers, onboarding",
       link: "/plutonium-core/guides/user-invites" },
   ]},
+  { name: "Localization", items: [
+    { name: "Internationalization", desc: "Every UI string from a locale file",
+      link: "/plutonium-core/reference/i18n" },
+    { name: "Locale switching", desc: "Per-portal, the standard Rails way",
+      link: "/plutonium-core/reference/i18n#switching-locale" },
+    { name: "Translated pagination", desc: "Pagy locales, ~35 languages",
+      link: "/plutonium-core/reference/i18n#where-the-strings-live" },
+  ]},
 ]
 </script>
 

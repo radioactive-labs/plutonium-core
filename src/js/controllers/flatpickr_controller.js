@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus";
+import { lookup } from "../i18n.js";
 
 // Connects to data-controller="flatpickr"
 export default class extends Controller {
@@ -43,6 +44,13 @@ export default class extends Controller {
 
   #buildOptions() {
     let options = { altInput: true };
+
+    // Optional locale passthrough: plutonium.js.libraries.flatpickr.locale is
+    // the flatpickr locale key (e.g. "de"). Loading the matching l10n bundle
+    // (flatpickr/dist/l10n/de.js) is the host app's job; without it flatpickr
+    // falls back to English.
+    const locale = lookup("plutonium.js.libraries.flatpickr.locale");
+    if (typeof locale === "string") options.locale = locale;
 
     if (this.element.attributes.type.value == "datetime-local") {
       options.enableTime = true;

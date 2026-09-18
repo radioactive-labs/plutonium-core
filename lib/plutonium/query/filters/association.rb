@@ -52,7 +52,7 @@ module Plutonium
             as: :resource_select,
             association_class: association_class,
             multiple: @multiple,
-            include_blank: @multiple ? false : "All",
+            include_blank: @multiple ? false : Plutonium::Translation.t("plutonium.query.all"),
             scope: @scope_proc
         end
 

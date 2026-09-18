@@ -23,6 +23,19 @@ module Plutonium
       #
       # @param resource_class [Object] The resource class.
       # @param params [Hash] The parameters for initialization.
+      # The model this query object filters, for label conventions keyed by model.
+      attr_reader :resource_class
+
+      # Display label for a filter: its own `label` when it is a Filter (an
+      # explicit `label:` or the plutonium.filters.<model>.<name> convention),
+      # else the convention, else the humanized name.
+      def filter_label(name)
+        filter = filter_definitions[name]
+        return filter.label if filter.is_a?(Plutonium::Query::Filter)
+
+        Plutonium::Translation.label_for(:filter, resource_class, name) || name.to_s.humanize
+      end
+
       def initialize(resource_class, params, request_path, &)
         @resource_class = resource_class
         @params = params
@@ -182,7 +195,9 @@ module Plutonium
               next if humanized.blank?
               humanized
             else
-              entries.map { |k, v| "#{k.to_s.humanize.downcase} #{v}" }.join(", ")
+              entries.map { |k, v|
+                Plutonium::Translation.t("plutonium.query.active_filter.input_value", input: k.to_s.humanize.downcase, value: v)
+              }.join(", ")
             end
           when Array
             entries = filter_params.reject(&:blank?)
@@ -199,7 +214,7 @@ module Plutonium
 
           {
             name: name,
-            label: name.to_s.humanize,
+            label: filter_label(name),
             value_label: value_label,
             clear_url: build_url(name => nil)
           }
@@ -254,7 +269,7 @@ module Plutonium
 
       private
 
-      attr_reader :resource_class, :params, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
+      attr_reader :params, :selected_sort_fields, :selected_sort_directions, :selected_scope_filter
 
       # Defines standard queries for search and scope.
       def define_standard_queries

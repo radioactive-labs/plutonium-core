@@ -21,7 +21,7 @@ module Plutonium
 
         private
 
-        def lang = nil
+        def lang = I18n.locale.to_s
 
         def page_title = view_context.controller.instance_variable_get(:@page_title)
 
@@ -35,6 +35,7 @@ module Plutonium
           head {
             render_title
             render_metatags
+            render_i18n
             render_assets
             render_pre_paint_scripts
           }
@@ -173,6 +174,23 @@ module Plutonium
           render_fonts
           render_styles
           render_scripts
+        end
+
+        # The `plutonium.js` locale subtree as JSON for src/js/i18n.js, in a
+        # <meta> rather than a <script>: Turbo Drive replaces provisional head
+        # elements on every visit but only ever appends scripts, so a locale
+        # switch mid-session would otherwise keep serving the first blob.
+        #
+        # Merged over the default locale so a partially translated locale
+        # falls back per key instead of dropping every untranslated string.
+        def render_i18n
+          meta(name: "pu-i18n", content: i18n_blob.to_json)
+        end
+
+        def i18n_blob
+          defaults = I18n.t("plutonium.js", locale: I18n.default_locale, default: {})
+          current = (I18n.locale == I18n.default_locale) ? {} : I18n.t("plutonium.js", default: {})
+          defaults.deep_merge(current)
         end
 
         def render_styles

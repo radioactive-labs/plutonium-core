@@ -1,0 +1,30 @@
+# Wording specific to the <%= package_name %> portal.
+#
+# This file is loaded automatically (the portal is a Rails engine) ahead of the
+# host app's config/locales: anything here overrides Plutonium's defaults for
+# this portal, and the app's own locale files override this.
+#
+# Portal-specific text for a resource goes under
+# plutonium.portals.<%= package_namespace %>, mirroring the global keys:
+#
+#   en:
+#     plutonium:
+#       portals:
+#         <%= package_namespace %>:
+#           fields:
+#             blogging/post:
+#               title:
+#                 placeholder: "Working title"
+#                 hint: "Shown in the sidebar"
+#           actions:
+#             blogging/post:
+#               publish: "Publish to site"
+#           scopes:
+#             blogging/post:
+#               drafts: "Drafts"
+#
+# See https://radioactive-labs.github.io/plutonium-core/reference/i18n
+en:
+  plutonium:
+    portals:
+      <%= package_namespace %>: {}

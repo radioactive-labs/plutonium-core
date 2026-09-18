@@ -1,0 +1,36 @@
+# Strings used by Plutonium's bundled JavaScript (src/js). The whole
+# `plutonium.js` subtree is serialised into `<script id="pu-i18n">` on every
+# page by Plutonium::UI::Layout::Base and read by `t()` in src/js/i18n.js, so
+# any key here can be overridden from the host app's config/locales.
+#
+# `libraries.*` are optional passthroughs to the third-party widgets' own
+# locale options; an absent entry leaves the library at its built-in default.
+en:
+  plutonium:
+    js:
+      are_you_sure: "Are you sure?"
+      clipboard:
+        copied: "Copied!"
+      slim_select:
+        search_failed: "Search failed"
+      dirty_form_guard:
+        unsaved_changes: "You have unsaved changes that will be lost. Continue?"
+        discard_changes: "Discard your changes?"
+      attachment_input:
+        choose_file:
+          one: "Choose file"
+          other: "Choose files"
+        delete_all: "Delete %{count}"
+      turbo_confirm:
+        cancel: "Cancel"
+        confirm: "Confirm"
+      libraries:
+        # SlimSelect `settings` (https://slimselectjs.com/settings)
+        slim_select:
+          placeholderText: "Select Value"
+          searchText: "No Results"
+          searchPlaceholder: "Search"
+          searchingText: "Searching..."
+        # flatpickr: `locale: "de"` (the host must load the matching l10n bundle)
+        # uppy: `strings: {...}` (Uppy locale strings, merged over the English defaults)
+        # intl_tel_input: `{...}` (intl-tel-input `i18n` option)

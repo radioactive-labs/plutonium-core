@@ -237,13 +237,13 @@
     {
       "warning_type": "Redirect",
       "warning_code": 18,
-      "fingerprint": "ce92f474802c81eb79c01577415a82ef604bddcb8072b68c5508260b2b0b7469",
+      "fingerprint": "4ea59ff297ad43eec0ad1ba3ed7c4fa459eb627312a017f3fcf58cdb3fd59104",
       "check_name": "Redirect",
       "message": "Possible unprotected redirect",
       "file": "lib/plutonium/invites/controller.rb",
       "line": 76,
       "link": "https://brakemanscanner.org/docs/warning_types/redirect/",
-      "code": "redirect_to(invitation_path_for(params[:token]), :alert => \"Please sign in to accept this invitation\")",
+      "code": "redirect_to(invitation_path_for(params[:token]), :alert => t(\"plutonium.invites.controller.sign_in_to_accept\"))",
       "render_path": null,
       "location": {
         "type": "method",

@@ -17,7 +17,7 @@ module Plutonium
           aside(
             data: {controller: "sidebar"},
             id: "sidebar-navigation",
-            aria: {label: "Sidebar Navigation"},
+            aria: {label: t("plutonium.ui.layout.sidebar_navigation")},
             class: "fixed top-0 left-0 z-40 w-64 h-dvh pt-14 transition-transform -translate-x-full lg:translate-x-0"
           ) do
             div(

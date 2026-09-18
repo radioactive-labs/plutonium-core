@@ -91,7 +91,7 @@ module Plutonium
           # writing a position derived from neighbours that never implied one.
           if config.delegate? && !current_query_object.sorted_ascending_only_by?(config.attribute)
             return render_position_reconciliation(
-              reason: "Reordering is only available while the list is sorted by #{config.attribute.to_s.humanize.downcase}."
+              reason: t("plutonium.positioning.reposition.foreign_sort", attribute: config.attribute.to_s.humanize.downcase)
             )
           end
 
@@ -168,17 +168,17 @@ module Plutonium
           end
 
           render_position_reconciliation(
-            reason: "You are not authorized to reorder this.",
+            reason: t("plutonium.positioning.reposition.unauthorized"),
             status: :forbidden
           )
         rescue ActiveRecord::RecordNotFound
           # The row was destroyed between render and drop. `find` raised before
           # authorize_current!, so satisfy that verifier explicitly.
           skip_verify_authorize_current!
-          render_position_reconciliation(reason: "This record no longer exists.")
+          render_position_reconciliation(reason: t("plutonium.positioning.reposition.record_missing"))
         rescue ActiveRecord::RecordInvalid => e
           reason = e.record.errors.full_messages.to_sentence.presence ||
-            "This record could not be moved."
+            t("plutonium.positioning.reposition.record_invalid")
           render_position_reconciliation(reason:)
         end
 
@@ -223,7 +223,7 @@ module Plutonium
         # says "the same product" rather than restating the column.
         def position_foreign_group_reason(record)
           scope = record.class.positioning_scope_attr.to_s.delete_suffix("_id").humanize.downcase
-          "Reordering only works within the same #{scope}."
+          t("plutonium.positioning.reposition.foreign_group", group: scope)
         end
 
         # Fills in a neighbour the CLIENT could not see.

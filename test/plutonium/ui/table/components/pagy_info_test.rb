@@ -11,11 +11,21 @@ class Plutonium::UI::Table::Components::PagyInfoTest < Minitest::Test
     pagy = build_pagy(count: 100, page: 2, limit: 10)
     html = render_component(pagy)
 
-    assert_includes html, "Showing"
-    assert_includes html, "11"   # from
-    assert_includes html, "20"   # to
-    assert_includes html, "100"  # count
-    assert_includes html, "results"
+    assert_includes html, "Displaying items <b>11</b>-<b>20</b> of <b>100</b> in total"
+  end
+
+  def test_uses_the_item_name_it_is_given
+    pagy = build_pagy(count: 100, page: 2, limit: 10)
+    html = Plutonium::UI::Table::Components::PagyInfo.new(pagy, item_name: "Articles").call
+
+    assert_includes html, "Displaying Articles <b>11</b>-<b>20</b> of <b>100</b> in total"
+    assert_includes html, "Show <select"
+    assert_includes html, "</select> Articles per page"
+  end
+
+  def test_single_page_and_empty_wording
+    assert_includes render_component(build_pagy(count: 7, page: 1, limit: 10)), "Displaying <b>7</b> items"
+    assert_includes render_component(build_pagy(count: 0, page: 1, limit: 10)), "No items found"
   end
 
   def test_renders_first_page_info
@@ -40,7 +50,8 @@ class Plutonium::UI::Table::Components::PagyInfoTest < Minitest::Test
     pagy = build_pagy(count: 100, page: 1, limit: 10)
     html = render_component(pagy)
 
-    assert_includes html, "Per page"
+    assert_includes html, "items per page"
+    assert_match(/<label[^>]*><span>Show <\/span>|Show <select/, html)
     assert_match(/<select/, html)
   end
 

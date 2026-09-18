@@ -48,5 +48,13 @@ module Dummy
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # The admin portal demonstrates the i18n layer end to end: it switches
+    # locale per request (see AdminPortal::Concerns::Controller). Spanish only
+    # translates a visible slice of the Plutonium strings; fallbacks resolve
+    # every other key back to English, so a locale switch never trips the
+    # test env's raise_on_missing_translations.
+    config.i18n.available_locales = [:en, :es]
+    config.i18n.fallbacks = true
   end
 end

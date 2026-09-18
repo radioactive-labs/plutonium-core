@@ -114,7 +114,7 @@ module Plutonium
           if from && !record_in_kanban_column?(record, from)
             return render_kanban_rejection(
               params[:from_column],
-              reason: "This card is no longer in “#{from.label}”."
+              reason: t("plutonium.kanban.move.not_in_column", column: from.label)
             )
           end
 
@@ -123,11 +123,11 @@ module Plutonium
           unless from && to&.accepts?(from.key) && !from.locked?
             reason =
               if from&.locked?
-                "Cards can't be moved out of “#{from.label}”."
+                t("plutonium.kanban.move.locked_source", column: from.label)
               elsif to
-                "Cards can't be moved into “#{to.label}”."
+                t("plutonium.kanban.move.not_accepted", column: to.label)
               else
-                "This card can't be moved there."
+                t("plutonium.kanban.move.not_allowed")
               end
             return render_kanban_rejection(params[:from_column], reason:)
           end
@@ -151,7 +151,7 @@ module Plutonium
           if to.wip && from.key != to.key && dest_cards.size + 1 > to.wip
             return render_kanban_rejection(
               params[:from_column],
-              reason: "“#{to.label}” is at its WIP limit (#{to.wip})."
+              reason: t("plutonium.kanban.move.wip_limit_reached", column: to.label, wip: to.wip)
             )
           end
 
@@ -180,7 +180,7 @@ module Plutonium
           # board. (Static boards always register — see Definition::IndexViews.)
           if run_enter_interaction && current_definition.defined_actions[to.enter_interaction_key].nil?
             Rails.logger.warn { "[plutonium] kanban enter_interaction on column `#{to.key}` is not registered — enter_interaction is unsupported on dynamic (`columns do…end`) boards; rejecting the drop." }
-            return render_kanban_rejection(params[:from_column], reason: "This drop can’t be completed.")
+            return render_kanban_rejection(params[:from_column], reason: t("plutonium.kanban.move.drop_incomplete"))
           end
 
           # An input-less drop interaction is `immediate` — the client commits it
@@ -304,7 +304,7 @@ module Plutonium
             # fix the input and resubmit.
             if drop_immediate
               reason = @interaction.errors.full_messages.to_sentence.presence ||
-                "“#{to.label}” could not be applied."
+                t("plutonium.kanban.move.enter_interaction_failed", column: to.label)
               return render_kanban_rejection(from.key, reason:)
             end
             return render :kanban_move_form, formats: [:html], **modal_render_options, status: :unprocessable_content
@@ -373,7 +373,7 @@ module Plutonium
           skip_verify_authorize_current!
           render_kanban_rejection(
             params[:from_column],
-            reason: "You are not authorized to move this card there.",
+            reason: t("plutonium.kanban.move.unauthorized"),
             status: :forbidden
           )
         rescue ActiveRecord::RecordNotFound
@@ -384,13 +384,13 @@ module Plutonium
           # `find` raised before authorize_current!, so satisfy that verifier; the
           # scope verifier is already satisfied by kanban_base_relation.
           skip_verify_authorize_current!
-          render_kanban_rejection(params[:from_column], reason: "This card no longer exists.")
+          render_kanban_rejection(params[:from_column], reason: t("plutonium.kanban.move.record_missing"))
         rescue ActiveRecord::RecordInvalid => e
           # An on_exit/on_enter hook (or the interaction) left the record invalid,
           # so save! raised and the transaction rolled back. Snap back with the
           # validation reason rather than let a 500 HTML page morph into the board.
           reason = e.record.errors.full_messages.to_sentence.presence ||
-            "This card could not be moved."
+            t("plutonium.kanban.move.record_invalid")
           render_kanban_rejection(params[:from_column], reason:)
         end
 
@@ -437,15 +437,15 @@ module Plutonium
           if from && !record_in_kanban_column?(record, from)
             return render_kanban_rejection(
               params[:from_column],
-              reason: "This card is no longer in “#{from.label}”."
+              reason: t("plutonium.kanban.move.not_in_column", column: from.label)
             )
           end
           unless from && to.accepts?(from.key) && !from.locked?
             reason =
               if from&.locked?
-                "Cards can't be moved out of “#{from.label}”."
+                t("plutonium.kanban.move.locked_source", column: from.label)
               else
-                "Cards can't be moved into “#{to.label}”."
+                t("plutonium.kanban.move.not_accepted", column: to.label)
               end
             return render_kanban_rejection(params[:from_column], reason:)
           end
@@ -473,7 +473,7 @@ module Plutonium
           skip_verify_authorize_current!
           render_kanban_rejection(
             params[:from_column],
-            reason: "You are not authorized to move this card there.",
+            reason: t("plutonium.kanban.move.unauthorized"),
             status: :forbidden
           )
         rescue ActiveRecord::RecordNotFound
@@ -527,7 +527,7 @@ module Plutonium
         # from the block for safety and dynamic edge cases.
         def current_kanban_board
           @current_kanban_board ||= current_definition.defined_kanban_board ||
-            Plutonium::Kanban::DSL.build(&current_definition.defined_kanban_block)
+            Plutonium::Kanban::DSL.build(resource_class: resource_class, &current_definition.defined_kanban_block)
         end
 
         # Authorized + query-applied UN-paginated relation.
@@ -799,7 +799,7 @@ module Plutonium
           apply_kanban_column_enter!(resource_record!, column)
         rescue => e
           Rails.logger.error { "[plutonium] kanban quick-add on_enter failed for column #{params[:kanban_column].inspect}: #{e.class}: #{e.message}\n#{e.backtrace&.join("\n")}" }
-          flash[:alert] = "Couldn’t place it in “#{column&.label || params[:kanban_column]}” — it stayed in its default column."
+          flash[:alert] = t("plutonium.kanban.quick_add.default_column_fallback", column: column&.label || params[:kanban_column])
         end
 
         # Applies a column's on_enter to an already-persisted record, then appends

@@ -2,6 +2,9 @@
 
 module Plutonium
   module Definition
+    # Raised when a definition's model cannot be inferred from its name.
+    class ModelClassError < NameError; end
+
     # Base class for Plutonium definitions
     #
     # @abstract Subclass and override {#customize_fields}, {#customize_inputs},
@@ -25,6 +28,10 @@ module Plutonium
     # @note This class is not thread-safe. Ensure proper synchronization
     #   if used in a multi-threaded environment.
     class Base
+      # `input :email, placeholder: t("forms.email_placeholder")` — a lazy
+      # translation, resolved on every render in the request's locale.
+      extend Plutonium::Translation::Lazy
+
       include DefineableProps
       include ConfigAttr
       include InheritableConfigAttr
@@ -192,13 +199,22 @@ module Plutonium
         @model_class ||= infer_model_class
       end
 
+      # `model_class`, or nil for a definition that has no model to infer (an
+      # anonymous or base definition). Convention lookups keyed by the model
+      # (action / scope labels) use this so such definitions keep rendering.
+      def self.model_class_or_nil
+        model_class
+      rescue ModelClassError
+        nil
+      end
+
       def self.infer_model_class
-        raise NameError, "cannot infer a model class for an anonymous definition; define `model_class` on it" if name.nil?
+        raise ModelClassError, "cannot infer a model class for an anonymous definition; define `model_class` on it" if name.nil?
 
         segments = name.split("::")
         base = segments.pop.delete_suffix("Definition")
         if base.empty?
-          raise NameError, "#{name} does not follow the `<Model>Definition` naming convention; define `model_class` on it"
+          raise ModelClassError, "#{name} does not follow the `<Model>Definition` naming convention; define `model_class` on it"
         end
 
         # Only an ActiveRecord model can be the answer, so a namespace module, a
@@ -212,7 +228,7 @@ module Plutonium
           return klass if klass.is_a?(Class) && klass < ActiveRecord::Base
         end
 
-        raise NameError, "could not infer a model class from #{name}; define `model_class` on it"
+        raise ModelClassError, "could not infer a model class from #{name}; define `model_class` on it"
       end
       private_class_method :infer_model_class
 

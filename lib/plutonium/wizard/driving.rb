@@ -518,7 +518,7 @@ module Plutonium
       def deny_wizard_resume_for_other_user!(runner)
         return unless runner.forbidden?
 
-        raise ActiveRecord::RecordNotFound, "wizard run not found"
+        raise ActiveRecord::RecordNotFound, I18n.t("plutonium.wizard.run_not_found")
       end
 
       # Entry auth (§5.2 / §6.5). A wizard may define `authorize?` (default allow);
@@ -533,7 +533,7 @@ module Plutonium
         raise ::ActionPolicy::Unauthorized.new(
           wizard,
           :authorize?,
-          AuthorizationDeniedResult.new("Wizard authorization denied")
+          AuthorizationDeniedResult.new(I18n.t("plutonium.wizard.authorization_denied"))
         )
       end
 

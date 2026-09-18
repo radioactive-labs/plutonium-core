@@ -18,6 +18,12 @@ module Plutonium
               # no-op for testing
             end
 
+            # Interaction::Base extends Plutonium::Translation::Lazy; presents
+            # calls t at class level.
+            def t(key, **options)
+              -> { I18n.t(key, **options) }
+            end
+
             def attribute(*args, **kwargs)
               # no-op for testing
             end
@@ -467,6 +473,19 @@ module Plutonium
           )
 
           assert_equal "API Client Created Successfully", page.send(:success_title)
+        end
+
+        test "CredentialsPage renders the translated banner, labels and copy-all text" do
+          page_class = Class.new(CreateApiClient::CredentialsPage) do
+            def done_url = "/api_clients"
+          end
+          output = page_class.new(login: "my-app", password: "secret123").call
+
+          assert_includes output, "API Client Created Successfully"
+          assert_includes output, "<strong>Important:</strong> Save these credentials now. The password cannot be retrieved later."
+          assert_includes output, "Login: my-app\nPassword: secret123"
+          assert_includes output, ">Copy All<"
+          assert_includes output, ">Done<"
         end
       end
     end

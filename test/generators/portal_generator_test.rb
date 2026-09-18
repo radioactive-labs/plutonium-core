@@ -26,6 +26,11 @@ class PortalGeneratorTest < Rails::Generators::TestCase
     assert_file "packages/test_portal/app/controllers/test_portal/concerns/controller.rb" do |content|
       assert_match(/include Plutonium::Auth::Public/, content)
     end
+
+    assert_file "packages/test_portal/config/locales/en.yml" do |content|
+      assert_match(/^\s+test_portal: \{\}$/, content)
+      assert_equal({"en" => {"plutonium" => {"portals" => {"test_portal" => {}}}}}, YAML.safe_load(content))
+    end
   end
 
   test "generates portal with rodauth auth" do

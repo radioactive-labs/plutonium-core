@@ -206,8 +206,7 @@ module Plutonium
           elsif (remaining = perform_each(resolved.records))
             # The loop stopped, so the remaining targets were never attempted.
             # A run that did not do its job must not read as completed.
-            run.fail!("stopped at the first target failure (#{run.failure_policy} policy); " \
-                      "#{remaining} target(s) were not attempted")
+            run.fail!(I18n.t("plutonium.async.executor.halted", policy: run.failure_policy, count: remaining))
           else
             # Partial failure under :continue is COMPLETED, not failed. The author
             # declared partial application acceptable, the executor ran to the
@@ -300,7 +299,7 @@ module Plutonium
         def fail_target(record, error)
           run.reload if run.changed?
 
-          raise BatchAbortedError, "target #{record.id} failed (#{error.message}); no targets were applied" if transactional?
+          raise BatchAbortedError, I18n.t("plutonium.async.executor.batch_aborted", id: record.id, error: error.message) if transactional?
 
           run.record_target_failure!(id: record.id, message: error.message)
           halt? ? :halt : nil
@@ -393,8 +392,8 @@ module Plutonium
         # part of the batch anyway would be the one outcome neither policy allows.
         def refuse_partial_batch(resolved)
           unresolved = resolved.missing_ids.size + resolved.unauthorized_ids.size
-          run.fail!("#{unresolved} of #{run.target_ids.size} targets could not be resolved; " \
-                    "a #{run.failure_policy} run does not apply a partial batch")
+          run.fail!(I18n.t("plutonium.async.executor.partial_batch_refused",
+            unresolved: unresolved, total: run.target_ids.size, policy: run.failure_policy))
         end
 
         # Advances progress and records +id+ as dispositioned, in one write —
@@ -407,9 +406,9 @@ module Plutonium
           run.save!
         end
 
-        def missing_message(id) = "Target #{id} is no longer available"
+        def missing_message(id) = I18n.t("plutonium.async.executor.target_missing", id: id)
 
-        def unauthorized_message(id) = "Target #{id} is no longer permitted by #{context.policy_action}"
+        def unauthorized_message(id) = I18n.t("plutonium.async.executor.target_unauthorized", id: id, action: context.policy_action)
 
         def continue? = run.failure_policy == :continue
 

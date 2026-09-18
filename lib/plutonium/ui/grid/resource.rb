@@ -63,7 +63,7 @@ module Plutonium
         end
 
         def render_empty_card
-          EmptyCard("No #{resource_name_plural(resource_class).downcase} available") {
+          EmptyCard(t("plutonium.ui.empty_state.none_available", resources: resource_name_plural(resource_class).downcase)) {
             action = resource_definition.defined_actions[:new]
             if action&.permitted_by?(current_policy)
               url = route_options_to_url(action.route_options, resource_class)
@@ -160,7 +160,7 @@ module Plutonium
                    "data-[open]:translate-x-0 " \
                    "flex flex-col",
             role: "dialog",
-            aria: {label: "Filters", hidden: "true", modal: "true"},
+            aria: {label: t("plutonium.ui.table.filters"), hidden: "true", modal: "true"},
             data: {filter_panel_target: "panel"}
           ) do
             render Plutonium::UI::Table::Components::FilterForm.new(
@@ -181,7 +181,7 @@ module Plutonium
 
         def render_footer
           div(class: "lg:sticky bottom-[-2px] mt-1 p-4 pb-6 w-full z-30 bg-[var(--pu-body)]") {
-            TableInfo(pagy_instance)
+            TableInfo(pagy_instance, item_name: resource_name(resource_class, pagy_instance.count))
             TablePagination(pagy_instance)
           }
         end

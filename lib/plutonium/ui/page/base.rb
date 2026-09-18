@@ -64,10 +64,18 @@ module Plutonium
         end
 
         def render_page_header
-          return unless page_title
+          return unless resolved_page_title
 
-          PageHeader(title: page_title, description: page_description, actions: page_actions)
+          PageHeader(title: resolved_page_title, description: resolved_page_description, actions: page_actions)
         end
+
+        # Titles and descriptions may be lazy translations (a proc built by
+        # the definition's `t`). Every surface that renders them (the page
+        # header, the modal chrome) goes through these so the lookup runs in
+        # the request's locale, the same way inputs and labels are resolved.
+        def resolved_page_title = Plutonium::Translation.resolve(page_title)
+
+        def resolved_page_description = Plutonium::Translation.resolve(page_description)
 
         def render_toolbar
           # Implement toolbar content

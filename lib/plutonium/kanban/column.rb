@@ -12,10 +12,19 @@ module Plutonium
         lost: {color: :red, collapsed: true}
       }.freeze
 
-      attr_reader :key, :label, :color, :wip, :scope, :on_enter, :on_exit, :accepts, :actions, :enter_interaction
+      attr_reader :key, :color, :wip, :scope, :on_enter, :on_exit, :accepts, :actions, :enter_interaction
+
+      # `label:` if given, else plutonium.kanban_columns.<model>.<key>, else the
+      # titleized key. Resolved on every read so it follows the request locale.
+      def label
+        Plutonium::Translation.resolve(@label) ||
+          Plutonium::Translation.label_for(:kanban_column, @resource_class, key) ||
+          key.to_s.titleize
+      end
 
       def initialize(key, label: nil, color: nil, wip: nil, scope: nil, on_enter: nil, on_exit: nil, on_drop: nil,
-        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil, enter_interaction: nil, drop_interaction: nil)
+        collapsed: nil, add: nil, accepts: nil, locked: nil, role: nil, enter_interaction: nil, drop_interaction: nil,
+        resource_class: nil)
         # on_drop:/drop_interaction: were renamed to on_enter:/enter_interaction:.
         # Resolve the deprecated aliases first (dev/test raise; deployed envs warn
         # and map — see resolve_renamed_option) so the rest of initialize only
@@ -48,7 +57,8 @@ module Plutonium
           raise ArgumentError, "kanban column `accepts:` no longer accepts a Proc; use true/false or an Array of source keys, and put record/user conditions in the kanban_move? policy."
         end
         @key = key.to_sym
-        @label = label || key.to_s.titleize
+        @label = label
+        @resource_class = resource_class
         @color = color.nil? ? preset[:color] : color
         @wip = wip
         @scope = scope

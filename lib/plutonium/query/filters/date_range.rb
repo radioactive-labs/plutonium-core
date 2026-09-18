@@ -34,8 +34,8 @@ module Plutonium
         def customize_inputs
           input :from, as: :date
           input :to, as: :date
-          field :from, placeholder: @from_label || "#{key.to_s.humanize} from..."
-          field :to, placeholder: @to_label || "#{key.to_s.humanize} to..."
+          field :from, placeholder: @from_label || Plutonium::Translation.t("plutonium.query.filters.date_range.from", label: label)
+          field :to, placeholder: @to_label || Plutonium::Translation.t("plutonium.query.filters.date_range.to", label: label)
         end
 
         private

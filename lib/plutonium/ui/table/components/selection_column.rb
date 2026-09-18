@@ -73,7 +73,7 @@ module Plutonium
               # Show X when no actions available for this record
               span(
                 class: "inline-flex items-center justify-center size-4 text-[var(--pu-text-subtle)]",
-                title: "No bulk actions available"
+                title: Plutonium::Translation.t("plutonium.ui.table.no_bulk_actions")
               ) { "✕" }
             else
               input(

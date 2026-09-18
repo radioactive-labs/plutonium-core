@@ -32,7 +32,7 @@ module Plutonium
             span(class: "inline-flex items-center gap-1.5 h-6 px-2 rounded-full bg-primary-50 border border-primary-200 text-xs text-primary-700 dark:bg-primary-950/40 dark:border-primary-900/60 dark:text-primary-300") do
               span { plain "#{filter[:label]}: #{filter[:value_label]}" }
               a(href: filter[:clear_url],
-                aria: {label: "Remove #{filter[:label]} filter"},
+                aria: {label: t("plutonium.ui.table.remove_filter", filter: filter[:label])},
                 class: "ml-0.5 inline-flex items-center justify-center w-4 h-4 rounded hover:bg-primary-200 dark:hover:bg-primary-900/60") do
                 render Phlex::TablerIcons::X.new(class: "w-3 h-3")
               end
@@ -44,14 +44,14 @@ module Plutonium
               data: {action: "click->filter-panel#toggle"},
               class: "inline-flex items-center gap-1 h-6 px-2 rounded-full border border-dashed border-[var(--pu-border)] text-xs text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] hover:border-[var(--pu-border-strong)]") do
               render Phlex::TablerIcons::Plus.new(class: "w-3 h-3")
-              plain "Filter"
+              plain t("plutonium.ui.table.filter")
             end
           end
 
           def render_clear_all_pill
             a(href: clear_all_url,
               class: "inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs text-[var(--pu-text-muted)] hover:text-[var(--pu-text)] underline-offset-2 hover:underline") do
-              plain "Clear all"
+              plain t("plutonium.ui.table.clear_all")
             end
           end
 
@@ -79,7 +79,7 @@ module Plutonium
 
           def render_result_count
             div(class: "ml-auto text-xs text-[var(--pu-text-muted)]") do
-              plain "#{@total_count} #{(@total_count == 1) ? "result" : "results"}"
+              plain t("plutonium.ui.table.result_count", count: @total_count)
             end
           end
         end

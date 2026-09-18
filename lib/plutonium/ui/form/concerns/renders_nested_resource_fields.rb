@@ -263,7 +263,7 @@ module Plutonium
           def render_nested_fields_add_button_content(name)
             span(class: "bg-secondary-700 text-white hover:bg-secondary-800 focus:ring-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-700 dark:focus:ring-secondary-800 flex items-center justify-center px-4 py-1.5 text-sm font-medium rounded-lg focus:outline-none focus:ring-4") do
               render Phlex::TablerIcons::Plus.new(class: "w-4 h-4 mr-1")
-              span { "Add #{name.to_s.singularize.humanize}" }
+              span { t("plutonium.ui.form.repeater.add", name: name.to_s.singularize.humanize) }
             end
           end
 
