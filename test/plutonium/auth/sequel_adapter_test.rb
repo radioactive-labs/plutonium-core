@@ -36,7 +36,7 @@ module Plutonium
       end
 
       def test_sequel_adapters_contains_sqlserver_mapping
-        expected = (RUBY_ENGINE == "jruby") ? "mssql" : "tinytds"
+        expected = (RUBY_ENGINE == "jruby") ? "sqlserver" : "tinytds"
         assert_equal expected, SequelAdapter::SEQUEL_ADAPTERS["sqlserver"]
       end
 
