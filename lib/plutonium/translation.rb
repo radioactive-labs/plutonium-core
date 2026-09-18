@@ -136,6 +136,27 @@ module Plutonium
       nil
     end
 
+    # Text for a dashboard or one of its cards, resolved by convention with the
+    # same portal layering as {#label_for}. Returns nil when nothing is defined.
+    #
+    #   dashboard_text(SalesDashboard, :label)
+    #   # => plutonium.portals.<portal>.dashboards.sales.label
+    #   #    plutonium.dashboards.sales.label
+    #   dashboard_text(SalesDashboard, :cards, :orders, :label)
+    #   # => plutonium.portals.<portal>.dashboards.sales.cards.orders.label
+    #   #    plutonium.dashboards.sales.cards.orders.label
+    def dashboard_text(dashboard_class, *path, portal: Current.portal)
+      return if dashboard_class.nil?
+
+      suffix = [dashboard_class.i18n_key, *path].join(".")
+      [portal_scope(portal, "dashboards"), "plutonium.dashboards"].compact.each do |scope|
+        value = probe("#{scope}.#{suffix}")
+        return value if value
+      end
+
+      nil
+    end
+
     # Label for an enum-like value rendered by a badge or filter, resolved the
     # way Rails resolves enum attribute values:
     #

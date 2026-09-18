@@ -209,12 +209,17 @@ module Plutonium
       # @return [String] path to JavaScript file
       attr_accessor :script
 
+      # @return [String] path to the on-demand charts bundle (Chart.js +
+      #   Chartkick), loaded by the first chart card on a page
+      attr_accessor :charts_script
+
       # Initialize a new AssetConfiguration instance with default values
       def initialize
         @logo = "plutonium.png"
         @favicon = "plutonium.ico"
         @stylesheet = "plutonium.css"
         @script = "plutonium.min.js"
+        @charts_script = "plutonium-charts.min.js"
       end
     end
   end

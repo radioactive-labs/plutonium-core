@@ -58,6 +58,18 @@
    --pu-card-border: #e2e8f0;
 
    /* ===================
+       Chart Palette - series colors, read by the chart controller
+       =================== */
+   --pu-chart-1: theme(colors.primary.500);
+   --pu-chart-2: #0ea5e9;
+   --pu-chart-3: #10b981;
+   --pu-chart-4: #f59e0b;
+   --pu-chart-5: #ef4444;
+   --pu-chart-6: #8b5cf6;
+   --pu-chart-7: #ec4899;
+   --pu-chart-8: #64748b;
+
+   /* ===================
        Shadow System - Layered, soft
        =================== */
    --pu-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.03), 0 1px 3px 0 rgb(0 0 0 / 0.05);
@@ -149,6 +161,18 @@
        =================== */
    --pu-card-bg: #1e293b;
    --pu-card-border: #334155;
+
+   /* ===================
+       Chart Palette (Dark) - lighter tints for contrast on dark surfaces
+       =================== */
+   --pu-chart-1: theme(colors.primary.400);
+   --pu-chart-2: #38bdf8;
+   --pu-chart-3: #34d399;
+   --pu-chart-4: #fbbf24;
+   --pu-chart-5: #f87171;
+   --pu-chart-6: #a78bfa;
+   --pu-chart-7: #f472b6;
+   --pu-chart-8: #94a3b8;
 
    /* ===================
        Shadow System (Dark)

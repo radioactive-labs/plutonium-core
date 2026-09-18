@@ -10,7 +10,7 @@ en:
         open_menu: "Open actions menu"
       breadcrumbs:
         label: "Breadcrumb"
-        dashboard: "Dashboard"
+        home: "Home"
         show_collapsed: "Show collapsed breadcrumbs"
       color_mode:
         toggle: "Toggle color mode"

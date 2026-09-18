@@ -10,6 +10,11 @@ module Plutonium
         def resource_register
           @resource_register ||= Plutonium::Resource::Register.new
         end
+
+        # Dashboards mounted on this engine with `register_dashboard`.
+        def dashboard_register
+          @dashboard_register ||= Plutonium::Dashboard::Register.new
+        end
       end
     end
   end

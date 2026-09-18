@@ -38,6 +38,12 @@ const cats = [
     { name: "Interactions", desc: "Business logic with auto-generated UI",
       link: "/plutonium-core/guides/custom-actions" },
   ]},
+  { name: "Operations", items: [
+    { name: "Dashboards", desc: "Metric, chart and custom cards, each lazy-loaded",
+      link: "/plutonium-core/guides/dashboards" },
+    { name: "Async runs", desc: "Bulk work with a live progress page",
+      link: "/plutonium-core/reference/behavior/async-interactions" },
+  ]},
   { name: "App structure", items: [
     { name: "Portals", desc: "Themed, mountable engines",
       link: "/plutonium-core/reference/app/portals" },

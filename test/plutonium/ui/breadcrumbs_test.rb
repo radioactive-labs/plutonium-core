@@ -67,7 +67,7 @@ class Plutonium::UI::BreadcrumbsTest < ActiveSupport::TestCase
     assert_includes output, "<li"
     assert_includes output, "<a"
     assert_includes output, 'href="/"'
-    assert_includes output, "Dashboard"
+    assert_includes output, "Home"
     # Home icon SVG path
     assert_includes output, "m19.707 9.293"
   end

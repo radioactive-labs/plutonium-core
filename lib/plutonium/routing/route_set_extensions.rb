@@ -25,6 +25,7 @@ module Plutonium
         if engine
           resource_route_config_lookup.clear
           engine.resource_register.clear
+          engine.dashboard_register.clear
         end
 
         super

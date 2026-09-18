@@ -1,0 +1,25 @@
+<%- if main_app? -%>
+class <%= dashboard_name %> < Plutonium::Dashboard::Base
+  presents label: "<%= dashboard_label %>"
+
+  # Cards sit on a 12-column grid (metric 3, chart and card 6 by default; `span:`
+  # overrides), each in its own lazy turbo frame. `group_by_day` is the groupdate gem.
+  #
+  # metric(:users, icon: Phlex::TablerIcons::Users) { authorized_resource_scope(User).count }
+  # chart(:signups, type: :line, span: 8) { User.group_by_day(:created_at, last: 30).count }
+  # card(:welcome) { p { "Signed in as #{current_user.email}" } }
+end
+<%- else -%>
+module <%= app_namespace %>
+  class <%= dashboard_name %> < Plutonium::Dashboard::Base
+    presents label: "<%= dashboard_label %>"
+
+    # Cards sit on a 12-column grid (metric 3, chart and card 6 by default; `span:`
+    # overrides), each in its own lazy turbo frame. `group_by_day` is the groupdate gem.
+    #
+    # metric(:users, icon: Phlex::TablerIcons::Users) { authorized_resource_scope(User).count }
+    # chart(:signups, type: :line, span: 8) { User.group_by_day(:created_at, last: 30).count }
+    # card(:welcome) { p { "Signed in as #{current_user.email}" } }
+  end
+end
+<%- end -%>
