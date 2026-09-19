@@ -45,9 +45,10 @@ module Pu
 
       def update_npm_package
         gem_version = installed_gem_version
+        package = gem_version ? "@radioactive-labs/plutonium@^#{gem_version}" : "@radioactive-labs/plutonium@latest"
 
-        say_status :update, "Updating @radioactive-labs/plutonium to #{gem_version}...", :green
-        run "yarn add @radioactive-labs/plutonium@^#{gem_version}"
+        say_status :update, "Updating #{package} with #{js_package_manager}...", :green
+        run js_add_command(package)
       end
 
       def installed_gem_version

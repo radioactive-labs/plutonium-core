@@ -57,7 +57,7 @@
   },
   "scripts": {
     "dev": "concurrently \"yarn css:dev\" \"yarn js:dev\"",
-    "build": "yarn js:prod && yarn css:prod",
+    "build": "rm -rf src/dist && yarn js:prod && yarn css:prod",
     "prepare": "yarn build",
     "css:dev": "chokidar \"src/css/**/*.css\" \"src/js/**/*.js\" \"app/views/**/*.{rb,erb,js}\" \"lib/plutonium/**/*.rb\" -c \"postcss src/css/plutonium.entry.css -o src/build/plutonium.css --dev\" --initial",
     "js:dev": "node esbuild.config.js --dev",

@@ -38,6 +38,14 @@ This:
 4. Registers Plutonium's Stimulus controllers.
 5. Updates Plutonium config to point at your asset files.
 
+### Package managers
+
+The generator installs with whatever `rails javascript:build` will use, following jsbundling-rails: the lockfile decides (`bun.lock`, `pnpm-lock.yaml`, `package-lock.json`, else `yarn.lock`), and a fresh app with no lockfile takes the first of bun, yarn, pnpm or npm found on PATH. That is why `rails new -j esbuild` on a machine with bun installed produces a bun app. Every package goes through one `add` with versions inline (`tailwindcss@latest`, `@radioactive-labs/plutonium@^<gem version>`), which yarn 1, yarn 2+, bun, npm and pnpm all understand.
+
+Yarn 2+ apps get `nodeLinker: node-modules` written to `.yarnrc.yml` if no linker is set. Tailwind's PostCSS plugin does not load under Plug'n'Play.
+
+`pu:core:update` and `pu:docker:install` use the same detection, so the Dockerfile installs bun, yarn 1, or yarn 2+ via corepack to match the app.
+
 ## Tailwind config
 
 Generated `tailwind.config.js`:

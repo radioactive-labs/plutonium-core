@@ -22,13 +22,28 @@ RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential curl git libpq-dev node-gyp pkg-config python-is-python3
 
 # Install JavaScript dependencies
-ARG NODE_VERSION=22.2.0
-ARG YARN_VERSION=1.22.22
+<% if using_bun? -%>
+ENV BUN_INSTALL=/usr/local/bun
+ENV PATH=/usr/local/bun/bin:$PATH
+ARG BUN_VERSION=<%= dockerfile_bun_version %>
+RUN curl -fsSL https://bun.sh/install | bash -s -- "bun-v${BUN_VERSION}"
+<% else -%>
+ARG NODE_VERSION=<%= dockerfile_node_version %>
 ENV PATH=/usr/local/node/bin:$PATH
 RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz -C /tmp/ && \
     /tmp/node-build-master/bin/node-build "${NODE_VERSION}" /usr/local/node && \
-    npm install -g yarn@$YARN_VERSION && \
     rm -rf /tmp/node-build-master
+<% if js_package_manager == :yarn -%>
+ARG YARN_VERSION=<%= dockerfile_yarn_version %>
+<% if yarn_through_corepack? -%>
+RUN corepack enable && corepack install -g yarn@$YARN_VERSION
+<% else -%>
+RUN npm install -g yarn@$YARN_VERSION
+<% end -%>
+<% elsif js_package_manager == :pnpm -%>
+RUN corepack enable && corepack install -g pnpm@latest
+<% end -%>
+<% end -%>
 
 # Install application gems
 COPY .ruby-version Gemfile Gemfile.lock ./
@@ -37,8 +52,8 @@ RUN bundle install && \
     bundle exec bootsnap precompile --gemfile
 
 # Install node modules
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile
+COPY <%= js_lockfile_copy %> ./
+RUN <%= js_frozen_install_command %>
 
 # Copy application code
 COPY . .

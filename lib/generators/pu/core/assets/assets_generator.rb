@@ -54,28 +54,35 @@ module Pu
         copy_file "postcss.config.js", force: true
       end
 
+      # Every package goes through one `add` built for the app's package manager
+      # (bun, yarn 1, yarn 2+, npm or pnpm; see Concerns::JsPackageManager).
+      # Versions ride inline because `pkg@latest` and `pkg@^x.y.z` are the one
+      # spelling all of them share; yarn 1's `upgrade --latest` does not exist
+      # on yarn 2+, and running yarn inside a bun app leaves two lockfiles.
       def install_dependencies
-        failed = []
+        ensure_yarn_node_modules_linker
 
+        command = js_add_command(npm_packages)
+        return if run(command)
+
+        say_status :warn,
+          "`#{command}` failed — your app may not boot until you re-run it",
+          :yellow
+      end
+
+      def npm_packages
         [
-          "@radioactive-labs/plutonium",
+          # Pinned to the gem so the two halves never drift; pu:core:update
+          # keeps them together afterwards.
+          "@radioactive-labs/plutonium@^#{Plutonium::VERSION}",
+          # cssbundling-rails already installs the latest Tailwind on new apps;
+          # apps created on Tailwind 3 are moved to 4 here.
+          "tailwindcss@latest",
           "postcss", "postcss-cli", "postcss-import",
           "@tailwindcss/postcss", "@tailwindcss/forms", "@tailwindcss/typography",
           "cssnano", "marked",
           "flowbite-typography"
-        ].each do |package|
-          run "yarn add #{package}"
-          failed << "yarn add #{package}" unless $?.success?
-        end
-
-        run "yarn upgrade tailwindcss --latest"
-        failed << "yarn upgrade tailwindcss --latest" unless $?.success?
-
-        return if failed.empty?
-
-        say_status :warn,
-          "the following commands failed — your app may not boot until you resolve them:\n  #{failed.join("\n  ")}",
-          :yellow
+        ]
       end
 
       def configure_application
