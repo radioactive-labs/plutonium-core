@@ -159,10 +159,78 @@ class AssetsGeneratorTest < ActiveSupport::TestCase
     assert_match(/app\/javascript\/controllers\/index\.js/, output)
   end
 
+  # install_dependencies used to run ten `yarn add`s and `yarn upgrade tailwindcss
+  # --latest`. That added a yarn.lock next to bun.lock on bun apps (jsbundling
+  # picks bun whenever it is on PATH), and `upgrade` is not a yarn 2+ command.
+  test "install_dependencies runs a single add for the detected manager with versions inline" do
+    commands = []
+    generator = build_generator(manager: :bun)
+    generator.define_singleton_method(:run) do |command, *|
+      commands << command
+      true
+    end
+
+    Dir.chdir(Rails.root) { generator.send(:install_dependencies) }
+
+    assert_equal 1, commands.size, "one add, not one per package"
+    command = commands.first
+    assert command.start_with?("bun add "), command
+    assert_includes command, "@radioactive-labs/plutonium@^#{Plutonium::VERSION}"
+    assert_includes command, "tailwindcss@latest"
+    assert_includes command, "@tailwindcss/postcss"
+    refute_match(/upgrade/, command)
+  end
+
+  test "install_dependencies uses yarn add on yarn apps" do
+    commands = []
+    generator = build_generator(manager: :yarn)
+    generator.define_singleton_method(:run) do |command, *|
+      commands << command
+      true
+    end
+
+    Dir.chdir(Rails.root) { generator.send(:install_dependencies) }
+
+    assert commands.first.start_with?("yarn add "), commands.first
+  end
+
+  test "install_dependencies warns with the exact command when the add fails" do
+    generator = build_generator(manager: :bun)
+    generator.define_singleton_method(:run) { |*| false }
+
+    output = strip_ansi(capture_say { Dir.chdir(Rails.root) { generator.send(:install_dependencies) } })
+
+    assert_match(/bun add .*@radioactive-labs\/plutonium/, output)
+    assert_match(/may not boot/, output)
+  end
+
+  test "install_dependencies pins yarn 2+ apps to the node-modules linker before installing" do
+    generator = build_generator(manager: :yarn, yarn: "4.9.2")
+    generator.define_singleton_method(:run) { |*| true }
+
+    capture_say { Dir.chdir(Rails.root) { generator.send(:install_dependencies) } }
+
+    assert_equal "nodeLinker: node-modules\n", File.read(Rails.root.join(".yarnrc.yml"))
+  end
+
+  test "install_dependencies leaves yarn 1 apps without a .yarnrc.yml" do
+    generator = build_generator(manager: :yarn, yarn: "1.22.22")
+    generator.define_singleton_method(:run) { |*| true }
+
+    capture_say { Dir.chdir(Rails.root) { generator.send(:install_dependencies) } }
+
+    refute File.exist?(Rails.root.join(".yarnrc.yml"))
+  end
+
   private
 
-  def build_generator
-    Pu::Core::AssetsGenerator.new([], {}, {destination_root: Rails.root})
+  def build_generator(manager: nil, yarn: "1.22.22")
+    Pu::Core::AssetsGenerator.new([], {}, {destination_root: Rails.root}).tap do |generator|
+      next unless manager
+
+      generator.define_singleton_method(:js_package_manager) { manager }
+      generator.define_singleton_method(:yarn_version) { yarn }
+    end
   end
 
   def run_verify_prerequisites

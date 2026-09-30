@@ -7,6 +7,7 @@ module PlutoniumGenerators
   module Generator
     include Concerns::Logger
     include Concerns::Actions
+    include Concerns::JsPackageManager
 
     # Finds the shared namespace prefix between two model names.
     # Used to derive association names when models share a namespace.
