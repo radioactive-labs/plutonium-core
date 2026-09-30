@@ -344,7 +344,7 @@ rails g pu:core:install
 
 ### `pu:core:assets`
 
-Set up the custom Tailwind + Stimulus toolchain. Installs npm packages with the app's package manager (bun, yarn 1, yarn 2+, npm or pnpm, detected from the lockfile), creates `tailwind.config.js`, imports Plutonium CSS, registers Stimulus controllers.
+Set up the custom Tailwind + Stimulus toolchain. Installs npm packages with the app's package manager (bun, yarn 1, yarn 2+, npm or pnpm, detected from the lockfile, else from what is on PATH), creates `tailwind.config.js`, imports Plutonium CSS, registers Stimulus controllers.
 
 ```bash
 rails g pu:core:assets

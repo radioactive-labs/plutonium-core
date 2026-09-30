@@ -22,7 +22,7 @@ x-app: &app
 services:
   web:
     <<: *app
-    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle && <%= js_install_command %> && bin/dev" # web
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle && <%= js_dev_install_command %> && bin/dev" # web
     # web properties
     ports: # web
       - "3000:3000" # app

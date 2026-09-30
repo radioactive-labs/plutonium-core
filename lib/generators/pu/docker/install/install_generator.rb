@@ -81,6 +81,13 @@ module Pu
         else "yarn install --#{yarn_through_corepack? ? "immutable" : "frozen-lockfile"}"
         end
       end
+
+      # docker-compose runs this on every container start. `npm ci` would wipe
+      # node_modules each boot and fails without a package-lock.json, so npm
+      # gets a plain install; the others already only sync what changed.
+      def js_dev_install_command
+        (js_package_manager == :npm) ? "npm install" : js_install_command
+      end
     end
   end
 end
