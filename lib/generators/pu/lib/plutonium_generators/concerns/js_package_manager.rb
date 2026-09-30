@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 begin
-  # jsbundling-rails >= 1.3 ships the detector its own build task uses.
+  # jsbundling-rails `main` ships the detector its build task uses (unreleased
+  # as of 1.3.1).
   require "jsbundling/package_manager"
 rescue LoadError
   # Older jsbundling-rails, or an app without it: fall back to the same rules.
@@ -12,13 +13,14 @@ module PlutoniumGenerators
     # Detects the host app's JavaScript package manager and builds the matching
     # shell commands, so generators never hardcode `yarn`.
     #
-    # Detection mirrors jsbundling-rails (Jsbundling::PackageManager), which is
-    # what `rails javascript:build` consults at precompile time. Installing with
-    # the same tool keeps a single lockfile: the lockfile decides, and with no
-    # lockfile the first executable on PATH among bun, yarn, pnpm and npm wins
-    # (yarn when none is found). `rails new -j esbuild` therefore yields a bun
-    # app on any machine that has bun installed, and this concern follows it
-    # rather than adding a yarn.lock next to bun.lock.
+    # Detection follows what `rails javascript:build` consults at precompile
+    # time. Installing with the same tool keeps a single lockfile: the lockfile
+    # decides, and with no lockfile the first executable on PATH among bun,
+    # yarn, pnpm and npm wins (yarn when none is found). `rails new -j esbuild`
+    # therefore yields a bun app on any machine that has bun installed, and
+    # this concern follows it rather than adding a yarn.lock next to bun.lock.
+    # When the app's jsbundling-rails provides Jsbundling::PackageManager, that
+    # detector is used as is (it skips yarn.lock and decides by PATH).
     #
     # Yarn 1 (classic) and Yarn 2+ (berry) share `add` but differ elsewhere;
     # `yarn_berry?` distinguishes them by asking the yarn the app resolves to.

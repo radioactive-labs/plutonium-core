@@ -40,7 +40,7 @@ This:
 
 ### Package managers
 
-The generator installs with whatever `rails javascript:build` will use, following jsbundling-rails: `bun.lock` (or `bun.lockb`, `bun.config.js`) means bun, `pnpm-lock.yaml` means pnpm, `package-lock.json` means npm. Otherwise the first of bun, yarn, pnpm or npm found on PATH wins, and yarn if none is. `yarn.lock` is not consulted, so an existing yarn app on a machine with bun installed is treated as a bun app by both jsbundling-rails and the generator. It is also why `rails new -j esbuild` on such a machine produces a bun app. Every package goes through one `add` with versions inline (`tailwindcss@latest`, `@radioactive-labs/plutonium@^<gem version>`), which yarn 1, yarn 2+, bun, npm and pnpm all understand.
+The generator installs with the package manager `rails javascript:build` will use. The lockfile decides: `bun.lock` or `bun.lockb` means bun, `pnpm-lock.yaml` pnpm, `package-lock.json` npm, `yarn.lock` yarn. With no lockfile, `bun.config.js` means bun, and otherwise the first of bun, yarn, pnpm or npm found on PATH wins (yarn if none is). That is why `rails new -j esbuild` on a machine with bun installed produces a bun app. When the app's jsbundling-rails provides `Jsbundling::PackageManager` (its `main` branch, not yet in a release as of 1.3.1), the generator defers to it instead; that detector ignores `yarn.lock` and picks by PATH. Every package goes through one `add` with versions inline (`tailwindcss@latest`, `@radioactive-labs/plutonium@^<gem version>`), which yarn 1, yarn 2+, bun, npm and pnpm all understand.
 
 Yarn 2+ apps get `nodeLinker: node-modules` written to `.yarnrc.yml` if no linker is set. Tailwind's PostCSS plugin does not load under Plug'n'Play.
 
