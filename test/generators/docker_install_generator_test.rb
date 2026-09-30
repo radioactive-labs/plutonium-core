@@ -70,6 +70,13 @@ class DockerInstallGeneratorTest < ActiveSupport::TestCase
     assert_includes render("docker-compose.yml", lockfile: "yarn.lock"), "bundle && yarn install && bin/dev"
   end
 
+  test "docker-compose uses npm install, not npm ci, on every start" do
+    compose = render("docker-compose.yml", lockfile: "package-lock.json")
+
+    assert_includes compose, "bundle && npm install && bin/dev"
+    refute_includes compose, "npm ci"
+  end
+
   test "falls back to pinned versions when the tool is not on PATH" do
     dockerfile = render("Dockerfile", lockfile: "yarn.lock", node: nil, yarn: nil)
 

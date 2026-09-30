@@ -774,7 +774,7 @@ rails generate pu:core:assets
 
 This installs npm packages, creates `tailwind.config.js` extending Plutonium's config, imports Plutonium CSS, registers Stimulus controllers, and points the Plutonium config at your asset files.
 
-Packages install with the app's package manager, detected from the lockfile the way jsbundling-rails does (`bun.lock` → bun, `pnpm-lock.yaml` → pnpm, `package-lock.json` → npm, else yarn). Do not run `yarn add` by hand in a bun app: that leaves two lockfiles. Yarn 2+ needs `nodeLinker: node-modules` in `.yarnrc.yml` (the generator writes it); Tailwind's PostCSS plugin does not load under Plug'n'Play.
+Packages install with the app's package manager, detected the way jsbundling-rails does (`bun.lock` → bun, `pnpm-lock.yaml` → pnpm, `package-lock.json` → npm, else the first of bun, yarn, pnpm, npm on PATH). `yarn.lock` is not consulted: a yarn app on a machine with bun installed is treated as a bun app. Do not run `yarn add` by hand in a bun app: that leaves two lockfiles. Yarn 2+ needs `nodeLinker: node-modules` in `.yarnrc.yml` (the generator writes it); Tailwind's PostCSS plugin does not load under Plug'n'Play.
 
 ## Tailwind config (generated)
 
