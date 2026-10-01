@@ -81,6 +81,12 @@ class OnboardOrganizationWizard < Plutonium::Wizard::Base
     # form raises the moment the user reaches review.
     attribute :contact_window, :string
     input :contact_window, as: :select, choices: ->(form) { form.wizard.contact_windows }
+
+    # A section holding only the conditional contact_email: it must disappear
+    # with its field rather than leave an empty heading on the step.
+    form_layout do
+      section :email_contact, :contact_email, label: "Email contact"
+    end
   end
 
   # Read by the arity-1 `choices:` above, on the form and on the review summary.

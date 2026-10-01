@@ -549,6 +549,42 @@ class AdminPortal::WizardFlowTest < ActionDispatch::IntegrationTest
       "the conditional field should appear once pre_submit reflects the chosen value"
   end
 
+  # A step section whose only field is condition-hidden is dropped with it, and
+  # comes back once the pre_submit re-render reveals the field.
+  test "a step section whose fields are all condition-hidden renders nothing" do
+    advance_through("identity") # now on details
+    refute_includes response.body, "Email contact"
+
+    post "#{tbase}/details",
+      params: {wizard: {note: "hi", contact_pref: "email"}, pre_submit: "contact_pref"}
+    assert_includes response.body, "Email contact"
+    assert_includes response.body, %(name="wizard[contact_email]")
+  end
+
+  # The review summary lists only what the step showed: an answer to a field the
+  # step hid (here, an email typed before switching back to "Don't contact me")
+  # is not summarised.
+  test "review leaves out fields the step hid" do
+    advance_through("identity")
+    post "#{tbase}/details", params: {
+      wizard: {note: "hi", contact_pref: "email", contact_email: "old@example.com", referral_source: "2", contact_window: "am"},
+      _direction: "next"
+    }
+    follow_redirect!
+    get "#{tbase}/details"
+    post "#{tbase}/details", params: {
+      wizard: {note: "hi", contact_pref: "none", referral_source: "2", contact_window: "am"},
+      _direction: "next"
+    }
+    follow_redirect!
+    get "#{tbase}/review"
+
+    card = response.body[%r{data-wizard-review-step="details".*?</section>}m]
+    assert_includes card, "Don&#39;t contact me"
+    refute_includes card, "old@example.com"
+    refute_includes card, "Contact email"
+  end
+
   # The pre_submit re-render also keeps the OTHER just-typed values (so the user
   # doesn't lose what they entered when the form swaps).
   test "pre_submit re-render keeps the other submitted values" do
