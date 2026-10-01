@@ -123,6 +123,9 @@ module Plutonium
             condition = section.condition
             next if condition && !instance_exec(&condition)
             next if resolved.fields.empty?
+            # A section whose fields are all hidden by their own `condition:`
+            # would render as an empty card; hidden display fields emit nothing.
+            next if resolved.fields.all? { |name| field_condition_hidden?(name) }
 
             Plutonium::Definition::FormLayout::ResolvedSection.new(
               section: Plutonium::Definition::FormLayout::Section.new(
@@ -268,6 +271,14 @@ module Plutonium
 
         def raise_unregistered_association(name, reflection)
           raise ArgumentError, "#{object.class}##{name} defined in #permitted_associations, but #{reflection.klass} is not a registered resource"
+        end
+
+        # Whether +name+ is hidden on this render by its own `condition:` — the
+        # same check render_resource_field makes before rendering it.
+        def field_condition_hidden?(name)
+          condition = resource_definition.defined_displays.dig(name, :options, :condition) ||
+            resource_definition.defined_fields.dig(name, :options, :condition)
+          condition.present? && !instance_exec(&condition)
         end
 
         def render_resource_field(name)

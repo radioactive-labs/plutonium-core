@@ -1006,14 +1006,14 @@ end
 - **Options**: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:` (positive Integer, literal only), `condition:`. Every option except `columns:` may be a **proc**, resolved at render under the same arity rule as any other option — take a `form` argument to read the render context.
 - ⚠️ **Breaking in 0.63**: section options used to take a zero-arg proc run *against* the form. They now follow the shared rule, and a `form_layout` block is evaluated against the layout builder, so a bare `object` is a `NameError`. Migrate `collapsed: -> { object.persisted? }` → `collapsed: ->(form) { form.object.persisted? }`. `condition:` is unchanged (still form-evaluated, still reads `object` with no argument).
 - **Absent fields are skipped.** A key the section lists that isn't in the permitted set (policy, per-action, scoping, nesting, or a typo) is silently dropped — never an error. The same layout serves a richly-permitted `edit` and a minimal `new`.
-- **🚨 Zero-field sections drop entirely** — no heading, no grid. So `+ New` (fewer permitted attributes) won't sprout empty headings. This checks *field presence only*; per-field `condition:` runs later, so to hide a whole section by state, gate it with the **section's own `condition:`**, not by hiding every field inside it.
+- **🚨 Zero-field sections drop entirely** — no heading, no grid. So `+ New` (fewer permitted attributes) won't sprout empty headings. A section whose fields are **all** hidden by their own `condition:` on this render drops too (the hidden fields are still recorded on the form). A section's own `condition:` hides it as a unit regardless of its fields.
 - **Works on interactions too** (`Plutonium::Interaction::Base`) — groups `attribute` declarations. There `object` is the interaction instance; for record actions the record is `object.resource`.
 
 Full DSL reference: [Resource › Definition › Form layout](/reference/resource/definition#form-layout).
 
 ## Display Layout (`display_layout`)
 
-The show page's counterpart to `form_layout`. Same DSL, same resolution (first-section-wins, unlisted permitted fields fall into `ungrouped`, absent fields skipped, zero-field sections dropped) — applied to the show page's fields instead of the form's.
+The show page's counterpart to `form_layout`. Same DSL, same resolution (first-section-wins, unlisted permitted fields fall into `ungrouped`, absent fields skipped, zero-field and all-condition-hidden sections dropped) — applied to the show page's fields instead of the form's.
 
 ```ruby
 class PostDefinition < ResourceDefinition

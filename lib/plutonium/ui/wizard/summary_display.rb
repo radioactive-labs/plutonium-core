@@ -38,6 +38,12 @@ module Plutonium
 
         def render_summary_field(name)
           input_options = @summary_inputs[name]&.dig(:options) || {}
+          # Summarise only what the step showed: an input hidden by its own
+          # `condition:` was never answered, so it gets no (empty) row. The
+          # condition runs against this display exactly as it ran against the
+          # step form — `object` is the same staged data either way.
+          condition = input_options[:condition]
+          return if condition && !instance_exec(&condition)
           field_options = input_options[:label] ? {label: input_options[:label]} : {}
 
           # A currency input stages a plain decimal; the data snapshot carries no

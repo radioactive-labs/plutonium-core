@@ -23,6 +23,10 @@ class KitchenSinkDefinition < ::ResourceDefinition
     # Lists only a field that is never in the permitted set, so it resolves to
     # zero fields on every render — its chrome must not be emitted.
     section :all_absent, :never_permitted, label: "All Absent Section"
+    # Its only field is hidden by the field's own `condition:` unless the record
+    # is featured, so the section must disappear with it rather than leave an
+    # empty heading behind.
+    section :alarm, :alarm_time, label: "Alarm Section"
     ungrouped label: "Everything else"
   end
 
@@ -43,6 +47,8 @@ class KitchenSinkDefinition < ::ResourceDefinition
     # Lists only a field that is never in the permitted set, so it resolves to
     # zero fields on every render — its chrome must not be emitted.
     section :display_absent, :never_permitted, label: "Display Absent Section"
+    # Display counterpart of the form's :alarm section.
+    section :display_alarm, :alarm_time, label: "Display Alarm Section"
     ungrouped label: "Other details"
   end
 
@@ -119,7 +125,8 @@ class KitchenSinkDefinition < ::ResourceDefinition
   input :tier, as: :select, choices: %w[a b c]                 # plain <select>
   input :birthday, as: :date                                   # flatpickr
   input :meeting_at, as: :datetime                             # flatpickr
-  input :alarm_time, as: :time                                 # flatpickr
+  input :alarm_time, as: :time, condition: -> { object.featured? } # flatpickr; only for featured sinks
+  display :alarm_time, condition: -> { object.featured? }
   input :phone, as: :phone, initial_country: "gh"              # intl-tel-input; default country + strictMode
   field :config, as: :json                                     # json editor
   field :prefs, as: :key_value                                 # key-value store
