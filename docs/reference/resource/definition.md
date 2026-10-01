@@ -644,11 +644,25 @@ Section options previously took a **zero-argument** proc evaluated against the f
 It fails loudly, never silently. `condition:` is unchanged — it is still evaluated against the form and still reads `object` with no argument.
 :::
 
-A section that resolves to **zero fields** — every declared field filtered out by the permitted set, or no field assigned — renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset). The check is purely "are there fields to render"; it does **not** evaluate per-field `condition:` procs (those run later, at field render). So if you want a whole section to appear only under some state, gate it with the section's own `condition:` rather than relying on every field inside it being hidden:
+A section that resolves to **zero fields** — every declared field filtered out by the permitted set, or no field assigned — renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset).
+
+The same goes for a section whose fields are **all hidden by their own `condition:`** on this render: it disappears with them instead of leaving an empty heading behind. The hidden fields are still recorded on the form, just as a hidden field in a visible section is. So fields that only apply to some records — re-evaluated on `pre_submit` — can be grouped in a section without any extra wiring:
+
+```ruby
+form_layout do
+  section :timing, :duration, :starts_on, label: "Timing"   # gone when both are hidden
+end
+
+input :employment_type, as: :select, pre_submit: true, choices: %w[full_time contract]
+input :duration, condition: -> { object.contract? }
+input :starts_on, condition: -> { object.contract? }
+```
+
+A section's own `condition:` still hides it as a unit, whatever its fields say:
 
 ```ruby
 section :shipping, :address, :city, :postcode,
-  condition: -> { object.requires_shipping? }   # hide the section as a unit
+  condition: -> { object.requires_shipping? }
 ```
 
 ### `ungrouped(**opts)`
@@ -728,7 +742,7 @@ end
 
 ## Display layout
 
-The show page's counterpart to [`form_layout`](#form-layout). Same DSL and the same resolution rules — first-section-wins ownership, unlisted permitted fields collected into `ungrouped`, absent fields skipped, zero-field sections dropped entirely — applied to the show page instead of the form.
+The show page's counterpart to [`form_layout`](#form-layout). Same DSL and the same resolution rules — first-section-wins ownership, unlisted permitted fields collected into `ungrouped`, absent fields skipped, zero-field sections and sections whose fields are all condition-hidden dropped entirely — applied to the show page instead of the form.
 
 ```ruby
 class PostDefinition < ResourceDefinition

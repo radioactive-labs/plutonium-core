@@ -125,6 +125,12 @@ module Plutonium
             div(class: themed(:sections_wrapper, nil)) do
               sections.each { |rs| render_form_section(rs) }
             end
+            # Fields of sections dropped because every one of them is
+            # condition-hidden. They still go through the normal render path,
+            # which records them without emitting markup (see
+            # render_simple_resource_field), so the form keeps extracting their
+            # values exactly as it does for a hidden field in a visible section.
+            @condition_hidden_section_fields.each { |name| render_resource_field name }
           end
         end
 
@@ -134,6 +140,7 @@ module Plutonium
         # helpers live — same context as input/section `condition:`). Returns nil
         # when no form_layout is declared (caller falls back to a single grid).
         def resolve_form_layout
+          @condition_hidden_section_fields = []
           sections = resource_definition.resolve_form_sections(resource_fields)
           return nil if sections.nil?
 
@@ -146,11 +153,18 @@ module Plutonium
             # filtered out by the permitted set (policy, per-action, scoping,
             # nesting). Rendering the chrome (heading + empty grid) for these
             # litters the form with empty headings (notably on `+ New`, where
-            # fewer attributes are permitted than declared). Field-level
-            # `condition:` is evaluated later, at render — a section whose fields
-            # are all condition-hidden is the author's call to gate via the
-            # section's own `condition:`.
+            # fewer attributes are permitted than declared).
             next if resolved.fields.empty?
+
+            # Likewise drop sections whose fields are ALL hidden by their own
+            # `condition:` on this render (e.g. a "Timing" section of fields that
+            # only apply to some record types, re-evaluated on `pre_submit`).
+            # Their fields are kept aside and rendered after the sections, so
+            # the hidden values are still recorded.
+            if resolved.fields.all? { |name| field_condition_hidden?(name) }
+              @condition_hidden_section_fields.concat(resolved.fields)
+              next
+            end
 
             # `columns` stays a validated literal (the Builder rejects a non-Integer
             # at declaration); `label`/`description`/`collapsible`/`collapsed` may be
@@ -419,6 +433,24 @@ module Plutonium
         # is why it cannot take a `form` argument the way an option does.
         # Resolving it here would also collapse it to a boolean before the render
         # site that owns it gets to ask.
+        # Whether +name+ is hidden on this render by its own `condition:` — the
+        # same check render_resource_field makes before rendering it: a nested
+        # input's condition, else the `input`/`field` condition. Structured
+        # inputs have no condition of their own and always count as visible.
+        def field_condition_hidden?(name)
+          definition = resource_definition
+          condition =
+            if definition.respond_to?(:defined_nested_inputs) && (nested = definition.defined_nested_inputs[name])
+              nested[:options]&.fetch(:condition, nil)
+            elsif definition.respond_to?(:defined_structured_inputs) && definition.defined_structured_inputs[name]
+              nil
+            else
+              definition.defined_inputs.dig(name, :options, :condition) ||
+                definition.defined_fields.dig(name, :options, :condition)
+            end
+          condition.present? && !instance_exec(&condition)
+        end
+
         def when_permitted(name, &)
           return unless resource_fields.include? name
 

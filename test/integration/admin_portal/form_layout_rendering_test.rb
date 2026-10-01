@@ -81,6 +81,34 @@ class AdminPortal::FormLayoutRenderingTest < ActionDispatch::IntegrationTest
     assert_includes response.body, %(name="kitchen_sink[age]")
   end
 
+  test "a section whose fields are all hidden by their own condition renders nothing" do
+    org = Organization.create!(name: "Sink Org #{SecureRandom.hex(4)}")
+    plain = KitchenSink.create!(name: "Plain", organization: org, featured: false)
+
+    # :alarm lists only :alarm_time, whose `condition:` hides it unless the sink
+    # is featured. No visible field, so no heading or empty card...
+    get "/admin/kitchen_sinks/#{plain.id}/edit"
+    assert_response :success
+    refute_includes response.body, "Alarm Section"
+    # ...and the hidden field is still not rendered as a visible input.
+    refute_match(/<input[^>]*name="kitchen_sink\[alarm_time\]"/, response.body)
+    # Sibling sections are unaffected.
+    assert_includes response.body, "Identity"
+
+    get "/admin/kitchen_sinks/#{plain.id}"
+    assert_response :success
+    refute_includes response.body, "Display Alarm Section"
+
+    # Once the condition holds, the section and its field render as usual.
+    featured = KitchenSink.create!(name: "Featured", organization: org, featured: true, alarm_time: "07:30")
+    get "/admin/kitchen_sinks/#{featured.id}/edit"
+    assert_includes response.body, "Alarm Section"
+    assert_match(/name="kitchen_sink\[alarm_time\]"/, response.body)
+
+    get "/admin/kitchen_sinks/#{featured.id}"
+    assert_includes response.body, "Display Alarm Section"
+  end
+
   test "fields in a multi-column section flow into grid cells, not full rows" do
     get "/admin/kitchen_sinks/new"
     assert_response :success
