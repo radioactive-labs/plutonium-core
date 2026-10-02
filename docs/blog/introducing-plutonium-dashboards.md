@@ -1,18 +1,17 @@
 ---
 title: "Introducing Plutonium dashboards: metric cards and charts for your Rails admin"
 titleTemplate: "Plutonium Blog"
-date: 2026-10-01
+date: 2026-10-02
 description: Plutonium now ships dashboards. Declare metric, chart and free-form cards in one Ruby class, mount it with one routes line, and every card loads in its own turbo frame inside your portal's auth and tenancy.
 author: Stefan Froelich
 tags: [announcement, dashboards, charts]
-draft: true
 ---
 
 # Introducing Plutonium dashboards: metric cards and charts for your Rails admin
 
 <BlogMeta />
 
-Every portal Plutonium generates opens on a Dashboard page that lists your resources with a record count each. Anything past that, the numbers and charts an admin actually opens the app to see, was yours to build: a controller action, some instance variables, a view. The next release ships it. A dashboard is a Ruby class of cards, mounted with one line in your routes.
+Every portal Plutonium generates opens on a Dashboard page that lists your resources with a record count each. Anything past that, the numbers and charts an admin actually opens the app to see, was yours to build: a controller action, some instance variables, a view. Plutonium 0.65 ships it. A dashboard is a Ruby class of cards, mounted with one line in your routes.
 
 ![A dashboard with four metric cards, an area chart of signups per day, a donut chart and a full-width welcome card](/images/blog/dashboards-overview.png)
 
