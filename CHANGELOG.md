@@ -2,6 +2,65 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.65.0] - 2026-10-02
+
+### Bug Fixes
+
+- Stop the nav overflowing, and let crushed tables scroll ([#111](https://github.com/radioactive-labs/plutonium-core/issues/111))
+- Cover auto-detected attachments in attachment_input_keys ([#114](https://github.com/radioactive-labs/plutonium-core/issues/114))
+- Keep the current view when clearing filters from the slideover ([#115](https://github.com/radioactive-labs/plutonium-core/issues/115))
+- Inherit width in subclasses and wrap long stepper labels ([#116](https://github.com/radioactive-labs/plutonium-core/issues/116))
+- Apply association filter's scope: option to dropdown and typeahead ([#151](https://github.com/radioactive-labs/plutonium-core/issues/151))
+- Guard #draw against nil engine for unconventional engine names ([#138](https://github.com/radioactive-labs/plutonium-core/issues/138))
+- Raise ArgumentError correctly in authorized_resource_scope ([#140](https://github.com/radioactive-labs/plutonium-core/issues/140))
+- Rescue FloatDomainError in has_cents setters ([#147](https://github.com/radioactive-labs/plutonium-core/issues/147))
+- Honour field condition: on forms by reading before stripping ([#149](https://github.com/radioactive-labs/plutonium-core/issues/149))
+- Preserve sort and scope when applying filters ([#145](https://github.com/radioactive-labs/plutonium-core/issues/145))
+- Neutralize full-width formula characters in CSV export ([#144](https://github.com/radioactive-labs/plutonium-core/issues/144))
+- Strip leading dot from extension fallback in attachment thumbnails ([#143](https://github.com/radioactive-labs/plutonium-core/issues/143))
+- Reject SGIDs whose model class has been removed ([#142](https://github.com/radioactive-labs/plutonium-core/issues/142))
+- Require Stimulus entrypoint alongside Tailwind ([#141](https://github.com/radioactive-labs/plutonium-core/issues/141))
+- Raise ::ActionPolicy::Unauthorized on denied wizard entry ([#148](https://github.com/radioactive-labs/plutonium-core/issues/148))
+- Raise NotImplementedError instead of returning non-existent EntityMembership ([#150](https://github.com/radioactive-labs/plutonium-core/issues/150))
+- Apply association filter's scope: option to filter pill labels ([#155](https://github.com/radioactive-labs/plutonium-core/issues/155))
+- Prevent duplicate memberships via locked state re-check ([#139](https://github.com/radioactive-labs/plutonium-core/issues/139))
+- Keep .env.test.local git-ignored in dotenv generator ([#146](https://github.com/radioactive-labs/plutonium-core/issues/146))
+- JSON-encode Array/Hash direct-upload values for Stimulus ([#121](https://github.com/radioactive-labs/plutonium-core/issues/121))
+- Float slim-select dropdown above modal instead of clipping it ([#157](https://github.com/radioactive-labs/plutonium-core/issues/157))
+- Validate async file inputs by declaration, not value shape ([#169](https://github.com/radioactive-labs/plutonium-core/issues/169))
+- Use sqlserver JDBC subadapter for SQL Server on JRuby ([#168](https://github.com/radioactive-labs/plutonium-core/issues/168))
+- Install assets with the app's package manager, not yarn 1 ([#170](https://github.com/radioactive-labs/plutonium-core/issues/170))
+- Npm install in docker-compose, document jsbundling detection accurately ([#172](https://github.com/radioactive-labs/plutonium-core/issues/172))
+- Drop sections whose fields are all condition-hidden, and leave hidden inputs out of wizard review ([#173](https://github.com/radioactive-labs/plutonium-core/issues/173))
+
+### Documentation
+
+- Publish the introduction post ([#108](https://github.com/radioactive-labs/plutonium-core/issues/108))
+- Per-post og cards, mobile search fix, complete configuration reference ([#109](https://github.com/radioactive-labs/plutonium-core/issues/109))
+- Add the four unreachable pages to the landing rail ([#110](https://github.com/radioactive-labs/plutonium-core/issues/110))
+- Note that width inherits to subclasses ([#120](https://github.com/radioactive-labs/plutonium-core/issues/120))
+- Note reserved filter names in query reference ([#156](https://github.com/radioactive-labs/plutonium-core/issues/156))
+
+### Features
+
+- Reject filters named after reserved query controls ([#153](https://github.com/radioactive-labs/plutonium-core/issues/153))
+- [**breaking**] Render column blocks in a Phlex context and layer header-only columns on the display ([#161](https://github.com/radioactive-labs/plutonium-core/issues/161))
+- Make every Plutonium string and derived label translatable ([#162](https://github.com/radioactive-labs/plutonium-core/issues/162))
+- Declarative dashboards with metric/chart/card DSL and pu:dashboard generator ([#163](https://github.com/radioactive-labs/plutonium-core/issues/163))
+
+### Miscellaneous Tasks
+
+- Remove dead rabl config and template-handler block ([#117](https://github.com/radioactive-labs/plutonium-core/issues/117))
+- Remove dead commented-out actions ([#118](https://github.com/radioactive-labs/plutonium-core/issues/118))
+- Remove dead PlutoniumGenerators::Installer module and Config concern ([#119](https://github.com/radioactive-labs/plutonium-core/issues/119))
+- Remove commented-out create_presenter/create_query_object scaffold methods and orphaned templates ([#165](https://github.com/radioactive-labs/plutonium-core/issues/165))
+- Remove unused Serializer concern and commented-out appname helpers ([#164](https://github.com/radioactive-labs/plutonium-core/issues/164))
+- Remove dead pu:field:input generator ([#160](https://github.com/radioactive-labs/plutonium-core/issues/160))
+- Remove dead turbo-rails monkey patches initializer ([#159](https://github.com/radioactive-labs/plutonium-core/issues/159))
+- Remove dead FieldImporter::Spec#validate method ([#158](https://github.com/radioactive-labs/plutonium-core/issues/158))
+- Remove unused invoke_options helper ([#166](https://github.com/radioactive-labs/plutonium-core/issues/166))
+- Update claude.md
+
 ## [0.64.0] - 2026-08-22
 
 ### Miscellaneous Tasks
