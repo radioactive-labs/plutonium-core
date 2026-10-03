@@ -65,6 +65,12 @@ module Pu
     user.#{profile_association}.nil?
   end
 
+  # The base update? delegates to create?, which is false once the profile
+  # exists. relation_scope already limits this to the user's own profile.
+  def update?
+    true
+  end
+
   def destroy?
     false
   end
