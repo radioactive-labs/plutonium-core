@@ -1,9 +1,9 @@
 ---
 name: plutonium-app
-description: Use BEFORE installing Plutonium, creating a portal or feature package, mounting an engine, or registering resources/routes. Covers initial setup, the package system, portal engines, route registration (including singular and custom routes), and resource-to-portal wiring.
+description: 'Use BEFORE installing Plutonium, creating a portal or feature package, mounting an engine, or registering resources/routes. Covers initial setup, the package system, portal engines, route registration (including singular and custom routes), and resource-to-portal wiring.'
 ---
 
-# Plutonium App — Installation, Packages, Portals, Routes
+# Plutonium App: Installation, Packages, Portals, Routes
 
 How a Plutonium app is assembled: the install bootstrap, the package system (feature vs portal), portal engines, and the routing surface that exposes resources to the web.
 
@@ -15,54 +15,54 @@ For the resources themselves (model + definition + scaffold options), see [[plut
 - **Existing app → `base.rb`. New app → `plutonium.rb`.** The `plutonium.rb` template re-runs full bootstrap (dotenv, annotate, solid_*, asset config) and creates generic "initial commit" commits that clobber history. For any pre-existing app use `base.rb`.
 - **Pass `--dest`, `--auth`, `--force`, `--skip-bundle`** etc. for unattended runs so generators don't block on prompts.
 - **Feature vs portal is a hard split.** Feature packages hold models/policies/definitions/interactions. Portal packages hold controllers/views/routes/auth. Don't mix.
-- **Package classes are auto-namespaced** — `packages/blogging/app/models/blogging/post.rb` → `Blogging::Post`. Don't fight it.
-- **Always connect resources with `pu:res:conn`** — until connected, a resource has no portal routes and is invisible.
-- **For custom routes on a registered resource, pass `as:`** — otherwise `resource_url_for` can't build URLs.
+- **Package classes are auto-namespaced**: `packages/blogging/app/models/blogging/post.rb` → `Blogging::Post`. Don't fight it.
+- **Always connect resources with `pu:res:conn`**: until connected, a resource has no portal routes and is invisible.
+- **For custom routes on a registered resource, pass `as:`**: otherwise `resource_url_for` can't build URLs.
 
 ---
 
-## 🛑 Before you install or scaffold structure: confirm the shape (ASK — don't infer)
+## 🛑 Before you install or scaffold structure: confirm the shape (ASK: don't infer)
 
-"Set up Plutonium" / "make an admin area" / "create a billing package" each hide a high-blast-radius decision. Get one wrong and you **clobber a year of git history**, build the wrong kind of package, or ship a portal nobody can log into. Resolve each — confirming by inspection (next section), not assumption:
+"Set up Plutonium" / "make an admin area" / "create a billing package" each hide a high-blast-radius decision. Get one wrong and you **clobber a year of git history**, build the wrong kind of package, or ship a portal nobody can log into. Resolve each, confirming by inspection (next section), not assumption:
 
-1. **Fresh app or existing one?** Existing ⇒ `bundle add plutonium` + `pu:core:install` (the `base.rb` path). **NEVER the `plutonium.rb` fresh-app template on an existing app** — it re-bootstraps (dotenv/annotate/solid_*/assets) and drops "initial commit" commits that clobber history. This is the single most dangerous mistake in this skill — confirm it's greenfield *before* reaching for `plutonium.rb`.
-2. **Feature package or portal package?** Business logic (models/policies/definitions/interactions) ⇒ `pu:pkg:package` (feature, no UI). A web surface (controllers/views/routes/auth) ⇒ `pu:pkg:portal`. Hard split — "billing" is a *feature*; "admin area" is a *portal*. A feature package is invisible until its resources are `pu:res:conn`'d into a portal.
-3. **Auth per portal.** `--auth=<account>` / `--public` / `--byo` / `--scope=<Entity>` (multi-tenant). Unguessable from "admin area" — decide, don't default silently.
-4. **Don't stop half-wired.** A resource reaches the browser only after: scaffold → migrate → `pu:res:conn --dest=portal` → portal engine `mount`ed in `config/routes.rb` → registered (conn does the last). Name the whole chain before you start.
+1. **Fresh app or existing one?** Existing ⇒ `bundle add plutonium` + `pu:core:install` (the `base.rb` path). **NEVER the `plutonium.rb` fresh-app template on an existing app**: it re-bootstraps (dotenv/annotate/solid_*/assets) and drops "initial commit" commits that clobber history. This is the single most dangerous mistake in this skill; confirm it's greenfield *before* reaching for `plutonium.rb`.
+2. **Feature package or portal package?** Business logic (models/policies/definitions/interactions) ⇒ `pu:pkg:package` (feature, no UI). A web surface (controllers/views/routes/auth) ⇒ `pu:pkg:portal`. Hard split: "billing" is a *feature*; "admin area" is a *portal*. A feature package is invisible until its resources are `pu:res:conn`'d into a portal.
+3. **Auth per portal.** `--auth=<account>` / `--public` / `--byo` / `--scope=<Entity>` (multi-tenant). Unguessable from "admin area"; decide, don't default silently.
+4. **Don't stop half-wired.** A resource reaches the browser only after: scaffold → migrate → `pu:res:conn --dest=portal` → registered in the portal's routes (conn does this) → portal engine mounted (`pu:pkg:portal` already did this). Name the whole chain before you start.
 
-**Never ship a guessed schema, portal name, or auth flag as applied commands** — read them off the app first; fall back to `AskUserQuestion` only for genuine product choices (separate staff accounts vs shared, which payment backend). The decisions compound: *existing app ⇒ base.rb path*; *feature package ⇒ needs a portal to be visible*; *new portal ⇒ pick auth + mount it*.
+**Never ship a guessed schema, portal name, or auth flag as applied commands**; read them off the app first; fall back to `AskUserQuestion` only for genuine product choices (separate staff accounts vs shared, which payment backend). The decisions compound: *existing app ⇒ base.rb path*; *feature package ⇒ needs a portal to be visible*; *new portal ⇒ pick auth + mount it*.
 
-## ✅ Before you run a generator: verify the ground truth (CHECK — read it, don't ask for it)
+## ✅ Before you run a generator: verify the ground truth (CHECK: read it, don't ask for it)
 
-You have file access — **inspect**; don't ask the user to describe their app.
+You have file access, **inspect**; don't ask the user to describe their app.
 
 | Check | How | Why it matters |
 |---|---|---|
-| Greenfield vs existing | `git log --oneline \| head`; is there a populated `Gemfile`/`app/`? | An existing app must use the `base.rb` path — **never** `plutonium.rb` |
+| Greenfield vs existing | `git log --oneline \| head`; is there a populated `Gemfile`/`app/`? | An existing app must use the `base.rb` path, **never** `plutonium.rb` |
 | Plutonium already installed | grep `Gemfile` for `plutonium`; `ls config/packages.rb app/controllers/resource_controller.rb` | Avoid re-installing / double bootstrap |
-| Package/portal already exists | `ls packages/<name>` | Don't duplicate — connect to / extend the existing one |
+| Package/portal already exists | `ls packages/<name>` | Don't duplicate; connect to / extend the existing one |
 | Existing auth | grep `Gemfile`/`app/models` for `rodauth`/`devise`/`has_secure_password` | Drives `--auth` vs `--byo` |
-| Portal engine mounted | grep `config/routes.rb` for `mount <Portal>::Engine` | An unmounted portal 404s |
+| Portal engine mounted | grep `packages/<portal>/config/routes.rb` for `mount <Portal>::Engine` | `pu:pkg:portal` writes the mount there. Don't add a second one to `config/routes.rb` (duplicate route name error) |
 | Resource registered | grep the portal's `config/routes.rb` for `register_resource ::<X>` | Unregistered ⇒ no URLs (`resource_url_for` fails) |
 | Migrations applied | `rails db:migrate:status` before `pu:res:conn` | `conn` seeds the policy from columns |
 
 Inspect with your own tools **before** running any generator.
 
-## 🛠 Use the generator — pick the right install path
+## 🛠 Use the generator: pick the right install path
 
 Never hand-write base controllers, engine files, layouts, or route registration. Pass `--dest`/`--auth`/`--force`/`--skip-bundle` for unattended runs.
 
 | Task | Generator | Verify first |
 |---|---|---|
-| Install — **existing** app | `bundle add plutonium` + `pu:core:install` | It's an existing app (use `base.rb`, **not** `plutonium.rb`) |
-| Install — **fresh** app | `rails new … -m …/plutonium.rb` | Brand-new app **only** |
+| Install, **existing** app | `bundle add plutonium` + `pu:core:install` | It's an existing app (use `base.rb`, **not** `plutonium.rb`) |
+| Install, **fresh** app | `rails new … -m …/plutonium.rb` | Brand-new app **only** |
 | Feature package | `pu:pkg:package <name>` | Not already present |
-| Portal package | `pu:pkg:portal <name> --auth=…/--public/--byo/--scope=…` | Auth strategy decided; then `mount` the engine by hand |
+| Portal package | `pu:pkg:portal <name> --auth=…/--public/--byo/--scope=…` | Auth strategy decided. The generator also mounts the engine (see Mounting) |
 | Connect a resource | `pu:res:conn <Res> --dest=portal` | Migrated; target portal exists |
 
 ---
 
-# Part 1 — Installation
+# Part 1: Installation
 
 ## Fresh Rails app (recommended)
 
@@ -78,11 +78,11 @@ Configures Rails + Propshaft + esbuild + TailwindCSS + Plutonium in one shot.
 ⚠️ Use `base.rb`, **not** `plutonium.rb`.
 
 ```bash
-# Option 1 — template
+# Option 1: template
 bin/rails app:template \
   LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
 
-# Option 2 — manual
+# Option 2: manual
 # Add `gem "plutonium"` to Gemfile, then:
 bundle install
 rails generate pu:core:install
@@ -108,10 +108,7 @@ rails db:prepare
 # 5. Connect resource to portal
 rails generate pu:res:conn Post --dest=admin_portal
 
-# 6. Mount portal in config/routes.rb
-#    mount AdminPortal::Engine, at: "/admin"
-
-# 7. Start
+# 6. Start (step 3 already mounted the portal at /admin)
 rails server
 ```
 
@@ -121,10 +118,10 @@ rails server
 app/
 ├── controllers/
 │   ├── plutonium_controller.rb       # non-resource base
-│   └── resource_controller.rb        # CRUD base — see plutonium-behavior
+│   └── resource_controller.rb        # CRUD base; see plutonium-behavior
 ├── definitions/resource_definition.rb
 ├── interactions/resource_interaction.rb
-├── models/resource_record.rb         # abstract model — includes Plutonium::Resource::Record
+├── models/resource_record.rb         # abstract model that includes Plutonium::Resource::Record
 ├── policies/resource_policy.rb
 └── views/layouts/resource.html.erb
 
@@ -174,7 +171,7 @@ end
 
 ---
 
-# Part 2 — The Package System
+# Part 2: The Package System
 
 Two kinds, hard split:
 
@@ -275,19 +272,19 @@ Switch locale with a normal Rails `around_action` in the portal's controller con
 
 ## When to use which
 
-**Feature packages** — domain logic that:
+**Feature packages** are domain logic that:
 - Could be reused across multiple portals (admin and customer both edit `Blogging::Post`)
 - Has no inherent UI / auth (it's just behavior)
 - You want to keep isolated from other domains (`billing` should not depend on `blogging`)
 
-**Portal packages** — user-facing surfaces that:
+**Portal packages** are user-facing surfaces that:
 - Have a specific auth flow (admin vs customer vs public)
 - Render different views of the same underlying resources
 - Need different policies / definitions per audience
 
 ---
 
-# Part 3 — Portal Engines
+# Part 3: Portal Engines
 
 A portal is a Rails engine mixing in `Plutonium::Portal::Engine`. It defines its own routes, controller concern, and (optionally) entity scoping.
 
@@ -302,7 +299,7 @@ rails g pu:pkg:portal <name>
 | Option | Description |
 |---|---|
 | `--auth=NAME` | Rodauth account to use (e.g. `--auth=user`) |
-| `--public` | Public access — no auth |
+| `--public` | Public access, no auth |
 | `--byo` | Bring your own auth |
 | `--scope=CLASS` | Entity class for multi-tenancy (e.g. `--scope=Organization`) |
 
@@ -333,7 +330,9 @@ end
 
 ## Controller concern (auth)
 
-Every portal has a `Concerns::Controller` mixed into its `ResourceController`. The generator wires this up; you customize it for auth / before_action hooks.
+Every portal has a `Concerns::Controller`, included by both its `ResourceController` (resource pages) and its `PlutoniumController` (dashboard and other non-resource pages). The generator wires this up; you customize it for auth / before_action hooks.
+
+Portal-wide helpers the layout calls belong here, declared with `helper_method`, so they work on the dashboard as well as resource pages. Defining one on a single resource controller (or on the app's `::ResourceController`) leaves the dashboard without it. The common case is `profile_url`: `Plutonium::Auth::Rodauth` defines it as `nil`, and the avatar menu only shows a Profile link when it is truthy. `pu:profile:conn --dest=<portal>` writes the override into this concern; it reads `current_user.profile`, the `has_one :profile` association that `pu:profile:install` adds (see [[plutonium-auth]]). A plain `pu:res:conn --singular` registers the route but does not define `profile_url`. When testing the link, request both the portal root and a resource page.
 
 ### Rodauth
 
@@ -371,18 +370,61 @@ end
 
 ## Mounting
 
+`pu:pkg:portal` writes the mount at the bottom of the portal's own `packages/<name>_portal/config/routes.rb`, at `/<name>`, wrapped in an auth constraint when `--auth` is given:
+
 ```ruby
-# config/routes.rb
+# packages/admin_portal/config/routes.rb (after the engine's routes.draw block)
 Rails.application.routes.draw do
-  # Authenticated mount
   constraints Rodauth::Rails.authenticate(:user) do
     mount AdminPortal::Engine, at: "/admin"
   end
-
-  # Unconstrained (portal handles its own auth)
-  mount PublicPortal::Engine, at: "/public"
 end
 ```
+
+To change the path, edit `at:` in place. Don't mount the engine again in `config/routes.rb`: the second `mount` reuses the route name (`admin_portal`) and Rails raises `ArgumentError: Invalid route name, already in use`.
+
+Route order matters: the app's `config/routes.rb` is drawn first, then each package's routes file, then gem engines (Active Storage, Turbo).
+
+### Mounting a portal at `/`
+
+Two things change when a portal is mounted at `"/"`.
+
+**Drop the `Rodauth::Rails.authenticate` constraint and authenticate in the controller concern instead.** The constraint does not fail the match for an anonymous visitor; it calls `rodauth.require_account`, which redirects to login. A constrained mount at `/` matches every path the app's own routes did not claim, so it redirects anonymous requests meant for routes drawn after it (other portals, Active Storage) and turns unknown URLs into login redirects.
+
+```ruby
+# packages/desk_portal/config/routes.rb
+Rails.application.routes.draw do
+  mount DeskPortal::Engine, at: "/"
+end
+
+# packages/desk_portal/app/controllers/desk_portal/concerns/controller.rb
+module DeskPortal
+  module Concerns
+    module Controller
+      extend ActiveSupport::Concern
+      include Plutonium::Portal::Controller
+      include Plutonium::Auth::Rodauth(:user)
+      # add concerns above.
+
+      included do
+        before_action { rodauth.require_account }
+      end
+    end
+  end
+end
+```
+
+**Move the engine's root off `/` but keep the name.** The app's `root` is drawn first, so the generated `root to: "dashboard#index"` is unreachable and the portal's `root_path` points at the app's home page. Plutonium's header, icon rail, breadcrumbs and wizard exits all link to `root_path`, so the portal still needs a route named `root`:
+
+```ruby
+DeskPortal::Engine.routes.draw do
+  get "dashboard", to: "dashboard#index", as: :root
+  register_resource ::Comment
+  # register resources above.
+end
+```
+
+The same applies to `register_dashboard ..., at: "/"`. Confirm with `Rails.application.routes.recognize_path("/")` (still the app's home) and `recognize_path("/dashboard")`.
 
 ## Controller hierarchy
 
@@ -412,13 +454,13 @@ end
 ## Per-portal overrides
 
 ```ruby
-# Definition — how fields render (NOT whether they appear)
+# Definition: how fields render (NOT whether they appear)
 class AdminPortal::PostDefinition < ::PostDefinition
   scope :pending_review
   input :internal_notes, hint: "Not shown to the author"
 end
 
-# Policy — whether a field appears at all
+# Policy: whether a field appears at all
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
   def destroy? = true
@@ -436,7 +478,7 @@ end
 
 ---
 
-# Part 4 — Routes & `register_resource`
+# Part 4: Routes & `register_resource`
 
 Portal routes live in `packages/<name>_portal/config/routes.rb`:
 
@@ -452,7 +494,7 @@ AdminPortal::Engine.routes.draw do
 end
 ```
 
-## `register_resource` — what it does
+## `register_resource`: what it does
 
 For each call, Plutonium auto-generates:
 
@@ -460,11 +502,11 @@ For each call, Plutonium auto-generates:
 - Nested routes for every registered `has_many` / `has_one` parent (prefixed `nested_`)
 - Route names that `resource_url_for` can resolve
 
-You list every resource the portal exposes. If a resource isn't registered, it has no URLs in that portal — `resource_url_for` will fail.
+You list every resource the portal exposes. If a resource isn't registered, it has no URLs in that portal, so `resource_url_for` will fail.
 
 ## Singular (singleton) resources
 
-For resources with no collection — a single per-user `Profile`, app-wide `Settings`, etc.:
+For resources with no collection, a single per-user `Profile`, app-wide `Settings`, etc.:
 
 ```ruby
 register_resource ::Profile, singular: true
@@ -505,9 +547,9 @@ register_resource ::Post do
 end
 ```
 
-**Always pass `as:`.** Without it, `resource_url_for(@post, action: :preview)` fails because there's no named route to look up — especially critical for nested resources.
+**Always pass `as:`.** Without it, `resource_url_for(@post, action: :preview)` fails because there's no named route to look up, which is especially critical for nested resources.
 
-For most operations with business logic, prefer **interactive actions** (definition + interaction — see [[plutonium-resource]] › Actions) over custom controller routes. The action routes are wired automatically with no `register_resource` block needed.
+For most operations with business logic, prefer **interactive actions** (definition + interaction, see [[plutonium-resource]] › Actions) over custom controller routes. The action routes are wired automatically with no `register_resource` block needed.
 
 ## Cross-package and nested URLs
 
@@ -515,7 +557,7 @@ See [[plutonium-behavior]] for full `resource_url_for` signature and [[plutonium
 
 ---
 
-# Part 5 — Connecting Resources to Portals (`pu:res:conn`)
+# Part 5: Connecting Resources to Portals (`pu:res:conn`)
 
 A resource is invisible until connected to at least one portal. The generator wires up the portal-specific controller, policy, definition, and route registration.
 
@@ -525,7 +567,7 @@ A resource is invisible until connected to at least one portal. The generator wi
 rails g pu:res:conn RESOURCE [RESOURCE...] --dest=PORTAL_NAME [--singular]
 ```
 
-Pass resources directly — avoids interactive prompts. No `--src` needed.
+Pass resources directly; this avoids interactive prompts. No `--src` needed.
 
 ## Usage
 
@@ -540,7 +582,7 @@ rails g pu:res:conn Blogging::Post Blogging::Comment --dest=admin_portal
 rails g pu:res:conn Profile --dest=customer_portal --singular
 ```
 
-**Run after migrations** — the generator reads model columns to seed the policy's `permitted_attributes_for_*`.
+**Run after migrations**: the generator reads model columns to seed the policy's `permitted_attributes_for_*`.
 
 ## What gets generated
 
@@ -560,7 +602,7 @@ register_resource ::Post
 register_resource ::Profile, singular: true   # if --singular
 ```
 
-Re-running `pu:res:conn` for the same resource is **idempotent** — already-registered entries report `identical` and are not duplicated. Insertion falls back gracefully when the conventional `# register resources above` marker is missing (uses the `routes.draw do` opening), and warns clearly if it can't find any anchor.
+Re-running `pu:res:conn` for the same resource is **idempotent**: already-registered entries report `identical` and are not duplicated. Insertion falls back gracefully when the conventional `# register resources above` marker is missing (uses the `routes.draw do` opening), and warns clearly if it can't find any anchor.
 
 ### Generated controller
 
@@ -590,7 +632,7 @@ class AdminPortal::PostPolicy < ::PostPolicy
 end
 ```
 
-Review and trim — the generator is liberal. Especially: drop `_id` fields when the form uses the association name, and add `:price` (not `:price_cents`) for `has_cents` fields.
+Review and trim: the generator is liberal. Especially: drop `_id` fields when the form uses the association name, and add `:price` (not `:price_cents`) for `has_cents` fields.
 
 ---
 
@@ -621,9 +663,9 @@ Review and trim — the generator is liberal. Especially: drop `_id` fields when
 
 ## Related skills
 
-- [[plutonium-resource]] — what a resource IS (model + definition + scaffold options)
-- [[plutonium-behavior]] — controllers, policies, interactions
-- [[plutonium-tenancy]] — entity scoping, nested resources, invites
-- [[plutonium-auth]] — Rodauth account configuration
-- [[plutonium-ui]] — layouts, page classes, custom Phlex components, assets
-- [[plutonium-testing]] — testing portals, packages, controllers
+- [[plutonium-resource]]: what a resource IS (model + definition + scaffold options)
+- [[plutonium-behavior]]: controllers, policies, interactions
+- [[plutonium-tenancy]]: entity scoping, nested resources, invites
+- [[plutonium-auth]]: Rodauth account configuration
+- [[plutonium-ui]]: layouts, page classes, custom Phlex components, assets
+- [[plutonium-testing]]: testing portals, packages, controllers

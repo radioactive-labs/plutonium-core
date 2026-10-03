@@ -1,11 +1,11 @@
 ---
 name: plutonium-behavior
-description: Use BEFORE writing or overriding a Plutonium controller, policy, or interaction class. Covers controller hooks, policy methods, permitted attributes, relation_scope, interaction structure, outcomes, and chaining. The single source for "how does this resource actually do things".
+description: 'Use BEFORE writing or overriding a Plutonium controller, policy, or interaction class. Covers controller hooks, policy methods, permitted attributes, relation_scope, interaction structure, outcomes, and chaining. The single source for "how does this resource actually do things".'
 ---
 
-# Plutonium Behavior — Controllers, Policies, Interactions
+# Plutonium Behavior: Controllers, Policies, Interactions
 
-The behavior layer is intentionally thin: **controllers route**, **policies authorize**, **interactions act**. Registering an action and rendering it lives in [[plutonium-resource]] — this skill covers how to *write* the controller hook, policy method, or interaction class behind it.
+The behavior layer is intentionally thin: **controllers route**, **policies authorize**, **interactions act**. Registering an action and rendering it lives in [[plutonium-resource]]; this skill covers how to *write* the controller hook, policy method, or interaction class behind it.
 
 For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]].
 
@@ -16,9 +16,9 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 - **`create?` and `read?` default to `false`.** Always override them explicitly. Derived methods (`update?`, `show?`, etc.) inherit automatically.
 - **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detection works; production raises.
 - **`ActiveRecord::RecordInvalid` is NOT rescued automatically in interactions.** Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
-- **Return `succeed(...)` or `failed(...)`** from `execute` — the controller can't tell what happened otherwise.
-- **An interaction is a presentation object** (it can only be built with a `view_context`). Logic may *start* in `execute`; the **second caller** — a job, an API controller, a rake task, the console — is the trigger to move it onto the **model**. Don't pre-extract, and don't invent a service layer. See Part 3 › Where the logic goes.
-- **Redirect is automatic on success** — only use `with_redirect_response` for a *different* destination.
+- **Return `succeed(...)` or `failed(...)`** from `execute`; the controller can't tell what happened otherwise.
+- **An interaction is a presentation object** (it can only be built with a `view_context`). Logic may *start* in `execute`; the **second caller** (a job, an API controller, a rake task, the console) is the trigger to move it onto the **model**. Don't pre-extract, and don't invent a service layer. See Part 3 › Where the logic goes.
+- **Redirect is automatic on success**: only use `with_redirect_response` for a *different* destination.
 - **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly. `super` works when extending a parent policy (e.g., a package base) that itself calls it. See [[plutonium-tenancy]].
 - **For `has_cents` fields, use the virtual name (`:price`), not `:price_cents`** in `permitted_attributes_for_*`.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy (undefined methods return `false`).
@@ -26,35 +26,35 @@ For tenant-scoped `relation_scope` and entity scoping, load [[plutonium-tenancy]
 
 ---
 
-## 🛑 Before you write behavior: place it in the right layer (ASK — don't infer)
+## 🛑 Before you write behavior: place it in the right layer (ASK: don't infer)
 
 "Make X happen" doesn't say **where** X lives. Put it in the wrong layer and you get authorization that doesn't authorize, a 500 on the happy path, or a CRUD override that breaks params/auth. First place the requirement, then confirm names against the real code (next section):
 
 | The requirement (in plain words) | Goes in | **NOT** in |
 |---|---|---|
-| "only \<role/owner\> may do X" — *who is allowed* | **Policy** `def x?` | a `condition:` proc — that only hides the button; the route stays live and callable |
-| "there's a button that does X" — *the trigger* | **Interaction** (+ action in the definition) | a hand-written controller action; an override of `create`/`update` |
-| "doing X changes state / sends mail / charges a card" — *the work* | a named **model** method the interaction calls (`post.publish!`) — inline in `execute` is fine while the button is the only caller | a service-object layer; three chained interactions |
+| "only \<role/owner\> may do X" (*who is allowed*) | **Policy** `def x?` | a `condition:` proc (that only hides the button; the route stays live and callable) |
+| "there's a button that does X" (*the trigger*) | **Interaction** (+ action in the definition) | a hand-written controller action; an override of `create`/`update` |
+| "doing X changes state / sends mail / charges a card" (*the work*) | a named **model** method the interaction calls (`post.publish!`); inline in `execute` is fine while the button is the only caller | a service-object layer; three chained interactions |
 | "after create/update go to Y" · "munge a param" · "reshape the index query" | **Controller hook** (`redirect_url_after_submit`, `resource_params`, `filtered_resource_collection`) | overriding `create`/`update`/`index` |
-| "which fields are visible / editable" | **Policy** `permitted_attributes_for_*` | the definition — that only controls *how* a field renders |
+| "which fields are visible / editable" | **Policy** `permitted_attributes_for_*` | the definition (that only controls *how* a field renders) |
 
 Then resolve the specifics:
 
-1. **A custom action needs BOTH:** an interaction (the work) **and** a policy `def <action>?` (the authorization). Miss the policy method ⇒ the action silently returns `false` (dead button). Put the role check in `condition:` ⇒ it isn't enforced — a direct POST still runs.
-2. **`create?`/`read?` default to `false`** — override explicitly; derived methods (`update?`/`show?`/…) inherit.
-3. **Any `create!`/`update!`/`save!` in `execute`** ⇒ rescue `ActiveRecord::RecordInvalid` → `failed(e.record.errors)`. Not auto-rescued — otherwise a validation failure 500s.
+1. **A custom action needs BOTH:** an interaction (the work) **and** a policy `def <action>?` (the authorization). Miss the policy method ⇒ the action silently returns `false` (dead button). Put the role check in `condition:` ⇒ it isn't enforced; a direct POST still runs.
+2. **`create?`/`read?` default to `false`**: override explicitly; derived methods (`update?`/`show?`/…) inherit.
+3. **Any `create!`/`update!`/`save!` in `execute`** ⇒ rescue `ActiveRecord::RecordInvalid` → `failed(e.record.errors)`. Not auto-rescued; otherwise a validation failure 500s.
 4. **`has_cents`** ⇒ permit `:price`, never `:price_cents`.
-5. **New vs editing** — never re-scaffold a controller/policy/interaction that's been customized.
+5. **New vs editing**: never re-scaffold a controller/policy/interaction that's been customized.
 
-**Never ship a guessed role method, column, enum value, or association as applied code.** `user.finance?`, `record.status_approved?`, `expense.submitted_by` either exist in the app or they don't — confirm them before writing, don't assume. Fall back to `AskUserQuestion` only for genuine product choices (what the rule *should* be), never for facts you can read.
+**Never ship a guessed role method, column, enum value, or association as applied code.** `user.finance?`, `record.status_approved?`, `expense.submitted_by` either exist in the app or they don't. Confirm them before writing; don't assume. Fall back to `AskUserQuestion` only for genuine product choices (what the rule *should* be), never for facts you can read.
 
-## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
+## ✅ Before you edit: verify the ground truth (CHECK: read it, don't ask for it)
 
-You have file access — **inspect**; don't ask the user to describe their own app.
+You have file access, **inspect**; don't ask the user to describe their own app.
 
 | Check | How | Why it matters |
 |---|---|---|
-| File already customized | Read `app/policies/<x>_policy.rb`, the controller, `app/interactions/*` | Edit incrementally — re-scaffolding clobbers customizations |
+| File already customized | Read `app/policies/<x>_policy.rb`, the controller, `app/interactions/*` | Edit incrementally; re-scaffolding clobbers customizations |
 | The role/method you authorize on exists | grep the user model for `def finance?` / `enum :role` / `has_role?` | `user.finance?` 500s (or is silently `false`) if absent |
 | The columns/enum your interaction writes | Read the model + `db/schema.rb` for the enum value, `approved_by`/`approved_at`, the submitter assoc | `update!(status: :approved)` raises if the value/column is missing |
 | Action not already wired | grep the definition for `action :<x>`; grep the policy for `def <x>?` | Avoids duplicate or dead actions |
@@ -62,18 +62,18 @@ You have file access — **inspect**; don't ask the user to describe their own a
 
 Inspect with your own tools **before** proposing code.
 
-## 🛠 Use the generator — and know what's hand-authored
+## 🛠 Use the generator, and know what's hand-authored
 
 | Task | How | Verify first |
 |---|---|---|
 | Base trio (controller + policy + interaction-base) | `pu:res:scaffold` | New resource |
 | Portal-specific controller/policy | `pu:res:conn … --dest=portal` | Resource exists |
-| **A custom-action interaction** | **Hand-author** in `app/interactions/<name>_interaction.rb` (subclass `ResourceInteraction`) — **there is NO `pu:res:interaction` generator; don't invent one** | — |
-| Edit an existing customized policy/controller/interaction | Hand-edit the file | It was already generated — re-scaffolding clobbers it |
+| **A custom-action interaction** | **Hand-author** in `app/interactions/<name>_interaction.rb` (subclass `ResourceInteraction`), **there is NO `pu:res:interaction` generator, so don't invent one** | - |
+| Edit an existing customized policy/controller/interaction | Hand-edit the file | It was already generated; re-scaffolding clobbers it |
 
 ---
 
-# Part 1 — Controllers
+# Part 1: Controllers
 
 Plutonium controllers ship full CRUD out of the box; nearly all customization lives in definitions / policies / interactions. The controller stays thin.
 
@@ -87,7 +87,7 @@ end
 
 # app/controllers/posts_controller.rb (per resource, generated by pu:res:scaffold)
 class PostsController < ::ResourceController
-  # Empty — all CRUD inherited
+  # Empty: all CRUD inherited
 end
 ```
 
@@ -111,8 +111,8 @@ Plus interactive-action routes for every action declared in the definition.
 |---|---|
 | Field rendering (inputs, displays, columns) | Definition |
 | Search, filters, scopes, sorting | Definition |
-| Custom operations (publish, archive, import) — the *button* | Interaction (+ action in definition) |
-| The operation itself, once a job/API/task also needs it | The **model** (`post.publish!`) — see Part 3 › Where the logic goes |
+| Custom operations (publish, archive, import): the *button* | Interaction (+ action in definition) |
+| The operation itself, once a job/API/task also needs it | The **model** (`post.publish!`); see Part 3 › Where the logic goes |
 | Authorization rules | Policy |
 | Form/show/page chrome | Definition (custom page classes) |
 | **Custom redirect logic** | **Controller hook** |
@@ -163,7 +163,7 @@ end
 
 **Don't add eager loading unprompted.** Which associations a page renders is decided by the definition, so an `includes` list written now is a guess that goes stale when a column is added. Adding one is a performance change the user didn't ask for.
 
-When a user actually reports a slow index or an N+1: suggest [goldiloader](https://github.com/salsify/goldiloader) first — it eager-loads on traversal, so it tracks whatever the definition renders and needs no list to maintain. Only hand-write `def filtered_resource_collection = super.includes(...)` if they decline the gem, and use the policy's `relation_scope` instead when the association is also read on show/export/typeahead. Full detail: [Guides › Performance](/guides/performance).
+When a user actually reports a slow index or an N+1: suggest [goldiloader](https://github.com/salsify/goldiloader) first: it eager-loads on traversal, so it tracks whatever the definition renders and needs no list to maintain. Only hand-write `def filtered_resource_collection = super.includes(...)` if they decline the gem, and use the policy's `relation_scope` instead when the association is also read on show/export/typeahead. Full detail: [Guides › Performance](/guides/performance).
 
 ### Presentation hooks
 
@@ -180,7 +180,7 @@ def submit_scoped_entity?   = true
 
 Prefer **interactive actions** (definition + interaction) for anything a user triggers from a page. The only reason to hand-write a controller action is unusual flows (custom response shapes, external service callbacks, etc.).
 
-Either way the *operation* is a named model method — the controller and the interaction are two front doors onto the same `post.publish!`.
+Either way the *operation* is a named model method; the controller and the interaction are two front doors onto the same `post.publish!`.
 
 ```ruby
 class PostsController < ::ResourceController
@@ -224,10 +224,10 @@ permitted_attributes
 current_authorized_scope                  # Scoped records the user can access
 ```
 
-**Other resources** (cross-resource auth — use these, not raw `where` / `find`):
+**Other resources** (cross-resource auth; use these, not raw `where` / `find`):
 
 ```ruby
-authorize! other_record, to: :show?       # ActionPolicy — raises if denied
+authorize! other_record, to: :show?       # ActionPolicy, raises if denied
 allowed_to?(:show?, other_record)         # Boolean check
 policy_for(OtherModel)                    # Policy instance for class or record
 policy_for(other_record).show?
@@ -237,7 +237,7 @@ authorized_resource_scope(OtherModel, relation: OtherModel.published)  # On a re
 authorized_resource_scope(OtherModel, type: :create)                   # Different action
 ```
 
-`authorized_resource_scope` applies the *other* resource's `relation_scope` AND the current policy context (entity scope, etc.). **Always prefer it over `OtherModel.all` / raw `where` in cross-resource controller code** — otherwise you bypass that resource's tenancy and visibility rules.
+`authorized_resource_scope` applies the *other* resource's `relation_scope` AND the current policy context (entity scope, etc.). **Always prefer it over `OtherModel.all` / raw `where` in cross-resource controller code**; otherwise you bypass that resource's tenancy and visibility rules.
 
 ### Definition access
 
@@ -294,7 +294,7 @@ end
 
 The parent class and association come from the **route** (each nested route carries its registration key), not from parsing the URL. There is no `parent_route_param`.
 
-Parent fields are excluded from forms/displays by default — toggle with the presentation hooks above. For `has_one` associations, routes are singular (no `:id`); index redirects to show (or new if no record exists). See [[plutonium-tenancy]] for the full nested-routing story.
+Parent fields are excluded from forms/displays by default; toggle with the presentation hooks above. For `has_one` associations, routes are singular (no `:id`); index redirects to show (or new if no record exists). See [[plutonium-tenancy]] for the full nested-routing story.
 
 ## Entity scoping (multi-tenancy)
 
@@ -328,7 +328,7 @@ verify_current_authorized_scope  # all except new/create
 Skip only when handling auth manually. Two forms:
 
 ```ruby
-# Class-level — skip across multiple actions
+# Class-level: skip across multiple actions
 class PostsController < ::ResourceController
   skip_verify_authorize_current only: [:custom_action]
   skip_verify_current_authorized_scope only: [:custom_action]
@@ -338,7 +338,7 @@ class PostsController < ::ResourceController
   end
 end
 
-# Per-action — bang methods, call inside the action body
+# Per-action: bang methods, call inside the action body
 def custom_action
   skip_verify_authorize_current!
   skip_verify_current_authorized_scope!
@@ -346,7 +346,7 @@ def custom_action
 end
 ```
 
-Prefer the per-action bang form when only one action skips — keeps the exception co-located with the code that needs it.
+Prefer the per-action bang form when only one action skips; it keeps the exception co-located with the code that needs it.
 
 ## Portal-specific controllers
 
@@ -358,7 +358,7 @@ class AdminPortal::PostsController < ::PostsController
   include AdminPortal::Concerns::Controller
 end
 
-# No feature package — inherits portal base
+# No feature package: inherits portal base
 class AdminPortal::PostsController < AdminPortal::ResourceController
 end
 ```
@@ -375,7 +375,7 @@ end
 
 ---
 
-# Part 2 — Policies
+# Part 2: Policies
 
 Built on [ActionPolicy](https://actionpolicy.evilmartians.io/). Plutonium adds:
 
@@ -434,9 +434,9 @@ end
 | `search?` | `index?` | Search-specific rules |
 | `typeahead?` | `index?` | Autocomplete-specific rules |
 
-🚨 **`record` is the resource CLASS on collection routes** (`current_policy_subject = resource_record? || resource_class`). `read?` backs both `show?` (instance) and `index?` (class); `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates (incl. kanban column actions) are class-backed too. `def read? = record.published?` raises `NoMethodError` on index — filter the list in `relation_scope`, gate individual records in `show?`. Record actions (`publish?` etc.) and bulk actions are always evaluated per record instance — no type guard needed.
+🚨 **`record` is the resource CLASS on collection routes** (`current_policy_subject = resource_record? || resource_class`). `read?` backs both `show?` (instance) and `index?` (class); `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates (incl. kanban column actions) are class-backed too. `def read? = record.published?` raises `NoMethodError` on index, so filter the list in `relation_scope` and gate individual records in `show?`. Record actions (`publish?` etc.) and bulk actions are always evaluated per record instance, so no type guard is needed.
 
-`export_csv?` is the exception — it defaults to `false` (not derived) so CSV export is strictly opt-in. Override it to `true` (or `index?`) to enable the built-in export. The exported column set is `permitted_attributes_for_export` (defaults to `permitted_attributes_for_index`). See [[plutonium-resource]] → CSV Export.
+`export_csv?` is the exception: it defaults to `false` (not derived) so CSV export is strictly opt-in. Override it to `true` (or `index?`) to enable the built-in export. The exported column set is `permitted_attributes_for_export` (defaults to `permitted_attributes_for_index`). See [[plutonium-resource]] → CSV Export.
 
 ### Custom actions
 
@@ -448,7 +448,7 @@ def archive? = create? && !record.archived?
 def invite_user? = user.admin?
 ```
 
-### Bulk actions — per-record auth
+### Bulk actions: per-record auth
 
 ```ruby
 def bulk_archive?
@@ -461,7 +461,7 @@ How it works:
 - Policy is checked **per record** in the selected set.
 - **Backend:** if any record fails, the entire request is rejected.
 - **UI:** only actions ALL selected records support are shown (intersection).
-- Records come from `current_authorized_scope` — users can only select what they're allowed to access.
+- Records come from `current_authorized_scope`, so users can only select what they're allowed to access.
 
 ## Attribute permissions
 
@@ -499,7 +499,7 @@ def permitted_attributes_for_read
 end
 ```
 
-🚨 **Index has no `record`.** `permitted_attributes_for_index` is evaluated at collection level — `record` is `nil`. `permitted_attributes_for_show` (and `_for_read`) ARE evaluated per record. So if you write a record-dependent `_for_read`:
+🚨 **Index has no record instance.** On collection routes the policy subject is the resource **class** (`current_policy_subject = resource_record? || resource_class`), so `permitted_attributes_for_index` runs with `record == Post`. The same class-bound policy feeds the table, the CSV export (`_for_export` defaults to `_for_index`) and kanban cards. `permitted_attributes_for_show` (and `_for_read`) run per record. So if you write a record-dependent `_for_read`:
 
 ```ruby
 def permitted_attributes_for_read
@@ -509,7 +509,7 @@ def permitted_attributes_for_read
 end
 ```
 
-…you MUST also define an explicit `permitted_attributes_for_index` — otherwise inheritance kicks in, runs the `_for_read` body during the table render, and `record.archived?` blows up on `NoMethodError: undefined method 'archived?' for nil`.
+…you MUST also define an explicit `permitted_attributes_for_index` whose body never touches `record`. Otherwise `_for_index` falls back to `_for_read`, runs it against the class during the table render, and `record.archived?` raises `NoMethodError` (`undefined method 'archived?'` for the `Post` class).
 
 ```ruby
 def permitted_attributes_for_index
@@ -517,13 +517,26 @@ def permitted_attributes_for_index
 end
 ```
 
-Same rule for `permitted_attributes_for_create` vs `_for_new` (new has no persisted record).
+Index columns are therefore decided **once for the whole collection**: a field is either a column for every row or for none. "Hide X on rows in state Y" cannot be done through the policy; drop the column, keep it for all rows, or (if the user wants a blank cell) render the cell conditionally in a definition `column` block; see [[plutonium-resource]]), and say which one you chose.
 
-### Policy vs definition — what controls what
+Same rule for `permitted_attributes_for_create` vs `_for_new`: `new` is a collection route too, so `record` is the class there.
+
+**Gate on the state the user named, not on its complement.** "Show the price once it's active" is `record.active?`, not `!record.draft?`. With `enum :status, {draft:, active:, discontinued:}` the complement also lets `discontinued` through, and a later enum value would leak too. Remove every attribute that carries the value, e.g. both `:price` and `:price_cents` if the policy lists both:
+
+```ruby
+def permitted_attributes_for_read
+  attrs = %i[name sku status price price_cents]
+  record.active? ? attrs : attrs - %i[price price_cents]
+end
+
+def permitted_attributes_for_index = %i[name sku status price]   # class-safe
+```
+
+### Policy vs definition: what controls what
 
 `permitted_attributes_for_*` controls **which fields appear** on a view. Definition `field`/`input`/`display`/`column` declarations only control **how** they render. A `field :name` in the definition does nothing unless `:name` is also in the relevant `permitted_attributes_for_*`.
 
-Common mistake: adding a definition declaration and wondering why the field doesn't show — check the policy.
+Common mistake: adding a definition declaration and wondering why the field doesn't show; check the policy.
 
 ### Anti-pattern: nested-attributes hashes
 
@@ -553,21 +566,38 @@ def permitted_associations
 end
 ```
 
-Declares which associations get their own **tab on the show page**. When `permitted_associations` is non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association — each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs. If `permitted_attributes_for_show` resolves to **no fields**, the empty Details tab is omitted and the first association tab leads instead.
+Declares which associations get their own **tab on the show page**. When `permitted_associations` is non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association, each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs. If `permitted_attributes_for_show` resolves to **no fields**, the empty Details tab is omitted and the first association tab leads instead.
 
 Each named association must:
 
 - Exist on the model (raises `ArgumentError: unknown association ...` otherwise).
 - Point to a class that's itself a registered Plutonium resource (raises `... is not a registered resource` otherwise).
 
+🚨 **"Registered" means registered in the portal rendering the page.** `registered_resources` is the current portal engine's `resource_register`, so a policy shared by several portals can only list associations whose class every one of those portals registers (`register_resource` in its `config/routes.rb`). Otherwise that portal's show page raises, it does not just drop the tab:
+
+```
+ArgumentError: Catalog::Product#product_metadata defined in #permitted_associations, but Catalog::ProductMetadata is not a registered resource
+```
+
+Before adding an association, grep every portal's `config/routes.rb` for the child class and find which portals use the policy (the package policy, unless the portal has its own override). For "only admins get the tab", leave the shared policy alone and add it in a portal-specific policy (next section):
+
+```ruby
+# rails g pu:res:conn Catalog::Product --dest=admin_portal --policy
+class AdminPortal::Catalog::ProductPolicy < ::Catalog::ProductPolicy
+  include AdminPortal::ResourcePolicy
+
+  def permitted_associations = [*super, :product_metadata]
+end
+```
+
 This is **NOT** the same as:
 
-- **Nested forms** — declared with `nested_input :variants` in the definition, requires `accepts_nested_attributes_for` on the model. See [[plutonium-resource]] › Nested Inputs.
-- **Association fields on tables / show details** — controlled by `permitted_attributes_for_index` / `_for_show` listing the association name.
+- **Nested forms**: declared with `nested_input :variants` in the definition; requires `accepts_nested_attributes_for` on the model. See [[plutonium-resource]] › Nested Inputs.
+- **Association fields on tables / show details**: controlled by `permitted_attributes_for_index` / `_for_show` listing the association name.
 
 ## Collection scoping (`relation_scope`)
 
-Filter which records the user can see. **Always compose with `default_relation_scope(relation)` explicitly** — `super` is unreliable inside the block, and bypassing this triggers `verify_default_relation_scope_applied!`:
+Filter which records the user can see. **Always compose with `default_relation_scope(relation)` explicitly**: `super` is unreliable inside the block, and bypassing this triggers `verify_default_relation_scope_applied!`:
 
 ```ruby
 relation_scope do |relation|
@@ -579,6 +609,8 @@ end
 For tenant scoping, parent scoping, `skip_default_relation_scope!`, and `associated_with` resolution: load [[plutonium-tenancy]].
 
 ## Portal-specific policies
+
+Generate the override with `rails g pu:res:conn <Resource> --dest=<portal> --policy` (`--policy` forces the file even when a base policy exists). It subclasses the base policy and includes the portal's `ResourcePolicy`, so override only what differs and call `super` for the rest.
 
 ```ruby
 class PostPolicy < ResourcePolicy
@@ -667,7 +699,7 @@ end
 
 ---
 
-# Part 3 — Interactions
+# Part 3: Interactions
 
 An interaction is the entry point from a Plutonium page into an operation: it declares the inputs, renders as a button and a form, is gated by a policy, and returns an outcome the controller turns into a flash + redirect. Registered as actions in definitions (see [[plutonium-resource]] › Actions) and executed by the controller.
 
@@ -685,13 +717,13 @@ def initialize(view_context:, **attributes)
 
 | | |
 |---|---|
-| **Logic may start in `execute`** | A one-off with a single caller is fine inline. Don't pre-extract — Plutonium ships no service layer to put it in, and YAGNI. |
+| **Logic may start in `execute`** | A one-off with a single caller is fine inline. Don't pre-extract: Plutonium ships no service layer to put it in, and YAGNI. |
 | **The trigger to extract is the second caller** | A background job, an API controller, a rake task, the console, another interaction. |
-| **The destination is the model** | Fat models, per Rails convention. Name it in domain language — `publish!`, `archive!`, `register!` — not persistence (`update_published_at`). Never a `PublishPostService`. |
+| **The destination is the model** | Fat models, per Rails convention. Name it in domain language (`publish!`, `archive!`, `register!`), not persistence (`update_published_at`). Never a `PublishPostService`. |
 
 ```ruby
 # 🚫 Three interactions, three view_contexts. A signup API or a seeds script
-#    can supply none of them — the email and the audit row are stranded.
+#    can supply none of them, so the email and the audit row are stranded.
 CreateUserInteraction.call(view_context:, **user_params)
   .and_then { |user| SendWelcomeEmail.call(view_context:, user:) }
   .and_then { |user| LogActivity.call(view_context:, user:) }
@@ -712,14 +744,14 @@ Chaining three interactions is usually one model method wearing three presentati
 class ResourceInteraction < Plutonium::Resource::Interaction
 end
 
-# app/models/post.rb — what publishing MEANS (a scheduler job can call this too)
+# app/models/post.rb: what publishing MEANS (a scheduler job can call this too)
 class Post < ApplicationRecord
   def publish!(on: Time.current)
     update!(published: true, published_at: on)
   end
 end
 
-# A real interaction — the button in front of it
+# A real interaction: the button in front of it
 class PublishPostInteraction < ResourceInteraction
   presents label: "Publish",
            icon: Phlex::TablerIcons::Send,
@@ -758,7 +790,7 @@ attribute :metadata, :hash
 attribute :date, :datetime
 ```
 
-The presence of `:resource` / `:resources` / neither determines the action type — see [[plutonium-resource]] › Action Types.
+The presence of `:resource` / `:resources` / neither determines the action type; see [[plutonium-resource]] › Action Types.
 
 ### Structured / repeating input
 
@@ -778,7 +810,7 @@ end
 ```
 
 ⚠️ **`nested_input` and `accepts_nested_attributes_for` are NOT available on
-interactions** (they were model-backed). Use `structured_input` instead — it's
+interactions** (they were model-backed). Use `structured_input` instead; it's
 classless and collects plain hashes/arrays. See [[plutonium-resource]] ›
 Structured Inputs for options (`repeat:`, `using:`, `fields:`).
 
@@ -809,7 +841,7 @@ MyInteraction.description
 
 If `action :foo, interaction: FooInteraction` doesn't override `label:`/`icon:`/etc., these `presents` values are used.
 
-## `execute` — outcomes
+## `execute` outcomes
 
 `execute` MUST return a `succeed(...)` or `failed(...)` outcome. Validations run automatically before `execute`; if they fail, the interaction short-circuits to `failed()`.
 
@@ -832,9 +864,9 @@ failed(email: "is invalid", name: "is required")  # hash form
 failed("Invalid value", :email)                   # string + attribute
 ```
 
-### Chaining — `and_then`
+### Chaining with `and_then`
 
-On a `Success`, `and_then` yields **the value** (NOT the outcome — there is no `r.value` in the block) and returns whatever the block returns; on a `Failure` it short-circuits, returning the failure untouched.
+On a `Success`, `and_then` yields **the value** (NOT the outcome; there is no `r.value` in the block) and returns whatever the block returns; on a `Failure` it short-circuits, returning the failure untouched.
 
 Use it to compose outcomes **inside one `execute`**, e.g. a guard:
 
@@ -853,11 +885,11 @@ def unlocked_resource
 end
 ```
 
-⚠️ **Don't chain interactions to sequence business operations** — see Where the logic goes above.
+⚠️ **Don't chain interactions to sequence business operations**; see Where the logic goes above.
 
 ## Validations
 
-Standard ActiveModel — run automatically before `execute`; if they fail, `execute` never runs:
+Standard ActiveModel, run automatically before `execute`; if they fail, `execute` never runs:
 
 ```ruby
 validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
@@ -876,16 +908,16 @@ end
 
 | | Interaction validation | Model validation |
 |---|---|---|
-| Asks | "Can I read this input?" — present, parses, right type, plausible format | "Is this record legal?" — invariants that hold no matter who calls |
+| Asks | "Can I read this input?" (present, parses, right type, plausible format) | "Is this record legal?" (invariants that hold no matter who calls) |
 | Exists to | render a form error next to the field | protect the data from every caller, including ones with no form |
-| Runs | before `execute`, never touching the model | inside `save!`/`update!` — i.e. inside the model method |
+| Runs | before `execute`, never touching the model | inside `save!`/`update!`, i.e. inside the model method |
 
 They surface **differently**, and that should inform where a rule lives:
 
 - An interaction validation attaches to a declared attribute → the re-rendered modal shows it inline against that input **and** in the summary.
 - `failed(record.errors)` flattens `ActiveModel::Errors` to **full messages on `:base`** (`Array(errors)` → `errors.to_a` → `full_messages`) → error summary only, never against a field, phrased with the *model's* attribute names.
 
-So it's fine — often right — to **duplicate** a cheap invariant as an interaction validation purely for the better error placement, while the model keeps the authoritative copy. What must not happen is the model-side copy going missing: when a job calls `post.publish!`, the interaction's validations aren't in the picture.
+So it's fine, often right, to **duplicate** a cheap invariant as an interaction validation purely for the better error placement, while the model keeps the authoritative copy. What must not happen is the model-side copy going missing: when a job calls `post.publish!`, the interaction's validations aren't in the picture.
 
 ## Accessing context
 
@@ -897,7 +929,7 @@ def execute
 end
 ```
 
-This write is **correctly inline**. "Who clicked the button" is context only the presentation layer holds — a job has no answer for it, so there's no second caller to extract for.
+This write is **correctly inline**. "Who clicked the button" is context only the presentation layer holds (a job has no answer for it), so there's no second caller to extract for.
 
 A shorter `current_user` helper is conventional:
 
@@ -921,15 +953,15 @@ def current_user = view_context.controller.helpers.current_user
 Use `resource_url_for` with the `interaction:` kwarg. Action type is inferred from the element and presence of `ids:`:
 
 ```ruby
-# Record action — instance argument
+# Record action: instance argument
 resource_url_for(@post, interaction: :publish)
 # => /posts/:id/record_actions/publish
 
-# Resource action — class, no ids
+# Resource action: class, no ids
 resource_url_for(Post, interaction: :import)
 # => /posts/resource_actions/import
 
-# Bulk action — class + ids
+# Bulk action: class + ids
 resource_url_for(Post, interaction: :archive, ids: [1, 2, 3])
 # => /posts/bulk_actions/archive?ids[]=1&ids[]=2&ids[]=3
 
@@ -937,14 +969,14 @@ resource_url_for(Post, interaction: :archive, ids: [1, 2, 3])
 resource_url_for(@post, parent: @user, interaction: :publish)
 ```
 
-The same URL serves GET (form/confirmation) and POST (commit) — the HTTP verb routes to the right controller action. Passing both `interaction:` and `action:` raises `ArgumentError`.
+The same URL serves GET (form/confirmation) and POST (commit); the HTTP verb routes to the right controller action. Passing both `interaction:` and `action:` raises `ArgumentError`.
 
 ## Complete example
 
-Inviting a user is a textbook second-caller case — a seats-provisioning job, an admin rake task, and a signup API all need to send the same invitation. So the operation lives on `Company`; the interaction is the button in front of it.
+Inviting a user is a textbook second-caller case: a seats-provisioning job, an admin rake task, and a signup API all need to send the same invitation. So the operation lives on `Company`; the interaction is the button in front of it.
 
 ```ruby
-# app/models/company.rb — what inviting MEANS: the row, the mail, the audit trail
+# app/models/company.rb: what inviting MEANS: the row, the mail, the audit trail
 class Company < ApplicationRecord
   has_many :user_invites
 
@@ -971,7 +1003,7 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   input :email
   input :role, as: :select, choices: -> { UserInvite.roles.keys }
 
-  # Input shape only — readable email? a role that exists?
+  # Input shape only: readable email? a role that exists?
   validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
   validates :role,  presence: true, inclusion: {in: UserInvite.roles.keys}
   validate :not_already_invited
@@ -1001,7 +1033,7 @@ end
 
 ## Related Skills
 
-- [[plutonium-resource]] — registering interactions as actions; field/input/display syntax
-- [[plutonium-tenancy]] — `relation_scope`, entity scoping, nested resources
-- [[plutonium-ui]] — custom interaction form templates, page classes
-- [[plutonium-testing]] — testing controllers, policies, interactions
+- [[plutonium-resource]]: registering interactions as actions; field/input/display syntax
+- [[plutonium-tenancy]]: `relation_scope`, entity scoping, nested resources
+- [[plutonium-ui]]: custom interaction form templates, page classes
+- [[plutonium-testing]]: testing controllers, policies, interactions

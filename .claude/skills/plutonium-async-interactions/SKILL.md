@@ -1,25 +1,25 @@
 ---
 name: plutonium-async-interactions
-description: Use BEFORE building any bulk operation or long-running interaction. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".
+description: 'Use BEFORE building any bulk operation or long-running interaction. Covers async, the Run STI model, failure policies (halt/continue/transactional), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), and scheduling ReapJob for stalled runs. The single source for "how do I make an interaction async".'
 ---
 
 # Plutonium Async Interactions
 
-`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it once the work is too slow to hold a request open — thousands of records, report generation, a third-party call.
+`async` turns an interaction from "does the work inline" into "persists a run, enqueues it, and redirects to it." Reach for it once the work is too slow to hold a request open: thousands of records, report generation, a third-party call.
 
 For everything about the interaction itself (inputs, validation, outcomes, `execute`), load [[plutonium-behavior]] first. `async` only replaces what `execute` does, not the rest of the interaction's shape.
 
 ## 🚨 Critical (read first)
 
-- **Experimental.** The DSL and behavior may change in a future release — same status as [[plutonium-wizard]] and [[plutonium-kanban]]. Fine to build on; expect to revisit it on upgrade.
+- **Experimental.** The DSL and behavior may change in a future release, same status as [[plutonium-wizard]] and [[plutonium-kanban]]. Fine to build on; expect to revisit it on upgrade.
 - **Enable the subsystem first.** `rails g pu:async_interactions:install --dest=<portal>` flips `config.async_interactions.enabled = true`, schedules `ReapJob`, and connects the run resource to that portal; then `rails db:migrate`. Pass `--skip-portal` to enable it before any portal exists. Off by default, so no `plutonium_async_runs` table otherwise.
-- **`async` fully replaces `#execute`.** An interaction either executes inline or runs async — declaring both raises `ArgumentError` at load.
+- **`async` fully replaces `#execute`.** An interaction either executes inline or runs async; declaring both raises `ArgumentError` at load.
 - **Define `perform_on(record)` for targeted work, `perform` for opaque work.** A run class implementing neither fails loudly (naming the class) the first time it's performed, rather than a bare `NoMethodError`.
-- **A nested dispatch records its parent.** `parent_type`/`parent_id`/`parent_association` join initiator and tenant on the row, because `Policy#default_relation_scope` picks parent scoping **or** entity scoping, not both — a nested run missing its parent re-derives targets under the wider tenant scope, and any predicate reading `parent` silently answers false. A parent deleted mid-run refuses the run, exactly like a deleted tenant.
+- **A nested dispatch records its parent.** `parent_type`/`parent_id`/`parent_association` join initiator and tenant on the row, because `Policy#default_relation_scope` picks parent scoping **or** entity scoping, not both. A nested run missing its parent re-derives targets under the wider tenant scope, and any predicate reading `parent` silently answers false. A parent deleted mid-run refuses the run, exactly like a deleted tenant.
 - **Permissions are re-derived at perform time, never replayed from dispatch.** The job rebuilds `(initiator, tenant)` from the row and re-checks the policy scope and predicate per target, immediately before each `perform_on`. A permission revoked mid-run stops applying to what's left. Both failure directions (scope, predicate) fail closed (refuse/report), never open.
 - **Register `Run` as a resource per portal.** Its show page IS the progress page, and other resources' index pages get a "runs in progress" banner for free. Nothing renders without registration.
 - **Read `outcome`, never bare `state`, when displaying a run's result.** A `:continue` run that under-applied still has `state == "completed"`; only `outcome` says `"completed_with_errors"`.
-- **Long work must call `heartbeat!`.** `stall_after` measures SILENCE, and the executor only writes per target — so opaque `perform` writes nothing at all between claim and finish. An opaque run longer than `stall_after` is reaped and, having no `handled_target_ids`, re-run from scratch. Call `heartbeat!` inside the loop. It also raises `StaleObjectError` if another worker took the run over, which for opaque work is the only way to find out.
+- **Long work must call `heartbeat!`.** `stall_after` measures SILENCE, and the executor only writes per target, so opaque `perform` writes nothing at all between claim and finish. An opaque run longer than `stall_after` is reaped and, having no `handled_target_ids`, re-run from scratch. Call `heartbeat!` inside the loop. It also raises `StaleObjectError` if another worker took the run over, which for opaque work is the only way to find out.
 - **A crashed/stalled run does not auto-heal.** Nothing revisits a `"running"` row on its own. `pu:async_interactions:install` schedules `Plutonium::Interaction::Async::ReapJob` for you when Solid Queue is in the bundle; otherwise (or on another scheduler) you must schedule it yourself. Unscheduled, a crash mid-batch leaves that row stuck forever.
 
 ---
@@ -37,7 +37,7 @@ For everything about the interaction itself (inputs, validation, outcomes, `exec
 
 ## Declaring the work
 
-`async` with a block. One file — the run is declared inline and needs no name:
+`async` with a block. One file: the run is declared inline and needs no name:
 
 ```ruby
 class Blogging::ArchivePosts < ResourceInteraction
@@ -64,9 +64,9 @@ class Reports::GenerateMonthly < ResourceInteraction
 end
 ```
 
-**The block is the run's class body, not the body of `#execute`.** The work happens later, in a process with no controller and no `view_context`, so it cannot close over anything in the interaction — which is why it declares `perform_on`/`perform` rather than executing directly. Validated attributes arrive through `options`, and `def` opens a fresh scope, so those bodies can't accidentally capture the interaction's locals.
+**The block is the run's class body, not the body of `#execute`.** The work happens later, in a process with no controller and no `view_context`, so it cannot close over anything in the interaction, which is why it declares `perform_on`/`perform` rather than executing directly. Validated attributes arrive through `options`, and `def` opens a fresh scope, so those bodies can't accidentally capture the interaction's locals.
 
-The block defines `<Interaction>::Run` — a real, named constant, because the class name is persisted in `type` and constantized in the job process.
+The block defines `<Interaction>::Run`, a real, named constant, because the class name is persisted in `type` and constantized in the job process.
 
 **Pass a class instead** to share one run across several interactions that do the same kind of work:
 
@@ -96,7 +96,7 @@ An opaque run records none of the target/policy columns. Nothing to re-verify wi
 
 ## Attributes and files
 
-Validated attributes reach the run through `options`, a JSON column written via `ActiveJob::Arguments` — primitives verbatim, `Date`/`BigDecimal`/`Time` round-tripped with their types. An attribute that can't be carried is refused at dispatch.
+Validated attributes reach the run through `options`, a JSON column written via `ActiveJob::Arguments`: primitives verbatim, `Date`/`BigDecimal`/`Time` round-tripped with their types. An attribute that can't be carried is refused at dispatch.
 
 Files can't ride a JSON column, and the request's tempfile is gone by the time the job runs, so an uploaded file is staged to its backend's cache and carried as a token. Read it back with `attachment`:
 
@@ -112,7 +112,7 @@ end
 
 `attachment(:key)` / `attachments(:key)` give `filename`, `content_type`, `url`, `open`, `download`.
 
-`backend:` and `uploader:` come off the attribute's `input` declaration, exactly as in a wizard step — `input :import_file, as: :uppy, uploader: Catalog::ImportUploader`. The uploader's `Attacher.validate` rules run when the interaction validates, so a bad file **fails the form** rather than surfacing as a run failure the submitter never sees. Where no `backend:` is declared: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
+`backend:` and `uploader:` come off the attribute's `input` declaration, exactly as in a wizard step: `input :import_file, as: :uppy, uploader: Catalog::ImportUploader`. The uploader's `Attacher.validate` rules run when the interaction validates, so a bad file **fails the form** rather than surfacing as a run failure the submitter never sees. Where no `backend:` is declared: `config.async_interactions.attachment_backend` → `config.attachment_backend` → auto-detect.
 
 ## Registering the Run resource
 
@@ -136,9 +136,9 @@ class AdminPortal::AsyncRunsController < AdminPortal::ResourceController
 end
 ```
 
-`controller_for` is required — the controller's name doesn't match `Run`'s real, namespaced class, so inference can't find it on its own. No policy/definition files are generated: `Plutonium::Interaction::Async::RunPolicy`/`Async::RunDefinition` already resolve automatically (exact class-name match for the definition, ActionPolicy's own lookup for the policy).
+`controller_for` is required: the controller's name doesn't match `Run`'s real, namespaced class, so inference can't find it on its own. No policy/definition files are generated: `Plutonium::Interaction::Async::RunPolicy`/`Async::RunDefinition` already resolve automatically (exact class-name match for the definition, ActionPolicy's own lookup for the policy).
 
-If Solid Queue is in the bundle, this also schedules `Async::ReapJob` in `config/recurring.yml` — see [Scheduling ReapJob](#scheduling-reapjob-stalled-runs). `--schedule` overrides the default `every 15 minutes`. Idempotent, so running it against a second portal doesn't duplicate the entry.
+If Solid Queue is in the bundle, this also schedules `Async::ReapJob` in `config/recurring.yml`: see [Scheduling ReapJob](#scheduling-reapjob-stalled-runs). `--schedule` overrides the default `every 15 minutes`. Idempotent, so running it against a second portal doesn't duplicate the entry.
 
 Registering gets you, for free:
 
@@ -166,7 +166,7 @@ production:
     schedule: every 15 minutes
 ```
 
-Without Solid Queue — or for another scheduler like `whenever` — add it yourself:
+Without Solid Queue, or for another scheduler like `whenever`, add it yourself:
 
 ```ruby
 # whenever gem
@@ -175,7 +175,7 @@ every 15.minutes do
 end
 ```
 
-15 to 30 minutes is a reasonable cadence against the default 1-hour `stall_after`. This is a time heuristic, not a true lease: a merely-slow (not dead) run that crosses `stall_after` gets resumed too. `lock_version` bounds what that costs — the resumed row's version no longer matches the still-live worker's, so that worker stops at its next write instead of racing the new one. It does **not** interrupt an in-flight `perform_on` (one target can be applied twice, once by each side), and it does not roll back what the superseded worker already committed. Set `stall_after` well above the app's slowest legitimate run.
+15 to 30 minutes is a reasonable cadence against the default 1-hour `stall_after`. This is a time heuristic, not a true lease: a merely-slow (not dead) run that crosses `stall_after` gets resumed too. `lock_version` bounds what that costs: the resumed row's version no longer matches the still-live worker's, so that worker stops at its next write instead of racing the new one. It does **not** interrupt an in-flight `perform_on` (one target can be applied twice, once by each side), and it does not roll back what the superseded worker already committed. Set `stall_after` well above the app's slowest legitimate run.
 
 On Solid Queue (or any queue providing ActiveJob concurrency controls) this is tightened further, automatically and with no configuration: `Async::Job` declares a semaphore of 1 keyed on the run id, held for `stall_after`, and `ReapJob` one global sweep at a time. A second delivery of the same run then waits rather than racing, so the one target the fence cannot save from a double apply is not applied twice either. Nothing declares it when the queue does not support it.
 
@@ -185,7 +185,7 @@ On Solid Queue (or any queue providing ActiveJob concurrency controls) this is t
 
 ## Related Skills
 
-- [[plutonium-behavior]] — the interaction itself: inputs, validation, `succeed`/`failed`, policies.
-- [[plutonium-resource]] — Actions (inferred bulk/record/resource shape), Definition (`field`/`display`/`column`).
-- [[plutonium-tenancy]] — entity scoping, `associated_with`, portal tenant strategies.
-- [[plutonium-wizard]] — the other long-lived, persisted flow primitive (multi-step, not async execution). `Wizard::SweepJob` is `ReapJob`'s sibling for abandoned wizard sessions.
+- [[plutonium-behavior]]: the interaction itself: inputs, validation, `succeed`/`failed`, policies.
+- [[plutonium-resource]]: Actions (inferred bulk/record/resource shape), Definition (`field`/`display`/`column`).
+- [[plutonium-tenancy]]: entity scoping, `associated_with`, portal tenant strategies.
+- [[plutonium-wizard]]: the other long-lived, persisted flow primitive (multi-step, not async execution). `Wizard::SweepJob` is `ReapJob`'s sibling for abandoned wizard sessions.

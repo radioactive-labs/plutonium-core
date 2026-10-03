@@ -1,62 +1,63 @@
 ---
 name: plutonium-wizard
-description: Use BEFORE building any multi-step Plutonium flow — onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, attachment/file-upload fields, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), guest/anonymous flows, at-rest data encryption, and storage/config. The single source for "how do I build a wizard".
+description: 'Use BEFORE building any multi-step Plutonium flow: onboarding, checkout, multi-model create, branching questionnaire. Covers the wizard DSL (steps, branching, using:, review, attachment/file-upload fields, per-step on_submit/persist/rollback, execute), anchoring & resume, one-time wizards + gate, registration (wizard macro + register_wizard), guest/anonymous flows, at-rest data encryption, and storage/config. The single source for "how do I build a wizard".'
 ---
 
 # Plutonium Wizards
 
-A wizard is a multi-step flow authored as a single class — `class X < Plutonium::Wizard::Base`. It collects typed `data` across ordered `step`s, optionally branches with `condition:`, and commits at the end via `execute`. It reuses the existing field DSL, form rendering, actions, and policies — no parallel stack.
+A wizard is a multi-step flow authored as a single class: `class X < Plutonium::Wizard::Base`. It collects typed `data` across ordered `step`s, optionally branches with `condition:`, and commits at the end via `execute`. It reuses the existing field DSL, form rendering, actions, and policies, no parallel stack.
 
 For the field/input vocabulary used inside a step, load [[plutonium-resource]]. For the Outcome / `succeed`/`failed` pattern and the Action system wizards register through, load [[plutonium-behavior]].
 
 ## 🚨 Critical (read first)
 
-- **Enable the subsystem first.** `rails g pu:wizards:install` flips `config.wizards.enabled = true` and schedules `SweepJob`; then `rails db:migrate`. (By hand: the flag in `config/initializers/plutonium.rb`.) It's `false` by default — without it there's no `plutonium_wizard_sessions` table.
-- **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a **raised exception** — a non-bang `false` advances the wizard and silently loses data. Or call `fail!("msg")`.
+- **Enable the subsystem first.** `rails g pu:wizards:install` flips `config.wizards.enabled = true` and schedules `SweepJob`; then `rails db:migrate`. (By hand: the flag in `config/initializers/plutonium.rb`.) It's `false` by default; without it there's no `plutonium_wizard_sessions` table.
+- **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a **raised exception**: a non-bang `false` advances the wizard and silently loses data. Or call `fail!("msg")`.
 - **`data` is step-keyed:** `data.<step>.<field>` (e.g. `data.company.name`, `data.plan.plan`). Each step has its own typed sub-object, so two steps may share a field name without colliding. Read a field through its owning step everywhere (`condition:`/`on_submit`/`execute`).
 - **`condition:` lambdas must be nil-safe.** They run against `data` at every transition, including before their deciding step is filled (value is `nil`). `-> { data.plan.plan == "pro" }` ✓; `-> { data.plan.plan.upcase == "PRO" }` raises on nil ✗.
 - **`review` must be the LAST step.** A step declared after `review` raises at load.
-- **`using:` targets a MODEL only** — not an interaction, not a bare definition. Selectors `fields:`/`only:`/`except:`.
+- **`using:` targets a MODEL only**, not an interaction, not a bare definition. Selectors `fields:`/`only:`/`except:`.
 - **No generator.** Author wizards by hand, like interactions. They live in `app/wizards/`.
-- **A wizard is a presentation object** — it's built with `view_context:`, so anything reachable only through `execute`/`on_submit` is reachable only from a wizard run. Logic may *start* there; the **second caller** (a job, an API, a rake task, the console) is the trigger to move it onto the **model**. See [[plutonium-behavior]] › Part 3 › Where the logic goes.
-- **Wizards are portal- *or* main-app-hosted.** A `register_wizard` mount inside a portal inherits the portal's auth/scoping/layout. A `register_wizard` mount on the **main app** runs standalone — for an **authenticated** main-app wizard you MUST define your own `::WizardsController` (include `Plutonium::Wizard::Controller` + your auth concern); the synthesized fallback is **bare (no auth)**. Resource-anchored (`wizard` macro) wizards always run embedded on the resource controller.
-- **Schedule `SweepJob`** — `pu:wizards:install` does it for you when Solid Queue is in the bundle; otherwise add a periodic job/cron yourself. It reaps abandoned/expired sessions — always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
+- **A wizard is a presentation object**: it's built with `view_context:`, so anything reachable only through `execute`/`on_submit` is reachable only from a wizard run. Logic may *start* there; the **second caller** (a job, an API, a rake task, the console) is the trigger to move it onto the **model**. See [[plutonium-behavior]] › Part 3 › Where the logic goes.
+- **Wizards are portal- *or* main-app-hosted.** A `register_wizard` mount inside a portal inherits the portal's auth/scoping/layout. A `register_wizard` mount on the **main app** runs standalone; for an **authenticated** main-app wizard you MUST define your own `::WizardsController` (include `Plutonium::Wizard::Controller` + your auth concern); the synthesized fallback is **bare (no auth)**. Resource-anchored (`wizard` macro) wizards always run embedded on the resource controller.
+- **Define `def authorize?` on every `register_wizard` wizard** (portal or main-app). Its default is `def authorize? = true`, and a route mount has no resource policy behind it, so without the override any authenticated user of that host can launch it. A gated `one_time` wizard is no exception: the gate forces users *into* the wizard but doesn't decide who may run it. `false` → 403. Resource (`wizard` macro) mounts are also gated by the action policy.
+- **Schedule `SweepJob`**: `pu:wizards:install` does it for you when Solid Queue is in the bundle; otherwise add a periodic job/cron yourself. It reaps abandoned/expired sessions, always good hygiene (stale `in_progress` rows pile up otherwise), and **load-bearing** for `on_submit`/`persist` wizards: it's the only thing that rolls back the partial domain records an abandoned save-as-you-go run leaves behind.
 
 ---
 
-## 🛑 Before you author: confirm the configuration (ASK — don't infer)
+## 🛑 Before you author: confirm the configuration (ASK: don't infer)
 
-Wizard configuration is dense and the dimensions **interact** — guess wrong about mounting, anchoring, or run identity and you get a wizard that compiles but misbehaves: it forks a new run on every visit, 404s on resume, leaks across tenants, or can't be gated. A one-line request ("a checkout wizard", "onboarding") does **not** determine these.
+Wizard configuration is dense and the dimensions **interact**: guess wrong about mounting, anchoring, or run identity and you get a wizard that compiles but misbehaves: it forks a new run on every visit, 404s on resume, leaks across tenants, or can't be gated. A one-line request ("a checkout wizard", "onboarding") does **not** determine these.
 
-**STOP and ask the user — use `AskUserQuestion` — before writing the class.** Resolve each decision below (skip one only when the user already stated it), then restate the resolved shape in a sentence and confirm:
+**STOP and ask the user (use `AskUserQuestion`) before writing the class.** Resolve each decision below (skip one only when the user already stated it), then restate the resolved shape in a sentence and confirm:
 
-1. **End result — what does `execute` do?** Create a new record, update an existing one, touch several models, or fire a side effect (email/charge/API)? This drives anchoring *and* persistence.
+1. **End result: what does `execute` do?** Create a new record, update an existing one, touch several models, or fire a side effect (email/charge/API)? This drives anchoring *and* persistence.
 2. **Anchored or fresh?** Does it operate on an **existing** record or create something new?
    - existing record from the URL → `anchored with: Model` (resource-mounted member route)
    - existing context (the tenant, the current user) → `anchored via: :current_scoped_entity`
    - brand new → non-anchored
 3. **Mount, host & shell.** A resource action (`wizard` macro), a **portal** entry (`register_wizard` in a portal engine), or a **main-app** entry (`register_wizard` on the app)? Authenticated, or **public/guest pre-login** (`anonymous`, e.g. signup)? For a route mount, what **layout** (`layout: :basic` for a bare screen, `:resource` for the shell, or omit for the host default)? (Resource wizards are always embedded; an authenticated main-app wizard needs an app-defined `::WizardsController`.)
-4. **Run identity.** Resume the user's **one** in-progress run (keyed — `concurrency_key`), or start a **fresh** run each launch (tokened/repeatable)? (Anchored wizards default to one run per `[anchor, current_user]`.)
-5. **One-time?** Run at most once and keep a completed marker (`one_time`) — e.g. to **gate** a page behind it?
+4. **Run identity.** Resume the user's **one** in-progress run (keyed by `concurrency_key`), or start a **fresh** run each launch (tokened/repeatable)? (Anchored wizards default to one run per `[anchor, current_user]`.)
+5. **One-time?** Run at most once and keep a completed marker (`one_time`), e.g. to **gate** a page behind it?
 6. **Persistence model.** Write everything atomically at `execute` (default, simplest), or **save-as-you-go** with per-step `on_submit`/`persist` (then `SweepJob` must be scheduled, and `on_rollback` added for any *uncompensated* side effect)?
 7. **Steps & branching.** Which steps/fields/validations? Any step shown only under a `condition:`?
-8. **Tenancy.** Is the host portal entity-scoped? (The tenant folds into run identity automatically — don't thread it by hand.)
+8. **Tenancy.** Is the host portal entity-scoped? (The tenant folds into run identity automatically, so don't thread it by hand.)
 
 These compound: *anchored ⇒ keyed by default*; *anonymous ⇒ no owner ⇒ tokened*; *one-time ⇒ keyed + gateable*; *save-as-you-go ⇒ SweepJob + rollback*. Surface the implication when you confirm ("public ⇒ guest ⇒ session-keyed, ownerless"). The DSL sections below map each decision to its macro.
 
-## ✅ Before you author: verify the ground truth (CHECK — read it, don't ask for it)
+## ✅ Before you author: verify the ground truth (CHECK: read it, don't ask for it)
 
-The ASK gate resolves the *design*; this confirms the app can actually *run* it. You have file access — inspect these yourself before writing the class (don't ask the user to confirm what you can read):
+The ASK gate resolves the *design*; this confirms the app can actually *run* it. You have file access: inspect these yourself before writing the class (don't ask the user to confirm what you can read):
 
 | Check | How | Why it matters |
 |---|---|---|
-| Subsystem enabled | grep `config/initializers/plutonium.rb` for `wizards.enabled = true`; confirm `plutonium_wizard_sessions` exists (`db:migrate`) | **OFF by default — without it nothing works** (the #1 gotcha) |
+| Subsystem enabled | grep `config/initializers/plutonium.rb` for `wizards.enabled = true`; confirm `plutonium_wizard_sessions` exists (`db:migrate`) | **OFF by default: without it nothing works** (the #1 gotcha) |
 | Anchor model exists & reachable | Read the model an `anchored` wizard runs against | Missing/unreadable anchor ⇒ 404 / `NotAnchoredError` |
 | Host portal exists & its scoping | Read the portal engine (`scope_to_entity`?) + its real module name | Tenant folds into run identity; a guessed portal name breaks `register_wizard` |
 | Guest-flow prereqs | AR encryption keys if `encrypt_data`; no `concurrency_key`/`one_time` with `anonymous` | First write raises otherwise |
 | `on_submit` ⇒ SweepJob scheduled | grep `config/recurring.yml` for `sweep_abandoned_wizards` | Abandoned mid-flow records pile up forever |
 
-**Don't author the class until `config.wizards.enabled` is confirmed and the anchor/target model + portal are read.** Until then, any class you show is provisional — say so; don't present a guessed field/column mapping as final.
+**Don't author the class until `config.wizards.enabled` is confirmed and the anchor/target model + portal are read.** Until then, any class you show is provisional. Say so; don't present a guessed field/column mapping as final.
 
 ---
 
@@ -92,13 +93,13 @@ class CompanyOnboardingWizard < Plutonium::Wizard::Base
 end
 ```
 
-- `presents label:/icon:/description:` — launch button label + icon (same as interactions); the optional `description:` renders as the wizard's header subheading.
-- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]). `step` (and `review`) also take an optional `description:` — a sub-label under the heading. `label:` defaults to `key.to_s.humanize`.
+- `presents label:/icon:/description:`: launch button label + icon (same as interactions); the optional `description:` renders as the wizard's header subheading.
+- A `step :key, label: do ... end` is one screen; the block uses the field DSL ([[plutonium-resource]]). `step` (and `review`) also take an optional `description:`: a sub-label under the heading. `label:` defaults to `key.to_s.humanize`.
 - `data.<step>.<field>` reads the **typed** value (cast to declared type) for that step, e.g. `data.company.name`.
-- `review` — built-in terminal step: auto-summary + gated Finish. Must be last.
-- `execute` — runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
+- `review`: built-in terminal step: auto-summary + gated Finish. Must be last.
+- `execute`: runs once at the end in one transaction; returns `succeed(...)` / `failed(...)`.
 
-⚠️ **`execute` is a presentation boundary, same as an interaction's.** A wizard is built with `view_context:` too, so anything reachable only through `execute` is reachable only from a wizard run. Steps and `execute` own the *flow* — which screens, in what order, writing what. What the write **means** belongs on the model as soon as a second caller wants it (the API signup that skips onboarding, an admin backfill, an importer): `Company.create!(...)` inline is fine for a one-off; `Company.onboard!(...)` is what you reach for when it isn't. Same for `on_submit`/`on_rollback` — they're flow hooks, not a home for domain logic. Full rule: [[plutonium-behavior]] › Part 3 › Where the logic goes.
+⚠️ **`execute` is a presentation boundary, same as an interaction's.** A wizard is built with `view_context:` too, so anything reachable only through `execute` is reachable only from a wizard run. Steps and `execute` own the *flow*: which screens, in what order, writing what. What the write **means** belongs on the model as soon as a second caller wants it (the API signup that skips onboarding, an admin backfill, an importer): `Company.create!(...)` inline is fine for a one-off; `Company.onboard!(...)` is what you reach for when it isn't. Same for `on_submit`/`on_rollback`: they're flow hooks, not a home for domain logic. Full rule: [[plutonium-behavior]] › Part 3 › Where the logic goes.
 
 ## Wizard-level macros
 
@@ -110,14 +111,14 @@ end
 | `on_relaunch :new` | Bare-relaunching a **tokened** wizard with pending runs shows a "resume or start new" chooser by default (`:prompt`) instead of silently forking; `:new` opts out (always fresh). No-op for keyed/`anonymous` (already auto-resume). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record (read via `anchor`). `with:` = URL `:id` (resource-mounted); `via:` = a controller method (portal-level, context). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the sweep reaps the session + rolls back tracked records. Default `config.wizards.cleanup_after`. |
-| `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock — a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs — **except `anchored`**, which defaults to `{ [anchor, current_user] }` (one draft per user per record). `{ anchor }` = one per record any-user; `{ wizard_token }` = repeatable. |
+| `concurrency_key { … }` | Key a run by the returned value(s) (tenant folded in). The keyed `in_progress` row is the lock: a second launch resumes, never forks. Omit → unlimited `wizard_token`-keyed runs, **except `anchored`**, which defaults to `{ [anchor, current_user] }` (one draft per user per record). `{ anchor }` = one per record any-user; `{ wizard_token }` = repeatable. |
 | `one_time` | Retain the completed row at the `concurrency_key` → run once (gate-able). **Requires `concurrency_key`.** Omit → row deleted on complete (repeatable). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). |
-| `encrypt_data` | Encrypt the staged `data` column at rest via ActiveRecord's encryption keys (PII flows). Requires `active_record.encryption` keys — first write raises (naming the wizard) if unconfigured. Unset inherits `config.wizards.encrypt_data` (global default, off); `encrypt_data false` opts out when that default is on. |
-| `width <size>` | Width of this wizard's step pages: `:sm` `:md` `:lg` `:xl` `:full` (`:full` = unconstrained). Unset inherits `config.wizards.width` (default `:md`). Independent of `config.default_page_width` — resource page width does not move wizards. |
-| `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`** — a guest's identity is its session token (already session-keyed/repeatable); whichever macro is declared last raises. |
+| `encrypt_data` | Encrypt the staged `data` column at rest via ActiveRecord's encryption keys (PII flows). Requires `active_record.encryption` keys; first write raises (naming the wizard) if unconfigured. Unset inherits `config.wizards.encrypt_data` (global default, off); `encrypt_data false` opts out when that default is on. |
+| `width <size>` | Width of this wizard's step pages: `:sm` `:md` `:lg` `:xl` `:full` (`:full` = unconstrained). Unset inherits `config.wizards.width` (default `:md`). Independent of `config.default_page_width`: resource page width does not move wizards. |
+| `anonymous` | Opt into **guest (unauthenticated) access.** Default = auth required. A guest wizard may authenticate only at its terminal `execute`; never mid-flow. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`**: a guest's identity is its session token (already session-keyed/repeatable); whichever macro is declared last raises. |
 
-## Branching — `condition:`
+## Branching: `condition:`
 
 Subtractive: a falsy `condition:` removes the step from the visible path.
 
@@ -131,11 +132,11 @@ end
 
 `condition:` can also read `anchor`. Branch-hidden steps' data is pruned before `execute`. **Must be nil-safe** (see Critical).
 
-Conditions are re-evaluated against the submission that was just staged, so a step (including `review`) may be gated on an answer from the step immediately before it — the revealed steps become reachable on that same POST. When a step's answer reveals nothing after it, that POST ends the flow and runs `execute`.
+Conditions are re-evaluated against the submission that was just staged, so a step (including `review`) may be gated on an answer from the step immediately before it; the revealed steps become reachable on that same POST. When a step's answer reveals nothing after it, that POST ends the flow and runs `execute`.
 
-### Revealing a field within a step — `pre_submit:`
+### Revealing a field within a step: `pre_submit:`
 
-A step-level `condition:` branches whole steps against *stored* data. To show or hide a field as the user edits a **sibling field on the same step**, mark the deciding input `pre_submit: true` — changing it re-renders the step form from the **just-submitted** values (same mechanism as resource forms and interactive actions):
+A step-level `condition:` branches whole steps against *stored* data. To show or hide a field as the user edits a **sibling field on the same step**, mark the deciding input `pre_submit: true`: changing it re-renders the step form from the **just-submitted** values (same mechanism as resource forms and interactive actions):
 
 ```ruby
 step :details do
@@ -149,14 +150,14 @@ step :details do
 end
 ```
 
-A `pre_submit` is **render-only**: it never persists, never marks the step submitted, and never moves the cursor — abandon the page and nothing durable is left. **Attachment fields are exempt** from the re-render's seeding: a file input doesn't re-post on a sibling's `change`, so an already-staged upload survives untouched instead of being blanked out of the form. Uploads stage only on a real submit.
+A `pre_submit` is **render-only**: it never persists, never marks the step submitted, and never moves the cursor: abandon the page and nothing durable is left. **Attachment fields are exempt** from the re-render's seeding: a file input doesn't re-post on a sibling's `change`, so an already-staged upload survives untouched instead of being blanked out of the form. Uploads stage only on a real submit.
 
-## Field reuse — `using:` a model
+## Field reuse: `using:` a model
 
 `using:` is a **step option** (not a block method) and targets a **model only**.
 
 ```ruby
-# Whole-step import — no block needed.
+# Whole-step import, no block needed.
 step :branding, label: "Branding", using: Company, fields: %i[logo brand_color]
 
 # Mix imported + wizard-local fields.
@@ -176,7 +177,7 @@ Imports: field universe + types from `Model.attribute_names`/`attribute_types`; 
 | `layout: false` | Skip inherited `form_layout`. |
 | `validation_context:` | Run `valid?(context)`. |
 
-**Declaration reuse only** — never the model's persistence. Data stages into `data`; `execute` does the writes.
+**Declaration reuse only**: never the model's persistence. Data stages into `data`; `execute` does the writes.
 
 ## Step internals
 
@@ -201,7 +202,7 @@ end
 
 Repeater rows rehydrate from staged `data` on GET (resume / back re-renders filled rows).
 
-Validations drive the form's field affordances just like a resource form: `presence` → the required marker (`*`); `length`/`numericality`/`format`/`inclusion` → `maxlength`/`min`/`max`/`pattern`/auto-choices. This holds for validations imported via `using:` too. (Structured-input sub-fields are the exception — they carry no validators, so no markers there.)
+Validations drive the form's field affordances just like a resource form: `presence` → the required marker (`*`); `length`/`numericality`/`format`/`inclusion` → `maxlength`/`min`/`max`/`pattern`/auto-choices. This holds for validations imported via `using:` too. (Structured-input sub-fields are the exception: they carry no validators, so no markers there.)
 
 ### Options that depend on the run
 
@@ -224,13 +225,13 @@ A one-argument proc still takes the form, as on any other form, for `object` (th
 
 Three limits worth knowing:
 
-- The **field set** is still fixed at class load — a proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup pass a **block** to `input` instead; it renders in the form's context with the field yielded.
+- The **field set** is still fixed at class load: a proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup pass a **block** to `input` instead; it renders in the form's context with the field yielded.
 - A **step's** `condition:` runs against the wizard; a **field's** `condition:` runs against the form (`object` = that step's staged data). Only the field-level one is excluded from the resolution above.
-- **Proc options resolve on every form** ([[plutonium-resource]]), by one rule with no wizard exception: a zero-argument proc keeps its own binding, a one-argument one gets the form. A step block is `instance_exec`'d against an internal field recorder, so `-> { anchor.x }` raises `NameError` — take the form and use `form.wizard`. Same trade a `form_layout` section option makes; an `input` line keeps its meaning when moved between a definition and a step.
+- **Proc options resolve on every form** ([[plutonium-resource]]), by one rule with no wizard exception: a zero-argument proc keeps its own binding, a one-argument one gets the form. A step block is `instance_exec`'d against an internal field recorder, so `-> { anchor.x }` raises `NameError`; take the form and use `form.wizard`. Same trade a `form_layout` section option makes; an `input` line keeps its meaning when moved between a definition and a step.
 
 ## Attachment fields (file uploads)
 
-A step can collect a file. Declare it like any field — a **`:string`** attribute (it holds the upload **token**, not the bytes) + a file input:
+A step can collect a file. Declare it like any field: a **`:string`** attribute (it holds the upload **token**, not the bytes) + a file input:
 
 ```ruby
 step :photo, label: "Photo" do
@@ -239,7 +240,7 @@ step :photo, label: "Photo" do
 end
 ```
 
-The file is staged into `data` as a backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data) — never the bytes (they can't ride JSON `data` across steps). `execute` assigns that token to the model's attachment **natively** (both backends accept it):
+The file is staged into `data` as a backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data), never the bytes (they can't ride JSON `data` across steps). `execute` assigns that token to the model's attachment **natively** (both backends accept it):
 
 ```ruby
 def execute
@@ -250,19 +251,19 @@ def execute
 end
 ```
 
-The review summary and the step's preview (on Back/resume) render the file automatically — `data.<step>.<field>` resolves the token to a displayable attachment at the boundary; nothing extra to write.
+The review summary and the step's preview (on Back/resume) render the file automatically: `data.<step>.<field>` resolves the token to a displayable attachment at the boundary; nothing extra to write.
 
-**Two upload modes** — same field, differ only by `direct_upload:`:
+**Two upload modes**: same field, differ only by `direct_upload:`:
 
 | Mode | Declare | Notes |
 |---|---|---|
 | **Server-side** (default) | `input :file, as: :file` | the file rides the step POST; the wizard uploads it to the backend's cache while staging. Simplest; works for **AS *and* active_shrine**; no JS/endpoint needed. |
 | **Direct upload** | `input :file, as: :uppy, direct_upload: true, endpoint: "/upload"` | the browser uploads to the endpoint and posts back a token (async progress UI). Needs that endpoint reachable (AS direct-uploads, or Shrine's `upload_endpoint`). |
 
-- **Backend** (server-side mode): defaults to `config.wizards.attachment_backend`, which **auto-detects** active_shrine → `:shrine`, else `:active_storage`. Override per field with `backend:`. It **must match the model `execute` assigns to** — an AS model ⇒ `:active_storage`, an active_shrine model ⇒ `:shrine` (an AS model won't accept a Shrine token, and vice-versa).
-- **Uploader** (Shrine only): `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` caches through that uploader (running its cache-stage plugins — mime/dimension/location/processing — instead of base `Shrine`). The token stays uploader-agnostic, so display + `execute` promotion are unchanged. Server-side only; raises for `:active_storage`. The uploader's `:cache` storage must be the one the model's attacher promotes from (the default global `Shrine.storages[:cache]`). **Validations are enforced on the step** (when Shrine's optional `validation`/`validation_helpers` plugin is loaded — else a clean no-op): the file is validated against the field's effective uploader (its `uploader:`, else base `Shrine`), so a failing file is rejected with a field error — not deferred to `execute`. (`Uploader.upload` itself runs no validations; the step's validation pass does.)
+- **Backend** (server-side mode): defaults to `config.wizards.attachment_backend`, which **auto-detects** active_shrine → `:shrine`, else `:active_storage`. Override per field with `backend:`. It **must match the model `execute` assigns to**: an AS model ⇒ `:active_storage`, an active_shrine model ⇒ `:shrine` (an AS model won't accept a Shrine token, and vice-versa).
+- **Uploader** (Shrine only): `input :photo, as: :file, backend: :shrine, uploader: PhotoUploader` caches through that uploader (running its cache-stage plugins (mime/dimension/location/processing) instead of base `Shrine`). The token stays uploader-agnostic, so display + `execute` promotion are unchanged. Server-side only; raises for `:active_storage`. The uploader's `:cache` storage must be the one the model's attacher promotes from (the default global `Shrine.storages[:cache]`). **Validations are enforced on the step** (when Shrine's optional `validation`/`validation_helpers` plugin is loaded, else a clean no-op): the file is validated against the field's effective uploader (its `uploader:`, else base `Shrine`), so a failing file is rejected with a field error, not deferred to `execute`. (`Uploader.upload` itself runs no validations; the step's validation pass does.)
 - **Multiple:** an array attribute + `multiple: true` → the staged value is an array of tokens.
-- **Cleanup:** a staged-then-abandoned upload is an unattached blob / cached Shrine file — each backend's own unattached cleanup reaps it (the wizard `SweepJob` doesn't touch it).
+- **Cleanup:** a staged-then-abandoned upload is an unattached blob / cached Shrine file: each backend's own unattached cleanup reaps it (the wizard `SweepJob` doesn't touch it).
 
 ## The review step
 
@@ -285,14 +286,14 @@ Always lists invalid/unvisited steps as fix-this jump links; Finish disabled unt
 | **Complete**, `summary: false` + block | block **replaces** the summary |
 | **Complete**, `summary: false`, no block | built-in "ready to complete" panel |
 
-- `summary:` (default true) — show the auto-summary of completed steps. `false` hands the complete-state body to your block (or the "ready to complete" panel). The summary always shows in the incomplete state.
-- `header:` (default true) — the step-header section (label + the "check everything over" prompt, shown only when the summary is). `false` drops it for a chromeless finish. Pair with `stepper false` for no chrome at all.
+- `summary:` (default true): show the auto-summary of completed steps. `false` hands the complete-state body to your block (or the "ready to complete" panel). The summary always shows in the incomplete state.
+- `header:` (default true): the step-header section (label + the "check everything over" prompt, shown only when the summary is). `false` drops it for a chromeless finish. Pair with `stepper false` for no chrome at all.
 
-The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String — Phlex renders the returned String too, double-rendering it.
+The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String: Phlex renders the returned String too, double-rendering it.
 
-**The summary resolves choice labels.** A field declared with the `choices:` option summarises as the label its `<option>` carried, not the stored value — `42` reads as "Alice", `"cash"` as "Cash". Every collection shape the input accepts works (pair arrays, `{value => label}` hashes, ranges, sets, AR relations, procs returning any of those), because resolution goes through the same `Phlexi::Form::SimpleChoicesMapper` the input uses. **Caveat:** choices supplied inside a *block* (`input(:x) { |f| f.select_tag choices: … }`) are computed at render time and aren't visible to the summary — those fields still show the raw value. Use the declarative `choices:` option when you want the review page to read well.
+**The summary resolves choice labels.** A field declared with the `choices:` option summarises as the label its `<option>` carried, not the stored value: `42` reads as "Alice", `"cash"` as "Cash". Every collection shape the input accepts works (pair arrays, `{value => label}` hashes, ranges, sets, AR relations, procs returning any of those), because resolution goes through the same `Phlexi::Form::SimpleChoicesMapper` the input uses. **Caveat:** choices supplied inside a *block* (`input(:x) { |f| f.select_tag choices: … }`) are computed at render time and aren't visible to the summary; those fields still show the raw value. Use the declarative `choices:` option when you want the review page to read well.
 
-## Per-step writes — `on_submit` / `persist` / `on_rollback`
+## Per-step writes: `on_submit` / `persist` / `on_rollback`
 
 `execute` is the default (atomic). Use `on_submit` **only** when a real record must exist mid-flow (external handoff, reviewer sees partials, payload too large for the row).
 
@@ -315,11 +316,11 @@ step :billing, label: "Billing" do
 end
 ```
 
-**`persist` always cleans up.** On any rollback (Cancel, sweep, branch-prune) the engine **always** destroys every `persist`'d record via `destroy!` (respects a model's soft-delete override). `on_rollback` is **optional, additive** — it compensates side effects the engine can't see, runs **before** the destroy, and a side-effect-only step (no `persist`) still runs its `on_rollback`. To keep a partial record, make the model soft-delete or use `cleanup_after :never`.
+**`persist` always cleans up.** On any rollback (Cancel, sweep, branch-prune) the engine **always** destroys every `persist`'d record via `destroy!` (respects a model's soft-delete override). `on_rollback` is **optional, additive**: it compensates side effects the engine can't see, runs **before** the destroy, and a side-effect-only step (no `persist`) still runs its `on_rollback`. To keep a partial record, make the model soft-delete or use `cleanup_after :never`.
 
 `on_submit` is not atomic across steps (HTTP), which is why `cleanup_after` + `SweepJob` exist.
 
-**Keep the hook to flow, not domain.** `on_submit`/`on_rollback` belong to one wizard step and can't be called from anywhere else, so they should say *when* and *what gets tracked* — one call to a model, as above. Once "authorize a card and record the billing row" is something the API does too, it becomes `Billing.authorize!(company:, token:)` and the hook shrinks to `persist Billing.authorize!(...)`.
+**Keep the hook to flow, not domain.** `on_submit`/`on_rollback` belong to one wizard step and can't be called from anywhere else, so they should say *when* and *what gets tracked*: one call to a model, as above. Once "authorize a card and record the billing row" is something the API does too, it becomes `Billing.authorize!(company:, token:)` and the hook shrinks to `persist Billing.authorize!(...)`.
 
 ## Accessors
 
@@ -331,14 +332,14 @@ end
 | `succeed(v)` / `failed(errs)` | Outcome helpers (alias `success`). `.with_message`, `.with_redirect_response` chainable. |
 | `fail!(msg)` / `fail!(:field, msg)` | Raise a `StepError` from `on_submit`/`execute`. |
 
-Available inside steps, `condition:`, `on_submit`, `on_rollback` and `execute` — and, via `form.wizard`, inside a step's **proc-valued field/input options** (see **Step internals → Options that depend on the run**).
+Available inside steps, `condition:`, `on_submit`, `on_rollback` and `execute`, and, via `form.wizard`, inside a step's **proc-valued field/input options** (see **Step internals → Options that depend on the run**).
 
 ## Anchoring
 
 ```ruby
 anchored with: Company              # single type
 anchored with: [Company, Org]       # polymorphic
-anchored                            # generic — type bound at registration
+anchored                            # generic, type bound at registration
 # omit                              # pure create flow (no anchor)
 ```
 
@@ -379,15 +380,15 @@ module AdminPortal
 end
 ```
 
-Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. The gate recomputes the wizard's `instance_key` from its `concurrency_key` (resolved on the host controller — `current_user`/`current_scoped_entity`/custom available) and checks `completed?(instance_key:)`. Only one-time wizards are gateable. Use `concurrency_key { anchor }` for "set up this record once".
+Un-completed user → redirected into the wizard (destination stashed); on completion → bounced back (PRG). Completed users pass through. The gate recomputes the wizard's `instance_key` from its `concurrency_key` (resolved on the host controller: `current_user`/`current_scoped_entity`/custom available) and checks `completed?(instance_key:)`. Only one-time wizards are gateable. Use `concurrency_key { anchor }` for "set up this record once".
 
 **Gating an anchored wizard:** the gate needs the anchor to recompute the key. A `via:`-anchored wizard is resolved automatically (the gate calls its `anchor_via` method on the controller); otherwise pass `ensure_wizard_completed Wizard, anchor: :method_or_proc`. An anchor it can't resolve raises (no silent loop). Anchor-keyed wizards are only gateable where the anchor is reconstructable.
 
-**Re-opening a completed one-time wizard** doesn't re-run it (the retained row's `data` is cleared) — it renders an "already completed" page (success badge + label + Continue). Override the body with `completed do |wizard| … end`. Repeatable wizards have no completed page (re-launch starts fresh).
+**Re-opening a completed one-time wizard** doesn't re-run it (the retained row's `data` is cleared); it renders an "already completed" page (success badge + label + Continue). Override the body with `completed do |wizard| … end`. Repeatable wizards have no completed page (re-launch starts fresh).
 
 ## Registration & launch
 
-**(a) On a resource definition** — the `wizard` macro synthesizes the launch action AND auto-mounts the wizard's routes on the resource's own controller. Placement mirrors interactions: anchored → record (member) action, non-anchored → resource (collection) action; no bulk:
+**(a) On a resource definition**: the `wizard` macro synthesizes the launch action AND auto-mounts the wizard's routes on the resource's own controller. Placement mirrors interactions: anchored → record (member) action, non-anchored → resource (collection) action; no bulk:
 
 ```ruby
 class CompanyDefinition < Plutonium::Resource::Definition
@@ -398,7 +399,7 @@ end
 
 The anchored member action resolves its anchor through the resource controller's scoped, policy-gated `resource_record!` (IDOR-safe: out-of-scope / non-existent ids 404). Gate it with a policy predicate named after the wizard key (`def configure? = update?`).
 
-**(b) Route-mounted** — `register_wizard`, in a **portal** engine's routes or on the **main app**, alongside `register_resource`:
+**(b) Route-mounted**: `register_wizard`, in a **portal** engine's routes or on the **main app**, alongside `register_resource`:
 
 ```ruby
 AdminPortal::Engine.routes.draw do
@@ -418,7 +419,7 @@ Draws `GET /onboarding` (canonical launch) + `GET/POST /onboarding(/:token)/:ste
 | `at:` (required) | Host-relative base path for the steps. |
 | `as:` | Override the route-helper prefix (defaults to `at:`, then the wizard's name). |
 | `public:` | Mount on a **public (unauthenticated)** route for an `anonymous` wizard. Defaults to the wizard's `anonymous?` flag. |
-| `layout:` | The Rails layout to render in (a layout name, like the controller `layout` macro): `:basic` (bare), `:resource` (shell), or any app layout. Default by host — portal → the resource shell, main-app → `:basic`. Turbo-frame requests are always layout-less regardless. |
+| `layout:` | The Rails layout to render in (a layout name, like the controller `layout` macro): `:basic` (bare), `:resource` (shell), or any app layout. Default by host: portal → the resource shell, main-app → `:basic`. Turbo-frame requests are always layout-less regardless. |
 
 ### Hosting & the controller override hook
 
@@ -427,7 +428,7 @@ Draws `GET /onboarding` (canonical launch) + `GET/POST /onboarding(/:token)/:ste
 | Host | Controller used | Auth |
 |---|---|---|
 | Portal | `<Portal>::WizardsController` if defined, else synthesized on the portal's `PlutoniumController` | the portal's (inherited) |
-| Main app, **authenticated** | `::WizardsController` — **you must define it** | **yours** — `include Plutonium::Auth::Rodauth(:account)` |
+| Main app, **authenticated** | `::WizardsController`: **you must define it** | **yours**: `include Plutonium::Auth::Rodauth(:account)` |
 | Main app, **public** (`anonymous`) | synthesized `::PublicWizardsController` (bare + `Auth::Public`) | none (guest) |
 
 ```ruby
@@ -438,19 +439,19 @@ class WizardsController < ApplicationController
 end
 ```
 
-`Plutonium::Wizard::Controller` is the whole contract — including it on any base yields a renderable wizard controller (it pulls in `Core::Controller` and contributes the `"plutonium"` view prefix, so even a bare `ActionController::Base` host renders the shared partials). For an app that needs no custom auth base there's a ready-made `Plutonium::Wizard::BaseController` (`< ActionController::Base` + the module) to subclass. The module is the mechanism; the class is sugar.
+`Plutonium::Wizard::Controller` is the whole contract: including it on any base yields a renderable wizard controller (it pulls in `Core::Controller` and contributes the `"plutonium"` view prefix, so even a bare `ActionController::Base` host renders the shared partials). For an app that needs no custom auth base there's a ready-made `Plutonium::Wizard::BaseController` (`< ActionController::Base` + the module) to subclass. The module is the mechanism; the class is sugar.
 
 > [!TIP]
-> **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro — it auto-mounts a record (member) action whose anchor is the scoped `resource_record!`. Passing a `with:`-anchored wizard to `register_wizard` **raises** (no resource record). A **`via:`-anchored** (context) wizard mounts portal-level fine — its anchor is a controller method (e.g. `via: :current_scoped_entity`).
+> **`with:`-anchored wizards mount on the resource, not portal-level.** Register a `with:`-anchored wizard on the anchored resource's definition with the `wizard` macro: it auto-mounts a record (member) action whose anchor is the scoped `resource_record!`. Passing a `with:`-anchored wizard to `register_wizard` **raises** (no resource record). A **`via:`-anchored** (context) wizard mounts portal-level fine; its anchor is a controller method (e.g. `via: :current_scoped_entity`).
 
 > [!DANGER]
-> **A portal-level wizard with no `authorize?` is runnable by ANY authenticated portal user** — it has no resource policy and defaults to allowed. **Always define `def authorize?`** for anything privileged (admin-only, per-user gating, tenant checks).
+> **A portal-level wizard with no `authorize?` is runnable by ANY authenticated portal user**: it has no resource policy and defaults to allowed. **Always define `def authorize?`** for anything privileged (admin-only, per-user gating, tenant checks).
 
 ## Authentication
 
-**Auth is required by default** — entry without a `current_user` is rejected. Authenticated lookups are **owner-scoped**: a run id leaked in a URL can't be resumed by another logged-in user (foreign row → 404).
+**Auth is required by default**: entry without a `current_user` is rejected. Authenticated lookups are **owner-scoped**: a run id leaked in a URL can't be resumed by another logged-in user (foreign row → 404).
 
-Where `current_user` comes from depends on the host: a **portal** mount inherits the portal's auth concern; a **main-app authenticated** mount needs the auth on your own `::WizardsController` (see *Hosting & the controller override hook* above — a bare synthesized main-app controller has no `current_user`, so a non-anonymous wizard there would be rejected by the auth gate). The wizard module supplies a `current_user` default that **defers to the host's auth concern** when present and is `nil` on a bare host.
+Where `current_user` comes from depends on the host: a **portal** mount inherits the portal's auth concern; a **main-app authenticated** mount needs the auth on your own `::WizardsController` (see *Hosting & the controller override hook* above; a bare synthesized main-app controller has no `current_user`, so a non-anonymous wizard there would be rejected by the auth gate). The wizard module supplies a `current_user` default that **defers to the host's auth concern** when present and is `nil` on a bare host.
 
 Opt into guest access with `anonymous`, and mount it on a **public route**:
 
@@ -464,48 +465,56 @@ class GuestSignupWizard < Plutonium::Wizard::Base
   end
 end
 
-# in a portal's routes — drawn on a public (unauthenticated) route automatically
+# in a portal's routes, drawn on a public (unauthenticated) route automatically
 register_wizard ::GuestSignupWizard, at: "signup", public: true
 ```
 
-The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<wizard_key>]`) — **no cookie, no TTL** (the row's `cleanup_after` is the lifetime). It's browser-close ephemeral, **auto-cleared on login/logout** (Rodauth `reset_session`), cleared on completion, and **never in a URL**. Authenticated repeatable runs keep their URL `:token` segment instead (owner-scoped). **No mid-flow auth crossing**: a guest wizard never stamps an owner mid-flow or carries a token across login — it only ever authenticates at `execute`.
+The guest run-id lives in the **Rails session** (`session["plutonium_wizards"][<wizard_key>]`): **no cookie, no TTL** (the row's `cleanup_after` is the lifetime). It's browser-close ephemeral, **auto-cleared on login/logout** (Rodauth `reset_session`), cleared on completion, and **never in a URL**. Authenticated repeatable runs keep their URL `:token` segment instead (owner-scoped). **No mid-flow auth crossing**: a guest wizard never stamps an owner mid-flow or carries a token across login; it only ever authenticates at `execute`.
 
 ## Listing in-progress wizards
 
-`Plutonium::Wizard.in_progress_for(view_context)` (→ `Resume.entries_for(view_context)`) takes the `view_context` (as interactions do) and derives the run owner (`current_user`), tenant scope, and **portal** from it — returning that user's in-progress runs **for the current portal**, newest-first, for a "continue where you left off" dashboard. A run is only ever listed (and linked) by the portal it was launched in: a non-scoped portal lists only unscoped runs, a scoped portal narrows to the current tenant. (Two portals can share an entity scope, so the launching portal — the `engine` — is recorded per-run; scope alone can't identify it.)
+`Plutonium::Wizard.in_progress_for(view_context)` (→ `Resume.entries_for(view_context)`) takes the `view_context` (as interactions do) and derives the run owner (`current_user`), tenant scope, and **portal** from it, returning that user's in-progress runs **for the current portal**, newest-first, for a "continue where you left off" dashboard. A run is only ever listed (and linked) by the portal it was launched in: a non-scoped portal lists only unscoped runs, a scoped portal narrows to the current tenant. (Two portals can share an entity scope, so the launching portal (the `engine`) is recorded per-run; scope alone can't identify it.)
 
-Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a `resume_url` built through the **current portal's** routes — the named route for a `register_wizard` mount, `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, and for a **non-anchored** `wizard`-macro run the resource whose definition registers that wizard class; `nil` + `resume_unresolved_reason` when the row can't be resolved here.
+Each entry exposes the wizard's `label`/`icon`, `current_step` (+ `current_step_label`), `updated_at`, the raw `session` row, and a `resume_url` built through the **current portal's** routes: the named route for a `register_wizard` mount, `resource_url_for(record, wizard:, step:)` for a `wizard`-macro **anchored** mount, and for a **non-anchored** `wizard`-macro run the resource whose definition registers that wizard class; `nil` + `resume_unresolved_reason` when the row can't be resolved here.
 
-Each entry also exposes a **`cancel_url`** — the `DELETE` target that abandons the run — resolved from the *same* mount through its own named cancel route. Never derive it by string-munging `resume_url`: that drops query params and mis-resolves for a run with no `current_step` (whose resume URL is the bare launch path). The two resolve **independently**, so an unresumable row is still cancellable rather than stranded in the list. Render it as a **form**, not a link — cancelling runs every step's `on_rollback`, destroys its `persist`'d records, and deletes the row:
+Each entry also exposes a **`cancel_url`**, the `DELETE` target that abandons the run, resolved from the *same* mount through its own named cancel route. Never derive it by string-munging `resume_url`: that drops query params and mis-resolves for a run with no `current_step` (whose resume URL is the bare launch path). The two resolve **independently**, so an unresumable row is still cancellable rather than stranded in the list. Render it as a **form**, not a link: cancelling runs every step's `on_rollback`, destroys its `persist`'d records, and deletes the row:
 
 ```ruby
 form(action: entry.cancel_url, method: "post") do
   input(type: "hidden", name: "_method", value: "delete")
   input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
-  # `turbo_confirm`, NOT `confirm` — `data-confirm` is Rails UJS and never fires under Turbo.
+  # `turbo_confirm`, NOT `confirm`: `data-confirm` is Rails UJS and never fires under Turbo.
   button(type: "submit", data: {turbo_confirm: "Discard this draft? This can't be undone."}) { "Cancel" }
 end
 ```
 
-**Narrowing.** For the per-record / per-wizard resume widget ("does this record have an unfinished draft of wizard X?"), pass the optional `anchor:`/`wizard:` filters — they narrow **in the query, before enrichment**, so discarded rows are never URL-resolved or anchor-loaded (cheaper than `select`-ing the array, which enriches every row first). They compose, and the `wizard + anchor` pair is index-covered: `…in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: company).first`. Don't reach into `e.session.anchor` to filter (a polymorphic load per row). For ad-hoc post-filtering the array still works — `e.wizard_class` is already on each entry.
+**Narrowing to one wizard or one record.** The full signature is `in_progress_for(view_context, anchor: nil, wizard: nil)`. To list only one wizard's runs, pass the class:
+
+```erb
+<% Plutonium::Wizard.in_progress_for(self, wizard: ConfigureWidgetWizard).each do |entry| %>
+```
+
+Both filters become `WHERE` clauses (`wizard: wizard.name`, `anchor: anchor`) **before** any row is enriched. Enrichment is the costly part: every returned row gets its resume URL and cancel URL resolved and its anchor loaded. Fetching the full list and then `select { |e| e.wizard_class == X }` pays that cost for every draft you throw away. The filters compose, and `wizard + anchor` is index-covered: `in_progress_for(vc, wizard: ConfigureCompanyWizard, anchor: company).first` answers "does this record have an unfinished draft of wizard X?". Don't filter on `e.session.anchor` either (a polymorphic load per row).
+
+The one case for post-filtering: the **same render** already calls the unfiltered `in_progress_for` (e.g. a full "continue where you left off" list plus a per-wizard callout on one page). Those entries are already enriched, so `select` on `e.wizard_class` is free, while a second `wizard:` call would query and enrich those rows again. If the callout stands alone, or the full list isn't on that page, use `wizard:`.
 
 ## Storage & config
 
 ```ruby
 # config/initializers/plutonium.rb
 Plutonium.configure do |config|
-  config.wizards.enabled = true            # false by default — required
+  config.wizards.enabled = true            # false by default, required
   config.wizards.cleanup_after = 14.days   # global default sweep TTL
   config.wizards.encrypt_data = false      # encrypt every wizard's data at rest (needs AR encryption keys)
-  config.wizards.database = :primary       # reserved — v1 supports :primary only (else raises at boot)
+  config.wizards.database = :primary       # reserved: v1 supports :primary only (else raises at boot)
   config.wizards.attachment_backend = nil  # server-side attachment staging backend (nil = auto-detect active_shrine/AS)
-  config.wizards.width = :md               # default step page width (:sm/:md/:lg/:xl/:full) — NOT tied to default_page_width
+  config.wizards.width = :md               # default step page width (:sm/:md/:lg/:xl/:full), NOT tied to default_page_width
 end
 ```
 
 - One framework table `plutonium_wizard_sessions` (gem-shipped migration, runs in place on `rails db:migrate`). No changes to your models.
 - DB-backed → resume across devices, in-progress listing, durable one-time markers.
-- **`Plutonium::Wizard::SweepJob`** (an `ActiveJob`) reaps idle/expired sessions and rolls back their tracked records. **Schedule it** for every wizard app — stale rows pile up otherwise, and for `on_submit`/`persist` wizards it's the *only* thing that rolls back abandoned mid-flow records. In a Solid Queue app (`rails g pu:lite:solid_queue` sets up the backend), add it to `config/recurring.yml`:
+- **`Plutonium::Wizard::SweepJob`** (an `ActiveJob`) reaps idle/expired sessions and rolls back their tracked records. **Schedule it** for every wizard app: stale rows pile up otherwise, and for `on_submit`/`persist` wizards it's the *only* thing that rolls back abandoned mid-flow records. In a Solid Queue app (`rails g pu:lite:solid_queue` sets up the backend), add it to `config/recurring.yml`:
 
   ```yaml
   # config/recurring.yml
@@ -514,7 +523,7 @@ end
     schedule: every 15 minutes
   ```
 
-  (Or any recurring mechanism your app already has — sidekiq-cron, `whenever`, a cron'd rake task. `perform` takes no required args.)
+  (Or any recurring mechanism your app already has: sidekiq-cron, `whenever`, a cron'd rake task. `perform` takes no required args.)
 
 ## Common gotchas
 
@@ -526,13 +535,15 @@ end
 - **`one_time` without `concurrency_key`** → raises (no stable row to retain).
 - **`anonymous` + `concurrency_key`/`one_time`** → raises (a guest is already session-keyed; whichever is declared last raises).
 - **`encrypt_data` without AR encryption keys** → first write raises (naming the wizard). Run `bin/rails db:encryption:init`.
+- **`register_wizard` wizard with no `authorize?`** → runnable by any authenticated user of that portal/app (default `true`, no resource policy).
+- **Filtering `in_progress_for` results with `select`** → enriches every draft first. Pass `wizard:`/`anchor:` instead, unless the same render already loaded the full list.
 - **Gating a non-one-time wizard** (`ensure_wizard_completed` on a repeatable wizard) → raises.
 - **`on_submit` wizard without scheduled SweepJob** → abandoned partial records pile up.
 - **Rotating `secret_key_base`** → invalidates every `instance_key` digest (it's salted with the app secret): in-progress runs become unresumable and one-time gates re-open. Only affects rows live at rotation time.
 
 ## Related Skills
 
-- [[plutonium-resource]] — the `attribute`/`input`/`validates`/`structured_input`/`form_layout` field DSL used inside a step.
-- [[plutonium-behavior]] — Outcomes (`succeed`/`failed`), the Action system the `wizard` macro builds on, policies.
-- [[plutonium-app]] — portal engines and `register_wizard` placement (alongside `register_resource`).
-- [[plutonium-testing]] — integration-testing wizard flows.
+- [[plutonium-resource]]: the `attribute`/`input`/`validates`/`structured_input`/`form_layout` field DSL used inside a step.
+- [[plutonium-behavior]]: Outcomes (`succeed`/`failed`), the Action system the `wizard` macro builds on, policies.
+- [[plutonium-app]]: portal engines and `register_wizard` placement (alongside `register_resource`).
+- [[plutonium-testing]]: integration-testing wizard flows.

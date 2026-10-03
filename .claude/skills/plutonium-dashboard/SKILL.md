@@ -1,11 +1,11 @@
 ---
 name: plutonium-dashboard
-description: Use BEFORE building a dashboard, KPI page, metrics overview or chart page in a Plutonium app — Plutonium::Dashboard::Base, the metric / chart / card DSL, register_dashboard, lazy turbo-frame cards, refresh, conditions, authorize?, and the pu:dashboard generator. The single source for "how do I add a dashboard with metric cards and charts".
+description: 'Use BEFORE building a dashboard, KPI page, metrics overview or chart page in a Plutonium app: Plutonium::Dashboard::Base, the metric / chart / card DSL, register_dashboard, lazy turbo-frame cards, refresh, conditions, authorize?, and the pu:dashboard generator. The single source for "how do I add a dashboard with metric cards and charts".'
 ---
 
 # Plutonium Dashboards
 
-A dashboard is a class of cards (`metric`, `chart`, `card`) mounted in a portal with one routes line. Every card loads in its own lazy turbo frame, so the page paints at once and each card's queries run in a separate request. Charts render with Chart.js through Chartkick, styled by Plutonium's design tokens.
+A dashboard is a class of cards (`metric`, `chart`, `card`) mounted in a portal with one routes line. By default every card loads in its own lazy turbo frame, so the page paints at once and each card's queries run in a separate request. Charts render with Chart.js through Chartkick, styled by Plutonium's design tokens.
 
 For resources and their definitions see [[plutonium-resource]]; for portals and routes see [[plutonium-app]]; for custom Phlex markup inside a card see [[plutonium-ui]].
 
@@ -19,7 +19,8 @@ For resources and their definitions see [[plutonium-resource]]; for portals and 
 - **Root-qualify packaged models inside a portal dashboard.** Within `module AdminPortal`, `Blogging::Post` resolves to the portal's own `AdminPortal::Blogging` controller namespace and raises `NameError`; write `::Blogging::Post`.
 - **`metric` and `chart` blocks return data; `card` blocks render Phlex markup.** A `card` block is `instance_exec`ed in a Phlex component: `div`, `ul`, `render` work, and unknown methods forward to the dashboard.
 - **`condition:` gates the card endpoint too** (404 when false), unlike a field `condition:`. Page-level access is `authorize?` on the dashboard (403).
-- **`refresh:` needs `lazy: true`** (the default). It reloads the frame; an inline card has no frame. `refresh: false` opts a lazy card out of the dashboard's `refresh`.
+- **`refresh:` needs `lazy: true`** (the default). It reloads the frame; an inline card has no frame. `refresh: false` opts a lazy card out of the dashboard's `refresh`. A card is inline or refreshing, never both: when a request wants both for one card, say so and let the user pick (see [Lazy vs inline](#lazy-vs-inline-lazy-false)).
+- **Work within the DSL in an app; don't patch the gem.** Removing the `refresh:` + `lazy: false` guard, teaching the board to refresh inline cards, or hand-rolling polling (a custom Stimulus timer, meta refresh, a Turbo stream broadcast) is not the fix for a dashboard request. Gem edits change behavior for every app and ship only with a release; a custom poller duplicates the built-in `frame-refresh` controller.
 - **Chart options other than `type:` / `height:` pass straight to Chartkick.** Unknown metric options raise.
 - **Ejected sidebars don't list dashboards automatically.** Portals generated before this feature have their own `_resource_sidebar.html.erb`; add the `registered_dashboards` block (below), which groups them under a "Dashboards" parent after the Home link (`plutonium.resource.nav.home`).
 
@@ -108,7 +109,7 @@ register_dashboard Reports::WeeklyDashboard, at: "reports/weekly", as: "weekly"
 - Entity-scoped portals: URLs carry the scope segment; use `dashboard_path_for(Klass)` rather than a hand-built helper.
 - Every non-root mount is drawn under `dashboards/` (`at: "sales"` → `/admin/dashboards/sales`), so it cannot collide with a resource route. Helper names carry no prefix. `prefix: nil` mounts at the bare path (`/admin/sales`, keeping it clear of resource routes is then on you); `prefix: "reports"` swaps the segment.
 - Lazy vs inline: see the table below.
-- Errors in a card: raised in development/test. In production the card is replaced by a notice, and the error is logged and reported via `Rails.error` (`source: "plutonium.dashboard"`, `context: {dashboard:, card:}`).
+- Errors in a card: raised when `config.consider_all_requests_local` is true (development and test by default). Otherwise (production) the card is replaced by a notice, and the error is logged and reported via `Rails.error` (`source: "plutonium.dashboard"`, `context: {dashboard:, card:}`).
 
 ## Lazy vs inline (`lazy: false`)
 
@@ -123,6 +124,12 @@ register_dashboard Reports::WeeklyDashboard, at: "reports/weekly", as: "weekly"
 | Raises in development and test | That card's frame request fails; the page and the other cards are fine | The whole page raises, because the card is part of the page |
 
 Default to lazy. Use `lazy: false` only for a cheap value (cached number, indexed count) near the top of the page; one slow inline card delays the whole page.
+
+When someone asks for a card to "render with the page" (usually to stop the skeleton flash), make the trade explicit in your answer rather than just flipping the flag:
+
+- **The page waits on it.** The block's query runs inside the page request, so its time is added to every page load.
+- **An exception takes the page down in development and test.** The error is re-raised while rendering the page, so the whole dashboard 500s, not just that card. In production it degrades to the card's notice like a lazy card.
+- **It stops refreshing.** If the same card should also auto-refresh, offer the two options: inline with no refresh (updates on page reload), or keep it lazy so it refreshes. A lazy card shows its skeleton only on the first load; each refresh reloads the frame with `refresh: "morph"` and swaps the content in place without a skeleton.
 
 ## Sidebar (ejected partial)
 
