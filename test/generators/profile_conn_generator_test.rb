@@ -116,7 +116,39 @@ class ProfileConnGeneratorTest < ActiveSupport::TestCase
       generator.send(:definition_path)
   end
 
+  # The base policy's update? delegates to create?, which the generator sets to
+  # `user.profile.nil?`, so without an explicit update? the profile is
+  # read-only once it exists.
+  test "customize_policy makes the profile editable after creation" do
+    Dir.mktmpdir do |root|
+      policy_path = "packages/customer_portal/app/policies/customer_portal/profile_policy.rb"
+      FileUtils.mkdir_p(File.join(root, File.dirname(policy_path)))
+      File.write(File.join(root, policy_path), <<~RUBY)
+        class CustomerPortal::ProfilePolicy < ::ProfilePolicy
+          include CustomerPortal::ResourcePolicy
+        end
+      RUBY
+
+      generator = Pu::Profile::ConnGenerator.new(["Profile"], {dest: "customer_portal"}, destination_root: root)
+      generator.define_singleton_method(:selected_destination_portal) { "customer_portal" }
+      quietly { generator.send(:customize_policy) }
+
+      policy = File.read(File.join(root, policy_path))
+      assert_match(/def update\?\n\s+true\n\s+end/, policy)
+      assert_match(/def create\?\n\s+user\.profile\.nil\?\n\s+end/, policy)
+      RubyVM::InstructionSequence.compile(policy)
+    end
+  end
+
   private
+
+  def quietly(&)
+    original = $stdout
+    $stdout = StringIO.new
+    yield
+  ensure
+    $stdout = original
+  end
 
   def build_generator(name, dest: nil, user_model: nil)
     args = [name]
