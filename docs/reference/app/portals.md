@@ -5,7 +5,7 @@ A portal is a Rails engine mixing in `Plutonium::Portal::Engine`. It defines its
 ## 🚨 Critical
 
 - **Use `pu:pkg:portal` for everything.** Never hand-write the engine file, controller concern, or layout.
-- **Pass `--auth=<name>`, `--public`, or `--byo`** for unattended runs — without one of these flags, the generator prompts.
+- **Pass `--auth=<name>`, `--public`, or `--byo`** for unattended runs; without one of these flags, the generator prompts.
 - **Always connect resources with `pu:res:conn`.** Until connected, a resource has no portal routes and is invisible.
 - **For custom routes on a registered resource, pass `as:`.** Without it, `resource_url_for` can't build URLs.
 
@@ -20,7 +20,7 @@ rails g pu:pkg:portal <name>
 | Option | Description |
 |---|---|
 | `--auth=NAME` | Rodauth account to authenticate with (e.g. `--auth=user`) |
-| `--public` | Public access — no authentication |
+| `--public` | Public access, no authentication |
 | `--byo` | Bring your own authentication |
 | `--scope=CLASS` | Entity class for multi-tenancy (e.g. `--scope=Organization`) |
 
@@ -51,7 +51,9 @@ end
 
 ## Controller concern (auth)
 
-Every portal has a `Concerns::Controller` mixed into its `ResourceController`. The generator wires this up; you customize for auth flow and shared before_action hooks.
+Every portal has a `Concerns::Controller`, included by both its `ResourceController` (resource pages) and its `PlutoniumController` (dashboard and other non-resource pages). The generator wires this up; you customize for auth flow and shared before_action hooks.
+
+Portal-wide helpers the layout calls belong here, declared with `helper_method`, so they work on the dashboard as well as resource pages. The common case is `profile_url`: `Plutonium::Auth::Rodauth` defines it as `nil`, and the avatar menu only shows a Profile link when it returns a URL. `pu:profile:conn --dest=<portal>` writes the override into this concern (see [Auth › Profile](/reference/auth/profile)).
 
 ### Rodauth
 
@@ -89,18 +91,62 @@ end
 
 ## Mounting
 
+`pu:pkg:portal` writes the mount at the bottom of the portal's own `packages/<name>_portal/config/routes.rb`, at `/<name>`, wrapped in an auth constraint when `--auth` is given:
+
 ```ruby
-# config/routes.rb
+# packages/admin_portal/config/routes.rb (after the engine's routes.draw block)
 Rails.application.routes.draw do
-  # Authenticated mount
   constraints Rodauth::Rails.authenticate(:user) do
     mount AdminPortal::Engine, at: "/admin"
   end
-
-  # Unconstrained — the portal handles its own auth
-  mount PublicPortal::Engine, at: "/public"
 end
 ```
+
+With `--public` or `--byo` the mount is unconstrained and the portal handles its own auth.
+
+To change the path, edit `at:` in place. Don't mount the engine again in `config/routes.rb`: the second `mount` reuses the route name (`admin_portal`) and Rails raises `ArgumentError: Invalid route name, already in use`.
+
+Route order matters: the app's `config/routes.rb` is drawn first, then each package's routes file, then gem engines (Active Storage, Turbo).
+
+### Mounting a portal at `/`
+
+Two things change when a portal is mounted at `"/"`.
+
+**Drop the `Rodauth::Rails.authenticate` constraint and authenticate in the controller concern instead.** The constraint does not fail the match for an anonymous visitor; it calls `rodauth.require_account`, which redirects to login. A constrained mount at `/` matches every path the app's own routes did not claim, so it redirects anonymous requests meant for routes drawn after it (other portals, Active Storage) and turns unknown URLs into login redirects.
+
+```ruby
+# packages/desk_portal/config/routes.rb
+Rails.application.routes.draw do
+  mount DeskPortal::Engine, at: "/"
+end
+
+# packages/desk_portal/app/controllers/desk_portal/concerns/controller.rb
+module DeskPortal
+  module Concerns
+    module Controller
+      extend ActiveSupport::Concern
+      include Plutonium::Portal::Controller
+      include Plutonium::Auth::Rodauth(:user)
+
+      included do
+        before_action { rodauth.require_account }
+      end
+    end
+  end
+end
+```
+
+**Move the engine's root off `/` but keep the name.** The app's `root` is drawn first, so the generated `root to: "dashboard#index"` is unreachable and the portal's `root_path` points at the app's home page. Plutonium's header, icon rail, breadcrumbs and wizard exits all link to `root_path`, so the portal still needs a route named `root`:
+
+```ruby
+DeskPortal::Engine.routes.draw do
+  get "dashboard", to: "dashboard#index", as: :root
+  register_resource ::Comment
+  # register resources above.
+end
+```
+
+The same applies to `register_dashboard ..., at: "/"`. Confirm with `Rails.application.routes.recognize_path("/")` (still the app's home) and `recognize_path("/dashboard")`.
 
 ## Routes & `register_resource`
 
@@ -126,7 +172,7 @@ For each call, Plutonium auto-generates:
 - Nested routes for every registered `has_many` / `has_one` parent (prefixed `nested_`)
 - Route names that `resource_url_for` can resolve
 
-You list every resource the portal exposes. If a resource isn't registered, it has no URLs in that portal — `resource_url_for` will fail.
+You list every resource the portal exposes. If a resource isn't registered, it has no URLs in that portal, so `resource_url_for` will fail.
 
 ### Choosing nested associations
 
@@ -136,11 +182,11 @@ Name the associations that get nested routes, and the rest are not drawn:
 register_resource ::Post, associations: %i[comments post_detail]
 ```
 
-`associations: []` draws none, and a name that is not a routable association fails the boot. Set `config.nested_association_routes = :declared` to make naming them the rule — see [Tenancy › Nested resources](../tenancy/nested-resources#declaring-which-associations-get-routes).
+`associations: []` draws none, and a name that is not a routable association fails the boot. Set `config.nested_association_routes = :declared` to make naming them the rule; see [Tenancy › Nested resources](../tenancy/nested-resources#declaring-which-associations-get-routes).
 
 ### Singular (singleton) resources
 
-For resources with no collection — a single per-user `Profile`, app-wide `Settings`, etc.:
+For resources with no collection: a single per-user `Profile`, app-wide `Settings`, etc.:
 
 ```ruby
 register_resource ::Profile, singular: true
@@ -178,12 +224,12 @@ end
 ```
 
 ::: warning Always pass `as:`
-Without `as:`, `resource_url_for(@post, action: :preview)` fails because there's no named route — especially critical for nested resources.
+Without `as:`, `resource_url_for(@post, action: :preview)` fails because there's no named route, which is especially critical for nested resources.
 :::
 
-For most operations with business logic, prefer **interactive actions** (definition + interaction — see [Resource › Actions](/reference/resource/actions)) over custom controller routes. Action routes wire automatically with no `register_resource` block needed.
+For most operations with business logic, prefer **interactive actions** (definition + interaction; see [Resource › Actions](/reference/resource/actions)) over custom controller routes. Action routes wire automatically with no `register_resource` block needed.
 
-## Connecting resources — `pu:res:conn`
+## Connecting resources: `pu:res:conn`
 
 A resource is invisible until connected to at least one portal. The generator wires up the portal-specific controller, policy, definition, and route registration.
 
@@ -191,7 +237,7 @@ A resource is invisible until connected to at least one portal. The generator wi
 rails g pu:res:conn RESOURCE [RESOURCE...] --dest=PORTAL_NAME [--singular]
 ```
 
-Pass resources directly — avoids interactive prompts. No `--src` needed.
+Pass resources directly to avoid interactive prompts. No `--src` needed.
 
 ```bash
 # Main app resources
@@ -286,13 +332,13 @@ end
 ## Per-portal overrides
 
 ```ruby
-# Definition — how fields render per portal
+# Definition: how fields render per portal
 class AdminPortal::PostDefinition < ::PostDefinition
   scope :pending_review
   input :internal_notes, hint: "Not shown to the author"
 end
 
-# Policy — which fields exist, and who may act
+# Policy: which fields exist, and who may act
 #          `internal_notes` appears for admins because THIS permits it,
 #          not because the definition above mentions it.
 class AdminPortal::PostPolicy < ::PostPolicy
@@ -302,7 +348,7 @@ class AdminPortal::PostPolicy < ::PostPolicy
   def permitted_attributes_for_create = %i[title content featured internal_notes]
 end
 
-# Controller — different redirect after submit
+# Controller: different redirect after submit
 module AdminPortal
   class PostsController < ResourceController
     private
@@ -321,7 +367,7 @@ config.after_initialize do
 end
 ```
 
-Strategies: `:path` (entity id in URL — default) or a custom method name on the portal controller concern.
+Strategies: `:path` (entity id in URL, the default) or a custom method name on the portal controller concern.
 
 For the full multi-tenancy story, see [Tenancy › Entity scoping](/reference/tenancy/entity-scoping).
 
@@ -330,13 +376,13 @@ For the full multi-tenancy story, see [Tenancy › Entity scoping](/reference/te
 The generated `dashboard#index` is a plain page listing the registered resources. To replace it with a [dashboard](/guides/dashboards) of metric and chart cards, run `rails g pu:dashboard Home --dest=<portal> --at=/`, which swaps the `root to:` line for a `register_dashboard ... at: "/"` registration.
 
 ```ruby
-# config/routes.rb
+# packages/admin_portal/config/routes.rb
 AdminPortal::Engine.routes.draw do
   root to: "dashboard#index"
   get "settings", to: "settings#index"
 end
 
-# Controller — inherit from PlutoniumController, NOT ResourceController
+# Controller: inherit from PlutoniumController, NOT ResourceController
 module AdminPortal
   class DashboardController < PlutoniumController
     def index
@@ -351,7 +397,7 @@ See [UI › Pages](/reference/ui/pages) for custom Phlex page classes.
 ## Multiple portals
 
 ```ruby
-# Admin — full access, entity-scoped
+# Admin: full access, entity-scoped
 module AdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
@@ -362,7 +408,7 @@ module AdminPortal
   end
 end
 
-# Customer dashboard — entity-scoped to the customer's organization
+# Customer dashboard: entity-scoped to the customer's organization
 module DashboardPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
@@ -373,7 +419,7 @@ module DashboardPortal
   end
 end
 
-# Public — no auth, no entity scoping
+# Public: no auth, no entity scoping
 module PublicPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
@@ -383,9 +429,9 @@ end
 
 ## Related
 
-- [Packages](./packages) — feature vs portal split, structure, namespacing
-- [Generators](./generators) — full `pu:pkg:portal` / `pu:res:conn` option reference
-- [Behavior › Controllers](/reference/behavior/controllers) — controller key methods, hooks, customizations
-- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — multi-tenancy mechanics
-- [Auth](/reference/auth/) — Rodauth account types referenced by `--auth=`
-- [UI › Layouts](/reference/ui/layouts) — customizing portal chrome
+- [Packages](./packages): feature vs portal split, structure, namespacing
+- [Generators](./generators): full `pu:pkg:portal` / `pu:res:conn` option reference
+- [Behavior › Controllers](/reference/behavior/controllers): controller key methods, hooks, customizations
+- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping): multi-tenancy mechanics
+- [Auth](/reference/auth/): Rodauth account types referenced by `--auth=`
+- [UI › Layouts](/reference/ui/layouts): customizing portal chrome

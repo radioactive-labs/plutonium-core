@@ -112,38 +112,38 @@ class Blogging::PostDefinition < Blogging::ResourceDefinition
   index_page_title "Blog Posts"
   index_page_description "Manage your blog content"
 
-  show_page_title { |record| record.title }
   show_page_description "View post details"
 end
 ```
+
+These setters take a literal, or the definition's lazy `t("some.key")` to translate per request. They have no record context, so a title built from the record goes in a `page_title` override on the page class (below).
 
 The default "Posts" heading becomes your branded title and description:
 
 ![Customized index page title](/images/tutorial/08-customized-index.png)
 
-For more advanced customization, you can create custom page classes that inherit from Plutonium's page components:
+For more advanced customization, override the page class nested in the definition:
 
 ```ruby
-# packages/admin_portal/app/views/admin_portal/blogging/posts/index_page.rb
-class AdminPortal::Blogging::Posts::IndexPage < Blogging::PostDefinition::IndexPage
-  private
+class Blogging::PostDefinition < Blogging::ResourceDefinition
+  class ShowPage < ShowPage
+    private
 
-  def page_title
-    "Blog Posts"
-  end
+    def page_title
+      object.title
+    end
 
-  def page_description
-    "Manage your blog content"
-  end
-
-  # Add content after the page header
-  def render_after_page_header
-    div(class: "mb-4 p-4 bg-blue-50 rounded") do
-      p { "Custom content here" }
+    # Add content after the page header
+    def render_after_page_header
+      div(class: "pu-alert pu-alert-info", role: "status") do
+        div(class: "pu-alert-message") { t("blogging.posts.show.comment_count", count: object.comments.count) }
+      end
     end
   end
 end
 ```
+
+`pu-alert pu-alert-<success|warning|danger|info>` is the banner the flash messages use, with dark-mode colors built in. The text comes from a locale key (see [i18n](/reference/i18n#your-own-components-and-pages)).
 
 ## Custom Form Layout
 
@@ -171,20 +171,35 @@ end
 
 ## Theming with TailwindCSS
 
-Plutonium uses TailwindCSS 4. Customize the theme:
+Plutonium uses TailwindCSS 4. Out of the box the app serves the gem's prebuilt CSS, so first switch it to your own build:
+
+```bash
+rails generate pu:core:assets
+```
+
+Brand colors are Tailwind palette colors compiled into the CSS, so change them in the generated `tailwind.config.js` through `plutoniumTailwindConfig.merge`, then rebuild:
+
+```javascript
+// tailwind.config.js
+theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
+  extend: {
+    colors: {
+      primary: { 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },  // Indigo
+    },
+  },
+}),
+```
+
+Surfaces, borders, radii and shadows are `--pu-*` tokens. Override them after the Plutonium import in `app/assets/stylesheets/application.tailwind.css`, and repeat every one you change in a `.dark` block so dark mode gets its own value:
 
 ```css
-/* app/assets/stylesheets/application.css */
-@import "tailwindcss";
-@import "gem:plutonium/src/css/plutonium.css";
+:root {
+  --pu-radius-md: 0.5rem;
+  --pu-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
 
-@theme {
-  --color-primary-500: #6366f1;  /* Indigo */
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-
-  --radius-md: 0.5rem;
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+.dark {
+  --pu-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
 }
 ```
 
@@ -201,9 +216,9 @@ class StatusBadge < Plutonium::UI::Component::Base
 
   def view_template
     if @published
-      span(class: "px-2 py-1 text-xs bg-green-100 text-green-800 rounded") { "Published" }
+      span(class: "pu-badge pu-badge-success") { t("blogging.posts.status.published") }
     else
-      span(class: "px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded") { "Draft" }
+      span(class: "pu-badge pu-badge-warning") { t("blogging.posts.status.draft") }
     end
   end
 end
@@ -224,7 +239,7 @@ class CustomLayout < Plutonium::UI::Layout::ResourceLayout
 
   # Customize body classes
   def body_attributes
-    {class: "antialiased min-h-screen bg-white dark:bg-gray-900"}
+    {class: "antialiased pu-min-h-viewport bg-[var(--pu-surface)] text-[var(--pu-text)]"}
   end
 
   # Add content before the main section

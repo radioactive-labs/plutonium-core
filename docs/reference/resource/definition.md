@@ -1,6 +1,6 @@
 # Definition
 
-Definitions configure **how** a resource is rendered and interacted with — which fields appear, how they render, what page chrome looks like. Auto-detection from the model handles the defaults; declare only what you're overriding.
+Definitions configure **how** a resource is rendered and interacted with: which fields appear, how they render, what page chrome looks like. Auto-detection from the model handles the defaults; declare only what you're overriding.
 
 For search/filters/scopes/sorting see [Query](./query). For custom actions see [Actions](./actions).
 
@@ -10,7 +10,7 @@ For search/filters/scopes/sorting see [Query](./query). For custom actions see [
 - **Use `condition:` for UI state, the policy for authorization.** `condition: -> { object.published? }` is fine. "Only admins see this field" belongs in `permitted_attributes_for_*`.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?` on the policy (see [Behavior › Policy](/reference/behavior/policies)).
 - **`has_cents` fields use the virtual name** (`field :price`), never `:price_cents`.
-- **Nested inputs need `accepts_nested_attributes_for` AND `inverse_of:` on the child's `belongs_to`** — without `inverse_of:`, validation fails with "Parent must exist" because the parent isn't saved yet.
+- **Nested inputs need `accepts_nested_attributes_for` AND `inverse_of:` on the child's `belongs_to`**, without `inverse_of:`, validation fails with "Parent must exist" because the parent isn't saved yet.
 
 ## File location
 
@@ -102,7 +102,7 @@ end
 | Text | `:string`, `:text`, `:email`, `:url`, `:tel`, `:password` |
 | Rich text | `:markdown` (EasyMDE editor) |
 | Numeric | `:number`, `:integer`, `:decimal`, `:range` |
-| Boolean | `:toggle` / `:switch` (switch — **default** for boolean columns), `:boolean` (plain checkbox) |
+| Boolean | `:toggle` / `:switch` (switch: **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
 | Selection | `:select`, `:slim_select`, `:radio_buttons`, `:check_boxes` |
 | Files | `:file`, `:uppy`, `:attachment` |
@@ -115,7 +115,7 @@ end
 
 #### Auto-inferred display formatting
 
-These render automatically — declare an `as:` only to override or pass options:
+These render automatically; declare an `as:` only to override or pass options:
 
 | Column | Renders as | Notes |
 |---|---|---|
@@ -132,11 +132,11 @@ display :active, as: :boolean, true_label: "Live", false_label: "Off"
 **Currency symbol.** The `unit:` can be set on the model's `has_cents` declaration
 (`has_cents :price_cents, unit: "£"`, or `unit: :currency_symbol` to read a method
 off the record for per-row currencies). That model-level unit is used everywhere the
-value renders as currency — the show page, tables, **and grid/kanban cards**. A
+value renders as currency: the show page, tables, **and grid/kanban cards**. A
 per-display `unit:` overrides it for that one display; `unit: false` explicitly
 renders no symbol. When neither is set, currency falls back to
 `Plutonium.configuration.default_currency_unit` (default: the i18n
-`number.currency.format.unit` if the locale defines it — `$` in `en` — else no symbol).
+`number.currency.format.unit` if the locale defines it, `$` in `en`, else no symbol).
 
 ## Field options
 
@@ -206,22 +206,22 @@ Keep a `field` condition to context that exists on every surface (`Rails.env`, a
 feature flag, `current_user`) and put record checks on `input`, `display` or `column`.
 
 ::: warning UI state, not authorization
-`condition:` is for UI logic ("show this when published"). For "who can see this", use the policy's `permitted_attributes_for_*` — see [Behavior › Policy](/reference/behavior/policies).
+`condition:` is for UI logic ("show this when published"). For "who can see this", use the policy's `permitted_attributes_for_*`; see [Behavior › Policy](/reference/behavior/policies).
 :::
 
 ## Options that vary per render
 
-Any option may be a **proc**, resolved on every render rather than frozen when the class loads. This holds across the whole form DSL — `field`, `input`, `section`/`ungrouped`, `structured_input` and nested inputs. Arity says **whether you want the form**:
+Any option may be a **proc**, resolved on every render rather than frozen when the class loads. This holds across the whole form DSL: `field`, `input`, `section`/`ungrouped`, `structured_input` and nested inputs. Arity says **whether you want the form**:
 
 ```ruby
 input :tier,  as: :select, choices: ->(form) { form.object.account.available_tiers }
 input :notes, placeholder: -> { "Updated #{Time.current.year}" }
 ```
 
-- **`-> { … }`** is called as-is, keeping whatever it closed over — it means what it reads like where you wrote it. Nothing rebinds `self`. That is what lets an option declared inside an interaction's `customize_inputs` reach the interaction, private helpers included: `choices: -> { reviewer_choices }`.
+- **`-> { … }`** is called as-is, keeping whatever it closed over: it means what it reads like where you wrote it. Nothing rebinds `self`. That is what lets an option declared inside an interaction's `customize_inputs` reach the interaction, private helpers included: `choices: -> { reviewer_choices }`.
 - **`->(form) { … }`** is handed the form, so `object` (the record being edited), `params` and view helpers are reachable. Use it whenever the value depends on what is being rendered.
 
-The rule holds on wizard steps too — but there a zero-argument proc closes over an internal field recorder, so options must take the form and read the run off it: `->(form) { form.wizard.anchor.tiers }`. See [Wizard DSL › Runtime input options](/reference/wizard/dsl#runtime-input-options).
+The rule holds on wizard steps too, but there a zero-argument proc closes over an internal field recorder, so options must take the form and read the run off it: `->(form) { form.wizard.anchor.tiers }`. See [Wizard DSL › Runtime input options](/reference/wizard/dsl#runtime-input-options).
 
 ### `condition:` is not an option
 
@@ -229,10 +229,10 @@ The rule holds on wizard steps too — but there a zero-argument proc closes ove
 
 | | asks | so it | receiver |
 |---|---|---|---|
-| an **option** (`choices:`, `label:`, `collapsed:`, …) | "what value should this have?" | may or may not care about the render — so it means what it reads like where you wrote it, and takes `form` when it does care | its own closure, or the form |
-| **`condition:`** | "should this render *here, now*?" | is a question about the render context by definition — there is no useful reading of it that ignores that context | always the thing doing the rendering |
+| an **option** (`choices:`, `label:`, `collapsed:`, …) | "what value should this have?" | may or may not care about the render, so it means what it reads like where you wrote it, and takes `form` when it does care | its own closure, or the form |
+| **`condition:`** | "should this render *here, now*?" | is a question about the render context by definition, there is no useful reading of it that ignores that context | always the thing doing the rendering |
 
-So `condition:` always runs **against** its context and reads it with no argument — and "its context" is whatever is rendering: the form for a field, section or nested input; the component for a `column` or `display`; the **wizard** for a step's `condition:` (evaluated in the runner to decide which steps exist, before any form is built); a condition context for an action or scope.
+So `condition:` always runs **against** its context and reads it with no argument, and "its context" is whatever is rendering: the form for a field, section or nested input; the component for a `column` or `display`; the **wizard** for a step's `condition:` (evaluated in the runner to decide which steps exist, before any form is built); a condition context for an action or scope.
 
 ```ruby
 input   :notes,     condition: -> { object.published? }        # form
@@ -253,7 +253,7 @@ class QuestionDefinition < ResourceDefinition
     choices: %w[text choice scale],
     pre_submit: true
 
-  # Dependents — no `as:` needed when the model column type matches
+  # Dependents: no `as:` needed when the model column type matches
   input :max_length, condition: -> { object.question_type == "text" }
   input :choices,    condition: -> { object.question_type == "choice" }
   input :min_value,  condition: -> { object.question_type == "scale" }
@@ -341,7 +341,7 @@ See [UI › Components](/reference/ui/components) for writing reusable Phlex com
 
 ### Custom component class
 
-`as:` takes a **field component** — Plutonium constructs it as
+`as:` takes a **field component**: Plutonium constructs it as
 `YourComponent.new(field, **attributes)`, so it subclasses
 `Phlexi::Form::Components::Base` (inputs) or `Phlexi::Display::Components::Base`
 (displays) and reads the value off `field`:
@@ -352,7 +352,7 @@ display :chart,        as: ChartComponent
 ```
 
 A component with its own constructor (e.g. `PostCardComponent.new(post:)`) is not
-an `as:` candidate — it would raise `ArgumentError`. Build it in a block instead:
+an `as:` candidate; it would raise `ArgumentError`. Build it in a block instead:
 
 ```ruby
 display :card do |field|
@@ -453,7 +453,7 @@ end
 |---|---|
 | `limit` | Max records (auto-detected from model; default 10) |
 | `allow_destroy` | Show delete checkbox (auto-detected) |
-| `update_only` | Hide "Add" button — only edit existing |
+| `update_only` | Hide "Add" button: only edit existing |
 | `description` | Help text above the section |
 | `condition` | Proc to show/hide |
 | `using` | Another Definition class |
@@ -468,13 +468,13 @@ end
   end
   ```
 - **Don't put `*_attributes` hashes in the policy.** Plutonium extracts nested params from the form definition, not the policy. The policy permits just the association name (`:variants`); `nested_input :variants` handles the rest. Adding `{variants_attributes: [...]}` to `permitted_attributes_for_create` renders as a literal text input. See [Behavior › Policy](/reference/behavior/policies).
-- **`update_only: true` hides the Add button** — for `has_one` and "settings"-style associations.
-- **Custom class names** — use `class_name:` in the model AND `using:` in the definition.
+- **`update_only: true` hides the Add button**: for `has_one` and "settings"-style associations.
+- **Custom class names**: use `class_name:` in the model AND `using:` in the definition.
 
 ## Structured inputs
 
 Classless inline fieldsets backed by a JSON/jsonb column. No model associations
-required — the whole sub-form is serialised into a single column as a hash
+required: the whole sub-form is serialised into a single column as a hash
 (single form) or an array of hashes (repeater).
 
 ![A single structured input (Payload) and a repeater (Rows)](/images/reference/structured-inputs.png)
@@ -513,16 +513,16 @@ end
 ### Removing rows
 
 Each repeater row has a **Remove** button. Removing a row collapses it to a
-compact _Removed — Restore_ bar and disables its inputs, so the browser omits
+compact bar (a _Removed_ label and a **Restore** button) and disables its inputs, so the browser omits
 them from the submission. The server simply rebuilds the JSON column from the
-rows it receives — there is no `_destroy` marker. **Restore** brings the row
+rows it receives; there is no `_destroy` marker. **Restore** brings the row
 back before saving.
 
 ![A removed row collapsed to a Restore bar](/images/reference/structured-inputs-removed.png)
 
 ### Policy
 
-Permit the column name as a plain symbol — Plutonium handles the nested hash
+Permit the column name as a plain symbol; Plutonium handles the nested hash
 params automatically:
 
 ```ruby
@@ -544,13 +544,13 @@ attribute is declared automatically; `execute` receives the value as a `Hash`
 The fields are classless render declarations, so there is nothing for Plutonium
 to attach validations to (unlike [`nested_input`](#nested-inputs), whose nested
 records run their own model validations). Whatever the form submits is stored
-as-is, after blank rows are dropped — **no per-field server-side validation**.
+as-is, after blank rows are dropped: **no per-field server-side validation**.
 :::
 
 Specifically:
 
 - **HTML constraints are client-side only.** A field's `required:` and a
-  select's `choices:` guide the browser but are **not** enforced on the server —
+  select's `choices:` guide the browser but are **not** enforced on the server:
   an API call or a crafted request can submit anything.
 - **Selects silently drop unknown values.** If a stored value is not among a
   `as: :select` field's `choices:`, the `<select>` renders **blank**, and saving
@@ -560,7 +560,7 @@ Specifically:
   `choices:` can drift. Keep `choices:` a stable superset, or use a free-text
   input, when values can change over time.
 
-To enforce anything, add the validation yourself — it runs server-side:
+To enforce anything, add the validation yourself; it runs server-side:
 
 ```ruby
 # resource: validate the JSON column on the model
@@ -607,7 +607,7 @@ end
 
 The block is evaluated once and stored on the class. Re-declaring `form_layout` in a subclass replaces the parent layout as a unit; per-field `input` config inherits normally.
 
-With no `form_layout` declared the form renders unchanged as a single responsive grid — fully backwards-compatible.
+With no `form_layout` declared the form renders unchanged as a single responsive grid, fully backwards-compatible.
 
 ### `section(key, *fields, **opts)`
 
@@ -615,16 +615,16 @@ Groups a set of fields under an optional heading.
 
 | Argument | Description |
 |---|---|
-| `key` | Symbol. `:ungrouped` is reserved — use the `ungrouped` macro instead (raises `ArgumentError` otherwise). |
+| `key` | Symbol. `:ungrouped` is reserved: use the `ungrouped` macro instead (raises `ArgumentError` otherwise). |
 | `*fields` | Ordered field keys to place in this section. |
 | `label:` | Section heading. Defaults to `key.to_s.humanize` (e.g. `:shipping_address` → `"Shipping address"`). |
 | `description:` | Optional help line rendered below the heading. |
 | `collapsible:` | Boolean (default `false`). Wraps the section in a native `<details>/<summary>` (no JS). |
 | `collapsed:` | Boolean (default `false`). Initial collapsed state when `collapsible: true`. |
-| `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer — any other value raises. (Literal only — not dynamic.) |
-| `condition:` | Lambda evaluated in the form instance context — same semantics as `input ..., condition:`. `object`, `current_user`, helpers etc. are all available. A falsey result hides the entire section and withholds its fields (they do not spill into `ungrouped`). |
+| `columns:` | Positive Integer. Overrides the section grid column count (e.g. `columns: 2`). Omit to use the form's default responsive grid. Must be a positive Integer, any other value raises. (Literal only, not dynamic.) |
+| `condition:` | Lambda evaluated in the form instance context: same semantics as `input ..., condition:`. `object`, `current_user`, helpers etc. are all available. A falsey result hides the entire section and withholds its fields (they do not spill into `ungrouped`). |
 
-Every option except `columns:` may be either a literal **or a proc** resolved at render time, following the same arity rule as every other option ([Options that vary per render](#options-that-vary-per-render)): take a `form` argument to read the render context. This makes the layout record-aware — e.g. collapse a section by default only for existing records:
+Every option except `columns:` may be either a literal **or a proc** resolved at render time, following the same arity rule as every other option ([Options that vary per render](#options-that-vary-per-render)): take a `form` argument to read the render context. This makes the layout record-aware, e.g. collapse a section by default only for existing records:
 
 ```ruby
 section :advanced, :seo_title, :notes,
@@ -634,19 +634,19 @@ section :advanced, :seo_title, :notes,
 ```
 
 ::: warning Breaking change in 0.63
-Section options previously took a **zero-argument** proc evaluated against the form (`collapsed: -> { object.persisted? }`). They now follow the same rule as every other option, where a zero-argument proc keeps its own binding — and a `form_layout` block is evaluated against the layout builder, so `object` there is a `NameError`.
+Section options previously took a **zero-argument** proc evaluated against the form (`collapsed: -> { object.persisted? }`). They now follow the same rule as every other option, where a zero-argument proc keeps its own binding, and a `form_layout` block is evaluated against the layout builder, so `object` there is a `NameError`.
 
 ```ruby
 - collapsed: -> { object.persisted? }
 + collapsed: ->(form) { form.object.persisted? }
 ```
 
-It fails loudly, never silently. `condition:` is unchanged — it is still evaluated against the form and still reads `object` with no argument.
+It fails loudly, never silently. `condition:` is unchanged: it is still evaluated against the form and still reads `object` with no argument.
 :::
 
-A section that resolves to **zero fields** — every declared field filtered out by the permitted set, or no field assigned — renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset).
+A section that resolves to **zero fields** (every declared field filtered out by the permitted set, or no field assigned) renders nothing at all (no heading, no grid). This keeps forms clean when fewer attributes are permitted than declared (notably `+ New`, where the create policy often permits a subset).
 
-The same goes for a section whose fields are **all hidden by their own `condition:`** on this render: it disappears with them instead of leaving an empty heading behind. The hidden fields are still recorded on the form, just as a hidden field in a visible section is. So fields that only apply to some records — re-evaluated on `pre_submit` — can be grouped in a section without any extra wiring:
+The same goes for a section whose fields are **all hidden by their own `condition:`** on this render: it disappears with them instead of leaving an empty heading behind. The hidden fields are still recorded on the form, just as a hidden field in a visible section is. So fields that only apply to some records, re-evaluated on `pre_submit`, can be grouped in a section without any extra wiring:
 
 ```ruby
 form_layout do
@@ -667,10 +667,10 @@ section :shipping, :address, :city, :postcode,
 
 ### `ungrouped(**opts)`
 
-A macro (not a `section` call) that configures the implicit bucket collecting every permitted field not claimed by any `section`. Takes **no field list** — its fields are computed at render time.
+A macro (not a `section` call) that configures the implicit bucket collecting every permitted field not claimed by any `section`. Takes **no field list**; its fields are computed at render time.
 
 - Accepts the same options as `section`: `label:`, `description:`, `collapsible:`, `collapsed:`, `columns:`, `condition:`.
-- **Position** — where you call `ungrouped` in the block is where leftovers appear. Omit it entirely and leftovers render **last**, after every declared section, with no heading. (Declaring `ungrouped` at the very end is therefore equivalent to omitting it, except that the explicit form lets you add a `label:` and other options.)
+- **Position**: where you call `ungrouped` in the block is where leftovers appear. Omit it entirely and leftovers render **last**, after every declared section, with no heading. (Declaring `ungrouped` at the very end is therefore equivalent to omitting it, except that the explicit form lets you add a `label:` and other options.)
 - Declaring `ungrouped` more than once in a single `form_layout` raises `ArgumentError`.
 
 ```ruby
@@ -688,9 +688,9 @@ end
 
 ### Layout references keys; config stays on `input`
 
-`form_layout` and `section` carry section-level options only. All per-field rendering config — `as:`, the field's own `label:`, `choices:`, per-field `condition:`, `pre_submit:`, blocks — remains on the `input` declaration. Layout never duplicates field config.
+`form_layout` and `section` carry section-level options only. All per-field rendering config (`as:`, the field's own `label:`, `choices:`, per-field `condition:`, `pre_submit:`, blocks) remains on the `input` declaration. Layout never duplicates field config.
 
-This includes a field's **column span**. In a section with `columns:`, fields flow into single grid cells by default; a field that declares its own span via `wrapper: {class: "col-span-..."}` keeps it — a field-level span always wins, so you can opt one field back to full width inside a multi-column section:
+This includes a field's **column span**. In a section with `columns:`, fields flow into single grid cells by default; a field that declares its own span via `wrapper: {class: "col-span-..."}` keeps it; a field-level span always wins, so you can opt one field back to full width inside a multi-column section:
 
 ```ruby
 input :notes, wrapper: {class: "col-span-full"}   # spans the whole row...
@@ -702,7 +702,7 @@ end
 
 ```ruby
 class ArticleDefinition < ResourceDefinition
-  # per-field config on input — untouched by form_layout
+  # per-field config on input: untouched by form_layout
   input :body, as: :markdown
   input :published_at, hint: "Leave blank to save as draft"
   input :visibility, as: :select, choices: %w[public private unlisted]
@@ -716,13 +716,13 @@ end
 
 ### Fields not in the permitted set are skipped
 
-A `section` only renders the fields that are actually in the form's permitted set for the current request. A key it lists that isn't there — a typo, or a field excluded by policy, per-action `permitted_attributes`, entity scoping, or nesting — is **silently dropped**, never an error. This lets a single `form_layout` reference conditionally-permitted fields without crashing the form in the contexts where they're filtered out. And when every field a section lists is dropped this way, the section's chrome is dropped with it (see the zero-fields note above) — so the same layout can serve a richly-permitted `edit` and a minimal `new` without leaving empty headings behind.
+A `section` only renders the fields that are actually in the form's permitted set for the current request. A key it lists that isn't there (a typo, or a field excluded by policy, per-action `permitted_attributes`, entity scoping, or nesting) is **silently dropped**, never an error. This lets a single `form_layout` reference conditionally-permitted fields without crashing the form in the contexts where they're filtered out. And when every field a section lists is dropped this way, the section's chrome is dropped with it (see the zero-fields note above), so the same layout can serve a richly-permitted `edit` and a minimal `new` without leaving empty headings behind.
 
 ### On interactions
 
-`form_layout` is also available on `Plutonium::Interaction::Base`. The same DSL groups the interaction's `attribute` declarations into sections. Interaction forms (`Plutonium::UI::Form::Interaction`) pick up the layout automatically — no extra wiring needed.
+`form_layout` is also available on `Plutonium::Interaction::Base`. The same DSL groups the interaction's `attribute` declarations into sections. Interaction forms (`Plutonium::UI::Form::Interaction`) pick up the layout automatically, no extra wiring needed.
 
-Dynamic options and `condition:` work here too, with one difference: on an interaction form the form's `object` is the **interaction instance** (not a record). For a record action, the record is `object.resource` — so e.g. `collapsed: ->(form) { form.object.resource.archived? }`, and `condition: -> { object.resource.archived? }` (which is form-evaluated, so it needs no argument).
+Dynamic options and `condition:` work here too, with one difference: on an interaction form the form's `object` is the **interaction instance** (not a record). For a record action, the record is `object.resource`, so e.g. `collapsed: ->(form) { form.object.resource.archived? }`, and `condition: -> { object.resource.archived? }` (which is form-evaluated, so it needs no argument).
 
 ```ruby
 class PublishPostInteraction < Plutonium::Interaction::Base
@@ -742,7 +742,7 @@ end
 
 ## Display layout
 
-The show page's counterpart to [`form_layout`](#form-layout). Same DSL and the same resolution rules — first-section-wins ownership, unlisted permitted fields collected into `ungrouped`, absent fields skipped, zero-field sections and sections whose fields are all condition-hidden dropped entirely — applied to the show page instead of the form.
+The show page's counterpart to [`form_layout`](#form-layout). Same DSL and the same resolution rules: first-section-wins ownership, unlisted permitted fields collected into `ungrouped`, absent fields skipped, zero-field sections and sections whose fields are all condition-hidden dropped entirely, applied to the show page instead of the form.
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -756,7 +756,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-With no `display_layout` declared the show page renders unchanged as a single card holding one responsive grid — fully backwards-compatible.
+With no `display_layout` declared the show page renders unchanged as a single card holding one responsive grid, fully backwards-compatible.
 
 ### Independent of `form_layout`
 
@@ -782,9 +782,9 @@ Raising rather than ignoring the option means a `form_layout` block copied acros
 
 ### Section options
 
-`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:` — the same set as [`section(key, *fields, **opts)`](#section-key-fields-opts) minus `columns:`. A collapsible display section behaves exactly as a form one does, `collapsed:` included.
+`label:`, `description:`, `collapsible:`, `collapsed:`, `condition:`, the same set as [`section(key, *fields, **opts)`](#section-key-fields-opts) minus `columns:`. A collapsible display section behaves exactly as a form one does, `collapsed:` included.
 
-Every option except `condition:` may be a proc, resolved at render under the same arity rule the form uses — a zero-arity proc keeps its own binding, a one-arity proc is handed the display:
+Every option except `condition:` may be a proc, resolved at render under the same arity rule the form uses: a zero-arity proc keeps its own binding, a one-arity proc is handed the display:
 
 ```ruby
 section :audit, :created_at, collapsible: true, collapsed: ->(display) { display.object.active? }
@@ -794,11 +794,11 @@ section :audit, :created_at, collapsible: true, collapsed: ->(display) { display
 
 ### Rendering
 
-Each section renders as its own card, stacked by a `sections_wrapper` container — so a sectioned show page has **no single outer card**. Fields declared via [`metadata`](#metadata-panel-show-page) are excluded from the sections and render in the metadata panel instead. Section chrome is themeable; see [UI › Displays › Theming](/reference/ui/displays#theming).
+Each section renders as its own card, stacked by a `sections_wrapper` container, so a sectioned show page has **no single outer card**. Fields declared via [`metadata`](#metadata-panel-show-page) are excluded from the sections and render in the metadata panel instead. Section chrome is themeable; see [UI › Displays › Theming](/reference/ui/displays#theming).
 
 ## Page width
 
-Detail-style pages — the show page and resource forms — are constrained to a readable column by default. Inputs and values stretch to their container, so at full content width they become ~1200px-wide text boxes: past a comfortable measure, and a long eye-travel between a label and the value beside it.
+Detail-style pages, the show page and resource forms, are constrained to a readable column by default. Inputs and values stretch to their container, so at full content width they become ~1200px-wide text boxes: past a comfortable measure, and a long eye-travel between a label and the value beside it.
 
 Index and table pages are deliberately **not** affected; a table wants every pixel.
 
@@ -816,7 +816,7 @@ end
 `:sm` `:md` `:lg` `:xl` `:full`. `:full` opts out of any constraint. An unknown value raises `ArgumentError` at declaration rather than silently rendering at some other width.
 
 ::: warning Size tokens are relative to their surface
-These are the same token *names* [modal sizes](#modals) use, but **not the same widths**. Each surface has its own scale, because the surfaces aren't comparable — a "small page" is reasonably larger than a "small dialog":
+These are the same token *names* [modal sizes](#modals) use, but **not the same widths**. Each surface has its own scale, because the surfaces aren't comparable: a "small page" is reasonably larger than a "small dialog":
 
 | Token | Page width | Centered modal | Slideover |
 |---|---|---|---|
@@ -846,7 +846,7 @@ All three inherit to subclasses, so a portal-specific definition keeps its paren
 
 ### Scope
 
-- **Modals are unaffected** — a dialog sizes itself via `modal_size`.
+- **Modals are unaffected**: a dialog sizes itself via `modal_size`.
 - **Interactions** (`Plutonium::Interaction::Base`) support the same settings, for interactive actions rendered as standalone pages.
 - **Wizards are configured separately**, via `Plutonium.configuration.wizards.width`. It defaults to `:md` independently of `default_page_width`, so widening resource pages leaves wizard steps where they are. Set both if you want them to match.
 
@@ -866,9 +866,9 @@ input :documents, as: :uppy,
 
 Inside `condition:` procs and block-form `input`/`display`:
 
-- `object` — the record being edited or displayed
+- `object`: the record being edited or displayed
 - `current_user`
-- `current_parent` — parent record for nested resources
+- `current_parent`: parent record for nested resources
 - `request`, `params`
 - All view helpers (via the same context as controllers)
 
@@ -922,23 +922,23 @@ interactive_action_page_breadcrumbs true
 ```ruby
 class PostDefinition < ResourceDefinition
   # "Save and add another" / "Update and continue editing"
-  #   nil   (default) — auto: hidden for singular resources, shown for plural
-  #   true            — always show
-  #   false           — always hide
+  #   nil   (default): auto: hidden for singular resources, shown for plural
+  #   true: always show
+  #   false: always hide
   submit_and_continue false
 
   # How :new / :edit and interactive actions render
-  #   :slideover   (default) — slide-in panel from the right
-  #   :centered              — centered dialog
-  #   false                  — full standalone pages (no modal)
+  #   :slideover   (default): slide-in panel from the right
+  #   :centered: centered dialog
+  #   false: full standalone pages (no modal)
   # size: optional, one of :sm, :md (default), :lg, :xl, :auto, :full
-  #       (widths are per-surface — see Page width; a slideover's :md is 480px,
+  #       (widths are per-surface: see Page width; a slideover's :md is 480px,
   #        a centered dialog's is 576px, a page's is 896px)
   modal :centered, size: :lg
 end
 ```
 
-`modal:` is the default for framework `:new`/`:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win — see [Actions](./actions).
+`modal:` is the default for framework `:new`/`:edit` *and* every interactive action on this definition. Per-action `modal:` / `size:` overrides win; see [Actions](./actions).
 
 ### `show_in` {#show_in}
 
@@ -951,8 +951,8 @@ end
 
 Controls how the **show page** opens when a record is clicked in the table or grid (and serves as the default for a [kanban board](/reference/kanban/dsl#show_in), which can override it per-board):
 
-- `:page` (default) — full-page navigation to the show route.
-- `:modal` — the show page opens in a **centered** dialog. This is deliberately independent of `modal:`/`modal_mode` above (which styles `:new`/`:edit`) — show is always centered, never a slideover. From inside the modal an expand icon opens the full page in a new tab; ⌘/Ctrl-click (or middle-click) on the row/card does the same directly.
+- `:page` (default): full-page navigation to the show route.
+- `:modal`, the show page opens in a **centered** dialog. This is deliberately independent of `modal:`/`modal_mode` above (which styles `:new`/`:edit`), show is always centered, never a slideover. From inside the modal an expand icon opens the full page in a new tab; ⌘/Ctrl-click (or middle-click) on the row/card does the same directly.
 
 An unknown mode raises `ArgumentError`.
 
@@ -972,7 +972,7 @@ Behavior:
 - **Policy-aware.** Fields intersect with the policy's permitted attributes. The panel auto-hides when nothing is permitted.
 - **Deduplicated.** Fields listed in `metadata` are removed from the main card so values aren't shown twice.
 - **Responsive.** Side-by-side at `lg+`, stacked below.
-- **Formatting inherits.** Field labels and `as:` declarations propagate — the metadata panel uses the same field-rendering machinery as the main card.
+- **Formatting inherits.** Field labels and `as:` declarations propagate: the metadata panel uses the same field-rendering machinery as the main card.
 
 ## Index views (Table & Grid)
 
@@ -980,7 +980,7 @@ Resources can offer both Table and Grid views. The user switches via the toolbar
 
 ```ruby
 class UserDefinition < ResourceDefinition
-  # No `index_views :table, :grid` needed — declaring grid_fields auto-enables :grid.
+  # No `index_views :table, :grid` needed: declaring grid_fields auto-enables :grid.
   grid_fields(
     image:     :avatar,           # ActiveStorage attachment, Shrine, or URL
     header:    :name,             # falls back to to_label
@@ -990,7 +990,7 @@ class UserDefinition < ResourceDefinition
     footer:    :last_seen_at      # falls back to :created_at
   )
 
-  default_index_view :grid        # optional — initial view when no cookie
+  default_index_view :grid        # optional: initial view when no cookie
   grid_layout :media              # :compact (default) or :media
   grid_columns 3                  # pin lg+ cols; default is 1/2/3/4 responsive
 end
@@ -1004,13 +1004,13 @@ end
 | `grid_layout :compact \| :media` | `:compact` puts image left of content; `:media` stacks image full-width on top. |
 | `grid_columns N` | Override responsive column count on `lg+`. Default is 1/2/3/4 at sm/md/lg/xl. |
 
-Grid slots — `:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer` — are all optional. `:meta` accepts an array; the rest are single fields. Slots pointing at policy-blocked fields collapse silently.
+Grid slots, `:image`, `:header`, `:subheader`, `:body`, `:meta`, `:footer`, are all optional. `:meta` accepts an array; the rest are single fields. Slots pointing at policy-blocked fields collapse silently.
 
 Only declare `index_views` explicitly to **disable** one (e.g. `index_views :grid` to drop the table view).
 
 ## Custom page classes
 
-Override the rendered page entirely — full control via Phlex:
+Override the rendered page entirely: full control via Phlex:
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -1037,8 +1037,8 @@ See [UI › Pages](/reference/ui/pages) and [UI › Forms](/reference/ui/forms) 
 
 ## Related
 
-- [Query](./query) — search, filters, scopes, sorting
-- [Actions](./actions) — custom + bulk actions
-- [Behavior › Policy](/reference/behavior/policies) — `permitted_attributes_for_*`, authorization
-- [UI › Forms](/reference/ui/forms) — field builder, association inputs, theming
-- [UI › Pages](/reference/ui/pages) — custom page classes
+- [Query](./query): search, filters, scopes, sorting
+- [Actions](./actions): custom + bulk actions
+- [Behavior › Policy](/reference/behavior/policies): `permitted_attributes_for_*`, authorization
+- [UI › Forms](/reference/ui/forms): field builder, association inputs, theming
+- [UI › Pages](/reference/ui/pages): custom page classes

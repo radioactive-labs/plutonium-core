@@ -8,15 +8,15 @@ Each tenant sees only their own records. Queries are filtered, forms inject the 
 
 ## 🚨 Critical
 
-- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Make sure `default_relation_scope(relation)` is called somewhere in the chain — explicitly here, or via `super(relation)` (the framework's `Plutonium::Resource::Policy` base calls it for you).
+- **Never bypass `default_relation_scope`.** Overriding `relation_scope` with `where(organization: ...)` or manual joins triggers `verify_default_relation_scope_applied!` at runtime. Make sure `default_relation_scope(relation)` is called somewhere in the chain: explicitly here, or via `super(relation)` (the framework's `Plutonium::Resource::Policy` base calls it for you).
 - **Always declare an association path from the model to the entity.** Direct `belongs_to`, `has_one :through`, or a custom `associated_with_<entity>` scope. If `associated_with` can't resolve, fix the **model**, not the policy.
-- **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}` — without this, uniqueness leaks across tenants.
+- **Compound uniqueness scoped to the tenant FK.** `validates :code, uniqueness: {scope: :organization_id}`, without this, uniqueness leaks across tenants.
 
 After login, users with memberships in multiple entities land on a workspace selector:
 
 ![Workspace selector after login](/images/guides/multi-tenancy-welcome.png)
 
-Picking one lands them on the entity-scoped dashboard — note the entity slug in the URL:
+Picking one lands them on the entity-scoped dashboard: note the entity slug in the URL:
 
 ![Tenant-scoped dashboard](/images/guides/multi-tenancy-dashboard.png)
 
@@ -62,14 +62,17 @@ end
 
 Or pass `--scope=Organization` to `pu:pkg:portal` and the engine wires this automatically.
 
-### 4. Mount the portal
+### 4. Check the mount
+
+`pu:pkg:portal` already mounted the engine in `packages/customer_portal/config/routes.rb`:
 
 ```ruby
-# config/routes.rb
 mount CustomerPortal::Engine, at: "/customer"
 ```
 
-URLs now include the entity id as the first path segment after the mount: `/customer/42/posts`. The underlying param name is `organization_scoped` (Plutonium suffixes `_scoped` to avoid a name collision with any `belongs_to :organization` on child models — `params[:organization_scoped]` vs `params[:organization]`). Pass `param_key:` to `scope_to_entity` if you want a different param name.
+To change the path, edit `at:` there. Don't add a second `mount` to `config/routes.rb`; Rails raises `Invalid route name, already in use`.
+
+URLs now include the entity id as the first path segment after the mount: `/customer/42/posts`. The underlying param name is `organization_scoped` (Plutonium suffixes `_scoped` to avoid a name collision with any `belongs_to :organization` on child models: `params[:organization_scoped]` vs `params[:organization]`). Pass `param_key:` to `scope_to_entity` if you want a different param name.
 
 ### 5. Compound uniqueness
 
@@ -81,6 +84,10 @@ end
 ```
 
 🚨 Without the `scope:`, the same slug in different orgs would collide.
+
+### 6. Leave the entity in the policy
+
+`organization` can stay in `permitted_attributes_for_create`. In the scoped portal the controller removes it from the form and params and sets it from the current entity (a forged `organization_id` is overwritten), while an unscoped admin portal using the same policy still gets a normal select.
 
 ## Strategies
 
@@ -143,7 +150,7 @@ class Membership < ResourceRecord
 end
 ```
 
-### 3. Grandchild — `has_one :through`
+### 3. Grandchild: `has_one :through`
 
 ```ruby
 class Post < ResourceRecord
@@ -187,9 +194,9 @@ relation_scope do |relation|
 end
 ```
 
-🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise the runtime verification raises. `super(relation)` works when extending `Plutonium::Resource::Policy` directly (its block calls `default_relation_scope`); call `default_relation_scope` by name when you're not chaining via `super`.
+🚨 `default_relation_scope(relation)` must be called somewhere in the chain, otherwise the runtime verification raises. `super(relation)` works when extending `Plutonium::Resource::Policy` directly (its block calls `default_relation_scope`); call `default_relation_scope` by name when you're not chaining via `super`.
 
-## Cross-tenant operations — super-admin portal
+## Cross-tenant operations: super-admin portal
 
 Create a separate portal **without** `scope_to_entity`:
 
@@ -197,7 +204,7 @@ Create a separate portal **without** `scope_to_entity`:
 module SuperAdminPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
-    # No scope_to_entity — sees all tenants
+    # No scope_to_entity: sees all tenants
   end
 end
 ```
@@ -206,14 +213,14 @@ This portal's policies see everything. Don't enable public signup here.
 
 ## Multiple associations to the same entity
 
-If a model has two `belongs_to` to the entity class (e.g. `Match belongs_to :home_team, :away_team`), Plutonium raises:
+If a model has two `belongs_to` to the entity class (e.g. `Match belongs_to :home_team, :away_team`), the controller raises:
 
 ```
 Match has multiple associations to Competition::Team: home_team, away_team.
 Plutonium cannot auto-detect which one to use for entity scoping.
 ```
 
-Override on the controller:
+Override on the portal controller:
 
 ```ruby
 class MatchesController < ::ResourceController
@@ -222,18 +229,24 @@ class MatchesController < ::ResourceController
 end
 ```
 
+Query scoping (`associated_with`) raises `AmbiguousAssociationError` too, so add an explicit scope on the model:
+
+```ruby
+scope :associated_with_competition_team, ->(team) { where(home_team: team) }
+```
+
 ## Common issues
 
-- **`verify_default_relation_scope_applied!` raises** — your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
-- **`Could not resolve the association between 'Model' and 'Entity'`** — the model has no path to the entity. Fix on the **model** (declare `has_one :through` or a custom `associated_with_<entity>` scope). Never paper over with `where` in the policy.
-- **Records leak across tenants** — likely a missing compound-uniqueness scope on the model. Add `validates :code, uniqueness: {scope: :organization_id}`.
-- **Forms show the entity field anyway** — check `present_scoped_entity?` / `submit_scoped_entity?` on the controller (defaults are `false`).
-- **Want to bypass scoping in one place** — use `skip_default_relation_scope!` explicitly, NOT a silent `where` bypass.
+- **`verify_default_relation_scope_applied!` raises**: your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
+- **`Could not resolve the association between 'Model' and 'Entity'`**: the model has no path to the entity. Fix on the **model** (declare `has_one :through` or a custom `associated_with_<entity>` scope). Never paper over with `where` in the policy.
+- **Records leak across tenants**: likely a missing compound-uniqueness scope on the model. Add `validates :code, uniqueness: {scope: :organization_id}`.
+- **Forms show the entity field anyway**: check `present_scoped_entity?` / `submit_scoped_entity?` on the controller (defaults are `false`).
+- **Want to bypass scoping in one place**: use `skip_default_relation_scope!` explicitly, NOT a silent `where` bypass.
 
 ## Related
 
-- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — full surface
-- [Reference › Behavior › Policies](/reference/behavior/policies) — `relation_scope` syntax
-- [Reference › App › Portals](/reference/app/portals) — `scope_to_entity` engine config
-- [Nested resources](./nested-resources) — parent scoping (takes precedence over entity scoping)
-- [User invites](./user-invites) — invitation-based membership onboarding
+- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping): full surface
+- [Reference › Behavior › Policies](/reference/behavior/policies): `relation_scope` syntax
+- [Reference › App › Portals](/reference/app/portals): `scope_to_entity` engine config
+- [Nested resources](./nested-resources): parent scoping (takes precedence over entity scoping)
+- [User invites](./user-invites): invitation-based membership onboarding

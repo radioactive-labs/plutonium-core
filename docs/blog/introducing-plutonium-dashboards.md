@@ -19,7 +19,7 @@ Every portal Plutonium generates opens on a Dashboard page that lists your resou
 
 - A class-level DSL with three kinds of card: `metric` for headline numbers, `chart` for charts, `card` for anything else.
 - `register_dashboard`, which draws the routes and a controller that inherits your portal's authentication, tenant scoping and layout.
-- Lazy loading: every card is fetched in its own turbo frame, behind a skeleton.
+- Lazy loading: by default every card is fetched in its own turbo frame, behind a skeleton.
 - A 12-column grid with a default width per kind of card, plus per-card refresh intervals, conditions, links and icons.
 - A `pu:dashboard` generator, and a Dashboards group in the portal sidebar.
 
@@ -101,7 +101,7 @@ The browser fetches each frame as it scrolls into view, and the card's block run
 
 ![The same dashboard before its frames have loaded: every card is a grey skeleton except the Conversion metric, which is already showing 12.5%](/images/blog/dashboards-loading.png)
 
-The Conversion card in that screenshot is declared `lazy: false`, which makes it inline: its block runs in the page request and the finished card is part of the page response, with no frame, no skeleton and no second request. The price is that the page waits for it. Use it for a number cheap enough that a round trip costs more than the query, and leave everything else lazy. An inline card never refreshes, since there is no frame to reload.
+The Conversion card in that screenshot is declared `lazy: false`, which makes it inline: its block runs in the page request and the finished card is part of the page response, with no frame, no skeleton and no second request. The price is that the page waits for it. Use it for a number cheap enough that a round trip costs more than the query, and leave everything else lazy. An inline card never refreshes, since there is no frame to reload, and in development and test an exception in its block fails the whole page rather than one frame.
 
 `refresh 60` on the dashboard reloads every lazy card once a minute. `refresh: 10` on a card overrides it, and `refresh: false` keeps an expensive card out of it. Reloads pause while the tab is hidden and catch up when it becomes visible again, so a dashboard left open overnight is not running your aggregates all night.
 

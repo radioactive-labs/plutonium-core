@@ -1,12 +1,12 @@
 # Nested Resources
 
-Plutonium auto-generates nested routes from `has_many` and `has_one` associations on a registered parent. No manual route wiring — `belongs_to` on the child plus `register_resource` for both is enough.
+Plutonium auto-generates nested routes from `has_many` and `has_one` associations on a registered parent. No manual route wiring: `belongs_to` on the child plus `register_resource` for both is enough.
 
 ## 🚨 Critical
 
 - **One level only.** Grandparent → parent → child nested routes are NOT supported. Use top-level routes for deeper relationships.
 - **Parent scoping beats entity scoping.** When a parent is present, `default_relation_scope` scopes via the parent, NOT via `entity_scope`. Don't double-scope.
-- **Named custom routes.** When adding member/collection routes on a nested resource, always pass `as:` — otherwise `resource_url_for` will fail.
+- **Named custom routes.** When adding member/collection routes on a nested resource, always pass `as:`; otherwise `resource_url_for` will fail.
 - **The parent is authorized for `:read?`** before `current_parent` returns. The child policy receives the parent in its context.
 
 ## Setup
@@ -102,13 +102,13 @@ current_nested_association  # association name (e.g. :properties)
 parent_input_param          # form param / association name (e.g. :company)
 ```
 
-Each nested route carries the key of its own registration, so the parent class and association are **read from the route** rather than reconstructed from the URL. That is what lets a resource registered `singular: true` act as a parent at all — it contributes no id parameter, so there is nothing in the path to infer from.
+Each nested route carries the key of its own registration, so the parent class and association are **read from the route** rather than reconstructed from the URL. That is what lets a resource registered `singular: true` act as a parent at all: it contributes no id parameter, so there is nothing in the path to infer from.
 
 ## Parent vs entity scoping
 
-When a parent is present, **parent scoping wins**: `default_relation_scope` scopes via the parent association, NOT `entity_scope`. The parent was already authorized and entity-scoped during its own authorization — double-scoping is redundant.
+When a parent is present, **parent scoping wins**: `default_relation_scope` scopes via the parent association, NOT `entity_scope`. The parent was already authorized and entity-scoped during its own authorization; double-scoping is redundant.
 
-In the child's policy, just call `default_relation_scope` — it handles both cases:
+In the child's policy, just call `default_relation_scope`, which handles both cases:
 
 ```ruby
 class PropertyPolicy < ResourcePolicy
@@ -186,7 +186,7 @@ class PropertyPolicy < ResourcePolicy
 end
 ```
 
-The parent is authorized for `:read?` before `current_parent` returns — children inherit the parent's access requirements.
+The parent is authorized for `:read?` before `current_parent` returns; children inherit the parent's access requirements.
 
 ## Parameter handling
 
@@ -234,7 +234,7 @@ class PropertiesController < ::ResourceController
 end
 ```
 
-Conditional — show parent only when accessed standalone:
+Conditional: show parent only when accessed standalone:
 
 ```ruby
 def present_parent?
@@ -273,7 +273,7 @@ end
 Generates `/companies/:company_id/nested_properties/:id/analytics`, etc.
 
 ::: warning Always pass `as:`
-Without `as:`, `resource_url_for(property, parent: company, action: :analytics)` fails — there's no named route to look up.
+Without `as:`, `resource_url_for(property, parent: company, action: :analytics)` fails; there's no named route to look up.
 :::
 
 ## Compound uniqueness
@@ -318,8 +318,8 @@ For deeper hierarchies, use top-level routes plus association tabs on the show p
 
 ## Related
 
-- [Entity scoping](./entity-scoping) — what happens when no parent is present
-- [Invites](./invites) — membership-based onboarding
-- [Behavior › Policy](/reference/behavior/policies) — `relation_scope`, parent context
-- [Behavior › Controllers](/reference/behavior/controllers) — `current_parent`, presentation hooks
-- [App › Portals](/reference/app/portals) — `register_resource` and custom member/collection routes
+- [Entity scoping](./entity-scoping): what happens when no parent is present
+- [Invites](./invites): membership-based onboarding
+- [Behavior › Policy](/reference/behavior/policies): `relation_scope`, parent context
+- [Behavior › Controllers](/reference/behavior/controllers): `current_parent`, presentation hooks
+- [App › Portals](/reference/app/portals): `register_resource` and custom member/collection routes

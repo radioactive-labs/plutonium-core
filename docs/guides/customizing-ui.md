@@ -1,6 +1,6 @@
 # Customizing the UI
 
-Plutonium's UI is built on Phlex, Tailwind 4, and Stimulus. Almost everything you see — pages, forms, displays, tables, components, layouts, even the design tokens — is open for override. This guide is the map. Each section shows the smallest useful example for one kind of customization, then points to the reference for the full surface.
+Plutonium's UI is built on Phlex, Tailwind 4, and Stimulus. Almost everything you see (pages, forms, displays, tables, components, layouts, even the design tokens) is open for override. This guide is the map. Each section shows the smallest useful example for one kind of customization, then points to the reference for the full surface.
 
 When you're not sure where to start, read this top to bottom. When you know what you need, jump to the right section and follow the link to reference.
 
@@ -17,7 +17,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-Each nested class inherits from Plutonium's defaults and lets you override only the methods you care about. Don't reimplement the whole layer — use the render hooks below.
+Each nested class inherits from Plutonium's defaults and lets you override only the methods you care about. Don't reimplement the whole layer; use the render hooks below.
 
 → See [Reference › UI › Pages](/reference/ui/pages) for the full hook list.
 
@@ -29,15 +29,17 @@ Most page customization is "I want to add something before/after this section." 
 class PostDefinition < ResourceDefinition
   class ShowPage < ShowPage
     def render_before_content
-      div(class: "pu-card pu-card-body") do
-        plain "This post has #{object.comments.count} comments"
+      div(class: "pu-alert pu-alert-info", role: "status") do
+        div(class: "pu-alert-message") { t("blog.posts.show.comment_count", count: object.comments.count) }
       end
     end
   end
 end
 ```
 
-Hooks exist around the header, breadcrumbs, page header, toolbar, content, and footer — pick the one closest to where you want the thing to appear.
+`pu-alert pu-alert-<success|warning|danger|info>` is the same banner the flash messages use, so it already has its dark-mode colors. The text comes from a locale key; see [i18n](/reference/i18n#your-own-components-and-pages).
+
+Hooks exist around the header, breadcrumbs, page header, toolbar, content, and footer: pick the one closest to where you want the thing to appear.
 
 → See [Reference › UI › Pages](/reference/ui/pages) › Page hooks.
 
@@ -56,7 +58,7 @@ class Form < Form
       render_resource_field :published_at
       render_resource_field :category
     end
-    render_actions   # REQUIRED — without this, no submit button
+    render_actions   # REQUIRED: without this, no submit button
   end
 
   private
@@ -126,14 +128,14 @@ class PostCardComponent < Plutonium::UI::Component::Base
     div(class: "pu-card pu-card-body") do
       h3(class: "font-bold text-[var(--pu-text)]") { @post.title }
       p(class: "text-[var(--pu-text-muted)] mt-2") { @post.excerpt }
-      a(href: resource_url_for(@post), class: "pu-btn pu-btn-sm pu-btn-ghost") { "Read more" }
+      a(href: resource_url_for(@post), class: "pu-btn pu-btn-sm pu-btn-ghost") { t("blog.posts.card.read_more") }
     end
   end
 end
 ```
 
 Use it directly in a page, or wire it as a field in the definition. A component
-with its own constructor takes the block form — you build it, so you decide what
+with its own constructor takes the block form: you build it, so you decide what
 it receives:
 
 ```ruby
@@ -143,13 +145,13 @@ end
 ```
 
 `as: SomeComponent` is for a *field* component, which Plutonium constructs with
-the field builder (`Phlexi::Form::Components::Base` / `Phlexi::Display::Components::Base`) — see the reference below.
+the field builder (`Phlexi::Form::Components::Base` / `Phlexi::Display::Components::Base`); see the reference below.
 
 → See [Reference › UI › Components](/reference/ui/components).
 
 ## Phlexi themes (recolor without rewriting)
 
-If all you want is to recolor or restyle the form/display/table, write a `Theme` class instead of overriding the template. Always `super.merge(...)` — never replace wholesale:
+If all you want is to recolor or restyle the form/display/table, write a `Theme` class instead of overriding the template. Always `super.merge(...)`; never replace wholesale:
 
 ```ruby
 class Form < Form
@@ -173,7 +175,7 @@ By default `:new`, `:edit`, and every interactive action render in a slideover p
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover               # default — slide-in from the right
+  modal :slideover               # default: slide-in from the right
   # modal :centered              # centered dialog
   # modal :centered, size: :lg   # centered, wider container
   # modal false                  # full standalone page
@@ -184,7 +186,7 @@ end
 
 ## Layouts and the shell
 
-The layout is the chrome around every resource page — topbar, sidebar, flash region, scripts. Two ways to customize it:
+The layout is the chrome around every resource page: topbar, sidebar, flash region, scripts. Two ways to customize it:
 
 ```bash
 # Per-portal: eject the shell partials and edit them directly
@@ -199,24 +201,24 @@ For programmatic overrides, subclass `Plutonium::UI::Layout::ResourceLayout` and
 
 ## Tailwind, Stimulus, and assets
 
-Plutonium ships with a Tailwind config, design tokens, and a set of Stimulus controllers. To plug into them in your app:
+Plutonium ships with a Tailwind config, design tokens, and a set of Stimulus controllers. Out of the box the app serves the gem's prebuilt `plutonium.css` and `plutonium.min.js`, so app-side Tailwind classes, a new brand palette, token overrides and your own Stimulus controllers need your own bundles first. Run the generator rather than wiring the pipeline by hand:
 
 ```bash
 rails generate pu:core:assets
 ```
 
-This installs the npm packages, creates a `tailwind.config.js` that extends Plutonium's defaults via `plutoniumTailwindConfig.merge`, imports Plutonium's CSS, and registers its Stimulus controllers. After that, you can:
+This installs the npm packages, creates a `tailwind.config.js` that extends Plutonium's defaults via `plutoniumTailwindConfig.merge`, imports Plutonium's CSS, registers its Stimulus controllers, and points `config.assets.stylesheet` / `config.assets.script` at your `application` bundles. It needs `app/assets/stylesheets/application.tailwind.css` and `app/javascript/controllers/index.js` to exist (an app created with `-j esbuild -c tailwind` plus Stimulus). After that, you can:
 
-- Extend the palette under `theme.extend.colors` (always inside `plutoniumTailwindConfig.merge` — a plain spread drops Plutonium's defaults).
-- Use `.pu-btn`, `.pu-card`, `.pu-input`, `.pu-table`, etc. instead of hand-rolling Tailwind chains.
+- Extend the palette under `theme.extend.colors` (always inside `plutoniumTailwindConfig.merge`: a plain spread drops Plutonium's defaults), then rebuild the CSS.
+- Use `.pu-btn`, `.pu-card`, `.pu-input`, `.pu-table`, `.pu-alert`, `.pu-badge`, etc. instead of hand-rolling Tailwind chains.
 - Reference design tokens directly: `bg-[var(--pu-surface)]`, `text-[var(--pu-text-muted)]`, `border-[var(--pu-border)]`. These auto-switch with dark mode.
-- Register your own Stimulus controllers alongside Plutonium's — `registerControllers(application)` is mandatory or the entire interactive layer is dead.
+- Register your own Stimulus controllers alongside Plutonium's. Your `application.js` now replaces the gem's bundle, so `registerControllers(application)` (added by the generator) must stay, or the entire interactive layer is dead.
 
 → See [Reference › UI › Assets](/reference/ui/assets) for the full toolchain, the `.pu-*` class catalog, and design-token reference.
 
 ## ERB views (escape hatch)
 
-When the Phlex page class is the wrong tool — you want to keep an existing ERB layout, you're integrating with a designer's HTML, or you just want to surround the generated page with custom markup — drop an ERB view at the controller path:
+When the Phlex page class is the wrong tool (you want to keep an existing ERB layout, you're integrating with a designer's HTML, or you just want to surround the generated page with custom markup), drop an ERB view at the controller path:
 
 ```
 app/views/posts/show.html.erb
@@ -237,7 +239,7 @@ Keep that line and wrap it to add chrome without giving up the generated page:
 <%= render partial: "related" %>
 ```
 
-Or replace the line entirely for full control. ERB views always win over the Phlex page class when both exist for the same action — reach for this only when Phlex hooks + overrides genuinely can't do the job.
+Or replace the line entirely for full control. ERB views always win over the Phlex page class when both exist for the same action, so reach for this only when Phlex hooks + overrides genuinely can't do the job.
 
 ## When to reach for what
 
@@ -249,18 +251,19 @@ Or replace the line entirely for full control. ERB views always win over the Phl
 | Reuse a UI block across pages | Custom Phlex component |
 | Recolor without changing structure | Phlexi `Theme` class |
 | Swap the topbar or sidebar | `pu:eject:shell` or custom layout class |
-| Change brand color or radius | Design tokens — see [Theming](/guides/theming) |
+| Change brand color | Tailwind `primary` palette via `plutoniumTailwindConfig.merge`, then rebuild. See [Theming](/guides/theming) |
+| Change surfaces, borders or radius | Design tokens (mirrored in `.dark`). See [Theming](/guides/theming) |
 | Add a custom JS interaction | Stimulus controller registered alongside Plutonium's |
 
 ## Gotchas
 
-- **Don't override `view_template` in pages** when a render hook fits — you lose breadcrumbs, header, and DynaFrame (turbo-frame) behavior.
-- **`render_actions` is mandatory** when you write a custom `form_template` — otherwise the form has no submit button.
-- **Always `registerControllers(application)`** in `app/javascript/controllers/index.js`. Without it, every Plutonium-shipped Stimulus controller is dead (color mode, slim-select, flatpickr, easymde, form pre-submit).
+- **Don't override `view_template` in pages** when a render hook fits, or you lose breadcrumbs, header, and DynaFrame (turbo-frame) behavior.
+- **`render_actions` is mandatory** when you write a custom `form_template`, otherwise the form has no submit button.
+- **Once the app serves its own JS bundle, `registerControllers(application)`** must be in `app/javascript/controllers/index.js` (`pu:core:assets` adds it). Without it, every Plutonium-shipped Stimulus controller is dead (color mode, slim-select, flatpickr, easymde, form pre-submit).
 - **Use `plutoniumTailwindConfig.merge`** when extending the Tailwind theme. A plain object spread drops Plutonium's defaults.
-- **Prefer `.pu-*` classes and `var(--pu-*)` tokens** over hardcoded `gray-X/dark:gray-Y` pairs — they switch with dark mode automatically.
+- **Style with `.pu-*` classes first, `var(--pu-*)` tokens second, raw palette pairs last.** The classes and tokens switch with dark mode; a hand-written `gray-X/dark:gray-Y` pair needs its own dark twin and won't follow a rebrand.
 
 ## Related
 
-- [Theming](/guides/theming) — design tokens, brand colors.
-- [Reference › UI](/reference/ui/) — the full surface area for every override above.
+- [Theming](/guides/theming): design tokens, brand colors.
+- [Reference › UI](/reference/ui/): the full surface area for every override above.

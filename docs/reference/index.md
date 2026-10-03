@@ -7,7 +7,7 @@ aside: false
 <SectionLanding
   eyebrow="Reference"
   title="Every API, in one place."
-  lede="The full surface area of Plutonium — controllers, policies, definitions, fields, interactions, generators."
+  lede="The full surface area of Plutonium: controllers, policies, definitions, fields, interactions, generators."
   mode="categorized"
   :rail="[
     { group: 'App', items: [

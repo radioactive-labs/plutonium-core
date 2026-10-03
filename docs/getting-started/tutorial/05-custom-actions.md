@@ -79,11 +79,11 @@ end
 
 ## Testing the Action
 
-Open any unpublished post and click **Actions** in the top-right — the "Publish Post" item appears with its Tabler icon:
+Open any unpublished post and click **Actions** in the top-right; the "Publish Post" item appears with its Tabler icon:
 
 ![Publish action in the show page menu](/images/tutorial/05-actions-menu.png)
 
-It also shows on each table row's `⋮` menu — same action, available wherever the record is rendered:
+It also shows on each table row's `⋮` menu, same action, available wherever the record is rendered:
 
 ![Publish action in the row menu](/images/tutorial/05-row-actions.png)
 

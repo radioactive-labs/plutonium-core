@@ -28,8 +28,13 @@ Let's implement basic CRUD permissions:
 
 ```ruby
 class Blogging::PostPolicy < Blogging::ResourcePolicy
-  # Anyone can view published posts
+  # Anyone can open the list; relation_scope (below) decides which posts it holds
   def read?
+    true
+  end
+
+  # A single post: published, or your own
+  def show?
     record.published? || owner?
   end
 
@@ -56,6 +61,8 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 end
 ```
 
+`read?` also backs `index?`, which is checked against the `Blogging::Post` class rather than a post, so `record.published?` there would raise `NoMethodError` on the list page. Record-state checks go in `show?`, `update?` and `destroy?`, which always receive the post.
+
 ## Understanding the Policy Context
 
 Inside a policy, you have access to:
@@ -63,13 +70,13 @@ Inside a policy, you have access to:
 | Accessor | Description |
 |----------|-------------|
 | `user` | The current authenticated user |
-| `record` | The resource being authorized |
+| `record` | The resource being authorized (the resource class on collection routes such as index and new) |
 | `entity_scope` | Parent record for scoping (e.g., Organization in multi-tenant apps) |
 
 ```ruby
 def some_permission?
   user          # => Current user (from authentication)
-  record        # => The Post instance being checked
+  record        # => The Post instance being checked (Blogging::Post on index/new)
   entity_scope  # => Parent record for multi-tenancy (or nil)
 end
 ```
@@ -101,6 +108,12 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
       [:title] # Limited view for unpublished posts
     end
   end
+
+  # The table is built from the class, not a post, so this must not touch `record`
+  # (without it, index falls back to permitted_attributes_for_read and raises)
+  def permitted_attributes_for_index
+    [:title, :published, :created_at, :user]
+  end
 end
 ```
 
@@ -108,7 +121,7 @@ end
 
 Control which records appear in listings:
 
-`relation_scope` is a macro — it takes a block. Writing it as a plain instance
+`relation_scope` is a macro: it takes a block. Writing it as a plain instance
 method (`def relation_scope(relation)`) overrides nothing and your scoping is
 silently ignored, so Plutonium raises if you try.
 
@@ -145,6 +158,10 @@ Different portals can have different policies. Create a portal-specific policy:
 class AdminPortal::Blogging::PostPolicy < ::Blogging::PostPolicy
   # Admins can do everything
   def read?
+    true
+  end
+
+  def show?
     true
   end
 

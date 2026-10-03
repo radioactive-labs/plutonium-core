@@ -40,6 +40,8 @@ rails g pu:res:conn Post --dest=admin_portal
 
 This creates the portal-specific controller, policy, and definition, plus registers the resource in the portal's routes. Until you do this, the resource has no URL.
 
+Run it after the migration. When there is no base policy to inherit from, `pu:res:conn` seeds the policy's attribute lists from the table's columns; on an unmigrated table it logs an error and writes empty lists.
+
 For singular resources (`/profile`, `/settings`), add `--singular`:
 
 ```bash
@@ -48,7 +50,7 @@ rails g pu:res:conn Profile --dest=customer_portal --singular
 
 ### 5. Trim the generated policy
 
-The generator is liberal — it seeds `permitted_attributes_for_*` from your model columns. Open `packages/admin_portal/app/policies/admin_portal/post_policy.rb` and:
+The generator is liberal: it seeds `permitted_attributes_for_*` from your model columns. Open `packages/admin_portal/app/policies/admin_portal/post_policy.rb` and:
 
 - Drop `_id` fields when the form should use the association name (e.g. `:user`, not `:user_id`).
 - Replace `:price_cents` with `:price` if the model uses `has_cents`.
@@ -83,7 +85,7 @@ You should see:
 
 Two paths:
 
-**Migration only.** Add a new column with a standard Rails migration. Plutonium auto-detects it — appears in all CRUD pages.
+**Migration only.** Add a new column with a standard Rails migration. Plutonium auto-detects it and shows it in all CRUD pages.
 
 **Field with custom rendering.** Add the column, then declare it in the definition:
 
@@ -117,6 +119,7 @@ rails g pu:res:conn Post --dest=admin_portal
 
 ```bash
 rails g pu:res:scaffold Blogging::Post title:string --dest=blogging
+rails db:prepare
 rails g pu:res:conn Blogging::Post --dest=admin_portal
 ```
 
@@ -132,8 +135,8 @@ The `blogging/post` syntax expands to `Blogging::Post`.
 
 ## Related
 
-- [Reference › App › Generators](/reference/app/generators) — full generator catalog
-- [Reference › Resource](/reference/resource/) — model + definition + query + actions
-- [Reference › App › Portals](/reference/app/portals) — `pu:res:conn` details
-- [Creating packages](./creating-packages) — resources in feature packages
-- [Nested resources](./nested-resources) — parent/child relationships
+- [Reference › App › Generators](/reference/app/generators): full generator catalog
+- [Reference › Resource](/reference/resource/): model + definition + query + actions
+- [Reference › App › Portals](/reference/app/portals): `pu:res:conn` details
+- [Creating packages](./creating-packages): resources in feature packages
+- [Nested resources](./nested-resources): parent/child relationships

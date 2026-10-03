@@ -1,10 +1,10 @@
 # Kanban Positioning
 
 ::: tip Positioning is not kanban-only
-The model concern, the arithmetic and the `position_on` modes on this page are shared with **table and grid drag-to-reorder** — see [Positioning & drag-to-reorder](/reference/resource/positioning) for the index-surface half of the feature (the grip, the `reposition` endpoint, `reposition?`, and board inheritance).
+The model concern, the arithmetic and the `position_on` modes on this page are shared with **table and grid drag-to-reorder**; see [Positioning & drag-to-reorder](/reference/resource/positioning) for the index-surface half of the feature (the grip, the `reposition` endpoint, `reposition?`, and board inheritance).
 :::
 
-Plutonium uses **decimal fractional positioning** for kanban card ordering. A drop writes a single decimal position (the midpoint between its neighbors), so the common case touches exactly one row — no bulk renumbering. The one exception is rare **rebalancing**: when the same slot has been subdivided ~20 times and the gap between two neighbors shrinks below `1e-6`, Plutonium renumbers that one scope group back to clean integers before inserting (see [Gap exhaustion](#rebalancing)).
+Plutonium uses **decimal fractional positioning** for kanban card ordering. A drop writes a single decimal position (the midpoint between its neighbors), so the common case touches exactly one row, with no bulk renumbering. The one exception is rare **rebalancing**: when the same slot has been subdivided ~20 times and the gap between two neighbors shrinks below `1e-6`, Plutonium renumbers that one scope group back to clean integers before inserting (see [Gap exhaustion](#rebalancing)).
 
 ## `Plutonium::Positioning::Model` concern
 
@@ -34,7 +34,7 @@ After calling `positioned_on`, the model gets:
 
 ### Migration
 
-Use the **`t.position`** helper — it adds a `decimal` column already tuned for fractional ordering (`precision: 16, scale: 8`), so you can't get the scale wrong:
+Use the **`t.position`** helper: it adds a `decimal` column already tuned for fractional ordering (`precision: 16, scale: 8`), so you can't get the scale wrong:
 
 ```ruby
 create_table :tasks do |t|
@@ -56,6 +56,8 @@ class AddPositionToTasks < ActiveRecord::Migration[8.1]
 end
 ```
 
+For a model owned by a feature package (e.g. `Catalog::Product`), put this migration in `packages/<package>/db/migrate/`, next to the table's create migration. Each package's `db/migrate` is appended to the app's migration paths, so `rails db:migrate` picks it up. Plain `rails g migration` always writes to the main app's `db/migrate`, so move the file into the package afterwards.
+
 `t.position` accepts a custom column name and any `column` options:
 
 ```ruby
@@ -65,7 +67,7 @@ t.position :position, scale: 10      # override precision/scale
 ```
 
 ::: tip Why the helper picks `scale: 8`
-If you write the column by hand, give it at least **two more decimal places than `EPSILON` (`1e-6`)** — i.e. `scale: 8` or higher. Rebalancing triggers when a gap drops below `1e-6`, so a column that can store smaller values still has room to write the final midpoint cleanly. A `scale: 6` column has no headroom: the last subdivision before a rebalance can round to a neighbor and momentarily collide. `t.position` defaults to `scale: 8`, which is safe.
+If you write the column by hand, give it at least **two more decimal places than `EPSILON` (`1e-6`)**, i.e. `scale: 8` or higher. Rebalancing triggers when a gap drops below `1e-6`, so a column that can store smaller values still has room to write the final midpoint cleanly. A `scale: 6` column has no headroom: the last subdivision before a rebalance can round to a neighbor and momentarily collide. `t.position` defaults to `scale: 8`, which is safe.
 :::
 
 ---
@@ -88,7 +90,7 @@ task.reposition!(prev_record: last_card, next_record: nil)   # append
 
 ### Gap exhaustion (rebalancing) {#rebalancing}
 
-Each midpoint insert into the *same* slot halves the gap (`1.0 → 0.5 → 0.25 → …`), so after roughly 20 consecutive insertions the gap drops below `EPSILON` (`1e-6`). At that point `reposition!` rebalances **only that scope group** — renumbering every row in the group to fresh integers (`1.0, 2.0, 3.0, …`) in current-position order, inside a transaction — then reloads the two neighbors and writes the new midpoint. Other scope groups are untouched. End moves (a `nil` neighbor) never rebalance: they always have integer room via `prev ± 1`.
+Each midpoint insert into the *same* slot halves the gap (`1.0 → 0.5 → 0.25 → …`), so after roughly 20 consecutive insertions the gap drops below `EPSILON` (`1e-6`). At that point `reposition!` rebalances **only that scope group**, renumbering every row in the group to fresh integers (`1.0, 2.0, 3.0, …`) in current-position order, inside a transaction, then reloads the two neighbors and writes the new midpoint. Other scope groups are untouched. End moves (a `nil` neighbor) never rebalance: they always have integer room via `prev ± 1`.
 
 ---
 
@@ -108,7 +110,7 @@ Task.backfill_positions!(order: :created_at)
 The `position_on` call inside `kanban do…end` controls how Plutonium persists positions after a drag-and-drop. Three modes are available:
 
 ::: tip A board inherits the definition's `position_on`
-`position_on` is the **same verb** at both levels. A board resolves its strategy as: its own `position_on`, else the **definition's**, else the historic default (`:position`, Mode A). So a resource whose definition already declares `position_on` for its table and grid needs nothing inside `kanban do…end` — the board picks up the same attribute and the same mode.
+`position_on` is the **same verb** at both levels. A board resolves its strategy as: its own `position_on`, else the **definition's**, else the historic default (`:position`, Mode A). So a resource whose definition already declares `position_on` for its table and grid needs nothing inside `kanban do…end`; the board picks up the same attribute and the same mode.
 
 Resolution is lazy, so a `kanban do…end` written **above** `position_on` in the class body still sees it.
 
@@ -123,7 +125,7 @@ end
 ```
 :::
 
-### Mode A — delegate (default)
+### Mode A: delegate (default)
 
 ```ruby
 kanban do
@@ -135,26 +137,26 @@ end
 
 On drop, Plutonium calls `record.reposition!(prev_record:, next_record:)`. Requires the model to include `Plutonium::Positioning::Model` and call `positioned_on`.
 
-### Mode B — BYO block
+### Mode B: BYO block
 
 ```ruby
 kanban do
   position_on :sort_order do |move|
-    # move.record — the dropped record
-    # move.column — destination column key (Symbol)
-    # move.prev   — record immediately before the slot (or nil)
-    # move.next   — record immediately after the slot (or nil)
-    # move.index  — 0-based insertion index within the destination column
+    # move.record: the dropped record
+    # move.column: destination column key (Symbol)
+    # move.prev:   record immediately before the slot (or nil)
+    # move.next:   record immediately after the slot (or nil)
+    # move.index:  0-based insertion index within the destination column
     move.record.update!(sort_order: my_position(move.prev, move.next))
   end
 end
 ```
 
-Plutonium orders the column by `sort_order` for display; your block is responsible only for persisting the new value. The block is called with a single `Plutonium::Positioning::Move` argument (still reachable under its original name, `Plutonium::Kanban::Positioning::Move`) — it is NOT `instance_exec`'d, so `self` is the proc's original binding.
+Plutonium orders the column by `sort_order` for display; your block is responsible only for persisting the new value. The block is called with a single `Plutonium::Positioning::Move` argument (still reachable under its original name, `Plutonium::Kanban::Positioning::Move`); it is NOT `instance_exec`'d, so `self` is the proc's original binding.
 
 On a table or grid the same block runs with `move.column` set to `nil`, since those surfaces have no columns. See [Mode B](/reference/resource/positioning#mode-b) for a worked `acts_as_list` example.
 
-### Mode C — disabled
+### Mode C: disabled
 
 ```ruby
 kanban do

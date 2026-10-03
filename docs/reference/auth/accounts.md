@@ -1,8 +1,8 @@
 # Accounts
 
-Rodauth account types. Pick one (or several — apps can have multiple side-by-side).
+Rodauth account types. Pick one (or several; apps can have multiple side-by-side).
 
-## Basic account — `pu:rodauth:account`
+## Basic account: `pu:rodauth:account`
 
 ```bash
 rails generate pu:rodauth:account user [options]
@@ -59,7 +59,7 @@ rails g pu:rodauth:account api_user --api_only --jwt --jwt_refresh
 rails g pu:rodauth:account user --kitchen_sink
 ```
 
-## Admin account — `pu:rodauth:admin`
+## Admin account: `pu:rodauth:admin`
 
 Pre-configured secure admin with multi-phase login, **required** TOTP, recovery codes, lockout, active session tracking, audit logging, role-based access, invite interaction, and **no public signup**.
 
@@ -74,7 +74,7 @@ rails g pu:rodauth:admin admin --extra-attributes=name:string,department:string
 | `--roles` | `super_admin,admin` | Comma-separated roles (positional enum) |
 | `--extra_attributes` | | Additional model attributes (e.g. `name:string`) |
 
-**Role-ordering convention:** index 0 is the most privileged. Generated invite interaction defaults new invitees to `roles[1]` — the order in `--roles=` matters.
+**Role-ordering convention:** index 0 is the most privileged. Generated invite interaction defaults new invitees to `roles[1]`, so the order in `--roles=` matters.
 
 ```ruby
 enum :role, super_admin: 0, admin: 1
@@ -82,12 +82,12 @@ enum :role, super_admin: 0, admin: 1
 
 **Invite + resend.** The admin resource gets two actions:
 
-- **Invite** — invite a new admin by email; Rodauth sends a verification link and the invitee sets their own password through the verify flow.
-- **Resend invitation** — re-send the verification email. Only shown for admins who haven't verified yet.
+- **Invite**: invite a new admin by email; Rodauth sends a verification link and the invitee sets their own password through the verify flow.
+- **Resend invitation**: re-send the verification email. Only shown for admins who haven't verified yet.
 
 This uses Rodauth account verification, separate from the [Tenancy › Invites](/reference/tenancy/invites) system.
 
-Rake task for direct admin creation (generated alongside the account — namespace is `rodauth`, task name is the account name):
+Rake task for direct admin creation (generated alongside the account; namespace is `rodauth`, task name is the account name):
 
 ```bash
 EMAIL=admin@example.com rails rodauth:admin
@@ -96,7 +96,7 @@ EMAIL=admin@example.com rails rodauth:admin
 
 The task creates the account and triggers a verification email; the admin sets their own password via that flow. No password is passed on the command line.
 
-## SaaS setup — `pu:saas:setup` (meta-generator) {#saas-setup}
+## SaaS setup: `pu:saas:setup` (meta-generator) {#saas-setup}
 
 Creates the User + Entity + Membership trio AND runs:
 
@@ -152,7 +152,7 @@ class OrganizationCustomer < ApplicationRecord
 end
 ```
 
-## API client — `pu:saas:api_client`
+## API client: `pu:saas:api_client`
 
 For machine-to-machine authentication. HTTP Basic Auth with auto-generated password.
 
@@ -233,12 +233,12 @@ end
 Emitted by the generators; both parts are required for concurrent portal logins.
 
 ```ruby
-# app/rodauth/rodauth_plugin.rb — the shared base, once
+# app/rodauth/rodauth_plugin.rb: the shared base, once
 enable :session_isolation
 ```
 
 ```ruby
-# app/rodauth/<name>_rodauth_plugin.rb — once per account type
+# app/rodauth/<name>_rodauth_plugin.rb: once per account type
 session_key_prefix "admin_"           # namespaces EVERY key, account id included
 remember_cookie_key "_admin_remember"
 ```
@@ -249,7 +249,7 @@ Do **not** also set `session_key`: explicit values bypass `convert_session_key` 
 
 ## Related
 
-- [Profile](./profile) — profile resource + SecuritySection component
-- [App › Portals › Controller concern (auth)](/reference/app/portals#controller-concern-auth) — wiring accounts into portal controllers
-- [Tenancy › Invites](/reference/tenancy/invites) — invitation system on top of Rodauth signup
-- [App › Generators › Authentication generators](/reference/app/generators#authentication-generators) — full generator catalog
+- [Profile](./profile): profile resource + SecuritySection component
+- [App › Portals › Controller concern (auth)](/reference/app/portals#controller-concern-auth): wiring accounts into portal controllers
+- [Tenancy › Invites](/reference/tenancy/invites): invitation system on top of Rodauth signup
+- [App › Generators › Authentication generators](/reference/app/generators#authentication-generators): full generator catalog

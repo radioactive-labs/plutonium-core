@@ -1,7 +1,7 @@
 # Kanban DSL Reference
 
 ::: warning Experimental
-Kanban boards are experimental — the DSL and behavior may change in a future release.
+Kanban boards are experimental: the DSL and behavior may change in a future release.
 :::
 
 Complete reference for the `kanban do…end` block declared inside a resource Definition.
@@ -51,7 +51,7 @@ Controls how card positions are persisted after a drag-and-drop. Three modes:
 
 **Inherited from the definition.** `position_on` is the same verb outside `kanban do…end`, where it makes the resource's [table and grid drag-reorderable](/reference/resource/positioning). A board with no `position_on` of its own uses the **definition's**, falling back to the historic default (`:position`, Mode A). Declaring it inside the board overrides that. Resolution is lazy, so declaration order in the class body does not matter.
 
-#### Mode A — delegate to `Plutonium::Positioning::Model` (default)
+#### Mode A: delegate to `Plutonium::Positioning::Model` (default)
 
 ```ruby
 # Default: uses :position attribute
@@ -64,30 +64,30 @@ position_on :sort_order
 Requires the model to:
 1. `include Plutonium::Positioning::Model`
 2. Call `positioned_on :position, scope: :grouping_attribute`
-3. Have a `decimal` column for the position attribute — add it with the `t.position` migration helper (a tuned `decimal(16,8)`) — see [Positioning › Migration](/reference/kanban/positioning#migration)
+3. Have a `decimal` column for the position attribute: add it with the `t.position` migration helper (a tuned `decimal(16,8)`); see [Positioning › Migration](/reference/kanban/positioning#migration)
 
 On drop, calls `record.reposition!(prev_record:, next_record:)` which computes the decimal midpoint and updates the record.
 
-#### Mode B — BYO block
+#### Mode B: BYO block
 
 ```ruby
 position_on :sort_order do |move|
   # move is a Plutonium::Positioning::Move value object
   # (also reachable as Plutonium::Kanban::Positioning::Move):
-  #   move.record  — the dropped ActiveRecord record
-  #   move.column  — destination column key (Symbol)
-  #   move.prev    — record immediately before the insertion slot, or nil
-  #   move.next    — record immediately after the insertion slot, or nil
-  #   move.index   — 0-based insertion index within the destination column
+  #   move.record  : the dropped ActiveRecord record
+  #   move.column  : destination column key (Symbol)
+  #   move.prev    : record immediately before the insertion slot, or nil
+  #   move.next    : record immediately after the insertion slot, or nil
+  #   move.index   : 0-based insertion index within the destination column
   move.record.update!(sort_order: compute_position(move.prev, move.next))
 end
 ```
 
-The block is evaluated via `call` (not `instance_exec`) — it is a plain Ruby proc/lambda.
+The block is evaluated via `call` (not `instance_exec`); it is a plain Ruby proc/lambda.
 
 Plutonium still orders column cards by `sort_order` (the first argument); your block is responsible only for persisting the new value.
 
-#### Mode C — disabled
+#### Mode C: disabled
 
 ```ruby
 position_on false
@@ -114,9 +114,9 @@ Enables ActionCable broadcasting after every successful move. After a drop, Plut
 - Tenant-scoped portals use the entity's Global ID parameter as the second segment.
 - Portals without entity scoping use the literal string `"global"`.
 
-Two viewers share a stream only if they have the same resource class **and** the same scoped entity — cross-tenant leakage is impossible by construction.
+Two viewers share a stream only if they have the same resource class **and** the same scoped entity; cross-tenant leakage is impossible by construction.
 
-Requires `turbo-rails` + ActionCable (gems), a cable adapter in `config/cable.yml` (Redis/Solid Cable in multi-process production), ActionCable mounted at `/cable`, **and** an ActionCable client loaded in your app's JavaScript. Plutonium's bundle ships `@hotwired/turbo` only — without `@hotwired/turbo-rails` (or `@rails/actioncable`) in your pack, the `<turbo-cable-stream-source>` never connects and other viewers won't update. Server-side broadcasting works regardless; this is purely the client subscription. See the [guide's Realtime setup](/guides/kanban#setup-required-for-realtime-to-actually-update-other-viewers).
+Requires `turbo-rails` + ActionCable (gems), a cable adapter in `config/cable.yml` (Redis/Solid Cable in multi-process production), ActionCable mounted at `/cable`, **and** an ActionCable client loaded in your app's JavaScript. Plutonium's bundle ships `@hotwired/turbo` only; without `@hotwired/turbo-rails` (or `@rails/actioncable`) in your pack, the `<turbo-cable-stream-source>` never connects and other viewers won't update. Server-side broadcasting works regardless; this is purely the client subscription. See the [guide's Realtime setup](/guides/kanban#setup-required-for-realtime-to-actually-update-other-viewers).
 
 Default: `false`.
 
@@ -141,14 +141,14 @@ show_in :modal   # open a card's show page in a centered modal dialog
 show_in :page    # navigate the whole page to the show route
 ```
 
-Overrides — **for this board** — where clicking a card opens the record's show page:
+Overrides, **for this board**, where clicking a card opens the record's show page:
 
-- `:modal` — the card's show link targets the layout's `remote_modal` frame, so the show page renders in a **centered** dialog. (Show is always centered — deliberately not the definition's `modal_mode`, which styles `new`/`edit`.)
-- `:page` — the card's show link targets `_top`, navigating the whole page to the show route.
+- `:modal`: the card's show link targets the layout's `remote_modal` frame, so the show page renders in a **centered** dialog. (Show is always centered, deliberately not the definition's `modal_mode`, which styles `new`/`edit`.)
+- `:page`: the card's show link targets `_top`, navigating the whole page to the show route.
 
 When `show_in` is **not** set on the board, the board inherits the definition's [`show_in`](/reference/resource/definition#show_in) (which itself defaults to `:page`). So to open cards in a modal you can set it on the board, or once on the definition (which also covers the table and grid views).
 
-Either mode escapes the column's lazy turbo-frame — `:page` replaces the whole page, and the `remote_modal` frame lives in the layout (resolved document-wide), so it opens outside the column. No per-card configuration is needed; the show page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome. From inside the modal, an expand icon (or ⌘/Ctrl-click on the card) opens the full page in a new tab.
+Either mode escapes the column's lazy turbo-frame: `:page` replaces the whole page, and the `remote_modal` frame lives in the layout (resolved document-wide), so it opens outside the column. No per-card configuration is needed; the show page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome. From inside the modal, an expand icon (or ⌘/Ctrl-click on the card) opens the full page in a new tab.
 
 An unknown mode raises `ArgumentError`.
 
@@ -168,7 +168,7 @@ Overrides the slot layout for every kanban card on this board, using the same sl
 
 When `card_fields` is not set, cards fall back to the resource definition's `grid_fields`. If neither is declared, the card renders the default header-only layout.
 
-The `meta` slot renders each field as a colored badge, and formats values by type before badging: a `has_cents` field renders as currency, a `belongs_to` association renders as its label (not an object inspect), and everything else is humanized — with status-like enums (`active`, `pending`, `published`…) resolving to a semantic color. The badge color is deterministic per value, so a given status is the same color on every card.
+The `meta` slot renders each field as a colored badge, and formats values by type before badging: a `has_cents` field renders as currency, a `belongs_to` association renders as its label (not an object inspect), and everything else is humanized, with status-like enums (`active`, `pending`, `published`…) resolving to a semantic color. The badge color is deterministic per value, so a given status is the same color on every card.
 
 ---
 
@@ -203,12 +203,12 @@ end
 | `color:` | Symbol or String | `nil` | Header color dot. Named colors: `:red`, `:orange`, `:amber`, `:yellow`, `:green`, `:blue`, `:purple`, `:pink`, `:gray`. Raw CSS string also accepted |
 | `scope:` | Symbol or Proc | `nil` | Relation filter for this column. **Symbol** → `relation.public_send(sym)` (named AR scope). **Proc** → 0-arg lambda called via `instance_exec` on the relation, e.g. `-> { where(status: "todo") }` |
 | `on_enter:` | Symbol or Proc | `nil` | Fired when a card is dropped into this column. **Symbol** → `record.public_send(sym)`. **Proc** → 1-arg lambda `->(record) { … }` where `self` inside the block is the view context (giving access to `current_user`, helpers, etc.). The callback may assign attributes in memory (`r.status = :done`) or call `update!` directly; if the record has unsaved changes after `on_enter` returns the controller saves it automatically. |
-| `on_exit:` | Symbol or Proc | `nil` | The source-side counterpart to `on_enter:`, fired when a card **leaves** this column on a cross-column move. Same dispatch (**Symbol** → `record.public_send`; **Proc** → 1-arg lambda, `self` = view context). Runs **before** the destination's `on_enter`, inside the same move transaction, so it sees the pre-move state and rolls back if the move fails. Use it for source-tied side effects the destination can't own (stop a timer, release a slot). Fires only on a drag-move through `kanban_move` — not on destroy, a programmatic status change, or quick-add. Skipped on same-column reorders. |
+| `on_exit:` | Symbol or Proc | `nil` | The source-side counterpart to `on_enter:`, fired when a card **leaves** this column on a cross-column move. Same dispatch (**Symbol** → `record.public_send`; **Proc** → 1-arg lambda, `self` = view context). Runs **before** the destination's `on_enter`, inside the same move transaction, so it sees the pre-move state and rolls back if the move fails. Use it for source-tied side effects the destination can't own (stop a timer, release a slot). Fires only on a drag-move through `kanban_move`, not on destroy, a programmatic status change, or quick-add. Skipped on same-column reorders. Use a model callback instead only when other save paths (edit form, API, import) must be covered too, and then drop the `on_exit:` so the work isn't done twice. |
 | `enter_interaction:` | Class | `nil` | A **record-scoped** interaction class (declares `attribute :resource`) run when a card is dropped **into** this column from another column. Opens the interaction's form as a modal to collect input, then commits `on_enter` + the interaction + repositioning atomically. Auto-registered as a hidden record action under a column-scoped key (`:<column>_enter_interaction`), authorized by `kanban_move?` (no policy method of its own). See [enter_interaction](#drop-interaction) below |
 | `role:` | `:backlog`, `:done`, `:lost` | `nil` | Applies a preset (see below) |
 | `collapsed:` | Boolean | `false` | Column starts collapsed (a thin strip with the label rotated). The Stimulus controller persists the toggled state to `localStorage` (key: `pu-kanban:<path>:<column-key>:collapsed`) so the user preference survives page reloads; this DSL value sets the server-rendered initial state only. |
 | `add:` | Boolean | `false` | Show a `+ Add` quick-add button |
-| `accepts:` | `true`, `false`, or Array | `true` | Drop policy — **structural topology only**. `true` accepts any source column. `false` rejects all drops (display-only column). An Array of column key symbols accepts only those sources. This is client-hintable: the value is emitted as `data-kanban-accepts` so the drag UI greys out disallowed source columns before the drop. **Record- or user-conditional rules do not belong here** — put them in `kanban_move?`, which sees the record and the `from`/`to` columns (see [Authorization](./authorization)). Passing a `Proc` raises `ArgumentError`. |
+| `accepts:` | `true`, `false`, or Array | `true` | Drop policy: **structural topology only**. `true` accepts any source column. `false` rejects all drops (display-only column). An Array of column key symbols accepts only those sources. This is client-hintable: the value is emitted as `data-kanban-accepts` so the drag UI greys out disallowed source columns before the drop. **Record- or user-conditional rules do not belong here**. Put them in `kanban_move?`, which sees the record and the `from`/`to` columns (see [Authorization](./authorization)). Passing a `Proc` raises `ArgumentError`. |
 | `locked:` | Boolean | `false` | Prevent dragging cards **out of** this column |
 | `wip:` | Integer | `nil` | WIP limit. Reject cross-column drops when `dest_count + 1 > wip`. Has no effect on same-column reordering |
 
@@ -219,7 +219,7 @@ The old names are **deprecated aliases**:
 - In **development and test** they raise an `ArgumentError` so the rename is caught before release.
 - In **deployed environments** (production, staging) they log a deprecation warning and map onto the new option, so an in-flight deployment keeps working across the upgrade.
 
-If both the old and new name are given, the new one wins. Update your definitions to `on_enter:` / `enter_interaction:` at your earliest convenience — a future release will drop the aliases entirely.
+If both the old and new name are given, the new one wins. Update your definitions to `on_enter:` / `enter_interaction:` at your earliest convenience; a future release will drop the aliases entirely.
 :::
 
 ### Role presets
@@ -230,7 +230,7 @@ If both the old and new name are given, the new one wins. Update your definition
 | `:done` | `color: :green, collapsed: true` |
 | `:lost` | `color: :red, collapsed: true` |
 
-`:done` and `:lost` are the two terminal roles — both collapsed by default, the
+`:done` and `:lost` are the two terminal roles, both collapsed by default, the
 colour signalling the outcome (`:done` = positive close, `:lost` = negative
 close). Use them as the won/lost pair in pipelines (leads, deals, tickets).
 
@@ -246,13 +246,13 @@ column :lost,
 
 Runs an authorization-aware, input-collecting interaction when a card is dropped **into** this column from another column.
 
-- **Must be a record-scoped interaction** — the class declares `attribute :resource` (singular) and acts on the one dropped card. A `resources`-plural (bulk) interaction is not valid here; that shape is for [column actions](#column-actions).
-- **Auto-registered as a hidden record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`) — unique by construction, so two columns can reuse the same interaction class without colliding. Hidden = it does not render as an action button on the show page, table rows, or grid cards; it is reachable only by a drop.
-- **Authorized by `kanban_move?` alone** — the interaction has **no policy method of its own**. The move (and therefore the interaction) is gated by the single `kanban_move?` predicate, which can gate this specific transition via its `to` column context (e.g. `def kanban_move? = kanban_to&.key == :lost ? user.manager? : super`). See [Authorization](./authorization).
-- **Move flow only.** Dropping cross-column opens the interaction's form as a modal; on submit `on_enter` + the interaction + repositioning commit in **one atomic transaction**. Validation failure rolls the whole transaction back (membership write included) and re-renders the modal with errors — nothing persists. Same-column reorders run positioning only (neither `on_enter` nor the interaction fires).
-- **Quick-add (`+ Add`)** applies `on_enter` + positioning **post-create** — the record is created first (needs a grouping-column default), then `on_enter` places it in the column; the `enter_interaction` is not involved.
-- **Author contract** — when a column declares both, `on_enter` owns the membership attribute (e.g. `status`) and the interaction owns the extras (reason, mail, audit). If the interaction also writes the membership attribute it must set the same value `on_enter` does (idempotent). With no `on_enter`, the interaction owns everything.
-- **Success response limitation** — the interaction's success **message** (`.with_message`) surfaces as a toast, but a custom success *response* (`with_redirect_response`, `with_file_response`, …) is **not** honored on the drop path; the board just re-renders and closes the modal.
+- **Must be a record-scoped interaction.** The class declares `attribute :resource` (singular) and acts on the one dropped card. A `resources`-plural (bulk) interaction is not valid here; that shape is for [column actions](#column-actions).
+- **Auto-registered as a hidden record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`), unique by construction, so two columns can reuse the same interaction class without colliding. Hidden = it does not render as an action button on the show page, table rows, or grid cards; it is reachable only by a drop.
+- **Authorized by `kanban_move?` alone.** The interaction has **no policy method of its own**. The move (and therefore the interaction) is gated by the single `kanban_move?` predicate, which can gate this specific transition via its `to` column context (e.g. `def kanban_move? = kanban_to&.key == :lost ? user.manager? : super`). See [Authorization](./authorization).
+- **Move flow only.** Dropping cross-column opens the interaction's form as a modal; on submit `on_enter` + the interaction + repositioning commit in **one atomic transaction**. Validation failure rolls the whole transaction back (membership write included) and re-renders the modal with errors; nothing persists. Same-column reorders run positioning only (neither `on_enter` nor the interaction fires).
+- **Quick-add (`+ Add`)** applies `on_enter` + positioning **post-create**: the record is created first (needs a grouping-column default), then `on_enter` places it in the column; the `enter_interaction` is not involved.
+- **Author contract.** When a column declares both, `on_enter` owns the membership attribute (e.g. `status`) and the interaction owns the extras (reason, mail, audit). If the interaction also writes the membership attribute it must set the same value `on_enter` does (idempotent). With no `on_enter`, the interaction owns everything.
+- **Success response limitation.** The interaction's success **message** (`.with_message`) surfaces as a toast, but a custom success *response* (`with_redirect_response`, `with_file_response`, …) is **not** honored on the drop path; the board just re-renders and closes the modal.
 
 See the [guide's Interaction on drop section](/guides/kanban#interaction-on-drop) for a full worked example.
 
@@ -265,7 +265,7 @@ Use `columns do…end` when the column list depends on the current request:
 ```ruby
 kanban do
   columns do
-    # `self` is the view context — current_user, params, and helpers all work.
+    # `self` is the view context: current_user, params, and helpers all work.
     current_user.visible_statuses.map do |status|
       Plutonium::Kanban::Column.new(
         :"status_#{status.id}",
@@ -299,7 +299,7 @@ class TaskDefinition < ResourceDefinition
 end
 ```
 
-**`enter_interaction:` is not supported on dynamic boards.** Unlike a column action, its hidden action can't be registered manually — the key is column-scoped and internal — and the static registration pass has no columns to see. A drop into a dynamic column that declares `enter_interaction:` is rejected with a snap-back (it does not crash). Use a static board when a column needs an `enter_interaction:`.
+**`enter_interaction:` is not supported on dynamic boards.** Unlike a column action, its hidden action can't be registered manually: the key is column-scoped and internal, and the static registration pass has no columns to see. A drop into a dynamic column that declares `enter_interaction:` is rejected with a snap-back (it does not crash). Use a static board when a column needs an `enter_interaction:`.
 :::
 
 ---
@@ -326,7 +326,7 @@ end
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `interaction:` | Class | Yes | An interaction class. Must have `attribute :resources` (plural) — it runs as a bulk action |
+| `interaction:` | Class | Yes | An interaction class. Must have `attribute :resources` (plural); it runs as a bulk action |
 | `on:` | `:all` or `:visible` | No (default `:all`) | `:all` passes IDs of all column cards (ignoring `per_column`). `:visible` passes only the rendered, capped subset |
 | `label:` | String | No | Button text. Defaults to `key.to_s.humanize` |
 | `icon:` | Phlex icon class | No | Icon rendered before the label |

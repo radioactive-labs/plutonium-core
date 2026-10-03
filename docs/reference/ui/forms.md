@@ -4,7 +4,7 @@ Built on [Phlexi::Form](https://github.com/radioactive-labs/phlexi-form). Overri
 
 ## 🚨 Critical
 
-- **`render_actions` is mandatory in custom `form_template`** — without it, the form has no submit button.
+- **`render_actions` is mandatory in custom `form_template`**: without it, the form has no submit button.
 - **Configure inputs in the definition, render them with `render_resource_field`** in the form template. Don't reimplement field widgets from scratch.
 - **Override via nested classes** (`class Form < Form; end`) inside the definition. Don't replace the root `Plutonium::UI::Form::Resource` class.
 
@@ -25,7 +25,7 @@ class PostDefinition < ResourceDefinition
   class Form < Form
     def form_template
       render_fields       # render every permitted field
-      render_actions      # submit buttons — REQUIRED
+      render_actions      # submit buttons, REQUIRED
     end
   end
 end
@@ -47,9 +47,9 @@ end
 
 ## Custom layouts
 
-### Sectioned form (declarative — preferred)
+### Sectioned form (declarative: preferred)
 
-Declare sections in the **definition** using `form_layout`. The form picks up the layout automatically — no `Form` subclass needed for common cases.
+Declare sections in the **definition** using `form_layout`. The form picks up the layout automatically, no `Form` subclass needed for common cases.
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -66,11 +66,11 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-This handles headings, collapsible panels, per-section column counts, and `condition:`-based visibility — all with no view code. See [Resource › Definition › Form layout](/reference/resource/definition#form-layout) for the full DSL reference, including `ungrouped`, `condition:`, `columns:`, and the "On interactions" note.
+This handles headings, collapsible panels, per-section column counts, and `condition:`-based visibility, all with no view code. See [Resource › Definition › Form layout](/reference/resource/definition#form-layout) for the full DSL reference, including `ungrouped`, `condition:`, `columns:`, and the "On interactions" note.
 
 ### Full control: override `render_fields`
 
-When the declarative DSL doesn't cover your use case — asymmetric multi-column layouts, embedding a panel widget between sections, etc. — override `render_fields` in a nested `Form` class:
+When the declarative DSL doesn't cover your use case (asymmetric multi-column layouts, embedding a panel widget between sections, etc.) override `render_fields` in a nested `Form` class:
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -109,7 +109,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-Prefer `form_layout` in the definition — it keeps layout config out of view code and works for interactions too.
+Prefer `form_layout` in the definition; it keeps layout config out of view code and works for interactions too.
 
 ### Two-column layout
 
@@ -137,7 +137,7 @@ end
 
 ## Field builder (`field(:foo).input_tag`)
 
-`render_resource_field` uses the input config from the definition. For ad-hoc rendering — when you want fine-grained control over a specific field — use `field(...)` directly:
+`render_resource_field` uses the input config from the definition. For ad-hoc rendering (when you want fine-grained control over a specific field) use `field(...) ` directly:
 
 ```ruby
 render field(:title).wrapped { |f| f.input_tag }                # wrapped: label + hint + errors
@@ -152,7 +152,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `input_tag` | text (auto-detected type) |
 | `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `tel_tag`, `hidden_tag` | standard HTML inputs |
 | `checkbox_tag`, `select_tag`, `radio_button_tag` | standard |
-| `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`) — the **default** for boolean columns; same behavior as a checkbox. Use `checkbox_tag` (`as: :boolean`) for a plain checkbox. |
+| `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`), the **default** for boolean columns; same behavior as a checkbox. Use `checkbox_tag` (`as: :boolean`) for a plain checkbox. |
 
 ### Plutonium-enhanced tags
 
@@ -180,8 +180,8 @@ end
 
 `as: :phone` renders an [intl-tel-input](https://github.com/jackocnr/intl-tel-input) field. Forward library options two ways:
 
-- `initial_country:` — a convenient shortcut for the library's `initialCountry` (ISO2, e.g. `"gh"`). This preselects a country so the widget doesn't show *"No country selected"* and a bare local number validates.
-- `intl_options:` — any other library option, using the library's own camelCase names. Merged over the shortcut, so it wins on conflict.
+- `initial_country:`: a convenient shortcut for the library's `initialCountry` (ISO2, e.g. `"gh"`). This preselects a country so the widget doesn't show *"No country selected"* and a bare local number validates.
+- `intl_options:`: any other library option, using the library's own camelCase names. Merged over the shortcut, so it wins on conflict.
 
 ```ruby
 input :phone, as: :phone, initial_country: "gh"
@@ -207,14 +207,14 @@ The field defaults to `strictMode: true`; override it via `intl_options: {strict
 ```ruby
 input :price, as: :currency               # unit from has_cents / config / i18n
 input :price, as: :currency, unit: "£"    # a literal symbol
-input :price, as: :currency, unit: false  # no prefix — a plain number input
+input :price, as: :currency, unit: false  # no prefix, a plain number input
 ```
 
 When nothing resolves (or `unit: false`), the prefix is omitted and it's an ordinary number input.
 
-**`has_cents` fields infer it automatically** — just like the display. A bare `input :price` on a `has_cents` attribute renders the currency input with the unit read off `has_cents`; no `as: :currency` needed. Use the explicit `as: :currency` for a non-`has_cents` decimal, or to override the unit.
+**`has_cents` fields infer it automatically**: just like the display. A bare `input :price` on a `has_cents` attribute renders the currency input with the unit read off `has_cents`; no `as: :currency` needed. Use the explicit `as: :currency` for a non-`has_cents` decimal, or to override the unit.
 
-In a **wizard** step the data snapshot has no `has_cents` reflection, so there's nothing to infer from — declare `as: :currency` and pass `unit:` explicitly (`input :price, as: :currency, unit: "$"`); the review summary reads it back and formats the value as currency.
+In a **wizard** step the data snapshot has no `has_cents` reflection, so there's nothing to infer from; declare `as: :currency` and pass `unit:` explicitly (`input :price, as: :currency, unit: "$"`); the review summary reads it back and formats the value as currency.
 
 ### Password & secret fields {#password-fields}
 
@@ -222,10 +222,10 @@ In a **wizard** step the data snapshot has no `has_cents` reflection, so there's
 
 | field state | result |
 |---|---|
-| untouched (sentinel) | kept — the stored secret is left unchanged |
+| untouched (sentinel) | kept, the stored secret is left unchanged |
 | edited to a new value, then failed re-render | comes back **blank + `required`** so the user re-types it (a submitted secret is never echoed back) |
-| cleared, then failed re-render | comes back blank, **not** `required` — the clear may be intentional, so it's allowed to stand |
-| emptied | explicit clear (clear-by-blank) — the `required` guard only prevents an *accidental* blank submit |
+| cleared, then failed re-render | comes back blank, **not** `required`; the clear may be intentional, so it's allowed to stand |
+| emptied | explicit clear (clear-by-blank), the `required` guard only prevents an *accidental* blank submit |
 | typed | set as the new value |
 
 The sentinel is guarded client-side by the `password-sentinel` Stimulus controller: the first edit (a keystroke, paste, or **backspace**) wipes the whole field, so a partial edit can't corrupt the sentinel into a literal new password. New records and interaction forms (set-password, reset-password) render an honest empty field.
@@ -237,7 +237,7 @@ The sentinel is guarded client-side by the `password-sentinel` Stimulus controll
 - ends with `_password`, `_digest`, `_hash`, `_token`, `_key`, or `_salt`;
 - contains `secret`.
 
-This is a naming convenience, **not** a security guarantee — tune it per field:
+This is a naming convenience, **not** a security guarantee, tune it per field:
 
 ```ruby
 # Opt OUT: render the value as a normal, readable text input
@@ -254,16 +254,16 @@ field :recovery_phrase, as: :password
 
 ### Wrapped vs unwrapped
 
-- `wrapped` — includes label, hint, and error rendering. Use for normal form fields.
-- Bare tag — just the input element. Use when you're laying out custom wrappers.
-- `wrapped(class: "...")` — pass classes to the wrapper div.
+- `wrapped`: includes label, hint, and error rendering. Use for normal form fields.
+- Bare tag, just the input element. Use when you're laying out custom wrappers.
+- `wrapped(class: "...")`: pass classes to the wrapper div.
 
 ## Association inputs (`secure_association_tag`) {#association-inputs}
 
 Association inputs render with two affordances out of the box:
 
-- **Inline `+` add** — a button next to the select opens the target resource's `:new` action. Inherits the target's modal mode. If the parent form is already in a modal, the `+` opens a **stacked secondary modal** (see [Pages › Stacked modals](./pages#stacked-modals-secondary-frame)) so the in-progress form isn't lost — on success the secondary closes and the parent reloads.
-- **Typeahead** — server-side autocomplete is on by default. Uses the target's `search` block if defined; otherwise falls back to a `LIKE` on the input's `label_method:` column or the first match from `[name, title, label, slug, display_name, email]`. See [Resource › Query › Search](/reference/resource/query#search) for the typeahead fallback details.
+- **Inline `+` add**: a button next to the select opens the target resource's `:new` action. Inherits the target's modal mode. If the parent form is already in a modal, the `+` opens a **stacked secondary modal** (see [Pages › Stacked modals](./pages#stacked-modals-secondary-frame)) so the in-progress form isn't lost; on success the secondary closes and the parent reloads.
+- **Typeahead**: server-side autocomplete is on by default. Uses the target's `search` block if defined; otherwise falls back to a `LIKE` on the input's `label_method:` column or the first match from `[name, title, label, slug, display_name, email]`. See [Resource › Query › Search](/reference/resource/query#search) for the typeahead fallback details.
 
 ```ruby
 # Opt out of the + button
@@ -280,7 +280,7 @@ input :author, label_method: :email
 ```
 
 ::: tip Large association tables
-For large target tables, write an explicit `search` block on the target resource definition — the fallback's leading-wildcard `LIKE` can't use a b-tree index.
+For large target tables, write an explicit `search` block on the target resource definition; the fallback's leading-wildcard `LIKE` can't use a b-tree index.
 :::
 
 ## Submit buttons
@@ -291,7 +291,7 @@ Control the secondary button via the definition:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  submit_and_continue false   # nil (default — auto), true (always show), false (always hide)
+  submit_and_continue false   # nil (default, auto), true (always show), false (always hide)
 end
 ```
 
@@ -313,9 +313,9 @@ end
 
 These all live in the definition layer:
 
-- **Pre-submit / dynamic forms** — see [Resource › Definition › Dynamic forms](/reference/resource/definition#dynamic-forms-pre-submit)
-- **Nested inputs** (`nested_input :variants`) — see [Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs)
-- **Interaction forms** — interactions define their own `attribute` / `input` and inherit `Plutonium::UI::Form::Interaction`; see [Behavior › Interactions](/reference/behavior/interactions)
+- **Pre-submit / dynamic forms**: see [Resource › Definition › Dynamic forms](/reference/resource/definition#dynamic-forms-pre-submit)
+- **Nested inputs** (`nested_input :variants`), see [Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs)
+- **Interaction forms**: interactions define their own `attribute` / `input` and inherit `Plutonium::UI::Form::Interaction`; see [Behavior › Interactions](/reference/behavior/interactions)
 
 ## Theming
 
@@ -342,7 +342,7 @@ end
 ```
 
 ::: warning Always `super.merge(...)`
-Don't replace the theme wholesale — Plutonium's defaults handle invalid states, focus rings, and dark mode. `super.merge` keeps them.
+Don't replace the theme wholesale, Plutonium's defaults handle invalid states, focus rings, and dark mode. `super.merge` keeps them.
 :::
 
 ### Theme keys
@@ -384,9 +384,9 @@ end
 
 ## Related
 
-- [Pages](./pages) — `NewPage` / `EditPage` page hooks
-- [Components](./components) — building reusable Phlex components for forms
-- [Assets](./assets) — `.pu-*` classes, design tokens, dark mode
-- [Resource › Definition](/reference/resource/definition) — input configuration (`as:`, `hint:`, `condition:`, blocks)
-- [Behavior › Interactions](/reference/behavior/interactions) — interaction forms (`Plutonium::UI::Form::Interaction`)
-- [Tenancy › Nested resources](/reference/tenancy/nested-resources) — parent fields hidden by URL
+- [Pages](./pages): `NewPage` / `EditPage` page hooks
+- [Components](./components): building reusable Phlex components for forms
+- [Assets](./assets): `.pu-*` classes, design tokens, dark mode
+- [Resource › Definition](/reference/resource/definition): input configuration (`as:`, `hint:`, `condition:`, blocks)
+- [Behavior › Interactions](/reference/behavior/interactions): interaction forms (`Plutonium::UI::Form::Interaction`)
+- [Tenancy › Nested resources](/reference/tenancy/nested-resources): parent fields hidden by URL

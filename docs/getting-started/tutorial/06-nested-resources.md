@@ -13,7 +13,10 @@ Nested resources are resources that belong to a parent resource. In our blog:
 
 ```bash
 rails generate pu:res:scaffold Comment body:text user:belongs_to Blogging/Post:belongs_to --dest=blogging
+rails db:prepare
 ```
+
+Run the migration before connecting the resource to a portal: `pu:res:conn` reads the table's columns to seed the policy's attribute lists.
 
 ## Setting Up the Association
 
@@ -69,11 +72,11 @@ class Blogging::PostPolicy < Blogging::ResourcePolicy
 end
 ```
 
-The post show page now has tabs — **Details** and **Comments** — driven by the associations you permit:
+The post show page now has tabs, **Details** and **Comments**, driven by the associations you permit:
 
 ![Post show page with Details and Comments tabs](/images/tutorial/06-post-with-comments.png)
 
-Clicking **Comments** opens the nested index for that post — a complete sub-resource view with its own paginated table, "New" button, and row actions:
+Clicking **Comments** opens the nested index for that post: a complete sub-resource view with its own paginated table, "New" button, and row actions:
 
 ![Nested comments index](/images/tutorial/06-comments-tab.png)
 

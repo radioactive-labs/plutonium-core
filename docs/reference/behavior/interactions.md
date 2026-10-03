@@ -5,11 +5,11 @@ The entry point from a Plutonium page into an operation. An interaction declares
 ## 🚨 Critical
 
 - **`ActiveRecord::RecordInvalid` is NOT rescued automatically.** Always rescue when using `create!` / `update!` / `save!`, return `failed(e.record.errors)`.
-- **Return `succeed(...)` or `failed(...)` from `execute`** — the controller can't tell what happened otherwise. Returning anything else raises.
-- **Redirect is automatic on success** — only use `with_redirect_response` for a *different* destination.
-- **Bulk actions use `attribute :resources` (plural).** Policy authorization is checked per record — if any fails, the whole request fails.
+- **Return `succeed(...)` or `failed(...)` from `execute`**: the controller can't tell what happened otherwise. Returning anything else raises.
+- **Redirect is automatic on success**: only use `with_redirect_response` for a *different* destination.
+- **Bulk actions use `attribute :resources` (plural).** Policy authorization is checked per record; if any fails, the whole request fails.
 - **The shape of the action (record / bulk / resource) is inferred from the interaction's attributes.** See [Resource › Actions](/reference/resource/actions#inferred-visibility-interactive-actions).
-- **An interaction is a presentation object.** Logic may *start* in `execute`; the **second caller** — a job, an API controller, a rake task, the console — is the signal to move it to the model. See [below](#what-an-interaction-is-for).
+- **An interaction is a presentation object.** Logic may *start* in `execute`; the **second caller** (a job, an API controller, a rake task, the console) is the signal to move it to the model. See [below](#what-an-interaction-is-for).
 
 ## What an interaction is for {#what-an-interaction-is-for}
 
@@ -17,20 +17,20 @@ An interaction is a **presentation object**. It exists so Plutonium can render a
 
 | An interaction owns | An interaction does not own |
 |---|---|
-| The button — `presents label:` / `icon:` | *Who* may click it. That's the [policy](./policies). |
-| The form — `attribute` + `input` declarations | — |
-| **Input shape** validation: present? parses? right type? | **Business invariants** — they must hold for every caller, so they belong on the model |
-| The user-facing outcome — `succeed` / `failed`, messages, redirect | The domain operation itself, once more than one caller needs it |
+| The button: `presents label:` / `icon:` | *Who* may click it. That's the [policy](./policies). |
+| The form: `attribute` + `input` declarations | - |
+| **Input shape** validation: present? parses? right type? | **Business invariants**: they must hold for every caller, so they belong on the model |
+| The user-facing outcome: `succeed` / `failed`, messages, redirect | The domain operation itself, once more than one caller needs it |
 
 ### Logic may start in `execute`
 
-A one-off operation with exactly one caller is perfectly fine written inline. Don't pre-extract a service object for a two-line `update!` — that's YAGNI, and Plutonium deliberately ships no service layer to put it in. The rule below is a **refactoring trigger**, not a prohibition.
+A one-off operation with exactly one caller is perfectly fine written inline. Don't pre-extract a service object for a two-line `update!`; that's YAGNI, and Plutonium deliberately ships no service layer to put it in. The rule below is a **refactoring trigger**, not a prohibition.
 
 ### The second caller is the trigger to extract
 
 The moment a background job, an API controller, a rake task, the console, or another interaction needs the same behaviour, move it to the model.
 
-The deadline is *the second caller* — and not "as soon as it looks like business logic" — because of one line in the base class:
+The deadline is *the second caller*, not "as soon as it looks like business logic", because of one line in the base class:
 
 ```ruby
 def initialize(view_context:, **attributes)
@@ -61,9 +61,9 @@ rescue ActiveRecord::RecordInvalid => e
 end
 ```
 
-Name it for the domain (`publish!`, `archive!`, `register!`), not for the persistence (`update_published_at`) — the point is that a scheduler job can now call `post.publish!` and read as if it meant it. And resist inventing a `PublishPostService`: the model is the destination, not a new layer.
+Name it for the domain (`publish!`, `archive!`, `register!`), not for the persistence (`update_published_at`); the point is that a scheduler job can now call `post.publish!` and read as if it meant it. And resist inventing a `PublishPostService`: the model is the destination, not a new layer.
 
-### Worked counter-example — chained interactions
+### Worked counter-example: chained interactions
 
 ```ruby
 # 🚫 Every link demands a view_context that has nothing to do with the work
@@ -72,7 +72,7 @@ CreateUserInteraction.call(view_context:, **user_params)
   .and_then { |user| LogActivity.call(view_context:, user:) }
 ```
 
-Sending a welcome email and writing an audit row are precisely what a signup API endpoint, a seeds script, or a console session also has to do — none of which has a `view_context`. Modelled as interactions, they are unreachable from anywhere but a Plutonium page.
+Sending a welcome email and writing an audit row are precisely what a signup API endpoint, a seeds script, or a console session also has to do, none of which has a `view_context`. Modelled as interactions, they are unreachable from anywhere but a Plutonium page.
 
 ```ruby
 # ✅ The model owns registering a user; the interaction presents it
@@ -82,12 +82,12 @@ def execute
 end
 ```
 
-Chaining three interactions is usually the signal that you have one model method wearing three presentation costumes. `and_then` is real API and stays [documented below](#chaining) — just don't reach for it to sequence business operations.
+Chaining three interactions is usually the signal that you have one model method wearing three presentation costumes. `and_then` is real API and stays [documented below](#chaining), just don't reach for it to sequence business operations.
 
 ## Structure
 
 ```ruby
-# app/interactions/resource_interaction.rb — installed once
+# app/interactions/resource_interaction.rb: installed once
 class ResourceInteraction < Plutonium::Resource::Interaction
 end
 
@@ -107,7 +107,7 @@ class PublishPostInteraction < ResourceInteraction
   private
 
   def execute
-    resource.publish!(on: publish_date)   # Post#publish! — see above
+    resource.publish!(on: publish_date)   # Post#publish!, see above
     succeed(resource).with_message("Post published!")
   rescue ActiveRecord::RecordInvalid => e
     failed(e.record.errors)
@@ -115,7 +115,7 @@ class PublishPostInteraction < ResourceInteraction
 end
 ```
 
-Note the division: the interaction declares the input, validates that a date was supplied, and phrases the flash. `Post#publish!` decides what publishing a post *means* — so the scheduled-publishing job can call it too.
+Note the division: the interaction declares the input, validates that a date was supplied, and phrases the flash. `Post#publish!` decides what publishing a post *means*, so the scheduled-publishing job can call it too.
 
 ## Attributes
 
@@ -132,11 +132,11 @@ attribute :metadata, :hash
 attribute :date, :datetime
 ```
 
-The presence of `:resource` / `:resources` / neither determines the action type — see [Resource › Actions › Inferred visibility](/reference/resource/actions#inferred-visibility-interactive-actions).
+The presence of `:resource` / `:resources` / neither determines the action type, see [Resource › Actions › Inferred visibility](/reference/resource/actions#inferred-visibility-interactive-actions).
 
 ## Inputs
 
-Same DSL as definition `input`. Auto-detection from the attribute type applies — declare `as:` only when overriding.
+Same DSL as definition `input`. Auto-detection from the attribute type applies; declare `as:` only when overriding.
 
 ```ruby
 input :email                          # auto: :email type from name match
@@ -164,7 +164,7 @@ MyInteraction.description  # => "Move to archive"
 
 If `action :foo, interaction: FooInteraction` doesn't override `label:` / `icon:` etc., these `presents` values are used.
 
-## `execute` — outcomes
+## `execute`: outcomes
 
 `execute` MUST return a `succeed(...)` or `failed(...)` outcome. Validations run automatically before `execute`; if they fail, the interaction short-circuits to `failed()`.
 
@@ -220,7 +220,7 @@ end
 ```
 
 ::: warning Don't use `and_then` to sequence business operations
-A chain of three interactions is a chain of three things that each demand a `view_context`, none of which a job or an API controller can supply. That's one model method wearing three costumes — see [Worked counter-example](#what-an-interaction-is-for). `and_then` earns its keep composing outcomes *within* one interaction, or in a test.
+A chain of three interactions is a chain of three things that each demand a `view_context`, none of which a job or an API controller can supply. That's one model method wearing three costumes, see [Worked counter-example](#what-an-interaction-is-for). `and_then` earns its keep composing outcomes *within* one interaction, or in a test.
 :::
 
 ## Validations
@@ -242,18 +242,18 @@ end
 
 ### Which validation goes where
 
-Interactions have validations and so do models, and they are not competing — they answer different questions:
+Interactions have validations and so do models, and they are not competing: they answer different questions:
 
 | | Interaction validation | Model validation |
 |---|---|---|
-| Asks | "Can I read this input?" — present, parses, right type, plausible format | "Is this record legal?" — invariants that hold no matter who is calling |
+| Asks | "Can I read this input?": present, parses, right type, plausible format | "Is this record legal?": invariants that hold no matter who is calling |
 | Exists to | render a form error next to the field | protect the data from every caller, including the ones with no form |
-| Runs | before `execute`, without ever touching the model | inside `save!` / `update!` — i.e. inside your model method |
+| Runs | before `execute`, without ever touching the model | inside `save!` / `update!`, i.e. inside your model method |
 
 Both surface to the user, but **not identically**, and the difference should inform where you put a rule:
 
 - An **interaction** validation attaches to a declared attribute. The re-rendered modal shows it inline against that input, and again in the summary at the top of the form.
-- `failed(record.errors)` flattens `ActiveModel::Errors` into **full messages on `:base`** (`Array(errors)` calls `errors.to_a`, which is `full_messages`). Those land in the form's error summary only — never against a field — and they're phrased with the *model's* attribute names, which need not match your inputs.
+- `failed(record.errors)` flattens `ActiveModel::Errors` into **full messages on `:base`** (`Array(errors)` calls `errors.to_a`, which is `full_messages`). Those land in the form's error summary only, never against a field, and they're phrased with the *model's* attribute names, which need not match your inputs.
 
 So it is fine, and often right, to *duplicate* a cheap invariant as an interaction validation purely for the better error placement, while the model keeps the authoritative copy. What must not happen is the model-side copy going missing: the moment a job calls `post.publish!`, the interaction's validations are not in the picture at all.
 
@@ -268,7 +268,7 @@ def execute
 end
 ```
 
-This one is *correctly* inline. "Who clicked the button" is context the presentation layer holds and nothing else does — `current_user` is read straight off the `view_context`. A job has no answer for it, so there is no second caller to extract for.
+This one is *correctly* inline. "Who clicked the button" is context the presentation layer holds and nothing else does: `current_user` is read straight off the `view_context`. A job has no answer for it, so there is no second caller to extract for.
 
 ## Interaction types
 
@@ -306,7 +306,7 @@ class BulkArchiveInteraction < Plutonium::Resource::Interaction
 end
 ```
 
-`update_all` stays inline on purpose: it's a single-statement SQL update whose *whole point* is skipping per-record model machinery. If archiving means more than setting a column — callbacks, an audit row, a webhook — this is the wrong shape; call `resources.each(&:archive!)` and let the model own it.
+`update_all` stays inline on purpose: it's a single-statement SQL update whose *whole point* is skipping per-record model machinery. If archiving means more than setting a column (callbacks, an audit row, a webhook), this is the wrong shape; call `resources.each(&:archive!)` and let the model own it.
 
 Per-record authorization details in [Resource › Actions › Bulk action](/reference/resource/actions#bulk-action).
 
@@ -327,10 +327,10 @@ end
 
 ## Calling interactions directly
 
-The controller handles this for interactive actions. You can also call one by hand — chiefly in **tests**, where you're exercising the interaction itself.
+The controller handles this for interactive actions. You can also call one by hand, chiefly in **tests**, where you're exercising the interaction itself.
 
 ::: tip Needing this in a job or a rake task is the signal to refactor
-Both entry points require `view_context:`, and a job doesn't have one. If you find yourself reaching for a stub to satisfy it, you don't want the interaction — you want the model method it wraps. See [What an interaction is for](#what-an-interaction-is-for).
+Both entry points require `view_context:`, and a job doesn't have one. If you find yourself reaching for a stub to satisfy it, you don't want the interaction, you want the model method it wraps. See [What an interaction is for](#what-an-interaction-is-for).
 :::
 
 ### Class method
@@ -352,14 +352,14 @@ interaction = PublishPost.new(view_context: view_context, resource: post)
 outcome = interaction.call
 ```
 
-The `view_context:` argument is required — interactions use it to access controller helpers and the current user. It is also the boundary marker: everything reachable *only* through an interaction is reachable only from a page.
+The `view_context:` argument is required: interactions use it to access controller helpers and the current user. It is also the boundary marker: everything reachable *only* through an interaction is reachable only from a page.
 
 ## Immediate vs form
 
 | Interaction shape | Behavior |
 |---|---|
-| Only `:resource` / `:resources` (no extra `attribute` or `input`) | **Immediate** — browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom"` or `confirmation: false` on the action. |
-| Additional `attribute` / `input` declared | **Form** — renders modal form first; no auto-confirmation. |
+| Only `:resource` / `:resources` (no extra `attribute` or `input`) | **Immediate**: browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom"` or `confirmation: false` on the action. |
+| Additional `attribute` / `input` declared | **Form**: renders modal form first; no auto-confirmation. |
 
 See [Resource › Actions › Immediate vs form](/reference/resource/actions#immediate-vs-form).
 
@@ -368,15 +368,15 @@ See [Resource › Actions › Immediate vs form](/reference/resource/actions#imm
 `resource_url_for` with the `interaction:` kwarg. The action type (record / bulk / resource) is inferred from the element and the presence of `ids:`:
 
 ```ruby
-# Record action — instance argument
+# Record action: instance argument
 resource_url_for(@post, interaction: :publish)
 # => /posts/:id/record_actions/publish
 
-# Resource action — class, no ids
+# Resource action: class, no ids
 resource_url_for(Post, interaction: :import)
 # => /posts/resource_actions/import
 
-# Bulk action — class + ids
+# Bulk action: class + ids
 resource_url_for(Post, interaction: :archive, ids: [1, 2, 3])
 # => /posts/bulk_actions/archive?ids[]=1&ids[]=2&ids[]=3
 
@@ -384,11 +384,11 @@ resource_url_for(Post, interaction: :archive, ids: [1, 2, 3])
 resource_url_for(@post, parent: @user, interaction: :publish)
 ```
 
-The same URL serves GET (form/confirmation) and POST (commit) — the HTTP verb routes to the right controller action. Passing both `interaction:` and `action:` raises `ArgumentError`.
+The same URL serves GET (form/confirmation) and POST (commit), the HTTP verb routes to the right controller action. Passing both `interaction:` and `action:` raises `ArgumentError`.
 
 ## Complete example
 
-Inviting a user is a textbook second-caller case — a seats-provisioning job, an admin rake task and a signup API all need to send the same invitation. So the operation lives on `Company`, and the interaction is the button in front of it.
+Inviting a user is a textbook second-caller case: a seats-provisioning job, an admin rake task and a signup API all need to send the same invitation. So the operation lives on `Company`, and the interaction is the button in front of it.
 
 ```ruby
 # app/models/company.rb
@@ -419,7 +419,7 @@ class Company::InviteUserInteraction < Plutonium::Resource::Interaction
   input :email
   input :role, as: :select, choices: -> { UserInvite.roles.keys }
 
-  # Input shape — is this a readable email, is this a role that exists?
+  # Input shape: is this a readable email, is this a role that exists?
   validates :email, presence: true, format: {with: URI::MailTo::EMAIL_REGEXP}
   validates :role,  presence: true, inclusion: {in: UserInvite.roles.keys}
   validate  :not_already_invited
@@ -460,12 +460,12 @@ RSpec.describe PublishPost do
 end
 ```
 
-See [Testing](/reference/testing/) for Plutonium's built-in testing helpers — `ResourceInteraction` concern wraps these patterns.
+See [Testing](/reference/testing/) for Plutonium's built-in testing helpers. The `ResourceInteraction` concern wraps these patterns.
 
 ## Related
 
-- [Async Interactions](./async-interactions) — `async` a persisted run instead of running `execute` inline
-- [Resource › Actions](/reference/resource/actions) — registering interactions, inferred visibility, immediate vs form
-- [Policies](./policies) — `def <action>?` authorization methods
-- [Controllers](./controllers) — `resource_url_for(..., interaction: …)` URL generation
-- [UI › Forms](/reference/ui/forms) — customizing the modal form rendered for actions with inputs
+- [Async Interactions](./async-interactions): `async` a persisted run instead of running `execute` inline
+- [Resource › Actions](/reference/resource/actions): registering interactions, inferred visibility, immediate vs form
+- [Policies](./policies): `def <action>?` authorization methods
+- [Controllers](./controllers): `resource_url_for(..., interaction: …)` URL generation
+- [UI › Forms](/reference/ui/forms): customizing the modal form rendered for actions with inputs

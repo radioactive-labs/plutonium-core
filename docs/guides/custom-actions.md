@@ -1,6 +1,6 @@
 # Custom Actions
 
-Add buttons beyond CRUD — Publish, Archive, Import, Send invitation, Bulk-update, etc.
+Add buttons beyond CRUD: Publish, Archive, Import, Send invitation, Bulk-update, etc.
 
 ## Goal
 
@@ -10,17 +10,17 @@ A button appears in the right place (show page / table row / index header / bulk
 
 | Flavor | Use for |
 |---|---|
-| **Simple action** — navigate to a URL | Linking to external docs, jumping to a custom page that does its own thing |
-| **Interactive action** — run an interaction class | Anything that *does* something (the common case) |
+| **Simple action**: navigate to a URL | Linking to external docs, jumping to a custom page that does its own thing |
+| **Interactive action**: run an interaction class | Anything that *does* something (the common case) |
 
-Prefer interactive actions. They handle authorization, form rendering, modal chrome, success/failure messaging, and automatic redirects — all for free.
+Prefer interactive actions. They handle authorization, form rendering, modal chrome, success/failure messaging, and automatic redirects, all for free.
 
-## Quick recipe — interactive action
+## Quick recipe: interactive action
 
 ### 1. Write the interaction
 
 ```ruby
-# app/models/post.rb — what publishing actually means
+# app/models/post.rb: what publishing actually means
 class Post < ApplicationRecord
   def publish!(on: Time.current)
     update!(published: true, published_at: on)
@@ -29,7 +29,7 @@ end
 ```
 
 ```ruby
-# app/interactions/publish_post_interaction.rb — the button in front of it
+# app/interactions/publish_post_interaction.rb: the button in front of it
 class PublishPostInteraction < ResourceInteraction
   presents label: "Publish",
            icon:  Phlex::TablerIcons::Send,
@@ -51,7 +51,7 @@ Plutonium doesn't rescue it automatically. Always rescue when using `create!` / 
 :::
 
 ::: tip Why `publish!` is on the model
-An interaction can only be built with a `view_context` — it's a presentation object. A two-line `update!` inline in `execute` is fine while the button is the only caller; the moment a scheduled-publishing job wants the same behaviour it has to duplicate it or fake a view context. Full rule: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
+An interaction can only be built with a `view_context`; it's a presentation object. A two-line `update!` inline in `execute` is fine while the button is the only caller; the moment a scheduled-publishing job wants the same behaviour it has to duplicate it or fake a view context. Full rule: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
 :::
 
 ### 2. Register it in the definition
@@ -62,7 +62,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-Action visibility (record / bulk / resource) is **inferred** from the interaction's attributes — no need to declare `record_action: true`. See [Inferred visibility](#inferred-visibility) below.
+Action visibility (record / bulk / resource) is **inferred** from the interaction's attributes; no need to declare `record_action: true`. See [Inferred visibility](#inferred-visibility) below.
 
 ### 3. Add a policy method
 
@@ -88,7 +88,7 @@ For `interaction:`-based actions, visibility flags are inferred from the interac
 | `attribute :resources` (plural) | `bulk_action: true` → bulk toolbar |
 | neither | `resource_action: true` → index page header |
 
-User-supplied flags can only **opt OUT** of inferred ones. Don't try to "broaden" — the interaction's attribute shape is semantic:
+User-supplied flags can only **opt OUT** of inferred ones. Don't try to "broaden"; the interaction's attribute shape is semantic:
 
 ```ruby
 # Hide from per-row menu, keep on show page
@@ -127,7 +127,7 @@ class Company::InviteUserInteraction < ResourceInteraction
 end
 ```
 
-`Company#invite!` creates the row *and* sends the mail. Both are things a seat-provisioning job needs to do without a browser anywhere in sight — see the [full worked example](/reference/behavior/interactions#complete-example).
+`Company#invite!` creates the row *and* sends the mail. Both are things a seat-provisioning job needs to do without a browser anywhere in sight, see the [full worked example](/reference/behavior/interactions#complete-example).
 
 ## Bulk actions
 
@@ -146,7 +146,7 @@ class BulkArchiveInteraction < ResourceInteraction
 end
 ```
 
-Policy — checked **per record** (fails the whole request if any record is unauthorized):
+Policy: checked **per record** (fails the whole request if any record is unauthorized):
 
 ```ruby
 def bulk_archive?
@@ -181,13 +181,13 @@ class BulkArchiveInteraction < ResourceInteraction
 end
 ```
 
-Nothing else about the action changes — the definition, the policy method and the form are the same. Only the work moves.
+Nothing else about the action changes: the definition, the policy method and the form are the same. Only the work moves.
 
 Three things worth knowing:
 
 - **The block is the run's class body, not `execute`.** The work runs later, in a job with no controller, so it cannot close over anything in the interaction. Its inputs arrive through `options`.
 - **The user is sent back where they were**, and the index they land on shows a banner for the run with a link to its progress page.
-- **Permissions are re-checked per record, at perform time** — not replayed from dispatch. A permission revoked while the run is working stops applying to the rest of it.
+- **Permissions are re-checked per record, at perform time**: not replayed from dispatch. A permission revoked while the run is working stops applying to the rest of it.
 
 Full detail, including file attributes, failure policies and resuming a crashed run: [Async Interactions](/reference/behavior/async-interactions).
 
@@ -212,8 +212,8 @@ end
 
 ## Immediate vs form
 
-- **Immediate** — interaction has only `:resource` / `:resources` (no extra inputs). Browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom message"` or `confirmation: false` on the action.
-- **Form** — interaction has additional `attribute` / `input`. Renders modal form first; no auto-confirmation (the form is the confirmation).
+- **Immediate**: interaction has only `:resource` / `:resources` (no extra inputs). Browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom message"` or `confirmation: false` on the action.
+- **Form**: interaction has additional `attribute` / `input`. Renders modal form first; no auto-confirmation (the form is the confirmation).
 
 ## Action options
 
@@ -231,10 +231,10 @@ action :name,
 
   # Behavior
   confirmation: "Are you sure?",
-  modal: :slideover,                     # :slideover / :centered — overrides definition's modal mode
-  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full — overrides definition's modal size
+  modal: :slideover,                     # :slideover / :centered, overrides definition's modal mode
+  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full, overrides definition's modal size
 
-  # HTML attributes — author wins over the framework's on every key
+  # HTML attributes: author wins over the framework's on every key
   link:   {target: "_blank", rel: "noopener"},  # every <a> rendering (toolbar GET link, dropdown items, bulk links, card show link)
   button: {data: {analytics: "archive"}}        # the button_to <form> wrapper (non-GET toolbar rendering)
 ```
@@ -283,7 +283,7 @@ Every resource gets `:archive` automatically.
 
 ## Where the logic goes
 
-Interactions are presentation objects — they need a `view_context` to exist at all. So the reflex to reach for when an operation grows:
+Interactions are presentation objects: they need a `view_context` to exist at all. So the reflex to reach for when an operation grows:
 
 ```ruby
 # 🚫 Three interactions, three view contexts, none of it callable from a job
@@ -300,22 +300,22 @@ def execute
 end
 ```
 
-Sending a welcome email and writing an audit row are exactly what a signup API endpoint or a rake task also does — and neither has a view context to hand.
+Sending a welcome email and writing an audit row are exactly what a signup API endpoint or a rake task also does, and neither has a view context to hand.
 
-The rule isn't "never put logic in an interaction". A single-caller operation can stay inline in `execute`; don't pre-extract. **The second caller is the trigger** — and the destination is the model, Rails-style, not a new service layer. Chaining three interactions is usually the tell that you already crossed it. Full explanation: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
+The rule isn't "never put logic in an interaction". A single-caller operation can stay inline in `execute`; don't pre-extract. **The second caller is the trigger**, and the destination is the model, Rails-style, not a new service layer. Chaining three interactions is usually the tell that you already crossed it. Full explanation: [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
 
 ## Common issues
 
-- **Action button missing** — check the policy method (`def my_action?`). Undefined returns `false`.
-- **`ActiveRecord::RecordInvalid` crashes the action** — not rescued automatically. Wrap with `rescue`, return `failed(e.record.errors)`.
-- **Bulk action fails on some records** — that's by design. Bulk policy is checked per-record; if any fails, the whole request is rejected. Either fix authorization or pre-filter the selection.
-- **Confirmation prompt shows when you don't want one** — pass `confirmation: false` on the action.
-- **The action times out on a large selection** — the work is running inside the request. Move it to a background run with `async`, above.
+- **Action button missing**: check the policy method (`def my_action?`). Undefined returns `false`.
+- **`ActiveRecord::RecordInvalid` crashes the action**: not rescued automatically. Wrap with `rescue`, return `failed(e.record.errors)`.
+- **Bulk action fails on some records**: that's by design. Bulk policy is checked per-record; if any fails, the whole request is rejected. Either fix authorization or pre-filter the selection.
+- **Confirmation prompt shows when you don't want one**: pass `confirmation: false` on the action.
+- **The action times out on a large selection**: the work is running inside the request. Move it to a background run with `async`, above.
 
 ## Related
 
-- [Reference › Resource › Actions](/reference/resource/actions) — full action options and bulk patterns
-- [Reference › Behavior › Interactions](/reference/behavior/interactions) — interaction class anatomy
-- [Reference › Behavior › Async Interactions](/reference/behavior/async-interactions) — `async`, progress pages, resuming a crashed run
-- [Reference › Behavior › Policies](/reference/behavior/policies) — `def <action>?` methods
-- [Authorization](./authorization) — policy patterns
+- [Reference › Resource › Actions](/reference/resource/actions): full action options and bulk patterns
+- [Reference › Behavior › Interactions](/reference/behavior/interactions): interaction class anatomy
+- [Reference › Behavior › Async Interactions](/reference/behavior/async-interactions): `async`, progress pages, resuming a crashed run
+- [Reference › Behavior › Policies](/reference/behavior/policies): `def <action>?` methods
+- [Authorization](./authorization): policy patterns

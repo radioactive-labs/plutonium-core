@@ -15,7 +15,7 @@ Plutonium's `pu:*` CLI generators. Discoverable via `rails g pu:<tab>`. Always p
 | [`pu:rodauth:install`](#pu-rodauth-install) | Install Rodauth base |
 | [`pu:rodauth:account`](#pu-rodauth-account) | Basic Rodauth account |
 | [`pu:rodauth:admin`](#pu-rodauth-admin) | Hardened admin account (2FA, lockout, audit) |
-| [`pu:saas:setup`](#pu-saas-setup) | **Meta** — user + entity + membership + portal + profile + welcome + invites |
+| [`pu:saas:setup`](#pu-saas-setup) | **Meta**: user + entity + membership + portal + profile + welcome + invites |
 | [`pu:saas:user`](#individual-saas-generators) | Individual: SaaS user account |
 | [`pu:saas:entity`](#individual-saas-generators) | Individual: entity model |
 | [`pu:saas:membership`](#individual-saas-generators) | Individual: membership join model |
@@ -23,7 +23,7 @@ Plutonium's `pu:*` CLI generators. Discoverable via `rails g pu:<tab>`. Always p
 | [`pu:saas:welcome`](#individual-saas-generators) | Individual: onboarding / select-entity flow |
 | [`pu:saas:api_client`](#pu-saas-api-client) | API client for M2M auth |
 | [`pu:profile:install`](#pu-profile-install) | Profile resource + security section |
-| [`pu:profile:setup`](#pu-profile-setup) | Meta — `pu:profile:install` + `pu:profile:conn` |
+| [`pu:profile:setup`](#pu-profile-setup) | Meta: `pu:profile:install` + `pu:profile:conn` |
 | [`pu:profile:conn`](#pu-profile-conn) | Connect profile to a portal as a singular resource |
 | [`pu:invites:install`](#pu-invites-install) | User invitations package |
 | [`pu:invites:invitable`](#pu-invites-invitable) | Mark a model as invitable |
@@ -52,11 +52,11 @@ rails g pu:res:scaffold Post user:belongs_to title:string 'content:text?' --dest
 
 | Option | Description |
 |---|---|
-| `--dest=NAME` | Destination package (`main_app` or `<package>`) — required for unattended runs |
+| `--dest=NAME` | Destination package (`main_app` or `<package>`), required for unattended runs |
 | `--no-model` | Skip model file (for existing models) |
 | `--no-migration` | Skip migration (use with `--no-model` for existing schema) |
 
-Field type syntax — full reference in [Resource › Model](/reference/resource/model). Quick recap:
+Field type syntax: full reference in [Resource › Model](/reference/resource/model). Quick recap:
 
 ```bash
 'name:string'              # required string
@@ -98,7 +98,7 @@ See [Portals › Connecting resources](./portals#connecting-resources-pu-res-con
 
 ### `pu:pkg:package`
 
-Feature package — models, policies, definitions, interactions.
+Feature package: models, policies, definitions, interactions.
 
 ```bash
 rails g pu:pkg:package blogging
@@ -108,7 +108,7 @@ See [Packages › Feature packages](./packages#feature-packages).
 
 ### `pu:pkg:portal`
 
-Portal package — controllers, views, routes, auth.
+Portal package: controllers, views, routes, auth.
 
 ```bash
 rails g pu:pkg:portal admin --auth=user
@@ -122,7 +122,7 @@ rails g pu:pkg:portal admin --auth=admin --scope=Organization
 | `--byo` | Bring your own auth |
 | `--scope=CLASS` | Entity class for multi-tenancy |
 
-See [Portals › Creating a portal](./portals#creating-a-portal).
+The generator also mounts the engine at `/<name>` in `packages/<name>_portal/config/routes.rb`. Don't mount it again in `config/routes.rb`; edit `at:` there to change the path. See [Portals › Mounting](./portals#mounting).
 
 ---
 
@@ -130,7 +130,7 @@ See [Portals › Creating a portal](./portals#creating-a-portal).
 
 ### `pu:rodauth:install`
 
-Install the Rodauth base — Roda app, base plugin, controller, layout, PostgreSQL extension migration.
+Install the Rodauth base: Roda app, base plugin, controller, layout, PostgreSQL extension migration.
 
 ```bash
 rails g pu:rodauth:install
@@ -151,7 +151,7 @@ For full option tables (features, defaults, individual feature flags) see [Auth 
 
 ### `pu:rodauth:admin`
 
-Hardened admin account — pre-configured with multi-phase login, required TOTP, recovery codes, lockout, active sessions, audit logging, role-based access, invite interaction, and **no public signup**.
+Hardened admin account: pre-configured with multi-phase login, required TOTP, recovery codes, lockout, active sessions, audit logging, role-based access, invite interaction, and **no public signup**.
 
 ```bash
 rails g pu:rodauth:admin admin
@@ -196,7 +196,7 @@ rails g pu:saas:setup --user Customer --entity Organization \
 | `--user=NAME` | (required) | User account model name |
 | `--entity=NAME` | (required) | Entity model name |
 | `--allow-signup` | `true` | Allow public registration |
-| `--roles` | `admin,member` | Additional roles — **`owner` always prepended as index 0** |
+| `--roles` | `admin,member` | Additional roles: **`owner` always prepended as index 0** |
 | `--skip-entity` | | Skip entity model generation |
 | `--skip-membership` | | Skip membership model generation |
 | `--user-attributes` | | Additional user model attributes |
@@ -271,7 +271,7 @@ rails g pu:profile:install AccountSettings bio:text --dest=main_app   # custom r
 
 ### `pu:profile:setup`
 
-Meta — runs `pu:profile:install` + `pu:profile:conn` in one shot.
+Meta: runs `pu:profile:install` + `pu:profile:conn` in one shot.
 
 ```bash
 rails g pu:profile:setup date_of_birth:date bio:text \
@@ -281,7 +281,7 @@ rails g pu:profile:setup date_of_birth:date bio:text \
 
 ### `pu:profile:conn`
 
-Connect the profile resource to a portal as a **singular** resource (registers `/profile` and the `profile_url` helper).
+Connect the profile resource to a portal as a **singular** resource (registers `/profile` and overrides the `profile_url` helper in the portal's controller concern). It also generates a user-scoped portal policy (`create? = user.profile.nil?`, `update? = true`, `destroy? = false`) and a `ShowPage` that renders the `SecuritySection`. See [Auth › Profile](/reference/auth/profile#what-pu-profile-conn-generates).
 
 ```bash
 rails g pu:profile:conn --dest=customer_portal
@@ -310,7 +310,7 @@ rails g pu:invites:install --entity-model=Organization --user-model=Customer --i
 | `--enforce-domain` | `false` | Require email domain to match entity |
 | `--dest=PACKAGE` | `main_app` | Package where the entity model lives (controls where `invite_user_interaction.rb` is generated) |
 
-Multiple invite flows are supported — run `pu:invites:install` once per flow.
+Multiple invite flows are supported; run `pu:invites:install` once per flow.
 
 ### `pu:invites:invitable`
 
@@ -398,7 +398,7 @@ rails g pu:test:install
 
 ### `pu:test:scaffold`
 
-Scaffold integration tests — one file per (resource × portal) pairing.
+Scaffold integration tests: one file per (resource × portal) pairing.
 
 ```bash
 rails g pu:test:scaffold Blogging::Post --portals=admin,org
@@ -432,7 +432,7 @@ rails g pu:skills:sync
 ### Full app setup
 
 ```bash
-# 1. Plutonium template (greenfield) — does all initial setup
+# 1. Plutonium template (greenfield): does all initial setup
 rails new myapp -a propshaft -j esbuild -c tailwind \
   -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 
@@ -505,13 +505,13 @@ Generators run from Rails root. Package names are case-sensitive.
 
 ### Migration already exists
 
-If a migration with the same timestamp exists, wait a second and retry — Rails generates timestamps to one-second resolution.
+If a migration with the same timestamp exists, wait a second and retry; Rails generates timestamps to one-second resolution.
 
 ## Related
 
-- [Packages](./packages) — feature vs portal package structure
-- [Portals](./portals) — portal configuration and resource connection
-- [Resource › Model](/reference/resource/model) — field-type syntax for `pu:res:scaffold`
-- [Auth](/reference/auth/) — account type configuration
-- [Tenancy](/reference/tenancy/) — multi-tenancy and invitations
-- [Testing](/reference/testing/) — test scaffolding
+- [Packages](./packages): feature vs portal package structure
+- [Portals](./portals): portal configuration and resource connection
+- [Resource › Model](/reference/resource/model): field-type syntax for `pu:res:scaffold`
+- [Auth](/reference/auth/): account type configuration
+- [Tenancy](/reference/tenancy/): multi-tenancy and invitations
+- [Testing](/reference/testing/): test scaffolding

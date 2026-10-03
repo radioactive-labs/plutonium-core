@@ -20,7 +20,7 @@ Then scaffold a resource, create a portal, and connect them:
 ```bash
 cd myapp
 
-# Scaffold a resource — model, migration, definition, policy
+# Scaffold a resource: model, migration, definition, policy
 rails g pu:res:scaffold Post title:string body:text published_at:datetime --dest=main_app
 rails db:prepare
 
@@ -31,7 +31,7 @@ rails g pu:res:conn Post --dest=app_portal
 bin/dev
 ```
 
-Visit `http://localhost:3000/app/posts` — you have a complete CRUD interface.
+Visit `http://localhost:3000/app/posts`: you have a complete CRUD interface.
 
 ## What You Stop Writing
 
@@ -44,7 +44,7 @@ rails g pu:res:scaffold Post ...       # Plutonium: full CRUD + search + filters
 
 And it doesn't stop at scaffolds:
 
-**Resource-oriented architecture** — models, policies, definitions, and controllers that work together:
+**Resource-oriented architecture**: models, policies, definitions, and controllers that work together:
 
 ```ruby
 # Policy controls WHO can do WHAT
@@ -66,7 +66,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-**Packages and portals** — split your app into feature engines and themed web interfaces:
+**Packages and portals**: split your app into feature engines and themed web interfaces:
 
 ```bash
 rails g pu:pkg:package blogging      # Business logic
@@ -107,10 +107,10 @@ end
 
 ## Why Plutonium
 
-- **Convention over configuration** — extended to resources, policies, portals, and tenancy, not just routes and views.
-- **It's just Rails** — generated code lives in your repo. Edit it, override it, delete it. The "magic" is regular Ruby mixins you can read.
-- **Multi-tenant ready** — path or domain tenancy, scoped relations, invites and memberships out of the box.
-- **AI-readable** — predictable file layout and naming, plus built-in [Claude Code skills](.claude/skills) that teach AI assistants the patterns.
+- **Convention over configuration**: extended to resources, policies, portals, and tenancy, not just routes and views.
+- **It's just Rails**: generated code lives in your repo. Edit it, override it, delete it. The "magic" is regular Ruby mixins you can read.
+- **Multi-tenant ready**: path or domain tenancy, scoped relations, invites and memberships out of the box.
+- **AI-readable**: predictable file layout and naming, plus built-in [Claude Code skills](.claude/skills) that teach AI assistants the patterns.
 
 ## Documentation
 
@@ -133,4 +133,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-MIT License — see [LICENSE.txt](LICENSE.txt).
+MIT License, see [LICENSE.txt](LICENSE.txt).
