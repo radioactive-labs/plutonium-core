@@ -971,7 +971,7 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   @apply flex items-center p-4 mb-4 rounded-lg;
 }
 .dark .pu-alert {
-  @apply bg-stone-300;
+  @apply bg-gray-800;
 }
 
 .pu-alert-message {
@@ -982,7 +982,7 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   @apply ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8;
 }
 .dark .pu-alert-close {
-  @apply bg-stone-300 hover:bg-gray-700;
+  @apply bg-gray-800 hover:bg-gray-700;
 }
 
 /* --- Variants: success / warning / danger / info ---
