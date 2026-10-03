@@ -4,10 +4,10 @@ Token-based email invitations for multi-tenant onboarding. Integrates with Rodau
 
 ## 🚨 Critical
 
-- **Invite email must match the accepting user's email.** Security feature — don't disable `enforce_email?` lightly.
-- **Entity scoping applies to invites** — invites are automatically filtered to the current entity (their model has `belongs_to :entity`).
+- **Invite email must match the accepting user's email.** Security feature; don't disable `enforce_email?` lightly.
+- **Entity scoping applies to invites.** Invites are automatically filtered to the current entity (their model has `belongs_to :entity`).
 - **Invitables must implement `on_invite_accepted`.** Without it, the invitable never learns about the new user.
-- **A single app can have multiple invite flows** — run `pu:invites:install` once per flow with different `--entity-model` / `--user-model` / `--invite-model`.
+- **A single app can have multiple invite flows.** Run `pu:invites:install` once per flow with different `--entity-model` / `--user-model` / `--invite-model`.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ Before installing invites, you need:
 2. An entity model (Organization, Company, Team, …)
 3. A membership model linking users to entities
 
-The fastest path is `pu:saas:setup` — it creates all three plus the SaaS portal, profile, welcome flow, and invites in one shot:
+The fastest path is `pu:saas:setup`, which creates all three plus the SaaS portal, profile, welcome flow, and invites in one shot:
 
 ```bash
 rails g pu:saas:setup --user Customer --entity Organization
@@ -41,7 +41,7 @@ rails generate pu:invites:install
 | `--enforce-domain` | `false` | Require invited email domain to match entity domain |
 
 ::: info Roles come from the membership model
-The role list is read from the membership model's `enum :role` — there is no `--roles=` flag on `pu:invites:install`. Set roles when generating the membership model (`pu:saas:membership --roles=...`) or edit its enum directly. **Index 0 is the most privileged** (typically `owner`, which the invite UI excludes from selectable choices); new invitees default to the second role.
+The role list is read from the membership model's `enum :role`; there is no `--roles=` flag on `pu:invites:install`. Set roles when generating the membership model (`pu:saas:membership --roles=...`) or edit its enum directly. **Index 0 is the most privileged** (typically `owner`, which the invite UI excludes from selectable choices); new invitees default to the second role.
 :::
 
 Example with custom models:
@@ -166,7 +166,7 @@ configure do
 end
 ```
 
-## Invitables — app models notified on accept
+## Invitables: app models notified on accept
 
 An "invitable" is an app model that triggers invitations and gets notified when one is accepted. Examples: `Tenant`, `TeamMember`, `ProjectCollaborator`.
 
@@ -200,14 +200,14 @@ end
 ```
 
 ::: warning Without `on_invite_accepted`
-The invitable never learns about the new user — the invite is consumed but your app doesn't update its state.
+The invitable never learns about the new user; the invite is consumed but your app doesn't update its state.
 :::
 
 ## Multiple invite flows
 
 A single app can have several independent invite flows side-by-side (e.g. one for inviting customers to organizations, another for inviting funders to projects). Run `pu:invites:install` once per flow.
 
-**Default name derivation:** when `--invite-model` is omitted, the class is `<EntityModel><UserModel>Invite`. So with the defaults (`--entity-model=Organization --user-model=User`) the generated class is `Invites::OrganizationUserInvite` — there is no literal `UserInvite` default. Single-flow apps don't need `--invite-model`.
+**Default name derivation:** when `--invite-model` is omitted, the class is `<EntityModel><UserModel>Invite`. So with the defaults (`--entity-model=Organization --user-model=User`) the generated class is `Invites::OrganizationUserInvite`; there is no literal `UserInvite` default. Single-flow apps don't need `--invite-model`.
 
 ```bash
 rails g pu:invites:install \
@@ -288,7 +288,7 @@ Override views in your package:
 
 ### Per-invitable templates
 
-When you generate an invitable with `--email-templates`, you get per-invitable mailer views — useful for differentiating "Join as a team member" from "Join as a project collaborator".
+When you generate an invitable with `--email-templates`, you get per-invitable mailer views, useful for differentiating "Join as a team member" from "Join as a project collaborator".
 
 ### Custom validation
 
@@ -319,7 +319,7 @@ Requires the invited email's domain to match the entity's domain.
 
 ### Custom roles
 
-Roles are defined on the membership model, not on the invites generator. Set them at membership generation time (ordering matters — **index 0 is the most privileged**, typically `owner`):
+Roles are defined on the membership model, not on the invites generator. Set them at membership generation time (ordering matters: **index 0 is the most privileged**, typically `owner`):
 
 ```bash
 rails g pu:saas:membership --user Customer --entity Organization --roles=admin,editor,viewer
@@ -366,11 +366,11 @@ entity.user_invites.pending
 
 ### Token security
 
-Tokens use `SecureRandom.urlsafe_base64(32)` — 256 bits, URL-safe. Stored hashed in the DB; raw token shown only at creation (in the email).
+Tokens use `SecureRandom.urlsafe_base64(32)`: 256 bits, URL-safe. Stored hashed in the DB; raw token shown only at creation (in the email).
 
 ### Email validation
 
-`enforce_email?` is `true` by default. The accepting user's email must match the invited email — prevents account hijacking via invite forwarding.
+`enforce_email?` is `true` by default. The accepting user's email must match the invited email, which prevents account hijacking via invite forwarding.
 
 To allow any email (NOT recommended):
 
@@ -387,14 +387,14 @@ Use Rack::Attack or similar to throttle:
 
 ## Common issues
 
-- **"Invitation not found or expired"** — token expired (default 1 week), invite cancelled, or no longer in `pending` state.
-- **Email mismatch error** — the accepting user's email doesn't match the invited email. `enforce_email?` is enforcing the match (this is intentional security).
-- **Rodauth redirect after login doesn't go to `/welcome`** — check the `login_redirect "/welcome"` line in the rodauth plugin's `configure` block.
-- **`on_invite_accepted` not called** — ensure the invitable model `include Plutonium::Invites::Concerns::Invitable` and defines `on_invite_accepted`.
+- **"Invitation not found or expired"**: token expired (default 1 week), invite cancelled, or no longer in `pending` state.
+- **Email mismatch error**: the accepting user's email doesn't match the invited email. `enforce_email?` is enforcing the match (this is intentional security).
+- **Rodauth redirect after login doesn't go to `/welcome`**: check the `login_redirect "/welcome"` line in the rodauth plugin's `configure` block.
+- **`on_invite_accepted` not called**: ensure the invitable model `include Plutonium::Invites::Concerns::Invitable` and defines `on_invite_accepted`.
 
 ## Related
 
-- [Entity scoping](./entity-scoping) — how invites are filtered to the current entity
-- [Auth](/reference/auth/) — Rodauth account configuration
-- [Behavior › Interactions](/reference/behavior/interactions) — `cancel_invite_interaction`, `resend_invite_interaction`
-- [Guides › User invites](/guides/user-invites) — task-oriented walkthrough
+- [Entity scoping](./entity-scoping): how invites are filtered to the current entity
+- [Auth](/reference/auth/): Rodauth account configuration
+- [Behavior › Interactions](/reference/behavior/interactions): `cancel_invite_interaction`, `resend_invite_interaction`
+- [Guides › User invites](/guides/user-invites): task-oriented walkthrough

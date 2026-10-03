@@ -20,7 +20,7 @@ Index pages, kanban boards and CSV exports already eager-load the associations a
 
 Each rendering passes its own field set, because they differ: the index renders its permitted attributes, an export renders `permitted_attributes_for_export`, and a kanban card renders its `card_fields`.
 
-It covers every association kind — `belongs_to`, `has_one`, `has_many` — and attachments on both ActiveStorage and Shrine.
+It covers every association kind (`belongs_to`, `has_one`, `has_many`) and attachments on both ActiveStorage and Shrine.
 
 Turn it off globally:
 
@@ -99,6 +99,6 @@ Those need to leave the request rather than be optimised inside it. An interacti
 
 ## Related
 
-- **Search fallback.** A resource with no `search` block falls back to a leading-wildcard `LIKE`, which cannot use a b-tree index. Write an explicit `search` block for large tables — see [Resource › Query](/reference/resource/query#search).
+- **Search fallback.** A resource with no `search` block falls back to a leading-wildcard `LIKE`, which cannot use a b-tree index. Write an explicit `search` block for large tables; see [Resource › Query](/reference/resource/query#search).
 - **Page size.** Query cost scales with rows per page.
-- [Async Interactions](/reference/behavior/async-interactions) — moving slow work out of the request
+- [Async Interactions](/reference/behavior/async-interactions): moving slow work out of the request

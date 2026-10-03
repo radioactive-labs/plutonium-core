@@ -1,25 +1,25 @@
 # Controller
 
-Plutonium controllers ship full CRUD out of the box; nearly all customization belongs elsewhere. The controller stays thin — when in doubt, push the change to the definition (UI) or the policy (auth).
+Plutonium controllers ship full CRUD out of the box; nearly all customization belongs elsewhere. The controller stays thin; when in doubt, push the change to the definition (UI) or the policy (auth).
 
 ## 🚨 Critical
 
 - **Don't override CRUD actions.** Use hooks (`resource_params`, `redirect_url_after_submit`, presentation hooks). Overriding `create` / `update` usually breaks authorization, params filtering, or both.
-- **Named custom routes only.** Always pass `as:` — without it, `resource_url_for` can't build URLs (critical for nested resources).
-- **Authorization is verified after every action** — if you write a custom action, you MUST call `authorize_current!` yourself or use `skip_verify_authorize_current` / `skip_verify_authorize_current!`.
+- **Named custom routes only.** Always pass `as:`. Without it, `resource_url_for` can't build URLs (critical for nested resources).
+- **Authorization is verified after every action.** If you write a custom action, you MUST call `authorize_current!` yourself or use `skip_verify_authorize_current` / `skip_verify_authorize_current!`.
 - **Cross-resource queries: use `authorized_resource_scope(OtherModel)`, not raw `where`.** Otherwise you bypass that resource's tenancy and visibility rules.
 
 ## Base classes
 
 ```ruby
-# app/controllers/resource_controller.rb — installed once
+# app/controllers/resource_controller.rb (installed once)
 class ResourceController < ApplicationController
   include Plutonium::Resource::Controller
 end
 
-# app/controllers/posts_controller.rb — per resource, generated
+# app/controllers/posts_controller.rb (per resource, generated)
 class PostsController < ::ResourceController
-  # Empty — all CRUD inherited
+  # Empty: all CRUD inherited
 end
 ```
 
@@ -59,10 +59,10 @@ Plus interactive-action routes for every action declared in the definition (`/po
 |---|---|
 | Field rendering (inputs, displays, columns) | [Definition](/reference/resource/definition) |
 | Search, filters, scopes, sorting | [Query](/reference/resource/query) |
-| Custom operations (publish, archive, import) — the *button* | [Interaction](./interactions) + action on definition |
-| The operation itself, once a job/API/task also needs it | The **model** — see [Interactions › What an interaction is for](./interactions#what-an-interaction-is-for) |
+| Custom operations (publish, archive, import): the *button* | [Interaction](./interactions) + action on definition |
+| The operation itself, once a job/API/task also needs it | The **model**, see [Interactions › What an interaction is for](./interactions#what-an-interaction-is-for) |
 | Authorization rules | [Policy](./policies) |
-| Form / show / page chrome | Definition (custom page classes — see [UI › Pages](/reference/ui/pages)) |
+| Form / show / page chrome | Definition (custom page classes, see [UI › Pages](/reference/ui/pages)) |
 | **Custom redirect logic** | **[Controller hook](#redirect-hooks)** |
 | **Param munging** | **[Controller hook](#parameter-hook)** |
 | **Custom index query shape** | **[Controller hook](#index-query-hook)** |
@@ -128,7 +128,7 @@ def present_scoped_entity?  = true
 def submit_scoped_entity?   = true
 ```
 
-Conditional pattern — show parent only when accessed standalone:
+Conditional pattern: show parent only when accessed standalone:
 
 ```ruby
 def present_parent?
@@ -156,9 +156,9 @@ end
 
 ## Custom actions
 
-Prefer **interactive actions** (definition + interaction — see [Resource › Actions](/reference/resource/actions)) for anything a user triggers from a page: you get the button, the policy check, the form, and the flash for free. The only reasons to hand-write a controller action: unusual response shapes, external service callbacks, etc.
+Prefer **interactive actions** (definition + interaction, see [Resource › Actions](/reference/resource/actions)) for anything a user triggers from a page: you get the button, the policy check, the form, and the flash for free. The only reasons to hand-write a controller action: unusual response shapes, external service callbacks, etc.
 
-Either way the *operation* should be a named method on the model — that's what keeps it reachable from a job or an API. The controller and the interaction are two different front doors to the same `post.publish!`.
+Either way the *operation* should be a named method on the model; that's what keeps it reachable from a job or an API. The controller and the interaction are two different front doors to the same `post.publish!`.
 
 ```ruby
 class PostsController < ::ResourceController
@@ -179,7 +179,7 @@ end
 ```
 
 ::: warning Always name custom routes
-Without `as:`, `resource_url_for` can't build the URL — particularly critical for nested resources.
+Without `as:`, `resource_url_for` can't build the URL, which is particularly critical for nested resources.
 :::
 
 ## Key methods
@@ -206,10 +206,10 @@ permitted_attributes                        # Allowed attributes for the current
 current_authorized_scope                    # Scoped collection the user can access
 ```
 
-**Other resources** — cross-resource auth. Use these, NOT raw `where` / `find`:
+**Other resources**: cross-resource auth. Use these, NOT raw `where` / `find`:
 
 ```ruby
-authorize! other_record, to: :show?         # ActionPolicy — raises if denied
+authorize! other_record, to: :show?         # ActionPolicy: raises if denied
 allowed_to?(:show?, other_record)           # Boolean check
 policy_for(OtherModel)                      # Policy instance for class or record
 policy_for(other_record).show?
@@ -219,7 +219,7 @@ authorized_resource_scope(OtherModel, relation: OtherModel.published)  # On a re
 authorized_resource_scope(OtherModel, type: :create)             # Different action
 ```
 
-`authorized_resource_scope` applies the *other* resource's `relation_scope` AND the current policy context (entity scope, etc.). **Always prefer it over `OtherModel.all` / raw `where`** in cross-resource controller code — otherwise you bypass that resource's tenancy and visibility rules.
+`authorized_resource_scope` applies the *other* resource's `relation_scope` AND the current policy context (entity scope, etc.). **Always prefer it over `OtherModel.all` / raw `where`** in cross-resource controller code; otherwise you bypass that resource's tenancy and visibility rules.
 
 ### Definition access
 
@@ -268,7 +268,7 @@ current_nested_association  # :posts
 parent_input_param          # :user
 ```
 
-The nesting is declared by the route, not inferred from the URL: each nested route carries the key of its own registration, and `current_parent_class` / `current_nested_association` read it back. (There is no `parent_route_param` — the id parameter is derived from the parent's own route, and a singular parent contributes none at all.)
+The nesting is declared by the route, not inferred from the URL: each nested route carries the key of its own registration, and `current_parent_class` / `current_nested_association` read it back. (There is no `parent_route_param`; the id parameter is derived from the parent's own route, and a singular parent contributes none at all.)
 
 Parent fields are excluded from forms/displays by default. Toggle with the [presentation hooks](#presentation-hooks).
 
@@ -295,7 +295,7 @@ Plutonium auto-detects which `belongs_to` association points to the scoped class
 # Portal config
 scope_to_entity Competition::Team, param_key: :team
 
-# Model — association name differs from param_key, but Plutonium finds by class
+# Model: association name differs from param_key, but Plutonium finds by class
 class Match < ApplicationRecord
   belongs_to :competition_team
 end
@@ -327,14 +327,14 @@ Full mechanics in [Tenancy › Entity scoping](/reference/tenancy/entity-scoping
 After-action callbacks ensure authorization happened:
 
 ```ruby
-verify_authorize_current         # all actions — `authorize_current!` must have been called
-verify_current_authorized_scope  # all except :new and :create — scope must have been loaded
+verify_authorize_current         # all actions: `authorize_current!` must have been called
+verify_current_authorized_scope  # all except :new and :create: scope must have been loaded
 ```
 
 Skip only when handling auth manually. Two forms:
 
 ```ruby
-# Class-level — across multiple actions
+# Class-level: across multiple actions
 class PostsController < ::ResourceController
   skip_verify_authorize_current only: [:preview]
   skip_verify_current_authorized_scope only: [:preview]
@@ -344,7 +344,7 @@ class PostsController < ::ResourceController
   end
 end
 
-# Per-action — bang methods, inside the action body
+# Per-action: bang methods, inside the action body
 def preview
   skip_verify_authorize_current!
   skip_verify_current_authorized_scope!
@@ -352,7 +352,7 @@ def preview
 end
 ```
 
-Prefer the per-action bang form when only one action skips — keeps the exception co-located with the code that needs it.
+Prefer the per-action bang form when only one action skips, which keeps the exception co-located with the code that needs it.
 
 ## Response formats
 
@@ -401,8 +401,8 @@ See [App › Portals](/reference/app/portals) for the full portal controller sto
 
 ## Related
 
-- [Policies](./policies) — authorization called from controllers
-- [Interactions](./interactions) — business logic for custom actions
-- [Resource › Definition](/reference/resource/definition) — UI config (where most "controller-like" tweaks belong)
-- [Resource › Actions](/reference/resource/actions) — registering interactive actions
-- [Tenancy › Nested resources](/reference/tenancy/nested-resources) — parent/child routing
+- [Policies](./policies): authorization called from controllers
+- [Interactions](./interactions): business logic for custom actions
+- [Resource › Definition](/reference/resource/definition): UI config (where most "controller-like" tweaks belong)
+- [Resource › Actions](/reference/resource/actions): registering interactive actions
+- [Tenancy › Nested resources](/reference/tenancy/nested-resources): parent/child routing

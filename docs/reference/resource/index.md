@@ -1,14 +1,14 @@
 # Resource Reference
 
-A **resource** is the unit Plutonium gives you full CRUD for — list, show, create, edit, delete — automatically. It's four cooperating layers, plus an optional fifth for business logic.
+A **resource** is the unit Plutonium gives you full CRUD for (list, show, create, edit, delete) automatically. It's four cooperating layers, plus an optional fifth for business logic.
 
 | Layer | File | What it controls |
 |---|---|---|
 | [Model](./model) | `app/models/post.rb` | Data, validations, associations |
-| [Definition](./definition) | `app/definitions/post_definition.rb` | UI — which fields, how they render, what actions exist |
-| Policy | `app/policies/post_policy.rb` | Authorization — see [Behavior › Policy](/reference/behavior/policies) |
-| Controller | `app/controllers/posts_controller.rb` | Request handling — see [Behavior › Controller](/reference/behavior/controllers) |
-| Interaction *(optional)* | `app/interactions/publish_post_interaction.rb` | Business logic for custom actions — see [Behavior › Interaction](/reference/behavior/interactions) |
+| [Definition](./definition) | `app/definitions/post_definition.rb` | UI: which fields, how they render, what actions exist |
+| Policy | `app/policies/post_policy.rb` | Authorization: see [Behavior › Policy](/reference/behavior/policies) |
+| Controller | `app/controllers/posts_controller.rb` | Request handling: see [Behavior › Controller](/reference/behavior/controllers) |
+| Interaction *(optional)* | `app/interactions/publish_post_interaction.rb` | Business logic for custom actions, see [Behavior › Interaction](/reference/behavior/interactions) |
 
 ## How a resource is born
 
@@ -22,7 +22,7 @@ That single scaffold gives you a working model + migration + controller + policy
 
 ## Auto-detection is the default
 
-Plutonium reads your model and renders every attribute automatically — type, label, form widget, display formatter, table column. You only declare overrides:
+Plutonium reads your model and renders every attribute automatically: type, label, form widget, display formatter, table column. You only declare overrides:
 
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
@@ -33,20 +33,20 @@ end
 ```
 
 ::: warning Don't declare for completeness
-A `field :title` with no options that matches what Plutonium would auto-detect is **dead code** — it does nothing and clutters the file. Declare ONLY when you need a different type, an option, a `condition:`, a block, or a custom component.
+A `field :title` with no options that matches what Plutonium would auto-detect is **dead code**; it does nothing and clutters the file. Declare ONLY when you need a different type, an option, a `condition:`, a block, or a custom component.
 :::
 
 ## Sub-pages
 
-- [Model](./model) — `Plutonium::Resource::Record`, `has_cents`, SGID, custom routing, labeling
-- [Definition](./definition) — fields, inputs, displays, columns, page chrome, metadata panel, index views
-- [Query](./query) — search, filters, scopes, sorting
-- [Actions](./actions) — custom actions, bulk actions, interaction integration
-- [Positioning & drag-to-reorder](./positioning) — `positioned_on`, `position_on`, the drag grip, `reposition?`
-- [CSV Export](./export) — streamed export, opt-in through the policy
+- [Model](./model): `Plutonium::Resource::Record`, `has_cents`, SGID, custom routing, labeling
+- [Definition](./definition): fields, inputs, displays, columns, page chrome, metadata panel, index views
+- [Query](./query): search, filters, scopes, sorting
+- [Actions](./actions): custom actions, bulk actions, interaction integration
+- [Positioning & drag-to-reorder](./positioning): `positioned_on`, `position_on`, the drag grip, `reposition?`
+- [CSV Export](./export): streamed export, opt-in through the policy
 
 ## Related
 
-- [Guides › Adding Resources](/guides/adding-resources) — task recipe
-- [App › Generators](/reference/app/generators) — `pu:res:scaffold` / `pu:res:conn` reference
-- [Tenancy](/reference/tenancy/) — multi-tenant scoping
+- [Guides › Adding Resources](/guides/adding-resources): task recipe
+- [App › Generators](/reference/app/generators): `pu:res:scaffold` / `pu:res:conn` reference
+- [Tenancy](/reference/tenancy/): multi-tenant scoping

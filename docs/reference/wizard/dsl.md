@@ -1,37 +1,37 @@
 # Wizard DSL
 
 ::: warning Experimental
-Wizards are experimental — the DSL and behavior may change in a future release.
+Wizards are experimental, the DSL and behavior may change in a future release.
 :::
 
-A wizard is a Ruby class — `class X < Plutonium::Wizard::Base`. It declares ordered `step`s, an optional terminal `review` step, wizard-level options, and an `execute` commit hook. This page is the full reference for the author-facing DSL.
+A wizard is a Ruby class, `class X < Plutonium::Wizard::Base`. It declares ordered `step`s, an optional terminal `review` step, wizard-level options, and an `execute` commit hook. This page is the full reference for the author-facing DSL.
 
 For task-oriented walkthroughs, start with the [Wizards guide](/guides/wizards).
 
 ## 🚨 Critical
 
-- **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a raised exception — a non-bang `false` return advances the wizard and silently loses data.
+- **Use bang methods** (`create!`/`update!`/`save!`) in `on_submit` and `execute`. Failure is signalled by a raised exception, a non-bang `false` return advances the wizard and silently loses data.
 - **`condition:` lambdas must be nil-safe.** They run against the typed `data` snapshot at every transition, including before their deciding step is filled (`nil`).
 - **`review` must be the last step.** Declaring a step after `review` raises at load time.
-- **`using:` targets a model only** — not an interaction, not a bare definition.
-- **`execute` returns an Outcome** — `succeed(...)` / `failed(...)`, or raise to fail.
+- **`using:` targets a model only**: not an interaction, not a bare definition.
+- **`execute` returns an Outcome**: `succeed(...)` / `failed(...)`, or raise to fail.
 
 ## Wizard-level macros
 
 | Macro | Meaning |
 |---|---|
 | `presents label:, icon:, description:` | The launch button's label + icon (same as interactions), plus an optional `description:` rendered as the wizard's header subheading. |
-| `navigation :linear \| :free` | Stepper jump policy. `:linear` (default) — back to any visited step; `:free` — any visible visited step. Forward jumps to unvisited steps are never allowed. |
+| `navigation :linear \| :free` | Stepper jump policy. `:linear` (default): back to any visited step; `:free`: any visible visited step. Forward jumps to unvisited steps are never allowed. |
 | `stepper false` | Hide the top rail (the step indicator). On by default. |
 | `on_relaunch :new` | Controls a bare relaunch of a **tokened** wizard when the user has pending (in-progress) runs. Default `:prompt` shows a "resume or start new" chooser instead of silently forking; `:new` opts out and always mints a fresh run. No-op for keyed/`anonymous` wizards (they already auto-resume their single run). See [Anchoring & resume](/reference/wizard/anchoring-resume#relaunching-a-tokened-wizard). |
 | `anchored with: Model` / `anchored via: :method` | Run against an existing record; read via `anchor`. `with:` resolves from the URL `:id` (resource-mounted); `via:` resolves by calling a controller method (portal-level, context-anchored). See [Anchoring & resume](/reference/wizard/anchoring-resume). |
 | `cleanup_after <ttl> \| :never` | Idle TTL before the abandonment sweep reaps a session and rolls back its tracked records. Defaults to `config.wizards.cleanup_after`. `:never` opts out. |
-| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays serialized element-wise — structured, **not** flat-joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock — a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs — **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
+| `concurrency_key { … }` / `concurrency_key :method` | Key a run by the returned value(s) (records → GID, scalars → string, arrays serialized element-wise, structured, **not** flat-joined; the tenant is folded in automatically). The keyed `in_progress` row is the lock, a second launch at the same key resumes, never forks. Omit → unlimited concurrent `wizard_token`-keyed runs, **except** an `anchored` wizard, which defaults to `{ [anchor, current_user] }` (one draft per user per record). See [Anchoring & resume](/reference/wizard/anchoring-resume#the-implied-anchored-key). |
 | `one_time` | Retain the completed row at the `concurrency_key` (blocks restart, gate-able). **Requires a `concurrency_key`.** Omit → row deleted on completion (repeatable). See [One-time wizards](/reference/wizard/one-time). |
 | `completed do \|wizard\| … end` | Custom body for the "already completed" page a finished **one-time** wizard shows when re-opened (replaces the default confirmation). See [`completed`](#completed) below and [One-time wizards](/reference/wizard/one-time#re-opening-a-completed-wizard). |
-| `encrypt_data` | Encrypt the staged `data` column at rest using ActiveRecord's encryption keys (off by default), for flows that stage PII. Requires `active_record.encryption` keys — see [Storage & config](/reference/wizard/storage-config#encryption). |
-| `width <size>` | Width of this wizard's step pages: `:sm` `:md` `:lg` `:xl` `:full`. Inherits to subclasses; otherwise `config.wizards.width` (default `:md`). Deliberately independent of `config.default_page_width` — see [Storage & config](/reference/wizard/storage-config). |
-| `anonymous` | Opt into **guest (unauthenticated) access** — the wizard runs pre-login (auth is required otherwise). The guest's identity is a server-minted run-id in the Rails session; it crosses the auth boundary only at its terminal `execute`. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`** — a guest is already session-keyed and repeatable, so declaring both raises (whichever is declared last). See [Authentication](/reference/wizard/anchoring-resume#authentication). |
+| `encrypt_data` | Encrypt the staged `data` column at rest using ActiveRecord's encryption keys (off by default), for flows that stage PII. Requires `active_record.encryption` keys, see [Storage & config](/reference/wizard/storage-config#encryption). |
+| `width <size>` | Width of this wizard's step pages: `:sm` `:md` `:lg` `:xl` `:full`. Inherits to subclasses; otherwise `config.wizards.width` (default `:md`). Deliberately independent of `config.default_page_width`, see [Storage & config](/reference/wizard/storage-config). |
+| `anonymous` | Opt into **guest (unauthenticated) access**: the wizard runs pre-login (auth is required otherwise). The guest's identity is a server-minted run-id in the Rails session; it crosses the auth boundary only at its terminal `execute`. Mount it `public: true` (the default for `anonymous`). **Mutually exclusive with `concurrency_key`/`one_time`**: a guest is already session-keyed and repeatable, so declaring both raises (whichever is declared last). See [Authentication](/reference/wizard/anchoring-resume#authentication). |
 
 ```ruby
 class CompanyOnboardingWizard < Plutonium::Wizard::Base
@@ -76,17 +76,17 @@ The block is optional only when `using:` supplies everything.
 
 A step's block is the same field DSL used on definitions and interactions:
 
-- `attribute :name, :type` — declares a typed attribute (feeds the `data` snapshot).
-- `input :name, as:, ...` — how the field renders.
-- `validates :name, ...` — ActiveModel validations, run on Next. These also drive the form's field affordances exactly like a resource form: a `presence` validation renders the required marker (`*`), and `length`/`numericality`/`format`/`inclusion` feed `maxlength`/`min`/`max`/`pattern`/auto-choices. Validations imported via `using:` surface these too.
-- `structured_input :name, repeat: N do |f| ... end` — a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects. The sub-fields can come from the block (above), or from a model via `using:` / `fields:` (same selectors as a step's `using:`) instead of a block.
-- `form_layout do ... end` — section the step's fields (`section`, `columns:`, `collapsible:`, etc.), scoped to this step.
+- `attribute :name, :type`: declares a typed attribute (feeds the `data` snapshot).
+- `input :name, as:, ...`: how the field renders.
+- `validates :name, ...`: ActiveModel validations, run on Next. These also drive the form's field affordances exactly like a resource form: a `presence` validation renders the required marker (`*`), and `length`/`numericality`/`format`/`inclusion` feed `maxlength`/`min`/`max`/`pattern`/auto-choices. Validations imported via `using:` surface these too.
+- `structured_input :name, repeat: N do |f| ... end`: a repeatable/structured group → `data.<step>.name` is an array of typed sub-objects. The sub-fields can come from the block (above), or from a model via `using:` / `fields:` (same selectors as a step's `using:`) instead of a block.
+- `form_layout do ... end`: section the step's fields (`section`, `columns:`, `collapsible:`, etc.), scoped to this step.
 
 See [plutonium-resource › Definition](/reference/resource/definition) for the full field/input/layout vocabulary.
 
 #### Runtime input options
 
-A step's fields are fixed when the class loads, so a **proc** is how an option depends on the run. Proc-valued field/input options are resolved on every render, and the proc **takes the form** — `form.wizard` is the run, `form.object` is that step's staged data:
+A step's fields are fixed when the class loads, so a **proc** is how an option depends on the run. Proc-valued field/input options are resolved on every render, and the proc **takes the form**: `form.wizard` is the run, `form.object` is that step's staged data:
 
 ```ruby
 step :plan do
@@ -104,15 +104,15 @@ input :answers, as: MyManifestComponent, config: ->(form) { form.wizard.anchor.m
 ```
 
 ::: warning Take the argument
-A **zero-argument** proc here will not work. It keeps its own binding — the same rule as [everywhere else](/reference/resource/definition#options-that-vary-per-render) — and a step block is `instance_exec`'d against an internal field recorder when the class loads, so `-> { anchor.available_tiers }` looks `anchor` up on that recorder and raises `NameError`.
+A **zero-argument** proc here will not work. It keeps its own binding (the same rule as [everywhere else](/reference/resource/definition#options-that-vary-per-render)), and a step block is `instance_exec`'d against an internal field recorder when the class loads, so `-> { anchor.available_tiers }` looks `anchor` up on that recorder and raises `NameError`.
 
 That is deliberate: it is the same trade a `form_layout` section option makes, and it means an `input` line keeps its meaning when moved between a definition and a step. Nothing silently swaps `self`.
 :::
 
 Two limits worth knowing:
 
-- The **field set** is still fixed at class load. A proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup, pass a block to `input` instead — it renders in the form's context with the field yielded.
-- `condition:` is **not** resolved this way, because it is not an option — it asks "should this render here, now?", so it always runs *against* the thing doing the rendering and reads it with no argument. A *step's* `condition:` runs against the **wizard** (it is evaluated in the runner to decide which steps exist, before any form is built — which is exactly why it can't be handed a form); a *field's* runs against the **form**, where `object` is that step's staged data. See [Definition › `condition:` is not an option](/reference/resource/definition#condition-is-not-an-option).
+- The **field set** is still fixed at class load. A proc varies an option, not which fields exist. To collect a shape known only at runtime, declare one `structured_input` and let a custom component render the inner controls. For bespoke markup, pass a block to `input` instead, it renders in the form's context with the field yielded.
+- `condition:` is **not** resolved this way, because it is not an option (it asks "should this render here, now?", so it always runs *against* the thing doing the rendering and reads it with no argument. A *step's* `condition:` runs against the **wizard** (it is evaluated in the runner to decide which steps exist, before any form is built) which is exactly why it can't be handed a form); a *field's* runs against the **form**, where `object` is that step's staged data. See [Definition › `condition:` is not an option](/reference/resource/definition#condition-is-not-an-option).
 
 ### `using:` a model
 
@@ -132,7 +132,7 @@ What gets imported:
 | Source | Imported |
 |---|---|
 | `Model.attribute_names` / `attribute_types` | The field universe + cast types. |
-| `<Model>Definition` (auto-resolved) | Input styling (`as:`, options, labels). Best-effort — no definition is fine. |
+| `<Model>Definition` (auto-resolved) | Input styling (`as:`, options, labels). Best-effort, no definition is fine. |
 | Transient `Model.new(slice).valid?` | Validations, keeping errors on imported fields + `:base`. |
 | `<Model>Definition#form_layout` | Section layout, filtered to imported fields. |
 
@@ -144,10 +144,10 @@ What gets imported:
 | `layout: false` | Skip inherited `form_layout` (default single grid). |
 | `validation_context:` | Run `valid?(context)` for context-scoped model validations. |
 
-**Declaration reuse only** — `using:` never pulls in the model's persistence or callbacks. Data stages into `data`; your `execute`/`on_submit` does the writes.
+**Declaration reuse only**: `using:` never pulls in the model's persistence or callbacks. Data stages into `data`; your `execute`/`on_submit` does the writes.
 
 ::: tip Why a model, not a definition
-A `Plutonium::Resource::Definition` carries no link to its model — the controller binds them at request time. The only reliable direction is **model → definition**, so the model is the reuse target, and `<Model>Definition` is auto-resolved from it for styling.
+A `Plutonium::Resource::Definition` carries no link to its model; the controller binds them at request time. The only reliable direction is **model → definition**, so the model is the reuse target, and `<Model>Definition` is auto-resolved from it for styling.
 :::
 
 ### Attachment fields
@@ -162,31 +162,31 @@ step :photo, label: "Photo" do
 end
 ```
 
-`data` is JSON staged across requests, so a file can't ride along — only its backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data). `execute` assigns the token to the model's attachment natively (`model.photo.attach(data.photo.photo)` for AS, `model.update!(photo: data.photo.photo)` for active_shrine). The review summary and the input preview (on Back/resume) resolve the token to a displayable attachment automatically.
+`data` is JSON staged across requests, so a file can't ride along: only its backend **token** (an ActiveStorage signed_id, or active_shrine/Shrine cached-file data). `execute` assigns the token to the model's attachment natively (`model.photo.attach(data.photo.photo)` for AS, `model.update!(photo: data.photo.photo)` for active_shrine). The review summary and the input preview (on Back/resume) resolve the token to a displayable attachment automatically.
 
 | | Declare | Behaviour |
 |---|---|---|
 | **Server-side** (default) | `as: :file` | file submitted with the step; the wizard uploads it to the backend cache while staging. AS *and* active_shrine. |
 | **Direct upload** | `as: :uppy, direct_upload: true, endpoint:` | browser uploads to the endpoint, posts a token (async UI). |
 | **Backend** (server-side) | `backend: :active_storage` / `:shrine` | defaults to `config.wizards.attachment_backend` (auto-detects active_shrine, else AS). **Must match the model** `execute` assigns to. |
-| **Uploader** (Shrine only) | `uploader: PhotoUploader` | cache the file through a specific Shrine uploader (its cache-stage plugins — mime/dimension extraction, `generate_location`, processing — run instead of base `Shrine`'s). The minted token stays uploader-agnostic, so display + promotion are unaffected. Accepts a class or a class-name string; raises for the AS backend. Server-side staging only (direct upload configures the uploader at its endpoint). Its **validations are enforced on the step** — see the note below. |
+| **Uploader** (Shrine only) | `uploader: PhotoUploader` | cache the file through a specific Shrine uploader (its cache-stage plugins, mime/dimension extraction, `generate_location`, processing, run instead of base `Shrine`'s). The minted token stays uploader-agnostic, so display + promotion are unaffected. Accepts a class or a class-name string; raises for the AS backend. Server-side staging only (direct upload configures the uploader at its endpoint). Its **validations are enforced on the step**, see the note below. |
 | **Multiple** | array attribute + `multiple: true` | staged value is an array of tokens. |
 
 ::: tip Uploader validations are enforced on the step
-A Shrine file field is validated **on its step** against the field's **effective uploader** — its `uploader:` if given, else base `Shrine` (whichever carries the `Attacher.validate` rules). A file that violates them is rejected right there (a field error + re-render), exactly like a `validates` — *not* deferred to `execute`. Mechanically: `Uploader.upload` caches the file (running no validations), then the step's validation pass runs the attacher's validations against the staged token. This needs Shrine's optional `validation`/`validation_helpers` plugin — without it there's nothing to enforce and it's a clean no-op. ActiveStorage fields are likewise unaffected.
+A Shrine file field is validated **on its step** against the field's **effective uploader**, its `uploader:` if given, else base `Shrine` (whichever carries the `Attacher.validate` rules). A file that violates them is rejected right there (a field error + re-render), exactly like a `validates`, *not* deferred to `execute`. Mechanically: `Uploader.upload` caches the file (running no validations), then the step's validation pass runs the attacher's validations against the staged token. This needs Shrine's optional `validation`/`validation_helpers` plugin, without it there's nothing to enforce and it's a clean no-op. ActiveStorage fields are likewise unaffected.
 :::
 
 ## Per-step hooks
 
-`execute` is the default commit point (atomic, at the end). Per-step `on_submit` is opt-in save-as-you-go — use it only when a real record must exist mid-flow.
+`execute` is the default commit point (atomic, at the end). Per-step `on_submit` is opt-in save-as-you-go, use it only when a real record must exist mid-flow.
 
 ### `on_submit`
 
 Runs in its own transaction when the step completes (after its fields validate). Inside it:
 
-- `persist record` (or a list) — register record(s) the engine tracks for resume + cleanup → `persisted[:step_key]`.
-- `fail!("message")` — abort with a base (form-level) error.
-- `fail!(:field, "message")` — abort with a field-level error.
+- `persist record` (or a list), register record(s) the engine tracks for resume + cleanup → `persisted[:step_key]`.
+- `fail!("message")`: abort with a base (form-level) error.
+- `fail!(:field, "message")`: abort with a field-level error.
 
 ```ruby
 on_submit do
@@ -232,13 +232,13 @@ What it renders depends on completion state and the `summary:` / block options:
 |---|---|
 | `label:` | The review step's label (default `"Review"`). |
 | `description:` | Optional sub-label under the review heading. |
-| `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block — or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
+| `summary:` | Show the auto-summary of completed steps (default `true`). When `false`, the complete-state body is your block, or the built-in "ready to complete" panel if there's no block. The summary always renders in the incomplete state. |
 | `header:` | Show the step-header section (the label plus the "check everything over" prompt, which only appears when the summary is shown) above the body (default `true`). `false` drops it for a chromeless finish. |
 
 The auto-summary renders each field through the display pipeline, honoring the input's declared `as:`/`label:`. An input hidden by its own `condition:` is left out, just as it was left off the step, so the summary never shows an empty row for a question the user wasn't asked:
 
 - a **choice input** (`select`/`radio_buttons` with `choices:`) resolves the stored value back to its label (`"pro"` → `"Pro"`) using the same choice mapper the form uses, so the recap matches what the user picked;
-- an **`as: :currency`** input formats the value as currency (`"1500.5"` → `"$1,500.50"`) rather than echoing a bare decimal — pass `unit:` on the input (the data snapshot has no `has_cents` reflection to infer it from).
+- an **`as: :currency`** input formats the value as currency (`"1500.5"` → `"$1,500.50"`) rather than echoing a bare decimal, pass `unit:` on the input (the data snapshot has no `has_cents` reflection to infer it from).
 
 ```ruby
 review label: "Review & submit"                       # auto-summary + gated finish
@@ -256,10 +256,10 @@ review summary: false, header: false                  # fully chromeless → "re
 
 ### The custom block's render context
 
-The block runs **in the Phlex view context** (`self` is the rendering component), not the controller — that's what lets it emit markup. So you can:
+The block runs **in the Phlex view context** (`self` is the rendering component), not the controller; that's what lets it emit markup. So you can:
 
-- **return a String** (the simplest case) — it renders as the block's text;
-- **emit Phlex** directly — `div`, `span`, `plain`, `render SomeComponent.new(...)`;
+- **return a String** (the simplest case); it renders as the block's text;
+- **emit Phlex** directly, `div`, `span`, `plain`, `render SomeComponent.new(...)`;
 - reach **view / route helpers** via `helpers.*` (e.g. `helpers.link_to`, `helpers.current_user`, a path helper).
 
 The block is **yielded the wizard**, so `wizard.data`, `wizard.anchor`, `wizard.persisted`, and `wizard.current_user` are all in hand.
@@ -269,7 +269,7 @@ review label: "Review & submit" do |wizard|
   div(class: "text-sm") do
     plain "Billing to "
     strong { wizard.data.company.name }
-    plain " — "
+    plain ", "
     plain helpers.link_to("see our terms", helpers.terms_path)
   end
 end
@@ -285,9 +285,9 @@ completed do |wizard|
 end
 ```
 
-A custom body for the **"already completed" page** — what a finished [one-time wizard](/reference/wizard/one-time#re-opening-a-completed-wizard) shows when a user re-opens it. On completion a one-time wizard retains its row but clears the `data`, so there's nothing to review; re-entry renders this standalone page instead of re-running the flow. Only meaningful for one-time wizards (repeatable ones leave no completed row, so re-launching just starts fresh).
+A custom body for the **"already completed" page**: what a finished [one-time wizard](/reference/wizard/one-time#re-opening-a-completed-wizard) shows when a user re-opens it. On completion a one-time wizard retains its row but clears the `data`, so there's nothing to review; re-entry renders this standalone page instead of re-running the flow. Only meaningful for one-time wizards (repeatable ones leave no completed row, so re-launching just starts fresh).
 
-Without `completed`, a built-in confirmation renders (a success badge, the wizard's label, a short message, and a Continue button out). The block **replaces that body entirely** — you supply your own content (and your own way out):
+Without `completed`, a built-in confirmation renders (a success badge, the wizard's label, a short message, and a Continue button out). The block **replaces that body entirely**: you supply your own content (and your own way out):
 
 ```ruby
 class WelcomeWizard < Plutonium::Wizard::Base
@@ -315,13 +315,13 @@ def execute
 end
 ```
 
-- Returns a `succeed(value)` / `failed(errors)` Outcome (the same Outcome interactions use — `.with_message`, `.with_redirect_response`, etc. all work).
+- Returns a `succeed(value)` / `failed(errors)` Outcome (the same Outcome interactions use, `.with_message`, `.with_redirect_response`, etc. all work).
 - **Use bang methods** so a failure raises. The engine catches `ActiveRecord::RecordInvalid` (→ field errors) and `Plutonium::Wizard::StepError` (→ base error via `fail!`); any other error re-raises as a 500.
 - On success the wizard marks the session completed, clears `data`/`persisted`, and redirects (PRG) so a back-button replay can't re-run `execute`.
 
-## Entry authorization — `authorize?`
+## Entry authorization: `authorize?`
 
-A portal-level (standalone) wizard has no resource policy, so gate entry by defining an `authorize?` instance method. The controller checks it before each request; a falsy return → `ActionPolicy::Unauthorized` (403).
+A `register_wizard` wizard (portal or main-app) has no resource policy, so gate entry by defining an `authorize?` instance method. The controller checks it before each request; a falsy return → `ActionPolicy::Unauthorized` (403). The default is `def authorize? = true`, so define it on every `register_wizard` wizard, including gated `one_time` ones.
 
 ```ruby
 def authorize?
@@ -330,7 +330,7 @@ end
 ```
 
 ::: warning As-built: `authorize?` is an instance method
-Define `def authorize?` on the wizard. (Resource-attached wizards instead use their action's policy predicate — see [Registration & launch](/reference/wizard/registration-launch).)
+Define `def authorize?` on the wizard. (Resource-attached wizards instead use their action's policy predicate, see [Registration & launch](/reference/wizard/registration-launch).)
 :::
 
 ## Accessors
@@ -339,12 +339,12 @@ Available inside steps, `condition:`, `on_submit`, `on_rollback`, and `execute`:
 
 | Accessor | Returns |
 |---|---|
-| `data` | Typed, dot-accessible snapshot of everything entered so far, **step-keyed** — read a field through its owning step: `data.<step>.<field>`. Read-only; not-yet-collected fields read as `nil` or their `default:`. Each step has its own sub-object, so two steps may declare the same field name without colliding. |
+| `data` | Typed, dot-accessible snapshot of everything entered so far, **step-keyed**: read a field through its owning step: `data.<step>.<field>`. Read-only; not-yet-collected fields read as `nil` or their `default:`. Each step has its own sub-object, so two steps may declare the same field name without colliding. |
 | `data.<step>.<field>` | The cast value (real Boolean/Integer/Date, not raw string). `data.<step>.<structured>` → array of typed sub-objects. An unknown step key reads as `nil`. |
 | `anchor` | The record the wizard was launched against. Raises `NotAnchoredError` if the wizard isn't `anchored`. |
 | `persisted[:step_key]` | Record(s) a per-step `on_submit` registered via `persist`. Lazily rehydrated on first access (located from stored GlobalIDs the first time you read the key, memoized thereafter). |
 
-A **proc-valued field/input option** on a step reaches the same accessors through `form.wizard` — see [Runtime input options](#runtime-input-options).
+A **proc-valued field/input option** on a step reaches the same accessors through `form.wizard`, see [Runtime input options](#runtime-input-options).
 
 ## Outcome helpers
 
@@ -360,7 +360,7 @@ A **proc-valued field/input option** on a step reaches the same accessors throug
 |---|---|
 | `Plutonium::Wizard::NotAnchoredError` | `anchor` called on a non-anchored wizard (also raised when a `via:` anchor resolves to `nil` or the wrong type). |
 | `Plutonium::Wizard::StepError` | Raised by `fail!` (or directly) for a custom, non-AR step failure → maps to a form error. |
-| `Plutonium::Wizard::UnknownWizardError` | A mount's `wizard_class` doesn't resolve to a loaded `Plutonium::Wizard::Base` subclass — a misconfigured mount or a tampered route param. |
+| `Plutonium::Wizard::UnknownWizardError` | A mount's `wizard_class` doesn't resolve to a loaded `Plutonium::Wizard::Base` subclass, a misconfigured mount or a tampered route param. |
 
 ## Related
 

@@ -48,8 +48,8 @@ Keys are unique per dashboard; a duplicate raises at class load. Cards render in
 | `description:` | String, lazy `t` | convention | Caption |
 | `icon:` | Phlex icon class | none | Shown beside the title |
 | `span:` | `1`..`12`, `:full` | metric `3`, chart `6`, card `6` | Columns of the 12-column grid. `:full` is `12`. On tablets (2 columns) a span of `6` or more takes the row; phones are one column |
-| `lazy:` | Boolean | `true` | `true`: own lazy turbo frame, block runs in a separate request. `false`: inline, block runs in the page request; no frame, never refreshes. See the [guide](/guides/dashboards#lazy-and-inline-cards) |
-| `refresh:` | Integer seconds, or `false` | dashboard `refresh` | Reload interval; requires `lazy: true`. `false` opts the card out of the dashboard's `refresh` |
+| `lazy:` | Boolean | `true` | `true`: own lazy turbo frame, block runs in a separate request. `false`: inline, block runs in the page request (adding its query time to every page load); no frame, never refreshes. When `config.consider_all_requests_local` is true (development and test), an inline card's exception fails the whole page. See the [guide](/guides/dashboards#lazy-and-inline-cards) |
+| `refresh:` | Integer seconds, or `false` | dashboard `refresh` | Reload interval; requires `lazy: true` (a number on a `lazy: false` card raises `ArgumentError`). `false` opts the card out of the dashboard's `refresh` |
 | `condition:` | Proc, Symbol | none | Hides the card and 404s its endpoint when false |
 | `href:` | String, Proc | none | Links the title |
 

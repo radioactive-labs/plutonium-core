@@ -23,25 +23,25 @@ rails db:migrate
 
 | Config | Default | Meaning |
 |---|---|---|
-| `config.wizards.enabled` | `false` | The subsystem's master switch. Registers the gem migration (so `rails db:migrate` creates the table) **and** draws wizard routes — both `register_wizard` and the resource-mounted `wizard`-macro actions. While `false`, `register_wizard` is a no-op (it logs a warning so a registered-but-disabled wizard isn't a silent 404) and no wizard routes are mounted. Required to use wizards. |
+| `config.wizards.enabled` | `false` | The subsystem's master switch. Registers the gem migration (so `rails db:migrate` creates the table) **and** draws wizard routes, both `register_wizard` and the resource-mounted `wizard`-macro actions. While `false`, `register_wizard` is a no-op (it logs a warning so a registered-but-disabled wizard isn't a silent 404) and no wizard routes are mounted. Required to use wizards. |
 | `config.wizards.cleanup_after` | `14.days` | Global default idle TTL for the abandonment sweep; overridable per wizard via `cleanup_after`. |
-| `config.wizards.database` | `:primary` | Which database connection the wizard table lives on. **v1 supports the primary database only** — see below. |
+| `config.wizards.database` | `:primary` | Which database connection the wizard table lives on. **v1 supports the primary database only**, see below. |
 | `config.wizards.encrypt_data` | `false` | Encrypt **every** wizard's staged `data` at rest by default. Off by default because it needs ActiveRecord encryption keys; a wizard still overrides it individually with `encrypt_data` / `encrypt_data false`. See [Encryption](#encryption). |
-| `config.wizards.attachment_backend` | `nil` | Storage backend for **server-side** [attachment](/reference/wizard/dsl#attachment-fields) staging (a plain `as: :file` field). `nil` auto-detects — active_shrine installed → `:shrine`, else `:active_storage`. Override per field with `input …, backend:`. Direct-upload fields ignore it (they arrive as a token). |
+| `config.wizards.attachment_backend` | `nil` | Storage backend for **server-side** [attachment](/reference/wizard/dsl#attachment-fields) staging (a plain `as: :file` field). `nil` auto-detects, active_shrine installed → `:shrine`, else `:active_storage`. Override per field with `input …, backend:`. Direct-upload fields ignore it (they arrive as a token). |
 
 ## Gem-shipped migration
 
-The migration ships **in the gem** and Rails runs it **in place** — there is no copy-into-your-app step (unlike `pu:rodauth`/`pu:invites`, which are app-customized templates). Enabling `config.wizards.enabled` registers the gem migration path; `rails db:migrate` then runs it.
+The migration ships **in the gem** and Rails runs it **in place**; there is no copy-into-your-app step (unlike `pu:rodauth`/`pu:invites`, which are app-customized templates). Enabling `config.wizards.enabled` registers the gem migration path; `rails db:migrate` then runs it.
 
 - Once run, the table is dumped into your `schema.rb` / `structure.sql` like any other, so `db:schema:load` on fresh/CI databases recreates it normally.
 - Disable later → the path isn't registered; the existing table is left alone (never auto-dropped).
-- `db:migrate:status` shows the migration's file living in the gem (cosmetic; reads "file missing" if the gem is later removed) — standard for gem-shipped migrations.
+- `db:migrate:status` shows the migration's file living in the gem (cosmetic; reads "file missing" if the gem is later removed), standard for gem-shipped migrations.
 
 ::: warning v1 supports the primary database only
-The wizard table lives on your app's **primary** database in v1. `config.wizards.database` is **reserved for future use** — multi-database routing for wizard sessions is a roadmap follow-up. Setting it to anything other than `:primary` (while wizards are enabled) **raises at boot**, rather than silently registering the migration on the primary database.
+The wizard table lives on your app's **primary** database in v1. `config.wizards.database` is **reserved for future use**, multi-database routing for wizard sessions is a roadmap follow-up. Setting it to anything other than `:primary` (while wizards are enabled) **raises at boot**, rather than silently registering the migration on the primary database.
 :::
 
-## The table — `plutonium_wizard_sessions`
+## The table: `plutonium_wizard_sessions`
 
 One framework-owned table serves everything; **no changes to your models.**
 
@@ -51,7 +51,7 @@ One framework-owned table serves everything; **no changes to your models.**
 | `status` | `in_progress` \| `completing` \| `completed` (see the note below). |
 | `current_step` | The step cursor. |
 | `instance_key` (unique) | The deterministic identity digest (see [Anchoring & resume](/reference/wizard/anchoring-resume#instance-identity)). |
-| `owner_type` / `owner_id` | The user (nullable — `null` for an `anonymous`/guest run). Authenticated lookups are owner-scoped against this. |
+| `owner_type` / `owner_id` | The user (nullable, `null` for an `anonymous`/guest run). Authenticated lookups are owner-scoped against this. |
 | `anchor_type` / `anchor_id` | The anchor record (nullable). |
 | `scope_type` / `scope_id` | The portal scoping entity / tenant (nullable). |
 | `engine` | The portal (engine class name) the run was launched in, e.g. `"OrgPortal::Engine"`. The "continue where you left off" listing only shows (and links) runs whose `engine` matches the portal being viewed (two portals can share an entity scope, so `scope` alone can't identify the portal). |
@@ -64,14 +64,14 @@ One framework-owned table serves everything; **no changes to your models.**
 
 What the single table powers:
 
-- **Resume** — look up the `in_progress` row by `instance_key`.
-- **One-time check** — does a `completed` row exist for `(wizard, owner)` or `(wizard, anchor)`.
-- **In-progress listing** — by owner, portal (`engine`), and tenant scope, so a run is only ever listed by the portal it was launched in.
-- **Multi-tenancy** — the portal scoping entity is folded into `instance_key` and stored as `scope_*`, so the same user's same non-anchored wizard doesn't collide across tenants.
-- **Sweep** — idle `in_progress`/`completing` rows past `expires_at`.
+- **Resume**: look up the `in_progress` row by `instance_key`.
+- **One-time check**: does a `completed` row exist for `(wizard, owner)` or `(wizard, anchor)`.
+- **In-progress listing**: by owner, portal (`engine`), and tenant scope, so a run is only ever listed by the portal it was launched in.
+- **Multi-tenancy**: the portal scoping entity is folded into `instance_key` and stored as `scope_*`, so the same user's same non-anchored wizard doesn't collide across tenants.
+- **Sweep**: idle `in_progress`/`completing` rows past `expires_at`.
 
 ::: tip The `persisted` / `tracked_records` naming
-The column is `tracked_records`, not `persisted` — an AR attribute named `persisted` collides with `ActiveRecord::Persistence#persisted?`. The author-facing accessor stays `persisted[:key]`; the store maps it to the column.
+The column is `tracked_records`, not `persisted`: an AR attribute named `persisted` collides with `ActiveRecord::Persistence#persisted?`. The author-facing accessor stays `persisted[:key]`; the store maps it to the column.
 :::
 
 ## Encryption
@@ -85,7 +85,7 @@ class CheckoutWizard < Plutonium::Wizard::Base
 end
 ```
 
-This encrypts the `data` column (the staged step values) — off by default. The `tracked_records` column (record GlobalIDs only) and the queried `owner`/`anchor`/`scope`/`token` columns stay plaintext.
+This encrypts the `data` column (the staged step values), off by default. The `tracked_records` column (record GlobalIDs only) and the queried `owner`/`anchor`/`scope`/`token` columns stay plaintext.
 
 **Encrypt everything by default.** Once your app has ActiveRecord encryption keys, you can flip encryption on for *all* wizards with one global flag, then override per wizard:
 
@@ -99,7 +99,7 @@ class PublicSurveyWizard < Plutonium::Wizard::Base
 end
 ```
 
-Resolution: an explicit `encrypt_data` / `encrypt_data false` on the wizard always wins; a wizard that declares neither inherits `config.wizards.encrypt_data` (off unless you set it). It stays opt-in globally because it requires keys — see the warning below.
+Resolution: an explicit `encrypt_data` / `encrypt_data false` on the wizard always wins; a wizard that declares neither inherits `config.wizards.encrypt_data` (off unless you set it). It stays opt-in globally because it requires keys, see the warning below.
 
 **How it works.** Because `data` is one shared `jsonb` column across all wizards (some opting in, some not), a static model-level `encrypts :data` doesn't fit (it would encrypt every row, and fights the `jsonb` type). Instead, the store encrypts at write time using **ActiveRecord's configured encryptor** (`ActiveRecord::Encryption.encryptor`, the same keys as `encrypts`) and stores a self-describing envelope inside the column:
 
@@ -107,17 +107,17 @@ Resolution: an explicit `encrypt_data` / `encrypt_data false` on the wizard alwa
 { "_enc": "<ciphertext>" }
 ```
 
-A row therefore decrypts based on its **own shape**, independent of the wizard's current `encrypt_data?` — so toggling the flag never strands existing runs.
+A row therefore decrypts based on its **own shape**, independent of the wizard's current `encrypt_data?`, so toggling the flag never strands existing runs.
 
 ::: warning Requires ActiveRecord encryption keys
-`encrypt_data` reuses your app's ActiveRecord encryption keys (`active_record.encryption.primary_key` / `deterministic_key` / `key_derivation_salt`, typically via credentials). If a wizard declares `encrypt_data` but no keys are configured, the **first write raises** a `Configuration` error naming the wizard — rather than ActiveRecord's later, context-free failure. Set the keys (`bin/rails db:encryption:init`) before enabling it.
+`encrypt_data` reuses your app's ActiveRecord encryption keys (`active_record.encryption.primary_key` / `deterministic_key` / `key_derivation_salt`, typically via credentials). If a wizard declares `encrypt_data` but no keys are configured, the **first write raises** a `Configuration` error naming the wizard, rather than ActiveRecord's later, context-free failure. Set the keys (`bin/rails db:encryption:init`) before enabling it.
 :::
 
 ## Files
 
 A file can't sit in the JSON `data` column, so a wizard stages only the backend's **upload token** (an ActiveStorage `signed_id`, or Shrine cached-file data) and `execute` assigns it to the model's attachment. This works for both server-side and direct uploads, ActiveStorage and active_shrine. See [DSL › Attachment fields](/reference/wizard/dsl#attachment-fields) and the [guide](/guides/wizards#file-uploads-attachments) for the full surface (`backend:`, `multiple:`, direct upload).
 
-A staged-then-abandoned upload is an unattached blob / cached Shrine file. **Each storage backend's own unattached-cache cleanup reaps it — the wizard `SweepJob` does not** (it only tracks records registered via `persist`). Ensure that backend cleanup runs.
+A staged-then-abandoned upload is an unattached blob / cached Shrine file. **Each storage backend's own unattached-cache cleanup reaps it, the wizard `SweepJob` does not** (it only tracks records registered via `persist`). Ensure that backend cleanup runs.
 
 ## Cleanup & the SweepJob
 
@@ -126,7 +126,7 @@ A staged-then-abandoned upload is an unattached blob / cached Shrine file. **Eac
 `Plutonium::Wizard::SweepJob` reaps idle `in_progress` / `completing` rows past `expires_at`: for each it runs the wizard's cleanup (each step's `on_rollback` if declared, then always destroy every tracked record, in reverse order) and deletes the row. Completed rows are never touched. The job is idempotent and safe to re-run.
 
 ::: tip The `completing` state and its grace window
-A healthy finalize flips the row to `completing` and runs `execute` **outside** the completion lock (so a long `execute` doesn't block other requests), without bumping `expires_at`. To avoid sweeping a finalize that's still running, the sweep only reaps a `completing` row once it's been idle for a 15-minute grace window — long enough that a still-`completing` row past it is a *crashed* finalize, not a slow one. Keep individual `execute`s well under 15 minutes (offload long work to a job).
+A healthy finalize flips the row to `completing` and runs `execute` **outside** the completion lock (so a long `execute` doesn't block other requests), without bumping `expires_at`. To avoid sweeping a finalize that's still running, the sweep only reaps a `completing` row once it's been idle for a 15-minute grace window, long enough that a still-`completing` row past it is a *crashed* finalize, not a slow one. Keep individual `execute`s well under 15 minutes (offload long work to a job).
 :::
 
 ### SweepJob is load-bearing for save-as-you-go
@@ -147,6 +147,6 @@ On completion of a one-time wizard, the row is kept as the durable marker but it
 
 ## Related
 
-- [Anchoring & resume](/reference/wizard/anchoring-resume) — `instance_key`, resume.
-- [DSL reference](/reference/wizard/dsl) — `cleanup_after`, `encrypt_data`, `persist`.
-- [One-time wizards](/reference/wizard/one-time) — durable completion markers.
+- [Anchoring & resume](/reference/wizard/anchoring-resume): `instance_key`, resume.
+- [DSL reference](/reference/wizard/dsl): `cleanup_after`, `encrypt_data`, `persist`.
+- [One-time wizards](/reference/wizard/one-time): durable completion markers.

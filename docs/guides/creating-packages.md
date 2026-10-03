@@ -13,7 +13,7 @@ Domain code (models, policies, definitions, interactions) lives in **feature pac
 | **Feature** | Business logic | `pu:pkg:package NAME` | `blogging`, `billing`, `inventory` |
 | **Portal** | Web interface | `pu:pkg:portal NAME` | `admin_portal`, `customer_portal`, `public_portal` |
 
-🚨 Don't mix the two. Feature packages own the **domain code** — models, interactions, policies/definitions for resources owned by that feature. Portal packages own the **web surface** — controllers, routes, auth, and portal-specific policy/definition *overrides* for resources they expose.
+🚨 Don't mix the two. Feature packages own the **domain code**: models, interactions, policies/definitions for resources owned by that feature. Portal packages own the **web surface**: controllers, routes, auth, and portal-specific policy/definition *overrides* for resources they expose.
 
 ## Feature package
 
@@ -59,12 +59,12 @@ rails g pu:pkg:portal admin --auth=user
 
 Options:
 
-- `--auth=NAME` — Rodauth account to authenticate with.
-- `--public` — public access, no auth.
-- `--byo` — bring your own auth.
-- `--scope=CLASS` — entity class for multi-tenancy.
+- `--auth=NAME`: Rodauth account to authenticate with.
+- `--public`: public access, no auth.
+- `--byo`: bring your own auth.
+- `--scope=CLASS`: entity class for multi-tenancy.
 
-The generator mounts the engine for you — at `/admin` in this case, wrapped in `constraints Rodauth::Rails.authenticate(:user)` because you passed `--auth=user`. Open `packages/admin_portal/config/routes.rb` to see the generated mount.
+The generator mounts the engine for you: at `/admin` in this case, wrapped in `constraints Rodauth::Rails.authenticate(:user)` because you passed `--auth=user`. Open `packages/admin_portal/config/routes.rb` to see the generated mount.
 
 ### 2. Connect resources
 
@@ -87,7 +87,7 @@ Every file under `app/<kind>/blogging/` resolves to `Blogging::*`:
 - `app/models/blogging/post.rb` → `Blogging::Post`
 - `app/policies/blogging/post_policy.rb` → `Blogging::PostPolicy`
 
-Each feature package gets base classes — `Blogging::ApplicationRecord`, `Blogging::ResourceRecord`, `Blogging::ResourcePolicy`, `Blogging::ResourceDefinition`, `Blogging::ResourceInteraction` — that inherit from the main app's.
+Each feature package gets base classes, `Blogging::ApplicationRecord`, `Blogging::ResourceRecord`, `Blogging::ResourcePolicy`, `Blogging::ResourceDefinition`, `Blogging::ResourceInteraction`, that inherit from the main app's.
 
 ## Cross-package references
 
@@ -129,7 +129,7 @@ packages/
 └── customer_portal/         # Portal: customer dashboard
 ```
 
-The portals expose the features. A single feature can be exposed by multiple portals — usually with different policies and definitions per portal.
+The portals expose the features. A single feature can be exposed by multiple portals, usually with different policies and definitions per portal.
 
 ## Package loading
 
@@ -147,13 +147,13 @@ Loaded from `config/application.rb`. Migrations from all packages are picked up 
 ## Per-portal overrides
 
 ```ruby
-# Definition — how fields render per portal
+# Definition: how fields render per portal
 class AdminPortal::PostDefinition < ::PostDefinition
   scope :pending_review
   input :internal_notes, hint: "Not shown to the author"
 end
 
-# Policy — which fields exist, and who may act
+# Policy: which fields exist, and who may act
 #          `internal_notes` appears for admins because THIS permits it,
 #          not because the definition above mentions it.
 class AdminPortal::PostPolicy < ::PostPolicy
@@ -166,13 +166,13 @@ end
 
 ## Common issues
 
-- **Class not loading** — namespace must match the directory: `app/models/blogging/post.rb` MUST be `Blogging::Post`.
-- **Migration not running** — package migrations are auto-included. If they aren't running, check `config/packages.rb` is loaded from `application.rb`.
-- **Cross-package association fails** — use `blogging/post:belongs_to` in `pu:res:scaffold`, OR manually set `class_name: "Blogging::Post"` on the `belongs_to`.
+- **Class not loading**: namespace must match the directory: `app/models/blogging/post.rb` MUST be `Blogging::Post`.
+- **Migration not running**: package migrations are auto-included. If they aren't running, check `config/packages.rb` is loaded from `application.rb`.
+- **Cross-package association fails**: use `blogging/post:belongs_to` in `pu:res:scaffold`, OR manually set `class_name: "Blogging::Post"` on the `belongs_to`.
 
 ## Related
 
-- [Reference › App › Packages](/reference/app/packages) — full package surface
-- [Reference › App › Portals](/reference/app/portals) — portal-specific configuration
-- [Adding resources](./adding-resources) — `pu:res:scaffold` and `pu:res:conn`
-- [Authentication](./authentication) — portal auth setup
+- [Reference › App › Packages](/reference/app/packages): full package surface
+- [Reference › App › Portals](/reference/app/portals): portal-specific configuration
+- [Adding resources](./adding-resources): `pu:res:scaffold` and `pu:res:conn`
+- [Authentication](./authentication): portal auth setup

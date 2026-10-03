@@ -10,9 +10,9 @@ For each resource, decide who can create / read / update / destroy / run custom 
 
 Every policy controls three things:
 
-1. **Action permissions** — `create?`, `read?`, `update?`, `destroy?`, plus your custom action methods.
-2. **Attribute permissions** — `permitted_attributes_for_create`, `_for_read`, etc.
-3. **Collection scope** — `relation_scope` (which records show up in lists).
+1. **Action permissions**: `create?`, `read?`, `update?`, `destroy?`, plus your custom action methods.
+2. **Attribute permissions**: `permitted_attributes_for_create`, `_for_read`, etc.
+3. **Collection scope**: `relation_scope` (which records show up in lists).
 
 ## 🚨 Critical
 
@@ -39,7 +39,7 @@ class PostPolicy < ResourcePolicy
 end
 ```
 
-These default to `false` — without an explicit override, nobody can create or read records.
+These default to `false`, without an explicit override, nobody can create or read records.
 
 ### 3. Override derived methods only when rules differ
 
@@ -55,7 +55,7 @@ def destroy?
 end
 ```
 
-🚨 **`record` is the resource CLASS on collection routes.** `read?` backs both `show?` (called with the record) and `index?` (called with the class — there is no single record to pass). The same goes for `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates. So `def read? = record.published?` raises `NoMethodError` the moment the index renders. Keep record-state rules out of these methods: filter what the list shows in `relation_scope` (step 6 below), and gate individual records in `show?` (which always receives the record). Record-action methods like `publish?` are safe — they are always evaluated against an instance.
+🚨 **`record` is the resource CLASS on collection routes.** `read?` backs both `show?` (called with the record) and `index?` (called with the class: there is no single record to pass). The same goes for `create?`/`new?`, `export_csv?`, `search?`, and resource-action gates. So `def read? = record.published?` raises `NoMethodError` the moment the index renders. Keep record-state rules out of these methods: filter what the list shows in `relation_scope` (step 6 below), and gate individual records in `show?` (which always receives the record). Record-action methods like `publish?` are safe; they are always evaluated against an instance.
 
 ### 4. Declare attribute permissions
 
@@ -69,8 +69,8 @@ def permitted_attributes_for_read
 end
 ```
 
-::: warning Index has no `record`
-`permitted_attributes_for_index` runs at collection level — `record` is `nil`. If you write a `record`-dependent `_for_read`, you MUST also declare an explicit `_for_index`. See [Reference › Behavior › Policies › Index has no record](/reference/behavior/policies#index-has-no-record).
+::: warning Index has no `record` instance
+`permitted_attributes_for_index` runs at collection level, where `record` is the resource class. `_for_index` falls back to `_for_read` (and `_for_export` to `_for_index`), so if you write a `record`-dependent `_for_read`, you MUST also declare an explicit `_for_index` that never touches `record`. See [Reference › Behavior › Policies › Index has no record](/reference/behavior/policies#index-has-no-record).
 :::
 
 ### 5. Custom action methods
@@ -87,7 +87,7 @@ end
 
 The method name matches the action name plus `?`. Undefined methods return `false`.
 
-### 6. Optionally filter the collection — `relation_scope`
+### 6. Optionally filter the collection: `relation_scope`
 
 ```ruby
 relation_scope do |relation|
@@ -95,7 +95,7 @@ relation_scope do |relation|
 end
 ```
 
-🚨 `default_relation_scope(relation)` must be called somewhere in the chain — otherwise `verify_default_relation_scope_applied!` raises at runtime. Calling it explicitly here is safest. `super` works only when the parent policy also calls it.
+🚨 `default_relation_scope(relation)` must be called somewhere in the chain, otherwise `verify_default_relation_scope_applied!` raises at runtime. Calling it explicitly here is safest. `super` works only when the parent policy also calls it.
 
 ## Common patterns
 
@@ -143,7 +143,7 @@ def update?
 end
 ```
 
-## Bulk action authorization — per record
+## Bulk action authorization: per record
 
 ```ruby
 def bulk_archive?
@@ -154,7 +154,7 @@ end
 - **Backend:** if any selected record fails, the entire request is rejected.
 - **UI:** only actions ALL selected records support are shown (intersection).
 
-Records come from `current_authorized_scope` — users can only select records they can access.
+Records come from `current_authorized_scope`; users can only select records they can access.
 
 ## Portal-specific policies
 
@@ -163,7 +163,7 @@ class PostPolicy < ResourcePolicy
   def create? = user.present?
 end
 
-# Admin — more permissive
+# Admin: more permissive
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
 
@@ -171,7 +171,7 @@ class AdminPortal::PostPolicy < ::PostPolicy
   def permitted_attributes_for_create = %i[title content featured internal_notes]
 end
 
-# Public — read-only
+# Public: read-only
 class PublicPortal::PostPolicy < ::PostPolicy
   include PublicPortal::ResourcePolicy
   def create? = false
@@ -186,7 +186,7 @@ def permitted_associations
 end
 ```
 
-Drives the show-page tablist. Each named association must exist on the model AND be a registered Plutonium resource. See [Reference › Behavior › Policies › Association permissions](/reference/behavior/policies#association-permissions).
+Drives the show-page tablist. Each named association must exist on the model AND be a registered Plutonium resource in every portal that uses the policy; a portal that doesn't register the child raises `ArgumentError ... is not a registered resource` on its show page. To add a tab in one portal only, put it in a portal-specific policy (`rails g pu:res:conn <Resource> --dest=<portal> --policy`). See [Reference › Behavior › Policies › Association permissions](/reference/behavior/policies#association-permissions).
 
 ::: warning Not for nested forms
 `permitted_associations` is for show-page navigation tabs, NOT nested forms. Nested forms come from `nested_input :variants` in the definition. See [Reference › Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs).
@@ -194,7 +194,7 @@ Drives the show-page tablist. Each named association must exist on the model AND
 
 ## Multi-tenant scoping
 
-When the portal sets `scope_to_entity Organization`, the inherited `relation_scope` automatically filters everything to the current org — no work in the policy. To add filters on top:
+When the portal sets `scope_to_entity Organization`, the inherited `relation_scope` automatically filters everything to the current org, no work in the policy. To add filters on top:
 
 ```ruby
 relation_scope do |relation|
@@ -243,15 +243,15 @@ end
 
 ## Common issues
 
-- **Undefined custom action policy method** — the button silently disappears (undefined returns `false`). Add `def my_action?` to the policy.
-- **`record.X` crashes during index** — `record` is `nil` on index. Add an explicit `permitted_attributes_for_index` that doesn't depend on `record`.
-- **`verify_default_relation_scope_applied!` raises** — your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
-- **`super` in `relation_scope`** — works when you're extending a parent policy that itself calls `default_relation_scope`. If you're not sure (or you're inheriting from `Plutonium::Resource::Policy` directly), call `default_relation_scope(relation)` explicitly. The runtime check verifies `default_relation_scope` was hit somewhere — not that you wrote it in this class.
+- **Undefined custom action policy method**: the button silently disappears (undefined returns `false`). Add `def my_action?` to the policy.
+- **`record.X` crashes during index**: `record` is the resource class on index, not an instance. Add an explicit `permitted_attributes_for_index` that doesn't depend on `record`.
+- **`verify_default_relation_scope_applied!` raises**: your custom `relation_scope` doesn't call `default_relation_scope(relation)`. Fix by composing: `default_relation_scope(relation).where(...)`.
+- **`super` in `relation_scope`**; works when you're extending a parent policy that itself calls `default_relation_scope`. If you're not sure (or you're inheriting from `Plutonium::Resource::Policy` directly), call `default_relation_scope(relation)` explicitly. The runtime check verifies `default_relation_scope` was hit somewhere: not that you wrote it in this class.
 
 ## Related
 
-- [Reference › Behavior › Policies](/reference/behavior/policies) — full policy surface
-- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — `default_relation_scope`, multi-tenant patterns
-- [Authentication](./authentication) — who's the user in the first place
-- [Multi-tenancy](./multi-tenancy) — entity scoping setup
-- [Custom actions](./custom-actions) — defining the actions that need policy methods
+- [Reference › Behavior › Policies](/reference/behavior/policies): full policy surface
+- [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping): `default_relation_scope`, multi-tenant patterns
+- [Authentication](./authentication): who's the user in the first place
+- [Multi-tenancy](./multi-tenancy): entity scoping setup
+- [Custom actions](./custom-actions): defining the actions that need policy methods

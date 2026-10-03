@@ -4,18 +4,18 @@ Plutonium uses [Rodauth](http://rodauth.jeremyevans.net/) via [rodauth-rails](ht
 
 ## Sub-pages
 
-- [Accounts](./accounts) — Rodauth install, basic accounts, admin accounts, SaaS setup, account customization
-- [Profile](./profile) — profile resource generator, the SecuritySection component
+- [Accounts](./accounts): Rodauth install, basic accounts, admin accounts, SaaS setup, account customization
+- [Profile](./profile): profile resource generator, the SecuritySection component
 
 ## 🚨 Critical
 
 - **Use the generators.** `pu:rodauth:install`, `pu:rodauth:account`, `pu:rodauth:admin`, `pu:saas:setup`, `pu:profile:install`, `pu:profile:conn`. Never hand-write Rodauth plugin files, account models, or profile resources.
-- **Role index 0 is the most privileged** (`owner`, `super_admin`). Invite interactions default new invitees to **index 1** — the order in `--roles=` matters.
+- **Role index 0 is the most privileged** (`owner`, `super_admin`). Invite interactions default new invitees to **index 1**, so the order in `--roles=` matters.
 - **`pu:saas:setup --roles=...` always prepends `owner` as index 0.** Don't include `owner` in the option.
 - **`pu:saas:setup` is a meta-generator.** It also runs `pu:saas:portal`, `pu:profile:setup`, `pu:saas:welcome`, and `pu:invites:install`. Don't re-run those manually.
-- **Profile association is always `:profile`** regardless of the model class — `current_user.profile`, `build_profile`, `params.require(:profile)`.
-- **Profile needs `pu:profile:conn` to be visible** — without it, the singular `/profile` route and `profile_url` helper don't exist.
-- **Every user needs a profile row.** Add an `after_create` callback or `find_or_create_by` — otherwise `current_user.profile` is nil.
+- **Profile association is always `:profile`** regardless of the model class: `current_user.profile`, `build_profile`, `params.require(:profile)`. `pu:profile:conn` hardcodes `current_user.profile`.
+- **Profile needs `pu:profile:conn` to be visible.** Without it, there is no singular `/profile` route and `profile_url` stays `nil` (no menu link).
+- **Check an existing profile policy for `update?`.** Older `pu:profile:conn` output lacks `def update? = true`, so the profile can't be edited once it exists. See [Profile](./profile#what-pu-profile-conn-generates).
 
 ## Install Rodauth
 
@@ -34,7 +34,7 @@ class ResourceController < PlutoniumController
 end
 ```
 
-Multiple account types — include the matching `:name`:
+Multiple account types: include the matching `:name`:
 
 ```ruby
 class AdminController < PlutoniumController
@@ -80,9 +80,9 @@ Authorization: Bearer <access_token>
 
 ## Related
 
-- [Accounts](./accounts) — account types and feature flags
-- [Profile](./profile) — profile resource + SecuritySection
-- [Tenancy › Invites](/reference/tenancy/invites) — invitation system on top of Rodauth signup
-- [App › Portals › Controller concern (auth)](/reference/app/portals#controller-concern-auth) — portal-side wiring
-- [Guides › Authentication](/guides/authentication) — task-oriented walkthrough
+- [Accounts](./accounts): account types and feature flags
+- [Profile](./profile): profile resource + SecuritySection
+- [Tenancy › Invites](/reference/tenancy/invites): invitation system on top of Rodauth signup
+- [App › Portals › Controller concern (auth)](/reference/app/portals#controller-concern-auth): portal-side wiring
+- [Guides › Authentication](/guides/authentication): task-oriented walkthrough
 - [Guides › User profile](/guides/user-profile)

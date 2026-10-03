@@ -4,11 +4,12 @@ TailwindCSS 4 + Stimulus toolchain. CSS design tokens for theming, `.pu-*` compo
 
 ## 🚨 Critical
 
-- **Always register Stimulus controllers** — `registerControllers(application)` is required. Without it, Plutonium's controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.
-- **Use `plutoniumTailwindConfig.merge`** when overriding the theme — plain object spread drops Plutonium's defaults.
-- **Tokens are CSS variables**, not Tailwind keys — `bg-[var(--pu-surface)]`, NOT `bg-pu-surface`.
-- **Dark mode uses `selector`** strategy — toggle `dark` on `<html>`. The bundled `color-mode` controller does this.
-- **Prefer `.pu-*` classes and `var(--pu-*)` tokens** over hardcoded `gray-X/dark:gray-Y` pairs — they switch with dark mode automatically.
+- **Custom CSS, brand colors, or your own Stimulus controllers need `pu:core:assets` first.** Out of the box the app serves the gem's prebuilt `plutonium.css` / `plutonium.min.js`; the generator switches it to your own bundles. Don't hand-write the Tailwind/PostCSS pipeline.
+- **Once the app owns its JS bundle, `registerControllers(application)`** must be in `app/javascript/controllers/index.js` (`pu:core:assets` adds it). Your bundle replaces the gem's, so without it Plutonium's controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.
+- **Use `plutoniumTailwindConfig.merge`** when overriding the theme, plain object spread drops Plutonium's defaults.
+- **Tokens are CSS variables**, not Tailwind keys, `bg-[var(--pu-surface)]`, NOT `bg-pu-surface`.
+- **Dark mode uses `selector`** strategy, toggle `dark` on `<html>`. The bundled `color-mode` controller does this.
+- **Style with `.pu-*` classes first, `var(--pu-*)` tokens second, raw palette pairs last.** Banners, badges, cards and buttons all have a `.pu-*` class that carries its own `.dark` rule. See [Component classes](#component-classes-pu).
 
 ## Asset configuration
 
@@ -30,13 +31,19 @@ end
 rails generate pu:core:assets
 ```
 
-This:
+Until this runs, the app serves the gem's prebuilt assets (`config.assets.stylesheet` defaults to `plutonium.css`, `script` to `plutonium.min.js`). Those are compiled from the gem's own sources, so app-side Tailwind classes, a new `primary` palette, token overrides and custom Stimulus controllers have nowhere to go. The generator:
 
-1. Installs npm packages (`@radioactive-labs/plutonium`, TailwindCSS plugins).
-2. Creates `tailwind.config.js` extending Plutonium's config.
-3. Imports Plutonium CSS into `application.tailwind.css`.
-4. Registers Plutonium's Stimulus controllers.
-5. Updates Plutonium config to point at your asset files.
+1. Installs `@radioactive-labs/plutonium` (pinned to the gem version), Tailwind 4 and the PostCSS plugins.
+2. Writes `tailwind.config.js` (through `plutoniumTailwindConfig.merge`) and `postcss.config.js`.
+3. Prepends `@import "gem:plutonium/src/css/plutonium.css";` to `application.tailwind.css` and adds `@config` after `@import "tailwindcss";`.
+4. Appends `registerControllers(application)` to `app/javascript/controllers/index.js`.
+5. Sets `config.assets.stylesheet = "application"` and `config.assets.script = "application"`, and writes the `build` / `build:css` scripts in `package.json`.
+
+Step 5 is why `registerControllers` is not optional: the gem's `plutonium.min.js` calls it itself, and your `application.js` replaces that bundle.
+
+### Prerequisites
+
+The generator aborts unless `app/assets/stylesheets/application.tailwind.css` and `app/javascript/controllers/index.js` exist, i.e. an app created with `-j esbuild -c tailwind` plus Stimulus. For an app without them, install the bundlers first (`bin/rails javascript:install:esbuild`, `css:install:tailwind`, `stimulus:install` from jsbundling-rails, cssbundling-rails and stimulus-rails), then run the generator. Don't hand-write `tailwind.config.js` / `postcss.config.js` instead: the generated ones resolve the gem path (`bundle show plutonium`) and load its `postcss-gem-import.cjs` so the `gem:` import works.
 
 ### Package managers
 
@@ -86,6 +93,8 @@ theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
 })
 ```
 
+These are Tailwind palette colors, compiled into the CSS at build time (`.pu-btn-primary` is `@apply bg-primary-600 ...`; `--pu-input-focus-ring` is `theme(colors.primary.500)`). Recoloring `primary` therefore means the `merge` above plus a rebuild, not a `--pu-*` override.
+
 ### Default color palette
 
 | Color | Usage |
@@ -128,15 +137,15 @@ application.register("custom", CustomController)
 
 ### Bundled controllers
 
-- `color-mode` — dark/light mode toggle
-- `form` — form handling (pre-submit, etc.)
-- `nested-resource-form-fields` — nested form management
-- `slim-select` — enhanced select boxes
-- `flatpickr` — date/time pickers
-- `easymde` — markdown editor
+- `color-mode`: dark/light mode toggle
+- `form`: form handling (pre-submit, etc.)
+- `nested-resource-form-fields`: nested form management
+- `slim-select`: enhanced select boxes
+- `flatpickr`: date/time pickers
+- `easymde`: markdown editor
 - Various internal UI controllers
 
-### Custom Stimulus controller — standard pattern
+### Custom Stimulus controller: standard pattern
 
 ```javascript
 // app/javascript/controllers/custom_controller.js
@@ -249,8 +258,12 @@ Plutonium uses a comprehensive CSS custom-property system for consistent, themea
 ```
 
 ::: warning Mirror every `:root` override in `.dark`
-Your stylesheet loads after Plutonium's, and `:root` and `.dark` have equal specificity — so a token you override in `:root` beats Plutonium's `.dark` value even when dark mode is active. Any color token you customize in `:root` without re-asserting in `.dark` ships your light value into dark mode, where it's typically unreadable (e.g. a translucent dark `--pu-text-subtle` becomes invisible on a dark surface).
+Your stylesheet loads after Plutonium's, and `:root` and `.dark` have equal specificity, so a token you override in `:root` beats Plutonium's `.dark` value even when dark mode is active. Any color token you customize in `:root` without re-asserting in `.dark` ships your light value into dark mode, where it's typically unreadable (e.g. a translucent dark `--pu-text-subtle` becomes invisible on a dark surface).
+
+That includes the shadows: `src/css/tokens.css` redefines `--pu-shadow-sm/md/lg` (and every surface, text, border, table, input, card and chart token) under `.dark`, so a tinted light shadow left out of your `.dark` block replaces the dark one.
 :::
+
+Put dark values in a `.dark { ... }` block, not `@media (prefers-color-scheme: dark)`. Dark mode is the `dark` class on `<html>` (set by the `color-mode` controller), so a media query ignores the user's toggle. Overrides need the app's own stylesheet after the Plutonium import (`pu:core:assets`); never edit the gem's `tokens.css` / `components.css`.
 
 ### Using tokens in templates
 
@@ -279,7 +292,11 @@ end
 
 ## Component classes (`.pu-*`)
 
-Ready-to-use styled components in `src/css/components.css`. **Prefer these over hardcoded `gray-X/dark:gray-Y` pairs** — they auto-switch with dark mode.
+Ready-to-use styled components in `src/css/components.css`. **Prefer these over hardcoded `gray-X/dark:gray-Y` (or `warning-50 dark:warning-950`) pairs.** In order of preference:
+
+1. **A `.pu-*` class** (`pu-alert-warning`, `pu-badge-warning`, `pu-card`, `pu-btn-soft-danger`). Each ships with its own `.dark` rule and is always in the CSS, because `components.css` is part of `plutonium.css` whether the app uses the prebuilt file or imports it.
+2. **A `var(--pu-*)` token** (`text-[var(--pu-text-muted)]`, `border-[var(--pu-border)]`) for layout around them. The token switches value under `.dark` and follows any theme override.
+3. **Raw palette utilities** only for what neither covers. On the prebuilt `plutonium.css` they exist only if the gem's own sources happen to use them (its Tailwind `content` scans the gem, not your app); with your own build they compile, but each needs a hand-picked `dark:` twin that won't follow a rebrand.
 
 ### Buttons
 
@@ -317,6 +334,21 @@ Ready-to-use styled components in `src/css/components.css`. **Prefer these over 
 ```
 
 Rendered automatically by the `:badge` display (enums) and `:boolean` display (Yes/No pills). See [Displays](./displays#built-in-display-components).
+
+### Alerts (inline banners)
+
+```
+.pu-alert / -success / -warning / -danger / -info
+.pu-alert-message / .pu-alert-close
+```
+
+```ruby
+div(class: "pu-alert pu-alert-warning", role: "alert") do
+  div(class: "pu-alert-message") { t("blog.posts.flagged_comments", count: flagged) }
+end
+```
+
+The same banner the flash messages use (`app/views/plutonium/_flash_alerts.html.erb`), so it already has its dark-mode colors.
 
 ### Cards, panels, tables, toolbars, empty states
 
@@ -408,12 +440,12 @@ end
 **Theme keys:** `wrapper`, `base`, `header`, `header_cell`, `body_row`, `body_cell`, `sort_icon`.
 
 ::: warning Always `super.merge(...)`
-Don't replace the theme wholesale. Plutonium's defaults handle invalid states, focus rings, and dark mode — `super.merge` keeps them.
+Don't replace the theme wholesale. Plutonium's defaults handle invalid states, focus rings, and dark mode, `super.merge` keeps them.
 :::
 
 ## Gotchas
 
-- **Stimulus controllers register silently fails.** If `registerControllers(application)` isn't called, the entire UI's interactive layer is dead (color-mode toggle, slim-select, flatpickr, easymde, pre-submit). No error — just no behavior.
+- **Stimulus controllers register silently fails.** Once `config.assets.script` points at the app's JS, if `registerControllers(application)` isn't called the entire UI's interactive layer is dead (color-mode toggle, slim-select, flatpickr, easymde, pre-submit). No error: just no behavior.
 - **`plutoniumTailwindConfig.merge` is mandatory.** Plain spread drops defaults silently.
 - **Tokens are CSS variables, not Tailwind keys.** Use `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
 - **Dark mode is `selector`, not `class`.** Toggle via `document.documentElement.classList.toggle('dark')`.
@@ -421,6 +453,6 @@ Don't replace the theme wholesale. Plutonium's defaults handle invalid states, f
 
 ## Related
 
-- [Forms › Theming](./forms#theming) — Form theme keys + override pattern
-- [Components](./components) — `tokens` and `classes` helpers for conditional class composition
-- [Layouts](./layouts) — fonts, dark-mode toggle, body attributes
+- [Forms › Theming](./forms#theming): Form theme keys + override pattern
+- [Components](./components): `tokens` and `classes` helpers for conditional class composition
+- [Layouts](./layouts): fonts, dark-mode toggle, body attributes

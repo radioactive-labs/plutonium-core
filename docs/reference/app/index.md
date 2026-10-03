@@ -4,9 +4,9 @@ How a Plutonium app is assembled: installation, the package system (feature vs p
 
 ## Sub-pages
 
-- [Packages](./packages) — feature vs portal packages, structure, namespacing, package loading
-- [Portals](./portals) — portal engines, mounting, controller concerns, `register_resource` (including singular and custom routes), connecting resources via `pu:res:conn`
-- [Generators](./generators) — full `pu:*` generator catalog
+- [Packages](./packages): feature vs portal packages, structure, namespacing, package loading
+- [Portals](./portals): portal engines, mounting, controller concerns, `register_resource` (including singular and custom routes), connecting resources via `pu:res:conn`
+- [Generators](./generators): full `pu:*` generator catalog
 
 ## Installation
 
@@ -30,7 +30,7 @@ The `plutonium.rb` template re-runs the full app bootstrap (dotenv, annotate, so
 bin/rails app:template \
   LOCATION=https://radioactive-labs.github.io/plutonium-core/templates/base.rb
 
-# Or manual — add `gem "plutonium"` to Gemfile, then:
+# Or manual: add `gem "plutonium"` to Gemfile, then:
 bundle install
 rails generate pu:core:install
 ```
@@ -38,7 +38,7 @@ rails generate pu:core:install
 ## Full setup workflow
 
 ```bash
-# 1. Core install — base controllers, policies, definitions, layouts
+# 1. Core install: base controllers, policies, definitions, layouts
 rails generate pu:core:install
 
 # 2. Auth (if needed)
@@ -55,10 +55,7 @@ rails db:prepare
 # 5. Connect resource to portal
 rails generate pu:res:conn Post --dest=admin_portal
 
-# 6. Mount portal in config/routes.rb
-#    mount AdminPortal::Engine, at: "/admin"
-
-# 7. Start
+# 6. Start (step 3 already mounted the portal at /admin)
 bin/dev   # uses Procfile to run Rails + CSS watcher
 ```
 
@@ -70,10 +67,10 @@ Visit `http://localhost:3000/admin`.
 app/
 ├── controllers/
 │   ├── plutonium_controller.rb     # non-resource base
-│   └── resource_controller.rb      # CRUD base — see Behavior › Controllers
+│   └── resource_controller.rb      # CRUD base; see Behavior › Controllers
 ├── definitions/resource_definition.rb
 ├── interactions/resource_interaction.rb
-├── models/resource_record.rb       # abstract model — includes Plutonium::Resource::Record
+├── models/resource_record.rb       # abstract model: includes Plutonium::Resource::Record
 ├── policies/resource_policy.rb
 └── views/layouts/resource.html.erb
 
@@ -103,7 +100,7 @@ Plutonium.configure do |config|
   # :classic preserves the legacy header + sidebar (only when upgrading).
   # config.shell = :classic
 
-  # Custom assets — see UI › Assets
+  # Custom assets; see UI › Assets
   # config.assets.stylesheet = "custom_stylesheet"
   # config.assets.script     = "custom_script"
   # config.assets.logo       = "custom_logo.png"
@@ -150,9 +147,9 @@ Meta-generators (`pu:saas:setup`) propagate these flags to the generators they c
 
 ## Related
 
-- [Packages](./packages) — feature vs portal package structure
-- [Portals](./portals) — portal engines, routing, resource connection
-- [Generators](./generators) — full generator reference
-- [Auth](/reference/auth/) — Rodauth setup and account types
-- [UI › Assets](/reference/ui/assets) — Tailwind, Stimulus, design tokens
-- [Tutorial](/getting-started/tutorial/) — step-by-step walkthrough
+- [Packages](./packages): feature vs portal package structure
+- [Portals](./portals): portal engines, routing, resource connection
+- [Generators](./generators): full generator reference
+- [Auth](/reference/auth/): Rodauth setup and account types
+- [UI › Assets](/reference/ui/assets): Tailwind, Stimulus, design tokens
+- [Tutorial](/getting-started/tutorial/): step-by-step walkthrough

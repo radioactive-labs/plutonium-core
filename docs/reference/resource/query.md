@@ -68,10 +68,10 @@ end
 
 ### Search powers typeahead too
 
-The same `search` block drives **typeahead lookups** on association inputs that target this resource — when you write `input :author, …` for an association, the dropdown's autocomplete calls the target resource's `search` block.
+The same `search` block drives **typeahead lookups** on association inputs that target this resource: when you write `input :author, …` for an association, the dropdown's autocomplete calls the target resource's `search` block.
 
 ::: tip Typeahead fallback when there's no search block
-A resource without a `search` block still gets typeahead — the framework runs a case-insensitive `LIKE` against the first column that exists, in priority order:
+A resource without a `search` block still gets typeahead: the framework runs a case-insensitive `LIKE` against the first column that exists, in priority order:
 
 1. The input's `label_method:` option, if it names a real column on the model.
 2. Otherwise the first match from `[name, title, label, slug, display_name, email]`.
@@ -84,7 +84,7 @@ For large tables, write an explicit `search` block backed by a trigram or full-t
 
 Six built-in filter types. Use the shorthand symbol or the full class name.
 
-`search`, `scope`, `sort_fields`, and `sort_directions` are reserved filter names — they're built-in controls in the `q[<name>]` namespace, so `filter :scope` raises `ArgumentError`.
+`search`, `scope`, `sort_fields`, and `sort_directions` are reserved filter names; they're built-in controls in the `q[<name>]` namespace, so `filter :scope` raises `ArgumentError`.
 
 | Type | Symbol | Params in URL | Options |
 |---|---|---|---|
@@ -191,7 +191,7 @@ class PostDefinition < ResourceDefinition
   scope :published    # uses Post.published
   scope :draft        # uses Post.draft
 
-  # Inline scope — block runs with the scope as argument
+  # Inline scope: block runs with the scope as argument
   scope(:recent)   { |s| s.where('created_at > ?', 1.week.ago) }
   scope(:this_month) { |s| s.where(created_at: Time.current.all_month) }
 end
@@ -216,9 +216,9 @@ When a default is set:
 - The default scope button is highlighted (not "All").
 - Clicking "All" shows the unscoped collection.
 
-### Conditional visibility — `condition:`
+### Conditional visibility: `condition:`
 
-Like `condition:` on [actions](./actions), a scope can be **defined but only render its button when a runtime proc is truthy**. The scope (and its URL) stays live either way — `condition:` only toggles the button.
+Like `condition:` on [actions](./actions), a scope can be **defined but only render its button when a runtime proc is truthy**. The scope (and its URL) stays live either way; `condition:` only toggles the button.
 
 ```ruby
 scope :admin_only,   condition: -> { current_user.admin? }
@@ -228,7 +228,7 @@ scope :beta_feature, condition: -> { params[:beta] == "1" }
 scope :internal, condition: -> { false }
 ```
 
-The proc is evaluated against the view context so `current_user`, `params`, `request`, and `allowed_to?` are all available directly. There is no `object`/`record` — scopes have no single-record context.
+The proc is evaluated against the view context so `current_user`, `params`, `request`, and `allowed_to?` are all available directly. There is no `object`/`record`; scopes have no single-record context.
 
 ::: danger `condition:` is NOT authorization
 A hidden scope button still has a **live URL** anyone can navigate to. `condition:` decides whether the *button renders*, not whether the *records are accessible*.
@@ -316,12 +316,12 @@ scope :this_month
 - **Add indexes** for filtered and sorted columns.
 - **Use `.distinct`** when joining associations in search to avoid duplicate rows.
 - **Prefer scopes over filters** for queries used often (faster, no input parsing).
-- **`pg_search` / FTS** for complex search — write an explicit `search` block.
-- **`LIKE '%q%'` can't use a b-tree index** — the typeahead fallback and naive search blocks get slow on large tables. Plan a trigram or full-text index when scaling.
+- **`pg_search` / FTS** for complex search: write an explicit `search` block.
+- **`LIKE '%q%'` can't use a b-tree index**: the typeahead fallback and naive search blocks get slow on large tables. Plan a trigram or full-text index when scaling.
 
 ## Related
 
-- [Definition](./definition) — field/input/display configuration
-- [Actions](./actions) — custom and bulk actions
-- [Behavior › Policy](/reference/behavior/policies) — `relation_scope` (filters records to what the user can see)
-- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — multi-tenant filtering
+- [Definition](./definition): field/input/display configuration
+- [Actions](./actions): custom and bulk actions
+- [Behavior › Policy](/reference/behavior/policies): `relation_scope` (filters records to what the user can see)
+- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping): multi-tenant filtering

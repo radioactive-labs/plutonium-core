@@ -1,6 +1,6 @@
 # Testing
 
-Plutonium ships `Plutonium::Testing` — opt-in Minitest concerns that give your app default test coverage for resources, policies, definitions, interactions, models, nested scoping, portal access, and authentication.
+Plutonium ships `Plutonium::Testing`, opt-in Minitest concerns that give your app default test coverage for resources, policies, definitions, interactions, models, nested scoping, portal access, and authentication.
 
 ## Quick start
 
@@ -75,7 +75,7 @@ resource_tests_for ResourceClass,
   has_cents:        %i[price]                              # ResourceModel only
 ```
 
-The **portal symbol** drives path prefix, default auth strategy, and scoping expectations. The resolver walks `Rails.application.routes.routes` for the engine mount — no manual configuration.
+The **portal symbol** drives path prefix, default auth strategy, and scoping expectations. The resolver walks `Rails.application.routes.routes` for the engine mount, with no manual configuration.
 
 ## Concerns
 
@@ -84,14 +84,16 @@ The **portal symbol** drives path prefix, default auth strategy, and scoping exp
 | `ResourceCrud` | index/show/new/create/edit/update/destroy | `create_resource!`, `valid_create_params`, `valid_update_params` |
 | `ResourcePolicy` | permit? × role × action matrix + relation_scope smoke | `policy_roles`, `policy_record`, `policy_matrix` |
 | `ResourceDefinition` | definition class + defineable prop smoke | none |
-| `ResourceInteraction` | `assert_interaction_success/failure` helpers | `interaction_class`, `valid_interaction_input` |
+| `ResourceInteraction` | `assert_interaction_success/failure` helpers | none |
 | `ResourceModel` | `associated_with`, SGID, `has_cents` | `model_test_record` |
 | `NestedResource` | nested CRUD + sibling-tenant boundaries | `parent_record!`, `other_parent_record!`, `create_resource!(parent:)` |
 | `PortalAccess` | cross-portal access matrix | `login_as_role`, `portal_root_path` |
 
-Mix and match — `include` only what you want.
+Mix and match: `include` only what you want.
 
 ## Auth helpers
+
+`login_as` and friends come from `Plutonium::Testing::AuthHelpers`. Only `ResourceCrud`, `NestedResource` and `PortalAccess` include it; the policy, definition, model and interaction concerns don't. A bare `login_as(account)` takes its portal from `resource_tests_for`, so in a `PortalAccess` class (or a hand-written test that adds `include Plutonium::Testing::AuthHelpers` itself) pass `portal:` every time.
 
 ```ruby
 login_as(account)                    # uses portal from DSL
@@ -130,7 +132,7 @@ Idempotent. Adds the require line and creates the override stub.
 |---|---|---|
 | `--portals=admin,org` | required | Emit one file per portal |
 | `--concerns=...` | `crud,policy,definition` | Subset of concerns to include |
-| `--parent=organization` | none | Wires `NestedResource` parent |
+| `--parent=organization` | none | Adds `parent:` to `resource_tests_for`; the `NestedResource` include and stubs also need `nested` in `--concerns` (`--concerns=crud,nested --parent=organization`) |
 | `--dest=main_app\|<package>` | `main_app` | Output destination |
 
 Output: `test/integration/<portal>_portal/<resource>_test.rb`.
@@ -144,16 +146,18 @@ Output: `test/integration/<portal>_portal/<resource>_test.rb`.
 
 ## Common pitfalls
 
-- **Forgotten stubs raise `NotImplementedError`** with the stub name — look for the missing method.
+- **Forgotten stubs raise `NotImplementedError`** with the stub name: look for the missing method.
 - **Portal mismatch:** `:admin` expects `AdminPortal::Engine`. Pass `path_prefix:` if your engine is named differently.
 - **Tenant leakage in stubs:** for an org portal, `create_resource!` must return a record bound to the test's `@org`.
-- **`policy_record` for tenant-scoped resources** must belong to a tenant the role can access — otherwise even allowed roles see `false`.
-- **Nested resources need `parent:` in the DSL AND a parent record** from `parent_record!`. Both are required for path interpolation.
+- **`policy_record` for tenant-scoped resources** must belong to a tenant the role can access, otherwise even allowed roles see `false`.
+- **Nested paths come from `parent_record!.id`**, so it must return the same persisted tenant on every call (e.g. `@org`). `parent:` in the DSL documents the relationship; the concern doesn't read it.
+- **Entity-scoped (`:path`) portals need two classes** for CRUD and tenant isolation, since `ResourceCrud` needs the tenant in `current_path_prefix` and `NestedResource` adds it itself. See [Reference › Testing](/reference/testing/#entity-scoped-portals-crud-tenant-isolation).
+- **`valid_update_params` is compared literally** after the PATCH: use strings for enums and leave association SGIDs out.
 - **`PortalAccess` uses `portal_access_for`**, not `resource_tests_for`. Don't mix them on the same class.
 
 ## Related
 
-- [Reference › Testing](/reference/testing/) — full DSL reference, all concern stubs, override hooks
-- [Authorization](./authorization) — write the policy this concern verifies
-- [Multi-tenancy](./multi-tenancy) — entity scoping that drives nested-resource tests
-- [Authentication](./authentication) — Rodauth setup behind the default login flow
+- [Reference › Testing](/reference/testing/): full DSL reference, all concern stubs, override hooks
+- [Authorization](./authorization): write the policy this concern verifies
+- [Multi-tenancy](./multi-tenancy): entity scoping that drives nested-resource tests
+- [Authentication](./authentication): Rodauth setup behind the default login flow

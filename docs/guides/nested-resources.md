@@ -11,7 +11,7 @@ Set up parent/child relationships so `/companies/:id/nested_properties` works au
 - Forms that auto-fill the parent (no manual hidden field).
 - Queries scoped to the parent (sibling companies' properties invisible).
 
-All of this happens with no manual route wiring — Plutonium generates it from the association.
+All of this happens with no manual route wiring; Plutonium generates it from the association.
 
 ## Steps
 
@@ -65,7 +65,7 @@ Plutonium prefixes nested routes with `nested_` so they don't conflict with top-
 | `/companies/:company_id/nested_company_profile` | `has_one` show (no `:id`) |
 | `/companies/:company_id/nested_company_profile/new` | `has_one` new |
 
-`has_one` associations get singular routes — index redirects to show (or new if no record exists).
+`has_one` associations get singular routes: index redirects to show (or new if no record exists).
 
 Every routable association gets one by default. To draw only some of them:
 
@@ -149,7 +149,7 @@ end
 ```
 
 ::: warning Always pass `as:`
-Without `as:`, `resource_url_for(property, parent: company, action: :analytics)` fails — no named route to look up.
+Without `as:`, `resource_url_for(property, parent: company, action: :analytics)` fails: no named route to look up.
 :::
 
 ## Policy authorization context
@@ -167,13 +167,13 @@ class PropertyPolicy < ResourcePolicy
 end
 ```
 
-The parent is authorized for `:read?` before `current_parent` returns — children inherit the parent's access requirements.
+The parent is authorized for `:read?` before `current_parent` returns; children inherit the parent's access requirements.
 
 ## Parent scoping vs entity scoping
 
-When a parent is present, **parent scoping wins**: `default_relation_scope` scopes via the parent association, NOT `entity_scope`. The parent was already entity-scoped during its own authorization — double-scoping isn't needed.
+When a parent is present, **parent scoping wins**: `default_relation_scope` scopes via the parent association, NOT `entity_scope`. The parent was already entity-scoped during its own authorization; double-scoping isn't needed.
 
-In the child policy, just call `default_relation_scope` — it handles both cases:
+In the child policy, just call `default_relation_scope`: it handles both cases:
 
 ```ruby
 relation_scope do |relation|
@@ -194,7 +194,7 @@ For deeper hierarchies, use top-level routes plus association tabs on the show p
 
 ## Nested inputs (sub-records inside a parent form)
 
-A different feature with a confusingly similar name. **Nested *resources*** (above) give you separate URLs for the child collection. **Nested *inputs*** let you edit child records inline inside the parent's form — a single submit creates/updates/deletes them in one go, backed by Rails' `accepts_nested_attributes_for`.
+A different feature with a confusingly similar name. **Nested *resources*** (above) give you separate URLs for the child collection. **Nested *inputs*** let you edit child records inline inside the parent's form: a single submit creates/updates/deletes them in one go, backed by Rails' `accepts_nested_attributes_for`.
 
 Use nested inputs when the children are conceptually part of the parent (line items on an order, variants on a product, contact methods on a person) and don't deserve their own page.
 
@@ -214,7 +214,7 @@ class PostDefinition < ResourceDefinition
   end
 end
 
-# Policy — list the association name (NOT `comments_attributes`)
+# Policy: list the association name (NOT `comments_attributes`)
 class PostPolicy < ResourcePolicy
   def permitted_attributes_for_create
     [:title, :body, :comments]
@@ -223,7 +223,7 @@ end
 ```
 
 ::: warning Permit the association, not the strong-params shape
-List `:comments` in `permitted_attributes_for_*` — Plutonium translates it to `comments_attributes: [...]` for you. If you write the raw hash, the form renders the field name as a literal label instead of the nested editor.
+List `:comments` in `permitted_attributes_for_*`: Plutonium translates it to `comments_attributes: [...]` for you. If you write the raw hash, the form renders the field name as a literal label instead of the nested editor.
 :::
 
 ### Result
@@ -251,13 +251,13 @@ nested_input :profile,  macro: :has_one   # singular sub-form, no Add button
 
 | | Nested inputs (`nested_input :comments`) | Nested resources (this guide's main topic) |
 |---|---|---|
-| URL | None — inline in parent form | `/posts/:id/nested_comments` |
-| Submit | One — saves parent + children together | Independent CRUD per child |
+| URL | None, inline in parent form | `/posts/:id/nested_comments` |
+| Submit | One, saves parent + children together | Independent CRUD per child |
 | Discoverability | Always visible in parent form | Tab on parent show page (with `permitted_associations`) |
 | Best for | Tightly-owned children (line items, variants) | Children users browse on their own (orders, posts) |
 | Backing | `accepts_nested_attributes_for` | Plutonium's nested controller routing |
 
-You can use both on the same association — they're not mutually exclusive.
+You can use both on the same association; they're not mutually exclusive.
 
 ## Inline `+` add on the parent form
 
@@ -265,15 +265,15 @@ When a form has an association select (e.g. picking the company on a Property fo
 
 ## Common issues
 
-- **Nested route doesn't exist** — both parent AND child must be registered in the same portal (`pu:res:conn`).
-- **Parent shows up in the form anyway** — check `present_parent?` / `submit_parent?` on the controller. Default is to hide on nested routes.
-- **Multiple `belongs_to` to the same parent class** (e.g. `Match belongs_to :home_team, :away_team`) — Plutonium raises. Override `scoped_entity_association` to specify. See [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping#multiple-associations-to-the-same-entity-class).
-- **`resource_url_for` returns wrong URL for a nested resource** — check that custom routes use `as:`.
+- **Nested route doesn't exist**: both parent AND child must be registered in the same portal (`pu:res:conn`).
+- **Parent shows up in the form anyway**: check `present_parent?` / `submit_parent?` on the controller. Default is to hide on nested routes.
+- **Multiple `belongs_to` to the same parent class** (e.g. `Match belongs_to :home_team, :away_team`): give the parent one `has_many` per side (`has_many :home_matches, class_name: "Match", foreign_key: :home_team_id`). Each becomes its own nested route, and Plutonium fills in the matching `belongs_to` through `inverse_of` or the foreign key, so nothing raises. `scoped_entity_association` only matters when the parent class is also the portal's entity; see [Reference › Tenancy › Entity scoping](/reference/tenancy/entity-scoping#multiple-associations-to-the-same-entity-class).
+- **`resource_url_for` returns wrong URL for a nested resource**: check that custom routes use `as:`.
 
 ## Related
 
-- [Reference › Tenancy › Nested resources](/reference/tenancy/nested-resources) — full surface
-- [Reference › Behavior › Controllers](/reference/behavior/controllers) — `current_parent`, presentation hooks
-- [Reference › Behavior › Policies](/reference/behavior/policies#association-permissions) — `permitted_associations`
-- [Multi-tenancy](./multi-tenancy) — how entity scoping interacts with parent scoping
-- [Adding resources](./adding-resources) — basic resource setup
+- [Reference › Tenancy › Nested resources](/reference/tenancy/nested-resources): full surface
+- [Reference › Behavior › Controllers](/reference/behavior/controllers): `current_parent`, presentation hooks
+- [Reference › Behavior › Policies](/reference/behavior/policies#association-permissions): `permitted_associations`
+- [Multi-tenancy](./multi-tenancy): how entity scoping interacts with parent scoping
+- [Adding resources](./adding-resources): basic resource setup

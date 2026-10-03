@@ -6,7 +6,7 @@ Reference documentation for the Plutonium kanban board feature.
 
 | Page | What it covers |
 |------|---------------|
-| [DSL](/reference/kanban/dsl) | Complete `kanban do…end` DSL — board options, columns, column actions, static vs. dynamic, lazy loading, realtime |
+| [DSL](/reference/kanban/dsl) | Complete `kanban do…end` DSL: board options, columns, column actions, static vs. dynamic, lazy loading, realtime |
 | [Positioning](/reference/kanban/positioning) | `Plutonium::Positioning::Model` concern, `positioned_on`, `position_on` modes, `reposition!`, rebalancing |
 | [Authorization](/reference/kanban/authorization) | `kanban_move?` policy predicate, read-only fallback, separating move rights from edit rights |
 

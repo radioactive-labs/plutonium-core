@@ -37,7 +37,7 @@ Passing a version older than the earliest available raises rather than silently 
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `load_defaults(version)` | — | Apply versioned framework defaults. Call first. |
+| `load_defaults(version)` | - | Apply versioned framework defaults. Call first. |
 | `development` | `ENV["PLUTONIUM_DEV"]` | Development mode for the framework itself (local assets, hot reload, verbose errors). Query with `config.development?`. Apps rarely set this, see [Development mode](#development-mode). |
 | `cache_discovery` | `true` outside the `development` env | Cache resource/route discovery. Disable to pick up new resources without a reboot. |
 | `enable_hotreload` | `true` in the `development` env | Hot-reload Plutonium components on change. |
@@ -116,8 +116,8 @@ export PLUTONIUM_DEV=1
 
 ## Related
 
-- [Assets](./ui/assets) — stylesheet, script, Tailwind, and design tokens
-- [Layouts](./ui/layouts) — the `shell` option and ejecting chrome
-- [Components › Avatar](./ui/components#avatar) — `navii_host_url`
-- [Wizards › Storage & config](./wizard/storage-config) — the `wizards.*` settings in context
-- [Async interactions](./behavior/async-interactions) — the `async_interactions.*` settings in context
+- [Assets](./ui/assets): stylesheet, script, Tailwind, and design tokens
+- [Layouts](./ui/layouts): the `shell` option and ejecting chrome
+- [Components › Avatar](./ui/components#avatar): `navii_host_url`
+- [Wizards › Storage & config](./wizard/storage-config): the `wizards.*` settings in context
+- [Async interactions](./behavior/async-interactions): the `async_interactions.*` settings in context

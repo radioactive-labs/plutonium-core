@@ -118,7 +118,7 @@ rails db:prepare
 
 ## Creating a Portal
 
-Resources need a portal to be accessible via the web. Let's create a public admin portal so we can explore the UI right away — we'll add authentication in [Chapter 3](./03-authentication).
+Resources need a portal to be accessible via the web. Let's create a public admin portal so we can explore the UI right away; we'll add authentication in [Chapter 3](./03-authentication).
 
 ```bash
 rails generate pu:pkg:portal admin --public
@@ -149,9 +149,9 @@ Visit `http://localhost:3000/admin/blogging/posts`. You should see an empty post
 
 ![Empty posts index](/images/tutorial/02-empty-index.png)
 
-Click "New" — the form is automatically generated from your model's attributes. By default Plutonium opens it as a slideover (right) so you keep the index visible; visiting `/admin/blogging/posts/new` directly renders the same form as a standalone page (left):
+Click "New": the form is automatically generated from your model's attributes. By default Plutonium opens it as a slideover (right) so you keep the index visible; visiting `/admin/blogging/posts/new` directly renders the same form as a standalone page (left):
 
-| Default — slideover from index | Standalone page (direct URL) |
+| Default: slideover from index | Standalone page (direct URL) |
 |:--:|:--:|
 | ![Slideover new form](/images/tutorial/02-new-form-modal.png) | ![Standalone new form](/images/tutorial/02-new-form.png) |
 

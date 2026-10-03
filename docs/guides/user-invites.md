@@ -8,7 +8,7 @@ An admin enters an email, the user gets an invite link, clicks it, signs up (or 
 
 ## Prerequisites
 
-You need a user model, an entity model, and a membership model. The fastest path is `pu:saas:setup` — it creates all three and runs `pu:invites:install` automatically:
+You need a user model, an entity model, and a membership model. The fastest path is `pu:saas:setup`: it creates all three and runs `pu:invites:install` automatically:
 
 ```bash
 rails g pu:saas:setup --user Customer --entity Organization
@@ -43,7 +43,7 @@ rails g pu:invites:install \
 | `--enforce-domain` | `false` | Require email domain to match entity |
 
 ::: info Roles come from the membership model
-`pu:invites:install` reads the role list from the membership model's `enum :role` — it does not accept a `--roles=` flag. Define roles when you generate the membership model (`pu:saas:membership --roles=...`), or edit the enum directly. **Index 0 is the most privileged** (typically `owner`); the invite interaction excludes `owner` from selectable choices and defaults new invitees to the second role.
+`pu:invites:install` reads the role list from the membership model's `enum :role`; it does not accept a `--roles=` flag. Define roles when you generate the membership model (`pu:saas:membership --roles=...`), or edit the enum directly. **Index 0 is the most privileged** (typically `owner`); the invite interaction excludes `owner` from selectable choices and defaults new invitees to the second role.
 :::
 
 ### 2. Migrate
@@ -112,7 +112,7 @@ Users land on `/welcome` where pending invites are shown. Including `Plutonium::
 include Plutonium::Invites::PendingInviteCheck
 ```
 
-## Invitables — app models notified on acceptance
+## Invitables: app models notified on acceptance
 
 An invitable is a model that gets notified when its invitation is accepted. Examples: `Tenant`, `TeamMember`, `ProjectCollaborator`.
 
@@ -137,7 +137,7 @@ end
 ```
 
 ::: warning Without `on_invite_accepted`
-The invitable never learns about the new user — the invite is consumed but your app doesn't update its state.
+The invitable never learns about the new user: the invite is consumed but your app doesn't update its state.
 :::
 
 ## Multiple invite flows in one app
@@ -158,7 +158,7 @@ rails g pu:invites:install \
 
 Each invocation creates an independent flow: model, controller, route, helper all named for the invite-model.
 
-The shared `Invites::WelcomeController` accumulates each new class into its `invite_classes` array — `pending_invite` checks all flows in priority order (first-match wins).
+The shared `Invites::WelcomeController` accumulates each new class into its `invite_classes` array; `pending_invite` checks all flows in priority order (first-match wins).
 
 See [Reference › Tenancy › Invites › Multiple invite flows](/reference/tenancy/invites#multiple-invite-flows).
 
@@ -222,27 +222,27 @@ entity.user_invites.pending    # list pending
 
 ## Security
 
-- **Token security** — `SecureRandom.urlsafe_base64(32)` — 256 bits, URL-safe. Stored hashed, raw token shown only at creation.
-- **Email validation** — `enforce_email?` is `true` by default. The accepting user's email must match the invited email — prevents account hijacking via invite forwarding.
-- **Rate limiting** — use Rack::Attack or similar to throttle invite creation per admin and acceptance attempts per IP.
+- **Token security**: `SecureRandom.urlsafe_base64(32)`, 256 bits, URL-safe. Stored hashed, raw token shown only at creation.
+- **Email validation**: `enforce_email?` is `true` by default. The accepting user's email must match the invited email; this prevents account hijacking via invite forwarding.
+- **Rate limiting**: use Rack::Attack or similar to throttle invite creation per admin and acceptance attempts per IP.
 
 ::: danger Don't disable enforce_email?
 ```ruby
 def enforce_email? = false   # ← only if you fully understand the trade-off
 ```
-Without this, anyone with the token can sign up — defeats the purpose of an invitation system.
+Without this, anyone with the token can sign up, which defeats the purpose of an invitation system.
 :::
 
 ## Common issues
 
-- **"Invitation not found or expired"** — token expired (default 1 week), invite cancelled, or no longer `pending`.
-- **Email mismatch error** — the accepting user's email doesn't match the invited email. This is by design (security).
-- **Rodauth redirect after login doesn't go to `/welcome`** — check `login_redirect "/welcome"` in the rodauth plugin's `configure` block.
-- **`on_invite_accepted` not called** — ensure the invitable model `include Plutonium::Invites::Concerns::Invitable` and defines `on_invite_accepted`.
+- **"Invitation not found or expired"**: token expired (default 1 week), invite cancelled, or no longer `pending`.
+- **Email mismatch error**: the accepting user's email doesn't match the invited email. This is by design (security).
+- **Rodauth redirect after login doesn't go to `/welcome`**: check `login_redirect "/welcome"` in the rodauth plugin's `configure` block.
+- **`on_invite_accepted` not called**: ensure the invitable model `include Plutonium::Invites::Concerns::Invitable` and defines `on_invite_accepted`.
 
 ## Related
 
-- [Reference › Tenancy › Invites](/reference/tenancy/invites) — full surface, multi-flow apps, customization
-- [Multi-tenancy](./multi-tenancy) — entity scoping (invites are entity-scoped automatically)
-- [Authentication](./authentication) — Rodauth setup
-- [User profile](./user-profile) — account-settings page
+- [Reference › Tenancy › Invites](/reference/tenancy/invites): full surface, multi-flow apps, customization
+- [Multi-tenancy](./multi-tenancy): entity scoping (invites are entity-scoped automatically)
+- [Authentication](./authentication): Rodauth setup
+- [User profile](./user-profile): account-settings page

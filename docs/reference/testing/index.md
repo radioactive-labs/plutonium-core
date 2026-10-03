@@ -1,13 +1,13 @@
 # Testing Reference
 
-`Plutonium::Testing` provides scaffolded integration tests that assert a resource × portal pairing — CRUD, policy matrix, definition smoke tests, model concerns (associated_with, SGID, has_cents), nested-resource scope boundaries, cross-portal access, and interaction outcomes. All optional, all opt-in.
+`Plutonium::Testing` provides scaffolded integration tests that assert a resource × portal pairing: CRUD, policy matrix, definition smoke tests, model concerns (associated_with, SGID, has_cents), nested-resource scope boundaries, cross-portal access, and interaction outcomes. All optional, all opt-in.
 
 ## 🚨 Critical
 
 - **Use the generators.** `pu:test:install` once per app, then `pu:test:scaffold ResourceClass --portals=...` per resource × portal. Hand-written test files drift from conventions.
-- **Tests are opt-in.** `Plutonium::Testing` is only loaded when `require "plutonium/testing"` runs — it's never autoloaded, never present in production.
+- **Tests are opt-in.** `Plutonium::Testing` is only loaded when `require "plutonium/testing"` runs; it's never autoloaded, never present in production.
 - **One file per (resource × portal).** Same model in admin and org portals = two test files. Each portal has different auth, scoping, and allowed actions.
-- **Stub methods are required.** Concerns ship with `NotImplementedError` stubs — your test class supplies the test data via `create_resource!`, `valid_create_params`, `policy_roles`, etc.
+- **Stub methods are required.** Concerns ship with `NotImplementedError` stubs: your test class supplies the test data via `create_resource!`, `valid_create_params`, `policy_roles`, etc.
 
 ## Quick start
 
@@ -88,6 +88,11 @@ class AdminPortal::BloggingPostsTest < ActionDispatch::IntegrationTest
 end
 ```
 
+**`valid_update_params` is also the assertion.** After the PATCH, the update test runs `assert_equal value, record.reload.public_send(attr)` for every key, so:
+
+- Use values that read back identically. Enums go in as strings (`status: "published"`): the enum reader returns a String, so `:published` fails.
+- Keep association SGIDs out of it. The loop only skips values starting with `gid://`, and `to_sgid.to_s` is a signed token, so the token gets compared to the associated record. Test reassigning an association in its own `test` block that PATCHes the SGID and asserts `record.reload.user == other_user`. `valid_create_params` has no such check, so SGIDs are fine there.
+
 ### `Plutonium::Testing::ResourcePolicy`
 
 Asserts the `permit?` matrix across action × role and verifies `relation_scope` returns an `ActiveRecord::Relation`.
@@ -133,18 +138,31 @@ Outcome-assertion helpers for `Plutonium::Resource::Interaction` subclasses.
 
 - `assert_interaction_success(klass, **input)` → returns the success outcome
 - `assert_interaction_failure(klass, **input)` → returns the failure outcome
-- `interaction_view_context` (overridable) → defaults to a mock view context
+- `interaction_view_context` (overridable) → the view context both helpers pass in (a mock by default); override it only when the interaction reads from the view context
+
+Use the helpers for both outcomes; they build the interaction and call it for you.
 
 ```ruby
-test "RebuildSearchInteraction succeeds" do
-  outcome = assert_interaction_success(RebuildSearchInteraction, since: 1.day.ago)
-  assert_equal 42, outcome.value[:rebuilt_count]
+test "PublishProduct moves a draft to active" do
+  product = create_product!(status: :draft)
+  assert_interaction_success(Catalog::PublishProduct, resource: product)
+  assert product.reload.active?
+end
+
+test "PublishProduct fails for a product that isn't a draft" do
+  product = create_product!(status: :active)
+  assert_interaction_failure(Catalog::PublishProduct, resource: product)
+  assert product.reload.active?   # state unchanged
 end
 ```
 
+The failure outcome carries no validation errors (they live on the interaction instance), so assert the unchanged state rather than building the interaction by hand to read `errors`.
+
+`ResourceInteraction` includes neither the DSL nor `AuthHelpers`. A file scaffolded with only `--concerns=interaction` still has the template's `resource_tests_for` and `login_as(@account)`, which raise `NoMethodError`: delete both (the helpers need no portal and no login).
+
 ### `Plutonium::Testing::ResourceModel`
 
-Tests `associated_with` scope, SGID routing, and `has_cents` accessors — gated by DSL flags.
+Tests `associated_with` scope, SGID routing, and `has_cents` accessors, gated by DSL flags.
 
 **Stubs:**
 
@@ -167,13 +185,77 @@ Asserts CRUD under a parent + scope-boundary tests (sibling tenants invisible).
 
 **Stubs:**
 
-- `parent_record!` → current tenant
+- `parent_record!` → current tenant (called several times per test, so return the same record each time, e.g. `@org`)
 - `other_parent_record!` → sibling tenant
 - `create_resource!(parent:)` → persisted record under given parent
 
+The concern builds its URLs as `"#{current_path_prefix}/#{parent.id}/#{collection}"`, so it expects the bare portal mount as the prefix and inserts the parent id itself.
+
+#### Entity-scoped portals: CRUD + tenant isolation
+
+In a portal that calls `scope_to_entity Model, strategy: :path` (e.g. `/org/:id/...`), "records from another tenant aren't reachable" is the `NestedResource` concern with the entity as the parent. The resolved prefix there is the bare mount (`/org`), and the two concerns need different prefixes and different `create_resource!` signatures:
+
+| | `ResourceCrud` | `NestedResource` |
+|---|---|---|
+| URL built | `prefix/collection` | `prefix/parent.id/collection` |
+| Prefix needed | `/org/#{@org.to_param}` (override `current_path_prefix`) | `/org` (the resolved default) |
+| Calls | `create_resource!` | `create_resource!(parent:)` |
+
+One class can't satisfy both, so split the scaffolded file into two classes:
+
+```bash
+rails g pu:test:scaffold Catalog::Variant --portals=org --concerns=crud,nested --parent=organization
+```
+
+```ruby
+class OrgPortal::CatalogVariantTest < ActionDispatch::IntegrationTest
+  include IntegrationTestHelper
+  include Plutonium::Testing::ResourceCrud
+
+  resource_tests_for Catalog::Variant, portal: :org
+
+  setup do
+    @org = create_organization!
+    @user = create_user!
+    create_membership!(organization: @org, user: @user)
+    @product = create_product!(user: @user, organization: @org)
+    login_as(@user)                       # :org logs in through /users/login
+  end
+
+  def current_path_prefix = "/org/#{@org.to_param}"
+  def create_resource! = create_variant!(product: @product)
+  def valid_create_params = {name: "Red", sku: "RED-1", stock_count: 5, product: @product.to_sgid.to_s}
+  def valid_update_params = {name: "Red / Large"}
+end
+
+class OrgPortal::CatalogVariantNestedTest < ActionDispatch::IntegrationTest
+  include IntegrationTestHelper
+  include Plutonium::Testing::NestedResource
+
+  resource_tests_for Catalog::Variant, portal: :org, parent: :organization
+
+  setup do
+    @org = create_organization!
+    @other_org = create_organization!
+    @user = create_user!
+    create_membership!(organization: @org, user: @user)
+    login_as(@user)
+  end
+
+  def parent_record! = @org
+  def other_parent_record! = @other_org
+
+  def create_resource!(parent:)
+    create_variant!(product: create_product!(organization: parent))
+  end
+end
+```
+
+`create_resource!(parent:)` must create under `parent`, not always under `@org`: the isolation test passes `other_parent_record!` and expects a 404 (or redirect) for that record.
+
 ### `Plutonium::Testing::PortalAccess`
 
-Cross-portal access boundaries. Uses its own DSL — NOT `resource_tests_for`.
+Cross-portal access boundaries. Uses its own DSL (NOT `resource_tests_for`).
 
 ```ruby
 class PortalAccessTest < ActionDispatch::IntegrationTest
@@ -210,7 +292,16 @@ Generates one test per (role × portal). Allowed = `200 | 302`; blocked = `302 |
 
 ## Auth helpers
 
-`Plutonium::Testing::AuthHelpers` is included transitively by every concern.
+`login_as` and friends come from `Plutonium::Testing::AuthHelpers`, which only some concerns pull in. The default portal comes from the DSL (`resource_tests_for`), which is a separate include:
+
+| Concern | `login_as` available | Bare `login_as(account)` works |
+|---|---|---|
+| `ResourceCrud`, `NestedResource` | yes | yes (portal from `resource_tests_for`) |
+| `PortalAccess` | yes | no: pass `portal:` every time |
+| `ResourcePolicy`, `ResourceDefinition`, `ResourceModel` | no | no |
+| `ResourceInteraction` | no | no |
+
+A hand-written integration test that only includes the app's own helpers (e.g. an `IntegrationTestHelper`) has no `login_as` at all. Add `include Plutonium::Testing::AuthHelpers` (and `require "plutonium/testing"` if `test_helper.rb` doesn't) and pass `portal:` explicitly. Likewise, delete the scaffold's `login_as(@account)` from a file whose concerns don't provide it.
 
 ```ruby
 login_as(account)                       # uses portal from the DSL
@@ -255,16 +346,18 @@ rails g pu:test:scaffold Blogging::Post --portals=org --parent=organization --de
 |---|---|---|
 | `--portals=admin,org` | required | Emit one file per portal |
 | `--concerns=...` | `crud,policy,definition` | Concerns to include (`crud`, `policy`, `definition`, `nested`, `model`, `interaction`, `portal_access`) |
-| `--parent=organization` | | Wires `NestedResource` parent |
+| `--parent=organization` | | Adds `parent:` to `resource_tests_for` and, only together with `nested` in `--concerns`, the `parent_record!`/`other_parent_record!` stubs |
 | `--dest=main_app\|<package>` | `main_app` | Output destination |
 
 Output path: `test/integration/<portal>_portal/<resource_underscored>_test.rb`.
+
+`--parent` alone does not add the `NestedResource` include; pass `--concerns=crud,nested --parent=organization`. The template is one class with every requested include, a `setup` that calls `login_as(@account)`, and a no-argument `create_resource!`. Treat it as a starting point: drop `login_as`/`resource_tests_for` where the concerns don't provide them (see [Auth helpers](#auth-helpers)), and split `crud` and `nested` into two classes for [entity-scoped portals](#entity-scoped-portals-crud-tenant-isolation).
 
 ## Customization & escape hatches
 
 - **Skip individual tests:** `resource_tests_for Klass, portal: :admin, skip: %i[destroy]`
 - **Restrict action set:** `resource_tests_for Klass, portal: :admin, actions: %i[index show]`
-- **Custom assertions:** add regular `test "..."` blocks alongside the generated matrix — they coexist.
+- **Custom assertions:** add regular `test "..."` blocks alongside the generated matrix; they coexist.
 - **Non-Rodauth auth:** override `sign_in_for_tests`. See [AuthHelpers](#auth-helpers).
 - **Custom path prefix:** `path_prefix: "/v2/admin"` overrides portal resolution.
 
@@ -273,15 +366,16 @@ Output path: `test/integration/<portal>_portal/<resource_underscored>_test.rb`.
 - **Forgotten stubs raise `NotImplementedError`** with the stub name. Look for the missing method in your test class.
 - **Portal mismatch:** `:admin` portal expects `AdminPortal::Engine` constant. If your portal is named differently, pass `path_prefix:` explicitly.
 - **Tenant leakage in stubs:** `create_resource!` for an org portal must return a record bound to the test's `@org`. Otherwise scope filtering tests pass for the wrong reason.
-- **`policy_record` for tenant-scoped resources** must belong to a tenant the role has access to — otherwise even allowed roles will see `false`.
-- **Nested resources need `parent: :foo`** in the DSL AND a real parent record from `parent_record!`. Without both, path interpolation fails.
-- **`PortalAccess` doesn't use `resource_tests_for`** — use `portal_access_for` instead. Mixing them on the same class is undefined behavior.
+- **`policy_record` for tenant-scoped resources** must belong to a tenant the role has access to; otherwise even allowed roles will see `false`.
+- **Nested paths come from `parent_record!.id`**, so it must return a real, persisted tenant the logged-in account belongs to. `parent: :foo` in the DSL documents the relationship; the concern doesn't read it.
+- **Entity-scoped CRUD hitting `/org/<collection>`** (404 or routing error): a `:path` portal resolves to the bare mount, so override `current_path_prefix` to include the tenant. Don't do this in a `NestedResource` class, which adds the id itself.
+- **`PortalAccess` doesn't use `resource_tests_for`**: use `portal_access_for` instead. Mixing them on the same class is undefined behavior.
 
 ## Related
 
-- [Behavior › Policy](/reference/behavior/policies) — the policy methods `ResourcePolicy` verifies
-- [Behavior › Interaction](/reference/behavior/interactions) — interaction outcomes asserted by `ResourceInteraction`
-- [Resource › Definition](/reference/resource/definition) — definition props the smoke test introspects
-- [Tenancy](/reference/tenancy/) — parent scoping (`NestedResource`), entity strategies (drive auth/scoping)
-- [Auth](/reference/auth/) — Rodauth setup behind the default `sign_in_for_tests`
-- [Guides › Testing](/guides/testing) — task-oriented walkthrough
+- [Behavior › Policy](/reference/behavior/policies): the policy methods `ResourcePolicy` verifies
+- [Behavior › Interaction](/reference/behavior/interactions): interaction outcomes asserted by `ResourceInteraction`
+- [Resource › Definition](/reference/resource/definition): definition props the smoke test introspects
+- [Tenancy](/reference/tenancy/): parent scoping (`NestedResource`), entity strategies (drive auth/scoping)
+- [Auth](/reference/auth/): Rodauth setup behind the default `sign_in_for_tests`
+- [Guides › Testing](/guides/testing): task-oriented walkthrough

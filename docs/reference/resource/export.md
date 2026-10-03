@@ -1,7 +1,7 @@
 # CSV Export
 
 Every resource ships with a streamed CSV export, **disabled by default**. It is *not* an
-[action](./actions.md) — it streams a file and opens in a new tab — so it is enabled
+[action](./actions.md) (it streams a file and opens in a new tab), so it is enabled
 through the policy rather than declared with `action :export_csv`. The route
 (`GET /<resources>/export_csv`) is auto-mounted on every resource; a split "Export"
 button appears on the index page once the policy permits it.
@@ -25,8 +25,8 @@ The control is a split button with two behaviours:
 
 | | Source | Filename |
 |---|---|---|
-| **Export** (primary) | The current view — selected scope + filters + search (the index's `?q`), **all** matching rows (not just the visible page) | `posts_<date>.csv` |
-| **Export all** (dropdown) | The entire authorized scope — ignores scope, filters, search, and default scope | `posts_all_<date>.csv` |
+| **Export** (primary) | The current view: selected scope + filters + search (the index's `?q`), **all** matching rows (not just the visible page) | `posts_<date>.csv` |
+| **Export all** (dropdown) | The entire authorized scope: ignores scope, filters, search, and default scope | `posts_all_<date>.csv` |
 
 "Export all" always exports everything the user is authorized to read, regardless of the
 current scope/filters.
@@ -73,12 +73,12 @@ For a column **without** an `export` block, the value is read straight off the r
 (`record.public_send(name)`):
 
 - **Scalars** (strings, numbers, booleans, dates) are written as-is.
-- **Associations** render as their display label — the same `display_name_of` the index
-  uses (e.g. `User #5`, or the record's `to_label`/`name`/`title` if defined) — never
+- **Associations** render as their display label: the same `display_name_of` the index
+  uses (e.g. `User #5`, or the record's `to_label`/`name`/`title` if defined), never
   `#<User:0x…>`. Add an `export` block to export a specific field instead (e.g. the email).
 - A name that is **neither** an `export` block **nor** a real method on the record renders
   the placeholder `<<invalid column>>` rather than aborting the (already-streaming) download.
-  To export a computed or virtual column, give it an `export` block — a `label:`-only
+  To export a computed or virtual column, give it an `export` block: a `label:`-only
   `export` does **not** supply a value, so it too renders the placeholder.
 
 ## Notes & limits

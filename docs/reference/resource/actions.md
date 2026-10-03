@@ -1,32 +1,32 @@
 # Actions
 
-Custom buttons that go beyond standard CRUD — publish, archive, import, send invitation, etc. Two flavors:
+Custom buttons that go beyond standard CRUD: publish, archive, import, send invitation, etc. Two flavors:
 
-- **Simple actions** — navigate to an existing URL.
-- **Interactive actions** — run an [Interaction](/reference/behavior/interactions), optionally collecting input via a modal form.
+- **Simple actions**: navigate to an existing URL.
+- **Interactive actions**: run an [Interaction](/reference/behavior/interactions), optionally collecting input via a modal form.
 
 ## 🚨 Critical
 
 - **Every custom action needs a policy method.** `action :publish` requires `def publish?` on the policy. Undefined methods return `false`, so the action silently disappears.
 - **For interactive actions, visibility is inferred from the interaction's attributes.** Don't declare `record_action: true` / `bulk_action: true` etc. by hand unless you're opting OUT.
 - **Bulk action authorization is per-record.** If any selected record fails the policy check, the entire request is rejected.
-- **Always pass `as:`** on custom routes — without it, `resource_url_for` can't generate URLs (critical for nested resources).
+- **Always pass `as:`** on custom routes: without it, `resource_url_for` can't generate URLs (critical for nested resources).
 - **Prefer interactive actions over hand-written controller routes.** Anything a user triggers from a page belongs behind an interaction.
-- **An interaction is the button, not the operation.** Logic may start in `execute`; once a job or an API also needs it, it moves to the model — see [Behavior › Interactions](/reference/behavior/interactions#what-an-interaction-is-for).
+- **An interaction is the button, not the operation.** Logic may start in `execute`; once a job or an API also needs it, it moves to the model, see [Behavior › Interactions](/reference/behavior/interactions#what-an-interaction-is-for).
 
 ## Action visibility flags
 
 | Flag | Where the button appears |
 |---|---|
-| `resource_action: true` | Index page (top toolbar) — for actions that operate on the collection (Import, Export, Create) |
-| `record_action: true` | Show page — for actions on a single record (Edit, Archive, Delete) |
-| `collection_record_action: true` | Per-row in the index table — for quick actions (Edit, Show) |
+| `resource_action: true` | Index page (top toolbar): for actions that operate on the collection (Import, Export, Create) |
+| `record_action: true` | Show page: for actions on a single record (Edit, Archive, Delete) |
+| `collection_record_action: true` | Per-row in the index table: for quick actions (Edit, Show) |
 | `bulk_action: true` | Bulk-actions toolbar (shown when records are selected) |
-| `hidden: true` | **Nowhere.** Suppresses all four surfaces at once, while keeping the route and policy live — see [Hidden actions](#hidden-actions) |
+| `hidden: true` | **Nowhere.** Suppresses all four surfaces at once, while keeping the route and policy live, see [Hidden actions](#hidden-actions) |
 
 ### Inferred visibility (interactive actions)
 
-For `interaction:`-based actions, all four flags are **inferred from the interaction's attributes** — don't declare them by hand:
+For `interaction:`-based actions, all four flags are **inferred from the interaction's attributes**; don't declare them by hand:
 
 | Interaction declares | Inferred flags |
 |---|---|
@@ -34,7 +34,7 @@ For `interaction:`-based actions, all four flags are **inferred from the interac
 | `attribute :resources` (plural) | `bulk_action: true` |
 | neither | `resource_action: true` |
 
-User-supplied flags override the inferred ones, but only **opt-out** makes sense — the interaction's `attribute :resource` / `attribute :resources` already fixes its semantic shape:
+User-supplied flags override the inferred ones, but only **opt-out** makes sense: the interaction's `attribute :resource` / `attribute :resources` already fixes its semantic shape:
 
 ```ruby
 # :resource interaction → defaults to record_action + collection_record_action.
@@ -63,10 +63,10 @@ action :name,
   collection_record_action: true,
   bulk_action:              true,
 
-  # Conditional visibility — display-only proc, NOT authorization (see below)
+  # Conditional visibility: display-only proc, NOT authorization (see below)
   condition: -> { params[:beta] == "1" },
 
-  # Never render, anywhere — route + policy stay live (see below)
+  # Never render, anywhere: route + policy stay live (see below)
   hidden: true,
 
   # Grouping
@@ -78,19 +78,19 @@ action :name,
   turbo_frame:  "_top",
   return_to:    "/custom/path",
   route_options: {action: :foo},
-  modal: :slideover,                     # :slideover / :centered — overrides the definition's modal mode
-  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full — overrides the definition's modal size
+  modal: :slideover,                     # :slideover / :centered; overrides the definition's modal mode
+  size:  :lg,                            # :sm / :md / :lg / :xl / :auto / :full; overrides the definition's modal size
 
   # HTML attributes (see below)
   link:   {target: "_blank", rel: "noopener"},  # merged onto the action's <a> renderings
   button: {data: {analytics: "archive"}}        # merged onto the button_to <form> (non-GET)
 ```
 
-### HTML attributes — `link:` / `button:`
+### HTML attributes: `link:` / `button:`
 
-Two per-element attribute bags, deep-merged over the framework's own attributes at render time — **the author wins on every key**, recursively through nested `data`:
+Two per-element attribute bags, deep-merged over the framework's own attributes at render time; **the author wins on every key**, recursively through nested `data`:
 
-- **`link:`** applies to every `<a>` rendered for the action: the toolbar link (GET), dropdown items (**any** HTTP method — dropdown items are always anchors, submitting via `data-turbo-method`), bulk-action links, kanban column action links, and the grid/kanban card's hidden show link (for `:show`).
+- **`link:`** applies to every `<a>` rendered for the action: the toolbar link (GET), dropdown items (**any** HTTP method, dropdown items are always anchors, submitting via `data-turbo-method`), bulk-action links, kanban column action links, and the grid/kanban card's hidden show link (for `:show`).
 - **`button:`** applies to the `button_to` **`<form>`** element of the non-GET toolbar rendering (the form wrapper, not the inner `<button>`).
 
 ```ruby
@@ -100,14 +100,14 @@ action :documentation,
   link: {target: "_blank", rel: "noopener noreferrer", data: {analytics: "docs"}}
 ```
 
-Because the author wins, you can override anything — `turbo_frame`, `class`, `data-*` — at your own risk. Two things to know:
+Because the author wins, you can override anything (`turbo_frame`, `class`, `data-*`) at your own risk. Two things to know:
 
-- `class:` **replaces** the framework's classes (no token append) — a bare `link: {class: "mt-2"}` removes the button styling entirely.
+- `class:` **replaces** the framework's classes (no token append): a bare `link: {class: "mt-2"}` removes the button styling entirely.
 - Pass `data:` as a **hash**. The merge only recurses when both sides are hashes, so a scalar `data:` replaces the framework's data wholesale (dropping `turbo_confirm`/`turbo_frame`).
 
 Both bags round-trip through [`with(...)`](#deriving-variants-action-with), so `defined_actions[:edit].with(link: {target: "_blank"})` works in `customize_actions`.
 
-### Deriving variants — `Action#with(...)`
+### Deriving variants: `Action#with(...)`
 
 Action records are frozen value objects. Inside `customize_actions`, derive a copy with overrides:
 
@@ -117,11 +117,11 @@ def customize_actions
 end
 ```
 
-## Conditional visibility — `condition:` {#conditional-visibility}
+## Conditional visibility: `condition:` {#conditional-visibility}
 
-Like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. It's purely a toggle on whether the **button is shown** — the action (and its route) stays fully live either way.
+Like the `condition:` proc on [inputs/displays/columns](/reference/resource/definition), an action can be **defined but only rendered when a runtime proc is truthy**. It's purely a toggle on whether the **button is shown**; the action (and its route) stays fully live either way.
 
-The headline use case: **expose an action's endpoint without surfacing it in the UI** — e.g. one you call from the API, a webhook, or another service. Hide the button with an always-falsy condition; the route still works:
+The headline use case: **expose an action's endpoint without surfacing it in the UI**, e.g. one you call from the API, a webhook, or another service. Hide the button with an always-falsy condition; the route still works:
 
 ```ruby
 # Defined and callable (API / programmatic), but no button anywhere in the UI:
@@ -133,7 +133,7 @@ It also works as a dynamic toggle driven by the **record** or the **view/request
 ```ruby
 # object → the row/shown record (record & collection-record actions):
 action :reopen,  interaction: ReopenInteraction,  condition: -> { object.closed? }
-# view/request state — feature flag, preview/beta mode:
+# view/request state: feature flag, preview/beta mode:
 action :preview, interaction: PreviewInteraction, condition: -> { params[:beta] == "1" }
 ```
 
@@ -144,34 +144,34 @@ Inside the proc, `object`/`record` is the contextual record, and every other cal
 | `object` / `record` | The row/shown record for **record** and **collection-record** actions; **`nil`** for resource and bulk actions (no single record). Guard with `object&.…` if a condition is shared across action kinds. |
 | `params`, `request` | Current request. |
 | `current_user`, `current_parent` | The signed-in user and (nested) parent. |
-| `resource_record!` | The shown record on the show page; raises on index/table — prefer `object`. |
+| `resource_record!` | The shown record on the show page; raises on index/table: prefer `object`. |
 | `allowed_to?`, `policy_for`, other helpers | The usual view helpers. |
 
 `object` is evaluated **per row** in tables and grids, so per-record show/hide works there too.
 
-::: danger `condition:` is NOT authorization — it only hides the button
+::: danger `condition:` is NOT authorization: it only hides the button
 A hidden action still has a **live route**: anyone who knows the URL can still trigger it. `condition:` decides whether the *button renders*, never whether the *request is allowed*.
 
 ```ruby
-# 🚫 WRONG — this does NOT stop non-admins. The route is live; they can POST to it.
+# 🚫 WRONG: this does NOT stop non-admins. The route is live; they can POST to it.
 action :wipe, interaction: WipeInteraction, condition: -> { current_user.admin? }
 
-# ✅ RIGHT — authorization belongs in the policy. The action only runs if this returns true.
+# ✅ RIGHT: authorization belongs in the policy. The action only runs if this returns true.
 class WidgetPolicy < ResourcePolicy
   def wipe? = current_user.admin?
 end
 ```
 
-**Rule of thumb:** "who may run this" → **policy** (`def action_name?`). "is this UI relevant right now" → `condition:`. Authorization is enforced regardless of `condition:`; the two compose — an action appears only when the policy permits **and** the condition is truthy.
+**Rule of thumb:** "who may run this" → **policy** (`def action_name?`). "is this UI relevant right now" → `condition:`. Authorization is enforced regardless of `condition:`; the two compose: an action appears only when the policy permits **and** the condition is truthy.
 :::
 
 ::: tip Per-record display vs. per-record authorization
-`condition: -> { object.draft? }` is fine for **showing/hiding** a per-record button. But if the rule is about **who may run it** ("only while draft *and* nobody else has it locked"), put it in the policy — `def publish? = record.draft?` is also evaluated per record (per row), and unlike `condition:` it actually gates execution.
+`condition: -> { object.draft? }` is fine for **showing/hiding** a per-record button. But if the rule is about **who may run it** ("only while draft *and* nobody else has it locked"), put it in the policy: `def publish? = record.draft?` is also evaluated per record (per row), and unlike `condition:` it actually gates execution.
 :::
 
-## Hidden actions — `hidden: true` {#hidden-actions}
+## Hidden actions: `hidden: true` {#hidden-actions}
 
-An action declared `hidden: true` renders in **no** toolbar, row dropdown, card, or bulk bar — regardless of its visibility flags, the policy, or `condition:`. Everything else about it stays live:
+An action declared `hidden: true` renders in **no** toolbar, row dropdown, card, or bulk bar, regardless of its visibility flags, the policy, or `condition:`. Everything else about it stays live:
 
 - the **route** is mounted;
 - the **policy predicate** (`def name?`) is defined and enforced;
@@ -181,7 +181,7 @@ An action declared `hidden: true` renders in **no** toolbar, row dropdown, card,
 action :reposition, hidden: true
 ```
 
-The use case is an endpoint reached by **something other than a button** — a drag gesture, a custom Stimulus controller, a client-side widget you wrote yourself. The framework uses it for exactly that: [`position_on`](/reference/resource/positioning) expands to `action :reposition, hidden: true`, and the kanban board's drop endpoint is declared the same way.
+The use case is an endpoint reached by **something other than a button**: a drag gesture, a custom Stimulus controller, a client-side widget you wrote yourself. The framework uses it for exactly that: [`position_on`](/reference/resource/positioning) expands to `action :reposition, hidden: true`, and the kanban board's drop endpoint is declared the same way.
 
 ### `hidden:` vs `condition: -> { false }`
 
@@ -190,7 +190,7 @@ Both suppress the button, so pick by intent:
 | | `hidden: true` | `condition: -> { false }` |
 |---|---|---|
 | Decided | at **class-load**, once | at **render time**, per row/request |
-| Costs | nothing — the surfaces filter it out before any policy or condition runs | a proc evaluation per rendering |
+| Costs | nothing: the surfaces filter it out before any policy or condition runs | a proc evaluation per rendering |
 | Says | "this is never a button" | "this is a button, just not right now" |
 
 Use `hidden:` for an action that is *structurally* not a button. Use `condition:` when visibility genuinely depends on the record, the user, or the request.
@@ -199,10 +199,10 @@ Use `hidden:` for an action that is *structurally* not a button. Use `condition:
 This is the same trap as [`condition:`](#conditional-visibility), and it bears repeating because "hidden" reads more absolute than it is. A hidden action has a **live route**: anyone who can construct the URL can call it.
 
 ```ruby
-# 🚫 WRONG — hiding the button does not stop the request.
+# 🚫 WRONG: hiding the button does not stop the request.
 action :purge_all, interaction: PurgeInteraction, hidden: true
 
-# ✅ RIGHT — authorization belongs in the policy.
+# ✅ RIGHT: authorization belongs in the policy.
 class WidgetPolicy < ResourcePolicy
   def purge_all? = current_user.admin?
 end
@@ -239,16 +239,16 @@ resources :posts do
 end
 ```
 
-Without it, `resource_url_for` can't build the URL — particularly critical for nested resources.
+Without it, `resource_url_for` can't build the URL, particularly critical for nested resources.
 :::
 
 For anything with business logic, use an **interactive action** instead.
 
 ## Interactive actions
 
-Run an [Interaction](/reference/behavior/interactions) — automatically renders a form if the interaction declares attributes beyond `:resource`/`:resources`, otherwise executes immediately with a confirmation.
+Run an [Interaction](/reference/behavior/interactions): automatically renders a form if the interaction declares attributes beyond `:resource`/`:resources`, otherwise executes immediately with a confirmation.
 
-The interactions below call named model methods (`archive!`, `invite!`) rather than doing the work inline. That's not mandatory for a one-off — the trigger to extract is the second caller, since an interaction can only be built with a `view_context`. See [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
+The interactions below call named model methods (`archive!`, `invite!`) rather than doing the work inline. That's not mandatory for a one-off; the trigger to extract is the second caller, since an interaction can only be built with a `view_context`. See [Interactions › What an interaction is for](/reference/behavior/interactions#what-an-interaction-is-for).
 
 ```ruby
 class PostDefinition < Plutonium::Resource::Definition
@@ -341,7 +341,7 @@ action :bulk_archive, interaction: BulkArchiveInteraction
 # bulk_action: true inferred from `attribute :resources`
 ```
 
-Policy — checked per record; fails the whole request if ANY record is unauthorized:
+Policy: checked per record; fails the whole request if ANY record is unauthorized:
 
 ```ruby
 def bulk_archive?
@@ -349,7 +349,7 @@ def bulk_archive?
 end
 ```
 
-The UI only shows bulk actions that ALL selected records support. Records are fetched via `current_authorized_scope` — users can only select records they can access.
+The UI only shows bulk actions that ALL selected records support. Records are fetched via `current_authorized_scope`; users can only select records they can access.
 
 ### Resource action (no record)
 
@@ -375,7 +375,7 @@ action :import, interaction: ImportInteraction
 
 ## Running the work in the background
 
-An interactive action executes inside the request. When that is too slow — a bulk action over thousands of records, or a single call to something slow — replace `execute` with `async` and the interaction dispatches a persisted, resumable run instead:
+An interactive action executes inside the request. When that is too slow (a bulk action over thousands of records, or a single call to something slow), replace `execute` with `async` and the interaction dispatches a persisted, resumable run instead:
 
 ```ruby
 class BulkArchiveInteraction < ResourceInteraction
@@ -396,8 +396,8 @@ See [Async Interactions](/reference/behavior/async-interactions) for failure pol
 
 | Interaction shape | Behavior |
 |---|---|
-| Only `:resource` / `:resources` (no extra inputs) | **Immediate** — browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom"` or `confirmation: false`. |
-| Additional `attribute` / `input` declared | **Form** — renders the action's form in a modal first; no auto-confirmation (the form is the confirmation). |
+| Only `:resource` / `:resources` (no extra inputs) | **Immediate**: browser confirmation (`"#{label}?"`, e.g. `"Archive?"`), then runs. Override with `confirmation: "Custom"` or `confirmation: false`. |
+| Additional `attribute` / `input` declared | **Form**: renders the action's form in a modal first; no auto-confirmation (the form is the confirmation). |
 
 ## Built-in CRUD actions
 
@@ -454,13 +454,13 @@ end
 ```
 
 > **CSV export is not an action.** It's a built-in, policy-gated capability with its own
-> button — see [CSV Export](./export.md). Don't declare it with `action :export_csv`.
+> button; see [CSV Export](./export.md). Don't declare it with `action :export_csv`.
 
 ## Interaction responses
 
 ```ruby
 def execute
-  # Success — redirects to resource automatically
+  # Success: redirects to resource automatically
   succeed(resource).with_message("Done!")
 
   # Different redirect destination
@@ -569,7 +569,7 @@ action :export,
 
 ## Related
 
-- [Definition](./definition) — fields, page chrome
-- [Query](./query) — search, filters, scopes
-- [Behavior › Interactions](/reference/behavior/interactions) — writing interaction classes
-- [Behavior › Policy](/reference/behavior/policies) — authorizing custom actions
+- [Definition](./definition): fields, page chrome
+- [Query](./query): search, filters, scopes
+- [Behavior › Interactions](/reference/behavior/interactions): writing interaction classes
+- [Behavior › Policy](/reference/behavior/policies): authorizing custom actions

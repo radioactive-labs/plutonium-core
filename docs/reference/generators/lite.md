@@ -16,10 +16,10 @@ rails g pu:lite:tune
 
 It writes a `pragmas:` mapping:
 
-- `cache_size: -64000` — 64 MB page cache (the ~2 MB default is too small).
-- `temp_store: 2` — MEMORY; sorts and temp indexes stay off disk.
-- `mmap_size: 536870912` — 512 MB memory-mapped I/O.
-- `wal_autocheckpoint: 10000` — checkpoint roughly every 40 MB of WAL.
+- `cache_size: -64000`: 64 MB page cache (the ~2 MB default is too small).
+- `temp_store: 2`: MEMORY; sorts and temp indexes stay off disk.
+- `mmap_size: 536870912`: 512 MB memory-mapped I/O.
+- `wal_autocheckpoint: 10000`: checkpoint roughly every 40 MB of WAL.
 
 On Rails &lt; 8.1 it also writes the baseline pragmas (`journal_mode: WAL`,
 `synchronous: NORMAL`, `foreign_keys: true`, `journal_size_limit`) that Rails 8.1+
@@ -30,7 +30,7 @@ constant-poll busy handler (`busy_handler_timeout`), which has better tail-laten
 than SQLite's internal exponential backoff. Setting a busy-timeout pragma would
 replace the better handler with the worse one, so this generator never emits it.
 
-The generator is idempotent — re-running it detects the existing pragmas and skips.
+The generator is idempotent: re-running it detects the existing pragmas and skips.
 It only ever touches the `default:` block, so a `pragmas:` mapping nested under
 another environment is left untouched.
 
@@ -47,7 +47,7 @@ rails g pu:lite:maintenance --schedule="every day at 4am"
 
 The job runs `PRAGMA optimize` on every configured SQLite database and `VACUUM`
 only on databases without live 24/7 writers (`primary`, `errors`, `rails_pulse`
-by default — edit `VACUUM_DBS` in the generated job to suit your app).
+by default; edit `VACUUM_DBS` in the generated job to suit your app).
 
 **Why VACUUM only some databases?** SolidQueue, Solid Cache and Solid Cable write
 to their databases constantly. `VACUUM` takes a global *exclusive* lock for its
@@ -61,5 +61,5 @@ Databases listed in the job that don't exist in `config/database.yml` are skippe
 at runtime, so the same job is safe regardless of which `pu:lite:*` generators you
 have run.
 
-If `solid_queue` is not installed, the job file is still created but not scheduled —
+If `solid_queue` is not installed, the job file is still created but not scheduled:
 add a `sqlite_maintenance` entry to whatever scheduler you use.

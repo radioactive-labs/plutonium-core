@@ -14,7 +14,7 @@ class PostDefinition < ResourceDefinition
       end
 
       # `fields_wrapper` is ALREADY a card (it renders a Block internally),
-      # so do not wrap it in another one — that stacks two cards and doubles
+      # so do not wrap it in another one, that stacks two cards and doubles
       # the border and shadow.
       fields_wrapper do
         render_resource_field :author
@@ -38,7 +38,7 @@ end
 |---|---|
 | `render_fields` | All permitted fields |
 | `render_resource_field(name)` | One field |
-| `render_associations` | Association tabs (driven by `permitted_associations` — see [Behavior › Policy](/reference/behavior/policies#association-permissions)) |
+| `render_associations` | Association tabs (driven by `permitted_associations`, see [Behavior › Policy](/reference/behavior/policies#association-permissions)) |
 | `object` | The record |
 | `resource_fields`, `resource_associations` | Permitted lists |
 
@@ -48,7 +48,7 @@ For per-field custom rendering, prefer declaring it in the **definition** rather
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  # Block — returns any Phlex component
+  # Block, returns any Phlex component
   display :status do |field|
     StatusBadgeComponent.new(value: field.value, class: field.dom.css_class)
   end
@@ -59,7 +59,7 @@ class PostDefinition < ResourceDefinition
     span(class: "pu-badge pu-badge-#{variant}") { field.value.to_s.humanize }
   end
 
-  # Field component class — built as ChartComponent.new(field, **attributes),
+  # Field component class, built as ChartComponent.new(field, **attributes),
   # so it subclasses Phlexi::Display::Components::Base and reads `field`.
   # (A component with its own constructor uses the block form above.)
   display :chart, as: ChartComponent
@@ -70,14 +70,14 @@ See [Resource › Definition › Custom rendering](/reference/resource/definitio
 
 ## Built-in display components
 
-Some types render with richer components automatically — you only declare an `as:` to override or pass options.
+Some types render with richer components automatically; you only declare an `as:` to override or pass options.
 
 | `as:` | Renders | Auto-inferred for | Options |
 |-------|---------|-------------------|---------|
 | `:boolean` | green "Yes" / neutral "No" pill | `boolean` columns | `true_label:`, `false_label:` |
 | `:badge` | colored status pill | `enum` columns | `colors:` (per-value override) |
 | `:currency` | delimited, 2-decimal money | `has_cents` decimal accessors | `unit:`, `options:` |
-| `:color` | swatch + value | — | — |
+| `:color` | swatch + value | - | - |
 
 ```ruby
 class OrderDefinition < ResourceDefinition
@@ -90,7 +90,7 @@ end
 
 **Badge colors.** Known statuses (`active`, `pending`, `failed`, …) are auto-colored by meaning. Unknown values get a stable decorative color (same value → same color). Override per-value with `colors:`; valid variants: `:neutral`, `:primary`, `:secondary`, `:success`, `:danger`, `:warning`, `:info`, `:accent`.
 
-**Currency.** No symbol is shown unless you pass `unit:` — a literal string (`"£"`) or a Symbol read off the record for per-row currencies. `has_cents` decimal accessors infer `:currency` automatically (still symbol-less until you set `unit:`).
+**Currency.** No symbol is shown unless you pass `unit:`, a literal string (`"£"`) or a Symbol read off the record for per-row currencies. `has_cents` decimal accessors infer `:currency` automatically (still symbol-less until you set `unit:`).
 
 ## Theming
 
@@ -118,20 +118,20 @@ end
 `fields_wrapper`, `fields_inner`, `sections_wrapper`, `section_grid`, `label`, `description`, `string`, `text`, `link`, `email`, `phone`, `markdown`, `json`, `boolean`, `badge`, `currency`, `color`, plus the shared section-chrome keys (`section_wrapper`, `section_header`, `section_summary`, `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`).
 
 ::: warning `fields_wrapper` is the card, `fields_inner` is the grid
-`fields_wrapper` is merged into a `Plutonium::UI::Block`, which supplies `pu-card` itself — grid classes put there style the card, not the fields. Override **`fields_inner`** for the unsectioned grid, and **`section_grid`** for the grid inside a [`display_layout`](/reference/resource/definition#display-layout) section.
+`fields_wrapper` is merged into a `Plutonium::UI::Block`, which supplies `pu-card` itself, grid classes put there style the card, not the fields. Override **`fields_inner`** for the unsectioned grid, and **`section_grid`** for the grid inside a [`display_layout`](/reference/resource/definition#display-layout) section.
 :::
 
 Section chrome comes from `Plutonium::UI::Component::Section::DEFAULT_THEME`, merged into **both** `Form::Theme` and `Display::Theme`, so form sections and show-page sections read identically by default while staying independently overridable.
 
-(`boolean` and `badge` apply their pill variant in the component, so their theme value stays empty — restyle the pills via the `.pu-badge*` classes instead.)
+(`boolean` and `badge` apply their pill variant in the component, so their theme value stays empty; restyle the pills via the `.pu-badge*` classes instead.)
 
 ## Metadata panel
 
-A right-side aside on the show page. Configured at the definition level, not the Display class — see [Resource › Definition › Metadata panel](/reference/resource/definition#metadata-panel-show-page).
+A right-side aside on the show page. Configured at the definition level, not the Display class, see [Resource › Definition › Metadata panel](/reference/resource/definition#metadata-panel-show-page).
 
 ## Related
 
-- [Pages](./pages) — `ShowPage` render hooks (often a lighter alternative to overriding `Display`)
-- [Components](./components) — building reusable Phlex display components
-- [Resource › Definition](/reference/resource/definition) — field-level display configuration (`as:`, `condition:`, blocks)
-- [Behavior › Policy](/reference/behavior/policies) — `permitted_associations` drives the show-page tablist
+- [Pages](./pages): `ShowPage` render hooks (often a lighter alternative to overriding `Display`)
+- [Components](./components): building reusable Phlex display components
+- [Resource › Definition](/reference/resource/definition): field-level display configuration (`as:`, `condition:`, blocks)
+- [Behavior › Policy](/reference/behavior/policies): `permitted_associations` drives the show-page tablist

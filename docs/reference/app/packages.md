@@ -1,6 +1,6 @@
 # Packages
 
-Plutonium apps are organized into **packages** — Rails engines with stricter conventions. Two flavors, hard split:
+Plutonium apps are organized into **packages**: Rails engines with stricter conventions. Two flavors, hard split:
 
 | Type | Purpose | Generator | Examples |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Each feature package gets its own base classes:
 - `Blogging::ResourceDefinition`
 - `Blogging::ResourceInteraction`
 
-These inherit from the main app's base classes — extend them for package-wide defaults.
+These inherit from the main app's base classes; extend them for package-wide defaults.
 
 ### Creating resources inside a feature package
 
@@ -111,13 +111,13 @@ This is loaded from `config/application.rb`. Migrations from all packages are pi
 
 ## When to use which
 
-**Feature packages** — domain logic that:
+**Feature packages**: domain logic that:
 
 - Could be reused across multiple portals (admin and customer both edit `Blogging::Post`).
 - Has no inherent UI / auth (it's just behavior).
 - You want isolated from other domains (`billing` should not depend on `blogging`).
 
-**Portal packages** — user-facing surfaces that:
+**Portal packages**: user-facing surfaces that:
 
 - Have a specific auth flow (admin vs customer vs public).
 - Render different views of the same underlying resources.
@@ -137,10 +137,10 @@ packages/
     └── controllers, views, routes
 ```
 
-The portals expose the features. A single feature can be exposed by multiple portals — usually with different policies and definitions per portal.
+The portals expose the features. A single feature can be exposed by multiple portals, usually with different policies and definitions per portal.
 
 ## Related
 
-- [Portals](./portals) — portal-specific configuration (mounting, auth, route registration)
-- [Generators](./generators) — `pu:pkg:package` and `pu:pkg:portal` flags
-- [Guide: Creating Packages](/guides/creating-packages) — task-oriented walkthrough
+- [Portals](./portals): portal-specific configuration (mounting, auth, route registration)
+- [Generators](./generators): `pu:pkg:package` and `pu:pkg:portal` flags
+- [Guide: Creating Packages](/guides/creating-packages): task-oriented walkthrough

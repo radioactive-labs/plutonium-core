@@ -52,11 +52,11 @@ class PostDefinition < ResourceDefinition
   column :status, align: :center
   column :amount, align: :end
 
-  # formatter — receives just the value
+  # formatter, receives just the value
   column :description, formatter: ->(value) { value&.truncate(30) }
   column :price,       formatter: ->(value) { "$%.2f" % value if value }
 
-  # block — receives the full record
+  # block, receives the full record
   column :full_name do |record|
     "#{record.first_name} #{record.last_name}"
   end
@@ -67,7 +67,7 @@ See [Resource › Definition › Column options](/reference/resource/definition#
 
 ## Grid view
 
-For card-based layouts as a switchable alternative to the table, use the built-in Grid view — declare `grid_fields` in the definition:
+For card-based layouts as a switchable alternative to the table, use the built-in Grid view, declare `grid_fields` in the definition:
 
 ```ruby
 class UserDefinition < ResourceDefinition
@@ -115,7 +115,7 @@ end
 
 ## Related
 
-- [Pages](./pages) — `IndexPage` render hooks (a lighter alternative for top/bottom chrome)
-- [Components](./components) — `PostCardComponent` and other reusable Phlex pieces
-- [Resource › Definition](/reference/resource/definition) — column configuration, grid view
-- [Resource › Query](/reference/resource/query) — search, filters, scopes, sort
+- [Pages](./pages): `IndexPage` render hooks (a lighter alternative for top/bottom chrome)
+- [Components](./components): `PostCardComponent` and other reusable Phlex pieces
+- [Resource › Definition](/reference/resource/definition): column configuration, grid view
+- [Resource › Query](/reference/resource/query): search, filters, scopes, sort

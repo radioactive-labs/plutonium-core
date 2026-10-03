@@ -1,12 +1,12 @@
 # Layouts
 
-The overall page chrome — topbar, sidebar, footer, body wrapping. Plutonium ships three shells; you can eject the templates or write a custom `ResourceLayout` for total control.
+The overall page chrome, topbar, sidebar, footer, body wrapping. Plutonium ships three shells; you can eject the templates or write a custom `ResourceLayout` for total control.
 
 ## Shell
 
 ```ruby
 Plutonium.configure do |config|
-  config.shell = :modern     # default — topbar + icon rail
+  config.shell = :modern     # default, topbar + icon rail
   # config.shell = :plain    # topbar, no icon rail (rail-less app)
   # config.shell = :classic  # legacy header + sidebar (only when upgrading)
 end
@@ -20,9 +20,9 @@ If you're starting fresh, use `:modern`. `:classic` exists so apps upgrading fro
 
 The shell variant selects the page chrome:
 
-- `:modern` (default) — Topbar plus the desktop icon rail.
-- `:plain` — Topbar but **no** icon rail. The Topbar is kept; only the rail is removed, so the surface is rail-less.
-- `:classic` — legacy Header/Sidebar (upgrade paths only).
+- `:modern` (default), Topbar plus the desktop icon rail.
+- `:plain`: Topbar but **no** icon rail. The Topbar is kept; only the rail is removed, so the surface is rail-less.
+- `:classic`: legacy Header/Sidebar (upgrade paths only).
 
 ### Resolving the shell (global → engine → controller)
 
@@ -32,7 +32,7 @@ The shell resolves across three layers, each overriding the one above it:
 # 1. Global default (config/initializers/plutonium.rb)
 Plutonium.configure { |config| config.shell = :modern }
 
-# 2. Per-engine — set it on a portal engine (lib/engine.rb)
+# 2. Per-engine: set it on a portal engine (lib/engine.rb)
 module CustomerPortal
   class Engine < Rails::Engine
     include Plutonium::Portal::Engine
@@ -43,19 +43,19 @@ module CustomerPortal
   end
 end
 
-# 3. Per-controller — overrides the engine/global default for one controller (and subclasses)
+# 3. Per-controller: overrides the engine/global default for one controller (and subclasses)
 class DashboardController < ResourceController
   shell :modern   # opt this controller back into the rail
 end
 ```
 
-`shell` takes a plain symbol, so it's safe in the class body too — but the generated engine already has a `config.after_initialize` block (where `scope_to_entity` lives), so keeping it there is the consistent home.
+`shell` takes a plain symbol, so it's safe in the class body too, but the generated engine already has a `config.after_initialize` block (where `scope_to_entity` lives), so keeping it there is the consistent home.
 
 An unset engine/controller value (`nil`) falls through to the next layer. Read the resolved value with the `shell` helper (`controller.shell`).
 
-### `rail` — a controller-level rail toggle
+### `rail`: a controller-level rail toggle
 
-Alongside `shell`, any resource controller exposes a class-level `rail` DSL that flips just the icon rail without changing the shell. It's a `class_attribute`, so it's inherited — a portal opts its entire surface in or out by calling `rail false` (or `rail true`) once in its controller concern:
+Alongside `shell`, any resource controller exposes a class-level `rail` DSL that flips just the icon rail without changing the shell. It's a `class_attribute`, so it's inherited; a portal opts its entire surface in or out by calling `rail false` (or `rail true`) once in its controller concern:
 
 ```ruby
 module CustomerPortal
@@ -68,15 +68,15 @@ module CustomerPortal
 end
 ```
 
-`rail nil` (the default) inherits the resolved shell — the rail shows when the resolved `shell == :modern`. Read the resolved value with the `rail?` predicate.
+`rail nil` (the default) inherits the resolved shell, the rail shows when the resolved `shell == :modern`. Read the resolved value with the `rail?` predicate.
 
 ### Stable CSS hooks
 
 Rail-less rendering exposes a few stable hooks for custom overrides:
 
-- `pu-topbar` — class on the Topbar nav.
-- `pu-sticky-footer` — class on the form sticky-footer div.
-- `html.pu-no-rail` — root class present whenever the current page is rail-less.
+- `pu-topbar`: class on the Topbar nav.
+- `pu-sticky-footer`: class on the form sticky-footer div.
+- `html.pu-no-rail`: root class present whenever the current page is rail-less.
 
 A built-in rule cancels the desktop rail inset on `.pu-topbar` and `.pu-sticky-footer` under `html.pu-no-rail`; target these hooks to layer your own CSS.
 
@@ -87,7 +87,7 @@ rails generate pu:eject:shell --dest=admin_portal
 rails generate pu:eject:layout
 ```
 
-`pu:eject:shell` copies `_resource_header.html.erb` and `_resource_sidebar.html.erb` into the portal's `app/views/plutonium/`. The eject is independent of `shell` — you can run it on either.
+`pu:eject:shell` copies `_resource_header.html.erb` and `_resource_sidebar.html.erb` into the portal's `app/views/plutonium/`. The eject is independent of `shell`; you can run it on either.
 
 `pu:eject:layout` copies `layouts/resource.html.erb` for layout-level edits.
 
@@ -111,7 +111,7 @@ The sidebar/icon-rail navigation is built with `Phlexi::Menu::Builder` in the ej
 
 ### Per-item link attributes
 
-Any extra options you pass to `item` are spread straight onto the rendered `<a>` — so a menu entry can opt into `target`, `rel`, `data-*`, `aria-*`, etc. Useful for items that open in their own tab or drive a Stimulus/Turbo behavior:
+Any extra options you pass to `item` are spread straight onto the rendered `<a>`, so a menu entry can opt into `target`, `rel`, `data-*`, `aria-*`, etc. Useful for items that open in their own tab or drive a Stimulus/Turbo behavior:
 
 ```ruby
 m.item "Inbox",
@@ -122,7 +122,7 @@ m.item "Inbox",
   data: {turbo_frame: "_top"}
 ```
 
-This works across both shells — the `:modern` icon-rail (leaf items, parent flyout triggers, and flyout children) and the `:classic` sidebar. Framework attributes always win on conflict: a custom `class:` is **merged** with the component's base classes, and on a parent trigger your `data:` / `aria:` merge with the flyout's own wiring (so you can't accidentally break the toggle). The `:active` key is reserved by Phlexi for [custom active-state logic](https://github.com/radioactive-labs/phlexi-menu) and is never emitted as an attribute.
+This works across both shells, the `:modern` icon-rail (leaf items, parent flyout triggers, and flyout children) and the `:classic` sidebar. Framework attributes always win on conflict: a custom `class:` is **merged** with the component's base classes, and on a parent trigger your `data:` / `aria:` merge with the flyout's own wiring (so you can't accidentally break the toggle). The `:active` key is reserved by Phlexi for [custom active-state logic](https://github.com/radioactive-labs/phlexi-menu) and is never emitted as an attribute.
 
 ## Custom layout class
 
@@ -190,7 +190,7 @@ See [Assets › Tailwind config](./assets#tailwind-config) for the full merge st
 
 ## Dark mode
 
-`selector` strategy — toggle by adding/removing `dark` on `<html>`. The bundled `color-mode` Stimulus controller handles toggling; Plutonium ships a switcher.
+`selector` strategy, toggle by adding/removing `dark` on `<html>`. The bundled `color-mode` Stimulus controller handles toggling; Plutonium ships a switcher.
 
 ```javascript
 // Manual toggle if needed
@@ -199,6 +199,6 @@ document.documentElement.classList.toggle('dark')
 
 ## Related
 
-- [Assets](./assets) — Tailwind config, design tokens, `.pu-*` classes
-- [Components](./components) — custom components used in layout hooks (`AnnouncementBanner`, etc.)
-- [Pages](./pages) — page-level hooks (a lighter alternative for per-page chrome)
+- [Assets](./assets): Tailwind config, design tokens, `.pu-*` classes
+- [Components](./components): custom components used in layout hooks (`AnnouncementBanner`, etc.)
+- [Pages](./pages): page-level hooks (a lighter alternative for per-page chrome)

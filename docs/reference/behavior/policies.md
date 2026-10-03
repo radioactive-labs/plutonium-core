@@ -11,20 +11,20 @@ Authorization for resources. Built on [ActionPolicy](https://actionpolicy.evilma
 
 - **`create?` and `read?` default to `false`.** You MUST override them explicitly. Everything else (`update?`, `destroy?`, `index?`, `show?`, …) derives from one of those.
 - **`permitted_attributes_for_*` must be explicit in production.** Dev auto-detects; production raises.
-- **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly in your override. `super` is fine when extending a parent policy (e.g., a package base) that itself calls it. The runtime check verifies it was hit somewhere — not in this specific class.
+- **`relation_scope` must end up calling `default_relation_scope(relation)` somewhere in the chain.** Prefer calling it explicitly in your override. `super` is fine when extending a parent policy (e.g., a package base) that itself calls it. The runtime check verifies it was hit somewhere, not in this specific class.
 - **For `has_cents` fields, use the virtual name** (`:price`), NEVER `:price_cents`.
 - **Don't put `*_attributes` hashes in `permitted_attributes_for_*`.** Nested forms are extracted from the form definition, not the policy. List the association name (`:variants`) and the `nested_input` in the definition handles the rest.
 - **Custom action ⇒ policy method.** `action :publish` needs `def publish?`. Undefined methods return `false` → action silently disappears.
-- **Index has no `record`.** Record-dependent `_for_read` overrides need an explicit `_for_index` too (see [below](#index-has-no-record)).
+- **Index has no `record` instance.** On collection routes `record` is the resource class. Record-dependent `_for_read` overrides need an explicit `_for_index` too (see [below](#index-has-no-record)).
 
 ## Base class
 
 ```ruby
-# app/policies/resource_policy.rb — installed once
+# app/policies/resource_policy.rb: installed once
 class ResourcePolicy < Plutonium::Resource::Policy
 end
 
-# app/policies/post_policy.rb — per resource, generated
+# app/policies/post_policy.rb: per resource, generated
 class PostPolicy < ResourcePolicy
   def create? = user.present?
   def read?   = true
@@ -46,7 +46,7 @@ Inside a policy:
 | Variable | Description |
 |---|---|
 | `user` | Current authenticated user (required) |
-| `record` | Resource being authorized |
+| `record` | Resource being authorized (the resource class on collection routes such as `index` and `new`) |
 | `entity_scope` | Current scoped entity (multi-tenancy) |
 | `parent` | Parent record for nested resources (nil otherwise) |
 | `parent_association` | Association name on parent (e.g. `:comments`) |
@@ -88,7 +88,7 @@ def archive? = create? && !record.archived?
 def invite_user? = user.admin?
 ```
 
-### Bulk actions — per-record authorization
+### Bulk actions: per-record authorization
 
 ```ruby
 def bulk_archive?
@@ -101,7 +101,7 @@ How it works:
 - Policy is checked **per record** in the selected set.
 - **Backend:** if any record fails, the entire request is rejected.
 - **UI:** only actions ALL selected records support are shown (intersection).
-- Records come from `current_authorized_scope` — users can only select records they're allowed to access.
+- Records come from `current_authorized_scope`, so users can only select records they're allowed to access.
 
 ## Attribute permissions
 
@@ -122,6 +122,7 @@ end
 |---|---|
 | `permitted_attributes_for_update` | `permitted_attributes_for_create` |
 | `permitted_attributes_for_index` | `permitted_attributes_for_read` |
+| `permitted_attributes_for_export` | `permitted_attributes_for_index` |
 | `permitted_attributes_for_show` | `permitted_attributes_for_read` |
 | `permitted_attributes_for_new` | `permitted_attributes_for_create` |
 | `permitted_attributes_for_edit` | `permitted_attributes_for_update` |
@@ -140,7 +141,7 @@ end
 
 ### Index has no `record`
 
-🚨 `permitted_attributes_for_index` is evaluated at the **collection level** — `record` is `nil`. `permitted_attributes_for_show` (and `_for_read`) ARE evaluated per record.
+🚨 `permitted_attributes_for_index` is evaluated at the **collection level**. There is no record instance: the policy subject is the resource **class**, so `record == Post`. The same class-bound policy feeds the table, the CSV export (`_for_export` defaults to `_for_index`) and kanban cards. `permitted_attributes_for_show` (and `_for_read`) ARE evaluated per record.
 
 If you write a record-dependent `_for_read`:
 
@@ -152,7 +153,7 @@ def permitted_attributes_for_read
 end
 ```
 
-…you MUST also define an explicit `permitted_attributes_for_index` — otherwise inheritance kicks in, runs the `_for_read` body during the table render, and `record.archived?` blows up on `NoMethodError: undefined method 'archived?' for nil`.
+…you MUST also define an explicit `permitted_attributes_for_index` whose body never touches `record`. Otherwise `_for_index` falls back to `_for_read`, runs it against the class during the table render, and `record.archived?` raises `NoMethodError` (`undefined method 'archived?'` for the `Post` class).
 
 ```ruby
 def permitted_attributes_for_index
@@ -160,7 +161,7 @@ def permitted_attributes_for_index
 end
 ```
 
-Same rule for `permitted_attributes_for_create` vs `_for_new` (new has no persisted record).
+Same rule for `permitted_attributes_for_create` vs `_for_new`: `new` is a collection route too, so `record` is the class there.
 
 ### Conditional attribute access
 
@@ -184,7 +185,7 @@ end
 
 `permitted_attributes_for_*` controls **which fields appear** on a view. The definition's `field`/`input`/`display`/`column` declarations only control **how** they render. A `field :name` in the definition does nothing unless `:name` is also in the relevant `permitted_attributes_for_*`.
 
-Common mistake: adding a definition declaration and wondering why the field doesn't show — check the policy.
+Common mistake: adding a definition declaration and wondering why the field doesn't show. Check the policy.
 
 ### Anti-pattern: nested-attributes hashes
 
@@ -229,17 +230,34 @@ def permitted_associations
 end
 ```
 
-Declares which associations get their own **tab on the show page**. When non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association — each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs. If `permitted_attributes_for_show` resolves to **no fields**, the empty Details tab is omitted and the first association tab leads instead.
+Declares which associations get their own **tab on the show page**. When non-empty, the show page renders a tablist: a "Details" tab (the main field card + metadata aside) plus one tab per association, each lazy-loaded via a frame navigator panel pointing at the associated `has_many` collection, `has_one` record, or `belongs_to` target. When empty, the show page renders without tabs. If `permitted_attributes_for_show` resolves to **no fields**, the empty Details tab is omitted and the first association tab leads instead.
 
 Each named association must:
 
 - Exist on the model (raises `ArgumentError: unknown association ...` otherwise).
 - Point to a class that's itself a registered Plutonium resource (raises `... is not a registered resource` otherwise).
 
+🚨 **"Registered" means registered in the portal rendering the page.** Each portal engine keeps its own resource register, so a policy shared by several portals can only list associations whose class every one of those portals registers (`register_resource` in its `config/routes.rb`). Otherwise that portal's show page raises instead of dropping the tab:
+
+```
+ArgumentError: Catalog::Product#product_metadata defined in #permitted_associations, but Catalog::ProductMetadata is not a registered resource
+```
+
+To give only one portal the tab, leave the shared policy alone and add the association in a [portal-specific policy](#portal-specific-policies):
+
+```ruby
+# rails g pu:res:conn Catalog::Product --dest=admin_portal --policy
+class AdminPortal::Catalog::ProductPolicy < ::Catalog::ProductPolicy
+  include AdminPortal::ResourcePolicy
+
+  def permitted_associations = [*super, :product_metadata]
+end
+```
+
 This is **NOT** the same as:
 
-- **Nested forms** — declared with `nested_input :variants` in the definition, requires `accepts_nested_attributes_for` on the model. See [Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs).
-- **Association fields on tables / show details** — controlled by `permitted_attributes_for_index` / `_for_show` listing the association name.
+- **Nested forms**: declared with `nested_input :variants` in the definition, requires `accepts_nested_attributes_for` on the model. See [Resource › Definition › Nested inputs](/reference/resource/definition#nested-inputs).
+- **Association fields on tables / show details**: controlled by `permitted_attributes_for_index` / `_for_show` listing the association name.
 
 ## Collection scoping (`relation_scope`)
 
@@ -247,10 +265,10 @@ Filter which records the user can see.
 
 ### Always compose with `default_relation_scope`
 
-🚨 `relation_scope` MUST end up calling `default_relation_scope(relation)` somewhere in the chain. `super` works — `Plutonium::Resource::Policy` defines a default scope block that calls `default_relation_scope`, so a subclass that does `super(relation).where(...)` is fine. Calling `default_relation_scope` explicitly is also fine (and required when you skip the parent chain). Plutonium enforces this at runtime via `verify_default_relation_scope_applied!`.
+🚨 `relation_scope` MUST end up calling `default_relation_scope(relation)` somewhere in the chain. `super` works: `Plutonium::Resource::Policy` defines a default scope block that calls `default_relation_scope`, so a subclass that does `super(relation).where(...)` is fine. Calling `default_relation_scope` explicitly is also fine (and required when you skip the parent chain). Plutonium enforces this at runtime via `verify_default_relation_scope_applied!`.
 
 ```ruby
-# ✅ Best — don't override at all. The inherited scope already calls default_relation_scope.
+# ✅ Best: don't override at all. The inherited scope already calls default_relation_scope.
 
 # ✅ Extra filters on top
 relation_scope do |relation|
@@ -267,13 +285,13 @@ end
 ### Wrong patterns
 
 ```ruby
-# ❌ Manually filtering by entity — bypasses default_relation_scope
+# ❌ Manually filtering by entity, bypasses default_relation_scope
 relation_scope { |r| r.where(organization: current_scoped_entity) }
 
-# ❌ Manual joins — same problem
+# ❌ Manual joins, same problem
 relation_scope { |r| r.joins(:project).where(projects: {organization_id: current_scoped_entity.id}) }
 
-# ❌ Missing default_relation_scope entirely — raises at runtime
+# ❌ Missing default_relation_scope entirely, raises at runtime
 relation_scope { |r| r.where(published: true) }
 ```
 
@@ -282,13 +300,13 @@ relation_scope { |r| r.where(published: true) }
 1. If a **parent** is present (nested resource), scopes via the parent association.
 2. Otherwise, applies `relation.associated_with(entity_scope)` for multi-tenancy.
 
-Parent scoping takes precedence over entity scoping — the parent was already authorized and entity-scoped during its own authorization, so double-scoping isn't needed.
+Parent scoping takes precedence over entity scoping. The parent was already authorized and entity-scoped during its own authorization, so double-scoping isn't needed.
 
 Full mechanics in [Tenancy › Entity scoping](/reference/tenancy/entity-scoping).
 
 ### Intentionally skipping
 
-Rare. Use `skip_default_relation_scope!` explicitly — never silently bypass:
+Rare. Use `skip_default_relation_scope!` explicitly, never silently bypass:
 
 ```ruby
 relation_scope do |relation|
@@ -301,12 +319,14 @@ Before reaching for this, consider a separate, unscoped portal.
 
 ## Portal-specific policies
 
+Generate the override with `rails g pu:res:conn <Resource> --dest=<portal> --policy` (`--policy` forces the file even when a base policy exists). It subclasses the base policy and includes the portal's `ResourcePolicy`, so override only what differs and call `super` for the rest.
+
 ```ruby
 class PostPolicy < ResourcePolicy
   def create? = user.present?
 end
 
-# Admin — more permissive
+# Admin: more permissive
 class AdminPortal::PostPolicy < ::PostPolicy
   include AdminPortal::ResourcePolicy
 
@@ -314,7 +334,7 @@ class AdminPortal::PostPolicy < ::PostPolicy
   def permitted_attributes_for_create = %i[title content featured internal_notes]
 end
 
-# Public — read-only
+# Public: read-only
 class PublicPortal::PostPolicy < ::PostPolicy
   include PublicPortal::ResourcePolicy
   def create? = false
@@ -410,8 +430,8 @@ policy.permitted_attributes_for_update
 
 ## Related
 
-- [Controllers](./controllers) — call policies via `authorize_current!` and `authorized_resource_scope`
-- [Interactions](./interactions) — custom actions whose policy methods you define
-- [Resource › Actions](/reference/resource/actions) — registering actions that need policy methods
-- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping) — `default_relation_scope`, three model shapes, custom scopes
-- [ActionPolicy docs](https://actionpolicy.evilmartians.io/) — the underlying library
+- [Controllers](./controllers): call policies via `authorize_current!` and `authorized_resource_scope`
+- [Interactions](./interactions): custom actions whose policy methods you define
+- [Resource › Actions](/reference/resource/actions): registering actions that need policy methods
+- [Tenancy › Entity scoping](/reference/tenancy/entity-scoping): `default_relation_scope`, three model shapes, custom scopes
+- [ActionPolicy docs](https://actionpolicy.evilmartians.io/): the underlying library

@@ -4,7 +4,7 @@
 Dashboards are experimental: the DSL and behavior may change in a future release.
 :::
 
-A dashboard is a page of cards: headline numbers, charts and free-form panels, declared in one Ruby class and mounted with a single routes line. Every card loads in its own lazy turbo frame, so the page paints immediately and each card's queries run in a separate request as it scrolls into view.
+A dashboard is a page of cards: headline numbers, charts and free-form panels, declared in one Ruby class and mounted with a single routes line. By default every card loads in its own lazy turbo frame, so the page paints immediately and each card's queries run in a separate request as it scrolls into view.
 
 ![A dashboard with four metric cards, an area chart of signups per day, a donut chart and a full-width welcome card](/images/guides/dashboard-overview.png)
 

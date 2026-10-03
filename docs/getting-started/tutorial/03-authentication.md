@@ -14,7 +14,7 @@ Plutonium integrates Rodauth seamlessly with its portal system.
 
 ## Installing Rodauth
 
-Run the Plutonium Rodauth installer once per app — it creates the Rodauth app, plugin, and initializer:
+Run the Plutonium Rodauth installer once per app. It creates the Rodauth app, plugin, and initializer:
 
 ```bash
 rails generate pu:rodauth:install
@@ -24,7 +24,7 @@ rails generate pu:rodauth:install
 
 ## Creating an Account Type
 
-Plutonium supports multiple account types. For admins, use the dedicated `pu:rodauth:admin` generator — it's a preset on top of `pu:rodauth:account` that enables 2FA, lockout, audit logging, and disables public signup:
+Plutonium supports multiple account types. For admins, use the dedicated `pu:rodauth:admin` generator. It's a preset on top of `pu:rodauth:account` that enables 2FA, lockout, audit logging, and disables public signup:
 
 ```bash
 rails generate pu:rodauth:admin admin
@@ -71,8 +71,8 @@ rails generate pu:pkg:portal admin --auth=admin --force
 
 This updates two files:
 
-- `packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb` — swaps `include Plutonium::Auth::Public` for `include Plutonium::Auth::Rodauth(:admin)`, giving you `current_user`, `logout_url`, and `profile_url` helpers throughout the portal.
-- `packages/admin_portal/config/routes.rb` — wraps the engine mount in a routes-level constraint:
+- `packages/admin_portal/app/controllers/admin_portal/concerns/controller.rb`: swaps `include Plutonium::Auth::Public` for `include Plutonium::Auth::Rodauth(:admin)`, giving you `current_user`, `logout_url`, and `profile_url` helpers throughout the portal.
+- `packages/admin_portal/config/routes.rb`: wraps the engine mount in a routes-level constraint:
 
   ```ruby
   constraints Rodauth::Rails.authenticate(:admin) do
@@ -80,9 +80,9 @@ This updates two files:
   end
   ```
 
-The routes constraint is what actually gates access — unauthenticated requests to `/admin/*` are redirected to `/admins/login` before they hit any controller or policy.
+The routes constraint is what actually gates access: unauthenticated requests to `/admin/*` are redirected to `/admins/login` before they hit any controller or policy.
 
-(If you prefer not to regenerate, you can apply both edits by hand — they're shown above.)
+(If you prefer not to regenerate, you can apply both edits by hand; they're shown above.)
 
 ## Testing Authentication
 
@@ -164,7 +164,7 @@ Now we can add the author relationship to our Post model. Generate a migration:
 rails generate migration AddUserToBloggingPosts user:belongs_to
 ```
 
-Update the migration to add the foreign key:
+Update the migration to add the foreign key (keep the `Migration[x.y]` version Rails generated for your app):
 
 ```ruby
 class AddUserToBloggingPosts < ActiveRecord::Migration[8.0]

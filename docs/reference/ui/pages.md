@@ -32,12 +32,10 @@ end
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  index_page_title       "Blog Posts"
-  index_page_description "Manage all published articles"
-  show_page_title        "Article Details"
-  show_page_title        -> { current_record!.title }   # dynamic
-  new_page_title         "Create Post"
-  edit_page_title        -> { "Edit: #{current_record!.title}" }
+  index_page_title       t("blog.posts.index.title")         # lazy: resolved per request, in its locale
+  index_page_description t("blog.posts.index.description")
+  show_page_title        "Article Details"                   # a literal also works (fixed, untranslated)
+  new_page_title         t("blog.posts.new.title")
 
   breadcrumbs              true     # global default
   index_page_breadcrumbs   false    # per-page override
@@ -48,9 +46,11 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
+The class-level `t` in a definition returns a lazy proc; calling `I18n.t` directly in the class body would resolve once, at load time. A title that depends on the record belongs in a `page_title` override on the nested page class (see the hooks example below), not in a lambda here: the setter's proc is called with no record context.
+
 ## Page hooks (preferred over `view_template`)
 
-Every page inherits these — use them instead of overriding `view_template` to preserve breadcrumbs, header, and DynaFrame behavior:
+Every page inherits these, use them instead of overriding `view_template` to preserve breadcrumbs, header, and DynaFrame behavior:
 
 | Hook | Position |
 |---|---|
@@ -68,12 +68,12 @@ class ShowPage < ShowPage
   private
 
   def page_title
-    "#{object.title} — #{object.author.name}"
+    "#{object.title}, #{object.author.name}"
   end
 
   def render_before_content
-    div(class: "alert alert-info") do
-      plain "This post has #{object.comments.count} comments"
+    div(class: "pu-alert pu-alert-info", role: "status") do
+      div(class: "pu-alert-message") { t("blog.posts.show.comment_count", count: object.comments.count) }
     end
   end
 
@@ -105,7 +105,7 @@ The default view simply renders the page class:
 <%= render current_definition.show_page_class.new %>
 ```
 
-Mix — keep the default and add chrome around it:
+Mix, keep the default and add chrome around it:
 
 ```erb
 <div class="announcement-banner">Special announcement</div>
@@ -125,7 +125,7 @@ Use to pin action strips, omit nav chrome, or swap layouts.
 
 ### Stacked modals (secondary frame)
 
-Association inputs include an inline `+` button. When the parent form is itself rendered in a modal, the `+` opens a **second stacked modal** in `Plutonium::REMOTE_MODAL_SECONDARY_FRAME` instead of replacing the primary modal. On successful create, the secondary closes and the primary frame reloads so the new record appears in the select — no developer wiring.
+Association inputs include an inline `+` button. When the parent form is itself rendered in a modal, the `+` opens a **second stacked modal** in `Plutonium::REMOTE_MODAL_SECONDARY_FRAME` instead of replacing the primary modal. On successful create, the secondary closes and the primary frame reloads so the new record appears in the select, no developer wiring.
 
 For custom flows: `helpers.turbo_stream_close_frame(frame_id)` and `helpers.turbo_stream_reload_frame(frame_id)` are available.
 
@@ -133,11 +133,11 @@ See [Forms › Association inputs](./forms#association-inputs).
 
 ## Modals & slideovers
 
-The framework's `:new` / `:edit` actions and any interactive action render inline inside a modal. Choose the chrome (and optional width) per-resource via the definition — interactive actions inherit the same default:
+The framework's `:new` / `:edit` actions and any interactive action render inline inside a modal. Choose the chrome (and optional width) per-resource via the definition, interactive actions inherit the same default:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover               # default — slide-in panel from the right
+  modal :slideover               # default, slide-in panel from the right
   # modal :centered              # centered dialog
   # modal :centered, size: :lg   # centered, wider container
   # modal false                  # full standalone pages (no modal)
@@ -148,7 +148,7 @@ end
 
 ## Tabs on the show page
 
-Show pages with `permitted_associations` (see [Behavior › Policy](/reference/behavior/policies#association-permissions)) render a tablist: **Details** tab first, then one tab per association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reload / back navigation. Tab rows scroll horizontally on narrow viewports — they don't wrap.
+Show pages with `permitted_associations` (see [Behavior › Policy](/reference/behavior/policies#association-permissions)) render a tablist: **Details** tab first, then one tab per association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reload / back navigation. Tab rows scroll horizontally on narrow viewports, they don't wrap.
 
 If the policy permits **no fields**, the empty Details tab is dropped and the first association tab leads instead.
 
@@ -169,7 +169,7 @@ end
 
 ## Available context
 
-Inside any page / form / display / Phlex component, the same set of helpers is available — model accessors, definition/policy methods, URL helpers, `current_user`. For the full list, see [Behavior › Controllers › Key methods](/reference/behavior/controllers#key-methods) — pages inherit the same surface.
+Inside any page / form / display / Phlex component, the same set of helpers is available (model accessors, definition/policy methods, URL helpers, `current_user`; for the full list, see [Behavior › Controllers › Key methods](/reference/behavior/controllers#key-methods)). Pages inherit the same surface.
 
 In Phlex components, Rails helpers are accessed via the `helpers` proxy:
 
@@ -184,9 +184,9 @@ end
 
 ## Related
 
-- [Forms](./forms) — Form class, field builder, themes
-- [Displays](./displays) — show-page Display class
-- [Tables](./tables) — index-page Table class
-- [Components](./components) — built-in component kit, custom Phlex components, DynaFrame
-- [Layouts](./layouts) — overall shell, eject, ResourceLayout
-- [Resource › Definition](/reference/resource/definition) — page titles, breadcrumbs, modal mode, metadata panel
+- [Forms](./forms): Form class, field builder, themes
+- [Displays](./displays): show-page Display class
+- [Tables](./tables): index-page Table class
+- [Components](./components): built-in component kit, custom Phlex components, DynaFrame
+- [Layouts](./layouts): overall shell, eject, ResourceLayout
+- [Resource › Definition](/reference/resource/definition): page titles, breadcrumbs, modal mode, metadata panel

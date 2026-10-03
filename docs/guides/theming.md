@@ -18,11 +18,12 @@ Adapt Plutonium's defaults to match your brand: primary color, fonts, logo, dark
 
 ## 🚨 Critical
 
-- **Always register Stimulus controllers** — `registerControllers(application)`. Without it, the entire interactive layer is dead.
-- **Use `plutoniumTailwindConfig.merge`** when overriding Tailwind theme — plain object spread drops Plutonium's defaults.
-- **Tokens are CSS variables, not Tailwind keys** — `bg-[var(--pu-surface)]`, NOT `bg-pu-surface`.
-- **Dark mode is `selector`, not `class`** — toggle by adding/removing `dark` on `<html>`.
-- **Prefer `.pu-*` classes and `var(--pu-*)` tokens** over hardcoded `gray-X/dark:gray-Y` pairs — they switch with dark mode automatically.
+- **Run `pu:core:assets` before any CSS or brand-color change.** Out of the box the app serves the gem's prebuilt `plutonium.css` / `plutonium.min.js`, so app-side Tailwind classes, palette changes and token overrides have nowhere to compile. Don't hand-write the Tailwind/PostCSS pipeline.
+- **Once the app owns its JS bundle, register Stimulus controllers** with `registerControllers(application)` (`pu:core:assets` adds it). Your bundle replaces the gem's, so without it the entire interactive layer is dead.
+- **Use `plutoniumTailwindConfig.merge`** when overriding Tailwind theme: plain object spread drops Plutonium's defaults.
+- **Tokens are CSS variables, not Tailwind keys**: `bg-[var(--pu-surface)]`, NOT `bg-pu-surface`.
+- **Dark mode is `selector`, not `class`**: toggle by adding/removing `dark` on `<html>`.
+- **Style with `.pu-*` classes first, `var(--pu-*)` tokens second, raw palette pairs last.** Banners, badges, cards and buttons all have a `.pu-*` class that carries its own `.dark` rule; a hand-written `bg-warning-50 dark:bg-warning-950/30` pair duplicates that and drifts from the theme.
 
 ## Step 1: Run the assets generator
 
@@ -30,7 +31,9 @@ Adapt Plutonium's defaults to match your brand: primary color, fonts, logo, dark
 rails generate pu:core:assets
 ```
 
-This installs npm packages, creates `tailwind.config.js`, imports Plutonium CSS, registers Stimulus controllers, and points `Plutonium.configure` at your asset files. Run once per app.
+This installs npm packages, creates `tailwind.config.js` and `postcss.config.js`, imports Plutonium CSS, registers Stimulus controllers, and points `Plutonium.configure` at your asset files. Run once per app.
+
+It aborts unless `app/assets/stylesheets/application.tailwind.css` and `app/javascript/controllers/index.js` exist (an app created with `-j esbuild -c tailwind` plus Stimulus). For an app without them, run `bin/rails javascript:install:esbuild`, `css:install:tailwind` and `stimulus:install` first. See [Reference › UI › Assets › Generator](/reference/ui/assets#generator).
 
 ## Step 2: Asset configuration
 
@@ -75,6 +78,8 @@ theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
 })
 ```
 
+These palettes are compiled into the CSS at build time (`.pu-btn-primary` is `@apply bg-primary-600 ...`), so a brand color change needs this `merge` plus a rebuild (the `build:css` script, or the running `bin/dev` watcher). A `--pu-*` override won't recolor `primary`.
+
 ### Default palette
 
 | Color | Use |
@@ -105,7 +110,15 @@ theme: plutoniumTailwindConfig.merge(plutoniumTailwindConfig.theme, {
 }
 ```
 
-Tokens auto-switch when the user toggles dark mode. See [Reference › UI › Assets › Design tokens](/reference/ui/assets#design-tokens) for the full token catalog.
+Tokens auto-switch when the user toggles dark mode.
+
+::: warning Mirror every `:root` override in `.dark`
+Your stylesheet loads after Plutonium's and `:root` / `.dark` have equal specificity, so a token overridden only in `:root` wins in dark mode too and ships your light value there. Re-assert every customized color token in `.dark`, shadows included: `--pu-shadow-sm/md/lg` have their own dark values in `src/css/tokens.css`.
+
+Put dark values in a `.dark { ... }` block, not `@media (prefers-color-scheme: dark)`. Dark mode is the `dark` class on `<html>`, so a media query ignores the user's toggle.
+:::
+
+See [Reference › UI › Assets › Design tokens](/reference/ui/assets#design-tokens) for the full token catalog.
 
 ## Using tokens in your code
 
@@ -145,6 +158,8 @@ Pre-styled ready-to-use components:
 | Buttons | `.pu-btn`, `.pu-btn-md/-sm/-xs`, `.pu-btn-primary/-secondary/-danger/-success/-warning/-info/-accent`, `.pu-btn-ghost/-outline`, `.pu-btn-soft-*` |
 | Inputs | `.pu-input/-invalid/-valid`, `.pu-label/-required`, `.pu-hint`, `.pu-error`, `.pu-checkbox` |
 | Cards | `.pu-card`, `.pu-card-body`, `.pu-panel-header`, `.pu-panel-title`, `.pu-panel-description` |
+| Badges | `.pu-badge`, `.pu-badge-neutral/-primary/-secondary/-success/-danger/-warning/-info/-accent` |
+| Alerts (inline banners) | `.pu-alert`, `.pu-alert-success/-warning/-danger/-info`, `.pu-alert-message`, `.pu-alert-close` |
 | Tables | `.pu-table-wrapper`, `.pu-table`, `-header`, `-header-cell`, `-body-row`, `-body-row-selected`, `-body-cell`, `.pu-selection-cell` |
 | Toolbars / empty states | `.pu-toolbar`, `-text`, `-actions`; `.pu-empty-state`, `-icon`, `-title`, `-description` |
 
@@ -184,7 +199,7 @@ end
 ```
 
 ::: warning Always `super.merge(...)`
-Don't replace the theme wholesale — Plutonium's defaults handle invalid states, focus rings, and dark mode. `super.merge` keeps them.
+Don't replace the theme wholesale (Plutonium's defaults handle invalid states, focus rings, and dark mode). `super.merge` keeps them.
 :::
 
 Full theme key catalog: [Reference › UI › Assets › Phlexi component themes](/reference/ui/assets#phlexi-component-themes).
@@ -225,7 +240,7 @@ document.documentElement.classList.toggle('dark')
 
 If you've overridden tokens via `:root` and `.dark`, both modes Just Work.
 
-## Per-portal chrome — eject the shell
+## Per-portal chrome: eject the shell
 
 For per-portal headers/sidebars:
 
@@ -245,7 +260,7 @@ Copies `layouts/resource.html.erb` for layout-level edits.
 
 ```ruby
 Plutonium.configure do |config|
-  config.shell = :modern     # default — topbar + icon rail
+  config.shell = :modern     # default: topbar + icon rail
   # config.shell = :classic  # legacy header + sidebar (only when upgrading)
 end
 ```
@@ -268,13 +283,13 @@ Bundled controllers: `color-mode`, `form` (pre-submit), `nested-resource-form-fi
 
 ## Common issues
 
-- **Stimulus controllers silently fail** — if `registerControllers(application)` isn't called, the entire UI's interactive layer is dead (color-mode toggle, slim-select, flatpickr, easymde, pre-submit). No error — just no behavior.
-- **`plutoniumTailwindConfig.merge` is mandatory** — plain spread drops defaults silently.
-- **Tokens not switching in dark mode** — you used `bg-pu-surface` instead of `bg-[var(--pu-surface)]`. Tokens are CSS variables, not Tailwind keys.
-- **`.pu-btn` styles not applying** — check that Plutonium CSS is imported BEFORE Tailwind: `@import "gem:plutonium/src/css/plutonium.css";` then `@import "tailwindcss";`.
+- **Stimulus controllers silently fail**: once the app serves its own JS bundle, if `registerControllers(application)` isn't called, the entire UI's interactive layer is dead (color-mode toggle, slim-select, flatpickr, easymde, pre-submit). No error: just no behavior.
+- **`plutoniumTailwindConfig.merge` is mandatory**: plain spread drops defaults silently.
+- **Tokens not switching in dark mode**: you used `bg-pu-surface` instead of `bg-[var(--pu-surface)]`. Tokens are CSS variables, not Tailwind keys.
+- **`.pu-btn` styles not applying**: check that Plutonium CSS is imported BEFORE Tailwind: `@import "gem:plutonium/src/css/plutonium.css";` then `@import "tailwindcss";`.
 
 ## Related
 
-- [Reference › UI › Assets](/reference/ui/assets) — full Tailwind / Stimulus / design tokens / component classes surface
-- [Reference › UI › Layouts](/reference/ui/layouts) — shell, eject, ResourceLayout
-- [Reference › UI › Forms › Theming](/reference/ui/forms#theming) — Form theme keys
+- [Reference › UI › Assets](/reference/ui/assets): full Tailwind / Stimulus / design tokens / component classes surface
+- [Reference › UI › Layouts](/reference/ui/layouts): shell, eject, ResourceLayout
+- [Reference › UI › Forms › Theming](/reference/ui/forms#theming): Form theme keys

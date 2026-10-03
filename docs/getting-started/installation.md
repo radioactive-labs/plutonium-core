@@ -9,7 +9,7 @@ rails new myapp -a propshaft -j esbuild -c tailwind \
   -m https://radioactive-labs.github.io/plutonium-core/templates/plutonium.rb
 ```
 
-This sets up Rails with Propshaft, esbuild, TailwindCSS, and Plutonium — plus Rodauth auth, asset pipeline, and initial migrations.
+This sets up Rails with Propshaft, esbuild, TailwindCSS, and Plutonium, plus Rodauth auth, asset pipeline, and initial migrations.
 
 After the template completes:
 
@@ -62,7 +62,7 @@ For account options and customization, see [Reference › Auth](/reference/auth/
 rails generate pu:core:assets
 ```
 
-Installs npm packages, creates `tailwind.config.js` extending Plutonium's config, imports Plutonium CSS, registers Stimulus controllers. Required if you want to customize the theme — see [Reference › UI › Assets](/reference/ui/assets) and [Guides › Theming](/guides/theming).
+Installs npm packages, creates `tailwind.config.js` extending Plutonium's config, imports Plutonium CSS, registers Stimulus controllers (`registerControllers(application)`, which your own JS bundle must keep), and points `config.assets.stylesheet` / `script` at your `application` bundles. Until then the app serves the gem's prebuilt CSS and JS, so it is required for custom CSS, brand colors or your own Stimulus controllers. It needs `app/assets/stylesheets/application.tailwind.css` and `app/javascript/controllers/index.js` (an app created with `-j esbuild -c tailwind` plus Stimulus). See [Reference › UI › Assets](/reference/ui/assets) and [Guides › Theming](/guides/theming).
 
 ## Verify
 
@@ -99,6 +99,6 @@ bin/dev
 
 ## Next steps
 
-- [Tutorial](./tutorial/) — build a complete blog application step-by-step
-- [Adding resources](/guides/adding-resources) — create your first resource
-- [Creating packages](/guides/creating-packages) — organize code into feature and portal packages
+- [Tutorial](./tutorial/): build a complete blog application step-by-step
+- [Adding resources](/guides/adding-resources): create your first resource
+- [Creating packages](/guides/creating-packages): organize code into feature and portal packages

@@ -4,7 +4,7 @@
 Dashboards are experimental: the DSL and behavior may change in a future release.
 :::
 
-Reference documentation for Plutonium dashboards: pages of metric, chart and free-form cards, each loaded in its own lazy turbo frame.
+Reference documentation for Plutonium dashboards: pages of metric, chart and free-form cards, each loaded in its own lazy turbo frame by default.
 
 ## In this section
 

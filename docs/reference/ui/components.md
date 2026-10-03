@@ -22,13 +22,13 @@ TablePagination(pagy)
 Breadcrumbs()
 ```
 
-These are shorthand for `render Plutonium::UI::PageHeader.new(...)` etc. — they work because every component class is exposed as a method on `Plutonium::UI::Component::Base`.
+These are shorthand for `render Plutonium::UI::PageHeader.new(...)` etc.; they work because every component class is exposed as a method on `Plutonium::UI::Component::Base`.
 
 ## Avatar
 
 `Plutonium::UI::Avatar` renders a profile image for a subject. It resolves an optional image source and falls back to a deterministic avatar from the hosted [Navii](https://navii.dev) service, then to a generic user icon when there's nothing to show.
 
-![Avatar — Navii fallback across sizes, deterministic faces for string subjects, explicit image src, and the icon fallback](/images/components/avatar.png)
+![Avatar, Navii fallback across sizes, deterministic faces for string subjects, explicit image src, and the icon fallback](/images/components/avatar.png)
 
 ```ruby
 Avatar(user)                      # Navii fallback seeded from the record
@@ -45,7 +45,7 @@ Avatar(src: "https://.../p.png")  # a bare image, no subject/fallback
 | `src:`    | `nil`   | The image. A **Symbol** names a method on the subject (`:avatar` → `subject.avatar`); otherwise an ActiveStorage attachment, [active_shrine](https://github.com/radioactive-labs/active_shrine)/Shrine uploader, or URL string. |
 | `size:`   | `:md`   | Semantic `:xs 24 / :sm 32 / :md 40 / :lg 48 / :xl 64`, or a raw Integer (px). |
 | `alt:`    | derived | Defaults to the String subject, or the record's display name. |
-| `class:`  | —       | Merged over the default `rounded-full` classes. |
+| `class:`  | - | Merged over the default `rounded-full` classes. |
 
 ### How the source resolves
 
@@ -58,7 +58,7 @@ Avatar(src: "https://.../p.png")  # a bare image, no subject/fallback
 When `src` is absent or unattached, a Navii avatar is rendered from the subject; with no subject either, a generic user icon is shown.
 
 ::: tip Symbol `src` is a contract
-`Avatar(user, src: :avatar)` calls `user.avatar` — the subject **must** respond to it (a `NoMethodError` is raised otherwise). Use a Symbol `src` only with a record subject, not a value that might be a plain string (e.g. a guest `current_user`).
+`Avatar(user, src: :avatar)` calls `user.avatar`, the subject **must** respond to it (a `NoMethodError` is raised otherwise). Use a Symbol `src` only with a record subject, not a value that might be a plain string (e.g. a guest `current_user`).
 :::
 
 ### Privacy
@@ -94,7 +94,7 @@ class PostCardComponent < Plutonium::UI::Component::Base
         span(class: "text-sm text-[var(--pu-text-subtle)]") {
           @post.published_at&.strftime("%B %d, %Y")
         }
-        a(href: resource_url_for(@post), class: "text-primary-600") { "Read more" }
+        a(href: resource_url_for(@post), class: "text-primary-600") { t("blog.posts.card.read_more") }
       end
     end
   end
@@ -104,18 +104,18 @@ end
 ::: tip Inherit `Plutonium::UI::Component::Base`
 It gives you:
 - The component kit (`PageHeader`, `Panel`, `Block`, …)
-- Resource helpers (`resource_url_for`, `current_user`, `current_record!`, `current_definition`)
+- Resource helpers (`resource_url_for`, `current_user`, `resource_record!`, `current_definition`)
 - A `helpers` proxy for Rails helpers (`helpers.link_to`, `helpers.number_to_currency`)
 - Token / class helpers (`tokens`, `classes`)
 
-A **field** component (one you pass to `as:`) inherits its Phlexi base instead —
+A **field** component (one you pass to `as:`) inherits its Phlexi base instead:
 `include Plutonium::UI::Component::Behaviour` there to get the same helpers.
 :::
 
 ### Use in a definition
 
 A component like `PostCardComponent` above has its own constructor, so it reaches
-a field through the **block form** — you build it yourself:
+a field through the **block form**, you build it yourself:
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -129,13 +129,13 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-`as: SomeComponent` is the other route, and it expects a **field component** —
+`as: SomeComponent` is the other route, and it expects a **field component**.
 Plutonium instantiates it with the field builder, not with your keyword
 arguments. See [field components](#field-components) below.
 
 ::: warning `as:` does not take a keyword-argument component
 `display :card, as: PostCardComponent` raises `ArgumentError: wrong number of
-arguments` — the component is constructed as `PostCardComponent.new(field,
+arguments`; the component is constructed as `PostCardComponent.new(field,
 **attributes)`. Use the block form for those.
 :::
 
@@ -143,7 +143,7 @@ arguments` — the component is constructed as `PostCardComponent.new(field,
 
 A field component subclasses the Phlexi component base for its surface and reads
 everything off `field` (`field.value`, `field.object`, `field.dom`, plus
-`attributes` — the themed id/name/class Plutonium already computed):
+`attributes`, the themed id/name/class Plutonium already computed):
 
 ```ruby
 # app/components/color_picker_component.rb
@@ -172,7 +172,7 @@ class PostDefinition < ResourceDefinition
 end
 ```
 
-An `as:` component works in every surface that renders the field — form, show
+An `as:` component works in every surface that renders the field: form, show
 page, index column, filter panel and wizard summary alike.
 
 ### Use in a page / form / display
@@ -187,7 +187,7 @@ end
 
 ## `DynaFrameContent` pattern
 
-Enables frame-aware rendering — regular requests get the full page (header + content + footer); turbo-frame requests get only the content inside the frame.
+Enables frame-aware rendering, regular requests get the full page (header + content + footer); turbo-frame requests get only the content inside the frame.
 
 ```ruby
 def view_template(&block)
@@ -205,7 +205,7 @@ All pages inherit this automatically. Modals and frame navigation work without s
 
 Rarely. Use it when writing a custom non-resource page that needs the same frame-aware rendering as the built-in pages.
 
-For typical custom pages, just inherit `Plutonium::UI::Page::Base` and override hooks like `render_content` — the DynaFrame wrapping happens in `view_template` automatically.
+For typical custom pages, just inherit `Plutonium::UI::Page::Base` and override hooks like `render_content`, the DynaFrame wrapping happens in `view_template` automatically.
 
 ## Conditional class helpers
 
@@ -257,15 +257,15 @@ class MyComponent < Plutonium::UI::Component::Base
 end
 ```
 
-The `helpers` proxy gives you everything `ApplicationController#helpers` exposes — including any custom helpers in `app/helpers/`.
+The `helpers` proxy gives you everything `ApplicationController#helpers` exposes, including any custom helpers in `app/helpers/`.
 
 ## Available context
 
-Inside any custom component, the same set of helpers as pages/forms/displays — see [Pages › Available context](./pages#available-context).
+Inside any custom component, the same set of helpers as pages/forms/displays, see [Pages › Available context](./pages#available-context).
 
 ## Related
 
-- [Pages](./pages) — `render_*` hooks call your components
-- [Forms](./forms) — the built-in input tags and their `as:` aliases
-- [Displays](./displays) — using custom display components
-- [Assets](./assets) — design tokens (`var(--pu-*)`) and `.pu-*` component classes
+- [Pages](./pages): `render_*` hooks call your components
+- [Forms](./forms): the built-in input tags and their `as:` aliases
+- [Displays](./displays): using custom display components
+- [Assets](./assets): design tokens (`var(--pu-*)`) and `.pu-*` component classes

@@ -20,7 +20,10 @@ for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
   if (!existsSync(source)) continue // skip dirs that aren't skills (no SKILL.md)
   let content = readFileSync(source, "utf8")
 
-  const description = content.match(/^description:\s*(.+)$/m)?.[1] ?? ""
+  // Descriptions are single-quoted YAML scalars (they contain ": "), so strip
+  // the quotes and unescape doubled single quotes.
+  const rawDescription = content.match(/^description:\s*(.+)$/m)?.[1] ?? ""
+  const description = rawDescription.match(/^'(.*)'$/)?.[1].replaceAll("''", "'") ?? rawDescription
 
   // Wiki-style [[skill-name]] cross-links become relative markdown links so
   // crawlers can follow them between the published files.
@@ -34,11 +37,11 @@ skills.sort((a, b) => (a.name === "plutonium" ? -1 : b.name === "plutonium" ? 1 
 
 const index = `# Plutonium Skills
 
-Task-focused guides for AI agents working with the [Plutonium](https://radioactive-labs.github.io/plutonium-core/) Rails RAD framework. Each file is self-contained markdown. Start with \`plutonium.md\` — it routes to the others.
+Task-focused guides for AI agents working with the [Plutonium](https://radioactive-labs.github.io/plutonium-core/) Rails RAD framework. Each file is self-contained markdown. Start with \`plutonium.md\`; it routes to the others.
 
 These are the same skills the gem installs into projects via \`rails g pu:skills:sync\` (Claude Code loads them automatically from \`.claude/skills/\`). Any agent can fetch them directly from the URLs below.
 
-${skills.map((s) => `- [${s.name}](${s.name}.md) — ${s.description}`).join("\n")}
+${skills.map((s) => `- [${s.name}](${s.name}.md): ${s.description}`).join("\n")}
 `
 
 writeFileSync(join(outDir, "index.md"), index)

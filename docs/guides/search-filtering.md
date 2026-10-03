@@ -28,7 +28,7 @@ All declared in the definition.
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  # Search box — searches title and body
+  # Search box: searches title and body
   search do |scope, query|
     scope.where("title ILIKE :q OR body ILIKE :q", q: "%#{query}%")
   end
@@ -81,7 +81,7 @@ end
 
 When an association input targets this resource, the dropdown's autocomplete calls the resource's `search` block. Same code, two surfaces.
 
-### Without a `search` block — typeahead fallback
+### Without a `search` block: typeahead fallback
 
 The framework falls back to a case-insensitive `LIKE` on the first column it finds, in priority order:
 
@@ -89,7 +89,7 @@ The framework falls back to a case-insensitive `LIKE` on the first column it fin
 2. Otherwise the first match from `[name, title, label, slug, display_name, email]`.
 3. Otherwise the relation is returned unfiltered (capped).
 
-For large tables, write an explicit `search` block — the leading-wildcard `LIKE` can't use a b-tree index. See [Reference › Resource › Query › Search](/reference/resource/query#search).
+For large tables, write an explicit `search` block: the leading-wildcard `LIKE` can't use a b-tree index. See [Reference › Resource › Query › Search](/reference/resource/query#search).
 
 ## Filters
 
@@ -154,7 +154,7 @@ class PostDefinition < ResourceDefinition
   scope :published    # uses Post.published
   scope :draft        # uses Post.draft
 
-  # Inline scope — block runs with scope as argument
+  # Inline scope: block runs with scope as argument
   scope(:recent) { |s| s.where('created_at > ?', 1.week.ago) }
 
   # Scope with controller context
@@ -206,9 +206,9 @@ Query params are namespaced under `q`:
 ## Performance tips
 
 - **Add indexes** for filtered and sorted columns.
-- **Use `.distinct`** when joining associations in search — duplicate rows otherwise.
+- **Use `.distinct`** when joining associations in search: duplicate rows otherwise.
 - **Prefer scopes over filters** for queries used often (no input parsing).
-- **`LIKE '%q%'` can't use a b-tree index** — for large tables, use `pg_search` or a trigram/GIN/full-text index.
+- **`LIKE '%q%'` can't use a b-tree index**: for large tables, use `pg_search` or a trigram/GIN/full-text index.
 
 ## Full-text search with `pg_search`
 
@@ -227,13 +227,13 @@ end
 
 ## Common issues
 
-- **Filter not showing up** — make sure the attribute is in `permitted_attributes_for_index` on the policy.
-- **Slow search on large tables** — `LIKE '%q%'` can't be indexed by a b-tree. Switch to FTS or trigram.
-- **Duplicate rows in results** — add `.distinct` when joining associations.
-- **Typeahead works on small dev tables but slows in production** — same b-tree issue. Write an explicit `search` block backed by a proper index.
+- **Filter not showing up**: make sure the attribute is in `permitted_attributes_for_index` on the policy.
+- **Slow search on large tables**: `LIKE '%q%'` can't be indexed by a b-tree. Switch to FTS or trigram.
+- **Duplicate rows in results**: add `.distinct` when joining associations.
+- **Typeahead works on small dev tables but slows in production**: same b-tree issue. Write an explicit `search` block backed by a proper index.
 
 ## Related
 
-- [Reference › Resource › Query](/reference/resource/query) — full surface
-- [Adding resources](./adding-resources) — basic resource setup
-- [Authorization](./authorization) — `permitted_attributes_for_index` gates which fields can be filtered
+- [Reference › Resource › Query](/reference/resource/query): full surface
+- [Adding resources](./adding-resources): basic resource setup
+- [Authorization](./authorization): `permitted_attributes_for_index` gates which fields can be filtered
