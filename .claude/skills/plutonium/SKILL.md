@@ -1,9 +1,9 @@
 ---
 name: plutonium
-description: Use BEFORE starting any Plutonium work — new app, new feature, or first edit in an unfamiliar area. Routes you to the right skill and bootstraps greenfield work.
+description: 'Use BEFORE starting any Plutonium work: new app, new feature, or first edit in an unfamiliar area. Routes you to the right skill and bootstraps greenfield work.'
 ---
 
-# Plutonium — Router & Bootstrapper
+# Plutonium: Router & Bootstrapper
 
 Entry point for all Plutonium work. Does three things:
 
@@ -14,57 +14,57 @@ Entry point for all Plutonium work. Does three things:
 ## 🚨 Critical (read first)
 
 - **Plutonium is generator-driven.** Almost every file you'd hand-write has a `pu:*` generator. Hand-written files drift from conventions and break future generator runs.
-- **For greenfield** (new app, substantial new feature, first resource in a new domain) — load the **bootstrap bundle** below before writing code.
-- **For targeted edits** — use the **router table** to jump to the right skill.
-- **For anything touching tenant scoping** — load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
+- **For greenfield** (new app, substantial new feature, first resource in a new domain), load the **bootstrap bundle** below before writing code.
+- **For targeted edits**: use the **router table** to jump to the right skill.
+- **For anything touching tenant scoping**: load `plutonium-tenancy`. Don't reach for `where(organization: ...)` in a policy; fix the model instead.
 - **Unattended execution:** always pass `--dest=`, `--force` (when re-running meta-generators), `--auth=`, `--skip-bundle`, `--quiet` so generators don't block on prompts. See [Unattended execution](#unattended-execution).
-- **Inspect before you act.** Every targeted skill now opens with a CHECK gate — read the relevant files yourself before scaffolding or editing. Don't ask the user to describe their app when you can read it.
+- **Inspect before you act.** Every targeted skill now opens with a CHECK gate: read the relevant files yourself before scaffolding or editing. Don't ask the user to describe their app when you can read it.
 
-## The mental model (read once — it decides what you should write)
+## The mental model (read once: it decides what you should write)
 
-Plutonium applies Rails' bargain — follow the convention and the framework carries you; reach for an escape hatch when you need one — to the layer **above CRUD**: auth, authorization, multi-tenancy, admin UI, business operations. Four consequences change what you should actually type.
+Plutonium applies Rails' bargain (follow the convention and the framework carries you; reach for an escape hatch when you need one) to the layer **above CRUD**: auth, authorization, multi-tenancy, admin UI, business operations. Four consequences change what you should actually type.
 
 ### 1. Everything is derived from something you already declared
 
-Not "defaults someone picked for you" — **computed from existing declarations**:
+Not "defaults someone picked for you": **computed from existing declarations**:
 
 | Derived | From |
 |---|---|
 | Field types, required markers, select choices | model columns, associations, attachments, enums, **and validations** (`presence: true` → required; `inclusion:` → select choices) |
-| A collection's preloads (index, kanban, export) | the policy's permitted field set — there is **no `includes` list to write or maintain** |
-| Tenant scope | your associations — direct `belongs_to`, then `has_one`/`has_one :through`, then reverse `has_many` |
+| A collection's preloads (index, kanban, export) | the policy's permitted field set; there is **no `includes` list to write or maintain** |
+| Tenant scope | your associations: direct `belongs_to`, then `has_one`/`has_one :through`, then reverse `has_many` |
 | Action type (record / bulk / resource) | whether the interaction declares `:resource`, `:resources`, or neither |
 | An association input's typeahead | the **target resource's own `search` block** |
 | CRUD, nested and action routes | one `register_resource` line |
 
-⇒ **Declare only what differs.** A `field :title` matching the detected type is dead code — and one more line to fall out of step when the column changes. This is the single most common way generated-looking code goes wrong.
+⇒ **Declare only what differs.** A `field :title` matching the detected type is dead code, and one more line to fall out of step when the column changes. This is the single most common way generated-looking code goes wrong.
 
 ### 2. Definition and policy answer different questions
 
 - **Definition** = *how* a field renders.
 - **Policy** = *whether it appears at all*.
 
-"Only admins see this field" is `permitted_attributes_for_*`. Never a definition declaration, and never a `condition:` (that only hides UI — the route stays live).
+"Only admins see this field" is `permitted_attributes_for_*`. Never a definition declaration, and never a `condition:` (that only hides UI; the route stays live).
 
 ### 3. Overrides are plain Ruby inheritance
 
-`AdminPortal::PostDefinition < ::PostDefinition`, and the same for policies and controllers. App-level default, portal-level subclass. No registry of overrides, no precedence DSL, no merge semantics — so "why does this field show here but not there" is always readable as a class hierarchy.
+`AdminPortal::PostDefinition < ::PostDefinition`, and the same for policies and controllers. App-level default, portal-level subclass. No registry of overrides, no precedence DSL, no merge semantics, so "why does this field show here but not there" is always readable as a class hierarchy.
 
 ### 4. Climb the escape-hatch ladder only as far as the problem requires
 
-1. **Change an option** — `input :content, as: :markdown`
-2. **Render inline** — `display :priority do |f| … end` (a block, `instance_exec`ed in Phlex, emits markup directly and gives you `f.object`)
-3. **Write a component** — a *field* component (subclasses the Phlexi base) plugs into `as:`; anything with its own constructor goes through a block (`display :card do |field| … end`)
-4. **Implement a hook** — controller hooks instead of reopening `create`/`update`; page `render_before_*` / `render_after_*` instead of `view_template`
-5. **Replace the page** — `view_template` on the nested class, or an ERB view at the controller path (ERB wins when both exist)
+1. **Change an option**: `input :content, as: :markdown`
+2. **Render inline**: `display :priority do |f| … end` (a block, `instance_exec`ed in Phlex, emits markup directly and gives you `f.object`)
+3. **Write a component**: a *field* component (subclasses the Phlexi base) plugs into `as:`; anything with its own constructor goes through a block (`display :card do |field| … end`)
+4. **Implement a hook**: controller hooks instead of reopening `create`/`update`; page `render_before_*` / `render_after_*` instead of `view_template`
+5. **Replace the page**: `view_template` on the nested class, or an ERB view at the controller path (ERB wins when both exist)
 
 Reaching for rung 5 on a rung-1 problem is how you end up owning breadcrumbs, the header and turbo frame wiring you never meant to touch.
 
 **Underneath all of it, it stays Rails.** Models are plain ActiveRecord, controllers inherit from Rails controllers, views resolve through Rails view paths. A Plutonium resource and a hand-written controller coexist in one app.
 
-## ✅ Orient before you route (CHECK — read the app, don't assume)
+## ✅ Orient before you route (CHECK: read the app, don't assume)
 
-A one-line request rarely says whether this is a new app, a half-built one, or a multi-tenant one — and those change which path you take. Spend 30 seconds reading the app **before** loading a bundle or running anything:
+A one-line request rarely says whether this is a new app, a half-built one, or a multi-tenant one, and those change which path you take. Spend 30 seconds reading the app **before** loading a bundle or running anything:
 
 | Read | Tells you |
 |---|---|
@@ -80,16 +80,16 @@ This is the global "look before you leap"; each targeted skill carries its own A
 | Skill | Covers |
 |---|---|
 | **[[plutonium-app]]** | Installation, packages (feature + portal), portal engines, mounting, `register_resource` (including singular and custom routes), `pu:res:conn` |
-| **[[plutonium-resource]]** | The resource itself — `pu:res:scaffold`, field types, model layer (`Plutonium::Resource::Record`, `has_cents`, SGID, routing), definition layer (fields/inputs/displays/columns, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization) |
+| **[[plutonium-resource]]** | The resource itself: `pu:res:scaffold`, field types, model layer (`Plutonium::Resource::Record`, `has_cents`, SGID, routing), definition layer (fields/inputs/displays/columns, search/filters/scopes/sorting, custom actions, bulk actions, index views, page customization) |
 | **[[plutonium-behavior]]** | Controllers (hooks, key methods, presentation), policies (action methods, `permitted_attributes_for_*`, `permitted_associations`), interactions (structure, outcomes, chaining, URL generation) |
-| **[[plutonium-async-interactions]]** | Async interactions — `async`, the Run STI model, failure policies (`halt`/`continue`/`transactional`), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), scheduling `ReapJob` |
+| **[[plutonium-async-interactions]]** | Async interactions: `async`, the Run STI model, failure policies (`halt`/`continue`/`transactional`), authorization re-derivation at perform time, registering AsyncRun as a resource (progress page + running banner), scheduling `ReapJob` |
 | **[[plutonium-ui]]** | Page classes, forms, displays, tables, custom Phlex components, layouts, modals & tabs, Tailwind config, Stimulus, design tokens, `.pu-*` classes, Phlexi themes |
-| **[[plutonium-kanban]]** | `kanban do…end` DSL in a Definition — columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy, quick-add, static vs dynamic boards |
-| **[[plutonium-dashboard]]** | Dashboards — `Plutonium::Dashboard::Base`, `metric` / `chart` / `card`, `register_dashboard`, lazy turbo-frame cards, `refresh`, `condition:`, `authorize?`, `pu:dashboard` |
+| **[[plutonium-kanban]]** | `kanban do…end` DSL in a Definition, columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy, quick-add, static vs dynamic boards |
+| **[[plutonium-dashboard]]** | Dashboards, `Plutonium::Dashboard::Base`, `metric` / `chart` / `card`, `register_dashboard`, lazy turbo-frame cards, `refresh`, `condition:`, `authorize?`, `pu:dashboard` |
 | **[[plutonium-auth]]** | Rodauth install, account types (basic / admin / SaaS), profile resource, security section |
 | **[[plutonium-tenancy]]** | Entity scoping (`associated_with`, `default_relation_scope`, three model shapes), nested resources, invites |
 | **[[plutonium-testing]]** | `pu:test:install`, `pu:test:scaffold`, `ResourceCrud`/`ResourcePolicy`/`ResourceDefinition`/`ResourceModel`/`NestedResource`/`PortalAccess`/`ResourceInteraction`, `AuthHelpers` |
-| **[[plutonium-wizard]]** | Multi-step flows — the wizard DSL (`step`/`review`/`using:`/`condition:`, per-step `on_submit`/`persist`/`on_rollback`, `execute`), anchoring & resume, one-time wizards + gate, registration (`wizard` macro + `register_wizard`), storage/config + SweepJob |
+| **[[plutonium-wizard]]** | Multi-step flows: the wizard DSL (`step`/`review`/`using:`/`condition:`, per-step `on_submit`/`persist`/`on_rollback`, `execute`), anchoring & resume, one-time wizards + gate, registration (`wizard` macro + `register_wizard`), storage/config + SweepJob |
 
 ## Greenfield bootstrap bundle
 
@@ -97,10 +97,10 @@ Triggers: installing Plutonium, building a new app, adding the first resource in
 
 **Load these before writing code:**
 
-1. **`plutonium-app`** — install, portals, packages, routes.
-2. **`plutonium-resource`** — scaffold, model, definition (the bulk of the work).
-3. **`plutonium-behavior`** — controllers, policies, interactions.
-4. **`plutonium-tenancy`** — only if multi-tenant; load before declaring entity scoping.
+1. **`plutonium-app`**: install, portals, packages, routes.
+2. **`plutonium-resource`**: scaffold, model, definition (the bulk of the work).
+3. **`plutonium-behavior`**: controllers, policies, interactions.
+4. **`plutonium-tenancy`**: only if multi-tenant; load before declaring entity scoping.
 
 Add when relevant:
 - **`plutonium-auth`** for login / accounts / profile.
@@ -114,7 +114,7 @@ Add when relevant:
 | Install Plutonium, create a portal or package, mount engines, register routes (incl. singular / custom routes) | **[[plutonium-app]]** |
 | Run `pu:res:scaffold`, pick field types, set scaffold options | **[[plutonium-resource]]** |
 | Edit a model, add associations, use `has_cents`, override `to_param` / `to_label` | **[[plutonium-resource]]** |
-| Edit a definition — fields, inputs, displays, columns, search, filters, scopes, custom actions, bulk actions, index views, modal/slideover, page titles | **[[plutonium-resource]]** |
+| Edit a definition, fields, inputs, displays, columns, search, filters, scopes, custom actions, bulk actions, index views, modal/slideover, page titles | **[[plutonium-resource]]** |
 | Override a controller action, hook, redirect, or `resource_params` | **[[plutonium-behavior]]** |
 | Write `relation_scope`, `permitted_attributes_for_*`, `permitted_associations`, action methods, or any policy override | **[[plutonium-behavior]]** (+ **[[plutonium-tenancy]]** if scoping) |
 | Write an interaction class for business logic | **[[plutonium-behavior]]** |
@@ -122,24 +122,24 @@ Add when relevant:
 | Scope a model to a tenant, write `associated_with`, set portal entity strategy | **[[plutonium-tenancy]]** |
 | Configure parent/child nested routes, custom parent resolution | **[[plutonium-tenancy]]** |
 | Set up user invitations or entity membership | **[[plutonium-tenancy]]** |
-| Build or customize a kanban board view — `kanban do…end`, columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy | **[[plutonium-kanban]]** |
-| Build a dashboard, KPI overview or chart page — `pu:dashboard`, `metric` / `chart` / `card`, `register_dashboard`, refresh, per-card conditions | **[[plutonium-dashboard]]** |
+| Build or customize a kanban board view, `kanban do…end`, columns, `card_fields`, `position_on`, `realtime`, column actions, `kanban_move?` policy | **[[plutonium-kanban]]** |
+| Build a dashboard, KPI overview or chart page, `pu:dashboard`, `metric` / `chart` / `card`, `register_dashboard`, refresh, per-card conditions | **[[plutonium-dashboard]]** |
 | Build a custom page (override `ShowPage`/`IndexPage`/`NewPage`/`EditPage`), custom form, custom display, custom table, custom Phlex component | **[[plutonium-ui]]** |
 | Configure Tailwind, register Stimulus controllers, edit design tokens, theme forms/displays/tables, write a custom layout | **[[plutonium-ui]]** |
 | Install Rodauth, set up accounts, configure login flow, add the profile resource | **[[plutonium-auth]]** |
 | Write tests for a resource, run `pu:test:scaffold`, include `Plutonium::Testing::*` concerns | **[[plutonium-testing]]** |
-| Build a multi-step flow — onboarding, checkout, branching create — register a `wizard` / `register_wizard`, gate a one-time wizard | **[[plutonium-wizard]]** |
+| Build a multi-step flow, onboarding, checkout, branching create, register a `wizard` / `register_wizard`, gate a one-time wizard | **[[plutonium-wizard]]** |
 
 ## Resource architecture at a glance
 
-A **resource** is four cooperating layers — Plutonium auto-fills defaults from the model, so you only declare overrides:
+A **resource** is four cooperating layers; Plutonium auto-fills defaults from the model, so you only declare overrides:
 
 | Layer | File | Purpose |
 |---|---|---|
 | **Model** | `app/models/post.rb` | Data, validations, associations |
-| **Definition** | `app/definitions/post_definition.rb` | UI — fields, filters, actions |
-| **Policy** | `app/policies/post_policy.rb` | Authorization — who, what |
-| **Controller** | `app/controllers/posts_controller.rb` | Request handling (rarely edited — use hooks) |
+| **Definition** | `app/definitions/post_definition.rb` | UI, fields, filters, actions |
+| **Policy** | `app/policies/post_policy.rb` | Authorization: who, what |
+| **Controller** | `app/controllers/posts_controller.rb` | Request handling (rarely edited; use hooks) |
 
 Plus one optional fifth layer:
 
@@ -191,8 +191,8 @@ Meta-generators (`pu:saas:setup`) propagate flags to the generators they chain. 
 ## Workflow summary
 
 1. **Load the bootstrap bundle** (or the targeted skill from the router table).
-2. **Generate** — `rails g pu:res:scaffold Model field:type ... --dest=main_app`.
-3. **Migrate** — `rails db:prepare`.
-4. **Connect** — `rails g pu:res:conn Model --dest=portal_name`.
-5. **Customize** — edit definition / policy as needed.
-6. **Verify** — hit the route in the browser.
+2. **Generate**: `rails g pu:res:scaffold Model field:type ... --dest=main_app`.
+3. **Migrate**: `rails db:prepare`.
+4. **Connect**: `rails g pu:res:conn Model --dest=portal_name`.
+5. **Customize**: edit definition / policy as needed.
+6. **Verify**: hit the route in the browser.

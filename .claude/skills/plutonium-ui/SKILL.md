@@ -1,9 +1,9 @@
 ---
 name: plutonium-ui
-description: Use BEFORE building or customizing any Plutonium UI — page classes, forms, displays, tables, custom Phlex components, layouts, Stimulus controllers, Tailwind config, design tokens, themes, or component classes. Covers the full view + asset toolchain.
+description: 'Use BEFORE building or customizing any Plutonium UI: page classes, forms, displays, tables, custom Phlex components, layouts, Stimulus controllers, Tailwind config, design tokens, themes, or component classes. Covers the full view + asset toolchain.'
 ---
 
-# Plutonium UI — Pages, Forms, Components, Assets
+# Plutonium UI: Pages, Forms, Components, Assets
 
 Plutonium uses Phlex for all view components and TailwindCSS 4 + Stimulus for the frontend. This skill covers everything from overriding a single page to writing custom Phlex components, configuring Tailwind, and theming via design tokens.
 
@@ -13,19 +13,21 @@ For field-level rendering (`field :foo, as: :markdown`, `display :status do |f| 
 
 - **Override via nested classes in the definition.** `class ShowPage < ShowPage; end`, `class Form < Form; end`. Don't replace the entire view layer.
 - **Use render hooks, not `view_template`.** `render_before_content`, `render_after_content`, `render_before_toolbar`, etc. exist so you don't reimplement the whole page.
-- **All pages inherit `DynaFrameContent`** — turbo-frame requests render only the content. Don't fight it; modals and frame nav "just work".
-- **Custom components inherit `Plutonium::UI::Component::Base`** — gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and the `helpers` proxy for Rails helpers.
-- **`render_actions` is mandatory in custom `form_template`** — without it, the form has no submit button.
-- **Always `registerControllers(application)`** in `app/javascript/controllers/index.js`. Without it, Plutonium's Stimulus controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.
-- **Use `plutoniumTailwindConfig.merge`** when extending Tailwind theme — plain object merge drops Plutonium's defaults.
-- **Prefer `.pu-*` classes and `var(--pu-*)` tokens** over hardcoded `gray-X/dark:gray-Y` pairs — they switch with dark mode automatically.
+- **All pages inherit `DynaFrameContent`**: turbo-frame requests render only the content. Don't fight it; modals and frame nav "just work".
+- **Custom components inherit `Plutonium::UI::Component::Base`**: it gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and the `helpers` proxy for Rails helpers.
+- **`render_actions` is mandatory in custom `form_template`**: without it, the form has no submit button.
+- **Custom CSS, brand colors, or your own Stimulus controllers need `pu:core:assets` first.** Out of the box the app serves the gem's prebuilt `plutonium.css` / `plutonium.min.js`; the generator switches it to your own bundles. Don't hand-write the Tailwind/PostCSS pipeline.
+- **Once the app owns its JS bundle, `registerControllers(application)`** must be in `app/javascript/controllers/index.js` (`pu:core:assets` adds it). Your bundle replaces the gem's, so without it Plutonium's Stimulus controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.
+- **Use `plutoniumTailwindConfig.merge`** when extending Tailwind theme; plain object merge drops Plutonium's defaults.
+- **Style with `.pu-*` classes first, `var(--pu-*)` tokens second, raw palette pairs never.** Banners, badges, cards and buttons all have a `.pu-*` class that carries its own `.dark` rule. A hand-written `bg-warning-50 dark:bg-warning-950/30` pair duplicates that, drifts from the theme, and may not even exist in the prebuilt CSS (see Part 8).
+- **User-facing copy goes through `t(...)` with a locale key**, in components, pages, displays and definitions alike. See Part 4 › Translating text.
 - **Configure inputs in the definition; render them with `render_resource_field` in the form.** Don't reimplement field widgets from scratch.
 
 ---
 
-## 🛑 Before you customize UI: pick the lightest seam (ASK — don't infer)
+## 🛑 Before you customize UI: pick the lightest seam (ASK: don't infer)
 
-Plutonium gives you escalating levels of customization. Reach for the **lightest that fits** — jumping to `view_template` or an eject loses breadcrumbs/header/DynaFrame behavior and saddles you with maintaining copied markup forever.
+Plutonium gives you escalating levels of customization. Reach for the **lightest that fits**: jumping to `view_template` or an eject loses breadcrumbs/header/DynaFrame behavior and saddles you with maintaining copied markup forever.
 
 | You want to… | Reach for | **NOT** |
 |---|---|---|
@@ -33,35 +35,35 @@ Plutonium gives you escalating levels of customization. Reach for the **lightest
 | Re-arrange the record's fields | a custom `Display` (`display_template`) | a hand-rolled `Form`/`view_template` |
 | Group form fields into sections | the `form_layout` DSL in the definition | a `Form` subclass |
 | Recolor / rebrand | `plutoniumTailwindConfig.merge(...)` in `tailwind.config.js` | a plain object spread (drops Plutonium's defaults) |
-| Replace whole chrome per-portal | `pu:eject:shell` / `pu:eject:layout` — **last resort, you own it after** | ejecting when a hook/class/theme would do |
+| Replace whole chrome per-portal | `pu:eject:shell` / `pu:eject:layout`, **last resort; you own it after** | ejecting when a hook/class/theme would do |
 
-Then: is the change **global** (base `PostDefinition`) or **per-portal** (`AdminPortal::PostDefinition`)? And does it touch CSS/JS (⇒ the asset toolchain must be set up)? Don't guess field names or the banner copy — read the definition.
+Then: is the change **global** (base `PostDefinition`) or **per-portal** (`AdminPortal::PostDefinition`)? And does it touch CSS/JS (⇒ the asset toolchain must be set up)? Don't guess field names or the banner copy; read the definition.
 
-## ✅ Before you edit: verify the ground truth (CHECK — read it, don't ask for it)
+## ✅ Before you edit: verify the ground truth (CHECK: read it, don't ask for it)
 
-You have file access — **inspect**; don't ask the user to describe their app.
+You have file access, **inspect**; don't ask the user to describe their app.
 
 | Check | How | Why it matters |
 |---|---|---|
 | Custom page/Display already exists | Read the definition for nested `ShowPage`/`Display`/`Form` | Re-declaring clobbers an existing override |
 | Global vs per-portal | Is it `::PostDefinition` or `AdminPortal::PostDefinition`? | Override the right one |
 | Real field names | Read the model/definition | Don't invent fields in `display_template` |
-| Asset toolchain wired | `ls tailwind.config.js`; the CSS `@import`; has `pu:core:assets` run? | Brand/CSS edits won't compile otherwise |
-| Stimulus registered | grep `app/javascript/controllers/index.js` for `registerControllers` | Else the interactive layer is dead |
+| Asset toolchain wired | `ls tailwind.config.js`; `config.assets.stylesheet` in the Plutonium initializer; has `pu:core:assets` run? | Still on the gem's prebuilt `plutonium.css` ⇒ brand/CSS edits won't compile |
+| Stimulus registered | grep `app/javascript/controllers/index.js` for `registerControllers` | Once the app serves its own JS bundle, the interactive layer is dead without it |
 | Build watcher | Is `yarn dev` running? (`PLUTONIUM_DEV=1` when working on the gem) | CSS/JS changes need the rebuild |
 
 Inspect with your own tools **before** proposing code.
 
-## 🛠 Use the generator — and prefer hooks over ejecting
+## 🛠 Use the generator, and prefer hooks over ejecting
 
 | Task | How | Verify first |
 |---|---|---|
-| Custom Tailwind + Stimulus toolchain | `pu:core:assets` | Not already run |
+| Custom Tailwind + Stimulus toolchain | `pu:core:assets` (see Part 7 for its prerequisites) | Not already run |
 | Eject chrome (header/sidebar/layout) | `pu:eject:shell` / `pu:eject:layout --dest=portal` | A render hook / nested class / theme genuinely can't do it (last resort) |
 
 ---
 
-# Part 1 — Pages
+# Part 1: Pages
 
 Each definition has nested page classes. Override the ones you need to customize:
 
@@ -93,15 +95,16 @@ Definition
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  index_page_title       "Blog Posts"
-  index_page_description "Manage all published articles"
-  show_page_title        "Article Details"
-  show_page_title        -> { "#{current_record!.title} — Details" }   # dynamic
+  index_page_title       t("blog.posts.index.title")         # lazy: resolved per request, in its locale
+  index_page_description t("blog.posts.index.description")
+  show_page_title        "Article Details"                   # a literal also works (fixed, untranslated)
 
   breadcrumbs              true     # global default
   index_page_breadcrumbs   false    # per-page override
 end
 ```
+
+The class-level `t` in a definition returns a lazy proc; calling `I18n.t` directly in the class body would resolve once, at load time. A title that depends on the record belongs in a `page_title` override on the nested page class (see the hooks example below), not in a lambda here: the setter's proc is called with no record context.
 
 ## Page hooks (preferred over `view_template`)
 
@@ -123,12 +126,12 @@ class ShowPage < ShowPage
   private
 
   def page_title
-    "#{object.title} — #{object.author.name}"
+    "#{object.title} - #{object.author.name}"
   end
 
   def render_before_content
-    div(class: "alert alert-info") do
-      plain "This post has #{object.comments.count} comments"
+    div(class: "pu-alert pu-alert-info", role: "status") do
+      div(class: "pu-alert-message") { t("blog.posts.show.comment_count", count: object.comments.count) }
     end
   end
 
@@ -179,7 +182,7 @@ Use to pin action strips, omit nav chrome, or swap layouts.
 
 ---
 
-# Part 2 — Forms
+# Part 2: Forms
 
 Forms are built on [Phlexi::Form](https://github.com/radioactive-labs/phlexi-form). Hierarchy:
 
@@ -198,7 +201,7 @@ class PostDefinition < ResourceDefinition
   class Form < Form
     def form_template
       render_fields       # render every permitted field
-      render_actions      # submit buttons — REQUIRED
+      render_actions      # submit buttons, REQUIRED
     end
   end
 end
@@ -220,11 +223,11 @@ end
 
 ## Custom layouts
 
-### Sectioned — prefer the `form_layout` / `display_layout` DSL
+### Sectioned: prefer the `form_layout` / `display_layout` DSL
 
-**For grouping fields into sections, don't hand-roll a `Form` or `Display` subclass — declare `form_layout` (forms) or `display_layout` (show page) in the definition.** They handle headings, descriptions, collapsible `<details>`, `condition:`-based visibility, and **auto-drop sections that resolve to zero fields** (so `+ New` doesn't sprout empty headings). `columns:` is form-only — `display_layout` raises on it. See [[plutonium-resource]] › Form Layout / Display Layout.
+**For grouping fields into sections, don't hand-roll a `Form` or `Display` subclass; declare `form_layout` (forms) or `display_layout` (show page) in the definition.** They handle headings, descriptions, collapsible `<details>`, `condition:`-based visibility, and **auto-drop sections that resolve to zero fields** (so `+ New` doesn't sprout empty headings). `columns:` is form-only, `display_layout` raises on it. See [[plutonium-resource]] › Form Layout / Display Layout.
 
-**Each section renders as its own card** (`Plutonium::UI::Block`), so a sectioned form or show page has **no single outer card** — the form drops its own `pu-card` and the sections supply it. Don't add a card wrapper of your own around them.
+**Each section renders as its own card** (`Plutonium::UI::Block`), so a sectioned form or show page has **no single outer card**: the form drops its own `pu-card` and the sections supply it. Don't add a card wrapper of your own around them.
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -265,7 +268,7 @@ class Form < Form
 end
 ```
 
-A hand-rolled `section` like this renders its heading unconditionally — that's exactly the empty-heading problem `form_layout` avoids. If you must hand-roll, guard empty sections yourself.
+A hand-rolled `section` like this renders its heading unconditionally, which is exactly the empty-heading problem `form_layout` avoids. If you must hand-roll, guard empty sections yourself.
 
 ### Two-column
 
@@ -308,7 +311,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `input_tag` | text (auto-detected type) |
 | `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `tel_tag`, `hidden_tag` | standard HTML inputs |
 | `checkbox_tag`, `select_tag`, `radio_button_tag` | standard |
-| `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`) — default for boolean columns; `as: :boolean` for a plain checkbox |
+| `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`), default for boolean columns; `as: :boolean` for a plain checkbox |
 
 ### Plutonium-enhanced tags
 
@@ -330,13 +333,13 @@ render field(:avatar).wrapped       { |f| f.uppy_tag(allowed_file_types: %w[.jpg
 
 ### Password & secret fields
 
-`password_tag` masks the stored value — it **never emits the secret into the DOM**. A stored secret renders a sentinel; an untouched submit keeps it, an edit-to-new-value then failed re-render comes back blank + `required` (re-type — secrets are never echoed back), a *cleared* field comes back blank but **not** `required` (the clear may be intentional), a deliberately emptied field clears it (clear-by-blank), a typed value sets it. The sentinel is guarded by the `password-sentinel` Stimulus controller — the first edit (incl. **backspace**) wipes the whole field so a partial edit can't corrupt it.
+`password_tag` masks the stored value and **never emits the secret into the DOM**. A stored secret renders a sentinel; an untouched submit keeps it, an edit-to-new-value then failed re-render comes back blank + `required` (re-type; secrets are never echoed back), a *cleared* field comes back blank but **not** `required` (the clear may be intentional), a deliberately emptied field clears it (clear-by-blank), a typed value sets it. The sentinel is guarded by the `password-sentinel` Stimulus controller: the first edit (incl. **backspace**) wipes the whole field so a partial edit can't corrupt it.
 
-Auto-detected by name: `password`/`token`/`salt`, `encrypted_*`, `*_password`/`*_digest`/`*_hash`/`*_token`/`*_key`/`*_salt`, or any name containing `secret`. A convenience, **not** a guarantee — odd-named secrets (`recovery_phrase`, `pin`) still leak unless masked explicitly.
+Auto-detected by name: `password`/`token`/`salt`, `encrypted_*`, `*_password`/`*_digest`/`*_hash`/`*_token`/`*_key`/`*_salt`, or any name containing `secret`. A convenience, **not** a guarantee: odd-named secrets (`recovery_phrase`, `pin`) still leak unless masked explicitly.
 
 ```ruby
-field :api_token,   as: :string     # opt OUT — show a readable value (token to copy, checksum)
-field :recovery_phrase, as: :password   # opt IN  — mask a secret the heuristic misses
+field :api_token,   as: :string     # opt OUT: show a readable value (token to copy, checksum)
+field :recovery_phrase, as: :password   # opt IN: mask a secret the heuristic misses
 ```
 
 ## Submit buttons
@@ -347,7 +350,7 @@ Control the secondary button via the definition:
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  submit_and_continue false   # nil (default — auto), true (always show), false (always hide)
+  submit_and_continue false   # nil (default, auto), true (always show), false (always hide)
 end
 ```
 
@@ -369,14 +372,14 @@ end
 
 These all live in the definition layer:
 
-- **Pre-submit / dynamic forms** — see [[plutonium-resource]] › Dynamic Forms.
-- **Nested inputs** (`nested_input :variants`) — association-backed inline forms; see [[plutonium-resource]] › Nested Inputs.
-- **Structured inputs** (`structured_input :payload`, `structured_input :rows, repeat: 5`) — classless hash / array-of-hashes into a JSON column (resources) or an attribute (interactions); reuses the repeater chrome. See [[plutonium-resource]] › Structured Inputs.
-- **Interaction forms** — interactions define their own `attribute` / `input` and inherit `Plutonium::UI::Form::Interaction`; see [[plutonium-behavior]] › Interactions.
+- **Pre-submit / dynamic forms**: see [[plutonium-resource]] › Dynamic Forms.
+- **Nested inputs** (`nested_input :variants`): association-backed inline forms; see [[plutonium-resource]] › Nested Inputs.
+- **Structured inputs** (`structured_input :payload`, `structured_input :rows, repeat: 5`): classless hash / array-of-hashes into a JSON column (resources) or an attribute (interactions); reuses the repeater chrome. See [[plutonium-resource]] › Structured Inputs.
+- **Interaction forms**: interactions define their own `attribute` / `input` and inherit `Plutonium::UI::Form::Interaction`; see [[plutonium-behavior]] › Interactions.
 
 ---
 
-# Part 3 — Display & Table
+# Part 3: Display & Table
 
 ## Custom Display
 
@@ -390,7 +393,7 @@ class PostDefinition < ResourceDefinition
       end
 
       # `fields_wrapper` is ALREADY a card (it renders a Block internally),
-      # so do not wrap it in another one — that stacks two cards and doubles
+      # so do not wrap it in another one: that stacks two cards and doubles
       # the border and shadow.
       fields_wrapper do
         render_resource_field :author
@@ -412,14 +415,14 @@ end
 |---|---|
 | `render_fields` | All permitted fields |
 | `render_resource_field(name)` | One field |
-| `render_associations` | Association tabs (driven by `permitted_associations` — see [[plutonium-behavior]]) |
-| `render_before_fields` / `render_after_fields` | Hooks around the fields — **Details tab only** |
+| `render_associations` | Association tabs (driven by `permitted_associations`, see [[plutonium-behavior]]) |
+| `render_before_fields` / `render_after_fields` | Hooks around the fields, **Details tab only** |
 | `object` | The record |
 | `resource_fields`, `resource_associations` | Permitted lists |
 
 ### Details-tab-only content
 
-To add a banner or extra section that shows on the **Details** tab and not the association tabs, override `render_before_fields` / `render_after_fields` on the **Display** — not the ShowPage. The page-level `render_before_content` / `render_after_content` hooks wrap the whole content block, and the tablist lives inside it, so anything added there shows on every tab.
+To add a banner or extra section that shows on the **Details** tab and not the association tabs, override `render_before_fields` / `render_after_fields` on the **Display**, not the ShowPage. The page-level `render_before_content` / `render_after_content` hooks wrap the whole content block, and the tablist lives inside it, so anything added there shows on every tab.
 
 ```ruby
 class PostDefinition < ResourceDefinition
@@ -427,13 +430,28 @@ class PostDefinition < ResourceDefinition
     private
 
     def render_before_fields
-      div(class: "pu-card pu-card-body mb-4") { plain "Only on the Details tab" }
+      flagged = object.comments.where(flagged: true).count
+      return if flagged.zero?
+
+      div(class: "pu-alert pu-alert-warning", role: "alert") do
+        div(class: "pu-alert-message") { t("blog.posts.flagged_comments", count: flagged) }
+      end
     end
   end
 end
 ```
 
-Both hooks are no-ops by default. `render_fields` is the Details tab body when the record has associations and the entire display when it doesn't, so the hooks fire in the Details context either way.
+```yaml
+# config/locales/en.yml
+en:
+  blog:
+    posts:
+      flagged_comments:
+        one: "1 comment is waiting for moderation."
+        other: "%{count} comments are waiting for moderation."
+```
+
+`pu-alert pu-alert-<success|warning|danger|info>` is the same inline banner the flash messages use (`app/views/plutonium/_flash_alerts.html.erb`), so it already has its dark-mode colors. Both hooks are no-ops by default. `render_fields` is the Details tab body when the record has associations and the entire display when it doesn't, so the hooks fire in the Details context either way.
 
 ## Custom Table
 
@@ -472,7 +490,7 @@ end
 
 ## Drag-to-Reorder Affordance (`position_on`)
 
-When a definition declares `position_on` (see [[plutonium-resource]]) the index **table**, the **card grid**, and **nested association tables** render a drag grip. Configuration is entirely in the definition — there is no UI-layer switch.
+When a definition declares `position_on` (see [[plutonium-resource]]) the index **table**, the **card grid**, and **nested association tables** render a drag grip. Configuration is entirely in the definition; there is no UI-layer switch.
 
 **What renders where:**
 
@@ -480,11 +498,11 @@ When a definition declares `position_on` (see [[plutonium-resource]]) the index 
 |---|---|---|---|
 | Index / nested table | the **grip only**, never the `<tr>` | inside the first cell's existing left padding (content does not shift) | vertical |
 | Card grid | the **grip only** | floated over the card's top-left corner | horizontal, wrap-aware |
-| Kanban board | the **whole card** | — | both (cross-column) |
+| Kanban board | the **whole card** | - | both (cross-column) |
 
-🚨 **Never make a `<tr>` draggable.** Two silent regressions: `draggable="true"` disables text selection inside the element in every major browser (you lose copy-a-cell-value), and it fights `row_click_controller` — a drag that starts and ends in place still fires a click and navigates the user away. Kanban keeps whole-card dragging because neither applies to a kanban card; a **grid** card gets a grip because it *does* carry a row-click show affordance.
+🚨 **Never make a `<tr>` draggable.** Two silent regressions: `draggable="true"` disables text selection inside the element in every major browser (you lose copy-a-cell-value), and it fights `row_click_controller`: a drag that starts and ends in place still fires a click and navigates the user away. Kanban keeps whole-card dragging because neither applies to a kanban card; a **grid** card gets a grip because it *does* carry a row-click show affordance.
 
-**Enabled state.** The grip is live only while the collection is sorted **ascending, by the position attribute, and nothing else**. Otherwise "drop me between these two rows" describes nothing. Under a foreign sort the Stimulus controller isn't attached at all and the grip renders as a **link that applies the position sort** — the disabled state is the way out of the disabled state, which is why `position_on` registers `sort <attr>`. Per record, the grip also requires `reposition?`.
+**Enabled state.** The grip is live only while the collection is sorted **ascending, by the position attribute, and nothing else**. Otherwise "drop me between these two rows" describes nothing. Under a foreign sort the Stimulus controller isn't attached at all and the grip renders as a **link that applies the position sort**: the disabled state is the way out of the disabled state, which is why `position_on` registers `sort <attr>`. Per record, the grip also requires `reposition?`.
 
 **DOM contract** (relevant if you eject a table/grid or write a custom collection component):
 
@@ -493,18 +511,18 @@ wrapper  data-controller="positioned"
          data-positioned-url-template-value="/things/__ID__/reposition"
          data-positioned-axis-value="horizontal"   # grid only
 row/card data-positioned-row-id="<id>"             # single source of truth for the record id
-grip     data-positioned-grip                      # a real <button> — tabbable
+grip     data-positioned-grip                      # a real <button>, tabbable
 ```
 
-The URL template is built off `current_page_path` (not `request.path`) so a post-rebalance re-render doesn't wire subsequent drops to `/things/5/reposition`. The controller POSTs `{prev_id, next_id, to_index}` plus `window.location.search` — the query string is load-bearing, since the endpoint re-renders through the ordinary index pipeline.
+The URL template is built off `current_page_path` (not `request.path`) so a post-rebalance re-render doesn't wire subsequent drops to `/things/5/reposition`. The controller POSTs `{prev_id, next_id, to_index}` plus `window.location.search`; the query string is load-bearing, since the endpoint re-renders through the ordinary index pipeline.
 
-**Accessibility.** Focus the grip and use <kbd>↑</kbd>/<kbd>↓</kbd> — deliberately linear even on a wrapped grid, since one position attribute stores a 1-D order. Focus is restored onto the same record's grip after a stream replaces the collection. ⚠️ Native HTML5 drag does **not** fire on touch devices (inherited from kanban); there is no automatic fallback.
+**Accessibility.** Focus the grip and use <kbd>↑</kbd>/<kbd>↓</kbd> (deliberately linear even on a wrapped grid, since one position attribute stores a 1-D order). Focus is restored onto the same record's grip after a stream replaces the collection. ⚠️ Native HTML5 drag does **not** fire on touch devices (inherited from kanban); there is no automatic fallback.
 
 Components: `lib/plutonium/ui/table/components/drag_handle.rb`, `lib/plutonium/ui/component/positionable.rb`, `src/js/controllers/positioned_controller.js`. Reference: `docs/reference/resource/positioning.md`.
 
 ---
 
-# Part 4 — Component Kit & Custom Components
+# Part 4: Component Kit & Custom Components
 
 ## Built-in shorthand kit
 
@@ -528,7 +546,7 @@ Breadcrumbs()
 
 ## Avatar
 
-`Avatar(subject = nil, src: nil, size: :md, alt: nil, **attrs)` — profile image with a deterministic [Navii](https://navii.dev) fallback. Registered in the kit.
+`Avatar(subject = nil, src: nil, size: :md, alt: nil, **attrs)`: profile image with a deterministic [Navii](https://navii.dev) fallback. Registered in the kit.
 
 ```ruby
 Avatar(user)                      # Navii fallback seeded from the record
@@ -540,17 +558,24 @@ Avatar(src: avatar_url)           # bare image, no subject/fallback
 ```
 
 - **subject** (positional): record → PII-free hashed seed + default `alt` (display name); String → seed. A URL-shaped String (`http(s)://…` or `/…`) is routed to `src` (shown as the image), not used as a seed.
-- **src**: a Symbol is sent to the subject (`:avatar` → `subject.avatar`, a **contract** — raises if absent); otherwise an ActiveStorage attachment, active_shrine/Shrine uploader, or URL string. ActiveStorage resolves via `helpers.url_for`; everything else via its own `#url`.
+- **src**: a Symbol is sent to the subject (`:avatar` → `subject.avatar`, a **contract**, raises if absent); otherwise an ActiveStorage attachment, active_shrine/Shrine uploader, or URL string. ActiveStorage resolves via `helpers.url_for`; everything else via its own `#url`.
 - **size**: `:xs 24 / :sm 32 / :md 40 / :lg 48 / :xl 64`, or a raw Integer.
-- **Privacy**: the value sent to Navii is **always** a SHA256 hash — no ids, emails, or seed strings leave the app. Deterministic per subject.
+- **Privacy**: the value sent to Navii is **always** a SHA256 hash, so no ids, emails, or seed strings leave the app. Deterministic per subject.
 - **Resolution order**: resolved `src` → Navii (from subject) → generic user icon.
 - **Config**: `config.navii_host_url` (default `https://api.navii.dev`); the component appends `/avatar/:seed`.
 
-🚨 Ejected shells: `Avatar` only shows a Navii avatar when `NavUser` is passed `record:`. The gem's `_resource_header.html.erb` passes `record: (current_user if current_user.respond_to?(:id))`; portals that **ejected** the header before this must re-eject (`rails g pu:eject:shell --dest=<portal>`) or add the `record:` line, otherwise they keep the icon fallback. Pass a record only — a String `current_user` (e.g. a guest) would otherwise be seeded as a literal identity.
+🚨 Ejected shells: `Avatar` only shows a Navii avatar when `NavUser` is passed `record:`. The gem's `_resource_header.html.erb` passes `record: (current_user if current_user.respond_to?(:id))`; portals that **ejected** the header before this must re-eject (`rails g pu:eject:shell --dest=<portal>`) or add the `record:` line, otherwise they keep the icon fallback. Pass a record only: a String `current_user` (e.g. a guest) would otherwise be seeded as a literal identity.
 
-## Translating component text
+## Translating text
 
-Every `Plutonium::UI::Component::Base` subclass (pages included) has a protected `t(key, **opts)` that reads Rails I18n with a full key; components that subclass Phlexi classes call `Plutonium::Translation.t`. Put new user-facing text in a locale file, never a literal:
+Put new user-facing text in a locale file, never a literal. Which `t` you get depends on where the code runs:
+
+| Where | Call | Notes |
+|---|---|---|
+| Components, pages, and nested `Form` / `Display` / `Table` classes (render hooks included) | `t("full.key", **opts)` | Protected instance method from `Plutonium::UI::Component::Behaviour`; full keys only |
+| `display` / `input` / `column` blocks in a definition | `t("full.key")` | The block is `instance_exec`ed by the page, so it is the page's `t` |
+| Definition class body (`label:`, `hint:`, `placeholder:`, page titles) | `t("full.key")` | Class-level lazy `t` (`Plutonium::Translation::Lazy`), resolved per render in the request's locale |
+| A bare Phlexi field component without `Behaviour` | `Plutonium::Translation.t("full.key")` | |
 
 ```ruby
 def view_template
@@ -558,6 +583,8 @@ def view_template
   span { t("my_app.cards.more", count: hidden_count) }   # one:/other: in YAML
 end
 ```
+
+Never call `I18n.t` directly in a definition class body: it runs once at load time, in whatever locale is active then.
 
 Rules: one key per sentence with `%{name}` placeholders (never concatenate fragments around a value), `count:` for plurals, no `.downcase`/`.pluralize` on translated nouns. The gem's own keys live under `plutonium.*` in its `config/locales/en/*.yml` and any can be overridden from the app.
 
@@ -575,14 +602,14 @@ class PostCardComponent < Plutonium::UI::Component::Base
     div(class: "bg-[var(--pu-card-bg)] border border-[var(--pu-card-border)] rounded-[var(--pu-radius-lg)] p-4") do
       h3(class: "font-bold text-[var(--pu-text)]") { @post.title }
       p(class: "text-[var(--pu-text-muted)] mt-2") { @post.excerpt }
-      a(href: resource_url_for(@post), class: "text-primary-600") { "Read more" }
+      a(href: resource_url_for(@post), class: "text-primary-600") { t("blog.posts.card.read_more") }
     end
   end
 end
 ```
 
 Use in a definition. A component with its **own constructor** (like the one above)
-must use the **block form** — you build it:
+must use the **block form**; you build it:
 
 ```ruby
 display :card do |field|
@@ -640,13 +667,13 @@ All pages inherit this. Modals and frame navigation work without special handlin
 
 ---
 
-# Part 5 — Modals, Slideovers, Tabs
+# Part 5: Modals, Slideovers, Tabs
 
 ## Modal/slideover for `:new` / `:edit` + interactive actions
 
 ```ruby
 class PostDefinition < ResourceDefinition
-  modal :slideover               # default — slide-in panel from the right
+  modal :slideover               # default, slide-in panel from the right
   # modal :centered              # centered dialog
   # modal :centered, size: :lg   # centered, wider container
   # modal false                  # full standalone page
@@ -657,19 +684,19 @@ Drives both framework `:new` / `:edit` and every interactive action on the defin
 
 ## Tabs on the show page
 
-Show pages with `permitted_associations` (see [[plutonium-behavior]]) render a tablist: **Details** tab first, then one tab per association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reload / back navigation. Tab rows scroll horizontally on narrow viewports — they don't wrap.
+Show pages with `permitted_associations` (see [[plutonium-behavior]]) render a tablist: **Details** tab first, then one tab per association. The active tab is reflected in the URL hash (`#products`, `#refund-requests`) so the page deep-links and the active state survives reload / back navigation. Tab rows scroll horizontally on narrow viewports; they don't wrap.
 
 If the policy permits **no fields**, the empty Details tab is dropped and the first association tab leads instead.
 
 ---
 
-# Part 6 — Layout (Chrome) & Eject
+# Part 6: Layout (Chrome) & Eject
 
 ## Shell
 
 ```ruby
 Plutonium.configure do |config|
-  config.shell = :modern    # default — topbar + icon rail
+  config.shell = :modern    # default, topbar + icon rail
   # config.shell = :plain   # topbar, no icon rail (whole app rail-less)
   # config.shell = :classic # legacy header + sidebar (only when upgrading)
 end
@@ -679,16 +706,16 @@ end
 
 ```ruby
 config.shell = :plain                        # 1. global default
-# 2. per-engine — inside the engine's config.after_initialize (with scope_to_entity)
+# 2. per-engine: inside the engine's config.after_initialize (with scope_to_entity)
 class CustomerPortal::Engine
   config.after_initialize { shell :plain }
 end
 class DashboardController; shell :modern; end # 3. per-controller (overrides engine/global)
 ```
 
-`shell` takes a symbol so the class body works too, but the generated engine already has a `config.after_initialize` block (home of `scope_to_entity`) — keep it there for consistency.
+`shell` takes a symbol so the class body works too, but the generated engine already has a `config.after_initialize` block (home of `scope_to_entity`); keep it there for consistency.
 
-Alongside `shell`, the controller-only `rail` DSL flips just the rail (inherited `class_attribute`, so a portal opts in/out once in its concern) — `rail false` / `rail true`; `rail nil` (default) inherits the resolved shell, `rail?` reads the resolved value:
+Alongside `shell`, the controller-only `rail` DSL flips just the rail (inherited `class_attribute`, so a portal opts in/out once in its concern), `rail false` / `rail true`; `rail nil` (default) inherits the resolved shell, `rail?` reads the resolved value:
 
 ```ruby
 module CustomerPortal::Concerns::Controller
@@ -716,7 +743,7 @@ The sidebar/icon-rail menu is built with `Phlexi::Menu::Builder` in `_resource_s
 m.item "Inbox", url: inbox_path, icon: Icon, target: "_blank", rel: "noopener", data: {turbo_frame: "_top"}
 ```
 
-Applies to both shells (icon-rail leaf, parent flyout trigger, and flyout children; classic sidebar). Framework `class`/`data`/`aria` win on conflict — `class:` merges with the base classes, and on a parent trigger `data:`/`aria:` merge with the flyout wiring so options can't break the toggle. Phlexi's reserved `:active` key is never emitted as an attribute.
+Applies to both shells (icon-rail leaf, parent flyout trigger, and flyout children; classic sidebar). Framework `class`/`data`/`aria` win on conflict; `class:` merges with the base classes, and on a parent trigger `data:`/`aria:` merge with the flyout wiring so options can't break the toggle. Phlexi's reserved `:active` key is never emitted as an attribute.
 
 ## Custom layout class (Phlex)
 
@@ -751,7 +778,7 @@ end
 
 ---
 
-# Part 7 — Assets, Tailwind, Stimulus
+# Part 7: Assets, Tailwind, Stimulus
 
 ## Asset configuration
 
@@ -772,7 +799,17 @@ end
 rails generate pu:core:assets
 ```
 
-This installs npm packages, creates `tailwind.config.js` extending Plutonium's config, imports Plutonium CSS, registers Stimulus controllers, and points the Plutonium config at your asset files.
+Until this runs, the app serves the gem's prebuilt assets (`config.assets.stylesheet` defaults to `plutonium.css`, `script` to `plutonium.min.js`, see `lib/plutonium/configuration.rb`). Those are compiled from the gem's own sources, so app-side Tailwind classes, a new `primary` palette, CSS token overrides and custom Stimulus controllers have nowhere to go. The generator:
+
+- installs `@radioactive-labs/plutonium` (pinned to the gem version), Tailwind 4 and the PostCSS plugins
+- writes `tailwind.config.js` (through `plutoniumTailwindConfig.merge`) and `postcss.config.js`
+- prepends `@import "gem:plutonium/src/css/plutonium.css";` to `application.tailwind.css` and adds `@config` after `@import "tailwindcss";`
+- appends `registerControllers(application)` to `app/javascript/controllers/index.js`
+- sets `config.assets.stylesheet = "application"` and `config.assets.script = "application"`, and writes the `build` / `build:css` scripts in `package.json`
+
+That last step is why `registerControllers` is not optional: the gem's `plutonium.min.js` calls it itself, and your `application.js` replaces that bundle.
+
+**Prerequisites.** It aborts unless `app/assets/stylesheets/application.tailwind.css` and `app/javascript/controllers/index.js` exist, i.e. an app created with `-j esbuild -c tailwind` plus Stimulus. An app without them gets the bundlers installed first (`bin/rails javascript:install:esbuild`, `css:install:tailwind`, `stimulus:install` from jsbundling-rails / cssbundling-rails / stimulus-rails), then the generator. Don't hand-write `tailwind.config.js` / `postcss.config.js` instead: the generated ones resolve the gem path (`bundle show plutonium`) and load its `postcss-gem-import.cjs` so the `gem:` import works.
 
 Packages install with the app's package manager, detected from the lockfile (`bun.lock`/`bun.lockb` → bun, `pnpm-lock.yaml` → pnpm, `package-lock.json` → npm, `yarn.lock` → yarn), else the first of bun, yarn, pnpm, npm on PATH. A yarn app stays yarn even with bun installed. Do not run `yarn add` by hand in a bun app: that leaves two lockfiles. Yarn 2+ needs `nodeLinker: node-modules` in `.yarnrc.yml` (the generator writes it); Tailwind's PostCSS plugin does not load under Plug'n'Play.
 
@@ -802,6 +839,8 @@ module.exports = {
 🚨 Always use `plutoniumTailwindConfig.merge(...)`. A plain spread drops Plutonium's defaults.
 
 ## Default color palette
+
+These are Tailwind palette colors, compiled into the CSS at build time (`.pu-btn-primary` is `@apply bg-primary-600 ...`; `--pu-input-focus-ring` is `theme(colors.primary.500)`). Recoloring `primary` therefore means the `merge` below plus a rebuild, not a `--pu-*` override.
 
 | Color | Use |
 |---|---|
@@ -853,7 +892,7 @@ application.register("custom", CustomController)
 
 Bundled controllers: `color-mode`, `form` (pre-submit), `nested-resource-form-fields`, `slim-select`, `flatpickr`, `easymde`, `kanban`, `positioned` (drag-to-reorder), `row-click`, plus various internal UI controllers.
 
-Custom controller — standard Stimulus:
+Custom controller, standard Stimulus:
 
 ```javascript
 import { Controller } from "@hotwired/stimulus"
@@ -881,11 +920,11 @@ theme: { fontFamily: { body: ['Inter', 'sans-serif'], sans: ['Inter', 'sans-seri
 
 ## Dark mode
 
-`selector` strategy — toggle by adding/removing `dark` on `<html>`. The `color-mode` Stimulus controller handles it; Plutonium ships a switcher.
+`selector` strategy: toggle by adding/removing `dark` on `<html>`. The `color-mode` Stimulus controller handles it; Plutonium ships a switcher.
 
 ---
 
-# Part 8 — Design Tokens & `.pu-*` Component Classes
+# Part 8: Design Tokens & `.pu-*` Component Classes
 
 Plutonium uses CSS custom properties for surfaces, text, borders, forms, cards, shadows, radii, spacing, and transitions. Tokens auto-switch with dark mode. Source: `src/css/tokens.css`.
 
@@ -898,12 +937,15 @@ Plutonium uses CSS custom properties for surfaces, text, borders, forms, cards, 
 | `--pu-border`, `--pu-border-muted`, `--pu-border-strong` | Borders |
 | `--pu-input-bg`, `--pu-input-border`, `--pu-input-focus-ring`, `--pu-input-placeholder` | Form inputs |
 | `--pu-card-bg`, `--pu-card-border` | Cards |
+| `--pu-table-header-bg`, `--pu-table-header-text`, `--pu-table-row-bg`, `--pu-table-row-hover`, `--pu-table-row-selected`, `--pu-table-border` | Tables |
+| `--pu-text-danger` | Error text |
+| `--pu-chart-1` … `--pu-chart-8` | Dashboard chart series |
 | `--pu-shadow-sm/md/lg` | Shadows |
 | `--pu-radius-sm/md/lg/xl/full` | Border radius |
 | `--pu-space-xs/sm/md/lg/xl` | Spacing |
 | `--pu-transition-fast/normal/slow` | Transitions |
 
-🚨 Tokens are CSS variables — use `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
+🚨 Tokens are CSS variables: use `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
 
 ## Customizing tokens
 
@@ -919,11 +961,23 @@ Plutonium uses CSS custom properties for surfaces, text, borders, forms, cards, 
 }
 ```
 
-🚨 **Mirror every `:root` override in `.dark`.** The app stylesheet loads after Plutonium's and `:root`/`.dark` have equal specificity, so a `:root`-only override beats Plutonium's `.dark` value even in dark mode — your light color ships into dark mode, often unreadably (e.g. translucent navy `--pu-text-subtle` is invisible on a dark surface). Every color token customized in `:root` MUST be re-asserted with a dark value in `.dark`.
+🚨 **Mirror every `:root` override in `.dark`.** The app stylesheet loads after Plutonium's and `:root`/`.dark` have equal specificity, so a `:root`-only override beats Plutonium's `.dark` value even in dark mode, so your light color ships into dark mode, often unreadably (e.g. translucent navy `--pu-text-subtle` is invisible on a dark surface). Every color token customized in `:root` MUST be re-asserted with a dark value in `.dark`. That includes the shadows: `src/css/tokens.css` redefines `--pu-shadow-sm/md/lg` (and every surface, text, border, table, input, card and chart token) under `.dark`, so a tinted light shadow left out of your `.dark` block replaces the dark one.
+
+Put dark values in a `.dark { ... }` block, not `@media (prefers-color-scheme: dark)`. Dark mode is the `dark` class on `<html>` (set by the `color-mode` controller), so a media query ignores the user's toggle.
+
+Overrides need the app's own stylesheet, after the Plutonium import (`pu:core:assets`). Never edit the gem's `tokens.css` / `components.css`.
 
 ## `.pu-*` component classes
 
-Ready-to-use styled components in `src/css/components.css`. **Prefer these over hardcoded `gray-X/dark:gray-Y` pairs.**
+Ready-to-use styled components in `src/css/components.css`. **Prefer these over hardcoded `gray-X/dark:gray-Y` (or `warning-50 dark:warning-950`) pairs.**
+
+Why, in order of preference:
+
+1. **A `.pu-*` class** (`pu-alert-warning`, `pu-badge-warning`, `pu-card`, `pu-btn-soft-danger`). Each ships with its own `.dark` rule and is always in the CSS, because `components.css` is part of `plutonium.css` whether the app uses the prebuilt file or imports it.
+2. **A `var(--pu-*)` token** (`text-[var(--pu-text-muted)]`, `border-[var(--pu-border)]`) for layout around them. The token switches value under `.dark`, so one class covers both modes and follows any theme override.
+3. **Raw palette utilities** only for what neither covers. On the prebuilt `plutonium.css` they exist only if the gem's own sources happen to use them (its Tailwind `content` scans the gem, not your app); with your own build they compile, but every one needs a hand-picked `dark:` twin that won't follow a rebrand.
+
+For a status banner use `pu-alert pu-alert-<variant>` with a `pu-alert-message` child; for an inline status chip, `pu-badge pu-badge-<variant>`.
 
 ### Buttons
 
@@ -944,6 +998,7 @@ Ready-to-use styled components in `src/css/components.css`. **Prefer these over 
 ```
 .pu-input / -invalid / -valid          .pu-label / -required          .pu-hint / .pu-error          .pu-checkbox / .pu-toggle
 .pu-badge / -neutral / -primary / -secondary / -success / -danger / -warning / -info / -accent
+.pu-alert / -success / -warning / -danger / -info     .pu-alert-message / .pu-alert-close
 .pu-card / .pu-card-body
 .pu-panel-header / -title / -description
 .pu-table-wrapper / .pu-table / -header / -header-cell / -body-row / -body-row-selected / -body-cell / .pu-selection-cell
@@ -1006,9 +1061,9 @@ tokens("base", condition?: {then: "if-true", else: "if-false"})
 
 ---
 
-# Part 9 — Phlexi Component Themes
+# Part 9: Phlexi Component Themes
 
-Themes are Ruby classes nested under a Form/Display/Table override. They merge into Plutonium's defaults — never replace wholesale, always `super.merge(...)`.
+Themes are Ruby classes nested under a Form/Display/Table override. They merge into Plutonium's defaults, never replace wholesale: always `super.merge(...)`.
 
 ## Form theme
 
@@ -1036,7 +1091,7 @@ end
 
 `base`, `sectioned_base`, `fields_wrapper`, `sections_wrapper`, `actions_wrapper`, `wrapper`, `inner_wrapper`, `label`, `invalid_label`, `valid_label`, `neutral_label`, `input`, `invalid_input`, `valid_input`, `neutral_input`, `hint`, `error`, `button`, `checkbox`, `select`, plus the shared section keys below.
 
-`sectioned_base` replaces `base` when the definition declares a `form_layout` — the sections are cards, so the form itself stops being one.
+`sectioned_base` replaces `base` when the definition declares a `form_layout`, because the sections are cards, so the form itself stops being one.
 
 ⚠️ **Width is NOT a theme key.** It's configuration (`page_width` / `form_width` on the definition, `Plutonium.configuration.default_page_width` globally) and is appended by `Form::Resource`/`Page::Show`, so overriding `base` or `fields_wrapper` restyles a surface without silently pinning its width. See [[plutonium-resource]] › Page Width.
 
@@ -1067,7 +1122,7 @@ end
 
 Section chrome is shared: `Plutonium::UI::Component::Section::DEFAULT_THEME` is merged into **both** `Form::Theme` and `Display::Theme`, so the two read identically by default while staying independently overridable.
 
-`section_wrapper` (merged into the section's Block — Block already supplies `pu-card`), `section_header`, `section_summary` (the collapsible header row), `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`, plus `sections_wrapper` (the container that stacks sections).
+`section_wrapper` (merged into the section's Block, Block already supplies `pu-card`), `section_header`, `section_summary` (the collapsible header row), `section_accent`, `section_heading`, `section_description`, `section_caret`, `section_body`, plus `sections_wrapper` (the container that stacks sections).
 
 ## Table theme
 
@@ -1096,7 +1151,7 @@ end
 
 ## Available context
 
-Inside any page / form / display / Phlex component, the same set of helpers is available — model accessors, definition/policy methods, URL helpers, `current_user`. For the full list, see [[plutonium-behavior]] › Key methods (controllers expose the same surface; pages inherit it).
+Inside any page / form / display / Phlex component, the same set of helpers is available: model accessors, definition/policy methods, URL helpers, `current_user`. For the full list, see [[plutonium-behavior]] › Key methods (controllers expose the same surface; pages inherit it).
 
 In Phlex components, Rails helpers are accessed via the `helpers` proxy:
 
@@ -1130,12 +1185,12 @@ end
 
 ## Gotchas
 
-- **Don't override `view_template` in pages** when a render hook fits — you lose breadcrumbs / header / DynaFrame behavior.
-- **Always register Stimulus controllers.** Without `registerControllers(application)` the entire UI's interactive layer is dead.
-- **Use `plutoniumTailwindConfig.merge`** — plain object merge drops Plutonium's defaults.
+- **Don't override `view_template` in pages** when a render hook fits; you lose breadcrumbs / header / DynaFrame behavior.
+- **Always register Stimulus controllers in your own bundle.** Once `config.assets.script` points at the app's JS, without `registerControllers(application)` the entire UI's interactive layer is dead.
+- **Use `plutoniumTailwindConfig.merge`**: plain object merge drops Plutonium's defaults.
 - **Dark mode is `selector`, not `class`.** Toggle via `document.documentElement.classList.toggle('dark')`.
-- **Tokens are CSS variables, not Tailwind keys** — `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
-- **`render_actions` is mandatory in custom `form_template`** — otherwise no submit button.
+- **Tokens are CSS variables, not Tailwind keys**: `bg-[var(--pu-surface)]`, not `bg-pu-surface`.
+- **`render_actions` is mandatory in custom `form_template`**: otherwise no submit button.
 - **Dropdowns (`resource-drop-down`) teleport their menu to `<body>` while open.** popper's `fixed` strategy alone is still clipped by a transformed + `overflow:hidden` ancestor (e.g. grid cards, app shells), so the controller reparents the open menu to `<body>` and restores it on close. Don't rely on the menu being a DOM child of its trigger while open.
 - **`DisplaysValue` components stringify the value and loop per item.** `render_value` receives `normalize_value(value)`, which is `value.to_s`, and for a `field.multiple?` (has_many) field it is called once per element (`field.value.each`). So a custom component that inherits `DisplaysValue` only ever sees the stringified value, per item, never the record. When you need `f.object` or whole-collection rendering, use the block-form display (`display :x do |f| … end`), which is `instance_exec`ed in Phlex once and can emit markup directly.
 - **Blocks run in a Phlex context on every surface.** A `display`, `input`, or `column` block emits `span`/`div` directly, or returns a String or a component. All three are `instance_exec`ed by the resource page rendering them (`self` is the page, not the definition): `display`/`input` blocks receive the field `f`, a `column` block receives the record. Phlex renders the return value too, so a block that emits markup must end with a tag call or `nil`. Most columns need no block at all, because `display :x, as: …` already flows to the table column.
@@ -1146,7 +1201,7 @@ end
 
 ## Related skills
 
-- [[plutonium-resource]] — field/input/display config (`as:`, `condition:`, blocks); modal options for actions.
-- [[plutonium-behavior]] — controller presentation hooks (`present_parent?`), available helpers (`resource_record!`, `current_scoped_entity`).
-- [[plutonium-app]] — `pu:eject:layout`, `pu:eject:shell`, portal package overrides.
-- [[plutonium-tenancy]] — `permitted_associations` drives the show-page tablist.
+- [[plutonium-resource]]: field/input/display config (`as:`, `condition:`, blocks); modal options for actions.
+- [[plutonium-behavior]]: controller presentation hooks (`present_parent?`), available helpers (`resource_record!`, `current_scoped_entity`).
+- [[plutonium-app]]: `pu:eject:layout`, `pu:eject:shell`, portal package overrides.
+- [[plutonium-tenancy]]: `permitted_associations` drives the show-page tablist.

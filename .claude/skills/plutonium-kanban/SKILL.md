@@ -1,6 +1,6 @@
 ---
 name: plutonium-kanban
-description: Use BEFORE building or customizing a kanban board view for any Plutonium resource — the kanban do…end DSL, column declarations, card_fields, position_on modes, realtime, column actions, kanban_move? policy, and quick-add. The single source for "how do I add a kanban board to a resource".
+description: 'Use BEFORE building or customizing a kanban board view for any Plutonium resource: the kanban do…end DSL, column declarations, card_fields, position_on modes, realtime, column actions, kanban_move? policy, and quick-add. The single source for "how do I add a kanban board to a resource".'
 ---
 
 # Plutonium Kanban
@@ -11,13 +11,14 @@ For field-level rendering on cards (card_fields slots), see [[plutonium-resource
 
 ## 🚨 Critical (read first)
 
-- **`kanban do…end` in the Definition auto-enables `:kanban`** in `defined_index_views` — exactly like `grid_fields` enables `:grid`. You do not need to call `index_views :kanban` separately unless you want to remove the table view.
+- **`kanban do…end` in the Definition auto-enables `:kanban`** in `defined_index_views`, exactly like `grid_fields` enables `:grid`. You do not need to call `index_views :kanban` separately unless you want to remove the table view.
 - **The model needs `include Plutonium::Positioning::Model`** (and a decimal `position` column + `positioned_on` call) for drag ordering to work. Without it, cards render unordered and moves raise an error. Use `position_on false` to explicitly opt out.
-- **Static column actions are auto-registered** as interactive resource actions at class-load time. Dynamic boards (`columns do…end`) cannot introspect their columns at load time — declare any column-action interactions separately with top-level `action` calls.
-- **Moves bypass `permitted_attributes_for_update`** — the `on_enter` callback runs with full model access. Gate the move itself with `kanban_move?` in the policy.
+- **Static column actions are auto-registered** as interactive resource actions at class-load time. Dynamic boards (`columns do…end`) cannot introspect their columns at load time, so declare any column-action interactions separately with top-level `action` calls.
+- **Moves bypass `permitted_attributes_for_update`**: the `on_enter` callback runs with full model access. Gate the move itself with `kanban_move?` in the policy.
 - **Quick-add (`add: true`) only appears when `create?` is true** in the policy.
-- **Same-column drops = positioning only** — a reorder within a column fires neither `on_exit`, `on_enter`, nor an `enter_interaction`; they represent *leaving*/*entering* a column, so only cross-column drops trigger them.
-- **`on_exit:` is the source-side hook** — fired when a card LEAVES a column (before the destination's `on_enter`, in the same transaction). Use it for source-tied side effects (stop a timer, release a slot) the destination can't own. It fires only on drag-moves via `kanban_move`, NOT on destroy/programmatic changes/quick-add — for those, use an ActiveRecord callback.
+- **Same-column drops = positioning only**: a reorder within a column fires neither `on_exit`, `on_enter`, nor an `enter_interaction`; they represent *leaving*/*entering* a column, so only cross-column drops trigger them.
+- **`on_exit:` is the source-side hook**: fired when a card LEAVES a column (before the destination's `on_enter`, in the same transaction). "When a card leaves X, wherever it goes" is exactly `on_exit:` on X; don't rebuild it as a `before_save` status-diff callback. It fires only on drag-moves via `kanban_move`, NOT on destroy/programmatic changes/quick-add, so reach for a model callback only when the requirement explicitly covers those other paths (see `on_exit:` below).
+- **`locked: true` stops cards LEAVING the column**, not entering it. To refuse incoming drops, use `accepts: false` (or an `accepts:` Array) on the destination.
 - **Use `on_enter:` / `enter_interaction:`, NOT `on_drop:` / `drop_interaction:`.** The old names were renamed. They still exist as deprecated aliases but **raise in development/test** (and only warn-and-map in production), so a definition using them fails your test suite. Always write the new names.
 
 ---
@@ -37,7 +38,7 @@ class Task < ApplicationRecord
 end
 ```
 
-Migration — add the position column with the `t.position` helper (a tuned `decimal(16,8)`; works in `create_table` and `change_table`). Don't hand-roll a small scale — `scale: 6` exactly matches the `1e-6` rebalance threshold and can round to a duplicate. Use `t.position` (scale 8) or ≥ 8 if hand-written:
+Migration: add the position column with the `t.position` helper (a tuned `decimal(16,8)`; works in `create_table` and `change_table`). Don't hand-roll a small scale: `scale: 6` exactly matches the `1e-6` rebalance threshold and can round to a duplicate. Use `t.position` (scale 8) or ≥ 8 if hand-written:
 
 ```ruby
 create_table :tasks do |t|
@@ -47,6 +48,20 @@ create_table :tasks do |t|
   t.timestamps
 
   t.index [:status, :position]
+end
+```
+
+**Package models: the migration goes in the package.** For a model owned by a feature package (e.g. `Catalog::Product`), write the position migration under `packages/<package>/db/migrate/`, next to the table's create migration. `pu:res:scaffold --dest=<package>` puts migrations there (it roots generation at `packages/<package>`), and `Plutonium::Package::Engine` appends each package's `db/migrate` to the app's migration paths, so `rails db:migrate` picks it up. Plain `rails g migration` always writes to the main app's `db/migrate`; move the file into the package afterwards. Keeping a table's migrations together keeps the package self-contained. (A couple of older dummy-app migrations for catalog tables sit in `test/dummy/db/migrate`; don't copy that.)
+
+```ruby
+# packages/catalog/db/migrate/20261002000000_add_position_to_catalog_products.rb
+class AddPositionToCatalogProducts < ActiveRecord::Migration[8.0]
+  def change
+    change_table :catalog_products do |t|
+      t.position
+      t.index [:category_id, :position]
+    end
+  end
 end
 ```
 
@@ -87,13 +102,13 @@ index_views :kanban           # remove table; kanban is the only view
 |---|---|---|
 | `per_column N` | Cap cards rendered per column; `+N more` footer when exceeded | unlimited |
 | `position_on :attr` | Custom attribute name for ordering (Mode A) | `:position` |
-| `position_on :attr do \|move\| … end` | BYO positioning block (Mode B) | — |
-| `position_on false` | No ordering or repositioning (Mode C) | — |
+| `position_on :attr do \|move\| … end` | BYO positioning block (Mode B) | - |
+| `position_on false` | No ordering or repositioning (Mode C) | - |
 | `card_fields(**slots)` | Override grid slot layout for cards; same slot keys as `grid_fields` | inherits `grid_fields` |
 | `realtime true` | ActionCable broadcast after every move | false |
 | `lazy false` | Eager-load all column frames on the initial request | `true` (lazy) |
 | `show_in :modal` / `:page` | Open a card's show page in a centered modal (`:modal`) or full-page (`:page`). Overrides the definition's `show_in` for this board | inherits definition (`:page`) |
-| `columns do … end` | Dynamic columns evaluated at request time with view context | — |
+| `columns do … end` | Dynamic columns evaluated at request time with view context | - |
 
 ### `card_fields`
 
@@ -103,25 +118,25 @@ Overrides the grid card layout for kanban cards. Uses the same slot keys as `gri
 card_fields header: :title, meta: [:status, :priority], footer: :due_at
 ```
 
-Every slot is optional and omitting it drops that line — **except `footer`, which
+Every slot is optional and omitting it drops that line, **except `footer`, which
 falls back to `:created_at`**. To render no footer at all, opt out explicitly:
 
 ```ruby
 card_fields header: :title, meta: [:status], footer: false
 ```
 
-Omitting `footer:` is the common cause of a card ending in a stray `—`: the
+Omitting `footer:` is the common cause of a card ending in a stray dash placeholder: the
 fallback lands on `:created_at`, and if that isn't in the policy's
 `permitted_attributes_for_index` the value resolves to nil and renders as the
 blank placeholder. Either permit `created_at`, point `footer:` at a permitted
 field, or pass `footer: false`. (A *declared* slot that's merely blank still
-shows `—` by design, so cards keep an even height.)
+shows the dash by design, so cards keep an even height.)
 
 ### `position_on` modes
 
-- **Mode A (default)** — delegates to `record.reposition!(prev_record:, next_record:)` from `Plutonium::Positioning::Model`. Requires the model concern and a decimal column.
-- **Mode B (block)** — you write the persistence. Plutonium still orders by the attribute; the block only persists the new value. Block receives a `Plutonium::Kanban::Positioning::Move` (fields: `record`, `column`, `prev`, `next`, `index`).
-- **Mode C (`false`)** — no ordering, no repositioning. `on_enter` still fires.
+- **Mode A (default)**: delegates to `record.reposition!(prev_record:, next_record:)` from `Plutonium::Positioning::Model`. Requires the model concern and a decimal column.
+- **Mode B (block)**: you write the persistence. Plutonium still orders by the attribute; the block only persists the new value. Block receives a `Plutonium::Kanban::Positioning::Move` (fields: `record`, `column`, `prev`, `next`, `index`).
+- **Mode C (`false`)**: no ordering, no repositioning. `on_enter` still fires.
 
 ### `realtime`
 
@@ -133,9 +148,9 @@ realtime true
 
 ### `show_in`
 
-Where a card click opens the record's show page. `:modal` renders the show page in a **centered** dialog; `:page` is a full-page navigation. The show modal is always centered — deliberately NOT the definition's `modal_mode` (which styles `new`/`edit`). No per-card wiring: the `Show` page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome.
+Where a card click opens the record's show page. `:modal` renders the show page in a **centered** dialog; `:page` is a full-page navigation. The show modal is always centered, deliberately NOT the definition's `modal_mode` (which styles `new`/`edit`). No per-card wiring: the `Show` page detects the modal frame (`in_modal?`) and wraps its details in the centered modal chrome.
 
-`show_in` also exists **on the definition** (`show_in :modal` / `:page`, default `:page`), where it governs the table and grid show links too. The kanban board inherits the definition's value unless it sets its own — so set it once on the definition for everywhere, or on the board to override just the board.
+`show_in` also exists **on the definition** (`show_in :modal` / `:page`, default `:page`), where it governs the table and grid show links too. The kanban board inherits the definition's value unless it sets its own, so set it once on the definition for everywhere, or on the board to override just the board.
 
 From inside the show modal, an expand icon (or ⌘/Ctrl/middle-click on the card) opens the full page in a new tab.
 
@@ -150,14 +165,14 @@ end
 
 ### Dynamic columns
 
-Evaluates the block at request time with the view context as `self` (`current_user`, `params`, `current_scoped_entity`, helpers all available). The block must return an Array of `Plutonium::Kanban::Column` objects — `column` is a DSL method only available outside the `columns` block. Declare any column-action interactions as top-level definition `action` calls — the block is not introspectable at class-load time.
+Evaluates the block at request time with the view context as `self` (`current_user`, `params`, `current_scoped_entity`, helpers all available). The block must return an Array of `Plutonium::Kanban::Column` objects; `column` is a DSL method only available outside the `columns` block. Declare any column-action interactions as top-level definition `action` calls, since the block is not introspectable at class-load time.
 
-> **`enter_interaction:` is NOT supported on dynamic boards.** Its hidden action is registered from the static column list at class-load time, which a `columns do…end` board doesn't have, and the key is column-scoped/internal so there's no manual-registration escape hatch (unlike column actions). A drop into such a column is rejected with a snap-back — it does not crash. Use a static board if you need `enter_interaction:`.
+> **`enter_interaction:` is NOT supported on dynamic boards.** Its hidden action is registered from the static column list at class-load time, which a `columns do…end` board doesn't have, and the key is column-scoped/internal so there's no manual-registration escape hatch (unlike column actions). A drop into such a column is rejected with a snap-back; it does not crash. Use a static board if you need `enter_interaction:`.
 
 ```ruby
 kanban do
   columns do
-    # `self` is the view context here — use Plutonium::Kanban::Column.new, NOT `column`.
+    # `self` is the view context here; use Plutonium::Kanban::Column.new, NOT `column`.
     current_user.teams.map do |team|
       Plutonium::Kanban::Column.new(
         :"team_#{team.id}",
@@ -186,7 +201,7 @@ column :key,
   collapsed: true,             # starts collapsed (Stimulus persists toggle to localStorage)
   add:       true,             # show "+ Add" button (requires create?)
   accepts:   true,             # true (default), false, or Array of source keys (Proc raises)
-  locked:    false,            # reject all incoming drops (server-enforced)
+  locked:    false,            # cards cannot be dragged OUT of this column (server-enforced)
   role:      :backlog          # :backlog, :done or :lost (see presets below)
 ```
 
@@ -198,7 +213,7 @@ column :key,
 | `:done` | `color: :green`, `collapsed: true` |
 | `:lost` | `color: :red`, `collapsed: true` |
 
-`:done` and `:lost` are the two terminal roles — collapsed by default, colour
+`:done` and `:lost` are the two terminal roles, collapsed by default, colour
 signalling the outcome (`:done` = positive close, `:lost` = negative close). The
 natural pair for won/lost pipelines (leads, deals, tickets).
 
@@ -206,13 +221,15 @@ Explicit options override the preset (e.g. `role: :done, collapsed: false`).
 
 ### `accepts:`
 
-Structural drop topology — which **source columns** may drop cards here:
+Structural drop topology: which **source columns** may drop cards here:
 
-- `true` (default) — any source allowed
-- `false` — column is a drop target but refuses everything (snap-back)
-- `Array` — list of source column keys allowed: `accepts: [:doing]`
+- `true` (default): any source allowed
+- `false`: column is a drop target but refuses everything (snap-back)
+- `Array`: list of source column keys allowed: `accepts: [:doing]`
 
-Checked server-side; client-side visual hints read `data-kanban-accepts` (so the drag UI can grey out disallowed sources). **No Proc form** — a `Proc` raises `ArgumentError`. Record- or user-conditional rules belong in `kanban_move?`, which sees the record and the `from`/`to` columns (see Authorization below).
+Checked server-side; client-side visual hints read `data-kanban-accepts` (so the drag UI can grey out disallowed sources). **No Proc form**: a `Proc` raises `ArgumentError`. Record- or user-conditional rules belong in `kanban_move?`, which sees the record and the `from`/`to` columns (see Authorization below).
+
+`locked:` is the source-side counterpart: `locked: true` means no card can leave the column, whatever the destination. "Once verified it can never go back to Pending" can be written either way: `accepts: false` on Pending (nothing may enter it) or `locked: true` on Verified (nothing may leave it). Pick the one that matches the rule as stated, and remember `locked:` on Pending would not stop cards entering it.
 
 ### `on_enter:`
 
@@ -220,7 +237,7 @@ Runs inside a transaction after authorization and before repositioning. Receives
 
 ```ruby
 on_enter: ->(r) { r.update!(status: "done") }   # update! directly
-on_enter: ->(r) { r.status = "done" }            # attribute assignment — saved automatically
+on_enter: ->(r) { r.status = "done" }            # attribute assignment, saved automatically
 on_enter: :mark_done!                            # dispatched as record.mark_done!
 ```
 
@@ -237,13 +254,28 @@ column :doing,
   on_exit:  ->(r) { r.stop_timer! }     # leaving Doing (wherever it goes)
 ```
 
-Use it for side effects tied to the column being **left** — the destination's `on_enter` doesn't know where a card came from, so source concerns (stop a timer, release a WIP/lock, un-assign) belong here.
+Use it for side effects tied to the column being **left**; the destination's `on_enter` doesn't know where a card came from, so source concerns (stop a timer, release a WIP/lock, un-assign) belong here.
 
-⚠️ It fires **only** on a drag-move through `kanban_move` — not on `destroy`, a programmatic `status` change elsewhere, or quick-add. For "whenever this leaves, no matter how", use an ActiveRecord callback. Skipped on same-column reorders.
+⚠️ It fires **only** on a drag-move through `kanban_move`, not on `destroy`, a programmatic `status` change elsewhere, or quick-add. Skipped on same-column reorders.
+
+**`on_exit:` vs a model callback.** Default to `on_exit:` for anything phrased in board terms ("when a ticket leaves In progress, wherever it goes, add the elapsed time"). "Wherever it goes" means any destination column, which is what `on_exit:` covers. A `before_save` callback keyed on a status diff duplicates what the column already knows (which column the card left) and has to re-derive column membership from attributes, which breaks as soon as a column's `scope:` is more than one attribute value. It also fires on every save path, which is a different requirement. If the column owns its membership attribute (the column's `on_enter` writes `status`, so `status` stays out of `permitted_attributes_for_update`), the board is the only way a card leaves, and `on_exit:` is complete. Use a model callback only when the user explicitly wants other paths (edit form, API, import) covered too, and then drop the `on_exit:` rather than keeping both, or the time is counted twice.
+
+```ruby
+column :in_progress,
+  label:    "In progress",
+  scope:    -> { where(status: "in_progress") },
+  on_enter: ->(t) { t.assign_attributes(status: "in_progress", started_at: Time.current) },
+  on_exit:  ->(t) {
+    t.time_spent_seconds += (Time.current - t.started_at).to_i if t.started_at
+    t.started_at = nil
+  }
+```
+
+Assigned attributes are saved by the controller's `record.save!` after the hooks, along with the destination's `on_enter` changes.
 
 ### `enter_interaction:`
 
-Run an input-collecting interaction when a card is dropped **into** this column from another column — for entries that need more than a membership flip (a reason, a mail, an audit entry).
+Run an input-collecting interaction when a card is dropped **into** this column from another column, for entries that need more than a membership flip (a reason, a mail, an audit entry).
 
 ```ruby
 column :lost, scope: -> { where(status: "lost") }, enter_interaction: MarkLostInteraction
@@ -260,12 +292,12 @@ class MarkLostInteraction < ResourceInteraction
 end
 ```
 
-- **Auto-registered as a HIDDEN record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`) — unique by construction, so two columns can reuse the same interaction class. No button on show/table/grid; reachable only by dropping. **No policy method of its own** — authorized by `kanban_move?` (see Authorization).
-- **Move flow:** cross-column drop opens the interaction's form as a modal; on submit `on_enter` + interaction + repositioning commit in **one atomic transaction**. Validation failure rolls it all back (membership write included) and re-renders the modal with errors — nothing persists. Put side-effects on `deliver_later` so a rollback sends no stray mail.
-- **Same-column reorder = positioning only** — neither `on_enter` nor the interaction fires (both = *entering* a column).
+- **Auto-registered as a HIDDEN record action** under a column-scoped key (`:lost` → `:lost_enter_interaction`), unique by construction, so two columns can reuse the same interaction class. No button on show/table/grid; reachable only by dropping. **No policy method of its own**; authorized by `kanban_move?` (see Authorization).
+- **Move flow:** cross-column drop opens the interaction's form as a modal; on submit `on_enter` + interaction + repositioning commit in **one atomic transaction**. Validation failure rolls it all back (membership write included) and re-renders the modal with errors; nothing persists. Put side-effects on `deliver_later` so a rollback sends no stray mail.
+- **Same-column reorder = positioning only**: neither `on_enter` nor the interaction fires (both = *entering* a column).
 - **Quick-add (`+ Add`)** applies `on_enter` + positioning post-create; the interaction is not involved.
 - **Author contract:** with both present, `on_enter` owns the membership attribute (`status`) and the interaction owns extras. If the interaction also writes membership it must set the **same** value (idempotent). With no `on_enter`, the interaction owns everything (like `:lost`).
-- **Limitation:** custom success *responses* (`with_redirect_response`, `with_file_response`, …) are NOT honored on the drop path — board re-renders + modal closes. Use `.with_message` for feedback.
+- **Limitation:** custom success *responses* (`with_redirect_response`, `with_file_response`, …) are NOT honored on the drop path: the board re-renders and the modal closes. Use `.with_message` for feedback.
 
 ### Column actions
 
@@ -282,7 +314,7 @@ column :done, … do
 end
 ```
 
-`on: :all` — passes every record in the column scope. `on: :visible` — passes only the currently rendered subset (respects `per_column`).
+`on: :all` passes every record in the column scope. `on: :visible` passes only the currently rendered subset (respects `per_column`).
 
 ---
 
@@ -306,9 +338,9 @@ class TaskPolicy < ResourcePolicy
 end
 ```
 
-When `kanban_move?` returns `false`, the board renders read-only — no drag handles, no drop zones.
+When `kanban_move?` returns `false`, the board renders read-only, with no drag handles or drop zones.
 
-**`kanban_move?` is the ONLY move authorization** — plain moves and `enter_interaction:` columns alike (the interaction has no policy method of its own). To gate a *specific* transition, read the destination (and source) column from the authorization context via the optional `kanban_to` / `kanban_from` policy readers (the `Column` objects; `nil` for every non-move check):
+**`kanban_move?` is the ONLY move authorization**, plain moves and `enter_interaction:` columns alike (the interaction has no policy method of its own). To gate a *specific* transition, read the destination (and source) column from the authorization context via the optional `kanban_to` / `kanban_from` policy readers (the `Column` objects; `nil` for every non-move check):
 
 ```ruby
 def kanban_move?
@@ -317,17 +349,17 @@ def kanban_move?
 end
 ```
 
-Rules take no positional args in ActionPolicy — the columns arrive as declared optional context (`authorize :kanban_from/:kanban_to, optional: true` on the base policy), supplied by the controller on the move check.
+Rules take no positional args in ActionPolicy; the columns arrive as declared optional context (`authorize :kanban_from/:kanban_to, optional: true` on the base policy), supplied by the controller on the move check.
 
 ### Move authorization flow
 
 1. Record loaded via current `relation_scope` (same as index).
-2. `kanban_move?` checked (with `kanban_from`/`kanban_to` in context) — HTTP 403 on failure. This is the sole authorization; an `enter_interaction` rides on it.
-3. Column `accepts:` / `locked:` checked — HTTP 422 + card snap-back on failure.
-4. `wip:` limit checked for cross-column moves — HTTP 422 on failure.
-5. `on_enter` fires + record repositioned, all in a transaction.
+2. `kanban_move?` checked (with `kanban_from`/`kanban_to` in context), HTTP 403 on failure. This is the sole authorization; an `enter_interaction` rides on it.
+3. Destination `accepts:` and source `locked:` checked: HTTP 422 + card snap-back on failure.
+4. `wip:` limit checked for cross-column moves, HTTP 422 on failure.
+5. Source `on_exit`, then destination `on_enter`, fire + record repositioned, all in a transaction.
 
-On a 422 rejection (steps 3–4) the response re-renders the source column (snap-back) **and** appends a dismissable warning toast naming the reason (e.g. `“Pending” is at its WIP limit (5).`) to the board's `#kanban-flash` region — so the snap-back is never silent. The toast renders the shared `plutonium/toast` partial directly (not via `flash`), so a stale undisplayed flash can't leak into the turbo-stream response.
+On a 422 rejection (steps 3–4) the response re-renders the source column (snap-back) **and** appends a dismissable warning toast naming the reason (e.g. `“Pending” is at its WIP limit (5).`) to the board's `#kanban-flash` region, so the snap-back is never silent. The toast renders the shared `plutonium/toast` partial directly (not via `flash`), so a stale undisplayed flash can't leak into the turbo-stream response.
 
 ### No permitted-attributes gate
 
@@ -337,7 +369,7 @@ Moves do not pass through `permitted_attributes_for_update`. `on_enter` is trust
 
 The `+ Add` button (column `add: true`) only renders when the policy's `create?` is true. The opened form is the standard new-resource form.
 
-The record is created normally, **then** the column's `on_enter` + positioning are applied to the **saved** record (it lands in the clicked column, appended to the bottom) — `on_enter` runs against a real record, exactly as on a drag. **Your grouping column must have a default** (DB or model), because `on_enter` runs after save; a `NOT NULL` grouping column with no default fails quick-add create. A raising `on_enter` keeps the created record in its default column and toasts the error (the create is not rolled back).
+The record is created normally, **then** the column's `on_enter` + positioning are applied to the **saved** record (it lands in the clicked column, appended to the bottom), so `on_enter` runs against a real record, exactly as on a drag. **Your grouping column must have a default** (DB or model), because `on_enter` runs after save; a `NOT NULL` grouping column with no default fails quick-add create. A raising `on_enter` keeps the created record in its default column and toasts the error (the create is not rolled back).
 
 ---
 
@@ -387,6 +419,6 @@ end
 
 ## Related skills
 
-- [[plutonium-resource]] — Definition layer, `grid_fields`, index views, actions
-- [[plutonium-behavior]] — Policy methods, `kanban_move?`, interactions
-- [[plutonium-ui]] — Custom Phlex components for card rendering
+- [[plutonium-resource]]: Definition layer, `grid_fields`, index views, actions
+- [[plutonium-behavior]]: Policy methods, `kanban_move?`, interactions
+- [[plutonium-ui]]: Custom Phlex components for card rendering
