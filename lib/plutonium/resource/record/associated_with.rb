@@ -6,6 +6,12 @@ module Plutonium
       module AssociatedWith
         extend ActiveSupport::Concern
 
+        # Raised when more than one association links the two classes and no
+        # `associated_with_<record>` scope says which one to use. Picking the
+        # first would scope by declaration order, so a reordered model could
+        # silently widen what a tenant sees.
+        class AmbiguousAssociationError < StandardError; end
+
         included do
           scope :associated_with, ->(record) do
             # If scoping to same class, just match by ID (e.g., Team scoped to Team)
@@ -45,21 +51,27 @@ module Plutonium
 
         class_methods do
           def find_association_from_self_to_record(record)
-            reflect_on_all_associations.find do |assoc|
+            matches = reflect_on_all_associations.select do |assoc|
               assoc.klass.name == record.class.name unless assoc.polymorphic?
             rescue
               assoc.check_validity!
               raise
             end
+            raise_ambiguous_association_error(self, record.class, matches, record) if matches.size > 1
+
+            matches.first
           end
 
           def find_association_to_self_from_record(record)
-            record.class.reflect_on_all_associations.find do |assoc|
+            matches = record.class.reflect_on_all_associations.select do |assoc|
               assoc.klass.name == name
             rescue
               assoc.check_validity!
               raise
             end
+            raise_ambiguous_association_error(record.class, self, matches, record) if matches.size > 1
+
+            matches.first
           end
 
           def query_based_on_association(assoc, record)
@@ -73,6 +85,15 @@ module Plutonium
             else
               raise NotImplementedError, "associated_with->##{assoc.macro}"
             end
+          end
+
+          def raise_ambiguous_association_error(from, to, matches, record)
+            named_scope = :"associated_with_#{record.model_name.singular}"
+            raise AmbiguousAssociationError,
+              "#{from.name} has multiple associations to #{to.name}: #{matches.map(&:name).join(", ")}. " \
+              "Plutonium cannot tell which one scopes #{name} to a #{record.class.name}.\n\n" \
+              "Define a named scope on #{name} e.g.\n\n" \
+              "scope :#{named_scope}, ->(#{record.model_name.singular}) { do_something_here }"
           end
 
           def raise_unresolvable_association_error(record, named_scope)

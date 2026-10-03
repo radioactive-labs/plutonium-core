@@ -55,8 +55,35 @@ class Plutonium::Resource::Record::AssociatedWithTest < ActiveSupport::TestCase
     post = Blogging::Post.create!(user: @user, organization: @org, title: "Test", body: "Content")
 
     # This should use the normal association lookup, not the same-class shortcut
-    result = Blogging::Post.associated_with(@user)
+    result = Blogging::Post.associated_with(@org)
 
     assert_includes result, post
+  end
+
+  # Blogging::Post has four has_many associations to Comment (comments,
+  # noninverse_comments, comment_series, flagged_comments). Picking the first
+  # would scope by declaration order, so it must refuse to guess.
+  test "associated_with raises when several of its associations point at the record's class" do
+    comment = Comment.create!(body: "Test", commentable: Blogging::Post.create!(user: @user, organization: @org, title: "T", body: "B"), user: @user)
+
+    error = assert_raises(Plutonium::Resource::Record::AssociatedWith::AmbiguousAssociationError) do
+      Blogging::Post.associated_with(comment)
+    end
+
+    assert_match "comments, noninverse_comments, comment_series, flagged_comments", error.message
+    assert_match "associated_with_comment", error.message
+  end
+
+  # Comment's only link to a post is the polymorphic commentable, so the lookup
+  # goes through the post's associations, and there are four of them.
+  test "associated_with raises when the record has several associations to the scoped class" do
+    post = Blogging::Post.create!(user: @user, organization: @org, title: "T", body: "B")
+
+    error = assert_raises(Plutonium::Resource::Record::AssociatedWith::AmbiguousAssociationError) do
+      Comment.associated_with(post)
+    end
+
+    assert_match "comments, noninverse_comments, comment_series, flagged_comments", error.message
+    assert_match "associated_with_blogging_post", error.message
   end
 end
