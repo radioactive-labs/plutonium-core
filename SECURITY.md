@@ -12,7 +12,7 @@ please upgrade before reporting an issue to confirm it still reproduces.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| Latest release (`0.66.x`) | :white_check_mark: |
+| Latest release (`0.67.x`) | :white_check_mark: |
 | Older releases | :x: |
 
 ## Reporting a Vulnerability

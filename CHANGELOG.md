@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.67.0] - 2026-10-09
+
+### Bug Fixes
+
+- Keep view switcher from clipping on narrow screens
+- Restore CSRF verification for cookie sessions ([#175](https://github.com/radioactive-labs/plutonium-core/issues/175))
+- Let slim-select dropdown overflow modal edge instead of clipping
+- Load Font Awesome 4.7 from jsdelivr for EasyMDE toolbar icons
+- Mask secret fields on every display surface
+- Fixes from the component audit
+
+### Features
+
+- Binary column input and display
+- Key/value, list, rating and value display components
+- No_fly_list tags support
+- [**breaking**] Render has_rich_text through Action Text's editor
+
+### Testing
+
+- Search slim-select typeaheads by email in system tests ([#177](https://github.com/radioactive-labs/plutonium-core/issues/177))
+
 ## [0.66.0] - 2026-10-08
 
 ### Bug Fixes

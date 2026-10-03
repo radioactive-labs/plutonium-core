@@ -17251,7 +17251,9 @@ ${text2}</tr>
   var slim_select_controller_default = class extends Controller {
     static values = {
       typeaheadUrl: String,
-      typeaheadDebounceMs: { type: Number, default: 200 }
+      typeaheadDebounceMs: { type: Number, default: 200 },
+      addable: Boolean,
+      maxSelected: Number
     };
     connect() {
       if (this.slimSelect) return;
@@ -17270,9 +17272,14 @@ ${text2}</tr>
       const settings = {};
       const strings = t("plutonium.js.libraries.slim_select");
       if (strings && typeof strings === "object") {
-        const { placeholderText, searchText, searchPlaceholder, searchingText } = strings;
-        Object.assign(settings, { placeholderText, searchText, searchPlaceholder, searchingText });
+        const { placeholderText, searchText, searchPlaceholder, searchingText, addableText } = strings;
+        Object.assign(settings, { placeholderText, searchText, searchPlaceholder, searchingText, addableText });
         Object.keys(settings).forEach((k4) => settings[k4] === void 0 && delete settings[k4]);
+      }
+      if (this.hasMaxSelectedValue) settings.maxSelected = this.maxSelectedValue;
+      if (this.addableValue) {
+        settings.placeholderText = t("plutonium.js.slim_select.add_placeholder");
+        settings.searchPlaceholder = t("plutonium.js.slim_select.add_search_placeholder");
       }
       this.modal = this.element.closest('[data-controller="remote-modal"]');
       if (this.modal) {
@@ -17288,6 +17295,9 @@ ${text2}</tr>
         events.afterClose = () => {
           this.modal.style.overflow = "";
         };
+      }
+      if (this.addableValue) {
+        events.addable = (value) => value.trim() || false;
       }
       if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {
         events.search = (search, currentData) => this.#typeaheadFetch(search, currentData);
@@ -30122,6 +30132,38 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     }
   };
 
+  // src/js/controllers/timeago_controller.js
+  var UNITS = [
+    ["year", 60 * 60 * 24 * 365],
+    ["month", 60 * 60 * 24 * 30],
+    ["week", 60 * 60 * 24 * 7],
+    ["day", 60 * 60 * 24],
+    ["hour", 60 * 60],
+    ["minute", 60],
+    ["second", 1]
+  ];
+  var timeago_controller_default = class extends Controller {
+    static values = {
+      datetime: String,
+      refreshInterval: { type: Number, default: 6e4 }
+    };
+    connect() {
+      this.formatter = new Intl.RelativeTimeFormat(document.documentElement.lang || void 0, { numeric: "auto" });
+      this.render();
+      this.timer = setInterval(() => this.render(), this.refreshIntervalValue);
+    }
+    disconnect() {
+      clearInterval(this.timer);
+    }
+    render() {
+      const date = new Date(this.datetimeValue);
+      if (isNaN(date)) return;
+      const seconds = Math.round((date - Date.now()) / 1e3);
+      const [unit, size] = UNITS.find(([, size2]) => Math.abs(seconds) >= size2) || UNITS[UNITS.length - 1];
+      this.element.textContent = this.formatter.format(Math.round(seconds / size), unit);
+    }
+  };
+
   // src/js/controllers/register_controllers.js
   function register_controllers_default(application2) {
     application2.register("password-visibility", password_visibility_controller_default);
@@ -30168,6 +30210,7 @@ this.ifd0Offset: ${this.ifd0Offset}, file.byteLength: ${e4.byteLength}`), e4.tif
     application2.register("run-progress", run_progress_controller_default);
     application2.register("chart", chart_controller_default);
     application2.register("frame-refresh", frame_refresh_controller_default);
+    application2.register("timeago", timeago_controller_default);
   }
 
   // src/js/turbo/turbo_actions.js
