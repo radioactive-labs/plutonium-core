@@ -3,6 +3,8 @@
 require "test_helper"
 
 class NestedResourcesTest < Minitest::Test
+  include DataHelpers
+
   # Test nested resources behavior as documented
 
   def setup
@@ -18,14 +20,16 @@ class NestedResourcesTest < Minitest::Test
   # Test associated_with scope - the core of nested resource scoping
 
   def test_associated_with_scope_via_belongs_to
-    # Comment belongs_to :commentable (polymorphic), so associated_with(post) should work
-    comment1 = Comment.create!(body: "Comment 1", commentable: @post, user: @user)
-    comment2 = Comment.create!(body: "Comment 2", commentable: @post, user: @user)
+    # Comment belongs_to :commentable (polymorphic, so skipped), and Product has a
+    # single has_many :comments back, so associated_with(product) resolves through it.
+    product = create_product!
+    comment1 = Comment.create!(body: "Comment 1", commentable: product, user: @user)
+    comment2 = Comment.create!(body: "Comment 2", commentable: product, user: @user)
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
-    comment3 = Comment.create!(body: "Comment 3", commentable: other_post, user: @user)
+    other_product = create_product!
+    comment3 = Comment.create!(body: "Comment 3", commentable: other_product, user: @user)
 
-    scoped = Comment.associated_with(@post)
+    scoped = Comment.associated_with(product)
 
     assert_includes scoped, comment1
     assert_includes scoped, comment2
@@ -33,27 +37,26 @@ class NestedResourcesTest < Minitest::Test
   end
 
   def test_associated_with_scope_via_has_many
-    # Post has_many :comments, so associated_with(comment) should work
-    # This tests the reverse association lookup
-    comment = Comment.create!(body: "Test", commentable: @post, user: @user)
+    # Product has_many :variants, so associated_with(variant) finds the parent
+    product = create_product!
+    variant = create_variant!(product: product)
+    other_product = create_product!
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
+    scoped = Catalog::Product.associated_with(variant)
 
-    # Posts associated with the comment (should find the parent post)
-    scoped = Blogging::Post.associated_with(comment)
-
-    assert_includes scoped, @post
-    refute_includes scoped, other_post
+    assert_includes scoped, product
+    refute_includes scoped, other_product
   end
 
   def test_associated_with_custom_scope
-    # Test that custom associated_with_* scopes take precedence
-    # Our User model has posts through the user association on Post
+    # Post defines associated_with_user because it has three User associations
+    # (user, author, editor); the custom scope takes precedence over inference.
+    authored = Blogging::Post.create!(title: "Authored", body: "Content", user: create_user!, author: @user, organization: @org)
 
-    # Posts associated with user
     scoped = Blogging::Post.associated_with(@user)
 
     assert_includes scoped, @post
+    refute_includes scoped, authored
   end
 
   def test_has_many_association_routes
@@ -68,13 +71,12 @@ class NestedResourcesTest < Minitest::Test
     # Simulate what happens in a nested resource context
     # When accessing /posts/1/comments, comments should be scoped to post
 
-    comment1 = Comment.create!(body: "On target post", commentable: @post, user: @user)
+    parent = create_product!
+    comment1 = Comment.create!(body: "On target product", commentable: parent, user: @user)
 
-    other_post = Blogging::Post.create!(title: "Other", body: "Content", user: @user, organization: @org)
-    comment2 = Comment.create!(body: "On other post", commentable: other_post, user: @user)
+    other_product = create_product!
+    comment2 = Comment.create!(body: "On other product", commentable: other_product, user: @user)
 
-    # This is what the controller does internally
-    parent = @post
     scoped_comments = Comment.associated_with(parent)
 
     assert_equal 1, scoped_comments.count
@@ -142,15 +144,16 @@ class NestedResourcesTest < Minitest::Test
 
   def test_multiple_levels_of_association_lookup
     # Test that associated_with can traverse associations
-    comment = Comment.create!(body: "Test", commentable: @post, user: @user)
+    product = create_product!(user: @user)
+    comment = Comment.create!(body: "Test", commentable: product, user: @user)
 
-    # User -> Post (via user association on Post)
-    user_posts = Blogging::Post.associated_with(@user)
-    assert_includes user_posts, @post
+    # User -> Product (via the user association on Product)
+    user_products = Catalog::Product.associated_with(@user)
+    assert_includes user_products, product
 
-    # Post -> Comments (via comments association on Post)
-    post_comments = Comment.associated_with(@post)
-    assert_includes post_comments, comment
+    # Product -> Comments (via the comments association on Product)
+    product_comments = Comment.associated_with(product)
+    assert_includes product_comments, comment
   end
 
   # has_one nested resource tests

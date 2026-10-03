@@ -46,6 +46,9 @@ class Blogging::Post < Blogging::ResourceRecord
   scope :published, -> { where(status: :published) }
   scope :drafts, -> { where(status: :draft) }
   scope :archived, -> { where(status: :archived) }
+  # Post belongs_to :user, :author and :editor, all User, so associated_with
+  # can't infer which one ties a post to a user and raises without this.
+  scope :associated_with_user, ->(user) { where(user: user) }
   # add scopes above.
 
   validates :title, presence: true
