@@ -87,6 +87,24 @@ class StorefrontPortal::PublicAccessTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  # The storefront policies inherit the custom-action predicates of the shared
+  # policies (e.g. `discontinue? = record.active?`), which only check record
+  # state. Overriding create?/update?/destroy? does not cover them, so the
+  # storefront must deny them itself or anonymous visitors can run them.
+  test "public: discontinuing a product is denied" do
+    product = create_product!(status: :active)
+    post "/storefront/catalog/products/#{product.id}/record_actions/discontinue"
+    assert_response :forbidden
+    assert product.reload.active?
+  end
+
+  test "public: archiving a post is denied" do
+    post_record = create_post!(status: :published)
+    post "/storefront/blogging/posts/#{post_record.id}/record_actions/archive"
+    assert_response :forbidden
+    assert post_record.reload.published?
+  end
+
   # Regression: when authorization fails on a collection action (no record
   # loaded), the policy's record is the resource Class. The unauthorized
   # rescue handler must accept a Class without exploding into a 500.
