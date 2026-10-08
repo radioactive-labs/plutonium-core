@@ -33,7 +33,7 @@ module Plutonium
       SIZE_CLASSES = {xs: "w-6 h-6", sm: "w-8 h-8", md: "w-10 h-10", lg: "w-12 h-12", xl: "w-16 h-16"}.freeze
 
       # Resolve an image value to a URL string. Supports:
-      # - ActiveStorage attachments -> helpers.url_for (they aren't routable via #url)
+      # - ActiveStorage attachments -> view_context.url_for (they aren't routable via #url)
       # - active_shrine / other ActiveStorage-style wrappers -> value.url
       # - Bare Shrine::UploadedFile, CarrierWave, etc. (respond to :url) -> value.url
       # - Plain URL strings ("https://..." or "/uploads/...")
@@ -127,9 +127,9 @@ module Plutonium
         return nil if value.nil?
 
         # Only reach for the Rails helper proxy when we have an attachment-style
-        # source (ActiveStorage needs helpers.url_for; the resolver ignores it
+        # source (ActiveStorage needs view_context.url_for; the resolver ignores it
         # for active_shrine and other #url-bearing sources).
-        resolver_helpers = value.respond_to?(:attached?) ? helpers : nil
+        resolver_helpers = value.respond_to?(:attached?) ? view_context : nil
         self.class.resolve_image_src(value, resolver_helpers)
       end
 
@@ -174,7 +174,7 @@ module Plutonium
         case @subject
         when nil then nil
         when String then @subject
-        else helpers&.display_name_of(@subject)
+        else view_context&.display_name_of(@subject)
         end
       end
     end

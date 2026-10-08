@@ -248,7 +248,7 @@ module Plutonium
 
           # Override in subclass to customize the done URL
           def done_url
-            helpers.url_for(action: :index)
+            view_context.url_for(action: :index)
           end
         end
       end

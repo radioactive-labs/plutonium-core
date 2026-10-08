@@ -23,18 +23,12 @@ class Plutonium::UI::Table::Components::FilterFormTest < ActiveSupport::TestCase
 
   def build_form(params, query_object:, filter_form_values: nil, search_value: nil, search_url: "/admin/tasks")
     filter_form_values ||= filter_form_values_from(params)
-    form = Plutonium::UI::Table::Components::FilterForm.new(
+    Plutonium::UI::Table::Components::FilterForm.new(
       filter_form_values,
       query_object: query_object,
       search_url: search_url,
       search_value: search_value
     )
-    # `helpers` is a deprecated alias for `view_context`; bypass the
-    # deprecation warning while exercising the same lookup the production
-    # code performs (render_sort_fields / render_scope_fields /
-    # render_hidden_state all call `helpers.params`).
-    form.define_singleton_method(:helpers) { view_context }
-    form
   end
 
   # Mirrors Plutonium::UI::Table::Resource#filter_form_values so the form
@@ -235,7 +229,6 @@ class Plutonium::UI::Table::Components::FilterFormTest < ActiveSupport::TestCase
     record = params[:q].to_unsafe_h
 
     form = Plutonium::UI::Form::Query.new(record, query_object: query_object, page_size: 10)
-    form.define_singleton_method(:helpers) { view_context_for(params) }
     html = form.call(context: {rails_view_context: view_context_for(params)})
     inputs = hidden_inputs(html)
 

@@ -88,7 +88,7 @@ module Plutonium
         def render_cancel_form(entry)
           form(action: entry.cancel_url, method: "post", class: "inline-block") do
             input(type: "hidden", name: "_method", value: "delete")
-            input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
+            input(type: "hidden", name: "authenticity_token", value: view_context.form_authenticity_token)
             button(
               type: "submit",
               class: "pu-btn pu-btn-sm pu-btn-soft-danger",
@@ -110,7 +110,7 @@ module Plutonium
         end
 
         def updated_ago(entry)
-          helpers.time_ago_in_words(entry.updated_at)
+          view_context.time_ago_in_words(entry.updated_at)
         rescue
           t("plutonium.wizard.chooser.a_while")
         end

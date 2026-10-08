@@ -107,7 +107,7 @@ module Plutonium
           if size == :cover
             # Cover is a full-width banner, not an avatar: only render when an
             # actual image resolves (no deterministic fallback).
-            src = Plutonium::UI::Avatar.resolve_image_src(value, helpers)
+            src = Plutonium::UI::Avatar.resolve_image_src(value, view_context)
             return unless src
 
             div(class: "w-full aspect-video bg-[var(--pu-surface-alt)] overflow-hidden") do
@@ -172,11 +172,11 @@ module Plutonium
           if value.respond_to?(:strftime)
             # display_datetime_value returns HTML-safe <time> markup
             # rendered by the timeago Stimulus controller.
-            raw safe(helpers.display_datetime_value(value))
+            raw safe(view_context.display_datetime_value(value))
           elsif currency_field?(name)
-            plain helpers.number_to_currency(value, unit: currency_unit_for(name))
+            plain view_context.number_to_currency(value, unit: currency_unit_for(name))
           else
-            plain helpers.display_name_of(value)
+            plain view_context.display_name_of(value)
           end
         end
 
@@ -194,10 +194,10 @@ module Plutonium
           badge = Plutonium::UI::Display::Components::Badge
 
           if currency_field?(name)
-            label = helpers.number_to_currency(value, unit: currency_unit_for(name))
+            label = view_context.number_to_currency(value, unit: currency_unit_for(name))
             variant = badge.variant_for(label)
           elsif association_field?(name)
-            label = helpers.display_name_of(value)
+            label = view_context.display_name_of(value)
             variant = badge.variant_for(label)
           else
             label = Plutonium::Translation.value_label(@record.class, name, value) || badge.humanize(value)
@@ -300,7 +300,7 @@ module Plutonium
         end
 
         def header_text
-          @header_text ||= helpers.display_name_of(field_value(slots[:header]) || record)
+          @header_text ||= view_context.display_name_of(field_value(slots[:header]) || record)
         end
 
         def field_value(name)

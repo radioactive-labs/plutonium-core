@@ -368,7 +368,7 @@ module Plutonium
         end
 
         def authenticity_field
-          token = helpers.form_authenticity_token
+          token = view_context.form_authenticity_token
           input(type: :hidden, name: "authenticity_token", value: token)
         end
 

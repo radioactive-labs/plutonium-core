@@ -110,7 +110,7 @@ module Plutonium
         end
 
         def selected_view
-          self.class.resolve_view(current_definition, resource_class, params[:view], helpers.cookies)
+          self.class.resolve_view(current_definition, resource_class, params[:view], view_context.cookies)
         end
 
         def page_type = :index_page

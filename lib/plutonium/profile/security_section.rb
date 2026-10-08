@@ -66,7 +66,7 @@ module Plutonium
       end
 
       def render_feature_link(feature, config)
-        path = helpers.rodauth.send(config[:path_method])
+        path = view_context.rodauth.send(config[:path_method])
         danger = config[:danger]
 
         a(
@@ -103,7 +103,7 @@ module Plutonium
       end
 
       def feature_enabled?(feature)
-        helpers.rodauth.features.include?(feature)
+        view_context.rodauth.features.include?(feature)
       end
     end
   end

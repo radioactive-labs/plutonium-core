@@ -106,8 +106,8 @@ module Plutonium
               end
               # Preserve the current view selection across filter applies
               # and clears so the user stays where they were.
-              if helpers.params[:view].present?
-                input(name: "view", value: helpers.params[:view], type: :hidden, hidden: true)
+              if view_context.params[:view].present?
+                input(name: "view", value: view_context.params[:view], type: :hidden, hidden: true)
               end
               render_sort_fields
               render_scope_fields
@@ -115,14 +115,14 @@ module Plutonium
           end
 
           def render_sort_fields
-            field :sort_fields, value: helpers.params.dig(search_param, :sort_fields) do |name|
+            field :sort_fields, value: view_context.params.dig(search_param, :sort_fields) do |name|
               render name.input_array_tag do |array|
                 render array.input_tag(type: :hidden, hidden: true)
               end
             end
             nest_one :sort_directions do |nested|
               query_object.sort_definitions.each do |filter_name, _|
-                direction_value = helpers.params.dig(search_param, :sort_directions, filter_name)
+                direction_value = view_context.params.dig(search_param, :sort_directions, filter_name)
                 nested.field(filter_name, value: direction_value) do |f|
                   render f.input_tag(type: :hidden, hidden: true)
                 end
@@ -132,7 +132,7 @@ module Plutonium
 
           def render_scope_fields
             return if query_object.scope_definitions.blank?
-            render field(:scope, value: helpers.params.dig(search_param, :scope)).input_tag(type: :hidden, hidden: true)
+            render field(:scope, value: view_context.params.dig(search_param, :scope)).input_tag(type: :hidden, hidden: true)
           end
 
           def render_filter_field(nested, resource_definition, name, filter_label: nil)
@@ -164,7 +164,7 @@ module Plutonium
           end
 
           def current_param_value(filter_name, input_name)
-            helpers.params.dig(search_param, filter_name, input_name)
+            view_context.params.dig(search_param, filter_name, input_name)
           end
 
           def form_action

@@ -53,7 +53,7 @@ class <%= name.classify %>::CreateInteraction < Plutonium::Resource::Interaction
     end
 
     def done_url
-      helpers.resource_url_for(<%= name.classify %>, parent: @parent)
+      view_context.resource_url_for(<%= name.classify %>, parent: @parent)
     end
   end
 
@@ -69,7 +69,7 @@ class <%= name.classify %>::CreateInteraction < Plutonium::Resource::Interaction
     end
 
     def done_url
-      helpers.resource_url_for(<%= name.classify %>)
+      view_context.resource_url_for(<%= name.classify %>)
     end
   end
 

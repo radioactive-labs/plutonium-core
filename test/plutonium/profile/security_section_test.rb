@@ -146,7 +146,7 @@ class Plutonium::Profile::SecuritySectionTest < ActiveSupport::TestCase
     component = Plutonium::Profile::SecuritySection.new
     mock_rodauth = Struct.new(:features).new(enabled_features)
     mock_helpers = Struct.new(:rodauth).new(mock_rodauth)
-    component.define_singleton_method(:helpers) { mock_helpers }
+    component.define_singleton_method(:view_context) { mock_helpers }
     component
   end
 
@@ -157,7 +157,7 @@ class Plutonium::Profile::SecuritySectionTest < ActiveSupport::TestCase
       mock_rodauth.define_singleton_method(method_name) { path }
     end
     mock_helpers = Struct.new(:rodauth).new(mock_rodauth)
-    component.define_singleton_method(:helpers) { mock_helpers }
+    component.define_singleton_method(:view_context) { mock_helpers }
     component
   end
 
