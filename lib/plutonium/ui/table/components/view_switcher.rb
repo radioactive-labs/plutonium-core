@@ -35,7 +35,7 @@ module Plutonium
             div(
               role: "tablist",
               aria: {label: t("plutonium.ui.table.view")},
-              class: "inline-flex h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden",
+              class: "inline-flex shrink-0 h-8 rounded-md border border-[var(--pu-border)] bg-[var(--pu-surface)] overflow-hidden",
               data: {
                 controller: "view-switcher",
                 view_switcher_cookie_name_value: @cookie_name,
@@ -76,7 +76,9 @@ module Plutonium
               }
             ) do
               render icon.new(class: "w-4 h-4 shrink-0")
-              span { label }
+              # Icon-only below sm so the switcher fits narrow toolbars; the
+              # label stays in the accessibility tree via sr-only.
+              span(class: "sr-only sm:not-sr-only") { label }
             end
           end
         end

@@ -80,7 +80,7 @@ module Plutonium
           end
 
           def render_search
-            form(method: :get, action: @search_url) do
+            form(method: :get, action: @search_url, class: "min-w-0") do
               div(class: "relative") do
                 div(class: "absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none") do
                   render Phlex::TablerIcons::Search.new(class: "w-4 h-4 text-[var(--pu-text-muted)]")
@@ -91,7 +91,7 @@ module Plutonium
                   name: "#{@search_param}[search]",
                   value: @search_value,
                   placeholder: t("plutonium.ui.table.search_placeholder"),
-                  class: "pu-input pu-input-toolbar pu-input-icon-left w-[220px]",
+                  class: "pu-input pu-input-toolbar pu-input-icon-left w-[220px] max-w-full",
                   # turbo-permanent + a stable id keep the DOM node
                   # across Turbo morphs so focus / caret / IME state
                   # survive the search-as-you-type submit cycle.
