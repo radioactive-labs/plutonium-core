@@ -99,7 +99,7 @@ module Plutonium
           end
 
           def page_url(limit)
-            @pagy.page_url(@pagy.page, limit: limit, max_limit: limit)
+            @pagy.page_url(@pagy.page, limit: limit, client_limit: limit)
           end
         end
       end
