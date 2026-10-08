@@ -821,7 +821,7 @@ end
 column :status, as: :badge, colors: {...}   # or just declare the type, no block
 ```
 
-Inside the block `self` is the table page (the same as a `display` block, where `self` is the show page): `current_user`, `helpers` and `resource_definition` work, methods defined on the definition class do not, so reach through the record you are passed. A block that emits markup must end with a tag call (or `nil`), because Phlex renders the return value too; a number or other scalar return renders as text. Most of the time you need no column block at all, because `display :x, as: …` already flows to the table column (type and attributes). Declare it once on `display` and reach for `column` only to override per-table.
+Inside the block `self` is the table page (the same as a `display` block, where `self` is the show page): `current_user`, `view_context` and `resource_definition` work, methods defined on the definition class do not, so reach through the record you are passed. A block that emits markup must end with a tag call (or `nil`), because Phlex renders the return value too; a number or other scalar return renders as text. Most of the time you need no column block at all, because `display :x, as: …` already flows to the table column (type and attributes). Declare it once on `display` and reach for `column` only to override per-table.
 
 ## Nested Inputs
 

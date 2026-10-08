@@ -118,7 +118,7 @@ end
 
 ## Writing a custom Phlex component
 
-When you need a piece of UI that's reused across pages, write a Phlex component. Inherit from `Plutonium::UI::Component::Base` and you get the component kit (`PageHeader`, `Panel`, `Block`), resource URL helpers, and a `helpers` proxy for Rails helpers.
+When you need a piece of UI that's reused across pages, write a Phlex component. Inherit from `Plutonium::UI::Component::Base` and you get the component kit (`PageHeader`, `Panel`, `Block`), resource URL helpers, and `view_context` for Rails helpers.
 
 ```ruby
 class PostCardComponent < Plutonium::UI::Component::Base

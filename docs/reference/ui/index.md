@@ -17,7 +17,7 @@ Plutonium uses [Phlex](https://www.phlex.fun/) for all view components and Tailw
 - **Override via nested classes in the definition.** `class ShowPage < ShowPage; end`, `class Form < Form; end`. Don't replace the entire view layer.
 - **Use render hooks, not `view_template`.** `render_before_content`, `render_after_content`, `render_before_toolbar`, etc. exist so you don't reimplement the whole page.
 - **All pages inherit `DynaFrameContent`**: turbo-frame requests render only the content. Don't fight it; modals and frame nav "just work".
-- **Custom components inherit `Plutonium::UI::Component::Base`**: gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and the `helpers` proxy for Rails helpers.
+- **Custom components inherit `Plutonium::UI::Component::Base`**: gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and `view_context` for Rails helpers.
 - **`render_actions` is mandatory in custom `form_template`**: without it, the form has no submit button.
 - **Custom CSS, brand colors, or your own Stimulus controllers need `pu:core:assets` first.** Out of the box the app serves the gem's prebuilt `plutonium.css` / `plutonium.min.js`; the generator switches it to your own bundles. Don't hand-write the Tailwind/PostCSS pipeline.
 - **Once the app owns its JS bundle, `registerControllers(application)`** must be in `app/javascript/controllers/index.js` (`pu:core:assets` adds it). Your bundle replaces the gem's, so without it Plutonium's Stimulus controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.

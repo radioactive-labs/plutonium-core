@@ -108,7 +108,7 @@ No kind-specific options. The block is `instance_exec`ed in `Plutonium::UI::Dash
 | `visible_cards` | Cards whose `condition:` passes |
 | `visible_card!(key)` | The card, or `Plutonium::Dashboard::UnknownCardError` (404) |
 | `refresh_for(card)` | The card's interval, else the dashboard's; `nil` for a card declared `refresh: false` |
-| `view_context` / `helpers` | The Rails view context |
+| `view_context` | The Rails view context |
 | `current_user`, `current_scoped_entity`, `scoped_to_entity?`, `params`, `request`, `controller`, `current_engine`, `resource_url_for`, `authorized_resource_scope`, `allowed_to?`, `policy_for`, `registered_resources`, `root_path` | Delegated to the view context |
 
 ## Class API

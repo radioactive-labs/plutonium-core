@@ -51,7 +51,7 @@ Avatar(src: "https://.../p.png")  # a bare image, no subject/fallback
 
 `src` is resolved in this order, so the same component works across attachment libraries:
 
-- **ActiveStorage** attachment → `helpers.url_for` (the Rails-routable redirect path)
+- **ActiveStorage** attachment → `view_context.url_for` (the Rails-routable redirect path)
 - **active_shrine** / Shrine `UploadedFile` / CarrierWave (anything responding to `#url`) → `value.url`
 - **URL string** (`"https://…"` or `"/…"`) → used as-is
 
@@ -105,7 +105,7 @@ end
 It gives you:
 - The component kit (`PageHeader`, `Panel`, `Block`, …)
 - Resource helpers (`resource_url_for`, `current_user`, `resource_record!`, `current_definition`)
-- A `helpers` proxy for Rails helpers (`helpers.link_to`, `helpers.number_to_currency`)
+- `view_context` for Rails helpers (`view_context.number_to_currency`); see [Accessing Rails helpers](#accessing-rails-helpers)
 - Token / class helpers (`tokens`, `classes`)
 
 A **field** component (one you pass to `as:`) inherits its Phlexi base instead:
@@ -247,17 +247,34 @@ tokens("base", condition?: {then: "if-true", else: "if-false"})
 
 ## Accessing Rails helpers
 
+Call helpers that return a value through `view_context`. It exposes everything `ApplicationController#helpers` does, including your own helpers in `app/helpers/`:
+
 ```ruby
 class MyComponent < Plutonium::UI::Component::Base
   def view_template
-    helpers.link_to(...)
-    helpers.image_tag(...)
-    helpers.number_to_currency(...)
+    span { view_context.number_to_currency(order.total) }
+    a(href: view_context.post_path(post)) { post.title }
   end
 end
 ```
 
-The `helpers` proxy gives you everything `ApplicationController#helpers` exposes, including any custom helpers in `app/helpers/`.
+Helpers that return HTML (`link_to`, `image_tag`, your own tag helpers) need a phlex-rails adapter. Through `view_context` their output is escaped and shows up as literal markup:
+
+```ruby
+class MyComponent < Plutonium::UI::Component::Base
+  include Phlex::Rails::Helpers::LinkTo
+  include Phlex::Rails::Helpers::ImageTag
+  register_output_helper :status_badge   # your own helper that returns HTML
+
+  def view_template
+    link_to("Edit", edit_path)
+    image_tag("logo.svg")
+    status_badge(order)
+  end
+end
+```
+
+Plutonium's own methods (`current_user`, `resource_url_for`, `display_name_of`, `params`, ...) are available directly. Don't use `helpers`: phlex-rails deprecated it and logs a warning on every call.
 
 ## Available context
 

@@ -401,7 +401,7 @@ column  :status, formatter: ->(v) { v.upcase }   # plain text; the display is ou
 `formatter:` receives just the value. Use a block when you need the full record.
 A column block runs in the table page's Phlex context, the same way a display block
 runs in the show page's: it can emit markup directly, or return a String, a number
-or a component. `self` is the table page, so `current_user`, `helpers` and
+or a component. `self` is the table page, so `current_user`, `view_context` and
 `resource_definition` are available, but methods defined on the definition class are
 not; reach through the record you are passed instead.
 

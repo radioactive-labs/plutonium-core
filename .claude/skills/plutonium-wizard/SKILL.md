@@ -289,7 +289,7 @@ Always lists invalid/unvisited steps as fix-this jump links; Finish disabled unt
 - `summary:` (default true): show the auto-summary of completed steps. `false` hands the complete-state body to your block (or the "ready to complete" panel). The summary always shows in the incomplete state.
 - `header:` (default true): the step-header section (label + the "check everything over" prompt, shown only when the summary is). `false` drops it for a chromeless finish. Pair with `stepper false` for no chrome at all.
 
-The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `helpers.*`; it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String: Phlex renders the returned String too, double-rendering it.
+The custom block runs **in the Phlex view context** (`self` is the component), so it may return a String, emit Phlex (`div`, `render Component.new(...)`), and reach helpers via `view_context` (write links as Phlex `a` tags: a `link_to` result passed to `plain` is escaped); it's yielded the `wizard` (`data`/`anchor`/`persisted`/`current_user`). Don't both emit markup and return a String: Phlex renders the returned String too, double-rendering it.
 
 **The summary resolves choice labels.** A field declared with the `choices:` option summarises as the label its `<option>` carried, not the stored value: `42` reads as "Alice", `"cash"` as "Cash". Every collection shape the input accepts works (pair arrays, `{value => label}` hashes, ranges, sets, AR relations, procs returning any of those), because resolution goes through the same `Phlexi::Form::SimpleChoicesMapper` the input uses. **Caveat:** choices supplied inside a *block* (`input(:x) { |f| f.select_tag choices: … }`) are computed at render time and aren't visible to the summary; those fields still show the raw value. Use the declarative `choices:` option when you want the review page to read well.
 
@@ -482,7 +482,7 @@ Each entry also exposes a **`cancel_url`**, the `DELETE` target that abandons th
 ```ruby
 form(action: entry.cancel_url, method: "post") do
   input(type: "hidden", name: "_method", value: "delete")
-  input(type: "hidden", name: "authenticity_token", value: helpers.form_authenticity_token)
+  input(type: "hidden", name: "authenticity_token", value: view_context.form_authenticity_token)
   # `turbo_confirm`, NOT `confirm`: `data-confirm` is Rails UJS and never fires under Turbo.
   button(type: "submit", data: {turbo_confirm: "Discard this draft? This can't be undone."}) { "Cancel" }
 end

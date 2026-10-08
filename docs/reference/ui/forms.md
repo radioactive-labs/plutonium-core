@@ -377,7 +377,7 @@ class Form < Form
     resource_url_for(Post, action: :new)
 
     # Rails helpers
-    helpers.link_to(...)
+    view_context.number_to_currency(...)
   end
 end
 ```

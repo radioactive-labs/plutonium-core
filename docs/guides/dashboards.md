@@ -65,7 +65,7 @@ module AdminPortal
         latest_orders.each do |order|
           li(class: "py-2 flex justify-between") do
             span { order.number }
-            span(class: "text-[var(--pu-text-muted)]") { helpers.number_to_currency(order.total) }
+            span(class: "text-[var(--pu-text-muted)]") { view_context.number_to_currency(order.total) }
           end
         end
       end
@@ -132,7 +132,7 @@ All three kinds share the same options:
 | `condition:` | A proc or a symbol naming a dashboard method. When false the card is left out of the page and its endpoint responds 404. |
 | `href:` | A path, or a proc returning one, that links the title. |
 
-Blocks run on the dashboard instance, which exposes `current_user`, `current_scoped_entity`, `params`, `authorized_resource_scope`, `resource_url_for`, `allowed_to?`, `helpers` (the view context) and the dashboard's own private methods. A one-argument block receives the dashboard instead.
+Blocks run on the dashboard instance, which exposes `current_user`, `current_scoped_entity`, `params`, `authorized_resource_scope`, `resource_url_for`, `allowed_to?`, `view_context` and the dashboard's own private methods. A one-argument block receives the dashboard instead.
 
 ### Metric
 

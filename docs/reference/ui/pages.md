@@ -127,7 +127,7 @@ Use to pin action strips, omit nav chrome, or swap layouts.
 
 Association inputs include an inline `+` button. When the parent form is itself rendered in a modal, the `+` opens a **second stacked modal** in `Plutonium::REMOTE_MODAL_SECONDARY_FRAME` instead of replacing the primary modal. On successful create, the secondary closes and the primary frame reloads so the new record appears in the select, no developer wiring.
 
-For custom flows: `helpers.turbo_stream_close_frame(frame_id)` and `helpers.turbo_stream_reload_frame(frame_id)` are available.
+For custom flows, controllers can call `helpers.turbo_stream_close_frame(frame_id)` and `helpers.turbo_stream_reload_frame(frame_id)`.
 
 See [Forms › Association inputs](./forms#association-inputs).
 
@@ -171,16 +171,20 @@ end
 
 Inside any page / form / display / Phlex component, the same set of helpers is available (model accessors, definition/policy methods, URL helpers, `current_user`; for the full list, see [Behavior › Controllers › Key methods](/reference/behavior/controllers#key-methods)). Pages inherit the same surface.
 
-In Phlex components, Rails helpers are accessed via the `helpers` proxy:
+In Phlex components, call Rails helpers that return a value through `view_context`, and include a phlex-rails adapter for helpers that return HTML:
 
 ```ruby
 class MyComponent < Plutonium::UI::Component::Base
+  include Phlex::Rails::Helpers::LinkTo
+
   def view_template
-    helpers.link_to(...)
-    helpers.number_to_currency(...)
+    link_to(...)
+    span { view_context.number_to_currency(...) }
   end
 end
 ```
+
+See [Components › Accessing Rails helpers](./components#accessing-rails-helpers).
 
 ## Related
 

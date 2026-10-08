@@ -14,7 +14,7 @@ For field-level rendering (`field :foo, as: :markdown`, `display :status do |f| 
 - **Override via nested classes in the definition.** `class ShowPage < ShowPage; end`, `class Form < Form; end`. Don't replace the entire view layer.
 - **Use render hooks, not `view_template`.** `render_before_content`, `render_after_content`, `render_before_toolbar`, etc. exist so you don't reimplement the whole page.
 - **All pages inherit `DynaFrameContent`**: turbo-frame requests render only the content. Don't fight it; modals and frame nav "just work".
-- **Custom components inherit `Plutonium::UI::Component::Base`**: it gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and the `helpers` proxy for Rails helpers.
+- **Custom components inherit `Plutonium::UI::Component::Base`**: it gives you the component kit (`PageHeader`, `Panel`, `Block`), resource helpers, and `view_context` for Rails helpers.
 - **`render_actions` is mandatory in custom `form_template`**: without it, the form has no submit button.
 - **Custom CSS, brand colors, or your own Stimulus controllers need `pu:core:assets` first.** Out of the box the app serves the gem's prebuilt `plutonium.css` / `plutonium.min.js`; the generator switches it to your own bundles. Don't hand-write the Tailwind/PostCSS pipeline.
 - **Once the app owns its JS bundle, `registerControllers(application)`** must be in `app/javascript/controllers/index.js` (`pu:core:assets` adds it). Your bundle replaces the gem's, so without it Plutonium's Stimulus controllers (color-mode, form, slim-select, flatpickr, easymde, etc.) are dead.
@@ -558,7 +558,7 @@ Avatar(src: avatar_url)           # bare image, no subject/fallback
 ```
 
 - **subject** (positional): record → PII-free hashed seed + default `alt` (display name); String → seed. A URL-shaped String (`http(s)://…` or `/…`) is routed to `src` (shown as the image), not used as a seed.
-- **src**: a Symbol is sent to the subject (`:avatar` → `subject.avatar`, a **contract**, raises if absent); otherwise an ActiveStorage attachment, active_shrine/Shrine uploader, or URL string. ActiveStorage resolves via `helpers.url_for`; everything else via its own `#url`.
+- **src**: a Symbol is sent to the subject (`:avatar` → `subject.avatar`, a **contract**, raises if absent); otherwise an ActiveStorage attachment, active_shrine/Shrine uploader, or URL string. ActiveStorage resolves via `view_context.url_for`; everything else via its own `#url`.
 - **size**: `:xs 24 / :sm 32 / :md 40 / :lg 48 / :xl 64`, or a raw Integer.
 - **Privacy**: the value sent to Navii is **always** a SHA256 hash, so no ids, emails, or seed strings leave the app. Deterministic per subject.
 - **Resolution order**: resolved `src` → Navii (from subject) → generic user icon.
@@ -1153,16 +1153,22 @@ end
 
 Inside any page / form / display / Phlex component, the same set of helpers is available: model accessors, definition/policy methods, URL helpers, `current_user`. For the full list, see [[plutonium-behavior]] › Key methods (controllers expose the same surface; pages inherit it).
 
-In Phlex components, Rails helpers are accessed via the `helpers` proxy:
+In Phlex components, call Rails helpers that return a value through `view_context`. Helpers that return HTML need a phlex-rails adapter, because their output is escaped when it comes through `view_context`:
 
 ```ruby
 class MyComponent < Plutonium::UI::Component::Base
+  include Phlex::Rails::Helpers::LinkTo   # built-in adapter
+  register_output_helper :status_badge    # your own helper that returns HTML
+
   def view_template
-    helpers.link_to(...)
-    helpers.number_to_currency(...)
+    link_to(...)
+    status_badge(order)
+    span { view_context.number_to_currency(...) }
   end
 end
 ```
+
+Never call `helpers` in a component: phlex-rails deprecated it and logs a warning on every call. Plutonium's own methods (`current_user`, `resource_url_for`, `display_name_of`, `params`) are available directly.
 
 ---
 

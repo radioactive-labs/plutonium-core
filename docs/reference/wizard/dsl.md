@@ -260,7 +260,7 @@ The block runs **in the Phlex view context** (`self` is the rendering component)
 
 - **return a String** (the simplest case); it renders as the block's text;
 - **emit Phlex** directly, `div`, `span`, `plain`, `render SomeComponent.new(...)`;
-- reach **view / route helpers** via `helpers.*` (e.g. `helpers.link_to`, `helpers.current_user`, a path helper).
+- reach **view / route helpers** via `view_context` (e.g. `view_context.terms_path`, `view_context.number_to_currency`). Write links as Phlex tags: a `link_to` result passed to `plain` is escaped.
 
 The block is **yielded the wizard**, so `wizard.data`, `wizard.anchor`, `wizard.persisted`, and `wizard.current_user` are all in hand.
 
@@ -270,7 +270,7 @@ review label: "Review & submit" do |wizard|
     plain "Billing to "
     strong { wizard.data.company.name }
     plain ", "
-    plain helpers.link_to("see our terms", helpers.terms_path)
+    a(href: view_context.terms_path) { "see our terms" }
   end
 end
 ```
@@ -302,7 +302,7 @@ class WelcomeWizard < Plutonium::Wizard::Base
 end
 ```
 
-The block runs in the **same Phlex view context** as the [review block](#the-custom-block-s-render-context) (`self` is the component; reach helpers via `helpers.*`) and is yielded the `wizard`. The same don't-mix-styles caveat applies.
+The block runs in the **same Phlex view context** as the [review block](#the-custom-block-s-render-context) (`self` is the component; reach helpers via `view_context`) and is yielded the `wizard`. The same don't-mix-styles caveat applies.
 
 ## `execute`
 
