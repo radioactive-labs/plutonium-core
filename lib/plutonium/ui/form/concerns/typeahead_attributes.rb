@@ -64,6 +64,11 @@ module Plutonium
             return nil unless name
 
             route_key = resource_class.model_name.route_key
+            # Path-scoped portals prefix every route name with the entity
+            # param key (`organization_scoped_`) and take the entity as the
+            # first positional arg, the same as Controller#resource_url_for.
+            path_scoped = current_engine.scoped_to_entity? && current_engine.scoped_entity_strategy == :path
+            route_key = "#{current_engine.scoped_entity_param_key}_#{route_key}" if path_scoped
             helper = (kind == :filter) ? :"typeahead_filter_#{route_key}_path" : :"typeahead_input_#{route_key}_path"
 
             # Engine route helpers are the source of truth for routes
@@ -74,7 +79,8 @@ module Plutonium
             # uses its eager list.
             url_helpers = current_engine.routes.url_helpers
             return nil unless url_helpers.respond_to?(helper)
-            url_helpers.public_send(helper, name: name)
+            helper_args = path_scoped ? [view_context.current_scoped_entity.to_param] : []
+            url_helpers.public_send(helper, *helper_args, name: name)
           end
         end
       end
