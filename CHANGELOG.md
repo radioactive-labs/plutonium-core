@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.66.0] - 2026-10-08
+
+### Bug Fixes
+
+- [**breaking**] Raise when associated_with finds more than one association
+- Generate update? in the pu:profile:conn policy
+- Use a dark background for alerts in dark mode
+- Deny inherited custom actions in the public storefront portal
+- Dark close buttons on alerts and toasts; test profile policy update?
+- Resolve typeahead URLs in path-scoped portals
+
+### Documentation
+
+- Publish dashboards and i18n announcements
+- Correct and extend skills from eval findings
+- Fix incorrect guidance and remove em dashes
+
+### Miscellaneous Tasks
+
+- Bump plutonium version in rails 8.1 appraisal lockfile
+
 ## [0.65.0] - 2026-10-02
 
 ### Bug Fixes
