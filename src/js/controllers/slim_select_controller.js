@@ -67,6 +67,15 @@ export default class extends Controller {
 
     const events = {};
 
+    if (this.modal) {
+      // A modal <dialog> gets `overflow: auto` from the UA stylesheet, so a
+      // dropdown that runs past the dialog's edge (a select near the bottom
+      // of a short modal) is clipped. The dialog never scrolls itself (its
+      // body owns the scroll regions), so let it overflow while open.
+      events.afterOpen = () => { this.modal.style.overflow = "visible"; };
+      events.afterClose = () => { this.modal.style.overflow = ""; };
+    }
+
     if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {
       // Replace SlimSelect's client-side filter with a server fetch.
       // Returns the SlimSelect data array shape: {value, text}.
@@ -192,6 +201,8 @@ export default class extends Controller {
       document.removeEventListener("scroll", this.boundModalReposition, true);
       this.boundModalReposition = null;
     }
+
+    if (this.modal) this.modal.style.overflow = "";
 
     if (this.slimSelect) {
       this.slimSelect.destroy();
