@@ -244,6 +244,15 @@ module Plutonium
               "uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1",
             crossorigin: "anonymous"
           )
+          # EasyMDE's toolbar uses Font Awesome 4 class names (renamed in 5+).
+          link(
+            rel: "stylesheet",
+            href:
+              "https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css",
+            integrity:
+              "sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN",
+            crossorigin: "anonymous"
+          )
         end
 
         def render_scripts

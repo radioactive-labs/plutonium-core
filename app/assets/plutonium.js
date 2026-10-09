@@ -17178,6 +17178,7 @@ ${text2}</tr>
     #buildOptions() {
       let options2 = {
         element: this.element,
+        autoDownloadFontAwesome: false,
         promptURLs: true,
         spellChecker: false,
         // Override the default preview renderer
@@ -17280,6 +17281,14 @@ ${text2}</tr>
         settings.openPosition = "auto";
       }
       const events = {};
+      if (this.modal) {
+        events.afterOpen = () => {
+          this.modal.style.overflow = "visible";
+        };
+        events.afterClose = () => {
+          this.modal.style.overflow = "";
+        };
+      }
       if (this.hasTypeaheadUrlValue && this.typeaheadUrlValue) {
         events.search = (search, currentData) => this.#typeaheadFetch(search, currentData);
       }
@@ -17380,6 +17389,7 @@ ${text2}</tr>
         document.removeEventListener("scroll", this.boundModalReposition, true);
         this.boundModalReposition = null;
       }
+      if (this.modal) this.modal.style.overflow = "";
       if (this.slimSelect) {
         this.slimSelect.destroy();
         this.slimSelect = null;

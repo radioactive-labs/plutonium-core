@@ -66,6 +66,7 @@ export default class extends Controller {
   #buildOptions() {
     let options = {
       element: this.element,
+      autoDownloadFontAwesome: false,
       promptURLs: true,
       spellChecker: false,
       // Override the default preview renderer
