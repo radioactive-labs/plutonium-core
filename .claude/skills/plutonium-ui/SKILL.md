@@ -326,6 +326,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
 | `key_value_store_tag` | Key/value pairs editor |
 | `currency_tag` | Money input (number field + unit prefix) |
+| `binary_tag` | Plain file input whose bytes go into a `binary` column |
 | `json_tag` | JSON editor; default for `json`/`jsonb` columns |
 
 ```ruby

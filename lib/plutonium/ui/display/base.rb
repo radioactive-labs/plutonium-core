@@ -55,6 +55,10 @@ module Plutonium
             create_component(Plutonium::UI::Display::Components::Number, :number, **, &)
           end
 
+          def binary_tag(**, &)
+            create_component(Plutonium::UI::Display::Components::Binary, :binary, **, &)
+          end
+
           # Type aliases for common column types
           alias_method :float_tag, :number_tag
           alias_method :decimal_tag, :number_tag

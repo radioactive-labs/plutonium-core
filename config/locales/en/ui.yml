@@ -92,3 +92,7 @@ en:
           reenter_hint: "Re-enter the new value to save it."
         attachment:
           delete: "Delete"
+        binary:
+          replace_hint: "Stored: %{size}. Choose a file to replace it."
+      display:
+        binary: "Binary data (%{size})"

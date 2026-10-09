@@ -26,6 +26,10 @@ module Plutonium
             case inferred_field_type
             when :rich_text
               return :markdown
+            when :binary
+              # phlexi-form infers :file, which Plutonium renders as an Uppy
+              # attachment; a binary column holds the file's bytes instead.
+              return :binary
             when :json, :jsonb
               # phlexi-form infers these as a plain :text textarea, which
               # renders `Hash#to_s` and never parses the submission back.
