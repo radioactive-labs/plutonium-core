@@ -10,8 +10,6 @@ module Plutonium
       included do
         add_flash_types :success, :warning, :error
 
-        protect_from_forgery with: :null_session, if: -> { request.headers["Authorization"].present? }
-
         rescue_from ::ActionPolicy::Unauthorized do |exception|
           respond_to do |format|
             format.any(:html, :turbo_stream) do
