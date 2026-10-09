@@ -45,8 +45,9 @@ class OrgPortal::PolymorphicNestedCreateTest < ApplicationSystemTestCase
     # waited out, only redone. See test/support/slim_select_helpers.rb.
     #
     # Matched on the user's `to_label` ("User #1"), which is what the widget
-    # renders — the email only exists on the model.
-    select_association @user.to_label, from: "comment[user]"
+    # renders. The typeahead searches the `email` column (User has no `search`
+    # block), so the search box gets the email.
+    select_association @user.to_label, from: "comment[user]", search: @user.email
 
     click_button "Create Comment"
 
