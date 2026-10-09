@@ -1280,3 +1280,13 @@ html.pu-rail-pinned .icon-rail-pin-expand {
   @apply rounded-sm outline-2 outline-offset-2 outline-primary-500;
 }
 
+/* Tailwind's preflight strips list markers. Restore them inside the rich
+   text editors (Trix, Lexxy) so lists look like lists while editing. */
+trix-editor ul,
+.lexxy-content ul {
+  @apply list-disc ps-6;
+}
+trix-editor ol,
+.lexxy-content ol {
+  @apply list-decimal ps-6;
+}

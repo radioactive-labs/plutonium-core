@@ -543,8 +543,8 @@ The field-level help keys (`:label`, `:description`, `:hint`, `:placeholder`) ar
 
 | Category | Types |
 |----------|-------|
-| Rich Text | `:markdown` (EasyMDE) |
 | Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
+| Rich Text | `:rich_text` (Action Text editor: Trix, or Lexxy once installed; **default** for `has_rich_text`), `:markdown` (EasyMDE) |
 | Numeric | `:number`, `:integer`, `:decimal`, `:range`, `:rating` (star picker, `max:`) |
 | Boolean | `:toggle` / `:switch` (switch, **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
@@ -556,7 +556,7 @@ The field-level help keys (`:label`, `:description`, `:hint`, `:placeholder`) ar
 
 ### Display Types (show / index)
 
-`:string`, `:text`, `:email`, `:url`, `:phone`, `:markdown`, `:number`, `:integer`, `:decimal`, `:boolean`, `:badge`, `:currency`, `:color`, `:date`, `:time`, `:datetime`, `:association`, `:attachment`
+`:string`, `:text`, `:email`, `:url`, `:phone`, `:markdown`, `:number`, `:integer`, `:decimal`, `:boolean`, `:badge`, `:currency`, `:color`, `:date`, `:time`, `:datetime`, `:association`, `:attachment`, `:key_value`, `:binary`, `:list`, `:tags`, `:rich_text`, `:relative_time`, `:code`, `:duration`, `:file_size`, `:progress`, `:rating`
 
 #### Auto-inferred display formatting
 
@@ -567,6 +567,7 @@ These render automatically: declare an `as:` only to override or pass options:
 | `boolean` | Yes/No pill (`:boolean`) | green "Yes" / neutral "No". Override labels: `true_label:`, `false_label:` |
 | `enum` | colored status badge (`:badge`) | known statuses (active, pending, failed…) auto-colored; unknown values get a stable decorative color |
 | `binary` | size (`:binary`) | `Binary data (12 KB)`, never the bytes |
+| `has_rich_text` | HTML (`:rich_text`) | rendered and sanitized by Action Text |
 | no_fly_list `has_tags` | chips (`:tags`) | declare by context name (`:labels`), not `labels_list` |
 | `has_cents` decimal | currency (`:currency`) | delimited, 2 decimals; symbol from `unit:` (display or `has_cents`), else `config.default_currency_unit` / i18n. `unit: false` drops it |
 

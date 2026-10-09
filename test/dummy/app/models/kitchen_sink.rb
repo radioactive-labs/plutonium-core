@@ -30,6 +30,7 @@ class KitchenSink < ::ResourceRecord
 
   # add has_many associations above.
 
+  has_rich_text :notes                        # Action Text (Trix, or Lexxy when the gem is installed)
   # add attachments above.
 
   # add scopes above.

@@ -8,11 +8,14 @@ module Plutonium
           include Plutonium::UI::Options::HasCentsField
           include Plutonium::UI::Options::SecretField
           include Plutonium::UI::Options::TagsField
+          include Plutonium::UI::Options::RichTextField
 
           private
 
           def infer_field_component
             return :tags if tags_field?
+            return :rich_text if rich_text_field?
+
             # Mask the same secret-bearing names the form does, so the show
             # page and table never print what the form refuses to echo.
             return :password if secret_field_name?

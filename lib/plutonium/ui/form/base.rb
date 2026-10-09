@@ -43,6 +43,11 @@ module Plutonium
           end
           alias_method :markdown_tag, :easymde_tag
 
+          # Action Text editor (Trix, or Lexxy when installed). See {Components::RichText}.
+          def rich_text_tag(**, &)
+            create_component(Components::RichText, :rich_text, **, &)
+          end
+
           def toggle_tag(**, &)
             create_component(Plutonium::UI::Form::Components::Toggle, :toggle, **, &)
           end
@@ -159,7 +164,6 @@ module Plutonium
           alias_method :datetime_tag, :flatpickr_tag
           alias_method :date_tag, :flatpickr_tag
           alias_method :time_tag, :flatpickr_tag
-          alias_method :rich_text_tag, :markdown_tag
           alias_method :json_tag, :json_input_tag
           alias_method :jsonb_tag, :json_input_tag
           alias_method :hstore_tag, :key_value_store_tag
