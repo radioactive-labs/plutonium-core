@@ -1,5 +1,6 @@
 class KitchenSink < ::ResourceRecord
   include Plutonium::Positioning::Model
+  include NoFlyList::TaggableRecord
 
   positioned_on :position, scope: :status
   # add concerns above.
@@ -15,6 +16,10 @@ class KitchenSink < ::ResourceRecord
   # add enums above.
 
   has_cents :price_cents, unit: "$" # virtual :price decimal accessor (cents <-> dollars); unit drives currency symbol
+  # Tags are per organization (no_fly_list `scope:`): each tenant keeps its
+  # own vocabulary. `zones` only accepts tags that already exist.
+  has_tags :labels, scope: :organization
+  has_tags :zones, scope: :organization, restrict_to_existing: true, limit: 2
   # add model configurations above.
 
   belongs_to :organization

@@ -166,6 +166,7 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `uppy_tag` / `file_tag` | Uppy file upload |
 | `binary_tag` | Plain file input whose bytes go into a `binary` column |
 | `list_tag` | Chip input for array values |
+| `tags_tag` | Chip input for a no_fly_list `has_tags` context |
 | `rating_tag` | Star picker (radio buttons, no JS); an optional rating gets a Clear option |
 | `secure_association_tag` | Association with policy-checked options (inline `+` add, typeahead) |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
@@ -268,6 +269,25 @@ input :nicknames, suggestions: %w[Basin Tub], limit: 5   # addable: false allows
 ```
 
 Removing every chip saves an empty array.
+
+[no_fly_list](https://github.com/radioactive-labs/no_fly_list) `has_tags` contexts are detected automatically. Permit them by context name (`labels`, not `labels_list`) and they render as chips on the form, the show page and the table:
+
+```ruby
+class Article < ResourceRecord
+  include NoFlyList::TaggableRecord
+  has_tags :labels, scope: :organization            # per-tenant vocabulary
+  has_tags :topics, restrict_to_existing: true, limit: 3
+end
+
+# policy
+def permitted_attributes_for_create = %i[title labels topics]
+```
+
+- The input suggests tags that already exist in the record's tag scope.
+- `restrict_to_existing` only allows picking existing tags. Plutonium doesn't decide where that vocabulary is managed: create the tags however suits the app (register the tag model as a resource, seed them, or add them in an interaction).
+- `limit` caps how many tags can be chosen.
+- Add `filter :labels, with: :tags` for a table filter.
+- The table reads tags through the context's association, so preload it (`includes(:labels)`) to avoid a query per row.
 
 ### Binary columns {#binary-fields}
 

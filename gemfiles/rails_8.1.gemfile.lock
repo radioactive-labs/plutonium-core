@@ -1,7 +1,15 @@
+GIT
+  remote: https://github.com/radioactive-labs/no_fly_list.git
+  revision: e1e88d9c7d898ef269e3cabfa12da2fb327459cc
+  branch: feat/scoped-tags
+  specs:
+    no_fly_list (0.7.4)
+      activerecord (>= 7.2)
+
 PATH
   remote: ..
   specs:
-    plutonium (0.65.0)
+    plutonium (0.66.0)
       action_policy (~> 0.7.0)
       csv
       listen (~> 3.8)
@@ -459,6 +467,7 @@ DEPENDENCIES
   importmap-rails
   minitest
   minitest-reporters
+  no_fly_list!
   plutonium!
   propshaft
   puma (>= 5.0)

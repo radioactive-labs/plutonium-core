@@ -4,3 +4,6 @@ source "https://rubygems.org"
 gemspec
 
 gem "rotp", "~> 6.3"
+
+# Optional tagging integration (Plutonium picks up `has_tags` contexts).
+gem "no_fly_list", github: "radioactive-labs/no_fly_list", branch: "feat/scoped-tags"

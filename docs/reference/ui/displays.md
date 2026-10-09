@@ -81,6 +81,7 @@ Some types render with richer components automatically; you only declare an `as:
 | `:key_value` | two-column list of keys and values; nested hashes/arrays as compact JSON | `hstore` columns | - |
 | `:binary` | `Binary data (12 KB)`, never the bytes | `binary` columns | - |
 | `:number` | delimited, at the column's scale (`1,999.50`) | `float` / `decimal` columns | - |
+| `:tags` | chips | no_fly_list `has_tags` contexts | - |
 | `:list` | chips | - | - |
 | `:relative_time` | "3 minutes ago", kept live; absolute time on hover | - | - |
 | `:code` | monospace value with a Copy button | - | - |

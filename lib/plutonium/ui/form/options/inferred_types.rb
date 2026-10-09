@@ -7,10 +7,13 @@ module Plutonium
         module InferredTypes
           include Plutonium::UI::Options::HasCentsField
           include Plutonium::UI::Options::SecretField
+          include Plutonium::UI::Options::TagsField
 
           private
 
           def infer_field_component
+            # A tag context is also a has_many of tag records; claim it first.
+            return :tags if tags_field?
             # Password detection lives in the string-type inference, not the
             # component-type inference (a `password` column infers as :string).
             # Route every inferred password/secret field to the masking Password

@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gem "rotp"
+gem "no_fly_list", github: "radioactive-labs/no_fly_list", branch: "feat/scoped-tags"
 gem "rails", "~> 8.1.0"
 gem "sqlite3"
 gem "puma", ">= 5.0"
