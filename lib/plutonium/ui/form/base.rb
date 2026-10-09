@@ -117,6 +117,9 @@ module Plutonium
           alias_method :belongs_to_tag, :secure_association_tag
           alias_method :has_many_tag, :secure_association_tag
           alias_method :has_one_tag, :secure_association_tag
+          # phlexi bound this to ITS has_many_tag at definition time, so it
+          # has to be re-pointed explicitly or habtm skips the policy scope.
+          alias_method :has_and_belongs_to_many_tag, :secure_association_tag
 
           def secure_polymorphic_association_tag(**attributes, &)
             attributes[:data_controller] = tokens(attributes[:data_controller], "slim-select") # TODO: put this behind a config

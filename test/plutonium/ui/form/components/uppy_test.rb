@@ -98,6 +98,7 @@ class Plutonium::UI::Form::Components::UppyTest < ActiveSupport::TestCase
       end
     end
     component.define_singleton_method(:plain) { |_text| nil }
+    component.define_singleton_method(:render) { |_component| nil }
 
     component.send(:render_attachment_preview, attachment)
     [titles, hidden_values]
@@ -120,6 +121,7 @@ class Plutonium::UI::Form::Components::UppyTest < ActiveSupport::TestCase
       end
     end
     component.define_singleton_method(:plain) { |_text| nil }
+    component.define_singleton_method(:render) { |_component| nil }
 
     component.send(:render_attachment_preview, attachment)
     texts.grep(String)
@@ -191,6 +193,24 @@ class Plutonium::UI::Form::Components::UppyTest < ActiveSupport::TestCase
       refute text.start_with?(".."),
         "double-dot extension regression: rendered #{text.inspect}"
     end
+  end
+
+  # The delete button used `span(class: "bi bi-trash")`, a Bootstrap Icons font
+  # class. Plutonium never loads that font, so the button had an empty icon.
+  test "the delete button renders a Tabler trash icon" do
+    component = Component.allocate
+    rendered = []
+    spans = []
+
+    component.define_singleton_method(:button) { |**_attrs, &block| block&.call }
+    component.define_singleton_method(:span) { |**attrs, &_block| spans << attrs }
+    component.define_singleton_method(:plain) { |_text| nil }
+    component.define_singleton_method(:render) { |obj| rendered << obj }
+
+    component.send(:render_delete_button)
+
+    assert rendered.any?(Phlex::TablerIcons::Trash), "expected a Tabler trash icon"
+    assert_empty spans.select { |attrs| attrs[:class].to_s.include?("bi-") }
   end
 
   # Builds the direct-upload data options for a component with the given attributes.

@@ -325,6 +325,8 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | `secure_association_tag` | Association with policy-checked options |
 | `belongs_to_tag` / `has_many_tag` / `has_one_tag` | Association selects |
 | `key_value_store_tag` | Key/value pairs editor |
+| `currency_tag` | Money input (number field + unit prefix) |
+| `json_tag` | JSON editor; default for `json`/`jsonb` columns |
 
 ```ruby
 render field(:published_at).wrapped { |f| f.flatpickr_tag(min_date: Date.today, enable_time: true) }

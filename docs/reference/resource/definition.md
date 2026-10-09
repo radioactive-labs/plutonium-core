@@ -104,8 +104,8 @@ end
 | Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
 | Boolean | `:toggle` / `:switch` (switch: **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
-| Selection | `:select`, `:slim_select`, `:radio_buttons`, `:check_boxes` |
 | Files | `:file`, `:uppy`, `:attachment` |
+| Selection | `:select`, `:slim_select`, `:collection_radio_buttons`, `:collection_checkboxes` |
 | Associations | `:association`, `:secure_association`, `:belongs_to`, `:has_many`, `:has_one` |
 | Special | `:hidden`, `:color`, `:phone` |
 

@@ -155,7 +155,7 @@ module Plutonium
               class: "w-full py-2 px-4 text-sm text-danger-600 dark:text-danger-400 bg-[var(--pu-surface)] hover:bg-danger-50 dark:hover:bg-danger-900/50 rounded-b-[var(--pu-radius-md)] transition-colors duration-200 flex items-center justify-center gap-2 border-t border-[var(--pu-border)]",
               data: {action: "click->attachment-preview#remove"}
             ) do
-              span(class: "bi bi-trash")
+              render Phlex::TablerIcons::Trash.new(class: "w-4 h-4")
               plain Plutonium::Translation.t("plutonium.ui.form.attachment.delete")
             end
           end

@@ -86,6 +86,7 @@ en:
           key_placeholder: "Key"
           value_placeholder: "Value"
           add_pair: "+ Add Pair"
+          remove_pair: "Remove pair"
         password:
           keep_current_hint: "Leave blank to keep the current value."
           reenter_hint: "Re-enter the new value to save it."
