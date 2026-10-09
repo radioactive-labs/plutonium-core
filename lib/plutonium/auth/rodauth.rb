@@ -24,6 +24,13 @@ module Plutonium
             rodauth.rails_account
           end
 
+          # A request Rodauth authenticated with a valid JWT reads its session
+          # from the token, not the cookie, so there is nothing for a forged
+          # request to ride on. Everything else gets the CSRF token check.
+          def verified_request?
+            super || (rodauth.features.include?(:jwt) && rodauth.valid_jwt?)
+          end
+
           def logout_url
             rodauth.logout_path
           end

@@ -86,7 +86,39 @@ class Plutonium::Auth::RodauthTest < ActiveSupport::TestCase
     assert_includes controller_class._helper_methods, :current_user
   end
 
+  test "a valid JWT verifies the request without a CSRF token" do
+    controller = build_forgery_controller(features: [:jwt], valid_jwt: true).new
+
+    assert controller.send(:verified_request?)
+  end
+
+  test "an invalid JWT does not verify the request" do
+    controller = build_forgery_controller(features: [:jwt], valid_jwt: false).new
+
+    refute controller.send(:verified_request?)
+  end
+
+  test "without the jwt feature the CSRF token check decides" do
+    controller = build_forgery_controller(features: [:login], valid_jwt: true).new
+
+    refute controller.send(:verified_request?)
+  end
+
   private
+
+  def build_forgery_controller(features:, valid_jwt:)
+    rodauth = Struct.new(:features, :valid_jwt?).new(features, valid_jwt)
+    # Stands in for Rails' token check, which fails: no token was sent.
+    unverified = Class.new(ActionController::Base) do
+      def verified_request? = false
+    end
+
+    Class.new(unverified) do
+      include Plutonium::Auth::Rodauth.for(:user)
+
+      define_method(:rodauth) { |name = nil| rodauth }
+    end
+  end
 
   def build_controller_class(mod)
     Class.new(ActionController::Base) do
