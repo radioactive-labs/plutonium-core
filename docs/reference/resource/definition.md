@@ -99,9 +99,9 @@ end
 
 | Category | Types |
 |---|---|
-| Text | `:string`, `:text`, `:email`, `:url`, `:tel`, `:password` |
 | Rich text | `:markdown` (EasyMDE editor) |
 | Numeric | `:number`, `:integer`, `:decimal`, `:range` |
+| Text | `:string`, `:text`, `:email`, `:url`, `:phone`, `:password` (alias `:secret`) |
 | Boolean | `:toggle` / `:switch` (switch: **default** for boolean columns), `:boolean` (plain checkbox) |
 | Date/Time | `:date`, `:time`, `:datetime` |
 | Selection | `:select`, `:slim_select`, `:radio_buttons`, `:check_boxes` |

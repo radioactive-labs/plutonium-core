@@ -314,7 +314,19 @@ module Plutonium
               "#{record.class.name} doesn't respond to it. " \
               "Define the method on the model or remove the slot."
           end
-          record.public_send(name)
+          value = record.public_send(name)
+          # Slots render raw values, so mask secrets here. Blank stays blank so
+          # the slot still collapses.
+          (value.present? && secret_slot?(name)) ? Plutonium::UI::Options::SecretField::MASK : value
+        end
+
+        # Same rule as the show page: an explicit `as:` (display over field)
+        # decides; otherwise the secret-name heuristic does.
+        def secret_slot?(name)
+          name = name.to_sym
+          declared = resource_definition.defined_displays.dig(name, :options, :as) ||
+            resource_definition.defined_fields.dig(name, :options, :as)
+          declared ? %i[password secret].include?(declared.to_sym) : Plutonium::UI::Options::SecretField.secret_name?(name)
         end
 
         def row_actions

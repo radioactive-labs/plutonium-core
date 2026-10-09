@@ -150,8 +150,8 @@ render field(:title).wrapped(class: "col-span-full") { |f| f.input_tag }
 | Tag | Input |
 |---|---|
 | `input_tag` | text (auto-detected type) |
-| `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `tel_tag`, `hidden_tag` | standard HTML inputs |
-| `checkbox_tag`, `select_tag`, `radio_button_tag` | standard |
+| `string_tag`, `text_tag`, `number_tag`, `email_tag`, `password_tag`, `url_tag`, `hidden_tag` | standard HTML inputs |
+| `checkbox_tag`, `select_tag`, `radio_button_tag`, `collection_radio_buttons_tag`, `collection_checkboxes_tag` | standard |
 | `toggle_tag` / `switch_tag` | switch-styled boolean (`as: :toggle` / `:switch`), the **default** for boolean columns; same behavior as a checkbox. Use `checkbox_tag` (`as: :boolean`) for a plain checkbox. |
 
 ### Plutonium-enhanced tags
@@ -237,16 +237,19 @@ The sentinel is guarded client-side by the `password-sentinel` Stimulus controll
 - ends with `_password`, `_digest`, `_hash`, `_token`, `_key`, or `_salt`;
 - contains `secret`.
 
+The same names are masked everywhere the value would otherwise print: the show page, table cells, the wizard summary, and grid and kanban card slots all render `••••••••` instead of the value. A `field`/`display` `as:` overrides the heuristic on those surfaces too.
+
 This is a naming convenience, **not** a security guarantee, tune it per field:
 
 ```ruby
 # Opt OUT: render the value as a normal, readable text input
-field :api_token,   as: :string      # a token the admin needs to copy
+field :api_token,   as: :string      # a token the admin needs to copy (shown on the show page and cards too)
 field :content_hash, as: :string     # a checksum, not a secret
 field :public_key,  as: :string      # *_key matches, but a public key is not secret
 
 # Opt IN: mask a secret the heuristic still misses (e.g. no telltale name)
 field :recovery_phrase, as: :password
+field :pin, as: :secret                # alias of :password
 ```
 
 > [!WARNING]

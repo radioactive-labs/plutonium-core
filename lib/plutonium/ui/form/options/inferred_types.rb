@@ -6,6 +6,7 @@ module Plutonium
       module Options
         module InferredTypes
           include Plutonium::UI::Options::HasCentsField
+          include Plutonium::UI::Options::SecretField
 
           private
 
@@ -15,7 +16,7 @@ module Plutonium
             # Route every inferred password/secret field to the masking Password
             # component so the stored value never reaches the DOM. We also widen
             # the heuristic to secret-bearing names Phlexi misses (`*_secret`,
-            # `*_key`, `salt`, ...) — see #secret_field_name?.
+            # `*_key`, `salt`, ...) — see Options::SecretField.
             return :password if inferred_string_field_type == :password || secret_field_name?
 
             # has_cents decimal accessors render as a currency input (number field
@@ -38,18 +39,6 @@ module Plutonium
             else
               inferred_field_component
             end
-          end
-
-          # Secret-bearing names Phlexi's `is_password_field?` does not catch
-          # (it only handles `password`, `encrypted_*`, `*_password`, `*_digest`,
-          # `*_hash`, `*_token`). Mask these too so their value never reaches the
-          # DOM. Still a name heuristic, not a guarantee — opt in/out per field
-          # with `as: :password` / `as: :string`.
-          def secret_field_name?
-            name = key.to_s.downcase
-            name == "token" || name == "salt" ||
-              name.include?("secret") ||
-              name.end_with?("_key", "_salt")
           end
         end
       end

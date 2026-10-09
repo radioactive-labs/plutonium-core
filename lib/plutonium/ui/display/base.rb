@@ -57,6 +57,7 @@ module Plutonium
           alias_method :jsonb_tag, :json_tag
           alias_method :key_value_tag, :hstore_tag
           alias_method :phlexi_tag, :phlexi_render_tag
+          alias_method :secret_tag, :password_tag
         end
 
         private
